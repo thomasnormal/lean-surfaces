@@ -44,6 +44,38 @@ private def change (projection : ClassReceiverProjection) (id : ObjectId)
     {projection.snapshot.memory with objects :=
       {objects := projection.snapshot.memory.objects.objects.modify id f}}}}
 
+private def rawObject (fields : List (String × Raw)) : Raw := .object fields
+
+private def rawText (value : String) : Raw := .string value
+
+private def friendFunctionRaw (kind id : String) : Raw := rawObject [
+  ("kind", rawText "FriendDecl"),
+  ("type", rawObject [("qualType", rawText "void ()")]),
+  ("inner", .array [rawObject [
+    ("kind", rawText kind), ("id", rawText id)]])]
+
+private def friendReferenceRaw (kind id : String) : Raw := rawObject [
+  ("kind", rawText "FriendDecl"),
+  ("type", rawObject [("qualType", rawText "void ()")]),
+  ("inner", .array [rawObject [
+    ("kind", rawText "DeclRefExpr"),
+    ("referencedDecl", rawObject [
+      ("kind", rawText kind), ("id", rawText id)])]])]
+
+private def declarationRow (id kind canonical : String) : DeclarationEvidenceRow :=
+  {ordinal := 0, id := h id, kind := kind, canonical := h canonical,
+    previous := none, semanticContext := none, lexicalContext := none,
+    implicit := false, dependentContext := false, owningModule := none,
+    functionShape := none, raw := .object []}
+
+private def friendProbe (_raw : Raw) (rows : List DeclarationEvidenceRow) : DeclarationProbe :=
+  {ast := .object [], metadata := .object [], declarations := rows}
+
+private def isError (result : Except String FrontendHandle) : Bool :=
+  match result with
+  | .ok _ => false
+  | .error _ => true
+
 set_option maxRecDepth 10000 in
 private theorem kernelSubobjects :
     [
@@ -75,6 +107,34 @@ private theorem kernelSubobjects :
       hierarchy.classes.modify 3 (fun shape => {shape with fields := []}))}} == none,
     observed projection {getter with isConst := false} == some (-9),
     observed (projection false true) {getter with isConst := false} == none
+    ].all id = true := by decide
+
+set_option maxRecDepth 10000 in
+private theorem kernelFriendFunctions :
+    [
+      (ClassHierarchyAdmission.resolveFriendFunction
+          (friendProbe (friendFunctionRaw "FunctionDecl" "0x1")
+            [declarationRow "0x1" "FunctionDecl" "0x2"])
+          (friendFunctionRaw "FunctionDecl" "0x1")).toOption == some (h "0x2"),
+      (ClassHierarchyAdmission.resolveFriendFunction
+          (friendProbe (friendReferenceRaw "FunctionDecl" "0x1")
+            [declarationRow "0x1" "FunctionDecl" "0x2"])
+          (friendReferenceRaw "FunctionDecl" "0x1")).toOption == some (h "0x2"),
+      isError (ClassHierarchyAdmission.resolveFriendFunction
+          (friendProbe (friendFunctionRaw "VarDecl" "0x1")
+            [declarationRow "0x1" "VarDecl" "0x1"])
+          (friendFunctionRaw "VarDecl" "0x1")),
+      isError (ClassHierarchyAdmission.resolveFriendFunction
+          (friendProbe (friendFunctionRaw "FunctionDecl" "0x1") [])
+          (friendFunctionRaw "FunctionDecl" "0x1")),
+      isError (ClassHierarchyAdmission.resolveFriendFunction
+          (friendProbe (friendFunctionRaw "FunctionDecl" "0x1") [])
+          (rawObject [("kind", rawText "FunctionDecl")])),
+      isError (ClassHierarchyAdmission.resolveFriendFunction
+          (friendProbe (friendFunctionRaw "FunctionDecl" "0x1")
+            [declarationRow "0x1" "FunctionDecl" "0x2",
+             declarationRow "0x1" "FunctionDecl" "0x3"])
+          (friendFunctionRaw "FunctionDecl" "0x1"))
     ].all id = true := by decide
 
 #print axioms kernelSubobjects

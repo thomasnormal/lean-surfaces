@@ -72,10 +72,13 @@ def evidenceNullableText (raw : Raw) (name : String) : Except String (Option Str
   | _ => throw s!"evidence field {name}: expected string or explicit null"
 
 def parseFrontendHandle (value : String) : Except String FrontendHandle := do
-  let digits := value.toList.drop 2
-  unless value.startsWith "0x" && !digits.isEmpty && digits.all (fun character =>
+  let digits := match value.toList with
+    | '0' :: 'x' :: rest => rest
+    | _ => []
+  unless !digits.isEmpty && digits.all (fun character =>
       character.isDigit || ('a' ≤ character && character ≤ 'f') ||
-        ('A' ≤ character && character ≤ 'F')) do
+        ('A' ≤ character && character ≤ 'F')) &&
+      value.toList.take 2 == ['0', 'x'] do
     throw s!"invalid artifact-local frontend handle: {value}"
   return {value}
 

@@ -121,6 +121,10 @@ private theorem kernelViews :
             {shape with bases := [b "L" "private", b "R"], friends := [h "F"]}))} [] [0] "F") == some 1,
       observed (contextualOn {hierarchy with classes :=
           (hierarchy.classes.modify 0 (fun shape =>
+            {shape with bases := [b "L" "private", b "R"], friends := [h "friend_fn"]}))} [] [0]
+          "friend_fn") == some 1,
+      observed (contextualOn {hierarchy with classes :=
+          (hierarchy.classes.modify 0 (fun shape =>
             {shape with bases := [b "L" "protected", b "R"]}))} [] [0] "D") == some 1,
       observed (contextualOn {hierarchy with classes :=
           (hierarchy.classes.modify 0 (fun shape =>

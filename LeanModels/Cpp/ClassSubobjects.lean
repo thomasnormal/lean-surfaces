@@ -16,6 +16,7 @@ structure ClassShape where
   isAbstract : Bool
   bases : List ClassBaseSpec
   fields : List FrontendHandle
+  /-- Canonical handles for source-declared class or function friends. -/
   friends : List FrontendHandle
   deriving Repr, BEq, Inhabited
 
@@ -97,6 +98,38 @@ private def friendHandle (probe : DeclarationProbe) (name : String) : Except Str
   let [handle] := canonicals
     | throw "class hierarchy: friend class is absent or ambiguous"
   pure handle
+
+private def friendFunctionTarget (raw : Raw) : Except String Raw := do
+  let some (.array [child]) := raw.field "inner"
+    | throw "class hierarchy: friend function has no direct declaration"
+  match child.text "kind" with
+  | some "FunctionDecl" | some "CXXMethodDecl" => pure child
+  | some "DeclRefExpr" =>
+      let some target := child.field "referencedDecl"
+        | throw "class hierarchy: friend function has no referenced declaration"
+      pure target
+  | _ => throw "class hierarchy: friend function has unsupported declaration"
+
+/-- Resolve one source `FriendDecl` whose target is a function declaration.
+Only a direct function/method declaration (or a direct reference to one) is
+accepted, and the probe must resolve its occurrence to one canonical handle. -/
+def resolveFriendFunction (probe : DeclarationProbe) (raw : Raw) :
+    Except String FrontendHandle := do
+  unless raw.text "kind" == some "FriendDecl" do
+    throw "class hierarchy: requires a FriendDecl"
+  let target ← friendFunctionTarget raw
+  let some kind := target.text "kind"
+    | throw "class hierarchy: friend function has no declaration kind"
+  unless kind == "FunctionDecl" || kind == "CXXMethodDecl" do
+    throw "class hierarchy: friend function target is not a function"
+  let occurrence ← evidenceHandle target "id"
+  let canonicals : List FrontendHandle := probe.declarations.filterMap fun row =>
+    if row.id == occurrence && (row.kind == "FunctionDecl" || row.kind == "CXXMethodDecl") then
+      some row.canonical
+    else none
+  let [canonical] := canonicals.eraseDups
+    | throw "class hierarchy: friend function is absent or ambiguous"
+  pure canonical
 
 private def source (artifact : Artifact) (probe : DeclarationProbe)
     (canonical : FrontendHandle) : Except String (Declaration × Raw × DeclarationEvidenceRow) := do
@@ -183,7 +216,14 @@ private def shape (artifact : Artifact) (probe : DeclarationProbe)
   let sourceFriends := (← children raw).filter (·.text "kind" == some "FriendDecl")
   let mut friends := []
   for friend in sourceFriends do
-    friends := friends ++ [← friendHandle probe (← friendName friend)]
+    let some type := friend.field "type"
+      | throw "class hierarchy: friend declaration has no source type"
+    let some spelling := type.text "qualType"
+      | throw "class hierarchy: friend declaration has no source type"
+    if spelling.startsWith "class " then
+      friends := friends ++ [← friendHandle probe (← friendName friend)]
+    else
+      friends := friends ++ [← resolveFriendFunction probe friend]
   pure {declaration := canonical, isAbstract, bases := parents, fields, friends}
 
 private def collect : Nat → Artifact → DeclarationProbe → List FrontendHandle →

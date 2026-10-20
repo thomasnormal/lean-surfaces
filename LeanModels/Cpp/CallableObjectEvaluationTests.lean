@@ -160,6 +160,17 @@ private def forInitializerFailureRetainsFrame : Bool :=
         | _ => false
   | .error _ => false
 
+private def unsupportedIncrementLoud : Bool :=
+  let expression : TypedCallableExpression := {
+    expression := .increment "??" false (handle "0x10"),
+    sourceType := intType, type := intType}
+  let callable : CallableFunction := {
+    functionWithLocal (.literal (signed 0)) with
+      body := .block (.return_ expression)}
+  match evaluateCallableObject 32 .lp64 callable [signed 7] with
+  | .error (.unsupportedOperator "??") => true
+  | _ => false
+
 private def readsParameter : Bool :=
   match evaluateCallableObject 32 .lp64 (functionWithLocal (.read (handle "0x10"))) [signed 7] with
   | .ok (.ok value) => value == signed 7
@@ -232,6 +243,7 @@ private def parserAdmitsAutomaticLocal : Bool :=
 #guard forBodyFailureRetainsFrame
 #guard returnFailureRetainsFrame
 #guard forInitializerFailureRetainsFrame
+#guard unsupportedIncrementLoud
 #guard parserAdmitsAutomaticLocal
 
 end LeanModels.Cpp.CallableObjectEvaluationTests

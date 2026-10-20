@@ -153,26 +153,30 @@ mutual
     match current.result with
     | .error reason => failure current.frame reason
     | .ok result =>
-        match result with
-        | .ok old =>
+        match operator with
+        | "++" | "--" =>
             let operation := if operator == "++" then IntegralBinary.add
               else IntegralBinary.subtract
-            let next := integralBinary operation old ⟨old.format, 1⟩
-            match next with
-            | .ok value =>
-                match current.frame.lookup declaration with
-                | .error reason => frameFailure current.frame reason
-                | .ok binding =>
-                    let assigned := current.frame.assignValue declaration binding.type value
-                    match assigned.result with
-                    | .error reason => frameFailure assigned.frame reason
-                    | .ok _ =>
-                        success assigned.frame (convertTo profile typed.type
-                          (if isPostfix then old else value))
+            match result with
+            | .ok old =>
+                let next := integralBinary operation old ⟨old.format, 1⟩
+                match next with
+                | .ok value =>
+                    match current.frame.lookup declaration with
+                    | .error reason => frameFailure current.frame reason
+                    | .ok binding =>
+                        let assigned := current.frame.assignValue declaration binding.type value
+                        match assigned.result with
+                        | .error reason => frameFailure assigned.frame reason
+                        | .ok _ =>
+                            success assigned.frame (convertTo profile typed.type
+                              (if isPostfix then old else value))
+                | result =>
+                    success current.frame
+                      (mapIntegralResult result (convertTo profile typed.type))
             | result =>
                 success current.frame (mapIntegralResult result (convertTo profile typed.type))
-        | result =>
-            success current.frame (mapIntegralResult result (convertTo profile typed.type))
+        | _ => failure current.frame (.unsupportedOperator operator)
 
   private partial def evalExpression (fuel : Nat) (profile : TargetProfile)
       (frame : IntegralObjectFrame) (typed : TypedCallableExpression) :

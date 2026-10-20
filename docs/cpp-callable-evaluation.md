@@ -41,7 +41,9 @@ arithmetic failures propagate instead of executing later statements.
 
 Prefix and postfix increment/decrement follow the admitted parameter-only shape
 of [expr.pre.incr] and [expr.post.incr]: the target is updated once, prefix
-returns the updated value, and postfix returns the saved value. The update uses
+returns the updated value, and postfix returns the saved value. An increment
+operator outside `++` and `--` is a loud refusal rather than an assumed
+decrement. The update uses
 the target's profile-resolved integral format, so unsigned wraparound is an
 `IntegralResult.ok` result while signed overflow remains
 `IntegralResult.undefined`. An increment nested in an unsequenced binary

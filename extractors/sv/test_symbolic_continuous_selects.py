@@ -547,6 +547,14 @@ class SymbolicContinuousSelects(unittest.TestCase):
         statement = envelope["design"]["modules"][0]["processes"][0]["body"]["stmts"][0]
         self.assertEqual(statement["kind"], "Unsupported")
 
+    def test_right_streaming_explicit_slice_stays_loud(self):
+        envelope = self.extract(
+            "module top(input logic [4:0] source, output logic [3:0] hi, "
+            "output logic out); always_comb begin "
+            "{>>2 {hi, out}} = source; end endmodule")
+        statement = envelope["design"]["modules"][0]["processes"][0]["body"]["stmts"][0]
+        self.assertEqual(statement["kind"], "Unsupported")
+
     def test_continuous_right_streaming_accepts_fixed_array_cell(self):
         envelope = self.extract(
             "module top(input logic [4:0] source, output logic [3:0] hi, "

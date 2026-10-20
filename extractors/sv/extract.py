@@ -2570,6 +2570,20 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
     }, True
 
 
+def _streaming_has_slice_size(lhs):
+    """Return whether a streaming concatenation spells an explicit slice.
+
+    Pyslang keeps the syntax node on ``lhs.syntax.sliceSize``; the elaborated
+    expression's ``sliceSize`` property is zero for both the default and an
+    explicit size.  Sized streams stay outside the fixed-window lowering.
+    """
+    try:
+        syntax = getattr(lhs, "syntax", None)
+        return syntax is None or getattr(syntax, "sliceSize", None) is not None
+    except Exception:
+        return True
+
+
 def _streaming_target_assignment(sm, expr):
     """Lower a simple right-streaming unpack into packed target leaves.
 
@@ -2588,7 +2602,7 @@ def _streaming_target_assignment(sm, expr):
         lhs = expr.left
         if type(lhs).__name__ != "StreamingConcatenationExpression":
             return None
-        if getattr(lhs, "sliceSize", 0) not in (0, None):
+        if _streaming_has_slice_size(lhs):
             return None
         token = getattr(getattr(lhs, "syntax", None), "operatorToken", None)
         operator = str(getattr(token, "kind", "")).split(".")[-1]
@@ -2659,7 +2673,7 @@ def _symbolic_streaming_target_assignment(sm, expr):
         lhs = expr.left
         if type(lhs).__name__ != "StreamingConcatenationExpression":
             return None
-        if getattr(lhs, "sliceSize", 0) not in (0, None):
+        if _streaming_has_slice_size(lhs):
             return None
         token = getattr(getattr(lhs, "syntax", None), "operatorToken", None)
         operator = str(getattr(token, "kind", "")).split(".")[-1]

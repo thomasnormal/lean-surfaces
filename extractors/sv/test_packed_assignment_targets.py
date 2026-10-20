@@ -176,6 +176,14 @@ class PackedAssignmentTargets(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_sized_right_streaming_unpack_stays_loud(self):
+        design = extract_source(
+            "module top; bit [7:0] source; bit [3:0] hi, lo; "
+            "initial {>>2 {hi, lo}} = source; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

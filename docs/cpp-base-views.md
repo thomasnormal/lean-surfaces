@@ -24,6 +24,15 @@ and a private edge only in its declaring class. This is the narrow source-backed
 context rule; friend lookup, access through unrelated contexts and full
 source-level cast lookup remain loud. The written label remains provenance data.
 
+Hierarchy admission also retains the unqualified class name for each class and
+each direct base spelling. `ClassBaseCastSyntax.resolve` consumes those names
+after syntax admission: starting at the caller-supplied source subobject, it
+follows exactly one retained direct edge for every AST path element, checks the
+source and target pointer spellings against the retained class names, and
+constructs the target path and declaration witnesses. A missing name,
+ambiguous direct edge, type mismatch or absent declaration is a loud refusal;
+the resolver never treats a frontend handle as a class name.
+
 Complete class descriptions also retain canonical friend handles from
 class-type and direct function or method `FriendDecl`s. A listed friend can
 supply the access context for a protected or private edge. The function form
@@ -32,10 +41,10 @@ to one canonical probe handle; missing and ambiguous targets refuse. The
 handle only authorizes this existing-object access policy. Friend-function
 execution, overload lookup and general access-control search remain loud.
 
-This operation does not parse or execute a C++ cast expression. It does not
-infer ABI offsets, allocate a pointer, resolve a virtual base, search for a
-unique target by class name, or perform virtual dispatch. Its explicit context
-check is a state policy, not a source cast-expression evaluator.
+This operation does not infer ABI offsets, allocate a pointer, resolve a
+virtual base, or perform virtual dispatch. Its explicit context check is a
+state policy, not a general source cast-expression evaluator. The source
+resolver only follows the already admitted nonvirtual direct-base names.
 The explicit path is the identity witness; repeated occurrences therefore stay
 distinct and ambiguous name-only conversions are never silently guessed.
 
@@ -56,9 +65,10 @@ each path element must carry its source `name`; the ordered names are retained
 as evidence.
 Reverse `BaseToDerived` casts, member or computed operands, missing handles or
 paths and all other cast forms remain explicit refusals. `bind` attaches this
-validated syntax evidence in an already-resolved `ClassBaseCast`; declaration
-handles and path witnesses still come from the typed state boundary, and
-execution continues to use those typed witnesses rather than spelling alone.
+validated syntax evidence in a typed `ClassBaseCast`, and `resolve` is the
+narrow bridge that supplies its declaration and path witnesses from a
+caller-provided source path. Execution continues to use those typed witnesses
+rather than spelling alone.
 
 The kernel controls cover complete-root and nested-base views, const roots,
 diamond identity, prefix failures, same-subobject and missing-path refusals,

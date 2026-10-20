@@ -9,6 +9,8 @@ structure ClassBaseSpec where
   target : FrontendHandle
   access : String
   writtenAccess : String
+  /-- The source spelling of this direct base, when retained by admission. -/
+  name : String := ""
   deriving Repr, BEq, Inhabited
 
 structure ClassShape where
@@ -18,6 +20,8 @@ structure ClassShape where
   fields : List FrontendHandle
   /-- Canonical handles for source-declared class or function friends. -/
   friends : List FrontendHandle
+  /-- The unqualified source name of this class, when retained by admission. -/
+  name : String := ""
   deriving Repr, BEq, Inhabited
 
 structure ClassSubobjectSlot where
@@ -77,6 +81,13 @@ private def lastName : List String → Option String
   | [] => none
   | [name] => some name
   | _ :: rest => lastName rest
+
+private def sourceTypeName (spelling : String) : Option String :=
+  let spelling :=
+    if spelling.startsWith "class " then (spelling.drop 6).toString
+    else if spelling.startsWith "struct " then (spelling.drop 7).toString
+    else spelling
+  lastName (spelling.splitOn "::")
 
 private def friendName (raw : Raw) : Except String String := do
   let some type := raw.field "type"
@@ -197,11 +208,16 @@ private def shape (artifact : Artifact) (probe : DeclarationProbe)
         sourceBase.text "access" == some access && sourceBase.text "writtenAccess" == some written do
       throw "class hierarchy: inconsistent base access"
     let some sourceType := sourceBase.field "type" | throw "class hierarchy: missing source base type"
-    unless sourceType.text "qualType" == some (← evidenceText base "type_spelling") do
+    let typeSpelling ← evidenceText base "type_spelling"
+    unless sourceType.text "qualType" == some typeSpelling do
       throw "class hierarchy: base source spelling disagrees"
+    let some baseName := sourceTypeName typeSpelling
+      | throw "class hierarchy: base source spelling has no class name"
+    unless cppIdentifier baseName do
+      throw "class hierarchy: malformed base source name"
     let .record parent ← parseCppTypeEvidence (← evidenceField base "type")
       | throw "class hierarchy: requires a concrete class base type"
-    parents := parents ++ [{target := parent, access, writtenAccess := written}]
+    parents := parents ++ [{target := parent, access, writtenAccess := written, name := baseName}]
   let sourceFields := (← children raw).filter (·.text "kind" == some "FieldDecl")
   unless sourceFields.length == (← evidenceNat row.raw "record_field_count") do
     throw "class hierarchy: inconsistent field census"
@@ -224,7 +240,8 @@ private def shape (artifact : Artifact) (probe : DeclarationProbe)
       friends := friends ++ [← friendHandle probe (← friendName friend)]
     else
       friends := friends ++ [← resolveFriendFunction probe friend]
-  pure {declaration := canonical, isAbstract, bases := parents, fields, friends}
+  let name ← evidenceText row.raw "name"
+  pure {declaration := canonical, isAbstract, bases := parents, fields, friends, name}
 
 private def collect : Nat → Artifact → DeclarationProbe → List FrontendHandle →
     List ClassShape → Except String (List ClassShape)

@@ -7,10 +7,10 @@ private def b (name : String) : ClassBaseSpec :=
   {target := h name, access := "public", writtenAccess := "public"}
 private def hierarchy : ClassHierarchy := {
   root := h "D", classes := [
-    ⟨h "D", false, [b "L", b "R"], [], []⟩,
-    ⟨h "L", true, [b "B"], [], []⟩,
-    ⟨h "R", true, [b "B"], [], []⟩,
-    ⟨h "B", true, [], [h "value"], []⟩]}
+    ⟨h "D", false, [b "L", b "R"], [], [], ""⟩,
+    ⟨h "L", true, [b "B"], [], [], ""⟩,
+    ⟨h "R", true, [b "B"], [], [], ""⟩,
+    ⟨h "B", true, [], [h "value"], [], ""⟩]}
 
 private def getter (mutable_ : Bool := false) : IntegralMemberGetter := {
   occurrence := default, owner := h "B",
@@ -98,7 +98,7 @@ private theorem kernelSubobjects :
     observed (change (projection false true) 4 (fun object => {object with type := .record (h "B")})) == none,
     observed {projection with hierarchy := {hierarchy with root := h "L"}} == none,
     observed {projection with hierarchy := {hierarchy with classes := hierarchy.classes ++ [hierarchy.classes.head!]}} == none,
-    observed {projection with hierarchy := {hierarchy with classes := hierarchy.classes ++ [⟨h "unused", false, [], [], []⟩]}} == none,
+    observed {projection with hierarchy := {hierarchy with classes := hierarchy.classes ++ [⟨h "unused", false, [], [], [], ""⟩]}} == none,
     observed {projection with hierarchy := {hierarchy with classes := (
       hierarchy.classes.modify 0 (fun shape => {shape with isAbstract := true}))}} == none,
     observed {projection with hierarchy := {hierarchy with classes := (

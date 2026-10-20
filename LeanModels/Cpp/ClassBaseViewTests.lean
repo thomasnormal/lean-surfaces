@@ -4,13 +4,17 @@ namespace LeanModels.Cpp.ClassBaseViewTests
 
 private def h (name : String) : FrontendHandle := ⟨name⟩
 private def b (name access : String := "public") : ClassBaseSpec :=
-  {target := h name, access, writtenAccess := access}
+  {target := h name, access, writtenAccess := access, name}
 private def hierarchy : ClassHierarchy := {
   root := h "D", classes := [
-    ⟨h "D", false, [b "L", b "R"], [], []⟩,
-    ⟨h "L", true, [b "B"], [], []⟩,
-    ⟨h "R", true, [b "B"], [], []⟩,
-    ⟨h "B", true, [], [], []⟩]}
+    {declaration := h "D", isAbstract := false, bases := [b "L", b "R"],
+      fields := [], friends := [], name := "D"},
+    {declaration := h "L", isAbstract := true, bases := [b "B"],
+      fields := [], friends := [], name := "L"},
+    {declaration := h "R", isAbstract := true, bases := [b "B"],
+      fields := [], friends := [], name := "R"},
+    {declaration := h "B", isAbstract := true, bases := [],
+      fields := [], friends := [], name := "B"}]}
 
 private def memory (constant : Bool := false) : IntegralObjectStore := {
   profile := .lp64,
@@ -72,12 +76,27 @@ private def rawDerivedToBase (targetType : String) (sourceType : String) : Raw :
     ("path", .array [rawObject [("name", rawText "B")]]),
     ("inner", .array [rawLValue sourceType (rawDeclRef sourceType)])]
 
+private def rawDerivedToBaseNamed (targetType sourceType pathName : String) : Raw :=
+  rawObject [
+    ("kind", rawText "ImplicitCastExpr"),
+    ("castKind", rawText "DerivedToBase"),
+    ("type", rawType targetType),
+    ("path", .array [rawObject [("name", rawText pathName)]]),
+    ("inner", .array [rawLValue sourceType (rawDeclRef sourceType)])]
+
 private def rawBaseCast (sourceType targetType : String) : Raw :=
   rawObject [
     ("kind", rawText "CXXStaticCastExpr"),
     ("castKind", rawText "NoOp"),
     ("type", rawType targetType),
     ("inner", .array [rawDerivedToBase targetType sourceType])]
+
+private def rawBaseCastNamed (sourceType targetType pathName : String) : Raw :=
+  rawObject [
+    ("kind", rawText "CXXStaticCastExpr"),
+    ("castKind", rawText "NoOp"),
+    ("type", rawType targetType),
+    ("inner", .array [rawDerivedToBaseNamed targetType sourceType pathName])]
 
 private def syntaxError (raw : Raw) (sourceType targetType : String) :
     Option ClassBaseCastSyntaxError :=
@@ -96,6 +115,30 @@ private def boundSyntax (raw : Raw) : Option ClassBaseCastSyntax :=
   | .error _ => none
   | .ok admitted =>
       (ClassBaseCastSyntax.bind admitted (castOn (view [] [0]) "D" "L")).syntaxEvidence
+
+private def observedResolved (raw : Raw) (source target : String)
+    (candidate : ClassBaseView) : Option ObjectId :=
+  match ClassBaseCastSyntax.admit raw (source ++ " *") (target ++ " *") with
+  | .error _ => none
+  | .ok admitted =>
+      match ClassBaseCastSyntax.resolve admitted candidate with
+      | .error _ => none
+      | .ok cast => observedCast cast
+
+private def resolveError (raw : Raw) (source target : String)
+    (candidate : ClassBaseView) : Option ClassBaseCastError :=
+  match ClassBaseCastSyntax.admit raw (source ++ " *") (target ++ " *") with
+  | .error _ => none
+  | .ok admitted =>
+      match ClassBaseCastSyntax.resolve admitted candidate with
+      | .error reason => some reason
+      | .ok _ => none
+
+private def malformedResolveError (evidence : ClassBaseCastSyntax)
+    (candidate : ClassBaseView) : Option ClassBaseCastError :=
+  match ClassBaseCastSyntax.resolve evidence candidate with
+  | .error reason => some reason
+  | .ok _ => none
 
 set_option maxRecDepth 10000 in
 private theorem kernelViews :
@@ -154,7 +197,7 @@ private theorem kernelViews :
           {shape with bases := [b "L" "private", b "R"], friends := [h "F"]}))} [] [0] "F") "D" "L") == some 1
     ].all id = true := by decide
 
-set_option maxRecDepth 10000 in
+set_option maxRecDepth 100000 in
 private theorem kernelCastSyntax :
     [
       (ClassBaseCastSyntax.admit (rawBaseCast "D *" "L *") "D *" "L *").isOk,
@@ -237,6 +280,22 @@ private theorem kernelCastSyntax :
             ("kind", rawText "DeclRefExpr"),
             ("type", rawType "D *")])])]])])
         "D *" "L *" == some .unsupportedOperand
+      , observedResolved (rawBaseCastNamed "D *" "L *" "L") "D" "L" (view [] [9]) == some 1
+      , observedResolved (rawBaseCastNamed "L *" "B *" "B") "L" "B" (view [0] [9]) == some 2
+      , resolveError (rawBaseCastNamed "D *" "R *" "L") "D" "R" (view [] [9]) ==
+          some .targetTypeMismatch
+      , resolveError (rawBaseCastNamed "D *" "L *" "Missing") "D" "L" (view [] [9]) ==
+          some .unresolvedBasePath
+      , resolveError (rawBaseCastNamed "R *" "L *" "L") "R" "L" (view [] [9]) ==
+          some .sourceTypeMismatch
+      , resolveError (rawBaseCastNamed "D *" "L *" "L") "D" "L"
+          ({view [] [9] with hierarchy := {hierarchy with classes :=
+            (hierarchy.classes.modify 0 (fun shape =>
+              {shape with bases := [b "L", {b "R" with name := "L"}]}))}}) ==
+          some .unresolvedBasePath
+      , malformedResolveError
+          {sourceType := "D", targetType := "L *", operand := h "0x1", basePath := ["L"]}
+          (view [] [9]) == some .syntaxMismatch
     ].all id = true := by decide
 
 #print axioms kernelViews

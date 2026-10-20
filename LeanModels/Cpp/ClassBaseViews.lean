@@ -47,6 +47,8 @@ inductive ClassBaseCastError where
   | view (reason : ClassBaseViewError)
   | sourceTypeMismatch
   | targetTypeMismatch
+  | syntaxMismatch
+  | unresolvedBasePath
   deriving Repr, BEq, Inhabited
 
 inductive ClassBaseCastSyntaxError where
@@ -83,6 +85,18 @@ private def pointerType (spelling : String) : Bool :=
   match spelling.toList.reverse with
   | '*' :: ' ' :: _ => true
   | _ => false
+
+private def lastComponent : List Char → List Char → List Char
+  | [], current => current.reverse
+  | ':' :: ':' :: rest, _ => lastComponent rest []
+  | character :: rest, current => lastComponent rest (character :: current)
+
+private def pointeeName (spelling : String) : Option String :=
+  if pointerType spelling then
+    let base := spelling.toList.take (spelling.toList.length - 2)
+    let component := String.ofList (lastComponent base [])
+    if cppIdentifier component then some component else none
+  else none
 
 def admit (raw : Raw) (sourceType targetType : String) :
     Except ClassBaseCastSyntaxError ClassBaseCastSyntax := do
@@ -266,6 +280,51 @@ theorem convert_memory (view : ClassBaseView) (memory : IntegralObjectStore)
               exact h.1.symm
 
 end ClassBaseView
+
+namespace ClassBaseCastSyntax
+
+private def followNames (hierarchy : ClassHierarchy) (start : FrontendHandle)
+    : List String → List Nat → Except ClassBaseCastError (List Nat × FrontendHandle)
+  | [], path => .ok (path, start)
+  | name :: rest, path => do
+      let some shape := hierarchy.classes.find? (·.declaration == start)
+        | throw .unresolvedBasePath
+      let candidates := shape.bases.zipIdx.filter (·.1.name == name)
+      let [(edge, index)] := candidates
+        | throw .unresolvedBasePath
+      followNames hierarchy edge.target rest (path ++ [index])
+
+/-- Resolve retained source cast evidence into the typed hierarchy path.
+The source subobject is supplied by the caller; only direct base names retained
+by hierarchy admission are followed. Missing names, ambiguous paths and type
+spellings refuse instead of inferring an ABI or declaration from a handle. -/
+def resolve (evidence : ClassBaseCastSyntax) (view : ClassBaseView) :
+    Except ClassBaseCastError ClassBaseCast := do
+  let some sourceName := pointeeName evidence.sourceType | throw .syntaxMismatch
+  let some targetName := pointeeName evidence.targetType | throw .syntaxMismatch
+  let slots ← match view.hierarchy.slots with
+    | .ok slots => pure slots
+    | .error reason => throw (.view (.hierarchy reason))
+  let some source := ClassBaseView.slotAt slots view.sourcePath
+    | throw (.view .missingSource)
+  let some sourceShape := view.hierarchy.classes.find? (·.declaration == source.1.declaration)
+    | throw .unresolvedBasePath
+  unless sourceShape.name == sourceName do throw .sourceTypeMismatch
+  let (targetPath, targetDeclaration) ← followNames view.hierarchy source.1.declaration
+    evidence.basePath view.sourcePath
+  unless targetPath != view.sourcePath do throw (.view .sameSubobject)
+  let some targetShape := view.hierarchy.classes.find? (·.declaration == targetDeclaration)
+    | throw .unresolvedBasePath
+  unless targetShape.name == targetName do throw .targetTypeMismatch
+  let resolvedView := {view with targetPath}
+  resolvedView.check
+    |>.mapError ClassBaseCastError.view
+  let cast : ClassBaseCast := {
+    view := resolvedView, sourceDeclaration := source.1.declaration,
+    targetDeclaration := targetDeclaration}
+  pure (bind evidence cast)
+
+end ClassBaseCastSyntax
 
 namespace ClassBaseCast
 

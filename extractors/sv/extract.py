@@ -2158,6 +2158,16 @@ def _convert_sym_call_expr(sm, e):
 
 
 def _convert_sym_select_expr(sm, e, cname):
+    if cname == "ElementSelectExpression":
+        cell = _fixed_array_cell(sm, e)
+        if cell is not None:
+            name, width, _two_state = cell
+            return {
+                "kind": "Ident",
+                "span": node_span(sm, e),
+                "width": width,
+                "name": name,
+            }
     member = None
     if (cname != "ReplicationExpression" and
             type(e.value).__name__ == "MemberAccessExpression"):
@@ -4644,6 +4654,9 @@ def convert_port_sym(sm, m):
 
 
 def convert_var_sym(sm, m):
+    array_decls = convert_fixed_array_vars_sym(sm, m)
+    if array_decls is not None:
+        return array_decls
     dtype, reason = _dtype_sym(sm, m.type, _decl_type_syntax(m))
     if dtype is None:
         return unsupported(sm, m, "VariableSymbol:" + reason)
@@ -4655,6 +4668,55 @@ def convert_var_sym(sm, m):
         "width": dtype,
         "init": convert_expr(sm, init) if init is not None else None,
     }
+
+
+def convert_fixed_array_vars_sym(sm, m):
+    """Lower a fixed one-dimensional unpacked integral array to cells.
+
+    The semantic tier has a flat vector store, so each constant-index cell is
+    represented by its own declaration name (the same representation used by
+    ``_fixed_array_cell``). Aggregate initializers and nested arrays remain
+    outside this narrow admission.
+    """
+    try:
+        array_type = m.type.canonicalType
+        if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
+            return None
+        element_type = array_type.elementType
+        if type(element_type.canonicalType).__name__ == "FixedSizeUnpackedArrayType":
+            return None
+        width, two, reason = type_width_2s(element_type)
+        if width is None or reason is not None:
+            return None
+        # ``VariableSymbol.declaredType.typeSyntax`` describes the packed
+        # element type even when the symbol itself has an unpacked suffix;
+        # pass it through so the flattened cell remains an instantiable
+        # symbolic PackedType rather than an unrecoverable null-dimension
+        # placeholder.
+        dtype, dtype_reason = _dtype_sym(sm, element_type, _decl_type_syntax(m))
+        if dtype is None or dtype_reason is not None:
+            return None
+        left, right = int(array_type.range.left), int(array_type.range.right)
+        count = abs(left - right) + 1
+        if count <= 0 or count > 1024 or getattr(m, "initializer", None) is not None:
+            return None
+        step = 1 if right >= left else -1
+        decls = []
+        for position in range(left, right + step, step):
+            init = None
+            if two:
+                init = {"kind": "Literal", "span": None, "width": width,
+                        "bits": "0" * width}
+            decls.append({
+                "kind": "Var",
+                "span": sym_span(sm, m),
+                "name": f"{m.name}[{position}]",
+                "width": dtype,
+                "init": init,
+            })
+        return decls
+    except Exception:
+        return None
 
 
 def convert_net_sym(sm, m):
@@ -4932,7 +4994,11 @@ def convert_members_sym(sm, scope):
                                        "GenerateBlockSymbol:unconditional"))
                 i += 1
                 continue
-            out.append(_convert_member_sym(sm, m, k))
+            converted = _convert_member_sym(sm, m, k)
+            if isinstance(converted, list):
+                out.extend(converted)
+            elif converted is not None:
+                out.append(converted)
             i += 1
         except Exception as exc:
             out.append(internal_error(exc))
@@ -5013,8 +5079,12 @@ def convert_module_sym(sm, inst):
                 if m.name in port_names:
                     i += 1
                     continue
-                decls.append(convert_var_sym(sm, m) if k == "Variable"
+                converted = (convert_var_sym(sm, m) if k == "Variable"
                              else convert_net_sym(sm, m))
+                if isinstance(converted, list):
+                    decls.extend(converted)
+                else:
+                    decls.append(converted)
             elif k == "Parameter":
                 params.append(convert_param_sym(sm, m))
             elif k == "ProceduralBlock":

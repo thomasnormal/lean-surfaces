@@ -429,6 +429,35 @@ class SymbolicContinuousSelects(unittest.TestCase):
         process, = envelope["design"]["modules"][0]["processes"]
         self.assertEqual(process["kind"], "Unsupported")
 
+    def test_constant_fixed_array_cell_is_a_symbolic_vector(self):
+        envelope = self.extract(
+            "module top(input logic source, output logic out); "
+            "logic [3:0] arr [0:1]; "
+            "assign arr[0] = {3'b000, source}; assign out = arr[0][0]; "
+            "endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertEqual([decl["name"] for decl in module["decls"]],
+                         ["arr[0]", "arr[1]"])
+        processes = module["processes"]
+        self.assertEqual(processes[0]["target"], {
+            "kind": "Ident",
+            "span": processes[0]["target"]["span"],
+            "width": 4,
+            "name": "arr[0]",
+        })
+        self.assertEqual(processes[1]["value"]["kind"], "BitSel")
+        self.assertEqual(processes[1]["value"]["value"]["kind"], "Ident")
+        self.assertEqual(processes[1]["value"]["value"]["name"], "arr[0]")
+
+    def test_dynamic_fixed_array_cell_stays_loud(self):
+        envelope = self.extract(
+            "module top(input logic source, input logic index, "
+            "output logic out); logic [3:0] arr [0:1]; "
+            "assign arr[index] = {3'b000, source}; assign out = arr[0][0]; "
+            "endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(processes[0]["kind"], "Unsupported")
+
 
 if __name__ == "__main__":
     unittest.main()

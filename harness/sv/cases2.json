@@ -356,6 +356,17 @@
    ]
   },
   {
+   "name": "fixed_array_element",
+   "example": "sem2/fixed_array_element",
+   "top": "fixed_array_element",
+   "signals": ["source", "out"],
+   "stimulus": [
+    {"source": "0"},
+    {"source": "1"},
+    {"source": "x"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

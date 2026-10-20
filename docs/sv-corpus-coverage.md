@@ -1042,6 +1042,14 @@ local declaration offsets preserve source-order splitting and x propagation;
 direction-mismatched, dynamic, duplicate, overlapping and effectful leaves
 remain loud.
 
+The `fixed_array_element` fixture checks the symbolic one-dimensional
+fixed-unpacked cell boundary. A no-initializer `logic [3:0] arr [0:1]`
+declaration becomes the two vector cells `arr[0]` and `arr[1]`; a constant
+element assignment and nested bit read use the existing symbolic identifiers,
+while dynamic array indices remain loud. This is a semantic-only fixture: the
+legacy corpus census and its target-only counts are unchanged, and no aggregate
+storage or dynamic array executor is introduced.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

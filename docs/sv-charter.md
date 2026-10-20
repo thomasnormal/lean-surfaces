@@ -2819,6 +2819,16 @@ ranges. Recursive and local declaration offsets combine before lowering;
 Direction mismatches, dynamic, duplicate, overlapping and effectful leaves
 remain loud; no aggregate store or scheduler is added.
 
+### Symbolic fixed-unpacked array cells — 2026-10-20
+
+One-dimensional fixed-unpacked integral declarations without initializers now
+flatten into ordinary symbolic vector declarations, one per constant index.
+`fixed_array_element` checks a write to `arr[0]` and a nested bit read from the
+same cell, including four-state propagation. Dynamic and out-of-range indices,
+nested or aggregate arrays, and array initializers remain loud; the semantic
+tier adds no aggregate store or dynamic index executor and makes no legacy
+census or simulator-agreement claim.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

@@ -22,6 +22,27 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Symmetric wildcard case statements — 2026-10-20
+
+IEEE §12.5.1 unqualified integral `casez` and `casex` now use the existing
+first-match case control chain with a shared pure symmetric match predicate.
+Z is ignored in either operand; `casex` additionally ignores X. Dynamic items
+and masks retain their live values, whole-case width/sign conversions precede
+matching, and selected bodies retain their continuation across waits. No
+scheduler changed. Effects, qualifiers, unsupported types/storage and
+symbolic-mode wildcard statements remain loud. See [the contract](sv-wildcard-cases.md).
+
+The paired **22,035**-path census gains **30 clean files** without losses:
+**3,299 → 3,329 clean**, **18,670 → 18,640 partial**, **66 include skips**,
+zero extraction errors. Twenty-eight gains match complete independent
+transcripts under both source and reverse schedule oracles. Two delayed
+corpus files retain the timed `$time` boundary and are extraction gains only.
+All three authored sources match complete transcripts, covering all 256
+pairs of two-bit four-state values, signed/mixed/wide contexts, dynamic masks,
+first/default/no-match, nesting and retained selected arms across delays.
+Three fixture-bound kernel theorems prove the evaluator bridge, symmetric
+matching and selected-arm continuation.
+
 ## Blocking intra-assignment timing — 2026-10-20
 
 IEEE §10.4.1/§9.4.5 blocking controls now compile to capture, wait and

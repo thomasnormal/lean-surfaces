@@ -3786,11 +3786,13 @@ def _case_expression_ok(node):
 
 
 def _convert_ordinary_case(sm, stmt):
-    """Lower pure IEEE 12.5 ordinary cases using bound whole-case sizing."""
+    """Pure IEEE 12.5/12.5.1 first-match cases, with whole-case sizing."""
     if stmt.check != UniquePriorityCheck.None_:
         return unsupported(sm, stmt, "CaseStatement:" + str(stmt.check).split(".")[-1])
-    if str(stmt.condition).split(".")[-1] != "Normal":
-        return unsupported(sm, stmt, "CaseStatement:" + str(stmt.condition).split(".")[-1])
+    condition = str(stmt.condition).split(".")[-1]
+    modes = {"Normal": None, "WildcardJustZ": "casez", "WildcardXOrZ": "casex"}
+    if condition not in modes:
+        return unsupported(sm, stmt, "CaseStatement:" + condition)
     if not _case_source_expression_ok(stmt.expr):
         return unsupported(sm, stmt, "CaseStatement:subject")
     subject = convert_expr(sm, stmt.expr)
@@ -3814,10 +3816,14 @@ def _convert_ordinary_case(sm, stmt):
     result = convert_stmt(sm, stmt.defaultCase) if stmt.defaultCase is not None else None
     span = node_span(sm, stmt)
     for pattern, body in reversed(branches):
+        comparison = {"kind": "Binary", "span": span, "width": 1,
+                      "op": "===", "left": subject, "right": pattern}
+        if modes[condition] is not None:
+            comparison = {"kind": "CaseMatch", "span": span, "width": 1,
+                          "mode": modes[condition], "left": subject, "right": pattern}
         result = {
             "kind": "If", "span": span, "case_lowered": True,
-            "cond": {"kind": "Binary", "span": span, "width": 1,
-                     "op": "===", "left": subject, "right": pattern},
+            "cond": comparison,
             "then": body, "else": result,
         }
     return result

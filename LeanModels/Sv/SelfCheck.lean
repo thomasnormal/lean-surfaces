@@ -175,6 +175,8 @@ inductive SExpr where
   | scmp (op : BinOp) (l r : SExpr)
   | caseEq (l r : SExpr)   -- `===`
   | caseNe (l r : SExpr)   -- `!==`
+  /-- Symmetric `casez`/`casex` match, after whole-case sizing. -/
+  | caseMatch (wildX : Bool) (l r : SExpr)
   | logAnd (l r : SExpr)   -- `&&`
   | logOr (l r : SExpr)    -- `||`
   | resize (w : Nat) (a : SExpr)
@@ -514,6 +516,10 @@ def evalSExpr (fuel : Nat) (st : SvState) (e : SExpr) : Res LVec :=
         return .ofLogic (LVec.eqCase (← evalSExpr fuel st l) (← evalSExpr fuel st r))
     | .caseNe l r => do
         return .ofLogic (LVec.neCase (← evalSExpr fuel st l) (← evalSExpr fuel st r))
+    | .caseMatch wildX l r => do
+        let a ← evalSExpr fuel st l
+        let b ← evalSExpr fuel st r
+        return .ofLogic (if LVec.matchesCase wildX a b then .l1 else .l0)
     | .logAnd l r => do
         return .ofLogic (Logic.and (truthy (← evalSExpr fuel st l)) (truthy (← evalSExpr fuel st r)))
     | .logOr l r => do
@@ -1075,6 +1081,13 @@ partial def parseSExpr (j : Json) : Except String SExpr := do
       let l ← parseSExpr (← getF j "left")
       let r ← parseSExpr (← getF j "right")
       parseSBinOp (← getStrF j "op") l r
+  | "CaseMatch" =>
+      let wildX ← match ← getStrF j "mode" with
+        | "casez" => pure false
+        | "casex" => pure true
+        | other => .error s!"unknown wildcard case mode '{other}'"
+      return .caseMatch wildX (← parseSExpr (← getF j "left"))
+        (← parseSExpr (← getF j "right"))
   | "Ternary" =>
       return .mkTernary (← parseSExpr (← getF j "cond"))
         (← parseSExpr (← getF j "then")) (← parseSExpr (← getF j "else"))

@@ -92,10 +92,7 @@ class OrdinaryCases(unittest.TestCase):
                 self.assert_refused(qualifier + " case(subject) 4'd1:; endcase",
                                     "CaseStatement:" + qualifier.capitalize())
 
-    def test_wildcards_and_inside_stay_loud(self):
-        for keyword, tag in (("casez", "WildcardJustZ"), ("casex", "WildcardXOrZ")):
-            with self.subTest(keyword=keyword):
-                self.assert_refused(keyword + "(subject) 4'd1:; endcase", "CaseStatement:" + tag)
+    def test_inside_stays_loud(self):
         self.assert_refused("case(subject) inside 4'd1:; endcase", "CaseStatement:Inside")
 
     def test_nonintegral_subject_stays_loud(self):

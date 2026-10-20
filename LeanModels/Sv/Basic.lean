@@ -483,6 +483,39 @@ def eqWildcard (a b : LVec) : Logic :=
 /-- Wildcard inequality `!=?` is the three-valued negation of `==?`. -/
 def neWildcard (a b : LVec) : Logic := (eqWildcard a b).not
 
+/-- IEEE 1800-2023 §12.5.1: symmetric case matching at one bit. Z is
+ignored on either side; `wildX` additionally ignores X on either side. -/
+def caseBitMatches (wildX : Bool) (a b : Logic) : Bool :=
+  a == b || a == .lz || b == .lz || (wildX && (a == .lx || b == .lx))
+
+/-- All cared bits must match. Unequal lengths cannot be a case match. -/
+def caseBitsMatch (wildX : Bool) : List Logic → List Logic → Bool
+  | [], [] => true
+  | a :: as, b :: bs => caseBitMatches wildX a b && caseBitsMatch wildX as bs
+  | _, _ => false
+
+/-- `casez` (`wildX = false`) and `casex` (`wildX = true`) comparison.
+Operands have already received the statement's whole-case sizing. -/
+def matchesCase (wildX : Bool) (a b : LVec) : Bool :=
+  caseBitsMatch wildX a.bits.toList b.bits.toList
+
+theorem caseBitMatches_comm (wildX : Bool) (a b : Logic) :
+    caseBitMatches wildX a b = caseBitMatches wildX b a := by
+  cases a <;> cases b <;> cases wildX <;> rfl
+
+theorem caseBitsMatch_comm (wildX : Bool) (as bs : List Logic) :
+    caseBitsMatch wildX as bs = caseBitsMatch wildX bs as := by
+  induction as generalizing bs with
+  | nil => cases bs <;> rfl
+  | cons a as ih =>
+      cases bs with
+      | nil => rfl
+      | cons b bs => simp only [caseBitsMatch, caseBitMatches_comm wildX a b, ih]
+
+theorem matchesCase_comm (wildX : Bool) (a b : LVec) :
+    matchesCase wildX a b = matchesCase wildX b a :=
+  caseBitsMatch_comm wildX a.bits.toList b.bits.toList
+
 /-- Case equality `===`, §11.4.5: exact 4-state match (`x` ≠ `z`!), always a
 definite `0`/`1`. Width mismatch: `0`. -/
 def eqCase (a b : LVec) : Logic := if a == b then .l1 else .l0

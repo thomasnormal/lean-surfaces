@@ -223,7 +223,12 @@ belong entirely to the admitted pure integral fragment. Purity is checked
 over the bound source tree before constant conversion, so a binder-folded
 call or increment cannot disappear into an admitted literal. Source-order
 first-match search ends in the source default (if any), independent of
-its original placement. Unsupported qualifiers, wildcard/pattern forms,
+its original placement. Unqualified `casez`/`casex` use the same lowering
+with `CaseMatch` conditions (`width = 1`, `mode = "casez"` or `"casex"`,
+`left` and `right`); both operands retain whole-case sizing. Z is ignored
+on either side, and `casex` also ignores X on either side. These conditions
+enter `SelfCheck.SExpr.caseMatch`, not the M0 or symbolic expression loader.
+Unsupported qualifiers, inside/pattern forms,
 effectful/nonintegral expressions and default-only cases retain
 `CaseStatement:<reason>` refusals. A frontend error in such a compilation
 adds top-level `CaseStatement:invalid-compilation`. This lowering does not

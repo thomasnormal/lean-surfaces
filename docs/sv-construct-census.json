@@ -427,11 +427,11 @@
     23
    ],
    [
-    "SignalEventControl:NegEdge",
-    22
+    "CaseStatement:pattern",
+    23
    ],
    [
-    "CaseStatement:pattern",
+    "SignalEventControl:NegEdge",
     22
    ],
    [
@@ -465,10 +465,6 @@
    [
     "ForwardingTypedefSymbol",
     18
-   ],
-   [
-    "CaseStatement:WildcardJustZ",
-    17
    ],
    [
     "NetSymbol:range",
@@ -508,10 +504,6 @@
    ],
    [
     "NetSymbol:Interconnect",
-    14
-   ],
-   [
-    "CaseStatement:WildcardXOrZ",
     14
    ],
    [
@@ -868,8 +860,8 @@
    ]
   ],
   "by_status": {
-   "clean": 3299,
-   "partial": 18670,
+   "clean": 3329,
+   "partial": 18640,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -930,7 +922,7 @@
     52
    ],
    "simulation": [
-    2801,
+    2831,
     18671
    ],
    "simulation elaboration": [
@@ -1231,9 +1223,9 @@
     "unlockable": 1
    },
    "chapter-12": {
-    "clean": 219,
+    "clean": 249,
     "error": 0,
-    "partial": 408,
+    "partial": 378,
     "skip_include": 0,
     "total": 627,
     "unlockable": 1

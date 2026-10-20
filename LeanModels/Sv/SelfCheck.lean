@@ -892,6 +892,7 @@ deriving Repr, Inhabited
 its envelope tag — `runSelfCheck` is loud on it, never silently drops). -/
 inductive SProc where
   | initial (body : SStmt)
+  | alwaysBody (body : SStmt)
   | alwaysPosedge (clock : String) (body : SStmt)
   | other (svKind : String) (text : String)
 deriving Repr, Inhabited
@@ -930,6 +931,8 @@ def runInits (fuel : Nat) : List SProc → SvState → NbaQueue → Out →
       .unsupported s!"non-initial process '{svKind}' (self-check tier runs initial-only designs)"
   | .alwaysPosedge clock _ :: _, _, _, _, _ =>
       .unsupported s!"non-initial process 'AlwaysPosedge:{clock}' (self-check tier runs initial-only designs)"
+  | .alwaysBody _ :: _, _, _, _, _ =>
+      .unsupported "non-initial process 'Always' (self-check tier runs initial-only designs)"
   | .initial body :: rest, st, nba, out, assignmentOrder => do
       let (st', nba', out') ← execSStmt fuel st nba out body assignmentOrder
       if out'.halted then .ok (st', nba', out')
@@ -945,6 +948,7 @@ def runSelfCheck (d : Design) (fuel : Nat)
       match p with
       | .other svKind _ => some svKind
       | .alwaysPosedge clock _ => some s!"AlwaysPosedge:{clock}"
+      | .alwaysBody _ => some "Always"
       | _ => none then
     return ← .unsupported
       s!"non-initial process '{tag}' (self-check tier runs initial-only designs)"
@@ -1256,6 +1260,7 @@ def parseSProc (j : Json) : Except String SProc := do
   let kind ← getStrF j "kind"
   match kind with
   | "Initial" => return .initial (← parseSStmt (← getF j "body"))
+  | "Always" => return .alwaysBody (← parseSStmt (← getF j "body"))
   | "AlwaysPosedge" =>
       return .alwaysPosedge (← getStrF j "clock")
         (← parseSStmt (← getF j "body"))
@@ -1356,7 +1361,10 @@ def parseModuleD (j : Json) : Except String Design := do
   -- Flat-state shadow check.
   let moduleNames := decls.toList.map (·.name)
   for p in procs do
-    if let .initial body := p then
+    let body? := match p with
+      | .initial body | .alwaysBody body => some body
+      | _ => none
+    if let some body := body? then
       let ln := localNames body
       for n in ln do
         if moduleNames.contains n then

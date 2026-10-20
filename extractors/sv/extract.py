@@ -4319,6 +4319,15 @@ def convert_procedural_block(sm, m):
     # active-low reset event list every clocked CV32E40P module uses).
     style = "always_ff" if pk == ProceduralBlockKind.AlwaysFF else "always"
     body = m.body
+    if (_SYM is None and pk == ProceduralBlockKind.Always
+            and not (type(body).__name__ == "TimedStatement"
+                     and type(body.timing).__name__ == "SignalEventControl"
+                     and body.timing.edge == EdgeKind.PosEdge)):
+        converted = convert_stmt(sm, body)
+        if contains_local_decl(converted):
+            return unsupported(sm, m, "Always:body-lifetime")
+        return {"kind": "Always", "span": span, "body": converted,
+                "always_lowered": True}
     if type(body).__name__ != "TimedStatement":
         return unsupported(sm, m, "ProceduralBlockSymbol:NoEventControl")
     timing = body.timing
@@ -5135,6 +5144,8 @@ def convert_design(sm, comp):
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "CaseStatement:invalid-compilation",
                                   "frontend rejected source containing a lowered case"))
+    _reject_invalid_lowering(sm, comp, modules, others, "always_lowered",
+                             "Always", "a repeating procedural process")
     if (any(contains_fixed_bits_query(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "$bits:invalid-compilation",

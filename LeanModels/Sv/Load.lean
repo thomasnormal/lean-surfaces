@@ -133,16 +133,29 @@ wake rule; external stimulus is currently the only integrated edge source. -/
 def requiresInternalEdges (d : SelfCheck.Design) : Bool :=
   let accesses := d.procs.toList.flatMap fun proc =>
     match proc with
-    | .initial body => timedAccesses body
+    | .initial body | .alwaysBody body => timedAccesses body
     | .alwaysPosedge clock body => (true, clock) :: timedAccesses body
     | .other _ _ => []
   let writes := accesses.filterMap fun (watched, name) => if watched then none else some name
   accesses.any fun (watched, name) => watched && writes.contains name
 
+/-- Compile one source process to the existing retained statement interface.
+Plain `always` owns one loop residual, without an additional rearming carrier. -/
+def timedProcOf : SProc → Except String ProcState
+  | .initial body =>
+      pure { residual := [body], status := .ready }
+  | .alwaysBody body =>
+      pure { residual := [.forLoop #[] (.m0 (.lit (.ofNat 1 1))) #[] body], status := .ready }
+  | .alwaysPosedge clock body =>
+      let residual := [.waitEvent clock .pos, body]
+      pure { residual, status := .ready, arm := some residual }
+  | .other kind _ => .error s!"timed design rejects process kind '{kind}'"
+
 /-- Build a scheduler world from the self-check envelope vocabulary.
 
-This surface admits one or more `initial` processes, whose continuations run
-through the existing scheduler in source order. Time is measured in that
+This surface admits `initial`, plain `always`, and canonical positive-edge
+processes. Their continuations run through the existing scheduler with an
+explicit region oracle. Time is measured in that
 module's time-unit ticks; physical unit conversion is not inferred.
 `runSelfCheck` remains time-zero-only and continues to refuse timing nodes. -/
 def elabTimedDesign (fuel : Nat) (d : SelfCheck.Design) : Except String SvWorld := do
@@ -150,16 +163,9 @@ def elabTimedDesign (fuel : Nat) (d : SelfCheck.Design) : Except String SvWorld 
     throw "timed design rejects time-zero-only $time lowering"
   if requiresInternalEdges d then
     throw "timed design requires procedural edge publication"
-  let procs ← d.procs.toList.mapM fun proc =>
-    match proc with
-    | .initial body =>
-        pure ({ residual := [body], status := .ready } : ProcState)
-    | .alwaysPosedge clock body =>
-        let residual := [.waitEvent clock .pos, body]
-        pure ({ residual, status := .ready, arm := some residual } : ProcState)
-    | .other kind _ => .error s!"timed design rejects non-initial process '{kind}'"
+  let procs ← d.procs.toList.mapM timedProcOf
   if procs.isEmpty then
-    .error "timed design requires at least one initial process"
+    .error "timed design requires at least one procedural process"
   let signals ← match SelfCheck.initDecls fuel d.decls.toList [] with
     | .ok signals => pure signals
     | .timeout => .error "timed design declaration initialization exhausted fuel"

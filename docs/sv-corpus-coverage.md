@@ -22,6 +22,33 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Plain always source repetition — 2026-10-20
+
+IEEE §9.2.2.1 plain `always` now retains its complete source body and compiles
+to one ready process using the existing true-condition loop. Delays and
+bare/negative-edge waits retain the unfinished body tail before the loop
+boundary. Canonical positive-edge encoding is unchanged. The initial-only
+runner still refuses `Always`; repeated scalar lifetimes, invalid source,
+implicit/compound sensitivities, `iff`, level waits and symbolic-mode
+repetition remain loud. No scheduler changed. See [the contract](sv-always.md).
+
+The paired **22,035**-path census gains **90 clean files** without losses:
+**3,371 → 3,461 clean**, **18,598 → 18,508 partial**, **66 include skips**,
+zero extraction errors. Six gains match complete independent transcripts under
+both region oracles. One more is race-sensitive: its observation and counter
+update share time five; the independent simulator and reverse oracle print
+`PASS`, while the source oracle prints `FAIL: fast_count=5 slow_count=2`.
+The remaining 83 gains refuse at runtime: 75 require procedural edge
+publication, six retain time-zero-only clock lowering, and two contain
+continuous assignments. Two of those 75 are negative compilation fixtures
+also rejected by the independent implementation; they are not runtime matches.
+
+Four authored runnable sources match complete independent transcripts under
+both oracles, including time-zero prefixes, retained tails, automatic array
+reinitialization and an always-only design. A fifth source preserves the
+internal edge-publication refusal. Four fixture-bound kernel theorems prove
+the single-process compilation, delayed/event tails and event rearming.
+
 ## Case-inside membership selection — 2026-10-20
 
 IEEE §12.5.4 unqualified integral `case … inside` now uses the existing

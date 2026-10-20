@@ -72,8 +72,27 @@ their constant expressions can be folded. The self-check vocabulary
 adds local declarations, `for`/`repeat` and output/termination tasks. Its
 time-zero runner remains initial-only and does not inherit Design2's selected
 targets or case statements; the scheduler-facing timed loader is a separate
-path and currently admits retained `initial` bodies in source order. Extractor, ingestion,
+path and currently admits retained `initial`, plain `always`, and canonical
+positive-edge bodies. Extractor, ingestion,
 evaluator and kernel-loader refusal inventories must therefore stay separate.
+
+## Plain always source repetition — 2026-10-20
+
+Plain `always` (§9.2.2.1) starts at time zero and repeats its complete source
+statement through the existing retained loop interface. One source process
+becomes one ready process, with no separate rearming carrier. Delay/event
+waits retain the current tail and loop boundary. The initial-only runner
+still refuses it, and canonical positive-edge encoding is unchanged.
+Unsupported sensitivities, repeated scalar lifetimes, invalid source,
+procedural edge publication and symbolic-mode repetition stay loud.
+See [the contract](sv-always.md).
+
+The paired 22,035-path census gains **90 clean files**, with no losses
+(**3,371 → 3,461**). Six gains match complete independent transcripts under
+both schedule oracles; one exposes a same-time observation race and matches
+only the reverse oracle. The remaining 83 are runtime refusals. Four authored
+sources match under both oracles; a fifth preserves the edge-publication
+boundary. Four kernel theorems bind to actual parsed source bodies.
 
 ## Procedural for/repeat (IEEE 1800-2023, 12.7.1–12.7.2 and 12.8)
 
@@ -133,8 +152,10 @@ non-identifier event controls remain unsupported. See
 
 Clocked `AlwaysPosedge` processes use the same public representation already
 used by `elabDesign`: an initial `WaitEvent`, the body, and an `arm` copy that
-reinstates the wait after each completed body. `AlwaysComb`, continuous assigns,
-and all other process kinds remain loud in the timed loader.
+reinstates the wait after each completed body. Plain `always` procedures use
+the existing true-condition loop over their complete source body, without a
+separate arm; see [the source repetition contract](sv-always.md). `AlwaysComb`,
+continuous assigns and other process kinds remain loud in the timed loader.
 
 The paired extraction census compares the same **21,934** source paths:
 clean **1,804 → 1,840**, **36 gains**, and **zero losses**. Gains are

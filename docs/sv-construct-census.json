@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    3942
+    3944
    ],
    [
     "InstanceSymbol:Instance",
@@ -24,7 +24,7 @@
    ],
    [
     "ExpressionStatement:CallExpression",
-    3720
+    3721
    ],
    [
     "CallExpression",
@@ -33,10 +33,6 @@
    [
     "VariableSymbol:2state",
     3451
-   ],
-   [
-    "TimedStatement:DelayControl",
-    2675
    ],
    [
     "VariableDeclStatement:2state",
@@ -51,16 +47,16 @@
     1480
    ],
    [
+    "ConcurrentAssertionStatement",
+    1341
+   ],
+   [
     "ClassType",
     1327
    ],
    [
-    "ProceduralBlockSymbol:NoEventControl",
-    1307
-   ],
-   [
     "InvalidStatement",
-    1302
+    1316
    ],
    [
     "MemberAccessExpression",
@@ -76,7 +72,7 @@
    ],
    [
     "ConversionExpression:width",
-    775
+    776
    ],
    [
     "PackageSymbol",
@@ -131,6 +127,10 @@
     319
    ],
    [
+    "SignalEventControl:clock",
+    314
+   ],
+   [
     "TypeAliasType:TypeAlias",
     297
    ],
@@ -159,20 +159,16 @@
     252
    ],
    [
-    "SignalEventControl:clock",
-    239
+    "ImmediateAssertionStatement",
+    223
+   ],
+   [
+    "Always:invalid-compilation",
+    220
    ],
    [
     "BlockStatement:JoinNone",
     219
-   ],
-   [
-    "SignalEventControl:None_",
-    216
-   ],
-   [
-    "ImmediateAssertionStatement",
-    210
    ],
    [
     "GenvarSymbol:Genvar",
@@ -188,7 +184,7 @@
    ],
    [
     "TimedStatement:DelayControl:expression",
-    164
+    165
    ],
    [
     "GenericClassDefSymbol",
@@ -220,7 +216,7 @@
    ],
    [
     "EventTriggerStatement",
-    108
+    109
    ],
    [
     "ExplicitImportSymbol:ExplicitImport",
@@ -237,10 +233,6 @@
    [
     "ProceduralDeassignStatement",
     82
-   ],
-   [
-    "ConcurrentAssertionStatement",
-    76
    ],
    [
     "VariableSymbol",
@@ -311,16 +303,16 @@
     48
    ],
    [
+    "Loop:invalid-compilation",
+    45
+   ],
+   [
     "DisableStatement",
     45
    ],
    [
     "TimeLiteral",
     45
-   ],
-   [
-    "Loop:invalid-compilation",
-    44
    ],
    [
     "CaseStatement:Unique",
@@ -392,7 +384,7 @@
    ],
    [
     "CaseStatement:subject",
-    30
+    33
    ],
    [
     "InsideExpression:source",
@@ -425,10 +417,6 @@
    [
     "CaseStatement:pattern",
     23
-   ],
-   [
-    "SignalEventControl:NegEdge",
-    22
    ],
    [
     "NetSymbol:Tri0",
@@ -615,6 +603,10 @@
     7
    ],
    [
+    "SignalEventControl:iff",
+    7
+   ],
+   [
     "TypeParameterSymbol:TypeParameter",
     7
    ],
@@ -636,6 +628,10 @@
    ],
    [
     "BinaryExpression:LogicalImplication:source",
+    5
+   ],
+   [
+    "ProceduralCheckerStatement",
     5
    ],
    [
@@ -667,10 +663,6 @@
     4
    ],
    [
-    "ProceduralCheckerStatement",
-    4
-   ],
-   [
     "EmptyArgumentExpression",
     4
    ],
@@ -688,10 +680,6 @@
    ],
    [
     "SignalEventControl:BothEdges",
-    3
-   ],
-   [
-    "SignalEventControl:iff",
     3
    ],
    [
@@ -720,6 +708,10 @@
    ],
    [
     "AssignmentExpression",
+    2
+   ],
+   [
+    "ProceduralBlockSymbol:NoEventControl",
     2
    ],
    [
@@ -756,6 +748,10 @@
    ],
    [
     "BinaryExpression:LogicalEquivalence",
+    1
+   ],
+   [
+    "SignalEventControl:NegEdge",
     1
    ],
    [
@@ -827,6 +823,10 @@
     1
    ],
    [
+    "SignalEventControl:None_",
+    1
+   ],
+   [
     "PortSymbol:type",
     1
    ],
@@ -852,13 +852,13 @@
    ]
   ],
   "by_status": {
-   "clean": 3371,
-   "partial": 18598,
+   "clean": 3461,
+   "partial": 18508,
    "skip_include": 66
   },
   "clean_by_type": {
    "(none)": [
-    321,
+    329,
     1387
    ],
    "compilation": [
@@ -878,7 +878,7 @@
     25
    ],
    "compile_error": [
-    110,
+    112,
     1750
    ],
    "compile_fail": [
@@ -914,7 +914,7 @@
     52
    ],
    "simulation": [
-    2872,
+    2952,
     18671
    ],
    "simulation elaboration": [
@@ -1018,26 +1018,18 @@
     "unlockable": 1
    },
    "chapter-4": {
-    "blocked_by_more": 276,
-    "clean": 147,
-    "partial": 276,
+    "blocked_by_more": 238,
+    "clean": 185,
+    "partial": 238,
     "simulation_tests": 423,
     "top_residual_blockers": [
      [
       "TimedStatement:DelayControl",
-      221
+      183
      ],
      [
       "InstanceSymbol:Instance",
       51
-     ],
-     [
-      "SignalEventControl:None_",
-      36
-     ],
-     [
-      "TimedStatement:SignalEventControl",
-      34
      ],
      [
       "PrimitiveInstanceSymbol:PrimitiveInstance",
@@ -1045,6 +1037,10 @@
      ],
      [
       "Call:$strobe",
+      23
+     ],
+     [
+      "TimedStatement:SignalEventControl",
       23
      ],
      [
@@ -1064,10 +1060,6 @@
       17
      ],
      [
-      "StringLiteral:encoding",
-      16
-     ],
-     [
       "ProceduralDeassignStatement",
       16
      ],
@@ -1076,12 +1068,16 @@
       15
      ],
      [
-      "PropertySymbol:Property",
-      12
+      "StringLiteral:encoding",
+      14
      ],
      [
-      "VariableDeclStatement:2state",
-      11
+      "SignalEventControl:None_",
+      13
+     ],
+     [
+      "PropertySymbol:Property",
+      12
      ],
      [
       "ClockingBlockSymbol:ClockingBlock",
@@ -1093,6 +1089,10 @@
      ],
      [
       "ProceduralBlockSymbol:NoEventControl",
+      10
+     ],
+     [
+      "VariableDeclStatement:2state",
       10
      ],
      [
@@ -1199,9 +1199,9 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 220,
+    "clean": 225,
     "error": 0,
-    "partial": 437,
+    "partial": 432,
     "skip_include": 0,
     "total": 657,
     "unlockable": 2
@@ -1215,9 +1215,9 @@
     "unlockable": 1
    },
    "chapter-12": {
-    "clean": 279,
+    "clean": 287,
     "error": 0,
-    "partial": 348,
+    "partial": 340,
     "skip_include": 0,
     "total": 627,
     "unlockable": 1
@@ -1247,9 +1247,9 @@
     "unlockable": 0
    },
    "chapter-16": {
-    "clean": 11,
+    "clean": 13,
     "error": 0,
-    "partial": 1532,
+    "partial": 1530,
     "skip_include": 0,
     "total": 1543,
     "unlockable": 0
@@ -1335,9 +1335,9 @@
     "unlockable": 0
    },
    "chapter-27": {
-    "clean": 2,
+    "clean": 3,
     "error": 0,
-    "partial": 352,
+    "partial": 351,
     "skip_include": 0,
     "total": 354,
     "unlockable": 0
@@ -1423,9 +1423,9 @@
     "unlockable": 0
    },
    "chapter-37": {
-    "clean": 106,
+    "clean": 108,
     "error": 0,
-    "partial": 311,
+    "partial": 309,
     "skip_include": 0,
     "total": 417,
     "unlockable": 0
@@ -1447,25 +1447,25 @@
     "unlockable": 0
    },
    "chapter-4": {
-    "clean": 148,
+    "clean": 186,
     "error": 0,
-    "partial": 279,
+    "partial": 241,
     "skip_include": 0,
     "total": 427,
     "unlockable": 0
    },
    "chapter-40": {
-    "clean": 4,
+    "clean": 10,
     "error": 0,
-    "partial": 83,
+    "partial": 77,
     "skip_include": 0,
     "total": 87,
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 345,
+    "clean": 346,
     "error": 0,
-    "partial": 273,
+    "partial": 272,
     "skip_include": 0,
     "total": 618,
     "unlockable": 0
@@ -1495,9 +1495,9 @@
     "unlockable": 0
    },
    "chapter-9": {
-    "clean": 79,
+    "clean": 106,
     "error": 0,
-    "partial": 510,
+    "partial": 483,
     "skip_include": 0,
     "total": 589,
     "unlockable": 0

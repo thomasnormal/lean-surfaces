@@ -197,20 +197,28 @@ the ingester may treat a `Net` with non-null `init` as it treats `Assign`.
 | `AlwaysComb` | `kind`, `span`, `body` (stmt) |
 | `Assign` | `kind`, `span`, `target` (expr: `Ident`, a select, or semantic-tier `ConcatTarget`), `value` (expr) — continuous `assign` |
 | `Initial` | `kind`, `span`, `body` (stmt) — scheduler-facing retained process; the timed loader admits one or more in source order |
+| `Always` | `kind`, `span`, `body` (stmt), `always_lowered: true` — legacy plain source repetition through the retained loop interface |
 
 `AlwaysPosedge` covers exactly `always_ff @(posedge clk) ...` and
 `always @(posedge clk) ...`; `style` records which keyword the source used —
 **M0 cycle semantics treats both identically** (edge-phase processes). Any
-other sensitivity (negedge, event lists, `@*`, `iff`, delays, always_latch,
-initial, final) makes the whole process `Unsupported` in this list. A scheduler
-envelope may instead carry `Initial` processes for the timed loader described
-below. `body` is a single statement node (often `Block` or `If`).
+other sensitivity stays unsupported in the M0 cycle path. The legacy
+scheduler envelope can instead carry `Initial` or plain `Always` processes;
+the latter retains its complete source body, including admitted delay, bare
+signal and negative-edge controls. Unsupported body nodes remain visible.
+Event lists, `@*`, `iff`, level waits and `always_latch` remain loud. `body`
+is a single statement node (often `Block` or `If`).
 
-The scheduler-facing timed loader admits one or more `Initial` processes and
-`AlwaysPosedge` processes. Initial bodies run from Active at time zero in source
-order; each clocked process is lowered to a retained `WaitEvent` followed by
+The scheduler-facing timed loader admits `Initial`, plain `Always`, and
+`AlwaysPosedge` processes. Initial bodies run from Active at time zero;
+plain `Always` compiles to one ready true-condition loop, with no separate
+arm. Each canonical clocked process is lowered to a retained `WaitEvent` followed by
 its body and re-armed after completion. The legacy self-check runner remains
 initial/time-zero-only and refuses non-initial processes and timed nodes.
+Frontend errors in a design containing `always_lowered` are a design-level
+barrier. Repeated scalar body lifetimes remain loud; already-admitted
+automatic fixed-array cells retain their existing reinitialization rule.
+See [plain always procedures](sv-always.md).
 
 ## Statements
 

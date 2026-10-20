@@ -1,6 +1,7 @@
 import LeanModels.Cpp
 import LeanModels.Cpp.ClassSubobjectTests
 import LeanModels.Cpp.ClassBaseViewTests
+import LeanModels.Cpp.MemberCallTests
 import LeanModels.Cpp.EvidenceTests
 import LeanModels.Cpp.CaptureTests
 import LeanModels.Cpp.LocalFunctionTests

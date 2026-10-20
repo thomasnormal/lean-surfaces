@@ -2838,6 +2838,14 @@ survive on `arr[0]`/`arr[1]` and that a constant cell write and nested read
 propagate four-state values. Signed, 2-state, unresolved and aggregate aliases
 remain loud; no nominal type table or aggregate storage is added.
 
+### Symbolic fixed-array cells in concatenation targets — 2026-10-20
+
+Constant cells of admitted fixed-unpacked arrays may now be leaves of a
+symbolic concatenation target. `fixed_array_concat_target` checks one sampled
+source split across `arr[0]` and an output bit, then reads the cell back with
+four-state propagation. Dynamic, aliased and overlapping array leaves remain
+loud; the existing flat vector storage and comb-settle path are reused.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

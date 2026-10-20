@@ -1057,6 +1057,12 @@ symbolic loader accepts the envelope and the constant write/read trace remains
 `0`, `1`, `x`. Signed, 2-state, unresolved and aggregate aliases remain loud;
 the legacy corpus census is unchanged.
 
+The `fixed_array_concat_target` fixture makes a cell one leaf of a symbolic
+`ConcatTarget`. Source-order splitting writes the four-bit `arr[0]` cell and
+the one-bit output from one sampled five-bit RHS; the second assignment reads
+the same cell back, including x propagation. Dynamic, aliased and overlapping
+array leaves remain loud, and the legacy corpus census is unchanged.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

@@ -364,6 +364,11 @@ MSB-to-LSB slices to the existing packed-vector windows during comb settling;
 aggregate storage and a second scheduler are not introduced. Empty, dynamic,
 aggregate, duplicate, aliased, or effectful forms remain `Unsupported`.
 
+A constant element of an admitted fixed-unpacked array is also a direct
+`ConcatTarget` leaf after cell expansion. Its emitted `Ident` names the cell,
+so source-order splitting and overlap checks use the same flat vector state;
+dynamic element leaves remain `Unsupported`.
+
 The same symbolic process representation carries a single constant `BitSel`
 or `PartSel` target. Multiple such assignments settle in process order into
 their existing vector windows, so disjoint partial drivers retain undriven

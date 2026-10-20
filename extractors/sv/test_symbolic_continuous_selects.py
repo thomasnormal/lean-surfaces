@@ -471,6 +471,19 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual(module["decls"][0]["width"]["packed"][0]["msb"]["value"], 3)
         self.assertEqual(module["processes"][1]["value"]["value"]["name"], "arr[0]")
 
+    def test_fixed_array_cell_can_be_a_concat_target_leaf(self):
+        envelope = self.extract(
+            "module top(input logic [4:0] source, output logic [3:0] hi, "
+            "output logic lo); logic [3:0] arr [0:1]; "
+            "assign {arr[0], lo} = source; assign hi = arr[0]; "
+            "endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        target = processes[0]["target"]
+        self.assertEqual(target["kind"], "ConcatTarget")
+        self.assertEqual([part["name"] for part in target["parts"]],
+                         ["arr[0]", "lo"])
+        self.assertEqual(processes[1]["value"]["name"], "arr[0]")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1017,6 +1017,11 @@ The `nested_member_bit` fixture checks a literal bit of the same nested member
 chain. Recursive offsets flatten to the one-bit outer window with x
 propagation; nested unions, dynamic and effectful paths remain loud.
 
+The `nested_noncanonical_subrange` fixture checks `[10:9]` of a `[10:7]` final
+member in the same nested chain. Recursive and local declaration offsets flatten
+to the outer window with x propagation; direction mismatches, dynamic, indexed
+and effectful paths remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

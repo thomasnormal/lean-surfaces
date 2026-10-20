@@ -2779,6 +2779,14 @@ now use accumulated fixed declaration offsets. `nested_member_bit` checks the
 bit window with four-state propagation. Nested unions, dynamic and effectful
 paths remain loud; no aggregate store or scheduler is added.
 
+### Symbolic nested noncanonical packed-member subranges — 2026-10-20
+
+Simple subranges of noncanonical final members in nested untagged packed
+structs now combine recursive and local declaration offsets before lowering.
+`nested_noncanonical_subrange` checks `[10:9]` inside `[10:7]` with four-state
+propagation. Direction mismatches, dynamic, indexed and effectful paths remain
+loud; no aggregate store or scheduler is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

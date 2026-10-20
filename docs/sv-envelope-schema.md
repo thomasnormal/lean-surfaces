@@ -447,6 +447,11 @@ The same accumulated offsets lower a literal bit-select of a final nested
 member to a one-bit outer window; `nested_member_bit` pins the bit case. Nested
 unions, dynamic and effectful paths remain unsupported.
 
+For a noncanonical final member, the recursive chain offset and the local
+declaration-label offset are both accumulated before emitting the outer slice;
+`nested_noncanonical_subrange` pins this case. Direction mismatches, dynamic,
+indexed and effectful paths remain unsupported.
+
 Literal bit-selects through an untagged packed-struct typedef use the same
 noncanonical declaration-label offsets after alias erasure;
 `noncanonical_typedef_bit` pins the accepted case. Dynamic and effectful alias

@@ -26,23 +26,25 @@ inductive ClassBaseViewError where
   | inaccessibleBase
   deriving Repr, BEq, Inhabited
 
+structure ClassBaseCastSyntax where
+  sourceType : String
+  targetType : String
+  deriving Repr, BEq, Inhabited
+
 /- An explicit typed nonvirtual base cast. The source and target declarations
 are witnesses for an already selected path; no source expression is parsed. -/
 structure ClassBaseCast where
   view : ClassBaseView
   sourceDeclaration : FrontendHandle
   targetDeclaration : FrontendHandle
+  /-- Optional source AST evidence attached by `ClassBaseCastSyntax.bind`. -/
+  syntaxEvidence : Option ClassBaseCastSyntax := none
   deriving Repr, BEq, Inhabited
 
 inductive ClassBaseCastError where
   | view (reason : ClassBaseViewError)
   | sourceTypeMismatch
   | targetTypeMismatch
-  deriving Repr, BEq, Inhabited
-
-structure ClassBaseCastSyntax where
-  sourceType : String
-  targetType : String
   deriving Repr, BEq, Inhabited
 
 inductive ClassBaseCastSyntaxError where
@@ -103,7 +105,7 @@ def admit (raw : Raw) (sourceType targetType : String) :
 The typed cast carries declaration handles and paths; the syntax record carries
 the corresponding frontend spellings, so no runtime field needs to be copied. -/
 def bind (_admitted : ClassBaseCastSyntax) (cast : ClassBaseCast) : ClassBaseCast :=
-  cast
+  {cast with syntaxEvidence := some _admitted}
 
 end ClassBaseCastSyntax
 

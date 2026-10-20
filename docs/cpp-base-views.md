@@ -53,8 +53,9 @@ NoOp`, whose single child is an `ImplicitCastExpr` with
 qualified pointer spellings must agree with the supplied source and target
 spellings. Reverse `BaseToDerived` casts, member or computed operands, missing
 paths and all other cast forms remain explicit refusals. `bind` attaches this
-validated syntax evidence to an already-resolved `ClassBaseCast`; declaration
-handles and path witnesses still come from the typed state boundary.
+validated syntax evidence in an already-resolved `ClassBaseCast`; declaration
+handles and path witnesses still come from the typed state boundary, and
+execution continues to use those typed witnesses rather than spelling alone.
 
 The kernel controls cover complete-root and nested-base views, const roots,
 diamond identity, prefix failures, same-subobject and missing-path refusals,

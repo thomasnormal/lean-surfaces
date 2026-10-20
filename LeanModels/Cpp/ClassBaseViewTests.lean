@@ -89,6 +89,12 @@ private def observedAdmittedCast (raw : Raw) : Option ObjectId :=
   | .ok admitted =>
       observedCast (ClassBaseCastSyntax.bind admitted (castOn (view [] [0]) "D" "L"))
 
+private def boundSyntax (raw : Raw) : Option ClassBaseCastSyntax :=
+  match ClassBaseCastSyntax.admit raw "D *" "L *" with
+  | .error _ => none
+  | .ok admitted =>
+      (ClassBaseCastSyntax.bind admitted (castOn (view [] [0]) "D" "L")).syntaxEvidence
+
 set_option maxRecDepth 10000 in
 private theorem kernelViews :
     [
@@ -151,6 +157,8 @@ private theorem kernelCastSyntax :
     [
       (ClassBaseCastSyntax.admit (rawBaseCast "D *" "L *") "D *" "L *").isOk,
       (ClassBaseCastSyntax.admit (rawBaseCast "D *" "L *") "D *" "L *").toOption ==
+        some {sourceType := "D *", targetType := "L *"},
+      boundSyntax (rawBaseCast "D *" "L *") ==
         some {sourceType := "D *", targetType := "L *"},
       observedAdmittedCast (rawBaseCast "D *" "L *") == some 1,
       syntaxError (rawBaseCast "D *" "L *") "D *" "L *" == none,

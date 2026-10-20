@@ -2061,6 +2061,20 @@ def _packed_struct_member(sm, expression):
             if getattr(aggregate, "isTagged", False):
                 return None
             parent_offset = 0
+        elif type(value).__name__ == "ElementSelectExpression":
+            # A constant cell of a fixed-unpacked array is already lowered to
+            # one ordinary vector signal.  Reuse the same packed-member
+            # offset on that cell; dynamic cells and nested-unpacked elements
+            # fail the fixed-cell admission above.
+            if _fixed_array_cell(sm, value) is None:
+                return None
+            base = value
+            aggregate = value.type.canonicalType
+            if type(aggregate).__name__ not in ("PackedStructType", "PackedUnionType"):
+                return None
+            if getattr(aggregate, "isTagged", False):
+                return None
+            parent_offset = 0
         elif type(value).__name__ == "MemberAccessExpression":
             parent = _packed_struct_member(sm, value)
             if parent is None:

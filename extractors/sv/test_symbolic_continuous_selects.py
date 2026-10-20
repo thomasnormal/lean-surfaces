@@ -483,6 +483,33 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual(module["processes"][0]["target"]["name"], "arr[0]")
         self.assertEqual(module["processes"][0]["value"]["kind"], "EnumRef")
 
+    def test_packed_aggregate_fixed_array_member_is_a_cell_window(self):
+        envelope = self.extract(
+            "module top(output logic [1:0] struct_out, "
+            "output logic [3:0] union_out); "
+            "typedef struct packed { logic [1:0] hi; logic [1:0] lo; } S; "
+            "typedef union packed { logic [3:0] a; logic [3:0] b; } U; "
+            "S sa [0:1]; U ua [0:1]; "
+            "assign sa[0].lo = 2'b01; assign struct_out = sa[0].lo; "
+            "assign ua[0].a = 4'b1010; assign union_out = ua[0].b; "
+            "endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertEqual([decl["name"] for decl in module["decls"]],
+                         ["sa[0]", "sa[1]", "ua[0]", "ua[1]"])
+        self.assertEqual([proc["kind"] for proc in module["processes"]],
+                         ["Assign", "Assign", "Assign", "Assign"])
+        self.assertEqual(module["processes"][0]["target"]["kind"], "PartSel")
+        self.assertEqual(module["processes"][2]["target"]["kind"], "PartSel")
+
+    def test_packed_aggregate_dynamic_array_member_stays_loud(self):
+        envelope = self.extract(
+            "module top(input logic [0:0] index, output logic [1:0] out); "
+            "typedef struct packed { logic [1:0] hi; logic [1:0] lo; } S; "
+            "S arr [0:1]; assign arr[index].lo = 2'b01; "
+            "assign out = arr[0].lo; endmodule")
+        self.assertEqual(envelope["design"]["modules"][0]["processes"][0]["kind"],
+                         "Unsupported")
+
     def test_fixed_array_cell_can_be_a_concat_target_leaf(self):
         envelope = self.extract(
             "module top(input logic [4:0] source, output logic [3:0] hi, "

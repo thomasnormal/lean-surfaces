@@ -2869,6 +2869,15 @@ an admitted fixed-unpacked array is flattened into vector cells. The
 the cell through an ordinary two-bit output. Signed, two-state and aggregate
 enum storage remain loud; no enum runtime table or aggregate store is added.
 
+### Symbolic packed-aggregate fixed-array member windows — 2026-10-20
+
+Untagged packed struct and union element types now flatten into fixed-width
+array cells, and constant member accesses through those cells reuse the
+existing declaration-offset `PartSel` windows. `packed_aggregate_array_member`
+checks a struct field write/read and a union alternate-field read. Tagged,
+nested-unpacked and dynamic aggregate paths remain loud; no aggregate runtime
+store or member table is added.
+
 ### Symbolic fixed-array cells in concatenation targets — 2026-10-20
 
 Constant cells of admitted fixed-unpacked arrays may now be leaves of a

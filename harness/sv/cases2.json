@@ -438,6 +438,15 @@
    ]
   },
   {
+   "name": "packed_aggregate_array_member",
+   "example": "sem2/packed_aggregate_array_member",
+   "top": "packed_aggregate_array_member",
+   "signals": ["struct_out", "union_out"],
+   "stimulus": [
+    {}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

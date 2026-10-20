@@ -261,7 +261,7 @@ The symbolic `sv-0.2` extractor uses the same flat cell representation for a
 one-dimensional fixed-unpacked integral array with no initializer: it emits one
 ordinary symbolic `Var` for each declared index (`arr[0]`, `arr[1]`, ...), and a
 constant `arr[k]` read or write becomes an `Ident` naming that cell. Dynamic or
-out-of-range indices, nested or aggregate arrays, and array initializers stay
+out-of-range indices, nested-unpacked arrays and array initializers stay
 `Unsupported`; the symbolic tier adds no aggregate store or dynamic index
 executor.
 
@@ -275,6 +275,11 @@ An ordinary four-state enum element type is likewise retained as a `TypeRef`
 on each flattened cell. Enum members remain typed constant expressions, while
 constant cell reads and writes use the same vector windows; signed, two-state
 and aggregate enum storage remains outside this path.
+
+An untagged packed struct or union element type is flattened to the same
+fixed-width cell vector. A constant member access through that cell adds the
+existing declaration offset and emits a `PartSel` window; tagged, nested-
+unpacked and dynamic aggregate paths remain `Unsupported`.
 
 An eligible cell-expanded declaration may also have an exact-length
 assignment-pattern initializer; each element is converted once and stored in

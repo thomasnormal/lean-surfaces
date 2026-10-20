@@ -1084,6 +1084,12 @@ metadata, while the constant enum-member write and cell read produce the
 member's two-bit vector. Signed, 2-state and aggregate enum storage remain
 loud; the legacy corpus census is unchanged.
 
+The `packed_aggregate_array_member` fixture applies the same cell lowering to
+untagged packed struct and union elements. Constant member writes and reads
+reuse `PartSel` windows over `sa[0]` and `ua[0]`, including the union's alias
+view. Tagged, nested-unpacked and dynamic aggregate paths remain loud; the
+legacy corpus census is unchanged.
+
 The `fixed_array_concat_target` fixture makes a cell one leaf of a symbolic
 `ConcatTarget`. Source-order splitting writes the four-bit `arr[0]` cell and
 the one-bit output from one sampled five-bit RHS; the second assignment reads

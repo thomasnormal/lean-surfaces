@@ -1579,7 +1579,7 @@
           {
             "stage": "compile",
             "returncode": 134,
-            "stdout": "/scratch/thomas-ahle/wt/ls-python/Examples/system-verilog/sem2/packed_aggregate_array_member/packed_aggregate_array_member.sv:11: error: Can not assign non-array expression `2'd1` to array.\n",
+            "stdout": "<source>:11: error: Can not assign non-array expression `2'd1` to array.\n",
             "stderr": "<source>:12: assert: elab_expr.cc:2487: failed assertion base_index.size()+1 == net->packed_dimensions()\nAborted (core dumped)\n"
           }
         ]

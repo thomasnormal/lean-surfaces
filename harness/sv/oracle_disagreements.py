@@ -50,7 +50,7 @@ def oracle_unavailability(case, source, envelope, tb_text, source_path, error):
         return None
     _check_bindings(case, row, source, envelope, tb_text)
     observed = dict(stage=error.stage, returncode=error.returncode,
-                    stdout=error.stdout,
+                    stdout=error.stdout.replace(source_path, "<source>"),
                     stderr=error.stderr.replace(source_path, "<source>"))
     if observed not in row.get("failures", []):
         raise HarnessError("%s: unexpected simulator failure; review the declaration\n%s"
@@ -87,7 +87,10 @@ def oracle_disagreement(case, sim, source, envelope, tb_text,
     return identity
 
 
-def report_annotation(message):
+def report_annotation(message, level="warning", title="SV oracle coverage"):
     import os
     if os.environ.get("GITHUB_ACTIONS") == "true":
-        print("::warning title=SV oracle coverage::" + message)
+        # Workflow-command data escapes preserve multiline diagnostics as one
+        # annotation, retrievable even when the job log needs authentication.
+        escaped = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+        print("::%s title=%s::%s" % (level, title, escaped))

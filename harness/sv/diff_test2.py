@@ -283,7 +283,10 @@ def main():
                     ok = False
                     results.append("%s:MISMATCH" % sim)
                     print("%-24s FAIL vs %s" % (name, sim))
-                    print(diff_traces(sim_lines, lean[sigmas[0]]))
+                    difference = diff_traces(sim_lines, lean[sigmas[0]])
+                    print(difference)
+                    report_annotation("%s: mismatch vs %s\n%s" % (name, sim, difference),
+                                      level="error", title="SV differential failure")
                 else:
                     results.append("%s:ok(%s)" % (sim, matched))
             if ok:
@@ -302,6 +305,8 @@ def main():
         except (HarnessError, gen_tb2.TbError) as exc:
             failures += 1
             print("%-24s ERROR: %s" % (name, exc))
+            report_annotation("%s: %s" % (name, exc), level="error",
+                              title="SV differential failure")
     if not args.keep and args.workdir is None:
         shutil.rmtree(base, ignore_errors=True)
     if failures:

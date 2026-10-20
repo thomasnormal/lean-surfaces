@@ -224,7 +224,8 @@ class UnavailableOracleTests(unittest.TestCase):
         failure = None
         if not succeeds:
             record = record or case["icarus_unavailable"]["failures"][0]
-            result = SimpleNamespace(returncode=record["returncode"], stdout=record["stdout"],
+            result = SimpleNamespace(returncode=record["returncode"],
+                                     stdout=record["stdout"].replace("<source>", str(source)),
                                      stderr=record["stderr"].replace("<source>", str(source)))
             failure = diff_test2.SimulatorError("observed tool failure", record["stage"], result)
         with tempfile.TemporaryDirectory(prefix="sv-unavailable-test-") as directory:
@@ -254,6 +255,21 @@ class UnavailableOracleTests(unittest.TestCase):
                     self.assertIn("0 case(s) verified, 1 skipped, 0 declared simulator disagreement(s), 1 unavailable backend(s)", output)
                     self.assertNotIn("PASS", output)
 
+    def test_compiler_diagnostics_are_independent_of_checkout_path(self):
+        case = next(c for c in self.cases if c["name"] == "packed_aggregate_array_member")
+        relative = Path("Examples/system-verilog") / case["example"] / (case["top"] + ".sv")
+        original = Path(diff_test2.REPO) / relative
+        with tempfile.TemporaryDirectory(prefix="different-checkout-") as directory:
+            relocated = Path(directory) / relative
+            relocated.parent.mkdir(parents=True)
+            relocated.write_bytes(original.read_bytes())
+            relocated.with_suffix(".sv.json").write_bytes(original.with_suffix(".sv.json").read_bytes())
+            with mock.patch.object(diff_test2, "REPO", directory):
+                status, output = self.run_main(case)
+        self.assertEqual(status, 1, output)  # Unavailable coverage is never verification.
+        self.assertIn("UNAVAILABLE ORACLE", output)
+        self.assertNotIn("unexpected simulator failure", output)
+
     def test_unexpected_diagnostic_exit_stage_or_output_remains_failure(self):
         for case in self.cases:
             record = case["icarus_unavailable"]["failures"][0]
@@ -277,6 +293,22 @@ class UnavailableOracleTests(unittest.TestCase):
                       "new compiler diagnostic retained"):
             with self.subTest(value=value):
                 self.assertIn(value, output)
+
+    def test_rejected_failure_publishes_escaped_github_annotation(self):
+        record = dict(stage="compile", returncode=99,
+                      stdout="unfamiliar 50% compiler stdout\n",
+                      stderr="unfamiliar compiler stderr\r\n")
+        with mock.patch.dict("os.environ", {"GITHUB_ACTIONS": "true"}):
+            status, output = self.run_main(self.cases[0], record)
+        self.assertEqual(status, 1, output)
+        annotations = [line for line in output.splitlines() if line.startswith("::error")]
+        self.assertEqual(len(annotations), 1, output)
+        annotation = annotations[0]
+        self.assertTrue(annotation.startswith("::error title=SV differential failure::"))
+        for detail in ("unexpected simulator failure", "compile", "99",
+                       "50%25 compiler stdout", "compiler stderr", "%0A"):
+            with self.subTest(detail=detail):
+                self.assertIn(detail, annotation)
 
     def test_changed_bindings_are_rejected(self):
         for field in ("source", "envelope", "case", "testbench"):

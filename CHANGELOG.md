@@ -49,6 +49,9 @@ change is listed here under **Changed** or **Removed**.
 
 ### Fixed
 
+- Icarus unavailable-oracle declarations normalize the DUT path in stdout
+  as well as stderr, fixing a diagnostic that depended on the local checkout
+  directory. Phase-2 failures publish complete escaped GitHub annotations.
 - SV envelope regeneration preserves canonical packed select expressions,
   including genvar indices into multidimensional vectors and selects beyond
   default parameter widths. CI runs the extractor regressions and publishes

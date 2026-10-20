@@ -14,6 +14,14 @@ JSON with sorted keys and compact separators, excluding only the declaration
 itself and any `icarus_unavailable` declaration. Every other digest covers exact bytes. The common checker is
 `harness/sv/oracle_disagreements.py`.
 
+The unavailable-oracle checker replaces the DUT's exact absolute path with
+`<source>` in both stdout and stderr before comparing diagnostics. This
+keeps declarations independent of the checkout directory; all remaining
+output, the exit status and the failing stage still have to match exactly.
+A regression copies the real source and envelope to a second checkout.
+Phase-2 failures also publish their complete diagnostic as a GitHub error
+annotation, escaping workflow-command data so multiline output is retained.
+
 The entry applies only to its named simulator and single schedule. A changed
 input or trace fails the harness. Agreement also fails while the entry is
 live, requiring review and removal of the resolved declaration. Missing

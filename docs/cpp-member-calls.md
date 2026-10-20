@@ -8,7 +8,8 @@ validated identifier name, a `referencedMemberDecl` handle, and one direct
 receiver `DeclRefExpr` with its own handle and qualified type spelling. A second
 child is an argument and refuses as `unsupportedArguments`; the call result's
 qualified type spelling is also retained. Missing or computed receiver/result
-evidence stays loud.
+evidence stays loud, and the referenced declaration must explicitly be a
+`CXXMethodDecl`.
 
 `IntegralMemberCall.bind` takes the expected receiver handle, an already
 admitted `IntegralMemberGetter`, and a caller-supplied
@@ -30,7 +31,7 @@ receiver handle never manufactures an object or an ABI address.
 
 Kernel controls cover a successful call and result **7**, missing or malformed
 call children, argument refusal, non-arrow receivers, missing method handles,
-missing receiver/result types, bad names, method/name/receiver-handle
+missing receiver/result types, bad names, non-method targets, method/name/receiver-handle
 mismatches, receiver-type mismatch and result-type mismatch.
 The controls use the existing projection's exact object state; no native
 differential claim is made by this source bridge. Native getter and

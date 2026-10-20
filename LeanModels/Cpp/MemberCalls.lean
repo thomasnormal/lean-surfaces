@@ -19,6 +19,7 @@ inductive IntegralMemberCallSyntaxError where
   | unsupportedReceiver
   | unsupportedArguments
   | missingMethodHandle
+  | unsupportedMethod
   | missingReceiverHandle
   | malformedReceiverType
   | malformedResultType
@@ -64,7 +65,9 @@ def admit (raw : Raw) :
     | none => throw .malformedName
   unless cppIdentifier name do throw .malformedName
   let method ← match member.field "referencedMemberDecl" with
-    | some value => (evidenceHandle value "id").mapError (fun _ => .missingMethodHandle)
+    | some value => do
+        unless value.text "kind" == some "CXXMethodDecl" do throw .unsupportedMethod
+        (evidenceHandle value "id").mapError (fun _ => .missingMethodHandle)
     | none => throw .missingMethodHandle
   let receiverRaw ← oneChild member
   unless receiverRaw.text "kind" == some "DeclRefExpr" do

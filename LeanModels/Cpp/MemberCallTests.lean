@@ -46,7 +46,7 @@ private def rawMember (methodId receiverId name : String) : Raw := rawObject [
   ("isArrow", .bool true),
   ("valueCategory", rawText "lvalue"),
   ("name", rawText name),
-  ("referencedMemberDecl", rawObject [("id", rawText methodId)]),
+  ("referencedMemberDecl", rawObject [("kind", rawText "CXXMethodDecl"), ("id", rawText methodId)]),
   ("inner", .array [rawRef receiverId])]
 
 private def rawMemberNoType (methodId receiverId name : String) : Raw := rawObject [
@@ -54,8 +54,17 @@ private def rawMemberNoType (methodId receiverId name : String) : Raw := rawObje
   ("isArrow", .bool true),
   ("valueCategory", rawText "lvalue"),
   ("name", rawText name),
-  ("referencedMemberDecl", rawObject [("id", rawText methodId)]),
+  ("referencedMemberDecl", rawObject [("kind", rawText "CXXMethodDecl"), ("id", rawText methodId)]),
   ("inner", .array [rawRefNoType receiverId])]
+
+private def rawMemberWrongKind (methodId receiverId name : String) : Raw := rawObject [
+  ("kind", rawText "MemberExpr"),
+  ("isArrow", .bool true),
+  ("valueCategory", rawText "lvalue"),
+  ("name", rawText name),
+  ("referencedMemberDecl", rawObject [
+    ("kind", rawText "FieldDecl"), ("id", rawText methodId)]),
+  ("inner", .array [rawRef receiverId])]
 
 private def rawCallWithResult (methodId receiverId name result : String) : Raw := rawObject [
   ("kind", rawText "CXXMemberCallExpr"),
@@ -143,6 +152,10 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
   ("kind", rawText "CXXMemberCallExpr"),
   ("inner", .array [rawMember methodHandle.value receiverHandle.value "bad-name"])]) ==
     some .malformedName
+#guard syntaxError (rawObject [
+  ("kind", rawText "CXXMemberCallExpr"),
+  ("inner", .array [rawMemberWrongKind methodHandle.value receiverHandle.value "read"])]) ==
+    some .unsupportedMethod
 #guard bindingError (rawCall "0xf" receiverHandle.value "read") == some .methodMismatch
 #guard bindingError (rawCall methodHandle.value receiverHandle.value "other") == some .nameMismatch
 #guard bindingError (rawCall methodHandle.value "0xe" "read") == some .receiverMismatch

@@ -2706,6 +2706,14 @@ labels to one-bit outer windows. `noncanonical_member_bit` checks the `[10]`
 select inside `[10:7]` with four-state propagation. Dynamic and effectful
 nested indices remain loud; no aggregate store or scheduler is added.
 
+### Symbolic noncanonical packed-union bit selects — 2026-10-20
+
+Literal bit-selects of direct noncanonical packed-union members now map labels
+to one-bit windows in the shared vector. `noncanonical_union_bit` checks the
+`[10]` select inside `[10:7]` through an alternate field with x propagation.
+Dynamic and effectful union indices remain loud; no driver resolution,
+aggregate store or scheduler is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

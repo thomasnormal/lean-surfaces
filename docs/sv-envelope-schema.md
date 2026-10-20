@@ -413,6 +413,11 @@ zero-based declaration-label offset and emit a one-bit outer `PartSel`;
 `noncanonical_member_bit` pins the accepted case. Dynamic and effectful
 nested indices remain unsupported.
 
+Direct noncanonical packed-union members use the same one-bit label mapping,
+with the selected write visible through alternate fields;
+`noncanonical_union_bit` pins the aliasing case. Dynamic and effectful union
+indices remain unsupported.
+
 The `bit_select_assign` fixture exercises two disjoint constant bit-select
 drivers, including a selected read on the RHS and four-state propagation. It
 uses the same `BitSel` window path; no separate scalar-driver representation

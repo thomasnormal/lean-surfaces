@@ -973,6 +973,11 @@ The `noncanonical_member_bit` fixture checks a literal `[10]` select of a
 outer one-bit window with x propagation; dynamic and effectful nested indices
 remain loud.
 
+The `noncanonical_union_bit` fixture applies the same `[10]` mapping to a
+direct `[10:7]` packed-union member and reads the bit through its alternate
+field. Alias visibility and x propagation are preserved; dynamic and effectful
+union indices remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

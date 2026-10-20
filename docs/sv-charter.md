@@ -2738,6 +2738,15 @@ noncanonical declaration-label offsets after alias erasure.
 four-state propagation. Direction-mismatched, dynamic, indexed and effectful
 alias paths remain loud; no type table, aggregate store or scheduler is added.
 
+### Symbolic noncanonical typedef-union subranges — 2026-10-20
+
+Simple subranges through an untagged packed-union typedef now retain
+noncanonical declaration-label offsets and shared-vector aliasing after alias
+erasure. `noncanonical_typedef_union_subrange` checks `[10:9]` inside `[10:7]`
+with four-state propagation. Direction-mismatched, dynamic, indexed and
+effectful union aliases remain loud; no type table, driver resolution,
+aggregate store or scheduler is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

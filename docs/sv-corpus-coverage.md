@@ -993,6 +993,12 @@ The `noncanonical_typedef_subrange` fixture checks a `[10:9]` slice through a
 offsets and x propagation; direction-mismatched, dynamic, indexed and
 effectful alias paths remain loud.
 
+The `noncanonical_typedef_union_subrange` fixture applies the same `[10:9]`
+mapping through an untagged packed-union typedef and reads the shared bits
+through its alternate field. Alias visibility and x propagation remain;
+direction-mismatched, dynamic, indexed and effectful union aliases remain
+loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

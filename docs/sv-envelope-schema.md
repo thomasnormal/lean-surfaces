@@ -433,6 +433,11 @@ the declaration-label offset mapping after alias erasure;
 `noncanonical_typedef_subrange` pins this case. Direction-mismatched, dynamic,
 indexed and effectful alias paths remain unsupported.
 
+The same noncanonical subrange mapping through an untagged packed-union typedef
+retains alternate-field aliasing; `noncanonical_typedef_union_subrange` pins
+the case. Direction-mismatched, dynamic, indexed and effectful union aliases
+remain unsupported.
+
 The `bit_select_assign` fixture exercises two disjoint constant bit-select
 drivers, including a selected read on the RHS and four-state propagation. It
 uses the same `BitSel` window path; no separate scalar-driver representation

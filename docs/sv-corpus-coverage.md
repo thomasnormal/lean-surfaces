@@ -925,6 +925,10 @@ The symbolic extractor also rejects statically overlapping constant drivers
 across separate assignments. The focused regression keeps the first driver
 and makes the conflicting process loud; no driver-resolution rule is inferred.
 
+The `packed_member_concat` fixture checks a sampled RHS split across two
+disjoint packed-struct member windows, with the member outputs read back from
+the same vector.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

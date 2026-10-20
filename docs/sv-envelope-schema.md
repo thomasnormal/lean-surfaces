@@ -362,6 +362,11 @@ the same base are checked for overlap after extraction. A duplicate or
 overlapping constant driver is converted to `Unsupported` rather than being
 silently resolved by process order; dynamic windows are not guessed.
 
+Concatenation leaves may also be direct fixed members of an untagged packed
+struct. Their accumulated offsets become ordinary `PartSel` leaves and retain
+the one-sampled-RHS rule; `packed_member_concat` pins this form. Union-member
+concatenations that overlap are rejected by the same guard.
+
 The `bit_select_assign` fixture exercises two disjoint constant bit-select
 drivers, including a selected read on the RHS and four-state propagation. It
 uses the same `BitSel` window path; no separate scalar-driver representation

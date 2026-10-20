@@ -64,6 +64,20 @@ class SymbolicConcatTargets(unittest.TestCase):
         self.assertEqual(process["kind"], "Unsupported")
         self.assertEqual(process["sv_kind"], "AssignmentExpression:target")
 
+    def test_packed_member_leaves_flatten(self):
+        envelope = self.extract(
+            "module top(input logic [7:0] source, output logic [3:0] hi, "
+            "output logic [3:0] lo); "
+            "struct packed { logic [3:0] hi; logic [3:0] lo; } value; "
+            "assign {value.hi, value.lo} = source; "
+            "assign hi = value.hi; assign lo = value.lo; endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(processes[0]["kind"], "Assign")
+        self.assertEqual(processes[0]["target"]["kind"], "ConcatTarget")
+        self.assertEqual([(part["msb"]["value"], part["lsb"]["value"])
+                          for part in processes[0]["target"]["parts"]],
+                         [(7, 4), (3, 0)])
+
 
 if __name__ == "__main__":
     unittest.main()

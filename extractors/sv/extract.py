@@ -3199,12 +3199,17 @@ def _symbolic_concat_target(sm, lhs):
             window = (target.get("name"), None, None)
         else:
             base = target.get("value", {}).get("name")
-            if node_kind == "ElementSelectExpression":
-                index = _constant_dimension_selector(node.selector)
-                window = (base, index, index)
+            if target.get("kind") == "BitSel":
+                index = target.get("index", {})
+                if index.get("kind") != "Int":
+                    return None
+                window = (base, index.get("value"), index.get("value"))
             else:
-                left = _constant_dimension_selector(node.left)
-                right = _constant_dimension_selector(node.right)
+                left = target.get("msb", {}).get("value")
+                right = target.get("lsb", {}).get("value")
+                if (target.get("msb", {}).get("kind") != "Int" or
+                        target.get("lsb", {}).get("kind") != "Int"):
+                    return None
                 window = (base, min(left, right), max(left, right))
         target["_window"] = window
         return [target]

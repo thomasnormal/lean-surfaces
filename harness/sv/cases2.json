@@ -116,6 +116,16 @@
    ]
   },
   {
+   "name": "packed_member_concat",
+   "example": "sem2/packed_member_concat",
+   "top": "packed_member_concat",
+   "signals": ["source", "hi", "lo"],
+   "stimulus": [
+    {"source": "10100101"},
+    {"source": "x010x001"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

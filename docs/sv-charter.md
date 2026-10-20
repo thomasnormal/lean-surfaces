@@ -2624,6 +2624,14 @@ constant windows on one base. The conflicting process becomes `Unsupported`,
 so process order cannot masquerade as IEEE driver resolution. Dynamic windows
 remain outside this check and no resolution or scheduler rule is added.
 
+### Symbolic packed-member concatenation — 2026-10-20
+
+Direct fixed members of an untagged packed struct may now be concatenation
+leaves. `packed_member_concat` checks one sampled RHS split into disjoint
+member windows and read back through those members. Overlapping union-member
+leaves remain loud under the same window guard; no aggregate store or new
+scheduler is introduced.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

@@ -1206,6 +1206,9 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
   | "DoWhile" =>
       return .doWhileLoop (← parseSExpr (← getF j "condition"))
         (← parseSStmt (← getF j "body"))
+  | "Forever" =>
+      return .forLoop #[] (.m0 (.lit (.ofNat 1 1))) #[]
+        (← parseSStmt (← getF j "body"))
   | "Delay" =>
       let amount ← getNatF j "amount"
       if amount >= 2 ^ 64 then throw "delay exceeds the admitted integral range"

@@ -258,6 +258,7 @@ ordinary effectful expression.
 | `If` | `kind`, `span`, `cond` (expr), `then` (stmt), `else` (stmt \| `null`) — `else if` chains nest as `If` inside `else` |
 | `For` | legacy/self-check: `kind`, `span`, `initializers` (statement array), `condition` (expr), `steps` (statement array), `body` (stmt) |
 | `Repeat` | legacy/self-check: `kind`, `span`, `count` (expr), `count_signed` (Bool), `body` (stmt) |
+| `Forever` | legacy/self-check: `kind`, `span`, `body` (stmt); ingestion uses existing `forLoop` with a true one-bit condition and empty initializer/step lists |
 | `Delay` | scheduler: `kind`, `span`, `amount` (Nat below 2^64), `body` (stmt) — a known nonnegative integral-literal delay; ingestion retains the body after the delay checkpoint, and runtime refuses `amount == 0` because Inactive delivery is not in this tier |
 | `WaitEvent` | scheduler: `kind`, `span`, `signal` (1-bit identifier), `edge` (`"posedge"`, `"negedge"`, or `"any"`) — a simple nested event wait; an enclosing `Block` retains the following body and the self-check runner refuses it |
 | `Break` / `Continue` | legacy/self-check: `kind`, `span`; transfer to the nearest loop |

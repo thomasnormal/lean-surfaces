@@ -108,3 +108,21 @@ declarations with unmodelled lifetime, symbolic `sv-0.2` loops, and explicit
 process-control suspension/rearming remain loud. The self-check runner
 still executes initial-only programs at time zero; ordinary timed source
 statements are not newly admitted by this extraction family.
+
+`forever` (§12.7.6) repeats its body without a source condition, initializer
+or step. The envelope retains `Forever.body`; ingestion compiles it to the
+existing `forLoop` with a one-bit true condition and empty initializer and
+step lists. Normal completion and `continue` enter the next iteration;
+`break` exits the nearest loop, and `$finish` halts the run. A body that runs
+forever without suspending exhausts fuel with `timeout`, never successful completion.
+
+Delay and event waits use the same retained body tail and loop boundary as
+other procedural loops. Resume finishes that body before starting the next
+iteration; a completed event body rearms its wait through the next iteration.
+The authored forever fixtures check finite transfers, nesting, automatic
+array reinitialization, live four-state payloads across delays and a blocked
+event body. Their kernel proofs bind to exact compiled source subtrees.
+No scheduler rule or evaluator constructor is added. Named-block `disable`,
+procedural edge publication, timed clock queries, zero-delay Inactive delivery,
+unmodelled scalar body lifetimes and symbolic-mode loops retain their existing
+refusals.

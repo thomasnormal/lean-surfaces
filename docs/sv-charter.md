@@ -3483,3 +3483,28 @@ pairs of two-bit four-state values, signed/mixed/wide contexts, dynamic masks,
 first/default/no-match, nesting and retained selected arms across delays.
 Three fixture-bound kernel theorems prove the evaluator bridge, symmetric
 matching and selected-arm continuation.
+
+### Forever loops — 2026-10-20
+
+IEEE §12.7.6 `forever` retains its body and compiles to the existing loop
+control with a true one-bit condition and empty initializer/step lists.
+Normal completion and `continue` start the next iteration; `break` exits
+only the nearest loop. Delay/event waits retain the current body tail and
+loop boundary. No evaluator or scheduler changed. See [the loop contract](sv-loops.md).
+Unmodelled body lifetimes, named-block `disable`, procedural edge publication,
+timed clocks, zero-delay Inactive delivery and symbolic-mode loops remain loud.
+
+The paired **22,035**-path census gains **21 clean files** without losses:
+**3,329 → 3,350 clean**, **18,640 → 18,619 partial**, **66 include skips**,
+zero extraction errors. Ten gains match complete independent transcripts
+under both source and reverse schedule oracles. Eleven gains remain runtime
+refusals: seven require procedural edge publication and four retain the timed
+`$time` boundary. Two additional candidates stay partial because their newly
+visible bodies contain `disable`. Extraction gains are separate from runtime
+agreement.
+
+All three authored sources match complete independent transcripts, covering
+nearest-loop transfers, nesting, automatic array reinitialization, termination,
+live four-state values across delays and a permanently waiting event body.
+Four fixture-bound kernel theorems establish event/delay retention, resumed
+break and event rearming after body completion. Fuel exhaustion remains timeout.

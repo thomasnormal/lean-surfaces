@@ -3398,6 +3398,14 @@ def _convert_stmt(sm, s):
     if cname in ("WhileLoopStatement", "DoWhileLoopStatement"):
         return _convert_test_loop(sm, s, cname)
 
+    if cname == "ForeverLoopStatement":
+        if _SYM is not None:
+            return unsupported(sm, s)
+        body = convert_stmt(sm, s.body)
+        if contains_local_decl(body):
+            return unsupported(sm, s, "ForeverLoopStatement:body-lifetime")
+        return {"kind": "Forever", "span": node_span(sm, s), "body": body}
+
     if cname == "ForeachLoopStatement":
         return _convert_foreach_loop(sm, s)
 
@@ -5059,7 +5067,7 @@ def contains_shift(node):
 
 def contains_loop(node):
     if isinstance(node, dict):
-        return node.get("kind") in ("For", "Repeat", "While", "DoWhile", "Break", "Continue") or any(
+        return node.get("kind") in ("For", "Repeat", "While", "DoWhile", "Forever", "Break", "Continue") or any(
             contains_loop(value) for value in node.values())
     if isinstance(node, list):
         return any(contains_loop(value) for value in node)

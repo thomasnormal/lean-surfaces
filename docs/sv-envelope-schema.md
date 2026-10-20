@@ -363,13 +363,14 @@ uses the same `BitSel` window path; no separate scalar-driver representation
 or scheduler is introduced.
 
 An untagged packed-struct variable may use a direct integral member as a
-constant window in the symbolic tier. The extractor lowers the member's fixed
-declaration offset to a `PartSel` over the synthetic packed vector, so both
-member writes and reads use the existing storage. Tagged structs, unions,
-unpacked members and dynamic member paths remain loud. A typedef naming an
-untagged packed struct is compile-time metadata and is skipped after its
-canonical vector width has been checked; `packed_member_typedef` pins that
-case.
+constant window in the symbolic tier. An untagged packed union uses the same
+single-vector representation, so an alternate field aliases the written
+bits. The extractor lowers each direct member's fixed declaration offset to a
+`PartSel` over the synthetic packed vector, so writes and reads use existing
+storage. Tagged structs/unions, nested unions, unpacked members and dynamic
+member paths remain loud. A typedef naming an untagged packed struct is
+compile-time metadata and is skipped after its canonical vector width has been
+checked; `packed_member_typedef` pins that case.
 
 Nested untagged packed-struct member chains are flattened in the same way:
 the helper accumulates each declaration offset and emits one outer-vector

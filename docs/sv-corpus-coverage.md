@@ -902,6 +902,10 @@ The `packed_member_nested` fixture checks a two-level untagged packed-struct
 chain. Its inner fields flatten to the outer vector's fixed windows, with the
 same four-state trace and no new aggregate store.
 
+The `packed_union_assign` fixture checks direct untagged packed-union aliasing:
+one field is driven, while a same-width alternate field and the whole union
+read the same vector bits. Tagged and nested unions remain outside this slice.
+
 The `indexed_part_assign` fixture covers literal indexed part-selects. Both
 `+:` and `-:` forms normalize to the same fixed windows, while dynamic bases
 remain loud; this is a semantic-tier fixture with no legacy census change.

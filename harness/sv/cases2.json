@@ -76,6 +76,16 @@
    ]
   },
   {
+   "name": "packed_union_assign",
+   "example": "sem2/packed_union_assign",
+   "top": "packed_union_assign",
+   "signals": ["source", "out", "alt"],
+   "stimulus": [
+    {"source": "10100011"},
+    {"source": "x010x001"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

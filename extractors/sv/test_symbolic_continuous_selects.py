@@ -93,6 +93,18 @@ class SymbolicContinuousSelects(unittest.TestCase):
         process, = envelope["design"]["modules"][0]["processes"]
         self.assertEqual(process["kind"], "Unsupported")
 
+    def test_untagged_packed_union_aliases_one_vector(self):
+        envelope = self.extract(
+            "module top(input logic [7:0] source, output logic [7:0] out, "
+            "output logic [7:0] alt); "
+            "union packed { logic [7:0] bytes; logic [7:0] alt; } value; "
+            "assign value.bytes = source; assign out = value; "
+            "assign alt = value.alt; endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertEqual(module["decls"][0]["width"]["resolved"], 8)
+        self.assertEqual([proc["kind"] for proc in module["processes"]],
+                         ["Assign", "Assign", "Assign"])
+
 
 if __name__ == "__main__":
     unittest.main()

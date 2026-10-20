@@ -4381,10 +4381,10 @@ def _dtype_sym(sm, t, type_syntax):
                 "packed": packed,
                 "resolved": ct.bitWidth,
             }, None
-        if cname == "PackedStructType":
+        if cname in ("PackedStructType", "PackedUnionType"):
             if getattr(ct, "isTagged", False):
                 return None, "tagged-struct"
-            # The semantic tier stores an untagged packed struct as one
+            # The semantic tier stores an untagged packed struct/union as one
             # fixed vector; member offsets become PartSel windows below.
             width = int(ct.bitWidth)
             if width <= 0:
@@ -4757,10 +4757,10 @@ def _convert_member_sym(sm, m, k):
             if _sym_enum_width(m.declaredType.type) is not None:
                 register_enum(sm, m.declaredType.type)
                 return None
-            if (type(m.declaredType.type.canonicalType).__name__ ==
-                    "PackedStructType"):
-                # A packed-struct typedef is compile-time metadata only in
-                # this tier; variables still lower to their fixed vector
+            if type(m.declaredType.type.canonicalType).__name__ in (
+                    "PackedStructType", "PackedUnionType"):
+                # A packed-struct/union typedef is compile-time metadata only
+                # in this tier; variables still lower to their fixed vector
                 # width and member offsets at each use site.
                 return None
         except Exception:

@@ -2571,20 +2571,20 @@ does not add a scheduler or driver-resolution rule.
 
 ### Symbolic packed-struct member windows — 2026-10-19
 
-Direct integral members of an untagged packed struct now lower to fixed
-`PartSel` windows over the struct's packed vector in the symbolic continuous
-assignment path. `packed_member_assign` checks field writes, a member read and
-x propagation through the resulting vector. Tagged structs, unions, unpacked
-or dynamic members remain loud; this semantic fixture does not claim a legacy
-census gain or simulator agreement.
+Direct integral members of untagged packed structs and unions now lower to
+fixed `PartSel` windows over one packed vector in the symbolic continuous
+assignment path. `packed_member_assign` checks struct field writes and reads;
+`packed_union_assign` checks same-width alternate-field aliasing. Tagged
+structs/unions, nested unions, unpacked or dynamic members remain loud; these
+semantic fixtures do not claim a legacy census gain or simulator agreement.
 
 ### Symbolic packed-struct typedef metadata — 2026-10-19
 
 Typedefs naming an untagged packed struct are now treated as compile-time
 metadata in the same narrow path. `packed_member_typedef` checks that the
 canonical vector width and fixed member offsets survive alias removal. Tagged,
-union and unresolved type aliases remain loud, and the semantic fixture does
-not claim a legacy census gain or simulator agreement.
+tagged-union and unresolved type aliases remain loud, and the semantic fixture
+does not claim a legacy census gain or simulator agreement.
 
 ### Symbolic nested packed-member windows — 2026-10-19
 

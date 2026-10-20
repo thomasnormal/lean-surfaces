@@ -26,6 +26,38 @@ with empty initializer and step lists. A body-first `doWhileLoop` entry
 handles the first body and then uses the same empty-step control for all
 subsequent tests and iterations. No synthetic signal or unrolling is needed.
 
+`foreach` (§12.7.3) traverses supported fixed unpacked and packed dimensions
+in declared left-to-right order, with the rightmost named index varying
+fastest. Omitted indices do not traverse their dimension; omitting every
+index executes the body once. The source's implicit iterators are signed
+32-bit integers with automatic scope. Stable declaration-based names keep
+same-name outer variables and nested loops distinct, and a module-wide
+collision audit rejects generated storage aliases.
+
+The extractor compiles the finite index space to one existing `For` with an
+unsigned ordinal and quotient/remainder index bindings. It retains dimension
+bounds as provenance. One loop boundary makes `break` exit every dimension;
+`continue` advances exactly one tuple. Reentry resets the automatic bindings.
+Array reads remain live, including across a retained delay. No new evaluator,
+array store or scheduler is introduced. Unsupported aggregate storage,
+dynamic/queue/associative arrays, unmodelled body lifetimes, invalid source,
+and symbolic-mode loops stay loud; the ordinal cardinality must fit 32 bits.
+
+Noncanonical packed element reads with a pure signed 32-bit index normalize
+the declared label to the existing LSB offset after widening to 34 bits
+(§11.5.1). This preserves signed bounds without wrapping an invalid index
+into a valid bit. Unknown/out-of-range indices use the source state kind's
+existing x/zero result. Other runtime index types and noncanonical dynamic
+selected writes retain their prior boundary. A wide unsigned negative-bound
+probe remains a deliberate refusal because independent observations disagree
+with a mathematical-offset interpretation; no truncation rule is guessed.
+
+The foreach source fixtures check complete independently observed output,
+including mixed dimensions, omissions, transfers, reentry, shadowing, signed
+bounds and live delayed reads. Kernel proofs bound to an extracted tuple
+loop establish its quotient/remainder offsets, coordinate coverage and
+whole-loop break at the retained body boundary.
+
 `repeat` (§12.7.2) samples its count once, retains a remaining count, and
 decrements it after normal body completion or `continue`. The sampled
 integral value is first converted to a signed 32-bit count: x/z bits become

@@ -773,6 +773,11 @@ def _array_storage_name(symbol):
     return symbol.name
 
 
+def _foreach_storage_name(symbol):
+    """Bind an automatic iterator by its declaration, including anonymous scopes."""
+    return f"$foreach:{symbol.location.offset}:{symbol.name}"
+
+
 def _fixed_array_cell(sm, expression):
     """Return the lowered cell for a constant element of a one-dimensional
     fixed unpacked integral array.
@@ -1938,7 +1943,8 @@ def _convert_named_value_expr(sm, e):
             return node
     if _SYM is None and skind == "EnumValue":
         return _convert_enum_member_expr(sm, e)
-    if skind not in ("Variable", "Net"):
+    iterator = _SYM is None and skind == "Iterator"
+    if skind not in ("Variable", "Net") and not iterator:
         return unsupported(sm, e, "NamedValueExpression:" + skind)
     width, _two, reason = type_width_2s(e.type)
     if width is None and _SYM is not None:
@@ -1957,7 +1963,7 @@ def _convert_named_value_expr(sm, e):
         "kind": "Ident",
         "span": node_span(sm, e),
         "width": width,
-        "name": sym.name,
+        "name": _foreach_storage_name(sym) if iterator else sym.name,
     }, e.type)
 
 
@@ -2380,6 +2386,35 @@ def _packed_constant_index(sm, source_type, index):
         return None
 
 
+def _packed_element_index(sm, source_type, index):
+    """Normalize a pure signed-int packed label without wrapping into valid bits.
+
+    Foreach iterators have this type. Widen before subtracting the signed
+    declaration bound; unknown/out-of-range offsets use selectedRead.
+    Other index types retain the prior boundary: wide unsigned indices on
+    negative ranges have an unresolved independent-observation discrepancy.
+    """
+    constant = _packed_constant_index(sm, source_type, index)
+    if constant is not None or _constant_dimension_selector(index) is not None:
+        return constant
+    width, _, reason = type_width_2s(index.type)
+    if (reason is not None or width != 32 or not index.type.isSigned
+            or not _case_source_expression_ok(index)):
+        return None
+    value = _convert_expr(sm, index)
+    if not _case_expression_ok(value):
+        return None
+    ct = source_type.canonicalType
+    wide = width + 2
+    value = {"kind": "SignedResize",
+             "span": node_span(sm, index), "width": wide, "operand": value}
+    right = {"kind": "Literal", "span": node_span(sm, index), "width": wide,
+             "bits": format(int(ct.range.right) & ((1 << wide) - 1), f"0{wide}b")}
+    left, right = (value, right) if ct.range.left > ct.range.right else (right, value)
+    return {"kind": "Binary", "span": node_span(sm, index), "width": wide,
+            "op": "-", "left": left, "right": right}, True
+
+
 def _packed_constant_simple_index(sm, source_type, left, right, width):
     """Normalize a constant simple part-select's right label to an offset."""
     try:
@@ -2588,7 +2623,7 @@ def _convert_selected_read(sm, expr, expression_kind):
     if (expression_kind == "ElementSelectExpression"
             and canonical_kind == "PackedArrayType"
             and not canonical_select):
-        normalized = _packed_constant_index(sm, source_type, index)
+        normalized = _packed_element_index(sm, source_type, index)
         if normalized is None:
             return unsupported(sm, expr, expression_kind + ":source-type")
         converted_index, index_signed = normalized
@@ -3361,6 +3396,9 @@ def _convert_stmt(sm, s):
     if cname in ("WhileLoopStatement", "DoWhileLoopStatement"):
         return _convert_test_loop(sm, s, cname)
 
+    if cname == "ForeachLoopStatement":
+        return _convert_foreach_loop(sm, s)
+
     if cname == "RepeatLoopStatement":
         if _SYM is not None:
             return unsupported(sm, s)
@@ -3598,6 +3636,84 @@ def _convert_test_loop(sm, statement, kind):
             "span": node_span(sm, statement), "condition": condition, "body": body}
 
 
+def _convert_foreach_loop(sm, statement):
+    """IEEE 12.7.3: one ordinal loop, so break exits every named dimension.
+
+    Fixed bounds are elaboration data; element reads in the body stay live.
+    Mixed-radix offsets give the rightmost named dimension unit stride.
+    Omitting every dimension has cardinality one, as an empty product.
+    """
+    if _SYM is not None:
+        return unsupported(sm, statement)
+    source = statement.arrayRef
+    width, _, reason = type_width_2s(source.type)
+    if (type(source).__name__ != "NamedValueExpression"
+            or str(source.symbol.kind) != "SymbolKind.Variable"
+            or (_fixed_array_shape(source) is None and
+                (reason is not None or width is None
+                 or type(source.type.canonicalType).__name__ != "PackedArrayType"))):
+        return unsupported(sm, statement, "ForeachLoopStatement:array")
+    dimensions = []
+    total = 1
+    for dimension in statement.loopDims:
+        if dimension.range is None:
+            return unsupported(sm, statement, "ForeachLoopStatement:dimension")
+        if dimension.loopVar is None:
+            continue
+        variable = dimension.loopVar
+        if variable.type.bitWidth != 32 or not variable.type.isSigned:
+            return unsupported(sm, statement, "ForeachLoopStatement:iterator-type")
+        left, right = int(dimension.range.left), int(dimension.range.right)
+        size = abs(left - right) + 1
+        total *= size
+        if total >= 1 << 32:
+            return unsupported(sm, statement, "ForeachLoopStatement:cardinality")
+        dimensions.append((_foreach_storage_name(variable), left, right, size))
+    body = convert_stmt(sm, statement.body)
+    if contains_local_decl(body):
+        return unsupported(sm, statement, "ForeachLoopStatement:body-lifetime")
+    span = node_span(sm, statement)
+    cursor_name = f"$foreach:{statement.sourceRange.start.offset}:$ordinal"
+
+    def literal(value):
+        return {"kind": "Literal", "span": span, "width": 32,
+                "bits": format(value & 0xffffffff, "032b")}
+
+    def ident(name, signed=False):
+        return {"kind": "Ident", "span": span, "width": 32,
+                "name": name, "signed": signed}
+
+    def binary(op, left, right, width=32):
+        return {"kind": "Binary", "span": span, "width": width,
+                "op": op, "left": left, "right": right}
+
+    def assign(name, value):
+        return {"kind": "BlockingAssign", "span": span,
+                "target": ident(name), "value": value}
+
+    declarations = [{"kind": "LocalDecl", "span": span, "width": 32,
+                     "name": name, "two_state": name == cursor_name,
+                     "signed": name != cursor_name, "init": None,
+                     "automatic_foreach": True}
+                    for name in [cursor_name] + [d[0] for d in dimensions]]
+    bindings = []
+    stride = total
+    for name, left, right, size in dimensions:
+        stride //= size
+        offset = binary("u%", binary("u/", ident(cursor_name), literal(stride)),
+                        literal(size))
+        value = binary("+" if left <= right else "-", literal(left), offset)
+        bindings.append(assign(name, value))
+    loop = {"kind": "For", "span": span, "foreach_lowered": True,
+            "foreach_dimensions": [{"name": name, "left": left, "right": right}
+                                   for name, left, right, _ in dimensions],
+            "initializers": [assign(cursor_name, literal(0))],
+            "condition": binary("<", ident(cursor_name), literal(total), 1),
+            "steps": [assign(cursor_name, binary("+", ident(cursor_name), literal(1)))],
+            "body": {"kind": "Block", "span": span, "stmts": bindings + [body]}}
+    return {"kind": "Block", "span": span, "stmts": declarations + [loop]}
+
+
 def _convert_for_step(sm, expression):
     if type(expression).__name__ == "AssignmentExpression":
         return _convert_assignment_expr(sm, expression)
@@ -3630,7 +3746,8 @@ def _convert_incdec(sm, expression, context):
 def contains_local_decl(node):
     if isinstance(node, dict):
         return (node.get("kind") == "LocalDecl"
-                and not node.get("automatic_array", False)) or any(
+                and not node.get("automatic_array", False)
+                and not node.get("automatic_foreach", False)) or any(
             contains_local_decl(value) for value in node.values())
     if isinstance(node, list):
         return any(contains_local_decl(value) for value in node)
@@ -4487,7 +4604,7 @@ def _hoist_static_local_arrays(node, decls):
     return node
 
 
-def _local_array_storage_collision(ports, decls, processes):
+def _generated_storage_collision(ports, decls, processes, prefix):
     names = [node["name"] for node in ports + decls
              if node.get("kind") in ("Port", "Var", "Net")]
 
@@ -4502,7 +4619,7 @@ def _local_array_storage_collision(ports, decls, processes):
                 collect(value)
 
     collect(processes)
-    generated = [name for name in names if name.startswith("$local_array:")]
+    generated = [name for name in names if name.startswith(prefix)]
     return any(names.count(name) != 1 for name in generated)
 
 
@@ -4554,10 +4671,14 @@ def convert_module(sm, inst):
             others.append(internal_error(exc))
 
     processes = _hoist_static_local_arrays(processes, decls)
-    if _local_array_storage_collision(ports, decls, processes):
+    if _generated_storage_collision(ports, decls, processes, "$local_array:"):
         others.append({"kind": "Unsupported", "span": span,
                        "sv_kind": "VariableDeclStatement:array-storage-collision",
                        "text": "generated local array storage collides with a binding"})
+    if _generated_storage_collision(ports, decls, processes, "$foreach:"):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "ForeachLoopStatement:storage-collision",
+                       "text": "generated iterator storage collides with a binding"})
 
     # Constant continuous windows are storage-only in the legacy runner too;
     # reject static overlap before it could be mistaken for net resolution.

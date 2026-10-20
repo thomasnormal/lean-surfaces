@@ -22,6 +22,34 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
+## Fixed-dimension foreach — 2026-10-20
+
+IEEE §12.7.3 fixed foreach loops compile to one ordinal `For` over the
+existing bounded cell/vector storage. Declared bounds, rightmost-first index
+variation, omitted dimensions, automatic signed-int iterator scope, live
+reads, whole-loop break and tuple-advancing continue are preserved. Ordinary
+timer continuation uses the existing retained body boundary. Pure signed-int
+indices also gain widened noncanonical packed-read normalization. Other
+runtime index types, unsupported aggregate storage, unresolved lifetimes,
+dynamic collections and symbolic-mode loops remain loud. See
+[the loop contract](sv-loops.md).
+
+The paired **22,035**-path census gains **21 clean files** without losses:
+**3,232 → 3,253 clean**, **18,737 → 18,716 partial**, **66 include skips**,
+zero extraction errors. Nineteen gains match complete time-zero transcripts;
+one more matches through the timed loader under both source and reverse
+oracles. The remaining timed fixture is refused because its `$time` queries
+carry time-zero-only provenance. A named-loop file remains partial because
+lowering its foreach exposes the unsupported `disable` statement.
+
+Three authored acceptance sources match complete independent transcripts,
+including live four-state packed reads across delays under both oracles.
+Fixture-bound kernel theorems establish ordinal offset evaluation, tuple
+coordinate reconstruction and break without a cursor step. A fourth source
+keeps wide unsigned negative-bound indexing loud: its observed behavior
+disagrees with widened mathematical offsets, so no simulator agreement or
+generic unsigned-index admission is claimed.
+
 ## Pre- and post-test procedural loops — 2026-10-20
 
 Pure integral `while` and `do…while` now use the existing loop control,

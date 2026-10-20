@@ -3379,3 +3379,37 @@ One quiescent fixture has a **diagnostic-only transcript divergence**: it
 produces no user output, while the independent simulator emits a quiescence
 warning. A no-loop control produces the same warning. That raw difference is
 retained and is not counted as an execution match.
+
+### Fixed-dimension foreach — 2026-10-20
+
+IEEE 1800-2023 §12.7.3 fixed foreach loops now compile to one existing
+ordinal `For`, preserving the bound dimension table as provenance. Named
+indices traverse declared bounds, rightmost first; omitted dimensions do
+not iterate, and an all-omitted index list executes once. The implicit
+signed-int variables receive stable declaration-based storage names with
+collision checks. Same-name outer variables, nested iterators and repeated
+entries retain their proper scope. One loop boundary makes break exit the
+whole tuple space and continue advance one tuple (§12.8).
+
+Array reads remain live. For noncanonical packed ranges, pure signed 32-bit
+indices normalize to LSB offsets after widening, preserving negative bounds
+and unknown/out-of-range results (§11.5.1). Other runtime index types remain
+loud: an independently run wide unsigned negative-bound probe disagrees with
+mathematical offsets and is retained as an explicit refusal. Unsupported
+array storage, dynamic collections, unresolved body lifetimes, invalid
+compilations and symbolic-mode loops remain loud. No evaluator, scheduler or
+array store changed. See [the loop contract](sv-loops.md).
+
+Three authored acceptance sources match complete independent transcripts.
+The timed source observes live four-state elements across retained bodies
+under both source and reverse schedule oracles. Three kernel theorems bind
+to the actual extracted tuple loop: offset evaluation, coordinate
+reconstruction and whole-loop break without stepping the ordinal.
+
+The paired **22,035**-path census gains **21 clean files** without losses:
+**3,232 → 3,253 clean**, **18,737 → 18,716 partial**, **66 include skips**,
+zero extraction errors. Nineteen gains match complete time-zero transcripts
+and one more matches through the timed loader under both oracles. One timed
+fixture remains refused by the existing time-zero-only `$time` guard.
+A named-loop file stays partial because its newly visible `disable` body
+remains unsupported. Extraction counts are separate from execution agreement.

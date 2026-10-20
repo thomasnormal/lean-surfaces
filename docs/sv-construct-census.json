@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    3940
+    3941
    ],
    [
     "InstanceSymbol:Instance",
@@ -28,7 +28,7 @@
    ],
    [
     "CallExpression",
-    3495
+    3496
    ],
    [
     "VariableSymbol:2state",
@@ -179,10 +179,6 @@
     199
    ],
    [
-    "ForeachLoopStatement",
-    194
-   ],
-   [
     "InstanceArraySymbol:InstanceArray",
     191
    ],
@@ -205,6 +201,10 @@
    [
     "VariableSymbol:type",
     135
+   ],
+   [
+    "ForeachLoopStatement:array",
+    130
    ],
    [
     "AssignmentExpression:timing",
@@ -324,7 +324,7 @@
    ],
    [
     "DisableStatement",
-    42
+    43
    ],
    [
     "Loop:invalid-compilation",
@@ -407,6 +407,10 @@
     27
    ],
    [
+    "ExpressionStatement:UnaryExpression-target",
+    26
+   ],
+   [
     "NamedValueExpression:range",
     25
    ],
@@ -417,10 +421,6 @@
    [
     "NetSymbol:type",
     24
-   ],
-   [
-    "ExpressionStatement:UnaryExpression-target",
-    23
    ],
    [
     "ForLoopStatement:body-lifetime",
@@ -852,13 +852,13 @@
    ]
   ],
   "by_status": {
-   "clean": 3232,
-   "partial": 18737,
+   "clean": 3253,
+   "partial": 18716,
    "skip_include": 66
   },
   "clean_by_type": {
    "(none)": [
-    318,
+    319,
     1387
    ],
    "compilation": [
@@ -914,7 +914,7 @@
     52
    ],
    "simulation": [
-    2736,
+    2756,
     18671
    ],
    "simulation elaboration": [
@@ -1107,9 +1107,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 669,
-    "clean": 372,
-    "partial": 669,
+    "blocked_by_more": 668,
+    "clean": 373,
+    "partial": 668,
     "simulation_tests": 1041,
     "top_residual_blockers": [
      [
@@ -1134,7 +1134,7 @@
      ],
      [
       "VariableDeclStatement:2state",
-      158
+      157
      ],
      [
       "ConversionExpression:width",
@@ -1142,7 +1142,7 @@
      ],
      [
       "TypeAliasType:TypeAlias",
-      110
+      109
      ],
      [
       "InstanceSymbol:Instance",
@@ -1150,7 +1150,7 @@
      ],
      [
       "TransparentMemberSymbol:TransparentMember",
-      62
+      61
      ],
      [
       "MemberAccessExpression",
@@ -1199,9 +1199,9 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 217,
+    "clean": 218,
     "error": 0,
-    "partial": 440,
+    "partial": 439,
     "skip_include": 0,
     "total": 657,
     "unlockable": 2
@@ -1215,9 +1215,9 @@
     "unlockable": 1
    },
    "chapter-12": {
-    "clean": 209,
+    "clean": 217,
     "error": 0,
-    "partial": 418,
+    "partial": 410,
     "skip_include": 0,
     "total": 627,
     "unlockable": 1
@@ -1399,9 +1399,9 @@
     "unlockable": 0
    },
    "chapter-34": {
-    "clean": 99,
+    "clean": 101,
     "error": 0,
-    "partial": 128,
+    "partial": 126,
     "skip_include": 1,
     "total": 228,
     "unlockable": 0
@@ -1423,9 +1423,9 @@
     "unlockable": 0
    },
    "chapter-37": {
-    "clean": 103,
+    "clean": 104,
     "error": 0,
-    "partial": 314,
+    "partial": 313,
     "skip_include": 0,
     "total": 417,
     "unlockable": 0
@@ -1471,17 +1471,17 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "clean": 384,
+    "clean": 385,
     "error": 0,
-    "partial": 801,
+    "partial": 800,
     "skip_include": 0,
     "total": 1185,
     "unlockable": 2
    },
    "chapter-7": {
-    "clean": 98,
+    "clean": 105,
     "error": 0,
-    "partial": 698,
+    "partial": 691,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0
@@ -1495,9 +1495,9 @@
     "unlockable": 0
    },
    "chapter-9": {
-    "clean": 70,
+    "clean": 71,
     "error": 0,
-    "partial": 519,
+    "partial": 518,
     "skip_include": 0,
     "total": 589,
     "unlockable": 0

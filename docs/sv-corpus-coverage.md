@@ -22,27 +22,25 @@ the dated sections retain their original measurement denominators.
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
-## Runtime integral `$clog2` — 2026-10-20
+## Selected compound assignments — 2026-10-20
 
-IEEE §20.8.1 calls now evaluate pure live integral operands at their own
-width, interpreted as unsigned, through the existing ceiling-log2 helper.
-The result is signed 32-bit; later assignment conversion is unchanged. Correct
-constant literals and symbolic extraction remain. Runtime unknowns, effects,
-unsupported types and invalid source stay loud; folds and elaboration cannot
-replace unresolved calls with approximate frontend constants.
-See [the contract](sv-runtime-clog2.md).
+IEEE §10.4.1/§11.4.1 operator assignments now capture dynamic addresses once
+and retain the complete bound RMW conversion tree over admitted variables,
+packed selections/members and fixed unpacked cells. Array results are sampled
+before copyback; bounded member vectors protect adjacent fields. Partial
+packed ranges refuse explicitly after a measured simulator disagreement.
+Effects and unsupported storage, symbolic and timing forms remain loud.
+See [the contract](sv-compound-assignments.md).
 
 The paired **22,035** paths gain **13 clean files** without losses:
-**4,057 → 4,070 clean**, **17,912 → 17,899 partial**, **66 include skips**,
+**4,070 → 4,083 clean**, **17,899 → 17,886 partial**, **66 include skips**,
 zero extraction errors. **All 13 gains match complete independent transcripts
-under both region oracles**. All 4,057 previously clean extracted designs
-remain identical. Four authored complete transcripts match both oracles;
-four further sources preserve refusals. Five source-bound kernel proofs
-establish live reads, blocking storage, NBA capture, post-change visibility
-and refusal before inventing unknown numeric results.
-
-The table measures extraction, including negative and compile-only files,
-rather than whole-corpus execution conformance.
+under both region oracles**. All 4,070 previously clean extracted designs
+remain identical. Seven authored complete transcripts match both oracles;
+four further sources preserve refusals. Five source-bound kernel theorems
+certify address capture, live RMW, blocking storage preserving NBA/output,
+unknown no-store and partial-range refusal. Extraction counts include
+negative and compile-only designs; they are not whole-corpus conformance.
 
 | Chapter | Total | Clean | Partial | Include skips |
 |---|---:|---:|---:|---:|
@@ -53,8 +51,8 @@ rather than whole-corpus execution conformance.
 | 7 | 796 | 106 | 690 | 0 |
 | 8 | 843 | 0 | 842 | 1 |
 | 9 | 589 | 110 | 479 | 0 |
-| 10 | 657 | 236 | 421 | 0 |
-| 11 | 1034 | 703 | 331 | 0 |
+| 10 | 657 | 244 | 413 | 0 |
+| 11 | 1034 | 708 | 326 | 0 |
 | 12 | 627 | 290 | 337 | 0 |
 | 13 | 598 | 1 | 597 | 0 |
 | 14 | 473 | 1 | 472 | 0 |
@@ -84,6 +82,30 @@ rather than whole-corpus execution conformance.
 | 38 | 340 | 204 | 136 | 0 |
 | 39 | 64 | 0 | 64 | 0 |
 | 40 | 87 | 40 | 47 | 0 |
+
+## Runtime integral `$clog2` — 2026-10-20
+
+IEEE §20.8.1 calls now evaluate pure live integral operands at their own
+width, interpreted as unsigned, through the existing ceiling-log2 helper.
+The result is signed 32-bit; later assignment conversion is unchanged. Correct
+constant literals and symbolic extraction remain. Runtime unknowns, effects,
+unsupported types and invalid source stay loud; folds and elaboration cannot
+replace unresolved calls with approximate frontend constants.
+See [the contract](sv-runtime-clog2.md).
+
+The paired **22,035** paths gain **13 clean files** without losses:
+**4,057 → 4,070 clean**, **17,912 → 17,899 partial**, **66 include skips**,
+zero extraction errors. **All 13 gains match complete independent transcripts
+under both region oracles**. All 4,057 previously clean extracted designs
+remain identical. Four authored complete transcripts match both oracles;
+four further sources preserve refusals. Five source-bound kernel proofs
+establish live reads, blocking storage, NBA capture, post-change visibility
+and refusal before inventing unknown numeric results.
+
+The table measures extraction, including negative and compile-only files,
+rather than whole-corpus execution conformance.
+
+
 
 ## Integral replication — 2026-10-20
 

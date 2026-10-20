@@ -76,10 +76,11 @@ class Multiplication(unittest.TestCase):
         self.assertEqual(product["left"]["name"], "product")
         self.assertEqual(product["right"]["name"], "factor")
 
-    def test_selected_compound_target_stays_loud(self):
+    def test_selected_compound_target_reads_the_selected_value(self):
         design = lower("module top; logic [7:0] product; logic [3:0] factor; "
                        "initial product[3:0] *= factor; endmodule")
-        self.assertTrue(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+        self.assertEqual(products(design)[0]['left']['kind'], 'CompoundRead')
 
     def test_invalid_compilation_cannot_hide_multiplication(self):
         design = lower("module top; logic [7:0] left, right, result; "

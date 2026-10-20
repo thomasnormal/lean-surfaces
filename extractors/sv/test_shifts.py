@@ -81,9 +81,10 @@ class Shifts(unittest.TestCase):
                          ["s<<", "s>>", "s<<<", "s>>>"])
         self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
 
-    def test_selected_compound_shift_stays_loud(self):
+    def test_selected_compound_shift_reads_the_selected_value(self):
         design = lower("module top; logic [7:0] value; initial value[3:0] <<= 1; endmodule")
-        self.assertTrue(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+        self.assertTrue(any(node.get('kind') == 'CompoundRead' for node in nodes(design)))
 
     def test_symbolic_constant_shift_keeps_integer_operator(self):
         design = symbolic("module divider #(parameter W = 8); localparam P = W << 1; "

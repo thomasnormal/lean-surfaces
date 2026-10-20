@@ -136,6 +136,24 @@ def selectedWrite (width : Nat) (descending indexSigned : Bool)
         value.insertAt 0 (replacement.extract skipped (width - skipped))
       else value.insertAt low.toNat replacement
 
+/-- A compound part-select that overlaps storage but is not wholly inside it.
+Independent observations disagree on its copyback; this tier refuses it. -/
+def partialCompoundSelection (width : Nat) (descending indexSigned : Bool)
+    (value index : LVec) : Bool :=
+  match selectedIndex indexSigned index with
+  | none => false
+  | some position =>
+      let low := if descending then position - (width : Int) + 1 else position
+      let high := low + (width : Int)
+      low < (value.width : Int) && 0 < high &&
+        (low < 0 || (value.width : Int) < high)
+
+def compoundRead (width : Nat) (descending indexSigned : Bool)
+    (value index : LVec) : Res LVec :=
+  if partialCompoundSelection width descending indexSigned value index then
+    .unsupported "AssignmentExpression:compound-partial-range"
+  else .ok (selectedRead width descending indexSigned value index)
+
 abbrev AssignmentOrder := Nat → List Nat
 
 def rightToLeftAssignmentOrder : AssignmentOrder := fun count => (List.range count).reverse
@@ -193,6 +211,7 @@ inductive SExpr where
   | ternary (c t f : SExpr)
   | concat (parts : Array SExpr)
   | selectRead (width : Nat) (descending indexSigned : Bool) (value index : SExpr)
+  | compoundRead (width : Nat) (descending indexSigned : Bool) (value index : SExpr)
   | bitQuery (query : BitQuery) (operand : SExpr) (controls : Array SExpr)
   | clog2 (operand : SExpr)
 deriving Repr, BEq, Inhabited
@@ -556,6 +575,10 @@ def evalSExpr (fuel : Nat) (st : SvState) (e : SExpr) : Res LVec :=
         let source ← evalSExpr fuel st value
         let position ← evalSExpr fuel st index
         return selectedRead width descending indexSigned source position
+    | .compoundRead width descending indexSigned value index => do
+        let source ← evalSExpr fuel st value
+        let position ← evalSExpr fuel st index
+        compoundRead width descending indexSigned source position
 
 /-- Left-to-right list evaluation (concat parts, source order). -/
 def evalSExprs (fuel : Nat) (st : SvState) (es : List SExpr) : Res (List LVec) :=
@@ -1135,6 +1158,11 @@ partial def parseSExpr (j : Json) : Except String SExpr := do
   | "SelectRead" =>
       return .selectRead (← getNatF j "width")
         (← getBoolF j "descending") (← getBoolF j "index_signed")
+        (← parseSExpr (← getF j "value")) (← parseSExpr (← getF j "index"))
+  | "CompoundRead" =>
+      let width ← getNatF j "width"
+      if width == 0 then throw "compound read has zero width"
+      return .compoundRead width (← getBoolF j "descending") (← getBoolF j "index_signed")
         (← parseSExpr (← getF j "value")) (← parseSExpr (← getF j "index"))
   | "Unsupported" =>
       return .m0 (.unsupported (← getStrF j "sv_kind") (unsupportedText j))

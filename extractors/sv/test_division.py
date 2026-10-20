@@ -61,10 +61,11 @@ class Division(unittest.TestCase):
                        "left /= right; left /= unsigned_value; end endmodule")
         self.assertEqual([node["op"] for node in divisions(design)], ["s/", "u/"])
 
-    def test_selected_compound_target_stays_loud(self):
+    def test_selected_compound_target_reads_the_selected_value(self):
         design = lower("module top; logic [7:0] value; logic [3:0] factor; "
                        "initial value[3:0] /= factor; endmodule")
-        self.assertTrue(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+        self.assertEqual(divisions(design)[0]['left']['kind'], 'CompoundRead')
 
     def test_real_division_stays_loud(self):
         design = lower("module top; real left, right, result; "

@@ -196,6 +196,7 @@ _SOURCE_BYTES = None
 # by `_SYM is not None`, keeping single-file output byte-identical.
 _SYM = None
 _DIV_CONTEXT = 0
+_COMPOUND_READ = None
 
 
 def source_text(node):
@@ -1768,6 +1769,10 @@ def _convert_expr(sm, e):
         return unsupported(sm, e, "InvalidExpression")
 
     cname = type(e).__name__
+    if cname == "LValueReferenceExpression" and _SYM is None and _COMPOUND_READ is not None:
+        if width_of(_COMPOUND_READ) == e.type.bitWidth:
+            return dict(_COMPOUND_READ)
+        return unsupported(sm, e, "AssignmentExpression:compound-read-width")
     if cname == "ConversionExpression":
         return _convert_conversion_expr(sm, e)
     if cname == "NamedValueExpression":
@@ -4302,7 +4307,8 @@ def contains_local_decl(node):
         return (node.get("kind") == "LocalDecl"
                 and not node.get("automatic_array", False)
                 and not node.get("automatic_foreach", False)
-                and not node.get("automatic_intra", False)) or any(
+                and not node.get("automatic_intra", False)
+                and not node.get("automatic_compound", False)) or any(
             contains_local_decl(value) for value in node.values())
     if isinstance(node, list):
         return any(contains_local_decl(value) for value in node)
@@ -4400,6 +4406,180 @@ def _convert_scan_assignment(sm, expression):
             "scanf_lowered": True}
 
 
+def _compound_value(sm, expression, read):
+    global _COMPOUND_READ
+    previous = _COMPOUND_READ
+    _COMPOUND_READ = read
+    try:
+        value = convert_expr(sm, expression.right)
+    finally:
+        _COMPOUND_READ = previous
+    if not expression.left.type.isFourState:
+        value = squash2_wrap(value, expression.left.type.bitWidth)
+    return value
+
+
+def _has_compound_assignment(comp):
+    found = False
+    def inspect(node):
+        nonlocal found
+        found = found or (type(node).__name__ == "AssignmentExpression"
+                          and node.op is not None)
+    comp.getRoot().visit(inspect)
+    return found
+
+
+def _expression_without_spans(node):
+    if isinstance(node, dict):
+        return {key: _expression_without_spans(value) for key, value in node.items()
+                if key != "span"}
+    if isinstance(node, list):
+        return [_expression_without_spans(value) for value in node]
+    return node
+
+
+def _unchanged_compound(sm, expression, read, value, span):
+    """Retain old envelopes only when their complete expression trees agree."""
+    if read.get("kind") != "Ident":
+        return None
+    symbol = BINARY_OPS.get(expression.op)
+    rhs = _compound_rhs(expression.right)
+    right = convert_expr(sm, rhs)
+    width = expression.type.bitWidth
+    if not _binary_width_ok(symbol, width, width_of(read), width_of(right)):
+        return None
+    if symbol in ("/", "%"):
+        symbol = ("s" if expression.left.type.isSigned and rhs.type.isSigned else "u") + symbol
+    if symbol in ("<<", ">>", "<<<", ">>>"):
+        symbol = ("s" if expression.left.type.isSigned else "u") + symbol
+    old = {"kind": "Binary", "span": node_span(sm, expression), "width": width,
+           "op": symbol, "left": read, "right": right}
+    if not expression.left.type.isFourState:
+        old = squash2_wrap(old, width)
+    if _expression_without_spans(old) != _expression_without_spans(value):
+        return None
+    return {"kind": "BlockingAssign", "span": span, "target": read, "value": old}
+
+
+def _convert_compound_assignment(sm, expression, span_node=None):
+    """IEEE 11.4.1: capture selectors once and retain the bound RMW tree."""
+    if (_SYM is not None or expression.isNonBlocking
+            or BINARY_OPS.get(expression.op) not in
+            ("+", "-", "*", "/", "%", "&", "|", "^", "<<", ">>", "<<<", ">>>")):
+        return unsupported(sm, span_node or expression, "AssignmentExpression:compound")
+    lhs, rhs = expression.left, _compound_rhs(expression.right)
+    width, _, reason = type_width_2s(lhs.type)
+    references = []
+    expression.right.visit(lambda node: references.append(node)
+                           if type(node).__name__ == "LValueReferenceExpression" else None)
+    if (reason is not None or width is None or len(references) != 1
+            or references[0].type.bitWidth != width
+            or not _case_source_expression_ok(lhs, packed_members=True)
+            or not _case_source_expression_ok(rhs, packed_members=True)):
+        return unsupported(sm, expression, "AssignmentExpression:compound-source")
+    span = node_span(sm, span_node or expression)
+    read = convert_expr(sm, lhs)
+    if read.get("kind") == "Ident":
+        value = _compound_value(sm, expression, read)
+        unchanged = _unchanged_compound(sm, expression, read, value, span)
+        if unchanged is not None:
+            return unchanged
+    prefix = []
+
+    def capture(value, suffix):
+        name = _scoped_temp("$compound:", expression.sourceRange.start.offset, suffix)
+        prefix.append({"kind": "LocalDecl", "span": span, "width": width_of(value),
+                       "name": name, "two_state": False, "init": value,
+                       "automatic_compound": True})
+        return {"kind": "Ident", "span": None, "width": width_of(value), "name": name}
+
+    def assign(target, value):
+        return {"kind": "BlockingAssign", "span": span, "target": target, "value": value}
+
+    def selected_read(target):
+        return {key: ("CompoundRead" if key == "kind" else value)
+                for key, value in target.items() if key != "two_state"}
+
+    array = _fixed_array_shape(lhs.value) if type(lhs).__name__ == "ElementSelectExpression" else None
+    if array is not None:
+        name, element_width, two_state, left, right = array
+        index = convert_expr(sm, lhs.selector)
+        index_width, _, index_reason = type_width_2s(lhs.selector.type)
+        if (index_reason is not None or index_width is None
+                or not _case_expression_ok(index) or width_of(index) != index_width):
+            return unsupported(sm, expression, "AssignmentExpression:compound-index")
+        index = capture(index, ":index")
+        minimum = -(1 << (index_width - 1)) if lhs.selector.type.isSigned else 0
+        maximum = (1 << (index_width - int(lhs.selector.type.isSigned))) - 1
+        positions = [position for position in range(left, right + (1 if right >= left else -1),
+                                                   1 if right >= left else -1)
+                     if minimum <= position <= maximum]
+        branches = []
+        read = {"kind": "Literal", "span": span, "width": element_width,
+                "bits": ("0" if two_state else "x") * element_width}
+        for position in positions:
+            target = {"kind": "Ident", "span": node_span(sm, lhs),
+                      "width": element_width, "name": f"{name}[{position}]"}
+            literal = {"kind": "Literal", "span": span, "width": index_width,
+                       "bits": format(position & ((1 << index_width) - 1), f"0{index_width}b")}
+            comparison = {"kind": "Binary", "span": span, "width": 1, "op": "===",
+                          "left": index, "right": literal}
+            branches.append((comparison, target))
+        for comparison, target in reversed(branches):
+            read = {"kind": "Ternary", "span": span, "width": element_width,
+                    "cond": comparison, "then": target, "else": read}
+        value = _compound_value(sm, expression, read)
+        if width_of(value) != width or not _case_expression_ok(value):
+            return unsupported(sm, expression, "AssignmentExpression:compound-value")
+        value = capture(value, ":value")
+        result = {"kind": "Empty", "span": span}
+        for comparison, target in reversed(branches):
+            result = {"kind": "If", "span": span, "cond": comparison,
+                      "then": assign(target, value), "else": result}
+        return {"kind": "Block", "span": span, "stmts": prefix + [result],
+                "compound_assignment_lowered": True}
+    target, admitted = legacy_blocking_target(sm, lhs, True)
+    suffix = []
+    if not admitted and type(lhs).__name__ in ("ElementSelectExpression", "RangeSelectExpression"):
+        member = lhs.value
+        shape = _packed_struct_member(sm, member)
+        selection = str(getattr(lhs, "selectionKind", "")).split(".")[-1]
+        if (shape is not None and _canonical_packed_select_source(member.type)
+                and (type(lhs).__name__ == "ElementSelectExpression"
+                     or selection in ("IndexedUp", "IndexedDown"))):
+            member_target, member_ok = legacy_blocking_target(sm, member, True)
+            member_read = convert_expr(sm, member)
+            position = lhs.selector if type(lhs).__name__ == "ElementSelectExpression" else lhs.left
+            index = convert_expr(sm, position)
+            if member_ok and _case_expression_ok([member_read, index]):
+                index = capture(index, ":index")
+                captured = capture(member_read, ":member")
+                target = {"kind": "SelectTarget", "span": span, "width": width,
+                          "value": captured, "index": index,
+                          "index_signed": bool(position.type.isSigned),
+                          "descending": selection == "IndexedDown",
+                          "two_state": not lhs.type.isFourState}
+                suffix = [assign(member_target, captured)]
+                admitted = True
+    if not admitted or target.get("kind") not in ("Ident", "SelectTarget"):
+        return unsupported(sm, expression, "AssignmentExpression:compound-target")
+    if target["kind"] == "SelectTarget":
+        target = dict(target)
+        if not suffix and target["index"].get("kind") != "Literal":
+            target["index"] = capture(target["index"], ":index")
+        read = selected_read(target)
+    else:
+        read = convert_expr(sm, lhs)
+    value = _compound_value(sm, expression, read)
+    if (width_of(value) != width or not _case_expression_ok([target, read, value])):
+        return unsupported(sm, expression, "AssignmentExpression:compound-value")
+    statements = prefix + [assign(target, value)] + suffix
+    if len(statements) == 1:
+        return dict(statements[0], compound_assignment_lowered=True)
+    return {"kind": "Block", "span": span, "stmts": statements,
+            "compound_assignment_lowered": True}
+
+
 def _convert_assignment_expr(sm, expr, span_node=None):
     if type(expr).__name__ != "AssignmentExpression":
         return unsupported(sm, span_node or expr,
@@ -4438,44 +4618,17 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         if array_assignment is not None:
             return array_assignment
     if expr.op is not None:
-        if _SYM is not None:
-            return unsupported(sm, span_node or expr, "AssignmentExpression:compound")
-        target, ok = ident_target(sm, expr.left)
-        sym = BINARY_OPS.get(expr.op)
-        if not ok or sym is None:
-            return unsupported(sm, span_node or expr, "AssignmentExpression:compound")
-        left = target
-        rhs = _compound_rhs(expr.right)
-        right = convert_expr(sm, rhs)
-        width = getattr(expr.type, "bitWidth", None)
-        if width is None or not _binary_width_ok(sym, width,
-                                                 width_of(left), width_of(right)):
-            return unsupported(sm, span_node or expr, "AssignmentExpression:compound-width")
-        if sym == "/":
-            sym = "s/" if expr.left.type.isSigned and rhs.type.isSigned else "u/"
-        if sym == "%":
-            sym = "s%" if expr.left.type.isSigned and rhs.type.isSigned else "u%"
-        if sym in ("<<", ">>", "<<<", ">>>"):
-            sym = ("s" if expr.left.type.isSigned else "u") + sym
-        value = {
-            "kind": "Binary",
-            "span": node_span(sm, expr),
-            "width": width,
-            "op": sym,
-            "left": left,
-            "right": right,
-        }
+        return _convert_compound_assignment(sm, expr, span_node)
+    if _SYM is None:
+        target, ok = legacy_blocking_target(sm, expr.left)
     else:
-        if _SYM is None:
-            target, ok = legacy_blocking_target(sm, expr.left)
-        else:
-            target, ok = select_target(sm, expr.left)
-        if not ok:
-            return unsupported(sm, span_node or expr, "AssignmentExpression:target")
-        if (target.get("kind") in ("SelectTarget", "ConcatTarget")
-                and not _case_source_expression_ok(expr.right)):
-            return unsupported(sm, span_node or expr, "AssignmentExpression:selected-effects")
-        value = convert_expr(sm, expr.right)
+        target, ok = select_target(sm, expr.left)
+    if not ok:
+        return unsupported(sm, span_node or expr, "AssignmentExpression:target")
+    if (target.get("kind") in ("SelectTarget", "ConcatTarget")
+            and not _case_source_expression_ok(expr.right)):
+        return unsupported(sm, span_node or expr, "AssignmentExpression:selected-effects")
+    value = convert_expr(sm, expr.right)
     try:
         if not expr.left.type.isFourState:
             value = squash2_wrap(value, expr.left.type.bitWidth)
@@ -5323,6 +5476,10 @@ def convert_module(sm, inst):
         others.append({"kind": "Unsupported", "span": span,
                        "sv_kind": "IntraAssignment:storage-collision",
                        "text": "generated captured-value storage collides with a binding"})
+    if _generated_storage_collision(ports, decls, processes, "$compound:"):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "AssignmentExpression:compound-storage-collision",
+                       "text": "generated operator-assignment storage collides with a binding"})
     if _generated_storage_collision(ports, decls, processes, "$plusargs:"):
         others.append({"kind": "Unsupported", "span": span,
                        "sv_kind": "Plusargs:storage-collision",
@@ -5729,6 +5886,11 @@ def _convert_design(sm, comp, packages):
     if _SYM is None and _constant_context_gap(comp, _contains_unresolved_clog2):
         others.append(unsupported(sm, comp, "$clog2:constant-context",
                                   "unresolved or unknown clog2 elaboration argument"))
+    if (_SYM is None and any(diagnostic.isError() or str(diagnostic.code) in (
+                "DiagCode(Redefinition)", "DiagCode(RedefinitionDifferentType)")
+                for diagnostic in comp.getAllDiagnostics()) and _has_compound_assignment(comp)):
+        others.append(unsupported(sm, comp, "AssignmentExpression:compound-invalid-compilation",
+                                  "frontend rejected a design containing an operator assignment"))
     if (any(contains_selected_read(module) for module in modules)
             and any(diagnostic.isError() for diagnostic in comp.getAllDiagnostics())):
         others.append(unsupported(sm, comp, "SelectRead:invalid-compilation",

@@ -1474,6 +1474,10 @@ zero. Invalid destination permutations remain loud.
 
 ### Scalar compound assignments — 2026-10-11
 
+This historical scalar boundary is extended by
+[selected compound assignments](sv-compound-assignments.md), including the
+complete bound conversion tree, as of 2026-10-20.
+
 The legacy/self-check surface now lowers whole-signal compound assignments
 on plain scalar identifiers to its existing blocking-assignment and
 binary-expression nodes. The admitted
@@ -3695,3 +3699,29 @@ refusals. Five source-bound kernel proofs cover current reads, blocking
 storage, captured NBA values, post-change visibility and unknown refusal.
 See [the contract](sv-runtime-clog2.md) and
 [the fixtures](../Examples/system-verilog/runtime_clog2/README.md).
+
+
+### Selected compound assignments — 2026-10-20
+
+IEEE §10.4.1/§11.4.1 blocking operator assignments now cover admitted packed
+selections, members and fixed unpacked cells. The extractor substitutes a
+current-value read into the frontend's complete bound RMW tree, preserving
+context widths/signs and final conversions. Dynamic addresses are captured
+once; dynamic arrays capture their computed result before cell copyback and
+filter unrepresentable labels. Bounded member temporaries protect adjacent
+fields. Existing local/store/continuation/NBA rules remain the authority.
+
+`CompoundRead` adds one expression admission check: an overlapping partial
+packed range refuses after two measured reference disagreements. The exact
+sources and observations remain as refusal fixtures. Wholly invalid and X
+selectors retain no-store behavior while still evaluating the RHS. Source
+effects, unsupported lvalues/types, internal timing and symbolic compounds
+remain loud; externally delayed statements compose normally.
+
+The paired 22,035-path census gains 13 clean designs, with no losses:
+4,083 clean/17,886 partial/66 include skips/zero errors. All 13 gains match
+complete reference transcripts under both oracles; all 4,070 previously clean
+extracted designs remain identical. Seven authored complete matches and four
+refusals accompany five kernel theorems bound to the real parsed delayed
+assignment. See [the contract](sv-compound-assignments.md) and
+[the receipts](../Examples/system-verilog/compound_assignments/README.md).

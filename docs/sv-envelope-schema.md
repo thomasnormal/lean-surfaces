@@ -1388,3 +1388,21 @@ and reuses `LeanModels.Sv.clog2` on its unsigned finite-vector value. Unknown
 bits refuse. Existing correct `fixed_clog2` literal folding remains; affected
 unknown elaboration constants refuse rather than use a frontend approximation.
 Symbolic `SysCall` is unchanged. See [the contract](sv-runtime-clog2.md).
+
+### Legacy selected operator assignments
+
+Operator assignments lower to ordinary blocking assignments and scoped
+`LocalDecl` captures, marked `automatic_compound: true`. New lowering roots
+carry `compound_assignment_lowered: true`. Captured addresses and array
+results are evaluated before copyback; bounded packed-member temporaries
+prevent writes to adjacent fields. No new scheduler statement is introduced.
+
+`CompoundRead` has `kind`, `span`, positive `width`, `value`, `index`,
+`index_signed` and `descending`, matching `SelectRead`'s geometry. It reads
+the current vector and captured index once. An overlapping, partially
+out-of-range interval refuses as `AssignmentExpression:compound-partial-range`;
+otherwise it delegates to `selectedRead`. Unknown or wholly out-of-range
+targets still evaluate the complete RHS before an ordinary no-store copyback.
+The complete frontend-bound RMW tree retains every conversion around this
+read. Previously correct scalar envelopes are unchanged. Symbolic compounds
+remain loud. See [the contract](sv-compound-assignments.md).

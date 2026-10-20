@@ -2803,6 +2803,14 @@ recursive windows retain one sampled RHS and existing MSB-to-LSB splitting;
 aliased, duplicate, overlapping and effectful leaves remain loud; no aggregate
 store or scheduler is added.
 
+### Symbolic typedef nested packed-member concatenations — 2026-10-20
+
+Nested fixed member concatenations now retain their recursive windows through an
+untagged packed-struct typedef after alias erasure. `typedef_nested_concat`
+checks one sampled RHS and x propagation. Tagged, unresolved, dynamic,
+duplicate, overlapping and effectful alias leaves remain loud; no type table,
+aggregate store or scheduler is added.
+
 The charter itself, backlog §L60, and — in the consolidation commit that
 followed it — `harness/sv_round_trip.py`, a rebuilt
 `extractors/sv/census.py`, and `docs/sv-construct-census.json`.

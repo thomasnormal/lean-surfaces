@@ -336,6 +336,16 @@
    ]
   },
   {
+   "name": "typedef_nested_concat",
+   "example": "sem2/typedef_nested_concat",
+   "top": "typedef_nested_concat",
+   "signals": ["source", "hi", "lo"],
+   "stimulus": [
+    {"source": "1010"},
+    {"source": "x010"}
+   ]
+  },
+  {
    "name": "t2_sel_w8",
    "example": "sem2/probes",
    "top": "t2_sel",

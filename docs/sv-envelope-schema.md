@@ -457,6 +457,11 @@ recursive windows retain one sampled RHS and source-order MSB-to-LSB splitting;
 `nested_member_concat` pins this case. Dynamic, aliased, duplicate, overlapping
 and effectful leaves remain unsupported.
 
+The same recursive concatenation lowering applies through an untagged
+packed-struct typedef after alias erasure; `typedef_nested_concat` pins the
+metadata spelling. Tagged, unresolved, dynamic, duplicate, overlapping and
+effectful alias leaves remain unsupported.
+
 The same recursive and local offsets lower a literal bit-select of a
 noncanonical final member to a one-bit outer window; `nested_noncanonical_bit`
 pins the bit case. Dynamic and effectful paths remain unsupported.

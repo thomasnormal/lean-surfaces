@@ -1031,6 +1031,11 @@ disjoint slices of nested members. Recursive windows receive the high and low
 RHS pieces in source order with x propagation; dynamic, aliased, duplicate,
 overlapping and effectful leaves remain loud.
 
+The `typedef_nested_concat` fixture checks the same nested concatenation through
+an untagged packed-struct typedef. Alias erasure preserves recursive windows,
+source-order splitting and x propagation; tagged, unresolved, dynamic,
+duplicate, overlapping and effectful alias leaves remain loud.
+
 ## Extractor robustness notes (observed, not fixed)
 
 1. **Zero crashes.** 21,307 single-file compiles (including 1,747

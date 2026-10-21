@@ -546,6 +546,41 @@ def withOracle (profile : IntegralMemberEnumProfile) (underlying : CppIntType) :
 
 end IntegralMemberEnumRepresentation
 
+/-- A value read from an enum field after its storage representation has been
+validated. The value remains tagged with the enum representation; it is not
+silently retyped as an unrelated builtin integer. -/
+structure IntegralMemberEnumValue where
+  representation : IntegralMemberEnumRepresentation
+  value : IntegralValue
+  deriving Repr, BEq, Inhabited
+
+inductive IntegralMemberEnumValueError where
+  | fieldMismatch
+  | invalidProfile
+  | underlyingTypeMismatch
+  | invalidValue (reason : InvalidIntegral)
+  deriving Repr, BEq, Inhabited
+
+namespace IntegralMemberEnumValue
+
+/-- Read an already existing enum-field value under an explicit target and
+representation oracle. No object, field offset, conversion, or enumerator
+value is inferred here; the caller supplies the stored underlying value. -/
+def evaluate (access : IntegralMemberThisFieldAccess)
+    (representation : IntegralMemberEnumRepresentation) (profile : TargetProfile)
+    (stored : IntegralValue) :
+    Except IntegralMemberEnumValueError IntegralMemberEnumValue := do
+  unless access.field == representation.profile.field do throw .fieldMismatch
+  let format ← match profile.format representation.underlying with
+    | .ok format => pure format
+    | .error .invalidProfile => throw .invalidProfile
+    | .error (.unsupportedType _) => throw .invalidProfile
+  unless stored.format == format do throw .underlyingTypeMismatch
+  if let some reason := stored.invalid? then throw (.invalidValue reason)
+  pure {representation, value := stored}
+
+end IntegralMemberEnumValue
+
 inductive IntegralMemberCallSyntaxError where
   | notMemberCall
   | malformedChildren

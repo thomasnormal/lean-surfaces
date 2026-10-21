@@ -140,6 +140,59 @@ private def enumProfileSample : IntegralMemberEnumProfile := {
   field := h "0x12", enum := h "0x13", name := "XMLError",
   constantCount := 20, explicitValueCount := 1, underlyingType := none}
 
+private def enumFieldAccessSample : IntegralMemberThisFieldAccess := {
+  method := h "0x14", definition := h "0x15", owner := h "0x16", field := h "0x12",
+  name := "_errorID", receiverType := "XMLError *", fieldType := "XMLError"}
+
+private def enumRepresentationSample : Option IntegralMemberEnumRepresentation :=
+  (IntegralMemberEnumRepresentation.withOracle enumProfileSample .unsignedInt).toOption
+
+private def enumValueAccepted : Bool :=
+  match enumRepresentationSample with
+  | some representation =>
+      match IntegralMemberEnumValue.evaluate enumFieldAccessSample representation .lp64
+          ⟨.unsigned 32, 7⟩ with
+      | .ok value => value.representation == representation && value.value == ⟨.unsigned 32, 7⟩
+      | .error _ => false
+  | none => false
+
+private def enumValueWrongFormat : Bool :=
+  match enumRepresentationSample with
+  | some representation =>
+      match IntegralMemberEnumValue.evaluate enumFieldAccessSample representation .lp64
+          ⟨.signed 32, 7⟩ with
+      | .error .underlyingTypeMismatch => true
+      | _ => false
+  | none => false
+
+private def enumValueWrongField : Bool :=
+  match enumRepresentationSample with
+  | some representation =>
+      match IntegralMemberEnumValue.evaluate
+          {enumFieldAccessSample with field := h "0x99"} representation .lp64
+          ⟨.unsigned 32, 7⟩ with
+      | .error .fieldMismatch => true
+      | _ => false
+  | none => false
+
+private def enumValueBadProfile : Bool :=
+  match enumRepresentationSample with
+  | some representation =>
+      match IntegralMemberEnumValue.evaluate enumFieldAccessSample representation
+          {TargetProfile.lp64 with intWidth := 0} ⟨.unsigned 32, 7⟩ with
+      | .error .invalidProfile => true
+      | _ => false
+  | none => false
+
+private def enumValueInvalid : Bool :=
+  match enumRepresentationSample with
+  | some representation =>
+      match IntegralMemberEnumValue.evaluate enumFieldAccessSample representation .lp64
+          ⟨.unsigned 32, 4294967296⟩ with
+      | .error (.invalidValue .outOfRange) => true
+      | _ => false
+  | none => false
+
 private def enumOracleError (underlying : CppIntType) :
     Option IntegralMemberEnumRepresentationError :=
   match IntegralMemberEnumRepresentation.withOracle enumProfileSample underlying with
@@ -434,6 +487,11 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard IntegralMemberEnumRepresentation.withOracle
     {enumProfileSample with underlyingType := some "int"} .unsignedInt matches
     .error .oracleDisagrees
+#guard enumValueAccepted
+#guard enumValueWrongFormat
+#guard enumValueWrongField
+#guard enumValueBadProfile
+#guard enumValueInvalid
 #guard boundWitnessedIntegerArgument.map (fun bound =>
     (bound.parameter, bound.parameterType, bound.argument.value)) ==
     some (h "0x10", .builtin .int, 0)

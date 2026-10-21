@@ -170,6 +170,14 @@ oracle, and `bool` is rejected as outside this integral field tier. Unknown or
 unsupported representations therefore remain loud instead of acquiring a
 guessed ABI layout.
 
+`IntegralMemberEnumValue.evaluate` is the corresponding state boundary. It
+requires the field handle from the typed access witness, a valid target
+profile, and a caller-supplied stored `IntegralValue` whose format exactly
+matches the chosen underlying type. It preserves the enum representation tag;
+it does not convert the value to an unrelated builtin, read an offset, or
+derive a value from the enumerator list. A field mismatch, invalid target,
+format mismatch, or invalid stored value refuses.
+
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or
 qualified dispatch, construction, writes and calls whose target body is not an

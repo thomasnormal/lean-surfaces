@@ -1487,6 +1487,12 @@ inheritance, method frames, virtual dispatch, random fields or constraints;
 class bodies are therefore not rewritten as module declarations. Class type
 uses retain their separate `ClassType:ClassType` boundary. See [the class boundary](sv-classes.md).
 
+Fork blocks remain explicit `BlockStatement:JoinAll`, `BlockStatement:JoinAny`
+and `BlockStatement:JoinNone` unsupported members. The envelope does not carry
+child-process identities, retained fork continuations, join barriers or
+detached-child lifetimes, so these blocks are not rewritten as sequential
+statements. See [the fork/join boundary](sv-fork-join.md).
+
 
 ## Dynamic integral casts
 

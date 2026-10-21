@@ -3914,6 +3914,18 @@ admitted by rewriting it as a module, and no random oracle or second scheduler
 is introduced. See [the boundary and repricing](sv-classes.md) and the
 read-only instrument `extractors/sv/class_reprice.py`.
 
+### Fork/join process control — 2026-10-21
+
+The combined `fork ... join*` boundary covers the three frontend markers. In
+the fresh 22,043-path census they occur in 571 files; 126 are fork/join-only
+and 445 co-occur with another wall. The sole files contain 132 join blocks:
+90 `join`/JoinAll, 10 `join_any` and 32 `join_none`. Child-process identity,
+parent barriers, first-child release, detached-child lifetime and named-block
+cancellation require scheduler state that the current surface envelope does
+not carry. No join flavor is serialized or admitted, and no second scheduler
+is introduced. See [the boundary and repricing](sv-fork-join.md) and the
+read-only instrument `extractors/sv/fork_join_reprice.py`.
+
 
 ### Dynamic integral casts — 2026-10-20
 

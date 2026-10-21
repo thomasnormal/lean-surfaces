@@ -455,6 +455,17 @@ method-frame, virtual-dispatch or constrained-random representation, so no
 class shape is admitted by module rewriting. See [classes](sv-classes.md) for
 the boundary and reproducible scan.
 
+## Fork/join process control — 2026-10-21
+
+The three `fork ... join*` markers remain a scheduler-owned process boundary.
+The fresh **22,043**-path census records them in **571** files: **126**
+fork/join-only and **445** co-occurring. Repricing the sole files finds **132**
+join blocks: **90** `join`/JoinAll, **10** `join_any` and **32** `join_none`.
+The existing envelope has no child-process identity, retained fork frame,
+join barrier or detached-child lifetime, so no flavor is admitted by
+serializing its body. See [fork/join](sv-fork-join.md) for the boundary and
+reproducible scan.
+
 The paired **22,035** paths gain **198 clean files**, no losses:
 **4,098 → 4,296 clean**, **17,871 → 17,673 partial**, **66 include skips**,
 zero extraction errors. All 4,098 previously clean extracted designs remain

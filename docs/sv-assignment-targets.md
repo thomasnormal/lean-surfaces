@@ -1,0 +1,87 @@
+# Assignment targets — admitted boundary
+
+This document fixes the public boundary for SystemVerilog assignment left-hand
+sides (`AssignmentExpression:target`). It applies to the legacy/self-check
+envelope and to the symbolic `sv-0.2` envelope. The rule follows the IEEE
+1800-2023 assignment and packed-data clauses (10–11): evaluate the right-hand
+side once, then update the selected destination in the order required by the
+owning execution path. A target is admitted only when its destination can be
+represented by the existing scalar, packed-vector, or expanded fixed-cell
+state.
+
+## Admitted representations
+
+The legacy path admits a whole identifier, a packed bit or part select over an
+identifier, and a direct field window of an untagged packed struct or packed
+union. A constant element of an eligible one-dimensional fixed-unpacked array
+is emitted as its own vector-cell identifier. The same path admits the
+already-tested direct concatenation and right-streaming forms when every leaf
+is one of those fixed destinations and the source width is definite. Select
+indices and source expressions must remain in the pure integral subset; an
+effectful selector or right-hand side is retained as `Unsupported`.
+
+The symbolic path carries `Ident`, `BitSel`, and `PartSel` targets over an
+identifier. Its continuous-assignment slice additionally admits a nested
+concatenation of direct scalar, constant bit-select, or constant part-select
+leaves. `Design2` samples one right-hand side and applies fixed windows to the
+existing vector state. Fixed-array cells can be leaves after declaration
+expansion. These symbolic continuous forms are deliberately separate from the
+legacy/self-check runner, whose loader has no continuous-driver scheduling
+rule.
+
+## Refusal boundary
+
+The target conversion stays loud for destinations that need a representation
+the public tier does not have:
+
+* dynamic, associative, queue, multidimensional, or otherwise unpacked
+  aggregate storage;
+* keyed/default/replicated aggregate patterns outside the admitted fixed-cell
+  lowering, and whole aggregate copies without a cellwise snapshot rule;
+* nested, unpacked, tagged, class, interface, or hierarchical members outside
+  the direct packed-window case;
+* dynamic or effectful select bounds and streaming forms with a direction or
+  slice size outside the admitted subset; and
+* legacy continuous assignments whose target needs a continuous-driver,
+  update-region, or net-resolution rule.
+
+No target family is admitted by manufacturing an aggregate store or by adding
+a second scheduler. A future target rung must first supply the missing storage
+or the scheduler-facing continuous-assignment rule, then add a source-bound
+fixture and an independent simulator comparison.
+
+## 2026-10-21 census and decision
+
+The fresh chapter-scoped corpus contains 22,043 paths. The target wall occurs
+in 4,030 files: 43 are target-only and 3,987 co-occur with another refusal.
+The most common companions are `VariableSymbol:2state` (3,215 files),
+`CallExpression` (1,339), `ExpressionStatement:CallExpression` (1,240),
+`NamedValueExpression:2state` (1,113), `MemberAccessExpression` (720), and
+`ClassType` (639). Companion counts overlap because one file can carry several
+refusals.
+
+The target-only repricer reports 79 instances in those 43 files:
+
+| target-only source shape | instances | files |
+|---|---:|---:|
+| whole aggregate/array target | 27 | 23 |
+| dynamic element target | 32 | 9 |
+| packed or unpacked part-select target | 14 | 5 |
+| concatenated or streaming target | 3 | 3 |
+| constant element/bit target | 2 | 2 |
+| keyed/default/replicated or unpacked-array pattern RHS | 1 | 1 |
+
+The file counts overlap only when a file contains more than one target shape.
+The target-only rows mix procedural aggregate/slice/stream forms with
+generated continuous drivers. Procedural rows require aggregate or runtime
+index representation; continuous rows require the scheduler-owned driver
+path. The measured target-only set therefore has no independently admissible
+legacy subfamily in this item. Existing packed/select/concat tests remain the
+acceptance evidence for the admitted matrix, while every residual shape stays
+loud until its prerequisite is supplied.
+
+The measurement is reproducible with
+`python3.9 extractors/sv/target_reprice.py --corpus <corpus>/tests`; it reads
+the source in process and writes no envelopes beside the corpus. The global
+4,030/43/3,987 counts come from the paired census artifact described in
+`docs/sv-corpus-coverage.md`.

@@ -3885,3 +3885,21 @@ authored refusals are separate. The 1,141 changed prior clean designs show no
 paired-model regression; that comparison is not independent conformance.
 Four kernel theorems bind initialization and retained increments to actual source.
 See [the contract](sv-procedural-lifetimes.md).
+
+### Assignment-target boundary — 2026-10-21
+
+The public target matrix remains limited to scalar identifiers, fixed packed
+windows, direct untagged packed-struct/union fields, expanded fixed-array
+cells, and the already-tested pure concatenation/streaming leaves. The fresh
+22,043-path census records `AssignmentExpression:target` in 4,030 files; 43
+are target-only and 3,987 have another refusal. Those 43 files contain 79
+target instances, dominated by whole aggregate/array and dynamic element
+destinations. The remaining rows mix procedural aggregate/slice/stream forms
+with generated continuous drivers.
+
+No additional legacy target subfamily is admitted in this rung. Aggregate
+destinations need aggregate or net-driver state, and continuous targets need
+the scheduler-owned driver path. Adding either as a surface shortcut would
+fabricate storage or create a second scheduler. Existing packed/select/concat
+fixtures remain the acceptance boundary; the full independent contract and
+repricing table are in [assignment targets](sv-assignment-targets.md).

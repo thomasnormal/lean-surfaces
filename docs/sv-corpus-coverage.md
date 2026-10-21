@@ -38,6 +38,27 @@ The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
 matched all 200 fixed-seed sample classifications.
 
+## Assignment-target boundary — 2026-10-21
+
+`AssignmentExpression:target` occurs in **4,030** files of the fresh
+22,043-path census. It is the sole recorded refusal in **43** files and
+co-occurs with another refusal in **3,987**. The target-only repricer finds
+**79** instances: 27 whole aggregate/array targets, 32 dynamic element
+targets, 14 packed or unpacked part-select targets, three concatenated or
+streaming targets, two constant element/bit targets, and one keyed/default or
+replicated pattern target. These shape counts are over the 43 sole-refusal
+files and may overlap by file.
+
+The existing target matrix already covers whole identifiers, fixed packed
+windows, direct untagged packed-struct/union fields, expanded fixed-array
+cells, and the tested pure concatenation/streaming leaves. The residual sole
+files mix procedural aggregate/slice/stream forms with generated continuous
+drivers; they need aggregate or runtime-index state, or the scheduler-owned
+continuous-assignment path. The legacy loader has no such continuous-driver
+rule, so this item adds no target lowering and introduces no aggregate store or
+second scheduler. The complete boundary and reproduction command are in
+[assignment targets](sv-assignment-targets.md).
+
 ## Procedural variable lifetimes — 2026-10-20
 
 IEEE §6.21/§9.3 static scalar, packed and fixed-array procedural storage now

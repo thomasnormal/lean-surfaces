@@ -317,6 +317,9 @@ aggregate arrays, and whole-array operations remain loud except for the narrow
 bounded dynamic access and whole-array positional-pattern assignments below.
 `If` conditions may be any width (truthiness per LRM: true iff some bit is `1`).
 
+The complete target admission and refusal rationale, including the current
+corpus repricing, is recorded in [assignment targets](sv-assignment-targets.md).
+
 The symbolic `sv-0.2` extractor uses the same flat cell representation for a
 one-dimensional fixed-unpacked integral array: it emits one ordinary symbolic
 `Var` for each declared index (`arr[0]`, `arr[1]`, ...), and a constant `arr[k]`

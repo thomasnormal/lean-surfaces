@@ -63,6 +63,15 @@ private def methodBodyErrorName :
   | .malformedDefinition => "malformed-definition"
   | .unsupportedDefinition => "unsupported-definition"
 
+private def thisFieldErrorName :
+    IntegralMemberThisFieldAccessError → String
+  | .missingMethod => "missing-method"
+  | .missingOwner => "missing-owner"
+  | .missingFirstField => "missing-first-field"
+  | .malformedReceiver => "malformed-receiver"
+  | .malformedField => "malformed-field"
+  | .fieldMismatch => "field-mismatch"
+
 private def memberMethodHandle (raw : Raw) : Option FrontendHandle := do
   let .array (member :: _) ← raw.field "inner" | none
   let referenced ← member.field "referencedMemberDecl"
@@ -189,6 +198,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut integerMethodBodyRefusals : List String := []
   let mut integerMethodObjectEvents : List String := []
   let mut integerMethodObjectRefusals : List String := []
+  let mut integerMethodThisFields : List String := []
+  let mut integerMethodThisFieldRefusals : List String := []
   let mut receiverShapes : List String := []
   let mut receiverFamilies : List String := []
   let mut reports : List Json := []
@@ -244,6 +255,14 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
                               (s!"{body.canonical.value}:{event}") :: integerMethodObjectEvents
                           | none => integerMethodObjectRefusals :=
                               "missing-first-object-event" :: integerMethodObjectRefusals
+                          match IntegralMemberThisFieldAccess.admit probe body with
+                          | .ok access => do
+                              integerMethodThisFields :=
+                                (s!"{access.name}:{access.fieldType}:{access.receiverType}") ::
+                                  integerMethodThisFields
+                          | .error error => do
+                              integerMethodThisFieldRefusals :=
+                                thisFieldErrorName error :: integerMethodThisFieldRefusals
                       | .error error => do
                           integerMethodBodyRefusals :=
                             methodBodyErrorName error :: integerMethodBodyRefusals
@@ -278,6 +297,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("typed_integer_method_body_refusals", counts integerMethodBodyRefusals),
     ("typed_integer_method_object_events", counts integerMethodObjectEvents),
     ("typed_integer_method_object_refusals", counts integerMethodObjectRefusals),
+    ("typed_integer_method_this_fields", counts integerMethodThisFields),
+    ("typed_integer_method_this_field_refusals", counts integerMethodThisFieldRefusals),
     ("unsupported_receiver_shapes", counts receiverShapes),
     ("unsupported_receiver_families", counts receiverFamilies),
     ("calls", toJson reports.reverse)])

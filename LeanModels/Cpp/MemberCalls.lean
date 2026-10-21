@@ -339,6 +339,98 @@ def admit (probe : DeclarationProbe) (canonical : FrontendHandle) :
 
 end IntegralMemberMethodBody
 
+/-- A typed receiver/member witness for the first direct `this->field` access
+in a defining body. It is a precondition for an object-backed frame, not a
+layout or offset calculation. -/
+structure IntegralMemberThisFieldAccess where
+  method : FrontendHandle
+  definition : FrontendHandle
+  owner : FrontendHandle
+  field : FrontendHandle
+  name : String
+  receiverType : String
+  fieldType : String
+  deriving Repr, BEq, Inhabited
+
+inductive IntegralMemberThisFieldAccessError where
+  | missingMethod
+  | missingOwner
+  | missingFirstField
+  | malformedReceiver
+  | malformedField
+  | fieldMismatch
+  deriving Repr, BEq, Inhabited
+
+namespace IntegralMemberThisFieldAccess
+
+private partial def rawNodesById (wanted : String) : Raw → List Raw
+  | node@(.object fields) =>
+      (if node.text "id" == some wanted then [node] else []) ++
+        fields.flatMap (fun (_, value) => rawNodesById wanted value)
+  | .array values => values.flatMap (rawNodesById wanted)
+  | _ => []
+
+private def directThis (raw : Raw) : Bool :=
+  match raw.field "inner" with
+  | some (.array [base]) => base.text "kind" == some "CXXThisExpr"
+  | _ => false
+
+private partial def firstThisMember : Raw → Option Raw
+  | node@(.object fields) =>
+      if node.text "kind" == some "MemberExpr" && directThis node then some node
+      else fields.firstM (fun (_, value) => firstThisMember value)
+  | .array values => values.firstM firstThisMember
+  | _ => none
+
+private def handleField (raw : Raw) (name : String) :
+    Except IntegralMemberThisFieldAccessError FrontendHandle :=
+  match raw.field name with
+  | some (.string value) =>
+      (parseFrontendHandle value).mapError (fun _ => .fieldMismatch)
+  | some value => (evidenceHandle value "id").mapError (fun _ => .fieldMismatch)
+  | none => throw .fieldMismatch
+
+/-- Require the first direct `this->field` in a selected body to agree with the
+method's parent and the field's declaration evidence. No field offset or value
+is fabricated. -/
+def admit (probe : DeclarationProbe) (body : IntegralMemberMethodBody) :
+    Except IntegralMemberThisFieldAccessError IntegralMemberThisFieldAccess := do
+  let some methodRow := probe.declarations.find? (fun row =>
+    row.id == body.definition && row.kind == "CXXMethodDecl")
+    | throw .missingMethod
+  let owner ← handleField methodRow.raw "method_parent" |>.mapError (fun _ => .missingOwner)
+  let methodNodes := (rawNodesById body.definition.value probe.ast).filter
+    (·.text "kind" == some "CXXMethodDecl")
+  let some method := methodNodes.head? | throw .missingMethod
+  let some member := firstThisMember method | throw .missingFirstField
+  unless member.field "isArrow" == some (.bool true) &&
+      member.text "valueCategory" == some "lvalue" do throw .malformedReceiver
+  let receiverType ← match member.field "type" with
+    | some type => match type.text "qualType" with
+        | some value => if value.isEmpty then throw .malformedReceiver else pure value
+        | none => throw .malformedReceiver
+    | none => throw .malformedReceiver
+  let field ← handleField member "referencedMemberDecl"
+  let name ← match member.text "name" with
+    | some value => if value.isEmpty then throw .malformedField else pure value
+    | none => throw .malformedField
+  let fieldType ← match member.field "type" with
+    | some type => match type.text "qualType" with
+        | some value => if value.isEmpty then throw .malformedField else pure value
+        | none => throw .malformedField
+    | none => throw .malformedField
+  let fieldRows := probe.declarations.filter (fun row =>
+    row.id == field && row.kind == "FieldDecl")
+  let fieldRow :: rest := fieldRows | throw .fieldMismatch
+  unless rest.all (fun row => row.raw == fieldRow.raw && row.semanticContext == fieldRow.semanticContext) do
+    throw .fieldMismatch
+  unless fieldRow.semanticContext == some owner do throw .fieldMismatch
+  let fieldParent ← handleField fieldRow.raw "field_parent"
+  unless fieldParent == owner do throw .fieldMismatch
+  pure ⟨body.canonical, body.definition, owner, field, name, receiverType, fieldType⟩
+
+end IntegralMemberThisFieldAccess
+
 inductive IntegralMemberCallSyntaxError where
   | notMemberCall
   | malformedChildren

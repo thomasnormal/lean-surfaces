@@ -146,6 +146,14 @@ statement can be evaluated; this is an object-frame precondition, not a
 default value. The walk is telemetry only and does not lower member offsets,
 constructors, allocation, or destruction.
 
+`IntegralMemberThisFieldAccess.admit` turns that first direct receiver access
+into a typed precondition: it checks the defining method's parent, the field's
+`FieldDecl` handle and parent, arrow/lvalue category, receiver spelling, and
+field spelling. The probe admits `_errorID:XMLError:XMLError` for all 11
+`SetError` bodies. The one `Set` body has no direct `this->field` witness and
+refuses this narrower precondition, as expected from its first `member-call`
+event.
+
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or
 qualified dispatch, construction, writes and calls whose target body is not an

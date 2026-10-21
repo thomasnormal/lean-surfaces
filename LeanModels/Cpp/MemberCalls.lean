@@ -880,6 +880,44 @@ def invoke (call : IntegralMemberEnumCall) :
 
 end IntegralMemberEnumCall
 
+/-- Evidence for the first executable enum getter shape: a canonical method
+with an owned body, no parameters, an enum result matching the selected enum
+profile, and a witnessed direct field access. -/
+structure IntegralMemberEnumGetter where
+  method : IntegralMemberMethodProfile
+  body : IntegralMemberMethodBody
+  access : IntegralMemberThisFieldAccess
+  representation : IntegralMemberEnumRepresentation
+  deriving Repr, BEq, Inhabited
+
+inductive IntegralMemberEnumGetterError where
+  | profile (reason : IntegralMemberMethodProfileError)
+  | body (reason : IntegralMemberMethodBodyError)
+  | access (reason : IntegralMemberThisFieldAccessError)
+  | parameters
+  | resultType
+  | methodMismatch
+  | fieldMismatch
+  deriving Repr, BEq, Inhabited
+
+namespace IntegralMemberEnumGetter
+
+/-- Admit only the direct zero-argument enum getter profile. This is evidence
+for a later evaluator; it does not execute the body or infer object state. -/
+def admit (probe : DeclarationProbe) (canonical : FrontendHandle)
+    (representation : IntegralMemberEnumRepresentation) :
+    Except IntegralMemberEnumGetterError IntegralMemberEnumGetter := do
+  let method ← IntegralMemberMethodProfile.admit probe canonical |>.mapError .profile
+  unless method.parameters.isEmpty do throw .parameters
+  unless method.resultType == .enumeration representation.profile.enum do throw .resultType
+  let body ← IntegralMemberMethodBody.admit probe canonical |>.mapError .body
+  let access ← IntegralMemberThisFieldAccess.admit probe body |>.mapError .access
+  unless access.method == canonical do throw .methodMismatch
+  unless access.field == representation.profile.field do throw .fieldMismatch
+  pure {method, body, access, representation}
+
+end IntegralMemberEnumGetter
+
 
 structure IntegralMemberCall where
   getter : IntegralMemberGetter

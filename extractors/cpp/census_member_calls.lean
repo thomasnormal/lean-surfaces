@@ -138,6 +138,18 @@ private def rawResultSpelling (raw : Raw) : Option String := do
   let type ← raw.field "type"
   type.text "qualType"
 
+private def enumGetterProfile (probe : DeclarationProbe) (method : FrontendHandle) :
+    Except String String := do
+  let canonical := canonicalMethodHandle probe method |>.getD method
+  let body ← IntegralMemberMethodBody.admit probe canonical |>.mapError (fun _ => "body")
+  let access ← IntegralMemberThisFieldAccess.admit probe body |>.mapError (fun _ => "field")
+  let profile ← IntegralMemberEnumProfile.admit probe access |>.mapError (fun _ => "enum")
+  let representation ← IntegralMemberEnumRepresentation.withOracle profile .unsignedInt |>.mapError
+    (fun _ => "representation")
+  let _ ← IntegralMemberEnumGetter.admit probe canonical representation |>.mapError
+    (fun _ => "getter")
+  pure profile.name
+
 
 private partial def firstObjectEvent : Raw → Option String
   | node@(.object fields) =>
@@ -247,6 +259,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut integerMethodEnumRepresentationRefusals : List String := []
   let mut enumResultCalls : List String := []
   let mut enumResultRefusals : List String := []
+  let mut enumGetterProfiles : List String := []
+  let mut enumGetterRefusals : List String := []
   let mut receiverShapes : List String := []
   let mut receiverFamilies : List String := []
   let mut reports : List Json := []
@@ -255,6 +269,7 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     | some method =>
         match methodEnumResult probe (canonicalMethodHandle probe method |>.getD method) with
         | .ok enum =>
+            let spelling := rawResultSpelling raw |>.getD "<missing>"
             match enumResultName probe enum, rawResultSpelling raw with
             | .ok name, some spelling =>
                 if spelling == name || spelling == "enum " ++ name ||
@@ -263,6 +278,9 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
                 else enumResultRefusals := "result-spelling-mismatch" :: enumResultRefusals
             | .error error, _ => enumResultRefusals := error :: enumResultRefusals
             | _, none => enumResultRefusals := "missing-result-spelling" :: enumResultRefusals
+            match enumGetterProfile probe (canonicalMethodHandle probe method |>.getD method) with
+            | .ok name => enumGetterProfiles := (s!"{name}:{spelling}") :: enumGetterProfiles
+            | .error error => enumGetterRefusals := error :: enumGetterRefusals
         | .error error =>
             if error != "non-enum-result" && error != "missing-method" then
               enumResultRefusals := error :: enumResultRefusals
@@ -384,6 +402,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
       counts integerMethodEnumRepresentationRefusals),
     ("enum_result_calls", counts enumResultCalls),
     ("enum_result_refusals", counts enumResultRefusals),
+    ("enum_getter_profiles", counts enumGetterProfiles),
+    ("enum_getter_refusals", counts enumGetterRefusals),
     ("unsupported_receiver_shapes", counts receiverShapes),
     ("unsupported_receiver_families", counts receiverFamilies),
     ("calls", toJson reports.reverse)])

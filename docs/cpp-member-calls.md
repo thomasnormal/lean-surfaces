@@ -149,6 +149,15 @@ check. This validates the explicit representation/value transport only; it
 does not turn handwritten test handles into Clang provenance or admit general
 enum method execution.
 
+`IntegralMemberEnumGetter.admit` prices the first body shape without executing
+it: a canonical method profile must have no parameters and an enum result that
+matches the oracle's enum handle, its defining body must resolve uniquely, and
+the body must expose the witnessed direct `this` field. On the same probe this
+admits **5** getter profiles (`ElementClosingType` **3**, `Whitespace` **2**);
+the **38** `XMLError` result calls refuse because their bodies do not expose
+that direct-field shape. This is the next execution precondition, not a
+fallback to a name-based getter.
+
 `IntegralMemberMethodBody.admit` then resolves the body relation independently
 of the profile. The real census finds exactly one definition for each involved
 canonical method: `Set → Set` once and `SetError →` its distinct defining

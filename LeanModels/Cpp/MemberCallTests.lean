@@ -56,6 +56,11 @@ private def rawRef (id : String) : Raw := rawObject [
   ("type", rawObject [("qualType", rawText "Owner *")]),
   ("referencedDecl", rawObject [("id", rawText id)])]
 
+private def rawRefType (id type : String) : Raw := rawObject [
+  ("kind", rawText "DeclRefExpr"),
+  ("type", rawObject [("qualType", rawText type)]),
+  ("referencedDecl", rawObject [("id", rawText id)])]
+
 private def rawRefNoType (id : String) : Raw := rawObject [
   ("kind", rawText "DeclRefExpr"),
   ("referencedDecl", rawObject [("id", rawText id)])]
@@ -63,15 +68,31 @@ private def rawRefNoType (id : String) : Raw := rawObject [
 private def rawMember (methodId receiverId name : String) : Raw := rawObject [
   ("kind", rawText "MemberExpr"),
   ("isArrow", .bool true),
-  ("valueCategory", rawText "lvalue"),
+  ("valueCategory", rawText "prvalue"),
   ("name", rawText name),
   ("referencedMemberDecl", rawObject [("kind", rawText "CXXMethodDecl"), ("id", rawText methodId)]),
+  ("inner", .array [rawRef receiverId])]
+
+private def rawMemberDot (methodId receiverId name : String) : Raw := rawObject [
+  ("kind", rawText "MemberExpr"),
+  ("isArrow", .bool false),
+  ("valueCategory", rawText "prvalue"),
+  ("name", rawText name),
+  ("referencedMemberDecl", rawObject [("kind", rawText "CXXMethodDecl"), ("id", rawText methodId)]),
+  ("inner", .array [rawRefType receiverId "Owner"])]
+
+private def rawMemberString (methodId receiverId name : String) : Raw := rawObject [
+  ("kind", rawText "MemberExpr"),
+  ("isArrow", .bool true),
+  ("valueCategory", rawText "prvalue"),
+  ("name", rawText name),
+  ("referencedMemberDecl", rawText methodId),
   ("inner", .array [rawRef receiverId])]
 
 private def rawMemberNoType (methodId receiverId name : String) : Raw := rawObject [
   ("kind", rawText "MemberExpr"),
   ("isArrow", .bool true),
-  ("valueCategory", rawText "lvalue"),
+  ("valueCategory", rawText "prvalue"),
   ("name", rawText name),
   ("referencedMemberDecl", rawObject [("kind", rawText "CXXMethodDecl"), ("id", rawText methodId)]),
   ("inner", .array [rawRefNoType receiverId])]
@@ -79,7 +100,7 @@ private def rawMemberNoType (methodId receiverId name : String) : Raw := rawObje
 private def rawMemberWrongKind (methodId receiverId name : String) : Raw := rawObject [
   ("kind", rawText "MemberExpr"),
   ("isArrow", .bool true),
-  ("valueCategory", rawText "lvalue"),
+  ("valueCategory", rawText "prvalue"),
   ("name", rawText name),
   ("referencedMemberDecl", rawObject [
     ("kind", rawText "FieldDecl"), ("id", rawText methodId)]),
@@ -92,6 +113,19 @@ private def rawCallWithResult (methodId receiverId name result : String) : Raw :
 
 private def rawCall (methodId receiverId name : String) : Raw :=
   rawCallWithResult methodId receiverId name "int"
+
+private def rawCallDotWithResult (methodId receiverId name result : String) : Raw := rawObject [
+  ("kind", rawText "CXXMemberCallExpr"),
+  ("type", rawObject [("qualType", rawText result)]),
+  ("inner", .array [rawMemberDot methodId receiverId name])]
+
+private def rawCallDot (methodId receiverId name : String) : Raw :=
+  rawCallDotWithResult methodId receiverId name "int"
+
+private def rawCallString (methodId receiverId name : String) : Raw := rawObject [
+  ("kind", rawText "CXXMemberCallExpr"),
+  ("type", rawObject [("qualType", rawText "int")]),
+  ("inner", .array [rawMemberString methodId receiverId name])]
 
 private def syntaxError (raw : Raw) : Option IntegralMemberCallSyntaxError :=
   match IntegralMemberCallSyntax.admit raw with
@@ -109,6 +143,12 @@ private def observed (raw : Raw) : Option Int :=
           | .ok (memory, value) =>
               if memory == projection.snapshot.memory then some value.value else none
           | .error _ => none
+
+private def observedDot : Option Int :=
+  observed (rawCallDot methodHandle.value receiverHandle.value "read")
+
+private def observedString : Option Int :=
+  observed (rawCallString methodHandle.value receiverHandle.value "read")
 
 private def bindingError (raw : Raw) : Option IntegralMemberCallError :=
   match IntegralMemberCallSyntax.admit raw with
@@ -138,6 +178,10 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 
 #guard (IntegralMemberCallSyntax.admit (rawCall methodHandle.value receiverHandle.value "read")).isOk
 #guard observed (rawCall methodHandle.value receiverHandle.value "read") == some 7
+#guard (IntegralMemberCallSyntax.admit (rawCallDot methodHandle.value receiverHandle.value "read")).isOk
+#guard observedDot == some 7
+#guard (IntegralMemberCallSyntax.admit (rawCallString methodHandle.value receiverHandle.value "read")).isOk
+#guard observedString == some 7
 
 private def resolveCanonicalHandle (rows : List DeclarationEvidenceRow) : Option FrontendHandle :=
   match IntegralMemberCallSyntax.admit (rawCall methodHandle.value receiverHandle.value "read") with
@@ -216,15 +260,17 @@ private def resolvedCanonicalHandle (rows : List DeclarationEvidenceRow) :
 #guard syntaxError (rawObject [
   ("kind", rawText "CXXMemberCallExpr"),
   ("inner", .array [rawObject [
-    ("kind", rawText "MemberExpr"), ("isArrow", .bool false),
-    ("valueCategory", rawText "lvalue"), ("name", rawText "read"),
-    ("referencedMemberDecl", rawObject [("id", rawText methodHandle.value)]),
-    ("inner", .array [rawRef receiverHandle.value])]])]) == some .unsupportedReceiver
+    ("kind", rawText "MemberExpr"), ("isArrow", .bool true),
+    ("valueCategory", rawText "prvalue"), ("name", rawText "read"),
+    ("referencedMemberDecl", rawObject [
+      ("kind", rawText "CXXMethodDecl"), ("id", rawText methodHandle.value)]),
+    ("inner", .array [rawObject [("kind", rawText "IntegerLiteral")]])]])]) ==
+  some .unsupportedReceiver
 #guard syntaxError (rawObject [
   ("kind", rawText "CXXMemberCallExpr"),
   ("inner", .array [rawObject [
     ("kind", rawText "MemberExpr"), ("isArrow", .bool true),
-    ("valueCategory", rawText "lvalue"), ("name", rawText "read"),
+    ("valueCategory", rawText "prvalue"), ("name", rawText "read"),
     ("inner", .array [rawRef receiverHandle.value])]])]) == some .missingMethodHandle
 #guard syntaxError (rawObject [
   ("kind", rawText "CXXMemberCallExpr"),

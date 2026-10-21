@@ -3,13 +3,17 @@
 2026-10-20. N4950 [expr.call] and [class.mfct.non.static] permit a narrow
 source bridge over the existing integral member getter and class receiver
 projection surfaces. `IntegralMemberCallSyntax.admit` accepts a
-`CXXMemberCallExpr` with exactly one `MemberExpr` child, an arrow receiver, a
+`CXXMemberCallExpr` with exactly one `MemberExpr` child, an arrow or direct-dot
+receiver, a
 validated identifier name, a `referencedMemberDecl` handle, and one direct
 receiver `DeclRefExpr` with its own handle and qualified type spelling. A second
 child is an argument and refuses as `unsupportedArguments`; the call result's
 qualified type spelling is also retained. Missing or computed receiver/result
 evidence stays loud, and the referenced declaration must explicitly be a
-`CXXMethodDecl`.
+`CXXMethodDecl` when resolved through probe metadata. Clang's raw JSON may carry
+that method reference as either an object with `kind`/`id` or a string id;
+`admitResolved` validates the latter against the complete probe. The callee
+`MemberExpr` is retained at its Clang `prvalue` category.
 
 `IntegralMemberCall.bind` takes the expected receiver handle, an already
 admitted `IntegralMemberGetter`, and a caller-supplied
@@ -32,6 +36,9 @@ from the probe, and that handle must also have an explicit self-canonical
 target-less, name-mismatched, or conflicting rows refuse loudly. Binding compares the resolved handle with the
 canonical handle retained by `IntegralMemberGetter`, so a call cannot silently
 cross a redeclaration or overload identity boundary.
+Arrow calls compare the retained receiver type with `<class name> *`; direct-dot
+calls compare it with `<class name>`. Both forms still require the caller's
+explicit existing-object projection and receiver declaration handle.
 Callers that start from raw AST are expected to use `admitResolved`, which
 performs both syntax admission and this canonical resolution in one operation.
 `extractors/cpp/census_member_calls.lean` applies that operation to every
@@ -50,7 +57,7 @@ qualified dispatch, construction, writes and calls whose target body is not an
 admitted getter remain refusals. No method is selected from a name, and the
 receiver handle never manufactures an object or an ABI address.
 
-Kernel controls cover a successful call and result **7**, canonical resolution
+Kernel controls cover successful arrow and direct-dot calls with result **7**, canonical resolution
 and invocation through a noncanonical occurrence, missing or malformed call
 children, argument refusal, non-arrow receivers, missing method handles, missing
 receiver/result types, bad names, non-method targets, method/canonical/name/

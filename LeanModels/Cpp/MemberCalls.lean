@@ -13,6 +13,8 @@ structure IntegralMemberCallSyntax where
   name : String
   /-- Canonical method identity, initially the occurrence handle. -/
   canonicalMethod : FrontendHandle := method
+  /-- Whether the source receiver uses `->` (`false` means direct `.` access). -/
+  receiverIsArrow : Bool := true
   deriving Repr, BEq, Inhabited
 
 inductive IntegralMemberCallSyntaxError where
@@ -63,14 +65,18 @@ def admit (raw : Raw) :
   let member ← callChild raw
   unless member.text "kind" == some "MemberExpr" do
     throw .malformedChildren
-  unless member.field "isArrow" == some (.bool true) &&
-      member.text "valueCategory" == some "lvalue" do
+  let receiverIsArrow ← match member.field "isArrow" with
+    | some (.bool value) => pure value
+    | _ => throw .unsupportedReceiver
+  unless member.text "valueCategory" == some "prvalue" do
     throw .unsupportedReceiver
   let name ← match member.text "name" with
     | some value => pure value
     | none => throw .malformedName
   unless cppIdentifier name do throw .malformedName
   let method ← match member.field "referencedMemberDecl" with
+    | some (.string id) =>
+        (parseFrontendHandle id).mapError (fun _ => .missingMethodHandle)
     | some value => do
         unless value.text "kind" == some "CXXMethodDecl" do throw .unsupportedMethod
         (evidenceHandle value "id").mapError (fun _ => .missingMethodHandle)
@@ -87,7 +93,7 @@ def admit (raw : Raw) :
         | none => throw .malformedReceiverType
     | none => throw .malformedReceiverType
   let resultType ← resultSpelling raw
-  pure {method, receiver, receiverType, resultType, name}
+  pure {method, receiver, receiverType, resultType, name, receiverIsArrow}
 
 /-- Resolve one retained method occurrence to exactly one canonical probe handle. -/
 def resolveCanonical (probe : DeclarationProbe) (evidence : IntegralMemberCallSyntax) :
@@ -132,7 +138,7 @@ inductive IntegralMemberCallError where
 
 namespace IntegralMemberCall
 
-private def projectionReceiverType (projection : ClassReceiverProjection) :
+private def projectionReceiverType (projection : ClassReceiverProjection) (isArrow : Bool) :
     Except IntegralMemberCallError String := do
   let slots ← projection.hierarchy.slots.mapError
     (fun reason => IntegralMemberCallError.projection (.hierarchy reason))
@@ -141,7 +147,7 @@ private def projectionReceiverType (projection : ClassReceiverProjection) :
   let some shape := projection.hierarchy.classes.find? (·.declaration == slot.declaration)
     | throw (.projection .malformedWorld)
   unless !shape.name.isEmpty do throw .receiverTypeMismatch
-  pure (shape.name ++ " *")
+  pure (shape.name ++ if isArrow then " *" else "")
 
 private def resultMatches : CppIntType → String → Bool
   | .boolean, "bool" => true
@@ -170,7 +176,7 @@ def bind (evidence : IntegralMemberCallSyntax) (getter : IntegralMemberGetter)
   unless getter.occurrence.name == some evidence.name do throw .nameMismatch
   unless evidence.receiver == receiver do throw .receiverMismatch
   projection.check getter |>.mapError .projection
-  let receiverType ← projectionReceiverType projection
+  let receiverType ← projectionReceiverType projection evidence.receiverIsArrow
   unless evidence.receiverType == receiverType do throw .receiverTypeMismatch
   unless resultMatches getter.result evidence.resultType do throw .resultTypeMismatch
   pure {getter, projection, syntaxEvidence := evidence}

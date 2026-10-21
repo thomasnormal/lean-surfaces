@@ -183,6 +183,31 @@ private def methodBodyObjectEvent (probe : DeclarationProbe)
   let compound ← inner.find? (·.text "kind" == some "CompoundStmt")
   firstObjectEvent compound
 
+private partial def directThisFieldWrites : Raw → List String
+  | node@(.object fields) =>
+      let nested := fields.flatMap (fun (_, value) => directThisFieldWrites value)
+      match node.text "kind", node.text "opcode", node.field "inner" with
+      | some "BinaryOperator", some "=", some (.array (left :: _)) =>
+          if left.text "kind" == some "MemberExpr" && hasKind "CXXThisExpr" left then
+            (left.text "name" |>.getD "<missing>") :: nested
+          else nested
+      | _, _, _ => nested
+  | .array values => values.flatMap directThisFieldWrites
+  | _ => []
+
+private def methodBodyThisFieldWrites (probe : DeclarationProbe)
+    (body : IntegralMemberMethodBody) : List String :=
+  match (rawNodesById body.definition.value probe.ast).find?
+      (·.text "kind" == some "CXXMethodDecl") with
+  | none => []
+  | some method =>
+      match method.field "inner" with
+      | some (.array inner) =>
+          match inner.find? (·.text "kind" == some "CompoundStmt") with
+          | some compound => directThisFieldWrites compound
+          | none => []
+      | _ => []
+
 private partial def rawTree (raw : Raw) : String :=
   let kind := raw.text "kind" |>.getD "<missing>"
   let cast := raw.text "castKind" |>.map (fun value => ":" ++ value) |>.getD ""
@@ -253,6 +278,7 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut integerMethodObjectRefusals : List String := []
   let mut integerMethodThisFields : List String := []
   let mut integerMethodThisFieldRefusals : List String := []
+  let mut integerMethodThisFieldWrites : List String := []
   let mut integerMethodEnumProfiles : List String := []
   let mut integerMethodEnumProfileRefusals : List String := []
   let mut integerMethodEnumRepresentations : List String := []
@@ -336,6 +362,9 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
                               (s!"{body.canonical.value}:{event}") :: integerMethodObjectEvents
                           | none => integerMethodObjectRefusals :=
                               "missing-first-object-event" :: integerMethodObjectRefusals
+                          for field in methodBodyThisFieldWrites probe body do
+                            integerMethodThisFieldWrites :=
+                              (s!"{body.canonical.value}:{field}") :: integerMethodThisFieldWrites
                           match IntegralMemberThisFieldAccess.admit probe body with
                           | .ok access => do
                               integerMethodThisFields :=
@@ -395,6 +424,7 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("typed_integer_method_object_refusals", counts integerMethodObjectRefusals),
     ("typed_integer_method_this_fields", counts integerMethodThisFields),
     ("typed_integer_method_this_field_refusals", counts integerMethodThisFieldRefusals),
+    ("typed_integer_method_this_field_writes", counts integerMethodThisFieldWrites),
     ("typed_integer_method_enum_profiles", counts integerMethodEnumProfiles),
     ("typed_integer_method_enum_profile_refusals", counts integerMethodEnumProfileRefusals),
     ("typed_integer_method_enum_representations", counts integerMethodEnumRepresentations),

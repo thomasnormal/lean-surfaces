@@ -226,6 +226,12 @@ under UBSan with the same four rows through `write` and `read`. The native rows
 agree and the Lean checks pass; this validates the existing object-store update
 path without admitting a general enum setter or a guessed layout.
 
+The source census now records direct assignment shapes separately from readable
+`this` fields. In the pinned TinyXML2 probe, all **11** `SetError` definitions
+expose a direct `this->_errorID = ...` write, recorded as
+`0x...:_errorID` telemetry. This is a body-shape price only: it does not bind a
+parameter, execute a setter, or infer a member offset.
+
 `IntegralMemberEnumCall` exposes that read as a call result without widening
 the ordinary integral getter. It requires the already selected method and
 receiver handles, the typed field witness, the oracle-backed enum profile, and

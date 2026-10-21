@@ -220,6 +220,12 @@ update to `IntegralObjectStore.assign`. Const receivers, wrong projections,
 malformed storage, and unsupported value formats remain loud; no field offset or
 object identity is inferred by the enum layer.
 
+`MemberGetterTests.test_enum_field_mutation_differential` compares assignment
+and readback of a real `enum Error : unsigned int` member at `-O0` and `-O2`
+under UBSan with the same four rows through `write` and `read`. The native rows
+agree and the Lean checks pass; this validates the existing object-store update
+path without admitting a general enum setter or a guessed layout.
+
 `IntegralMemberEnumCall` exposes that read as a call result without widening
 the ordinary integral getter. It requires the already selected method and
 receiver handles, the typed field witness, the oracle-backed enum profile, and

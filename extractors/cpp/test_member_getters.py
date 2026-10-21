@@ -313,6 +313,63 @@ def cases : List (Int × Int) := [''' + pairs + ''']
 ''')
         print("enum representation: 4 native rows, -O0/-O2 UBSan; explicit unsigned underlying type")
 
+    def test_enum_field_mutation_differential(self):
+        """Compare writable enum-field assignment and readback with C++."""
+        source = r'''
+#include <iostream>
+enum Error : unsigned int { zero = 0u, one = 1u, top = 4294967295u };
+struct Sample {
+ Error value;
+ void set(Error next) { value = next; }
+ Error get() const { return value; }
+};
+int main() {
+ Sample object{static_cast<Error>(7u)};
+ for (unsigned int input : {0u, 1u, 7u, 4294967295u}) {
+  object.set(static_cast<Error>(input));
+  std::cout << input << ' ' << static_cast<unsigned int>(object.get()) << '\n';
+ }
+}
+'''
+        rows = [line.split() for line in self.native(source).splitlines()]
+        self.assertEqual(rows, [[value, value] for value in
+                                ["0", "1", "7", "4294967295"]])
+        pairs = ", ".join(f"({value}, {expected})" for value, expected in rows)
+        self.lean('''import LeanModels.Cpp.MemberCalls
+open LeanModels.Cpp
+private def h (value : String) : FrontendHandle := ⟨value⟩
+private def access : IntegralMemberThisFieldAccess := {
+  method := h "method", definition := h "method", owner := h "owner", field := h "field",
+  name := "value", receiverType := "Sample *", fieldType := "Error", methodName := "get"}
+private def profile : IntegralMemberEnumProfile := {
+  field := h "field", enum := h "enum", name := "Error", constantCount := 3,
+  explicitValueCount := 3, underlyingType := some "unsigned int"}
+private def representation : IntegralMemberEnumRepresentation :=
+  (IntegralMemberEnumRepresentation.withOracle profile .unsignedInt).toOption.getD
+    {profile, underlying := .unsignedInt}
+private def hierarchy : ClassHierarchy := {
+  root := h "owner",
+  classes := [{declaration := h "owner", isAbstract := false, bases := [], fields := [h "field"], friends := [], name := "Sample"}]}
+private def memory (input : Int) : IntegralObjectStore := {
+  profile := .lp64,
+  objects := {objects := [{duration := .automatic, type := .record (h "owner"), phase := .aliveInitialized}, {duration := .automatic, type := .builtin .unsignedInt, phase := .aliveInitialized}]},
+  values := [none, some ⟨.unsigned 32, input⟩]}
+private def projection (input : Int) : ClassReceiverProjection := {
+  hierarchy, objects := [0], receiverPath := [],
+  snapshot := {memory := memory input, object := 0, member := 1, field := h "field"}}
+def cases : List (Int × Int) := [''' + pairs + ''']
+#guard cases.all (fun (input, expected) =>
+  let before := projection 7
+  match IntegralMemberEnumValue.write access representation before ⟨.unsigned 32, input⟩ with
+  | .ok store =>
+      let after := {before with snapshot := {before.snapshot with memory := store}}
+      match IntegralMemberEnumValue.read access representation after with
+      | .ok (_, value) => value.value.value == expected
+      | .error _ => false
+  | .error _ => false)
+''')
+        print("enum mutation: 4 native assignment/readback rows, -O0/-O2 UBSan; explicit unsigned underlying type")
+
 
 if __name__ == "__main__":
     unittest.main()

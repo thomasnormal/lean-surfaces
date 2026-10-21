@@ -3958,6 +3958,22 @@ type-operator node, so no override or dependent declaration is reduced to a
 default type. See [the type-parameter boundary](sv-type-parameters.md) and
 the read-only instrument `extractors/sv/type_parameter_reprice.py`.
 
+### Final procedures — 2026-10-21
+
+`ProceduralBlockSymbol:Final` is the end-of-simulation shutdown boundary. In
+the fresh 22,043-path census it occurs in 88 files: 39 are final-only and 49
+co-occur with another wall. The sole files contain 45 final spans, including
+39 block bodies, 33 assignments or increments, 38 `$display` calls, four
+`$finish` calls, two assertion/`$fatal` sites, three delays, one `wait` and one
+`$time` query (features overlap). A final procedure runs once when simulation
+ends, after the finish condition, in a function-like shutdown context with
+its own completion and ordering rules. It cannot be treated as `initial`, a
+delayed process or an independent concurrent process. The envelope has no
+end-of-simulation queue or final invocation frame, so no final body is
+admitted by running it at time zero or adding a second scheduler. See [the
+final boundary](sv-final.md) and the read-only instrument
+`extractors/sv/final_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

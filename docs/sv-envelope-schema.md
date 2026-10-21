@@ -1512,6 +1512,11 @@ unsupported members; see [the type-parameter boundary](sv-type-parameters.md).
 The envelope has no type environment or `type(...)` node, so overrides and
 dependent declarations are not reduced to the default type.
 
+Final procedures remain explicit `ProceduralBlockSymbol:Final` unsupported
+members; see [the final-procedure boundary](sv-final.md). The envelope has no
+end-of-simulation invocation phase or completion queue, so a final body is not
+run as an initial or concurrent process.
+
 Frontend recovery spans remain explicit `InvalidStatement` unsupported
 members; see [the recovery boundary](sv-invalid-statements.md). The envelope
 does not execute a bad or partially recovered statement tree.

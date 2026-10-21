@@ -484,6 +484,22 @@ type-parameter-only and **10** co-occurring. Repricing the sole files finds
 declaration is reduced to a default. See [the type-parameter boundary](sv-type-parameters.md)
 and `extractors/sv/type_parameter_reprice.py` for the reproducible scan.
 
+## Final procedures — 2026-10-21
+
+`ProceduralBlockSymbol:Final` remains the end-of-simulation shutdown boundary.
+The fresh **22,043**-path census records it in **88** files: **39** are
+final-only and **49** co-occurring. Repricing the sole files finds **45** final
+spans. Their overlapping source features include **39** block bodies,
+**33** assignments or increments, **38** `$display` calls, **4** `$finish`
+calls, **2** assertion/`$fatal` sites, **3** delays, **1** `wait` and **1**
+`$time` query. Final procedures run once at simulation completion in a
+function-like shutdown context, after the finish condition and with distinct
+ordering/completion rules; they are not `initial`, delayed, or independent
+concurrent processes. The envelope has no final-invocation context or
+end-of-simulation queue, so no final body is admitted by running it at time
+zero or by inventing another scheduler. See [the final boundary](sv-final.md)
+and `extractors/sv/final_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

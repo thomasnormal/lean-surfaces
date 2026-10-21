@@ -1466,6 +1466,11 @@ Gate, switch and pull primitive instances remain explicit
 primitive boundary](sv-primitives.md). The envelope has no continuous-driver
 or net-resolution node.
 
+Concurrent properties remain explicit `ConcurrentAssertionStatement`
+unsupported members; see [the assertion boundary](sv-concurrent-assertions.md).
+The immediate-assertion `If` lowering does not encode sampled history,
+sequence attempts or assertion-region actions.
+
 
 ## Dynamic integral casts
 

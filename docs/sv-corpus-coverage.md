@@ -403,6 +403,18 @@ resolution, strengths and delayed publication are absent from the current
 store, so no primitive family is admitted. See [the boundary](sv-primitives.md)
 and `extractors/sv/primitive_reprice.py` for the reproducible scan.
 
+## Concurrent assertions — 2026-10-21
+
+`ConcurrentAssertionStatement` remains the sampled-property boundary. The
+fresh **22,043**-path census records it in **1,358** files: **539**
+assertion-only and **819** co-occurring. Repricing the sole files finds
+**639** statements: **562** `assert property`, **37** `cover property`, **9**
+`assume property`, **8** `cover sequence`, **21** `expect` and **2**
+`restrict` forms. Preponed sampling, Observed evaluation, sequence-attempt
+state and Reactive/coverage actions have no representation in the current
+executor, so no flavor is admitted. See [the boundary](sv-concurrent-assertions.md)
+and `extractors/sv/concurrent_assert_reprice.py` for the reproducible scan.
+
 The paired **22,035** paths gain **198 clean files**, no losses:
 **4,098 → 4,296 clean**, **17,871 → 17,673 partial**, **66 include skips**,
 zero extraction errors. All 4,098 previously clean extracted designs remain

@@ -3861,6 +3861,19 @@ remains loud until it can call the existing scheduler with a real driver
 representation. See [the boundary and repricing](sv-primitives.md) and the
 read-only instrument `extractors/sv/primitive_reprice.py`.
 
+### Concurrent assertions — 2026-10-21
+
+Concurrent assertion repricing measures `ConcurrentAssertionStatement` in
+1,358 files: 539 assertion-only and 819 co-occurring. The sole files contain
+639 statements: 562 `assert property`, 37 `cover property`, nine `assume
+property`, eight `cover sequence`, 21 `expect` and two `restrict` forms.
+These statements sample in Preponed, retain sequence attempts across ticks,
+evaluate in Observed and publish actions through Reactive/coverage regions.
+Their flavors are not immediate booleans, so no form is admitted by the
+existing assertion action path and no second scheduler is added. See [the
+boundary and repricing](sv-concurrent-assertions.md) and the read-only
+instrument `extractors/sv/concurrent_assert_reprice.py`.
+
 
 ### Dynamic integral casts — 2026-10-20
 

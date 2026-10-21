@@ -222,9 +222,10 @@ object identity is inferred by the enum layer.
 
 `MemberGetterTests.test_enum_field_mutation_differential` compares assignment
 and readback of a real `enum Error : unsigned int` member at `-O0` and `-O2`
-under UBSan with the same four rows through `write` and `read`. The native rows
-agree and the Lean checks pass; this validates the existing object-store update
-path without admitting a general enum setter or a guessed layout.
+under UBSan with the same four rows through the admitted setter witness,
+`IntegralMemberEnumSetter.write`, and `read`. The native rows agree and the
+Lean checks pass; this validates the existing object-store update path without
+admitting a general enum setter or a guessed layout.
 
 The source census now records direct assignment shapes separately from readable
 `this` fields. In the pinned TinyXML2 probe, all **11** `SetError` definitions

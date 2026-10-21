@@ -177,16 +177,21 @@ private def enumSetterRepresentation : Option IntegralMemberEnumRepresentation :
     field := fieldHandle, enum := h "0x13", name := "XMLError",
     constantCount := 20, explicitValueCount := 1, underlyingType := none} .unsignedInt).toOption
 
-private def enumSetterAccepted : Bool :=
+private def enumSetterEvidence : Option IntegralMemberEnumSetter :=
   match enumSetterRepresentation with
   | some representation =>
       match IntegralMemberEnumSetter.admit (enumSetterProbeWith (enumSetterRight "0x15"))
           methodHandle representation with
-      | .ok setter =>
-          setter.field == fieldHandle && setter.parameter == h "0x15" &&
-            setter.fieldName == "_errorID" && setter.fieldType == "XMLError" &&
-            setter.parameterType == "XMLError"
-      | .error _ => false
+      | .ok setter => some setter
+      | .error _ => none
+  | none => none
+
+private def enumSetterAccepted : Bool :=
+  match enumSetterEvidence with
+  | some setter =>
+      setter.field == fieldHandle && setter.parameter == h "0x15" &&
+        setter.fieldName == "_errorID" && setter.fieldType == "XMLError" &&
+        setter.parameterType == "XMLError"
   | none => false
 
 private def enumSetterWrongParameter : Bool :=
@@ -296,6 +301,32 @@ private def enumProjection : ClassReceiverProjection := {
         {duration := .automatic, type := .builtin .unsignedInt, phase := .aliveInitialized}]},
       values := [none, some ⟨.unsigned 32, 7⟩]},
     object := 0, member := 1, field := fieldHandle}}
+
+private def enumSetterWriteAccepted : Bool :=
+  match enumSetterEvidence with
+  | some setter =>
+      let access : IntegralMemberThisFieldAccess := {
+        method := methodHandle, definition := methodHandle, owner := ownerHandle,
+        field := fieldHandle, name := "_errorID", receiverType := "Owner *",
+        fieldType := "XMLError", methodName := "set"}
+      match IntegralMemberEnumSetter.write setter access enumProjection
+          ⟨.unsigned 32, 9⟩ with
+      | .ok memory => memory.values == [none, some ⟨.unsigned 32, 9⟩]
+      | .error _ => false
+  | none => false
+
+private def enumSetterWriteWrongField : Bool :=
+  match enumSetterEvidence with
+  | some setter =>
+      let access : IntegralMemberThisFieldAccess := {
+        method := methodHandle, definition := methodHandle, owner := ownerHandle,
+        field := h "0x99", name := "_errorID", receiverType := "Owner *",
+        fieldType := "XMLError", methodName := "set"}
+      match IntegralMemberEnumSetter.write setter access enumProjection
+          ⟨.unsigned 32, 9⟩ with
+      | .error .fieldMismatch => true
+      | _ => false
+  | none => false
 
 private def enumReadAccepted : Bool :=
   match enumReadRepresentation with
@@ -695,6 +726,8 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
     some (methodHandle, .void, [.builtin .int], false, false, "CompoundStmt")
 #guard enumSetterAccepted
 #guard enumSetterWrongParameter
+#guard enumSetterWriteAccepted
+#guard enumSetterWriteWrongField
 #guard methodBody.map (fun body =>
     (body.canonical, body.definition, body.bodyKind)) ==
     some (methodHandle, h "0x11", "CompoundStmt")

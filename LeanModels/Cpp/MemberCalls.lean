@@ -974,6 +974,16 @@ inductive IntegralMemberEnumSetterError where
   | parameterTypeMismatch
   deriving Repr, BEq, Inhabited
 
+inductive IntegralMemberEnumSetterWriteError where
+  | methodMismatch
+  | definitionMismatch
+  | ownerMismatch
+  | fieldMismatch
+  | nameMismatch
+  | fieldTypeMismatch
+  | write (reason : IntegralMemberEnumValue.IntegralMemberEnumWriteError)
+  deriving Repr, BEq, Inhabited
+
 namespace IntegralMemberEnumSetter
 
 private partial def rawNodesById (wanted : String) : Raw → List Raw
@@ -1073,6 +1083,22 @@ def admit (probe : DeclarationProbe) (canonical : FrontendHandle)
   unless spellingMatches parameterType representation.profile.name do
     throw .parameterTypeMismatch
   pure {method, body, owner, field, parameter, fieldName, fieldType, parameterType, representation}
+
+/-- Apply an admitted setter only through a separately supplied receiver
+projection and field witness. The witness must retain the exact method/body,
+owner, field, and source type selected by admission before the existing enum
+writer is called. -/
+def write (setter : IntegralMemberEnumSetter) (access : IntegralMemberThisFieldAccess)
+    (projection : ClassReceiverProjection) (stored : IntegralValue) :
+    Except IntegralMemberEnumSetterWriteError IntegralObjectStore := do
+  unless access.method == setter.body.canonical do throw .methodMismatch
+  unless access.definition == setter.body.definition do throw .definitionMismatch
+  unless access.owner == setter.owner do throw .ownerMismatch
+  unless access.field == setter.field do throw .fieldMismatch
+  unless access.name == setter.fieldName do throw .nameMismatch
+  unless access.fieldType == setter.fieldType do throw .fieldTypeMismatch
+  IntegralMemberEnumValue.write access setter.representation projection stored
+    |>.mapError .write
 
 end IntegralMemberEnumSetter
 

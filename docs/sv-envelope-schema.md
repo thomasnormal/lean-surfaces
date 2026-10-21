@@ -1493,6 +1493,10 @@ unsupported members; see [the covergroup boundary](sv-covergroups.md). The
 envelope has no sampling event, coverpoint/bin or cross state, so a covergroup
 is not flattened into module storage or executed as a procedural block.
 
+Compilation-unit covergroups retain the separate `CovergroupType` unsupported
+member. The same sampling and coverage-state boundary applies at that scope;
+the envelope does not move the declaration into an artificial module.
+
 Frontend recovery spans remain explicit `InvalidStatement` unsupported
 members; see [the recovery boundary](sv-invalid-statements.md). The envelope
 does not execute a bad or partially recovered statement tree.

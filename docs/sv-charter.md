@@ -3912,6 +3912,17 @@ no covergroup shape is admitted by flattening it into module storage. See
 [the covergroup boundary](sv-covergroups.md) and the read-only instrument
 `extractors/sv/covergroup_reprice.py`.
 
+### Compilation-unit covergroups — 2026-10-21
+
+The separate `CovergroupType` marker covers compilation-unit covergroup
+declarations. In the fresh 22,043-path census it occurs in five files: three
+are covergroup-only and two co-occur with another wall. The sole files contain
+six spans, with three clocked, three `extends`, four coverpoint and two bin
+feature rows (overlapping). Top-level inheritance remains a diagnostic and
+coverage-object boundary; no declaration is moved into an artificial module.
+See [the covergroup boundary](sv-covergroups.md) and the read-only instrument
+`extractors/sv/top_covergroup_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

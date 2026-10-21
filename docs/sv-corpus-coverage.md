@@ -441,6 +441,17 @@ Sampling events, bin databases and cross state have no representation in the
 envelope, so no covergroup shape is admitted. See [the covergroup boundary](sv-covergroups.md)
 and `extractors/sv/covergroup_reprice.py` for the reproducible scan.
 
+## Compilation-unit covergroups — 2026-10-21
+
+The separate `CovergroupType` marker covers a covergroup declared outside a
+module. The fresh **22,043**-path census records it in **5** files: **3**
+covergroup-only and **2** co-occurring. Repricing the sole files finds **3**
+spans: **3** clocked, **3** `extends`, **4** coverpoint and **2** bin rows
+(features overlap). Top-level inheritance errors retain the same coverage
+object boundary; no compilation-unit covergroup is admitted. See
+[the covergroup boundary](sv-covergroups.md) and
+`extractors/sv/top_covergroup_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

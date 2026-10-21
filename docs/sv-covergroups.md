@@ -47,3 +47,22 @@ python3.9 extractors/sv/covergroup_reprice.py \
 ```
 
 The instrument is read-only and does not execute coverage sampling.
+
+## Compilation-unit covergroups — 2026-10-21
+
+The separate `CovergroupType` marker is emitted for a covergroup declared at
+compilation-unit scope. The fresh census records it in **5** files: **3** are
+covergroup-only and **2** co-occur with another wall. The sole files contain
+**6** recovered spans: three include clocked sampling, three include `extends`,
+four include coverpoints and two include bins. These rows describe the
+frontend span, including declarations rejected for illegal top-level
+inheritance; they do not admit a top-level coverage object. Reproduce the
+separate scan with:
+
+```text
+python3.9 extractors/sv/top_covergroup_reprice.py \
+  --corpus /path/to/sv-tests-2/tests
+```
+
+The top-level and module-member markers share the same coverage-state
+boundary and remain loud independently.

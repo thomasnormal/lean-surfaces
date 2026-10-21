@@ -391,6 +391,18 @@ executor. Constant-function candidates require a separate elaboration
 evaluator. No subfamily is admitted by this item. See [the boundary](sv-subroutines.md)
 and `extractors/sv/subroutine_reprice.py` for the reproducible scan.
 
+## Primitive instances — 2026-10-21
+
+`PrimitiveInstanceSymbol:PrimitiveInstance` remains the structural-driver
+boundary. The fresh **22,043**-path census records it in **1,053** files:
+**543** primitive-only and **510** co-occurring. Repricing the sole files
+finds **681** concrete instances: **302** logic gates, **99** conditional
+gates, **130** MOS switches, **76** tran switches and **74** pull sources.
+**120** carry delays and **561** do not. Continuous drivers, four-state net
+resolution, strengths and delayed publication are absent from the current
+store, so no primitive family is admitted. See [the boundary](sv-primitives.md)
+and `extractors/sv/primitive_reprice.py` for the reproducible scan.
+
 The paired **22,035** paths gain **198 clean files**, no losses:
 **4,098 → 4,296 clean**, **17,871 → 17,673 partial**, **66 include skips**,
 zero extraction errors. All 4,098 previously clean extracted designs remain

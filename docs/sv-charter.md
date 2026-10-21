@@ -3847,6 +3847,20 @@ independently admissible by dropping its body or treating a call as pure. See
 [the boundary and repricing](sv-subroutines.md) and the read-only instrument
 `extractors/sv/subroutine_reprice.py`.
 
+### Primitive instances — 2026-10-21
+
+Structural primitive repricing is the next largest sole boundary:
+`PrimitiveInstanceSymbol:PrimitiveInstance` occurs in 1,053 files, with 543
+primitive-only and 510 co-occurring. The sole files contain 681 concrete
+instances: 302 logic gates, 99 conditional gates, 130 MOS switches, 76 tran
+switches and 74 pull sources. One hundred twenty have delays and 561 do not.
+Even a no-delay gate needs continuous publication, four-state net resolution
+and driver state; switches and pull sources add bidirectionality and strength.
+The current scalar/packed store has no driver graph, so every primitive family
+remains loud until it can call the existing scheduler with a real driver
+representation. See [the boundary and repricing](sv-primitives.md) and the
+read-only instrument `extractors/sv/primitive_reprice.py`.
+
 
 ### Dynamic integral casts — 2026-10-20
 

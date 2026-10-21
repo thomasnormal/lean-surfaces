@@ -1461,6 +1461,11 @@ User function, task and DPI declarations remain explicit
 boundary](sv-subroutines.md). No callable frame or external ABI is encoded by
 the legacy module envelope.
 
+Gate, switch and pull primitive instances remain explicit
+`PrimitiveInstanceSymbol:PrimitiveInstance` unsupported members; see [the
+primitive boundary](sv-primitives.md). The envelope has no continuous-driver
+or net-resolution node.
+
 
 ## Dynamic integral casts
 

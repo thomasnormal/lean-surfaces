@@ -52,6 +52,17 @@ private def projection : ClassReceiverProjection := {
 private def rawObject (fields : List (String × Raw)) : Raw := .object fields
 private def rawText (value : String) : Raw := .string value
 
+private def rawIntegerArgument (id value : String) : Raw := rawObject [
+  ("id", rawText id), ("kind", rawText "IntegerLiteral"),
+  ("type", rawObject [("qualType", rawText "int")]), ("value", rawText value)]
+
+private def integerArgument : Option IntegralMemberIntegerArgument :=
+  (IntegralMemberIntegerArgument.admit (rawIntegerArgument "0xf" "0")).toOption
+
+private def boundIntegerArgument : Option IntegralMemberBoundIntegerArgument := do
+  let argument ← integerArgument
+  IntegralMemberIntegerArgument.bind argument (h "0x10") (.builtin .int) |>.toOption
+
 private def rawRef (id : String) : Raw := rawObject [
   ("kind", rawText "DeclRefExpr"),
   ("type", rawObject [("qualType", rawText "Owner *")]),
@@ -308,6 +319,20 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
       evidence.receiverFieldName, evidence.receiverCast)) ==
     some (receiverFieldHandle, some receiverFieldHandle, some receiverHandle,
       some "pool", ["LValueToRValue", "LValueToRValue"])
+#guard integerArgument.map (fun argument =>
+    (argument.occurrence, argument.sourceType, argument.type, argument.value)) ==
+    some (h "0xf", "int", .builtin .int, 0)
+#guard boundIntegerArgument.map (fun bound =>
+    (bound.parameter, bound.parameterType, bound.argument.value)) ==
+    some (h "0x10", .builtin .int, 0)
+#guard (IntegralMemberIntegerArgument.admit
+    (rawObject [("kind", rawText "CharacterLiteral")])).toOption.isNone
+#guard (IntegralMemberIntegerArgument.admit
+    (rawObject [("kind", rawText "IntegerLiteral"),
+      ("id", rawText "0xf"), ("type", rawObject [("qualType", rawText "long")]),
+      ("value", rawText "0")])).toOption.isNone
+#guard integerArgument.map (fun argument =>
+    IntegralMemberIntegerArgument.bind argument (h "0x10") (.builtin .long)) matches .some (.error .parameterTypeMismatch)
 #guard syntaxError (rawNestedCall methodHandle.value methodHandle.value receiverHandle.value "read") ==
   some .unsupportedReceiver
 #guard syntaxError (rawCallThis methodHandle.value "read") == some .missingThisOwner

@@ -99,6 +99,15 @@ and the selected method's parameter declaration before it can evaluate a call;
 it must not treat a literal's presence as proof of overload selection or
 conversion safety.
 
+`IntegralMemberIntegerArgument.admit` now captures that direct slice as typed
+evidence: the artifact-local literal handle, source spelling (`int`), normalized
+`CppTypeEvidence.builtin .int`, and nonnegative value. Its separate `bind`
+operation requires an explicit parameter handle and independently supplied
+exact-`int` parameter type. It performs no lookup, overload resolution,
+conversion, object mutation, or execution; wrappers and other literal types
+remain loud. This keeps the parameter-binding boundary visible while the
+zero-argument getter remains the only executable member-call path.
+
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or
 qualified dispatch, construction, writes and calls whose target body is not an

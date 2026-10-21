@@ -25,6 +25,74 @@ structure IntegralMemberCallSyntax where
   receiverFieldName : Option String := none
   deriving Repr, BEq, Inhabited
 
+/-- Typed evidence for the first member-call argument slice. This is a direct
+`IntegerLiteral`, before any implicit conversion or overload selection. The
+frontend spelling is retained alongside the normalized builtin type so a
+caller cannot silently replace the source type with a guessed one. -/
+structure IntegralMemberIntegerArgument where
+  occurrence : FrontendHandle
+  sourceType : String
+  type : CppTypeEvidence
+  value : Nat
+  deriving Repr, BEq, Inhabited
+
+inductive IntegralMemberIntegerArgumentError where
+  | notIntegerLiteral
+  | missingOccurrence
+  | malformedType
+  | unsupportedType
+  | malformedValue
+  | missingParameter
+  | parameterTypeMismatch
+  deriving Repr, BEq, Inhabited
+
+structure IntegralMemberBoundIntegerArgument where
+  argument : IntegralMemberIntegerArgument
+  parameter : FrontendHandle
+  parameterType : CppTypeEvidence
+  deriving Repr, BEq, Inhabited
+
+namespace IntegralMemberIntegerArgument
+
+/-- Admit exactly the direct `int` literal slice priced by the member-call
+census. Cast wrappers, boolean/character literals, and non-`int` spellings
+remain outside this evidence tier. -/
+def admit (raw : Raw) :
+    Except IntegralMemberIntegerArgumentError IntegralMemberIntegerArgument := do
+  unless raw.text "kind" == some "IntegerLiteral" do
+    throw .notIntegerLiteral
+  let occurrence ← match raw.field "id" with
+    | some (.string value) =>
+        match parseFrontendHandle value with
+        | .ok handle => pure handle
+        | .error _ => throw .missingOccurrence
+    | _ => throw .missingOccurrence
+  let sourceType ← match raw.field "type" with
+    | some type => match type.text "qualType" with
+        | some value => if value == "int" then pure value else throw .unsupportedType
+        | none => throw .malformedType
+    | none => throw .malformedType
+  let value ← match raw.field "value" with
+    | some (.string value) =>
+        match value.toNat? with
+        | some value => pure value
+        | none => throw .malformedValue
+    | _ => throw .malformedValue
+  pure {occurrence, sourceType, type := .builtin .int, value}
+
+/-- Bind a retained literal to an explicitly supplied parameter declaration.
+No lookup, overload resolution, conversion, or execution occurs here. The
+parameter identity and type must come from a separately validated method
+signature; this function only checks the narrow exact-`int` boundary. -/
+def bind (argument : IntegralMemberIntegerArgument) (parameter : FrontendHandle)
+    (parameterType : CppTypeEvidence) :
+    Except IntegralMemberIntegerArgumentError IntegralMemberBoundIntegerArgument := do
+  unless !parameter.value.isEmpty do throw .missingParameter
+  unless parameterType == .builtin .int do throw .parameterTypeMismatch
+  pure {argument, parameter, parameterType}
+
+end IntegralMemberIntegerArgument
+
 inductive IntegralMemberCallSyntaxError where
   | notMemberCall
   | malformedChildren

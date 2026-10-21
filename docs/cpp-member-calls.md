@@ -130,6 +130,16 @@ its body. Successful argument bindings therefore do not count as runtime
 admissions; they identify both the canonical-signature wall and the next
 object-backed method-body tier precisely.
 
+The same census walks every retained member-call occurrence whose selected
+method metadata has an enumeration result type, including calls that still
+refuse on arguments or receivers. The pinned TinyXML2 artifact contains **43**
+such calls: `XMLError` **38**, `ElementClosingType` **3**, and `Whitespace` **2**.
+Their raw result spellings agree with the witnessed enum names in all 43 cases;
+unknown or inconsistent method-result metadata remains a named census refusal.
+This is real-artifact source telemetry, not a native execution or differential
+claim: the calls still require their own object, argument, and enum-value
+admission before execution.
+
 `IntegralMemberMethodBody.admit` then resolves the body relation independently
 of the profile. The real census finds exactly one definition for each involved
 canonical method: `Set → Set` once and `SetError →` its distinct defining

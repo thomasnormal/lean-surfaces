@@ -112,6 +112,33 @@ private partial def rawNodesById (wanted : String) : Raw → List Raw
   | .array values => values.flatMap (rawNodesById wanted)
   | _ => []
 
+private def methodEnumResult (probe : DeclarationProbe) (method : FrontendHandle) :
+    Except String FrontendHandle := do
+  let rows := probe.declarations.filter (fun row =>
+    row.id == method && row.kind == "CXXMethodDecl")
+  let row :: rest := rows | throw "missing-method"
+  unless rest.all (· == row) do throw "conflicting-method"
+  let some raw := row.raw.field "method_result_type" | throw "missing-result-type"
+  let type ← parseCppTypeEvidence raw |>.mapError (fun _ => "malformed-result-type")
+  match type with
+  | .enumeration enum => pure enum
+  | _ => throw "non-enum-result"
+
+private def enumResultName (probe : DeclarationProbe) (enum : FrontendHandle) :
+    Except String String := do
+  let nodes := (rawNodesById enum.value probe.ast).filter
+    (·.text "kind" == some "EnumDecl")
+  let node :: rest := nodes | throw "missing-enum"
+  unless rest.all (· == node) do throw "conflicting-enum"
+  let some name := node.text "name" | throw "malformed-enum"
+  unless !name.isEmpty do throw "malformed-enum"
+  pure name
+
+private def rawResultSpelling (raw : Raw) : Option String := do
+  let type ← raw.field "type"
+  type.text "qualType"
+
+
 private partial def firstObjectEvent : Raw → Option String
   | node@(.object fields) =>
       match node.text "kind" with
@@ -218,10 +245,28 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut integerMethodEnumProfileRefusals : List String := []
   let mut integerMethodEnumRepresentations : List String := []
   let mut integerMethodEnumRepresentationRefusals : List String := []
+  let mut enumResultCalls : List String := []
+  let mut enumResultRefusals : List String := []
   let mut receiverShapes : List String := []
   let mut receiverFamilies : List String := []
   let mut reports : List Json := []
   for (raw, ordinal) in calls.zipIdx do
+    match memberMethodHandle raw with
+    | some method =>
+        match methodEnumResult probe (canonicalMethodHandle probe method |>.getD method) with
+        | .ok enum =>
+            match enumResultName probe enum, rawResultSpelling raw with
+            | .ok name, some spelling =>
+                if spelling == name || spelling == "enum " ++ name ||
+                    spelling.endsWith ("::" ++ name) then
+                  enumResultCalls := (s!"{name}:{spelling}") :: enumResultCalls
+                else enumResultRefusals := "result-spelling-mismatch" :: enumResultRefusals
+            | .error error, _ => enumResultRefusals := error :: enumResultRefusals
+            | _, none => enumResultRefusals := "missing-result-spelling" :: enumResultRefusals
+        | .error error =>
+            if error != "non-enum-result" && error != "missing-method" then
+              enumResultRefusals := error :: enumResultRefusals
+    | none => pure ()
     match IntegralMemberCallSyntax.admitResolved probe raw with
     | .ok evidence =>
         admitted := admitted + 1
@@ -337,6 +382,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("typed_integer_method_enum_representations", counts integerMethodEnumRepresentations),
     ("typed_integer_method_enum_representation_refusals",
       counts integerMethodEnumRepresentationRefusals),
+    ("enum_result_calls", counts enumResultCalls),
+    ("enum_result_refusals", counts enumResultRefusals),
     ("unsupported_receiver_shapes", counts receiverShapes),
     ("unsupported_receiver_families", counts receiverFamilies),
     ("calls", toJson reports.reverse)])

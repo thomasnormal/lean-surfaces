@@ -45,6 +45,15 @@ private def integerArgumentErrorName :
   | .missingParameterEvidence => "missing-parameter-evidence"
   | .conflictingParameterEvidence => "conflicting-parameter-evidence"
 
+private def methodProfileErrorName :
+    IntegralMemberMethodProfileError → String
+  | .missingMethod => "missing-method"
+  | .conflictingMethod => "conflicting-method"
+  | .malformedSignature => "malformed-signature"
+  | .unsupportedFlags => "unsupported-flags"
+  | .missingBody => "missing-body"
+  | .unsupportedBody => "unsupported-body"
+
 private def memberMethodHandle (raw : Raw) : Option FrontendHandle := do
   let .array (member :: _) ← raw.field "inner" | none
   let referenced ← member.field "referencedMemberDecl"
@@ -126,6 +135,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut argumentTrees : List String := []
   let mut integerArgumentBindings : List String := []
   let mut integerArgumentRefusals : List String := []
+  let mut integerMethodProfiles : List String := []
+  let mut integerMethodProfileRefusals : List String := []
   let mut receiverShapes : List String := []
   let mut receiverFamilies : List String := []
   let mut reports : List Json := []
@@ -166,6 +177,10 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
                               integerArgumentErrorName error :: integerArgumentRefusals
                       | .error error => integerArgumentRefusals :=
                           integerArgumentErrorName error :: integerArgumentRefusals
+                      match IntegralMemberMethodProfile.admit probe canonical with
+                      | .ok _ => integerMethodProfiles := canonical.value :: integerMethodProfiles
+                      | .error error => integerMethodProfileRefusals :=
+                          methodProfileErrorName error :: integerMethodProfileRefusals
                   | .ok _, none => integerArgumentRefusals :=
                       "canonical-method-missing" :: integerArgumentRefusals
                   | .error error, _ => integerArgumentRefusals :=
@@ -191,6 +206,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("unsupported_argument_trees", counts argumentTrees),
     ("typed_integer_argument_bindings", counts integerArgumentBindings),
     ("typed_integer_argument_refusals", counts integerArgumentRefusals),
+    ("typed_integer_method_profiles", counts integerMethodProfiles),
+    ("typed_integer_method_profile_refusals", counts integerMethodProfileRefusals),
     ("unsupported_receiver_shapes", counts receiverShapes),
     ("unsupported_receiver_families", counts receiverFamilies),
     ("calls", toJson reports.reverse)])

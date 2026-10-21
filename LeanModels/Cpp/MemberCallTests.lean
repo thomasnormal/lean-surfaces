@@ -51,6 +51,7 @@ private def projection : ClassReceiverProjection := {
 
 private def rawObject (fields : List (String × Raw)) : Raw := .object fields
 private def rawText (value : String) : Raw := .string value
+private def rawNat (value : Nat) : Raw := .number (toString value)
 
 private def rawIntegerArgument (id value : String) : Raw := rawObject [
   ("id", rawText id), ("kind", rawText "IntegerLiteral"),
@@ -79,6 +80,37 @@ private def parameterProbe : DeclarationProbe :=
   {ast := parameterAst, metadata := .object [],
     declarations := [declarationRow methodHandle.value "CXXMethodDecl" methodHandle.value]
       |>.map fun row => {row with raw := parameterRaw}}
+
+private def profileRaw : Raw := rawObject [
+  ("kind", rawText "CXXMethodDecl"), ("id", rawText methodHandle.value),
+  ("method_shape_api", rawText "CXXMethodDecl receiver shape v1"),
+  ("method_signature_api", rawText "FunctionDecl return and parameter projection v1"),
+  ("definition", .bool true), ("body_present", .bool true),
+  ("defaulted", .bool false), ("deleted_as_written", .bool false),
+  ("function_has_skipped_body", .bool false),
+  ("function_will_have_body", .bool false),
+  ("function_has_defining_attr", .bool false),
+  ("function_late_template_parsed", .bool false),
+  ("function_explicitly_defaulted", .bool false),
+  ("function_attribute_count", rawNat 0),
+  ("own_body_kind", rawText "CompoundStmt"),
+  ("own_body_owner", rawText methodHandle.value),
+  ("method_const", .bool false), ("method_static", .bool false),
+  ("method_volatile", .bool false), ("method_virtual", .bool false),
+  ("method_pure", .bool false), ("method_variadic", .bool false),
+  ("method_exception_spec", rawNat 0), ("method_ref_qualifier", rawNat 0),
+  ("method_parameter_types", .array [rawObject [
+    ("kind", rawText "builtin"), ("name", rawText "int")]]),
+  ("method_result_type", rawObject [("kind", rawText "builtin"),
+    ("name", rawText "void")])]
+
+private def profileProbe : DeclarationProbe :=
+  {ast := parameterAst, metadata := .object [],
+    declarations := [declarationRow methodHandle.value "CXXMethodDecl" methodHandle.value]
+      |>.map fun row => {row with raw := profileRaw}}
+
+private def methodProfile : Option IntegralMemberMethodProfile :=
+  (IntegralMemberMethodProfile.admit profileProbe methodHandle).toOption
 
 private def parameterEvidence : Option IntegralMemberParameterEvidence :=
   (IntegralMemberIntegerArgument.parameter parameterProbe methodHandle 0).toOption
@@ -354,6 +386,10 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
     (parameter.method, parameter.parameter, parameter.ordinal, parameter.name,
       parameter.sourceType, parameter.type)) ==
     some (methodHandle, h "0x10", 0, some "flags", "int", .builtin .int)
+#guard methodProfile.map (fun profile =>
+    (profile.method, profile.resultType, profile.parameters, profile.isConst,
+      profile.isStatic, profile.bodyKind)) ==
+    some (methodHandle, .void, [.builtin .int], false, false, "CompoundStmt")
 #guard boundWitnessedIntegerArgument.map (fun bound =>
     (bound.parameter, bound.parameterType, bound.argument.value)) ==
     some (h "0x10", .builtin .int, 0)

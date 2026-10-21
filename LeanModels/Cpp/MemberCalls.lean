@@ -49,6 +49,18 @@ structure IntegralMemberParameterEvidence where
   type : CppTypeEvidence
   deriving Repr, BEq, Inhabited
 
+/-- The canonical method-level profile needed before a member call can be
+considered for execution. This is still frontend evidence: it does not lower
+or run the method body. -/
+structure IntegralMemberMethodProfile where
+  method : FrontendHandle
+  resultType : CppTypeEvidence
+  parameters : List CppTypeEvidence
+  isConst : Bool
+  isStatic : Bool
+  bodyKind : String
+  deriving Repr, BEq, Inhabited
+
 inductive IntegralMemberIntegerArgumentError where
   | notIntegerLiteral
   | missingOccurrence
@@ -61,6 +73,15 @@ inductive IntegralMemberIntegerArgumentError where
   | malformedMethodSignature
   | missingParameterEvidence
   | conflictingParameterEvidence
+  deriving Repr, BEq, Inhabited
+
+inductive IntegralMemberMethodProfileError where
+  | missingMethod
+  | conflictingMethod
+  | malformedSignature
+  | unsupportedFlags
+  | missingBody
+  | unsupportedBody
   deriving Repr, BEq, Inhabited
 
 structure IntegralMemberBoundIntegerArgument where
@@ -171,6 +192,79 @@ def bindTo (argument : IntegralMemberIntegerArgument)
   pure {argument, parameter := parameter.parameter, parameterType := parameter.type}
 
 end IntegralMemberIntegerArgument
+
+namespace IntegralMemberMethodProfile
+
+private def parseTypeList (raw : Raw) :
+    Except IntegralMemberMethodProfileError (List CppTypeEvidence) :=
+  match raw.field "method_parameter_types" with
+  | some (.array values) => values.mapM (fun value =>
+      match parseCppTypeEvidence value with
+      | .ok type => pure type
+      | .error _ => throw .malformedSignature)
+  | _ => throw .malformedSignature
+
+private def boolField (raw : Raw) (name : String) :
+    Except IntegralMemberMethodProfileError Bool :=
+  (evidenceBool raw name).mapError (fun _ => .malformedSignature)
+
+private def natField (raw : Raw) (name : String) :
+    Except IntegralMemberMethodProfileError Nat :=
+  (evidenceNat raw name).mapError (fun _ => .malformedSignature)
+
+/-- Preserve one canonical instance-method signature and body ownership. Every
+frontend flag that would change dispatch, parameter count, or body ownership
+is checked explicitly; missing fields refuse rather than defaulting. -/
+def admit (probe : DeclarationProbe) (method : FrontendHandle) :
+    Except IntegralMemberMethodProfileError IntegralMemberMethodProfile := do
+  let rows := probe.declarations.filter (fun row =>
+    row.id == method && row.kind == "CXXMethodDecl" && row.canonical == method)
+  let row :: rest := rows | throw .missingMethod
+  unless rest.all (· == row) do throw .conflictingMethod
+  let raw := row.raw
+  let _ ← (requireEvidenceText raw "method_shape_api"
+      "CXXMethodDecl receiver shape v1").mapError (fun _ => .malformedSignature)
+  let _ ← (requireEvidenceText raw "method_signature_api"
+      "FunctionDecl return and parameter projection v1").mapError (fun _ => .malformedSignature)
+  let definition ← boolField raw "definition"
+  let bodyPresent ← boolField raw "body_present"
+  let defaulted ← boolField raw "defaulted"
+  let deleted ← boolField raw "deleted_as_written"
+  let skipped ← boolField raw "function_has_skipped_body"
+  let pending ← boolField raw "function_will_have_body"
+  let defining ← boolField raw "function_has_defining_attr"
+  let lateParsed ← boolField raw "function_late_template_parsed"
+  let explicitlyDefaulted ← boolField raw "function_explicitly_defaulted"
+  let attributeCount ← natField raw "function_attribute_count"
+  unless definition && bodyPresent && !defaulted && !deleted && !skipped && !pending &&
+      !defining && !lateParsed && !explicitlyDefaulted && attributeCount == 0 do
+    throw .unsupportedBody
+  let some bodyKind ← (evidenceNullableText raw "own_body_kind").mapError
+      (fun _ => .malformedSignature)
+    | throw .missingBody
+  let some bodyOwner ← (evidenceNullableHandle raw "own_body_owner").mapError
+      (fun _ => .malformedSignature)
+    | throw .missingBody
+  unless bodyKind == "CompoundStmt" && bodyOwner == method do throw .unsupportedBody
+  let isConst ← boolField raw "method_const"
+  let isStatic ← boolField raw "method_static"
+  let volatile ← boolField raw "method_volatile"
+  let virtual ← boolField raw "method_virtual"
+  let pureMethod ← boolField raw "method_pure"
+  let variadic ← boolField raw "method_variadic"
+  let exceptionSpec ← natField raw "method_exception_spec"
+  let refQualifier ← natField raw "method_ref_qualifier"
+  unless !isStatic && !volatile && !virtual && !pureMethod && !variadic &&
+      exceptionSpec == 0 && refQualifier == 0 do throw .unsupportedFlags
+  let parameters ← parseTypeList raw
+  let resultType ← match raw.field "method_result_type" with
+    | some value => match parseCppTypeEvidence value with
+        | .ok type => pure type
+        | .error _ => throw .malformedSignature
+    | none => throw .malformedSignature
+  pure {method, resultType, parameters, isConst, isStatic, bodyKind}
+
+end IntegralMemberMethodProfile
 
 inductive IntegralMemberCallSyntaxError where
   | notMemberCall

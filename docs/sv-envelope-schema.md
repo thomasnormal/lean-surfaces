@@ -1453,7 +1453,8 @@ limits, invalid source and unsupported active members retain explicit walls.
 The loader still requires one top module. Symbolic extraction is unchanged.
 See [the contract](sv-module-hierarchy.md) for initialization and scope rules
 and [the port boundary](sv-hierarchy-ports.md) for the connected-child
-repricing decision.
+repricing decision. Program and interface instances retain an explicit
+`Hierarchy:module-kind` unsupported member; see [the kind boundary](sv-hierarchy-kinds.md).
 
 
 ## Dynamic integral casts

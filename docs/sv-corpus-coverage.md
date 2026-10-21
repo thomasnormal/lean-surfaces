@@ -366,6 +366,19 @@ cases retain default/`z` input rules. No safe subfamily is admitted by the
 existing flat store. See [the boundary](sv-hierarchy-ports.md) and
 `extractors/sv/hierarchy_reprice.py` for the reproducible measurement.
 
+## Program and interface hierarchy — 2026-10-21
+
+`Hierarchy:module-kind` remains the boundary for a concrete `program` or
+`interface` instance. The fresh **22,043**-path census records this wall in
+**1,248** files: **319** module-kind-only and **929** co-occurring. Repricing
+the sole files finds **365** non-module instances: **330** programs and **35**
+interfaces. The instances include **57** top-level programs, **273** nested
+programs and **35** nested interfaces; **279** are portless and **86** have
+ports. Program reactive/completion behavior and interface modport/clocking
+and design-signal behavior cannot be represented by the ordinary module
+executor, so no subfamily is admitted. See [the boundary](sv-hierarchy-kinds.md)
+and `extractors/sv/hierarchy_kind_reprice.py` for the reproducible scan.
+
 The paired **22,035** paths gain **198 clean files**, no losses:
 **4,098 → 4,296 clean**, **17,871 → 17,673 partial**, **66 include skips**,
 zero extraction errors. All 4,098 previously clean extracted designs remain

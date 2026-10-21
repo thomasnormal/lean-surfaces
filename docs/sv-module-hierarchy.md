@@ -7,6 +7,7 @@ arrays. This is the first module-hierarchy rung; connected ports, interface
 instances and program instances remain explicit boundaries.
 The connected-port census and repricing decision are recorded separately in
 [Connected child ports](sv-hierarchy-ports.md).
+Program and interface instances have their own [hierarchy-kind boundary](sv-hierarchy-kinds.md).
 
 The extractor walks each actual `InstanceSymbol.body`, rather than its shared
 `canonicalBody`. Siblings with identical parameter configurations can share a

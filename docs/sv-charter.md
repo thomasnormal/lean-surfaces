@@ -3818,6 +3818,21 @@ child ports remain loud and the static hierarchy rung stays portless. See
 [the boundary and repricing](sv-hierarchy-ports.md) and the read-only
 instrument `extractors/sv/hierarchy_reprice.py`.
 
+### Program and interface hierarchy — 2026-10-21
+
+The next hierarchy repricing pass measures the residual
+`Hierarchy:module-kind` wall. In the fresh 22,043-path census it occurs in
+1,248 files: 319 module-kind-only and 929 co-occurring. Those sole files
+contain 365 concrete non-module instances: 330 programs and 35 interfaces.
+There are 57 top-level programs, 273 nested programs, and 35 nested
+interfaces; 279 instances are portless and 86 have ports. Programs require
+reactive-region, completion, final and `$exit` behavior. Interfaces require
+design-signal, modport, clocking and binding behavior. The module executor
+cannot represent either by flattening it as an ordinary module, so all
+program/interface instances remain loud and no second scheduler is added. See
+[the boundary and repricing](sv-hierarchy-kinds.md) and the read-only
+instrument `extractors/sv/hierarchy_kind_reprice.py`.
+
 
 ### Dynamic integral casts — 2026-10-20
 

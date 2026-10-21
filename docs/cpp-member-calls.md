@@ -58,6 +58,8 @@ category, and base child kinds for a future receiver tier.
 The census preserves nested base trees and cast kinds, including
 `UncheckedDerivedToBase(CXXThisExpr)` and `LValueToRValue(MemberExpr(...))`, so
 `this` and derived-base work can be priced independently.
+The census also groups the remaining generic refusals into disjoint families:
+cast bases, nested member bases, and nested member-call bases.
 
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or

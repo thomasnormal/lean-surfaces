@@ -46,6 +46,23 @@ private partial def baseTree (raw : Raw) : String :=
   if children.isEmpty then kind ++ cast
   else kind ++ cast ++ "(" ++ String.intercalate "," (children.map baseTree) ++ ")"
 
+private partial def hasKind (wanted : String) (raw : Raw) : Bool :=
+  raw.text "kind" == some wanted ||
+    (((raw.field "inner").bind Raw.array?).getD []).any (hasKind wanted)
+
+private def receiverFamily (raw : Raw) : String :=
+  match raw.field "inner" with
+  | some (.array (member :: _)) =>
+      match member.field "inner" with
+      | some (.array (base :: _)) =>
+          if hasKind "CXXThisExpr" base then "this"
+          else if hasKind "CXXMemberCallExpr" base then "member-call"
+          else if hasKind "MemberExpr" base then "member"
+          else if hasKind "ImplicitCastExpr" base then "cast"
+          else base.text "kind" |>.getD "other"
+      | _ => "missing-base"
+  | _ => "malformed"
+
 private def receiverShape (raw : Raw) : String :=
   match raw.field "inner" with
   | some (.array (member :: _)) =>
@@ -78,6 +95,7 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut refusals : List String := []
   let mut argumentShapes : List String := []
   let mut receiverShapes : List String := []
+  let mut receiverFamilies : List String := []
   let mut reports : List Json := []
   for (raw, ordinal) in calls.zipIdx do
     match IntegralMemberCallSyntax.admitResolved probe raw with
@@ -97,6 +115,7 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
           argumentShapes := argumentShape raw :: argumentShapes
         if reason == .unsupportedReceiver then
           receiverShapes := receiverShape raw :: receiverShapes
+          receiverFamilies := receiverFamily raw :: receiverFamilies
         reports := jsonObject [
           ("ordinal", toJson ordinal),
           ("status", toJson "REFUSE"),
@@ -112,6 +131,7 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("first_refusals", counts refusals),
     ("unsupported_argument_shapes", counts argumentShapes),
     ("unsupported_receiver_shapes", counts receiverShapes),
+    ("unsupported_receiver_families", counts receiverFamilies),
     ("calls", toJson reports.reverse)])
   return 0
 

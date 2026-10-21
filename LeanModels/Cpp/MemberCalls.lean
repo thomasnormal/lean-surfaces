@@ -503,6 +503,49 @@ def admit (probe : DeclarationProbe) (access : IntegralMemberThisFieldAccess) :
 
 end IntegralMemberEnumProfile
 
+/-- A caller-supplied representation choice for an enum whose frontend
+metadata omitted its fixed underlying type. This is an oracle input, not a
+fact recovered from the AST. -/
+structure IntegralMemberEnumRepresentation where
+  profile : IntegralMemberEnumProfile
+  underlying : CppIntType
+  deriving Repr, BEq, Inhabited
+
+inductive IntegralMemberEnumRepresentationError where
+  | booleanUnderlying
+  | oracleDisagrees
+  deriving Repr, BEq, Inhabited
+
+namespace IntegralMemberEnumRepresentation
+
+def underlyingName : CppIntType → String
+  | .char => "char"
+  | .signedChar => "signed char"
+  | .unsignedChar => "unsigned char"
+  | .short => "short"
+  | .unsignedShort => "unsigned short"
+  | .int => "int"
+  | .unsignedInt => "unsigned int"
+  | .long => "long"
+  | .unsignedLong => "unsigned long"
+  | .longLong => "long long"
+  | .unsignedLongLong => "unsigned long long"
+  | .boolean => "bool"
+
+/-- Apply an explicit integral underlying-type oracle. If the profile contains
+a retained fixed spelling, the oracle must agree; an absent spelling remains
+an oracle choice. -/
+def withOracle (profile : IntegralMemberEnumProfile) (underlying : CppIntType) :
+    Except IntegralMemberEnumRepresentationError IntegralMemberEnumRepresentation := do
+  unless underlying != .boolean do throw .booleanUnderlying
+  match profile.underlyingType with
+  | some retained =>
+      unless retained == underlyingName underlying do throw .oracleDisagrees
+  | none => pure ()
+  pure {profile, underlying}
+
+end IntegralMemberEnumRepresentation
+
 inductive IntegralMemberCallSyntaxError where
   | notMemberCall
   | malformedChildren

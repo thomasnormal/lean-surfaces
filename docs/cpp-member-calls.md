@@ -162,6 +162,14 @@ value count, and any fixed-underlying-type spelling. The probe reports
 Reading the field therefore still needs an enum representation decision; the
 profile refuses to manufacture an `int` layout from the spelling alone.
 
+`IntegralMemberEnumRepresentation.withOracle` makes that decision explicit at
+the caller boundary. The census currently supplies `.unsignedInt` as a
+pricing oracle for this probe; this is harness input, not a representation fact
+recovered from Clang. A retained fixed-underlying spelling must agree with the
+oracle, and `bool` is rejected as outside this integral field tier. Unknown or
+unsupported representations therefore remain loud instead of acquiring a
+guessed ABI layout.
+
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or
 qualified dispatch, construction, writes and calls whose target body is not an

@@ -136,6 +136,16 @@ private def definitionProbe : DeclarationProbe :=
 private def methodBody : Option IntegralMemberMethodBody :=
   (IntegralMemberMethodBody.admit definitionProbe methodHandle).toOption
 
+private def enumProfileSample : IntegralMemberEnumProfile := {
+  field := h "0x12", enum := h "0x13", name := "XMLError",
+  constantCount := 20, explicitValueCount := 1, underlyingType := none}
+
+private def enumOracleError (underlying : CppIntType) :
+    Option IntegralMemberEnumRepresentationError :=
+  match IntegralMemberEnumRepresentation.withOracle enumProfileSample underlying with
+  | .ok _ => none
+  | .error error => some error
+
 private def parameterEvidence : Option IntegralMemberParameterEvidence :=
   (IntegralMemberIntegerArgument.parameter parameterProbe methodHandle 0).toOption
 
@@ -417,6 +427,13 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard methodBody.map (fun body =>
     (body.canonical, body.definition, body.bodyKind)) ==
     some (methodHandle, h "0x11", "CompoundStmt")
+#guard (IntegralMemberEnumRepresentation.withOracle enumProfileSample .unsignedInt).toOption.map
+    (fun representation => (representation.profile.name, representation.underlying)) ==
+    some ("XMLError", .unsignedInt)
+#guard enumOracleError .boolean == some .booleanUnderlying
+#guard IntegralMemberEnumRepresentation.withOracle
+    {enumProfileSample with underlyingType := some "int"} .unsignedInt matches
+    .error .oracleDisagrees
 #guard boundWitnessedIntegerArgument.map (fun bound =>
     (bound.parameter, bound.parameterType, bound.argument.value)) ==
     some (h "0x10", .builtin .int, 0)

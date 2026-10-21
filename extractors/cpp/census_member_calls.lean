@@ -81,6 +81,11 @@ private def enumProfileErrorName :
   | .malformedEnum => "malformed-enum"
   | .conflictingEnum => "conflicting-enum"
 
+private def enumRepresentationErrorName :
+    IntegralMemberEnumRepresentationError → String
+  | .booleanUnderlying => "boolean-underlying"
+  | .oracleDisagrees => "oracle-disagrees"
+
 private def memberMethodHandle (raw : Raw) : Option FrontendHandle := do
   let .array (member :: _) ← raw.field "inner" | none
   let referenced ← member.field "referencedMemberDecl"
@@ -211,6 +216,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut integerMethodThisFieldRefusals : List String := []
   let mut integerMethodEnumProfiles : List String := []
   let mut integerMethodEnumProfileRefusals : List String := []
+  let mut integerMethodEnumRepresentations : List String := []
+  let mut integerMethodEnumRepresentationRefusals : List String := []
   let mut receiverShapes : List String := []
   let mut receiverFamilies : List String := []
   let mut reports : List Json := []
@@ -272,9 +279,18 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
                                 (s!"{access.name}:{access.fieldType}:{access.receiverType}") ::
                                   integerMethodThisFields
                               match IntegralMemberEnumProfile.admit probe access with
-                              | .ok profile => integerMethodEnumProfiles :=
-                                  (s!"{profile.name}:{profile.constantCount}:{profile.explicitValueCount}:" ++
-                                    profile.underlyingType.getD "<absent>") :: integerMethodEnumProfiles
+                              | .ok profile => do
+                                  integerMethodEnumProfiles :=
+                                    (s!"{profile.name}:{profile.constantCount}:{profile.explicitValueCount}:" ++
+                                      profile.underlyingType.getD "<absent>") :: integerMethodEnumProfiles
+                                  match IntegralMemberEnumRepresentation.withOracle profile .unsignedInt with
+                                  | .ok representation => integerMethodEnumRepresentations :=
+                                  (s!"{representation.profile.name}:" ++
+                                    IntegralMemberEnumRepresentation.underlyingName
+                                      representation.underlying) ::
+                                        integerMethodEnumRepresentations
+                                  | .error error => integerMethodEnumRepresentationRefusals :=
+                                      enumRepresentationErrorName error :: integerMethodEnumRepresentationRefusals
                               | .error error => integerMethodEnumProfileRefusals :=
                                   enumProfileErrorName error :: integerMethodEnumProfileRefusals
                           | .error error => do
@@ -318,6 +334,9 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("typed_integer_method_this_field_refusals", counts integerMethodThisFieldRefusals),
     ("typed_integer_method_enum_profiles", counts integerMethodEnumProfiles),
     ("typed_integer_method_enum_profile_refusals", counts integerMethodEnumProfileRefusals),
+    ("typed_integer_method_enum_representations", counts integerMethodEnumRepresentations),
+    ("typed_integer_method_enum_representation_refusals",
+      counts integerMethodEnumRepresentationRefusals),
     ("unsupported_receiver_shapes", counts receiverShapes),
     ("unsupported_receiver_families", counts receiverFamilies),
     ("calls", toJson reports.reverse)])

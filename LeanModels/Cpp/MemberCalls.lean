@@ -36,6 +36,19 @@ structure IntegralMemberIntegerArgument where
   value : Nat
   deriving Repr, BEq, Inhabited
 
+/-- A method parameter witness selected from the canonical declaration row and
+its retained AST children. The declaration handle and ordinal are both kept:
+the type list alone is insufficient to bind an argument to a source parameter.
+-/
+structure IntegralMemberParameterEvidence where
+  method : FrontendHandle
+  parameter : FrontendHandle
+  ordinal : Nat
+  name : Option String
+  sourceType : String
+  type : CppTypeEvidence
+  deriving Repr, BEq, Inhabited
+
 inductive IntegralMemberIntegerArgumentError where
   | notIntegerLiteral
   | missingOccurrence
@@ -44,6 +57,10 @@ inductive IntegralMemberIntegerArgumentError where
   | malformedValue
   | missingParameter
   | parameterTypeMismatch
+  | missingMethod
+  | malformedMethodSignature
+  | missingParameterEvidence
+  | conflictingParameterEvidence
   deriving Repr, BEq, Inhabited
 
 structure IntegralMemberBoundIntegerArgument where
@@ -53,6 +70,59 @@ structure IntegralMemberBoundIntegerArgument where
   deriving Repr, BEq, Inhabited
 
 namespace IntegralMemberIntegerArgument
+
+private partial def rawNodesById (wanted : String) : Raw → List Raw
+  | node@(.object fields) =>
+      let here := if node.text "id" == some wanted then [node] else []
+      here ++ fields.flatMap (fun (_, value) => rawNodesById wanted value)
+  | .array values => values.flatMap (rawNodesById wanted)
+  | _ => []
+
+private def parameterRaws (raw : Raw) :
+    Except IntegralMemberIntegerArgumentError (List Raw) :=
+  match raw.field "inner" with
+  | some (.array children) =>
+      pure (children.filter (·.text "kind" == some "ParmVarDecl"))
+  | _ => throw .malformedMethodSignature
+
+/-- Recover one parameter from a canonical method's explicit metadata and AST
+parameter child. Repeated or absent method/parameter evidence refuses instead
+of guessing an ordinal or declaration identity. -/
+def parameter (probe : DeclarationProbe) (method : FrontendHandle) (ordinal : Nat) :
+    Except IntegralMemberIntegerArgumentError IntegralMemberParameterEvidence := do
+  let rows := probe.declarations.filter (fun row =>
+    row.id == method && row.kind == "CXXMethodDecl" && row.canonical == method)
+  let row :: rest := rows | throw .missingMethod
+  unless rest.all (· == row) do throw .conflictingParameterEvidence
+  let parameterTypes ← match row.raw.field "method_parameter_types" with
+    | some (.array values) => values.mapM (fun value =>
+        match parseCppTypeEvidence value with
+        | .ok type => pure type
+        | .error _ => throw .malformedMethodSignature)
+    | _ => throw .malformedMethodSignature
+  let nodes := (rawNodesById method.value probe.ast).filter
+    (·.text "kind" == some "CXXMethodDecl")
+  let node :: restNodes := nodes | throw .missingMethod
+  unless restNodes.all (· == node) do throw .conflictingParameterEvidence
+  let parameters ← parameterRaws node
+  unless parameters.length == parameterTypes.length do
+    throw .malformedMethodSignature
+  let some parameterType := parameterTypes[ordinal]? | throw .missingParameterEvidence
+  let some parameterRaw := parameters[ordinal]? | throw .missingParameterEvidence
+  let parameter ← match parameterRaw.field "id" with
+    | some (.string value) =>
+        match parseFrontendHandle value with
+        | .ok handle => pure handle
+        | .error _ => throw .missingParameterEvidence
+    | _ => throw .missingParameterEvidence
+  let sourceType ← match parameterRaw.field "type" with
+    | some type => match type.text "qualType" with
+        | some value => if value.isEmpty then throw .malformedMethodSignature else pure value
+        | none => throw .malformedMethodSignature
+    | none => throw .malformedMethodSignature
+  unless sourceType == "int" && parameterType == .builtin .int do
+    throw .parameterTypeMismatch
+  pure ⟨method, parameter, ordinal, parameterRaw.text "name", sourceType, parameterType⟩
 
 /-- Admit exactly the direct `int` literal slice priced by the member-call
 census. Cast wrappers, boolean/character literals, and non-`int` spellings
@@ -90,6 +160,15 @@ def bind (argument : IntegralMemberIntegerArgument) (parameter : FrontendHandle)
   unless !parameter.value.isEmpty do throw .missingParameter
   unless parameterType == .builtin .int do throw .parameterTypeMismatch
   pure {argument, parameter, parameterType}
+
+/-- Bind against the parameter witness produced by `parameter`; this is the
+only argument-to-parameter operation in the evidence tier. -/
+def bindTo (argument : IntegralMemberIntegerArgument)
+    (parameter : IntegralMemberParameterEvidence) :
+    Except IntegralMemberIntegerArgumentError IntegralMemberBoundIntegerArgument := do
+  unless argument.type == parameter.type && argument.sourceType == parameter.sourceType do
+    throw .parameterTypeMismatch
+  pure {argument, parameter := parameter.parameter, parameterType := parameter.type}
 
 end IntegralMemberIntegerArgument
 

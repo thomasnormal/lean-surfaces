@@ -108,6 +108,15 @@ conversion, object mutation, or execution; wrappers and other literal types
 remain loud. This keeps the parameter-binding boundary visible while the
 zero-argument getter remains the only executable member-call path.
 
+`IntegralMemberIntegerArgument.parameter` closes the remaining evidence gap for
+this slice. Given a canonical `CXXMethodDecl` handle and ordinal, it requires a
+self-canonical method metadata row, a matching structured parameter-type list,
+and the corresponding `ParmVarDecl` child in the retained AST. It returns the
+parameter handle, ordinal, name, source spelling, and normalized type.
+`bindTo` accepts only matching argument/parameter evidence. Missing, repeated,
+misordered, or non-`int` parameter witnesses refuse; no parameter is inferred
+from a method name or from the argument's position alone.
+
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or
 qualified dispatch, construction, writes and calls whose target body is not an

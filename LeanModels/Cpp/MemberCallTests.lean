@@ -63,6 +63,31 @@ private def boundIntegerArgument : Option IntegralMemberBoundIntegerArgument := 
   let argument ← integerArgument
   IntegralMemberIntegerArgument.bind argument (h "0x10") (.builtin .int) |>.toOption
 
+private def parameterRaw : Raw := rawObject [
+  ("kind", rawText "CXXMethodDecl"), ("id", rawText methodHandle.value),
+  ("method_parameter_types", .array [rawObject [
+    ("kind", rawText "builtin"), ("name", rawText "int")]])]
+
+private def parameterAst : Raw := rawObject [
+  ("kind", rawText "CXXMethodDecl"), ("id", rawText methodHandle.value),
+  ("inner", .array [rawObject [
+    ("kind", rawText "ParmVarDecl"), ("id", rawText "0x10"),
+    ("name", rawText "flags"),
+    ("type", rawObject [("qualType", rawText "int")])]])]
+
+private def parameterProbe : DeclarationProbe :=
+  {ast := parameterAst, metadata := .object [],
+    declarations := [declarationRow methodHandle.value "CXXMethodDecl" methodHandle.value]
+      |>.map fun row => {row with raw := parameterRaw}}
+
+private def parameterEvidence : Option IntegralMemberParameterEvidence :=
+  (IntegralMemberIntegerArgument.parameter parameterProbe methodHandle 0).toOption
+
+private def boundWitnessedIntegerArgument : Option IntegralMemberBoundIntegerArgument := do
+  let argument ← integerArgument
+  let parameter ← parameterEvidence
+  IntegralMemberIntegerArgument.bindTo argument parameter |>.toOption
+
 private def rawRef (id : String) : Raw := rawObject [
   ("kind", rawText "DeclRefExpr"),
   ("type", rawObject [("qualType", rawText "Owner *")]),
@@ -323,6 +348,13 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
     (argument.occurrence, argument.sourceType, argument.type, argument.value)) ==
     some (h "0xf", "int", .builtin .int, 0)
 #guard boundIntegerArgument.map (fun bound =>
+    (bound.parameter, bound.parameterType, bound.argument.value)) ==
+    some (h "0x10", .builtin .int, 0)
+#guard parameterEvidence.map (fun parameter =>
+    (parameter.method, parameter.parameter, parameter.ordinal, parameter.name,
+      parameter.sourceType, parameter.type)) ==
+    some (methodHandle, h "0x10", 0, some "flags", "int", .builtin .int)
+#guard boundWitnessedIntegerArgument.map (fun bound =>
     (bound.parameter, bound.parameterType, bound.argument.value)) ==
     some (h "0x10", .builtin .int, 0)
 #guard (IntegralMemberIntegerArgument.admit

@@ -620,16 +620,65 @@ private def enumSetterCallArgument : IntegralMemberEnumValue :=
       {profile := enumReadProfile, underlying := .unsignedInt},
     value := ⟨.unsigned 32, 9⟩}
 
+private def rawEnumArgument (id type parameter : String) : Raw := rawObject [
+  ("kind", rawText "DeclRefExpr"), ("id", rawText id),
+  ("type", rawObject [("qualType", rawText type)]),
+  ("referencedDecl", rawObject [("id", rawText parameter)])]
+
+private def enumArgumentAccepted : Bool :=
+  match enumSetterRepresentation with
+  | some representation =>
+      match IntegralMemberEnumArgument.admit
+          (rawEnumArgument "0x20" "XMLError" "0x21") representation with
+      | .ok argument =>
+          argument.occurrence == h "0x20" && argument.type == .enumeration (h "0x13") &&
+            argument.declaration == h "0x21"
+      | .error _ => false
+  | none => false
+
+private def enumArgumentWrongType : Bool :=
+  match enumSetterRepresentation with
+  | some representation =>
+      match IntegralMemberEnumArgument.admit
+          (rawEnumArgument "0x20" "int" "0x21") representation with
+      | .error .unsupportedType => true
+      | _ => false
+  | none => false
+
+private def enumArgumentBindAccepted : Bool :=
+  match enumSetterRepresentation with
+  | some representation =>
+      match IntegralMemberEnumArgument.admit
+          (rawEnumArgument "0x20" "XMLError" "0x21") representation with
+      | .ok argument =>
+          match IntegralMemberEnumArgument.bindTo argument (h "0x15")
+              (.enumeration (h "0x13")) with
+          | .ok bound => bound.parameter == h "0x15"
+          | .error _ => false
+      | .error _ => false
+  | none => false
+
+private def enumSetterSourceArgument : Option IntegralMemberEnumArgument :=
+  match enumSetterRepresentation with
+  | some representation =>
+      (IntegralMemberEnumArgument.admit
+        (rawEnumArgument "0x20" "XMLError" "0x21") representation).toOption
+  | none => none
+
 private def enumSetterCallObserved : Option Int :=
   match enumSetterEvidence with
   | some setter =>
-      match IntegralMemberEnumSetterCall.bind enumSetterCallSyntax setter
-          enumSetterCallAccess receiverHandle enumSetterCallArgument enumProjection with
-      | .ok call =>
-          match call.invoke with
-          | .ok memory => memory.values[1]?.bind id |>.map (fun value => value.value)
-          | .error _ => none
-      | .error _ => none
+      match enumSetterSourceArgument with
+      | some sourceArgument =>
+        match IntegralMemberEnumSetterCall.bindWithArgument enumSetterCallSyntax setter
+            enumSetterCallAccess receiverHandle sourceArgument enumSetterCallArgument
+            enumProjection with
+        | .ok call =>
+            match call.invoke with
+            | .ok memory => memory.values[1]?.bind id |>.map (fun value => value.value)
+            | .error _ => none
+        | .error _ => none
+      | none => none
   | none => none
 
 private def enumSetterCallArgumentError : Option IntegralMemberEnumSetterCallError :=
@@ -775,6 +824,9 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard enumSetterWrongParameter
 #guard enumSetterWriteAccepted
 #guard enumSetterWriteWrongField
+#guard enumArgumentAccepted
+#guard enumArgumentWrongType
+#guard enumArgumentBindAccepted
 #guard methodBody.map (fun body =>
     (body.canonical, body.definition, body.bodyKind)) ==
     some (methodHandle, h "0x11", "CompoundStmt")

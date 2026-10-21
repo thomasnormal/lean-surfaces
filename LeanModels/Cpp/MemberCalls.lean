@@ -549,6 +549,72 @@ def withOracle (profile : IntegralMemberEnumProfile) (underlying : CppIntType) :
 
 end IntegralMemberEnumRepresentation
 
+/-- A direct enum variable argument retained from a source expression. Its
+declaration handle and source spelling are kept alongside the structured enum
+type; no value is read or manufactured at this boundary. -/
+structure IntegralMemberEnumArgument where
+  occurrence : FrontendHandle
+  sourceType : String
+  type : CppTypeEvidence
+  declaration : FrontendHandle
+  deriving Repr, BEq, Inhabited
+
+inductive IntegralMemberEnumArgumentError where
+  | notDeclRef
+  | missingOccurrence
+  | malformedType
+  | unsupportedType
+  | missingReferencedDeclaration
+  | parameterTypeMismatch
+  deriving Repr, BEq, Inhabited
+
+structure IntegralMemberBoundEnumArgument where
+  argument : IntegralMemberEnumArgument
+  parameter : FrontendHandle
+  parameterType : CppTypeEvidence
+  deriving Repr, BEq, Inhabited
+
+namespace IntegralMemberEnumArgument
+
+private def spellingMatches (spelling name : String) : Bool :=
+  spelling == name || spelling == "enum " ++ name || spelling.endsWith ("::" ++ name)
+
+/-- Admit one direct enum `DeclRefExpr` under the caller's representation
+oracle. Casts, literals, and other argument forms remain outside this witness.
+-/
+def admit (raw : Raw) (representation : IntegralMemberEnumRepresentation) :
+    Except IntegralMemberEnumArgumentError IntegralMemberEnumArgument := do
+  unless raw.text "kind" == some "DeclRefExpr" do throw .notDeclRef
+  let occurrence ← match raw.field "id" with
+    | some (.string value) =>
+        (parseFrontendHandle value).mapError (fun _ => .missingOccurrence)
+    | _ => throw .missingOccurrence
+  let sourceType ← match raw.field "type" with
+    | some type =>
+        match type.text "qualType" with
+        | some value => if !value.isEmpty then pure value else throw .malformedType
+        | none => throw .malformedType
+    | none => throw .malformedType
+  unless spellingMatches sourceType representation.profile.name do throw .unsupportedType
+  let referenced ← match raw.field "referencedDecl" with
+    | some (.object fields) =>
+        match (Raw.object fields).field "id" with
+        | some (.string value) =>
+            (parseFrontendHandle value).mapError (fun _ => .missingReferencedDeclaration)
+        | _ => throw .missingReferencedDeclaration
+    | some (.string value) =>
+        (parseFrontendHandle value).mapError (fun _ => .missingReferencedDeclaration)
+    | _ => throw .missingReferencedDeclaration
+  pure {occurrence := occurrence, sourceType := sourceType, type := .enumeration representation.profile.enum, declaration := referenced}
+
+def bindTo (argument : IntegralMemberEnumArgument) (parameter : FrontendHandle)
+    (parameterType : CppTypeEvidence) :
+    Except IntegralMemberEnumArgumentError IntegralMemberBoundEnumArgument := do
+  unless argument.type == parameterType do throw .parameterTypeMismatch
+  pure {argument, parameter, parameterType}
+
+end IntegralMemberEnumArgument
+
 /-- A value read from an enum field after its storage representation has been
 validated. The value remains tagged with the enum representation; it is not
 silently retyped as an unrelated builtin integer. -/
@@ -1112,6 +1178,7 @@ structure IntegralMemberEnumSetterCall where
   receiver : FrontendHandle
   argument : IntegralMemberEnumValue
   projection : ClassReceiverProjection
+  sourceArgument : Option IntegralMemberEnumArgument := none
   deriving Repr, BEq, Inhabited
 
 inductive IntegralMemberEnumSetterCallError where
@@ -1122,6 +1189,7 @@ inductive IntegralMemberEnumSetterCallError where
   | receiverTypeMismatch
   | resultTypeMismatch
   | argumentRepresentationMismatch
+  | argumentEvidenceMismatch (reason : IntegralMemberEnumArgumentError)
   | projection (reason : ClassProjectionError)
   | write (reason : IntegralMemberEnumSetterWriteError)
   deriving Repr, BEq, Inhabited
@@ -1172,6 +1240,20 @@ def invoke (call : IntegralMemberEnumSetterCall) :
     Except IntegralMemberEnumSetterCallError IntegralObjectStore :=
   IntegralMemberEnumSetter.write call.setter call.access call.projection call.argument.value
     |>.mapError .write
+
+/-- Bind the same call while retaining a direct enum argument witness. The
+argument's structured type must match the admitted setter parameter; its live
+value remains a separate caller-supplied `IntegralMemberEnumValue`. -/
+def bindWithArgument (callSyntax : IntegralMemberCallSyntax)
+    (setter : IntegralMemberEnumSetter) (access : IntegralMemberThisFieldAccess)
+    (receiver : FrontendHandle) (sourceArgument : IntegralMemberEnumArgument)
+    (argument : IntegralMemberEnumValue) (projection : ClassReceiverProjection) :
+    Except IntegralMemberEnumSetterCallError IntegralMemberEnumSetterCall := do
+  let _ ← IntegralMemberEnumArgument.bindTo sourceArgument setter.parameter
+      (.enumeration setter.representation.profile.enum) |>.mapError
+        .argumentEvidenceMismatch
+  let call ← bind callSyntax setter access receiver argument projection
+  pure {call with sourceArgument := some sourceArgument}
 
 end IntegralMemberEnumSetterCall
 

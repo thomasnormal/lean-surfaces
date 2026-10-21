@@ -254,6 +254,13 @@ projection before invoking the setter write. Kernel controls observe `7 → 9`
 through this wrapper and reject a representation or result mismatch; no source
 call parser or variadic TinyXML2 setter is widened by it.
 
+`IntegralMemberEnumArgument.admit` preserves the separate source argument
+boundary for a direct enum `DeclRefExpr`: occurrence, referenced declaration,
+source spelling, and structured enum identity are retained, while casts and
+integer literals refuse. `bindWithArgument` checks that witness against the
+admitted setter parameter before using a caller-supplied enum value. The kernel
+battery accepts the typed argument and rejects an `int` spelling.
+
 `IntegralMemberEnumCall` exposes that read as a call result without widening
 the ordinary integral getter. It requires the already selected method and
 receiver handles, the typed field witness, the oracle-backed enum profile, and

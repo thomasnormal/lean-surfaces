@@ -401,6 +401,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut enumArgumentRefusals : List String := []
   let mut enumArgumentParameters : List String := []
   let mut enumArgumentParameterRefusals : List String := []
+  let mut enumArgumentMethodProfiles : List String := []
+  let mut enumArgumentMethodProfileRefusals : List String := []
   let mut enumGetterProfiles : List String := []
   let mut enumGetterRefusals : List String := []
   let mut receiverShapes : List String := []
@@ -424,6 +426,11 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
                             s!"{parameter.ordinal}:{parameter.sourceType}") :: enumArgumentParameters
                       | .error error => enumArgumentParameterRefusals :=
                           enumArgumentErrorName error :: enumArgumentParameterRefusals
+                      match IntegralMemberMethodProfile.admit probe canonical with
+                      | .ok profile => enumArgumentMethodProfiles :=
+                          profile.method.value :: enumArgumentMethodProfiles
+                      | .error error => enumArgumentMethodProfileRefusals :=
+                          methodProfileErrorName error :: enumArgumentMethodProfileRefusals
                       match enumArgumentShape argument name with
                       | .ok shape => enumArgumentShapes := shape :: enumArgumentShapes
                       | .error reason => enumArgumentRefusals := reason :: enumArgumentRefusals
@@ -594,6 +601,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("enum_argument_refusals", counts enumArgumentRefusals),
     ("enum_argument_parameters", counts enumArgumentParameters),
     ("enum_argument_parameter_refusals", counts enumArgumentParameterRefusals),
+    ("enum_argument_method_profiles", counts enumArgumentMethodProfiles),
+    ("enum_argument_method_profile_refusals", counts enumArgumentMethodProfileRefusals),
     ("enum_getter_profiles", counts enumGetterProfiles),
     ("enum_getter_refusals", counts enumGetterRefusals),
     ("unsupported_receiver_shapes", counts receiverShapes),

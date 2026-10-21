@@ -297,7 +297,10 @@ ordinal. Repeated or missing method/AST rows, length disagreements, wrong
 enum identities, and spelling mismatches refuse. `bindToEvidence` accepts only
 matching argument and parameter type evidence; the existing setter admission
 still supplies its own body witness, so this addition does not select an
-overload or execute a variadic method.
+overload or execute a variadic method. The real census carries all 23
+parameter witnesses into `IntegralMemberMethodProfile.admit`; all 23 stop at
+the named `unsupported-body` profile refusal, with no enum argument reaching
+setter execution.
 
 `IntegralMemberEnumCall` exposes that read as a call result without widening
 the ordinary integral getter. It requires the already selected method and

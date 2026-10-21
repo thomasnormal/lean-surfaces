@@ -452,6 +452,17 @@ object boundary; no compilation-unit covergroup is admitted. See
 [the covergroup boundary](sv-covergroups.md) and
 `extractors/sv/top_covergroup_reprice.py` for the reproducible scan.
 
+## Parameterized class declarations — 2026-10-21
+
+`GenericClassDefSymbol` remains the generic object/elaboration boundary. The
+fresh **22,043**-path census records it in **146** files: **10**
+generic-class-only and **136** co-occurring. Repricing the sole files finds
+**10** parameterized class spans. Feature rows overlap: **9** value-parameter,
+**5** type-parameter, **8** virtual-class, **7** typedef-member, **2**
+static-method, **2** packed-aggregate-type and **1** local-parameter spans.
+No default specialization is admitted. See [the generic-class boundary](sv-generic-classes.md)
+and `extractors/sv/generic_class_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

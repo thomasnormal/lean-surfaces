@@ -1497,6 +1497,11 @@ Compilation-unit covergroups retain the separate `CovergroupType` unsupported
 member. The same sampling and coverage-state boundary applies at that scope;
 the envelope does not move the declaration into an artificial module.
 
+Parameterized class declarations remain explicit `GenericClassDefSymbol`
+unsupported members; see [the generic-class boundary](sv-generic-classes.md).
+The envelope has no value/type parameter environment or specialization table,
+so a generic class is not reduced to one default class.
+
 Frontend recovery spans remain explicit `InvalidStatement` unsupported
 members; see [the recovery boundary](sv-invalid-statements.md). The envelope
 does not execute a bad or partially recovered statement tree.

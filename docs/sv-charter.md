@@ -3923,6 +3923,18 @@ coverage-object boundary; no declaration is moved into an artificial module.
 See [the covergroup boundary](sv-covergroups.md) and the read-only instrument
 `extractors/sv/top_covergroup_reprice.py`.
 
+### Parameterized class declarations — 2026-10-21
+
+`GenericClassDefSymbol` is the value/type-parameterized class boundary. In the
+fresh 22,043-path census it occurs in 146 files: 10 are generic-class-only and
+136 co-occur with another wall. The sole files contain 10 spans, including
+nine value-parameter, five type-parameter, eight virtual-class, seven
+typedef-member, two static-method, two packed-aggregate-type and one
+local-parameter feature rows (overlapping). The envelope has no
+specialization table or parameter environment, so no generic class is reduced
+to a default specialization. See [the generic-class boundary](sv-generic-classes.md)
+and the read-only instrument `extractors/sv/generic_class_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

@@ -31,6 +31,35 @@ private def errorName : IntegralMemberCallSyntaxError → String
 private def counts (values : List String) : Json :=
   jsonObject (values.eraseDups.map fun value => (value, toJson (values.count value)))
 
+private def integerArgumentErrorName :
+    IntegralMemberIntegerArgumentError → String
+  | .notIntegerLiteral => "not-integer-literal"
+  | .missingOccurrence => "missing-occurrence"
+  | .malformedType => "malformed-type"
+  | .unsupportedType => "unsupported-type"
+  | .malformedValue => "malformed-value"
+  | .missingParameter => "missing-parameter"
+  | .parameterTypeMismatch => "parameter-type-mismatch"
+  | .missingMethod => "missing-method"
+  | .malformedMethodSignature => "malformed-method-signature"
+  | .missingParameterEvidence => "missing-parameter-evidence"
+  | .conflictingParameterEvidence => "conflicting-parameter-evidence"
+
+private def memberMethodHandle (raw : Raw) : Option FrontendHandle := do
+  let .array (member :: _) ← raw.field "inner" | none
+  let referenced ← member.field "referencedMemberDecl"
+  match referenced with
+  | .string value => (parseFrontendHandle value).toOption
+  | .object _ => (evidenceHandle referenced "id").toOption
+  | _ => none
+
+private def canonicalMethodHandle (probe : DeclarationProbe)
+    (method : FrontendHandle) : Option FrontendHandle :=
+  match (probe.declarations.filterMap fun row =>
+      if row.id == method && row.kind == "CXXMethodDecl" then some row.canonical else none).eraseDups with
+  | [canonical] => some canonical
+  | _ => none
+
 private partial def rawTree (raw : Raw) : String :=
   let kind := raw.text "kind" |>.getD "<missing>"
   let cast := raw.text "castKind" |>.map (fun value => ":" ++ value) |>.getD ""
@@ -95,6 +124,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut refusals : List String := []
   let mut argumentShapes : List String := []
   let mut argumentTrees : List String := []
+  let mut integerArgumentBindings : List String := []
+  let mut integerArgumentRefusals : List String := []
   let mut receiverShapes : List String := []
   let mut receiverFamilies : List String := []
   let mut reports : List Json := []
@@ -121,6 +152,24 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
           | some (.array (_ :: arguments)) =>
               argumentTrees := (arguments.map rawTree).foldl (init := argumentTrees)
                 (fun trees tree => tree :: trees)
+              for (argument, ordinal) in arguments.zipIdx do
+                if argument.text "kind" == some "IntegerLiteral" then
+                  match IntegralMemberIntegerArgument.admit argument,
+                      memberMethodHandle raw |>.bind (canonicalMethodHandle probe) with
+                  | .ok evidence, some canonical =>
+                      match IntegralMemberIntegerArgument.parameter probe canonical ordinal with
+                      | .ok parameter =>
+                          match IntegralMemberIntegerArgument.bindTo evidence parameter with
+                          | .ok _ => integerArgumentBindings :=
+                              (s!"{canonical.value}:{ordinal}") :: integerArgumentBindings
+                          | .error error => integerArgumentRefusals :=
+                              integerArgumentErrorName error :: integerArgumentRefusals
+                      | .error error => integerArgumentRefusals :=
+                          integerArgumentErrorName error :: integerArgumentRefusals
+                  | .ok _, none => integerArgumentRefusals :=
+                      "canonical-method-missing" :: integerArgumentRefusals
+                  | .error error, _ => integerArgumentRefusals :=
+                      integerArgumentErrorName error :: integerArgumentRefusals
           | _ => argumentTrees := "<malformed>" :: argumentTrees
         if reason == .unsupportedReceiver then
           receiverShapes := receiverShape raw :: receiverShapes
@@ -140,6 +189,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("first_refusals", counts refusals),
     ("unsupported_argument_shapes", counts argumentShapes),
     ("unsupported_argument_trees", counts argumentTrees),
+    ("typed_integer_argument_bindings", counts integerArgumentBindings),
+    ("typed_integer_argument_refusals", counts integerArgumentRefusals),
     ("unsupported_receiver_shapes", counts receiverShapes),
     ("unsupported_receiver_families", counts receiverFamilies),
     ("calls", toJson reports.reverse)])

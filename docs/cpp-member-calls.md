@@ -117,6 +117,15 @@ parameter handle, ordinal, name, source spelling, and normalized type.
 misordered, or non-`int` parameter witnesses refuse; no parameter is inferred
 from a method name or from the argument's position alone.
 
+The census applies this witness to the real probe as a pricing check. All 12
+direct `int` literal arguments bind to a retained parameter (`Set` once at
+ordinal 2 and `SetError` eleven times at ordinal 1). The corresponding method
+bodies remain outside execution: the callable census classifies the target
+`SetError` body as an instance method requiring object semantics, with
+`CXXConstructExpr`, allocation/deletion, member calls, and control flow in its
+body. These successful argument bindings therefore do not count as runtime
+admissions; they identify the next object-backed method-body tier precisely.
+
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or
 qualified dispatch, construction, writes and calls whose target body is not an

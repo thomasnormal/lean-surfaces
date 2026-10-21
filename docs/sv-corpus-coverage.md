@@ -415,6 +415,17 @@ state and Reactive/coverage actions have no representation in the current
 executor, so no flavor is admitted. See [the boundary](sv-concurrent-assertions.md)
 and `extractors/sv/concurrent_assert_reprice.py` for the reproducible scan.
 
+## Invalid statement markers — 2026-10-21
+
+`InvalidStatement` is a frontend recovery marker, not a runtime statement
+family. The fresh **22,043**-path census records it in **1,323** files:
+**606** marker-only and **717** co-occurring. Repricing the sole files finds
+**568** bad `begin`/block recovery spans, **31** VPI system-task tokens and
+**7** empty frontend spans. These spans preserve bad-AST and diagnostic
+boundaries; they cannot be admitted by dropping a wrapper or executing a
+partial block. See [the boundary](sv-invalid-statements.md) and
+`extractors/sv/invalid_stmt_reprice.py` for the reproducible scan.
+
 The paired **22,035** paths gain **198 clean files**, no losses:
 **4,098 → 4,296 clean**, **17,871 → 17,673 partial**, **66 include skips**,
 zero extraction errors. All 4,098 previously clean extracted designs remain

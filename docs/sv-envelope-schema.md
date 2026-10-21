@@ -1471,6 +1471,10 @@ unsupported members; see [the assertion boundary](sv-concurrent-assertions.md).
 The immediate-assertion `If` lowering does not encode sampled history,
 sequence attempts or assertion-region actions.
 
+Frontend recovery spans remain explicit `InvalidStatement` unsupported
+members; see [the recovery boundary](sv-invalid-statements.md). The envelope
+does not execute a bad or partially recovered statement tree.
+
 
 ## Dynamic integral casts
 

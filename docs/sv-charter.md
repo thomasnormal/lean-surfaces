@@ -3874,6 +3874,18 @@ existing assertion action path and no second scheduler is added. See [the
 boundary and repricing](sv-concurrent-assertions.md) and the read-only
 instrument `extractors/sv/concurrent_assert_reprice.py`.
 
+### Invalid statement markers — 2026-10-21
+
+`InvalidStatement` is a frontend recovery marker rather than an IEEE
+statement family. It occurs in 1,323 files: 606 marker-only and 717
+co-occurring. The sole files contain 568 bad `begin`/block recovery spans, 31
+VPI system-task tokens and seven empty frontend spans. A bad block can contain
+valid-looking assignments and delays around an unsupported VPI call or
+malformed source; dropping it would execute a partial recovery tree. No
+recovery shape is admitted, and no second parser or recovery interpreter is
+introduced. See [the boundary and repricing](sv-invalid-statements.md) and the
+read-only instrument `extractors/sv/invalid_stmt_reprice.py`.
+
 
 ### Dynamic integral casts — 2026-10-20
 

@@ -282,18 +282,33 @@ open LeanModels.Cpp
 private def h (value : String) : FrontendHandle := ⟨value⟩
 private def access : IntegralMemberThisFieldAccess := {
   method := h "method", definition := h "method", owner := h "owner", field := h "field",
-  name := "value", receiverType := "Sample *", fieldType := "Error"}
+  name := "value", receiverType := "Sample *", fieldType := "Error", methodName := "get"}
 private def profile : IntegralMemberEnumProfile := {
   field := h "field", enum := h "enum", name := "Error", constantCount := 3,
   explicitValueCount := 3, underlyingType := some "unsigned int"}
 private def representation : IntegralMemberEnumRepresentation :=
   (IntegralMemberEnumRepresentation.withOracle profile .unsignedInt).toOption.getD
     {profile, underlying := .unsignedInt}
+private def hierarchy : ClassHierarchy := {
+  root := h "owner",
+  classes := [{declaration := h "owner", isAbstract := false, bases := [], fields := [h "field"], friends := [], name := "Sample"}]}
+private def callSyntax : IntegralMemberCallSyntax := {
+  method := h "method", receiver := h "receiver", receiverType := "Sample *",
+  resultType := "Error", name := "get", canonicalMethod := h "method"}
+private def memory (input : Int) : IntegralObjectStore := {
+  profile := .lp64,
+  objects := {objects := [{duration := .automatic, type := .record (h "owner"), phase := .aliveInitialized}, {duration := .automatic, type := .builtin .unsignedInt, phase := .aliveInitialized}]},
+  values := [none, some ⟨.unsigned 32, input⟩]}
+private def projection (input : Int) : ClassReceiverProjection := {
+  hierarchy, objects := [0], receiverPath := [],
+  snapshot := {memory := memory input, object := 0, member := 1, field := h "field"}}
 def cases : List (Int × Int) := [''' + pairs + ''']
 #guard cases.all (fun (input, expected) =>
-  match IntegralMemberEnumValue.evaluate access representation .lp64
-      ⟨.unsigned 32, input⟩ with
-  | .ok value => value.value == ⟨.unsigned 32, expected⟩
+  match IntegralMemberEnumCall.bind callSyntax access representation (h "receiver")
+      (projection input) with
+  | .ok call => match call.invoke with
+    | .ok (_, value) => value.value.value == expected
+    | .error _ => false
   | .error _ => false)
 ''')
         print("enum representation: 4 native rows, -O0/-O2 UBSan; explicit unsigned underlying type")

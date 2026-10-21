@@ -143,11 +143,11 @@ admission before execution.
 `MemberGetterTests.test_enum_representation_value_differential` supplies the
 small native control: a real `enum Error : unsigned int` getter is compiled
 and run at `-O0` and `-O2` under UBSan for four underlying values, and Lean
-checks the same rows through `IntegralMemberEnumValue.evaluate`. The native
-outputs agree across optimization levels and all four rows pass the kernel
-check. This validates the explicit representation/value transport only; it
-does not turn handwritten test handles into Clang provenance or admit general
-enum method execution.
+checks the same rows through `IntegralMemberEnumCall.invoke` with an explicit
+class projection. The native outputs agree across optimization levels and all
+four rows pass the kernel check. This validates the explicit representation,
+receiver, and value transport only; it does not turn handwritten test handles
+into Clang provenance or admit general enum method execution.
 
 `IntegralMemberEnumGetter.admit` prices the first body shape without executing
 it: a canonical method profile must have no parameters and an enum result that

@@ -446,7 +446,7 @@ private def syntaxError (raw : Raw) : Option IntegralMemberCallSyntaxError :=
   | .ok _ => none
 
 private def enumCallAccess : IntegralMemberThisFieldAccess :=
-  {enumReadAccess with name := "read"}
+  {enumReadAccess with methodName := "read"}
 
 private def enumCallRepresentation : IntegralMemberEnumRepresentation :=
   enumReadRepresentation.getD {profile := enumReadProfile, underlying := .unsignedInt}

@@ -350,6 +350,7 @@ structure IntegralMemberThisFieldAccess where
   name : String
   receiverType : String
   fieldType : String
+  methodName : String := ""
   deriving Repr, BEq, Inhabited
 
 inductive IntegralMemberThisFieldAccessError where
@@ -427,7 +428,9 @@ def admit (probe : DeclarationProbe) (body : IntegralMemberMethodBody) :
   unless fieldRow.semanticContext == some owner do throw .fieldMismatch
   let fieldParent ← handleField fieldRow.raw "field_parent"
   unless fieldParent == owner do throw .fieldMismatch
-  pure ⟨body.canonical, body.definition, owner, field, name, receiverType, fieldType⟩
+  let methodName := methodRow.raw.text "name" |>.getD ""
+  unless !methodName.isEmpty do throw .missingMethod
+  pure ⟨body.canonical, body.definition, owner, field, name, receiverType, fieldType, methodName⟩
 
 end IntegralMemberThisFieldAccess
 
@@ -857,7 +860,7 @@ def bind (callSyntax : IntegralMemberCallSyntax) (access : IntegralMemberThisFie
     Except IntegralMemberEnumCallError IntegralMemberEnumCall := do
   unless callSyntax.method == access.method do throw .methodMismatch
   unless callSyntax.canonicalMethod == access.method do throw .canonicalMethodMismatch
-  unless callSyntax.name == access.name do throw .nameMismatch
+  unless !access.methodName.isEmpty && callSyntax.name == access.methodName do throw .nameMismatch
   unless callSyntax.receiver == receiver do throw .receiverMismatch
   let getter : IntegralMemberGetter := {
     occurrence := {(default : Declaration) with id := access.method.value, kind := "CXXMethodDecl", name := some access.name},

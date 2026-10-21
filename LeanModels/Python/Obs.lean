@@ -1904,7 +1904,7 @@ theorem fuelMono (fuel : Nat) :
               | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
               | pyset zs => exact Run.le_refl _
           -- §3c-i-c: the trunk refuses to STEP `enumDict`; both fuels agree
-          | enumDict i ad cur n sv => simp only [execGen]; exact Run.le_refl _
+          | enumDict i ad cur n sv kind => simp only [execGen]; exact Run.le_refl _
           -- §iter: the trunk's `iterDict` arm refuses; both fuels agree
           | iterDict ad cur n sv => simp only [execGen]; exact Run.le_refl _
           -- §iterList: and its `iterList` arm refuses for the same reason

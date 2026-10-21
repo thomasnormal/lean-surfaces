@@ -879,6 +879,24 @@ theorem enumFrame_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTw
   | ref b =>
       rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
       · rw [enumFrame, enumFrame, heq]
+        cases hobj : Heap.get? h b with
+        | none => rfl
+        | some obj =>
+            cases obj with
+            | list xs => rfl
+            | dict es sv => rfl
+            | generator qn ls cc st => rfl
+            | «instance» ci attrs => rfl
+            | cell cv => rfl
+            | closure nm ps ao lo hg ig bd cap => rfl
+            | pyset zs => rfl
+            | dictView da kind =>
+                by_cases hd : da = pa
+                · subst da
+                  rcases htwin with ⟨q, l₀, c₀, l₁, c₁, ho₀, ho⟩
+                  simp [ho₀, ho, hslot, Heap.get?_swapAt_self
+                    (Heap.lt_size_of_get? hslot)]
+                · simp [Heap.get?_swapAt_ne (o := o) hd]
       · rw [enumFrame, enumFrame, h1, h2]
   | _ => rfl
 
@@ -2529,7 +2547,7 @@ theorem pbExecGen_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) 
             exact PBF.unsupported
       -- §3c-i-c: the trunk CONSTRUCTS an `enumDict` frame (`enumFrame` is
       -- shared) but refuses when STEPPING it, and a refusal is blind
-      | enumDict i ad cur n sv =>
+      | enumDict i ad cur n sv kind =>
           simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
           exact PBF.unsupported
       -- §iter: the trunk never CONSTRUCTS an `iterDict` frame (`iterFrame` has

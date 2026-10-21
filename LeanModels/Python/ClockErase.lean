@@ -1106,7 +1106,7 @@ theorem ceExecGen_succ (ih : CE fuel) : CEExecGen (fuel + 1) := by
         | closure nm ps ao lo hg ig bd cap => exact .unsupported
         | pyset xs => exact .unsupported
     -- §3c-i-c: the trunk builds this frame but refuses to STEP it
-    | enumDict i ad cur n sv => simp only [execGen]; exact .unsupported
+    | enumDict i ad cur n sv kind => simp only [execGen]; exact .unsupported
     -- §iter: the trunk never builds an `iterDict` frame either; its arm refuses
     | iterDict ad cur n sv => simp only [execGen]; exact .unsupported
     -- §iterList: nor an `iterList` frame; same refusal

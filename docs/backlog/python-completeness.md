@@ -1077,7 +1077,7 @@ expectation is CPython 3.9.19's own.
 | `dict.enumerate-start` | `print(list(enumerate(d, 5)))`, and `-3` beside it | starts at 5 / at −3 | **MATCH** — the start is an `int` |
 | `dict.enumerate-escapes` | `e = enumerate(d)` / `d[2] = 'b'` / `print(type(e).__name__)` | `enumerate`, and NO error | **MATCH** — this row IS the ruled delta |
 | `dict.enumerate-resize` | `e = enumerate(d)` / `d[2] = 'b'` / `print(next(e))` | `RuntimeError: dictionary changed size during iteration` | **MATCH** — raises, never snapshots |
-| `dict.enumerate-of-items` | `print(list(enumerate(d.items())))` | `[(0, ('x', 1)), (1, ('y', 2))]` | stays **REFUSE** — the excluded composition |
+| `dict.enumerate-of-items` | `print(list(enumerate(d.items())))` | `[(0, ('x', 1)), (1, ('y', 2))]` | **MATCH** — the enum cursor carries the live `.items()` view kind |
 
 `dict.enumerate-escapes` and `dict.enumerate-resize` are the SAME two
 statements with a different third line, and that is deliberate: the pair is
@@ -1181,7 +1181,7 @@ samples, the summary must print the FIRST error verbatim.
 * grammar census **113 → 117 witnesses**; `dict.enumerate` flips
   **REFUSE → MATCH**, joined by `dict.enumerate-start`,
   `dict.enumerate-escapes` and `dict.enumerate-resize` (MATCH) and
-  `dict.enumerate-of-items` (REFUSE — the excluded composition).
+  `dict.enumerate-of-items` (MATCH — the enum cursor carries the live view kind).
 * `harness/cases.json` **655 → 660 rows**, all five `match`, so
   `diff_test` goes **1456 → 1464 cases** (`1337 → 1345 matched`) with
   `119 whitelisted-unsupported` UNCHANGED — this inch adds capability

@@ -510,7 +510,7 @@ print(list(k))
 w("dict.values-identity-eq", """
 d = {1: 'a'}
 print(d.values() == d.values())
-""", "REFUSE",
+""", "MATCH",
   "THE TRAP, measured: CPython answers FALSE. A values view defines no "
   "equality, so it compares by IDENTITY — while `d.keys() == {1}` is True "
   "by SET equality. A model that treated the three views alike would be "
@@ -595,10 +595,9 @@ print(next(e))
 w("dict.enumerate-of-items", """
 d = {2: 'b', 1: 'a'}
 print(list(enumerate(d.items())))
-""", "REFUSE",
-  "an enumerate OUTLIVES its call, so 3c-i-b's `consumesViewArg` excludes "
-  "it and the view is not rewritten. Composing the view kind with this "
-  "cursor is its own inch")
+""", "MATCH",
+  "the enumerate cursor now retains the dictionary view kind, so the live "
+  "items view yields indexed `(key, value)` pairs")
 # --- §iter: `iter(d)` + `next` over dict KEYS (2026-08-23-pycomplete-17/18).
 # The flagship's key source; the frame is `enumDict` without the index. Every
 # expectation below is CPython 3.9.19's own, measured before the design.

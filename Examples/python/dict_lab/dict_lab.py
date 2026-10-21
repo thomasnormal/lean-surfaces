@@ -512,6 +512,23 @@ def enum_dict_grow_then_step(a):
     return next(e)[0]
 
 
+def enum_view_items(a):
+    # `enumerate` keeps the live view kind in its cursor, so `.items()` yields
+    # `(key, value)` pairs before the outer index is added. Keep the list
+    # inside the function and return its tuple elements so the public boundary
+    # observes only value-shaped data.
+    d = {2: "b", 1: a}
+    xs = list(enumerate(d.items()))
+    return (xs[0], xs[1])
+
+
+def enum_view_values(a):
+    # The same cursor carries `.values()` and yields the values directly.
+    d = {2: "b", 1: a}
+    xs = list(enumerate(d.values()))
+    return (xs[0], xs[1])
+
+
 # §del: `del d[k]`, which ingestion lowers to `<dictdel>(d, k)`. The four churn
 # rows below are the MEASURED shapes from
 # docs/backlog/python-completeness.md 2026-08-23-pycomplete-15: the same-size

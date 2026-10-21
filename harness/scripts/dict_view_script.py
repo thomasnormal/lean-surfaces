@@ -13,3 +13,6 @@ print(list(values))
 items = d.items()
 d["c"] = 4
 print(list(items))
+
+print(list(enumerate(d.items())))
+print(list(enumerate(d.values())))

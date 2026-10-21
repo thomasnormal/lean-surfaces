@@ -5012,10 +5012,13 @@ def enumFrame (h : Heap) (i : Int) : RVal → Res GenFrame
   | .ref a =>
     (match Heap.get? h a with
      | some (.list _) => .ok (.enumList i a 0)
-     | some (.dict es sv) => .ok (.enumDict i a 0 es.size sv)
+     | some (.dict es sv) => .ok (.enumDict i a 0 es.size sv .keys)
      | some (.generator ..) =>
          .unsupported "enumerate() over a generator is outside the tier (it would need a stepper inside the stepper; docs/backlog.md)"
-     | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
+     | some (.dictView da kind) =>
+         (match Heap.get? h da with
+          | some (.dict es sv) => .ok (.enumDict i da 0 es.size sv kind)
+          | _ => .unsupported danglingMsg)
      | some (.instance _ _) => .exn (.typeError "'object' object is not iterable")
      | some (.cell _) => .unsupported cellInternal
      | some (.closure ..) => .exn (.typeError "'function' object is not iterable")

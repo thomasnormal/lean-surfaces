@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3534 | 3202 | 0 | 332 |
+| 3538 | 3206 | 0 | 332 |
 
-Of the 3202 rows the model decides, 3202 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 3206 rows the model decides, 3206 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,13 +20,13 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 3534 | 3119 | 0 | 415 |
+| 3538 | 3119 | 0 | 419 |
 
 ## Grammar
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-144 witnesses: 129 MATCH, 15 REFUSE.
+144 witnesses: 130 MATCH, 14 REFUSE.
 
 ### `stmt`
 
@@ -121,7 +121,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `enumerate-start` | MATCH | the START is an `int`, not a `Nat`: CPython counts from a negative start as readily as a positive one — inch … |
 | `enumerate-escapes` | MATCH | THE RULED DELTA (2026-08-23-pycomplete-13 (c)): binding an enumerate and then GROWING the dict is SILENT in C… |
 | `enumerate-resize` | MATCH | the same two statements as `dict.enumerate-escapes` with a different THIRD line, and that pairing is the poin… |
-| `enumerate-of-items` | REFUSE | dictionary view operation is outside the tier |
+| `enumerate-of-items` | MATCH | the enumerate cursor now retains the dictionary view kind, so the live items view yields indexed `(key, value… |
 | `iter-next` | MATCH | the flagship's key expression, minimal: CPython answers 2 — the FIRST key in INSERTION order, which is what m… |
 | `iter-steps` | MATCH | ONE cursor, stepped twice. `next` already implemented both its forms, so the inch bought the stepping for fre… |
 | `iter-empty` | MATCH | the 2-argument `next` on an EXHAUSTED-at-birth cursor: CPython answers the default, and the 1-argument form o… |

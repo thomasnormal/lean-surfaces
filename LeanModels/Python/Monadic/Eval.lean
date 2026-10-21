@@ -1749,12 +1749,12 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
   -- `.done` pops the frame through `K.execGen k'`, so a dict that grows AFTER
   -- the enumerate is exhausted cannot raise — which is what the oracle says
   -- (`[(0, 'a')]` then `[]`, never a RuntimeError).
-  | .enumDict i ad cur n sv :: k' => do
-      match ← dictStepM ad cur n sv .keys with
+  | .enumDict i ad cur n sv kind :: k' => do
+      match ← dictStepM ad cur n sv kind with
       | some .resized => raisePy (.runtimeError "dictionary changed size during iteration")
       | some .rekeyed => refuse "the dict's KEY SET changed during iteration without changing its size — CPython's answer depends on its entries-array layout (docs/memory-model.md §dict iteration)"
       | some (.yieldVal kv) =>
-          pure (some (.tuple #[.int i, kv], .enumDict (i + 1) ad (cur + 1) n sv :: k'))
+          pure (some (.tuple #[.int i, kv], .enumDict (i + 1) ad (cur + 1) n sv kind :: k'))
       | some .done => K.execGen k'
       | Option.none => refuse "internal: an enumerate cursor over a non-dict object (report this)"
   -- §iter: `iter(d)`. The `enumDict` step with the tuple taken OFF — CPython's

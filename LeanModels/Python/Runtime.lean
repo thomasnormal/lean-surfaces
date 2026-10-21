@@ -168,6 +168,7 @@ inductive GenFrame where
   snapshot: an escaped `enumerate(d)` still sees the dict, and CPython
   raises on the STEP after a resize rather than at the bind. -/
   | enumDict (i : Int) (a : Addr) (cur : Nat) (n : Nat) (sv : Nat)
+      (kind : DictViewKind)
   /-- §iter `iter(<heap dict>)` at cursor `cur`: `enumDict` WITHOUT the index
   — CPython's `dict_keyiterator`, which yields the bare KEY. Same two guards
   (`n`, `sv`) and the same reason for them.
@@ -367,7 +368,7 @@ def GenFrame.WF (h : Heap) : GenFrame → Prop
   | .forGen _ a _ => a < h.size
   | .enumSeq _ xs => RVal.WFList h xs
   | .enumList _ a _ => a < h.size
-  | .enumDict _ a _ _ _ => a < h.size
+  | .enumDict _ a _ _ _ _ => a < h.size
   | .iterDict a _ _ _ => a < h.size
   | .iterList a _ => a < h.size
   | .block _ => True

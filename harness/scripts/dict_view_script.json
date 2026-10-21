@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.9.19"
   },
   "source_file": "harness/scripts/dict_view_script.py",
-  "source_sha256": "db6a8a7803070fa0832179c4f829632d1da01db483553d9e2014d972b30b0e2e",
+  "source_sha256": "70f55293957ecdd05e5c523f71eac08666ebd1286972e32cdfad69d37f9c2a80",
   "module": {
     "kind": "Module",
     "body": [
@@ -669,6 +669,226 @@
                     "end_col_offset": 16
                   },
                   "id": "items"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 17,
+          "col_offset": 0,
+          "end_lineno": 17,
+          "end_col_offset": 33
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 17,
+            "col_offset": 0,
+            "end_lineno": 17,
+            "end_col_offset": 33
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 17,
+              "col_offset": 0,
+              "end_lineno": 17,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "Call",
+              "span": {
+                "lineno": 17,
+                "col_offset": 6,
+                "end_lineno": 17,
+                "end_col_offset": 32
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 17,
+                  "col_offset": 6,
+                  "end_lineno": 17,
+                  "end_col_offset": 10
+                },
+                "id": "list"
+              },
+              "args": [
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 17,
+                    "col_offset": 11,
+                    "end_lineno": 17,
+                    "end_col_offset": 31
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 17,
+                      "col_offset": 11,
+                      "end_lineno": 17,
+                      "end_col_offset": 20
+                    },
+                    "id": "enumerate"
+                  },
+                  "args": [
+                    {
+                      "kind": "Call",
+                      "span": {
+                        "lineno": 17,
+                        "col_offset": 21,
+                        "end_lineno": 17,
+                        "end_col_offset": 30
+                      },
+                      "func": {
+                        "kind": "Attribute",
+                        "span": {
+                          "lineno": 17,
+                          "col_offset": 21,
+                          "end_lineno": 17,
+                          "end_col_offset": 28
+                        },
+                        "value": {
+                          "kind": "Name",
+                          "span": {
+                            "lineno": 17,
+                            "col_offset": 21,
+                            "end_lineno": 17,
+                            "end_col_offset": 22
+                          },
+                          "id": "d"
+                        },
+                        "attr": "items"
+                      },
+                      "args": [],
+                      "keywords": [],
+                      "call_unsupported": null
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 18,
+          "col_offset": 0,
+          "end_lineno": 18,
+          "end_col_offset": 34
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 18,
+            "col_offset": 0,
+            "end_lineno": 18,
+            "end_col_offset": 34
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 18,
+              "col_offset": 0,
+              "end_lineno": 18,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "Call",
+              "span": {
+                "lineno": 18,
+                "col_offset": 6,
+                "end_lineno": 18,
+                "end_col_offset": 33
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 18,
+                  "col_offset": 6,
+                  "end_lineno": 18,
+                  "end_col_offset": 10
+                },
+                "id": "list"
+              },
+              "args": [
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 18,
+                    "col_offset": 11,
+                    "end_lineno": 18,
+                    "end_col_offset": 32
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 18,
+                      "col_offset": 11,
+                      "end_lineno": 18,
+                      "end_col_offset": 20
+                    },
+                    "id": "enumerate"
+                  },
+                  "args": [
+                    {
+                      "kind": "Call",
+                      "span": {
+                        "lineno": 18,
+                        "col_offset": 21,
+                        "end_lineno": 18,
+                        "end_col_offset": 31
+                      },
+                      "func": {
+                        "kind": "Attribute",
+                        "span": {
+                          "lineno": 18,
+                          "col_offset": 21,
+                          "end_lineno": 18,
+                          "end_col_offset": 29
+                        },
+                        "value": {
+                          "kind": "Name",
+                          "span": {
+                            "lineno": 18,
+                            "col_offset": 21,
+                            "end_lineno": 18,
+                            "end_col_offset": 22
+                          },
+                          "id": "d"
+                        },
+                        "attr": "values"
+                      },
+                      "args": [],
+                      "keywords": [],
+                      "call_unsupported": null
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
                 }
               ],
               "keywords": [],

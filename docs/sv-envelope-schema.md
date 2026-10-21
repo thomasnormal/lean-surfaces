@@ -1456,6 +1456,11 @@ and [the port boundary](sv-hierarchy-ports.md) for the connected-child
 repricing decision. Program and interface instances retain an explicit
 `Hierarchy:module-kind` unsupported member; see [the kind boundary](sv-hierarchy-kinds.md).
 
+User function, task and DPI declarations remain explicit
+`SubroutineSymbol:Subroutine` unsupported members; see [the subroutine
+boundary](sv-subroutines.md). No callable frame or external ABI is encoded by
+the legacy module envelope.
+
 
 ## Dynamic integral casts
 

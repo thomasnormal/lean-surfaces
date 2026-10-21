@@ -3833,6 +3833,20 @@ program/interface instances remain loud and no second scheduler is added. See
 [the boundary and repricing](sv-hierarchy-kinds.md) and the read-only
 instrument `extractors/sv/hierarchy_kind_reprice.py`.
 
+### Subroutines — 2026-10-21
+
+The next refusal repricing measures `SubroutineSymbol:Subroutine`. In the
+fresh 22,043-path census it occurs in 1,714 files: 108 subroutine-only and
+1,606 co-occurring. Those sole files contain 126 unsupported declaration
+instances: 70 functions, 23 tasks and 33 DPI imports. Functions need formal
+conversion, return context, locals, recursion and effects; tasks add blocking,
+retained continuations and output/ref/inout copyback; DPI imports require an
+external ABI and oracle. Constant-function candidates still need a separate
+elaboration evaluator and legality boundary. No declaration shape is
+independently admissible by dropping its body or treating a call as pure. See
+[the boundary and repricing](sv-subroutines.md) and the read-only instrument
+`extractors/sv/subroutine_reprice.py`.
+
 
 ### Dynamic integral casts — 2026-10-20
 

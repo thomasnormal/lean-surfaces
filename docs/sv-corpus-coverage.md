@@ -379,6 +379,18 @@ and design-signal behavior cannot be represented by the ordinary module
 executor, so no subfamily is admitted. See [the boundary](sv-hierarchy-kinds.md)
 and `extractors/sv/hierarchy_kind_reprice.py` for the reproducible scan.
 
+## Subroutines — 2026-10-21
+
+`SubroutineSymbol:Subroutine` remains the callable declaration boundary. The
+fresh **22,043**-path census records it in **1,714** files: **108**
+subroutine-only and **1,606** co-occurring. Repricing the sole files finds
+**126** declarations: **70** functions, **23** tasks and **33** DPI imports.
+Function activation/return/local state, task blocking and argument copyback,
+and DPI external effects have no representation in the current envelope or
+executor. Constant-function candidates require a separate elaboration
+evaluator. No subfamily is admitted by this item. See [the boundary](sv-subroutines.md)
+and `extractors/sv/subroutine_reprice.py` for the reproducible scan.
+
 The paired **22,035** paths gain **198 clean files**, no losses:
 **4,098 → 4,296 clean**, **17,871 → 17,673 partial**, **66 include skips**,
 zero extraction errors. All 4,098 previously clean extracted designs remain

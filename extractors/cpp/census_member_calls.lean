@@ -78,6 +78,49 @@ private def canonicalMethodHandle (probe : DeclarationProbe)
   | [canonical] => some canonical
   | _ => none
 
+private partial def hasKind (wanted : String) (raw : Raw) : Bool :=
+  raw.text "kind" == some wanted ||
+    (((raw.field "inner").bind Raw.array?).getD []).any (hasKind wanted)
+
+private partial def rawNodesById (wanted : String) : Raw → List Raw
+  | node@(.object fields) =>
+      (if node.text "id" == some wanted then [node] else []) ++
+        fields.flatMap (fun (_, value) => rawNodesById wanted value)
+  | .array values => values.flatMap (rawNodesById wanted)
+  | _ => []
+
+private partial def firstObjectEvent : Raw → Option String
+  | node@(.object fields) =>
+      match node.text "kind" with
+      | some "MemberExpr" =>
+          if hasKind "CXXThisExpr" node then
+            some (s!"this-member:{node.text "name" |>.getD "<missing>"}")
+          else firstObjectFields fields
+      | some "CXXMemberCallExpr" => some "member-call"
+      | some "CXXNewExpr" => some "allocation"
+      | some "CXXDeleteExpr" => some "deallocation"
+      | some "CXXConstructExpr" => some "construction"
+      | _ => firstObjectFields fields
+  | .array values => values.firstM firstObjectEvent
+  | _ => none
+where
+  firstObjectFields : List (String × Raw) → Option String
+    | [] => none
+    | (name, value) :: rest =>
+        if name == "inner" then
+          match firstObjectEvent value with
+          | some event => some event
+          | none => firstObjectFields rest
+        else firstObjectFields rest
+
+private def methodBodyObjectEvent (probe : DeclarationProbe)
+    (body : IntegralMemberMethodBody) : Option String := do
+  let method ← (rawNodesById body.definition.value probe.ast).find?
+    (·.text "kind" == some "CXXMethodDecl")
+  let inner ← method.field "inner" |>.bind Raw.array?
+  let compound ← inner.find? (·.text "kind" == some "CompoundStmt")
+  firstObjectEvent compound
+
 private partial def rawTree (raw : Raw) : String :=
   let kind := raw.text "kind" |>.getD "<missing>"
   let cast := raw.text "castKind" |>.map (fun value => ":" ++ value) |>.getD ""
@@ -92,10 +135,6 @@ private def argumentShape (raw : Raw) : String :=
   | some (.array (_ :: arguments)) =>
       String.intercalate "," (arguments.map (fun argument => argument.text "kind" |>.getD "<missing>"))
   | _ => "<malformed>"
-
-private partial def hasKind (wanted : String) (raw : Raw) : Bool :=
-  raw.text "kind" == some wanted ||
-    (((raw.field "inner").bind Raw.array?).getD []).any (hasKind wanted)
 
 private def receiverFamily (raw : Raw) : String :=
   match raw.field "inner" with
@@ -148,6 +187,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut integerMethodProfileRefusals : List String := []
   let mut integerMethodBodies : List String := []
   let mut integerMethodBodyRefusals : List String := []
+  let mut integerMethodObjectEvents : List String := []
+  let mut integerMethodObjectRefusals : List String := []
   let mut receiverShapes : List String := []
   let mut receiverFamilies : List String := []
   let mut reports : List Json := []
@@ -178,7 +219,7 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
                 if argument.text "kind" == some "IntegerLiteral" then
                   match IntegralMemberIntegerArgument.admit argument,
                       memberMethodHandle raw |>.bind (canonicalMethodHandle probe) with
-                  | .ok evidence, some canonical =>
+                  | .ok evidence, some canonical => do
                       match IntegralMemberIntegerArgument.parameter probe canonical ordinal with
                       | .ok parameter =>
                           match IntegralMemberIntegerArgument.bindTo evidence parameter with
@@ -189,14 +230,23 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
                       | .error error => integerArgumentRefusals :=
                           integerArgumentErrorName error :: integerArgumentRefusals
                       match IntegralMemberMethodProfile.admit probe canonical with
-                      | .ok _ => integerMethodProfiles := canonical.value :: integerMethodProfiles
-                      | .error error => integerMethodProfileRefusals :=
+                      | .ok _ => do
+                          integerMethodProfiles := canonical.value :: integerMethodProfiles
+                      | .error error => do
+                          integerMethodProfileRefusals :=
                           methodProfileErrorName error :: integerMethodProfileRefusals
                       match IntegralMemberMethodBody.admit probe canonical with
-                      | .ok body => integerMethodBodies :=
-                          (s!"{body.canonical.value}:{body.definition.value}") :: integerMethodBodies
-                      | .error error => integerMethodBodyRefusals :=
-                          methodBodyErrorName error :: integerMethodBodyRefusals
+                      | .ok body => do
+                          integerMethodBodies :=
+                            (s!"{body.canonical.value}:{body.definition.value}") :: integerMethodBodies
+                          match methodBodyObjectEvent probe body with
+                          | some event => integerMethodObjectEvents :=
+                              (s!"{body.canonical.value}:{event}") :: integerMethodObjectEvents
+                          | none => integerMethodObjectRefusals :=
+                              "missing-first-object-event" :: integerMethodObjectRefusals
+                      | .error error => do
+                          integerMethodBodyRefusals :=
+                            methodBodyErrorName error :: integerMethodBodyRefusals
                   | .ok _, none => integerArgumentRefusals :=
                       "canonical-method-missing" :: integerArgumentRefusals
                   | .error error, _ => integerArgumentRefusals :=
@@ -226,6 +276,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("typed_integer_method_profile_refusals", counts integerMethodProfileRefusals),
     ("typed_integer_method_bodies", counts integerMethodBodies),
     ("typed_integer_method_body_refusals", counts integerMethodBodyRefusals),
+    ("typed_integer_method_object_events", counts integerMethodObjectEvents),
+    ("typed_integer_method_object_refusals", counts integerMethodObjectRefusals),
     ("unsupported_receiver_shapes", counts receiverShapes),
     ("unsupported_receiver_families", counts receiverFamilies),
     ("calls", toJson reports.reverse)])

@@ -138,6 +138,14 @@ defining handle or conflicting body ownership refuses. This relation is still
 provenance only; selecting a body does not execute it or waive the variadic and
 object-semantics walls above.
 
+The next object-state price is now measured by a source-order body walk. The
+first object event is `member-call` for `Set` and
+`this-member:_errorID` for all 11 `SetError` definitions. Thus `SetError`
+requires a live receiver and a readable `_errorID` subobject before its first
+statement can be evaluated; this is an object-frame precondition, not a
+default value. The walk is telemetry only and does not lower member offsets,
+constructors, allocation, or destruction.
+
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or
 qualified dispatch, construction, writes and calls whose target body is not an

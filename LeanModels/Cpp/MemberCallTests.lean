@@ -665,14 +665,41 @@ private def enumSetterSourceArgument : Option IntegralMemberEnumArgument :=
         (rawEnumArgument "0x20" "XMLError" "0x21") representation).toOption
   | none => none
 
+private def enumArgumentValueAccepted : Bool :=
+  match enumSetterRepresentation, enumSetterSourceArgument with
+  | some representation, some argument =>
+      match IntegralMemberEnumArgument.evaluate argument representation .lp64
+          ⟨.unsigned 32, 9⟩ with
+      | .ok value => value.representation == representation && value.value == ⟨.unsigned 32, 9⟩
+      | .error _ => false
+  | _, _ => false
+
+private def enumArgumentValueWrongFormat : Bool :=
+  match enumSetterRepresentation, enumSetterSourceArgument with
+  | some representation, some argument =>
+      match IntegralMemberEnumArgument.evaluate argument representation .lp64
+          ⟨.signed 32, 9⟩ with
+      | .error .underlyingTypeMismatch => true
+      | _ => false
+  | _, _ => false
+
+private def enumArgumentValueWrongEnum : Bool :=
+  match enumSetterRepresentation, enumSetterSourceArgument with
+  | some representation, some argument =>
+      let wrong := {argument with type := .enumeration (h "0x99")}
+      match IntegralMemberEnumArgument.evaluate wrong representation .lp64
+          ⟨.unsigned 32, 9⟩ with
+      | .error .argumentMismatch => true
+      | _ => false
+  | _, _ => false
+
 private def enumSetterCallObserved : Option Int :=
   match enumSetterEvidence with
   | some setter =>
       match enumSetterSourceArgument with
       | some sourceArgument =>
-        match IntegralMemberEnumSetterCall.bindWithArgument enumSetterCallSyntax setter
-            enumSetterCallAccess receiverHandle sourceArgument enumSetterCallArgument
-            enumProjection with
+        match IntegralMemberEnumSetterCall.bindWithArgumentValue enumSetterCallSyntax setter
+            enumSetterCallAccess receiverHandle sourceArgument ⟨.unsigned 32, 9⟩ enumProjection with
         | .ok call =>
             match call.invoke with
             | .ok memory => memory.values[1]?.bind id |>.map (fun value => value.value)
@@ -691,6 +718,15 @@ private def enumSetterCallArgumentError : Option IntegralMemberEnumSetterCallErr
       | .error reason => some reason
       | .ok _ => none
   | none => none
+
+private def enumSetterCallValueError : Option IntegralMemberEnumSetterCallError :=
+  match enumSetterEvidence, enumSetterSourceArgument with
+  | some setter, some sourceArgument =>
+      match IntegralMemberEnumSetterCall.bindWithArgumentValue enumSetterCallSyntax setter
+          enumSetterCallAccess receiverHandle sourceArgument ⟨.signed 32, 9⟩ enumProjection with
+      | .error reason => some reason
+      | .ok _ => none
+  | _, _ => none
 
 private def enumSetterCallResultError : Option IntegralMemberEnumSetterCallError :=
   match enumSetterEvidence with
@@ -827,6 +863,9 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard enumArgumentAccepted
 #guard enumArgumentWrongType
 #guard enumArgumentBindAccepted
+#guard enumArgumentValueAccepted
+#guard enumArgumentValueWrongFormat
+#guard enumArgumentValueWrongEnum
 #guard methodBody.map (fun body =>
     (body.canonical, body.definition, body.bodyKind)) ==
     some (methodHandle, h "0x11", "CompoundStmt")
@@ -851,6 +890,7 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard enumWriteReadOnly
 #guard enumSetterCallObserved == some 9
 #guard enumSetterCallArgumentError == some .argumentRepresentationMismatch
+#guard enumSetterCallValueError == some (.argumentValueMismatch .underlyingTypeMismatch)
 #guard enumSetterCallResultError == some .resultTypeMismatch
 #guard enumCallObserved == some 7
 #guard enumCallResultError == some .resultTypeMismatch

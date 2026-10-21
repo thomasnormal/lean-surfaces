@@ -624,6 +624,7 @@ structure IntegralMemberEnumValue where
   deriving Repr, BEq, Inhabited
 
 inductive IntegralMemberEnumValueError where
+  | argumentMismatch
   | fieldMismatch
   | invalidProfile
   | underlyingTypeMismatch
@@ -694,6 +695,30 @@ def write (access : IntegralMemberThisFieldAccess)
   projection.snapshot.memory.assign member value.value |>.mapError .integral
 
 end IntegralMemberEnumValue
+
+namespace IntegralMemberEnumArgument
+
+/-- Evaluate a retained direct enum argument against an explicit representation
+and caller-supplied stored value. The frontend does not provide the runtime
+value here: the caller supplies it, while this boundary checks the enum
+identity, target format, and value validity without applying conversions. -/
+def evaluate (argument : IntegralMemberEnumArgument)
+    (representation : IntegralMemberEnumRepresentation) (profile : TargetProfile)
+    (stored : IntegralValue) :
+    Except IntegralMemberEnumValueError IntegralMemberEnumValue := do
+  unless argument.type == .enumeration representation.profile.enum do
+    throw .argumentMismatch
+  unless spellingMatches argument.sourceType representation.profile.name do
+    throw .argumentMismatch
+  let format ← match profile.format representation.underlying with
+    | .ok format => pure format
+    | .error .invalidProfile => throw .invalidProfile
+    | .error (.unsupportedType _) => throw .invalidProfile
+  unless stored.format == format do throw .underlyingTypeMismatch
+  if let some reason := stored.invalid? then throw (.invalidValue reason)
+  pure {representation, value := stored}
+
+end IntegralMemberEnumArgument
 
 inductive IntegralMemberCallSyntaxError where
   | notMemberCall
@@ -1190,6 +1215,7 @@ inductive IntegralMemberEnumSetterCallError where
   | resultTypeMismatch
   | argumentRepresentationMismatch
   | argumentEvidenceMismatch (reason : IntegralMemberEnumArgumentError)
+  | argumentValueMismatch (reason : IntegralMemberEnumValueError)
   | projection (reason : ClassProjectionError)
   | write (reason : IntegralMemberEnumSetterWriteError)
   deriving Repr, BEq, Inhabited
@@ -1254,6 +1280,19 @@ def bindWithArgument (callSyntax : IntegralMemberCallSyntax)
         .argumentEvidenceMismatch
   let call ← bind callSyntax setter access receiver argument projection
   pure {call with sourceArgument := some sourceArgument}
+
+/-- Evaluate a retained direct enum argument under the receiver's target
+profile, then bind the resulting value to the setter call. The stored value is
+caller evidence; no source conversion, overload lookup, or variadic execution
+is inferred. -/
+def bindWithArgumentValue (callSyntax : IntegralMemberCallSyntax)
+    (setter : IntegralMemberEnumSetter) (access : IntegralMemberThisFieldAccess)
+    (receiver : FrontendHandle) (sourceArgument : IntegralMemberEnumArgument)
+    (stored : IntegralValue) (projection : ClassReceiverProjection) :
+    Except IntegralMemberEnumSetterCallError IntegralMemberEnumSetterCall := do
+  let argument ← IntegralMemberEnumArgument.evaluate sourceArgument setter.representation
+      projection.snapshot.memory.profile stored |>.mapError .argumentValueMismatch
+  bindWithArgument callSyntax setter access receiver sourceArgument argument projection
 
 end IntegralMemberEnumSetterCall
 

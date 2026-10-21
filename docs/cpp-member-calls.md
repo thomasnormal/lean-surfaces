@@ -274,6 +274,18 @@ argument shapes are admitted, all
 empty. This is source provenance only: no enum value is evaluated and the
 variadic `SetError` calls remain outside execution.
 
+`IntegralMemberEnumArgument.evaluate` is the next value boundary. It accepts
+the retained enum identity plus an explicit representation oracle, target
+profile, and caller-supplied underlying `IntegralValue`; it checks the source
+spelling and enum handle, validates the target format, and preserves the enum
+tag. Invalid formats, values, profiles, and enum identities refuse without a
+conversion or a fabricated enumerator value. `bindWithArgumentValue` threads
+that result into the admitted synthetic setter call, while the existing
+separate-value binder remains available for callers that already hold a typed
+enum value. The four-row setter differential now uses this source-argument
+evaluation path; the matching Clang 21.1.8 oracle is still an explicit
+skip when unavailable.
+
 `IntegralMemberEnumCall` exposes that read as a call result without widening
 the ordinary integral getter. It requires the already selected method and
 receiver handles, the typed field witness, the oracle-backed enum profile, and

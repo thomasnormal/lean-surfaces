@@ -358,6 +358,9 @@ private def setter : IntegralMemberEnumSetter := {
   body := setterBody,
   owner := h "owner", field := h "field", parameter := h "parameter",
   fieldName := "value", fieldType := "Error", parameterType := "Error", representation}
+private def sourceArgument : IntegralMemberEnumArgument := {
+  occurrence := h "argument", sourceType := "Error", type := .enumeration (h "enum"),
+  declaration := h "parameter"}
 private def callSyntax : IntegralMemberCallSyntax := {
   method := h "method", receiver := h "receiver", receiverType := "Sample *",
   resultType := "void", name := "set", canonicalMethod := h "method"}
@@ -374,10 +377,8 @@ private def projection (input : Int) : ClassReceiverProjection := {
 def cases : List (Int × Int) := [''' + pairs + ''']
 #guard cases.all (fun (input, expected) =>
   let before := projection 7
-  let argument : IntegralMemberEnumValue :=
-    {representation := setter.representation, value := ⟨.unsigned 32, input⟩}
-  match IntegralMemberEnumSetterCall.bind callSyntax setter access (h "receiver")
-      argument before with
+  match IntegralMemberEnumSetterCall.bindWithArgumentValue callSyntax setter access
+      (h "receiver") sourceArgument ⟨.unsigned 32, input⟩ before with
   | .ok call =>
       match call.invoke with
       | .ok store =>

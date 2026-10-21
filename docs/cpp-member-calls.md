@@ -62,6 +62,21 @@ The census preserves nested base trees and cast kinds, including
 The census also groups the remaining generic refusals into disjoint families:
 cast bases, nested member bases, and nested member-call bases.
 
+On the 542-call TinyXML2 probe, the current census admits 55 calls. The 16
+remaining generic receiver refusals are 11 cast bases, 4 nested member bases,
+and 1 nested member-call base. Their exact leading shapes are:
+
+| family | retained receiver base |
+| --- | --- |
+| cast (6) | `ImplicitCastExpr:UncheckedDerivedToBase(DeclRefExpr)` on a direct-dot call |
+| cast (5) | `ImplicitCastExpr:UncheckedDerivedToBase(ImplicitCastExpr:LValueToRValue(DeclRefExpr))` on an arrow call |
+| nested member (4) | `ImplicitCastExpr:LValueToRValue(MemberExpr(ImplicitCastExpr:LValueToRValue(DeclRefExpr)))` on an arrow call |
+| member-call (1) | `CXXMemberCallExpr(MemberExpr(ImplicitCastExpr:UncheckedDerivedToBase(DeclRefExpr)))` on an arrow call |
+
+The other 471 refusals in that run are 314 unsupported argument lists, 155
+missing `this` owners, and 2 malformed names. This is source pricing only:
+the census still performs no receiver conversion, object lookup, or call.
+
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or
 qualified dispatch, construction, writes and calls whose target body is not an

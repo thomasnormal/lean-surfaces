@@ -12,6 +12,8 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+## [0.1.13] — 2026-10-21
+
 ### Added
 
 - `int(text, base)` and `int(text, base=base)` accept ASCII strings and bytes

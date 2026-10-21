@@ -10,7 +10,7 @@ tractable.
 
 ## Python release status
 
-The Python prerelease is **v0.1.12 (2026-10-15)**. Its Git tag identifies the
+The Python prerelease is **v0.1.13 (2026-10-21)**. Its Git tag identifies the
 release commit on `master`. The earlier `v0.1.2` through `v0.1.6` entries
 record source releases whose local Git tags remain unpublished.
 See [CHANGELOG.md](CHANGELOG.md) for the version history.
@@ -74,10 +74,10 @@ non-finite division, float keys, and identity-dependent NaN operations remain
 loud coverage gaps, not scope exclusions. `PyFloat` provides typed marshalling;
 downstream exhaustive matches must handle the new value/operator/error
 constructors and rebuild their Lean artifacts. See [the float model](docs/python-floats.md).
-The executable differential suite has 3,174 cases: 2,840 agree with CPython and
-334 refuse loudly (**89.5% complete**). The narrower proof interpreter agrees on
-2,766 cases and refuses 408 (**87.2% complete**); neither run has a mismatch in
-the recorded suite. The grammar census has 142 witnesses, with 123 MATCH and 19
+The executable differential suite has 3,515 cases: 3,183 agree with CPython and
+332 refuse loudly (**90.5% complete**). The narrower proof interpreter agrees on
+3,109 cases and refuses 406 (**88.4% complete**); neither run has a mismatch in
+the recorded suite. The grammar census has 144 witnesses, with 126 MATCH and 18
 REFUSE. These are measured
 examples, not a claim of complete language support; remaining gaps stay in scope.
 See [the measured coverage](docs/python-coverage.md) and

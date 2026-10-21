@@ -36,6 +36,15 @@ private def argumentShape (raw : Raw) : String :=
       String.intercalate "," (arguments.map (fun argument => argument.text "kind" |>.getD "<missing>"))
   | _ => "<malformed>"
 
+private partial def baseTree (raw : Raw) : String :=
+  let kind := raw.text "kind" |>.getD "<missing>"
+  let cast := raw.text "castKind" |>.map (fun value => ":" ++ value) |>.getD ""
+  let children := match raw.field "inner" with
+    | some (.array values) => values
+    | _ => []
+  if children.isEmpty then kind ++ cast
+  else kind ++ cast ++ "(" ++ String.intercalate "," (children.map baseTree) ++ ")"
+
 private def receiverShape (raw : Raw) : String :=
   match raw.field "inner" with
   | some (.array (member :: _)) =>
@@ -46,8 +55,7 @@ private def receiverShape (raw : Raw) : String :=
         | _ => "arrow-missing"
       let category := member.text "valueCategory" |>.getD "<missing>"
       let bases := match member.field "inner" with
-        | some (.array children) => String.intercalate "," (children.map (fun (child : Raw) =>
-            child.text "kind" |>.getD "<missing>"))
+        | some (.array children) => String.intercalate "," (children.map baseTree)
         | _ => "<missing>"
       s!"{kind}|{arrow}|{category}|{bases}"
   | _ => "<malformed>"

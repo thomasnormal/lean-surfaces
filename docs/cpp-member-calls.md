@@ -52,6 +52,9 @@ future argument tier can be priced against source evidence before evaluation
 semantics are added.
 Receiver refusals likewise retain the member kind, arrow/dot spelling, value
 category, and base child kinds for a future receiver tier.
+The census preserves nested base trees and cast kinds, including
+`UncheckedDerivedToBase(CXXThisExpr)` and `LValueToRValue(MemberExpr(...))`, so
+`this` and derived-base work can be priced independently.
 
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or

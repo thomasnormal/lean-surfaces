@@ -75,6 +75,41 @@ analogous source-order rule: initializer statements run once, each header
 condition is evaluated at the header, and each completed body or `continue`
 runs the step list once before the next header.
 
+## Public source-phase contract
+
+The source layer exposes the phase ordering directly. A legal `for` transition
+is one of the following, in order:
+
+| phase | next phase after normal completion |
+|---|---|
+| initializer list | header condition |
+| header condition, true | body |
+| header condition, false or ambiguous | loop exit |
+| body, including `continue` | ordered step list |
+| ordered step list | header condition |
+
+`break` moves directly to loop exit and never evaluates the step list. A
+`repeat` transition evaluates its count once, samples a nonnegative remaining
+counter, and enters the body only while that counter is positive. Normal body
+completion and `continue` each consume one iteration; `break` exits without a
+further decrement. An ordinary dependency wait retains the current phase and
+the complete continuation, so resumption cannot rerun an initializer,
+condition already completed, step, or count sample.
+
+The repeat count conversion is the IEEE integral conversion written as a
+total rule over the admitted source values:
+
+1. map every `x`/`z` bit to `0`;
+2. sign-extend or zero-extend according to the source expression's signedness;
+3. narrow to signed 32 bits; and
+4. use zero iterations when the converted value is nonpositive, otherwise use
+   its natural count.
+
+Malformed, effectful, or otherwise unrepresented source evaluation remains a
+loud refusal. Explicit process-control suspension and wait rearming are also
+outside this contract until their kernel rule is supplied; they must not be
+approximated by restarting a loop.
+
 The process-local stepper stores the unfinished body followed by a loop
 boundary marker. An ordinary delay or event wait retains the current
 state, output, pending nonblocking work, and the loop's next phase.

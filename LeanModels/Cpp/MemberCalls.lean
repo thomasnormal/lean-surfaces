@@ -15,6 +15,8 @@ structure IntegralMemberCallSyntax where
   canonicalMethod : FrontendHandle := method
   /-- Whether the source receiver uses `->` (`false` means direct `.` access). -/
   receiverIsArrow : Bool := true
+  /-- Optional direct receiver conversion retained from the AST. -/
+  receiverCast : Option String := none
   deriving Repr, BEq, Inhabited
 
 inductive IntegralMemberCallSyntaxError where
@@ -81,19 +83,31 @@ def admit (raw : Raw) :
         unless value.text "kind" == some "CXXMethodDecl" do throw .unsupportedMethod
         (evidenceHandle value "id").mapError (fun _ => .missingMethodHandle)
     | none => throw .missingMethodHandle
-  let receiverRaw ← oneChild member
-  unless receiverRaw.text "kind" == some "DeclRefExpr" do
-    throw .unsupportedReceiver
+  let receiverRawOuter ← oneChild member
+  let receiverRaw ← match receiverRawOuter.text "kind" with
+    | some "DeclRefExpr" => pure receiverRawOuter
+    | some "ImplicitCastExpr" => do
+        unless receiverRawOuter.text "castKind" == some "LValueToRValue" do
+          throw .unsupportedReceiver
+        let child ← oneChild receiverRawOuter
+        unless child.text "kind" == some "DeclRefExpr" do throw .unsupportedReceiver
+        pure child
+    | _ => throw .unsupportedReceiver
   let some referenced := receiverRaw.field "referencedDecl"
     | throw .missingReceiverHandle
   let receiver ← (evidenceHandle referenced "id").mapError (fun _ => .missingReceiverHandle)
-  let receiverType ← match receiverRaw.field "type" with
+  let receiverType ← match receiverRawOuter.field "type" with
     | some type => match type.text "qualType" with
         | some value => if value.isEmpty then throw .malformedReceiverType else pure value
         | none => throw .malformedReceiverType
     | none => throw .malformedReceiverType
   let resultType ← resultSpelling raw
-  pure {method, receiver, receiverType, resultType, name, receiverIsArrow}
+  let receiverCast := if receiverRawOuter.text "kind" == some "ImplicitCastExpr"
+    then some "LValueToRValue" else none
+  pure {(default : IntegralMemberCallSyntax) with
+    method := method, receiver := receiver, receiverType := receiverType,
+    resultType := resultType, name := name, canonicalMethod := method,
+    receiverIsArrow := receiverIsArrow, receiverCast := receiverCast}
 
 /-- Resolve one retained method occurrence to exactly one canonical probe handle. -/
 def resolveCanonical (probe : DeclarationProbe) (evidence : IntegralMemberCallSyntax) :

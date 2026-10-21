@@ -38,7 +38,9 @@ canonical handle retained by `IntegralMemberGetter`, so a call cannot silently
 cross a redeclaration or overload identity boundary.
 Arrow calls compare the retained receiver type with `<class name> *`; direct-dot
 calls compare it with `<class name>`. Both forms still require the caller's
-explicit existing-object projection and receiver declaration handle.
+explicit existing-object projection and receiver declaration handle. A single
+`LValueToRValue` `ImplicitCastExpr` around a direct pointer `DeclRefExpr` is
+retained as receiver evidence; other casts and computed bases remain loud.
 Callers that start from raw AST are expected to use `admitResolved`, which
 performs both syntax admission and this canonical resolution in one operation.
 `extractors/cpp/census_member_calls.lean` applies that operation to every

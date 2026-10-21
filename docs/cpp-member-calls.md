@@ -130,6 +130,14 @@ its body. Successful argument bindings therefore do not count as runtime
 admissions; they identify both the canonical-signature wall and the next
 object-backed method-body tier precisely.
 
+`IntegralMemberMethodBody.admit` then resolves the body relation independently
+of the profile. The real census finds exactly one definition for each involved
+canonical method: `Set → Set` once and `SetError →` its distinct defining
+occurrence eleven times. Duplicate identical rows are accepted, while a second
+defining handle or conflicting body ownership refuses. This relation is still
+provenance only; selecting a body does not execute it or waive the variadic and
+object-semantics walls above.
+
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or
 qualified dispatch, construction, writes and calls whose target body is not an

@@ -61,6 +61,15 @@ structure IntegralMemberMethodProfile where
   bodyKind : String
   deriving Repr, BEq, Inhabited
 
+/-- The canonical-to-defining relation for a method whose canonical row is
+declaration-only. The body handle is retained separately; it is never guessed
+from a name or from the first redeclaration. -/
+structure IntegralMemberMethodBody where
+  canonical : FrontendHandle
+  definition : FrontendHandle
+  bodyKind : String
+  deriving Repr, BEq, Inhabited
+
 inductive IntegralMemberIntegerArgumentError where
   | notIntegerLiteral
   | missingOccurrence
@@ -82,6 +91,15 @@ inductive IntegralMemberMethodProfileError where
   | unsupportedFlags
   | missingBody
   | unsupportedBody
+  deriving Repr, BEq, Inhabited
+
+inductive IntegralMemberMethodBodyError where
+  | missingCanonical
+  | missingDefinition
+  | ambiguousDefinition
+  | conflictingDefinition
+  | malformedDefinition
+  | unsupportedDefinition
   deriving Repr, BEq, Inhabited
 
 structure IntegralMemberBoundIntegerArgument where
@@ -265,6 +283,61 @@ def admit (probe : DeclarationProbe) (method : FrontendHandle) :
   pure {method, resultType, parameters, isConst, isStatic, bodyKind}
 
 end IntegralMemberMethodProfile
+
+namespace IntegralMemberMethodBody
+
+private def boolField (raw : Raw) (name : String) :
+    Except IntegralMemberMethodBodyError Bool :=
+  (evidenceBool raw name).mapError (fun _ => .malformedDefinition)
+
+private def bodyCandidate (canonical : FrontendHandle) (row : DeclarationEvidenceRow) :
+    Except IntegralMemberMethodBodyError IntegralMemberMethodBody := do
+  let raw := row.raw
+  let definition ← boolField raw "definition"
+  let bodyPresent ← boolField raw "body_present"
+  unless definition && bodyPresent do throw .malformedDefinition
+  let skipped ← boolField raw "function_has_skipped_body"
+  let pending ← boolField raw "function_will_have_body"
+  let defining ← boolField raw "function_has_defining_attr"
+  let lateParsed ← boolField raw "function_late_template_parsed"
+  let explicitlyDefaulted ← boolField raw "function_explicitly_defaulted"
+  let defaulted ← boolField raw "defaulted"
+  let deleted ← boolField raw "deleted_as_written"
+  let attributeCount ← (evidenceNat raw "function_attribute_count").mapError
+    (fun _ => .malformedDefinition)
+  unless !skipped && !pending && !defining && !lateParsed && !explicitlyDefaulted &&
+      !defaulted && !deleted && attributeCount == 0 do throw .unsupportedDefinition
+  let some bodyKind ← (evidenceNullableText raw "own_body_kind").mapError
+      (fun _ => .malformedDefinition)
+    | throw .malformedDefinition
+  let some owner ← (evidenceNullableHandle raw "own_body_owner").mapError
+      (fun _ => .malformedDefinition)
+    | throw .malformedDefinition
+  unless bodyKind == "CompoundStmt" && owner == row.id do throw .malformedDefinition
+  pure {canonical, definition := row.id, bodyKind}
+
+/-- Resolve a canonical method to exactly one clean defining occurrence. The
+canonical row itself may be declaration-only; duplicate identical evidence is
+harmless, while distinct defining handles or conflicting rows refuse. -/
+def admit (probe : DeclarationProbe) (canonical : FrontendHandle) :
+    Except IntegralMemberMethodBodyError IntegralMemberMethodBody := do
+  let canonicalRows := probe.declarations.filter (fun row =>
+    row.id == canonical && row.kind == "CXXMethodDecl" && row.canonical == canonical)
+  if canonicalRows.isEmpty then throw .missingCanonical
+  let candidates := probe.declarations.filter (fun row =>
+    row.kind == "CXXMethodDecl" && row.canonical == canonical &&
+      row.raw.field "definition" == some (.bool true))
+  let candidateIds := candidates.map (·.id) |>.eraseDups
+  let some definition := candidateIds.head? | throw .missingDefinition
+  unless candidateIds.tail.isEmpty do throw .ambiguousDefinition
+  let matching := candidates.filter (·.id == definition)
+  match matching with
+  | [] => throw .missingDefinition
+  | row :: rest =>
+      unless rest.all (·.raw == row.raw) do throw .conflictingDefinition
+      bodyCandidate canonical row
+
+end IntegralMemberMethodBody
 
 inductive IntegralMemberCallSyntaxError where
   | notMemberCall

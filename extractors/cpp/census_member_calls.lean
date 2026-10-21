@@ -54,6 +54,15 @@ private def methodProfileErrorName :
   | .missingBody => "missing-body"
   | .unsupportedBody => "unsupported-body"
 
+private def methodBodyErrorName :
+    IntegralMemberMethodBodyError → String
+  | .missingCanonical => "missing-canonical"
+  | .missingDefinition => "missing-definition"
+  | .ambiguousDefinition => "ambiguous-definition"
+  | .conflictingDefinition => "conflicting-definition"
+  | .malformedDefinition => "malformed-definition"
+  | .unsupportedDefinition => "unsupported-definition"
+
 private def memberMethodHandle (raw : Raw) : Option FrontendHandle := do
   let .array (member :: _) ← raw.field "inner" | none
   let referenced ← member.field "referencedMemberDecl"
@@ -137,6 +146,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut integerArgumentRefusals : List String := []
   let mut integerMethodProfiles : List String := []
   let mut integerMethodProfileRefusals : List String := []
+  let mut integerMethodBodies : List String := []
+  let mut integerMethodBodyRefusals : List String := []
   let mut receiverShapes : List String := []
   let mut receiverFamilies : List String := []
   let mut reports : List Json := []
@@ -181,6 +192,11 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
                       | .ok _ => integerMethodProfiles := canonical.value :: integerMethodProfiles
                       | .error error => integerMethodProfileRefusals :=
                           methodProfileErrorName error :: integerMethodProfileRefusals
+                      match IntegralMemberMethodBody.admit probe canonical with
+                      | .ok body => integerMethodBodies :=
+                          (s!"{body.canonical.value}:{body.definition.value}") :: integerMethodBodies
+                      | .error error => integerMethodBodyRefusals :=
+                          methodBodyErrorName error :: integerMethodBodyRefusals
                   | .ok _, none => integerArgumentRefusals :=
                       "canonical-method-missing" :: integerArgumentRefusals
                   | .error error, _ => integerArgumentRefusals :=
@@ -208,6 +224,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("typed_integer_argument_refusals", counts integerArgumentRefusals),
     ("typed_integer_method_profiles", counts integerMethodProfiles),
     ("typed_integer_method_profile_refusals", counts integerMethodProfileRefusals),
+    ("typed_integer_method_bodies", counts integerMethodBodies),
+    ("typed_integer_method_body_refusals", counts integerMethodBodyRefusals),
     ("unsupported_receiver_shapes", counts receiverShapes),
     ("unsupported_receiver_families", counts receiverFamilies),
     ("calls", toJson reports.reverse)])

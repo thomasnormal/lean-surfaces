@@ -53,6 +53,12 @@ private def rawObject (fields : List (String × Raw)) : Raw := .object fields
 private def rawText (value : String) : Raw := .string value
 private def rawNat (value : Nat) : Raw := .number (toString value)
 
+private def rawWithField (raw : Raw) (name : String) (value : Raw) : Raw :=
+  match raw with
+  | .object fields => .object (fields.map fun entry =>
+      if entry.1 == name then (name, value) else entry)
+  | _ => raw
+
 private def rawIntegerArgument (id value : String) : Raw := rawObject [
   ("id", rawText id), ("kind", rawText "IntegerLiteral"),
   ("type", rawObject [("qualType", rawText "int")]), ("value", rawText value)]
@@ -111,6 +117,24 @@ private def profileProbe : DeclarationProbe :=
 
 private def methodProfile : Option IntegralMemberMethodProfile :=
   (IntegralMemberMethodProfile.admit profileProbe methodHandle).toOption
+
+private def canonicalOnlyRaw : Raw := rawObject [
+  ("kind", rawText "CXXMethodDecl"), ("id", rawText methodHandle.value),
+  ("definition", .bool false)]
+
+private def definitionRaw : Raw :=
+  rawWithField (rawWithField profileRaw "id" (rawText "0x11"))
+    "own_body_owner" (rawText "0x11")
+
+private def definitionProbe : DeclarationProbe :=
+  {ast := rawWithField parameterAst "id" (rawText "0x11"), metadata := .object [],
+    declarations := [
+      {declarationRow methodHandle.value "CXXMethodDecl" methodHandle.value with
+        raw := canonicalOnlyRaw},
+      {declarationRow "0x11" "CXXMethodDecl" methodHandle.value with raw := definitionRaw}]}
+
+private def methodBody : Option IntegralMemberMethodBody :=
+  (IntegralMemberMethodBody.admit definitionProbe methodHandle).toOption
 
 private def parameterEvidence : Option IntegralMemberParameterEvidence :=
   (IntegralMemberIntegerArgument.parameter parameterProbe methodHandle 0).toOption
@@ -390,6 +414,9 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
     (profile.method, profile.resultType, profile.parameters, profile.isConst,
       profile.isStatic, profile.bodyKind)) ==
     some (methodHandle, .void, [.builtin .int], false, false, "CompoundStmt")
+#guard methodBody.map (fun body =>
+    (body.canonical, body.definition, body.bodyKind)) ==
+    some (methodHandle, h "0x11", "CompoundStmt")
 #guard boundWitnessedIntegerArgument.map (fun bound =>
     (bound.parameter, bound.parameterType, bound.argument.value)) ==
     some (h "0x10", .builtin .int, 0)

@@ -81,6 +81,10 @@ on an arrow call. The remaining generic shape is:
 The other 472 refusals in that run are 314 unsupported argument lists, 155
 missing `this` owners, and 2 malformed names. This is source pricing only:
 the census still performs no receiver conversion, object lookup, or call.
+The kernel battery includes a matching nested-call witness and checks that it
+refuses as `unsupportedReceiver`; admitting it would require a typed result
+object, a second call's body and state/effect sequencing, so it is priced as a
+separate call-chain tier.
 
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or

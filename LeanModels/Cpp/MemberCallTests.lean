@@ -210,6 +210,16 @@ private def rawNestedMember (methodId fieldId receiverId name : String) : Raw :=
       ("type", rawObject [("qualType", rawText "MemPool *")]),
       ("inner", .array [rawNestedField fieldId receiverId])]])]])]
 
+private def rawNestedCall (methodId innerMethodId receiverId name : String) : Raw := rawObject [
+  ("kind", rawText "CXXMemberCallExpr"),
+  ("type", rawObject [("qualType", rawText "int")]),
+  ("inner", .array [rawObject [
+    ("kind", rawText "MemberExpr"), ("isArrow", .bool true),
+    ("valueCategory", rawText "prvalue"), ("name", rawText name),
+    ("referencedMemberDecl", rawObject [
+      ("kind", rawText "CXXMethodDecl"), ("id", rawText methodId)]),
+    ("inner", .array [rawCallDerived innerMethodId receiverId "Parent"])]])]
+
 private def rawCallThis (methodId name : String) : Raw := rawObject [
   ("kind", rawText "CXXMemberCallExpr"),
   ("type", rawObject [("qualType", rawText "int")]),
@@ -298,6 +308,8 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
       evidence.receiverFieldName, evidence.receiverCast)) ==
     some (receiverFieldHandle, some receiverFieldHandle, some receiverHandle,
       some "pool", ["LValueToRValue", "LValueToRValue"])
+#guard syntaxError (rawNestedCall methodHandle.value methodHandle.value receiverHandle.value "read") ==
+  some .unsupportedReceiver
 #guard syntaxError (rawCallThis methodHandle.value "read") == some .missingThisOwner
 
 private def resolveCanonicalHandle (rows : List DeclarationEvidenceRow) : Option FrontendHandle :=

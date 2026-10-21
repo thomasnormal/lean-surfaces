@@ -1475,6 +1475,12 @@ Frontend recovery spans remain explicit `InvalidStatement` unsupported
 members; see [the recovery boundary](sv-invalid-statements.md). The envelope
 does not execute a bad or partially recovered statement tree.
 
+Configuration declarations remain explicit `ConfigBlockSymbol` unsupported
+members. The `sv-0.1` envelope has no library namespace or elaboration-time
+configuration resolver, so `design`, `default`, `cell`, `instance`, `use`,
+sub-configuration and configuration-localparam bindings are not lowered into
+the single-top-module representation. See [the configuration boundary](sv-configurations.md).
+
 
 ## Dynamic integral casts
 

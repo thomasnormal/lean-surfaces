@@ -426,6 +426,22 @@ boundaries; they cannot be admitted by dropping a wrapper or executing a
 partial block. See [the boundary](sv-invalid-statements.md) and
 `extractors/sv/invalid_stmt_reprice.py` for the reproducible scan.
 
+## Configurations — 2026-10-21
+
+`ConfigBlockSymbol` remains the elaboration-time design-selection boundary.
+The fresh **22,043**-path census records it in **271** files: **148**
+configuration-only and **123** co-occurring. Repricing the sole files finds
+**166** configuration blocks across 148 files, with **17** files containing
+more than one block. There are **159** design clauses naming **168** top cells,
+**145** `default liblist` rules, **16** `cell liblist`, **7** `cell use`,
+**23** `instance liblist`, **35** `instance use`, and **5** configuration
+`localparam` declarations in four files. Clause rows overlap within a file.
+
+The current envelope has no library namespace, configuration-rule precedence,
+hierarchical binding or elaboration-time parameter environment. No config
+shape is admitted by flattening it into a module; the complete boundary and
+reproduction command are in [configurations](sv-configurations.md).
+
 The paired **22,035** paths gain **198 clean files**, no losses:
 **4,098 → 4,296 clean**, **17,871 → 17,673 partial**, **66 include skips**,
 zero extraction errors. All 4,098 previously clean extracted designs remain

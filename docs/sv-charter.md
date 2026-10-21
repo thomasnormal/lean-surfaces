@@ -3886,6 +3886,20 @@ recovery shape is admitted, and no second parser or recovery interpreter is
 introduced. See [the boundary and repricing](sv-invalid-statements.md) and the
 read-only instrument `extractors/sv/invalid_stmt_reprice.py`.
 
+### Configurations — 2026-10-21
+
+`ConfigBlockSymbol` is an elaboration-time design-selection boundary. In the
+fresh 22,043-path census it occurs in 271 files: 148 configuration-only and
+123 co-occurring. Those sole files contain 166 configuration blocks, 159
+design clauses naming 168 top cells, 145 default-library rules, 23 cell rules,
+58 instance rules and five configuration-localparam declarations. `use`
+bindings, hierarchical instance matching, library precedence and
+sub-configuration selection all change the elaborated design before the
+existing single-top-module loader runs. No configuration shape is admitted by
+dropping its declaration or selecting the first module; no second elaborator
+or library resolver is introduced. See [the boundary and repricing](sv-configurations.md)
+and the read-only instrument `extractors/sv/config_reprice.py`.
+
 
 ### Dynamic integral casts — 2026-10-20
 

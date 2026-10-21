@@ -3947,6 +3947,17 @@ type-scope lookup as a specialization shortcut. See [the generic-class
 boundary](sv-generic-classes.md) and the read-only instrument
 `extractors/sv/generic_class_use_reprice.py`.
 
+### Type parameters — 2026-10-21
+
+`TypeParameterSymbol:TypeParameter` is the type-binding boundary. In the fresh
+22,043-path census it occurs in 18 files: eight are type-parameter-only and
+10 co-occur with another wall. The sole files contain nine spans, including
+three empty frontend spans, four `type(...)` operator spans and two
+typed-default spans (overlapping). The envelope has no type environment or
+type-operator node, so no override or dependent declaration is reduced to a
+default type. See [the type-parameter boundary](sv-type-parameters.md) and
+the read-only instrument `extractors/sv/type_parameter_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

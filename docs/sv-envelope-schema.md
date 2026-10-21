@@ -1507,6 +1507,11 @@ Generic class member/scope recovery retains the separate
 not perform class-scope parameter iteration or type-scope lookup as a
 specialization shortcut.
 
+Type parameters remain explicit `TypeParameterSymbol:TypeParameter`
+unsupported members; see [the type-parameter boundary](sv-type-parameters.md).
+The envelope has no type environment or `type(...)` node, so overrides and
+dependent declarations are not reduced to the default type.
+
 Frontend recovery spans remain explicit `InvalidStatement` unsupported
 members; see [the recovery boundary](sv-invalid-statements.md). The envelope
 does not execute a bad or partially recovered statement tree.

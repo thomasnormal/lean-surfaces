@@ -474,6 +474,16 @@ resolution row (features overlap). No parameter iteration or type-scope lookup
 is admitted. See [the generic-class boundary](sv-generic-classes.md) and
 `extractors/sv/generic_class_use_reprice.py` for the reproducible scan.
 
+## Type parameters — 2026-10-21
+
+`TypeParameterSymbol:TypeParameter` remains the type-binding boundary. The
+fresh **22,043**-path census records it in **18** files: **8**
+type-parameter-only and **10** co-occurring. Repricing the sole files finds
+**9** spans: **3** empty frontend spans, **4** `type(...)` operator spans and
+**2** typed-default spans (features overlap). No type override or dependent
+declaration is reduced to a default. See [the type-parameter boundary](sv-type-parameters.md)
+and `extractors/sv/type_parameter_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

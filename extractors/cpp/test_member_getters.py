@@ -257,6 +257,47 @@ def cases : List (String × Int × Int) := [{pairs}]
             self.assertEqual(hashlib.sha256((corpus / name).read_bytes()).hexdigest(), expected)
         print("original member getters: 22 defined rows, independent member writes/reads, -O0/-O2 UBSan")
 
+    def test_enum_representation_value_differential(self):
+        """Compare an explicit enum representation/value boundary with C++."""
+        source = r'''
+#include <iostream>
+enum Error : unsigned int { zero = 0u, one = 1u, top = 4294967295u };
+struct Sample {
+ Error value;
+ Error get() const { return value; }
+};
+int main() {
+ for (unsigned int input : {0u, 1u, 7u, 4294967295u}) {
+  Sample object{static_cast<Error>(input)};
+  std::cout << input << ' ' << static_cast<unsigned int>(object.get()) << '\n';
+ }
+}
+'''
+        rows = [line.split() for line in self.native(source).splitlines()]
+        self.assertEqual(rows, [[value, value] for value in
+                                ["0", "1", "7", "4294967295"]])
+        pairs = ", ".join(f"({value}, {expected})" for value, expected in rows)
+        self.lean('''import LeanModels.Cpp.MemberCalls
+open LeanModels.Cpp
+private def h (value : String) : FrontendHandle := ⟨value⟩
+private def access : IntegralMemberThisFieldAccess := {
+  method := h "method", definition := h "method", owner := h "owner", field := h "field",
+  name := "value", receiverType := "Sample *", fieldType := "Error"}
+private def profile : IntegralMemberEnumProfile := {
+  field := h "field", enum := h "enum", name := "Error", constantCount := 3,
+  explicitValueCount := 3, underlyingType := some "unsigned int"}
+private def representation : IntegralMemberEnumRepresentation :=
+  (IntegralMemberEnumRepresentation.withOracle profile .unsignedInt).toOption.getD
+    {profile, underlying := .unsignedInt}
+def cases : List (Int × Int) := [''' + pairs + ''']
+#guard cases.all (fun (input, expected) =>
+  match IntegralMemberEnumValue.evaluate access representation .lp64
+      ⟨.unsigned 32, input⟩ with
+  | .ok value => value.value == ⟨.unsigned 32, expected⟩
+  | .error _ => false)
+''')
+        print("enum representation: 4 native rows, -O0/-O2 UBSan; explicit unsigned underlying type")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -140,6 +140,15 @@ This is real-artifact source telemetry, not a native execution or differential
 claim: the calls still require their own object, argument, and enum-value
 admission before execution.
 
+`MemberGetterTests.test_enum_representation_value_differential` supplies the
+small native control: a real `enum Error : unsigned int` getter is compiled
+and run at `-O0` and `-O2` under UBSan for four underlying values, and Lean
+checks the same rows through `IntegralMemberEnumValue.evaluate`. The native
+outputs agree across optimization levels and all four rows pass the kernel
+check. This validates the explicit representation/value transport only; it
+does not turn handwritten test handles into Clang provenance or admit general
+enum method execution.
+
 `IntegralMemberMethodBody.admit` then resolves the body relation independently
 of the profile. The real census finds exactly one definition for each involved
 canonical method: `Set → Set` once and `SetError →` its distinct defining

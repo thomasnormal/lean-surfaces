@@ -3899,6 +3899,19 @@ declaration shape is admitted by inlining or boolean evaluation. See [the
 property boundary](sv-properties.md) and the read-only instrument
 `extractors/sv/property_reprice.py`.
 
+### Covergroup declarations — 2026-10-21
+
+`CovergroupType:CovergroupType` is the verification-object declaration
+boundary. In the fresh 22,043-path census it occurs in 725 files: eight are
+covergroup-only and 717 co-occur with another wall. The sole files contain
+nine unsupported covergroup spans, including nine coverpoints, six bin
+declarations, three clocked samples, three sample-argument directions, two
+options, two sample methods, one `with` expression and one cross (rows
+overlap). The envelope has no sampling event, bin database or cross state, so
+no covergroup shape is admitted by flattening it into module storage. See
+[the covergroup boundary](sv-covergroups.md) and the read-only instrument
+`extractors/sv/covergroup_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

@@ -1488,6 +1488,11 @@ The `sv-0.1` envelope carries no property formals, local-variable frame,
 sampled-value history or sequence-attempt state, so declarations are not
 inlined into their assertion statements.
 
+Covergroup declarations remain explicit `CovergroupType:CovergroupType`
+unsupported members; see [the covergroup boundary](sv-covergroups.md). The
+envelope has no sampling event, coverpoint/bin or cross state, so a covergroup
+is not flattened into module storage or executed as a procedural block.
+
 Frontend recovery spans remain explicit `InvalidStatement` unsupported
 members; see [the recovery boundary](sv-invalid-statements.md). The envelope
 does not execute a bad or partially recovered statement tree.

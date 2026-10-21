@@ -429,6 +429,18 @@ in the envelope, so no declaration shape is admitted. See [the property
 boundary](sv-properties.md) and `extractors/sv/property_reprice.py` for the
 reproducible scan.
 
+## Covergroup declarations — 2026-10-21
+
+`CovergroupType:CovergroupType` remains the verification-object boundary. The
+fresh **22,043**-path census records it in **725** files: **8** covergroup-only
+and **717** co-occurring. Repricing the sole files finds **9** unsupported
+covergroup spans. Overlapping features include **9** coverpoints, **6** bin
+declarations, **3** clocked samples, **3** sample-argument directions, **2**
+options, **2** sample methods, **1** `with` expression and **1** cross.
+Sampling events, bin databases and cross state have no representation in the
+envelope, so no covergroup shape is admitted. See [the covergroup boundary](sv-covergroups.md)
+and `extractors/sv/covergroup_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

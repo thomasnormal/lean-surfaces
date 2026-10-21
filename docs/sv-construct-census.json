@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22035,
+  "corpus_files": 22043,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -16,19 +16,19 @@
   "blocker_files": [
    [
     "VariableSymbol:2state",
-    5741
+    5743
    ],
    [
     "AssignmentExpression:target",
-    4028
+    4030
    ],
    [
     "ExpressionStatement:CallExpression",
-    3768
+    3775
    ],
    [
     "CallExpression",
-    3290
+    3291
    ],
    [
     "Hierarchy:ports",
@@ -36,19 +36,19 @@
    ],
    [
     "SubroutineSymbol:Subroutine",
-    1713
+    1714
    ],
    [
     "NamedValueExpression:2state",
-    1481
+    1482
    ],
    [
     "ConcurrentAssertionStatement",
-    1353
+    1358
    ],
    [
     "ClassType",
-    1327
+    1328
    ],
    [
     "InvalidStatement",
@@ -56,7 +56,7 @@
    ],
    [
     "Hierarchy:module-kind",
-    1246
+    1248
    ],
    [
     "MemberAccessExpression",
@@ -68,11 +68,11 @@
    ],
    [
     "ConversionExpression:width",
-    778
+    779
    ],
    [
     "HierarchicalValueExpression",
-    748
+    749
    ],
    [
     "CovergroupType:CovergroupType",
@@ -116,7 +116,7 @@
    ],
    [
     "Hierarchy:invalid-compilation",
-    324
+    325
    ],
    [
     "BlockStatement:JoinAll",
@@ -124,11 +124,11 @@
    ],
    [
     "TypeAliasType:TypeAlias",
-    298
+    299
    ],
    [
     "SequenceSymbol:Sequence",
-    283
+    284
    ],
    [
     "InterfacePortSymbol:InterfacePort",
@@ -156,11 +156,11 @@
    ],
    [
     "Package:Subroutine",
-    193
+    194
    ],
    [
     "TimedStatement:DelayControl:expression",
-    168
+    169
    ],
    [
     "StaticLocal:initializer",
@@ -179,11 +179,11 @@
     146
    ],
    [
-    "TimedStatement:CycleDelayControl",
-    145
+    "Package:invalid-compilation",
+    146
    ],
    [
-    "Package:invalid-compilation",
+    "TimedStatement:CycleDelayControl",
     145
    ],
    [
@@ -227,12 +227,12 @@
     88
    ],
    [
-    "ImmediateAssertion:condition",
+    "ProceduralDeassignStatement",
     83
    ],
    [
-    "ProceduralDeassignStatement",
-    82
+    "ImmediateAssertion:condition",
+    83
    ],
    [
     "VariableSymbol",
@@ -981,13 +981,13 @@
   ],
   "by_status": {
    "clean": 4326,
-   "partial": 17643,
+   "partial": 17651,
    "skip_include": 66
   },
   "clean_by_type": {
    "(none)": [
     412,
-    1387
+    1388
    ],
    "compilation": [
     0,
@@ -1035,7 +1035,7 @@
    ],
    "runtime_error": [
     0,
-    42
+    44
    ],
    "shell": [
     52,
@@ -1043,7 +1043,7 @@
    ],
    "simulation": [
     3741,
-    18671
+    18676
    ],
    "simulation elaboration": [
     2,
@@ -1380,9 +1380,9 @@
    "chapter-10": {
     "clean": 248,
     "error": 0,
-    "partial": 409,
+    "partial": 410,
     "skip_include": 0,
-    "total": 657,
+    "total": 658,
     "unlockable": 2
    },
    "chapter-11": {
@@ -1428,9 +1428,9 @@
    "chapter-16": {
     "clean": 50,
     "error": 0,
-    "partial": 1493,
+    "partial": 1498,
     "skip_include": 0,
-    "total": 1543,
+    "total": 1548,
     "unlockable": 0
    },
    "chapter-17": {
@@ -1468,9 +1468,9 @@
    "chapter-21": {
     "clean": 84,
     "error": 0,
-    "partial": 816,
+    "partial": 817,
     "skip_include": 0,
-    "total": 900,
+    "total": 901,
     "unlockable": 0
    },
    "chapter-22": {
@@ -1540,9 +1540,9 @@
    "chapter-3": {
     "clean": 60,
     "error": 0,
-    "partial": 239,
+    "partial": 240,
     "skip_include": 1,
-    "total": 300,
+    "total": 301,
     "unlockable": 0
    },
    "chapter-30": {

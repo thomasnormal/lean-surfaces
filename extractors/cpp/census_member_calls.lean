@@ -86,6 +86,18 @@ private def enumRepresentationErrorName :
   | .booleanUnderlying => "boolean-underlying"
   | .oracleDisagrees => "oracle-disagrees"
 
+private def enumArgumentErrorName : IntegralMemberEnumArgumentError → String
+  | .notDeclRef => "not-decl-ref"
+  | .missingOccurrence => "missing-occurrence"
+  | .malformedType => "malformed-type"
+  | .unsupportedType => "unsupported-type"
+  | .missingReferencedDeclaration => "missing-referenced-declaration"
+  | .parameterTypeMismatch => "parameter-type-mismatch"
+  | .missingMethod => "missing-method"
+  | .malformedMethodSignature => "malformed-method-signature"
+  | .missingParameterEvidence => "missing-parameter-evidence"
+  | .conflictingParameterEvidence => "conflicting-parameter-evidence"
+
 private def enumSetterErrorName :
     IntegralMemberEnumSetterError → String
   | .profile error => "profile:" ++ methodProfileErrorName error
@@ -387,6 +399,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut enumResultRefusals : List String := []
   let mut enumArgumentShapes : List String := []
   let mut enumArgumentRefusals : List String := []
+  let mut enumArgumentParameters : List String := []
+  let mut enumArgumentParameterRefusals : List String := []
   let mut enumGetterProfiles : List String := []
   let mut enumGetterRefusals : List String := []
   let mut receiverShapes : List String := []
@@ -403,6 +417,13 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
               | .ok enum =>
                   match enumResultName probe enum with
                   | .ok name =>
+                      match IntegralMemberEnumArgument.parameter probe canonical argumentOrdinal
+                          enum name with
+                      | .ok parameter => enumArgumentParameters :=
+                          (s!"{parameter.method.value}:{parameter.parameter.value}:" ++
+                            s!"{parameter.ordinal}:{parameter.sourceType}") :: enumArgumentParameters
+                      | .error error => enumArgumentParameterRefusals :=
+                          enumArgumentErrorName error :: enumArgumentParameterRefusals
                       match enumArgumentShape argument name with
                       | .ok shape => enumArgumentShapes := shape :: enumArgumentShapes
                       | .error reason => enumArgumentRefusals := reason :: enumArgumentRefusals
@@ -571,6 +592,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("enum_result_refusals", counts enumResultRefusals),
     ("enum_argument_shapes", counts enumArgumentShapes),
     ("enum_argument_refusals", counts enumArgumentRefusals),
+    ("enum_argument_parameters", counts enumArgumentParameters),
+    ("enum_argument_parameter_refusals", counts enumArgumentParameterRefusals),
     ("enum_getter_profiles", counts enumGetterProfiles),
     ("enum_getter_refusals", counts enumGetterRefusals),
     ("unsupported_receiver_shapes", counts receiverShapes),

@@ -271,8 +271,11 @@ named refusals; variadic arguments beyond the structured parameter list are
 not treated as enum parameters. On the 542-call TinyXML2 probe, **23** enum
 argument shapes are admitted, all
 `XMLError:tinyxml2::XMLError:DeclRefExpr`, and the enum-argument refusal set is
-empty. This is source provenance only: no enum value is evaluated and the
-variadic `SetError` calls remain outside execution.
+empty. The same 23 positions join to one parameter witness
+`0x...7def0:0x...7d810:0:XMLError` (the concrete handles are retained in the
+JSON report), with no parameter-provenance refusals. This is source provenance
+only: no enum value is evaluated and the variadic `SetError` calls remain
+outside execution.
 
 `IntegralMemberEnumArgument.evaluate` is the next value boundary. It accepts
 the retained enum identity plus an explicit representation oracle, target
@@ -285,6 +288,16 @@ separate-value binder remains available for callers that already hold a typed
 enum value. The four-row setter differential now uses this source-argument
 evaluation path; the matching Clang 21.1.8 oracle is still an explicit
 skip when unavailable.
+
+`IntegralMemberEnumArgument.parameter` closes the declaration side of that
+boundary. Given a canonical method handle, ordinal, and the same enum
+representation, it joins the structured parameter-type list to exactly one
+`ParmVarDecl`, retaining the parameter handle, name, source spelling, and
+ordinal. Repeated or missing method/AST rows, length disagreements, wrong
+enum identities, and spelling mismatches refuse. `bindToEvidence` accepts only
+matching argument and parameter type evidence; the existing setter admission
+still supplies its own body witness, so this addition does not select an
+overload or execute a variadic method.
 
 `IntegralMemberEnumCall` exposes that read as a call result without widening
 the ordinary integral getter. It requires the already selected method and

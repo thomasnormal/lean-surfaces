@@ -177,6 +177,22 @@ private def enumSetterRepresentation : Option IntegralMemberEnumRepresentation :
     field := fieldHandle, enum := h "0x13", name := "XMLError",
     constantCount := 20, explicitValueCount := 1, underlyingType := none} .unsignedInt).toOption
 
+private def enumParameterEvidence : Option IntegralMemberEnumParameterEvidence :=
+  (IntegralMemberEnumArgument.parameter
+    (enumSetterProbeWith (enumSetterRight "0x15")) methodHandle 0 (h "0x13") "XMLError").toOption
+
+private def enumParameterAccepted : Bool :=
+  enumParameterEvidence.map (fun parameter =>
+    (parameter.method, parameter.parameter, parameter.ordinal, parameter.name,
+      parameter.sourceType, parameter.type)) ==
+    some (methodHandle, h "0x15", 0, some "error", "XMLError", .enumeration (h "0x13"))
+
+private def enumParameterWrongOrdinal : Bool :=
+  match IntegralMemberEnumArgument.parameter
+      (enumSetterProbeWith (enumSetterRight "0x15")) methodHandle 1 (h "0x13") "XMLError" with
+  | .error .missingParameterEvidence => true
+  | _ => false
+
 private def enumSetterEvidence : Option IntegralMemberEnumSetter :=
   match enumSetterRepresentation with
   | some representation =>
@@ -665,6 +681,14 @@ private def enumSetterSourceArgument : Option IntegralMemberEnumArgument :=
         (rawEnumArgument "0x20" "XMLError" "0x21") representation).toOption
   | none => none
 
+private def enumArgumentBindEvidenceAccepted : Bool :=
+  match enumParameterEvidence, enumSetterSourceArgument with
+  | some parameter, some argument =>
+      match IntegralMemberEnumArgument.bindToEvidence argument parameter with
+      | .ok bound => bound.parameter == h "0x15" && bound.parameterType == .enumeration (h "0x13")
+      | .error _ => false
+  | _, _ => false
+
 private def enumArgumentValueAccepted : Bool :=
   match enumSetterRepresentation, enumSetterSourceArgument with
   | some representation, some argument =>
@@ -858,11 +882,14 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
     some (methodHandle, .void, [.builtin .int], false, false, "CompoundStmt")
 #guard enumSetterAccepted
 #guard enumSetterWrongParameter
+#guard enumParameterAccepted
+#guard enumParameterWrongOrdinal
 #guard enumSetterWriteAccepted
 #guard enumSetterWriteWrongField
 #guard enumArgumentAccepted
 #guard enumArgumentWrongType
 #guard enumArgumentBindAccepted
+#guard enumArgumentBindEvidenceAccepted
 #guard enumArgumentValueAccepted
 #guard enumArgumentValueWrongFormat
 #guard enumArgumentValueWrongEnum

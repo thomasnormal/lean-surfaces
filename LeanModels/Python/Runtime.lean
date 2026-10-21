@@ -227,6 +227,11 @@ are faithful wherever an instance can appear. -/
 inductive Obj where
   | dict (entries : Array (RVal × RVal)) (shapeVersion : Nat)
   | list (xs : Array RVal)
+  /-- A first-class dictionary view.  The view retains the dictionary's
+  address, so reads (length, truthiness, membership, and consuming snapshots)
+  observe later mutations just like CPython's live `dict_keys`,
+  `dict_values`, and `dict_items` objects. -/
+  | dictView (dictAddr : Addr) (kind : DictViewKind)
   | instance (cls : ClassId) (attrs : Array (String × RVal))
   /-- A GENERATOR object (H4): the suspended frame AS DATA — the
   generator function's (possibly qualified) name, its locals at the
@@ -379,6 +384,7 @@ def Obj.WF (h : Heap) : Obj → Prop
   | .dict es _ => RVal.WFList h (es.toList.map Prod.fst)
       ∧ RVal.WFList h (es.toList.map Prod.snd)
   | .list xs => RVal.WFList h xs.toList
+  | .dictView da _ => da < h.size
   | .instance _ attrs => RVal.WFList h (attrs.toList.map Prod.snd)
   | .closure _ _ _ _ _ _ _ captured => RVal.WFList h (captured.map Prod.snd)
   | .pyset xs => RVal.WFList h xs.toList
@@ -1019,6 +1025,8 @@ mutual
                 return .list vs.toArray
             | some (.dict _ _) =>
                 .unsupported "returning a dict through the call boundary is outside the tier (no dict observation form in `Val`; docs/memory-model.md)"
+            | some (.dictView _ _) =>
+                .unsupported "returning a dictionary view through the call boundary is outside the tier (a view has live identity and no observation form in `Val`; docs/memory-model.md §dict views)"
             | some (.closure ..) =>
                 .unsupported "returning a closure through the call boundary is outside the tier (a snapshot would forget function identity; docs/memory-model.md §nested defs and closures)"
             | some (.pyset _) =>
@@ -1222,6 +1230,7 @@ theorem RVal.freezeH_ne_exn_pair (h : Heap) (fuel : Nat) :
             rw [hget] at hc
             cases o with
             | dict es ver => simp at hc
+            | dictView da kind => simp at hc
             | «instance» cls attrs => simp at hc
             | generator qn lo k st => simp at hc
             | closure nm ps ao lo' hg ig bd cap => simp at hc
@@ -1374,6 +1383,7 @@ theorem RVal.eq_thaw_of_freezeH_pair (h : Heap) (fuel : Nat) :
             rw [hget] at hc
             cases o with
             | dict es ver => cases hc
+            | dictView da kind => cases hc
             | «instance» cls attrs => cases hc
             | generator qn lo k st => cases hc
             | closure nm ps ao lo' hg ig bd cap => cases hc

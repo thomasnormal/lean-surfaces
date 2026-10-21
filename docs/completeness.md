@@ -364,9 +364,12 @@ day dict deletion lands.
 * **3c-i — views and `enumerate` in CONSUMING position**: LANDED across
   §pycomplete-5 (the cursor takes a view KIND), §pycomplete-11 (the
   ingestion rewrite) and §pycomplete-14 (`enumerate(d)`'s own frame).
-* **3c-ii — the views as FIRST-CLASS values**: REMAINING, and it needs an
-  `Obj.dictView` plus the set-algebra inventory and the identity-equality
-  rule §pycomplete-8 measured.
+* **3c-ii — the views as FIRST-CLASS values**: LANDED on the executable
+  monadic surface. `Obj.dictView` retains the source dictionary address, so
+  escaped `.keys()`/`.values()`/`.items()` views track later mutations through
+  length, truthiness, membership, and consuming iteration. View set algebra,
+  equality, indexing, and rendering remain loud with witnesses in the
+  acceptance battery.
 * **3d — `DictComp`**, which rides 3a.
 
 **Unblocks**: dict iteration, one of the two or three most common idioms

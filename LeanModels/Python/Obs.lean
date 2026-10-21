@@ -235,7 +235,7 @@ theorem heapEqMono (fuel : Nat) :
             cases Heap.get? h y <;> exact Res.le_refl _
           | some o1 =>
             cases Heap.get? h y with
-            | none => cases o1 <;> exact Res.le_refl _
+            | none => cases o1 <;> simp [heapEq, Res.le_iff]
             | some o2 =>
               cases o1 with
               | cell cv => cases o2 <;> exact Res.le_refl _
@@ -245,6 +245,7 @@ theorem heapEqMono (fuel : Nat) :
                   exact Res.le_ite (ihN h ((x, y) :: active) es.toList fs.toList k hk)
                     (Res.le_refl _)
                 | list ys => exact Res.le_refl _
+                | dictView da kind => exact Res.le_refl _
                 | «instance» ci attrs => exact Res.le_refl _
                 | generator qn lo kk stt => exact Res.le_refl _
                 | cell cv => exact Res.le_refl _
@@ -256,11 +257,17 @@ theorem heapEqMono (fuel : Nat) :
                 | list ys =>
                   exact Res.le_ite (ihL h ((x, y) :: active) xs.toList ys.toList k hk)
                     (Res.le_refl _)
+                | dictView da kind => exact Res.le_refl _
                 | «instance» ci attrs => exact Res.le_refl _
                 | generator qn lo kk stt => exact Res.le_refl _
                 | cell cv => exact Res.le_refl _
                 | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
                 | pyset zs => exact Res.le_refl _
+              | dictView da kind =>
+                cases o2 with
+                | dictView da₂ kind₂ =>
+                  cases kind <;> cases kind₂ <;> exact Res.le_refl _
+                | _ => simp [heapEq, Res.le_iff]
               | «instance» ci attrs => cases o2 <;> exact Res.le_refl _
               | generator qn lo kk stt => cases o2 <;> exact Res.le_refl _
               | closure nm ps ao lo' hg ig bd cap =>
@@ -308,6 +315,48 @@ theorem heapContainsScan_mono {h : Heap} {fuel : Nat} {x : RVal}
     exact Res.le_bind ((heapEqMono fuel).1 h [] v x fuel' hf)
       fun e => Res.le_ite (Res.le_refl _) ih
 
+/-- Fuel monotonicity of membership in a live `dict_items` view. -/
+theorem dictItemContainsList_mono {h : Heap} {fuel : Nat}
+    {es : Array (RVal × RVal)} {probe : List RVal} {fuel' : Nat}
+    (hf : fuel ≤ fuel') :
+    dictItemContainsList h fuel es probe ⊑ dictItemContainsList h fuel' es probe := by
+  cases probe with
+  | nil => exact Res.le_refl _
+  | cons key rest =>
+    cases rest with
+    | nil => exact Res.le_refl _
+    | cons value tail =>
+      cases tail with
+      | nil =>
+        simp only [dictItemContainsList]
+        by_cases hk : hashableKey key
+        · cases hd : dictFind es.toList key with
+          | none => simp [hk, hd]; exact Res.le_refl _
+          | some stored =>
+            simp [hk, hd]
+            exact (heapEqMono fuel).1 h [] stored value fuel' hf
+        · simp [hk]; exact Res.le_refl _
+      | cons extra tail' => exact Res.le_refl _
+
+theorem dictItemContains_mono {h : Heap} {fuel : Nat}
+    {es : Array (RVal × RVal)} {probe : RVal} {fuel' : Nat}
+    (hf : fuel ≤ fuel') :
+    dictItemContains h fuel es probe ⊑ dictItemContains h fuel' es probe := by
+  cases probe with
+  | tuple xs => exact dictItemContainsList_mono (probe := xs.toList) hf
+  | ntuple tn fields xs =>
+      exact dictItemContainsList_mono (probe := xs.toList) hf
+  | none => exact Res.le_refl _
+  | ellipsis => exact Res.le_refl _
+  | bool b => exact Res.le_refl _
+  | int n => exact Res.le_refl _
+  | float value => exact Res.le_refl _
+  | str s => exact Res.le_refl _
+  | bytes xs => exact Res.le_refl _
+  | listV xs => exact Res.le_refl _
+  | rangeV lo hi step => exact Res.le_refl _
+  | ref a => exact Res.le_refl _
+
 /-- Fuel monotonicity for `setDedup` (H7+ set construction): the
 element-equality scans thread the fuel; the accumulator generalizes. -/
 theorem setDedup_mono {h : Heap} {fuel fuel' : Nat} {xs : List RVal}
@@ -333,6 +382,23 @@ theorem heapContains_mono {h : Heap} {fuel : Nat} {a : Addr} {k : RVal}
     cases o with
     | dict es v => exact Res.le_refl _
     | list xs => exact heapContainsScan_mono hf
+    | dictView da kind =>
+      cases hv : Heap.get? h da with
+      | none => simp [dictViewEntries, hv, Res.le_iff]
+      | some obj =>
+        cases obj with
+        | dict es ver =>
+          cases kind with
+          | keys => simp [dictViewEntries, hv, Res.le_iff]
+          | values =>
+            simpa [dictViewEntries, hv] using
+              (heapContainsScan_mono (h := h) (fuel := fuel) (fuel' := fuel')
+                (x := k) (l := (dictViewElems es .values).toList) hf)
+          | items =>
+            simpa [dictViewEntries, hv] using
+              (dictItemContains_mono (h := h) (fuel := fuel) (fuel' := fuel')
+                (es := es) (probe := k) hf)
+        | _ => simp [dictViewEntries, hv, Res.le_iff]
     | «instance» ci attrs => exact Res.le_refl _
     | generator qn lo kk stt => exact Res.le_refl _
     | cell cv => exact Res.le_refl _
@@ -372,6 +438,7 @@ theorem freezeHMono (fuel : Nat) :
           | some o =>
             cases o with
             | dict es v => exact Res.le_refl _
+            | dictView da kind => exact Res.le_refl _
             | «instance» ci attrs => exact Res.le_refl _
             | generator qn lo kk stt => exact Res.le_refl _
             | cell cv => exact Res.le_refl _
@@ -1603,6 +1670,7 @@ theorem fuelMono (fuel : Nat) :
         | some o =>
           cases o with
           | dict es ver => exact Run.le_refl _
+          | dictView da kind => exact Run.le_refl _
           | «instance» ci attrs => exact Run.le_refl _
           | cell cv => exact Run.le_refl _
           | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
@@ -1635,6 +1703,7 @@ theorem fuelMono (fuel : Nat) :
         | attrMissing => exact Run.le_refl _
         | dictGet =>
           exact Run.le_bind (ihEs m st args k hk) fun st vs => Run.le_refl _
+        | dictView kind => exact Run.le_refl _
         | dictClear =>
           -- pass 5: arg-eval then a fuel-free heap update
           exact Run.le_bind (ihEs m st args k hk) fun st vs => Run.le_refl _
@@ -1660,6 +1729,7 @@ theorem fuelMono (fuel : Nat) :
           cases o with
           | dict es ver => exact Run.le_refl _
           | list xs => exact Run.le_refl _
+          | dictView da kind => exact Run.le_refl _
           | «instance» ci attrs => exact Run.le_refl _
           | cell cv => exact Run.le_refl _
           | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
@@ -1775,6 +1845,7 @@ theorem fuelMono (fuel : Nat) :
                   | some o =>
                     cases o with
                     | dict es ver => exact Run.le_refl _
+                    | dictView da kind => exact Run.le_refl _
                     | «instance» ci attrs => exact Run.le_refl _
                     | cell cv => exact Run.le_refl _
                     | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
@@ -1796,6 +1867,7 @@ theorem fuelMono (fuel : Nat) :
             | some o =>
               cases o with
               | dict es ver => exact Run.le_refl _
+              | dictView da kind => exact Run.le_refl _
               | «instance» ci attrs => exact Run.le_refl _
               | generator qn lo kk stt => exact Run.le_refl _
               | cell cv => exact Run.le_refl _
@@ -1825,6 +1897,7 @@ theorem fuelMono (fuel : Nat) :
               cases o with
               | list xs => exact Run.le_ite (Run.le_refl _) (ihGen m st rest kf hk)
               | dict es ver => exact Run.le_refl _
+              | dictView da kind => exact Run.le_refl _
               | «instance» ci attrs => exact Run.le_refl _
               | generator qn lo kk stt => exact Run.le_refl _
               | cell cv => exact Run.le_refl _
@@ -3083,6 +3156,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         cases o with
         | cell cv => exact .unsupported
         | dict es ver => exact .unsupported
+        | dictView da kind => exact .unsupported
         | «instance» ci attrs => exact .exn
         | closure nm ps ao lo' hg ig bd cap => exact .unsupported
         | pyset zs => exact .unsupported

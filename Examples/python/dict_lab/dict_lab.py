@@ -399,11 +399,11 @@ def view_keys_max(a):
 
 
 def view_escape_still_loud(a):
-    # THE BOUNDARY. Binding the view is not a consuming position, so ingestion
-    # does not rewrite it and the tier still refuses -- which is what keeps the
-    # rewrite's snapshot honest (CPython answers 1 here).
+    # A view is a live heap object. Binding it preserves the dictionary address,
+    # so a later insertion is visible when the view is consumed.
     d = {1: a}
     k = d.keys()
+    d[2] = "b"
     return len(list(k))
 
 
@@ -411,6 +411,48 @@ def view_arg_not_alone_still_loud(a):
     # a view beside another argument is not the recognised shape either
     d = {1: a}
     return len(list(d.keys())[0:1])
+
+
+def view_keys_live(a):
+    d = {1: a}
+    k = d.keys()
+    d[2] = "b"
+    return (len(k), bool(k), 2 in k, list(k))
+
+
+def view_values_live(a):
+    d = {1: a}
+    k = d.values()
+    d[2] = a
+    return (len(k), bool(k), a in k, list(k))
+
+
+def view_items_live(a):
+    d = {1: a}
+    k = d.items()
+    d[2] = "b"
+    return (len(k), bool(k), (1, a) in k, list(k))
+
+
+def view_items_unhashable():
+    d = {1: 2}
+    return ([1], 2) in d.items()
+
+
+def view_eq_still_loud(a):
+    d = {1: a}
+    return d.keys() == d.keys()
+
+
+def view_index_still_loud(a):
+    d = {1: a}
+    k = d.keys()
+    return k[0]
+
+
+def view_repr_still_loud(a):
+    d = {1: a}
+    return str(d.keys())
 
 
 # §3c-i-c: `enumerate(d)` -- the KEY cursor with an index. It is not a loop

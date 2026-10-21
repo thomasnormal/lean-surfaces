@@ -839,6 +839,7 @@ mutual
         else .ok st .next
       | some (.dict _ _) =>
         .unsupported "'for' over a dict is outside the tier (live dict iteration is deliberately NOT in the inventory — no snapshot shortcut; docs/memory-model.md)"
+      | some (.dictView ..) => .unsupported "dictionary view iteration is outside the proof tier"
       | some (.instance _ _) =>
         .exn st (.typeError "'object' object is not iterable")
       | some (.generator ..) =>

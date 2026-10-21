@@ -351,6 +351,9 @@ def RVal.typeNameH (h : Heap) : RVal → String
     match Heap.get? h a with
     | some (.dict _ _) => "dict"
     | some (.list _) => "list"
+    | some (.dictView _ .keys) => "dict_keys"
+    | some (.dictView _ .values) => "dict_values"
+    | some (.dictView _ .items) => "dict_items"
     -- H3: the class NAME lives in the module, not the heap — "object" is
     -- the message-only placeholder (the harness compares exception CLASS
     -- names, never messages).
@@ -2582,6 +2585,7 @@ mutual
   def keyHasInstanceRef (h : Heap) : RVal → Bool
     | .ref a =>
       match Heap.get? h a with
+      | some (.dictView ..) => true
       | some (.instance _ _) => true
       | some (.generator ..) => true
       | some (.cell _) => true
@@ -2668,6 +2672,13 @@ def dictViewElems (es : Array (RVal × RVal)) (kind : DictViewKind) : Array RVal
   | .keys => es.map Prod.fst
   | .values => es.map Prod.snd
   | .items => es.map (fun kv => .tuple #[kv.1, kv.2])
+
+/-- Resolve the dictionary retained by a live view. A non-dictionary target
+is an invariant failure, never an empty view. -/
+def dictViewEntries (h : Heap) (a : Addr) : Res (Array (RVal × RVal)) :=
+  match Heap.get? h a with
+  | some (.dict es _) => .ok es
+  | _ => .unsupported danglingMsg
 
 /-- §3c-i-b: the kind a synthetic view builtin stands for (`Ast.lean`
 §the dict-view ingestion rewrite emits these names). -/
@@ -2826,6 +2837,7 @@ def heapIndex (h : Heap) (a : Addr) (k : RVal) : Res RVal :=
       .exn (.typeError s!"list indices must be integers, not {RVal.typeNameH h k}")
   -- H3: no `__getitem__` can exist (dunder guard), so the default
   -- protocol's refusal is the faithful outcome.
+  | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
   | some (.instance _ _) => .exn (.typeError "'object' object is not subscriptable")
   | some (.generator ..) => .exn (.typeError "'generator' object is not subscriptable")
   | some (.cell _) => .unsupported cellInternal
@@ -2899,6 +2911,7 @@ def heapStore (h : Heap) (a : Addr) (k v : RVal) : Res Heap :=
     | Option.none =>
       .exn (.typeError s!"list indices must be integers, not {RVal.typeNameH h k}")
   -- H3: no `__setitem__` can exist (dunder guard) — faithful refusal.
+  | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
   | some (.instance _ _) =>
     .exn (.typeError "'object' object does not support item assignment")
   | some (.generator ..) =>
@@ -2916,6 +2929,8 @@ def heapLen (h : Heap) (a : Addr) : Res RVal :=
   match Heap.get? h a with
   | some (.dict es _) => .ok (.int es.size)
   | some (.list xs) => .ok (.int xs.size)
+  | some (.dictView da _) =>
+    do let es ← dictViewEntries h da; return .int es.size
   | some (.instance _ _) => .exn (.typeError "object of type 'object' has no len()")
   | some (.generator ..) => .exn (.typeError "object of type 'generator' has no len()")
   | some (.cell _) => .unsupported cellInternal
@@ -2933,6 +2948,7 @@ def heapGet (h : Heap) (a : Addr) (k dflt : RVal) : Res RVal :=
     if hashableKey k then .ok ((dictFind es.toList k).getD dflt)
     else keyRefusal h k
   | some (.list _) => .exn .attributeError   -- 'list' object has no attribute 'get'
+  | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
   | some (.instance _ _) =>
     .unsupported "internal: '.get' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | some (.generator ..) => .exn .attributeError
@@ -2952,6 +2968,7 @@ def heapAppend (h : Heap) (a : Addr) (v : RVal) : Res Heap :=
     | some h' => .ok h'
     | Option.none => .unsupported danglingMsg
   | some (.dict _ _) => .exn .attributeError  -- 'dict' object has no attribute 'append'
+  | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
   | some (.instance _ _) =>
     .unsupported "internal: '.append' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | some (.generator ..) => .exn .attributeError
@@ -2975,6 +2992,7 @@ def heapPop (h : Heap) (a : Addr) (i : Option Int) : Res (Heap × RVal) :=
     | Option.none => .exn .indexError
   | some (.dict _ _) =>
     .unsupported "'.pop' on a dict is outside the tier (dict.pop lands with the dict-method tier)"
+  | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
   | some (.instance _ _) =>
     .unsupported "internal: '.pop' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | some (.generator ..) => .exn .attributeError
@@ -3002,6 +3020,7 @@ def heapInsert (h : Heap) (a : Addr) (i : Int) (v : RVal) : Res Heap :=
     | some h' => .ok h'
     | Option.none => .unsupported danglingMsg
   | some (.dict _ _) => .exn .attributeError  -- 'dict' object has no attribute 'insert'
+  | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
   | some (.instance _ _) =>
     .unsupported "internal: '.insert' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | some (.generator ..) => .exn .attributeError
@@ -3017,6 +3036,7 @@ order); a dict/list has no writable attributes — the faithful
 `AttributeError` (no `__slots__`/instance dict on builtins). -/
 def heapAttrStore (h : Heap) (a : Addr) (attr : String) (v : RVal) : Res Heap :=
   match Heap.get? h a with
+  | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
   | some (.instance ci attrs) =>
     match Heap.update h a (.instance ci (Env.set attrs.toList attr v).toArray) with
     | some h' => .ok h'
@@ -3042,6 +3062,8 @@ def truthyH (h : Heap) : RVal → Res Bool
     match Heap.get? h a with
     | some (.dict es _) => .ok (es.size != 0)
     | some (.list xs) => .ok (xs.size != 0)
+    | some (.dictView da _) =>
+      do let es ← dictViewEntries h da; return es.size != 0
     | some (.instance _ _) => .ok true
     -- a generator object is always truthy (no `__bool__`/`__len__`)
     | some (.generator ..) => .ok true
@@ -3111,6 +3133,9 @@ mutual
             if xs.size == ys.size then
               heapEqList h fuel ((x, y) :: active) xs.toList ys.toList
             else .ok false
+          | some (.dictView _ .values), some (.dictView _ .values) => .ok false
+          | some (.dictView ..), some _ | some _, some (.dictView ..) =>
+              .unsupported "dictionary view set comparison is outside the tier"
           | some _, some _ => .ok false   -- dict vs list: cross-type `==`
           | _, _ => .unsupported danglingMsg
       | .ref _, _ => .ok false
@@ -3165,6 +3190,26 @@ def heapContainsScan (h : Heap) (fuel : Nat) (x : RVal) : List RVal → Res Bool
     let e ← heapEq h fuel [] v x
     if e then return true else heapContainsScan h fuel x vs
 
+/-- `dict_items.__contains__` accepts only two-element tuples, hashes the key
+before lookup, and compares the stored value. The hash check is observable:
+`([unhashable], value) in d.items()` raises before any equality scan. -/
+def dictItemContainsList (h : Heap) (fuel : Nat)
+    (es : Array (RVal × RVal)) : List RVal → Res Bool
+  | [key, value] =>
+    if hashableKey key then
+      match dictFind es.toList key with
+      | some stored => heapEq h fuel [] stored value
+      | Option.none => .ok false
+    else keyRefusal h key
+  | _ => .ok false
+
+def dictItemContains (h : Heap) (fuel : Nat) (es : Array (RVal × RVal))
+    (probe : RVal) : Res Bool :=
+  match probe with
+  | .tuple xs => dictItemContainsList h fuel es xs.toList
+  | .ntuple _ _ xs => dictItemContainsList h fuel es xs.toList
+  | _ => .ok false
+
 /-- `k in o` on a heap object. Dicts: key membership (unhashable probes
 raise, empty dict included — pure `keyEq`, keys are hashable). Lists
 (H2): the fueled `==` scan (`heapContainsScan`). -/
@@ -3174,6 +3219,15 @@ def heapContains (h : Heap) (fuel : Nat) (a : Addr) (k : RVal) : Res Bool :=
     if hashableKey k then .ok (dictFind es.toList k).isSome
     else keyRefusal h k
   | some (.list xs) => heapContainsScan h fuel k xs.toList
+  | some (.dictView da kind) =>
+    do
+      let es ← dictViewEntries h da
+      match kind with
+      | .keys =>
+        if hashableKey k then .ok (dictFind es.toList k).isSome
+        else keyRefusal h k
+      | .values => heapContainsScan h fuel k (dictViewElems es .values).toList
+      | .items => dictItemContains h fuel es k
   -- H3: no `__contains__`/`__iter__`/`__getitem__` (dunder guard) —
   -- the faithful `TypeError`.
   | some (.instance _ _) =>
@@ -3328,6 +3382,7 @@ def sortedValH (h : Heap) (v : RVal) (desc : Bool := false) : Res (Heap × RVal)
           .ok (h.push (.list (((sortInts ns).map RVal.int).toArray)), .ref h.size)
        | Option.none => do
           return (h.push (.list (← sortByLt desc (dictKeys es).toList).toArray), .ref h.size))
+    | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
     | some (.instance _ _) =>
         .exn (.typeError "'object' object is not iterable")
     | some (.generator ..) =>
@@ -3364,6 +3419,7 @@ def extremumValH (h : Heap) (isMax : Bool) (vs : List RVal) : Res RVal :=
                .exn (.valueError s!"{if isMax then "max" else "min"}() arg is an empty sequence")
            | Option.none =>
                extremumOf isMax (if isMax then "max" else "min") (dictKeys es).toList)
+        | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
         | some (.instance _ _) =>
             .exn (.typeError "'object' object is not iterable")
         | some (.generator ..) =>
@@ -3634,6 +3690,7 @@ def assignToH (h : Heap) (env : Env) (target : Expr) (v : RVal) : Res Env :=
        | some (.list xs) => assignTo env target (.listV xs)
        | some (.dict _ _) =>
          .unsupported "unpacking a dict iterates its keys — outside the tier (live dict iteration; docs/memory-model.md)"
+       | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
        | some (.instance _ _) =>
          -- no `__iter__` can exist (dunder guard) — faithful
          .exn (.typeError "cannot unpack non-iterable object object")
@@ -3701,6 +3758,7 @@ def unpackSeq (h : Heap) (n : Nat) : RVal → Res (List RVal)
            s!"not enough values to unpack (expected {n}, got {xs.size})")
      | some (.dict _ _) =>
        .unsupported "unpacking a dict iterates its keys — outside the tier (live dict iteration; docs/memory-model.md)"
+     | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
      | some (.instance _ _) => .exn (.typeError "cannot unpack non-iterable object object")
      | some (.generator ..) =>
        .unsupported "unpacking a generator DRAINS it (a stateful read) — outside the tier (docs/memory-model.md §generator semantics)"
@@ -3732,6 +3790,7 @@ def unpackAllStar (h : Heap) : RVal → Res (List RVal)
       match Heap.get? h a with
       | some (.list xs) => .ok xs.toList
       | some (.dict _ _) => .unsupported "unpacking a dict iterates its keys — outside the tier (live dict iteration; docs/memory-model.md)"
+      | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
       | some (.instance _ _) => .exn (.typeError "cannot unpack non-iterable object object")
       | some (.generator ..) => .unsupported "unpacking a generator DRAINS it (a stateful read) — outside the tier (docs/memory-model.md §generator semantics)"
       | some (.cell _) => .unsupported cellInternal
@@ -3825,6 +3884,7 @@ def sumRejectedStart (program : Module) (heap : Heap) (iterable : RVal)
     match Heap.get? heap address with
     | some (.list _) | some (.dict ..) | some (.pyset _) | some (.generator ..) => rejected
     | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
+    | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
     | some (.instance classId _) =>
       match getClass? program classId with
       | some classDef =>
@@ -3839,6 +3899,7 @@ def bytesOperandCheck (program : Module) (heap : Heap) (operand : RVal)
   match operand with
   | .ref address =>
     match Heap.get? heap address with
+    | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
     | some (.instance classId _) =>
       match getClass? program classId with
       | some classDef => .exn (.typeError (formatName classDef.name))
@@ -3927,6 +3988,7 @@ read position. -/
 def attrReadPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
     AttrReadPlan :=
   match Heap.get? h a with
+  | some (.dictView ..) => .refuse "dictionary view operation is outside the tier"
   | some (.instance ci attrs) =>
     (match Env.lookup attrs.toList attr with
      | some v => .value v
@@ -3969,7 +4031,7 @@ inductive AttrPlan where
   | instMethod (qname : String) -- class method: `callIn` with self bound
   | instAttrValue               -- data attribute in call position (loud)
   | attrMissing                 -- faithful AttributeError (pre-args)
-  | dictGet | listAppend | listPop
+  | dictGet | dictView (kind : DictViewKind) | listAppend | listPop
   -- the §2.5 residue (docs/memory-model.md §`list.insert`): the
   -- clamping-index list MUTATOR
   | listInsert
@@ -3988,6 +4050,7 @@ builtin method tier). -/
 def attrCallPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
     AttrPlan :=
   match Heap.get? h a with
+  | some (.dictView ..) => .refuse "dictionary view operation is outside the tier"
   | some (.instance ci attrs) =>
     (match Env.lookup attrs.toList attr with
      | some _ => .instAttrValue
@@ -4001,6 +4064,9 @@ def attrCallPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
   | some (.dict _ _) =>
     if attr == "get" then .dictGet
     else if attr == "clear" then .dictClear
+    else if attr == "keys" then .dictView .keys
+    else if attr == "values" then .dictView .values
+    else if attr == "items" then .dictView .items
     else .refuse s!"method call '.{attr}' on a dict is outside the tier (dict '.get'/'.clear' only; docs/memory-model.md)"
   | some (.list _) =>
     if attr == "append" then .listAppend
@@ -4949,6 +5015,7 @@ def enumFrame (h : Heap) (i : Int) : RVal → Res GenFrame
      | some (.dict es sv) => .ok (.enumDict i a 0 es.size sv)
      | some (.generator ..) =>
          .unsupported "enumerate() over a generator is outside the tier (it would need a stepper inside the stepper; docs/backlog.md)"
+     | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
      | some (.instance _ _) => .exn (.typeError "'object' object is not iterable")
      | some (.cell _) => .unsupported cellInternal
      | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
@@ -4984,6 +5051,7 @@ def iterFrame (h : Heap) : RVal → Res GenFrame
          .unsupported "iter() over a generator answers the generator ITSELF in CPython (`iter(g) is g`) — outside the tier"
      | some (.pyset _) =>
          .unsupported "iter() over a set is outside the tier (hash order; docs/memory-model.md)"
+     | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
      | some (.instance _ _) => .exn (.typeError "'object' object is not iterable")
      | some (.cell _) => .unsupported cellInternal
      | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
@@ -5704,10 +5772,14 @@ theorem attrCallPlan_heapFree {m : Module} (hm : m.heapFree = true)
   | some o =>
     cases o with
     | cell v => right; right; right; exact ⟨_, rfl⟩
+    | dictView da kind => right; right; right; exact ⟨_, rfl⟩
     | dict es ver =>
       by_cases hg : (attr == "get") = true
       · rw [if_pos hg]; left; rfl
-      · rw [if_neg hg, if_neg (heapFreeAttr_ne ha (by decide : heapFreeAttr "clear" = false))]
+      · rw [if_neg hg, if_neg (heapFreeAttr_ne ha (by decide : heapFreeAttr "clear" = false)),
+          if_neg (heapFreeAttr_ne ha (by decide : heapFreeAttr "keys" = false)),
+          if_neg (heapFreeAttr_ne ha (by decide : heapFreeAttr "values" = false)),
+          if_neg (heapFreeAttr_ne ha (by decide : heapFreeAttr "items" = false))]
         right; right; right; exact ⟨_, rfl⟩
     | list xs =>
       rw [if_neg (heapFreeAttr_ne ha (by decide : heapFreeAttr "append" = false)),
@@ -6128,6 +6200,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            | some (.dict es _) =>
                              Run.liftRes st
                                (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") (dictKeys es).toList))
+                           | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
                            | some (.instance _ _) =>
                              .exn st (.typeError "'object' object is not iterable")
                            | some (.generator ..) =>
@@ -6212,6 +6285,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                              .ok { st with world :=
                                      { st.world with heap := st.world.heap.push (.pyset ds.toArray) } }
                                (.ref st.world.heap.size)
+                           | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
                            | some (.instance _ _) =>
                              .exn st (.typeError "'object' object is not iterable")
                            | some (.cell _) => .unsupported cellInternal
@@ -6303,6 +6377,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                                 Run.liftRes st (sumFold start (dictKeys es).toList)
                               | some (.pyset _) =>
                                 .unsupported "sum() over a set is outside the tier (hash order; docs/memory-model.md)"
+                              | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
                               | some (.instance _ _) =>
                                 .exn st (.typeError "'object' object is not iterable")
                               | some (.cell _) => .unsupported cellInternal
@@ -6343,6 +6418,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                              .ok st (.tuple (dictKeys es))
                            | some (.pyset _) =>
                              .unsupported "tuple() over a set is outside the tier (hash order; docs/memory-model.md)"
+                           | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
                            | some (.instance _ _) =>
                              .exn st (.typeError "'object' object is not iterable")
                            | some (.cell _) => .unsupported cellInternal
@@ -6384,6 +6460,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            | some (.dict es _) => allocListRun st (dictKeys es)
                            | some (.pyset _) =>
                              .unsupported "list() over a set is outside the tier (hash order; docs/memory-model.md)"
+                           | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
                            | some (.instance _ _) =>
                              .exn st (.typeError "'object' object is not iterable")
                            | some (.cell _) => .unsupported cellInternal
@@ -6418,6 +6495,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                              allocDictRun st entries.toArray
                            | some (.pyset _) =>
                              .exn st (.typeError "cannot convert dictionary update sequence element #0 to a sequence")
+                           | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
                            | some (.instance _ _) =>
                              .exn st (.typeError "'object' object is not iterable")
                            | some (.cell _) => .unsupported cellInternal
@@ -6903,6 +6981,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                  | .attrMissing => .exn st .attributeError
                  | .dictGet =>
                    .unsupported "dict.get() with keyword arguments is outside the tier (get is positional-only in CPython)"
+                 | .dictView _ =>
+                   .unsupported "dict view method calls with keyword arguments are outside the tier"
                  | .dictClear =>
                    .unsupported "dict.clear() with keyword arguments is outside the tier (clear takes no keyword arguments in CPython)"
                  | .listAppend =>
@@ -7064,6 +7144,8 @@ def execAttrCall (m : Module) (fuel : Nat) (st : FrameState) (a : Addr)
       | [k] => Run.liftRes st (heapGet st.world.heap a k .none)
       | [k, d] => Run.liftRes st (heapGet st.world.heap a k d)
       | vs => .exn st (.typeError s!"get expected at most 2 arguments, got {vs.length}")
+    | .dictView _ =>
+      .unsupported "dictionary view allocation is outside the proof tier"
     | .dictClear =>
       -- pass 5: the dict MUTATOR — entries := #[], shape version
       -- bumped (a live items()-iteration must see the change), `None`
@@ -7645,6 +7727,7 @@ def execForList (m : Module) (fuel : Nat) (st : FrameState) (target : Expr)
       else .ok st .next
     | some (.dict _ _) =>
         .unsupported "'for' over a dict is outside the tier (live dict iteration is deliberately NOT in the inventory — no snapshot shortcut; docs/memory-model.md)"
+    | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
     | some (.instance _ _) =>
         -- H3: no `__iter__`/`__getitem__` can exist (dunder guard)
         .exn st (.typeError "'object' object is not iterable")
@@ -7871,6 +7954,7 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
                    execGen m fuel st (.forGen target ad body :: .block ss :: k')
                | some (.dict _ _) =>
                    .unsupported "'for' over a dict is outside the tier (live dict iteration is deliberately NOT in the inventory; docs/memory-model.md)"
+               | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
                | some (.instance _ _) =>
                    .exn st (.typeError "'object' object is not iterable")
                | some (.cell _) => .unsupported cellInternal
@@ -7898,6 +7982,7 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
          else execGen m fuel st k'
        | some (.dict _ _) =>
            .unsupported "'for' over a dict is outside the tier (live dict iteration; docs/memory-model.md)"
+       | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
        | some (.instance _ _) => .exn st (.typeError "'object' object is not iterable")
        | some (.generator ..) =>
            .unsupported "internal: a list cursor over a generator object (report this)"

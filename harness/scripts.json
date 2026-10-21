@@ -589,5 +589,9 @@
   {
     "file": "harness/scripts/del_list_script.py",
     "expect": "match"
+  },
+  {
+    "file": "harness/scripts/dict_view_script.py",
+    "expect": "match"
   }
 ]

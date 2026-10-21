@@ -2004,10 +2004,13 @@ stores.
   siblings through the ingestion rewrite (§pycomplete-11), and
   `enumerate(d)` on its own `enumDict` frame (§pycomplete-14). The trunk
   refuses to STEP these; the rebuild runs them.
-* **3c-ii — the views as FIRST-CLASS values.** REMAINING: `k = d.keys()`
-  held across statements, set algebra on keys/items, `==` against a set,
-  `reversed`, and the identity-equality rule that makes
-  `d.values() == d.values()` False. Needs an `Obj.dictView`.
+* **3c-ii — the views as FIRST-CLASS values.** LANDED on the executable
+  monadic surface: `k = d.keys()` (and the values/items variants) held across
+  statements retains the source dictionary address in an `Obj.dictView`, so
+  later mutation is visible to length, truthiness, membership, and consuming
+  iteration. View set algebra, equality, indexing, rendering, and `reversed`
+  remain loud; the acceptance battery keeps the measured boundaries,
+  including the identity result for `d.values() == d.values()`.
   `enumerate(d.items())` and `dict(d.items())` are still out here too.
 * **3d — `DictComp`**, which rides 3a.
 

@@ -3911,3 +3911,21 @@ slice as a heap list. Tuple, list, string, range, short-input, and non-iterable
 rows are covered by `Examples/python/unpack_lab`; module-scope execution is
 pinned by `harness/scripts/unpack_script.py`. Starred `for` targets, nested or
 multiple stars, and starred call arguments remain loud by design.
+
+## 2026-10-21-pycomplete-48 — first-class dictionary views retain their source
+
+The escaped-view boundary from §2026-08-23-pycomplete-8 is now live on the
+executable monadic surface. `.keys()`, `.values()`, and `.items()` allocate an
+`Obj.dictView` containing the original dictionary address and view kind. Length,
+truthiness, membership, and consuming iteration read the dictionary at the time
+they run, so a mutation between `k = d.keys()` and `list(k)` is visible. The
+same address survives an escaped view through the supported consuming paths;
+`dict_items` membership follows CPython by requiring a two-element tuple-like
+probe and checking key hashability before equality.
+
+The measured boundaries remain loud: view set algebra/equality, indexing, and
+rendering are not guessed, and the trunk proof interpreter still refuses view
+allocation while the monadic runner is the acceptance surface. The focused
+battery is 26 rows (23 matches, 3 intentional refusals), and
+`harness/scripts/dict_view_script.py` covers mutation after each view kind is
+escaped.

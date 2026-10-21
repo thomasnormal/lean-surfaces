@@ -504,11 +504,9 @@ d = {1: 'a'}
 k = d.keys()
 d[2] = 'b'
 print(list(k))
-""", "REFUSE",
-  "THE 3c-ii MARKER: a view is a LIVE first-class object, not a snapshot — "
-  "CPython prints [1, 2] because `k` still sees the dict. Consuming forms "
-  "(3c-i) never need that; this one does, and it is what an `Obj.dictView` "
-  "would buy")
+""", "MATCH",
+  "3c-ii: the first-class `Obj.dictView` retains the dictionary address, so "
+  "the later insertion is visible when `list(k)` consumes the live view")
 w("dict.values-identity-eq", """
 d = {1: 'a'}
 print(d.values() == d.values())
@@ -944,10 +942,9 @@ WHITELIST_CLASS = {
     "dict_lab::ret_dict": "boundary.heap-value",
     "dict_lab::ret_tuple_with_dict": "boundary.heap-value",
     "dict_lab::int_is": "op.Is-immediates",
-    # §3c-i-b: a view that ESCAPES its call is not the recognised shape, so
-    # ingestion leaves it alone and the tier refuses. This is 3c-ii's
-    # territory. A consuming list call followed by a list slice is live.
-    "dict_lab::view_escape_still_loud": "dictview.first-class",
+    "dict_lab::view_eq_still_loud": "dictview.set-algebra-equality",
+    "dict_lab::view_index_still_loud": "dictview.non-subscriptable",
+    "dict_lab::view_repr_still_loud": "dictview.rendering",
     "cls_lab::attr_on_int": "attr.on-scalar",
     "cls_lab::weird_eq": "class.dunder-protocol",
     "cls_lab::sub_inherits": "class.inheritance",

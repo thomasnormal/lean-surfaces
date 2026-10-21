@@ -267,6 +267,10 @@ def iterValues (K : Kont) (m : Module) (fname : String) (guardGen : Bool) :
       -- keep. `sorted`/`max`/`min` never reach here: they go through the
       -- shared trunk workers, which is why they were already green.
       | some (.dict es _) => pure (dictKeys es).toList
+      | some (.dictView da kind) =>
+          match Heap.get? (← frameHeap) da with
+          | some (.dict es _) => pure (dictViewElems es kind).toList
+          | _ => refuse danglingMsg
       | some (.pyset _) =>
           refuseOrder s!"{fname}() over a set is outside the tier (hash order; docs/memory-model.md)"
       | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
@@ -367,6 +371,7 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
           match Heap.get? (← frameHeap) ad with
           | some (.dict entries _) => do
               let a ← heapPush (.dict entries 0); pure (.ref a)
+          | some (.dictView ..) => refuse "dict() over a dictionary view is outside the tier"
           | some (.list _) =>
               refuse "dict() over a sequence of key/value pairs is outside the tier (the per-insert hashability and duplicate-key rules are not guessed; a dict display or dict(k=v, …) is in tier)"
           | some (.generator ..) => do
@@ -648,6 +653,12 @@ def applyAttrPlan (K : Kont) (a : Addr) (attr : String) :
       | [k] => liftRes (heapGet h a k .none)
       | [k, d] => liftRes (heapGet h a k d)
       | vs => raisePy (.typeError s!"get expected at most 2 arguments, got {vs.length}")
+  | .dictView kind, vs =>
+      match vs with
+      | [] => do
+          let view ← heapPush (.dictView a kind)
+          pure (.ref view)
+      | vs => raisePy (.typeError s!"{attr}() takes no arguments ({vs.length} given)")
   | .dictClear, vs =>
       match vs with
       | [] => do
@@ -1021,6 +1032,7 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                       refuse s!"calling an instance ATTRIBUTE value ('.{attr}' is data on this instance, not a method) is outside the H3 tier"
                   | .attrMissing => raisePy .attributeError
                   | .dictGet => refuse "dict.get() with keyword arguments is outside the tier (get is positional-only in CPython)"
+                  | .dictView _ => refuse "dict view method calls with keyword arguments are outside the tier"
                   | .dictClear => refuse "dict.clear() with keyword arguments is outside the tier (clear takes no keyword arguments in CPython)"
                   | .listAppend => refuse "list.append() with keyword arguments is outside the tier (append is positional-only in CPython)"
                   | .listPop => refuse "list.pop() with keyword arguments is outside the tier (pop is positional-only in CPython)"
@@ -1654,6 +1666,11 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
                 -- next step tell CPython's two mutation regimes apart.
                 | some (.dict es sv) =>
                     K.execGen (.forDict target ad 0 es.size sv .keys body :: .block ss :: k')
+                | some (.dictView da kind) =>
+                    match Heap.get? (← frameHeap) da with
+                    | some (.dict es sv) =>
+                        K.execGen (.forDict target da 0 es.size sv kind body :: .block ss :: k')
+                    | _ => refuse danglingMsg
                 | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
                 | some (.cell _) => refuse cellInternal
                 | some (.closure ..) => raisePy (.typeError "'function' object is not iterable")
@@ -1677,6 +1694,7 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
           else K.execGen k'
       | some (.dict _ _) =>
           refuse "'for' over a dict is outside the tier (live dict iteration; docs/memory-model.md)"
+      | some (.dictView ..) => refuse "internal: a list cursor over a dictionary view (report this)"
       | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
       | some (.generator ..) =>
           refuse "internal: a list cursor over a generator object (report this)"
@@ -1972,6 +1990,10 @@ def kont (m : Module) : Nat → Kont
           -- the script shell's is module scope) — three entries, and the
           -- `dict.for-in-function` witness is what proved the count.
           | some (.dict es sv) => K.forDict target a 0 es.size sv .keys body
+          | some (.dictView da kind) =>
+              match Heap.get? (← frameHeap) da with
+              | some (.dict es sv) => K.forDict target da 0 es.size sv kind body
+              | _ => refuse danglingMsg
           | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
           | some (.generator ..) => K.forGen target a body
           | some (.cell _) => refuse cellInternal

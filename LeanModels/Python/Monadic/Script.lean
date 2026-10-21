@@ -133,6 +133,10 @@ def scriptForListAt (S : SKont) (m : Module) (target : Expr) (a i : Nat)
         loopFlow (S.forList target a (i + 1) body) (← S.stmts body)
       else pure .next
   | some (.dict es sv) => S.forDict target a 0 es.size sv .keys body
+  | some (.dictView da kind) =>
+      match Heap.get? (← frameHeap) da with
+      | some (.dict es sv) => S.forDict target da 0 es.size sv kind body
+      | _ => refuse danglingMsg
   | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
   | some (.generator ..) =>
       if moduleGenFree m then

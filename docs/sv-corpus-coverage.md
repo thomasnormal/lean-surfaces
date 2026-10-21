@@ -75,6 +75,23 @@ device state, external I/O, or an explicit random oracle. No call-only head
 can be admitted independently without changing those representations. The
 full boundary and repricing command are in [call statements](sv-call-statements.md).
 
+## Call-expression boundary — 2026-10-21
+
+`CallExpression` occurs in **3,291** files of the fresh 22,043-path census.
+It is the sole refusal in **212** files and co-occurs in **3,079**. The
+call-expression repricer finds **315** unsupported expression-call instances;
+the largest heads are `$random` (30), `$dist_uniform` (23), `$urandom` (21),
+`$stable` (19), `$rose` (18), `$changed` (15), `$past` (15), and
+`std::randomize` (15).
+
+The admitted expression-call surface remains fixed metadata queries, pure and
+runtime `$clog2`, the time-zero `$time` literal, and dynamic integral `$cast`
+through their existing contracts. Residual calls need an explicit random
+oracle, sampled scheduler history, elapsed-time/unit state, external effects,
+unsupported value types, or callable frames. No call-only head is admitted by
+folding or discarding those effects. The complete boundary and reproduction
+command are in [call expressions](sv-call-expressions.md).
+
 ## Procedural variable lifetimes — 2026-10-20
 
 IEEE §6.21/§9.3 static scalar, packed and fixed-array procedural storage now

@@ -3914,3 +3914,14 @@ co-occurring. Their 498 call instances are dominated by `$fatal`, queue tasks,
 dump tasks, `$strobe`/`$monitor`, and severity calls. Those require diagnostic,
 Postponed, aggregate/device, external-I/O, or random-oracle representations;
 none is an independent legacy admission. See [call statements](sv-call-statements.md).
+
+### Call-expression boundary — 2026-10-21
+
+Expression-position calls remain limited to fixed metadata queries, pure and
+runtime `$clog2`, the time-zero `$time` literal, and dynamic integral `$cast`.
+The 22,043-path census records `CallExpression` in 3,291 files: 212 call-only
+and 3,079 co-occurring, with 315 call instances in the call-only set. Random
+and distribution functions, sampled-value queries, time/real conversions,
+external tasks, methods, and user calls require an oracle, scheduler history,
+additional value/state representations, or callable frames. None is an
+independent admission in this rung. See [call expressions](sv-call-expressions.md).

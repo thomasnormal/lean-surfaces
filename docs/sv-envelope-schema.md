@@ -1341,6 +1341,11 @@ and symbolic mode carry `IntraAssignment:<reason>` or the shared timing
 refusal tag. Any invalid compilation containing this lowering also receives
 `IntraAssignment:invalid-compilation`. See [the contract](sv-intra-assignment.md).
 
+In particular, `IntraAssignment:publication-or-context` remains explicit for
+nonblocking intra-assignment controls. Its future publication and same-time
+ordering are not represented by the blocking capture/wait lowering, so the
+envelope does not fabricate a sleeping process or an update queue.
+
 ### Legacy package storage provenance
 
 Source-defined packages with admitted scalar/packed integral variables lower

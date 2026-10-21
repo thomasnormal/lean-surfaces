@@ -3523,6 +3523,17 @@ Three fixture-bound kernel theorems prove capture before wait, resumed-index
 copyback and retained repeat control. Nonblocking controls, unsupported
 effects/storage/delays and symbolic-mode controls remain loud.
 
+### Nonblocking intra-assignment publication — 2026-10-21
+
+The residual `IntraAssignment:publication-or-context` wall is the
+nonblocking publication boundary. In the fresh 22,043-path census it is the
+sole refusal in 55 files and occurs 75 times: 63 delayed controls, two event
+controls, one `#0` and nine repeat/context forms. A future NBA update queue,
+same-time ordering and process-lifetime rule are distinct from the blocking
+capture/wait path, so no shape is admitted by serializing it or spawning a
+synthetic sleeper. See [the boundary and repricing](sv-intra-assignment.md)
+and the read-only instrument `extractors/sv/intra_nba_reprice.py`.
+
 ### Symmetric wildcard case statements — 2026-10-20
 
 IEEE §12.5.1 unqualified integral `casez` and `casex` now use the existing

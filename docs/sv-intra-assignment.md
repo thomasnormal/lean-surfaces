@@ -46,3 +46,23 @@ record independent full transcripts and fixture-bound kernel proofs of
 capture-before-wait, resumed-index copyback and retained repeat control.
 Their zero-delay and internal-edge examples certify explicit runtime
 boundaries and are not counted as execution matches.
+
+## Nonblocking publication — 2026-10-21
+
+The residual `IntraAssignment:publication-or-context` marker is specifically
+the nonblocking path. In the fresh 22,043-path census it is the sole wall in
+**55** files and occurs **75** times. The spans contain **63** delayed NBA
+controls, **2** event controls, **1** explicit `#0`, and **9** repeat/context
+forms. These rows are telemetry for the existing refusal, not a new lowering.
+
+An intra-assignment nonblocking control saves a value and schedules a future
+publication whose update queue, process lifetime and same-time ordering are
+independent of the submitting process. Reusing the blocking capture/wait path
+or creating a synthetic sleeper would lose that distinction. The tier keeps
+all four shapes loud until the kernel supplies a future-update rule; no
+publication or second scheduler is invented. Reproduce the measurement with:
+
+```text
+python3.9 extractors/sv/intra_nba_reprice.py \
+  --corpus /path/to/sv-tests-2/tests
+```

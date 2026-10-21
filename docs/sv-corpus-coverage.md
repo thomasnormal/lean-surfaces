@@ -1011,6 +1011,17 @@ Three fixture-bound kernel theorems prove capture before wait, resumed-index
 copyback and retained repeat control. Nonblocking controls, unsupported
 effects/storage/delays and symbolic-mode controls remain loud.
 
+## Nonblocking intra-assignment publication — 2026-10-21
+
+`IntraAssignment:publication-or-context` remains the future-NBA boundary. The
+fresh **22,043**-path census records it as the sole wall in **55** files and
+the repricer finds **75** markers: **63** delayed controls, **2** event
+controls, **1** explicit `#0`, and **9** repeat/context forms. The current
+retained blocking path cannot represent a separate future publication queue
+or same-time ordering, so no nonblocking shape is admitted. See
+[intra-assignment publication](sv-intra-assignment.md) for the boundary and
+reproduction command.
+
 ## Explicit command-line plusargs — 2026-10-20
 
 The §21.6 family admits literal prefix queries and integral value queries

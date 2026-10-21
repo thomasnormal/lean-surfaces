@@ -809,6 +809,78 @@ def admitResolved (probe : DeclarationProbe) (raw : Raw) :
 
 end IntegralMemberCallSyntax
 
+/-- An enum-valued member call keeps the source call evidence separate from
+the existing builtin getter call. Its result spelling is checked against the
+enum profile before the explicit object projection is read. -/
+structure IntegralMemberEnumCall where
+  callSyntax : IntegralMemberCallSyntax
+  access : IntegralMemberThisFieldAccess
+  representation : IntegralMemberEnumRepresentation
+  receiver : FrontendHandle
+  projection : ClassReceiverProjection
+  deriving Repr, BEq, Inhabited
+
+inductive IntegralMemberEnumCallError where
+  | methodMismatch
+  | canonicalMethodMismatch
+  | nameMismatch
+  | receiverMismatch
+  | receiverTypeMismatch
+  | resultTypeMismatch
+  | projection (reason : ClassProjectionError)
+  | value (reason : IntegralMemberEnumValueError)
+  deriving Repr, BEq, Inhabited
+
+namespace IntegralMemberEnumCall
+
+private def receiverType (projection : ClassReceiverProjection) (isArrow : Bool) :
+    Except IntegralMemberEnumCallError String := do
+  let slots ← projection.hierarchy.slots.mapError
+    (fun reason => IntegralMemberEnumCallError.projection (.hierarchy reason))
+  let some slot := slots.find? (·.path == projection.receiverPath)
+    | throw (.projection .absentReceiver)
+  let some shape := projection.hierarchy.classes.find? (·.declaration == slot.declaration)
+    | throw (.projection .malformedWorld)
+  unless !shape.name.isEmpty do throw .receiverTypeMismatch
+  pure (shape.name ++ if isArrow then " *" else "")
+
+private def resultMatches (profile : IntegralMemberEnumProfile) (spelling : String) : Bool :=
+  spelling == profile.name || spelling == "enum " ++ profile.name ||
+    spelling.endsWith ("::" ++ profile.name)
+
+/-- Bind an already selected enum-valued call to an existing receiver. No
+overload lookup, enum conversion, object construction, or layout is inferred.
+-/
+def bind (callSyntax : IntegralMemberCallSyntax) (access : IntegralMemberThisFieldAccess)
+    (representation : IntegralMemberEnumRepresentation) (receiver : FrontendHandle)
+    (projection : ClassReceiverProjection) :
+    Except IntegralMemberEnumCallError IntegralMemberEnumCall := do
+  unless callSyntax.method == access.method do throw .methodMismatch
+  unless callSyntax.canonicalMethod == access.method do throw .canonicalMethodMismatch
+  unless callSyntax.name == access.name do throw .nameMismatch
+  unless callSyntax.receiver == receiver do throw .receiverMismatch
+  let getter : IntegralMemberGetter := {
+    occurrence := {(default : Declaration) with id := access.method.value, kind := "CXXMethodDecl", name := some access.name},
+    owner := access.owner,
+    field := {declaration := access.field, name := access.name, type := .builtin representation.underlying, isMutable := false},
+    isConst := true, conversions := [], result := representation.underlying,
+    canonical := access.method}
+  projection.check getter |>.mapError .projection
+  let actualReceiverType ← receiverType projection callSyntax.receiverIsArrow
+  unless callSyntax.receiverType == actualReceiverType do throw .receiverTypeMismatch
+  unless resultMatches representation.profile callSyntax.resultType do throw .resultTypeMismatch
+  pure {callSyntax, access, representation, receiver, projection}
+
+def invoke (call : IntegralMemberEnumCall) :
+    Except IntegralMemberEnumCallError (IntegralObjectStore × IntegralMemberEnumValue) :=
+  IntegralMemberEnumValue.read call.access call.representation call.projection
+    |>.mapError (fun reason => match reason with
+      | .projection reason => .projection reason
+      | .value reason => .value reason)
+
+end IntegralMemberEnumCall
+
+
 structure IntegralMemberCall where
   getter : IntegralMemberGetter
   projection : ClassReceiverProjection

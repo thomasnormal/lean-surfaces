@@ -185,6 +185,15 @@ enum layer supplies only the field witness and representation oracle. A stale,
 wrong-owner, malformed, or otherwise unbound snapshot therefore refuses at the
 projection/getter boundary rather than producing an enum result.
 
+`IntegralMemberEnumCall` exposes that read as a call result without widening
+the ordinary integral getter. It requires the already selected method and
+receiver handles, the typed field witness, the oracle-backed enum profile, and
+an existing projection. The retained result spelling must be the enum name (or
+its `enum`/qualified spelling); an ordinary builtin result, mismatched method,
+receiver, or result type refuses. Invocation then delegates to
+`IntegralMemberEnumValue.read`, so the object-state and storage checks are
+unchanged.
+
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or
 qualified dispatch, construction, writes and calls whose target body is not an

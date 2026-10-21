@@ -445,6 +445,45 @@ private def syntaxError (raw : Raw) : Option IntegralMemberCallSyntaxError :=
   | .error reason => some reason
   | .ok _ => none
 
+private def enumCallAccess : IntegralMemberThisFieldAccess :=
+  {enumReadAccess with name := "read"}
+
+private def enumCallRepresentation : IntegralMemberEnumRepresentation :=
+  enumReadRepresentation.getD {profile := enumReadProfile, underlying := .unsignedInt}
+
+private def enumCallObserved : Option Int :=
+  match IntegralMemberCallSyntax.admit (rawCallWithResult methodHandle.value
+      receiverHandle.value "read" "XMLError") with
+  | .error _ => none
+  | .ok callSyntax =>
+      match IntegralMemberEnumCall.bind callSyntax enumCallAccess enumCallRepresentation
+          receiverHandle enumProjection with
+      | .error _ => none
+      | .ok call =>
+          match call.invoke with
+          | .ok (_, value) => some value.value.value
+          | .error _ => none
+
+private def enumCallResultError : Option IntegralMemberEnumCallError :=
+  match IntegralMemberCallSyntax.admit (rawCall methodHandle.value receiverHandle.value "read") with
+  | .error _ => none
+  | .ok callSyntax =>
+      match IntegralMemberEnumCall.bind callSyntax enumCallAccess enumCallRepresentation
+          receiverHandle enumProjection with
+      | .error reason => some reason
+      | .ok _ => none
+
+private def enumCallReceiverError : Option IntegralMemberEnumCallError :=
+  match IntegralMemberCallSyntax.admit (rawCallWithResult methodHandle.value
+      receiverHandle.value "read" "XMLError") with
+  | .error _ => none
+  | .ok callSyntax =>
+      match IntegralMemberEnumCall.bind callSyntax enumCallAccess enumCallRepresentation
+          (h "0x99") enumProjection with
+      | .error reason => some reason
+      | .ok _ => none
+
+
 private def observed (raw : Raw) : Option Int :=
   match IntegralMemberCallSyntax.admit raw with
   | .error _ => none
@@ -548,6 +587,9 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard enumReadAccepted
 #guard enumReadWrongObject
 #guard enumReadWrongStorage
+#guard enumCallObserved == some 7
+#guard enumCallResultError == some .resultTypeMismatch
+#guard enumCallReceiverError == some .receiverMismatch
 #guard boundWitnessedIntegerArgument.map (fun bound =>
     (bound.parameter, bound.parameterType, bound.argument.value)) ==
     some (h "0x10", .builtin .int, 0)

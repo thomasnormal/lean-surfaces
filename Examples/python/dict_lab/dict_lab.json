@@ -6,7 +6,7 @@
     "version": "3.9.19"
   },
   "source_file": "Examples/python/dict_lab/dict_lab.py",
-  "source_sha256": "016e4c19595421da434d060f834f28881c8476d25cd4f8ac81686140a9920354",
+  "source_sha256": "87286adee75651ef46cec4facd054e17af315f19cb98cfb2f8f02208f203d1c8",
   "module": {
     "kind": "Module",
     "body": [
@@ -14146,15 +14146,15 @@
           "end_lineno": 519,
           "end_col_offset": 18
         },
-        "name": "del_nondict_still_loud",
+        "name": "del_list_item",
         "args": [
           {
             "arg": "a",
             "span": {
               "lineno": 512,
-              "col_offset": 27,
+              "col_offset": 18,
               "end_lineno": 512,
-              "end_col_offset": 28
+              "end_col_offset": 19
             }
           }
         ],
@@ -23555,6 +23555,424 @@
               }
             ],
             "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 885,
+          "col_offset": 0,
+          "end_lineno": 888,
+          "end_col_offset": 16
+        },
+        "name": "del_list_negative",
+        "args": [
+          {
+            "arg": "a",
+            "span": {
+              "lineno": 885,
+              "col_offset": 22,
+              "end_lineno": 885,
+              "end_col_offset": 23
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 886,
+              "col_offset": 4,
+              "end_lineno": 886,
+              "end_col_offset": 18
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 886,
+                  "col_offset": 4,
+                  "end_lineno": 886,
+                  "end_col_offset": 6
+                },
+                "id": "xs"
+              }
+            ],
+            "value": {
+              "kind": "List",
+              "span": {
+                "lineno": 886,
+                "col_offset": 9,
+                "end_lineno": 886,
+                "end_col_offset": 18
+              },
+              "elts": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 886,
+                    "col_offset": 10,
+                    "end_lineno": 886,
+                    "end_col_offset": 11
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                },
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 886,
+                    "col_offset": 13,
+                    "end_lineno": 886,
+                    "end_col_offset": 14
+                  },
+                  "id": "a"
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 886,
+                    "col_offset": 16,
+                    "end_lineno": 886,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "3"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "DeleteSubscript",
+            "span": {
+              "lineno": 887,
+              "col_offset": 4,
+              "end_lineno": 887,
+              "end_col_offset": 14
+            },
+            "recv": {
+              "kind": "Name",
+              "span": {
+                "lineno": 887,
+                "col_offset": 8,
+                "end_lineno": 887,
+                "end_col_offset": 10
+              },
+              "id": "xs"
+            },
+            "key": {
+              "kind": "UnaryOp",
+              "span": {
+                "lineno": 887,
+                "col_offset": 11,
+                "end_lineno": 887,
+                "end_col_offset": 13
+              },
+              "op": "USub",
+              "operand": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 887,
+                  "col_offset": 12,
+                  "end_lineno": 887,
+                  "end_col_offset": 13
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "1"
+                }
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 888,
+              "col_offset": 4,
+              "end_lineno": 888,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Subscript",
+              "span": {
+                "lineno": 888,
+                "col_offset": 11,
+                "end_lineno": 888,
+                "end_col_offset": 16
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 888,
+                  "col_offset": 11,
+                  "end_lineno": 888,
+                  "end_col_offset": 13
+                },
+                "id": "xs"
+              },
+              "index": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 888,
+                  "col_offset": 14,
+                  "end_lineno": 888,
+                  "end_col_offset": 15
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "1"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 891,
+          "col_offset": 0,
+          "end_lineno": 894,
+          "end_col_offset": 12
+        },
+        "name": "del_list_missing",
+        "args": [
+          {
+            "arg": "a",
+            "span": {
+              "lineno": 891,
+              "col_offset": 21,
+              "end_lineno": 891,
+              "end_col_offset": 22
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 892,
+              "col_offset": 4,
+              "end_lineno": 892,
+              "end_col_offset": 12
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 892,
+                  "col_offset": 4,
+                  "end_lineno": 892,
+                  "end_col_offset": 6
+                },
+                "id": "xs"
+              }
+            ],
+            "value": {
+              "kind": "List",
+              "span": {
+                "lineno": 892,
+                "col_offset": 9,
+                "end_lineno": 892,
+                "end_col_offset": 12
+              },
+              "elts": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 892,
+                    "col_offset": 10,
+                    "end_lineno": 892,
+                    "end_col_offset": 11
+                  },
+                  "id": "a"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "DeleteSubscript",
+            "span": {
+              "lineno": 893,
+              "col_offset": 4,
+              "end_lineno": 893,
+              "end_col_offset": 13
+            },
+            "recv": {
+              "kind": "Name",
+              "span": {
+                "lineno": 893,
+                "col_offset": 8,
+                "end_lineno": 893,
+                "end_col_offset": 10
+              },
+              "id": "xs"
+            },
+            "key": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 893,
+                "col_offset": 11,
+                "end_lineno": 893,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "9"
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 894,
+              "col_offset": 4,
+              "end_lineno": 894,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 894,
+                "col_offset": 11,
+                "end_lineno": 894,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 897,
+          "col_offset": 0,
+          "end_lineno": 900,
+          "end_col_offset": 12
+        },
+        "name": "del_list_bad_index",
+        "args": [
+          {
+            "arg": "a",
+            "span": {
+              "lineno": 897,
+              "col_offset": 23,
+              "end_lineno": 897,
+              "end_col_offset": 24
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 898,
+              "col_offset": 4,
+              "end_lineno": 898,
+              "end_col_offset": 12
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 898,
+                  "col_offset": 4,
+                  "end_lineno": 898,
+                  "end_col_offset": 6
+                },
+                "id": "xs"
+              }
+            ],
+            "value": {
+              "kind": "List",
+              "span": {
+                "lineno": 898,
+                "col_offset": 9,
+                "end_lineno": 898,
+                "end_col_offset": 12
+              },
+              "elts": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 898,
+                    "col_offset": 10,
+                    "end_lineno": 898,
+                    "end_col_offset": 11
+                  },
+                  "id": "a"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "DeleteSubscript",
+            "span": {
+              "lineno": 899,
+              "col_offset": 4,
+              "end_lineno": 899,
+              "end_col_offset": 15
+            },
+            "recv": {
+              "kind": "Name",
+              "span": {
+                "lineno": 899,
+                "col_offset": 8,
+                "end_lineno": 899,
+                "end_col_offset": 10
+              },
+              "id": "xs"
+            },
+            "key": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 899,
+                "col_offset": 11,
+                "end_lineno": 899,
+                "end_col_offset": 14
+              },
+              "value": {
+                "type": "str",
+                "value": "x"
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 900,
+              "col_offset": 4,
+              "end_lineno": 900,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 900,
+                "col_offset": 11,
+                "end_lineno": 900,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
           }
         ]
       }

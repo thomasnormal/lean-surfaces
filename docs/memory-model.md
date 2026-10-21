@@ -228,7 +228,8 @@ cycle DETECTION, never by running out of fuel).
   active-pair `RecursionError` on corresponding cycles), dynamic
   `is`/`is not`, `.append(x)`, `.pop()`/`.pop(i)` (empty/out-of-range pop
   a faithful `IndexError`), `.insert(i, x)` (CPython's CLAMPING index —
-  never an `IndexError`; §`list.insert`), unpacking `a, b = lst` (an
+  never an `IndexError`; §`list.insert`), `del xs[i]` (negative indices,
+  faithful `IndexError`, and the list-index `TypeError`), unpacking `a, b = lst` (an
   eager snapshot
   read, per CPython), and `for` — a LIVE INDEX CURSOR against the object
   (`execForList`, a frozen recursion point): the body's writes, `append`
@@ -4514,8 +4515,8 @@ THIRD decision site, as `list(d.keys())` becomes `list(<dictkeys>(d))`).
 `del` has no value and `exprStmt` discards the value, so the lowering is
 exact and the statement needs no `Stmt` constructor. That admission is
 SYNTACTIC: `del o[k]` lowers for ANY receiver and the receiver's TYPE is
-decided in the evaluator's arm, which refuses a non-dict
-(`del.non-dict-receiver`). `del o.attr`, `del xs[i:j]` and multi-target
+decided in the evaluator's arm, which handles dict and heap-list receivers.
+`del o.attr`, `del xs[i:j]` and multi-target
 deletes mixing shapes stay `Unsupported` at extraction (clause 4).
 
 **Surface.** One constructor `Stmt.delStmt (names : Array String) sp`;

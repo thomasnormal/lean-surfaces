@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3524 | 3193 | 0 | 331 |
+| 3527 | 3197 | 0 | 330 |
 
-Of the 3193 rows the model decides, 3193 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 3197 rows the model decides, 3197 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,13 +20,13 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 3524 | 3119 | 0 | 405 |
+| 3527 | 3119 | 0 | 408 |
 
 ## Grammar
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-144 witnesses: 126 MATCH, 18 REFUSE.
+144 witnesses: 127 MATCH, 17 REFUSE.
 
 ### `stmt`
 
@@ -154,7 +154,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `dict-missing` | MATCH | CPython raises KeyError(9) and the tier reproduces it |
 | `dict-reinsert-order` | MATCH | deletion does NOT hold the slot: reinsertion APPENDS, so the entries array stays exactly the insertion sequen… |
 | `dict-churn` | REFUSE | the dict's KEY SET changed during iteration without changing its size — CPython's answer depends on its entri… |
-| `non-dict-receiver` | REFUSE | 'del o[k]' on a non-dict receiver is outside the tier (dict item deletion only; docs/memory-model.md §the del… |
+| `non-dict-receiver` | MATCH | H2 heap-list item deletion through the shared `<dictdel>` ingestion rewrite |
 | `dict-next-iter` | MATCH | THE FLAGSHIP LINE (sunfish.py:541 `del self.tp_score[next(iter(self.tp_score))]`), whole. Inch (1) landed the… |
 
 ### `const`

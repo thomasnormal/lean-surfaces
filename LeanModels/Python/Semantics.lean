@@ -2858,6 +2858,18 @@ def heapDelete (h : Heap) (a : Addr) (k : RVal) : Option (Res Heap) :=
         | some h' => .ok h'
         | Option.none => .unsupported danglingMsg
     else keyRefusal h k)
+  | some (.list xs) =>
+    some (match asInt k with
+      | some i =>
+        match normIndex i xs.size with
+        | some n =>
+          match Heap.update h a (.list ((xs.toList.eraseIdx n).toArray)) with
+          | some h' => .ok h'
+          | Option.none => .unsupported danglingMsg
+        | Option.none => .exn .indexError
+      | Option.none =>
+        .exn (.typeError
+          s!"list indices must be integers or slices, not {RVal.typeNameH h k}"))
   | _ => Option.none
 
 /-- `o[k] = v` on a heap object. Dicts: value replacement keeps the shape

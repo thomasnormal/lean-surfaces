@@ -1381,9 +1381,10 @@ array stays exactly the insertion sequence every cursor in the file reads.
 
 The rewrite is SYNTACTIC — it lowers `del o[k]` for any receiver — so the type
 check lands in the arm, as it does for the view builtins.
-`dict_lab::del_nondict_still_loud` is the witness: CPython DELETES there (list
-item deletion, answers 1), and the tier refuses rather than invent an answer
-for a receiver whose behaviour it has not measured. `del xs[1:]` is excluded
+`dict_lab::del_list_item` is now the witness for the landed H2 list
+deletion path: CPython deletes the item and the tier mutates the heap list.
+Negative indices and the faithful `IndexError`/non-integer `TypeError` are
+covered by the adjacent battery rows. `del xs[1:]` is excluded
 at extraction: a slice deletes a RANGE, a different operation.
 
 ### An inherited wart, named rather than replicated silently
@@ -1401,10 +1402,11 @@ next has reason to open that file.
 
 * grammar census **117 → 122 witnesses**: `del.dict-key`,
   `del.dict-missing`, `del.dict-reinsert-order` (MATCH), `del.dict-churn` and
-  `del.non-dict-receiver` (REFUSE).
-* `harness/cases.json` **660 → 670 rows**. `del_lab::del_sub` FLIPS
+  `del.non-dict-receiver` (now MATCH).
+* `harness/cases.json` **660 → 674 rows**. `del_lab::del_sub` FLIPS
   `unsupported → match` and LEAVES `WHITELIST_CLASS`; four new gaps join it —
-  one `del.non-dict-receiver` and three `dict.keyset-churn`.
+  `del.non-dict-receiver` now MATCHES, with three new list deletion
+  differential rows and three `dict.keyset-churn` refusals.
 * `docs/memory-model.md` updated in three places: the H1 dict inventory, the
   `del` construct paragraph, and the cross-rung churn note that predicted
   this inch.

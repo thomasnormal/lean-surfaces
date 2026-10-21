@@ -509,11 +509,11 @@ def del_through_alias(a):
     return len(d)
 
 
-def del_nondict_still_loud(a):
-    # THE SYNTACTIC BOUNDARY: ingestion rewrites `del o[k]` for ANY receiver,
-    # so the receiver's TYPE is decided in the evaluator's arm. CPython DELETES
-    # here (list item deletion), which this tier does not have, so it refuses
-    # rather than inventing an answer.
+def del_list_item(a):
+    # H2 list deletion through the same syntactic `<dictdel>` rewrite used by
+    # dictionaries. The heap receiver decides whether the operation is a dict
+    # key removal or a list item removal; this named witness used to be loud.
+    # The ordinary list case is now in the H2 inventory.
     xs = [a, 5]
     del xs[0]
     return len(xs)
@@ -880,3 +880,21 @@ def except_recursion_as_runtime(a):
         return 1 if d == e else 0
     except RuntimeError:
         return a
+
+
+def del_list_negative(a):
+    xs = [1, a, 3]
+    del xs[-1]
+    return xs[1]
+
+
+def del_list_missing(a):
+    xs = [a]
+    del xs[9]
+    return 0
+
+
+def del_list_bad_index(a):
+    xs = [a]
+    del xs["x"]
+    return 0

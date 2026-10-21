@@ -559,10 +559,8 @@ w("del.non-dict-receiver", """
 xs = [1, 2]
 del xs[0]
 print(xs)
-""", "REFUSE",
-  "CPython answers [2]. The rewrite is SYNTACTIC — it lowers `del o[k]` for "
-  "any receiver — so the type is decided in the evaluator's arm, and list "
-  "item deletion is a tier this model does not have")
+""", "MATCH",
+  "H2 heap-list item deletion through the shared `<dictdel>` ingestion rewrite")
 w("dict.enumerate", """
 d = {2: 'b', 1: 'a'}
 for i, k in enumerate(d):
@@ -1125,9 +1123,6 @@ WHITELIST_CLASS = {
     # `del_lab::del_sub` LEFT this table with §del: clause 4 admits a single
     # subscript target and ingestion rewrites it, so the row is now `match`.
     "del_lab::del_attr": "del.non-name-target",
-    # §del: the SYNTACTIC boundary of the rewrite. Ingestion lowers `del o[k]`
-    # for any receiver, so a non-dict is refused in the evaluator's arm.
-    "dict_lab::del_nondict_still_loud": "del.non-dict-receiver",
     # §del: the same-size KEY-SET CHURN regime, REACHABLE for the first time
     # because deletion landed (2026-08-23-pycomplete-15 measured it: some
     # shapes raise CPython's second RuntimeError, some complete silently, and

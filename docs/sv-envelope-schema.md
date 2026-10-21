@@ -1482,6 +1482,12 @@ unsupported members; see [the assertion boundary](sv-concurrent-assertions.md).
 The immediate-assertion `If` lowering does not encode sampled history,
 sequence attempts or assertion-region actions.
 
+Named concurrent-property declarations remain explicit
+`PropertySymbol:Property` unsupported members; see [the property boundary](sv-properties.md).
+The `sv-0.1` envelope carries no property formals, local-variable frame,
+sampled-value history or sequence-attempt state, so declarations are not
+inlined into their assertion statements.
+
 Frontend recovery spans remain explicit `InvalidStatement` unsupported
 members; see [the recovery boundary](sv-invalid-statements.md). The envelope
 does not execute a bad or partially recovered statement tree.

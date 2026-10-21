@@ -3885,6 +3885,20 @@ existing assertion action path and no second scheduler is added. See [the
 boundary and repricing](sv-concurrent-assertions.md) and the read-only
 instrument `extractors/sv/concurrent_assert_reprice.py`.
 
+### Property declarations — 2026-10-21
+
+`PropertySymbol:Property` is the named concurrent-property declaration
+boundary, separate from assertion statements that use a property. In the
+fresh 22,043-path census it occurs in 471 files: 10 are property-only and 461
+co-occur with another wall. The sole files contain 11 unsupported property
+spans, including six clocked, four implication, three formal-argument, two
+local-variable, two sampled-function, one abort/disable and one end-label
+feature rows (rows overlap). Formal arguments, sampled history and
+sequence-attempt state have no representation in the module envelope, so no
+declaration shape is admitted by inlining or boolean evaluation. See [the
+property boundary](sv-properties.md) and the read-only instrument
+`extractors/sv/property_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

@@ -415,6 +415,20 @@ state and Reactive/coverage actions have no representation in the current
 executor, so no flavor is admitted. See [the boundary](sv-concurrent-assertions.md)
 and `extractors/sv/concurrent_assert_reprice.py` for the reproducible scan.
 
+## Property declarations — 2026-10-21
+
+`PropertySymbol:Property` remains the named concurrent-property declaration
+boundary. The fresh **22,043**-path census records it in **471** files:
+**10** property-only and **461** co-occurring. Repricing the sole files finds
+**11** unsupported property spans. Overlapping source features include **6**
+clocked spans, **4** implication spans, **3** formal-property-argument
+spans, **2** with local variables, **2** with sampled functions, **1** with
+abort/disable controls and **1** with an `endproperty` label. Formal
+arguments, sampled history and sequence-attempt state have no representation
+in the envelope, so no declaration shape is admitted. See [the property
+boundary](sv-properties.md) and `extractors/sv/property_reprice.py` for the
+reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

@@ -31,20 +31,20 @@ private def errorName : IntegralMemberCallSyntaxError → String
 private def counts (values : List String) : Json :=
   jsonObject (values.eraseDups.map fun value => (value, toJson (values.count value)))
 
-private def argumentShape (raw : Raw) : String :=
-  match raw.field "inner" with
-  | some (.array (_ :: arguments)) =>
-      String.intercalate "," (arguments.map (fun argument => argument.text "kind" |>.getD "<missing>"))
-  | _ => "<malformed>"
-
-private partial def baseTree (raw : Raw) : String :=
+private partial def rawTree (raw : Raw) : String :=
   let kind := raw.text "kind" |>.getD "<missing>"
   let cast := raw.text "castKind" |>.map (fun value => ":" ++ value) |>.getD ""
   let children := match raw.field "inner" with
     | some (.array values) => values
     | _ => []
   if children.isEmpty then kind ++ cast
-  else kind ++ cast ++ "(" ++ String.intercalate "," (children.map baseTree) ++ ")"
+  else kind ++ cast ++ "(" ++ String.intercalate "," (children.map rawTree) ++ ")"
+
+private def argumentShape (raw : Raw) : String :=
+  match raw.field "inner" with
+  | some (.array (_ :: arguments)) =>
+      String.intercalate "," (arguments.map (fun argument => argument.text "kind" |>.getD "<missing>"))
+  | _ => "<malformed>"
 
 private partial def hasKind (wanted : String) (raw : Raw) : Bool :=
   raw.text "kind" == some wanted ||
@@ -73,7 +73,7 @@ private def receiverShape (raw : Raw) : String :=
         | _ => "arrow-missing"
       let category := member.text "valueCategory" |>.getD "<missing>"
       let bases := match member.field "inner" with
-        | some (.array children) => String.intercalate "," (children.map baseTree)
+        | some (.array children) => String.intercalate "," (children.map rawTree)
         | _ => "<missing>"
       s!"{kind}|{arrow}|{category}|{bases}"
   | _ => "<malformed>"
@@ -94,6 +94,7 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut admitted := 0
   let mut refusals : List String := []
   let mut argumentShapes : List String := []
+  let mut argumentTrees : List String := []
   let mut receiverShapes : List String := []
   let mut receiverFamilies : List String := []
   let mut reports : List Json := []
@@ -116,6 +117,11 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
         refusals := name :: refusals
         if reason == .unsupportedArguments then
           argumentShapes := argumentShape raw :: argumentShapes
+          match raw.field "inner" with
+          | some (.array (_ :: arguments)) =>
+              argumentTrees := (arguments.map rawTree).foldl (init := argumentTrees)
+                (fun trees tree => tree :: trees)
+          | _ => argumentTrees := "<malformed>" :: argumentTrees
         if reason == .unsupportedReceiver then
           receiverShapes := receiverShape raw :: receiverShapes
           receiverFamilies := receiverFamily raw :: receiverFamilies
@@ -133,6 +139,7 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("refused", toJson refusals.length),
     ("first_refusals", counts refusals),
     ("unsupported_argument_shapes", counts argumentShapes),
+    ("unsupported_argument_trees", counts argumentTrees),
     ("unsupported_receiver_shapes", counts receiverShapes),
     ("unsupported_receiver_families", counts receiverFamilies),
     ("calls", toJson reports.reverse)])

@@ -57,9 +57,11 @@ performs both syntax admission and this canonical resolution in one operation.
 retained `CXXMemberCallExpr` in a complete probe and emits an auditable JSON
 admission/refusal census. It is bounded and read-only: no receiver, object
 state, body execution, overload lookup or native agreement is inferred.
-For argument refusals it also reports the retained child-kind shape, so a
-future argument tier can be priced against source evidence before evaluation
-semantics are added.
+For argument refusals it reports both the retained child-kind shape and the
+recursive child tree, so a future argument tier can be priced against source
+evidence before evaluation semantics are added. The recursive tree preserves
+conversion kinds such as `IntegralCast` and `NullToPointer`; a top-level kind
+alone would merge those into one unsupported bucket.
 Receiver refusals likewise retain the member kind, arrow/dot spelling, value
 category, and base child kinds for a future receiver tier.
 The census preserves nested base trees and cast kinds, including
@@ -85,6 +87,17 @@ The kernel battery includes a matching nested-call witness and checks that it
 refuses as `unsupportedReceiver`; admitting it would require a typed result
 object, a second call's body and state/effect sequencing, so it is priced as a
 separate call-chain tier.
+
+The argument census gives the next narrow candidate a concrete price. Twelve
+refused calls pass a direct `IntegerLiteral` (`int`) as their only argument;
+two more use the distinct tree `ImplicitCastExpr:IntegralCast(IntegerLiteral)`.
+The direct literals are all the value `0` in the pinned source. They are still
+refused: the current member-call bridge has no method-parameter evidence and
+its invocation path is the zero-argument integral getter. A future integer
+argument tier must retain the literal occurrence, source type, converted type,
+and the selected method's parameter declaration before it can evaluate a call;
+it must not treat a literal's presence as proof of overload selection or
+conversion safety.
 
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or

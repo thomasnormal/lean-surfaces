@@ -86,6 +86,22 @@ private def enumRepresentationErrorName :
   | .booleanUnderlying => "boolean-underlying"
   | .oracleDisagrees => "oracle-disagrees"
 
+private def enumSetterErrorName :
+    IntegralMemberEnumSetterError → String
+  | .profile error => "profile:" ++ methodProfileErrorName error
+  | .body error => "body:" ++ methodBodyErrorName error
+  | .resultType => "result-type"
+  | .parameterCount => "parameter-count"
+  | .assignmentMissing => "assignment-missing"
+  | .malformedAssignment => "malformed-assignment"
+  | .missingOwner => "missing-owner"
+  | .missingField => "missing-field"
+  | .fieldMismatch => "field-mismatch"
+  | .missingParameter => "missing-parameter"
+  | .parameterMismatch => "parameter-mismatch"
+  | .fieldTypeMismatch => "field-type-mismatch"
+  | .parameterTypeMismatch => "parameter-type-mismatch"
+
 private def memberMethodHandle (raw : Raw) : Option FrontendHandle := do
   let .array (member :: _) ← raw.field "inner" | none
   let referenced ← member.field "referencedMemberDecl"
@@ -208,6 +224,53 @@ private def methodBodyThisFieldWrites (probe : DeclarationProbe)
           | none => []
       | _ => []
 
+private def directThisMember (raw : Raw) : Bool :=
+  raw.text "kind" == some "MemberExpr" &&
+    raw.field "isArrow" == some (.bool true) &&
+    raw.text "valueCategory" == some "lvalue" &&
+    match raw.field "inner" with
+    | some (.array [base]) => base.text "kind" == some "CXXThisExpr"
+    | _ => false
+
+private partial def firstDirectThisFieldWrite : Raw → Option Raw
+  | node@(.object fields) =>
+      match node.text "kind", node.text "opcode", node.field "inner" with
+      | some "BinaryOperator", some "=", some (.array (left :: _)) =>
+          if directThisMember left then some left
+          else fields.firstM (fun (_, value) => firstDirectThisFieldWrite value)
+      | _, _, _ => fields.firstM (fun (_, value) => firstDirectThisFieldWrite value)
+  | .array values => values.firstM firstDirectThisFieldWrite
+  | _ => none
+
+private def rawHandle? (raw : Raw) (name : String) : Option FrontendHandle := do
+  match raw.field name with
+  | some (.string value) => (parseFrontendHandle value).toOption
+  | some value => (evidenceHandle value "id").toOption
+  | none => none
+
+private def rawQualType? (raw : Raw) : Option String := do
+  let type ← raw.field "type"
+  type.text "qualType"
+
+private def methodBodyThisFieldWriteAccess (probe : DeclarationProbe)
+    (body : IntegralMemberMethodBody) : Option IntegralMemberThisFieldAccess := do
+  let method ← (rawNodesById body.definition.value probe.ast).find?
+    (·.text "kind" == some "CXXMethodDecl")
+  let inner ← method.field "inner" |>.bind Raw.array?
+  let compound ← inner.find? (·.text "kind" == some "CompoundStmt")
+  let left ← firstDirectThisFieldWrite compound
+  let owner ← probe.declarations.find? (fun row =>
+    row.id == body.definition && row.kind == "CXXMethodDecl") |>.bind
+    (fun row => rawHandle? row.raw "method_parent")
+  let field ← rawHandle? left "referencedMemberDecl"
+  let name ← left.text "name"
+  let fieldType ← rawQualType? left
+  let receiverType ← match left.field "inner" with
+    | some (.array [base]) => rawQualType? base
+    | _ => none
+  pure ⟨body.canonical, body.definition, owner, field, name, receiverType, fieldType,
+    method.text "name" |>.getD ""⟩
+
 private partial def rawTree (raw : Raw) : String :=
   let kind := raw.text "kind" |>.getD "<missing>"
   let cast := raw.text "castKind" |>.map (fun value => ":" ++ value) |>.getD ""
@@ -283,6 +346,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut integerMethodEnumProfileRefusals : List String := []
   let mut integerMethodEnumRepresentations : List String := []
   let mut integerMethodEnumRepresentationRefusals : List String := []
+  let mut integerMethodEnumSetterProfiles : List String := []
+  let mut integerMethodEnumSetterRefusals : List String := []
   let mut enumResultCalls : List String := []
   let mut enumResultRefusals : List String := []
   let mut enumGetterProfiles : List String := []
@@ -365,6 +430,24 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
                           for field in methodBodyThisFieldWrites probe body do
                             integerMethodThisFieldWrites :=
                               (s!"{body.canonical.value}:{field}") :: integerMethodThisFieldWrites
+                          match methodBodyThisFieldWriteAccess probe body with
+                          | some access =>
+                              match IntegralMemberEnumProfile.admit probe access with
+                              | .ok profile =>
+                                  match IntegralMemberEnumRepresentation.withOracle profile .unsignedInt with
+                                  | .ok representation =>
+                                      match IntegralMemberEnumSetter.admit probe body.canonical representation with
+                                      | .ok setter => integerMethodEnumSetterProfiles :=
+                                          (s!"{setter.method.method.value}:{setter.fieldName}") ::
+                                            integerMethodEnumSetterProfiles
+                                      | .error error => integerMethodEnumSetterRefusals :=
+                                          enumSetterErrorName error :: integerMethodEnumSetterRefusals
+                                  | .error error => integerMethodEnumSetterRefusals :=
+                                      ("representation:" ++ enumRepresentationErrorName error) ::
+                                        integerMethodEnumSetterRefusals
+                              | .error error => integerMethodEnumSetterRefusals :=
+                                  ("enum:" ++ enumProfileErrorName error) :: integerMethodEnumSetterRefusals
+                          | none => pure ()
                           match IntegralMemberThisFieldAccess.admit probe body with
                           | .ok access => do
                               integerMethodThisFields :=
@@ -430,6 +513,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("typed_integer_method_enum_representations", counts integerMethodEnumRepresentations),
     ("typed_integer_method_enum_representation_refusals",
       counts integerMethodEnumRepresentationRefusals),
+    ("typed_integer_method_enum_setter_profiles", counts integerMethodEnumSetterProfiles),
+    ("typed_integer_method_enum_setter_refusals", counts integerMethodEnumSetterRefusals),
     ("enum_result_calls", counts enumResultCalls),
     ("enum_result_refusals", counts enumResultRefusals),
     ("enum_getter_profiles", counts enumGetterProfiles),

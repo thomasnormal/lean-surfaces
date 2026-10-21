@@ -241,6 +241,12 @@ that synthetic shape and reject a mismatched parameter handle. The real
 refused before body execution; their 11 direct writes stay telemetry rather than
 fabricated setter calls.
 
+The census now applies that setter profile to direct enum-field assignments. It
+reports **0** setter profiles on TinyXML2: all **11** `_errorID` candidates
+refuse with `profile:unsupported-body` (the variadic signature), while the
+non-enum `Set` writes refuse at enum-field typing. This keeps the method-body
+and parameter boundary explicit before any setter execution is attempted.
+
 `IntegralMemberEnumCall` exposes that read as a call result without widening
 the ordinary integral getter. It requires the already selected method and
 receiver handles, the typed field witness, the oracle-backed enum profile, and

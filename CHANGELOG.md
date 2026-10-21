@@ -12,6 +12,31 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+## [0.1.14] — 2026-10-21
+
+### Added
+
+- Flat starred assignments such as `head, *middle, tail = values` now drain
+  the right-hand iterable and bind a fresh list for the middle slice. Nested,
+  multiple, non-name, and starred `for` targets remain loud.
+- Bare-name list item deletion now follows CPython for integer and Boolean
+  indices, including negative indices, missing-item `IndexError`, and the
+  faithful non-integer index `TypeError`.
+- First-class dictionary `keys()`, `values()`, and `items()` views retain their
+  source dictionary and observe later mutations through supported length,
+  membership, and consuming-iteration paths. `enumerate` over the values and
+  items views now retains the view kind and yields the corresponding elements.
+
+### Fixed
+
+- Proof-side clock-erasure and payload-blind walkers now cover the dictionary
+  view object and its backing reads while preserving their refusal-safe
+  behavior.
+- The measured Python differential suite now has **3,538 rows**, with **3,206
+  matches / 332 recorded refusals** in the executable runner and **3,119
+  matches / 419 refusals** in the proof interpreter; the grammar census has
+  **144 witnesses, 130 MATCH and 14 REFUSE**.
+
 ## [0.1.13] — 2026-10-21
 
 ### Added

@@ -72,6 +72,15 @@ private def thisFieldErrorName :
   | .malformedField => "malformed-field"
   | .fieldMismatch => "field-mismatch"
 
+private def enumProfileErrorName :
+    IntegralMemberEnumProfileError → String
+  | .malformedTypeEvidence => "malformed-type-evidence"
+  | .missingFieldType => "missing-field-type"
+  | .nonEnumerationField => "non-enumeration-field"
+  | .missingEnum => "missing-enum"
+  | .malformedEnum => "malformed-enum"
+  | .conflictingEnum => "conflicting-enum"
+
 private def memberMethodHandle (raw : Raw) : Option FrontendHandle := do
   let .array (member :: _) ← raw.field "inner" | none
   let referenced ← member.field "referencedMemberDecl"
@@ -200,6 +209,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut integerMethodObjectRefusals : List String := []
   let mut integerMethodThisFields : List String := []
   let mut integerMethodThisFieldRefusals : List String := []
+  let mut integerMethodEnumProfiles : List String := []
+  let mut integerMethodEnumProfileRefusals : List String := []
   let mut receiverShapes : List String := []
   let mut receiverFamilies : List String := []
   let mut reports : List Json := []
@@ -260,6 +271,12 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
                               integerMethodThisFields :=
                                 (s!"{access.name}:{access.fieldType}:{access.receiverType}") ::
                                   integerMethodThisFields
+                              match IntegralMemberEnumProfile.admit probe access with
+                              | .ok profile => integerMethodEnumProfiles :=
+                                  (s!"{profile.name}:{profile.constantCount}:{profile.explicitValueCount}:" ++
+                                    profile.underlyingType.getD "<absent>") :: integerMethodEnumProfiles
+                              | .error error => integerMethodEnumProfileRefusals :=
+                                  enumProfileErrorName error :: integerMethodEnumProfileRefusals
                           | .error error => do
                               integerMethodThisFieldRefusals :=
                                 thisFieldErrorName error :: integerMethodThisFieldRefusals
@@ -299,6 +316,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("typed_integer_method_object_refusals", counts integerMethodObjectRefusals),
     ("typed_integer_method_this_fields", counts integerMethodThisFields),
     ("typed_integer_method_this_field_refusals", counts integerMethodThisFieldRefusals),
+    ("typed_integer_method_enum_profiles", counts integerMethodEnumProfiles),
+    ("typed_integer_method_enum_profile_refusals", counts integerMethodEnumProfileRefusals),
     ("unsupported_receiver_shapes", counts receiverShapes),
     ("unsupported_receiver_families", counts receiverFamilies),
     ("calls", toJson reports.reverse)])

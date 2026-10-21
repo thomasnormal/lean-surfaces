@@ -431,6 +431,78 @@ def admit (probe : DeclarationProbe) (body : IntegralMemberMethodBody) :
 
 end IntegralMemberThisFieldAccess
 
+/-- Enum metadata needed to read `_errorID`. The frontend's declaration handle
+and enumerator count are retained, while an absent fixed underlying type stays
+absent instead of being guessed as `int`. -/
+structure IntegralMemberEnumProfile where
+  field : FrontendHandle
+  enum : FrontendHandle
+  name : String
+  constantCount : Nat
+  explicitValueCount : Nat
+  underlyingType : Option String
+  deriving Repr, BEq, Inhabited
+
+inductive IntegralMemberEnumProfileError where
+  | malformedTypeEvidence
+  | missingFieldType
+  | nonEnumerationField
+  | missingEnum
+  | malformedEnum
+  | conflictingEnum
+  deriving Repr, BEq, Inhabited
+
+namespace IntegralMemberEnumProfile
+
+private partial def rawNodesById (wanted : String) : Raw → List Raw
+  | node@(.object fields) =>
+      (if node.text "id" == some wanted then [node] else []) ++
+        fields.flatMap (fun (_, value) => rawNodesById wanted value)
+  | .array values => values.flatMap (rawNodesById wanted)
+  | _ => []
+
+private def enumConstants (raw : Raw) :
+    Except IntegralMemberEnumProfileError (List Raw) :=
+  match raw.field "inner" with
+  | some (.array children) => pure (children.filter (·.text "kind" == some "EnumConstantDecl"))
+  | _ => throw .malformedEnum
+
+private partial def containsKind (wanted : String) : Raw → Bool
+  | node@(.object fields) =>
+      node.text "kind" == some wanted || fields.any (fun (_, value) => containsKind wanted value)
+  | .array values => values.any (containsKind wanted)
+  | _ => false
+
+private def explicitValue (raw : Raw) : Bool :=
+  containsKind "ConstantExpr" raw || (raw.field "value").isSome
+
+/-- Recover the enum identity and explicit-value census for a typed field. No
+underlying representation is supplied when Clang did not retain one. -/
+def admit (probe : DeclarationProbe) (access : IntegralMemberThisFieldAccess) :
+    Except IntegralMemberEnumProfileError IntegralMemberEnumProfile := do
+  let typeRows ← match parseValidatedTypeEvidence probe with
+    | .ok rows => pure rows
+    | .error _ => throw .malformedTypeEvidence
+  let some (.enumeration enum) := typeEvidenceFor typeRows access.field
+    | throw .missingFieldType
+  let nodes := (rawNodesById enum.value probe.ast).filter
+    (·.text "kind" == some "EnumDecl")
+  let node :: rest := nodes | throw .missingEnum
+  unless rest.all (· == node) do throw .conflictingEnum
+  let name ← match node.text "name" with
+    | some value => if value.isEmpty then throw .malformedEnum else pure value
+    | none => throw .malformedEnum
+  let constants ← enumConstants node
+  let underlyingType ← match node.field "fixedUnderlyingType" with
+    | none => pure none
+    | some value => match value.text "qualType" with
+        | some spelling => pure (some spelling)
+        | none => throw .malformedEnum
+  pure ⟨access.field, enum, name, constants.length, constants.countP explicitValue,
+    underlyingType⟩
+
+end IntegralMemberEnumProfile
+
 inductive IntegralMemberCallSyntaxError where
   | notMemberCall
   | malformedChildren

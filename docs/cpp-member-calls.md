@@ -154,6 +154,14 @@ field spelling. The probe admits `_errorID:XMLError:XMLError` for all 11
 refuses this narrower precondition, as expected from its first `member-call`
 event.
 
+`IntegralMemberEnumProfile.admit` follows the field's structured type evidence
+to its enum declaration and retains the enum handle, constant count, explicit
+value count, and any fixed-underlying-type spelling. The probe reports
+`XMLError:20:1:<absent>` for all 11 `SetError` accesses: one explicit zero and
+19 implicitly sequenced constants, with no fixed underlying type retained.
+Reading the field therefore still needs an enum representation decision; the
+profile refuses to manufacture an `int` layout from the spelling alone.
+
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or
 qualified dispatch, construction, writes and calls whose target body is not an

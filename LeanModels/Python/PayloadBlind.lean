@@ -626,19 +626,20 @@ theorem keyHasInstanceRef_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
   induction v using keyHasInstanceRef.induct (h := h)
     (motive_2 := fun vs => keyHasInstanceRefList (Heap.swapAt h pa o) vs
       = keyHasInstanceRefList h vs) with
-  -- case3 is the H7 CELL arm (a cell is identity, like an instance: the
-  -- key census refuses it), which is why every later case shifted by one
-  | case1 b cls attrs hb | case2 b q l c st hb | case3 b cv hb
-  | case4 b n p a1 a2 a3 a4 bd cp hb
-  | case5 b xs hb | case6 b _ _ _ _ =>
-      rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
+  | case1 a da kind hb | case2 a cls attrs hb | case3 a q l c st hb
+  | case4 a cv hb | case5 a n p ao lo hg ig bd cap hb | case6 a xs hb
+  | case7 a h1 h2 h3 h4 h5 h6 =>
+      rcases Heap.get?_swapAt_twin (b := a) hslot htwin with heq | ⟨_, _, _, _, _, h1', h2'⟩
       · rw [keyHasInstanceRef, keyHasInstanceRef, heq]
-      · rw [keyHasInstanceRef, keyHasInstanceRef, h1, h2]
-  | case7 xs ih | case8 _ _ xs ih => rw [keyHasInstanceRef, keyHasInstanceRef]; exact ih
-  | case9 _ _ _ => rfl
-  | case10 t _ _ _ _ => rw [keyHasInstanceRef.eq_def, keyHasInstanceRef.eq_def]; split <;> simp_all
-  | case11 => rfl
-  | case12 x rest ih1 ih2 => rw [keyHasInstanceRefList, keyHasInstanceRefList, ih1, ih2]
+      · rw [keyHasInstanceRef, keyHasInstanceRef, h1', h2']
+  | case8 xs ih => rw [keyHasInstanceRef]; exact ih
+  | case9 t fs xs ih => rw [keyHasInstanceRef]; exact ih
+  | case10 lo hi step => rfl
+  | case11 t _ _ _ _ =>
+      cases t <;> simp_all [keyHasInstanceRef]
+  | case12 => rfl
+  | case13 x rest ihx ihr =>
+      simp only [keyHasInstanceRefList, ihx, ihr]
 
 /-- The name CPython would print in `unhashable type: '…'` is blind. -/
 theorem unhashableName?_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
@@ -738,13 +739,26 @@ Each is `match Heap.get? h b with …` over the six `Obj` constructors, and
 arm is reached on BOTH sides at `pa` and answers the same, every other arm
 is reached with the identical object. -/
 
-/-- `len(o)` is blind. -/
+theorem dictViewEntries_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o) (da : Addr) :
+    dictViewEntries (Heap.swapAt h pa o) da = dictViewEntries h da := by
+  by_cases hd : da = pa
+  · subst da
+    rcases htwin with ⟨q, l₀, c₀, l₁, c₁, ho₀, ho⟩
+    simp [dictViewEntries, Heap.get?_swapAt_self
+      (Heap.lt_size_of_get? hslot), hslot, ho₀, ho]
+  · rw [dictViewEntries, dictViewEntries, Heap.get?_swapAt_ne hd]
+
+/- `len(o)` is blind. -/
 theorem heapLen_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
     (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o) (b : Addr) :
     heapLen (Heap.swapAt h pa o) b = heapLen h b := by
   rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
-  · rw [heapLen, heapLen, heq]
-  · rw [heapLen, heapLen, h1, h2]
+  · cases hg : Heap.get? h b with
+    | none => simp [heapLen, heq, hg]
+    | some obj =>
+      cases obj <;> simp [heapLen, heq, hg, dictViewEntries_swapAt hslot htwin]
+  · simp [heapLen, h1, h2]
 
 /-- Truthiness is blind (a generator object is truthy either way). -/
 theorem truthyH_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
@@ -753,7 +767,10 @@ theorem truthyH_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
   cases v with
   | ref b =>
       rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
-      · rw [truthyH, truthyH, heq]
+      · cases hg : Heap.get? h b with
+        | none => simp [truthyH, heq, hg]
+        | some obj =>
+          cases obj <;> simp [truthyH, heq, hg, dictViewEntries_swapAt hslot htwin]
       · rw [truthyH, truthyH, h1, h2]
   | _ => rfl
 
@@ -986,18 +1003,37 @@ theorem heapEq_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin 
   | case7 _ _ x y _ _ _ _ hy hx _ =>
       simp_all [heapEq, Heap.get?_swapAt_of_ne_slot hslot (by simp) hx,
         Heap.get?_swapAt_of_ne_slot hslot (by simp) hy]
-  | case8 _ _ x y _ _ _ _ _ _ hy hx =>
+  | case8 _ _ x y _ _ _ _ hy hx =>
       rcases Heap.get?_swapAt_twin (b := x) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
         heqx | ⟨_, _, _, _, _, hx1, hx2⟩ <;>
       rcases Heap.get?_swapAt_twin (b := y) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
         heqy | ⟨_, _, _, _, _, hy1, hy2⟩ <;>
       simp_all [heapEq]
-  | case9 _ _ x y _ _ hno =>
+  | case9 _ _ x y _ _ _ _ _ _ _ hno =>
       rcases Heap.get?_swapAt_twin (b := x) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
         heqx | ⟨_, _, _, _, _, hx1, hx2⟩ <;>
       rcases Heap.get?_swapAt_twin (b := y) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
         heqy | ⟨_, _, _, _, _, hy1, hy2⟩ <;>
       simp_all [heapEq]
+  | case10 _ _ x y _ _ _ _ _ _ _ _ hno =>
+      rcases Heap.get?_swapAt_twin (b := x) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
+        heqx | ⟨_, _, _, _, _, hx1, hx2⟩ <;>
+      rcases Heap.get?_swapAt_twin (b := y) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
+        heqy | ⟨_, _, _, _, _, hy1, hy2⟩ <;>
+      simp_all [heapEq]
+  | case11 _ _ x y _ _ _ _ _ _ _ _ _ hy hx =>
+      rcases Heap.get?_swapAt_twin (b := x) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
+        heqx | ⟨_, _, _, _, _, hx1, hx2⟩ <;>
+      rcases Heap.get?_swapAt_twin (b := y) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
+        heqy | ⟨_, _, _, _, _, hy1, hy2⟩ <;>
+      simp_all [heapEq]
+  | case12 _ _ x y _ _ _ _ _ _ _ hno =>
+      rcases Heap.get?_swapAt_twin (b := x) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
+        heqx | ⟨_, _, _, _, _, hx1, hx2⟩ <;>
+      rcases Heap.get?_swapAt_twin (b := y) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
+        heqy | ⟨_, _, _, _, _, hy1, hy2⟩ <;>
+      simp_all [heapEq]
+  | case13 => simp_all [heapEq]
   | _ => simp_all [heapEq, heapEqList, heapEqEntries]
 
 /-- `print`'s rendering of one value is blind. -/
@@ -1039,13 +1075,26 @@ theorem heapContainsScan_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : Pa
   | nil => rfl
   | cons v rest ih => simp only [heapContainsScan, heapEq_swapAt hslot htwin, ih]
 
+theorem dictItemContains_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (fuel : Nat) (es : Array (RVal × RVal))
+    (probe : RVal) :
+    dictItemContains (Heap.swapAt h pa o) fuel es probe = dictItemContains h fuel es probe := by
+  cases probe <;>
+    simp [dictItemContains, dictItemContainsList, keyRefusal_swapAt hslot htwin,
+      heapEq_swapAt hslot htwin]
+
 /-- `k in o` on a heap object is blind. -/
 theorem heapContains_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
     (fuel : Nat) (b : Addr) (k : RVal) :
     heapContains (Heap.swapAt h pa o) fuel b k = heapContains h fuel b k := by
   rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
-  · simp only [heapContains, heq, keyRefusal_swapAt hslot htwin,
-      heapContainsScan_swapAt hslot htwin]
+  · cases hg : Heap.get? h b with
+    | none => simp [heapContains, heq, hg]
+    | some obj =>
+      cases obj <;> simp [heapContains, heq, hg, keyRefusal_swapAt hslot htwin,
+        heapContainsScan_swapAt hslot htwin, dictViewEntries_swapAt hslot htwin,
+        dictItemContains_swapAt hslot htwin]
   · rw [heapContains, heapContains, h1, h2]
 
 /-- `x in c` for every in-tier container is blind. -/
@@ -2562,6 +2611,7 @@ theorem pbExecAttrCall_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o f
                     heapGet_swapAt hs htwin]
                   exact PBF.liftRes hs _
               | cons _ _ => exact PBF.exn hs _
+  | dictView _ => exact PBF.unsupported
   | dictClear =>
       refine PBF.bind (ihEs m st args hslot) fun s vs _ hs => ?_
       cases vs with
@@ -4326,6 +4376,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                             refine PBF.bind (PBF.liftRes hs3 _) fun s4 full _ hs4 => ?_
                             exact PBW.withLocals (ihIn m s4.world qname full hs4)
                     | attrMissing => exact PBF.exn hs1 _
+                    | dictView _ => exact PBF.unsupported
                     | _ => exact PBF.unsupported
                 | ntuple tn fs xs =>
                     simp only []

@@ -178,6 +178,13 @@ it does not convert the value to an unrelated builtin, read an offset, or
 derive a value from the enumerator list. A field mismatch, invalid target,
 format mismatch, or invalid stored value refuses.
 
+`IntegralMemberEnumValue.read` composes this value check with the existing
+`ClassReceiverProjection.invoke` path. The projection remains the sole source
+of object identity, member ownership, lifetime, and stored-cell validation; the
+enum layer supplies only the field witness and representation oracle. A stale,
+wrong-owner, malformed, or otherwise unbound snapshot therefore refuses at the
+projection/getter boundary rather than producing an enum result.
+
 This is not overload resolution or a general method-call evaluator. Arguments,
 temporaries, lvalue/rvalue receiver conversions, member pointers, virtual or
 qualified dispatch, construction, writes and calls whose target body is not an

@@ -193,6 +193,59 @@ private def enumValueInvalid : Bool :=
       | _ => false
   | none => false
 
+private def enumReadAccess : IntegralMemberThisFieldAccess := {
+  method := methodHandle, definition := methodHandle, owner := ownerHandle,
+  field := fieldHandle, name := "value", receiverType := "Owner *", fieldType := "XMLError"}
+
+private def enumReadProfile : IntegralMemberEnumProfile :=
+  {enumProfileSample with field := fieldHandle}
+
+private def enumReadRepresentation : Option IntegralMemberEnumRepresentation :=
+  (IntegralMemberEnumRepresentation.withOracle enumReadProfile .unsignedInt).toOption
+
+private def enumProjection : ClassReceiverProjection := {
+  hierarchy := hierarchy, objects := [0], receiverPath := [],
+  snapshot := {
+    memory := {
+      profile := .lp64,
+      objects := {objects := [
+        {duration := .automatic, type := .record ownerHandle, phase := .aliveInitialized},
+        {duration := .automatic, type := .builtin .unsignedInt, phase := .aliveInitialized}]},
+      values := [none, some ⟨.unsigned 32, 7⟩]},
+    object := 0, member := 1, field := fieldHandle}}
+
+private def enumReadAccepted : Bool :=
+  match enumReadRepresentation with
+  | some representation =>
+      match IntegralMemberEnumValue.read enumReadAccess representation enumProjection with
+      | .ok (memory, value) =>
+          memory == enumProjection.snapshot.memory && value.value == ⟨.unsigned 32, 7⟩
+      | .error _ => false
+  | none => false
+
+private def enumReadWrongObject : Bool :=
+  match enumReadRepresentation with
+  | some representation =>
+      let bad := {enumProjection with
+        snapshot := {enumProjection.snapshot with object := 1}}
+      match IntegralMemberEnumValue.read enumReadAccess representation bad with
+      | .error (.projection .wrongReceiver) => true
+      | _ => false
+  | none => false
+
+private def enumReadWrongStorage : Bool :=
+  match enumReadRepresentation with
+  | some representation =>
+      let bad := {enumProjection with snapshot := {enumProjection.snapshot with
+        memory := {enumProjection.snapshot.memory with
+          objects := {objects := (enumProjection.snapshot.memory.objects.objects.modify 1
+            (fun object => {object with type := .builtin .int}))},
+          values := [none, some ⟨.signed 32, 7⟩]}}}
+      match IntegralMemberEnumValue.read enumReadAccess representation bad with
+      | .error (.projection (.getter .malformedSnapshot)) => true
+      | _ => false
+  | none => false
+
 private def enumOracleError (underlying : CppIntType) :
     Option IntegralMemberEnumRepresentationError :=
   match IntegralMemberEnumRepresentation.withOracle enumProfileSample underlying with
@@ -492,6 +545,9 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard enumValueWrongField
 #guard enumValueBadProfile
 #guard enumValueInvalid
+#guard enumReadAccepted
+#guard enumReadWrongObject
+#guard enumReadWrongStorage
 #guard boundWitnessedIntegerArgument.map (fun bound =>
     (bound.parameter, bound.parameterType, bound.argument.value)) ==
     some (h "0x10", .builtin .int, 0)

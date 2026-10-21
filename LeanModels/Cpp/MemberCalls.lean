@@ -561,6 +561,11 @@ inductive IntegralMemberEnumValueError where
   | invalidValue (reason : InvalidIntegral)
   deriving Repr, BEq, Inhabited
 
+inductive IntegralMemberEnumReadError where
+  | projection (reason : ClassProjectionError)
+  | value (reason : IntegralMemberEnumValueError)
+  deriving Repr, BEq, Inhabited
+
 namespace IntegralMemberEnumValue
 
 /-- Read an already existing enum-field value under an explicit target and
@@ -578,6 +583,24 @@ def evaluate (access : IntegralMemberThisFieldAccess)
   unless stored.format == format do throw .underlyingTypeMismatch
   if let some reason := stored.invalid? then throw (.invalidValue reason)
   pure {representation, value := stored}
+
+private def getter (access : IntegralMemberThisFieldAccess)
+    (representation : IntegralMemberEnumRepresentation) : IntegralMemberGetter := {
+  occurrence := {(default : Declaration) with id := access.method.value, kind := "CXXMethodDecl", name := some access.name},
+  owner := access.owner,
+  field := {declaration := access.field, name := access.name, type := .builtin representation.underlying, isMutable := false},
+  isConst := true, conversions := [], result := representation.underlying,
+  canonical := access.method}
+
+/-- Read an enum field from an explicit existing class projection. The
+underlying storage cell is checked by the existing projection/getter rules;
+the enum oracle only chooses its builtin representation. -/
+def read (access : IntegralMemberThisFieldAccess)
+    (representation : IntegralMemberEnumRepresentation) (projection : ClassReceiverProjection) :
+    Except IntegralMemberEnumReadError (IntegralObjectStore × IntegralMemberEnumValue) := do
+  let (memory, stored) ← projection.invoke (getter access representation) |>.mapError .projection
+  let value ← evaluate access representation memory.profile stored |>.mapError .value
+  pure (memory, value)
 
 end IntegralMemberEnumValue
 

@@ -107,6 +107,9 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
           ("method", toJson evidence.method.value),
           ("canonical_method", toJson evidence.canonicalMethod.value),
           ("receiver", toJson evidence.receiver.value),
+          ("receiver_field", toJson (evidence.receiverField.map (·.value) |>.getD "")),
+          ("receiver_base", toJson (evidence.receiverBase.map (·.value) |>.getD "")),
+          ("receiver_field_name", toJson (evidence.receiverFieldName |>.getD "")),
           ("name", toJson evidence.name)] :: reports
     | .error reason =>
         let name := errorName reason

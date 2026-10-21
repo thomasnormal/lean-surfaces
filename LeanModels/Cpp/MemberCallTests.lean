@@ -7,6 +7,7 @@ private def ownerHandle : FrontendHandle := h "0xa"
 private def fieldHandle : FrontendHandle := h "0xb"
 private def methodHandle : FrontendHandle := h "0xc"
 private def receiverHandle : FrontendHandle := h "0xd"
+private def receiverFieldHandle : FrontendHandle := h "0xe"
 
 private def hierarchy : ClassHierarchy := {
   root := ownerHandle,
@@ -72,6 +73,12 @@ private def rawRefCastNoOp (id : String) : Raw := rawObject [
   ("castKind", rawText "NoOp"),
   ("type", rawObject [("qualType", rawText "Owner *")]),
   ("inner", .array [rawRefCast id])]
+
+private def rawFieldRefCast (id : String) : Raw := rawObject [
+  ("kind", rawText "ImplicitCastExpr"),
+  ("castKind", rawText "LValueToRValue"),
+  ("type", rawObject [("qualType", rawText "Owner *")]),
+  ("inner", .array [rawRefType id "Owner *"])]
 
 private def rawRefDerived (id : String) : Raw := rawObject [
   ("kind", rawText "ImplicitCastExpr"),
@@ -179,6 +186,30 @@ private def rawCallDerived (methodId receiverId name : String) : Raw := rawObjec
       ("kind", rawText "CXXMethodDecl"), ("id", rawText methodId)]),
     ("inner", .array [rawRefDerived receiverId])]])]
 
+private def rawNestedField (fieldId receiverId : String) : Raw := rawObject [
+  ("kind", rawText "MemberExpr"),
+  ("isArrow", .bool true),
+  ("valueCategory", rawText "lvalue"),
+  ("name", rawText "pool"),
+  ("type", rawObject [("qualType", rawText "MemPool *")]),
+  ("referencedMemberDecl", rawObject [
+    ("kind", rawText "FieldDecl"), ("id", rawText fieldId)]),
+  ("inner", .array [rawFieldRefCast receiverId])]
+
+private def rawNestedMember (methodId fieldId receiverId name : String) : Raw := rawObject [
+  ("kind", rawText "CXXMemberCallExpr"),
+  ("type", rawObject [("qualType", rawText "int")]),
+  ("inner", .array [rawObject [
+    ("kind", rawText "MemberExpr"), ("isArrow", .bool true),
+    ("valueCategory", rawText "prvalue"), ("name", rawText name),
+    ("referencedMemberDecl", rawObject [
+      ("kind", rawText "CXXMethodDecl"), ("id", rawText methodId)]),
+    ("inner", .array [rawObject [
+      ("kind", rawText "ImplicitCastExpr"),
+      ("castKind", rawText "LValueToRValue"),
+      ("type", rawObject [("qualType", rawText "MemPool *")]),
+      ("inner", .array [rawNestedField fieldId receiverId])]])]])]
+
 private def rawCallThis (methodId name : String) : Raw := rawObject [
   ("kind", rawText "CXXMemberCallExpr"),
   ("type", rawObject [("qualType", rawText "int")]),
@@ -259,6 +290,14 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard (IntegralMemberCallSyntax.admit (rawCallDerived methodHandle.value receiverHandle.value "read")).isOk
 #guard (IntegralMemberCallSyntax.admit (rawCallDerived methodHandle.value receiverHandle.value "read")).toOption.map
     (fun evidence => evidence.receiverCast) == some ["UncheckedDerivedToBase[Base]"]
+#guard (IntegralMemberCallSyntax.admit
+    (rawNestedMember methodHandle.value receiverFieldHandle.value receiverHandle.value "read")).isOk
+#guard (IntegralMemberCallSyntax.admit
+    (rawNestedMember methodHandle.value receiverFieldHandle.value receiverHandle.value "read")).toOption.map
+    (fun evidence => (evidence.receiver, evidence.receiverField, evidence.receiverBase,
+      evidence.receiverFieldName, evidence.receiverCast)) ==
+    some (receiverFieldHandle, some receiverFieldHandle, some receiverHandle,
+      some "pool", ["LValueToRValue", "LValueToRValue"])
 #guard syntaxError (rawCallThis methodHandle.value "read") == some .missingThisOwner
 
 private def resolveCanonicalHandle (rows : List DeclarationEvidenceRow) : Option FrontendHandle :=

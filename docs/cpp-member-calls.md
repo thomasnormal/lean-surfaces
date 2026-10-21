@@ -44,7 +44,13 @@ retained as receiver evidence, and a nested `NoOp` wrapper is retained as well;
 other casts and computed bases remain loud.
 `CXXThisExpr` bases refuse as `missing-this-owner` because the call node does
 not carry a receiver declaration handle; an enclosing method context is not
-guessed from a raw call fragment.
+guessed from a raw call fragment. A pointer-valued data-member receiver is now
+retained when its outer `LValueToRValue` and inner `MemberExpr` are explicitly
+typed, arrow-based, and backed by a `FieldDecl` handle. The evidence keeps the
+field handle, its base declaration handle, field spelling, and conversion chain.
+It remains provenance only: binding and invocation still require an independently
+supplied projection for the resulting receiver, and no member offset or pointer
+value is inferred.
 Callers that start from raw AST are expected to use `admitResolved`, which
 performs both syntax admission and this canonical resolution in one operation.
 `extractors/cpp/census_member_calls.lean` applies that operation to every
@@ -60,18 +66,19 @@ The census preserves nested base trees and cast kinds, including
 `UncheckedDerivedToBase(CXXThisExpr)` and `LValueToRValue(MemberExpr(...))`, so
 `this` and derived-base work can be priced independently.
 The census also groups the remaining generic refusals into disjoint families:
-nested member bases and nested member-call bases.
+nested member-call bases.
 
-On the 542-call TinyXML2 probe, the current census admits 66 calls. The 5
-remaining generic receiver refusals are 4 nested member bases and 1 nested
-member-call base. Their exact leading shapes are:
+On the 542-call TinyXML2 probe, the current census admits 70 calls. The 1
+remaining generic receiver refusal is a nested member-call base. The four newly
+admitted member-field bases have the exact leading shape
+`ImplicitCastExpr:LValueToRValue(MemberExpr(ImplicitCastExpr:LValueToRValue(DeclRefExpr)))`
+on an arrow call. The remaining generic shape is:
 
 | family | retained receiver base |
 | --- | --- |
-| nested member (4) | `ImplicitCastExpr:LValueToRValue(MemberExpr(ImplicitCastExpr:LValueToRValue(DeclRefExpr)))` on an arrow call |
 | member-call (1) | `CXXMemberCallExpr(MemberExpr(ImplicitCastExpr:UncheckedDerivedToBase(DeclRefExpr)))` on an arrow call |
 
-The other 471 refusals in that run are 314 unsupported argument lists, 155
+The other 472 refusals in that run are 314 unsupported argument lists, 155
 missing `this` owners, and 2 malformed names. This is source pricing only:
 the census still performs no receiver conversion, object lookup, or call.
 

@@ -17,6 +17,12 @@ structure IntegralMemberCallSyntax where
   receiverIsArrow : Bool := true
   /-- Direct receiver conversions retained from the AST, outermost first. -/
   receiverCast : List String := []
+  /-- A pointer-valued data member used as the receiver, when present. -/
+  receiverField : Option FrontendHandle := none
+  /-- The declaration supplying the base object of `receiverField`. -/
+  receiverBase : Option FrontendHandle := none
+  /-- Source spelling of `receiverField`, when present. -/
+  receiverFieldName : Option String := none
   deriving Repr, BEq, Inhabited
 
 inductive IntegralMemberCallSyntaxError where
@@ -91,6 +97,75 @@ private partial def receiverDeclRef (raw : Raw) :
         pure (decl, cast :: casts)
   | _ => throw .unsupportedReceiver
 
+private def pointerSpelling (value : String) : Bool :=
+  match value.toList.reverse with
+  | '*' :: _ => true
+  | _ => false
+
+private structure ReceiverPlan where
+  receiver : FrontendHandle
+  casts : List String
+  field : Option FrontendHandle := none
+  base : Option FrontendHandle := none
+  fieldName : Option String := none
+
+private def receiverPlan (raw : Raw) : Except IntegralMemberCallSyntaxError ReceiverPlan := do
+  match raw.text "kind" with
+  | some "ImplicitCastExpr" =>
+      let some cast := raw.text "castKind" | throw .unsupportedReceiver
+      let child ← oneChild raw
+      if cast == "LValueToRValue" && child.text "kind" == some "MemberExpr" then
+        unless child.text "valueCategory" == some "lvalue" do throw .unsupportedReceiver
+        unless child.field "isArrow" == some (.bool true) do throw .unsupportedReceiver
+        let outerType ← match raw.field "type" with
+          | some type => match type.text "qualType" with
+              | some value => pure value
+              | none => throw .unsupportedReceiver
+          | none => throw .unsupportedReceiver
+        let fieldName ← match child.text "name" with
+          | some value => pure value
+          | none => throw .unsupportedReceiver
+        unless cppIdentifier fieldName do throw .unsupportedReceiver
+        let fieldHandle ← match child.field "referencedMemberDecl" with
+          | some (.string id) =>
+              (parseFrontendHandle id).mapError (fun _ => .unsupportedReceiver)
+          | some value => do
+              unless value.text "kind" == some "FieldDecl" do throw .unsupportedReceiver
+              (evidenceHandle value "id").mapError (fun _ => .unsupportedReceiver)
+          | none => throw .unsupportedReceiver
+        let fieldType ← match child.field "type" with
+          | some type => match type.text "qualType" with
+              | some value => if pointerSpelling value then pure value else throw .unsupportedReceiver
+              | none => throw .unsupportedReceiver
+          | none => throw .unsupportedReceiver
+        unless outerType == fieldType do throw .unsupportedReceiver
+        let baseRaw ← oneChild child
+        let (base, baseCasts) ← receiverDeclRef baseRaw
+        let some baseReferenced := base.field "referencedDecl"
+          | throw .missingReceiverHandle
+        let baseHandle ← (evidenceHandle baseReferenced "id").mapError
+          (fun _ => .missingReceiverHandle)
+        let receiver := fieldHandle
+        let field := some fieldHandle
+        let base := some baseHandle
+        let fieldName := some fieldName
+        pure {receiver, casts := (cast :: baseCasts), field, base, fieldName}
+      else
+        let (decl, casts) ← receiverDeclRef raw
+        let some referenced := decl.field "referencedDecl"
+          | throw .missingReceiverHandle
+        let receiver ← (evidenceHandle referenced "id").mapError
+          (fun _ => .missingReceiverHandle)
+        pure {receiver, casts, field := none, base := none, fieldName := none}
+  | some "DeclRefExpr" =>
+      let (decl, casts) ← receiverDeclRef raw
+      let some referenced := decl.field "referencedDecl"
+        | throw .missingReceiverHandle
+      let receiver ← (evidenceHandle referenced "id").mapError
+        (fun _ => .missingReceiverHandle)
+      pure {receiver, casts, field := none, base := none, fieldName := none}
+  | _ => throw .unsupportedReceiver
+
 def admit (raw : Raw) :
     Except IntegralMemberCallSyntaxError IntegralMemberCallSyntax := do
   unless raw.text "kind" == some "CXXMemberCallExpr" do
@@ -116,21 +191,19 @@ def admit (raw : Raw) :
     | none => throw .missingMethodHandle
   let receiverRawOuter ← oneChild member
   if containsThis receiverRawOuter then throw .missingThisOwner
-  let (receiverRaw, receiverCasts) ← receiverDeclRef receiverRawOuter
-  let some referenced := receiverRaw.field "referencedDecl"
-    | throw .missingReceiverHandle
-  let receiver ← (evidenceHandle referenced "id").mapError (fun _ => .missingReceiverHandle)
+  let receiverPlan ← receiverPlan receiverRawOuter
   let receiverType ← match receiverRawOuter.field "type" with
     | some type => match type.text "qualType" with
         | some value => if value.isEmpty then throw .malformedReceiverType else pure value
         | none => throw .malformedReceiverType
     | none => throw .malformedReceiverType
   let resultType ← resultSpelling raw
-  let receiverCast := receiverCasts
   pure {(default : IntegralMemberCallSyntax) with
-    method := method, receiver := receiver, receiverType := receiverType,
+    method := method, receiver := receiverPlan.receiver, receiverType := receiverType,
     resultType := resultType, name := name, canonicalMethod := method,
-    receiverIsArrow := receiverIsArrow, receiverCast := receiverCast}
+    receiverIsArrow := receiverIsArrow, receiverCast := receiverPlan.casts,
+    receiverField := receiverPlan.field, receiverBase := receiverPlan.base,
+    receiverFieldName := receiverPlan.fieldName}
 
 /-- Resolve one retained method occurrence to exactly one canonical probe handle. -/
 def resolveCanonical (probe : DeclarationProbe) (evidence : IntegralMemberCallSyntax) :

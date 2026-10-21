@@ -3937,6 +3937,18 @@ not carry. No join flavor is serialized or admitted, and no second scheduler
 is introduced. See [the boundary and repricing](sv-fork-join.md) and the
 read-only instrument `extractors/sv/fork_join_reprice.py`.
 
+### Random sequence productions — 2026-10-21
+
+`RandSequenceStatement` remains the constrained-random production boundary.
+The fresh 22,043-path census records it in 72 files: 53 randsequence-only and
+19 co-occurring. The sole files contain 54 production blocks, including 18
+alternative, 15 conditional/case, 10 repeat, 10 weighted and 54 action-block
+features (rows overlap). Production selection, random state, recursive
+expansion and automatic action scopes have no representation in the current
+envelope. No feature is admitted with a fixed branch or random guess, and no
+second scheduler is introduced. See [the boundary and repricing](sv-randsequence.md)
+and the read-only instrument `extractors/sv/randsequence_reprice.py`.
+
 
 ### Dynamic integral casts — 2026-10-20
 

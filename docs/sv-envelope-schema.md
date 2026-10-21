@@ -1346,6 +1346,12 @@ nonblocking intra-assignment controls. Its future publication and same-time
 ordering are not represented by the blocking capture/wait lowering, so the
 envelope does not fabricate a sleeping process or an update queue.
 
+Random sequence productions remain explicit `RandSequenceStatement` unsupported
+members. The envelope carries no production graph, constrained-random state or
+generated automatic action frame, so alternatives, repeats, weights,
+conditionals and action blocks are not lowered into procedural statements.
+See [the randsequence boundary](sv-randsequence.md).
+
 ### Legacy package storage provenance
 
 Source-defined packages with admitted scalar/packed integral variables lower

@@ -1022,6 +1022,17 @@ or same-time ordering, so no nonblocking shape is admitted. See
 [intra-assignment publication](sv-intra-assignment.md) for the boundary and
 reproduction command.
 
+## Random sequence productions — 2026-10-21
+
+`RandSequenceStatement` remains the constrained-random production boundary.
+The fresh **22,043**-path census records it in **72** files: **53**
+randsequence-only and **19** co-occurring. Repricing the sole files finds
+**54** production blocks with overlapping features: **18** alternatives,
+**15** conditional/case forms, **10** repeats, **10** weighted choices and
+**54** action blocks. The current envelope has no production graph, random
+state or generated action scope, so no feature is admitted by choosing a fixed
+branch. See [randsequence](sv-randsequence.md) for the boundary and scan.
+
 ## Explicit command-line plusargs — 2026-10-20
 
 The §21.6 family admits literal prefix queries and integral value queries

@@ -275,7 +275,7 @@
   },
   {
     "file": "harness/scripts/star_target_script.py",
-    "expect": "unsupported"
+    "expect": "match"
   },
   {
     "file": "harness/scripts/zerodiv_pow_script.py",
@@ -538,15 +538,52 @@
     "file": "harness/scripts/sum_string_start.py",
     "expect": "match"
   },
-  {"file": "harness/scripts/builtin_raise_script.py", "expect": "match"},
-  {"file": "harness/scripts/builtin_raise_namedtuple.py", "expect": "match"},
-  {"file": "harness/scripts/builtin_raise_namedtuple_handler.py", "expect": "match"},
-  {"file": "harness/scripts/builtin_raise_namedtuple_generator.py", "expect": "match"},
-  {"file": "harness/scripts/builtin_raise_uncaught.py", "expect": "match"},
-  {"file": "harness/scripts/builtin_raise_base.py", "expect": "match"},
-  {"file": "harness/scripts/builtin_raise_generator.py", "expect": "match"},
-  {"file": "harness/scripts/builtin_raise_shadow.py", "expect": "unsupported"},
-  {"file": "harness/scripts/builtin_raise_namesake.py", "expect": "match"},
-  {"file": "harness/scripts/int_base_script.py", "expect": "match"},
-  {"file": "harness/scripts/int_base_error_script.py", "expect": "match"}
+  {
+    "file": "harness/scripts/builtin_raise_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_namedtuple.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_namedtuple_handler.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_namedtuple_generator.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_uncaught.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_base.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_generator.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_shadow.py",
+    "expect": "unsupported"
+  },
+  {
+    "file": "harness/scripts/builtin_raise_namesake.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/int_base_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/int_base_error_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/unpack_script.py",
+    "expect": "match"
+  }
 ]

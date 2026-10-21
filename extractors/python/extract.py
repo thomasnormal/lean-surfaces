@@ -862,30 +862,44 @@ def _target_bound_names(t):
 
 
 def _target_has_starred(t):
-    """Does this assignment TARGET contain a star anywhere? (`a, *b`, and
-    nested: `a, (b, *c)`.)
+    """Does this target contain a star that the flat lowering did not admit?
 
-    The tier does not model starred unpacking, and `unpackSeq` already
-    refuses a non-name target element — but it checks ARITY FIRST, so a
-    starred target was only refused when the arity happened to coincide.
-    Measured 2026-08-15 against CPython 3.9.19: `x, *y = [1,2]` refused
-    loudly (correct), while `x, *y = [1,2,3]` and `*x, y = [1,2,3]`
-    answered `ValueError: too many values to unpack (expected 2)` and
-    `x, *y = [1]` answered `not enough values to unpack (expected 2, got 1)`
-    — all three SILENT WRONG ANSWERS, where CPython binds happily. Refusing
-    the whole statement at extraction restores "answers loudly or not at
-    all"; it costs no coverage, because every starred target already ended
-    in a refusal or a wrong answer, never in agreement.
-
-    This is the DOCTRINE fix, not the feature: real support is designed in
-    docs/backlog.md §Position 2 (a `Stmt.unpackAssign` constructor) and
-    built on the `starred-displays` branch (eb6a882).
+    Flat one-star plain-name targets are handled by ``_starred_unpack_target``
+    before this fallback.  This recursive check keeps nested, multiple-star,
+    and other unsupported target shapes loud instead of letting the ordinary
+    tuple arity path fabricate an error.
     """
     if isinstance(t, ast.Starred):
         return True
     if isinstance(t, (ast.Tuple, ast.List)):
         return any(_target_has_starred(e) for e in t.elts)
     return False
+
+
+def _starred_unpack_target(t):
+    """Return the flat plain-name shape of ``a, *rest, z`` targets.
+
+    A starred assignment is admitted only as one flat tuple/list target with
+    exactly one starred plain name and plain-name neighbours.  Anything else
+    remains the loud ``Starred:target`` boundary.
+    """
+    if not isinstance(t, (ast.Tuple, ast.List)):
+        return None
+    before = []
+    after = []
+    star = None
+    for i, elt in enumerate(t.elts):
+        if isinstance(elt, ast.Starred):
+            if star is not None or not isinstance(elt.value, ast.Name):
+                return None
+            star = elt.value.id
+            continue
+        if not isinstance(elt, ast.Name):
+            return None
+        (before if star is None else after).append(elt.id)
+    if star is None:
+        return None
+    return before, star, after
 
 
 def _assigned_names(fn):
@@ -1607,11 +1621,22 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         }
 
     if isinstance(node, ast.Assign):
+        if len(node.targets) == 1:
+            unpack = _starred_unpack_target(node.targets[0])
+            if unpack is not None:
+                before, star, after = unpack
+                return {
+                    "kind": "UnpackAssign",
+                    "span": span(node),
+                    "before": before,
+                    "star": star,
+                    "after": after,
+                    "value": convert_expr(node.value),
+                }
         if any(_target_has_starred(t) for t in node.targets):
-            # Refuse the STATEMENT, not just the starred element: the model
-            # arity-checks a tuple target before it inspects the elements,
-            # so an inner `Unsupported` leaf was reached too late and a
-            # wrong ValueError escaped. See `_target_has_starred`.
+            # Refuse the whole unsupported target shape, rather than letting
+            # the ordinary tuple arity path inspect an inner Starred leaf too
+            # late and fabricate an exception.
             return unsupported(node, "Starred:target")
         return {
             "kind": "Assign",
@@ -1650,6 +1675,10 @@ def convert_stmt(node, enclosing=None, module_scope=False,
     if isinstance(node, ast.For):
         # Plain `for` only; `async for` is a different node class
         # (ast.AsyncFor) and falls through to Unsupported.
+        unpack = _starred_unpack_target(node.target)
+        if unpack is not None:
+            before, star, after = unpack
+            return unsupported(node, "Starred:target")
         return {
             "kind": "For",
             "span": span(node),

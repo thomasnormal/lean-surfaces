@@ -680,6 +680,26 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(st["kind"], "For")
         self.assertEqual(st["target"]["kind"], "Tuple")
 
+    def test_starred_assignment_target_has_dedicated_statement(self):
+        env = self._envelope_of(
+            "def f(xs):\n    a, *middle, z = xs\n    return a, middle, z\n")
+        st = env["module"]["body"][0]["body"][0]
+        self.assertEqual(st["kind"], "UnpackAssign")
+        self.assertEqual(st["before"], ["a"])
+        self.assertEqual(st["star"], "middle")
+        self.assertEqual(st["after"], ["z"])
+        self.assertEqual(st["value"]["kind"], "Name")
+
+    def test_starred_assignment_target_rejects_non_names_and_multiple_stars(self):
+        for source in (
+                "def f(xs):\n    a, *middle, obj.x = xs\n",
+                "def f(xs):\n    a, *middle, xs[0] = xs\n",
+                "def f(xs):\n    a, *b, *c = xs\n"):
+            with self.subTest(source=source):
+                st = self._envelope_of(source)["module"]["body"][0]["body"][0]
+                self.assertEqual(st["kind"], "Unsupported")
+                self.assertEqual(st["py_kind"], "Starred:target")
+
     def test_for_else_keeps_orelse(self):
         # `for … else` is representable (the interpreter refuses it loudly).
         env = self._envelope_of(

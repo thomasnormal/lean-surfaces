@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.19"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/star_lab/star_lab.py",
-  "source_sha256": "d8f98db7113b4bd44e5d39181a68dc14ce00eca9f2dc77df9b354bbcb62ed7ed",
+  "source_sha256": "cf618bfdb209bc95c0478265f916365ddf7f6808dccf30edc244a13c9edc0efc",
   "module": {
     "kind": "Module",
     "body": [
@@ -2878,7 +2878,7 @@
                 "end_lineno": 114,
                 "end_col_offset": 15
               },
-              "py_kind": "Set",
+              "py_kind": "Set:unpack",
               "text": "{*a}"
             }
           }
@@ -3064,15 +3064,68 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "Unsupported",
+            "kind": "UnpackAssign",
             "span": {
               "lineno": 126,
               "col_offset": 4,
               "end_lineno": 126,
               "end_col_offset": 21
             },
-            "py_kind": "Starred:target",
-            "text": "(x, *y) = [1, 2, 3]"
+            "before": [
+              "x"
+            ],
+            "star": "y",
+            "after": [],
+            "value": {
+              "kind": "List",
+              "span": {
+                "lineno": 126,
+                "col_offset": 12,
+                "end_lineno": 126,
+                "end_col_offset": 21
+              },
+              "elts": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 126,
+                    "col_offset": 13,
+                    "end_lineno": 126,
+                    "end_col_offset": 14
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 126,
+                    "col_offset": 16,
+                    "end_lineno": 126,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 126,
+                    "col_offset": 19,
+                    "end_lineno": 126,
+                    "end_col_offset": 20
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "3"
+                  }
+                }
+              ]
+            }
           },
           {
             "kind": "Return",
@@ -3130,128 +3183,15 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "For",
+            "kind": "Unsupported",
             "span": {
               "lineno": 132,
               "col_offset": 4,
               "end_lineno": 133,
               "end_col_offset": 21
             },
-            "target": {
-              "kind": "Unsupported",
-              "span": {
-                "lineno": 132,
-                "col_offset": 8,
-                "end_lineno": 132,
-                "end_col_offset": 13
-              },
-              "py_kind": "Starred:target",
-              "text": "(a, *b)"
-            },
-            "iter": {
-              "kind": "List",
-              "span": {
-                "lineno": 132,
-                "col_offset": 17,
-                "end_lineno": 132,
-                "end_col_offset": 28
-              },
-              "elts": [
-                {
-                  "kind": "List",
-                  "span": {
-                    "lineno": 132,
-                    "col_offset": 18,
-                    "end_lineno": 132,
-                    "end_col_offset": 27
-                  },
-                  "elts": [
-                    {
-                      "kind": "Constant",
-                      "span": {
-                        "lineno": 132,
-                        "col_offset": 19,
-                        "end_lineno": 132,
-                        "end_col_offset": 20
-                      },
-                      "value": {
-                        "type": "int",
-                        "repr": "1"
-                      }
-                    },
-                    {
-                      "kind": "Constant",
-                      "span": {
-                        "lineno": 132,
-                        "col_offset": 22,
-                        "end_lineno": 132,
-                        "end_col_offset": 23
-                      },
-                      "value": {
-                        "type": "int",
-                        "repr": "2"
-                      }
-                    },
-                    {
-                      "kind": "Constant",
-                      "span": {
-                        "lineno": 132,
-                        "col_offset": 25,
-                        "end_lineno": 132,
-                        "end_col_offset": 26
-                      },
-                      "value": {
-                        "type": "int",
-                        "repr": "3"
-                      }
-                    }
-                  ]
-                }
-              ]
-            },
-            "body": [
-              {
-                "kind": "Return",
-                "span": {
-                  "lineno": 133,
-                  "col_offset": 8,
-                  "end_lineno": 133,
-                  "end_col_offset": 21
-                },
-                "value": {
-                  "kind": "Tuple",
-                  "span": {
-                    "lineno": 133,
-                    "col_offset": 15,
-                    "end_lineno": 133,
-                    "end_col_offset": 21
-                  },
-                  "elts": [
-                    {
-                      "kind": "Name",
-                      "span": {
-                        "lineno": 133,
-                        "col_offset": 16,
-                        "end_lineno": 133,
-                        "end_col_offset": 17
-                      },
-                      "id": "a"
-                    },
-                    {
-                      "kind": "Name",
-                      "span": {
-                        "lineno": 133,
-                        "col_offset": 19,
-                        "end_lineno": 133,
-                        "end_col_offset": 20
-                      },
-                      "id": "b"
-                    }
-                  ]
-                }
-              }
-            ],
-            "orelse": []
+            "py_kind": "Starred:target",
+            "text": "for (a, *b) in [[1, 2, 3]]:\n    return (a, b)"
           },
           {
             "kind": "Return",

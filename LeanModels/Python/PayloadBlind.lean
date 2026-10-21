@@ -876,6 +876,19 @@ theorem unpackSeq_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTw
       · rw [unpackSeq, unpackSeq, h1, h2]
   | _ => rfl
 
+/-! The starred sibling has the same heap-read shape as `unpackSeq`. -/
+theorem unpackSeqStar_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (before after : Nat) (v : RVal) :
+    unpackSeqStar (Heap.swapAt h pa o) before after v =
+      unpackSeqStar h before after v := by
+  cases v with
+  | ref b =>
+      rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq |
+        ⟨_, _, _, _, _, h1, h2⟩
+      · simp [unpackSeqStar, unpackAllStar, heq]
+      · simp [unpackSeqStar, unpackAllStar, h1, h2]
+  | _ => rfl
+
 /-- The heap-aware assignment is blind: it diverts only on a `.ref`
 value at a tuple/list target, and reads the referent's CONSTRUCTOR. -/
 theorem assignToH_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
@@ -2710,6 +2723,22 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                   refine PBF.bind (PBF.liftRes hs1 _) fun s2 env' _ hs2 => ?_
                   refine PBF.ok ?_ _
                   exact hs2
+  | unpackAssign before star after value sp =>
+      simp only [execStmt, FrameState.swapAt_world, FrameState.swapAt_locals,
+        World.swapAt_heap]
+      refine PBF.bind (ihE m st value hslot) fun s1 v _ hs1 => ?_
+      have hparts : PBF pa o₀ o
+          (Run.liftRes s1 (unpackSeqStar s1.world.heap before.size after.size v))
+          (Run.liftRes (s1.swapAt pa o)
+            (unpackSeqStar (Heap.swapAt s1.world.heap pa o)
+              before.size after.size v)) := by
+        rw [unpackSeqStar_swapAt hs1 htwin]
+        exact PBF.liftRes hs1 _
+      refine PBF.bind hparts fun s2 parts _ hs2 => ?_
+      obtain ⟨pre, mid, suf⟩ := parts
+      simp only [FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap,
+        Heap.swapAt_push (Heap.lt_size_of_get? hs2), Heap.size_swapAt]
+      exact PBF.ok (Heap.get?_push_of_get? _ hs2) _
   | augAssign target op value sp =>
       simp only [execStmt, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
       cases target with

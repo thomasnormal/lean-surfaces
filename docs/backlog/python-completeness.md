@@ -3899,3 +3899,13 @@ not reach a builder.
 
 Push-on-green is what made the blast radius zero: `fe45bb4` was already on the
 remote, so the worst case was re-cloning, never re-doing the migration.
+
+## 2026-10-21-pycomplete-47 — starred assignment targets land
+
+The measured wrong-answer frontier `x, *y = value` is now implemented. The
+extractor admits one flat starred plain-name target as `UnpackAssign`; the
+interpreter drains the right-hand side before binding and allocates the middle
+slice as a heap list. Tuple, list, string, range, short-input, and non-iterable
+rows are covered by `Examples/python/unpack_lab`; module-scope execution is
+pinned by `harness/scripts/unpack_script.py`. Starred `for` targets, nested or
+multiple stars, and starred call arguments remain loud by design.

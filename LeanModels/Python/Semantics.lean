@@ -285,6 +285,7 @@ def Expr.kindName : Expr → String
 def Stmt.kindName : Stmt → String
   | .ret .. => "Return"
   | .assign .. => "Assign"
+  | .unpackAssign .. => "UnpackAssign"
   | .augAssign .. => "AugAssign"
   | .whileLoop .. => "While"
   | .forStmt .. => "For"
@@ -3707,6 +3708,38 @@ def unpackSeq (h : Heap) (n : Nat) : RVal → Res (List RVal)
       .exn (.valueError s!"not enough values to unpack (expected {n}, got {xs.size})")
   | v => .exn (.typeError s!"cannot unpack non-iterable {v.typeName} object")
 
+/-! Starred unpacking consumes the supported eager iterables, then splits the
+prefix and suffix around a fresh list-valued middle. -/
+def unpackAllStar (h : Heap) : RVal → Res (List RVal)
+  | .bytes values => .ok (bytesIntVals values)
+  | .listV xs | .tuple xs | .ntuple _ _ xs => .ok xs.toList
+  | .str s => .ok (strCharVals s)
+  | .rangeV lo hi step =>
+      rangeVals lo.toInt hi.toInt step.toInt
+  | .ref a =>
+      match Heap.get? h a with
+      | some (.list xs) => .ok xs.toList
+      | some (.dict _ _) => .unsupported "unpacking a dict iterates its keys — outside the tier (live dict iteration; docs/memory-model.md)"
+      | some (.instance _ _) => .exn (.typeError "cannot unpack non-iterable object object")
+      | some (.generator ..) => .unsupported "unpacking a generator DRAINS it (a stateful read) — outside the tier (docs/memory-model.md §generator semantics)"
+      | some (.cell _) => .unsupported cellInternal
+      | some (.closure ..) => .exn (.typeError "cannot unpack non-iterable function object")
+      | some (.pyset _) => .unsupported "unpacking a set is outside the tier (hash order; docs/memory-model.md)"
+      | Option.none => .unsupported danglingMsg
+  | v => .exn (.typeError s!"cannot unpack non-iterable {v.typeName} object")
+
+def unpackSeqStar (h : Heap) (before after : Nat) (v : RVal) :
+    Res (List RVal × List RVal × List RVal) :=
+  unpackAllStar h v >>= fun xs =>
+    let need := before + after
+    if xs.length < need then
+      .exn (.valueError s!"not enough values to unpack (expected at least {need}, got {xs.length})")
+    else
+      let tailCount := xs.length - before
+      let middleCount := tailCount - after
+      .ok (xs.take before, (xs.drop before).take middleCount,
+        (xs.drop before).drop middleCount)
+
 /-- Store unpacked values into tuple-target ELEMENTS left to right,
 threading the HEAP (pass 4, docs/memory-model.md §bound() end-to-end:
 `self.tp_score, self.tp_move, self.history = …`). Element tier: plain
@@ -4331,6 +4364,7 @@ mutual
   /-- Module-level primaries the statement's subtree STORES into. -/
   def Stmt.g1Stores : Stmt → List String
     | .assign tgts _ _ => Expr.g1TargetStoresList tgts.toList
+    | .unpackAssign .. => []
     | .augAssign t _ _ _ => t.g1TargetStores
     | .whileLoop _ b o _ | .ifStmt _ b o _ =>
       Stmt.g1StoresList b.toList ++ Stmt.g1StoresList o.toList
@@ -4361,6 +4395,7 @@ mutual
   is unknown, because an import runs arbitrary code. -/
   def Stmt.g1Binds : Stmt → Option (List String)
     | .assign tgts _ _ => targetBindsListG tgts.toList
+    | .unpackAssign before star after _ _ => some (before.toList ++ [star] ++ after.toList)
     | .augAssign t _ _ _ => targetBindsG t
     -- H7: a nested def binds its NAME (its body is its own scope)
     | .defStmt name _ _ _ _ _ _ _ _ => some [name]
@@ -5268,6 +5303,7 @@ mutual
   /-- Does executing this statement provably preserve the world? -/
   def Stmt.heapFree : Stmt → Bool
     | .defStmt .. => false              -- ALLOCATES a closure (H7)
+    | .unpackAssign .. => false
     | .ret Option.none _ => true
     | .ret (some e) _ => e.heapFree
     | .assign tgts v _ =>
@@ -5433,6 +5469,7 @@ mutual
     | .ret Option.none _ => true
     | .ret (some e) _ => e.genAllocFree
     | .assign tgts v _ => Expr.genAllocFreeList tgts.toList && v.genAllocFree
+    | .unpackAssign _ _ _ v _ => v.genAllocFree
     | .augAssign t _ v _ => t.genAllocFree && v.genAllocFree
     | .whileLoop t b o _ =>
       t.genAllocFree && Stmt.genAllocFreeList b.toList && Stmt.genAllocFreeList o.toList
@@ -7175,6 +7212,17 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
           Run.liftRes st (assignToH st.world.heap st.locals t v) ⤳ fun st env' =>
           .ok { st with locals := env' } .next
       | _ => .unsupported "chained assignment (multiple targets) is outside the v0 tier"
+    | .unpackAssign before star after value _ =>
+      evalExpr m fuel st value ⤳ fun st v =>
+      Run.liftRes st (unpackSeqStar st.world.heap before.size after.size v) ⤳
+        fun st parts =>
+          let (pre, mid, suf) := parts
+          let a := st.world.heap.size
+          let h' := st.world.heap.push (.list mid.toArray)
+          let names := before.toList ++ [star] ++ after.toList
+          let vals := pre ++ [.ref a] ++ suf
+          .ok { st with world := { st.world with heap := h' },
+                        locals := bindAll st.locals names vals } .next
     | .augAssign target op value _ =>
       match target with
       | .name id _ =>

@@ -173,6 +173,7 @@ mutual
     | .ret Option.none _ => []
     | .ret (some e) _ => e.allNames
     | .assign tgts v _ => Expr.allNamesList tgts.toList ++ v.allNames
+    | .unpackAssign before star after v _ => before.toList ++ [star] ++ after.toList ++ v.allNames
     | .augAssign t _ v _ => t.allNames ++ v.allNames
     | .whileLoop t b o _ =>
       t.allNames ++ Stmt.allNamesList b.toList ++ Stmt.allNamesList o.toList
@@ -223,6 +224,7 @@ mutual
   static-locals collection, overapproximated. -/
   def Stmt.assignedNames : Stmt → List String
     | .assign tgts _ _ => (tgts.toList.map targetBoundNames).flatten
+    | .unpackAssign before star after _ _ => before.toList ++ [star] ++ after.toList
     | .augAssign t _ _ _ => targetBoundNames t
     | .whileLoop _ b o _ =>
       Stmt.assignedNamesList b.toList ++ Stmt.assignedNamesList o.toList
@@ -268,7 +270,7 @@ def moduleGlobalReads (m : Module) : List String :=
 
 /-- The span of a statement (every constructor carries one last). -/
 def scriptStmtSpan : Stmt → Span
-  | .ret _ sp | .assign _ _ sp | .augAssign _ _ _ sp
+  | .ret _ sp | .assign _ _ sp | .unpackAssign _ _ _ _ sp | .augAssign _ _ _ sp
   | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
   | .exprStmt _ sp | .yieldStmt _ sp | .yieldFromStmt _ sp
   | .pass sp | .brk sp | .cont sp

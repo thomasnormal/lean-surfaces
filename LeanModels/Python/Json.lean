@@ -305,6 +305,12 @@ partial def parseStmt (j : Json) : Except String Stmt := do
     | "Assign" =>
         let targets ← (← (← getField j "targets").getArr?).mapM parseExpr
         return .assign targets (← parseExpr (← getField j "value")) span
+    | "UnpackAssign" =>
+        let before ← (← (← getField j "before").getArr?).mapM (·.getStr?)
+        let star ← (← getField j "star").getStr?
+        let after ← (← (← getField j "after").getArr?).mapM (·.getStr?)
+        return .unpackAssign before star after
+          (← parseExpr (← getField j "value")) span
     | "AugAssign" =>
         let target ← parseExpr (← getField j "target")
         let op ← parseBinOpName (← (← getField j "op").getStr?)
@@ -629,6 +635,7 @@ private partial def stmtBindsWith (imp0 : Bool) : Stmt → Option (List String)
   | .assign tgts _ _ => do
     let bss ← tgts.toList.mapM targetBinds
     return bss.flatten
+  | .unpackAssign before star after _ _ => some (before.toList ++ [star] ++ after.toList)
   | .augAssign t _ _ _ => targetBinds t
   | .forStmt t _ body orelse _ => do
     let tb ← targetBinds t
@@ -709,6 +716,8 @@ mutual
     | .ret Option.none _ => []
     | .ret (some e) _ => exprRefs e
     | .assign tgts v _ => (tgts.toList.map exprRefs).flatten ++ exprRefs v
+    | .unpackAssign before star after v _ =>
+      before.toList ++ [star] ++ after.toList ++ exprRefs v
     | .augAssign t _ v _ => exprRefs t ++ exprRefs v
     | .whileLoop t b o _ | .ifStmt t b o _ =>
       exprRefs t ++ (b.toList.map stmtRefs).flatten ++ (o.toList.map stmtRefs).flatten
@@ -740,7 +749,7 @@ end
 
 /-- The span of a statement (every constructor carries one last). -/
 private def stmtSpanOf : Stmt → Span
-  | .ret _ sp | .assign _ _ sp | .augAssign _ _ _ sp
+  | .ret _ sp | .assign _ _ sp | .unpackAssign _ _ _ _ sp | .augAssign _ _ _ sp
   | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
   | .exprStmt _ sp | .yieldStmt _ sp | .yieldFromStmt _ sp
   | .pass sp | .brk sp | .cont sp
@@ -1034,6 +1043,8 @@ private partial def yfNames : Stmt → List String
       (ts.toList.map exprRefs).flatten
         ++ (ts.toList.map (fun t => (targetBinds t).getD [])).flatten
         ++ exprRefs v
+  | .unpackAssign before star after v _ =>
+      before.toList ++ [star] ++ after.toList ++ exprRefs v
   | .augAssign t _ v _ => exprRefs t ++ (targetBinds t).getD [] ++ exprRefs v
   | .whileLoop t b o _ =>
       exprRefs t ++ (b.toList.map yfNames).flatten ++ (o.toList.map yfNames).flatten
@@ -1155,6 +1166,8 @@ private partial def stmtNamesXW : Stmt → List String
   | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .unsupported .. => []
   | .ret (some e) _ => exprNamesXW e
   | .assign ts v _ => (ts.toList.map exprNamesXW).flatten ++ exprNamesXW v
+  | .unpackAssign before star after v _ =>
+      before.toList ++ [star] ++ after.toList ++ exprNamesXW v
   | .augAssign t _ v _ => exprNamesXW t ++ exprNamesXW v
   | .whileLoop t b o _ | .ifStmt t b o _ =>
       exprNamesXW t ++ (b.toList.map stmtNamesXW).flatten
@@ -1308,6 +1321,8 @@ mutual
     | .unsupported .. => return s
     | .ret (some e) sp => return .ret (some (← lowerExpr ctx e)) sp
     | .assign ts v sp => return .assign (← lowerExprs ctx ts) (← lowerExpr ctx v) sp
+    | .unpackAssign before star after v sp =>
+        return .unpackAssign before star after (← lowerExpr ctx v) sp
     | .augAssign t op v sp => return .augAssign (← lowerExpr ctx t) op (← lowerExpr ctx v) sp
     | .whileLoop t b o sp =>
         return .whileLoop (← lowerExpr ctx t) (← lowerStmts ctx b) (← lowerStmts ctx o) sp

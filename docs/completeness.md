@@ -185,7 +185,7 @@ Counted, not sampled.
 | layer | points | shape |
 | --- | --- | --- |
 | interpreter + ingestion | **143** distinct `.unsupported "…"` literals in `LeanModels/Python/*.lean` | of which **16** are `internal: … (report this)` — heap/dispatch invariants that should be unreachable, so **127** are reachable refusals |
-| extractor, literal | **11** `py_kind`s | `NamedExpr` `Starred:target` `Starred:display_shadowed` `Dict:unpack` five `JoinedStr:*` two `ImportFrom:accelerator-*` |
+| extractor, literal | **11** `py_kind`s | `NamedExpr` `Starred:target` (non-flat or otherwise invalid targets) `Starred:display_shadowed` `Dict:unpack` five `JoinedStr:*` two `ImportFrom:accelerator-*` |
 | extractor, computed | **6** families | `BinOp:` `UnaryOp:` `Compare:` `AugAssign:` `Constant:` `Subscript:` — one refusal per unmodelled member of each operator table |
 | extractor, generic | **3** fall-throughs | every `ast` node type with no clause: expression, statement, and the top-level dispatcher |
 | extractor, structured-but-loud | **6** envelope fields | `args_` `call_` `class_` `closure_` `locals_` `try_unsupported` — the node IS extracted, carries a prose reason, and refuses at EVALUATION. This is the family a node count cannot see (§L14). |

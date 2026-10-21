@@ -160,6 +160,11 @@ deriving Repr, Inhabited, BEq
 inductive Stmt where
   | ret (value : Option Expr) (span : Span)
   | assign (targets : Array Expr) (value : Expr) (span : Span)
+  /-- Starred tuple/list unpacking assignment, `a, *rest, z = value`.
+  The extractor admits exactly one starred element with plain-name
+  neighbours; the star always receives a freshly allocated heap list. -/
+  | unpackAssign (before : Array String) (star : String) (after : Array String)
+      (value : Expr) (span : Span)
   | augAssign (target : Expr) (op : BinOp) (value : Expr) (span : Span)
   | whileLoop (test : Expr) (body : Array Stmt) (orelse : Array Stmt) (span : Span)
   | forStmt (target : Expr) (iter : Expr) (body : Array Stmt) (orelse : Array Stmt) (span : Span)
@@ -366,6 +371,9 @@ mutual
         | none => false
     | .assign targets value _ =>
         exprListMentionsAny names targets.toList || exprMentionsAny names value
+    | .unpackAssign before star after value _ =>
+        names.contains star || stringListMentionsAny names before.toList
+          || stringListMentionsAny names after.toList || exprMentionsAny names value
     | .augAssign target _ value _ =>
         exprMentionsAny names target || exprMentionsAny names value
     | .whileLoop test body orelse _ | .ifStmt test body orelse _ =>

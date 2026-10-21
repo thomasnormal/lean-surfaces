@@ -1197,6 +1197,15 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
           assignM t v
           pure .next
       | _ => refuse "chained assignment (multiple targets) is outside the v0 tier"
+  | .unpackAssign before star after value _ => do
+      let v ← evalOpen K m value
+      let parts ← liftRes (unpackSeqStar (← frameHeap) before.size after.size v)
+      let (pre, mid, suf) := parts
+      let a ← heapPush (.list mid.toArray)
+      let names := before.toList ++ [star] ++ after.toList
+      let vals := pre ++ [.ref a] ++ suf
+      modify fun st => { st with locals := bindAll st.locals names vals }
+      pure .next
   | .augAssign target op value _ =>
       match target with
       | .name id _ => do

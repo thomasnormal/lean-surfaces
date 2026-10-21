@@ -1171,6 +1171,13 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
             obtain ⟨h2, env2⟩ := he
             exact .of_seed (fun tr => by simp)
               (by simp only [FrameState.withClock_self hs4])
+  | unpackAssign before star after value sp =>
+    simp only [execStmt]
+    refine .bind (ihE m st value h) fun s2 v hs2 => ?_
+    ce_norm
+    refine .bind (.liftRes hs2 _) fun s3 parts hs3 => ?_
+    exact .of_seed (fun tr => by simp)
+      (by simp only [FrameState.withClock_self hs3])
   | augAssign target op value sp =>
     simp only [execStmt]
     cases target <;> try exact .unsupported

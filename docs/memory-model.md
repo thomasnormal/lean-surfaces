@@ -3835,15 +3835,14 @@ truthy in the ordinary tier, so the model agrees with CPython by
 computing the same truthiness. `assert_lab.tuple_test` is the row that
 would catch a well-meaning special case.
 
-## Starred displays (`Starred` position 1, the tail batch — BUILT 2026-08-13)
+## Starred displays and assignment targets (`Starred` — BUILT 2026-08-13; assignment targets 2026-10-21)
 
 `ast.Starred` is three constructs, not one (docs/backlog.md §the tail,
-construct 5). Only the DISPLAY position is landed here, because it is the
-one that costs nothing: it is a LOWERING in the extractor, so there are
-ZERO new AST constructors, ZERO `evalExpr` arms, ZERO walkers and ZERO
-proof arms — `fuelMono`, `worldInv` and `ceExecStmt_succ` do not move.
-Assignment targets (position 2) and call sites (position 3) stay refused,
-loudly.
+construct 5). Displays are a lowering, assignment targets use the dedicated
+`Stmt.unpackAssign` statement, and call sites remain loud. The display
+lowering costs zero Lean constructors or proof arms; the assignment target
+statement has the ordinary ingestion, interpreter, walker, and observation
+arms for a statement that allocates its starred slice.
 
 ### The lowering, and why the obvious one is WRONG
 
@@ -3907,48 +3906,19 @@ it per scope would mean re-deciding CPython's scoping rules inside the
 extractor, and the f-string lowering's `str` census is the same shape for
 the same reason.
 
-### The target refusal is a MEASURED CORRECTION, not a restatement
+### Assignment targets are landed (2026-10-21)
 
-Position 2 was expected to be refused already, on the ground that
-`targetNames` admits plain names only. IT WAS NOT. `unpackSeq` checks
-ARITY BEFORE element kinds, so `x, *y = [1, 2, 3]` — whose target ingested
-as a structural tuple with an `Unsupported "Starred"` element — answered
+Flat targets with exactly one starred plain name now ingest as
+`Stmt.unpackAssign before star after value span`. The right-hand side is
+evaluated and fully materialized before any binding. Prefix and suffix names
+receive their values, and the starred name receives a newly allocated heap
+list containing the middle slice. This matches CPython for tuples, lists,
+strings, ranges, and the supported boundary iterable values. There is no
+"too many values" case; a short input raises
+`ValueError: not enough values to unpack (expected at least k, got n)`.
 
-    ValueError: too many values to unpack (expected 2)
-
-where CPython binds `x = 1, y = [2, 3]`. A FAKE exception, i.e. a wrong
-answer, not a refusal. The whole target now ingests as
-`Unsupported "Starred:target"` and the assignment refuses loudly
-(`star_lab.star_target`/`star_for`). This was a pre-existing defect the
-landing found, and it is the reason position 2's refusal is pinned by row
-rather than assumed.
-
-**AS REBASED (2026-08-16): the defect was fixed TWICE, independently, and
-both arms are kept because they are not the same rule.** While this
-branch sat, master closed the same hole from the STATEMENT side
-(`_target_has_starred` at `convert_stmt`'s `ast.Assign` arm — "Starred
-assignment targets REFUSE instead of answering a wrong ValueError",
-2026-08-15). That one is strictly stronger for an assignment: the whole
-`Assign` becomes `Unsupported`, and it is the shape `star_lab.json`
-re-extracts to now. The EXPRESSION-side arm here still pays for itself,
-because master's covers `ast.Assign` and nothing else: a `for` target, a
-`with … as (a, *b)` target and a comprehension target reach only this one.
-
-And what the `for` target actually did was MEASURED rather than assumed,
-against CPython 3.9.19, at all three arities that separated the wrong
-answers from the loud ones in the `Assign` case:
-
-| probe | CPython | model, master | model, rebased |
-| --- | --- | --- | --- |
-| `for x, *y in [[1,2,3]]` | `1 [2, 3]` | REFUSE `unpacking targets other than plain names` | REFUSE `assignment target 'Starred:target'` |
-| `for x, *y in [[1,2]]` | `1 [2]` | REFUSE, same | REFUSE, same |
-| `for x, *y in [[1]]` | `1 []` | REFUSE, same | REFUSE, same |
-
-So `for` was ALREADY loud on master and this arm is a MESSAGE change
-there, not a soundness fix — `execFor`'s target check is name-only and
-fires BEFORE any arity check, which is exactly where `unpackSeq` differed.
-Recorded because the obvious inference from the `Assign` defect — "the
-same trap must be open in `for`" — is false, and only the probe says so.
+Nested targets, multiple stars, attribute/subscript neighbors, and starred
+`for` targets remain loud. Call sites remain loud through `callUnsupported`.
 
 Call sites (position 3) need nothing: `Expr.call`'s `callUnsupported`
 already carries `starred args`, measured at implementation time rather

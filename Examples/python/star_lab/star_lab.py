@@ -122,13 +122,13 @@ def star_dict():
 
 
 def star_target():
-    # position 2: assignment targets are a separate construct, not landed
+    # position 2: assignment targets use the dedicated unpacking statement
     x, *y = [1, 2, 3]
     return (x, y)
 
 
 def star_for():
-    # a starred `for` target: the same construct, the same refusal
+    # a starred `for` target remains a separate, loud construct
     for a, *b in [[1, 2, 3]]:
         return (a, b)
     return None

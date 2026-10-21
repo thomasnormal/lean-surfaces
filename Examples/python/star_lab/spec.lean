@@ -22,18 +22,10 @@ easily breaks: `+` associates left and the `binOp` arm binds left before
 right, so the operands run in source order (`star_script.py` pins it
 through stdout).
 
-Pinned loud, because these are SEPARATE constructs with separate prices
-and only the display position is landed: a starred call argument
-(`star_call`), a set display (`star_set`), a dict receiver (`star_dict`),
-and starred assignment/`for` TARGETS (`star_target`/`star_for`).
-
-The target refusal is a MEASURED CORRECTION, not a restatement: before
-this landing the extractor kept a structural tuple target whose starred
-element was `Unsupported "Starred"`, and `unpackSeq` checks ARITY BEFORE
-element kinds — so `x, *y = [1, 2, 3]` answered
-`ValueError: too many values to unpack (expected 2)` where CPython binds
-`x = 1, y = [2, 3]`. That is a wrong answer, not a refusal. The whole
-target now ingests as `Unsupported "Starred:target"` and refuses loudly.
+Pinned loud, because these are SEPARATE constructs with separate prices:
+a starred call argument (`star_call`) and a set display (`star_set`) remain
+outside the tier. Assignment targets are now handled by the dedicated
+`UnpackAssign` statement; a starred `for` target (`star_for`) remains loud.
 -/
 
 open LeanModels LeanModels.Python
@@ -84,8 +76,7 @@ different message. -/
 #py_check star_lab.star_none() raises
   (.typeError "'NoneType' object is not iterable")
 
-/-! ### the loud frontier: the OTHER two starred positions, plus the set
-display and the dict receiver -/
+/-! ### the loud frontier: call and set positions, plus a starred `for` target -/
 
 #guard callFunction star_lab "star_call" #[] 4096 matches .unsupported _
 #guard callFunction star_lab "star_set" #[] 4096 matches .unsupported _
@@ -94,7 +85,8 @@ display and the dict receiver -/
 -- the regression guard that flipped when the draining consumers gained
 -- their dict arms (docs/memory-model.md §dict iteration).
 #py_check star_lab.star_dict() = (Val.list #[.str "x", .str "y"])
-#guard callFunction star_lab "star_target" #[] 4096 matches .unsupported _
+#py_check star_lab.star_target() =
+  (Val.tuple #[.int 1, .list #[.int 2, .int 3]])
 #guard callFunction star_lab "star_for" #[] 4096 matches .unsupported _
 
 /-! ### what the lowering does to the heap-free fragment, pinned per

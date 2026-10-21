@@ -146,6 +146,18 @@ private def rawCallCast (methodId receiverId name : String) : Raw := rawObject [
   ("type", rawObject [("qualType", rawText "int")]),
   ("inner", .array [rawMemberCast methodId receiverId name])]
 
+private def rawCallThis (methodId name : String) : Raw := rawObject [
+  ("kind", rawText "CXXMemberCallExpr"),
+  ("type", rawObject [("qualType", rawText "int")]),
+  ("inner", .array [rawObject [
+    ("kind", rawText "MemberExpr"), ("isArrow", .bool true),
+    ("valueCategory", rawText "prvalue"), ("name", rawText name),
+    ("referencedMemberDecl", rawObject [
+      ("kind", rawText "CXXMethodDecl"), ("id", rawText methodId)]),
+    ("inner", .array [rawObject [
+      ("kind", rawText "CXXThisExpr"),
+      ("type", rawObject [("qualType", rawText "Owner *")])]])]])]
+
 private def syntaxError (raw : Raw) : Option IntegralMemberCallSyntaxError :=
   match IntegralMemberCallSyntax.admit raw with
   | .error reason => some reason
@@ -206,6 +218,7 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard observedString == some 7
 #guard (IntegralMemberCallSyntax.admit (rawCallCast methodHandle.value receiverHandle.value "read")).isOk
 #guard observedCast == some 7
+#guard syntaxError (rawCallThis methodHandle.value "read") == some .missingThisOwner
 
 private def resolveCanonicalHandle (rows : List DeclarationEvidenceRow) : Option FrontendHandle :=
   match IntegralMemberCallSyntax.admit (rawCall methodHandle.value receiverHandle.value "read") with

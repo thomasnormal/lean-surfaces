@@ -31,6 +31,7 @@ inductive IntegralMemberCallSyntaxError where
   | canonicalMethodTargetMissing
   | canonicalMethodTargetMismatch
   | missingReceiverHandle
+  | missingThisOwner
   | malformedReceiverType
   | malformedResultType
   | malformedName
@@ -60,6 +61,10 @@ private def resultSpelling (raw : Raw) : Except IntegralMemberCallSyntaxError St
       | none => .error .malformedResultType
   | none => .error .malformedResultType
 
+private partial def containsThis (raw : Raw) : Bool :=
+  raw.text "kind" == some "CXXThisExpr" ||
+    (((raw.field "inner").bind Raw.array?).getD []).any containsThis
+
 def admit (raw : Raw) :
     Except IntegralMemberCallSyntaxError IntegralMemberCallSyntax := do
   unless raw.text "kind" == some "CXXMemberCallExpr" do
@@ -84,6 +89,7 @@ def admit (raw : Raw) :
         (evidenceHandle value "id").mapError (fun _ => .missingMethodHandle)
     | none => throw .missingMethodHandle
   let receiverRawOuter ← oneChild member
+  if containsThis receiverRawOuter then throw .missingThisOwner
   let receiverRaw ← match receiverRawOuter.text "kind" with
     | some "DeclRefExpr" => pure receiverRawOuter
     | some "ImplicitCastExpr" => do

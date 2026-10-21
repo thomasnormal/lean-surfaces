@@ -23,6 +23,7 @@ private def errorName : IntegralMemberCallSyntaxError → String
   | .canonicalMethodTargetMissing => "canonical-method-target-missing"
   | .canonicalMethodTargetMismatch => "canonical-method-target-mismatch"
   | .missingReceiverHandle => "missing-receiver-handle"
+  | .missingThisOwner => "missing-this-owner"
   | .malformedReceiverType => "malformed-receiver-type"
   | .malformedResultType => "malformed-result-type"
   | .malformedName => "malformed-name"

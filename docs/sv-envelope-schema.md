@@ -1502,6 +1502,11 @@ unsupported members; see [the generic-class boundary](sv-generic-classes.md).
 The envelope has no value/type parameter environment or specialization table,
 so a generic class is not reduced to one default class.
 
+Generic class member/scope recovery retains the separate
+`GenericClassDefSymbol:GenericClassDef` unsupported member. The envelope does
+not perform class-scope parameter iteration or type-scope lookup as a
+specialization shortcut.
+
 Frontend recovery spans remain explicit `InvalidStatement` unsupported
 members; see [the recovery boundary](sv-invalid-statements.md). The envelope
 does not execute a bad or partially recovered statement tree.

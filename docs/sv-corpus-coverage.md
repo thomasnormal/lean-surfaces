@@ -463,6 +463,17 @@ static-method, **2** packed-aggregate-type and **1** local-parameter spans.
 No default specialization is admitted. See [the generic-class boundary](sv-generic-classes.md)
 and `extractors/sv/generic_class_reprice.py` for the reproducible scan.
 
+## Generic class member and scope uses — 2026-10-21
+
+`GenericClassDefSymbol:GenericClassDef` remains the member/scope elaboration
+boundary for parameterized classes. The fresh **22,043**-path census records
+it in **39** files: **2** generic-class-use-only and **37** co-occurring.
+Repricing the sole files finds **2** spans, with one value-parameter member,
+one type-parameter member, one local-parameter member and one class-scope
+resolution row (features overlap). No parameter iteration or type-scope lookup
+is admitted. See [the generic-class boundary](sv-generic-classes.md) and
+`extractors/sv/generic_class_use_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

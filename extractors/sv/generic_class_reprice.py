@@ -58,6 +58,10 @@ def one_file(path):
     text = data.decode("utf-8")
     if INCLUDE_RE.search(text):
         return "skip_include", []
+    # A source without the class keyword cannot contain this class marker;
+    # avoid invoking the frontend for the common non-class corpus rows.
+    if not re.search(r"\bclass\b[^;{}\n]*#\s*\(", text):
+        return "other", []
     tree = SyntaxTree.fromText(text, name=path.as_posix())
     compilation = Compilation()
     compilation.addSyntaxTree(tree)

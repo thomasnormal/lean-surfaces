@@ -44,3 +44,22 @@ python3.9 extractors/sv/generic_class_reprice.py \
 ```
 
 The instrument is read-only and performs no class specialization.
+
+## Generic class member/scope uses — 2026-10-21
+
+`GenericClassDefSymbol:GenericClassDef` is the separate marker for a
+parameterized class body whose member or class-scope elaboration is itself
+unsupported. The fresh census records it in **39** files: **2** are
+generic-class-use-only and **37** co-occur with another wall. The sole files
+contain **2** spans: one value-parameter member, one type-parameter member,
+one local-parameter member and one class-scope resolution use (rows overlap).
+These are frontend-span labels, not a specialization result. Reproduce the
+separate scan with:
+
+```text
+python3.9 extractors/sv/generic_class_use_reprice.py \
+  --corpus /path/to/sv-tests-2/tests
+```
+
+Member parameter iteration and type-scope lookup remain loud; the instrument
+does not resolve a generic class body.

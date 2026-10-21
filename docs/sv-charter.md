@@ -3935,6 +3935,18 @@ specialization table or parameter environment, so no generic class is reduced
 to a default specialization. See [the generic-class boundary](sv-generic-classes.md)
 and the read-only instrument `extractors/sv/generic_class_reprice.py`.
 
+### Generic class member and scope uses — 2026-10-21
+
+`GenericClassDefSymbol:GenericClassDef` is the separate parameterized-class
+member/scope boundary. In the fresh 22,043-path census it occurs in 39 files:
+two are generic-class-use-only and 37 co-occur with another wall. The sole
+files contain two spans, with one value-parameter member, one type-parameter
+member, one local-parameter member and one class-scope resolution row
+(overlapping). The envelope does not perform member parameter iteration or
+type-scope lookup as a specialization shortcut. See [the generic-class
+boundary](sv-generic-classes.md) and the read-only instrument
+`extractors/sv/generic_class_use_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

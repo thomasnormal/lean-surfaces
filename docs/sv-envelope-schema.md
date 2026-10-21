@@ -123,6 +123,9 @@ The tag list may grow with the tier; ingesters must treat **any** unknown
 `sv_kind` as simply "unsupported" (the interpreter returns `.unsupported` when
 an `Unsupported` node is reached).
 
+The measured two-state declaration boundary and its representation rationale
+are recorded in [`sv-two-state-boundary.md`](sv-two-state-boundary.md).
+
 ## Module
 
 Key order: `kind`, `span`, `name`, `ports`, `decls`, `processes`, `others`.

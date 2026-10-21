@@ -484,6 +484,21 @@ summary. The largest residual refusal is assignment targets (4,457 files),
 followed by expression calls (4,351), hierarchy (3,833), and two-state
 declaration shapes (3,703).
 
+### Two-state declaration boundary — 2026-10-21
+
+The legacy value tier already admits scalar, predefined-integral, packed-vector,
+and untagged packed-struct/union two-state variables, with zero startup and
+`x`/`z`-to-zero assignment conversion. The fresh corpus's `VariableSymbol:2state`
+tag is the remaining mix of unpacked/dynamic/queue/object/event/real/string
+declarations and uses. It occurs in 5,743 files, but is the sole refusal in 28;
+the common companions are other storage, call, class, and selected-access
+boundaries. The symbolic `PDecl`/`PType` surface has no two-state metadata and
+keeps `Squash2` loud, so a blanket declaration flag would fabricate semantics
+for representations the tier does not have. The complete admitted slice and
+the measured refusal rationale are recorded in
+[`sv-two-state-boundary.md`](sv-two-state-boundary.md). No aggregate, object,
+string/real, handle, or event scheduler is smuggled into this rung.
+
 The ordinary portable suite includes x/z stimuli and an absent-input cycle:
 all five complete cycle traces agree with both independent simulation and
 Icarus. The separate unconnected startup fixture differs: Icarus 13.0

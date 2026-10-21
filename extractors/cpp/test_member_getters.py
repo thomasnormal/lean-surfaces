@@ -289,17 +289,6 @@ private def profile : IntegralMemberEnumProfile := {
 private def representation : IntegralMemberEnumRepresentation :=
   (IntegralMemberEnumRepresentation.withOracle profile .unsignedInt).toOption.getD
     {profile, underlying := .unsignedInt}
-private def setterMethod : IntegralMemberMethodProfile := {
-  method := h "method", resultType := .void,
-    parameters := [.enumeration (h "enum")], isConst := false,
-    isStatic := false, bodyKind := "CompoundStmt"}
-private def setterBody : IntegralMemberMethodBody := {
-  canonical := h "method", definition := h "method", bodyKind := "CompoundStmt"}
-private def setter : IntegralMemberEnumSetter := {
-  method := setterMethod,
-  body := setterBody,
-  owner := h "owner", field := h "field", parameter := h "parameter",
-  fieldName := "value", fieldType := "Error", parameterType := "Error", representation}
 private def hierarchy : ClassHierarchy := {
   root := h "owner",
   classes := [{declaration := h "owner", isAbstract := false, bases := [], fields := [h "field"], friends := [], name := "Sample"}]}
@@ -358,6 +347,20 @@ private def profile : IntegralMemberEnumProfile := {
 private def representation : IntegralMemberEnumRepresentation :=
   (IntegralMemberEnumRepresentation.withOracle profile .unsignedInt).toOption.getD
     {profile, underlying := .unsignedInt}
+private def setterMethod : IntegralMemberMethodProfile := {
+  method := h "method", resultType := .void,
+    parameters := [.enumeration (h "enum")], isConst := false,
+    isStatic := false, bodyKind := "CompoundStmt"}
+private def setterBody : IntegralMemberMethodBody := {
+  canonical := h "method", definition := h "method", bodyKind := "CompoundStmt"}
+private def setter : IntegralMemberEnumSetter := {
+  method := setterMethod,
+  body := setterBody,
+  owner := h "owner", field := h "field", parameter := h "parameter",
+  fieldName := "value", fieldType := "Error", parameterType := "Error", representation}
+private def callSyntax : IntegralMemberCallSyntax := {
+  method := h "method", receiver := h "receiver", receiverType := "Sample *",
+  resultType := "void", name := "set", canonicalMethod := h "method"}
 private def hierarchy : ClassHierarchy := {
   root := h "owner",
   classes := [{declaration := h "owner", isAbstract := false, bases := [], fields := [h "field"], friends := [], name := "Sample"}]}
@@ -371,11 +374,17 @@ private def projection (input : Int) : ClassReceiverProjection := {
 def cases : List (Int × Int) := [''' + pairs + ''']
 #guard cases.all (fun (input, expected) =>
   let before := projection 7
-  match IntegralMemberEnumSetter.write setter access before ⟨.unsigned 32, input⟩ with
-  | .ok store =>
-      let after := {before with snapshot := {before.snapshot with memory := store}}
-      match IntegralMemberEnumValue.read access representation after with
-      | .ok (_, value) => value.value.value == expected
+  let argument : IntegralMemberEnumValue :=
+    {representation := setter.representation, value := ⟨.unsigned 32, input⟩}
+  match IntegralMemberEnumSetterCall.bind callSyntax setter access (h "receiver")
+      argument before with
+  | .ok call =>
+      match call.invoke with
+      | .ok store =>
+          let after := {before with snapshot := {before.snapshot with memory := store}}
+          match IntegralMemberEnumValue.read access representation after with
+          | .ok (_, value) => value.value.value == expected
+          | .error _ => false
       | .error _ => false
   | .error _ => false)
 ''')

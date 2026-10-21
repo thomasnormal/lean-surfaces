@@ -1102,6 +1102,79 @@ def write (setter : IntegralMemberEnumSetter) (access : IntegralMemberThisFieldA
 
 end IntegralMemberEnumSetter
 
+/-- A one-enum-argument call bound to an admitted setter and an existing
+receiver projection. Argument evaluation and overload resolution remain caller
+evidence; invocation only performs the validated object-store write. -/
+structure IntegralMemberEnumSetterCall where
+  callSyntax : IntegralMemberCallSyntax
+  setter : IntegralMemberEnumSetter
+  access : IntegralMemberThisFieldAccess
+  receiver : FrontendHandle
+  argument : IntegralMemberEnumValue
+  projection : ClassReceiverProjection
+  deriving Repr, BEq, Inhabited
+
+inductive IntegralMemberEnumSetterCallError where
+  | methodMismatch
+  | canonicalMethodMismatch
+  | nameMismatch
+  | receiverMismatch
+  | receiverTypeMismatch
+  | resultTypeMismatch
+  | argumentRepresentationMismatch
+  | projection (reason : ClassProjectionError)
+  | write (reason : IntegralMemberEnumSetterWriteError)
+  deriving Repr, BEq, Inhabited
+
+namespace IntegralMemberEnumSetterCall
+
+private def receiverType (projection : ClassReceiverProjection) (isArrow : Bool) :
+    Except IntegralMemberEnumSetterCallError String := do
+  let slots ← projection.hierarchy.slots.mapError
+    (fun reason => IntegralMemberEnumSetterCallError.projection (.hierarchy reason))
+  let some slot := slots.find? (·.path == projection.receiverPath)
+    | throw (.projection .absentReceiver)
+  let some shape := projection.hierarchy.classes.find? (·.declaration == slot.declaration)
+    | throw (.projection .malformedWorld)
+  unless !shape.name.isEmpty do throw .receiverTypeMismatch
+  pure (shape.name ++ if isArrow then " *" else "")
+
+private def writableGetter (setter : IntegralMemberEnumSetter) : IntegralMemberGetter :=
+  let method := setter.body.canonical
+  let occurrence : Declaration :=
+    {(default : Declaration) with id := method.value, kind := "CXXMethodDecl", name := some setter.fieldName}
+  let field : IntegralRecordField :=
+    {declaration := setter.field, name := setter.fieldName,
+      type := .builtin setter.representation.underlying, isMutable := false}
+  {occurrence := occurrence, owner := setter.owner, field := field,
+    isConst := false, conversions := [], result := setter.representation.underlying,
+    canonical := method}
+
+/-- Bind a source call to one already-admitted setter. No argument conversion,
+object construction, or dispatch is inferred. -/
+def bind (callSyntax : IntegralMemberCallSyntax) (setter : IntegralMemberEnumSetter)
+    (access : IntegralMemberThisFieldAccess) (receiver : FrontendHandle)
+    (argument : IntegralMemberEnumValue) (projection : ClassReceiverProjection) :
+    Except IntegralMemberEnumSetterCallError IntegralMemberEnumSetterCall := do
+  unless callSyntax.method == setter.body.canonical do throw .methodMismatch
+  unless callSyntax.canonicalMethod == setter.body.canonical do throw .canonicalMethodMismatch
+  unless !access.methodName.isEmpty && callSyntax.name == access.methodName do throw .nameMismatch
+  unless callSyntax.receiver == receiver do throw .receiverMismatch
+  unless callSyntax.resultType == "void" do throw .resultTypeMismatch
+  unless argument.representation == setter.representation do
+    throw .argumentRepresentationMismatch
+  projection.check (writableGetter setter) |>.mapError .projection
+  let actualReceiverType ← receiverType projection callSyntax.receiverIsArrow
+  unless callSyntax.receiverType == actualReceiverType do throw .receiverTypeMismatch
+  pure {callSyntax, setter, access, receiver, argument, projection}
+
+def invoke (call : IntegralMemberEnumSetterCall) :
+    Except IntegralMemberEnumSetterCallError IntegralObjectStore :=
+  IntegralMemberEnumSetter.write call.setter call.access call.projection call.argument.value
+    |>.mapError .write
+
+end IntegralMemberEnumSetterCall
+
 
 structure IntegralMemberCall where
   getter : IntegralMemberGetter

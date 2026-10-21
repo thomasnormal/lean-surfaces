@@ -606,6 +606,53 @@ private def enumCallAccess : IntegralMemberThisFieldAccess :=
 private def enumCallRepresentation : IntegralMemberEnumRepresentation :=
   enumReadRepresentation.getD {profile := enumReadProfile, underlying := .unsignedInt}
 
+private def enumSetterCallAccess : IntegralMemberThisFieldAccess := {
+  method := methodHandle, definition := methodHandle, owner := ownerHandle,
+  field := fieldHandle, name := "_errorID", receiverType := "Owner *",
+  fieldType := "XMLError", methodName := "set"}
+
+private def enumSetterCallSyntax : IntegralMemberCallSyntax := {
+  method := methodHandle, receiver := receiverHandle, receiverType := "Owner *",
+  resultType := "void", name := "set", canonicalMethod := methodHandle}
+
+private def enumSetterCallArgument : IntegralMemberEnumValue :=
+  {representation := enumSetterRepresentation.getD
+      {profile := enumReadProfile, underlying := .unsignedInt},
+    value := ⟨.unsigned 32, 9⟩}
+
+private def enumSetterCallObserved : Option Int :=
+  match enumSetterEvidence with
+  | some setter =>
+      match IntegralMemberEnumSetterCall.bind enumSetterCallSyntax setter
+          enumSetterCallAccess receiverHandle enumSetterCallArgument enumProjection with
+      | .ok call =>
+          match call.invoke with
+          | .ok memory => memory.values[1]?.bind id |>.map (fun value => value.value)
+          | .error _ => none
+      | .error _ => none
+  | none => none
+
+private def enumSetterCallArgumentError : Option IntegralMemberEnumSetterCallError :=
+  match enumSetterEvidence with
+  | some setter =>
+      let wrong := {enumSetterCallArgument with
+        representation := {enumSetterCallArgument.representation with underlying := .int}}
+      match IntegralMemberEnumSetterCall.bind enumSetterCallSyntax setter
+          enumSetterCallAccess receiverHandle wrong enumProjection with
+      | .error reason => some reason
+      | .ok _ => none
+  | none => none
+
+private def enumSetterCallResultError : Option IntegralMemberEnumSetterCallError :=
+  match enumSetterEvidence with
+  | some setter =>
+      let bad := {enumSetterCallSyntax with resultType := "int"}
+      match IntegralMemberEnumSetterCall.bind bad setter enumSetterCallAccess receiverHandle
+          enumSetterCallArgument enumProjection with
+      | .error reason => some reason
+      | .ok _ => none
+  | none => none
+
 private def enumCallObserved : Option Int :=
   match IntegralMemberCallSyntax.admit (rawCallWithResult methodHandle.value
       receiverHandle.value "read" "XMLError") with
@@ -750,6 +797,9 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard enumWriteWrongFormat
 #guard enumWriteWrongProjection
 #guard enumWriteReadOnly
+#guard enumSetterCallObserved == some 9
+#guard enumSetterCallArgumentError == some .argumentRepresentationMismatch
+#guard enumSetterCallResultError == some .resultTypeMismatch
 #guard enumCallObserved == some 7
 #guard enumCallResultError == some .resultTypeMismatch
 #guard enumCallReceiverError == some .receiverMismatch

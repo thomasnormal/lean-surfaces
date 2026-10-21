@@ -247,6 +247,13 @@ refuse with `profile:unsupported-body` (the variadic signature), while the
 non-enum `Set` writes refuse at enum-field typing. This keeps the method-body
 and parameter boundary explicit before any setter execution is attempted.
 
+`IntegralMemberEnumSetterCall` adds the call-level wrapper for the admitted
+synthetic shape. It checks canonical method and receiver identity, the `void`
+result spelling, the enum argument's exact representation, and the existing
+projection before invoking the setter write. Kernel controls observe `7 → 9`
+through this wrapper and reject a representation or result mismatch; no source
+call parser or variadic TinyXML2 setter is widened by it.
+
 `IntegralMemberEnumCall` exposes that read as a call result without widening
 the ordinary integral getter. It requires the already selected method and
 receiver handles, the typed field witness, the oracle-backed enum profile, and

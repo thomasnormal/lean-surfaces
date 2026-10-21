@@ -73,6 +73,13 @@ private def rawRefCastNoOp (id : String) : Raw := rawObject [
   ("type", rawObject [("qualType", rawText "Owner *")]),
   ("inner", .array [rawRefCast id])]
 
+private def rawRefDerived (id : String) : Raw := rawObject [
+  ("kind", rawText "ImplicitCastExpr"),
+  ("castKind", rawText "UncheckedDerivedToBase"),
+  ("type", rawObject [("qualType", rawText "Owner *")]),
+  ("path", .array [rawObject [("name", rawText "Base")]]),
+  ("inner", .array [rawRefType id "Derived *"])]
+
 private def rawRefNoType (id : String) : Raw := rawObject [
   ("kind", rawText "DeclRefExpr"),
   ("referencedDecl", rawObject [("id", rawText id)])]
@@ -162,6 +169,16 @@ private def rawCallCastNoOp (methodId receiverId name : String) : Raw := rawObje
       ("kind", rawText "CXXMethodDecl"), ("id", rawText methodId)]),
     ("inner", .array [rawRefCastNoOp receiverId])]])]
 
+private def rawCallDerived (methodId receiverId name : String) : Raw := rawObject [
+  ("kind", rawText "CXXMemberCallExpr"),
+  ("type", rawObject [("qualType", rawText "int")]),
+  ("inner", .array [rawObject [
+    ("kind", rawText "MemberExpr"), ("isArrow", .bool true),
+    ("valueCategory", rawText "prvalue"), ("name", rawText name),
+    ("referencedMemberDecl", rawObject [
+      ("kind", rawText "CXXMethodDecl"), ("id", rawText methodId)]),
+    ("inner", .array [rawRefDerived receiverId])]])]
+
 private def rawCallThis (methodId name : String) : Raw := rawObject [
   ("kind", rawText "CXXMemberCallExpr"),
   ("type", rawObject [("qualType", rawText "int")]),
@@ -239,6 +256,9 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard observedCast == some 7
 #guard (IntegralMemberCallSyntax.admit (rawCallCastNoOp methodHandle.value receiverHandle.value "read")).isOk
 #guard observedCastNoOp == some 7
+#guard (IntegralMemberCallSyntax.admit (rawCallDerived methodHandle.value receiverHandle.value "read")).isOk
+#guard (IntegralMemberCallSyntax.admit (rawCallDerived methodHandle.value receiverHandle.value "read")).toOption.map
+    (fun evidence => evidence.receiverCast) == some ["UncheckedDerivedToBase[Base]"]
 #guard syntaxError (rawCallThis methodHandle.value "read") == some .missingThisOwner
 
 private def resolveCanonicalHandle (rows : List DeclarationEvidenceRow) : Option FrontendHandle :=

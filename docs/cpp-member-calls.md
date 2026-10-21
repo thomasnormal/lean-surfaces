@@ -60,16 +60,14 @@ The census preserves nested base trees and cast kinds, including
 `UncheckedDerivedToBase(CXXThisExpr)` and `LValueToRValue(MemberExpr(...))`, so
 `this` and derived-base work can be priced independently.
 The census also groups the remaining generic refusals into disjoint families:
-cast bases, nested member bases, and nested member-call bases.
+nested member bases and nested member-call bases.
 
-On the 542-call TinyXML2 probe, the current census admits 55 calls. The 16
-remaining generic receiver refusals are 11 cast bases, 4 nested member bases,
-and 1 nested member-call base. Their exact leading shapes are:
+On the 542-call TinyXML2 probe, the current census admits 66 calls. The 5
+remaining generic receiver refusals are 4 nested member bases and 1 nested
+member-call base. Their exact leading shapes are:
 
 | family | retained receiver base |
 | --- | --- |
-| cast (6) | `ImplicitCastExpr:UncheckedDerivedToBase(DeclRefExpr)` on a direct-dot call |
-| cast (5) | `ImplicitCastExpr:UncheckedDerivedToBase(ImplicitCastExpr:LValueToRValue(DeclRefExpr))` on an arrow call |
 | nested member (4) | `ImplicitCastExpr:LValueToRValue(MemberExpr(ImplicitCastExpr:LValueToRValue(DeclRefExpr)))` on an arrow call |
 | member-call (1) | `CXXMemberCallExpr(MemberExpr(ImplicitCastExpr:UncheckedDerivedToBase(DeclRefExpr)))` on an arrow call |
 

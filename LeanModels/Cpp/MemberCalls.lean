@@ -48,6 +48,16 @@ private def oneChild (raw : Raw) : Except IntegralMemberCallSyntaxError Raw :=
   | some [child] => .ok child
   | _ => .error .malformedChildren
 
+private def basePath (raw : Raw) : Except IntegralMemberCallSyntaxError (List String) :=
+  match raw.field "path" with
+  | some (.array edges) => do
+      unless !edges.isEmpty do throw .unsupportedReceiver
+      edges.mapM fun edge => do
+        let some name := edge.text "name" | throw .unsupportedReceiver
+        unless cppIdentifier name do throw .unsupportedReceiver
+        pure name
+  | _ => throw .unsupportedReceiver
+
 private def callChild (raw : Raw) : Except IntegralMemberCallSyntaxError Raw :=
   match children raw with
   | some [child] => .ok child
@@ -71,10 +81,14 @@ private partial def receiverDeclRef (raw : Raw) :
   | some "DeclRefExpr" => pure (raw, [])
   | some "ImplicitCastExpr" => do
       let some cast := raw.text "castKind" | throw .unsupportedReceiver
-      unless cast == "LValueToRValue" || cast == "NoOp" do throw .unsupportedReceiver
       let child ← oneChild raw
       let (decl, casts) ← receiverDeclRef child
-      pure (decl, cast :: casts)
+      if cast == "UncheckedDerivedToBase" then
+        let path ← basePath raw
+        pure (decl, (cast ++ "[" ++ String.intercalate "::" path ++ "]") :: casts)
+      else
+        unless cast == "LValueToRValue" || cast == "NoOp" do throw .unsupportedReceiver
+        pure (decl, cast :: casts)
   | _ => throw .unsupportedReceiver
 
 def admit (raw : Raw) :

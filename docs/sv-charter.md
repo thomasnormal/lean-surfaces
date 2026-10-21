@@ -3900,6 +3900,20 @@ dropping its declaration or selecting the first module; no second elaborator
 or library resolver is introduced. See [the boundary and repricing](sv-configurations.md)
 and the read-only instrument `extractors/sv/config_reprice.py`.
 
+### Class declarations — 2026-10-21
+
+`ClassType` remains the object-model boundary. In the fresh 22,043-path census
+it occurs in 1,328 files: 109 class-only and 1,219 co-occurring. The sole
+files contain 161 class spans: 95 ordinary classes, 29 classes with
+`extends`, 32 interface classes and five virtual classes. Their spans include
+100 method-bearing classes, 44 with random fields, 29 with constraints, four
+with extern declarations and three with typedef members. Object identity,
+allocation, inheritance, method frames, virtual dispatch and constrained
+randomization are absent from the module store and executor. No class shape is
+admitted by rewriting it as a module, and no random oracle or second scheduler
+is introduced. See [the boundary and repricing](sv-classes.md) and the
+read-only instrument `extractors/sv/class_reprice.py`.
+
 
 ### Dynamic integral casts — 2026-10-20
 

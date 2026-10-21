@@ -1481,6 +1481,12 @@ configuration resolver, so `design`, `default`, `cell`, `instance`, `use`,
 sub-configuration and configuration-localparam bindings are not lowered into
 the single-top-module representation. See [the configuration boundary](sv-configurations.md).
 
+Class declarations remain explicit `ClassType` unsupported members. The
+`sv-0.1` envelope does not encode class identity, object allocation,
+inheritance, method frames, virtual dispatch, random fields or constraints;
+class bodies are therefore not rewritten as module declarations. Class type
+uses retain their separate `ClassType:ClassType` boundary. See [the class boundary](sv-classes.md).
+
 
 ## Dynamic integral casts
 

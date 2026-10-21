@@ -442,6 +442,19 @@ hierarchical binding or elaboration-time parameter environment. No config
 shape is admitted by flattening it into a module; the complete boundary and
 reproduction command are in [configurations](sv-configurations.md).
 
+## Class declarations — 2026-10-21
+
+`ClassType` remains the object-model boundary. The fresh **22,043**-path
+census records it in **1,328** files: **109** class-only and **1,219**
+co-occurring. Repricing the sole files finds **161** class spans: **95**
+ordinary classes, **29** `extends` classes, **32** interface classes and **5**
+virtual classes. Feature rows overlap: **100** spans contain methods, **44**
+random fields, **29** constraints, **4** extern declarations and **3** typedef
+members. The envelope has no object identity, allocation, inheritance,
+method-frame, virtual-dispatch or constrained-random representation, so no
+class shape is admitted by module rewriting. See [classes](sv-classes.md) for
+the boundary and reproducible scan.
+
 The paired **22,035** paths gain **198 clean files**, no losses:
 **4,098 → 4,296 clean**, **17,871 → 17,673 partial**, **66 include skips**,
 zero extraction errors. All 4,098 previously clean extracted designs remain

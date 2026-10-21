@@ -40,7 +40,8 @@ Arrow calls compare the retained receiver type with `<class name> *`; direct-dot
 calls compare it with `<class name>`. Both forms still require the caller's
 explicit existing-object projection and receiver declaration handle. A single
 `LValueToRValue` `ImplicitCastExpr` around a direct pointer `DeclRefExpr` is
-retained as receiver evidence; other casts and computed bases remain loud.
+retained as receiver evidence, and a nested `NoOp` wrapper is retained as well;
+other casts and computed bases remain loud.
 `CXXThisExpr` bases refuse as `missing-this-owner` because the call node does
 not carry a receiver declaration handle; an enclosing method context is not
 guessed from a raw call fragment.

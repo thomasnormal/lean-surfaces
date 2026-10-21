@@ -15,8 +15,8 @@ structure IntegralMemberCallSyntax where
   canonicalMethod : FrontendHandle := method
   /-- Whether the source receiver uses `->` (`false` means direct `.` access). -/
   receiverIsArrow : Bool := true
-  /-- Optional direct receiver conversion retained from the AST. -/
-  receiverCast : Option String := none
+  /-- Direct receiver conversions retained from the AST, outermost first. -/
+  receiverCast : List String := []
   deriving Repr, BEq, Inhabited
 
 inductive IntegralMemberCallSyntaxError where
@@ -65,6 +65,18 @@ private partial def containsThis (raw : Raw) : Bool :=
   raw.text "kind" == some "CXXThisExpr" ||
     (((raw.field "inner").bind Raw.array?).getD []).any containsThis
 
+private partial def receiverDeclRef (raw : Raw) :
+    Except IntegralMemberCallSyntaxError (Raw × List String) :=
+  match raw.text "kind" with
+  | some "DeclRefExpr" => pure (raw, [])
+  | some "ImplicitCastExpr" => do
+      let some cast := raw.text "castKind" | throw .unsupportedReceiver
+      unless cast == "LValueToRValue" || cast == "NoOp" do throw .unsupportedReceiver
+      let child ← oneChild raw
+      let (decl, casts) ← receiverDeclRef child
+      pure (decl, cast :: casts)
+  | _ => throw .unsupportedReceiver
+
 def admit (raw : Raw) :
     Except IntegralMemberCallSyntaxError IntegralMemberCallSyntax := do
   unless raw.text "kind" == some "CXXMemberCallExpr" do
@@ -90,15 +102,7 @@ def admit (raw : Raw) :
     | none => throw .missingMethodHandle
   let receiverRawOuter ← oneChild member
   if containsThis receiverRawOuter then throw .missingThisOwner
-  let receiverRaw ← match receiverRawOuter.text "kind" with
-    | some "DeclRefExpr" => pure receiverRawOuter
-    | some "ImplicitCastExpr" => do
-        unless receiverRawOuter.text "castKind" == some "LValueToRValue" do
-          throw .unsupportedReceiver
-        let child ← oneChild receiverRawOuter
-        unless child.text "kind" == some "DeclRefExpr" do throw .unsupportedReceiver
-        pure child
-    | _ => throw .unsupportedReceiver
+  let (receiverRaw, receiverCasts) ← receiverDeclRef receiverRawOuter
   let some referenced := receiverRaw.field "referencedDecl"
     | throw .missingReceiverHandle
   let receiver ← (evidenceHandle referenced "id").mapError (fun _ => .missingReceiverHandle)
@@ -108,8 +112,7 @@ def admit (raw : Raw) :
         | none => throw .malformedReceiverType
     | none => throw .malformedReceiverType
   let resultType ← resultSpelling raw
-  let receiverCast := if receiverRawOuter.text "kind" == some "ImplicitCastExpr"
-    then some "LValueToRValue" else none
+  let receiverCast := receiverCasts
   pure {(default : IntegralMemberCallSyntax) with
     method := method, receiver := receiver, receiverType := receiverType,
     resultType := resultType, name := name, canonicalMethod := method,

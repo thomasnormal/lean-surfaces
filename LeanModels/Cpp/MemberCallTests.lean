@@ -59,6 +59,15 @@ private def rawWithField (raw : Raw) (name : String) (value : Raw) : Raw :=
       if entry.1 == name then (name, value) else entry)
   | _ => raw
 
+private def rawWithFieldOrAppend (raw : Raw) (name : String) (value : Raw) : Raw :=
+  match raw with
+  | .object fields =>
+      if fields.any (fun entry => entry.1 == name) then
+        .object (fields.map fun entry =>
+          if entry.1 == name then (name, value) else entry)
+      else .object (fields ++ [(name, value)])
+  | _ => raw
+
 private def rawIntegerArgument (id value : String) : Raw := rawObject [
   ("id", rawText id), ("kind", rawText "IntegerLiteral"),
   ("type", rawObject [("qualType", rawText "int")]), ("value", rawText value)]
@@ -114,6 +123,80 @@ private def profileProbe : DeclarationProbe :=
   {ast := parameterAst, metadata := .object [],
     declarations := [declarationRow methodHandle.value "CXXMethodDecl" methodHandle.value]
       |>.map fun row => {row with raw := profileRaw}}
+
+private def enumSetterParameter : Raw := rawObject [
+  ("kind", rawText "ParmVarDecl"), ("id", rawText "0x15"),
+  ("name", rawText "error"), ("type", rawObject [("qualType", rawText "XMLError")])]
+
+private def enumSetterField : Raw := rawObject [
+  ("kind", rawText "MemberExpr"), ("isArrow", .bool true),
+  ("valueCategory", rawText "lvalue"), ("name", rawText "_errorID"),
+  ("type", rawObject [("qualType", rawText "XMLError")]),
+  ("referencedMemberDecl", rawText fieldHandle.value),
+  ("inner", .array [rawObject [("kind", rawText "CXXThisExpr")]])]
+
+private def enumSetterRight (parameter : String) : Raw := rawObject [
+  ("kind", rawText "DeclRefExpr"),
+  ("type", rawObject [("qualType", rawText "XMLError")]),
+  ("referencedDecl", rawObject [("id", rawText parameter)])]
+
+private def enumSetterBinary (right : Raw) : Raw := rawObject [
+  ("kind", rawText "BinaryOperator"), ("opcode", rawText "="),
+  ("type", rawObject [("qualType", rawText "XMLError")]),
+  ("inner", .array [enumSetterField, right])]
+
+private def enumSetterBody (right : Raw) : Raw := rawObject [
+  ("kind", rawText "CompoundStmt"),
+  ("inner", .array [enumSetterBinary right])]
+
+private def enumSetterAst (right : Raw) : Raw := rawObject [
+  ("kind", rawText "CXXMethodDecl"), ("id", rawText methodHandle.value),
+  ("inner", .array [enumSetterParameter, enumSetterBody right])]
+
+private def enumSetterProfileRaw : Raw :=
+  rawWithFieldOrAppend
+    (rawWithField profileRaw "method_parameter_types"
+      (.array [rawObject [("kind", rawText "enumeration"),
+        ("declaration", rawText "0x13")]]))
+    "method_parent" (rawText ownerHandle.value)
+
+private def enumSetterFieldRow : DeclarationEvidenceRow :=
+  {declarationRow fieldHandle.value "FieldDecl" fieldHandle.value with
+    semanticContext := some ownerHandle,
+    raw := rawObject [("field_parent", rawText ownerHandle.value)]}
+
+private def enumSetterProbeWith (right : Raw) : DeclarationProbe :=
+  {ast := enumSetterAst right, metadata := .object [],
+    declarations := [
+      {declarationRow methodHandle.value "CXXMethodDecl" methodHandle.value with
+        raw := enumSetterProfileRaw},
+      enumSetterFieldRow]}
+
+private def enumSetterRepresentation : Option IntegralMemberEnumRepresentation :=
+  (IntegralMemberEnumRepresentation.withOracle {
+    field := fieldHandle, enum := h "0x13", name := "XMLError",
+    constantCount := 20, explicitValueCount := 1, underlyingType := none} .unsignedInt).toOption
+
+private def enumSetterAccepted : Bool :=
+  match enumSetterRepresentation with
+  | some representation =>
+      match IntegralMemberEnumSetter.admit (enumSetterProbeWith (enumSetterRight "0x15"))
+          methodHandle representation with
+      | .ok setter =>
+          setter.field == fieldHandle && setter.parameter == h "0x15" &&
+            setter.fieldName == "_errorID" && setter.fieldType == "XMLError" &&
+            setter.parameterType == "XMLError"
+      | .error _ => false
+  | none => false
+
+private def enumSetterWrongParameter : Bool :=
+  match enumSetterRepresentation with
+  | some representation =>
+      match IntegralMemberEnumSetter.admit (enumSetterProbeWith (enumSetterRight "0x99"))
+          methodHandle representation with
+      | .error .parameterMismatch => true
+      | _ => false
+  | none => false
 
 private def methodProfile : Option IntegralMemberMethodProfile :=
   (IntegralMemberMethodProfile.admit profileProbe methodHandle).toOption
@@ -610,6 +693,8 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
     (profile.method, profile.resultType, profile.parameters, profile.isConst,
       profile.isStatic, profile.bodyKind)) ==
     some (methodHandle, .void, [.builtin .int], false, false, "CompoundStmt")
+#guard enumSetterAccepted
+#guard enumSetterWrongParameter
 #guard methodBody.map (fun body =>
     (body.canonical, body.definition, body.bodyKind)) ==
     some (methodHandle, h "0x11", "CompoundStmt")

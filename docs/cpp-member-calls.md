@@ -232,6 +232,14 @@ expose a direct `this->_errorID = ...` write, recorded as
 `0x...:_errorID` telemetry. This is a body-shape price only: it does not bind a
 parameter, execute a setter, or infer a member offset.
 
+`IntegralMemberEnumSetter.admit` is the corresponding narrow source witness for
+an executable setter candidate: a non-variadic `void set(Enum)` with exactly one
+parameter and a direct `this->field = parameter` assignment. Kernel controls admit
+that synthetic shape and reject a mismatched parameter handle. The real
+`SetError` methods remain outside it because their variadic signatures are
+refused before body execution; their 11 direct writes stay telemetry rather than
+fabricated setter calls.
+
 `IntegralMemberEnumCall` exposes that read as a call result without widening
 the ordinary integral getter. It requires the already selected method and
 receiver handles, the typed field witness, the oracle-backed enum profile, and

@@ -943,6 +943,139 @@ def admit (probe : DeclarationProbe) (canonical : FrontendHandle)
 
 end IntegralMemberEnumGetter
 
+/-- Evidence for a narrow enum setter body. The body must assign one direct
+`this->field` from its sole enum parameter; no conversion, overload lookup,
+temporary, or general statement execution is performed here. -/
+structure IntegralMemberEnumSetter where
+  method : IntegralMemberMethodProfile
+  body : IntegralMemberMethodBody
+  owner : FrontendHandle
+  field : FrontendHandle
+  parameter : FrontendHandle
+  fieldName : String
+  fieldType : String
+  parameterType : String
+  representation : IntegralMemberEnumRepresentation
+  deriving Repr, BEq, Inhabited
+
+inductive IntegralMemberEnumSetterError where
+  | profile (reason : IntegralMemberMethodProfileError)
+  | body (reason : IntegralMemberMethodBodyError)
+  | resultType
+  | parameterCount
+  | assignmentMissing
+  | malformedAssignment
+  | missingOwner
+  | missingField
+  | fieldMismatch
+  | missingParameter
+  | parameterMismatch
+  | fieldTypeMismatch
+  | parameterTypeMismatch
+  deriving Repr, BEq, Inhabited
+
+namespace IntegralMemberEnumSetter
+
+private partial def rawNodesById (wanted : String) : Raw → List Raw
+  | node@(.object fields) =>
+      (if node.text "id" == some wanted then [node] else []) ++
+        fields.flatMap (fun (_, value) => rawNodesById wanted value)
+  | .array values => values.flatMap (rawNodesById wanted)
+  | _ => []
+
+private def directThis (raw : Raw) : Bool :=
+  match raw.field "inner" with
+  | some (.array [base]) => base.text "kind" == some "CXXThisExpr"
+  | _ => false
+
+private def directThisMember (raw : Raw) : Bool :=
+  raw.text "kind" == some "MemberExpr" &&
+    raw.field "isArrow" == some (.bool true) &&
+    raw.text "valueCategory" == some "lvalue" && directThis raw
+
+private partial def firstAssignment : Raw → Option (Raw × Raw)
+  | node@(.object fields) =>
+      match node.text "kind", node.text "opcode", node.field "inner" with
+      | some "BinaryOperator", some "=", some (.array [left, right]) =>
+          if directThisMember left then some (left, right)
+          else fields.firstM (fun (_, value) => firstAssignment value)
+      | _, _, _ => fields.firstM (fun (_, value) => firstAssignment value)
+  | .array values => values.firstM firstAssignment
+  | _ => none
+
+private def handle (raw : Raw) (name : String) :
+    Except IntegralMemberEnumSetterError FrontendHandle :=
+  match raw.field name with
+  | some (.string value) =>
+      (parseFrontendHandle value).mapError (fun _ => .fieldMismatch)
+  | some value => (evidenceHandle value "id").mapError (fun _ => .fieldMismatch)
+  | none => throw .fieldMismatch
+
+private def spellingMatches (spelling name : String) : Bool :=
+  spelling == name || spelling == "enum " ++ name || spelling.endsWith ("::" ++ name)
+
+private def rawId (raw : Raw) : Option String := do
+  let (.string value) ← raw.field "id" | none
+  pure value
+
+private def rawTypeSpelling (raw : Raw) : Except IntegralMemberEnumSetterError String := do
+  let some type := raw.field "type" | throw .parameterTypeMismatch
+  let some spelling := type.text "qualType" | throw .parameterTypeMismatch
+  unless !spelling.isEmpty do throw .parameterTypeMismatch
+  pure spelling
+
+/-- Admit only a non-variadic `void set(Enum)` body whose direct assignment is
+`this->field = parameter`, with both declarations retained by the probe. -/
+def admit (probe : DeclarationProbe) (canonical : FrontendHandle)
+    (representation : IntegralMemberEnumRepresentation) :
+    Except IntegralMemberEnumSetterError IntegralMemberEnumSetter := do
+  let method ← IntegralMemberMethodProfile.admit probe canonical |>.mapError .profile
+  unless method.resultType == .void do throw .resultType
+  let [parameterType] := method.parameters | throw .parameterCount
+  unless parameterType == .enumeration representation.profile.enum do
+    throw .parameterTypeMismatch
+  let body ← IntegralMemberMethodBody.admit probe canonical |>.mapError .body
+  let some methodNode := (rawNodesById body.definition.value probe.ast).find?
+      (·.text "kind" == some "CXXMethodDecl") | throw .assignmentMissing
+  let some (.array inner) := methodNode.field "inner" | throw .assignmentMissing
+  let parameters := inner.filter (·.text "kind" == some "ParmVarDecl")
+  let [parameterRaw] := parameters | throw .parameterCount
+  let parameter ← match rawId parameterRaw with
+    | some value => (parseFrontendHandle value).mapError (fun _ => .missingParameter)
+    | none => throw .missingParameter
+  let some compound := inner.find? (·.text "kind" == some "CompoundStmt")
+    | throw .assignmentMissing
+  let some (left, right) := firstAssignment compound | throw .assignmentMissing
+  let field ← handle left "referencedMemberDecl"
+  unless field == representation.profile.field do throw .fieldMismatch
+  let some methodRow := probe.declarations.find? (fun row =>
+    row.id == body.definition && row.kind == "CXXMethodDecl")
+    | throw .missingOwner
+  let owner ← handle methodRow.raw "method_parent" |>.mapError (fun _ => .missingOwner)
+  let fieldRows := probe.declarations.filter (fun row =>
+    row.id == field && row.kind == "FieldDecl")
+  let fieldRow :: rest := fieldRows | throw .missingField
+  unless rest.all (fun row => row.raw == fieldRow.raw &&
+      row.semanticContext == fieldRow.semanticContext) do throw .fieldMismatch
+  unless fieldRow.semanticContext == some owner do throw .fieldMismatch
+  let fieldParent ← handle fieldRow.raw "field_parent"
+  unless fieldParent == owner do throw .fieldMismatch
+  let fieldName ← match left.text "name" with
+    | some value => if value.isEmpty then throw .fieldMismatch else pure value
+    | none => throw .fieldMismatch
+  let fieldType ← rawTypeSpelling left
+  unless spellingMatches fieldType representation.profile.name do
+    throw .fieldTypeMismatch
+  unless right.text "kind" == some "DeclRefExpr" do throw .malformedAssignment
+  let rightParameter ← handle right "referencedDecl"
+  unless rightParameter == parameter do throw .parameterMismatch
+  let parameterType ← rawTypeSpelling parameterRaw
+  unless spellingMatches parameterType representation.profile.name do
+    throw .parameterTypeMismatch
+  pure {method, body, owner, field, parameter, fieldName, fieldType, parameterType, representation}
+
+end IntegralMemberEnumSetter
+
 
 structure IntegralMemberCall where
   getter : IntegralMemberGetter

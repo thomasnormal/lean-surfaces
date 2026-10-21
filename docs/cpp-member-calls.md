@@ -261,6 +261,19 @@ integer literals refuse. `bindWithArgument` checks that witness against the
 admitted setter parameter before using a caller-supplied enum value. The kernel
 battery accepts the typed argument and rejects an `int` spelling.
 
+The source census now joins each retained call argument to its selected method
+metadata before pricing this boundary. It examines only parameter positions
+whose structured type is an enumeration, then accepts a direct
+`DeclRefExpr` when its qualified spelling matches the witnessed enum name and
+its referenced declaration handle is present. Casts, non-reference argument
+nodes, missing type spellings, and mismatched enum spellings are emitted as
+named refusals; variadic arguments beyond the structured parameter list are
+not treated as enum parameters. On the 542-call TinyXML2 probe, **23** enum
+argument shapes are admitted, all
+`XMLError:tinyxml2::XMLError:DeclRefExpr`, and the enum-argument refusal set is
+empty. This is source provenance only: no enum value is evaluated and the
+variadic `SetError` calls remain outside execution.
+
 `IntegralMemberEnumCall` exposes that read as a call result without widening
 the ordinary integral getter. It requires the already selected method and
 receiver handles, the typed field witness, the oracle-backed enum profile, and

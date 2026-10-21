@@ -140,6 +140,20 @@ private def methodEnumResult (probe : DeclarationProbe) (method : FrontendHandle
   | .enumeration enum => pure enum
   | _ => throw "non-enum-result"
 
+private def methodEnumParameter (probe : DeclarationProbe) (method : FrontendHandle)
+    (ordinal : Nat) : Except String FrontendHandle := do
+  let rows := probe.declarations.filter (fun row =>
+    row.id == method && row.kind == "CXXMethodDecl")
+  let row :: rest := rows | throw "missing-method"
+  unless rest.all (· == row) do throw "conflicting-method"
+  let some (.array values) := row.raw.field "method_parameter_types"
+    | throw "missing-parameter-types"
+  let some value := values[ordinal]? | throw "missing-parameter"
+  match parseCppTypeEvidence value with
+  | .ok (.enumeration enum) => pure enum
+  | .ok _ => throw "non-enum-parameter"
+  | .error _ => throw "malformed-parameter-type"
+
 private def enumResultName (probe : DeclarationProbe) (enum : FrontendHandle) :
     Except String String := do
   let nodes := (rawNodesById enum.value probe.ast).filter
@@ -252,6 +266,27 @@ private def rawQualType? (raw : Raw) : Option String := do
   let type ← raw.field "type"
   type.text "qualType"
 
+private def enumSpellingMatches (spelling name : String) : Bool :=
+  spelling == name || spelling == "enum " ++ name || spelling.endsWith ("::" ++ name)
+
+private def enumArgumentShape (argument : Raw) (enumName : String) : Except String String :=
+  match argument.text "kind" with
+  | some "DeclRefExpr" => do
+      let spelling ← match rawQualType? argument with
+        | some spelling => pure spelling
+        | none => throw "declref-missing-type"
+      unless enumSpellingMatches spelling enumName do
+        throw ("declref-type-mismatch:" ++ spelling)
+      unless (rawHandle? argument "referencedDecl").isSome do
+        throw "declref-missing-declaration"
+      pure (s!"{enumName}:{spelling}:DeclRefExpr")
+  | some kind =>
+      if kind.endsWith "CastExpr" then
+        throw (s!"{enumName}:cast:{kind}")
+      else
+        throw (s!"{enumName}:non-reference:{kind}")
+  | none => throw (s!"{enumName}:non-reference:<missing>")
+
 private def methodBodyThisFieldWriteAccess (probe : DeclarationProbe)
     (body : IntegralMemberMethodBody) : Option IntegralMemberThisFieldAccess := do
   let method ← (rawNodesById body.definition.value probe.ast).find?
@@ -350,6 +385,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut integerMethodEnumSetterRefusals : List String := []
   let mut enumResultCalls : List String := []
   let mut enumResultRefusals : List String := []
+  let mut enumArgumentShapes : List String := []
+  let mut enumArgumentRefusals : List String := []
   let mut enumGetterProfiles : List String := []
   let mut enumGetterRefusals : List String := []
   let mut receiverShapes : List String := []
@@ -358,6 +395,21 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   for (raw, ordinal) in calls.zipIdx do
     match memberMethodHandle raw with
     | some method =>
+        let canonical := canonicalMethodHandle probe method |>.getD method
+        match raw.field "inner" with
+        | some (.array (_ :: arguments)) =>
+            for (argument, argumentOrdinal) in arguments.zipIdx do
+              match methodEnumParameter probe canonical argumentOrdinal with
+              | .ok enum =>
+                  match enumResultName probe enum with
+                  | .ok name =>
+                      match enumArgumentShape argument name with
+                      | .ok shape => enumArgumentShapes := shape :: enumArgumentShapes
+                      | .error reason => enumArgumentRefusals := reason :: enumArgumentRefusals
+                  | .error reason => enumArgumentRefusals :=
+                      ("enum:" ++ reason) :: enumArgumentRefusals
+              | .error _ => pure ()
+        | _ => pure ()
         match methodEnumResult probe (canonicalMethodHandle probe method |>.getD method) with
         | .ok enum =>
             let spelling := rawResultSpelling raw |>.getD "<missing>"
@@ -517,6 +569,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("typed_integer_method_enum_setter_refusals", counts integerMethodEnumSetterRefusals),
     ("enum_result_calls", counts enumResultCalls),
     ("enum_result_refusals", counts enumResultRefusals),
+    ("enum_argument_shapes", counts enumArgumentShapes),
+    ("enum_argument_refusals", counts enumArgumentRefusals),
     ("enum_getter_profiles", counts enumGetterProfiles),
     ("enum_getter_refusals", counts enumGetterRefusals),
     ("unsupported_receiver_shapes", counts receiverShapes),

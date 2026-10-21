@@ -588,11 +588,11 @@ def evaluate (access : IntegralMemberThisFieldAccess)
   pure {representation, value := stored}
 
 private def getter (access : IntegralMemberThisFieldAccess)
-    (representation : IntegralMemberEnumRepresentation) : IntegralMemberGetter := {
+    (representation : IntegralMemberEnumRepresentation) (isConst : Bool := true) : IntegralMemberGetter := {
   occurrence := {(default : Declaration) with id := access.method.value, kind := "CXXMethodDecl", name := some access.name},
   owner := access.owner,
   field := {declaration := access.field, name := access.name, type := .builtin representation.underlying, isMutable := false},
-  isConst := true, conversions := [], result := representation.underlying,
+  isConst, conversions := [], result := representation.underlying,
   canonical := access.method}
 
 /-- Read an enum field from an explicit existing class projection. The
@@ -604,6 +604,28 @@ def read (access : IntegralMemberThisFieldAccess)
   let (memory, stored) ← projection.invoke (getter access representation) |>.mapError .projection
   let value ← evaluate access representation memory.profile stored |>.mapError .value
   pure (memory, value)
+
+inductive IntegralMemberEnumWriteError where
+  | projection (reason : ClassProjectionError)
+  | getter (reason : MemberGetterError)
+  | value (reason : IntegralMemberEnumValueError)
+  | integral (reason : IntegralObjectError)
+  deriving Repr, BEq, Inhabited
+
+/-- Assign an enum field through an existing writable object projection. The
+new stored value must use the oracle-selected underlying format; constness,
+ownership, lifetime, and object identity remain the existing getter/memory
+checks. -/
+def write (access : IntegralMemberThisFieldAccess)
+    (representation : IntegralMemberEnumRepresentation) (projection : ClassReceiverProjection)
+    (stored : IntegralValue) :
+    Except IntegralMemberEnumWriteError IntegralObjectStore := do
+  let getter := getter access representation false
+  projection.check getter |>.mapError .projection
+  let value ← evaluate access representation projection.snapshot.memory.profile stored
+    |>.mapError .value
+  let member ← projection.snapshot.bind getter |>.mapError .getter
+  projection.snapshot.memory.assign member value.value |>.mapError .integral
 
 end IntegralMemberEnumValue
 

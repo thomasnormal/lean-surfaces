@@ -246,6 +246,47 @@ private def enumReadWrongStorage : Bool :=
       | _ => false
   | none => false
 
+private def enumWriteAccepted : Bool :=
+  match enumReadRepresentation with
+  | some representation =>
+      match IntegralMemberEnumValue.write enumReadAccess representation enumProjection
+          ⟨.unsigned 32, 9⟩ with
+      | .ok memory =>
+          memory.values == [none, some ⟨.unsigned 32, 9⟩]
+      | .error _ => false
+  | none => false
+
+private def enumWriteWrongFormat : Bool :=
+  match enumReadRepresentation with
+  | some representation =>
+      match IntegralMemberEnumValue.write enumReadAccess representation enumProjection
+          ⟨.signed 32, 9⟩ with
+      | .error (.value .underlyingTypeMismatch) => true
+      | _ => false
+  | none => false
+
+private def enumWriteWrongProjection : Bool :=
+  match enumReadRepresentation with
+  | some representation =>
+      let bad := {enumProjection with
+        snapshot := {enumProjection.snapshot with object := 1}}
+      match IntegralMemberEnumValue.write enumReadAccess representation bad
+          ⟨.unsigned 32, 9⟩ with
+      | .error (.projection .wrongReceiver) => true
+      | _ => false
+  | none => false
+
+private def enumWriteReadOnly : Bool :=
+  match enumReadRepresentation with
+  | some representation =>
+      let readOnly := {enumProjection with
+        snapshot := {enumProjection.snapshot with readOnly := true}}
+      match IntegralMemberEnumValue.write enumReadAccess representation readOnly
+          ⟨.unsigned 32, 9⟩ with
+      | .error (.getter .constReceiver) => true
+      | _ => false
+  | none => false
+
 private def enumOracleError (underlying : CppIntType) :
     Option IntegralMemberEnumRepresentationError :=
   match IntegralMemberEnumRepresentation.withOracle enumProfileSample underlying with
@@ -587,6 +628,10 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard enumReadAccepted
 #guard enumReadWrongObject
 #guard enumReadWrongStorage
+#guard enumWriteAccepted
+#guard enumWriteWrongFormat
+#guard enumWriteWrongProjection
+#guard enumWriteReadOnly
 #guard enumCallObserved == some 7
 #guard enumCallResultError == some .resultTypeMismatch
 #guard enumCallReceiverError == some .receiverMismatch

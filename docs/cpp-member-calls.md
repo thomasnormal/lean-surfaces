@@ -213,6 +213,13 @@ enum layer supplies only the field witness and representation oracle. A stale,
 wrong-owner, malformed, or otherwise unbound snapshot therefore refuses at the
 projection/getter boundary rather than producing an enum result.
 
+`IntegralMemberEnumValue.write` uses the same explicit projection and
+representation boundary for mutation. It validates a writable synthetic getter,
+checks the new stored value's exact underlying format, and delegates the actual
+update to `IntegralObjectStore.assign`. Const receivers, wrong projections,
+malformed storage, and unsupported value formats remain loud; no field offset or
+object identity is inferred by the enum layer.
+
 `IntegralMemberEnumCall` exposes that read as a call result without widening
 the ordinary integral getter. It requires the already selected method and
 receiver handles, the typed field witness, the oracle-backed enum profile, and

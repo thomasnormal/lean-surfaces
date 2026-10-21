@@ -59,6 +59,22 @@ rule, so this item adds no target lowering and introduces no aggregate store or
 second scheduler. The complete boundary and reproduction command are in
 [assignment targets](sv-assignment-targets.md).
 
+## Statement-call boundary — 2026-10-21
+
+`ExpressionStatement:CallExpression` occurs in **3,775** files of the fresh
+22,043-path census. It is the sole refusal in **261** files and co-occurs in
+**3,514**. The call-only repricer finds **498** unsupported statement-call
+instances. The largest heads are `$fatal` (74), `$q_add` (46),
+`$q_initialize` (34), `$dumpvars` (30), `$strobe` (29), `$dumpfile` (27),
+`$monitor` (20), `$info` (19), `$q_remove` (19), and `$warning` (17).
+
+The public statement-call matrix remains `$display`, `$write`, `$finish`, and
+`$stop`, with the existing pure argument and output/halt rules. The residual
+heads require diagnostic/status channels, Postponed scheduling, aggregate or
+device state, external I/O, or an explicit random oracle. No call-only head
+can be admitted independently without changing those representations. The
+full boundary and repricing command are in [call statements](sv-call-statements.md).
+
 ## Procedural variable lifetimes — 2026-10-20
 
 IEEE §6.21/§9.3 static scalar, packed and fixed-array procedural storage now

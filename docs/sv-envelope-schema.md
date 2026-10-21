@@ -283,6 +283,7 @@ ordinary effectful expression.
 | `Block` | `kind`, `span`, `stmts`: [stmt...] — `begin ... end` (a single-statement body still nests one level: `"stmts": [<stmt>]`) |
 | `BlockingAssign` | `kind`, `span`, `target` (`Ident`; legacy/self-check also `SelectTarget` or `ConcatTarget`), `value` (expr) — `=` |
 | `Scanf` | legacy/self-check: `kind`, `span`, `input` (packed expression), `format` (literal string), `outputs` (source-ordered packed targets), `result` (packed target), `scanf_lowered: true` — direct blocking assignment of `$sscanf` |
+| `SysCall` | legacy/self-check and scheduler: `kind`, `span`, `name` (`"$display"` \| `"$write"` \| `"$finish"` \| `"$stop"`), optional `format`, `args`, and parallel `arg_signed`; `$display`/`$write` use a literal format and integral arguments, while `$finish`/`$stop` halt |
 | `NonblockingAssign` | `kind`, `span`, `target` (`Ident`; legacy/self-check also `SelectTarget` or `ConcatTarget`), `value` (expr) — `<=` |
 | `If` | `kind`, `span`, `cond` (expr), `then` (stmt), `else` (stmt \| `null`) — `else if` chains nest as `If` inside `else` |
 | `For` | legacy/self-check: `kind`, `span`, `initializers` (statement array), `condition` (expr), `steps` (statement array), `body` (stmt) |
@@ -319,6 +320,9 @@ bounded dynamic access and whole-array positional-pattern assignments below.
 
 The complete target admission and refusal rationale, including the current
 corpus repricing, is recorded in [assignment targets](sv-assignment-targets.md).
+
+Statement-position call effects and the residual call census are recorded in
+[call statements](sv-call-statements.md).
 
 The symbolic `sv-0.2` extractor uses the same flat cell representation for a
 one-dimensional fixed-unpacked integral array: it emits one ordinary symbolic

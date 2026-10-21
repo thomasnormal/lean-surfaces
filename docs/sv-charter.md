@@ -3903,3 +3903,14 @@ the scheduler-owned driver path. Adding either as a surface shortcut would
 fabricate storage or create a second scheduler. Existing packed/select/concat
 fixtures remain the acceptance boundary; the full independent contract and
 repricing table are in [assignment targets](sv-assignment-targets.md).
+
+### Statement-call boundary — 2026-10-21
+
+Statement-position calls remain limited to `$display`, `$write`, `$finish`,
+and `$stop`, whose output and halt effects already have public state and
+retained-continuation rules. The fresh 22,043-path census records
+`ExpressionStatement:CallExpression` in 3,775 files: 261 call-only and 3,514
+co-occurring. Their 498 call instances are dominated by `$fatal`, queue tasks,
+dump tasks, `$strobe`/`$monitor`, and severity calls. Those require diagnostic,
+Postponed, aggregate/device, external-I/O, or random-oracle representations;
+none is an independent legacy admission. See [call statements](sv-call-statements.md).

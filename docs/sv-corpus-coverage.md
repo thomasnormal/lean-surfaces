@@ -455,6 +455,20 @@ method-frame, virtual-dispatch or constrained-random representation, so no
 class shape is admitted by module rewriting. See [classes](sv-classes.md) for
 the boundary and reproducible scan.
 
+## Nested class declarations — 2026-10-21
+
+`ClassType:ClassType` marks a class declaration nested in a module. The fresh
+**22,043**-path census records it in **509** files: **49** class-use-only and
+**460** co-occurring. Repricing the sole files finds **65** nested class
+spans: **43** ordinary classes, **14** `extends` classes, **6** interface
+classes and **2** virtual classes. Overlapping feature rows find **25**
+method-bearing spans, **22** with constraints, **18** with random fields,
+**16** with virtual/interface mentions, **17** with `extends` and **5** with
+covergroups. These are source-span labels, not an admission claim; nested
+classes still need the object model and are not flattened into their module.
+See [classes](sv-classes.md) and
+`extractors/sv/class_use_reprice.py` for the reproducible scan.
+
 ## Fork/join process control — 2026-10-21
 
 The three `fork ... join*` markers remain a scheduler-owned process boundary.

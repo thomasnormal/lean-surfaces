@@ -3925,6 +3925,20 @@ admitted by rewriting it as a module, and no random oracle or second scheduler
 is introduced. See [the boundary and repricing](sv-classes.md) and the
 read-only instrument `extractors/sv/class_reprice.py`.
 
+### Nested class declarations — 2026-10-21
+
+`ClassType:ClassType` is the separate module-member class boundary. In the
+fresh 22,043-path census it occurs in 509 files: 49 are class-use-only and
+460 co-occur with another wall. The sole files contain 65 nested class spans:
+43 ordinary classes, 14 `extends` classes, six interface classes and two
+virtual classes. Their spans include 25 method-bearing classes, 22 with
+constraints, 18 with random fields, 16 with virtual/interface mentions, 17
+with `extends` and five with covergroups. The module envelope has no object
+identity, allocation, inheritance or class-member execution state, so no
+nested class shape is admitted by flattening it into the containing module.
+See [the boundary and repricing](sv-classes.md) and the read-only instrument
+`extractors/sv/class_use_reprice.py`.
+
 ### Fork/join process control — 2026-10-21
 
 The combined `fork ... join*` boundary covers the three frontend markers. In

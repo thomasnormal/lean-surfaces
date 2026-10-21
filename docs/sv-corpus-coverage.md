@@ -351,6 +351,21 @@ region oracles apply; ports, program/interface kinds, differing timescales,
 new initializer-order dependence and unsupported active members remain loud.
 See [the contract](sv-module-hierarchy.md).
 
+## Connected child ports — 2026-10-21
+
+`Hierarchy:ports` remains the explicit boundary for a module instance with a
+declared port. The fresh **22,043**-path census records this wall in **2,397**
+files: **1,186** port-only and **1,211** co-occurring. Frontend-instance
+repricing of the port-only files finds **1,481** concrete child instances and
+**3,593** declared ports. **1,423** instances have every port connected,
+**43** have at least one empty/omitted connection, and **15** are entirely
+unconnected. The connected cases include ordinary scalar links as well as
+conversions, selections, concatenations and `inout`; all require a port map,
+continuous propagation, and scheduler-owned update behavior. The omitted
+cases retain default/`z` input rules. No safe subfamily is admitted by the
+existing flat store. See [the boundary](sv-hierarchy-ports.md) and
+`extractors/sv/hierarchy_reprice.py` for the reproducible measurement.
+
 The paired **22,035** paths gain **198 clean files**, no losses:
 **4,098 → 4,296 clean**, **17,871 → 17,673 partial**, **66 include skips**,
 zero extraction errors. All 4,098 previously clean extracted designs remain

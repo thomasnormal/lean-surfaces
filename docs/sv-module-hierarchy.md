@@ -5,6 +5,8 @@ The legacy `sv-0.1` surface now traverses concrete portless module instances,
 including parameter overrides, nested generate scopes and static instance
 arrays. This is the first module-hierarchy rung; connected ports, interface
 instances and program instances remain explicit boundaries.
+The connected-port census and repricing decision are recorded separately in
+[Connected child ports](sv-hierarchy-ports.md).
 
 The extractor walks each actual `InstanceSymbol.body`, rather than its shared
 `canonicalBody`. Siblings with identical parameter configurations can share a

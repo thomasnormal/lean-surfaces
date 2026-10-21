@@ -3803,6 +3803,21 @@ cross-instance storage and blocking/NBA statements.
 See [the contract](sv-module-hierarchy.md) and
 [the fixtures](../Examples/system-verilog/module_hierarchy/README.md).
 
+### Connected child ports — 2026-10-21
+
+The hierarchy repricing pass measures the residual `Hierarchy:ports` wall at
+the frontend's concrete child-instance boundary. In the fresh 22,043-path
+census it occurs in 2,397 files: 1,186 port-only and 1,211 co-occurring. Those
+port-only files contain 1,481 child instances with declared ports; 1,423 are
+fully connected, 43 have at least one omitted connection, and 15 are wholly
+unconnected. Connected inputs/outputs need assignment-like conversion plus
+continuous propagation, while `inout` needs bidirectional aliasing and
+resolution. Omitted inputs retain `z`/default rules. The flat store has none
+of those representations, so no safe connected-port subfamily is admitted;
+child ports remain loud and the static hierarchy rung stays portless. See
+[the boundary and repricing](sv-hierarchy-ports.md) and the read-only
+instrument `extractors/sv/hierarchy_reprice.py`.
+
 
 ### Dynamic integral casts — 2026-10-20
 

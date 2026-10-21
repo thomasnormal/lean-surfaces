@@ -1451,7 +1451,9 @@ copy is implied. Existing expression/statement JSON remains authoritative.
 Child ports, interface/program instances, differing timescales, expansion
 limits, invalid source and unsupported active members retain explicit walls.
 The loader still requires one top module. Symbolic extraction is unchanged.
-See [the contract](sv-module-hierarchy.md) for initialization and scope rules.
+See [the contract](sv-module-hierarchy.md) for initialization and scope rules
+and [the port boundary](sv-hierarchy-ports.md) for the connected-child
+repricing decision.
 
 
 ## Dynamic integral casts

@@ -193,6 +193,24 @@ private def enumParameterWrongOrdinal : Bool :=
   | .error .missingParameterEvidence => true
   | _ => false
 
+private def enumParameterWrongType : Bool :=
+  let base := enumSetterProbeWith (enumSetterRight "0x15")
+  let bad := {base with declarations := base.declarations.map (fun row =>
+    if row.id == methodHandle then
+      {row with raw := (rawWithField row.raw "method_parameter_types"
+        (.array [rawObject [("kind", rawText "builtin"), ("name", rawText "int")]]))}
+    else row)}
+  match IntegralMemberEnumArgument.parameter bad methodHandle 0 (h "0x13") "XMLError" with
+  | .error .parameterTypeMismatch => true
+  | _ => false
+
+private def enumParameterMissingAst : Bool :=
+  let base := enumSetterProbeWith (enumSetterRight "0x15")
+  let bad := {base with ast := rawWithField base.ast "inner" (.array [])}
+  match IntegralMemberEnumArgument.parameter bad methodHandle 0 (h "0x13") "XMLError" with
+  | .error .malformedMethodSignature => true
+  | _ => false
+
 private def enumSetterEvidence : Option IntegralMemberEnumSetter :=
   match enumSetterRepresentation with
   | some representation =>
@@ -909,6 +927,8 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard enumSetterWrongParameter
 #guard enumParameterAccepted
 #guard enumParameterWrongOrdinal
+#guard enumParameterWrongType
+#guard enumParameterMissingAst
 #guard enumSetterWriteAccepted
 #guard enumSetterWriteWrongField
 #guard enumArgumentAccepted

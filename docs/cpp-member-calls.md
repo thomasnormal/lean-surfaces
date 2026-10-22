@@ -304,6 +304,11 @@ parameter witnesses into `IntegralMemberMethodProfile.admit`; all 23 stop at
 the named `unsupported-body` profile refusal, with no enum argument reaching
 setter execution.
 
+The kernel battery also mutates independent copies of this evidence: a wrong
+parameter type, an out-of-range ordinal, a malformed parameter-type row, and a
+missing `ParmVarDecl` all refuse before argument binding. These are provenance
+controls only; they do not turn a malformed probe into a callable setter.
+
 The body relation is priced independently so the profile refusal cannot hide
 the next source requirement. All 23 witnessed arguments resolve the same
 canonical-to-defining method pair and expose the first object event

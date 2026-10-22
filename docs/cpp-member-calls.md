@@ -344,7 +344,8 @@ declarations, ordinal gaps, and type/spelling disagreements therefore remain
 visible as named telemetry instead of disappearing from an empty result.
 
 The counter contract has a bounded synthetic check. Running
-`lake env lean --run extractors/cpp/census_member_calls.lean --self-test`
+`prlimit --as=17179869184 env LEAN_NUM_THREADS=1 lake env lean -j 1 --run
+extractors/cpp/census_member_calls.lean --self-test`
 exercises one accepted join plus malformed parameter metadata, a missing
 `ParmVarDecl`, an out-of-range ordinal, and a wrong enum parameter type. It
 also checks that a malformed structured-parameter lookup is retained when the

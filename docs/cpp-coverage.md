@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 9 | 0 | 0 | 0 | 0 | 9 |
+| 10 | 0 | 0 | 0 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -19,6 +19,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `object.automatic-initialized` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `object.automatic-assignment` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `object.dynamic-storage` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
+| `object.static-storage` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `tinyxml2.IsUTF8Continuation.negative` | 2 | `ok 1` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `tinyxml2.IsUTF8Continuation.minimum` | 2 | `ok 1` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `tinyxml2.IsUTF8Continuation.nonnegative` | 2 | `ok 0` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |

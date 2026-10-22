@@ -59,7 +59,11 @@ converts the source value to the declared integral type, and publishes the
 initialized value. Reads after `endLifetime` still return the distinct lifetime
 error, so the convenience boundary does not erase tombstone state.
 
-The rung-1 dynamic boundary uses the same typed value store with `.dynamic`
+The rung-1 static boundary uses the same typed value store with `.static_`
+storage: one allocated identity retains its initialized value across multiple
+accesses and updates. This is the state continuity needed for a function-local
+static; destruction at program termination is outside this slice. The dynamic
+boundary uses the same typed value store with `.dynamic`
 storage: allocation reserves a fresh identity, initialization publishes the
 value, `endLifetime` creates a tombstone, and `releaseStorage` marks the dynamic
 storage released. Borrowed accesses remain tied to that identity and refuse

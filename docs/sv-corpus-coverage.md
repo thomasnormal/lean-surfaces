@@ -1315,6 +1315,21 @@ text/status or coverage-observation contract. See the [immediate assertion
 contract](sv-immediate-assertions.md) and
 `extractors/sv/immediate_assert_error_reprice.py` for the reproducible scan.
 
+## Deferred immediate assertions — 2026-10-22
+
+`ImmediateAssertion:deferred` remains the scheduler-region assertion boundary.
+The fresh **22,043**-path census records it in **52** files: **19** are
+deferred-only and **33** co-occur. Repricing the sole files finds **27**
+branches: **17** `assert`, **5** `assume`, **5** `cover`, **16** `#0`
+Observed-region forms, **11** `final` Postponed-region forms, **15** single
+system-call actions, **12** null actions, **1** block-action diagnostic, **4**
+`always` contexts, **1** `always_comb` context and **1** protected-region form
+(features overlap). The envelope has no deferred sampling/re-evaluation,
+pending-report, action restriction or end-of-simulation ordering state, so no
+branch is rewritten as an immediate conditional. See [the immediate assertion
+contract](sv-immediate-assertions.md) and
+`extractors/sv/immediate_assert_deferred_reprice.py` for the reproducible scan.
+
 ## Plain always source repetition — 2026-10-20
 
 IEEE §9.2.2.1 plain `always` now retains its complete source body and compiles

@@ -46,6 +46,22 @@ node: no diagnostic text, status, source-location footer or coverage database
 is invented. Reproduce the measurement with
 `extractors/sv/immediate_assert_error_reprice.py`.
 
+## Deferred assertion subfamily — 2026-10-22
+
+The fresh 22,043-path census records `ImmediateAssertion:deferred` in **52**
+files; **19** are deferred-only and **33** co-occur with another wall. The
+read-only repricer finds **27** branches in the sole files: 17 `assert`, five
+`assume` and five `cover` branches; 16 `#0` Observed-region forms and 11
+`final` Postponed-region forms; 15 single system-call actions, 12 null
+actions, one block-action diagnostic, four ordinary `always` contexts, one
+`always_comb` context and one protected-region form (features overlap).
+Deferred assertions sample and report through regions distinct from the
+ordinary conditional executor; their re-evaluation, pending-report maturity,
+action restrictions and end-of-simulation ordering remain unsupported. No
+deferred branch is rewritten as an immediate `If` or assigned a guessed
+region. Reproduce the measurement with
+`extractors/sv/immediate_assert_deferred_reprice.py`.
+
 Independent checks pin four-state mode, enable cover directives and every
 cover success, and disable additional assertion-engine status messages:
 `-ii_val -abvcoveron -abvrecordcoverall -abvdisableasrtst`. Default simulator

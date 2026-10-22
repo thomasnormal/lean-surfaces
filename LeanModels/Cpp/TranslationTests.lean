@@ -67,6 +67,15 @@ private def namespaceAliasTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "a"), ("kind", .string "NamespaceAliasDecl"),
         ("name", .string "alias"), ("inner", .array [])]])]}
 
+private def usingDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "n"), ("kind", .string "NamespaceDecl"),
+        ("name", .string "n"), ("inner", .array [])],
+      .object [("id", .string "u"), ("kind", .string "UsingDirectiveDecl"),
+        ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -87,6 +96,9 @@ def typeAliasTranslationWitness : Except String Unit :=
 
 def namespaceAliasTranslationWitness : Except String Unit :=
   admitNamespaceAliasDeclaration namespaceAliasTranslation [1]
+
+def usingDirectiveTranslationWitness : Except String Unit :=
+  admitUsingDirectiveDeclaration usingDirectiveTranslation [1]
 
 #guard admitTranslationUnit emptyTranslation matches .ok ()
 #guard admitTranslationUnit wrongRoot matches .error _
@@ -113,6 +125,9 @@ def namespaceAliasTranslationWitness : Except String Unit :=
 #guard namespaceAliasTranslationWitness matches .ok ()
 #guard admitNamespaceAliasDeclaration namespaceAliasTranslation [] matches .error _
 #guard admitNamespaceAliasDeclaration namespaceAliasTranslation [0] matches .error _
+#guard usingDirectiveTranslationWitness matches .ok ()
+#guard admitUsingDirectiveDeclaration usingDirectiveTranslation [] matches .error _
+#guard admitUsingDirectiveDeclaration namespaceAliasTranslation [0] matches .error _
 #guard execute emptyTranslation "f" matches .error "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
 theorem empty_translation_admits : admitTranslationUnit emptyTranslation = .ok () := rfl

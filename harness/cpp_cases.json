@@ -88,6 +88,17 @@
     "rung": 0
   },
   {
+    "id": "translation.using-directive-declaration",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "usingDirectiveTranslationWitness",
+    "cpp_source": "namespace n {} using namespace n;",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "object.automatic-lifetime",
     "kind": "lifetime",
     "corpus": "rung-1 witness",

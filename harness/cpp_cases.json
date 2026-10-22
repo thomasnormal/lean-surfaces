@@ -166,6 +166,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-conditional",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableConditionalWitness",
+    "cpp_source": "int conditional_witness(int value) { return value ? 7 : 8; } bool callable_witness() { return conditional_witness(1) == 7 && conditional_witness(0) == 8; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

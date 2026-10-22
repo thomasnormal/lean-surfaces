@@ -54,9 +54,27 @@ def callableCompoundAssignmentWitness : Bool :=
   | .ok (.ok value) => value == signed 7
   | _ => false
 
+def conditionalFunction : CallableFunction := {
+  incrementFunction with
+  body := .block (.return_ {
+    expression := .conditional
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .integer 7, sourceType := intType, type := intType}
+      {expression := .integer 8, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableConditionalWitness : Bool :=
+  match evaluateCallable 16 .lp64 conditionalFunction [signed 1],
+        evaluateCallable 16 .lp64 conditionalFunction [signed 0] with
+  | .ok (.ok positive), .ok (.ok zero) => positive == signed 7 && zero == signed 8
+  | _, _ => false
+
 #guard callableIncrementWitness
 #guard callablePostfixWitness
 #guard callableCompoundAssignmentWitness
+#guard callableConditionalWitness
 
 theorem callable_increment_witness : callableIncrementWitness = true := by
   rfl
@@ -67,8 +85,12 @@ theorem callable_postfix_witness : callablePostfixWitness = true := by
 theorem callable_compound_assignment_witness : callableCompoundAssignmentWitness = true := by
   rfl
 
+theorem callable_conditional_witness : callableConditionalWitness = true := by
+  rfl
+
 #print axioms callable_increment_witness
 #print axioms callable_postfix_witness
 #print axioms callable_compound_assignment_witness
+#print axioms callable_conditional_witness
 
 end LeanModels.Cpp.CallableRung3Tests

@@ -1943,3 +1943,9 @@ flatten structure members; see [pattern conditions](sv-pattern-conditions.md).
 member for elaboration-time severity calls. The envelope does not turn them
 into runtime output or fabricate a pre-simulation diagnostic phase; see
 [elaboration system tasks](sv-elaboration-system-tasks.md).
+
+## Hierarchy timescales
+
+`Hierarchy:timescale` remains an explicit unsupported hierarchy when modules
+require scoped time units or precision. The envelope does not apply one global
+scale or alter delay rounding; see [hierarchy timescales](sv-timescale.md).

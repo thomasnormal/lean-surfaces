@@ -4857,3 +4857,11 @@ The fresh 22,043-path census records `ElabSystemTaskSymbol:ElabSystemTask` in
 elaboration-task spans containing `$info` and `$warning`. The envelope has no
 pre-simulation diagnostic phase, so these tasks remain loud. See
 [elaboration system tasks](sv-elaboration-system-tasks.md).
+
+### Hierarchy timescale boundary — 2026-10-22
+
+The fresh 22,043-path census records `Hierarchy:timescale` in **27** files:
+**5** are sole refusals and 22 co-occur. Repricing finds five hierarchy spans
+with per-module directives and time observations or delays. The hierarchy has
+no scoped time-unit environment, so these designs remain loud. See
+[hierarchy timescales](sv-timescale.md).

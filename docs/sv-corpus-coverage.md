@@ -3297,3 +3297,11 @@ The fresh 22,043-path census records `ElabSystemTaskSymbol:ElabSystemTask` in
 elaboration-task spans containing `$info` and `$warning`. The task remains
 loud; see [elaboration system tasks](sv-elaboration-system-tasks.md) and
 `extractors/sv/elab_task_reprice.py`.
+
+## Hierarchy timescale boundary — 2026-10-22
+
+The fresh 22,043-path census records `Hierarchy:timescale` in **27** files:
+**5** are sole refusals and 22 co-occur. Repricing finds five hierarchy spans
+with per-module directives and time observations or delays. The scale remains
+loud; see [hierarchy timescales](sv-timescale.md) and
+`extractors/sv/timescale_reprice.py`.

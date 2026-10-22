@@ -31,11 +31,30 @@ def callableSwitchWitness : Bool :=
       one == signed 10 && two == signed 20 && other == signed 30
   | _, _, _ => false
 
+def ifFunction : CallableFunction := {
+  switchFunction with
+  body := .block (.conditional
+    {expression := .parameter parameter, sourceType := intType, type := intType}
+    (.return_ {expression := .integer 10, sourceType := intType, type := intType})
+    (.return_ {expression := .integer 20, sourceType := intType, type := intType}))
+}
+
+def callableIfWitness : Bool :=
+  match evaluateCallable 16 .lp64 ifFunction [signed 1],
+        evaluateCallable 16 .lp64 ifFunction [signed 0] with
+  | .ok (.ok positive), .ok (.ok zero) => positive == signed 10 && zero == signed 20
+  | _, _ => false
+
 #guard callableSwitchWitness
+#guard callableIfWitness
 
 theorem callable_switch_witness : callableSwitchWitness = true := by
   rfl
 
+theorem callable_if_witness : callableIfWitness = true := by
+  rfl
+
 #print axioms callable_switch_witness
+#print axioms callable_if_witness
 
 end LeanModels.Cpp.CallableRung4Tests

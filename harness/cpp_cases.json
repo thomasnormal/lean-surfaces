@@ -202,6 +202,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-if",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung4Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung4Tests",
+    "lean_expression": "callableIfWitness",
+    "cpp_source": "int if_witness(int value) { if (value) return 10; else return 20; } bool callable_witness() { return if_witness(1) == 10 && if_witness(0) == 20; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "expression.callable-conditional",
     "kind": "expression",
     "corpus": "rung-3 witness",

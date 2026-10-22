@@ -925,6 +925,39 @@ def _fixed_array_leaf_select(sm, expression):
         return None
 
 
+def _fixed_array_oob_select(sm, expression):
+    """Recognize a fully constant out-of-bounds fixed-array selection."""
+    try:
+        selectors = []
+        current = expression
+        while type(current).__name__ == "ElementSelectExpression":
+            position = _constant_dimension_selector(current.selector)
+            if position is None:
+                return False
+            selectors.append(position)
+            current = current.value
+        if not _storage_expression(current):
+            return False
+        if str(current.symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net"):
+            return False
+        shape = _fixed_array_dimensions(current.type, max_cells=None)
+        if shape is None:
+            return False
+        dimensions, leaf_type = shape
+        if len(selectors) != len(dimensions):
+            return False
+        # Do not turn an unsupported leaf type into a no-op: its declaration
+        # still needs the ordinary type boundary to fire.
+        width, _two_state, reason = type_width_2s(leaf_type)
+        if width is None or reason is not None:
+            return False
+        return any(
+            position < min(left, right) or position > max(left, right)
+            for position, (left, right) in zip(reversed(selectors), dimensions))
+    except Exception:
+        return False
+
+
 def _foreach_storage_name(symbol):
     """Bind an automatic iterator by its declaration, including anonymous scopes."""
     return _scoped_temp("$foreach:", symbol.location.offset, ":" + symbol.name)
@@ -4905,6 +4938,15 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             return array_assignment
     if expr.op is not None:
         return _convert_compound_assignment(sm, expr, span_node)
+    if (_SYM is None and _fixed_array_oob_select(sm, expr.left)
+            and _case_source_expression_ok(expr.right)):
+        # IEEE 1800 §7.4.5: an invalid unpacked-array index performs no
+        # update. The admitted RHS subset is pure, so dropping the write
+        # preserves its value semantics without inventing an aggregate store.
+        value = convert_expr(sm, expr.right)
+        if value is not None and _case_expression_ok(value):
+            return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                    "oob_write_noop": True}
     if _SYM is None:
         target, ok = legacy_blocking_target(sm, expr.left)
     else:

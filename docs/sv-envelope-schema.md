@@ -104,7 +104,7 @@ emits:
 | `AssignmentExpression:compound` | compound assignment whose scalar binary operator is outside the admitted set or whose target is not a plain identifier |
 | `AssignmentExpression:compound-width` | compound assignment whose elaborated operands do not share the destination width |
 | `IntraAssignment:<reason>` | unsupported intra-assignment control, value, destination or context; blocking controls in the admitted surface lower to capture/wait/copyback, while nonblocking publication remains loud |
-| `AssignmentExpression:target` | assignment LHS that is not a plain identifier (bit/part-select, concat LHS, ...) |
+| `AssignmentExpression:target` | assignment LHS that is not an admitted identifier/select/concatenation target (including dynamic or aggregate forms; a constant out-of-bounds fixed-array write is lowered to `Empty` per §7.4.5) |
 | `ExpressionStatement:<Class>` | expression statement that is not an assignment (`i++;`, void call, ...) |
 | `StaticLocal:initializer` | static procedural initializer outside the closed pure pre-process value fragment |
 | `StaticLocal:initializer-order` | pre-process initializer reads another procedural static store whose order is not represented |

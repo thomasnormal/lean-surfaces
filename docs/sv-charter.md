@@ -558,6 +558,19 @@ files **17,653 → 17,634**. `VariableSymbol:2state` falls **5,744 → 5,666**;
 constant nested selections stop producing target refusals. The differential
 matrix has **14 rows, 10 matches, 0 disagreements, and 4 recorded refusals**.
 
+### Constant out-of-bounds fixed-array writes — 2026-10-22
+
+The target surface now lowers a fully constant out-of-range write on a fixed
+unpacked array to `Empty`, as required by IEEE §7.4.5. The RHS remains subject
+to the existing pure expression check, and in-range or dynamic selections keep
+their cell/selected-target semantics. `fixed_array_oob` checks the no-op while
+the two corpus witnesses exercise module and procedural declarations.
+
+The fresh census moves clean files **4,345 → 4,347** and partial files
+**17,634 → 17,632**; `AssignmentExpression:target` falls **3,982 → 3,980**.
+The differential matrix is now **15 rows, 11 matches, 0 disagreements, and 4
+recorded refusals**.
+
 ### Constant `$clog2` calls — 2026-10-14
 
 The runtime admission dated 2026-10-20 below extends this historical tier.

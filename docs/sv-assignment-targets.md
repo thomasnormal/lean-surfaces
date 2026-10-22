@@ -85,3 +85,19 @@ The measurement is reproducible with
 the source in process and writes no envelopes beside the corpus. The global
 4,030/43/3,987 counts come from the paired census artifact described in
 `docs/sv-corpus-coverage.md`.
+
+## Constant out-of-bounds fixed-array writes — 2026-10-22
+
+IEEE 1800-2023 §7.4.5 makes a write through a constant invalid index on a
+fixed unpacked array a no-op. The legacy extractor now recognizes a fully
+constant selection through every fixed dimension, checks the declared ranges,
+and lowers an out-of-bounds write to `Empty`. The right-hand side must still
+be in the existing pure integral expression subset; this avoids dropping an
+effect while preserving the no-update rule. In-range and dynamic selections
+continue through their ordinary cell or selected-target paths.
+
+`fixed_array_oob` checks both an in-range write and an out-of-range write in
+the self-check interpreter. The two corresponding corpus witnesses are
+`chapter-7/7.4.5--array-oob-write-noop-v3.sv` and
+`chapter-7/7.4.5--oob-write-is-no-op.sv`. No aggregate storage or scheduler
+rule is introduced.

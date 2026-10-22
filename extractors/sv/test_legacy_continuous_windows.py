@@ -72,6 +72,14 @@ class LegacyContinuousWindows(unittest.TestCase):
         stmt = envelope["design"]["modules"][0]["processes"][0]["body"]["stmts"][0]
         self.assertEqual(stmt["target"]["name"], "value[1][2]")
 
+    def test_fixed_array_out_of_bounds_write_is_empty(self):
+        envelope = self.extract(
+            "module top; int value [0:3]; "
+            "initial begin value[99] = 7; end endmodule")
+        stmt = envelope["design"]["modules"][0]["processes"][0]["body"]["stmts"][0]
+        self.assertEqual(stmt["kind"], "Empty")
+        self.assertTrue(stmt["oob_write_noop"])
+
     def test_constant_fixed_array_cell_select_is_a_continuous_window(self):
         envelope = self.extract(
             "module top(input logic [1:0] source, output logic [1:0] out); "

@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-22
 
-The chapter-scoped rerun covered **22,045** paths: **4,345 clean**,
-**17,634 partial**, **66 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,045** paths: **4,347 clean**,
+**17,632 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`VariableSymbol:2state` (5,666), `AssignmentExpression:target` (3,982),
+`VariableSymbol:2state` (5,666), `AssignmentExpression:target` (3,980),
 `ExpressionStatement:CallExpression` (3,792), `CallExpression` (3,292),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,483), `ConcurrentAssertionStatement`
@@ -57,6 +57,18 @@ and partial files fall **17,653 → 17,634**. The `VariableSymbol:2state` wall
 falls **5,744 → 5,666**; the related constant element-selection wall falls
 **663 → 615**. The differential matrix is **14 rows, 10 matches, 0
 disagreements, and 4 recorded refusals**.
+
+## Constant out-of-bounds fixed-array writes — 2026-10-22
+
+The target tier now handles the IEEE §7.4.5 rule that a fully constant
+out-of-range index on a fixed unpacked array performs no update. The extractor
+checks every fixed dimension and emits an `Empty` statement after requiring a
+pure RHS; in-range and dynamic selections retain their existing target rules.
+`fixed_array_oob` is the pinned differential witness.
+
+Clean files rise **4,345 → 4,347** and partial files fall **17,634 → 17,632**.
+The `AssignmentExpression:target` wall falls **3,982 → 3,980**; the other
+blocker counts are unchanged.
 
 ## Assignment-target boundary — 2026-10-21
 

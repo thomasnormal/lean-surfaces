@@ -45,6 +45,8 @@ private def aliasing : Bool :=
     alias.frame.store.objects.objects.all (fun object => object.phase == .aliveInitialized) &&
     (({caller with store := alias.frame.store}.read (h "caller")).result matches .ok ⟨.signed 32, 9⟩)
 
+def callableReferenceParameterWitness : Bool := aliasing
+
 private def valueCopyAndIsolation : Bool :=
   let f := function [.lvalueReference intType, intType]
     (.sequence (.assign (h "0") (literal 7)) (.return_ (expression "1")))
@@ -125,6 +127,7 @@ private def futureArgumentIdentityRefuses : Bool :=
     future.frame.store == caller.store && future.frame.scopes.isEmpty
 
 #guard aliasing
+#guard callableReferenceParameterWitness
 #guard valueCopyAndIsolation
 #guard constAndLifetime
 #guard uninitializedBinding
@@ -139,7 +142,11 @@ private theorem kernelReferenceParameters :
       uninitializedBinding && failureRetainsPrefix && unreadableValueAndActualConst &&
       executionFailureRetainsMutation && futureArgumentIdentityRefuses) = true := rfl
 
+theorem callable_reference_parameter_witness : callableReferenceParameterWitness = true := by
+  rfl
+
 #print axioms kernelReferenceParameters
+#print axioms callable_reference_parameter_witness
 #print axioms IntegralObjectFrame.bindReferenceParameter_store
 
 end LeanModels.Cpp.CallableReferenceParameterTests

@@ -334,6 +334,18 @@
     "rung": 4
   },
   {
+    "id": "declaration.callable-reference-parameter",
+    "kind": "statement",
+    "corpus": "rung-5 witness",
+    "lean_module": "LeanModels.Cpp.CallableReferenceParameterTests",
+    "lean_namespace": "LeanModels.Cpp.CallableReferenceParameterTests",
+    "lean_expression": "callableReferenceParameterWitness",
+    "cpp_source": "int mutate(int& first, int& second) { first = 7; second = 9; return first; } bool callable_witness() { int value = 2; return mutate(value, value) == 9 && value == 9; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 5
+  },
+  {
     "id": "expression.callable-conditional",
     "kind": "expression",
     "corpus": "rung-3 witness",

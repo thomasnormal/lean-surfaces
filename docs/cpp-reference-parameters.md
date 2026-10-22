@@ -24,6 +24,10 @@ An uninitialized live object may bind and later be initialized through a mutable
 reference. A const-reference parameter still observes mutation through another
 mutable alias; it does not own a snapshot.
 
+The differential witness exercises two reference parameters bound to the same
+caller object. The first write is visible through the second binding, and the
+returned value and caller store both observe the final write.
+
 A value parameter receives its own initialized automatic object. When the
 argument is an lvalue, the model reads the supplied view and then converts and
 copies the value. Normal-return cleanup ends owned parameter/local lifetimes

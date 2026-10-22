@@ -678,6 +678,20 @@ transition selector, so these delays are not replaced by immediate assignment.
 See [the net-delay boundary](sv-net-delays.md) and
 `extractors/sv/net_delay_reprice.py` for the reproducible scan.
 
+## Continuous-assignment delays — 2026-10-22
+
+`ContinuousAssignSymbol:delay` remains the delayed continuous-driver boundary.
+The fresh **22,043**-path census records it in **21** files: **13** are
+continuous-assignment-delay-only and **8** co-occurring. Repricing the sole
+files finds **13** spans: **6** rise/fall forms, **4** three-delay forms,
+**4** vectors, **4** inertial cancellation/rescheduling cases, **2** four-state
+`z` transitions, **3** initial-X settling cases, **1** strength-before-delay
+case and **1** chapter-37 type form (features overlap). The envelope has no
+delayed-driver queue or transition selector, so delayed continuous assignments
+are not replaced by immediate assignments. See [the continuous-assignment
+delay boundary](sv-continuous-assign-delays.md) and
+`extractors/sv/continuous_assign_delay_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

@@ -4174,6 +4174,22 @@ an immediate assignment and no second scheduler is introduced. See [the net
 delay boundary](sv-net-delays.md) and the read-only instrument
 `extractors/sv/net_delay_reprice.py`.
 
+### Continuous-assignment delays — 2026-10-22
+
+`ContinuousAssignSymbol:delay` is the delayed continuous-driver boundary. In
+the fresh 22,043-path census it occurs in 21 files: 13 are
+continuous-assignment-delay-only and eight co-occur with another wall. The
+sole files contain 13 spans, including rise/fall and three-delay forms,
+vector outputs, inertial cancellation/rescheduling, four-state `z`
+transitions, initial-X settling, strength-before-delay ordering and a
+chapter-37 type form (features overlap). IEEE §§10.3, 10.3.3 and 4.9.1
+require a retained delayed driver and transition-dependent publication. The
+envelope has no delayed-driver queue or inertial state, so no delayed assign
+is rewritten as an immediate assignment and no second scheduler is
+introduced. See [the continuous-assignment delay boundary](sv-continuous-assign-delays.md)
+and the read-only instrument
+`extractors/sv/continuous_assign_delay_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

@@ -1418,6 +1418,11 @@ rise/fall/turn-off selector or inertial cancellation state, so net and
 declaration-time continuous-assignment delays are not rewritten as immediate
 assignments. See [the net-delay boundary](sv-net-delays.md).
 
+`ContinuousAssignSymbol:delay` remains explicit as a delayed-driver boundary.
+The envelope has no pending continuous-assignment event, transition selector
+or inertial cancellation state, so `assign #d` is not rewritten as an
+immediate assignment. See [the continuous-assignment delay boundary](sv-continuous-assign-delays.md).
+
 ### Legacy package storage provenance
 
 Source-defined packages with admitted scalar/packed integral variables lower

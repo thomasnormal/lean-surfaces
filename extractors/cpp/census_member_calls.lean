@@ -407,6 +407,12 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut enumArgumentMethodBodyRefusals : List String := []
   let mut enumArgumentMethodObjectEvents : List String := []
   let mut enumArgumentMethodObjectRefusals : List String := []
+  let mut enumArgumentMethodThisFields : List String := []
+  let mut enumArgumentMethodThisFieldRefusals : List String := []
+  let mut enumArgumentMethodEnumProfiles : List String := []
+  let mut enumArgumentMethodEnumProfileRefusals : List String := []
+  let mut enumArgumentMethodEnumRepresentations : List String := []
+  let mut enumArgumentMethodEnumRepresentationRefusals : List String := []
   let mut enumGetterProfiles : List String := []
   let mut enumGetterRefusals : List String := []
   let mut receiverShapes : List String := []
@@ -446,6 +452,31 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
                                 enumArgumentMethodObjectEvents
                           | none => enumArgumentMethodObjectRefusals :=
                               "missing-first-object-event" :: enumArgumentMethodObjectRefusals
+                          match IntegralMemberThisFieldAccess.admit probe body with
+                          | .ok access =>
+                              enumArgumentMethodThisFields :=
+                                (s!"{access.name}:{access.fieldType}:{access.receiverType}") ::
+                                  enumArgumentMethodThisFields
+                              match IntegralMemberEnumProfile.admit probe access with
+                              | .ok profile =>
+                                  enumArgumentMethodEnumProfiles :=
+                                    (s!"{profile.name}:{profile.constantCount}:" ++
+                                      s!"{profile.explicitValueCount}:" ++
+                                      profile.underlyingType.getD "<absent>") ::
+                                      enumArgumentMethodEnumProfiles
+                                  match IntegralMemberEnumRepresentation.withOracle profile .unsignedInt with
+                                  | .ok representation => enumArgumentMethodEnumRepresentations :=
+                                      (s!"{representation.profile.name}:" ++
+                                        IntegralMemberEnumRepresentation.underlyingName
+                                          representation.underlying) ::
+                                        enumArgumentMethodEnumRepresentations
+                                  | .error error => enumArgumentMethodEnumRepresentationRefusals :=
+                                      enumRepresentationErrorName error ::
+                                        enumArgumentMethodEnumRepresentationRefusals
+                              | .error error => enumArgumentMethodEnumProfileRefusals :=
+                                  enumProfileErrorName error :: enumArgumentMethodEnumProfileRefusals
+                          | .error error => enumArgumentMethodThisFieldRefusals :=
+                              thisFieldErrorName error :: enumArgumentMethodThisFieldRefusals
                       | .error error => enumArgumentMethodBodyRefusals :=
                           methodBodyErrorName error :: enumArgumentMethodBodyRefusals
                       match enumArgumentShape argument name with
@@ -624,6 +655,13 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("enum_argument_method_body_refusals", counts enumArgumentMethodBodyRefusals),
     ("enum_argument_method_object_events", counts enumArgumentMethodObjectEvents),
     ("enum_argument_method_object_refusals", counts enumArgumentMethodObjectRefusals),
+    ("enum_argument_method_this_fields", counts enumArgumentMethodThisFields),
+    ("enum_argument_method_this_field_refusals", counts enumArgumentMethodThisFieldRefusals),
+    ("enum_argument_method_enum_profiles", counts enumArgumentMethodEnumProfiles),
+    ("enum_argument_method_enum_profile_refusals", counts enumArgumentMethodEnumProfileRefusals),
+    ("enum_argument_method_enum_representations", counts enumArgumentMethodEnumRepresentations),
+    ("enum_argument_method_enum_representation_refusals",
+      counts enumArgumentMethodEnumRepresentationRefusals),
     ("enum_getter_profiles", counts enumGetterProfiles),
     ("enum_getter_refusals", counts enumGetterRefusals),
     ("unsupported_receiver_shapes", counts receiverShapes),

@@ -308,6 +308,13 @@ canonical-to-defining method pair and expose the first object event
 `this-member:_errorID`; no body or object-event refusal occurs. This remains
 telemetry: the live receiver, field state, and variadic body are not executed.
 
+Typing that event succeeds for all 23 body witnesses: the field access is
+`_errorID:XMLError:XMLError`, its enum profile is
+`XMLError:20:1:<absent>`, and the explicit census oracle selects
+`XMLError:unsigned int`. There are no field, enum-profile, or representation
+refusals. The underlying choice is still an oracle input; it is not recovered
+from TinyXML2's absent fixed-underlying spelling.
+
 `IntegralMemberEnumCall` exposes that read as a call result without widening
 the ordinary integral getter. It requires the already selected method and
 receiver handles, the typed field witness, the oracle-backed enum profile, and

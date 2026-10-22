@@ -421,6 +421,27 @@ def scriptBuiltinShadowStmt (n : String) : Stmt :=
 def scriptBuiltinShadowStmts (m : Module) : List Stmt :=
   (scriptBuiltinShadowNames m).map scriptBuiltinShadowStmt
 
+/-! The extractor admits one explicit annotation-table shape:
+`__annotations__ = alias = {}`.  `Json.lean` splits that chain into
+`__annotations__ = {}` followed by `alias = __annotations__`; the script
+view therefore needs a poisoned static dunder entry so the latter read goes
+through the live module frame instead of the ordinary import-dunder refusal.
+The marker is present only for that exact two-statement prefix. -/
+def scriptAnnotationTableAlias (m : Module) : Option String :=
+  match m.topLevel.toList with
+  | .assign #[.name "__annotations__" _] (.dict #[] _ _) _ ::
+      .assign #[.name alias _] (.name "__annotations__" _) _ :: _ =>
+      if alias == "__annotations__" then Option.none else some alias
+  | _ => Option.none
+
+def scriptAnnotationTableStmt (m : Module) : List Stmt :=
+  match scriptAnnotationTableAlias m with
+  | some _ =>
+      let sp : Span := { lineno := 0, colOffset := 0, endLineno := 0, endColOffset := 0 }
+      [.assign #[.name "__annotations__" sp]
+        (.unsupported "script-annotation-table" "__annotations__" sp) sp]
+  | Option.none => []
+
 /-- Names the module's BENIGN-whitelisted imports bind (`time`, `count`,
 `namedtuple`). They bind STATICALLY — never in the script frame's locals
 — so the module-scope `del` arm has nothing to remove and refuses
@@ -449,7 +470,8 @@ agree with CPython's sequential binding. -/
 def scriptView (m : Module) : Module :=
   { m with topLevel :=
       (scriptNameBinding :: scriptViewMarker ::
-        scriptBuiltinShadowStmts m ++ scriptImports m).toArray }
+        scriptBuiltinShadowStmts m ++ scriptAnnotationTableStmt m ++
+        scriptImports m).toArray }
 
 /-- CLASS CREATION IS AN EFFECT (docs/memory-model.md §class creation).
 CPython evaluates a class's bases and runs its body AT the `class`

@@ -889,6 +889,19 @@ class ExtractorTests(unittest.TestCase):
         body = self._envelope_of("x: 1 = 7\n")["module"]["body"]
         self.assertEqual([item["kind"] for item in body], ["Assign", "Expr"])
 
+    def test_module_annotation_shared_empty_table_updates_through_alias(self):
+        body = self._envelope_of(
+            "__annotations__ = table = {}\n"
+            "x: 'int' = 7\n")["module"]["body"]
+        self.assertEqual([item["kind"] for item in body],
+                         ["Assign", "Assign", "Assign"])
+        store = body[2]
+        self.assertEqual(store["targets"][0]["kind"], "Subscript")
+        self.assertEqual(store["targets"][0]["value"]["id"],
+                         "__annotations__")
+        self.assertEqual(store["targets"][0]["index"]["value"],
+                         {"type": "str", "value": "x"})
+
     def test_function_annotation_erasure_ignores_bound_annotation_table(self):
         for binding in ("__annotations__ = None\n",
                         "table = {}\n__annotations__ = table\n",

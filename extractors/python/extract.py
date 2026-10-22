@@ -51,6 +51,7 @@ Python 3.9 compatible.
 
 import argparse
 import ast
+import collections
 import hashlib
 import json
 import os
@@ -104,6 +105,7 @@ UNSUPPORTED_TEXT_LIMIT = 200
 # one flag per lowering, and the name set carries the reason.
 _MODULE_SHADOWS_DISPLAY = False     # starred displays: `[*a]` -> `list(tuple(a))`
 _MODULE_ANNOTATIONS_BOUND = False
+_MODULE_ANNOTATION_TABLE = None
 _MODULE_SAFE_ANNOTATIONS = set()
 
 DISPLAY_LOWERING_NAMES = ("list", "tuple", "set", "dict")
@@ -138,6 +140,65 @@ def binds_any_name(tree, names):
             if any(x in names for x in n.names):
                 return True
     return False
+
+
+def annotation_table_alias(tree):
+    """Return the one explicit annotation-table alias this tier models.
+
+    The script surface can preserve an explicitly shared table when the
+    module starts with the exact CPython idiom
+    ``__annotations__ = alias = {}``.  Every other explicit binding remains
+    loud: a later rebind, deletion, or hidden alias would make a synthetic
+    subscript store silently target the wrong object.  This is deliberately
+    a source-level admission, before statement lowering splits chains.
+    """
+    candidates = []
+    for node in tree.body:
+        if not (isinstance(node, ast.Assign) and isinstance(node.value, ast.Dict)
+                and not node.value.keys and not node.value.values
+                and len(node.targets) == 2):
+            continue
+        first, second = node.targets
+        if (isinstance(first, ast.Name) and first.id == "__annotations__"
+                and isinstance(second, ast.Name)
+                and second.id != "__annotations__"):
+            candidates.append((node.lineno, second.id))
+    if len(candidates) != 1:
+        return None
+    line, alias = candidates[0]
+    stores = collections.Counter()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Name) and isinstance(n.ctx, (ast.Store, ast.Del)):
+            stores[n.id] += 1
+    if stores["__annotations__"] != 1 or stores[alias] != 1:
+        return None
+    # All module-scope annotated assignments must follow the table creation;
+    # otherwise CPython may be using its implicit table before the explicit
+    # alias replaces it, a source-order shape this rewrite cannot represent.
+    class ModuleAnnotations(ast.NodeVisitor):
+        def __init__(self):
+            self.lines = []
+
+        def visit_FunctionDef(self, node):
+            return
+
+        def visit_AsyncFunctionDef(self, node):
+            return
+
+        def visit_ClassDef(self, node):
+            return
+
+        def visit_AnnAssign(self, node):
+            if node.value is not None and node.simple:
+                self.lines.append(node.lineno)
+            self.generic_visit(node)
+
+    anns = ModuleAnnotations()
+    for stmt in tree.body:
+        anns.visit(stmt)
+    if any(ann_line <= line for ann_line in anns.lines):
+        return None
+    return alias
 
 
 # Pass 0 import forms (docs/memory-model.md paragraph "Import forms
@@ -1370,8 +1431,30 @@ def convert_ann_assign(node, module_scope=False, func_scope=False,
         }
         if func_scope:
             return assignment
-        if module_scope and _MODULE_ANNOTATIONS_BOUND:
+        if (module_scope and _MODULE_ANNOTATIONS_BOUND
+                and _MODULE_ANNOTATION_TABLE is None):
             return unsupported(node, "AnnAssign:annotations-bound")
+        if (module_scope and _MODULE_ANNOTATIONS_BOUND
+                and _MODULE_ANNOTATION_TABLE is not None):
+            # CPython stores the value first, evaluates the annotation, then
+            # mutates the module's `__annotations__` mapping.  Keep those as
+            # ordinary statements so the script executor's existing heap
+            # subscript store preserves aliases such as `table` exactly.
+            annotation = convert_expr(node.annotation)
+            table_store = {
+                "kind": "Assign",
+                "span": span(node),
+                "targets": [{
+                    "kind": "Subscript",
+                    "span": span(node),
+                    "value": {"kind": "Name", "span": span(node.target),
+                              "id": "__annotations__"},
+                    "index": {"kind": "Constant", "span": span(node.target),
+                              "value": {"type": "str", "value": node.target.id}},
+                }],
+                "value": annotation,
+            }
+            return [assignment, table_store]
         if (module_scope and isinstance(node.annotation, ast.Name)
                 and node.annotation.id in _MODULE_SAFE_ANNOTATIONS):
             # An unshadowed builtin type lookup is pure and cannot fail. The
@@ -2142,9 +2225,11 @@ def process_file(source_path, companion_dir, out=None):
     # whole-module, so they are decided once, here, before any expression
     # is converted.
     global _MODULE_SHADOWS_DISPLAY, _MODULE_ANNOTATIONS_BOUND
+    global _MODULE_ANNOTATION_TABLE
     global _MODULE_SAFE_ANNOTATIONS
     _MODULE_SHADOWS_DISPLAY = binds_any_name(tree, DISPLAY_LOWERING_NAMES)
     _MODULE_ANNOTATIONS_BOUND = binds_any_name(tree, ("__annotations__",))
+    _MODULE_ANNOTATION_TABLE = annotation_table_alias(tree)
     _MODULE_SAFE_ANNOTATIONS = {
         name for name in MODULE_SAFE_ANNOTATION_NAMES
         if not binds_any_name(tree, (name,))

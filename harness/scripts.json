@@ -302,8 +302,8 @@
   },
   {
     "file": "harness/scripts/ann_module_table_script.py",
-    "expect": "unsupported",
-    "note": "An explicitly bound annotation table is observable through aliases, so its omitted mutation must remain loud"
+    "expect": "match",
+    "note": "The exact __annotations__ = table = {} idiom updates the shared heap mapping after each module annotation"
   },
   {
     "file": "harness/scripts/int_string_script.py",

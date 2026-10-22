@@ -2137,22 +2137,27 @@ Statement-list conversion splices both nodes through module control shells;
 function-local annotations remain erased, including effectful expressions;
 value-less declarations are erased only when their local binding is unobserved.
 
-The annotation-table store is omitted ONLY if the whole-module binding census
-finds no explicit binding or deletion of `__annotations__`, in any scope or
-binding form. Otherwise `AnnAssign:annotations-bound` refuses the lowering.
-Merely rejecting a dunder read is insufficient: `__annotations__ = table = {}`
-makes the omitted mutation observable through `table`, and rebinding the table
-to `None` changes CPython's exception behavior. Future-annotations imports,
-class annotations, observed value-less annotations, and nonsimple targets stay
-loud.
+The implicit annotation-table store is omitted only when the whole-module
+binding census finds no explicit binding or deletion of `__annotations__`.
+The exact `__annotations__ = table = {}` idiom is admitted on the script
+surface: ingestion lowers each annotation to a normal subscript store, so the
+heap dictionary and its aliases receive the same insertion in CPython order.
+Other explicit bindings remain `AnnAssign:annotations-bound` and loud;
+rebinding the table to `None`, deleting it, or constructing it through a
+separate alias changes the target or exception behavior and is not guessed.
+Future-annotations imports, class annotations, observed value-less
+annotations, and nonsimple targets stay loud.
 
 Dynamic annotations are now lowered to the same two statements as literal
-annotations: store the value first, then evaluate the annotation expression.
+annotations when the implicit table is unobservable: store the value first,
+then evaluate the annotation expression. With the admitted shared table,
+the second statement is the corresponding heap subscript store.
 This matches CPython's `STORE_NAME`/annotation-store order and lets a raising
 annotation retain the already-published target in script mode (`x: (1 // 0) =
-3` raises `ZeroDivisionError` with `x == 3`). The explicit
-`__annotations__`-table binding guard remains loud because the omitted table
-mutation is observable through aliases. A shadowed builtin type name is
+3` raises `ZeroDivisionError` with `x == 3`). For the admitted shared-table
+shape, the same lowering writes the evaluated annotation through the heap
+alias. Other explicit `__annotations__` bindings remain loud because their
+omitted table mutation or rebinding is observable. A shadowed builtin type name is
 evaluated rather than treated as a pure lookup, so its normal resolution and
 failure behavior remains visible. No interpreter or proof judgment changes.
 

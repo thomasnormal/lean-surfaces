@@ -53,15 +53,94 @@
         }
       },
       {
-        "kind": "Unsupported",
+        "kind": "Assign",
         "span": {
           "lineno": 2,
           "col_offset": 0,
           "end_lineno": 2,
           "end_col_offset": 12
         },
-        "py_kind": "AnnAssign:annotations-bound",
-        "text": "x: 'int' = 3"
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 2,
+              "col_offset": 0,
+              "end_lineno": 2,
+              "end_col_offset": 1
+            },
+            "id": "x"
+          }
+        ],
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 2,
+            "col_offset": 11,
+            "end_lineno": 2,
+            "end_col_offset": 12
+          },
+          "value": {
+            "type": "int",
+            "repr": "3"
+          }
+        }
+      },
+      {
+        "kind": "Assign",
+        "span": {
+          "lineno": 2,
+          "col_offset": 0,
+          "end_lineno": 2,
+          "end_col_offset": 12
+        },
+        "targets": [
+          {
+            "kind": "Subscript",
+            "span": {
+              "lineno": 2,
+              "col_offset": 0,
+              "end_lineno": 2,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 2,
+                "col_offset": 0,
+                "end_lineno": 2,
+                "end_col_offset": 1
+              },
+              "id": "__annotations__"
+            },
+            "index": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 2,
+                "col_offset": 0,
+                "end_lineno": 2,
+                "end_col_offset": 1
+              },
+              "value": {
+                "type": "str",
+                "value": "x"
+              }
+            }
+          }
+        ],
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 2,
+            "col_offset": 3,
+            "end_lineno": 2,
+            "end_col_offset": 8
+          },
+          "value": {
+            "type": "str",
+            "value": "int"
+          }
+        }
       },
       {
         "kind": "Expr",

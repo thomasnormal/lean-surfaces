@@ -9,10 +9,11 @@ annotation at all, so `x: T = v` at a plain-name target is an ordinary
 assignment — exactly, with no condition on `T`. The rows below prove that
 by annotating with expressions that would RAISE if anyone evaluated them.
 At MODULE scope a simple target with a value and any annotation expression
-is admitted unless the annotation table is explicitly bound. The value is
-stored before the annotation runs, so a raising annotation leaves the target
-published. CLASS annotations stay loud, as does the value-less form, which
-binds nothing yet LOCALISES its name.
+is admitted when the implicit table is unobservable; the exact
+`__annotations__ = table = {}` script idiom is also admitted and updates the
+shared heap mapping. The value is stored before the annotation runs, so a
+raising annotation leaves the target published. CLASS annotations stay loud,
+as does the value-less form, which binds nothing yet LOCALISES its name.
 """
 
 g: "int" = 5

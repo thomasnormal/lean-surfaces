@@ -231,6 +231,17 @@
     "rung": 0
   },
   {
+    "id": "translation.variable-template-specialization-declaration",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "variableTemplateSpecializationTranslationWitness",
+    "cpp_source": "template<class T> T value = T{}; template int value<int>;",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

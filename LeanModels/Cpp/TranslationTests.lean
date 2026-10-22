@@ -175,6 +175,13 @@ private def classTemplateSpecializationTranslation : Artifact := {emptyTranslati
       .object [("id", .string "s"), ("kind", .string "ClassTemplateSpecializationDecl"),
         ("name", .string "Sample"), ("inner", .array [])]])]}
 
+private def variableTemplateSpecializationTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "s"), ("kind", .string "VarTemplateSpecializationDecl"),
+        ("name", .string "value"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -231,6 +238,9 @@ def typeAliasTemplateTranslationWitness : Except String Unit :=
 
 def classTemplateSpecializationTranslationWitness : Except String Unit :=
   admitClassTemplateSpecializationDeclaration classTemplateSpecializationTranslation [0]
+
+def variableTemplateSpecializationTranslationWitness : Except String Unit :=
+  admitVariableTemplateSpecializationDeclaration variableTemplateSpecializationTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -323,6 +333,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard classTemplateSpecializationTranslationWitness matches .ok ()
 #guard admitClassTemplateSpecializationDeclaration classTemplateSpecializationTranslation [] matches .error _
 #guard admitClassTemplateSpecializationDeclaration functionTranslation [0] matches .error _
+#guard variableTemplateSpecializationTranslationWitness matches .ok ()
+#guard admitVariableTemplateSpecializationDeclaration variableTemplateSpecializationTranslation [] matches .error _
+#guard admitVariableTemplateSpecializationDeclaration functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

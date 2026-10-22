@@ -1209,6 +1209,55 @@ def _unpacked_struct_field_cells(base_name, aggregate, span, seen=None):
     return cells
 
 
+def _unpacked_struct_initializer_cells(sm, base_name, aggregate, initializer,
+                                       seen=None):
+    """Flatten a complete nested struct assignment pattern into leaf cells."""
+    if seen is None:
+        seen = set()
+    marker = id(aggregate)
+    if marker in seen or type(aggregate).__name__ != "UnpackedStructType":
+        return None
+    if type(initializer).__name__ not in (
+            "SimpleAssignmentPatternExpression",
+            "StructuredAssignmentPatternExpression"):
+        return None
+    if getattr(initializer, "bad", False):
+        return None
+    fields = list(aggregate)
+    elements = list(initializer.elements)
+    if not fields or len(fields) != len(elements):
+        return None
+    seen = seen | {marker}
+    cells = []
+    for field, value in zip(fields, elements):
+        leaf = field.type.canonicalType
+        name = f"{base_name}.{field.name}"
+        if type(leaf).__name__ == "UnpackedStructType":
+            nested = _unpacked_struct_initializer_cells(
+                sm, name, leaf, value, seen)
+            if nested is None:
+                return None
+            cells.extend(nested)
+            continue
+        width, two_state, reason = type_width_2s(field.type)
+        if width is None or reason is not None:
+            return None
+        if type(leaf).__name__ in ("FixedSizeUnpackedArrayType",
+                                   "DynamicArrayType", "QueueType",
+                                   "AssociativeArrayType", "UnpackedUnionType"):
+            return None
+        if value is None or not _case_source_expression_ok(value, packed_members=True):
+            return None
+        converted = convert_expr(sm, value)
+        if (converted is None or converted.get("kind") == "Unsupported"
+                or width_of(converted) != width
+                or not _case_expression_ok(converted)):
+            return None
+        init = squash2_wrap(converted, width) if two_state else converted
+        cells.append((name, width, init, field.type))
+    return cells
+
+
 def _unpacked_struct_decls(sm, symbol):
     """Flatten a top-level untagged unpacked struct with integral fields."""
     try:
@@ -1221,6 +1270,21 @@ def _unpacked_struct_decls(sm, symbol):
         if not fields:
             return None
         initializer = getattr(symbol, "initializer", None)
+
+        if any(type(field.type.canonicalType).__name__ == "UnpackedStructType"
+               for field in fields):
+            if initializer is None:
+                cells = _unpacked_struct_field_cells(
+                    _storage_name(symbol), aggregate, sym_span(sm, symbol))
+            else:
+                cells = _unpacked_struct_initializer_cells(
+                    sm, _storage_name(symbol), aggregate, initializer)
+            if cells is None:
+                return None
+            return [signed_metadata({
+                "kind": "Var", "span": sym_span(sm, symbol), "name": name,
+                "width": width, "init": init,
+            }, field_type) for name, width, init, field_type in cells]
 
         # A shallow struct has no aggregate slot in the legacy state.  Keep
         # the initializer at the field boundary and lower each selected
@@ -1267,19 +1331,6 @@ def _unpacked_struct_decls(sm, symbol):
                 # makes x/z-to-zero conversion explicit for bit fields.
                 converted_values.append((field, converted))
             field_values = converted_values
-        if any(type(field.type.canonicalType).__name__ == "UnpackedStructType"
-               for field in fields):
-            if field_values is not None:
-                return None
-            cells = _unpacked_struct_field_cells(
-                _storage_name(symbol), aggregate, sym_span(sm, symbol))
-            if cells is None:
-                return None
-            return [signed_metadata({
-                "kind": "Var", "span": span, "name": name,
-                "width": width, "init": init,
-            }, field_type) for name, width, init, field_type in cells
-                    for span in (sym_span(sm, symbol),)]
         decls = []
         for field in fields:
             width, two_state, reason = type_width_2s(field.type)

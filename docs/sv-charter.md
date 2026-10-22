@@ -170,6 +170,19 @@ partial files **17,545 → 17,542**; `VariableSymbol:2state` falls **4,952 →
 4,135**. The differential matrix adds one matching row with no disagreements;
 grammar coverage remains **199 witnesses, 67 MATCH, and 132 REFUSE**.
 
+## Nested unpacked-struct initializers — 2026-10-23
+
+Complete assignment patterns for unpacked struct trees now flatten recursively
+into leaf cells. Positional, keyed, and default values are converted at each
+leaf width with ordinary two-state squashing; partial, effectful, nonintegral,
+and aggregate-array forms remain loud. The `nested_struct_initializers` fixture
+is the differential witness.
+
+The available 22,035-file snapshot moves clean files **4,427 → 4,429** and
+partial files **17,542 → 17,540**; `VariableSymbol:2state` falls **4,135 →
+4,133**. The differential matrix adds one matching row with no disagreements;
+grammar coverage remains **199 witnesses, 67 MATCH, and 132 REFUSE**.
+
 **Proof inventory, with comments excluded.** There are **98 named
 theorems and 10 anonymous examples** in `LeanModels/Sv`, and **121
 theorems and 6 examples** in the SV example directories: **235 actual

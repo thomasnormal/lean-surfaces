@@ -242,6 +242,16 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertTrue(any(item.get("kind") == "Unsupported"
                             for item in self._walk(envelope)))
 
+    def test_nested_struct_initializers_flatten_leaf_cells(self):
+        envelope = self.extract(
+            "module top; typedef struct { int A; struct { int B, C; } BC1, BC2; } T; "
+            "T value = '{default:10}; initial begin if (value.BC1.B == 10) "
+            "$display(\"PASS\"); end endmodule")
+        decls = envelope["design"]["modules"][0]["decls"]
+        self.assertEqual([d["name"] for d in decls], [
+            "value.A", "value.BC1.B", "value.BC1.C", "value.BC2.B", "value.BC2.C"])
+        self.assertFalse(any(d.get("kind") == "Unsupported" for d in decls))
+
     @staticmethod
     def _walk(value):
         if isinstance(value, dict):

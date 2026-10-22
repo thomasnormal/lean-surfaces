@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-22
 
-The chapter-scoped rerun covered **22,035** paths: **4,427 clean**,
-**17,542 partial**, **66 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,035** paths: **4,429 clean**,
+**17,540 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`VariableSymbol:2state` (4,135), `AssignmentExpression:target` (3,913),
+`VariableSymbol:2state` (4,133), `AssignmentExpression:target` (3,913),
 `ExpressionStatement:CallExpression` (3,784), `CallExpression` (3,290),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,481), `ConcurrentAssertionStatement`
@@ -198,6 +198,20 @@ The `string_declaration` differential row covers both scopes.
 On the available 22,035-file snapshot, clean files rise **4,424 → 4,427** and
 partial files fall **17,545 → 17,542**; `VariableSymbol:2state` falls
 **4,952 → 4,135**. The differential matrix is **26 rows, 22 matches, 0
+disagreements, and 4 recorded refusals**; grammar coverage remains **199
+witnesses, 67 MATCH, and 132 REFUSE**.
+
+## Nested unpacked-struct initializers — 2026-10-23
+
+Complete assignment patterns for unpacked struct trees now flatten recursively
+into leaf cells. Positional, keyed, and default values are converted at each
+leaf width with ordinary two-state squashing; partial, effectful, nonintegral,
+and aggregate-array forms remain loud. The `nested_struct_initializers` row
+covers nested defaults and keyed fields.
+
+On the available 22,035-file snapshot, clean files rise **4,427 → 4,429** and
+partial files fall **17,542 → 17,540**; `VariableSymbol:2state` falls
+**4,135 → 4,133**. The differential matrix is **27 rows, 23 matches, 0
 disagreements, and 4 recorded refusals**; grammar coverage remains **199
 witnesses, 67 MATCH, and 132 REFUSE**.
 

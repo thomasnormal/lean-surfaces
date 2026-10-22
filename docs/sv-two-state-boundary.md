@@ -86,6 +86,12 @@ string reads, writes, concatenation, and formatting remain unsupported because
 the representation has no string value. The `string_decl` fixture covers both
 scopes.
 
+Complete assignment patterns for unpacked struct trees now flatten recursively
+into leaf cells. Positional, keyed, and default values preserve each leaf's
+width and two-state squash; partial, effectful, nonintegral, and aggregate
+array forms remain unsupported. The `nested_struct_initializers` fixture
+covers this initializer slice.
+
 The public representation has no aggregate heap, queue, object, string, real,
 handle, or event scheduler. The symbolic `PDecl`/`PType` representation also
 does not carry a two-state bit, and symbolic `Squash2` is intentionally loud.

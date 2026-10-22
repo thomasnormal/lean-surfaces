@@ -275,6 +275,13 @@ envelope does not carry portable diagnostic text, status, source-location
 footer or coverage-observation state. Repricing details are in
 `extractors/sv/immediate_assert_error_reprice.py`.
 
+Qualified priority `if` statements remain explicit
+`ConditionalStatement:Priority` unsupported nodes. The ordinary conditional
+lowering can preserve first-match selection but has no listed-order priority
+status, no-match diagnostic channel or retained check state for a waiting
+body. See [the priority-if boundary](sv-priority-if.md) and
+`extractors/sv/priority_if_reprice.py`.
+
 Qualified priority case statements remain explicit
 `CaseStatement:Priority` unsupported nodes. The ordinary case lowering can
 preserve first-match selection but has no priority status or no-match

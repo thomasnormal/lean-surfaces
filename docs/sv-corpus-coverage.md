@@ -570,6 +570,19 @@ diagnostic channel, so no qualifier is erased and no arm is selected. See
 [the priority-case boundary](sv-priority-cases.md) and
 `extractors/sv/priority_case_reprice.py` for the reproducible scan.
 
+## Priority-if statements — 2026-10-22
+
+`ConditionalStatement:Priority` remains the listed-order first-match plus
+no-match diagnostic boundary. The fresh **22,044**-path census records it in
+**9** files, all priority-if-only. Repricing finds **9** spans: **6** explicit
+`else` fallbacks, **2** no-match paths without a final `else`, **4**
+potentially multiple-true chains, **2** indexed selects, **2** `always_comb`
+contexts, one explicit no-match violation and one invalid qualifier after
+`else` (features overlap). The ordinary conditional chain lacks priority
+status and a no-match diagnostic channel, so no qualifier is erased and no
+branch is selected. See [the priority-if boundary](sv-priority-if.md) and
+`extractors/sv/priority_if_reprice.py` for the reproducible scan.
+
 ## Randcase statements — 2026-10-22
 
 `RandCaseStatement` remains the weighted-random branch boundary. The fresh

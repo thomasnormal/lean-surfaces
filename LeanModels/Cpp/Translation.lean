@@ -147,6 +147,9 @@ def admitFriendTemplateDeclaration (artifact : Artifact) (path : List Nat) :
 def admitTemplateParamObjectDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "TemplateParamObjectDecl" "template-param-object"
 
+def admitImplicitConceptSpecializationDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "ImplicitConceptSpecializationDecl" "implicit-concept-specialization"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

@@ -3888,6 +3888,19 @@ treated as an ordinary wire or variable and no second scheduler is added. See
 [the boundary and repricing](sv-trireg.md) and the read-only instrument
 `extractors/sv/trireg_reprice.py`.
 
+### `tri0` implicit pull nets — 2026-10-22
+
+`NetSymbol:Tri0` remains the implicit-driver boundary. The fresh 22,043-path
+census records it in 22 files: 11 are `Tri0`-only and 11 co-occur with
+another wall. The sole files contain 11 declarations: all have an implicit
+pull-0, eight observe an undriven net, three have a continuous driver, one
+uses explicit driver strength, one tests a strong-driver override and one
+tests an `x` driver (features overlap). The envelope has no implicit pull
+driver, strength ordering or resolved four-state driver set, so no `tri0` is
+reduced to a constant or ordinary wire and no second scheduler is added. See
+[the boundary and repricing](sv-tri0.md) and the read-only instrument
+`extractors/sv/net_pull_reprice.py`.
+
 ### Concurrent assertions — 2026-10-21
 
 Concurrent assertion repricing measures `ConcurrentAssertionStatement` in

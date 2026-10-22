@@ -691,6 +691,18 @@ envelope has no charge state, driver-release transition or decay publication,
 so `trireg` is not reduced to a wire or variable. See [the `trireg` boundary](sv-trireg.md)
 and `extractors/sv/trireg_reprice.py` for the reproducible scan.
 
+## `tri0` implicit pull nets — 2026-10-22
+
+`NetSymbol:Tri0` remains the implicit-driver boundary. The fresh **22,043**-
+path census records it in **22** files: **11** are `Tri0`-only and **11**
+co-occur with another wall. Repricing the sole files finds **11** declarations:
+all carry an implicit pull-0, **8** observe an undriven net, **3** have a
+continuous driver, **1** uses explicit driver strength, **1** tests a strong
+driver override and **1** tests an `x` driver (features overlap). The envelope
+has no implicit pull driver or strength-resolved driver set, so `tri0` is not
+reduced to a constant or ordinary wire. See [the `tri0` boundary](sv-tri0.md)
+and `extractors/sv/net_pull_reprice.py` for the reproducible scan.
+
 ## Continuous-assignment delays — 2026-10-22
 
 `ContinuousAssignSymbol:delay` remains the delayed continuous-driver boundary.

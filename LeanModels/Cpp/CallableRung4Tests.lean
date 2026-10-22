@@ -117,12 +117,40 @@ def callableBreakWitness : Bool :=
   | .ok (.ok value) => value == signed 3
   | _ => false
 
+def continueFunction : CallableFunction := {
+  switchFunction with
+  body := .block (.sequence
+    (.forLoop
+      (.assign parameter {expression := .integer 0, sourceType := intType, type := intType})
+      {expression := .binary "<"
+        {expression := .parameter parameter, sourceType := intType, type := intType}
+        {expression := .integer 3, sourceType := intType, type := intType},
+        sourceType := intType, type := .builtin .boolean}
+      (.expression {
+        expression := .increment "++" false parameter,
+        sourceType := intType,
+        type := intType})
+      (.sequence
+        (.compoundAssign "+=" parameter
+          {expression := .integer 1, sourceType := intType, type := intType})
+        (.sequence .continue_
+          (.compoundAssign "+=" parameter
+            {expression := .integer 100, sourceType := intType, type := intType}))))
+    (.return_ {expression := .parameter parameter, sourceType := intType, type := intType}))
+}
+
+def callableContinueWitness : Bool :=
+  match evaluateCallable 64 .lp64 continueFunction [signed 9] with
+  | .ok (.ok value) => value == signed 4
+  | _ => false
+
 #guard callableSwitchWitness
 #guard callableIfWitness
 #guard callableWhileWitness
 #guard callableDoWitness
 #guard callableForWitness
 #guard callableBreakWitness
+#guard callableContinueWitness
 
 theorem callable_switch_witness : callableSwitchWitness = true := by
   rfl
@@ -142,11 +170,15 @@ theorem callable_for_witness : callableForWitness = true := by
 theorem callable_break_witness : callableBreakWitness = true := by
   rfl
 
+theorem callable_continue_witness : callableContinueWitness = true := by
+  rfl
+
 #print axioms callable_switch_witness
 #print axioms callable_if_witness
 #print axioms callable_while_witness
 #print axioms callable_do_witness
 #print axioms callable_for_witness
 #print axioms callable_break_witness
+#print axioms callable_continue_witness
 
 end LeanModels.Cpp.CallableRung4Tests

@@ -8,13 +8,14 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 5 | 0 | 0 | 0 | 0 | 5 |
+| 6 | 0 | 0 | 0 | 0 | 6 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
 | case | rung | Lean | native | verdict | detail |
 |---|---:|---|---|---|---|
 | `translation.empty-root` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
+| `object.automatic-lifetime` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `tinyxml2.IsUTF8Continuation.negative` | 2 | `ok 1` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `tinyxml2.IsUTF8Continuation.minimum` | 2 | `ok 1` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `tinyxml2.IsUTF8Continuation.nonnegative` | 2 | `ok 0` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |

@@ -46,7 +46,7 @@ PINNED_CLANG = "21.1.8"
 
 RUNG_STATUS = [
     (0, "§5, §6.2–6.6", "executable", "A bounded TranslationUnitDecl root is admitted; declaration and body execution remains refused."),
-    (1, "§6.7, §6.9", "specified", "Object-model and lifetime contracts exist; integrated storage execution is not admitted."),
+    (1, "§6.7, §6.9", "executable", "Automatic storage reservation and lifetime start/end execute for admitted integral object shapes; unsupported storage remains loud."),
     (2, "§6.8", "executable", "LP64 scalar/integral values and conversions execute definitionally."),
     (3, "§7", "executable", "Bounded integral expressions and selected callable bodies execute; general overloads do not."),
     (4, "§8", "executable", "Selected callable blocks, branches, loops, switch and transfers execute."),
@@ -129,6 +129,9 @@ def render_lean(cases):
         "def cppRender : Option Int → String",
         "  | none => \"refuse\"",
         "  | some value => s!\"ok {value}\"",
+        "def cppRenderBool : Bool → String",
+        "  | true => \"ok\"",
+        "  | false => \"refuse\"",
         "def cppRenderUnit : Except String Unit → String",
         "  | .ok _ => \"ok\"",
         "  | .error message => \"refuse \" ++ message",
@@ -137,7 +140,8 @@ def render_lean(cases):
     lines += ["open %s" % namespace for namespace in namespaces]
     for row in cases:
         expression = row["lean_expression"]
-        render = "cppRenderUnit" if row.get("kind") == "translation" else "cppRender"
+        render = ("cppRenderUnit" if row.get("kind") == "translation" else
+                  "cppRenderBool" if row.get("kind") == "lifetime" else "cppRender")
         lines.append("#eval IO.println (\"CPPCASE|%s|\" ++ %s (%s))" %
                      (row["id"], render, expression))
     return "\n".join(lines) + "\n"
@@ -181,6 +185,7 @@ def native_rows(cases, clang):
     if clang is None:
         return {row["id"]: ("ORACLE", "pinned Clang/LLVM %s is unavailable" % PINNED_CLANG) for row in cases}
     translation = [row for row in cases if row.get("kind") == "translation"]
+    lifetime = [row for row in cases if row.get("kind") == "lifetime"]
     callable_cases = [row for row in cases if row.get("kind", "callable") == "callable"]
     result = {}
     if translation:
@@ -193,6 +198,27 @@ def native_rows(cases, clang):
                     result[row["id"]] = ("NATIVE", "ok")
                 else:
                     result[row["id"]] = ("ORACLE", "translation compile failed: %s" % (check.stdout + check.stderr)[-1200:])
+    if lifetime:
+        with tempfile.TemporaryDirectory(prefix="cpp-diff-lifetime-") as directory:
+            for row in lifetime:
+                subject = pathlib.Path(directory) / "subject.cpp"
+                wrapper = pathlib.Path(directory) / "caller.cpp"
+                subject.write_text(row["cpp_source"] + "\n", encoding="utf-8")
+                wrapper.write_text('#include "subject.cpp"\n#include <iostream>\nint main() { (void)%s; std::cout << "ok\\n"; }\n' % row["cpp_expression"], encoding="utf-8")
+                binary = pathlib.Path(directory) / "caller"
+                check = run([clang, "-std=c++23", "-pedantic-errors", str(wrapper), "-o", str(binary)], timeout=60)
+                if check.returncode != 0:
+                    result[row["id"]] = ("ORACLE", "lifetime witness compile failed: %s" % (check.stdout + check.stderr)[-1200:])
+                    continue
+                try:
+                    execute = run([str(binary)], timeout=30)
+                except subprocess.TimeoutExpired:
+                    result[row["id"]] = ("TIMEOUT", "lifetime witness exceeded 30 seconds")
+                    continue
+                if execute.returncode == 0 and execute.stdout.strip() == "ok":
+                    result[row["id"]] = ("NATIVE", "ok")
+                else:
+                    result[row["id"]] = ("ORACLE", "lifetime witness did not complete")
     if not callable_cases:
         return result
     corpus = os.environ.get("LEANCPP_TINYXML2_DIR")
@@ -251,7 +277,7 @@ def differential(cases, model, native):
         elif native_status == "NATIVE":
             if row.get("expect") != "match":
                 verdict, detail = "DIVERGE", "native call completed for a recorded refusal"
-            elif row.get("kind") == "translation" and model_value == native_value:
+            elif row.get("kind") in ("translation", "lifetime") and model_value == native_value:
                 verdict, detail = "MATCH", "Lean admission and Clang compilation agree"
             elif row.get("kind", "callable") == "callable" and model_value == "ok " + native_value:
                 verdict, detail = "MATCH", "Lean and Clang agree"

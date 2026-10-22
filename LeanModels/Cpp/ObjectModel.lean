@@ -69,6 +69,15 @@ def beginLifetime (store : ObjectStore) (object : ObjectId) : Except ObjectError
       | .ended => .error .lifetimeEnded
       | .released => .error .storageReleased
 
+/-- Rung-1 automatic declaration boundary: reserve automatic storage and start
+    the object's lifetime, leaving initialization as a separate operation. -/
+def declareAutomatic (store : ObjectStore) (type : CppTypeEvidence) :
+    ObjectStore × ObjectId :=
+  let (reserved, object) := store.allocate .automatic type
+  match reserved.beginLifetime object with
+  | .ok live => (live, object)
+  | .error _ => (reserved, object)
+
 def initializeObject (store : ObjectStore) (object : ObjectId) : Except ObjectError ObjectStore :=
   match store.object? object with
   | none => .error (.missing object)

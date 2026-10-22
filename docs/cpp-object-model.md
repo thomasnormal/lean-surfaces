@@ -19,7 +19,10 @@ structured `CppTypeEvidence`, and one of these phases:
 - `ended`: the lifetime has ended but storage is retained as a tombstone; or
 - `released`: dynamic storage has been released.
 
-`allocate` creates storage, `beginLifetime` records lifetime start,
+`allocate` creates storage, while `declareAutomatic` is the rung-1 declaration
+boundary that reserves automatic storage and starts the lifetime, leaving the
+object `aliveUninitialized` until a separate initialization operation.
+`beginLifetime` records lifetime start for other admitted transitions,
 `initializeObject` marks value availability, `endLifetime` ends it, and
 `releaseStorage` releases only dynamic storage after the lifetime has ended.
 `readType` is the single access gate: it succeeds only for an initialized live

@@ -46,6 +46,18 @@
     "rung": 1
   },
   {
+    "id": "object.dynamic-storage",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.ObjectModelRung1Tests",
+    "lean_namespace": "LeanModels.Cpp.ObjectModelRung1Tests",
+    "lean_expression": "dynamicStorageLifecycle",
+    "cpp_source": "bool dynamic_witness() { int* value = new int(static_cast<short>(7)); bool ok = *value == 7; delete value; return ok; }",
+    "cpp_expression": "dynamic_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

@@ -62,9 +62,31 @@ def automaticAssignmentLifecycle : Bool :=
               | _, _ => false
           | _, _ => false
 
+def dynamicStorageLifecycle : Bool :=
+  match IntegralObjectStore.empty .lp64 with
+  | .error _ => false
+  | .ok store =>
+      match store.allocate .dynamic (.builtin .int) with
+      | .error _ => false
+      | .ok (allocated, object) =>
+          match allocated.initializeConverted object (.builtin .short) ⟨.signed 16, 7⟩ with
+          | .error _ => false
+          | .ok initialized =>
+              match initialized.borrow object, initialized.endLifetime object with
+              | .ok access, .ok ended =>
+                  match initialized.read access, ended.releaseStorage object with
+                  | .ok value, .ok released =>
+                      value.value == 7 &&
+                        (released.read access matches .error (.lifetime .storageReleased)) &&
+                        (released.assign access ⟨.signed 32, 9⟩
+                          matches .error (.lifetime .storageReleased))
+                  | _, _ => false
+              | _, _ => false
+
 #guard automaticDeclarationLifecycle
 #guard automaticInitializedDeclaration
 #guard automaticAssignmentLifecycle
+#guard dynamicStorageLifecycle
 
 theorem automatic_declaration_lifecycle : automaticDeclarationLifecycle = true := by
   rfl
@@ -75,8 +97,12 @@ theorem automatic_initialized_declaration : automaticInitializedDeclaration = tr
 theorem automatic_assignment_lifecycle : automaticAssignmentLifecycle = true := by
   rfl
 
+theorem dynamic_storage_lifecycle : dynamicStorageLifecycle = true := by
+  rfl
+
 #print axioms automatic_declaration_lifecycle
 #print axioms automatic_initialized_declaration
 #print axioms automatic_assignment_lifecycle
+#print axioms dynamic_storage_lifecycle
 
 end LeanModels.Cpp.ObjectModelRung1Tests

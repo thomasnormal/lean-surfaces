@@ -121,6 +121,18 @@ partial files **17,553 → 17,550**; `VariableSymbol:2state` falls **5,521 →
 5,276**. The differential matrix adds one matching row with no disagreements;
 grammar coverage is **193 witnesses, 61 MATCH, and 132 REFUSE**.
 
+## Inert module real declarations — 2026-10-22
+
+A module-scope `real` or `shortreal` declaration with no use in the time-zero
+self-check path is now admitted as inert metadata. It does not enter the flat
+vector state; floating-point reads, writes, arithmetic, and formatting remain
+loud. The `real_declaration` fixture is the differential witness.
+
+The available 22,035-file snapshot moves clean files **4,419 → 4,421** and
+partial files **17,550 → 17,548**; `VariableSymbol:2state` falls **5,276 →
+4,990**. The differential matrix adds one matching row with no disagreements;
+grammar coverage is **194 witnesses, 62 MATCH, and 132 REFUSE**.
+
 **Proof inventory, with comments excluded.** There are **98 named
 theorems and 10 anonymous examples** in `LeanModels/Sv`, and **121
 theorems and 6 examples** in the SV example directories: **235 actual

@@ -178,6 +178,21 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertTrue(any(item.get("kind") == "Unsupported"
                             for item in module["processes"][0]["body"]["stmts"]))
 
+    def test_module_real_declaration_is_inert_on_time_zero_path(self):
+        envelope = self.extract(
+            "module top; real rr; initial begin $display(\"PASS\"); "
+            "$finish; end endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertEqual(module["decls"], [])
+        self.assertEqual(module["others"], [])
+
+    def test_module_real_read_remains_loud(self):
+        envelope = self.extract(
+            "module top; real rr; initial begin if (rr == 0) $display(\"PASS\"); "
+            "end endmodule")
+        self.assertTrue(any(item.get("kind") == "Unsupported"
+                            for item in self._walk(envelope)))
+
     @staticmethod
     def _walk(value):
         if isinstance(value, dict):

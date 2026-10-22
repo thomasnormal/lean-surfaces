@@ -367,6 +367,17 @@ def is_module_event_decl(symbol):
         return False
 
 
+def is_module_floating_decl(symbol):
+    """Whether a module-scope real/shortreal declaration is inert metadata."""
+    if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
+        return False
+    try:
+        return (not symbol.parentScope.isProceduralContext
+                and type(symbol.type.canonicalType).__name__ == "FloatingType")
+    except Exception:
+        return False
+
+
 def is_flat_unpacked_struct_alias(symbol):
     """Whether a typedef names an integral-only unpacked struct tree.
 
@@ -6490,7 +6501,7 @@ def convert_module(sm, inst):
                 if not route and m.name in port_names:
                     continue
                 if k == "Variable":
-                    if is_module_event_decl(m):
+                    if is_module_event_decl(m) or is_module_floating_decl(m):
                         continue
                     converted = convert_var(sm, m)
                     declarations = converted if isinstance(converted, list) else [converted]
@@ -6750,7 +6761,8 @@ def _declaration_only(member):
             or is_integral_type_alias(member)
             or is_flat_unpacked_struct_alias(member)
             or is_bound_enum_member(member)
-            or is_module_event_decl(member))
+            or is_module_event_decl(member)
+            or is_module_floating_decl(member))
 
 
 def _let_compilation_barriers(sm, comp):

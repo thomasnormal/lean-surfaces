@@ -10,8 +10,8 @@ The extractor and focused tests cover both declarations and selected reads and
 writes, including signed forms.
 
 The current `VariableSymbol:2state` census tag names the shapes outside that
-value tier. The 2026-10-22 corpus snapshot has 5,521 files containing the tag;
-it is the sole refusal in 20 files. The previous snapshot had 5,532 files and
+value tier. The 2026-10-22 corpus snapshot has 4,990 files containing the tag;
+it is the sole refusal in 18 files. The previous snapshot had 5,521 files and
 28 sole refusals. Its current frequent companions are assignment targets
 (3,913 files), statement calls (3,784), expression calls (3,290),
 `NamedValueExpression:2state` (1,481), classes (1,327), member access (1,023),
@@ -61,6 +61,12 @@ time-zero self-check path when no event operation uses it. It is omitted from
 the flat vector state; waits, triggers, and event-driven processes remain
 unsupported because they require the scheduler's event object and queue.
 `event_decl` exercises this declaration-only slice.
+
+A module-scope `real` or `shortreal` declaration is likewise admitted as inert
+metadata when no procedural operation uses it. It is omitted from the flat
+vector state; floating-point reads, writes, arithmetic, and formatting remain
+unsupported because the representation has no floating-point value. The
+`real_decl` fixture covers this declaration-only slice.
 
 The public representation has no aggregate heap, queue, object, string, real,
 handle, or event scheduler. The symbolic `PDecl`/`PType` representation also

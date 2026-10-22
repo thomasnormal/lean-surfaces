@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-22
 
-The chapter-scoped rerun covered **22,035** paths: **4,416 clean**,
-**17,553 partial**, **66 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,035** paths: **4,421 clean**,
+**17,548 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`VariableSymbol:2state` (5,521), `AssignmentExpression:target` (3,913),
+`VariableSymbol:2state` (4,990), `AssignmentExpression:target` (3,913),
 `ExpressionStatement:CallExpression` (3,784), `CallExpression` (3,290),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,481), `ConcurrentAssertionStatement`
@@ -146,6 +146,20 @@ partial files fall **17,553 → 17,550**; `VariableSymbol:2state` falls
 **5,521 → 5,276**. The differential matrix is **22 rows, 18 matches, 0
 disagreements, and 4 recorded refusals**; grammar coverage is **193 witnesses,
 61 MATCH, and 132 REFUSE**.
+
+## Inert module real declarations — 2026-10-22
+
+A module-scope `real` or `shortreal` declaration with no use in the time-zero
+self-check path is now admitted as inert metadata. It does not enter the flat
+vector state; floating-point reads, writes, arithmetic, and formatting remain
+loud. The `real_declaration` differential row prints `PASS` and checks the
+declaration-only shape.
+
+On the available 22,035-file snapshot, clean files rise **4,419 → 4,421** and
+partial files fall **17,550 → 17,548**; `VariableSymbol:2state` falls
+**5,276 → 4,990**. The differential matrix is **23 rows, 19 matches, 0
+disagreements, and 4 recorded refusals**; grammar coverage is **194 witnesses,
+62 MATCH, and 132 REFUSE**.
 
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 

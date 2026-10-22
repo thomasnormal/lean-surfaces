@@ -94,6 +94,18 @@
     "rung": 1
   },
   {
+    "id": "scalar.integral-conversion",
+    "kind": "scalar",
+    "corpus": "rung-2 witness",
+    "lean_module": "LeanModels.Cpp.ScalarRung2Tests",
+    "lean_namespace": "LeanModels.Cpp.ScalarRung2Tests",
+    "lean_expression": "scalarConversionWitness",
+    "cpp_source": "bool scalar_witness() { short value = -1; unsigned char narrowed = static_cast<unsigned char>(value); return narrowed == 255 && sizeof(narrowed) == 1; }",
+    "cpp_expression": "scalar_witness()",
+    "expect": "match",
+    "rung": 2
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

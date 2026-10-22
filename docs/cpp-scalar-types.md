@@ -28,4 +28,6 @@ lake build LeanModels.Cpp.ScalarTypeTests
 
 The guards cover type-category predicates, qualification changes, cv-erased
 identity, profile validation, width resolution, `void` refusal and distinct
-equal-width integer identities.
+equal-width integer identities. `ScalarRung2Tests.lean` adds a kernel-reduced
+LP64 witness for a signed-to-unsigned narrowing conversion, integral promotion,
+usual arithmetic type selection, and the corresponding one-byte width fact.

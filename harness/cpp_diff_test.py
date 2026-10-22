@@ -141,7 +141,7 @@ def render_lean(cases):
     for row in cases:
         expression = row["lean_expression"]
         render = ("cppRenderUnit" if row.get("kind") == "translation" else
-                  "cppRenderBool" if row.get("kind") == "lifetime" else "cppRender")
+                  "cppRenderBool" if row.get("kind") in ("lifetime", "scalar") else "cppRender")
         lines.append("#eval IO.println (\"CPPCASE|%s|\" ++ %s (%s))" %
                      (row["id"], render, expression))
     return "\n".join(lines) + "\n"
@@ -185,7 +185,7 @@ def native_rows(cases, clang):
     if clang is None:
         return {row["id"]: ("ORACLE", "pinned Clang/LLVM %s is unavailable" % PINNED_CLANG) for row in cases}
     translation = [row for row in cases if row.get("kind") == "translation"]
-    lifetime = [row for row in cases if row.get("kind") == "lifetime"]
+    checks = [row for row in cases if row.get("kind") in ("lifetime", "scalar")]
     callable_cases = [row for row in cases if row.get("kind", "callable") == "callable"]
     result = {}
     if translation:
@@ -198,9 +198,9 @@ def native_rows(cases, clang):
                     result[row["id"]] = ("NATIVE", "ok")
                 else:
                     result[row["id"]] = ("ORACLE", "translation compile failed: %s" % (check.stdout + check.stderr)[-1200:])
-    if lifetime:
-        with tempfile.TemporaryDirectory(prefix="cpp-diff-lifetime-") as directory:
-            for row in lifetime:
+    if checks:
+        with tempfile.TemporaryDirectory(prefix="cpp-diff-check-") as directory:
+            for row in checks:
                 subject = pathlib.Path(directory) / "subject.cpp"
                 wrapper = pathlib.Path(directory) / "caller.cpp"
                 subject.write_text(row["cpp_source"] + "\n", encoding="utf-8")
@@ -208,17 +208,17 @@ def native_rows(cases, clang):
                 binary = pathlib.Path(directory) / "caller"
                 check = run([clang, "-std=c++23", "-pedantic-errors", str(wrapper), "-o", str(binary)], timeout=60)
                 if check.returncode != 0:
-                    result[row["id"]] = ("ORACLE", "lifetime witness compile failed: %s" % (check.stdout + check.stderr)[-1200:])
+                    result[row["id"]] = ("ORACLE", "check witness compile failed: %s" % (check.stdout + check.stderr)[-1200:])
                     continue
                 try:
                     execute = run([str(binary)], timeout=30)
                 except subprocess.TimeoutExpired:
-                    result[row["id"]] = ("TIMEOUT", "lifetime witness exceeded 30 seconds")
+                    result[row["id"]] = ("TIMEOUT", "check witness exceeded 30 seconds")
                     continue
                 if execute.returncode == 0 and execute.stdout.strip() == "ok":
                     result[row["id"]] = ("NATIVE", "ok")
                 else:
-                    result[row["id"]] = ("ORACLE", "lifetime witness did not complete")
+                    result[row["id"]] = ("ORACLE", "check witness did not complete")
     if not callable_cases:
         return result
     corpus = os.environ.get("LEANCPP_TINYXML2_DIR")
@@ -277,7 +277,7 @@ def differential(cases, model, native):
         elif native_status == "NATIVE":
             if row.get("expect") != "match":
                 verdict, detail = "DIVERGE", "native call completed for a recorded refusal"
-            elif row.get("kind") in ("translation", "lifetime") and model_value == native_value:
+            elif row.get("kind") in ("translation", "lifetime", "scalar") and model_value == native_value:
                 verdict, detail = "MATCH", "Lean admission and Clang compilation agree"
             elif row.get("kind", "callable") == "callable" and model_value == "ok " + native_value:
                 verdict, detail = "MATCH", "Lean and Clang agree"
@@ -285,7 +285,7 @@ def differential(cases, model, native):
                 verdict, detail = "DIVERGE", "model=%s native=%s" % (model_value, native_value)
         else:
             verdict, detail = "DIVERGE", "unknown native status %s" % native_status
-        rows.append({"id": row["id"], "corpus": row["corpus"], "rung": row["rung"],
+        rows.append({"id": row["id"], "corpus": row["corpus"], "kind": row.get("kind", "callable"), "rung": row["rung"],
                      "model": model_value, "native": native_status,
                      "verdict": verdict, "detail": detail})
     return rows
@@ -395,8 +395,9 @@ def render_rung_page(diff_rows, grammar_rows_value):
                   diff_count.get("ORACLE", 0)))
     translation_count = sum(1 for row in diff_rows if row["rung"] == 0)
     lifetime_count = sum(1 for row in diff_rows if row["rung"] == 1)
-    callable_count = len(diff_rows) - translation_count - lifetime_count
-    lines += ["", "The differential rows include %d compile-only translation witness, %d rung-1 lifetime witnesses, and %d callable rows from `Examples/cpp/tinyxml2/IsUTF8Continuation.lean`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls." % (translation_count, lifetime_count, callable_count), ""]
+    scalar_count = sum(1 for row in diff_rows if row["kind"] == "scalar")
+    callable_count = len(diff_rows) - translation_count - lifetime_count - scalar_count
+    lines += ["", "The differential rows include %d compile-only translation witness, %d rung-1 lifetime witnesses, %d rung-2 scalar checks, and %d callable rows from `Examples/cpp/tinyxml2/IsUTF8Continuation.lean`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls." % (translation_count, lifetime_count, scalar_count, callable_count), ""]
     return "\n".join(lines)
 
 

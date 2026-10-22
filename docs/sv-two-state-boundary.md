@@ -10,12 +10,12 @@ The extractor and focused tests cover both declarations and selected reads and
 writes, including signed forms.
 
 The current `VariableSymbol:2state` census tag names the shapes outside that
-value tier. The 2026-10-22 corpus snapshot has 5,556 files containing the tag;
-it is the sole refusal in 20 files. The previous snapshot had 5,650 files and
+value tier. The 2026-10-22 corpus snapshot has 5,521 files containing the tag;
+it is the sole refusal in 20 files. The previous snapshot had 5,532 files and
 28 sole refusals. Its current frequent companions are assignment targets
-(3,176 files), statement calls (2,234), expression calls (2,103),
-`NamedValueExpression:2state` (1,409), classes (1,147), member access (1,120),
-real literals (639), and element-select source types (536). The remaining
+(3,913 files), statement calls (3,784), expression calls (3,290),
+`NamedValueExpression:2state` (1,481), classes (1,327), member access (1,023),
+real literals (705), and element-select source types (591). The remaining
 sole-tag examples include
 dynamic and queue arrays, events, real and string variables, handles, and
 other declaration forms with no common bit-vector meaning.
@@ -31,15 +31,17 @@ nonintegral leaf remain loud. A multidimensional packed integral leaf is kept
 as one vector cell, preserving packed bit order; the
 `fixed_array_packed_leaf_2state` fixture exercises that form.
 
-The same flattening applies to a shallow untagged unpacked struct with integral
-scalar or packed fields: each direct field is an independent vector cell, so
-field reads, writes, and compound assignments preserve the scalar two-state
-rules. Whole-struct values, nested or nonintegral fields, tagged structs, and
-struct initializers remain outside the representation. Complete positional and
-keyed/default assignment patterns are now lowered field by field, using the
-same width conversion and `Squash2` boundary; partial or effectful patterns
-remain loud. The `unpacked_struct_integral_fields` and
-`unpacked_struct_initializers` fixtures exercise these two field-level forms.
+The same flattening applies to an untagged unpacked struct tree whose leaves
+are integral scalars or packed fields: each leaf is an independent vector cell,
+so field reads, writes, and compound assignments preserve the scalar two-state
+rules. Nested member paths are part of the cell name (`value.inner.flag`).
+Whole-struct values, nonintegral fields, arrays, tagged structs, and struct
+initializers remain outside the representation. Complete positional and
+keyed/default assignment patterns are lowered field by field for the admitted
+non-nested shape, using the same width conversion and `Squash2` boundary;
+partial or effectful patterns remain loud. The
+`unpacked_struct_integral_fields` and `unpacked_struct_initializers` fixtures
+exercise the direct field-level forms.
 
 Finite unpacked-array declaration concatenations receive the same cellwise
 treatment when every operand is a pure constant array, exact typed pattern, or
@@ -47,12 +49,12 @@ integral scalar. The `unpacked_concat_initializer` fixture covers this
 composition; runtime array sources and self-aliasing remain outside the
 representation.
 
-Fixed unpacked arrays of shallow untagged unpacked integral structs are also
+Fixed unpacked arrays of untagged unpacked integral struct trees are also
 flattened by position and field. A declaration such as `item values[0:1]`
-produces cells `values[0].bits`, `values[0].count`, and so on; direct constant
-member access retains the existing field semantics. Aggregate array
-initializers, nested/nonintegral structs, and dynamic selections remain loud.
-The `unpacked_struct_array` fixture covers this leaf composition.
+produces cells `values[0].bits`, `values[0].meta.count`, and so on; direct
+constant member access retains the existing field semantics. Aggregate array
+initializers, nonintegral fields, and dynamic selections remain loud. The
+`unpacked_struct_array` fixture covers this leaf composition.
 
 The public representation has no aggregate heap, queue, object, string, real,
 handle, or event scheduler. The symbolic `PDecl`/`PType` representation also

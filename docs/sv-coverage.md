@@ -245,12 +245,12 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22035 | 4414 | 17555 | 66 |
+| 22035 | 4416 | 17553 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `VariableSymbol:2state` | 5532 |
-| `AssignmentExpression:target` | 3915 |
+| `VariableSymbol:2state` | 5521 |
+| `AssignmentExpression:target` | 3913 |
 | `ExpressionStatement:CallExpression` | 3784 |
 | `CallExpression` | 3290 |
 | `Hierarchy:ports` | 2397 |
@@ -261,7 +261,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 | `ClassType` | 1327 |
 | `Hierarchy:module-kind` | 1246 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1153 |
-| `MemberAccessExpression` | 1037 |
+| `MemberAccessExpression` | 1023 |
 | `ConversionExpression:width` | 778 |
 | `HierarchicalValueExpression` | 748 |
 

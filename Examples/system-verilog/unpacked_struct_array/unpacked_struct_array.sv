@@ -7,15 +7,20 @@
 module top;
   typedef struct {
     bit [3:0] bits;
-    int count;
+    struct {
+      int count;
+      bit valid;
+    } meta;
   } item_t;
   item_t values [0:1];
 
   initial begin
     values[0].bits = 4'ha;
-    values[1].count = 3;
-    if (values[0].bits == 4'ha && values[1].count == 3 &&
-        values[0].count == 0 && values[1].bits == 0)
+    values[1].meta.count = 3;
+    values[1].meta.valid = 1;
+    if (values[0].bits == 4'ha && values[1].meta.count == 3 &&
+        values[1].meta.valid &&
+        values[0].meta.count == 0 && values[1].bits == 0)
       $display("PASS");
     else
       $display("FAIL");

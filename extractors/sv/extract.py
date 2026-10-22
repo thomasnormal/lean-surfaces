@@ -352,11 +352,12 @@ def is_integral_type_alias(symbol):
 
 
 def is_flat_unpacked_struct_alias(symbol):
-    """Whether a typedef names a shallow integral unpacked struct.
+    """Whether a typedef names an integral-only unpacked struct tree.
 
     Such a typedef is metadata for the legacy field-flattening path; it does
-    not allocate an aggregate value by itself. Nested and nonintegral fields
-    remain declaration boundaries until they have their own representation.
+    not allocate an aggregate value by itself. Nested struct fields are
+    admitted recursively; other aggregate fields remain declaration
+    boundaries until they have their own representation.
     """
     if str(symbol.kind) != "SymbolKind.TypeAlias":
         return False
@@ -366,19 +367,29 @@ def is_flat_unpacked_struct_alias(symbol):
             return False
         if getattr(aggregate, "isTagged", False):
             return False
-        fields = list(aggregate)
-        if not fields:
-            return False
-        for field in fields:
-            width, _, reason = type_width_2s(field.type)
-            if width is None or reason is not None:
+        def integral_tree(node, seen):
+            marker = id(node)
+            if marker in seen or type(node).__name__ != "UnpackedStructType":
                 return False
-            if type(field.type.canonicalType).__name__ in (
-                    "FixedSizeUnpackedArrayType", "DynamicArrayType",
-                    "QueueType", "AssociativeArrayType", "UnpackedStructType",
-                    "UnpackedUnionType"):
+            fields = list(node)
+            if not fields:
                 return False
-        return True
+            seen = seen | {marker}
+            for field in fields:
+                leaf = field.type.canonicalType
+                if type(leaf).__name__ == "UnpackedStructType":
+                    if not integral_tree(leaf, seen):
+                        return False
+                    continue
+                width, _, reason = type_width_2s(field.type)
+                if width is None or reason is not None:
+                    return False
+                if type(leaf).__name__ in (
+                        "FixedSizeUnpackedArrayType", "DynamicArrayType",
+                        "QueueType", "AssociativeArrayType", "UnpackedUnionType"):
+                    return False
+            return True
+        return integral_tree(aggregate, set())
     except Exception:
         return False
 def is_bound_enum_member(symbol):
@@ -1049,15 +1060,10 @@ def _unpacked_struct_member(sm, expression):
         if type(expression).__name__ != "MemberAccessExpression":
             return None
         value = expression.value
-        if _storage_expression(value):
-            base_name = _storage_name(value.symbol)
-            aggregate = value.type.canonicalType
-        else:
-            selected = _fixed_array_selection_prefix(value)
-            if selected is None:
-                return None
-            base_name, leaf_type = selected
-            aggregate = leaf_type.canonicalType
+        path = _unpacked_struct_path(value)
+        if path is None:
+            return None
+        base_name, aggregate = path
         if type(aggregate).__name__ != "UnpackedStructType":
             return None
         member = expression.member
@@ -1077,6 +1083,64 @@ def _unpacked_struct_member(sm, expression):
         }
     except Exception:
         return None
+
+
+def _unpacked_struct_path(expression):
+    """Return the flattened name and aggregate type for a struct receiver."""
+    try:
+        if _storage_expression(expression):
+            return _storage_name(expression.symbol), expression.type.canonicalType
+        selected = _fixed_array_selection_prefix(expression)
+        if selected is not None:
+            return selected[0], selected[1].canonicalType
+        if type(expression).__name__ == "MemberAccessExpression":
+            parent = _unpacked_struct_path(expression.value)
+            if parent is None:
+                return None
+            parent_name, parent_type = parent
+            if type(parent_type).__name__ != "UnpackedStructType":
+                return None
+            member = expression.member
+            if member.type.canonicalType is None:
+                return None
+            return f"{parent_name}.{member.name}", member.type.canonicalType
+        return None
+    except Exception:
+        return None
+
+
+def _unpacked_struct_field_cells(base_name, aggregate, span, seen=None):
+    """Flatten an integral-only unpacked-struct tree into vector cells."""
+    if seen is None:
+        seen = set()
+    marker = id(aggregate)
+    if marker in seen or type(aggregate).__name__ != "UnpackedStructType":
+        return None
+    seen = seen | {marker}
+    fields = list(aggregate)
+    if not fields:
+        return None
+    cells = []
+    for field in fields:
+        leaf = field.type.canonicalType
+        if type(leaf).__name__ == "UnpackedStructType":
+            nested = _unpacked_struct_field_cells(
+                f"{base_name}.{field.name}", leaf, span, seen)
+            if nested is None:
+                return None
+            cells.extend(nested)
+            continue
+        width, two_state, reason = type_width_2s(field.type)
+        if width is None or reason is not None:
+            return None
+        if type(leaf).__name__ in ("FixedSizeUnpackedArrayType",
+                                   "DynamicArrayType", "QueueType",
+                                   "AssociativeArrayType", "UnpackedUnionType"):
+            return None
+        init = ({"kind": "Literal", "span": None, "width": width,
+                 "bits": "0" * width} if two_state else None)
+        cells.append((f"{base_name}.{field.name}", width, init, field.type))
+    return cells
 
 
 def _unpacked_struct_decls(sm, symbol):
@@ -1137,6 +1201,19 @@ def _unpacked_struct_decls(sm, symbol):
                 # makes x/z-to-zero conversion explicit for bit fields.
                 converted_values.append((field, converted))
             field_values = converted_values
+        if any(type(field.type.canonicalType).__name__ == "UnpackedStructType"
+               for field in fields):
+            if field_values is not None:
+                return None
+            cells = _unpacked_struct_field_cells(
+                _storage_name(symbol), aggregate, sym_span(sm, symbol))
+            if cells is None:
+                return None
+            return [signed_metadata({
+                "kind": "Var", "span": span, "name": name,
+                "width": width, "init": init,
+            }, field_type) for name, width, init, field_type in cells
+                    for span in (sym_span(sm, symbol),)]
         decls = []
         for field in fields:
             width, two_state, reason = type_width_2s(field.type)
@@ -1145,8 +1222,7 @@ def _unpacked_struct_decls(sm, symbol):
             leaf = field.type.canonicalType
             if type(leaf).__name__ in ("FixedSizeUnpackedArrayType",
                                         "DynamicArrayType", "QueueType",
-                                        "AssociativeArrayType", "UnpackedStructType",
-                                        "UnpackedUnionType"):
+                                        "AssociativeArrayType", "UnpackedUnionType"):
                 return None
             init = None
             if field_values is not None:
@@ -5944,20 +6020,6 @@ def convert_fixed_array_vars(sm, m):
             # admits declarations without an initializer only.
             if getattr(leaf_type, "isTagged", False) or getattr(m, "initializer", None) is not None:
                 return None
-            fields = list(leaf_type)
-            if not fields:
-                return None
-            field_shapes = []
-            for field in fields:
-                width, two, reason = type_width_2s(field.type)
-                if width is None or reason is not None:
-                    return None
-                if type(field.type.canonicalType).__name__ in (
-                        "FixedSizeUnpackedArrayType", "DynamicArrayType",
-                        "QueueType", "AssociativeArrayType",
-                        "UnpackedStructType", "UnpackedUnionType"):
-                    return None
-                field_shapes.append((field, width, two))
             positions = [()]
             for left, right in dimensions:
                 step = 1 if right >= left else -1
@@ -5968,15 +6030,15 @@ def convert_fixed_array_vars(sm, m):
             declarations = []
             for indexes in positions:
                 cell = base + "".join(f"[{position}]" for position in indexes)
-                for field, width, two in field_shapes:
-                    init = ({"kind": "Literal", "span": None,
-                             "width": width, "bits": "0" * width}
-                            if two else None)
+                cells = _unpacked_struct_field_cells(
+                    cell, leaf_type, sym_span(sm, m))
+                if cells is None:
+                    return None
+                for name, width, init, field_type in cells:
                     declarations.append(signed_metadata({
                         "kind": "Var", "span": sym_span(sm, m),
-                        "name": f"{cell}.{field.name}",
-                        "width": width, "init": init,
-                    }, field.type))
+                        "name": name, "width": width, "init": init,
+                    }, field_type))
             return declarations
         if len(dimensions) > 1:
             width, two, reason = type_width_2s(leaf_type)

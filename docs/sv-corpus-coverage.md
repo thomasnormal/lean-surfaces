@@ -27,15 +27,15 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-22
 
-The chapter-scoped rerun covered **22,045** paths: **4,409 clean**,
-**17,570 partial**, **66 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,035** paths: **4,416 clean**,
+**17,553 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`VariableSymbol:2state` (5,556), `AssignmentExpression:target` (3,922),
-`ExpressionStatement:CallExpression` (3,792), `CallExpression` (3,292),
+`VariableSymbol:2state` (5,521), `AssignmentExpression:target` (3,913),
+`ExpressionStatement:CallExpression` (3,784), `CallExpression` (3,290),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
-`NamedValueExpression:2state` (1,483), `ConcurrentAssertionStatement`
-(1,358), `InvalidStatement` (1,329), and `ClassType` (1,329).
+`NamedValueExpression:2state` (1,481), `ConcurrentAssertionStatement`
+(1,353), `InvalidStatement` (1,329), and `ClassType` (1,327).
 
 The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
@@ -77,8 +77,8 @@ An untagged, shallow unpacked `struct` whose fields are integral scalars or
 packed vectors now lowers each field to its own ordinary vector cell. Direct
 member reads, writes, and compound assignments use the flattened field name;
 two-state fields retain zero startup and x/z-to-zero assignment conversion.
-Whole-struct operations, nested or unpacked aggregate fields, initializers,
-dynamic member forms, and tagged structs remain loud because the legacy state
+Whole-struct operations, nonintegral or array fields, initializers, dynamic
+member forms, and tagged structs remain loud because the legacy state
 has no aggregate slot. The `unpacked_struct_integral_fields` differential row
 checks field updates and the resulting display.
 
@@ -116,19 +116,22 @@ Using the available 22,035-file snapshot, clean files rise **4,413 → 4,414**
 and partial files fall **17,556 → 17,555**. `VariableSymbol:2state` falls
 **5,548 → 5,547**; all other leading blocker counts are unchanged.
 
-## Fixed arrays of shallow unpacked integral structs — 2026-10-22
+## Nested unpacked integral structs and arrays — 2026-10-22
 
-Fixed unpacked arrays may now use a shallow untagged unpacked struct with
-integral scalar or packed fields as their leaf type. The extractor expands
-each constant array position into direct field cells, so member reads and
-writes use names such as `values[1].count` while retaining ordinary two-state
-startup and conversion. Whole struct values, aggregate array initializers,
-nested/nonintegral fields, and dynamic selections remain loud. The
-`unpacked_struct_array` row exercises the admitted shape.
+Untagged unpacked structs now flatten recursively when every leaf is an
+integral scalar or packed vector. Fixed unpacked arrays compose that lowering
+at each constant position, so member reads and writes use names such as
+`values[1].meta.count` while retaining ordinary two-state startup and
+conversion. Whole struct values, aggregate array initializers, nonintegral
+fields, and dynamic selections remain loud. The `unpacked_struct_array` row
+exercises the nested array shape.
 
-On the available 22,035-file snapshot, clean files remain **4,414** and
-partial files **17,555**; `VariableSymbol:2state` falls **5,547 → 5,532** and
-`MemberAccessExpression` **1,052 → 1,037**.
+On the available 22,035-file snapshot, clean files rise **4,414 → 4,416** and
+partial files fall **17,555 → 17,553**; `VariableSymbol:2state` falls
+**5,532 → 5,521** and `MemberAccessExpression` **1,037 → 1,023**. The
+differential matrix is **21 rows, 17 matches, 0 disagreements, and 4 recorded
+refusals**; grammar coverage remains **192 witnesses, 60 MATCH, and 132
+REFUSE**.
 
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 

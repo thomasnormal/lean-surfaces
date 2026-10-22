@@ -16,11 +16,11 @@
   "blocker_files": [
    [
     "VariableSymbol:2state",
-    5532
+    5521
    ],
    [
     "AssignmentExpression:target",
-    3915
+    3913
    ],
    [
     "ExpressionStatement:CallExpression",
@@ -64,7 +64,7 @@
    ],
    [
     "MemberAccessExpression",
-    1037
+    1023
    ],
    [
     "ConversionExpression:width",
@@ -167,10 +167,6 @@
     166
    ],
    [
-    "TypeAliasType:TypeAlias",
-    158
-   ],
-   [
     "GenericClassDefSymbol",
     146
    ],
@@ -181,6 +177,10 @@
    [
     "Package:invalid-compilation",
     145
+   ],
+   [
+    "TypeAliasType:TypeAlias",
+    144
    ],
    [
     "ForeachLoopStatement:array",
@@ -231,12 +231,12 @@
     74
    ],
    [
-    "VariableSymbol:type",
+    "RandSequenceStatement",
     72
    ],
    [
-    "RandSequenceStatement",
-    72
+    "VariableSymbol:type",
+    71
    ],
    [
     "NetSymbol:Tri",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4414,
-   "partial": 17555,
+   "clean": 4416,
+   "partial": 17553,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    3823,
+    3825,
     18671
    ],
    "simulation elaboration": [
@@ -1053,14 +1053,14 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 249,
-    "clean": 733,
-    "partial": 258,
+    "blocked_by_more": 248,
+    "clean": 734,
+    "partial": 257,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
       "AssignmentExpression:target",
-      133
+      132
      ],
      [
       "VariableDeclStatement:2state",
@@ -1096,7 +1096,7 @@
      ],
      [
       "TypeAliasType:TypeAlias",
-      21
+      20
      ],
      [
       "ElementSelectExpression:source-type",
@@ -1115,11 +1115,11 @@
       10
      ],
      [
-      "MemberAccessExpression",
-      10
+      "NamedValueExpression:Parameter",
+      9
      ],
      [
-      "NamedValueExpression:Parameter",
+      "MemberAccessExpression",
       9
      ],
      [
@@ -1331,9 +1331,9 @@
     "unlockable": 2
    },
    "chapter-11": {
-    "clean": 737,
+    "clean": 738,
     "error": 0,
-    "partial": 297,
+    "partial": 296,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 9
@@ -1603,9 +1603,9 @@
     "unlockable": 4
    },
    "chapter-7": {
-    "clean": 157,
+    "clean": 158,
     "error": 0,
-    "partial": 639,
+    "partial": 638,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

@@ -152,6 +152,17 @@ class LegacyContinuousWindows(unittest.TestCase):
                             and n.get("sv_kind") == "VariableSymbol:2state"
                             for n in self._walk(envelope)))
 
+    def test_nested_unpacked_integral_struct_fields_flatten_recursively(self):
+        envelope = self.extract(
+            "module top; struct { int a; struct { bit [3:0] b; bit c; } inner; } value; "
+            "initial begin value.a = 3; value.inner.b = 4'ha; value.inner.c = 1; end")
+        decls = envelope["design"]["modules"][0]["decls"]
+        self.assertEqual([d["name"] for d in decls],
+                         ["value.a", "value.inner.b", "value.inner.c"])
+        stmts = envelope["design"]["modules"][0]["processes"][0]["body"]["stmts"]
+        self.assertEqual([s["target"]["name"] for s in stmts],
+                         ["value.a", "value.inner.b", "value.inner.c"])
+
     @staticmethod
     def _walk(value):
         if isinstance(value, dict):

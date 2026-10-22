@@ -250,6 +250,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-break",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung4Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung4Tests",
+    "lean_expression": "callableBreakWitness",
+    "cpp_source": "int break_witness(int value) { while (value) { break; } return value; } bool callable_witness() { return break_witness(3) == 3; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "expression.callable-conditional",
     "kind": "expression",
     "corpus": "rung-3 witness",

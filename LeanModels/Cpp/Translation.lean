@@ -93,6 +93,9 @@ def admitFunctionTemplateDeclaration (artifact : Artifact) (path : List Nat) :
 def admitVariableTemplateDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarTemplateDecl" "variable-template"
 
+def admitTypeAliasTemplateDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "TypeAliasTemplateDecl" "type-alias-template"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

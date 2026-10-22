@@ -346,6 +346,18 @@
     "rung": 5
   },
   {
+    "id": "declaration.callable-local-reference",
+    "kind": "statement",
+    "corpus": "rung-5 witness",
+    "lean_module": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_namespace": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_expression": "callableLocalReferenceWitness",
+    "cpp_source": "bool callable_witness() { int value = 7; int& alias = value; const int& view = alias; alias = 9; return value == 9 && view == 9; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 5
+  },
+  {
     "id": "expression.callable-conditional",
     "kind": "expression",
     "corpus": "rung-3 witness",

@@ -35,6 +35,11 @@ it. Ending the reference's lexical scope removes its binding and never ends
 the referent's lifetime. Ordinary owned locals still end once in reverse
 declaration order. Every error retains the current frame.
 
+The differential witness binds a mutable local reference and then a const view
+to the same automatic object. A write through the mutable alias is visible
+through the original object and through the const view, while leaving the scope
+ends only the owned object.
+
 Admission requires structured reference/referent types, variable evidence,
 typed initializer subexpressions, an exact in-scope declaration handle and
 Clang's lvalue category. Parentheses and qualification-only `NoOp` wrappers

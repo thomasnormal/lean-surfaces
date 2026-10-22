@@ -466,13 +466,20 @@ private def aliasUninitializedAndEnded : Bool :=
         (lateBinding.result matches .error (.object (.lifetime .lifetimeEnded))) &&
         lateBinding.frame == afterEnd
 
+def callableLocalReferenceWitness : Bool := aliasLifetimeAndConst && aliasUninitializedAndEnded
+
 #guard aliasLifetimeAndConst
 #guard aliasUninitializedAndEnded
+#guard callableLocalReferenceWitness
 
 private theorem kernelReferenceBindings :
     (aliasLifetimeAndConst && aliasUninitializedAndEnded) = true := rfl
 
+theorem callable_local_reference_witness : callableLocalReferenceWitness = true := by
+  rfl
+
 #print axioms kernelReferenceBindings
+#print axioms callable_local_reference_witness
 #print axioms IntegralObjectFrame.bindLocalReference_store
 
 end LeanModels.Cpp.IntegralObjectFrameTests

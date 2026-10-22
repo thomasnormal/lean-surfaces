@@ -4849,3 +4849,11 @@ files: **5** are sole refusals and 7 co-occur. Repricing the sole files finds
 or wildcard patterns. The conditional evaluator has no pattern binding or
 aggregate-member state, so these conditions remain loud. See
 [pattern conditions](sv-pattern-conditions.md).
+
+### Elaboration system-task boundary — 2026-10-22
+
+The fresh 22,043-path census records `ElabSystemTaskSymbol:ElabSystemTask` in
+**12** files: **5** are sole refusals and 7 co-occur. Repricing finds six
+elaboration-task spans containing `$info` and `$warning`. The envelope has no
+pre-simulation diagnostic phase, so these tasks remain loud. See
+[elaboration system tasks](sv-elaboration-system-tasks.md).

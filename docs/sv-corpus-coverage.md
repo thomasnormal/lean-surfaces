@@ -3289,3 +3289,11 @@ files: **5** are sole refusals and 7 co-occur. Repricing the sole files finds
 **9** spans covering constant integral, identifier-binding and structure member
 or wildcard patterns. The pattern remains loud; see [pattern conditions](sv-pattern-conditions.md)
 and `extractors/sv/pattern_condition_reprice.py`.
+
+## Elaboration system-task boundary — 2026-10-22
+
+The fresh 22,043-path census records `ElabSystemTaskSymbol:ElabSystemTask` in
+**12** files: **5** are sole refusals and 7 co-occur. Repricing finds six
+elaboration-task spans containing `$info` and `$warning`. The task remains
+loud; see [elaboration system tasks](sv-elaboration-system-tasks.md) and
+`extractors/sv/elab_task_reprice.py`.

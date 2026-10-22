@@ -1936,3 +1936,10 @@ width extension or signedness; see [bitwise XNOR](sv-xnor.md).
 `matches` patterns requiring constant matching, identifier binding or aggregate
 member/wildcard semantics. The envelope does not bind pattern variables or
 flatten structure members; see [pattern conditions](sv-pattern-conditions.md).
+
+## Elaboration system tasks
+
+`ElabSystemTaskSymbol:ElabSystemTask` remains an explicit unsupported design
+member for elaboration-time severity calls. The envelope does not turn them
+into runtime output or fabricate a pre-simulation diagnostic phase; see
+[elaboration system tasks](sv-elaboration-system-tasks.md).

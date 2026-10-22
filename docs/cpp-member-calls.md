@@ -80,6 +80,28 @@ on an arrow call. The remaining generic shape is:
 | --- | --- |
 | member-call (1) | `CXXMemberCallExpr(MemberExpr(ImplicitCastExpr:UncheckedDerivedToBase(DeclRefExpr)))` on an arrow call |
 
+### Typed call-chain boundary
+
+The remaining nested receiver is a call-chain shape, not a receiver cast. A
+future admission must retain the inner `CXXMemberCallExpr` occurrence and its
+canonical method identity, the inner result type and value category, and the
+outer member-call occurrence that consumes that result. The outer receiver
+cannot be typed from the inner method name or from a copied class spelling.
+
+Invocation must sequence the inner call before the outer receiver projection,
+threading the same object store and any observable effects through both calls.
+The evidence therefore needs an explicit inner result object or reference,
+its lifetime and ownership relation to the outer receiver, and a state/effect
+trace for the inner body. A body that mutates or replaces the result object,
+returns a temporary with no retained lifetime, or raises before the outer call
+remains a refusal. Receiver conversion evidence is checked separately after
+the result object is established; it is never inferred from the chain.
+
+The one TinyXML2 nested-member-call refusal has no such result-object or body
+witness today. The kernel witness keeps it loud as `unsupportedReceiver` until
+those records and a two-call sequencing rule exist, while the ordinary direct
+receiver and field-base tiers remain unchanged.
+
 The other 472 refusals in that run are 314 unsupported argument lists, 155
 missing `this` owners, and 2 malformed names. This is source pricing only:
 the census still performs no receiver conversion, object lookup, or call.

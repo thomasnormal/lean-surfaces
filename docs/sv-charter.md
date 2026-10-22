@@ -4824,3 +4824,11 @@ six empty-member spans covering soft-keyword mode, unnamed primitive arrays,
 nested attributes and dollar-leading identifiers. The envelope has no recovery
 node or diagnostic stream, so these members remain loud. See
 [empty members](sv-empty-members.md).
+
+### Assignment-pattern boundary — 2026-10-22
+
+The fresh 22,043-path census records `AssignmentPattern:integral-shape` in
+**5** files, all sole refusals. Repricing finds **10** typed packed pattern
+spans, each using a casted nested pattern in a concatenation. The envelope has
+no self-determined aggregate layout, so these patterns remain loud. See
+[assignment patterns](sv-assignment-pattern-boundary.md).

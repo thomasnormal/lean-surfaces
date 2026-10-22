@@ -3265,3 +3265,11 @@ six empty-member spans covering soft-keyword mode, unnamed primitive arrays,
 nested attributes and dollar-leading identifiers. The empty member remains
 loud; see [empty members](sv-empty-members.md) and
 `extractors/sv/empty_member_reprice.py`.
+
+## Assignment-pattern boundary — 2026-10-22
+
+The fresh 22,043-path census records `AssignmentPattern:integral-shape` in
+**5** files, all sole refusals. Repricing finds **10** typed packed pattern
+spans, each using a casted nested pattern in a concatenation. The pattern
+remains loud; see [assignment patterns](sv-assignment-pattern-boundary.md) and
+`extractors/sv/assignment_pattern_reprice.py`.

@@ -1916,3 +1916,10 @@ reset directive state; see [invalid continuous assignments](sv-invalid-continuou
 frontend parsing cannot bind a declaration or design member. The envelope does
 not invent identifiers, flatten nested attributes or reinterpret soft-keyword
 mode; see [empty members](sv-empty-members.md).
+
+## Assignment patterns
+
+`AssignmentPattern:integral-shape` remains an explicit unsupported expression
+when a typed packed pattern requires self-determined multidimensional layout.
+The envelope does not flatten nested patterns or guess width and dimension
+order; see [assignment patterns](sv-assignment-pattern-boundary.md).

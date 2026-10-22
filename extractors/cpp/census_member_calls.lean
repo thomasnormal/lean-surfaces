@@ -176,6 +176,14 @@ private def enumResultName (probe : DeclarationProbe) (enum : FrontendHandle) :
   unless !name.isEmpty do throw "malformed-enum"
   pure name
 
+private def enumArgumentParameterEvidence (probe : DeclarationProbe)
+    (method : FrontendHandle) (ordinal : Nat) (enum : FrontendHandle) (enumName : String) :
+    Except String String := do
+  let parameter ← IntegralMemberEnumArgument.parameter probe method ordinal enum enumName
+    |>.mapError enumArgumentErrorName
+  pure (s!"{parameter.method.value}:{parameter.parameter.value}:" ++
+    s!"{parameter.ordinal}:{parameter.sourceType}")
+
 private def rawResultSpelling (raw : Raw) : Option String := do
   let type ← raw.field "type"
   type.text "qualType"
@@ -431,13 +439,11 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
               | .ok enum =>
                   match enumResultName probe enum with
                   | .ok name =>
-                      match IntegralMemberEnumArgument.parameter probe canonical argumentOrdinal
-                          enum name with
+                      match enumArgumentParameterEvidence probe canonical argumentOrdinal enum name with
                       | .ok parameter => enumArgumentParameters :=
-                          (s!"{parameter.method.value}:{parameter.parameter.value}:" ++
-                            s!"{parameter.ordinal}:{parameter.sourceType}") :: enumArgumentParameters
+                          parameter :: enumArgumentParameters
                       | .error error => enumArgumentParameterRefusals :=
-                          enumArgumentErrorName error :: enumArgumentParameterRefusals
+                          error :: enumArgumentParameterRefusals
                       match IntegralMemberMethodProfile.admit probe canonical with
                       | .ok profile => enumArgumentMethodProfiles :=
                           profile.method.value :: enumArgumentMethodProfiles
@@ -681,9 +687,88 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("calls", toJson reports.reverse)])
   return 0
 
+private def selfRawObject (fields : List (String × Raw)) : Raw := .object fields
+private def selfText (value : String) : Raw := .string value
+private def selfHandle (value : String) : FrontendHandle := ⟨value⟩
+
+private def selfEnumType : Raw := selfRawObject [
+  ("kind", selfText "enumeration"), ("declaration", selfText "0x13")]
+
+private def selfBuiltinType : Raw := selfRawObject [
+  ("kind", selfText "builtin"), ("name", selfText "int")]
+
+private def selfParameter (id spelling : String) : Raw := selfRawObject [
+  ("kind", selfText "ParmVarDecl"), ("id", selfText id),
+  ("name", selfText "error"),
+  ("type", selfRawObject [("qualType", selfText spelling)])]
+
+private def selfMethodNode (parameters : List Raw) : Raw := selfRawObject [
+  ("kind", selfText "CXXMethodDecl"), ("id", selfText "0xc"),
+  ("inner", .array parameters)]
+
+private def selfMethodRow (parameterTypes : Raw) : DeclarationEvidenceRow := {
+  ordinal := 0, id := selfHandle "0xc", kind := "CXXMethodDecl",
+  canonical := selfHandle "0xc", previous := none, semanticContext := none,
+  lexicalContext := none, implicit := false, dependentContext := false,
+  owningModule := none, functionShape := none,
+  raw := selfRawObject [
+    ("id", selfText "0xc"), ("kind", selfText "CXXMethodDecl"),
+    ("method_parameter_types", parameterTypes)]}
+
+private def selfProbe (parameterTypes : Raw) (parameters : List Raw) : DeclarationProbe := {
+  ast := selfRawObject [("inner", .array [selfMethodNode parameters])],
+  metadata := .object [], declarations := [selfMethodRow parameterTypes]}
+
+private def selfParameterOutcome (probe : DeclarationProbe) (ordinal : Nat) : Except String String :=
+  enumArgumentParameterEvidence probe (selfHandle "0xc") ordinal (selfHandle "0x13") "XMLError"
+
+private def selfParameterOutcomes : List (Except String String) := [
+  selfParameterOutcome (selfProbe (.array [selfEnumType])
+    [selfParameter "0x15" "XMLError"]) 0,
+  selfParameterOutcome (selfProbe (.array [selfRawObject []])
+    [selfParameter "0x15" "XMLError"]) 0,
+  selfParameterOutcome (selfProbe (.array [selfEnumType]) []) 0,
+  selfParameterOutcome (selfProbe (.array [selfEnumType])
+    [selfParameter "0x15" "XMLError"]) 1,
+  selfParameterOutcome (selfProbe (.array [selfBuiltinType])
+    [selfParameter "0x15" "int"]) 0]
+
+private def selfAcceptedParameters (outcomes : List (Except String String)) : List String :=
+  outcomes.filterMap fun outcome => match outcome with
+  | .ok value => some value
+  | .error _ => none
+
+private def selfRefusedParameters (outcomes : List (Except String String)) : List String :=
+  outcomes.filterMap fun outcome => match outcome with
+  | .ok _ => none
+  | .error reason => some reason
+
+private def selfTestPass : Bool :=
+  let outcomes := selfParameterOutcomes
+  selfAcceptedParameters outcomes == ["0xc:0x15:0:XMLError"] &&
+    selfRefusedParameters outcomes == [
+      "malformed-method-signature", "malformed-method-signature",
+      "missing-parameter-evidence", "parameter-type-mismatch"]
+
+private def selfTest : IO UInt32 := do
+  let outcomes := selfParameterOutcomes
+  let accepted := selfAcceptedParameters outcomes
+  let refused := selfRefusedParameters outcomes
+  emit (jsonObject [
+    ("format", toJson "cpp-member-call-census-1-self-test"),
+    ("status", toJson (if selfTestPass then "PASS" else "FAIL")),
+    ("bounded_cases", toJson outcomes.length),
+    ("enum_argument_parameters", counts accepted),
+    ("enum_argument_parameter_refusals", counts refused)])
+  if selfTestPass then return 0 else return 1
+
 def main (arguments : List String) : IO UInt32 := do
-  let [input] := arguments
-    | IO.eprintln "usage: lake env lean --run extractors/cpp/census_member_calls.lean PROBE"; return 1
+  let input ← match arguments with
+    | ["--self-test"] => return ← selfTest
+    | [input] => pure input
+    | _ =>
+      IO.eprintln "usage: lake env lean --run extractors/cpp/census_member_calls.lean PROBE|--self-test"
+      return 1
   try
     let before ← (System.FilePath.mk input).metadata
     unless before.type == .file do

@@ -320,6 +320,13 @@ the AST `ParmVarDecl` join are clean. Malformed method rows, missing
 declarations, ordinal gaps, and type/spelling disagreements therefore remain
 visible as named telemetry instead of disappearing from an empty result.
 
+The counter contract has a bounded synthetic check. Running
+`lake env lean --run extractors/cpp/census_member_calls.lean --self-test`
+exercises one accepted join plus malformed parameter metadata, a missing
+`ParmVarDecl`, an out-of-range ordinal, and a wrong enum parameter type. It
+prints the same two counter fields and exits nonzero if either the accepted
+entry or any refusal is lost.
+
 The kernel battery also mutates independent copies of this evidence: a wrong
 parameter type, an out-of-range ordinal, a malformed parameter-type row, and a
 missing `ParmVarDecl` all refuse before argument binding. These are provenance

@@ -514,6 +514,19 @@ rearming state, so no implicit control is admitted by guessing a sensitivity
 list or executing it once. See [the implicit-event boundary](sv-implicit-events.md)
 and `extractors/sv/implicit_event_reprice.py` for the reproducible scan.
 
+## Unique case statements — 2026-10-22
+
+`CaseStatement:Unique` remains the first-match plus diagnostic boundary. The
+fresh **22,043**-path census records it in **45** files: **37** are unique-case
+only and **8** co-occurring. Repricing the sole files finds **38** spans:
+**20** have a `default` arm in **19** files, **9** use nonblocking updates,
+**5** use indexed selects, **4** use multi-label items, **4** are `casez`, **1** is `casex`, **1**
+uses `inside` and **1** has a nested block (features overlap). The envelope has
+no unique-violation diagnostic channel or retained case-check state, so no
+qualifier is erased and no fixed arm is selected. See [the unique-case
+boundary](sv-unique-cases.md) and `extractors/sv/unique_case_reprice.py` for
+the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

@@ -30,8 +30,9 @@ cannot erase an effect. Repeated pure subject reads in the `If` chain have
 no intervening writes or waits. Unsupported storage and nonintegral operands
 remain loud. `unique`, `unique0` and `priority` retain their diagnostic
 obligations and remain loud, as do `case inside` and pattern cases on this
-legacy path. Symbolic-mode wildcard statements and the M0 expression loader
-do not gain this SelfCheck expression. Invalid compilations retain the
+legacy path. See [unique case statements](sv-unique-cases.md) for the
+`CaseStatement:Unique` boundary. Symbolic-mode wildcard statements and the M0
+expression loader do not gain this SelfCheck expression. Invalid compilations retain the
 existing case-lowering admission barrier.
 
 The [fixtures](../Examples/system-verilog/wildcard_cases/README.md) compare

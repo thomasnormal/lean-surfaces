@@ -259,6 +259,10 @@ and common-width fixed-array labels expand to their scalar elements. A guard
 must return definite one to select its body; unknown guards advance the search.
 Dollar case endpoints and array-element widening remain loud. These reuse the
 existing membership helpers and do not extend the symbolic `Case` path.
+`unique` case qualifiers remain explicit `CaseStatement:Unique` unsupported
+members; see [the unique-case boundary](sv-unique-cases.md). The ordinary
+case lowering has no unique-violation diagnostic channel.
+
 Unsupported qualifiers and pattern forms,
 effectful/nonintegral expressions and default-only cases retain
 `CaseStatement:<reason>` refusals. A frontend error in such a compilation

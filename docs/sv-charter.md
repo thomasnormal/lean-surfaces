@@ -3990,6 +3990,20 @@ admitted by guessing a list, running it once or adding a scheduler. See [the
 implicit-event boundary](sv-implicit-events.md) and the read-only instrument
 `extractors/sv/implicit_event_reprice.py`.
 
+### Unique case statements — 2026-10-22
+
+`CaseStatement:Unique` is the first-match plus diagnostic boundary. In the
+fresh 22,043-path census it occurs in 45 files: 37 are unique-case-only and
+eight co-occur with another wall. The sole files contain 38 spans, including
+20 `default` arms in 19 files, nine nonblocking updates, five indexed selects,
+four multi-label items, four `casez`, one `casex`, one `inside` case and one nested
+block (features overlap). A unique case must retain ordinary first-match
+selection while reporting zero- or multi-match violations; the envelope has
+no diagnostic channel or retained case-check state. No qualifier is erased,
+no fixed arm is selected, and no second scheduler is introduced. See [the
+unique-case boundary](sv-unique-cases.md) and the read-only instrument
+`extractors/sv/unique_case_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

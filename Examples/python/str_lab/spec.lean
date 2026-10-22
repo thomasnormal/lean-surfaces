@@ -34,7 +34,8 @@ loudly — Unicode tables are not guessed); `index` is code-point-exact
 substring search with the faithful `ValueError` miss. The loud
 frontier: any other str method (`upper` — never a fake
 `AttributeError`), list/tuple slices (they ALLOCATE in CPython), and
-`index` start/end arguments. No `proof.lean`: checks-only, like
+`index` bounds are live; over-arity remains a faithful TypeError. No
+`proof.lean`: checks-only, like
 `cls_lab`/`list_lab` — the string-tier theorems on the shipped file
 live in `Examples/python/sunfish`.
 -/
@@ -94,10 +95,17 @@ load_program str_lab from "Examples/python/str_lab/str_lab.json"
   (.typeError "must be str, not int")
 #py_check str_lab.idx("abc", "zz") raises
   (.valueError "substring not found")
+#py_check str_lab.idx_start("abcab", "b", 2) = 4
+#py_check str_lab.idx_start_end("abcab", "b", 1, 4) = 1
+#py_check str_lab.idx_negative("abcab", "b", -3) = 4
+#py_check str_lab.idx_bad_bound("abcab", "b", 1) raises
+  (.typeError "slice indices must be integers or None or have an __index__ method")
+#py_check str_lab.idx_toomany("abcab", "b", 1) raises
+  (.typeError "index expected at most 3 arguments, got 4")
 
 /-! ### the loud frontier, pinned raw (no surface form for
 `unsupported` — deliberate): out-of-tier str methods are never a fake
-`AttributeError`; `index` bounds refuse. -/
+`AttributeError`; unsupported methods remain loud. -/
 
 #py_check str_lab.upper_of("abc") = "ABC"
 #py_check str_lab.upper_of("nN1.") = "NN1."
@@ -120,8 +128,7 @@ load_program str_lab from "Examples/python/str_lab/str_lab.json"
   matches .unsupported _
 #guard callFunction str_lab "list_slice_is_loud" #[] 4096 ==
   .ok (.list #[.int 3, .int 2, .int 1])
-#guard callFunction str_lab "idx_start_is_loud" #[.str "abcab", .str "b", .int 2] 4096
-  matches .unsupported _
+#guard callFunction str_lab "idx_start" #[.str "abcab", .str "b", .int 2] 4096 == .ok (.int 4)
 #guard callFunction str_lab "swap" #[.str "é"] 4096 matches .unsupported _
 #guard callFunction str_lab "isup" #[.str "É"] 4096 matches .unsupported _
 

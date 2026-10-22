@@ -128,8 +128,24 @@ def list_slice_is_loud():
     return [1, 2, 3][::-1]
 
 
-def idx_start_is_loud(s, t, a):
+def idx_toomany(s, t, a):
+    return s.index(t, a, 0, 1)
+
+
+def idx_start(s, t, a):
     return s.index(t, a)
+
+
+def idx_start_end(s, t, a, b):
+    return s.index(t, a, b)
+
+
+def idx_negative(s, t, a):
+    return s.index(t, a)
+
+
+def idx_bad_bound(s, t, a):
+    return s.index(t, "x")
 
 
 def cast_int(s):

@@ -958,7 +958,6 @@ WHITELIST_CLASS = {
     "str_lab::cast_int": "builtin.int-of-str",
     "str_lab::swap": "str.non-ascii",
     "str_lab::isup": "str.non-ascii",
-    "str_lab::idx_start_is_loud": "strmethod.arity",
     "str_lab::fmt_nonascii_r": "str.non-ascii",
     "str_lab::fmt_char": "str.surrogate",
     "str_lab::builtin_ascii_container": "render.ascii-container",

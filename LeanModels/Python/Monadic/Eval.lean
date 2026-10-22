@@ -728,9 +728,13 @@ def applyStrMethod (sv : String) : StrPlan → List RVal → SemF RVal
       | [] => raisePy (.typeError "index expected at least 1 argument, got 0")
       | [.str sub] => liftRes (strIndex sv sub)
       | [v] => raisePy (.typeError s!"must be str, not {RVal.typeNameH h v}")
+      | [.str sub, start] => liftRes (strIndexBounds sv sub start .none)
+      | [.str sub, start, stop] => liftRes (strIndexBounds sv sub start stop)
+      | [_v, _] => raisePy (.typeError s!"must be str, not {RVal.typeNameH h _v}")
+      | [_v, _, _] => raisePy (.typeError s!"must be str, not {RVal.typeNameH h _v}")
       | vs =>
           if vs.length ≤ 3 then
-            refuse "str.index() with start/end arguments is outside the tier (docs/memory-model.md §string semantics)"
+            refuse "str.index() with start/end arguments are outside the tier (docs/memory-model.md §string semantics)"
           else raisePy (.typeError s!"index expected at most 3 arguments, got {vs.length}")
   | .join, vs =>
       match vs with

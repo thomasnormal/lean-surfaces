@@ -2358,6 +2358,38 @@ def asSliceIdx : RVal → Option (Option Int)
   | .none => some Option.none
   | v => (asInt v).map some
 
+/-- Search at most `limit` positions in a string.  The returned index is
+relative to the supplied list; callers add the normalized start bound. -/
+def strFindLimited (hay needle : List Char) : Nat → Option Nat
+  | 0 => if needle.isPrefixOf hay then some 0 else Option.none
+  | n + 1 =>
+    if needle.isPrefixOf hay then some 0
+    else
+      match hay with
+      | [] => Option.none
+      | _ :: rest => (strFindLimited rest needle n).map (· + 1)
+
+/-- `s.index(sub, start[, end])`: normalize the bounds like a forward
+slice, then search only positions whose complete match lies before `end`.
+The needle type is checked by the caller before this worker, matching
+CPython's validation order. -/
+def strIndexBounds (s sub : String) (start stop : RVal) : Res RVal :=
+  match asSliceIdx start, asSliceIdx stop with
+  | some ls, some le =>
+    let len : Int := s.length
+    let lo := match ls with | some i => sliceAdj i len true | Option.none => 0
+    let hi := match le with | some i => sliceAdj i len true | Option.none => len
+    if hi < lo then .exn (.valueError "substring not found")
+    else
+      let span := (hi - lo).toNat
+      let needleLen := sub.length
+      if needleLen > span then .exn (.valueError "substring not found")
+      else
+        match strFindLimited (s.toList.drop lo.toNat) sub.toList (span - needleLen) with
+        | some i => .ok (.int (lo.toNat + i))
+        | Option.none => .exn (.valueError "substring not found")
+  | _, _ => .exn (.typeError "slice indices must be integers or None or have an __index__ method")
+
 /-- `s[lower:upper:step]` on a str — CPython slice semantics, value
 exact for EVERY string. The components validate in CPython's own order
 (`PySlice_Unpack`): `step` first (`TypeError` for a non-index,
@@ -6863,9 +6895,13 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                | [] => .exn st (.typeError "index expected at least 1 argument, got 0")
                | [.str sub] => Run.liftRes st (strIndex sv sub)
                | [v] => .exn st (.typeError s!"must be str, not {RVal.typeNameH st.world.heap v}")
+               | [.str sub, start] => Run.liftRes st (strIndexBounds sv sub start .none)
+               | [.str sub, start, stop] => Run.liftRes st (strIndexBounds sv sub start stop)
+               | [_v, _] => .exn st (.typeError s!"must be str, not {RVal.typeNameH st.world.heap _v}")
+               | [_v, _, _] => .exn st (.typeError s!"must be str, not {RVal.typeNameH st.world.heap _v}")
                | vs =>
                  if vs.length ≤ 3 then
-                   .unsupported "str.index() with start/end arguments is outside the tier (docs/memory-model.md §string semantics)"
+                   .unsupported "str.index() with start/end arguments are outside the tier (docs/memory-model.md §string semantics)"
                  else .exn st (.typeError s!"index expected at most 3 arguments, got {vs.length}")
              | .join =>
                evalExprs m fuel st args.toList ⤳ fun st vs =>

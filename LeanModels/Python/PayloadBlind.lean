@@ -4346,10 +4346,27 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                       simp only [FrameState.swapAt_world, World.swapAt_heap,
                                         RVal.typeNameH_swapAt hs2 htwin]
                                       exact PBF.exn hs2 _
-                              | cons _ _ =>
-                                  cases v <;>
-                                    exact PBF.ite (fun _ => PBF.unsupported)
-                                      (fun _ => PBF.exn hs2 _)
+                              | cons d tail =>
+                                  cases tail with
+                                  | nil =>
+                                      cases v with
+                                      | str sub => exact PBF.liftRes hs2 _
+                                      | _ =>
+                                          simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                            RVal.typeNameH_swapAt hs2 htwin]
+                                          exact PBF.exn hs2 _
+                                  | cons d2 tail2 =>
+                                      cases tail2 with
+                                      | nil =>
+                                          cases v with
+                                          | str sub => exact PBF.liftRes hs2 _
+                                          | _ =>
+                                              simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                                RVal.typeNameH_swapAt hs2 htwin]
+                                              exact PBF.exn hs2 _
+                                      | cons _ _ =>
+                                          simp only [FrameState.swapAt_world, World.swapAt_heap]
+                                          exact PBF.exn hs2 _
                       | join =>
                           refine PBF.bind (ihEs m s1 args.toList hs1) fun s2 vs _ hs2 => ?_
                           cases vs with

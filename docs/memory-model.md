@@ -544,9 +544,9 @@ tier).
   Lean core's `Char` case maps ARE the ASCII maps, agreeing with
   CPython exactly there; a non-ASCII string refuses loudly — the
   Unicode tables are not guessed), and
-  `.index(sub)` — code-point-exact substring search, the faithful
-  `ValueError` miss, a non-str argument the faithful `TypeError`
-  (`start`/`end` arguments loud). EVERY other attribute on a str
+  `.index(sub[, start[, end]])` — code-point-exact substring search with
+  CPython's normalized integer bounds, the faithful `ValueError` miss,
+  non-str needles and non-index bounds as faithful `TypeError`s. EVERY other attribute on a str
   refuses loudly — never a fake `AttributeError` (CPython's str
   carries ~45 real methods plus the dunder protocol). Arity errors
   are faithful `TypeError`s, raised after the arguments evaluate

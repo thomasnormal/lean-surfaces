@@ -57,6 +57,21 @@ generator refusal; the focused differential run is **8 rows, 7 MATCH and
 1 whitelisted refusal, 0 failures**. The full coverage page and case file
 were regenerated from this landing.
 
+## 2026-10-22-pycomplete-51 — bounded `str.index` closes the adjacent method wall
+
+`str.index` now supports its optional `start` and `end` bounds. Bounds use the
+same integer/`None` normalization as string slices, search is restricted to
+the requested half-open window, and CPython's `ValueError` and index-bound
+`TypeError` payloads remain exact; over-arity keeps its faithful `TypeError`.
+The monadic and trunk evaluators, clock-erasure and payload-blind walkers,
+and the string laboratory all carry the new cases.
+
+The focused differential battery is **8 rows, 8 matches, 0 failures**,
+covering positive and negative starts, bounded windows, invalid bounds, the
+existing wrong-needle error, and over-arity. `str_lab/spec.lean`, the
+payload-blindness proof, and the clock-erasure proof all build. The next full
+Python gate will regenerate the coverage totals.
+
 ## 2026-08-22-pycomplete-1 — RUNG 3b: the eight consumers that could never meet the hazard their refusal cited
 
 `list(d)`, `tuple(d)`, `sorted(d)`, `sum(d)`, `max(d)`, `min(d)`, `set(d)`,

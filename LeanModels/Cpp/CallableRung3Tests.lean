@@ -23,11 +23,31 @@ def callableIncrementWitness : Bool :=
   | .ok (.ok value) => value == signed 5
   | _ => false
 
+def postfixFunction : CallableFunction := {
+  incrementFunction with
+  body := .block (.return_ {
+    expression := .comma
+      {expression := .increment "++" true parameter, sourceType := intType, type := intType}
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callablePostfixWitness : Bool :=
+  match evaluateCallable 16 .lp64 postfixFunction [signed 4] with
+  | .ok (.ok value) => value == signed 5
+  | _ => false
+
 #guard callableIncrementWitness
+#guard callablePostfixWitness
 
 theorem callable_increment_witness : callableIncrementWitness = true := by
   rfl
 
+theorem callable_postfix_witness : callablePostfixWitness = true := by
+  rfl
+
 #print axioms callable_increment_witness
+#print axioms callable_postfix_witness
 
 end LeanModels.Cpp.CallableRung3Tests

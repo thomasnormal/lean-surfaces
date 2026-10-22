@@ -180,6 +180,7 @@ Void functions use the [result API](cpp-void-callables.md), where successful
 `none` denotes no value. The integral-only APIs refuse a void result before
 executing the body.
 
-`CallableRung3Tests.lean` adds a kernel-reduced prefix-increment call witness:
-the parameter state is updated once and the returned value is the incremented
-value. The corresponding coverage row calls an unchanged C++ function.
+`CallableRung3Tests.lean` adds kernel-reduced prefix- and postfix-increment
+call witnesses. The parameter state is updated once; the postfix result is
+then sequenced with a comma expression so the updated value is observed. The
+corresponding coverage rows call unchanged C++ functions.

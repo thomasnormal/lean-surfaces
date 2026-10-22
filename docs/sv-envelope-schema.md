@@ -1825,3 +1825,10 @@ value; see [element-select source types](sv-element-select-source.md).
 envelope has no package callable table, constant-function frame or DPI ABI
 representation, so package functions and DPI imports are not dropped, inlined
 or replaced with guessed results; see [package subroutines](sv-package-subroutines.md).
+
+## Variable types
+
+`VariableSymbol:type` remains an explicit unsupported declaration when a
+variable needs unpacked aggregate storage or has an invalid packed dimension
+on a struct or union. The envelope does not flatten the declaration or recover
+from the frontend diagnostic; see [variable types](sv-variable-types.md).

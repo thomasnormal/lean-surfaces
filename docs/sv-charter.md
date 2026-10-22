@@ -4703,3 +4703,13 @@ one nonconstant package function and two DPI imports. The declaration and
 constant-use labels overlap. Package callable tables, constant-function
 frames and DPI linkage are absent from the legacy envelope, so no package
 subroutine is erased or inlined. See [package subroutines](sv-package-subroutines.md).
+
+### Variable type boundary — 2026-10-22
+
+The fresh 22,043-path census records `VariableSymbol:type` in **150** files:
+**10** are sole refusals and 140 co-occur. Repricing the sole files finds
+**10** variable spans: nine fixed unpacked-array storage declarations (seven
+multidimensional), nine packed-element-plus-unpacked declarations and one
+invalid packed dimension on an aggregate. The labels overlap. The legacy
+envelope has no aggregate runtime store or invalid-type recovery state, so no
+variable is flattened or fabricated. See [variable types](sv-variable-types.md).

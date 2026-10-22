@@ -3149,3 +3149,13 @@ The fresh 22,043-path census records `Package:Subroutine` in **194** files:
 one nonconstant package function and two DPI imports. Features overlap. The
 package callable boundary remains loud; see [package subroutines](sv-package-subroutines.md)
 and `extractors/sv/package_subroutine_reprice.py`.
+
+## Variable type boundary — 2026-10-22
+
+The fresh 22,043-path census records `VariableSymbol:type` in **150** files:
+**10** are sole refusals and 140 co-occur. Repricing the sole files finds
+**10** spans: nine fixed unpacked-array storage declarations, seven of those
+multidimensional, nine packed-plus-unpacked element types and one invalid
+packed dimension on an aggregate. Features overlap. The variable type remains
+loud; see [variable types](sv-variable-types.md) and
+`extractors/sv/variable_type_reprice.py`.

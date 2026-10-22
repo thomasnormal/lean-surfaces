@@ -34,6 +34,18 @@
     "rung": 1
   },
   {
+    "id": "object.automatic-assignment",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.ObjectModelRung1Tests",
+    "lean_namespace": "LeanModels.Cpp.ObjectModelRung1Tests",
+    "lean_expression": "automaticAssignmentLifecycle",
+    "cpp_source": "bool assignment_witness() { int value = 7; int& alias = value; alias = static_cast<short>(11); const int& read_only = value; return value == 11 && (&read_only == &value); }",
+    "cpp_expression": "assignment_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

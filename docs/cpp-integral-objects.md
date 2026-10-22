@@ -59,7 +59,10 @@ python3 extractors/cpp/test_integral_objects.py
 Kernel guards cover exact and converted initialization, assignment after vacuous initialization,
 alias-visible writes, distinct objects, const objects/accesses, stale accesses,
 dynamic release, invalid values/profiles and incoherent externally supplied
-slots. The optional compiled oracle compares defined automatic and dynamic
-integral-object traces at `-O0` and `-O2` under undefined-behavior sanitization;
+slots. The rung-1 witness in `ObjectModelRung1Tests.lean` additionally traces a
+converted write through a borrowed reference, reads it back, and checks that
+const and ended-lifetime writes remain refused. The optional compiled oracle
+compares defined automatic and dynamic integral-object traces at `-O0` and `-O2`
+under undefined-behavior sanitization;
 indeterminate and expired reads are never executed by the oracle. It validates
 this component, not AST or corpus admission. Missing tools are named skips.

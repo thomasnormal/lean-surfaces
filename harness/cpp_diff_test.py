@@ -204,7 +204,7 @@ def native_rows(cases, clang):
                 subject = pathlib.Path(directory) / "subject.cpp"
                 wrapper = pathlib.Path(directory) / "caller.cpp"
                 subject.write_text(row["cpp_source"] + "\n", encoding="utf-8")
-                wrapper.write_text('#include "subject.cpp"\n#include <iostream>\nint main() { (void)%s; std::cout << "ok\\n"; }\n' % row["cpp_expression"], encoding="utf-8")
+                wrapper.write_text('#include "subject.cpp"\n#include <iostream>\nint main() { if (!(%s)) return 3; std::cout << "ok\\n"; }\n' % row["cpp_expression"], encoding="utf-8")
                 binary = pathlib.Path(directory) / "caller"
                 check = run([clang, "-std=c++23", "-pedantic-errors", str(wrapper), "-o", str(binary)], timeout=60)
                 if check.returncode != 0:
@@ -393,7 +393,10 @@ def render_rung_page(diff_rows, grammar_rows_value):
                  (len(diff_rows), diff_count.get("MATCH", 0), diff_count.get("DIVERGE", 0),
                   diff_count.get("REFUSE", 0), diff_count.get("TIMEOUT", 0),
                   diff_count.get("ORACLE", 0)))
-    lines += ["", "The differential rows include the compile-only root witness and four rows from `Examples/cpp/tinyxml2/IsUTF8Continuation.lean`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.", ""]
+    translation_count = sum(1 for row in diff_rows if row["rung"] == 0)
+    lifetime_count = sum(1 for row in diff_rows if row["rung"] == 1)
+    callable_count = len(diff_rows) - translation_count - lifetime_count
+    lines += ["", "The differential rows include %d compile-only translation witness, %d rung-1 lifetime witnesses, and %d callable rows from `Examples/cpp/tinyxml2/IsUTF8Continuation.lean`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls." % (translation_count, lifetime_count, callable_count), ""]
     return "\n".join(lines)
 
 

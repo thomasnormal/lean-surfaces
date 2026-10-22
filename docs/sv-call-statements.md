@@ -54,8 +54,8 @@ surface therefore remains loud until the required representation is supplied.
 ## 2026-10-21 census and decision
 
 The fresh 22,043-path census records
-`ExpressionStatement:CallExpression` in **3,775** files: **261** are
-call-only refusals and **3,514** co-occur with another refusal. The most common
+`ExpressionStatement:CallExpression` in **3,791** files: **261** are
+call-only refusals and **3,530** co-occur with another refusal. The most common
 companions are `VariableSymbol:2state` (2,243 files),
 `AssignmentExpression:target` (1,240), `CallExpression` (1,191),
 `SubroutineSymbol:Subroutine` (803), `NamedValueExpression:2state` (587), and

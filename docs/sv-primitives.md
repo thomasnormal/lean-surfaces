@@ -34,21 +34,21 @@ The current admission therefore stays explicit:
 
 ## 2026-10-21 census and decision
 
-The fresh 22,043-path census records
-`PrimitiveInstanceSymbol:PrimitiveInstance` in **1,053** files: **543** are
-primitive-only and **510** co-occur with another wall. The repricer walks the
-frontend's concrete primitive instances in the 543 sole files and finds **681**
+After the primitive-array extractor fix, the fresh 22,043-path census records
+`PrimitiveInstanceSymbol:PrimitiveInstance` in **1,153** files: **583** are
+primitive-only and **570** co-occur with another wall. The repricer walks the
+frontend's concrete primitive instances in the 583 sole files and finds **811**
 instances:
 
 | primitive family | instances |
 |---|---:|
-| logic gates (`and/or/xor/xnor/nand/nor/not/buf`) | 302 |
-| conditional gates (`bufif`/`notif`) | 99 |
-| MOS switches (`nmos/pmos/cmos/rcmos/rnmos/rpmos`) | 130 |
-| tran switches (`tran`/`rtran`, conditional variants) | 76 |
+| logic gates (`and/or/xor/xnor/nand/nor/not/buf`) | 392 |
+| conditional gates (`bufif`/`notif`) | 121 |
+| MOS switches (`nmos/pmos/cmos/rcmos/rnmos/rpmos`) | 146 |
+| tran switches (`tran`/`rtran`, conditional variants) | 78 |
 | pull sources (`pullup/pulldown`) | 74 |
 
-The rows include **120** instances with a delay and **561** without, plus
+The rows include **120** instances with a delay and **691** without, plus
 primitive arrays and generate-created instances. No primitive family is
 independently safe in the current store: even a no-delay logic gate requires
 continuous publication and net resolution. All primitive instances therefore
@@ -61,4 +61,6 @@ python3.9 extractors/sv/primitive_reprice.py \
 ```
 
 The instrument reads each source in process and writes no envelope beside the
-corpus. Its primitive-shape counts are telemetry, not a new driver model.
+corpus. Its primitive-shape counts are telemetry, not a new driver model. The
+extractor now classifies primitive-array elements directly, so these rows no
+longer become `ExtractorInternal:AttributeError` failures.

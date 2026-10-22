@@ -24,8 +24,8 @@ second parser, recovery interpreter or fabricated statement is introduced.
 
 ## 2026-10-21 census and decision
 
-The fresh 22,043-path census records `InvalidStatement` in **1,323** files:
-**606** are marker-only and **717** co-occur with another wall. The read-only
+The fresh 22,043-path census records `InvalidStatement` in **1,329** files:
+**606** are marker-only and **723** co-occur with another wall. The read-only
 repricer finds one recovery marker in each of the 606 sole files:
 
 | recovered span shape | instances | files |

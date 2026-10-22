@@ -24,7 +24,7 @@
    ],
    [
     "ExpressionStatement:CallExpression",
-    3775
+    3791
    ],
    [
     "CallExpression",
@@ -47,12 +47,12 @@
     1358
    ],
    [
-    "ClassType",
-    1328
+    "InvalidStatement",
+    1329
    ],
    [
-    "InvalidStatement",
-    1323
+    "ClassType",
+    1328
    ],
    [
     "Hierarchy:module-kind",
@@ -64,7 +64,7 @@
    ],
    [
     "PrimitiveInstanceSymbol:PrimitiveInstance",
-    1053
+    1153
    ],
    [
     "ConversionExpression:width",
@@ -116,7 +116,7 @@
    ],
    [
     "Hierarchy:invalid-compilation",
-    325
+    329
    ],
    [
     "BlockStatement:JoinAll",
@@ -211,10 +211,6 @@
     100
    ],
    [
-    "ExtractorInternal:AttributeError",
-    100
-   ],
-   [
     "IntraAssignment:publication-or-context",
     95
    ],
@@ -243,6 +239,10 @@
     72
    ],
    [
+    "NetSymbol:Tri",
+    67
+   ],
+   [
     "WaitStatement",
     65
    ],
@@ -261,10 +261,6 @@
    [
     "TypeAlias:invalid-compilation",
     61
-   ],
-   [
-    "NetSymbol:Tri",
-    59
    ],
    [
     "EmptyMemberSymbol:EmptyMember",
@@ -463,6 +459,10 @@
     18
    ],
    [
+    "NetSymbol:range",
+    17
+   ],
+   [
     "TransparentMemberSymbol",
     17
    ],
@@ -632,10 +632,6 @@
    ],
    [
     "SignalEventControl:iff",
-    7
-   ],
-   [
-    "NetSymbol:range",
     7
    ],
    [
@@ -1324,58 +1320,7 @@
     "unlockable": 2
    }
   },
-  "extractor_internal_files": [
-   "chapter-28/28.10--pulldown-array-vector-net.sv",
-   "chapter-28/28.10--pullup-array-vector-net.sv",
-   "chapter-28/28.12--gate-array-and.sv",
-   "chapter-28/28.12--gate-array-basic.sv",
-   "chapter-28/28.12--gate-array-bufif1.sv",
-   "chapter-28/28.12--gate-array-nmos.sv",
-   "chapter-28/28.12--gate-array-nor.sv",
-   "chapter-28/28.12--gate-array-or.sv",
-   "chapter-28/28.12--gate-array-with-delay.sv",
-   "chapter-28/28.12--gate-array-xnor.sv",
-   "chapter-28/28.12--gate-array-xor.sv",
-   "chapter-28/28.3.5--equal-range-generates-one-instance.sv",
-   "chapter-28/28.3.5--gate-array-equal-range-one-instance.sv",
-   "chapter-28/28.3.5--gate-array-equal-range-single-instance-v5.sv",
-   "chapter-28/28.3.5--gate-array-lhi-less-than-rhi-legal-v3.sv",
-   "chapter-28/28.3.5--gate-array-lhi-less-than-rhi-v5.sv",
-   "chapter-28/28.3.5--gate-array-nonzero-base-range.sv",
-   "chapter-28/28.3.5--gate-array-range-lhi-equals-rhi-single-instance-v3.sv",
-   "chapter-28/28.3.5--gate-array-range-produces-abs-count-instances.sv",
-   "chapter-28/28.3.5--gate-array-range-reverse-lhi-greater-than-rhi-v3.sv",
-   "chapter-28/28.3.5--gate-array-reversed-range.sv",
-   "chapter-28/28.3.5--primitive-array-four-state-terminal-history.sv",
-   "chapter-28/28.3.5--same-identifier-two-ranges-in-one-decl-is-illegal.sv",
-   "chapter-28/28.3.5--two-unique-gate-arrays-one-declaration.sv",
-   "chapter-28/28.3.6--gate-array-equal-range-single-instance.sv",
-   "chapter-28/28.3.6--gate-array-instance-individual-reference.sv",
-   "chapter-28/28.3.6--gate-array-nand.sv",
-   "chapter-28/28.3.6--gate-array-part-select-v5.sv",
-   "chapter-28/28.3.6--gate-array-port-bit-equals-expr-shared-to-all.sv",
-   "chapter-28/28.3.6--gate-array-range.sv",
-   "chapter-28/28.3.6--gate-array-reversed-range.sv",
-   "chapter-28/28.3.6--gate-array-scalar-broadcast-to-each-instance-v3.sv",
-   "chapter-28/28.3.6--gate-array-scalar-broadcast-v5.sv",
-   "chapter-28/28.3.6--gate-array-shared-input.sv",
-   "chapter-28/28.3.6--gate-array-vector-port-bit-split-lsb-rhi-v3.sv",
-   "chapter-28/28.3.6--lsb-connects-to-rhi-instance.sv",
-   "chapter-28/28.3.6--one-identifier-one-range-only.sv",
-   "chapter-28/28.3.6--selected-and-concatenated-terminal-distribution-four-state-history.sv",
-   "chapter-28/28.3.6--too-few-bits-array-connection-neg.sv",
-   "chapter-28/28.3.6--too-many-bits-array-connection-neg.sv",
-   "chapter-28/28.3.6.1--bufif1-array-output-part-select-control-vector.sv",
-   "chapter-28/28.3.6.1--cmos-array-vector-control-terminals.sv",
-   "chapter-28/28.3.6.1--gate-array-concat-data-scalar-control.sv",
-   "chapter-28/28.3.6.1--gate-array-concat-input-split.sv",
-   "chapter-28/28.3.6.1--gate-array-concat-output-split.sv",
-   "chapter-28/28.3.6.1--gate-array-connection-rules-bit-select.sv",
-   "chapter-28/28.3.6.1--gate-array-control-part-select-connection.sv",
-   "chapter-28/28.3.6.1--gate-array-expression-input-shared.sv",
-   "chapter-28/28.3.6.1--gate-array-input-part-select-split.sv",
-   "chapter-28/28.3.6.1--gate-array-output-part-select-connection.sv"
-  ],
+  "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
     "clean": 248,

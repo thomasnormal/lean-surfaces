@@ -109,6 +109,11 @@ class ModuleHierarchy(unittest.TestCase):
         d = lower('interface child;endinterface module top;child u();endmodule')
         self.assertIn('Hierarchy:module-kind', walls(d))
 
+    def test_primitive_array_is_loud_without_an_extractor_crash(self):
+        d = lower('module top; wire a; not g[1:0](a, a); endmodule')
+        self.assertIn('PrimitiveInstanceSymbol:PrimitiveInstance', walls(d))
+        self.assertNotIn('ExtractorInternal:AttributeError', walls(d))
+
     def test_distinct_time_units_do_not_silently_share_ticks(self):
         self.assertIn('Hierarchy:timescale', walls(fixture('timescale')))
         d = lower('module child;timeunit 1ns;timeprecision 1ps;endmodule '

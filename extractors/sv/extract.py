@@ -5656,7 +5656,15 @@ def _hierarchy_instance_members(sm, instance, route, context, depth):
     if context["instances"] > 1024 or depth > 64:
         yield unsupported(sm, instance, "Hierarchy:instance-limit"), route
         return
-    if not instance.isModule:
+    # Primitive instances are concrete driver symbols, not module instances.
+    # They do not expose ``isModule``; classify them as the existing loud
+    # primitive boundary instead of leaking an extractor AttributeError while
+    # expanding a primitive instance array.
+    instance_kind = str(getattr(instance, "kind", "")).split(".")[-1]
+    if instance_kind == "PrimitiveInstance":
+        yield unsupported(sm, instance, "PrimitiveInstanceSymbol:PrimitiveInstance"), route
+        return
+    if not getattr(instance, "isModule", False):
         yield unsupported(sm, instance, "Hierarchy:module-kind"), route
         return
     body = instance.body
@@ -5826,11 +5834,16 @@ def _module_storage_collisions(ports, decls, processes, span):
 
 
 def convert_module(sm, inst):
-    if not inst.isModule:
-        return {"kind": "Module", "name": inst.name, "span": sym_span(sm, inst),
+    if not getattr(inst, "isModule", False):
+        kind = str(getattr(inst, "kind", "")).split(".")[-1]
+        marker = ("PrimitiveInstanceSymbol:PrimitiveInstance"
+                  if kind == "PrimitiveInstance" else "Hierarchy:module-kind")
+        return {"kind": "Module", "name": getattr(inst, "name", ""),
+                "span": sym_span(sm, inst),
                 "ports": [], "decls": [], "processes": [], "others": [
-                    unsupported(sm, inst, "Hierarchy:module-kind",
-                                "program/interface scheduling requires its own runtime contract")]}
+                    unsupported(sm, inst, marker,
+                                "program/interface scheduling requires its own runtime contract"
+                                if marker == "Hierarchy:module-kind" else None)]}
     body = inst.body
     span = sym_span(sm, body) or sym_span(sm, inst)
     hierarchy = {"instances": 0, "seen": False, "timescale": str(body.definition.timeScale)}

@@ -3861,16 +3861,17 @@ independently admissible by dropping its body or treating a call as pure. See
 ### Primitive instances — 2026-10-21
 
 Structural primitive repricing is the next largest sole boundary:
-`PrimitiveInstanceSymbol:PrimitiveInstance` occurs in 1,053 files, with 543
-primitive-only and 510 co-occurring. The sole files contain 681 concrete
-instances: 302 logic gates, 99 conditional gates, 130 MOS switches, 76 tran
-switches and 74 pull sources. One hundred twenty have delays and 561 do not.
-Even a no-delay gate needs continuous publication, four-state net resolution
-and driver state; switches and pull sources add bidirectionality and strength.
-The current scalar/packed store has no driver graph, so every primitive family
-remains loud until it can call the existing scheduler with a real driver
-representation. See [the boundary and repricing](sv-primitives.md) and the
-read-only instrument `extractors/sv/primitive_reprice.py`.
+`PrimitiveInstanceSymbol:PrimitiveInstance` occurs in 1,153 files, with 583
+primitive-only and 570 co-occurring after primitive-array extraction was made
+explicit. The sole files contain 811 concrete instances: 392 logic gates, 121
+conditional gates, 146 MOS switches, 78 tran switches and 74 pull sources.
+One hundred twenty have delays and 691 do not. Even a no-delay gate needs
+continuous publication, four-state net resolution and driver state; switches
+and pull sources add bidirectionality and strength. The current scalar/packed
+store has no driver graph, so every primitive family remains loud until it can
+call the existing scheduler with a real driver representation. See [the
+boundary and repricing](sv-primitives.md) and the read-only instrument
+`extractors/sv/primitive_reprice.py`.
 
 ### Concurrent assertions — 2026-10-21
 
@@ -3977,7 +3978,7 @@ final boundary](sv-final.md) and the read-only instrument
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE
-statement family. It occurs in 1,323 files: 606 marker-only and 717
+statement family. It occurs in 1,329 files: 606 marker-only and 723
 co-occurring. The sole files contain 568 bad `begin`/block recovery spans, 31
 VPI system-task tokens and seven empty frontend spans. A bad block can contain
 valid-looking assignments and delays around an unsupported VPI call or
@@ -4158,7 +4159,7 @@ repricing table are in [assignment targets](sv-assignment-targets.md).
 Statement-position calls remain limited to `$display`, `$write`, `$finish`,
 and `$stop`, whose output and halt effects already have public state and
 retained-continuation rules. The fresh 22,043-path census records
-`ExpressionStatement:CallExpression` in 3,775 files: 261 call-only and 3,514
+`ExpressionStatement:CallExpression` in 3,791 files: 261 call-only and 3,530
 co-occurring. Their 498 call instances are dominated by `$fatal`, queue tasks,
 dump tasks, `$strobe`/`$monitor`, and severity calls. Those require diagnostic,
 Postponed, aggregate/device, external-I/O, or random-oracle representations;

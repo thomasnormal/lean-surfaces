@@ -29,10 +29,10 @@ The chapter-scoped rerun covered **22,043** paths: **4,326 clean**,
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
 `VariableSymbol:2state` (5,743), `AssignmentExpression:target` (4,030),
-`ExpressionStatement:CallExpression` (3,775), `CallExpression` (3,291),
+`ExpressionStatement:CallExpression` (3,791), `CallExpression` (3,291),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,482), `ConcurrentAssertionStatement`
-(1,358), `ClassType` (1,328), and `InvalidStatement` (1,323).
+(1,358), `ClassType` (1,328), and `InvalidStatement` (1,329).
 
 The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
@@ -61,9 +61,9 @@ second scheduler. The complete boundary and reproduction command are in
 
 ## Statement-call boundary — 2026-10-21
 
-`ExpressionStatement:CallExpression` occurs in **3,775** files of the fresh
+`ExpressionStatement:CallExpression` occurs in **3,791** files of the fresh
 22,043-path census. It is the sole refusal in **261** files and co-occurs in
-**3,514**. The call-only repricer finds **498** unsupported statement-call
+**3,530**. The call-only repricer finds **498** unsupported statement-call
 instances. The largest heads are `$fatal` (74), `$q_add` (46),
 `$q_initialize` (34), `$dumpvars` (30), `$strobe` (29), `$dumpfile` (27),
 `$monitor` (20), `$info` (19), `$q_remove` (19), and `$warning` (17).
@@ -394,14 +394,15 @@ and `extractors/sv/subroutine_reprice.py` for the reproducible scan.
 ## Primitive instances — 2026-10-21
 
 `PrimitiveInstanceSymbol:PrimitiveInstance` remains the structural-driver
-boundary. The fresh **22,043**-path census records it in **1,053** files:
-**543** primitive-only and **510** co-occurring. Repricing the sole files
-finds **681** concrete instances: **302** logic gates, **99** conditional
-gates, **130** MOS switches, **76** tran switches and **74** pull sources.
-**120** carry delays and **561** do not. Continuous drivers, four-state net
-resolution, strengths and delayed publication are absent from the current
-store, so no primitive family is admitted. See [the boundary](sv-primitives.md)
-and `extractors/sv/primitive_reprice.py` for the reproducible scan.
+boundary. After the primitive-array extractor fix, the fresh **22,043**-path
+census records it in **1,153** files: **583** primitive-only and **570**
+co-occurring. Repricing the sole files finds **811** concrete instances:
+**392** logic gates, **121** conditional gates, **146** MOS switches, **78**
+tran switches and **74** pull sources. **120** carry delays and **691** do
+not. Continuous drivers, four-state net resolution, strengths and delayed
+publication are absent from the current store, so no primitive family is
+admitted. See [the boundary](sv-primitives.md) and
+`extractors/sv/primitive_reprice.py` for the reproducible scan.
 
 ## Concurrent assertions — 2026-10-21
 
@@ -503,8 +504,8 @@ and `extractors/sv/final_reprice.py` for the reproducible scan.
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement
-family. The fresh **22,043**-path census records it in **1,323** files:
-**606** marker-only and **717** co-occurring. Repricing the sole files finds
+family. The fresh **22,043**-path census records it in **1,329** files:
+**606** marker-only and **723** co-occurring. Repricing the sole files finds
 **568** bad `begin`/block recovery spans, **31** VPI system-task tokens and
 **7** empty frontend spans. These spans preserve bad-AST and diagnostic
 boundaries; they cannot be admitted by dropping a wrapper or executing a

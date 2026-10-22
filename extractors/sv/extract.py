@@ -351,6 +351,22 @@ def is_integral_type_alias(symbol):
         return False
 
 
+def is_module_event_decl(symbol):
+    """Whether a module-scope named event has no self-check observation.
+
+    The time-zero self-check surface has no event object slot. A declaration
+    can nevertheless be admitted as inert metadata when no procedural code
+    uses it; event triggers and waits continue through their loud boundaries.
+    """
+    if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
+        return False
+    try:
+        return (not symbol.parentScope.isProceduralContext
+                and type(symbol.type.canonicalType).__name__ == "EventType")
+    except Exception:
+        return False
+
+
 def is_flat_unpacked_struct_alias(symbol):
     """Whether a typedef names an integral-only unpacked struct tree.
 
@@ -6474,6 +6490,8 @@ def convert_module(sm, inst):
                 if not route and m.name in port_names:
                     continue
                 if k == "Variable":
+                    if is_module_event_decl(m):
+                        continue
                     converted = convert_var(sm, m)
                     declarations = converted if isinstance(converted, list) else [converted]
                     for declaration in declarations:
@@ -6731,7 +6749,8 @@ def _declaration_only(member):
     return (str(member.kind) == "SymbolKind.LetDecl"
             or is_integral_type_alias(member)
             or is_flat_unpacked_struct_alias(member)
-            or is_bound_enum_member(member))
+            or is_bound_enum_member(member)
+            or is_module_event_decl(member))
 
 
 def _let_compilation_barriers(sm, comp):

@@ -133,6 +133,20 @@ differential matrix is **21 rows, 17 matches, 0 disagreements, and 4 recorded
 refusals**; grammar coverage remains **192 witnesses, 60 MATCH, and 132
 REFUSE**.
 
+## Inert module event declarations — 2026-10-22
+
+A module-scope named `event` declaration with no use in the time-zero
+self-check path is now admitted as inert metadata. It does not enter the flat
+vector state, while event waits, triggers, and other scheduler interactions
+remain loud. The `event_declaration` differential row prints `PASS` and checks
+the admitted declaration shape.
+
+On the available 22,035-file snapshot, clean files rise **4,416 → 4,419** and
+partial files fall **17,553 → 17,550**; `VariableSymbol:2state` falls
+**5,521 → 5,276**. The differential matrix is **22 rows, 18 matches, 0
+disagreements, and 4 recorded refusals**; grammar coverage is **193 witnesses,
+61 MATCH, and 132 REFUSE**.
+
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 
 The target tier now handles the IEEE §7.4.5 rule that a fully constant

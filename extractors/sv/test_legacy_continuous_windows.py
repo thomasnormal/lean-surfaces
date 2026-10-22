@@ -163,6 +163,21 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertEqual([s["target"]["name"] for s in stmts],
                          ["value.a", "value.inner.b", "value.inner.c"])
 
+    def test_module_event_declaration_is_inert_on_time_zero_path(self):
+        envelope = self.extract(
+            "module top; event named_ev; initial begin $display(\"PASS\"); "
+            "$finish; end endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertEqual(module["decls"], [])
+        self.assertEqual(module["others"], [])
+
+    def test_module_event_wait_remains_loud(self):
+        envelope = self.extract(
+            "module top; event named_ev; initial begin @named_ev; end endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertTrue(any(item.get("kind") == "Unsupported"
+                            for item in module["processes"][0]["body"]["stmts"]))
+
     @staticmethod
     def _walk(value):
         if isinstance(value, dict):

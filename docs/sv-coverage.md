@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 21 | 17 | 0 | 4 | sv-tests-2 declarations |
+| 22 | 18 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -31,6 +31,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `unpacked_struct_initializers` | `Examples/system-verilog/unpacked_struct_initializers/unpacked_struct_initializers.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_concat_initializer` | `Examples/system-verilog/unpacked_concat_initializer/unpacked_concat_initializer.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_struct_array` | `Examples/system-verilog/unpacked_struct_array/unpacked_struct_array.sv` | match | **MATCH** | `ok` | MATCH |
+| `event_declaration` | `Examples/system-verilog/event_decl/event_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `delay_refusal` | `Examples/system-verilog/delay/delay.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `event_refusal` | `Examples/system-verilog/event/event.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `always_refusal` | `Examples/system-verilog/always/events.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
@@ -42,7 +43,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 192 | 60 | 132 | pyslang SyntaxKind |
+| 193 | 61 | 132 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -107,6 +108,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.EqualsAssertionArgClause` | `Examples/system-verilog/let_expressions/defaults.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EqualsValueClause` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.EventControlWithExpression` | `Examples/system-verilog/always/events.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
+| `SyntaxKind.EventType` | `Examples/system-verilog/event_decl/event_decl.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ExpressionStatement` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ForLoopStatement` | `Examples/system-verilog/case_inside/table.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ForVariableDeclaration` | `Examples/system-verilog/runtime_clog2/boundaries.sv` | **MATCH** | `ok`  |
@@ -245,11 +247,11 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22035 | 4416 | 17553 | 66 |
+| 22035 | 4419 | 17550 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `VariableSymbol:2state` | 5521 |
+| `VariableSymbol:2state` | 5276 |
 | `AssignmentExpression:target` | 3913 |
 | `ExpressionStatement:CallExpression` | 3784 |
 | `CallExpression` | 3290 |

@@ -109,6 +109,18 @@ partial files **17,555 → 17,553**; `VariableSymbol:2state` falls **5,532 →
 matrix adds one matching row with no disagreements; grammar coverage remains
 **192 witnesses, 60 MATCH, and 132 REFUSE**.
 
+## Inert module event declarations — 2026-10-22
+
+A module-scope named `event` declaration with no use in the time-zero
+self-check path is now admitted as inert metadata. It does not enter the flat
+vector state, while event waits, triggers, and other scheduler interactions
+remain loud. The `event_declaration` fixture is the differential witness.
+
+The available 22,035-file snapshot moves clean files **4,416 → 4,419** and
+partial files **17,553 → 17,550**; `VariableSymbol:2state` falls **5,521 →
+5,276**. The differential matrix adds one matching row with no disagreements;
+grammar coverage is **193 witnesses, 61 MATCH, and 132 REFUSE**.
+
 **Proof inventory, with comments excluded.** There are **98 named
 theorems and 10 anonymous examples** in `LeanModels/Sv`, and **121
 theorems and 6 examples** in the SV example directories: **235 actual

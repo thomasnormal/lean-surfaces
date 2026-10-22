@@ -56,6 +56,12 @@ constant member access retains the existing field semantics. Aggregate array
 initializers, nonintegral fields, and dynamic selections remain loud. The
 `unpacked_struct_array` fixture covers this leaf composition.
 
+A module-scope named `event` declaration is admitted as inert metadata on the
+time-zero self-check path when no event operation uses it. It is omitted from
+the flat vector state; waits, triggers, and event-driven processes remain
+unsupported because they require the scheduler's event object and queue.
+`event_decl` exercises this declaration-only slice.
+
 The public representation has no aggregate heap, queue, object, string, real,
 handle, or event scheduler. The symbolic `PDecl`/`PType` representation also
 does not carry a two-state bit, and symbolic `Squash2` is intentionally loud.

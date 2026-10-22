@@ -16,11 +16,24 @@ def integralExpressionWitness : Bool :=
     integralBinary .divide (signed 1) (signed 0) ==
       .undefined .divisionByZero
 
+def integralUnaryShiftWitness : Bool :=
+  integralUnary .negate (signed 3) == .ok (signed (-3)) &&
+    integralUnary .complement (signed (-1)) == .ok (signed 0) &&
+    integralUnary .logicalNot (signed (-3)) == .ok (boolean 0) &&
+    integralBinary .shiftLeft (signed 1) (signed 3) == .ok (signed 8) &&
+    integralBinary .shiftRight (signed (-7)) (signed 1) == .ok (signed (-4)) &&
+    integralBinary .shiftLeft (signed 1) (signed 32) == .undefined .excessiveShift
+
 #guard integralExpressionWitness
+#guard integralUnaryShiftWitness
 
 theorem integral_expression_witness : integralExpressionWitness = true := by
   rfl
 
+theorem integral_unary_shift_witness : integralUnaryShiftWitness = true := by
+  rfl
+
 #print axioms integral_expression_witness
+#print axioms integral_unary_shift_witness
 
 end LeanModels.Cpp.IntegralRung3Tests

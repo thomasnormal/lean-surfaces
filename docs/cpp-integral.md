@@ -86,7 +86,7 @@ and no unchanged-corpus execution coverage is claimed. Type binding,
 promotions, object/lifetime machinery and statement execution remain required
 before this value layer can admit a function from any evidence corpus.
 
-The rung-3 coverage witness in `IntegralRung3Tests.lean` checks defined add,
-divide, remainder, bitwise-and and comparison results, while retaining signed
-overflow and divide-by-zero as explicit undefined outcomes. Its native probe
-executes only the defined expressions.
+The rung-3 coverage witnesses in `IntegralRung3Tests.lean` check defined add,
+divide, remainder, bitwise-and, comparison, unary, and shift results, while
+retaining signed overflow, divide-by-zero, and excessive shifts as explicit
+undefined outcomes. Their native probes execute only the defined expressions.

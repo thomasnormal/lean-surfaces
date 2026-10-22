@@ -118,6 +118,18 @@
     "rung": 3
   },
   {
+    "id": "expression.unary-and-shifts",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.IntegralRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.IntegralRung3Tests",
+    "lean_expression": "integralUnaryShiftWitness",
+    "cpp_source": "bool unary_shift_witness() { int negated = -3; int complemented = ~(-1); bool logical = !(-3); int left = 1 << 3; int right = -7 >> 1; return negated == -3 && complemented == 0 && !logical && left == 8 && right == -4; }",
+    "cpp_expression": "unary_shift_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

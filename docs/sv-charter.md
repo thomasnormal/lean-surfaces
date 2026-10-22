@@ -43,6 +43,23 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Shallow unpacked integral structs — 2026-10-22
+
+The self-check surface now admits an untagged unpacked struct when every direct
+field is an integral scalar or packed vector. Ingestion flattens the fields into
+ordinary vector cells, and direct member reads, writes, and compound assignments
+reuse the existing identifier evaluator. Two-state field initialization and
+assignment squashing remain intact. Whole-struct operations, nested or
+nonintegral fields, tagged structs, and aggregate initializers stay loud because
+the legacy state has no aggregate storage. The authored
+`unpacked_struct_integral_fields` fixture and differential row exercise the
+admitted shape.
+
+The fresh sv-tests-2 census moves **4,378 → 4,409 clean** and **17,601 → 17,570
+partial** with zero extraction errors. The leading `VariableSymbol:2state`
+blocker falls **5,650 → 5,556**, `AssignmentExpression:target` falls
+**3,961 → 3,922**, and `MemberAccessExpression` falls **1,188 → 1,052**.
+
 **Proof inventory, with comments excluded.** There are **98 named
 theorems and 10 anonymous examples** in `LeanModels/Sv`, and **121
 theorems and 6 examples** in the SV example directories: **235 actual

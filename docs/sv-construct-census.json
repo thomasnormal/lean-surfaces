@@ -16,11 +16,11 @@
   "blocker_files": [
    [
     "VariableSymbol:2state",
-    5650
+    5556
    ],
    [
     "AssignmentExpression:target",
-    3961
+    3922
    ],
    [
     "ExpressionStatement:CallExpression",
@@ -59,12 +59,12 @@
     1248
    ],
    [
-    "MemberAccessExpression",
-    1188
-   ],
-   [
     "PrimitiveInstanceSymbol:PrimitiveInstance",
     1153
+   ],
+   [
+    "MemberAccessExpression",
+    1052
    ],
    [
     "ConversionExpression:width",
@@ -123,10 +123,6 @@
     320
    ],
    [
-    "TypeAliasType:TypeAlias",
-    300
-   ],
-   [
     "SequenceSymbol:Sequence",
     284
    ],
@@ -171,6 +167,10 @@
     166
    ],
    [
+    "TypeAliasType:TypeAlias",
+    160
+   ],
+   [
     "GenericClassDefSymbol",
     147
    ],
@@ -191,20 +191,12 @@
     124
    ],
    [
-    "TypeAliasType",
-    116
-   ],
-   [
     "ProceduralAssignStatement",
     112
    ],
    [
     "EventTriggerStatement",
     110
-   ],
-   [
-    "VariableSymbol:type",
-    102
    ],
    [
     "Elaboration:invalid-compilation",
@@ -231,8 +223,16 @@
     83
    ],
    [
+    "VariableSymbol:type",
+    80
+   ],
+   [
     "VariableSymbol",
     76
+   ],
+   [
+    "TypeAliasType",
+    74
    ],
    [
     "RandSequenceStatement",
@@ -435,16 +435,16 @@
     21
    ],
    [
-    "AssignmentExpression:compound-source",
-    20
-   ],
-   [
     "ConditionalStatement:Unique",
     20
    ],
    [
     "NetSymbol:Tri1",
     20
+   ],
+   [
+    "AssignmentExpression:compound-source",
+    19
    ],
    [
     "NamedValueExpression:range",
@@ -464,10 +464,6 @@
    ],
    [
     "TransparentMemberSymbol",
-    17
-   ],
-   [
-    "Package:TypeAlias",
     17
    ],
    [
@@ -639,6 +635,10 @@
     7
    ],
    [
+    "Package:TypeAlias",
+    7
+   ],
+   [
     "InsideExpression:item",
     6
    ],
@@ -743,10 +743,6 @@
     4
    ],
    [
-    "EnumMethod:source",
-    4
-   ],
-   [
     "Replication:effects",
     3
    ],
@@ -784,6 +780,10 @@
    ],
    [
     "WaitOrderStatement",
+    3
+   ],
+   [
+    "EnumMethod:source",
     3
    ],
    [
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4378,
-   "partial": 17601,
+   "clean": 4409,
+   "partial": 17570,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1002,7 +1002,7 @@
     25
    ],
    "compile_error": [
-    104,
+    107,
     1750
    ],
    "compile_fail": [
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    3790,
+    3818,
     18678
    ],
    "simulation elaboration": [
@@ -1060,7 +1060,7 @@
     "top_residual_blockers": [
      [
       "AssignmentExpression:target",
-      135
+      133
      ],
      [
       "VariableDeclStatement:2state",
@@ -1072,7 +1072,7 @@
      ],
      [
       "VariableSymbol:2state",
-      70
+      67
      ],
      [
       "CallExpression",
@@ -1099,10 +1099,6 @@
       21
      ],
      [
-      "MemberAccessExpression",
-      17
-     ],
-     [
       "ElementSelectExpression:source-type",
       15
      ],
@@ -1116,6 +1112,10 @@
      ],
      [
       "ExpressionStatement:CallExpression",
+      10
+     ],
+     [
+      "MemberAccessExpression",
       10
      ],
      [
@@ -1231,18 +1231,18 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 619,
-    "clean": 421,
-    "partial": 621,
+    "blocked_by_more": 613,
+    "clean": 427,
+    "partial": 615,
     "simulation_tests": 1042,
     "top_residual_blockers": [
      [
       "VariableSymbol:2state",
-      228
+      220
      ],
      [
       "AssignmentExpression:target",
-      228
+      220
      ],
      [
       "CallExpression",
@@ -1254,11 +1254,11 @@
      ],
      [
       "TimedStatement:DelayControl",
-      158
+      157
      ],
      [
       "VariableDeclStatement:2state",
-      156
+      155
      ],
      [
       "ConversionExpression:width",
@@ -1266,15 +1266,11 @@
      ],
      [
       "TypeAliasType:TypeAlias",
-      94
+      90
      ],
      [
       "InstanceSymbol:Instance",
       57
-     ],
-     [
-      "MemberAccessExpression",
-      55
      ],
      [
       "RealLiteral",
@@ -1291,6 +1287,10 @@
      [
       "SubroutineSymbol:Subroutine",
       39
+     ],
+     [
+      "MemberAccessExpression",
+      36
      ],
      [
       "NullLiteral",
@@ -1323,9 +1323,9 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 252,
+    "clean": 256,
     "error": 0,
-    "partial": 406,
+    "partial": 402,
     "skip_include": 0,
     "total": 658,
     "unlockable": 2
@@ -1403,9 +1403,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 217,
+    "clean": 225,
     "error": 0,
-    "partial": 608,
+    "partial": 600,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0
@@ -1427,9 +1427,9 @@
     "unlockable": 2
    },
    "chapter-23": {
-    "clean": 174,
+    "clean": 175,
     "error": 0,
-    "partial": 677,
+    "partial": 676,
     "skip_include": 0,
     "total": 851,
     "unlockable": 0
@@ -1451,9 +1451,9 @@
     "unlockable": 0
    },
    "chapter-26": {
-    "clean": 165,
+    "clean": 166,
     "error": 0,
-    "partial": 400,
+    "partial": 399,
     "skip_include": 0,
     "total": 565,
     "unlockable": 0
@@ -1595,17 +1595,17 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 434,
+    "clean": 441,
     "error": 0,
-    "partial": 752,
+    "partial": 745,
     "skip_include": 0,
     "total": 1186,
     "unlockable": 4
    },
    "chapter-7": {
-    "clean": 146,
+    "clean": 155,
     "error": 0,
-    "partial": 650,
+    "partial": 641,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0
@@ -1619,9 +1619,9 @@
     "unlockable": 0
    },
    "chapter-9": {
-    "clean": 114,
+    "clean": 115,
     "error": 0,
-    "partial": 475,
+    "partial": 474,
     "skip_include": 0,
     "total": 589,
     "unlockable": 0

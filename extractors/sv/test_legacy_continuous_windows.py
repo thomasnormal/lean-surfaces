@@ -94,6 +94,21 @@ class LegacyContinuousWindows(unittest.TestCase):
                          [("value[0]", 8), ("value[1]", 8)])
         self.assertEqual(decls[0]["init"]["bits"], "0" * 8)
 
+    def test_unpacked_struct_integral_fields_flatten_to_cells(self):
+        envelope = self.extract(
+            "module top; typedef struct { int count; bit [7:0] mask; } item_t; "
+            "item_t item; initial begin item.count = 3; item.mask = 5; "
+            "item.count += 4; item.mask <<= 1; end endmodule")
+        decls = envelope["design"]["modules"][0]["decls"]
+        self.assertEqual([d["name"] for d in decls],
+                         ["item.count", "item.mask"])
+        stmts = envelope["design"]["modules"][0]["processes"][0]["body"]["stmts"]
+        self.assertEqual([s["kind"] for s in stmts],
+                         ["BlockingAssign", "BlockingAssign",
+                          "BlockingAssign", "BlockingAssign"])
+        self.assertEqual(stmts[2]["target"]["name"], "item.count")
+        self.assertEqual(stmts[3]["target"]["name"], "item.mask")
+
     def test_fixed_array_out_of_bounds_write_is_empty(self):
         envelope = self.extract(
             "module top; int value [0:3]; "

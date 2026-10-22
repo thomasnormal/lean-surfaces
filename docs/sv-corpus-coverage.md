@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-22
 
-The chapter-scoped rerun covered **22,045** paths: **4,347 clean**,
-**17,632 partial**, **66 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,045** paths: **4,409 clean**,
+**17,570 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`VariableSymbol:2state` (5,666), `AssignmentExpression:target` (3,980),
+`VariableSymbol:2state` (5,556), `AssignmentExpression:target` (3,922),
 `ExpressionStatement:CallExpression` (3,792), `CallExpression` (3,292),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,483), `ConcurrentAssertionStatement`
@@ -70,6 +70,24 @@ files **17,628 → 17,601**. `VariableSymbol:2state` falls **5,660 → 5,650**;
 `AssignmentExpression:target` falls **3,980 → 3,961**. The differential
 matrix is now **17 rows, 13 matches, 0 disagreements, and 4 recorded
 refusals**.
+
+## Shallow unpacked integral structs — 2026-10-22
+
+An untagged, shallow unpacked `struct` whose fields are integral scalars or
+packed vectors now lowers each field to its own ordinary vector cell. Direct
+member reads, writes, and compound assignments use the flattened field name;
+two-state fields retain zero startup and x/z-to-zero assignment conversion.
+Whole-struct operations, nested or unpacked aggregate fields, initializers,
+dynamic member forms, and tagged structs remain loud because the legacy state
+has no aggregate slot. The `unpacked_struct_integral_fields` differential row
+checks field updates and the resulting display.
+
+The fresh census moves **4,378 → 4,409 clean** and **17,601 → 17,570
+partial**, with zero extraction errors. `VariableSymbol:2state` falls
+**5,650 → 5,556**, `AssignmentExpression:target` falls **3,961 → 3,922**,
+and `MemberAccessExpression` falls **1,188 → 1,052**. The differential matrix
+is **18 rows, 14 matches, 0 disagreements, and 4 recorded refusals**; the
+grammar census remains **192 witnesses, 60 MATCH, and 132 REFUSE**.
 
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 

@@ -351,6 +351,36 @@ def is_integral_type_alias(symbol):
         return False
 
 
+def is_flat_unpacked_struct_alias(symbol):
+    """Whether a typedef names a shallow integral unpacked struct.
+
+    Such a typedef is metadata for the legacy field-flattening path; it does
+    not allocate an aggregate value by itself. Nested and nonintegral fields
+    remain declaration boundaries until they have their own representation.
+    """
+    if str(symbol.kind) != "SymbolKind.TypeAlias":
+        return False
+    try:
+        aggregate = symbol.declaredType.type.canonicalType
+        if type(aggregate).__name__ != "UnpackedStructType":
+            return False
+        if getattr(aggregate, "isTagged", False):
+            return False
+        fields = list(aggregate)
+        if not fields:
+            return False
+        for field in fields:
+            width, _, reason = type_width_2s(field.type)
+            if width is None or reason is not None:
+                return False
+            if type(field.type.canonicalType).__name__ in (
+                    "FixedSizeUnpackedArrayType", "DynamicArrayType",
+                    "QueueType", "AssociativeArrayType", "UnpackedStructType",
+                    "UnpackedUnionType"):
+                return False
+        return True
+    except Exception:
+        return False
 def is_bound_enum_member(symbol):
     """An admitted enum's transparent member introduces no runtime binding."""
     if str(symbol.kind) != "SymbolKind.TransparentMember":
@@ -990,6 +1020,80 @@ def _fixed_array_cell(sm, expression):
     outside this deliberately narrow lowering and stay loud.
     """
     return _fixed_array_leaf_select(sm, expression)
+
+
+def _unpacked_struct_member(sm, expression):
+    """Return the flattened cell for a direct integral unpacked-struct field.
+
+    The legacy state has no aggregate object slot, but a struct whose fields
+    are scalar/packed integral values can be represented exactly by one slot
+    per field.  Keep this helper deliberately shallow: nested aggregates,
+    array fields, dynamic selections and whole-struct operations remain loud.
+    """
+    try:
+        if type(expression).__name__ != "MemberAccessExpression":
+            return None
+        value = expression.value
+        if not _storage_expression(value):
+            return None
+        aggregate = value.type.canonicalType
+        if type(aggregate).__name__ != "UnpackedStructType":
+            return None
+        member = expression.member
+        width, two_state, reason = type_width_2s(member.type)
+        if width is None or reason is not None:
+            return None
+        leaf = member.type.canonicalType
+        if type(leaf).__name__ in ("FixedSizeUnpackedArrayType",
+                                    "DynamicArrayType", "QueueType",
+                                    "AssociativeArrayType", "UnpackedStructType",
+                                    "UnpackedUnionType"):
+            return None
+        return {
+            "name": f"{_storage_name(value.symbol)}.{member.name}",
+            "width": width,
+            "two_state": two_state,
+        }
+    except Exception:
+        return None
+
+
+def _unpacked_struct_decls(sm, symbol):
+    """Flatten a top-level untagged unpacked struct with integral fields."""
+    try:
+        aggregate = symbol.type.canonicalType
+        if type(aggregate).__name__ != "UnpackedStructType":
+            return None
+        if getattr(aggregate, "isTagged", False):
+            return None
+        if getattr(symbol, "initializer", None) is not None:
+            return None
+        fields = list(aggregate)
+        if not fields:
+            return None
+        decls = []
+        for field in fields:
+            width, two_state, reason = type_width_2s(field.type)
+            if width is None or reason is not None:
+                return None
+            leaf = field.type.canonicalType
+            if type(leaf).__name__ in ("FixedSizeUnpackedArrayType",
+                                        "DynamicArrayType", "QueueType",
+                                        "AssociativeArrayType", "UnpackedStructType",
+                                        "UnpackedUnionType"):
+                return None
+            init = None
+            if two_state:
+                init = {"kind": "Literal", "span": None, "width": width,
+                        "bits": "0" * width}
+            decls.append(signed_metadata({
+                "kind": "Var", "span": sym_span(sm, symbol),
+                "name": f"{_storage_name(symbol)}.{field.name}",
+                "width": width, "init": init,
+            }, field.type))
+        return decls
+    except Exception:
+        return None
 
 
 def _fixed_array_shape(source):
@@ -1920,6 +2024,14 @@ def _convert_expr(sm, e):
             "ReplicatedAssignmentPatternExpression"):
         return _convert_packed_pattern(sm, e)
     if cname == "MemberAccessExpression":
+        unpacked_member = _unpacked_struct_member(sm, e)
+        if unpacked_member is not None:
+            return signed_metadata({
+                "kind": "Ident",
+                "span": node_span(sm, e),
+                "width": unpacked_member["width"],
+                "name": unpacked_member["name"],
+            }, e.type)
         member = _packed_struct_member(sm, e)
         if member is not None:
             base, width, offset, _two_state = member
@@ -3486,6 +3598,17 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
                 and _packed_struct_member(sm, lhs.value) is not None):
             return unsupported(sm, lhs, expression_kind + ":member-select"), False
     if expression_kind == "MemberAccessExpression":
+        unpacked_member = _unpacked_struct_member(sm, lhs)
+        if unpacked_member is not None:
+            target = {
+                "kind": "Ident",
+                "span": node_span(sm, lhs),
+                "width": unpacked_member["width"],
+                "name": unpacked_member["name"],
+            }
+            if concat_leaf:
+                target["two_state"] = unpacked_member["two_state"]
+            return target, True
         member = _packed_struct_member(sm, lhs)
         if member is not None:
             _base, width, offset, two_state = member
@@ -4453,8 +4576,12 @@ def _case_source_expression_ok(expression, *, packed_members=False):
             return
         if kind == "MemberAccessExpression" and packed_members:
             container = node.value.type.canonicalType
-            pure = pure and type(container).__name__ in ("PackedStructType", "PackedUnionType")
-            pure = pure and not getattr(container, "isTagged", False)
+            if type(container).__name__ in ("PackedStructType", "PackedUnionType"):
+                pure = pure and not getattr(container, "isTagged", False)
+            elif type(container).__name__ == "UnpackedStructType":
+                pure = pure and _unpacked_struct_member(None, node) is not None
+            else:
+                pure = False
             return
         pure = pure and not getattr(node, "bad", False) and kind in (
             "IntegerLiteral", "UnbasedUnsizedIntegerLiteral", "StringLiteral",
@@ -5575,6 +5702,9 @@ def convert_port(sm, m):
 
 
 def convert_var(sm, m):
+    struct_decls = _unpacked_struct_decls(sm, m)
+    if struct_decls is not None:
+        return struct_decls
     array_decls = convert_fixed_array_vars(sm, m)
     if array_decls is not None:
         return array_decls
@@ -6352,7 +6482,9 @@ def _closed_package_initializer(expression):
 def _declaration_only(member):
     """Frontend-bound declarations that allocate no runtime value."""
     return (str(member.kind) == "SymbolKind.LetDecl"
-            or is_integral_type_alias(member) or is_bound_enum_member(member))
+            or is_integral_type_alias(member)
+            or is_flat_unpacked_struct_alias(member)
+            or is_bound_enum_member(member))
 
 
 def _let_compilation_barriers(sm, comp):

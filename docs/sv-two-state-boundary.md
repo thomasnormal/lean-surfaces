@@ -10,8 +10,8 @@ The extractor and focused tests cover both declarations and selected reads and
 writes, including signed forms.
 
 The current `VariableSymbol:2state` census tag names the shapes outside that
-value tier. The 2026-10-22 corpus snapshot has 5,650 files containing the tag;
-it is the sole refusal in 20 files. The previous snapshot had 5,660 files and
+value tier. The 2026-10-22 corpus snapshot has 5,556 files containing the tag;
+it is the sole refusal in 20 files. The previous snapshot had 5,650 files and
 28 sole refusals. Its current frequent companions are assignment targets
 (3,176 files), statement calls (2,234), expression calls (2,103),
 `NamedValueExpression:2state` (1,409), classes (1,147), member access (1,120),
@@ -30,6 +30,13 @@ or nonconstant selections, effectful or shape-mismatched patterns, and every
 nonintegral leaf remain loud. A multidimensional packed integral leaf is kept
 as one vector cell, preserving packed bit order; the
 `fixed_array_packed_leaf_2state` fixture exercises that form.
+
+The same flattening applies to a shallow untagged unpacked struct with integral
+scalar or packed fields: each direct field is an independent vector cell, so
+field reads, writes, and compound assignments preserve the scalar two-state
+rules. Whole-struct values, nested or nonintegral fields, tagged structs, and
+struct initializers remain outside the representation. The
+`unpacked_struct_integral_fields` fixture exercises this field-level form.
 
 The public representation has no aggregate heap, queue, object, string, real,
 handle, or event scheduler. The symbolic `PDecl`/`PType` representation also

@@ -3914,6 +3914,18 @@ constant or ordinary wire and no second scheduler is added. See [the boundary
 and repricing](sv-tri1.md) and the read-only instrument
 `extractors/sv/tri1_reprice.py`.
 
+### `tri` resolved nets — 2026-10-22
+
+`NetSymbol:Tri` remains the resolved-wire boundary. The fresh 22,043-path
+census records it in 66 files: 7 are `Tri`-only and 59 co-occur with another
+wall. The sole files contain 7 declarations: three continuous single-driver
+forms, four undriven observations, two wire/tri equivalence comparisons, two
+invalid `tri reg` spellings and one floating four-state observation (features
+overlap). The envelope has no general driver set or strength-resolution state,
+so no `tri` is renamed to `wire` and no invalid declaration is salvaged. See
+[the boundary and repricing](sv-tri.md) and the read-only instrument
+`extractors/sv/tri_reprice.py`.
+
 ### Concurrent assertions — 2026-10-21
 
 Concurrent assertion repricing measures `ConcurrentAssertionStatement` in

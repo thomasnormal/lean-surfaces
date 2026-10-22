@@ -715,6 +715,18 @@ pull driver or strength-resolved driver set, so `tri1` is not reduced to a
 constant or ordinary wire. See [the `tri1` boundary](sv-tri1.md) and
 `extractors/sv/tri1_reprice.py` for the reproducible scan.
 
+## `tri` resolved nets — 2026-10-22
+
+`NetSymbol:Tri` remains the resolved-wire boundary. The fresh **22,043**-path
+census records it in **66** files: **7** are `Tri`-only and **59** co-occur
+with another wall. Repricing the sole files finds **7** declarations: **3**
+continuous single-driver forms, **4** undriven observations, **2** wire/tri
+equivalence comparisons, **2** invalid `tri reg` spellings and **1** floating
+four-state observation (features overlap). The envelope has no general driver
+set or strength-resolution state, so `tri` is not renamed to `wire` and no
+invalid declaration is salvaged. See [the `tri` boundary](sv-tri.md) and
+`extractors/sv/tri_reprice.py` for the reproducible scan.
+
 ## Continuous-assignment delays — 2026-10-22
 
 `ContinuousAssignSymbol:delay` remains the delayed continuous-driver boundary.

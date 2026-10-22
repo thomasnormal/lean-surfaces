@@ -120,6 +120,7 @@ emits:
 | `NetSymbol:TriReg` | charge-storage net with driver release, capacitive retention, charge strength or decay |
 | `NetSymbol:Tri0` | implicit pull-0 net with strength-sensitive four-state driver resolution |
 | `NetSymbol:Tri1` | implicit pull-1 net with strength-sensitive four-state driver resolution |
+| `NetSymbol:Tri` | resolved-wire net requiring a general four-state driver set and strength resolution |
 | `ExtractorInternal:<PyException>` | defensive catch-all: the extractor itself failed on this node (should not occur; `span` is `null`, `text` is the Python error) |
 
 The tag list may grow with the tier; ingesters must treat **any** unknown
@@ -1592,6 +1593,10 @@ driver, strength ordering or resolved four-state driver set.
 `tri1` declarations remain explicit `NetSymbol:Tri1` unsupported members; see
 [the pull-up boundary](sv-tri1.md). The envelope has no implicit pull driver,
 strength ordering or resolved four-state driver set.
+
+`tri` declarations remain explicit `NetSymbol:Tri` unsupported members; see
+[the resolved-wire boundary](sv-tri.md). The envelope has no general driver
+set, floating high-impedance state or strength resolution for this spelling.
 
 Concurrent properties remain explicit `ConcurrentAssertionStatement`
 unsupported members; see [the assertion boundary](sv-concurrent-assertions.md).

@@ -71,10 +71,33 @@ def callableConditionalWitness : Bool :=
   | .ok (.ok positive), .ok (.ok zero) => positive == signed 7 && zero == signed 8
   | _, _ => false
 
+def logicalExpression : TypedCallableExpression := {
+  expression := .logical "&&"
+    {expression := .parameter parameter, sourceType := intType, type := intType}
+    {expression := .increment "++" false parameter, sourceType := intType, type := intType}
+  sourceType := .builtin .boolean
+  type := .builtin .boolean}
+
+def logicalFunction : CallableFunction := {
+  incrementFunction with
+  body := .block (.return_ {
+    expression := .comma logicalExpression
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableLogicalWitness : Bool :=
+  match evaluateCallable 16 .lp64 logicalFunction [signed 0],
+        evaluateCallable 16 .lp64 logicalFunction [signed 1] with
+  | .ok (.ok zero), .ok (.ok one) => zero == signed 0 && one == signed 2
+  | _, _ => false
+
 #guard callableIncrementWitness
 #guard callablePostfixWitness
 #guard callableCompoundAssignmentWitness
 #guard callableConditionalWitness
+#guard callableLogicalWitness
 
 theorem callable_increment_witness : callableIncrementWitness = true := by
   rfl
@@ -88,9 +111,13 @@ theorem callable_compound_assignment_witness : callableCompoundAssignmentWitness
 theorem callable_conditional_witness : callableConditionalWitness = true := by
   rfl
 
+theorem callable_logical_witness : callableLogicalWitness = true := by
+  rfl
+
 #print axioms callable_increment_witness
 #print axioms callable_postfix_witness
 #print axioms callable_compound_assignment_witness
 #print axioms callable_conditional_witness
+#print axioms callable_logical_witness
 
 end LeanModels.Cpp.CallableRung3Tests

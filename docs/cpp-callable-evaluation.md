@@ -185,4 +185,6 @@ call witnesses. The parameter state is updated once; the postfix result is
 then sequenced with a comma expression so the updated value is observed. The
 compound-assignment witness extends the same state path with `+=`. The
 conditional witness then selects one of two typed results from the parameter.
-The corresponding coverage rows call unchanged C++ functions.
+The logical short-circuit witness then exposes whether an incrementing right
+operand ran for false and true left operands. The corresponding coverage rows
+call unchanged C++ functions.

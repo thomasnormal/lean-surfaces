@@ -55,6 +55,17 @@
     "rung": 0
   },
   {
+    "id": "translation.field-declaration",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "fieldTranslationWitness",
+    "cpp_source": "struct Sample { int value; };",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

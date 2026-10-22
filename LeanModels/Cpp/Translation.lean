@@ -51,6 +51,9 @@ def admitParameterDeclaration (artifact : Artifact) (path : List Nat) :
 def admitRecordDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXRecordDecl" "record"
 
+def admitFieldDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "FieldDecl" "field"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

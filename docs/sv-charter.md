@@ -4632,3 +4632,15 @@ multiple-output latch, one nested-enable latch and one protected lexical
 region (features overlap). The envelope has no inferred wait set, latch-hold
 state or always-latch legality diagnostics, so the marker remains loud. See
 [`always_latch`](sv-always-latch.md) and its read-only repricer.
+
+### User-defined primitive boundary — 2026-10-22
+
+`PrimitiveSymbol` remains the UDP declaration and truth-table boundary, separate
+from built-in primitive instances. The fresh 22,043-path census records it in
+**382** files: 13 are UDP-only and 369 co-occur. The 13 sole rows contain
+three port-shape diagnostics, one combinational current-state field, two all-X
+input rows with non-X output/next-state, one duplicate-input row, three rows
+with multiple transitions, one missing input field, one `z` table symbol and
+one invalid initial output value. UDP state tables need a declaration and
+transition matcher absent from the envelope; no table evaluator or driver is
+introduced. See [the UDP boundary](sv-udp.md).

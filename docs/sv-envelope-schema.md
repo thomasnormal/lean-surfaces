@@ -1778,3 +1778,11 @@ member. The envelope has no inferred sensitivity set, automatic time-zero
 activation record, latch-retention state, or legality diagnostics for timing
 controls and fork/join within the block. It is not rewritten as `AlwaysComb` or
 as a plain `Always`; see the [`always_latch` boundary](sv-always-latch.md).
+
+## User-defined primitives
+
+UDP declarations remain explicit unsupported design members with
+`sv_kind = "PrimitiveSymbol"`. The envelope has no UDP port declaration,
+ordered truth-table, current-state/transition matcher, or UDP diagnostic
+status. They are not flattened into expressions or built-in primitive drivers;
+see the [UDP boundary](sv-udp.md).

@@ -3085,3 +3085,14 @@ enables and a protected region. Features overlap. The envelope does not carry
 inferred wait registration or retained latch state, so all 13 remain loud. See
 [`always_latch`](sv-always-latch.md) and
 `extractors/sv/always_latch_reprice.py`.
+
+## User-defined primitive boundary — 2026-10-22
+
+The fresh 22,043-path census records `PrimitiveSymbol` in **382** files: **13**
+are UDP-only and 369 co-occur. Repricing the sole files finds 13 UDP spans:
+three port-shape diagnostics, one combinational current-state field, two all-X
+input rows with non-X output/next-state, one duplicate-input row, three
+multiple-transition rows, one missing input field, one `z` table symbol and
+one invalid initial output value. UDP declarations and tables remain loud; the
+legacy envelope has no truth-table state or transition matcher. See [the UDP
+boundary](sv-udp.md) and `extractors/sv/udp_reprice.py`.

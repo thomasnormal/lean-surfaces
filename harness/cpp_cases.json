@@ -214,6 +214,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-while",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung4Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung4Tests",
+    "lean_expression": "callableWhileWitness",
+    "cpp_source": "int while_witness(int value) { while (value) --value; return value; } bool callable_witness() { return while_witness(3) == 0 && while_witness(0) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "expression.callable-conditional",
     "kind": "expression",
     "corpus": "rung-3 witness",

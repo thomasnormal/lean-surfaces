@@ -45,8 +45,27 @@ def callableIfWitness : Bool :=
   | .ok (.ok positive), .ok (.ok zero) => positive == signed 10 && zero == signed 20
   | _, _ => false
 
+def whileFunction : CallableFunction := {
+  switchFunction with
+  body := .block (.sequence
+    (.whileLoop
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      (.expression {
+        expression := .increment "--" false parameter,
+        sourceType := intType,
+        type := intType}))
+    (.return_ {expression := .integer 0, sourceType := intType, type := intType}))
+}
+
+def callableWhileWitness : Bool :=
+  match evaluateCallable 32 .lp64 whileFunction [signed 3],
+        evaluateCallable 16 .lp64 whileFunction [signed 0] with
+  | .ok (.ok three), .ok (.ok zero) => three == signed 0 && zero == signed 0
+  | _, _ => false
+
 #guard callableSwitchWitness
 #guard callableIfWitness
+#guard callableWhileWitness
 
 theorem callable_switch_witness : callableSwitchWitness = true := by
   rfl
@@ -54,7 +73,11 @@ theorem callable_switch_witness : callableSwitchWitness = true := by
 theorem callable_if_witness : callableIfWitness = true := by
   rfl
 
+theorem callable_while_witness : callableWhileWitness = true := by
+  rfl
+
 #print axioms callable_switch_witness
 #print axioms callable_if_witness
+#print axioms callable_while_witness
 
 end LeanModels.Cpp.CallableRung4Tests

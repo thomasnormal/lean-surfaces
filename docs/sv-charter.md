@@ -4681,3 +4681,15 @@ members and one untagged-union dynamic member. The legacy envelope has no
 aggregate layout, tagged-union state or dynamic-member representation, so
 these compilation-unit aliases remain loud. See [compilation-unit aggregate
 typedefs](sv-unit-type-aliases.md).
+
+### Element-select source-type boundary — 2026-10-22
+
+The fresh 22,043-path census records `ElementSelectExpression:source-type` in
+**662** files: **11** are sole refusals and 651 co-occur. Repricing those sole
+files finds **23** selection spans: one scalar bit-select diagnostic, 17 nested
+packed-union member selections, two two-state unpacked-array out-of-bounds
+reads, two four-state out-of-bounds reads and one enum-array base-type result.
+The selected-read envelope has no general aggregate layout or
+state-kind-specific out-of-bounds rule, so it does not flatten a union, invent
+a scalar index or choose an unknown/zero result. See [element-select
+source types](sv-element-select-source.md).

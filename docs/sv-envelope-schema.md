@@ -1810,3 +1810,11 @@ their aggregate or union shape needs layout, tagged-state, dynamic-member or
 diagnostic information absent from the envelope. They are not rewritten as
 integral aliases or lowered to a partial aggregate; see [compilation-unit
 aggregate typedefs](sv-unit-type-aliases.md).
+
+## Element-select source types
+
+`ElementSelectExpression:source-type` remains an explicit unsupported
+selection when the source is a scalar, a nested packed-union member array or
+an unpacked array whose out-of-bounds state rule is not represented. The
+envelope does not flatten aggregate layout or fabricate a zero/unknown/base
+value; see [element-select source types](sv-element-select-source.md).

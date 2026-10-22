@@ -3130,3 +3130,13 @@ tagged-union shapes, two tagged-union dynamic members and one untagged-union
 dynamic member. The aliases remain loud; see [compilation-unit aggregate
 typedefs](sv-unit-type-aliases.md) and
 `extractors/sv/unit_type_alias_reprice.py`.
+
+## Element-select source-type boundary — 2026-10-22
+
+The fresh 22,043-path census records `ElementSelectExpression:source-type` in
+**662** files: **11** are sole refusals and 651 co-occur. Repricing the sole
+files finds **23** spans: one scalar source diagnostic, 17 nested packed-union
+member selections, two two-state unpacked-array out-of-bounds reads, two
+four-state out-of-bounds reads and one enum-array base-type result. The source
+type remains loud; see [element-select source types](sv-element-select-source.md)
+and `extractors/sv/element_select_source_reprice.py`.

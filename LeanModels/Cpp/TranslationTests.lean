@@ -30,11 +30,21 @@ private def functionTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "f"), ("kind", .string "FunctionDecl"),
         ("name", .string "f"), ("inner", .array [])]])]}
 
+private def variableTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "v"), ("kind", .string "VarDecl"),
+        ("name", .string "v"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
 def functionTranslationWitness : Except String Unit :=
   admitFunctionDeclaration functionTranslation [0]
+
+def variableTranslationWitness : Except String Unit :=
+  admitVariableDeclaration variableTranslation [0]
 
 #guard admitTranslationUnit emptyTranslation matches .ok ()
 #guard admitTranslationUnit wrongRoot matches .error _
@@ -46,6 +56,9 @@ def functionTranslationWitness : Except String Unit :=
 #guard functionTranslationWitness matches .ok ()
 #guard admitFunctionDeclaration functionTranslation [] matches .error _
 #guard admitFunctionDeclaration namespaceTranslation [0] matches .error _
+#guard variableTranslationWitness matches .ok ()
+#guard admitVariableDeclaration variableTranslation [] matches .error _
+#guard admitVariableDeclaration functionTranslation [0] matches .error _
 #guard execute emptyTranslation "f" matches .error "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
 theorem empty_translation_admits : admitTranslationUnit emptyTranslation = .ok () := rfl

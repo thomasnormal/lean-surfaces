@@ -45,6 +45,9 @@ def admitNamespaceDeclaration (artifact : Artifact) (path : List Nat) :
 def admitFunctionDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "FunctionDecl" "function"
 
+def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
+
 def executionRefusal : String :=
   "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 

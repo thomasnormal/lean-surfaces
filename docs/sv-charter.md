@@ -158,6 +158,18 @@ partial files **17,546 → 17,545**; `VariableSymbol:2state` falls **4,954 →
 4,952**. The differential matrix adds one matching row with no disagreements;
 grammar coverage is **199 witnesses, 67 MATCH, and 132 REFUSE**.
 
+## Inert string declarations — 2026-10-22
+
+Module-scope and declaration-only local `string` variables are now admitted as
+inert metadata on the time-zero self-check path. They do not enter the flat
+vector state; string reads, writes, concatenation, and formatting remain loud.
+The `string_declaration` fixture is the differential witness.
+
+The available 22,035-file snapshot moves clean files **4,424 → 4,427** and
+partial files **17,545 → 17,542**; `VariableSymbol:2state` falls **4,952 →
+4,135**. The differential matrix adds one matching row with no disagreements;
+grammar coverage remains **199 witnesses, 67 MATCH, and 132 REFUSE**.
+
 **Proof inventory, with comments excluded.** There are **98 named
 theorems and 10 anonymous examples** in `LeanModels/Sv`, and **121
 theorems and 6 examples** in the SV example directories: **235 actual

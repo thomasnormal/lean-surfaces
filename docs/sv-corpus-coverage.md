@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-22
 
-The chapter-scoped rerun covered **22,035** paths: **4,423 clean**,
-**17,546 partial**, **66 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,035** paths: **4,427 clean**,
+**17,542 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`VariableSymbol:2state` (4,952), `AssignmentExpression:target` (3,913),
+`VariableSymbol:2state` (4,135), `AssignmentExpression:target` (3,913),
 `ExpressionStatement:CallExpression` (3,784), `CallExpression` (3,290),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,481), `ConcurrentAssertionStatement`
@@ -187,6 +187,19 @@ partial files fall **17,546 → 17,545**; `VariableSymbol:2state` falls
 **4,954 → 4,952**. The differential matrix is **25 rows, 21 matches, 0
 disagreements, and 4 recorded refusals**; grammar coverage is **199 witnesses,
 67 MATCH, and 132 REFUSE**.
+
+## Inert string declarations — 2026-10-22
+
+Module-scope and declaration-only local `string` variables are now admitted as
+inert metadata on the time-zero self-check path. They do not enter the flat
+vector state; string reads, writes, concatenation, and formatting remain loud.
+The `string_declaration` differential row covers both scopes.
+
+On the available 22,035-file snapshot, clean files rise **4,424 → 4,427** and
+partial files fall **17,545 → 17,542**; `VariableSymbol:2state` falls
+**4,952 → 4,135**. The differential matrix is **26 rows, 22 matches, 0
+disagreements, and 4 recorded refusals**; grammar coverage remains **199
+witnesses, 67 MATCH, and 132 REFUSE**.
 
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 

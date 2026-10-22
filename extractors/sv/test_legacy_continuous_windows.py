@@ -226,6 +226,22 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertTrue(any(item.get("kind") == "Unsupported"
                             for item in self._walk(envelope)))
 
+    def test_string_declarations_are_inert_without_an_initializer(self):
+        envelope = self.extract(
+            "module top; string module_s; initial begin string local_s; "
+            "$display(\"PASS\"); $finish; end endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertEqual(module["decls"], [])
+        self.assertEqual(module["others"], [])
+        self.assertEqual(module["processes"][0]["body"]["stmts"][0]["kind"], "Empty")
+
+    def test_string_use_remains_loud(self):
+        envelope = self.extract(
+            "module top; string s; initial begin if (s == \"x\") "
+            "$display(\"PASS\"); end endmodule")
+        self.assertTrue(any(item.get("kind") == "Unsupported"
+                            for item in self._walk(envelope)))
+
     @staticmethod
     def _walk(value):
         if isinstance(value, dict):

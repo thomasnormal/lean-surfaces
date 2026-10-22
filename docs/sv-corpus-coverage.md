@@ -3328,3 +3328,12 @@ are sole refusals and 20 co-occur. Repricing finds five compilation-unit
 parameter spans with `$unit::` references, module context and shadowing. The
 parameter remains loud; see [parameter scope](sv-parameter-scope.md) and
 `extractors/sv/parameter_scope_reprice.py`.
+
+## Residual two-state named-value boundary — 2026-10-22
+
+The fresh 22,043-path census records `NamedValueExpression:2state` in **1,482**
+files: **5** are sole refusals and 1,477 co-occur. Repricing finds five fixed-
+array named-value spans covering unpacked concatenation, indexed patterns,
+array literals and descending `foreach`. The name remains loud; see
+[residual two-state named values](sv-namedvalue-2state.md) and
+`extractors/sv/namedvalue_2state_reprice.py`.

@@ -1968,3 +1968,10 @@ envelope. The envelope does not expand macros or reorder output; see
 `ParameterSymbol` remains an explicit unsupported declaration for parameters in
 compilation-unit scope. The envelope does not copy unit bindings into modules
 or collapse `$unit::` lookup and shadowing; see [parameter scope](sv-parameter-scope.md).
+
+## Residual two-state named values
+
+`NamedValueExpression:2state` remains an explicit unsupported expression when
+an aggregate named value requires fixed-array concatenation, pattern context,
+literal conversion or range-aware iteration. The envelope does not treat an
+array name as a scalar; see [residual two-state named values](sv-namedvalue-2state.md).

@@ -280,6 +280,13 @@ private def friendTemplateTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "f"), ("kind", .string "FriendTemplateDecl"),
         ("name", .string "friend"), ("inner", .array [])]])]}
 
+private def templateParamObjectTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "TemplateParamObjectDecl"),
+        ("name", .string "value"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -381,6 +388,9 @@ def classScopeFunctionSpecializationTranslationWitness : Except String Unit :=
 
 def friendTemplateTranslationWitness : Except String Unit :=
   admitFriendTemplateDeclaration friendTemplateTranslation [0]
+
+def templateParamObjectTranslationWitness : Except String Unit :=
+  admitTemplateParamObjectDeclaration templateParamObjectTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -518,6 +528,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard friendTemplateTranslationWitness matches .ok ()
 #guard admitFriendTemplateDeclaration friendTemplateTranslation [] matches .error _
 #guard admitFriendTemplateDeclaration functionTranslation [0] matches .error _
+#guard templateParamObjectTranslationWitness matches .ok ()
+#guard admitTemplateParamObjectDeclaration templateParamObjectTranslation [] matches .error _
+#guard admitTemplateParamObjectDeclaration functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

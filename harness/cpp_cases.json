@@ -396,6 +396,17 @@
     "rung": 0
   },
   {
+    "id": "translation.template-param-object-declaration",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "templateParamObjectTranslationWitness",
+    "cpp_source": "struct Key { int value; constexpr bool operator==(const Key&) const = default; }; template<Key K> struct Holder {};",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

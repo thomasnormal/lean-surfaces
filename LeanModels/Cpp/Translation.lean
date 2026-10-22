@@ -144,6 +144,9 @@ def admitClassScopeFunctionSpecializationDeclaration (artifact : Artifact) (path
 def admitFriendTemplateDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "FriendTemplateDecl" "friend-template"
 
+def admitTemplateParamObjectDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "TemplateParamObjectDecl" "template-param-object"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

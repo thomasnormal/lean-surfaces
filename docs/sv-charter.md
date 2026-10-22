@@ -4798,3 +4798,11 @@ two `always_ff` guards and one procedural `always` guard, with three edge and
 four level-qualified forms. The wait representation has no occurrence-time
 guard or inferred-clock state, so `iff` controls remain loud. See
 [conditional events](sv-event-iff.md).
+
+### Invalid static-local boundary — 2026-10-22
+
+The fresh 22,043-path census records `StaticLocal:invalid-compilation` in
+**241** files: **7** are sole refusals and 234 co-occur. Repricing the sole
+files finds seven rejected static-local spans covering lexical errors,
+declaration ordering and block-label syntax. The envelope has no recovery frame
+or diagnostic stream, so malformed blocks remain loud. See [invalid static locals](sv-invalid-static-locals.md).

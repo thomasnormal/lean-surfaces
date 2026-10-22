@@ -3238,3 +3238,12 @@ all **7** are sole refusals. Repricing finds four procedural event guards,
 two `always_ff` guards and one procedural `always` guard, with three edge and
 four level-qualified forms. The guard remains loud; see [conditional events](sv-event-iff.md)
 and `extractors/sv/event_iff_reprice.py`.
+
+## Invalid static-local boundary — 2026-10-22
+
+The fresh 22,043-path census records `StaticLocal:invalid-compilation` in
+**241** files: **7** are sole refusals and 234 co-occur. Repricing the sole
+files finds seven rejected static-local spans covering lexical errors,
+declaration ordering and block-label syntax. The rejected block remains loud;
+see [invalid static locals](sv-invalid-static-locals.md) and
+`extractors/sv/static_invalid_reprice.py`.

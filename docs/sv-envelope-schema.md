@@ -1895,3 +1895,10 @@ see [invalid hierarchies](sv-invalid-hierarchies.md).
 occurrence-time `iff` guard qualifies an ordinary or `always_ff` event. The
 envelope does not drop the guard, turn it into a separate event or fabricate
 an inferred clock; see [conditional events](sv-event-iff.md).
+
+## Invalid static locals
+
+`StaticLocal:invalid-compilation` remains an explicit unsupported marker when
+frontend parsing rejects a procedural local declaration, number token or block
+label. The envelope does not move declarations, recover malformed tokens or
+invent a local frame; see [invalid static locals](sv-invalid-static-locals.md).

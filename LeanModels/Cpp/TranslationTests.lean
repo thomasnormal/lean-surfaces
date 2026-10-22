@@ -58,6 +58,15 @@ private def typeAliasTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "a"), ("kind", .string "TypeAliasDecl"),
         ("name", .string "Count"), ("inner", .array [])]])]}
 
+private def namespaceAliasTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "n"), ("kind", .string "NamespaceDecl"),
+        ("name", .string "n"), ("inner", .array [])],
+      .object [("id", .string "a"), ("kind", .string "NamespaceAliasDecl"),
+        ("name", .string "alias"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -75,6 +84,9 @@ def typedefTranslationWitness : Except String Unit :=
 
 def typeAliasTranslationWitness : Except String Unit :=
   admitTypeAliasDeclaration typeAliasTranslation [0]
+
+def namespaceAliasTranslationWitness : Except String Unit :=
+  admitNamespaceAliasDeclaration namespaceAliasTranslation [1]
 
 #guard admitTranslationUnit emptyTranslation matches .ok ()
 #guard admitTranslationUnit wrongRoot matches .error _
@@ -98,6 +110,9 @@ def typeAliasTranslationWitness : Except String Unit :=
 #guard typeAliasTranslationWitness matches .ok ()
 #guard admitTypeAliasDeclaration typeAliasTranslation [] matches .error _
 #guard admitTypeAliasDeclaration functionTranslation [0] matches .error _
+#guard namespaceAliasTranslationWitness matches .ok ()
+#guard admitNamespaceAliasDeclaration namespaceAliasTranslation [] matches .error _
+#guard admitNamespaceAliasDeclaration namespaceAliasTranslation [0] matches .error _
 #guard execute emptyTranslation "f" matches .error "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
 theorem empty_translation_admits : admitTranslationUnit emptyTranslation = .ok () := rfl

@@ -641,6 +641,15 @@ private def rawEnumArgument (id type parameter : String) : Raw := rawObject [
   ("type", rawObject [("qualType", rawText type)]),
   ("referencedDecl", rawObject [("id", rawText parameter)])]
 
+private def rawEnumArgumentCast : Raw := rawObject [
+  ("kind", rawText "ImplicitCastExpr"), ("castKind", rawText "LValueToRValue"),
+  ("type", rawObject [("qualType", rawText "XMLError")]),
+  ("inner", .array [rawEnumArgument "0x20" "XMLError" "0x21"])]
+
+private def rawEnumArgumentLiteral : Raw := rawObject [
+  ("kind", rawText "IntegerLiteral"), ("id", rawText "0x22"),
+  ("type", rawObject [("qualType", rawText "int")]), ("value", rawText "1")]
+
 private def enumArgumentAccepted : Bool :=
   match enumSetterRepresentation with
   | some representation =>
@@ -658,6 +667,22 @@ private def enumArgumentWrongType : Bool :=
       match IntegralMemberEnumArgument.admit
           (rawEnumArgument "0x20" "int" "0x21") representation with
       | .error .unsupportedType => true
+      | _ => false
+  | none => false
+
+private def enumArgumentCastRefused : Bool :=
+  match enumSetterRepresentation with
+  | some representation =>
+      match IntegralMemberEnumArgument.admit rawEnumArgumentCast representation with
+      | .error .notDeclRef => true
+      | _ => false
+  | none => false
+
+private def enumArgumentLiteralRefused : Bool :=
+  match enumSetterRepresentation with
+  | some representation =>
+      match IntegralMemberEnumArgument.admit rawEnumArgumentLiteral representation with
+      | .error .notDeclRef => true
       | _ => false
   | none => false
 
@@ -888,6 +913,8 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard enumSetterWriteWrongField
 #guard enumArgumentAccepted
 #guard enumArgumentWrongType
+#guard enumArgumentCastRefused
+#guard enumArgumentLiteralRefused
 #guard enumArgumentBindAccepted
 #guard enumArgumentBindEvidenceAccepted
 #guard enumArgumentValueAccepted

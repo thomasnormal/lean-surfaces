@@ -259,7 +259,9 @@ boundary for a direct enum `DeclRefExpr`: occurrence, referenced declaration,
 source spelling, and structured enum identity are retained, while casts and
 integer literals refuse. `bindWithArgument` checks that witness against the
 admitted setter parameter before using a caller-supplied enum value. The kernel
-battery accepts the typed argument and rejects an `int` spelling.
+battery accepts the typed argument and rejects an `int` spelling, an
+`ImplicitCastExpr`, and an integer literal. These controls keep the setter
+boundary from silently adding source conversions.
 
 The source census now joins each retained call argument to its selected method
 metadata before pricing this boundary. It examines only parameter positions

@@ -4762,3 +4762,12 @@ spans: all five carry a supply-strength logic-one driver, and one also tests a
 continuous-assignment strength context. The envelope has no strength lattice
 or supply driver set, so `supply1` is not replaced by a constant. See
 [the `supply1` boundary](sv-supply1.md).
+
+### Variable packed-range boundary — 2026-10-22
+
+The fresh 22,043-path census records `VariableSymbol:range` in **62** files:
+**7** are sole refusals and 55 co-occur. Repricing the sole files finds **7**
+unsupported range spans: four multidimensional packed ranges and three packed-
+struct array ranges. The legacy variable representation has no complete
+multidimensional range descriptor, so these dimensions remain loud. See
+[variable packed ranges](sv-variable-ranges.md).

@@ -3205,3 +3205,11 @@ are sole refusals and 51 co-occur. Repricing the sole files finds **5** spans;
 all carry a supply-strength logic-one driver and one has a continuous-strength
 context. The net remains loud; see [the `supply1` boundary](sv-supply1.md) and
 `extractors/sv/supply1_reprice.py`.
+
+## Variable packed-range boundary — 2026-10-22
+
+The fresh 22,043-path census records `VariableSymbol:range` in **62** files:
+**7** are sole refusals and 55 co-occur. Repricing the sole files finds **7**
+unsupported range spans: four multidimensional packed ranges and three packed-
+struct array ranges. The range remains loud; see [variable packed ranges](sv-variable-ranges.md)
+and `extractors/sv/variable_range_reprice.py`.

@@ -1865,3 +1865,10 @@ types](sv-net-types.md).
 `NetSymbol:Supply1` remains an explicit unsupported net declaration. The
 envelope has no supply-strength driver or resolution lattice, so it does not
 lower `supply1` to a literal one; see [the `supply1` boundary](sv-supply1.md).
+
+## Variable packed ranges
+
+`VariableSymbol:range` remains an explicit unsupported declaration when a
+variable has multidimensional packed geometry, including an array of packed
+struct elements. The envelope does not flatten dimensions or invent aggregate
+width and identity metadata; see [variable packed ranges](sv-variable-ranges.md).

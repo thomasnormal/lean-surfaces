@@ -190,6 +190,18 @@
     "rung": 3
   },
   {
+    "id": "statement.callable-switch",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung4Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung4Tests",
+    "lean_expression": "callableSwitchWitness",
+    "cpp_source": "int switch_witness(int value) { switch (value) { case 1: return 10; case 2: return 20; default: return 30; } } bool callable_witness() { return switch_witness(1) == 10 && switch_witness(2) == 20 && switch_witness(7) == 30; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "expression.callable-conditional",
     "kind": "expression",
     "corpus": "rung-3 witness",

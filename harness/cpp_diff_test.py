@@ -141,7 +141,7 @@ def render_lean(cases):
     for row in cases:
         expression = row["lean_expression"]
         render = ("cppRenderUnit" if row.get("kind") == "translation" else
-                  "cppRenderBool" if row.get("kind") in ("lifetime", "scalar", "expression") else "cppRender")
+                  "cppRenderBool" if row.get("kind") in ("lifetime", "scalar", "expression", "statement") else "cppRender")
         lines.append("#eval IO.println (\"CPPCASE|%s|\" ++ %s (%s))" %
                      (row["id"], render, expression))
     return "\n".join(lines) + "\n"
@@ -185,7 +185,7 @@ def native_rows(cases, clang):
     if clang is None:
         return {row["id"]: ("ORACLE", "pinned Clang/LLVM %s is unavailable" % PINNED_CLANG) for row in cases}
     translation = [row for row in cases if row.get("kind") == "translation"]
-    checks = [row for row in cases if row.get("kind") in ("lifetime", "scalar", "expression")]
+    checks = [row for row in cases if row.get("kind") in ("lifetime", "scalar", "expression", "statement")]
     callable_cases = [row for row in cases if row.get("kind", "callable") == "callable"]
     result = {}
     if translation:
@@ -277,7 +277,7 @@ def differential(cases, model, native):
         elif native_status == "NATIVE":
             if row.get("expect") != "match":
                 verdict, detail = "DIVERGE", "native call completed for a recorded refusal"
-            elif row.get("kind") in ("translation", "lifetime", "scalar", "expression") and model_value == native_value:
+            elif row.get("kind") in ("translation", "lifetime", "scalar", "expression", "statement") and model_value == native_value:
                 verdict, detail = "MATCH", "Lean admission and Clang compilation agree"
             elif row.get("kind", "callable") == "callable" and model_value == "ok " + native_value:
                 verdict, detail = "MATCH", "Lean and Clang agree"
@@ -397,8 +397,9 @@ def render_rung_page(diff_rows, grammar_rows_value):
     lifetime_count = sum(1 for row in diff_rows if row["rung"] == 1)
     scalar_count = sum(1 for row in diff_rows if row["kind"] == "scalar")
     expression_count = sum(1 for row in diff_rows if row["kind"] == "expression")
-    callable_count = len(diff_rows) - translation_count - lifetime_count - scalar_count - expression_count
-    lines += ["", "The differential rows include %d compile-only translation witness, %d rung-1 lifetime witnesses, %d rung-2 scalar checks, %d rung-3 expression checks, and %d callable rows from `Examples/cpp/tinyxml2/IsUTF8Continuation.lean`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls." % (translation_count, lifetime_count, scalar_count, expression_count, callable_count), ""]
+    statement_count = sum(1 for row in diff_rows if row["kind"] == "statement")
+    callable_count = len(diff_rows) - translation_count - lifetime_count - scalar_count - expression_count - statement_count
+    lines += ["", "The differential rows include %d compile-only translation witness, %d rung-1 lifetime witnesses, %d rung-2 scalar checks, %d rung-3 expression checks, %d rung-4 statement checks, and %d callable rows across the retained callable witness set; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls." % (translation_count, lifetime_count, scalar_count, expression_count, statement_count, callable_count), ""]
     return "\n".join(lines)
 
 

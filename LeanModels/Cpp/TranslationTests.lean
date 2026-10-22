@@ -189,6 +189,9 @@ def nonTypeTemplateParameterTranslationWitness : Except String Unit :=
 def templateTemplateParameterTranslationWitness : Except String Unit :=
   admitTemplateTemplateParameter templateParameterTranslation [0, 2]
 
+def classTemplateTranslationWitness : Except String Unit :=
+  admitClassTemplateDeclaration templateParameterTranslation [0]
+
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
 
@@ -265,6 +268,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard templateTemplateParameterTranslationWitness matches .ok ()
 #guard admitTemplateTemplateParameter templateParameterTranslation [] matches .error _
 #guard admitTemplateTemplateParameter functionTranslation [0] matches .error _
+#guard classTemplateTranslationWitness matches .ok ()
+#guard admitClassTemplateDeclaration templateParameterTranslation [] matches .error _
+#guard admitClassTemplateDeclaration functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

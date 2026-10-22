@@ -621,6 +621,19 @@ sample/drive queues, skew representation or region bridge, so no clocking block
 is reduced to an ordinary event wait. See [the clocking-block boundary](sv-clocking-blocks.md)
 and `extractors/sv/clocking_reprice.py` for the reproducible scan.
 
+## Invalid package compilations — 2026-10-22
+
+`Package:invalid-compilation` remains the package diagnostic boundary. The
+fresh **22,043**-path census records it in **146** files: **24** are
+invalid-package-only and **122** co-occurring. Repricing the sole files finds
+**24** diagnostic spans: **3** repeated-timeunit declarations, **19** import
+cases, **10** files with multiple imports, **9** wildcard imports, **8** export
+cases, **6** combined import/export cases, **1** `export *::*` case and **2**
+exports without a corresponding import (features overlap). The envelope keeps
+the frontend rejection as a design-level marker; it does not salvage package
+declarations or choose an import resolution. See [the invalid-package boundary](sv-package-invalid.md)
+and `extractors/sv/package_invalid_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

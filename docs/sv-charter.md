@@ -4110,6 +4110,22 @@ bridge. No block is reduced to an ordinary event wait, and no second scheduler
 is introduced. See [the clocking-block boundary](sv-clocking-blocks.md) and
 the read-only instrument `extractors/sv/clocking_reprice.py`.
 
+### Invalid package compilations — 2026-10-22
+
+`Package:invalid-compilation` is the package diagnostic boundary. In the fresh
+22,043-path census it occurs in 146 files: 24 are invalid-package-only and 122
+co-occur with another wall. The sole files contain 24 diagnostic spans,
+including three repeated-timeunit declarations, 19 import cases, ten files
+with multiple imports, nine wildcard imports, eight export cases, six combined
+import/export cases, one `export *::*` case and two exports without a
+corresponding import (features overlap). IEEE §26 requires these declarations
+to pass scope and consistency checks before elaboration. The envelope has no
+diagnostic provenance, package scope graph or partial-elaboration contract.
+No package is salvaged or reduced to its first import, and no recovery
+elaborator or second scheduler is introduced. See [the invalid-package
+boundary](sv-package-invalid.md) and the read-only instrument
+`extractors/sv/package_invalid_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

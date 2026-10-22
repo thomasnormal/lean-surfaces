@@ -1395,6 +1395,11 @@ skew representation or Preponed/Reactive bridge, so a clocking block is not
 lowered to an ordinary event wait or variable declaration. See [the
 clocking-block boundary](sv-clocking-blocks.md).
 
+`Package:invalid-compilation` remains explicit as a design-level diagnostic
+boundary. The envelope has no package diagnostic provenance or partial-
+elaboration contract, so a rejected package is not salvaged by dropping its
+imports or declarations. See [the invalid-package boundary](sv-package-invalid.md).
+
 ### Legacy package storage provenance
 
 Source-defined packages with admitted scalar/packed integral variables lower

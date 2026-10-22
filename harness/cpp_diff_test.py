@@ -45,7 +45,7 @@ PINNED_CLANG = "21.1.8"
 
 
 RUNG_STATUS = [
-    (0, "§5, §6.2–6.6", "executable", "A bounded TranslationUnitDecl root is admitted; declaration and body execution remains refused."),
+    (0, "§5, §6.2–6.6", "executable", "Bounded TranslationUnitDecl and NamespaceDecl metadata occurrences are admitted; declaration and body execution remains refused."),
     (1, "§6.7, §6.9", "executable", "Static, thread, automatic, and dynamic storage reservation, integral initialization, lifetime end, and dynamic release execute; unsupported storage remains loud."),
     (2, "§6.8", "executable", "LP64 scalar/integral values and conversions execute definitionally."),
     (3, "§7", "executable", "Bounded integral expressions and selected callable bodies execute; general overloads do not."),
@@ -140,7 +140,8 @@ def render_lean(cases):
     lines += ["open %s" % namespace for namespace in namespaces]
     for row in cases:
         expression = row["lean_expression"]
-        render = ("cppRenderUnit" if row.get("kind") == "translation" else
+        render = ("cppRenderUnit" if row.get("kind") == "translation" and row.get("render") != "bool" else
+                  "cppRenderBool" if row.get("render") == "bool" else
                   "cppRenderBool" if row.get("kind") in ("lifetime", "scalar", "expression", "statement") else "cppRender")
         lines.append("#eval IO.println (\"CPPCASE|%s|\" ++ %s (%s))" %
                      (row["id"], render, expression))

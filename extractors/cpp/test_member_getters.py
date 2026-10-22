@@ -407,15 +407,15 @@ struct Sample {
 int main() {
  Sample object{zero};
  object.set(zero);
- std::cout << static_cast<unsigned int>(object.get()) << '\n';
+ std::cout << "0 " << static_cast<unsigned int>(object.get()) << '\n';
  object.set(one);
- std::cout << static_cast<unsigned int>(object.get()) << '\n';
+ std::cout << "1 " << static_cast<unsigned int>(object.get()) << '\n';
  object.set(top);
- std::cout << static_cast<unsigned int>(object.get()) << '\n';
+ std::cout << "4294967295 " << static_cast<unsigned int>(object.get()) << '\n';
 }
 '''
         rows = [line.split() for line in self.native(source).splitlines()]
-        self.assertEqual(rows, [[value] for value in ["0", "1", "4294967295"]])
+        self.assertEqual(rows, [[value, value] for value in ["0", "1", "4294967295"]])
         fixture = self.work / "enum-setter.cpp"
         fixture.write_text(source, encoding="utf-8")
         probe_text = self.run_ok([
@@ -426,7 +426,7 @@ int main() {
         envelope = self.work / "enum-setter-probe.json"
         envelope.write_text(probe_text, encoding="utf-8")
         pairs = ", ".join(f"({value}, {expected})" for value, expected in rows)
-        self.lean('''import LeanModels.Cpp.MemberCalls
+        self.lean('''import LeanModels.Cpp
 open LeanModels.Cpp
 set_option maxRecDepth 100000
 set_option maxHeartbeats 4000000
@@ -483,18 +483,20 @@ private def setup : Option
 
 private def projection (access : IntegralMemberThisFieldAccess)
     (representation : IntegralMemberEnumRepresentation) (input : Int) :
-    ClassReceiverProjection := {
-  hierarchy := {root := access.owner,
+    ClassReceiverProjection :=
+  let hierarchy : ClassHierarchy := {
+    root := access.owner,
     classes := [{declaration := access.owner, isAbstract := false, bases := [],
-      fields := [access.field], friends := [], name := "Sample"}]},
-  objects := [0], receiverPath := [],
-  snapshot := {memory := {profile := .lp64,
-      objects := {objects := [
-        {duration := .automatic, type := .record access.owner, phase := .aliveInitialized},
-        {duration := .automatic, type := .builtin representation.underlying,
-          phase := .aliveInitialized}]},
-      values := [none, some ⟨.unsigned 32, input⟩]},
-    object := 0, member := 1, field := access.field}}
+      fields := [access.field], friends := [], name := "Sample"}]}
+  let memory : IntegralObjectStore := {
+    profile := .lp64,
+    objects := {objects := [
+      {duration := .automatic, type := .record access.owner, phase := .aliveInitialized},
+      {duration := .automatic, type := .builtin representation.underlying,
+        phase := .aliveInitialized}]},
+    values := [none, some ⟨.unsigned 32, input⟩]}
+  {hierarchy, objects := [0], receiverPath := [],
+    snapshot := {memory, object := 0, member := 1, field := access.field}}
 
 def cases : List (Int × Int) := [''' + pairs + r''']
 #guard setup.isSome

@@ -324,8 +324,11 @@ The counter contract has a bounded synthetic check. Running
 `lake env lean --run extractors/cpp/census_member_calls.lean --self-test`
 exercises one accepted join plus malformed parameter metadata, a missing
 `ParmVarDecl`, an out-of-range ordinal, and a wrong enum parameter type. It
-prints the same two counter fields and exits nonzero if either the accepted
-entry or any refusal is lost.
+also checks that a malformed structured-parameter lookup is retained when the
+source argument's qualified spelling names an enum; that refusal is prefixed
+`metadata:` so it cannot be confused with a later `ParmVarDecl` join. The
+check prints the same two counter fields and exits nonzero if either the
+accepted entry or any refusal is lost.
 
 The kernel battery also mutates independent copies of this evidence: a wrong
 parameter type, an out-of-range ordinal, a malformed parameter-type row, and a

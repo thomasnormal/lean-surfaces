@@ -176,6 +176,29 @@ private def enumResultName (probe : DeclarationProbe) (enum : FrontendHandle) :
   unless !name.isEmpty do throw "malformed-enum"
   pure name
 
+private partial def enumNames : Raw → List String
+  | node@(.object fields) =>
+      let here := if node.text "kind" == some "EnumDecl" then
+          node.text "name" |>.toList else []
+      here ++ fields.flatMap (fun (_, value) => enumNames value)
+  | .array values => values.flatMap enumNames
+  | _ => []
+
+private def rawQualTypeText (raw : Raw) : Option String := do
+  let type ← raw.field "type"
+  type.text "qualType"
+
+private def enumSpellingMatchesAny (probe : DeclarationProbe) (spelling : String) : Bool :=
+  (enumNames probe.ast).any fun name =>
+    spelling == name || spelling == "enum " ++ name || spelling.endsWith ("::" ++ name)
+
+private def enumArgumentParameterMetadataRefusal (probe : DeclarationProbe)
+    (argument : Raw) (reason : String) : Option String := do
+  let spelling ← rawQualTypeText argument
+  if enumSpellingMatchesAny probe spelling then
+    pure ("metadata:" ++ reason)
+  else none
+
 private def enumArgumentParameterEvidence (probe : DeclarationProbe)
     (method : FrontendHandle) (ordinal : Nat) (enum : FrontendHandle) (enumName : String) :
     Except String String := do
@@ -500,7 +523,11 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
                       | .error reason => enumArgumentRefusals := reason :: enumArgumentRefusals
                   | .error reason => enumArgumentRefusals :=
                       ("enum:" ++ reason) :: enumArgumentRefusals
-              | .error _ => pure ()
+              | .error reason =>
+                  match enumArgumentParameterMetadataRefusal probe argument reason with
+                  | some refusal => enumArgumentParameterRefusals :=
+                      refusal :: enumArgumentParameterRefusals
+                  | none => pure ()
         | _ => pure ()
         match methodEnumResult probe (canonicalMethodHandle probe method |>.getD method) with
         | .ok enum =>
@@ -706,6 +733,10 @@ private def selfMethodNode (parameters : List Raw) : Raw := selfRawObject [
   ("kind", selfText "CXXMethodDecl"), ("id", selfText "0xc"),
   ("inner", .array parameters)]
 
+private def selfEnumNode : Raw := selfRawObject [
+  ("kind", selfText "EnumDecl"), ("id", selfText "0x13"),
+  ("name", selfText "XMLError")]
+
 private def selfMethodRow (parameterTypes : Raw) : DeclarationEvidenceRow := {
   ordinal := 0, id := selfHandle "0xc", kind := "CXXMethodDecl",
   canonical := selfHandle "0xc", previous := none, semanticContext := none,
@@ -716,11 +747,21 @@ private def selfMethodRow (parameterTypes : Raw) : DeclarationEvidenceRow := {
     ("method_parameter_types", parameterTypes)]}
 
 private def selfProbe (parameterTypes : Raw) (parameters : List Raw) : DeclarationProbe := {
-  ast := selfRawObject [("inner", .array [selfMethodNode parameters])],
+  ast := selfRawObject [("inner", .array [selfMethodNode parameters, selfEnumNode])],
   metadata := .object [], declarations := [selfMethodRow parameterTypes]}
 
 private def selfParameterOutcome (probe : DeclarationProbe) (ordinal : Nat) : Except String String :=
   enumArgumentParameterEvidence probe (selfHandle "0xc") ordinal (selfHandle "0x13") "XMLError"
+
+private def selfMetadataOutcome : Except String String :=
+  let argument := selfRawObject [
+    ("kind", selfText "DeclRefExpr"),
+    ("type", selfRawObject [("qualType", selfText "XMLError")])]
+  match enumArgumentParameterMetadataRefusal
+      (selfProbe (.array [selfEnumType]) [selfParameter "0x15" "XMLError"])
+      argument "missing-parameter" with
+  | some refusal => .error refusal
+  | none => .ok "metadata-classification-missing"
 
 private def selfParameterOutcomes : List (Except String String) := [
   selfParameterOutcome (selfProbe (.array [selfEnumType])
@@ -731,7 +772,8 @@ private def selfParameterOutcomes : List (Except String String) := [
   selfParameterOutcome (selfProbe (.array [selfEnumType])
     [selfParameter "0x15" "XMLError"]) 1,
   selfParameterOutcome (selfProbe (.array [selfBuiltinType])
-    [selfParameter "0x15" "int"]) 0]
+    [selfParameter "0x15" "int"]) 0,
+  selfMetadataOutcome]
 
 private def selfAcceptedParameters (outcomes : List (Except String String)) : List String :=
   outcomes.filterMap fun outcome => match outcome with
@@ -748,7 +790,8 @@ private def selfTestPass : Bool :=
   selfAcceptedParameters outcomes == ["0xc:0x15:0:XMLError"] &&
     selfRefusedParameters outcomes == [
       "malformed-method-signature", "malformed-method-signature",
-      "missing-parameter-evidence", "parameter-type-mismatch"]
+      "missing-parameter-evidence", "parameter-type-mismatch",
+      "metadata:missing-parameter"]
 
 private def selfTest : IO UInt32 := do
   let outcomes := selfParameterOutcomes

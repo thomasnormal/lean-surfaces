@@ -97,6 +97,14 @@ def tuple_of_int():
     return tuple(7)
 
 
+def tuple_index_oob():
+    return (1, 2)[3]
+
+
+def string_index_oob():
+    return "a"[3]
+
+
 def range_len(a, b, s):
     return len(range(a, b, s))
 

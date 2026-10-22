@@ -59,6 +59,8 @@ load_program seq_lab from "Examples/python/seq_lab/seq_lab.json"
 #py_check seq_lab.tuple_of_range(3) = (Val.tuple #[.int 3, .int 2, .int 1])
 #py_check seq_lab.tuple_of_int() raises
   (.typeError "'int' object is not iterable")
+#py_check seq_lab.tuple_index_oob() raises (.indexErrorTuple)
+#py_check seq_lab.string_index_oob() raises (.indexErrorString)
 
 /-! ### range -/
 
@@ -84,7 +86,7 @@ load_program seq_lab from "Examples/python/seq_lab/seq_lab.json"
 #py_check seq_lab.range_index(3) = 0
 #py_check seq_lab.range_index_negative(3) = 2
 #py_check seq_lab.range_index_step() = 8
-#py_check seq_lab.range_index_oob(3) raises (.indexError)
+#py_check seq_lab.range_index_oob(3) raises (.indexErrorRange)
 #py_check seq_lab.range_index_type() raises
   (.typeError "range indices must be integers or slices, not str")
 #py_check seq_lab.range_in(5) = true

@@ -1401,12 +1401,15 @@ theorem heapPop_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin
     | some obj =>
         cases obj with
         | list xs =>
-            cases hni : normIndex (i.getD (-1)) xs.size with
-            | none => simp only [heapPop, Heap.get?_swapAt_ne hba, hget, hni]; rfl
-            | some n =>
-                simp only [heapPop, Heap.get?_swapAt_ne hba, hget, hni]
-                rw [Heap.update_swapAt_ne hba]
-                cases Heap.update h b (Obj.list ((xs.toList.eraseIdx n).toArray)) <;> rfl
+            by_cases hempty : xs.isEmpty
+            · simp only [heapPop, Heap.get?_swapAt_ne hba, hget, hempty,
+                Bool.true_eq] <;> rfl
+            · cases hni : normIndex (i.getD (-1)) xs.size with
+              | none => simp only [heapPop, Heap.get?_swapAt_ne hba, hget, hempty, hni]; rfl
+              | some n =>
+                  simp only [heapPop, Heap.get?_swapAt_ne hba, hget, hempty, hni]
+                  rw [Heap.update_swapAt_ne hba]
+                  cases Heap.update h b (Obj.list ((xs.toList.eraseIdx n).toArray)) <;> rfl
         | _ => simp only [heapPop, Heap.get?_swapAt_ne hba, hget] <;> rfl
 
 /-- `o[k] = v` is blind up to the swap — the widest of the writers (dict
@@ -1555,16 +1558,18 @@ theorem heapPop_slot (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o
       cases obj with
       | list xs =>
           have hne : pa ≠ b := Heap.ne_slot_of_get? hslot hget (by simp)
-          cases hni : normIndex (i.getD (-1)) xs.size with
-          | none => simp [heapPop, hget, hni] at hw
-          | some n =>
-              simp [heapPop, hget, hni] at hw
-              cases hu : Heap.update h b (Obj.list ((xs.toList.eraseIdx n).toArray)) with
-              | none => simp [hu] at hw
-              | some h₁ =>
-                  simp only [hu, Res.ok.injEq] at hw
-                  subst hw
-                  exact (Heap.get?_update_ne hu hne).trans hslot
+          by_cases hempty : xs.isEmpty
+          · simp [heapPop, hget, hempty] at hw
+          · cases hni : normIndex (i.getD (-1)) xs.size with
+            | none => simp [heapPop, hget, hempty, hni] at hw
+            | some n =>
+                simp [heapPop, hget, hempty, hni] at hw
+                cases hu : Heap.update h b (Obj.list ((xs.toList.eraseIdx n).toArray)) with
+                | none => simp [hu] at hw
+                | some h₁ =>
+                    simp only [hu, Res.ok.injEq] at hw
+                    subst hw
+                    exact (Heap.get?_update_ne hu hne).trans hslot
       | _ => simp [heapPop, hget] at hw
 
 /-- `o[k] = v` pins the slot: the dict and list arms are the only ones

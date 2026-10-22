@@ -144,7 +144,9 @@ def errName : PyErr → String
   | .overflowError _ => "OverflowError"
   -- the same CLASS as the above; only the message differs
   | .zeroDivisionPow => "ZeroDivisionError"
-  | .indexError => "IndexError"
+  | .indexError | .indexErrorTuple | .indexErrorString | .indexErrorRange
+  | .indexErrorBytes | .indexErrorAssign | .indexErrorPopEmpty | .indexErrorPop =>
+      "IndexError"
   | .valueError _ => "ValueError"
   | .keyError => "KeyError"
   | .runtimeError _ => "RuntimeError"
@@ -166,10 +168,9 @@ every exception to exit 1 means stdout + exit code cannot tell two apart —
 the class comparison the harnesses gained closes that, and this is the
 next resolution step down. `none` = the model's representation carries NO
 message for this class, which is a real gap and is reported as its own
-telemetry bucket rather than silently compared against CPython's text:
-`IndexError` alone is "list index out of range" / "string index out of
-range" / "tuple index out of range" in CPython, and the payload-free
-constructor cannot say which. Never invent one here. -/
+telemetry bucket rather than silently compared against CPython's text. The
+condition-specific `IndexError` constructors below carry the exact CPython
+3.9 text for each indexed container and list mutation. -/
 def errMessage : PyErr → Option String
   | .typeError msg => some msg
   | .nameError n => some s!"name '{n}' is not defined"
@@ -200,17 +201,18 @@ def errMessage : PyErr → Option String
   | .floatModuloZeroDivisionError => some "float modulo"
   | .floatDivmodZeroDivisionError => some "float divmod()"
   | .overflowError msg => some msg
-  -- STILL payload-free, and deliberately so: these texts carry RUNTIME
-  -- DATA the constructor does not hold, so no split can supply them —
-  -- `IndexError` distinguishes list/tuple/assignment/pop (4 measured
-  -- texts), `KeyError` prints the missing key's `repr`, `AttributeError`
-  -- names the type AND the attribute. Reported as `ABSENT` by the
-  -- survey's message telemetry, never invented; the priced plan for
-  -- giving them payloads is in docs/backlog.md. `RecursionError` is the
-  -- one that must STAY absent: CPython names the C site it hit
-  -- ("maximum recursion depth exceeded in comparison"), which no model
-  -- state determines.
-  | .indexError | .keyError | .recursionError
+  -- IndexError's six texts are determined by the raise condition, so
+  -- sibling nullary constructors can answer them without carrying runtime
+  -- data. RecursionError remains absent because CPython names the C site.
+  | .indexError => some "list index out of range"
+  | .indexErrorTuple => some "tuple index out of range"
+  | .indexErrorString => some "string index out of range"
+  | .indexErrorRange => some "range object index out of range"
+  | .indexErrorBytes => some "index out of range"
+  | .indexErrorAssign => some "list assignment index out of range"
+  | .indexErrorPopEmpty => some "pop from empty list"
+  | .indexErrorPop => some "pop index out of range"
+  | .keyError | .recursionError
   | .attributeError => Option.none
   -- a user exception raised bare (`raise Stop`) prints its class alone
   | .user _ _ => some ""

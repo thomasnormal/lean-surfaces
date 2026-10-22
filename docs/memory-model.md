@@ -221,13 +221,14 @@ cycle DETECTION, never by running out of fuel).
   references to one list see each other's writes; callee mutations reach
   the caller through `callIn`'s shared world.
 * In tier: subscript read/write (bool/int indices coerce; negative
-  indices from the end; out-of-range a faithful `IndexError` — CPython
+  indices from the end; out-of-range condition-specific `IndexError`
+  messages retain CPython's list/tuple/string/range/bytes texts — CPython
   assignment never extends), `len`, truthiness, `in`/`not in` (the
   `element == probe` scan, element on the left, through the fueled
   `heapEq`), `==`/`!=` (identity shortcut, size check, elementwise,
   active-pair `RecursionError` on corresponding cycles), dynamic
   `is`/`is not`, `.append(x)`, `.pop()`/`.pop(i)` (empty/out-of-range pop
-  a faithful `IndexError`), `.insert(i, x)` (CPython's CLAMPING index —
+  faithful `IndexError` text), `.insert(i, x)` (CPython's CLAMPING index —
   never an `IndexError`; §`list.insert`), `del xs[i]` (negative indices,
   faithful `IndexError`, and the list-index `TypeError`), unpacking `a, b = lst` (an
   eager snapshot
@@ -3799,7 +3800,8 @@ pinned by paired rows rather than reasoned about:
 the payload-carrying `PyErr.valueError`/`runtimeError` constructors, and
 `none` is the bare `assert test` — CPython prints the class name alone,
 so a payload-free constructor is EXACT here rather than a recorded gap
-(contrast `IndexError`, which is three different CPython texts).
+(contrast the condition-specific `IndexError` constructors, which retain
+CPython's container and mutation texts).
 
 ### The message rendering is REUSED, not re-decided
 

@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "harness/scripts/exc_message_script.py",
-  "source_sha256": "1384885aa81d09dae1f993c8d0fca6752834e1126e90fc7bb2dfa2813e9f47c2",
+  "source_sha256": "ebb32e5a0f723df569d7a49e9f7703a4bc581f4071899b165ef96e527639d7d9",
   "module": {
     "kind": "Module",
     "body": [
@@ -15,7 +15,7 @@
         "span": {
           "lineno": 1,
           "col_offset": 0,
-          "end_lineno": 14,
+          "end_lineno": 12,
           "end_col_offset": 3
         },
         "value": {
@@ -23,37 +23,37 @@
           "span": {
             "lineno": 1,
             "col_offset": 0,
-            "end_lineno": 14,
+            "end_lineno": 12,
             "end_col_offset": 3
           },
           "value": {
             "type": "str",
-            "value": "leanpy corpus: the exception MESSAGE, not just the class.\n\nCPython maps every uncaught exception to exit 1, so stdout + exit code\nalone cannot tell two apart; the harnesses gained a CLASS comparison on\n2026-08-13 and caught a false agreement the same hour. This row is the\nnext resolution step down: the model's `NameError` carries the name, so\nthe whole `NameError: name 'nope' is not defined` line is compared.\n\nRows whose exception class carries NO payload in the model\n(`ZeroDivisionError`, `IndexError`, `KeyError`, `AttributeError`,\n`RecursionError`) are reported as `ABSENT` by the survey's message\ntelemetry and are NOT compared \u2014 inventing a text the semantics does not\nclaim would be exactly the kind of lie this project refuses.\n"
+            "value": "leanpy corpus: the exception MESSAGE, not just the class.\n\nCPython maps every uncaught exception to exit 1, so stdout + exit code\nalone cannot tell two apart; the harnesses gained a CLASS comparison on\n2026-08-13 and caught a false agreement the same hour. This row is the\nnext resolution step down: the model's `NameError` carries the name, so\nthe whole `NameError: name 'nope' is not defined` line is compared.\n\nRows whose exception class carries no payload in the model remain an\nhonest `ABSENT` telemetry bucket. Condition-specific `IndexError`\nconstructors now carry their standard text and are compared exactly.\n"
           }
         }
       },
       {
         "kind": "Expr",
         "span": {
-          "lineno": 16,
+          "lineno": 14,
           "col_offset": 0,
-          "end_lineno": 16,
+          "end_lineno": 14,
           "end_col_offset": 15
         },
         "value": {
           "kind": "Call",
           "span": {
-            "lineno": 16,
+            "lineno": 14,
             "col_offset": 0,
-            "end_lineno": 16,
+            "end_lineno": 14,
             "end_col_offset": 15
           },
           "func": {
             "kind": "Name",
             "span": {
-              "lineno": 16,
+              "lineno": 14,
               "col_offset": 0,
-              "end_lineno": 16,
+              "end_lineno": 14,
               "end_col_offset": 5
             },
             "id": "print"
@@ -62,9 +62,9 @@
             {
               "kind": "Constant",
               "span": {
-                "lineno": 16,
+                "lineno": 14,
                 "col_offset": 6,
-                "end_lineno": 16,
+                "end_lineno": 14,
                 "end_col_offset": 14
               },
               "value": {
@@ -80,25 +80,25 @@
       {
         "kind": "Expr",
         "span": {
-          "lineno": 17,
+          "lineno": 15,
           "col_offset": 0,
-          "end_lineno": 17,
+          "end_lineno": 15,
           "end_col_offset": 11
         },
         "value": {
           "kind": "Call",
           "span": {
-            "lineno": 17,
+            "lineno": 15,
             "col_offset": 0,
-            "end_lineno": 17,
+            "end_lineno": 15,
             "end_col_offset": 11
           },
           "func": {
             "kind": "Name",
             "span": {
-              "lineno": 17,
+              "lineno": 15,
               "col_offset": 0,
-              "end_lineno": 17,
+              "end_lineno": 15,
               "end_col_offset": 5
             },
             "id": "print"
@@ -107,9 +107,9 @@
             {
               "kind": "Name",
               "span": {
-                "lineno": 17,
+                "lineno": 15,
                 "col_offset": 6,
-                "end_lineno": 17,
+                "end_lineno": 15,
                 "end_col_offset": 10
               },
               "id": "nope"

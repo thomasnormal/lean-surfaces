@@ -46,13 +46,13 @@ load_program list_lab from "Examples/python/list_lab/list_lab.json"
 #py_check list_lab.index_error(-2) = 1
 #py_check list_lab.index_error(5) raises .indexError
 #py_check list_lab.index_error(-3) raises .indexError
-#py_check list_lab.store_error() raises .indexError
+#py_check list_lab.store_error() raises .indexErrorAssign
 #py_check list_lab.unpack_list() = 12
 
 /-! ### methods: append/pop (pop-empty faithful) -/
 
 #py_check list_lab.append_pop(10) = (Val.tuple #[.int 12, .int 10, .int 1])
-#py_check list_lab.pop_empty() raises .indexError
+#py_check list_lab.pop_empty() raises .indexErrorPopEmpty
 
 /-! ### membership, equality (nested, cross-type, cyclic), truthiness -/
 

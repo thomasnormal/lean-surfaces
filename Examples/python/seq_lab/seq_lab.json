@@ -6,7 +6,7 @@
     "version": "3.12.14"
   },
   "source_file": "Examples/python/seq_lab/seq_lab.py",
-  "source_sha256": "7698235192863c48ddbae211e4f0b59ae035f54add1a220c72f23923dce39343",
+  "source_sha256": "6ff75b4518d5b23782f63344efa864bc4bc5890e28a348c5ddb567acfd647414",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "seq_lab \u2014 pass 3's value tiers at FUNCTION level (checks-only).\n\nTuple/namedtuple slices, tuple repetition, sum(it[, start]), tuple(it),\nand range as an immediate value (materialize-per-use). Range equality now\ncompares sequences without materialization; range values cross the public\nboundary, while list slices remain pinned by a refusal probe. String repetition now\nhas its own acceptance tier.\n"
+            "value": "seq_lab — pass 3's value tiers at FUNCTION level (checks-only).\n\nTuple/namedtuple slices, tuple repetition, sum(it[, start]), tuple(it),\nand range as an immediate value (materialize-per-use). Range equality now\ncompares sequences without materialization; range values cross the public\nboundary, while list slices remain pinned by a refusal probe. String repetition now\nhas its own acceptance tier.\n"
           }
         }
       },
@@ -2833,6 +2833,89 @@
       {
         "kind": "FunctionDef",
         "span": {
+          "lineno": 100,
+          "col_offset": 0,
+          "end_lineno": 101,
+          "end_col_offset": 20
+        },
+        "name": "tuple_index_oob",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 101,
+              "col_offset": 4,
+              "end_lineno": 101,
+              "end_col_offset": 20
+            },
+            "value": {
+              "kind": "Subscript",
+              "span": {
+                "lineno": 101,
+                "col_offset": 11,
+                "end_lineno": 101,
+                "end_col_offset": 20
+              },
+              "value": {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 101,
+                  "col_offset": 11,
+                  "end_lineno": 101,
+                  "end_col_offset": 17
+                },
+                "elts": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 101,
+                      "col_offset": 12,
+                      "end_lineno": 101,
+                      "end_col_offset": 13
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 101,
+                      "col_offset": 15,
+                      "end_lineno": 101,
+                      "end_col_offset": 16
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "2"
+                    }
+                  }
+                ]
+              },
+              "index": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 101,
+                  "col_offset": 18,
+                  "end_lineno": 101,
+                  "end_col_offset": 19
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "3"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
           "lineno": 104,
           "col_offset": 0,
           "end_lineno": 108,
@@ -3030,6 +3113,65 @@
                 "end_col_offset": 14
               },
               "id": "acc"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 104,
+          "col_offset": 0,
+          "end_lineno": 105,
+          "end_col_offset": 17
+        },
+        "name": "string_index_oob",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 105,
+              "col_offset": 4,
+              "end_lineno": 105,
+              "end_col_offset": 17
+            },
+            "value": {
+              "kind": "Subscript",
+              "span": {
+                "lineno": 105,
+                "col_offset": 11,
+                "end_lineno": 105,
+                "end_col_offset": 17
+              },
+              "value": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 105,
+                  "col_offset": 11,
+                  "end_lineno": 105,
+                  "end_col_offset": 14
+                },
+                "value": {
+                  "type": "str",
+                  "value": "a"
+                }
+              },
+              "index": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 105,
+                  "col_offset": 15,
+                  "end_lineno": 105,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "3"
+                }
+              }
             }
           }
         ]

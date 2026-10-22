@@ -44,6 +44,10 @@ def index(value, position):
     return value[position]
 
 
+def index_oob():
+    return b"a"[3]
+
+
 def slice_bytes(value, lower, upper, step):
     return value[lower:upper:step]
 

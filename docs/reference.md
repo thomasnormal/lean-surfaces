@@ -162,7 +162,9 @@ branded variable does not unbrand — and close brand-headed *goals* with
 | `.typeError (msg : String)` | message | `TypeError` |
 | `.nameError (name : String)` | the unresolved name | `NameError` |
 | `.zeroDivisionError` | — | `ZeroDivisionError` |
-| `.indexError` | — | `IndexError` |
+| `.indexError` | — | `IndexError` (list read: `list index out of range`) |
+| `.indexErrorTuple` / `.indexErrorString` / `.indexErrorRange` / `.indexErrorBytes` | — | `IndexError` with container-specific text |
+| `.indexErrorAssign` / `.indexErrorPopEmpty` / `.indexErrorPop` | — | `IndexError` with list-assignment/pop text |
 | `.valueError (msg : String)` | message | `ValueError` |
 
 Notes:
@@ -172,7 +174,8 @@ Notes:
 - CPython's `UnboundLocalError` is a `NameError` subclass; the harness
   canonicalizes it to `NameError` (DESIGN.md name-resolution row).
 - `==>!` compares the whole `PyErr` *value*, message included — payload-free
-  classes (`.zeroDivisionError`, `.indexError`) are the practical targets
+  classes (`.zeroDivisionError` and the condition-specific `IndexError`
+  constructors) are the practical targets
   ([howto](howto/spec-a-raising-function.md)).
 
 ## Semantic tier — summary

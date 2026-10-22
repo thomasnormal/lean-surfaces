@@ -14,6 +14,7 @@ load_program bytes_lab from "Examples/python/bytes_lab/bytes_lab.json"
 #py_check bytes_lab.slicing() = Val.bytes #[98, 100]
 #py_check bytes_lab.equality_order() = Val.tuple #[.bool true, .bool true, .bool true]
 #py_check bytes_lab.iterate() = Val.tuple #[.int 97, .int 98]
+#py_check bytes_lab.index_oob() raises (.indexErrorBytes)
 
 #py_check bytes_lab.contains(Val.bytes #[97, 98], Val.bytes #[98]) = true
 #py_check bytes_lab.contains(Val.bytes #[97, 98], 256) raises

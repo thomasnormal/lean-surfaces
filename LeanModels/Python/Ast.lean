@@ -604,9 +604,10 @@ since H1-proper (the dict tier) `KeyError` (missing dict key),
 `RuntimeError` (dict changed size during iteration), `RecursionError`
 (cyclic dict comparison), and since H3 (classes) `AttributeError` (missing
 instance attribute; attribute access on builtins outside their method
-tier), and since H4 (generators) `StopIteration`. The harness compares exception *class names* only, so message-free
-constructors (`keyError`/`attributeError` like `indexError`) carry no
-payload. -/
+tier), and since H4 (generators) `StopIteration`. The harness compares
+exception classes and, when carried, their messages. `keyError` and
+`attributeError` remain payload-free; the condition-specific `IndexError`
+constructors retain their standard texts. -/
 inductive PyErr where
   | typeError (msg : String)
   | nameError (name : String)
@@ -645,7 +646,22 @@ inductive PyErr where
   let `0 ** -1` escape a handler CPython catches, which is a wrong answer
   and not a missing feature. -/
   | zeroDivisionPow
+  /-- Out-of-range list indexing (the dominant IndexError text). -/
   | indexError
+  /-- Out-of-range tuple/namedtuple indexing. -/
+  | indexErrorTuple
+  /-- Out-of-range string indexing. -/
+  | indexErrorString
+  /-- Out-of-range range indexing. -/
+  | indexErrorRange
+  /-- Out-of-range bytes indexing. -/
+  | indexErrorBytes
+  /-- Out-of-range list item assignment/deletion. -/
+  | indexErrorAssign
+  /-- Popping an empty list. -/
+  | indexErrorPopEmpty
+  /-- Popping an out-of-range list index. -/
+  | indexErrorPop
   | valueError (msg : String)
   | keyError
   | runtimeError (msg : String)
@@ -757,6 +773,13 @@ def builtinExcCatches : String → PyErr → Bool
   | "ArithmeticError",   .floatDivmodZeroDivisionError => true
   | "ArithmeticError",   .overflowError _     => true
   | "LookupError",       .indexError         => true
+  | "LookupError",       .indexErrorTuple   => true
+  | "LookupError",       .indexErrorString  => true
+  | "LookupError",       .indexErrorRange   => true
+  | "LookupError",       .indexErrorBytes   => true
+  | "LookupError",       .indexErrorAssign  => true
+  | "LookupError",       .indexErrorPopEmpty => true
+  | "LookupError",       .indexErrorPop     => true
   | "LookupError",       .keyError           => true
   | "TypeError",         .typeError _        => true
   | "NameError",         .nameError _        => true
@@ -769,6 +792,13 @@ def builtinExcCatches : String → PyErr → Bool
   | "ZeroDivisionError", .floatDivmodZeroDivisionError => true
   | "OverflowError",     .overflowError _     => true
   | "IndexError",        .indexError         => true
+  | "IndexError",        .indexErrorTuple   => true
+  | "IndexError",        .indexErrorString  => true
+  | "IndexError",        .indexErrorRange   => true
+  | "IndexError",        .indexErrorBytes   => true
+  | "IndexError",        .indexErrorAssign  => true
+  | "IndexError",        .indexErrorPopEmpty => true
+  | "IndexError",        .indexErrorPop     => true
   | "ValueError",        .valueError _       => true
   | "KeyError",          .keyError           => true
   | "RuntimeError",      .runtimeError _     => true

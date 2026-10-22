@@ -6,11 +6,9 @@ alone cannot tell two apart; the harnesses gained a CLASS comparison on
 next resolution step down: the model's `NameError` carries the name, so
 the whole `NameError: name 'nope' is not defined` line is compared.
 
-Rows whose exception class carries NO payload in the model
-(`ZeroDivisionError`, `IndexError`, `KeyError`, `AttributeError`,
-`RecursionError`) are reported as `ABSENT` by the survey's message
-telemetry and are NOT compared — inventing a text the semantics does not
-claim would be exactly the kind of lie this project refuses.
+Rows whose exception class carries no payload in the model remain an
+honest `ABSENT` telemetry bucket. Condition-specific `IndexError`
+constructors now carry their standard text and are compared exactly.
 """
 
 print("before")

@@ -2153,7 +2153,7 @@ def rangeIndex (lo hi step : Int) (index : RVal) : Res RVal :=
   | some i =>
     match normIndex i (rangeLen lo hi step) with
     | some n => .ok (.int (lo + step * (n : Int)))
-    | Option.none => .exn .indexError
+    | Option.none => .exn .indexErrorRange
   | Option.none =>
     .exn (.typeError s!"range indices must be integers or slices, not {index.typeName}")
 
@@ -2183,7 +2183,7 @@ def indexVal (container index : RVal) : Res RVal :=
     | some integer =>
       match normIndex integer xs.size with
       | some position => .ok (.int (xs.getD position 0).toNat)
-      | Option.none => .exn .indexError
+      | Option.none => .exn .indexErrorBytes
     | Option.none =>
       .exn (.typeError s!"byte indices must be integers or slices, not {typeNamePrefix index.typeName 200}")
   | .tuple xs, index =>
@@ -2191,7 +2191,7 @@ def indexVal (container index : RVal) : Res RVal :=
     | some i =>
       match normIndex i xs.size with
       | some n => .ok (xs.getD n .none)
-      | Option.none => .exn .indexError
+      | Option.none => .exn .indexErrorTuple
     | Option.none =>
       .exn (.typeError s!"tuple indices must be integers, not {index.typeName}")
   | .ntuple _ _ xs, index =>
@@ -2201,7 +2201,7 @@ def indexVal (container index : RVal) : Res RVal :=
     | some i =>
       match normIndex i xs.size with
       | some n => .ok (xs.getD n .none)
-      | Option.none => .exn .indexError
+      | Option.none => .exn .indexErrorTuple
     | Option.none =>
       .exn (.typeError s!"tuple indices must be integers, not {index.typeName}")
   | .str s, index =>
@@ -2209,7 +2209,7 @@ def indexVal (container index : RVal) : Res RVal :=
     | some i =>
       match normIndex i s.length with
       | some n => .ok (.str (String.singleton (s.toList.getD n ' ')))
-      | Option.none => .exn .indexError
+      | Option.none => .exn .indexErrorString
     | Option.none =>
       .exn (.typeError s!"string indices must be integers, not {index.typeName}")
   | v, _ => .exn (.typeError s!"'{v.typeName}' object is not subscriptable")
@@ -2879,7 +2879,7 @@ def heapDelete (h : Heap) (a : Addr) (k : RVal) : Option (Res Heap) :=
           match Heap.update h a (.list ((xs.toList.eraseIdx n).toArray)) with
           | some h' => .ok h'
           | Option.none => .unsupported danglingMsg
-        | Option.none => .exn .indexError
+        | Option.none => .exn .indexErrorAssign
       | Option.none =>
         .exn (.typeError
           s!"list indices must be integers or slices, not {RVal.typeNameH h k}"))
@@ -2908,7 +2908,7 @@ def heapStore (h : Heap) (a : Addr) (k v : RVal) : Res Heap :=
         match Heap.update h a (.list ((xs.toList.set n v).toArray)) with
         | some h' => .ok h'
         | Option.none => .unsupported danglingMsg
-      | Option.none => .exn .indexError
+      | Option.none => .exn .indexErrorAssign
     | Option.none =>
       .exn (.typeError s!"list indices must be integers, not {RVal.typeNameH h k}")
   -- H3: no `__setitem__` can exist (dunder guard) — faithful refusal.
@@ -2985,12 +2985,13 @@ empty pop is a faithful `IndexError`. `dict.pop` is a REAL CPython method
 def heapPop (h : Heap) (a : Addr) (i : Option Int) : Res (Heap × RVal) :=
   match Heap.get? h a with
   | some (.list xs) =>
+    if xs.isEmpty then .exn .indexErrorPopEmpty else
     match normIndex (i.getD (-1)) xs.size with
     | some n =>
       match Heap.update h a (.list ((xs.toList.eraseIdx n).toArray)) with
       | some h' => .ok (h', xs.getD n .none)
       | Option.none => .unsupported danglingMsg
-    | Option.none => .exn .indexError
+    | Option.none => .exn .indexErrorPop
   | some (.dict _ _) =>
     .unsupported "'.pop' on a dict is outside the tier (dict.pop lands with the dict-method tier)"
   | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"

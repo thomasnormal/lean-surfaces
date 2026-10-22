@@ -471,10 +471,8 @@ def main(argv=None):
                                     "an exception whose class could not be read"))
                 continue
             # One resolution step below the class: the MESSAGE. Reported,
-            # not enforced — the model's payload-free constructors carry no
-            # message at all (`IndexError` is three different CPython texts),
-            # and a bucket that says which is the useful instrument. The
-            # class comparison above is what fails a run.
+            # and enforced whenever the model carries one. Payload-free
+            # constructors remain an honest ABSENT bucket.
             rec["msg_verdict"] = message_verdict(row, cpython_exc_line(cerr))
         if out == lean_stdout(row) and code == row["exit"]:
             rec["verdict"] = "MATCH"

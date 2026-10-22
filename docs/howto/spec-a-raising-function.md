@@ -68,8 +68,9 @@ as-is).
 ## What can go wrong
 
 **Message-carrying errors are exact-match.** `==>!` compares the whole
-`PyErr` value. `.zeroDivisionError` and `.indexError` carry no payload and
-are the practical targets. `.typeError`/`.valueError`/`.nameError` carry a
+`PyErr` value. `.zeroDivisionError` carries no payload; `IndexError` has
+condition-specific nullary constructors so its standard message is retained.
+`.typeError`/`.valueError`/`.nameError` carry a
 message/name string, and your spec must match it character-for-character
 (the interpreter's messages mimic CPython's, e.g.
 `.typeError "unsupported operand type(s) for +: 'int' and 'str'"`).

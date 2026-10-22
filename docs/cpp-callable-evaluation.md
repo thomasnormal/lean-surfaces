@@ -183,4 +183,5 @@ executing the body.
 `CallableRung3Tests.lean` adds kernel-reduced prefix- and postfix-increment
 call witnesses. The parameter state is updated once; the postfix result is
 then sequenced with a comma expression so the updated value is observed. The
+compound-assignment witness extends the same state path with `+=`. The
 corresponding coverage rows call unchanged C++ functions.

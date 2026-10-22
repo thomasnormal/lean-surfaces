@@ -310,6 +310,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-local-declaration",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalDeclarationWitness",
+    "cpp_source": "int local_witness(int value) { int local = 4; local += 3; return local; } bool callable_witness() { return local_witness(7) == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "expression.callable-conditional",
     "kind": "expression",
     "corpus": "rung-3 witness",

@@ -92,6 +92,12 @@ the block and loop structure. In this value-only evaluator, a local declaration
 remains a loud refusal; the object-backed evaluator enters and exits the
 corresponding frame scopes and allocates its validated integral objects.
 
+The object-backed callable path admits a `DeclStmt` containing validated
+automatic integral declarations. Initialization publishes the converted value
+in the active frame; later assignments and reads observe that same object, and
+leaving the block ends its lifetime. Non-integral, volatile, static, reference,
+array and unsupported initializer shapes remain loud.
+
 An admitted `forLoop` executes its initializer once, then tests the condition
 before each body. Normal body completion and `continue` execute the step once
 before the next test. Break, return and failure bypass the step; a failed step

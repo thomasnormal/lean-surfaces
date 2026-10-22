@@ -57,6 +57,8 @@ private def localMutation : Bool :=
   | .ok (.ok value) => value == signed 7
   | _ => false
 
+def callableLocalDeclarationWitness : Bool := localMutation
+
 private def localIncrementFunction : CallableFunction :=
   {functionWithLocal (.literal (signed 4)) with
     body := .block (.sequence
@@ -334,6 +336,7 @@ private def parserAdmitsAutomaticLocal : Bool :=
 #guard selfInitializerRetainsFrame
 #guard nestedBlockDropsLocal
 #guard localMutation
+#guard callableLocalDeclarationWitness
 #guard localIncrement
 #guard loopLocalReentry
 #guard forBodyFailureRetainsFrame
@@ -347,6 +350,9 @@ private def parserAdmitsAutomaticLocal : Bool :=
 #guard unsupportedBinaryLoud
 #guard switchScopeClosesOnFailure
 #guard parserAdmitsAutomaticLocal
+
+theorem callable_local_declaration_witness : callableLocalDeclarationWitness = true := by
+  rfl
 
 private def incrementFunction (type : CppIntType) (operator : String)
     (isPostfix : Bool) : CallableFunction := {
@@ -416,6 +422,7 @@ private theorem kernelObjectExecution :
       overflowRetainsParameter "++" true 2147483647) = true := rfl
 
 #print axioms kernelObjectExecution
+#print axioms callable_local_declaration_witness
 
 private def kernelControl (loop : CallableStatement) : Bool :=
   let function : CallableFunction := {

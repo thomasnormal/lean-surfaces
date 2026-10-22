@@ -87,7 +87,7 @@ See [the measured coverage](docs/python-coverage.md) and
 
 ## C++ tier status
 
-The C++ tier prerelease is **v0.1.12 (2026-10-22)**. Tag `cpp-v0.1.12` identifies
+The C++ tier prerelease is **v0.1.13 (2026-10-22)**. Tag `cpp-v0.1.13` identifies
 the release commit on `master`; see the [C++ changelog](docs/cpp-changelog.md).
 The bounded surface admits translation roots and exact-path namespace,
 function, parameter, record, field, variable, enum, typedef, type-alias,
@@ -96,7 +96,7 @@ metadata, typed integral objects,
 and static, thread, automatic, and dynamic storage lifetimes; rung 3 also
 executes selected integral callable expressions and rung-4 control statements,
 void returns, forward labels, bounded local scopes, and a local-reference
-alias witness. Its checked-in differential corpus has 72 rows and its grammar census has 24
+alias witness. Its checked-in differential corpus has 78 rows and its grammar census has 24
 witnesses; this
 host reports every native result as an explicit ORACLE because pinned
 Clang/LLVM 21.1.8 is unavailable. See the [C++ coverage](docs/cpp-coverage.md)

@@ -4017,6 +4017,20 @@ trace. No branch is selected by a fixed seed or source order, and no second
 scheduler is introduced. See [the randcase boundary](sv-randcase.md) and the
 read-only instrument `extractors/sv/randcase_reprice.py`.
 
+### Disable statements — 2026-10-22
+
+`DisableStatement` is the named-scope cancellation boundary. In the fresh
+22,043-path census it occurs in 45 files: 28 are disable-only and 17 co-occur
+with another wall. The sole files contain 28 spans, including 25 named
+targets, two escaped targets and one statement label. IEEE §9.6.2 and §12.6
+terminate the selected named block or label, skip its remaining statements and
+resume after that scope; named forks and blocks can cancel retained child
+activity. The envelope has no target-scope identity, cancellation token or
+retained continuation tree. No target is guessed, no disable is lowered to
+`break`, return or silent child cancellation, and no second scheduler is
+introduced. See [the disable boundary](sv-disable.md) and the read-only
+instrument `extractors/sv/disable_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

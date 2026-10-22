@@ -1363,6 +1363,11 @@ see [the randcase boundary](sv-randcase.md). The envelope has no sampled
 weight vector, random oracle or weighted-selection trace, so no branch is
 lowered by fixed seed or source order.
 
+`DisableStatement` remains a named-scope cancellation boundary; it has no
+target-scope identity or cancellation continuation. The envelope therefore
+does not lower a disable to `break`, return or silent child cancellation.
+See [the disable boundary](sv-disable.md).
+
 ### Legacy package storage provenance
 
 Source-defined packages with admitted scalar/packed integral variables lower

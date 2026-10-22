@@ -3188,3 +3188,12 @@ spans: five `$time` subjects, one constant-expression subject, one packed-union
 member subject and one packed-struct part-select subject. The subject remains
 loud; see [case subjects](sv-case-subjects.md) and
 `extractors/sv/case_subject_reprice.py`.
+
+## Net type boundary — 2026-10-22
+
+The fresh 22,043-path census records `NetSymbol:type` in **24** files: **7**
+are sole refusals and 17 co-occur. Repricing the sole files finds **7** spans:
+four multidimensional net arrays, one generated net-array case, two packed-
+struct nets and one typedef-struct net. Features overlap. The net type remains
+loud; see [net types](sv-net-types.md) and
+`extractors/sv/net_type_reprice.py`.

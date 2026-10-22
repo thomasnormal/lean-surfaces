@@ -4744,3 +4744,12 @@ spans: five `$time` subjects, one constant-expression subject, one packed-union
 member subject and one packed-struct part-select subject. The ordinary case
 chain has no general time, elaboration-constant or aggregate subject plan, so
 no subject is replaced or flattened. See [case subjects](sv-case-subjects.md).
+
+### Net type boundary — 2026-10-22
+
+The fresh 22,043-path census records `NetSymbol:type` in **24** files: **7**
+are sole refusals and 17 co-occur. Repricing the sole files finds **7** net
+spans: four multidimensional net arrays, one generated net-array case, two
+packed-struct nets and one typedef-struct net. The array labels overlap. Net
+driver storage and aggregate field identity are absent from the envelope, so
+no net is flattened or given a variable store. See [net types](sv-net-types.md).

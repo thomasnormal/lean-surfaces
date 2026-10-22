@@ -1852,3 +1852,10 @@ invent a hierarchy root; see [compilation-unit variables](sv-compilation-unit-va
 is a scheduler-visible time read, an elaboration constant or a packed
 aggregate/member selection outside the ordinary integral path. The envelope
 does not replace or flatten that subject; see [case subjects](sv-case-subjects.md).
+
+## Net types
+
+`NetSymbol:type` remains an explicit unsupported net declaration when it needs
+aggregate or multidimensional driver storage. The envelope does not flatten
+net arrays, copy them into variables or erase packed-struct identity; see [net
+types](sv-net-types.md).

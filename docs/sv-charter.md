@@ -5102,3 +5102,11 @@ constant element selection. Ingestion materializes only the observed cells,
 retaining two-state zero startup and ordinary assignment semantics. Dynamic,
 whole-array, aggregate, and nonintegral uses remain loud. The
 `large_fixed_array` fixture covers the IEEE minimum 2^24-element declaration.
+
+### Unused string literal initializers — 2026-10-23
+
+Declaration-only module and local `string` variables may now carry a pure
+string-literal initializer when the value is never read. The declaration is
+omitted from the flat vector state, while nonliteral initializers and every
+string operation remain loud. The `string_literal_decl` fixture covers both
+module and local declarations.

@@ -255,6 +255,22 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertEqual(module["others"], [])
         self.assertEqual(module["processes"][0]["body"]["stmts"][0]["kind"], "Empty")
 
+    def test_string_literal_initializers_are_inert_when_unused(self):
+        envelope = self.extract(
+            "module top; string module_s = \"module\"; initial begin "
+            "string local_s = \"local\"; $display(\"PASS\"); "
+            "$finish; end endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertEqual(module["decls"], [])
+        self.assertEqual(module["others"], [])
+        self.assertEqual(module["processes"][0]["body"]["stmts"][0]["kind"], "Empty")
+
+    def test_nonliteral_string_initializer_stays_loud(self):
+        envelope = self.extract(
+            "module top; string s = \"x\"; string t = s; endmodule")
+        self.assertTrue(any(item.get("kind") == "Unsupported"
+                            for item in self._walk(envelope)))
+
     def test_string_use_remains_loud(self):
         envelope = self.extract(
             "module top; string s; initial begin if (s == \"x\") "

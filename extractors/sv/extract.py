@@ -403,7 +403,12 @@ def is_module_virtual_interface_null_decl(symbol):
 
 
 def is_string_decl(symbol):
-    """Whether a declaration names an opaque SystemVerilog string."""
+    """Whether an unused declaration names an opaque SystemVerilog string.
+
+    A missing initializer or a pure string-literal initializer has no
+    observable effect on the time-zero self-check path and can be omitted from
+    the flat state.  Any other initializer remains a value boundary.
+    """
     if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
         return False
     try:
@@ -412,7 +417,15 @@ def is_string_decl(symbol):
         if (not symbol.parentScope.isProceduralContext
                 and getattr(symbol.parentScope, "containingInstance", None) is None):
             return False
-        return getattr(symbol, "initializer", None) is None
+        initializer = getattr(symbol, "initializer", None)
+        if initializer is None:
+            return True
+        if type(initializer).__name__ == "StringLiteral":
+            return not getattr(initializer, "bad", False)
+        return (type(initializer).__name__ == "ConversionExpression"
+                and type(getattr(initializer, "operand", None)).__name__ == "StringLiteral"
+                and not getattr(initializer, "bad", False)
+                and not getattr(initializer.operand, "bad", False))
     except Exception:
         return False
 
@@ -5621,8 +5634,6 @@ def _convert_local_decl(sm, stmt):
             return unsupported(sm, stmt, "VariableDeclStatement:chandle-initializer")
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None and is_string_decl(symbol):
-        if getattr(symbol, "initializer", None) is not None:
-            return unsupported(sm, stmt, "VariableDeclStatement:string-initializer")
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None:
         cells = convert_fixed_array_vars(sm, symbol)

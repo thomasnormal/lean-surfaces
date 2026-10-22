@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 28 | 24 | 0 | 4 | sv-tests-2 declarations |
+| 29 | 25 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -36,6 +36,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `chandle_declaration` | `Examples/system-verilog/chandle_decl/chandle_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `virtual_interface_null_declaration` | `Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_declaration` | `Examples/system-verilog/string_decl/string_decl.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_literal_declaration` | `Examples/system-verilog/string_literal_decl/string_literal_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `nested_struct_initializers` | `Examples/system-verilog/nested_struct_initializers/nested_struct_initializers.sv` | match | **MATCH** | `ok` | MATCH |
 | `large_fixed_array` | `Examples/system-verilog/large_fixed_array/large_fixed_array.sv` | match | **MATCH** | `ok` | MATCH |
 | `delay_refusal` | `Examples/system-verilog/delay/delay.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
@@ -259,11 +260,11 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22035 | 4430 | 17539 | 66 |
+| 22035 | 4434 | 17535 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `VariableSymbol:2state` | 4132 |
+| `VariableSymbol:2state` | 3989 |
 | `AssignmentExpression:target` | 3913 |
 | `ExpressionStatement:CallExpression` | 3784 |
 | `CallExpression` | 3290 |

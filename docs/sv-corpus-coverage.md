@@ -3543,3 +3543,10 @@ those observed cells, so the self-check interpreter can execute the standard's
 boundary-access test without allocating millions of envelope declarations.
 Dynamic and aggregate uses remain loud. The new differential fixture is
 `Examples/system-verilog/large_fixed_array/large_fixed_array.sv`.
+
+## Unused string literal initializers — 2026-10-23
+
+Unused module and local `string` declarations with pure literal initializers
+are admitted as inert metadata on the time-zero path. Reads, writes,
+concatenation, formatting, and nonliteral initializers remain loud. The
+`string_literal_decl` differential fixture covers this declaration-only slice.

@@ -10,8 +10,8 @@ The extractor and focused tests cover both declarations and selected reads and
 writes, including signed forms.
 
 The current `VariableSymbol:2state` census tag names the shapes outside that
-value tier. The 2026-10-23 corpus snapshot has 4,132 files containing the tag;
-it is the sole refusal in 9 files. The previous snapshot had 4,133 files and
+value tier. The 2026-10-23 corpus snapshot has 3,989 files containing the tag;
+it is the sole refusal in 8 files. The previous snapshot had 4,132 files and
 9 sole refusals. Its current frequent companions are assignment targets
 (3,913 files), statement calls (3,784), expression calls (3,290),
 `NamedValueExpression:2state` (1,481), classes (1,327), member access (1,023),
@@ -100,6 +100,12 @@ rules. A dynamic index, whole-array read or write, aggregate initializer, or
 nonintegral leaf remains unsupported because the flat state has no compact
 array object. `large_fixed_array` exercises the two endpoint cells of the
 IEEE-required 2^24-element extent.
+
+Declaration-only `string` variables may also carry a pure string-literal
+initializer when no operation observes the value. Ingestion omits that opaque
+value from the flat state; nonliteral initializers and all string reads or
+writes remain unsupported. `string_literal_decl` exercises module and local
+forms.
 
 The public representation has no aggregate heap, queue, object, string, real,
 handle, or event scheduler. The symbolic `PDecl`/`PType` representation also

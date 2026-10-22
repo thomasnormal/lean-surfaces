@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "VariableSymbol:2state",
-    4132
+    3989
    ],
    [
     "AssignmentExpression:target",
@@ -140,7 +140,7 @@
    ],
    [
     "StaticLocal:invalid-compilation",
-    234
+    229
    ],
    [
     "BlockStatement:JoinNone",
@@ -383,16 +383,16 @@
     35
    ],
    [
-    "VariableDeclStatement:2state",
-    35
-   ],
-   [
     "NetType",
     34
    ],
    [
     "CaseStatement:subject",
     30
+   ],
+   [
+    "VariableDeclStatement:2state",
+    29
    ],
    [
     "InsideExpression:source",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4430,
-   "partial": 17539,
+   "clean": 4434,
+   "partial": 17535,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1002,7 +1002,7 @@
     25
    ],
    "compile_error": [
-    107,
+    108,
     1750
    ],
    "compile_fail": [
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    3833,
+    3836,
     18671
    ],
    "simulation elaboration": [
@@ -1419,9 +1419,9 @@
     "unlockable": 0
    },
    "chapter-22": {
-    "clean": 383,
+    "clean": 384,
     "error": 0,
-    "partial": 161,
+    "partial": 160,
     "skip_include": 28,
     "total": 572,
     "unlockable": 2
@@ -1587,9 +1587,9 @@
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 369,
+    "clean": 372,
     "error": 0,
-    "partial": 249,
+    "partial": 246,
     "skip_include": 0,
     "total": 618,
     "unlockable": 1

@@ -102,8 +102,8 @@ Refusals — every one LOUD, never wrong:
   `def`/`class`/namedtuple LATER (`defsBoundBefore`): CPython raises
   `NameError` there and the model's definition tables are
   position-independent;
-* a class whose CREATION does something observable
-  (`classesCreationPure`);
+* a class whose CREATION is outside the executable class-body slice
+  (`classesCreationAdmissible`);
 * a mid-statement binding a function reads (`scriptFlushCoherent`);
 * a top-level rebinding of a builtin/`def`/`class`/namedtuple name;
 * `print` of a container or heap value (its `repr` is not guessed);
@@ -474,20 +474,18 @@ def scriptView (m : Module) : Module :=
         scriptImports m).toArray }
 
 /-- CLASS CREATION IS AN EFFECT (docs/memory-model.md §class creation).
-CPython evaluates a class's bases and runs its body AT the `class`
-statement; the model builds `ClassDefn` at ingestion and executes nothing.
-For a `creationPure` class that is invisible — methods, `pass`, docstrings
-and literal attribute bindings can neither print nor raise. For any other
-class it is a silently skipped effect, which is the one thing this project
-never does, so the whole script refuses.
+CPython evaluates a class's bases and runs its body at the `class` statement.
+Pure bodies are safe to skip; bodies in the executable slice are evaluated in
+an isolated class namespace while retaining shared world effects. Unsupported
+creation forms remain loud, so the executor never silently loses an effect.
+The closed FUNCTION surface is unaffected — it makes no claim about module
+stdout, and class-body effects are visible on the script/CallsIn surface. -/
+def classesCreationAdmissible (m : Module) : Bool :=
+  m.classes.all fun c => c.creationPure || c.creationExecutable
 
-Found by pointing `tools/leanpy` at `class C: print("x")`: CPython printed
-and the model did not, a WRONG ANSWER rather than a refusal. The closed
-FUNCTION surface is unaffected — it makes no claim about module stdout,
-and the one class-body effect that could reach a call's result, a
-class-level `global`, is already tracked by `ClassDefn.hasGlobal`. -/
+@[deprecated classesCreationAdmissible (since := "2026-10-22")]
 def classesCreationPure (m : Module) : Bool :=
-  m.classes.all (·.creationPure)
+  classesCreationAdmissible m
 
 /-! ### The publish (a module frame's locals ARE its globals) -/
 
@@ -590,6 +588,24 @@ def scriptFlushCoherent (m : Module) : Bool :=
 /-! ### The executor -/
 
 mutual
+  /-- Execute the retained, non-method part of an executable class body in a
+  fresh class namespace.  The namespace is discarded after creation, while
+  heap/stdout/exceptions remain in the shared world. -/
+  def execClassBody (m : Module) (fuel : Nat) (caller : FrameState)
+      (classSt : FrameState) : List Stmt → Run FrameState RFlow
+    | [] => .ok { classSt with locals := caller.locals } .next
+    | s :: rest =>
+      match fuel with
+      | 0 => .timeout
+      | fuel + 1 =>
+        Run.bind (execStmt m fuel classSt s) fun st flow =>
+          match flow with
+          | .next => execClassBody m fuel caller st rest
+          | .ret v => .ok { st with locals := caller.locals } (.ret v)
+          | .brk => .ok { st with locals := caller.locals } .brk
+          | .cont => .ok { st with locals := caller.locals } .cont
+  termination_by structural fuel
+
   /-- Execute top-level statements, FLUSHING the frame's locals into the
   world's globals after each one (the header's §the flush: a top-level
   binding IS a global, so a call made by a later statement reads exactly
@@ -736,6 +752,16 @@ mutual
                     | e => .exn st' e)
                  | .timeout => .timeout
                  | .unsupported msg => .unsupported msg)
+      | .unsupported "ClassDef" name sp =>
+        match findClass m name with
+        | some (_, c) =>
+          if c.creationPure then
+            .ok st .next
+          else if c.creationExecutable then
+            execClassBody m fuel st { st with locals := [] } c.body.toList
+          else
+            .unsupported s!"class {name}: executable class creation is outside the tier"
+        | none => .unsupported s!"internal: class marker {name} has no class table entry"
       | .unsupported "Import" text sp =>
         if (benignImportBinds text).isSome then .ok st .next
         else execStmt m fuel st (.unsupported "Import" text sp)
@@ -940,8 +966,8 @@ docs/memory-model.md §the trace clock) — the script-mode counterpart of
 `callFunctionClock`, seeded into the starting world, which keeps the
 `runScript = runScriptClock m []` equation definitional. -/
 def runScriptClock (m : Module) (clock : List Int) (fuel : Nat) : Run World Unit :=
-  if !classesCreationPure m then
-    .unsupported "a class whose CREATION does something observable (an unrecognized base, a metaclass keyword, a decorator on the class OR on one of its methods, or a class-level statement beyond undecorated methods/pass/docstring/literal attributes): CPython runs that at the `class` statement and the model executes no class body, so leanpy refuses rather than silently skip the effect"
+  if !classesCreationAdmissible m then
+    .unsupported "a class whose CREATION is outside the executable class-body slice (bases, metaclass keywords, decorators, or unsupported class-body statements)"
   else if !defsBoundBefore m m.topLevel.toList then
     .unsupported "a top-level statement mentions a name this module defines LATER (`def`/`class`/namedtuple): CPython would raise NameError there, and the model's definition tables are position-independent, so leanpy refuses rather than run a definition that does not exist yet"
   else if !scriptFlushCoherent m then

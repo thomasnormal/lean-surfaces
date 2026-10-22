@@ -81,7 +81,7 @@
   },
   {
     "file": "harness/scripts/cls_effect_script.py",
-    "expect": "unsupported"
+    "expect": "match"
   },
   {
     "file": "harness/scripts/cls_data_script.py",

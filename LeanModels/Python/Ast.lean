@@ -28,7 +28,7 @@ namespace LeanModels.Python
 inductive BinOp where
   | add | sub | mult | div | floorDiv | mod | pow | lshift | rshift
   | bitOr | bitXor | bitAnd | matMult
-deriving Repr, Inhabited, BEq, DecidableEq
+deriving Repr, Inhabited, BEq
 
 
 /-- Unary operators. 1:1 with CPython: `usub` ↔ `USub`, `not` ↔ `Not`,
@@ -471,10 +471,11 @@ identifier can never contain `.`, so qualified names collide with nothing
 and plain-name resolution never sees them) — method calls then reuse
 `callIn`/`CallsIn` verbatim, with `self` as an ordinary first argument.
 `methods` records the plain method names (dispatch/guard checks);
-`ok = false` iff the class uses features outside the tier (bases —
-inheritance is loudly unsupported — keywords/metaclass, decorators,
-class-level statements other than defs/docstrings/`pass`): the class is
-still REPRESENTED, but instantiating it refuses loudly.
+`ok = false` iff the class uses features outside the instantiation tier
+(bases — inheritance is loudly unsupported — keywords/metaclass,
+decorators, or unsupported class-level statements): the class is still
+REPRESENTED, but instantiating it refuses loudly. Creation-time effects
+are tracked separately by `creationPure`/`creationExecutable` below.
 
 Class identity (docs/memory-model.md H3): a `ClassId` is the INDEX into
 `Module.classes`, never the name. With duplicate class names the LAST
@@ -512,20 +513,24 @@ structure ClassDefn where
   payload-free representation exact). -/
   isExc : Bool := false
   /-- Is CREATING this class observationally free? CPython executes a
-  class body — and evaluates its bases — at the `class` statement, while
-  the model builds `ClassDefn` at ingestion and executes nothing. That is
-  invisible only when the body can neither print, raise, nor call: methods,
-  `pass`, docstrings and LITERAL attribute assignments qualify; a call, a
-  name read, an unrecognized base or a decorator does not (leanpy found the
-  hole with `class C: print(…)` — CPython printed, the model did not, a
-  WRONG ANSWER rather than a refusal). Set by ingestion from the class
-  body (Json.lean); `runScript` refuses a module that contains a
-  non-`creationPure` class, so a script never silently skips an effect.
+  class body — and evaluates its bases — at the `class` statement. The
+  model builds `ClassDefn` at ingestion. A pure body may be skipped; an
+  executable body is retained in `body` and run by the script executor.
+  Unsupported creation forms remain loud, so a script never silently skips
+  an effect. Set by ingestion from the class body (Json.lean).
   Default `false`: a hand-built `ClassDefn` has no body to inspect, and
   the safe answer is the loud one. -/
   creationPure : Bool := false
   span : Span
-deriving Repr, Inhabited, BEq, DecidableEq
+  /-- Non-method class-body statements retained for script-mode class
+  creation.  FunctionDef members are still flattened into `functions` and
+  do not appear here. -/
+  body : Array Stmt := #[]
+  /-- Whether this class is admitted by the first executable class-body
+  slice (no unsupported base/meta effect, and only ordinary assignment,
+  expression, and pass statements). -/
+  creationExecutable : Bool := false
+deriving Repr, Inhabited, BEq
 
 /-- A Python module: `def`s split out into `functions` (in source order,
 including class methods flattened under `"<class>.<method>"` qualified

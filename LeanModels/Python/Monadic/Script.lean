@@ -21,7 +21,7 @@ compound whose bindings a function body might read stale — and it is kept here
 # THE ADMISSION MACHINERY IS REUSED WHOLE
 
 Everything above the trunk's executor is PURE and is imported, not rebuilt:
-`classesCreationPure`, `defsBoundBefore`, `scriptFlushCoherent`, `scriptView`,
+`classesCreationAdmissible`, `defsBoundBefore`, `scriptFlushCoherent`, `scriptView`,
 `publishScriptGlobals`, `scriptRebindMsg`, `benignImportBinds`,
 `benignImportNames`, `dunderShaped`. That is roughly 530 of the trunk's 893
 script lines. The rebuild owns the ~320 lines of CONTROL, exactly as it owns
@@ -93,6 +93,17 @@ def loopFlow (again : SemF RFlow) : RFlow → SemF RFlow
   | .next | .cont => again
   | .brk => pure .next
   | .ret v => pure (.ret v)
+
+/-- Run retained class-body statements in a fresh class namespace.  `inWorld`
+projects that namespace away while retaining the shared world effects, and
+`inFrame` restores the caller's module locals. -/
+def classBodyStmtsAt (K : Kont) (m : Module) : List Stmt → SemF RFlow
+  | [] => pure .next
+  | s :: rest => do
+      let flow ← execOpen K m s
+      match flow with
+      | .next => classBodyStmtsAt K m rest
+      | flow => pure flow
 
 /-! ## §1 THE SHELLS — ordinary functions of `S`, one fuel level per step -/
 
@@ -337,6 +348,14 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
                   | e => raisePy e)
   | .withStmt items body withUnsupported sp =>
       scriptWithAt S K m items body withUnsupported sp
+  | .unsupported "ClassDef" name _ =>
+      match findClass m name with
+      | some (_, c) =>
+          if c.creationPure then pure .next
+          else if c.creationExecutable then
+            inFrame (inWorld [] (classBodyStmtsAt K m c.body.toList))
+          else refuse s!"class {name}: executable class creation is outside the tier"
+      | none => refuse s!"internal: class marker {name} has no class table entry"
   | .unsupported "Import" text sp =>
       if (benignImportBinds text).isSome then pure .next
       else execOpen K m (.unsupported "Import" text sp)
@@ -388,8 +407,8 @@ EMPTY world, against the `scriptView`. The decided outcome's world carries the
 accumulated stdout. -/
 def runScriptClockMono (m : Module) (clock : List Int) (fuel : Nat) :
     Run World Unit :=
-  if !classesCreationPure m then
-    .unsupported "a class whose CREATION does something observable (an unrecognized base, a metaclass keyword, a decorator on the class OR on one of its methods, or a class-level statement beyond undecorated methods/pass/docstring/literal attributes): CPython runs that at the `class` statement and the model executes no class body, so leanpy refuses rather than silently skip the effect"
+  if !classesCreationAdmissible m then
+    .unsupported "a class whose CREATION is outside the executable class-body slice (bases, metaclass keywords, decorators, or unsupported class-body statements)"
   else if !defsBoundBefore m m.topLevel.toList then
     .unsupported "a top-level statement mentions a name this module defines LATER (`def`/`class`/namedtuple): CPython would raise NameError there, and the model's definition tables are position-independent, so leanpy refuses rather than run a definition that does not exist yet"
   else if !scriptFlushCoherent m then

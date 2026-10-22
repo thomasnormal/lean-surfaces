@@ -4479,6 +4479,11 @@ mutual
     | .augAssign t _ _ _ => targetBindsG t
     -- H7: a nested def binds its NAME (its body is its own scope)
     | .defStmt name _ _ _ _ _ _ _ _ => some [name]
+    -- Class definitions are represented in the ordered top-level stream by
+    -- a marker so script mode can execute creation at the right source
+    -- position; the marker still binds its class name for static poisoning
+    -- and clock/module-init analyses.
+    | .unsupported "ClassDef" name _ => some [name]
     | .forStmt t _ b o _ =>
       match targetBindsG t, Stmt.g1BindsList b.toList, Stmt.g1BindsList o.toList with
       | some a, some c, some d => some (a ++ c ++ d)
@@ -4681,6 +4686,11 @@ def globalsStep (h : Heap) (acc : GlobalsAcc) (analysable diverged : Bool)
       match globalsDirty h acc analysable s with
       | (h', acc', an') => (h', acc', an', diverged || g1ExecCandidate s)
   | .pass _ => (h, acc, analysable, diverged)
+  -- Class definitions are ordered markers in the script stream.  Closed
+  -- function calls do not execute class creation, so module initialization
+  -- treats the marker as a definition-only no-op; script mode handles the
+  -- marker in its own executor.
+  | .unsupported "ClassDef" _ _ => (h, acc, analysable, diverged)
   -- a bare expression binds nothing; `globalsDirty` records that it can
   -- still STORE (and the recorded call-mutation gap in the section
   -- comment above)
@@ -8226,6 +8236,9 @@ def initFoldStep (h : Heap) (acc : GlobalsAcc) (s : Stmt) :
         | Option.none => Option.none)
      | _ => Option.none)
   | .pass _ => some (h, acc)
+  -- See `globalsStep`: class creation is a script-mode effect, while the
+  -- closed function boundary keeps its module-init world unchanged.
+  | .unsupported "ClassDef" _ _ => some (h, acc)
   | .exprStmt (.constant ..) _ => some (h, acc)
   | _ => Option.none
 

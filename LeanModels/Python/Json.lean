@@ -652,6 +652,11 @@ private partial def stmtBindsWith (imp0 : Bool) : Stmt → Option (List String)
   | .yieldFromStmt .. => Option.none
   -- H7: a nested def binds its NAME; the body is its own scope
   | .defStmt name _ _ _ _ _ _ _ _ => some [name]
+  -- Class definitions are represented in the ordered top-level stream by a
+  -- marker so script execution can run their creation body at the class
+  -- statement.  The marker still binds its class name for the static
+  -- binding/exception/namedtuple censuses.
+  | .unsupported "ClassDef" name _ => some [name]
   -- exceptions tier: `raise` binds nothing; a try can bind whatever its
   -- body and handler can (over-approximation, the safe direction)
   | .raiseStmt .. => some []
@@ -810,9 +815,15 @@ private def recognizeNamedtuples (functions : Array FunctionDefn)
     -- class-base candidates: the class name must not collide with an
     -- assign candidate, a top-level bind, or another same-named class
     -- (the def/class collision guard already covers `def`s loudly)
+    -- `stmtBinds` includes the ordered ClassDef marker itself, so remove
+    -- those marker bindings before testing the class-base candidate; the
+    -- separate candidate/class-name and duplicate-class checks below retain
+    -- the actual collision guards.
+    let boundWithoutClassMarkers :=
+      bound.filter (fun n => !classes.any (fun c => c.name == n))
     let cok := classes.all fun c =>
       c.ntBase.isNone ||
-        (!bound.contains c.name
+        (!boundWithoutClassMarkers.contains c.name
           && (cands.all fun nt => nt.name != c.name)
           && (classes.toList.filter (fun c' => c'.name == c.name)).length == 1)
     if !cok then unchanged else
@@ -831,11 +842,11 @@ private def recognizeNamedtuples (functions : Array FunctionDefn)
 /-- Can this class-body statement change anything observable when CPython
 executes the class body? `pass`, a docstring (or stray constant), an
 UNDECORATED method, and an attribute bound to a LITERAL are all invisible:
-the model skips class creation entirely, and skipping these skips nothing.
-Anything that calls, reads a name, subscripts, or loops can print or raise
-at exactly the `class` statement, where the model does nothing at all — so
-it is NOT pure and `runScript` refuses the module
-(`ClassDefn.creationPure`).
+the model may skip these pure creation effects, and skipping them skips
+nothing.
+Anything outside the executable class-body slice can print or raise at
+exactly the `class` statement, where it is not reproduced — so it remains
+loud through `ClassDefn.creationPure`/`creationExecutable`.
 
 A DECORATED method is NOT invisible — see `methodCreationPure`; a
 `.defStmt` reaching this function is a NESTED def, which cannot appear in
@@ -854,8 +865,8 @@ def classBodyStmtPure (s : Stmt) : Bool :=
 is this class-body `FunctionDef` node invisible at the `class` statement?
 
 Only if it is UNDECORATED. `@log def m(self)` calls `log` while CPython
-builds the class, and the model — which executes no class body at all —
-would print nothing where CPython prints: a WRONG ANSWER, not a refusal,
+builds the class, and the executable class-body slice does not reproduce
+decorator descriptor semantics: a WRONG ANSWER, not a refusal, would result,
 and the third way into the hole `creationPure` exists to close (the first
 two were a class-body statement and a base expression).
 
@@ -871,6 +882,27 @@ def methodCreationPure (j : Json) : Bool :=
   match j.getObjVal? "has_decorators" with
   | .ok (.bool b) => !b
   | _ => true
+
+/-- The first executable class-creation slice admits a class with no
+recognized base/meta effect and only ordinary name assignments, expression
+statements, or `pass` in its body.  Method definitions are removed before
+this check; their decorators are handled separately by `methodCreationPure`.
+The class namespace is intentionally discarded after execution, so this
+slice models creation-time effects without pretending to implement class
+objects or inheritance. -/
+def classBodyStmtExecutable (s : Stmt) : Bool :=
+  match s with
+  | .pass _ | .exprStmt _ _ => true
+  | .assign targets _ _ =>
+      targets.all fun t => match t with | .name _ _ => true | _ => false
+  | _ => false
+
+def classCreationExecutableShape (classUnsupported : Option String)
+    (decoratedMethod : Bool) (body : Array Stmt) : Bool :=
+  !decoratedMethod
+    && (classUnsupported.isNone
+      || classUnsupported == some "class-level statements (class attributes)")
+    && body.all classBodyStmtExecutable
 
 /-- Parse a module-level `ClassDef` node (H3): the `ClassDefn` record plus
 the method `FunctionDefn`s FLATTENED under qualified names
@@ -908,12 +940,17 @@ def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) 
     let body ← (← getField j "body").getArr?
     let mut methods : Array String := #[]
     let mut fns : Array FunctionDefn := #[]
+    let mut classBody : Array Stmt := #[]
+    let mut decoratedMethod := false
     for stmtJson in body do
       let k ← (← getField stmtJson "kind").getStr?
       if k == "FunctionDef" then
         let f ← parseFunctionDefn stmtJson
+        decoratedMethod := decoratedMethod || !methodCreationPure stmtJson
         methods := methods.push f.name
         fns := fns.push { f with name := name ++ "." ++ f.name }
+      else
+        classBody := classBody.push (← parseStmt stmtJson)
     -- CREATION PURITY (docs/memory-model.md §class creation): the
     -- extractor's structured verdict, re-checked here over the parsed body
     -- so ingestion never trusts a field it can verify. An envelope from
@@ -927,7 +964,10 @@ def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) 
       if k == "FunctionDef" then pure (methodCreationPure stmtJson)
       else pure (classBodyStmtPure (← parseStmt stmtJson))
     return ({ name, ok := classUnsupported.isNone, methods, hasGlobal, ntBase,
-              isExc, creationPure := noCreationEffects && bodyPure, span }, fns)
+              isExc, creationPure := noCreationEffects && bodyPure, span,
+              body := classBody,
+              creationExecutable := classCreationExecutableShape classUnsupported
+                decoratedMethod classBody }, fns)
 
 /-! ## Generator-expression lowering (H4, docs/memory-model.md
 §generator semantics)
@@ -1648,8 +1688,10 @@ def parseModule (j : Json) : Except String Module :=
         functions := functions.push (← parseFunctionDefn stmtJson)
       else if k == "ClassDef" then
         let (c, fns) ← parseClassDefn stmtJson
+        let classStmt := .unsupported "ClassDef" c.name c.span
         classes := classes.push c
         functions := functions ++ fns
+        topLevel := topLevel.push classStmt
       else
         topLevel := topLevel.push (← parseStmt stmtJson)
     -- pass 5: split chained assignments FIRST, so the namedtuple

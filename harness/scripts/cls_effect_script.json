@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "harness/scripts/cls_effect_script.py",
-  "source_sha256": "fd1bf291c7eab23071bb141a23140b3cfb5c610cebaaf311708a4ea38400b91e",
+  "source_sha256": "a397a0f2c0ed3781052411dd97e821fcbb3566424a658b7f2b9ec86837f77ebd",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "leanpy corpus: CLASS CREATION IS AN EFFECT \u2014 the refusal row.\n\nCPython runs a class body at the `class` statement, so this program\nprints \"creating C\" BEFORE \"after\". The model builds its `ClassDefn` at\ningestion and executes no class body at all; skipping the print silently\nwould be a wrong answer, so `runScript` refuses the whole script loudly\n(`ClassDefn.creationPure`, docs/memory-model.md \u00a7class creation).\n\nThis row exists because `tools/leanpy` found the hole: it was a MISMATCH\nagainst CPython before the guard, the only silent divergence the first\ncompleteness survey turned up.\n"
+            "value": "leanpy corpus: CLASS CREATION IS AN EFFECT \u2014 the refusal row.\n\nCPython runs a class body at the `class` statement, so this program\nprints \"creating C\", then the computed class-local value, BEFORE\n\"after\". The executable class-creation slice now evaluates these body\nstatements in a fresh class namespace while retaining stdout and heap\neffects in the module world.\n\nThis row exists because `tools/leanpy` found the hole: it was a MISMATCH\nagainst CPython before the guard, the only silent divergence the first\ncompleteness survey turned up.\n"
           }
         }
       },
@@ -37,8 +37,8 @@
         "span": {
           "lineno": 15,
           "col_offset": 0,
-          "end_lineno": 17,
-          "end_col_offset": 9
+          "end_lineno": 19,
+          "end_col_offset": 12
         },
         "name": "C",
         "class_unsupported": "class-level statements (class attributes)",
@@ -122,31 +122,127 @@
                 "repr": "1"
               }
             }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 18,
+              "col_offset": 4,
+              "end_lineno": 18,
+              "end_col_offset": 13
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 18,
+                  "col_offset": 4,
+                  "end_lineno": 18,
+                  "end_col_offset": 5
+                },
+                "id": "y"
+              }
+            ],
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 18,
+                "col_offset": 8,
+                "end_lineno": 18,
+                "end_col_offset": 13
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 18,
+                  "col_offset": 8,
+                  "end_lineno": 18,
+                  "end_col_offset": 9
+                },
+                "id": "x"
+              },
+              "op": "Add",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 18,
+                  "col_offset": 12,
+                  "end_lineno": 18,
+                  "end_col_offset": 13
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "1"
+                }
+              }
+            }
+          },
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 19,
+              "col_offset": 4,
+              "end_lineno": 19,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 19,
+                "col_offset": 4,
+                "end_lineno": 19,
+                "end_col_offset": 12
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 19,
+                  "col_offset": 4,
+                  "end_lineno": 19,
+                  "end_col_offset": 9
+                },
+                "id": "print"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 19,
+                    "col_offset": 10,
+                    "end_lineno": 19,
+                    "end_col_offset": 11
+                  },
+                  "id": "y"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
           }
         ]
       },
       {
         "kind": "Expr",
         "span": {
-          "lineno": 20,
+          "lineno": 22,
           "col_offset": 0,
-          "end_lineno": 20,
+          "end_lineno": 22,
           "end_col_offset": 14
         },
         "value": {
           "kind": "Call",
           "span": {
-            "lineno": 20,
+            "lineno": 22,
             "col_offset": 0,
-            "end_lineno": 20,
+            "end_lineno": 22,
             "end_col_offset": 14
           },
           "func": {
             "kind": "Name",
             "span": {
-              "lineno": 20,
+              "lineno": 22,
               "col_offset": 0,
-              "end_lineno": 20,
+              "end_lineno": 22,
               "end_col_offset": 5
             },
             "id": "print"
@@ -155,9 +251,9 @@
             {
               "kind": "Constant",
               "span": {
-                "lineno": 20,
+                "lineno": 22,
                 "col_offset": 6,
-                "end_lineno": 20,
+                "end_lineno": 22,
                 "end_col_offset": 13
               },
               "value": {

@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/exc_lab/exc_lab.py",
-  "source_sha256": "20f45d76d4b3a6d896264197f7b380d46408373c1aa06c460759f12902235a48",
+  "source_sha256": "60ac043960936dc617a3e36b30a6dfccf39ebae786de3e6d1515b0a5772c3992",
   "module": {
     "kind": "Module",
     "body": [
@@ -6004,6 +6004,223 @@
                       "type": "int",
                       "repr": "1"
                     }
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 344,
+          "col_offset": 0,
+          "end_lineno": 345,
+          "end_col_offset": 28
+        },
+        "name": "raise_value_message",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 345,
+              "col_offset": 4,
+              "end_lineno": 345,
+              "end_col_offset": 28
+            },
+            "exc": {
+              "kind": "Call",
+              "span": {
+                "lineno": 345,
+                "col_offset": 10,
+                "end_lineno": 345,
+                "end_col_offset": 28
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 345,
+                  "col_offset": 10,
+                  "end_lineno": 345,
+                  "end_col_offset": 20
+                },
+                "id": "ValueError"
+              },
+              "args": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 345,
+                    "col_offset": 21,
+                    "end_lineno": 345,
+                    "end_col_offset": 27
+                  },
+                  "value": {
+                    "type": "str",
+                    "value": "boom"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 348,
+          "col_offset": 0,
+          "end_lineno": 349,
+          "end_col_offset": 35
+        },
+        "name": "raise_type_message",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Raise",
+            "span": {
+              "lineno": 349,
+              "col_offset": 4,
+              "end_lineno": 349,
+              "end_col_offset": 35
+            },
+            "exc": {
+              "kind": "Call",
+              "span": {
+                "lineno": 349,
+                "col_offset": 10,
+                "end_lineno": 349,
+                "end_col_offset": 35
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 349,
+                  "col_offset": 10,
+                  "end_lineno": 349,
+                  "end_col_offset": 19
+                },
+                "id": "TypeError"
+              },
+              "args": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 349,
+                    "col_offset": 20,
+                    "end_lineno": 349,
+                    "end_col_offset": 34
+                  },
+                  "value": {
+                    "type": "str",
+                    "value": "bad argument"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 352,
+          "col_offset": 0,
+          "end_lineno": 356,
+          "end_col_offset": 16
+        },
+        "name": "catch_value_message",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 353,
+              "col_offset": 4,
+              "end_lineno": 356,
+              "end_col_offset": 16
+            },
+            "body": [
+              {
+                "kind": "Raise",
+                "span": {
+                  "lineno": 354,
+                  "col_offset": 8,
+                  "end_lineno": 354,
+                  "end_col_offset": 32
+                },
+                "exc": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 354,
+                    "col_offset": 14,
+                    "end_lineno": 354,
+                    "end_col_offset": 32
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 354,
+                      "col_offset": 14,
+                      "end_lineno": 354,
+                      "end_col_offset": 24
+                    },
+                    "id": "ValueError"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 354,
+                        "col_offset": 25,
+                        "end_lineno": 354,
+                        "end_col_offset": 31
+                      },
+                      "value": {
+                        "type": "str",
+                        "value": "boom"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              }
+            ],
+            "exc_name": "ValueError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 356,
+                  "col_offset": 8,
+                  "end_lineno": 356,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 356,
+                    "col_offset": 15,
+                    "end_lineno": 356,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "7"
                   }
                 }
               }

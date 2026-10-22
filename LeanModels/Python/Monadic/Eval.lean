@@ -1388,6 +1388,38 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
                     raisePy (.builtinException id)
                   else
                     refuse s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)"
+        | some (.call (.name id _) args kwargs callUnsupported _) => do
+            -- The measured payload form is one positional string passed to a
+            -- builtin exception class whose `PyErr` retains that string.
+            -- Resolve the class before evaluating the argument, matching
+            -- Python's callee-first order and the static shadow guard above.
+            let st ← get
+            if !kwargs.isEmpty || callUnsupported.isSome then
+              refuse "'raise N(…)': keyword/starred constructor arguments are outside the tier (docs/memory-model.md §exceptions)"
+            else if (Env.lookup st.locals id).isSome
+                || (lookupG (moduleGlobals m).1 id).isSome
+                || (Env.lookup st.world.globals id).isSome
+                || (findFunction m id).isSome then
+              refuse s!"'raise {id}': the name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
+            else if (findClass m id).isSome || (findNamedTuple m id).isSome then
+              refuse s!"'raise {id}(…)': user exception and namedtuple constructors with payloads are outside the tier (docs/memory-model.md §exceptions)"
+            else
+              match args.toList with
+              | [arg] => do
+                  let v ← evalOpen K m arg
+                  match v with
+                  | .str msg =>
+                      match builtinExcWithMessage id msg with
+                      | some e => raisePy e
+                      | none =>
+                          if admittedBuiltinExc.contains id then
+                            refuse s!"'raise {id}(…)': only the measured one-string builtin exception constructors are admitted — outside the tier (docs/memory-model.md §exceptions)"
+                          else
+                            refuse s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)"
+                  | _ =>
+                      refuse s!"'raise {id}(…)': the measured constructor form requires one string argument — outside the tier (docs/memory-model.md §exceptions)"
+              | _ =>
+                  refuse s!"'raise {id}(…)': the measured constructor form requires exactly one positional string argument — outside the tier (docs/memory-model.md §exceptions)"
         | some _ =>
             refuse "'raise <expression>' (anything but an admitted exception class name) is outside the tier (docs/memory-model.md §exceptions)"
   | .assertStmt test msg _ => do

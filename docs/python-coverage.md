@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3538 | 3206 | 0 | 332 |
+| 3541 | 3210 | 0 | 331 |
 
-Of the 3206 rows the model decides, 3206 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 3210 rows the model decides, 3210 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,13 +20,13 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 3538 | 3119 | 0 | 419 |
+| 3541 | 3119 | 0 | 422 |
 
 ## Grammar
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-144 witnesses: 130 MATCH, 14 REFUSE.
+144 witnesses: 131 MATCH, 13 REFUSE.
 
 ### `stmt`
 
@@ -49,9 +49,9 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `If` | MATCH |  |
 | `With` | MATCH | single synchronous context-manager item |
 | `AsyncWith` | REFUSE | unsupported statement 'AsyncFunctionDef' |
-| `Raise` | REFUSE | 'raise <expression>' (anything but an admitted exception class name) is outside the tier (docs/memory-model.m… |
+| `Raise` | MATCH | one positional string is retained by the measured builtin PyErr payload form |
 | `Raise-empty-constructor` | MATCH | a direct zero-argument exception constructor lowers to the admitted class-identity raise; payload-bearing con… |
-| `Raise-class` | MATCH | bare admitted builtin exception class; payload construction remains unfinished |
+| `Raise-class` | MATCH | bare admitted builtin exception class; other payload forms remain unfinished |
 | `Try` | MATCH | FLIPPED by §except-builtin: `ValueError` is now an admitted handler class. WHAT THIS ROW PROVES AND DOES NOT:… |
 | `Assert` | MATCH | assertion failure uses the admitted builtin exception hierarchy |
 | `Import` | REFUSE | unsupported statement 'Import' |

@@ -1299,9 +1299,14 @@ identity. The admitted class shape is recognized at ingestion, like
 namedtuples: `class N(Exception): pass` EXACTLY (single base literally
 named `Exception`, body `pass`/docstring only, no methods) — the
 `Stop` shape. Such a class is an exception NAME, not an instantiable
-object: `N()` as a value, attributes, `raise N(args…)` with arguments,
-`raise <expr>` of anything but an admitted class name, `raise … from`,
-and the bare re-raise `raise` all refuse loudly. A direct zero-argument
+object: `N()` as a value, attributes, and user-class `raise N(args…)` with
+arguments remain loud. The measured builtin payload form admits exactly one
+positional string for `TypeError`, `ValueError`, `RuntimeError`,
+`OverflowError`, and `AssertionError`; the resulting `PyErr` retains that
+message, so the boundary can agree with CPython's uncaught-exception text.
+Other builtin constructors, keyword or multiple arguments, and non-string
+payloads remain loud. `raise <expr>` of anything but an admitted class name,
+`raise … from`, and the bare re-raise `raise` all refuse loudly. A direct zero-argument
 constructor in raise position (`raise N()`) is lowered at ingestion to
 the same class-identity path as `raise N`; it carries no inspectable
 instance payload. `raise N` maps to
@@ -1379,8 +1384,9 @@ driver `try`/`except Stop`, which exercises the full raise-through-
 resume-into-handler path while leaving `time.time()` exactly where it
 is: deferred, awaiting its own recorded abstraction decision. The
 zero-argument constructor spelling is pinned by
-`builtin_raise_lab.raised_instance`; payload-bearing constructors remain
-the next exception-value boundary.
+`builtin_raise_lab.raised_instance`; `exc_lab` now pins the one-string
+builtin payload form. User-class payloads, non-string and multi-argument
+constructors remain the next exception-value boundary.
 
 **Explicitly NOT decided here:** the `time.time()` abstraction,
 `except Exception`, builtin-name matching, `finally`, exception

@@ -708,6 +708,20 @@ def admittedBuiltinExc : List String :=
    "ValueError", "KeyError", "RuntimeError", "RecursionError",
    "AttributeError", "AssertionError", "StopIteration"]
 
+/-- The measured one-string constructor surface for explicit `raise`.  These
+  are exactly the builtin exception representations that retain a String
+  payload, so `raise ValueError(msg)` can preserve CPython's message without
+  inventing an exception object.  Other builtin classes (and all user classes)
+  remain loud until their payload representation is designed. -/
+def builtinExcWithMessage (name msg : String) : Option PyErr :=
+  match name with
+  | "TypeError" => some (.typeError msg)
+  | "ValueError" => some (.valueError msg)
+  | "RuntimeError" => some (.runtimeError msg)
+  | "OverflowError" => some (.overflowError msg)
+  | "AssertionError" => some (.assertionError (some msg))
+  | _ => Option.none
+
 /-- Ancestors CPython defines and this tier deliberately does NOT admit yet.
 Named so the refusal can say WHAT it would have caught rather than emitting
 the generic message — a frontier that names itself is one the next inch can

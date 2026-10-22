@@ -339,3 +339,18 @@ def except_ancestor_still_loud(n):
         return 1 // n
     except ArithmeticError:
         return -1
+
+
+def raise_value_message():
+    raise ValueError("boom")
+
+
+def raise_type_message():
+    raise TypeError("bad argument")
+
+
+def catch_value_message():
+    try:
+        raise ValueError("boom")
+    except ValueError:
+        return 7

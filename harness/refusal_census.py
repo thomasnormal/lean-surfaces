@@ -241,7 +241,7 @@ print(0)
 """, "REFUSE", "rides the async sort")
 w("stmt.Raise", """
 raise ValueError("boom")
-""", "REFUSE", "no exception VALUES; PyErr is not a first-class object")
+""", "MATCH", "one positional string is retained by the measured builtin PyErr payload form")
 w("stmt.Raise-empty-constructor", """
 raise ValueError()
 """, "MATCH",
@@ -249,7 +249,7 @@ raise ValueError()
   "class-identity raise; payload-bearing constructors remain loud")
 w("stmt.Raise-class", """
 raise ValueError
-""", "MATCH", "bare admitted builtin exception class; payload construction remains unfinished")
+""", "MATCH", "bare admitted builtin exception class; other payload forms remain unfinished")
 w("stmt.Try", """
 try:
     print(1)

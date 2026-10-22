@@ -1770,3 +1770,11 @@ scope retains a design-level `Unsupported` node with
 partial elaboration status or diagnostic stream, so an invalid prefix is never
 executed as though it were the source design. See the
 [repricing boundary](sv-elaboration-invalid.md).
+
+## `always_latch`
+
+`ProceduralBlockSymbol:AlwaysLatch` remains an explicit unsupported process
+member. The envelope has no inferred sensitivity set, automatic time-zero
+activation record, latch-retention state, or legality diagnostics for timing
+controls and fork/join within the block. It is not rewritten as `AlwaysComb` or
+as a plain `Always`; see the [`always_latch` boundary](sv-always-latch.md).

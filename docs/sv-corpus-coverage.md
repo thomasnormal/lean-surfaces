@@ -3073,3 +3073,15 @@ frontend has rejected the elaborated design, so these rows remain diagnostic
 boundaries rather than partial runtime programs. See
 [invalid elaboration diagnostics](sv-elaboration-invalid.md) and the
 read-only `extractors/sv/elaboration_invalid_reprice.py` instrument.
+
+## `always_latch` inferred-sensitivity boundary — 2026-10-22
+
+The fresh 22,043-path census records `ProceduralBlockSymbol:AlwaysLatch` in
+**53** files: **13** are latch-only and 40 co-occur. Repricing the sole files
+finds 13 spans: 12 infer sensitivity, six use nonblocking assignments, two
+include mixed or timed companion processes, and one each exercises an explicit
+timing-control diagnostic, a forbidden fork/join, multiple outputs, nested
+enables and a protected region. Features overlap. The envelope does not carry
+inferred wait registration or retained latch state, so all 13 remain loud. See
+[`always_latch`](sv-always-latch.md) and
+`extractors/sv/always_latch_reprice.py`.

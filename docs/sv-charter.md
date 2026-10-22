@@ -4620,3 +4620,15 @@ The lowered generate representation has no partial-elaboration diagnostic
 state, so no invalid prefix is salvaged and no recovery elaborator is added.
 See [invalid elaboration diagnostics](sv-elaboration-invalid.md) and its
 read-only repricer.
+
+### `always_latch` inferred-sensitivity boundary — 2026-10-22
+
+`ProceduralBlockSymbol:AlwaysLatch` remains a process-kind boundary. The fresh
+22,043-path census records it in **53** files: 13 are latch-only and 40
+co-occur. The 13 sole rows contain 12 inferred-sensitivity spans, six
+nonblocking assignments, two mixed/timed companion-process rows, one explicit
+timing-control diagnostic, one forbidden fork/join diagnostic, one
+multiple-output latch, one nested-enable latch and one protected lexical
+region (features overlap). The envelope has no inferred wait set, latch-hold
+state or always-latch legality diagnostics, so the marker remains loud. See
+[`always_latch`](sv-always-latch.md) and its read-only repricer.

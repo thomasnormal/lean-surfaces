@@ -135,6 +135,9 @@ def admitBindingDeclaration (artifact : Artifact) (path : List Nat) :
 def admitDecompositionDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "DecompositionDecl" "decomposition"
 
+def admitIndirectFieldDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "IndirectFieldDecl" "indirect-field"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

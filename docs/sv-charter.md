@@ -4840,3 +4840,12 @@ files: **5** are sole refusals and 2 co-occur. Repricing the sole files finds
 **10** spans across the `~^` and `^~` spellings, with variable and literal
 operands. The binary evaluator has no four-state XNOR rule, so these operators
 remain loud. See [bitwise XNOR](sv-xnor.md).
+
+### Pattern-condition boundary — 2026-10-22
+
+The fresh 22,043-path census records `ConditionalStatement:pattern` in **12**
+files: **5** are sole refusals and 7 co-occur. Repricing the sole files finds
+**9** spans covering constant integral, identifier-binding and structure member
+or wildcard patterns. The conditional evaluator has no pattern binding or
+aggregate-member state, so these conditions remain loud. See
+[pattern conditions](sv-pattern-conditions.md).

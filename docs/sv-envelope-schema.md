@@ -1929,3 +1929,10 @@ order; see [assignment patterns](sv-assignment-pattern-boundary.md).
 `BinaryExpression:BinaryXnor` remains an explicit unsupported expression for
 both `~^` and `^~`. The envelope does not guess four-state unknown propagation,
 width extension or signedness; see [bitwise XNOR](sv-xnor.md).
+
+## Pattern conditions
+
+`ConditionalStatement:pattern` remains an explicit unsupported condition for
+`matches` patterns requiring constant matching, identifier binding or aggregate
+member/wildcard semantics. The envelope does not bind pattern variables or
+flatten structure members; see [pattern conditions](sv-pattern-conditions.md).

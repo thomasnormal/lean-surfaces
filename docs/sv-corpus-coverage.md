@@ -3281,3 +3281,11 @@ files: **5** are sole refusals and 2 co-occur. Repricing the sole files finds
 **10** spans across the `~^` and `^~` spellings, with variable and literal
 operands. XNOR remains loud; see [bitwise XNOR](sv-xnor.md) and
 `extractors/sv/xnor_reprice.py`.
+
+## Pattern-condition boundary — 2026-10-22
+
+The fresh 22,043-path census records `ConditionalStatement:pattern` in **12**
+files: **5** are sole refusals and 7 co-occur. Repricing the sole files finds
+**9** spans covering constant integral, identifier-binding and structure member
+or wildcard patterns. The pattern remains loud; see [pattern conditions](sv-pattern-conditions.md)
+and `extractors/sv/pattern_condition_reprice.py`.

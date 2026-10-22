@@ -270,6 +270,11 @@ unsupported conditions/actions and symbolic-mode checks remain loud.
 Frontend errors in a design containing the lowering are a design-level
 barrier. See [the contract](sv-immediate-assertions.md).
 
+The implicit-error branch remains an explicit unsupported else node: the
+envelope does not carry portable diagnostic text, status, source-location
+footer or coverage-observation state. Repricing details are in
+`extractors/sv/immediate_assert_error_reprice.py`.
+
 The legacy/self-check extractor also lowers unqualified ordinary integral
 `case` statements into nested `If` nodes with `Binary` `===` conditions.
 Each lowered `If` carries optional `case_lowered: true` provenance; the

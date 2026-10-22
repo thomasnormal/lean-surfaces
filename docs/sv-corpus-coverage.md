@@ -1301,6 +1301,20 @@ checks explicitly enable all cover successes and disable extra assertion-engine
 status messages; no additional transcript filtering is applied. Four kernel
 theorems bind to actual compiled source subtrees.
 
+## Implicit immediate-assertion diagnostics — 2026-10-22
+
+`ImmediateAssertion:implicit-error` remains the omitted-failure-action
+boundary. The fresh **22,043**-path census records it in **25** files: **22**
+are implicit-error-only and **3** co-occur. Repricing the sole files finds
+**24** branches: **17** `assert`, **7** `assume`, **12** omitted success
+actions, **12** explicit success actions, **5** named assertions, **13** true
+conditions, **1** false condition, **2** `always` contexts and **1**
+`always_comb` context (features overlap). The branch remains an explicit
+unsupported else node because the envelope has no portable diagnostic
+text/status or coverage-observation contract. See the [immediate assertion
+contract](sv-immediate-assertions.md) and
+`extractors/sv/immediate_assert_error_reprice.py` for the reproducible scan.
+
 ## Plain always source repetition — 2026-10-20
 
 IEEE §9.2.2.1 plain `always` now retains its complete source body and compiles

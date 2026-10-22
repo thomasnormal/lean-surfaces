@@ -32,6 +32,20 @@ the frontend accepts them but the independent compiler rejects them. They
 remain `ImmediateAssertion:null-failure`; explicit empty `begin end` actions
 are admitted. A dedicated fixture preserves the disagreement.
 
+## Implicit diagnostic subfamily — 2026-10-22
+
+The fresh 22,043-path census records `ImmediateAssertion:implicit-error` in
+25 files; **22** are implicit-error-only and **3** co-occur with another wall.
+The read-only repricer finds **24** implicit diagnostic branches in the sole
+files: 17 `assert` and seven `assume` branches, 12 omitted success actions,
+12 explicit success actions, five named assertions, 13 definite-true
+conditions, one definite-false condition, two ordinary `always` contexts and
+one `always_comb` context (features overlap). These rows include compile-only
+chapter-37 metadata files. The branch remains an explicit unsupported else
+node: no diagnostic text, status, source-location footer or coverage database
+is invented. Reproduce the measurement with
+`extractors/sv/immediate_assert_error_reprice.py`.
+
 Independent checks pin four-state mode, enable cover directives and every
 cover success, and disable additional assertion-engine status messages:
 `-ii_val -abvcoveron -abvrecordcoverall -abvdisableasrtst`. Default simulator

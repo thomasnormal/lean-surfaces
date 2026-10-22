@@ -94,6 +94,21 @@ the existing `$finish(0)` source-location observation gap. Four authored
 runnable sources match, three preserve explicit refusals, and four kernel
 theorems bind to actual parsed source bodies.
 
+### Implicit immediate-assertion diagnostics — 2026-10-22
+
+`ImmediateAssertion:implicit-error` remains the omitted-failure-action
+boundary. The fresh 22,043-path census records it in 25 files: 22 are
+implicit-error-only and three co-occur. Repricing the sole files finds 24
+branches: 17 `assert`, seven `assume`, 12 omitted success actions, 12 explicit
+success actions, five named assertions, 13 true conditions, one false
+condition, two `always` contexts and one `always_comb` context (features
+overlap). The branch carries the standard diagnostic obligation, but the
+envelope has no portable diagnostic text/status or coverage-observation
+contract. It remains an explicit unsupported else node; no diagnostic is
+fabricated and no second scheduler is added. See the [immediate assertion
+contract](sv-immediate-assertions.md) and read-only instrument
+`extractors/sv/immediate_assert_error_reprice.py`.
+
 ## Plain always source repetition — 2026-10-20
 
 Plain `always` (§9.2.2.1) starts at time zero and repeats its complete source

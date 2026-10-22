@@ -4832,3 +4832,11 @@ The fresh 22,043-path census records `AssignmentPattern:integral-shape` in
 spans, each using a casted nested pattern in a concatenation. The envelope has
 no self-determined aggregate layout, so these patterns remain loud. See
 [assignment patterns](sv-assignment-pattern-boundary.md).
+
+### Bitwise XNOR boundary — 2026-10-22
+
+The fresh 22,043-path census records `BinaryExpression:BinaryXnor` in **7**
+files: **5** are sole refusals and 2 co-occur. Repricing the sole files finds
+**10** spans across the `~^` and `^~` spellings, with variable and literal
+operands. The binary evaluator has no four-state XNOR rule, so these operators
+remain loud. See [bitwise XNOR](sv-xnor.md).

@@ -3273,3 +3273,11 @@ The fresh 22,043-path census records `AssignmentPattern:integral-shape` in
 spans, each using a casted nested pattern in a concatenation. The pattern
 remains loud; see [assignment patterns](sv-assignment-pattern-boundary.md) and
 `extractors/sv/assignment_pattern_reprice.py`.
+
+## Bitwise XNOR boundary — 2026-10-22
+
+The fresh 22,043-path census records `BinaryExpression:BinaryXnor` in **7**
+files: **5** are sole refusals and 2 co-occur. Repricing the sole files finds
+**10** spans across the `~^` and `^~` spellings, with variable and literal
+operands. XNOR remains loud; see [bitwise XNOR](sv-xnor.md) and
+`extractors/sv/xnor_reprice.py`.

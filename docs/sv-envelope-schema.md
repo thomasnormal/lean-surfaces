@@ -1923,3 +1923,9 @@ mode; see [empty members](sv-empty-members.md).
 when a typed packed pattern requires self-determined multidimensional layout.
 The envelope does not flatten nested patterns or guess width and dimension
 order; see [assignment patterns](sv-assignment-pattern-boundary.md).
+
+## Bitwise XNOR
+
+`BinaryExpression:BinaryXnor` remains an explicit unsupported expression for
+both `~^` and `^~`. The envelope does not guess four-state unknown propagation,
+width extension or signedness; see [bitwise XNOR](sv-xnor.md).

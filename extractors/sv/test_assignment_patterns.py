@@ -108,7 +108,7 @@ class AssignmentPatterns(unittest.TestCase):
         d = lower("module top; logic[1:0][3:0]x='{4'ha,4'h5};endmodule")
         self.assertIn('VariableSymbol:range', walls(d))
         d = lower("module top; typedef struct{int a;int b;}T;T x='{1,2};endmodule")
-        self.assertTrue(walls(d))
+        self.assertFalse(walls(d))
 
     def test_element_limit_refuses_rather_than_truncating(self):
         d = lower("module top;logic[1024:0]x='{default:'0};endmodule")

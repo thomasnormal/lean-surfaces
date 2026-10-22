@@ -60,6 +60,23 @@ partial** with zero extraction errors. The leading `VariableSymbol:2state`
 blocker falls **5,650 → 5,556**, `AssignmentExpression:target` falls
 **3,961 → 3,922**, and `MemberAccessExpression` falls **1,188 → 1,052**.
 
+## Unpacked struct aggregate initializers — 2026-10-22
+
+Positional and complete keyed/default assignment patterns on shallow untagged
+unpacked structs are now lowered field by field. Each direct integral field
+keeps the existing vector cell, width conversion, and two-state `Squash2`
+semantics; pyslang's elaborated field order makes keyed syntax independent of
+source key order. Partial, effectful, nested, and nonintegral aggregate forms
+remain loud because the representation still has no aggregate slot. The
+`unpacked_struct_initializers` fixture covers positional and keyed forms,
+including four-state input into a two-state field.
+
+The fresh census moves **4,409 → 4,413 clean** and **17,570 → 17,566
+partial**, with zero extraction errors. `VariableSymbol:2state` falls
+**5,556 → 5,551**; the differential matrix is now **19 rows, 15 matches, 0
+disagreements, and 4 recorded refusals**. Grammar coverage remains **192
+witnesses, 60 MATCH, and 132 REFUSE**.
+
 **Proof inventory, with comments excluded.** There are **98 named
 theorems and 10 anonymous examples** in `LeanModels/Sv`, and **121
 theorems and 6 examples** in the SV example directories: **235 actual

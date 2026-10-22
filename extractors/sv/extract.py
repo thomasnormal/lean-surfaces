@@ -1066,11 +1066,56 @@ def _unpacked_struct_decls(sm, symbol):
             return None
         if getattr(aggregate, "isTagged", False):
             return None
-        if getattr(symbol, "initializer", None) is not None:
-            return None
         fields = list(aggregate)
         if not fields:
             return None
+        initializer = getattr(symbol, "initializer", None)
+
+        # A shallow struct has no aggregate slot in the legacy state.  Keep
+        # the initializer at the field boundary and lower each selected
+        # value into the same scalar/vector cell used by field reads/writes.
+        # Positional patterns follow declaration order; keyed patterns use
+        # pyslang's elaborated member setters and may provide a default for
+        # omitted fields.  Other aggregate forms remain loud.
+        field_values = None
+        if initializer is not None:
+            pattern_kind = type(initializer).__name__
+            if pattern_kind == "SimpleAssignmentPatternExpression":
+                elements = list(initializer.elements)
+                if len(elements) != len(fields):
+                    return None
+                field_values = list(zip(fields, elements))
+            elif pattern_kind == "StructuredAssignmentPatternExpression":
+                # pyslang elaborates complete keyed/default patterns into
+                # context-sized ``elements`` in declaration order.  A
+                # partial keyed pattern is represented as InvalidExpression
+                # by the frontend and is intentionally left unsupported.
+                elements = list(initializer.elements)
+                if len(elements) != len(fields):
+                    return None
+                field_values = list(zip(fields, elements))
+            else:
+                return None
+
+            if getattr(initializer, "bad", False):
+                return None
+            converted_values = []
+            for field, value in field_values:
+                if value is None:
+                    converted_values.append((field, None))
+                    continue
+                if not _case_source_expression_ok(value, packed_members=True):
+                    return None
+                converted = convert_expr(sm, value)
+                width, _two_state, reason = type_width_2s(field.type)
+                if (converted.get("kind") == "Unsupported"
+                        or width_of(converted) != width
+                        or not _case_expression_ok(converted)):
+                    return None
+                # Keep the converted value on the field pair.  This also
+                # makes x/z-to-zero conversion explicit for bit fields.
+                converted_values.append((field, converted))
+            field_values = converted_values
         decls = []
         for field in fields:
             width, two_state, reason = type_width_2s(field.type)
@@ -1083,7 +1128,12 @@ def _unpacked_struct_decls(sm, symbol):
                                         "UnpackedUnionType"):
                 return None
             init = None
-            if two_state:
+            if field_values is not None:
+                converted = next(value for candidate, value in field_values
+                                 if candidate is field)
+                if converted is not None:
+                    init = squash2_wrap(converted, width) if two_state else converted
+            if init is None and two_state:
                 init = {"kind": "Literal", "span": None, "width": width,
                         "bits": "0" * width}
             decls.append(signed_metadata({

@@ -89,6 +89,20 @@ and `MemberAccessExpression` falls **1,188 → 1,052**. The differential matrix
 is **18 rows, 14 matches, 0 disagreements, and 4 recorded refusals**; the
 grammar census remains **192 witnesses, 60 MATCH, and 132 REFUSE**.
 
+## Unpacked struct aggregate initializers — 2026-10-22
+
+Positional and complete keyed/default assignment patterns on shallow untagged
+unpacked structs now lower to the existing field cells in declaration order.
+Each field is converted at its own width and two-state boundary, so keyed
+source order does not affect storage and `x`/`z` input is squashed for `bit`
+fields. Partial, effectful, nested, and nonintegral aggregate forms remain
+loud. The `unpacked_struct_initializers` fixture and differential row exercise
+the admitted forms.
+
+Clean files rise **4,409 → 4,413** and partial files fall **17,570 → 17,566**;
+`VariableSymbol:2state` falls **5,556 → 5,551**. The differential matrix is
+now **19 rows, 15 matches, 0 disagreements, and 4 recorded refusals**.
+
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 
 The target tier now handles the IEEE §7.4.5 rule that a fully constant

@@ -93,6 +93,22 @@ On the available 22,035-file corpus snapshot, clean files move **4,413 →
 disagreements; grammar coverage remains **192 witnesses, 60 MATCH, and 132
 REFUSE**.
 
+## Fixed arrays of shallow unpacked integral structs — 2026-10-22
+
+Fixed unpacked arrays may now use a shallow untagged unpacked struct with
+integral scalar or packed fields as their leaf type. Ingestion expands the
+Cartesian product into field cells such as `values[1].count`, preserving
+zero-start and two-state conversion for every field; constant member reads and
+writes reuse the existing flattened member path. Whole struct values,
+aggregate array initializers, nested/nonintegral fields, and dynamic selections
+remain loud. The `unpacked_struct_array` fixture is the differential witness.
+
+The available 22,035-file snapshot keeps clean files at **4,414** and partial
+files at **17,555**; `VariableSymbol:2state` falls **5,547 → 5,532** and
+`MemberAccessExpression` falls **1,052 → 1,037**. The differential matrix adds
+one matching row with no disagreements; grammar coverage remains **192
+witnesses, 60 MATCH, and 132 REFUSE**.
+
 **Proof inventory, with comments excluded.** There are **98 named
 theorems and 10 anonymous examples** in `LeanModels/Sv`, and **121
 theorems and 6 examples** in the SV example directories: **235 actual

@@ -116,6 +116,20 @@ Using the available 22,035-file snapshot, clean files rise **4,413 → 4,414**
 and partial files fall **17,556 → 17,555**. `VariableSymbol:2state` falls
 **5,548 → 5,547**; all other leading blocker counts are unchanged.
 
+## Fixed arrays of shallow unpacked integral structs — 2026-10-22
+
+Fixed unpacked arrays may now use a shallow untagged unpacked struct with
+integral scalar or packed fields as their leaf type. The extractor expands
+each constant array position into direct field cells, so member reads and
+writes use names such as `values[1].count` while retaining ordinary two-state
+startup and conversion. Whole struct values, aggregate array initializers,
+nested/nonintegral fields, and dynamic selections remain loud. The
+`unpacked_struct_array` row exercises the admitted shape.
+
+On the available 22,035-file snapshot, clean files remain **4,414** and
+partial files **17,555**; `VariableSymbol:2state` falls **5,547 → 5,532** and
+`MemberAccessExpression` **1,052 → 1,037**.
+
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 
 The target tier now handles the IEEE §7.4.5 rule that a fully constant

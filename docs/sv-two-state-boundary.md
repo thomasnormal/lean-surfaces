@@ -47,6 +47,13 @@ integral scalar. The `unpacked_concat_initializer` fixture covers this
 composition; runtime array sources and self-aliasing remain outside the
 representation.
 
+Fixed unpacked arrays of shallow untagged unpacked integral structs are also
+flattened by position and field. A declaration such as `item values[0:1]`
+produces cells `values[0].bits`, `values[0].count`, and so on; direct constant
+member access retains the existing field semantics. Aggregate array
+initializers, nested/nonintegral structs, and dynamic selections remain loud.
+The `unpacked_struct_array` fixture covers this leaf composition.
+
 The public representation has no aggregate heap, queue, object, string, real,
 handle, or event scheduler. The symbolic `PDecl`/`PType` representation also
 does not carry a two-state bit, and symbolic `Squash2` is intentionally loud.

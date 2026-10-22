@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 20 | 16 | 0 | 4 | sv-tests-2 declarations |
+| 21 | 17 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -30,6 +30,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `unpacked_struct_integral_fields` | `Examples/system-verilog/unpacked_struct_integral_fields/unpacked_struct_integral_fields.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_struct_initializers` | `Examples/system-verilog/unpacked_struct_initializers/unpacked_struct_initializers.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_concat_initializer` | `Examples/system-verilog/unpacked_concat_initializer/unpacked_concat_initializer.sv` | match | **MATCH** | `ok` | MATCH |
+| `unpacked_struct_array` | `Examples/system-verilog/unpacked_struct_array/unpacked_struct_array.sv` | match | **MATCH** | `ok` | MATCH |
 | `delay_refusal` | `Examples/system-verilog/delay/delay.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `event_refusal` | `Examples/system-verilog/event/event.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `always_refusal` | `Examples/system-verilog/always/events.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
@@ -248,8 +249,8 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | blocker kind | files |
 |---|---:|
-| `VariableSymbol:2state` | 5547 |
-| `AssignmentExpression:target` | 3918 |
+| `VariableSymbol:2state` | 5532 |
+| `AssignmentExpression:target` | 3915 |
 | `ExpressionStatement:CallExpression` | 3784 |
 | `CallExpression` | 3290 |
 | `Hierarchy:ports` | 2397 |
@@ -260,7 +261,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 | `ClassType` | 1327 |
 | `Hierarchy:module-kind` | 1246 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1153 |
-| `MemberAccessExpression` | 1052 |
+| `MemberAccessExpression` | 1037 |
 | `ConversionExpression:width` | 778 |
 | `HierarchicalValueExpression` | 748 |
 

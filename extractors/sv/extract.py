@@ -925,8 +925,14 @@ def _fixed_array_dimensions(array_type, max_cells=1024):
         return None
 
 
-def _fixed_array_leaf_select(sm, expression):
-    """Flatten a constant selection through any number of fixed dimensions."""
+def _fixed_array_selection_prefix(expression):
+    """Return ``(flat-name, selected-leaf-type)`` for constant cells.
+
+    Unlike `_fixed_array_leaf_select`, this helper also accepts a
+    nonintegral leaf such as a shallow unpacked struct.  The caller is then
+    responsible for lowering that leaf's protocol (for example, its direct
+    integral members).
+    """
     try:
         selectors = []
         current = expression
@@ -940,9 +946,6 @@ def _fixed_array_leaf_select(sm, expression):
             return None
         if str(current.symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net"):
             return None
-        # Selection itself does not allocate the flattened declaration, so
-        # preserve the legacy one-dimensional constant-cell behavior even
-        # for a large finite range. Declaration expansion keeps the bound.
         shape = _fixed_array_dimensions(current.type, max_cells=None)
         if shape is None:
             return None
@@ -953,12 +956,24 @@ def _fixed_array_leaf_select(sm, expression):
         for position, (left, right) in zip(positions, dimensions):
             if position < min(left, right) or position > max(left, right):
                 return None
-        width, two_state, reason = type_width_2s(leaf_type)
-        if width is None or reason is not None:
-            return None
         name = _array_storage_name(current.symbol)
         for position in positions:
             name += f"[{position}]"
+        return name, leaf_type
+    except Exception:
+        return None
+
+
+def _fixed_array_leaf_select(sm, expression):
+    """Flatten a constant selection through any number of fixed dimensions."""
+    try:
+        selected = _fixed_array_selection_prefix(expression)
+        if selected is None:
+            return None
+        name, leaf_type = selected
+        width, two_state, reason = type_width_2s(leaf_type)
+        if width is None or reason is not None:
+            return None
         return name, width, two_state
     except Exception:
         return None
@@ -1034,9 +1049,15 @@ def _unpacked_struct_member(sm, expression):
         if type(expression).__name__ != "MemberAccessExpression":
             return None
         value = expression.value
-        if not _storage_expression(value):
-            return None
-        aggregate = value.type.canonicalType
+        if _storage_expression(value):
+            base_name = _storage_name(value.symbol)
+            aggregate = value.type.canonicalType
+        else:
+            selected = _fixed_array_selection_prefix(value)
+            if selected is None:
+                return None
+            base_name, leaf_type = selected
+            aggregate = leaf_type.canonicalType
         if type(aggregate).__name__ != "UnpackedStructType":
             return None
         member = expression.member
@@ -1050,7 +1071,7 @@ def _unpacked_struct_member(sm, expression):
                                     "UnpackedUnionType"):
             return None
         return {
-            "name": f"{_storage_name(value.symbol)}.{member.name}",
+            "name": f"{base_name}.{member.name}",
             "width": width,
             "two_state": two_state,
         }
@@ -5916,6 +5937,47 @@ def convert_fixed_array_vars(sm, m):
         if dimensions_shape is None:
             return None
         dimensions, leaf_type = dimensions_shape
+        if type(leaf_type).__name__ == "UnpackedStructType":
+            # Compose the existing shallow-struct field cells with the
+            # fixed-array cell expansion.  Whole struct values and aggregate
+            # array initializers still need an aggregate store, so this slice
+            # admits declarations without an initializer only.
+            if getattr(leaf_type, "isTagged", False) or getattr(m, "initializer", None) is not None:
+                return None
+            fields = list(leaf_type)
+            if not fields:
+                return None
+            field_shapes = []
+            for field in fields:
+                width, two, reason = type_width_2s(field.type)
+                if width is None or reason is not None:
+                    return None
+                if type(field.type.canonicalType).__name__ in (
+                        "FixedSizeUnpackedArrayType", "DynamicArrayType",
+                        "QueueType", "AssociativeArrayType",
+                        "UnpackedStructType", "UnpackedUnionType"):
+                    return None
+                field_shapes.append((field, width, two))
+            positions = [()]
+            for left, right in dimensions:
+                step = 1 if right >= left else -1
+                positions = [prefix + (position,)
+                             for prefix in positions
+                             for position in range(left, right + step, step)]
+            base = _array_storage_name(m)
+            declarations = []
+            for indexes in positions:
+                cell = base + "".join(f"[{position}]" for position in indexes)
+                for field, width, two in field_shapes:
+                    init = ({"kind": "Literal", "span": None,
+                             "width": width, "bits": "0" * width}
+                            if two else None)
+                    declarations.append(signed_metadata({
+                        "kind": "Var", "span": sym_span(sm, m),
+                        "name": f"{cell}.{field.name}",
+                        "width": width, "init": init,
+                    }, field.type))
+            return declarations
         if len(dimensions) > 1:
             width, two, reason = type_width_2s(leaf_type)
             if width is None or reason is not None:

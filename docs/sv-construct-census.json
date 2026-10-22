@@ -16,11 +16,11 @@
   "blocker_files": [
    [
     "VariableSymbol:2state",
-    5547
+    5532
    ],
    [
     "AssignmentExpression:target",
-    3918
+    3915
    ],
    [
     "ExpressionStatement:CallExpression",
@@ -64,7 +64,7 @@
    ],
    [
     "MemberAccessExpression",
-    1052
+    1037
    ],
    [
     "ConversionExpression:width",
@@ -223,16 +223,16 @@
     82
    ],
    [
-    "VariableSymbol:type",
-    76
-   ],
-   [
     "VariableSymbol",
     76
    ],
    [
     "TypeAliasType",
     74
+   ],
+   [
+    "VariableSymbol:type",
+    72
    ],
    [
     "RandSequenceStatement",

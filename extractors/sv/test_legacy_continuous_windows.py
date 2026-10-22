@@ -132,6 +132,26 @@ class LegacyContinuousWindows(unittest.TestCase):
                             and n.get("sv_kind") == "VariableSymbol:2state"
                             for n in self._walk(envelope)))
 
+    def test_fixed_array_of_unpacked_integral_structs_flattens_fields(self):
+        envelope = self.extract(
+            "module top; typedef struct { bit [3:0] x; int y; } S; "
+            "S value [0:1]; initial begin value[0].x = 4'ha; "
+            "value[1].y = 3; end endmodule")
+        decls = envelope["design"]["modules"][0]["decls"]
+        self.assertEqual([d["name"] for d in decls],
+                         ["value[0].x", "value[0].y", "value[1].x", "value[1].y"])
+        stmts = envelope["design"]["modules"][0]["processes"][0]["body"]["stmts"]
+        self.assertEqual([s["target"]["name"] for s in stmts],
+                         ["value[0].x", "value[1].y"])
+
+    def test_fixed_array_of_unpacked_struct_aggregate_initializer_stays_loud(self):
+        envelope = self.extract(
+            "module top; typedef struct { bit [3:0] x; int y; } S; "
+            "S value [0:1] = '{'{4'ha, 1}, '{4'hb, 2}}; endmodule")
+        self.assertTrue(any(n.get("kind") == "Unsupported"
+                            and n.get("sv_kind") == "VariableSymbol:2state"
+                            for n in self._walk(envelope)))
+
     @staticmethod
     def _walk(value):
         if isinstance(value, dict):

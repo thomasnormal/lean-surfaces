@@ -17,6 +17,7 @@
     {"name": "unpacked_struct_integral_fields", "file": "Examples/system-verilog/unpacked_struct_integral_fields/unpacked_struct_integral_fields.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "unpacked_struct_initializers", "file": "Examples/system-verilog/unpacked_struct_initializers/unpacked_struct_initializers.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "unpacked_concat_initializer", "file": "Examples/system-verilog/unpacked_concat_initializer/unpacked_concat_initializer.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
+    {"name": "unpacked_struct_array", "file": "Examples/system-verilog/unpacked_struct_array/unpacked_struct_array.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "delay_refusal", "file": "Examples/system-verilog/delay/delay.sv", "module": "delay", "oracle": "refuse", "expect": "refuse"},
     {"name": "event_refusal", "file": "Examples/system-verilog/event/event.sv", "module": "event_wait", "oracle": "refuse", "expect": "refuse"},
     {"name": "always_refusal", "file": "Examples/system-verilog/always/events.sv", "module": "top", "oracle": "refuse", "expect": "refuse"},

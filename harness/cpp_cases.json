@@ -330,6 +330,17 @@
     "rung": 0
   },
   {
+    "id": "translation.unresolved-using-value-declaration",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "unresolvedUsingValueTranslationWitness",
+    "cpp_source": "template<class T> struct Holder { using T::value; };",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

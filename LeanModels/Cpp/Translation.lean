@@ -126,6 +126,9 @@ def admitUsingPackDeclaration (artifact : Artifact) (path : List Nat) :
 def admitUnresolvedUsingTypenameDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "UnresolvedUsingTypenameDecl" "unresolved-using-typename"
 
+def admitUnresolvedUsingValueDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "UnresolvedUsingValueDecl" "unresolved-using-value"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

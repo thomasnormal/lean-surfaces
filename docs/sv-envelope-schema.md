@@ -1423,6 +1423,11 @@ The envelope has no pending continuous-assignment event, transition selector
 or inertial cancellation state, so `assign #d` is not rewritten as an
 immediate assignment. See [the continuous-assignment delay boundary](sv-continuous-assign-delays.md).
 
+`TimedStatement:DelayControl:expression` remains explicit as a dynamic-delay
+boundary. The envelope has no runtime delay evaluator, timeunit/precision
+environment or X/Z conversion rule, so an expression delay is not folded to a
+fixed literal. See [the dynamic delay-expression boundary](sv-delay-expressions.md).
+
 ### Legacy package storage provenance
 
 Source-defined packages with admitted scalar/packed integral variables lower

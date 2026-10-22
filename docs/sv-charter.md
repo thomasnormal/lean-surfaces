@@ -4190,6 +4190,21 @@ introduced. See [the continuous-assignment delay boundary](sv-continuous-assign-
 and the read-only instrument
 `extractors/sv/continuous_assign_delay_reprice.py`.
 
+### Dynamic delay expressions — 2026-10-22
+
+`TimedStatement:DelayControl:expression` is the runtime delay-expression
+boundary. In the fresh 22,043-path census it occurs in 168 files: 20 are
+delay-expression-only and 148 co-occur with another wall. The sole files
+contain 24 spans, including dynamic parameter/signal references, fixed-point
+and unit-suffixed time literals, timeunit/timeprecision rounding contexts,
+X/Z-to-zero behavior, delayed assignments, arithmetic expressions and
+time-query contexts (features overlap). IEEE §§9.4.1, 5.8, 3.14.2.3 and 22.4
+require encounter-time sampling and time-scale conversion. The envelope has
+only a fixed integral delay form, so no dynamic expression is folded to a
+guessed constant and no second time wheel is introduced. See [the dynamic
+delay-expression boundary](sv-delay-expressions.md) and the read-only
+instrument `extractors/sv/delay_expression_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

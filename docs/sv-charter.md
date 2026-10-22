@@ -5110,3 +5110,10 @@ string-literal initializer when the value is never read. The declaration is
 omitted from the flat vector state, while nonliteral initializers and every
 string operation remain loud. The `string_literal_decl` fixture covers both
 module and local declarations.
+
+### Pure string literal writes — 2026-10-23
+
+Procedural assignments of a pure string literal to an opaque string are erased
+as no-op state updates. Nonliteral writes and every string read or operation
+remain loud. The `do_while_string_literal` fixture supplies differential
+coverage for this assignment slice.

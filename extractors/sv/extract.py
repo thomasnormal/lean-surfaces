@@ -5540,6 +5540,18 @@ def _convert_assignment_expr(sm, expr, span_node=None):
     if type(expr).__name__ != "AssignmentExpression":
         return unsupported(sm, span_node or expr,
                            "AssignmentExpression:" + type(expr).__name__)
+    # An opaque string has no flat-state slot. A pure literal write has no
+    # effect of its own, so it can be erased; later string reads still lower
+    # to their existing loud boundary. Nonliteral writes remain unsupported.
+    if (_SYM is None and expr.op is None
+            and type(expr.left).__name__ == "NamedValueExpression"
+            and type(expr.left.type.canonicalType).__name__ == "StringType"
+            and type(expr.right).__name__ == "ConversionExpression"
+            and type(getattr(expr.right, "operand", None)).__name__ == "StringLiteral"
+            and not getattr(expr.right, "bad", False)
+            and not getattr(expr.right.operand, "bad", False)):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "string_literal_write_noop": True}
     if expr.timingControl is not None:
         return _convert_intra_assignment(sm, expr)
     scan = _convert_scan_assignment(sm, expr)

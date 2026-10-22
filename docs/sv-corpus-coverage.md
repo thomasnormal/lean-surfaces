@@ -3550,3 +3550,9 @@ Unused module and local `string` declarations with pure literal initializers
 are admitted as inert metadata on the time-zero path. Reads, writes,
 concatenation, formatting, and nonliteral initializers remain loud. The
 `string_literal_decl` differential fixture covers this declaration-only slice.
+
+## Pure string literal writes — 2026-10-23
+
+Pure literal assignments to opaque strings are erased when they have no state
+effect. Nonliteral writes and string reads remain loud. The
+`do_while_string_literal` fixture supplies differential evidence.

@@ -120,3 +120,8 @@ item.
 This is a scope decision, not a claim that the language lacks those types.
 Any future aggregate, object, string/real, handle, or event rung must introduce
 its own representation, operations, lifetime rules, and differential fixtures.
+
+The same inert treatment applies to a procedural pure string-literal write:
+the assignment is lowered to `Empty` because the opaque string has no flat state
+slot. Nonliteral writes and all subsequent string operations remain unsupported;
+`do_while_string_literal` covers the write alongside an admitted loop.

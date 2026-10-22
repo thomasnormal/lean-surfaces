@@ -579,6 +579,21 @@ envelope has no alias graph or resolved-driver topology, so no alias is erased,
 made one-way or replaced by an initial assignment. See [the net-alias boundary](sv-net-alias.md)
 and `extractors/sv/net_alias_reprice.py` for the reproducible scan.
 
+## Package initializers — 2026-10-22
+
+`Package:initializer` remains the package initialization-order boundary. The
+fresh **22,043**-path census records it in **41** files: **25** are
+initializer-only and **16** co-occurring. Repricing the sole files finds **35**
+spans: all **35** contain a runtime variable reference, **14** use arithmetic
+in **11** files, **6** contain multiple referenced identifiers, **1** uses a
+qualified package reference, and **19** occur in **9** files with multiple
+initializers (features overlap). Export contexts occur in **24** spans across
+**17** files, including **9** wildcard-export spans in **5** files. The
+envelope has no dependency graph or initialization phase for these reads, so no
+initializer is folded to a constant, dropped or run as a module process. See
+[the package-initializer boundary](sv-package-initializers.md) and
+`extractors/sv/package_initializer_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

@@ -4062,6 +4062,22 @@ replaced by an initial assignment, and no second elaborator or scheduler is
 introduced. See [the net-alias boundary](sv-net-alias.md) and the read-only
 instrument `extractors/sv/net_alias_reprice.py`.
 
+### Package initializers — 2026-10-22
+
+`Package:initializer` is the package initialization-order boundary. In the
+fresh 22,043-path census it occurs in 41 files: 25 are initializer-only and 16
+co-occur with another wall. The sole files contain 35 spans, all with a runtime
+variable reference; 14 use arithmetic in 11 files, six contain multiple
+referenced identifiers, one uses a qualified package reference, and 19 occur
+in nine files with multiple initializers (features overlap). Export contexts
+occur in 24 spans across 17 files, including nine wildcard-export spans in
+five files. IEEE §26.2 runs package initializers before any process starts and
+in declaration order. The envelope has no dependency graph or initialization
+phase for these reads. No initializer is folded to a constant, dropped or run
+as a module process, and no second scheduler is introduced. See [the
+package-initializer boundary](sv-package-initializers.md) and the read-only
+instrument `extractors/sv/package_initializer_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

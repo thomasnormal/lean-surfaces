@@ -1378,6 +1378,12 @@ boundary. The envelope has no alias graph or resolved-driver topology, so an
 alias is not lowered to a one-way assignment or an initial copy. See [the
 net-alias boundary](sv-net-alias.md).
 
+`Package:initializer` remains explicit as a package initialization-order
+boundary. The envelope has no dependency graph or initialization phase for
+runtime package-variable reads, so these initializers are not folded to
+constants, dropped or run as module processes. See [the package-initializer
+boundary](sv-package-initializers.md).
+
 ### Legacy package storage provenance
 
 Source-defined packages with admitted scalar/packed integral variables lower

@@ -11,15 +11,83 @@
     "kind": "Module",
     "body": [
       {
-        "kind": "Unsupported",
+        "kind": "Assign",
         "span": {
           "lineno": 1,
           "col_offset": 0,
           "end_lineno": 1,
           "end_col_offset": 15
         },
-        "py_kind": "AnnAssign:annotation-expression",
-        "text": "x: 1 // 0 = 3"
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 1,
+              "col_offset": 0,
+              "end_lineno": 1,
+              "end_col_offset": 1
+            },
+            "id": "x"
+          }
+        ],
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 14,
+            "end_lineno": 1,
+            "end_col_offset": 15
+          },
+          "value": {
+            "type": "int",
+            "repr": "3"
+          }
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 4,
+          "end_lineno": 1,
+          "end_col_offset": 10
+        },
+        "value": {
+          "kind": "BinOp",
+          "span": {
+            "lineno": 1,
+            "col_offset": 4,
+            "end_lineno": 1,
+            "end_col_offset": 10
+          },
+          "left": {
+            "kind": "Constant",
+            "span": {
+              "lineno": 1,
+              "col_offset": 4,
+              "end_lineno": 1,
+              "end_col_offset": 5
+            },
+            "value": {
+              "type": "int",
+              "repr": "1"
+            }
+          },
+          "op": "FloorDiv",
+          "right": {
+            "kind": "Constant",
+            "span": {
+              "lineno": 1,
+              "col_offset": 9,
+              "end_lineno": 1,
+              "end_col_offset": 10
+            },
+            "value": {
+              "type": "int",
+              "repr": "0"
+            }
+          }
+        }
       },
       {
         "kind": "FunctionDef",

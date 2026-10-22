@@ -1378,12 +1378,13 @@ def convert_ann_assign(node, module_scope=False, func_scope=False,
             # implicit __annotations__ table is unobservable in this tier, so
             # retain the value/store and omit only this lookup.
             return assignment
-        if module_scope and not (
-                isinstance(node.annotation, ast.Constant)
-                and (node.annotation.value is None
-                     or isinstance(node.annotation.value, (str, int, bool)))):
-            return unsupported(node, "AnnAssign:annotation-expression")
         if module_scope:
+            # Module annotations execute after the value STORE_NAME.  Keep the
+            # annotation expression as a separate statement so effects and
+            # exceptions are observed in CPython order; the script executor
+            # publishes the target before evaluating this expression.  The
+            # explicit-annotation-table guard above remains the separate loud
+            # boundary because its mutation is observable through aliases.
             return [assignment, {
                 "kind": "Expr",
                 "span": span(node.annotation),

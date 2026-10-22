@@ -762,8 +762,8 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(namespace["x"], 7)
         self.assertEqual(namespace["__annotations__"], {"x": 9})
         body = self._envelope_of(source)["module"]["body"]
-        self.assertEqual(body[-1]["kind"], "Unsupported")
-        self.assertEqual(body[-1]["py_kind"], "AnnAssign:annotation-expression")
+        self.assertEqual(body[-1]["kind"], "Expr")
+        self.assertEqual(body[-1]["value"]["kind"], "Call")
 
     def test_module_scalar_annotations_preserve_rhs_evaluation_order(self):
         for annotation, value, kind in (("'tag'", "tag", "str"),
@@ -789,16 +789,15 @@ class ExtractorTests(unittest.TestCase):
                 self.assertEqual(body[-1]["value"]["kind"], "Constant")
                 self.assertEqual(body[-1]["value"]["value"]["type"], kind)
 
-    def test_module_nonscalar_annotation_expressions_remain_loud(self):
+    def test_module_annotation_expressions_run_after_value_store(self):
         for annotation in ("x", "boom()", "1 // 0", "[1]", "(1,)",
                            "{1: 1}", "1.5", "1j", "-1"):
             with self.subTest(annotation=annotation):
                 source = ("x: " + annotation + " = 3\n"
                           "def f():\n    return x\n")
                 body = self._envelope_of(source)["module"]["body"]
-                self.assertEqual(body[0]["kind"], "Unsupported")
-                self.assertEqual(body[0]["py_kind"],
-                                 "AnnAssign:annotation-expression")
+                self.assertEqual([item["kind"] for item in body[:2]],
+                                 ["Assign", "Expr"])
         namespace = {}
         with self.assertRaises(ZeroDivisionError):
             exec("x: (1 // 0) = 3\n", namespace)
@@ -809,10 +808,10 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual([item["kind"] for item in body], ["Assign", "Expr"])
         self.assertEqual(body[0]["targets"][0]["id"], "x")
 
-    def test_module_shadowed_builtin_annotation_stays_loud(self):
+    def test_module_shadowed_builtin_annotation_is_evaluated(self):
         body = self._envelope_of("int = 7\nx: int = 3\n")["module"]["body"]
-        self.assertEqual(body[1]["kind"], "Unsupported")
-        self.assertEqual(body[1]["py_kind"], "AnnAssign:annotation-expression")
+        self.assertEqual([item["kind"] for item in body[1:]],
+                         ["Assign", "Expr"])
 
     def test_function_annotations_stay_erased_in_compound_bodies(self):
         fn = self._first_fn(

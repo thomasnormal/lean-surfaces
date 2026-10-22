@@ -2061,7 +2061,8 @@ That is the only pre-existing expectation the inch moves.
 
 `x: int = 1` in a FUNCTION BODY is an ordinary assignment, rewritten to
 one at extraction. Module scope admits unshadowed builtin type-name
-annotations and scalar-literal annotations below; class scope stays loud.
+annotations and evaluates other annotation expressions after the value store;
+class scope stays loud.
 The split is not a
 narrowing of convenience — it is where CPython itself puts a semantic
 boundary, and the census measured it rather than reading PEP 526 for it.
@@ -2145,16 +2146,15 @@ to `None` changes CPython's exception behavior. Future-annotations imports,
 class annotations, observed value-less annotations, and nonsimple targets stay
 loud.
 
-Nonliteral annotations refuse as `AnnAssign:annotation-expression`, even when
-their expression is independently in tier. The closed-function initializer
-rolls back failing expression statements without propagating their exceptions;
-lowering `x: (1 // 0) = 3` would otherwise retain `x = 3` for a subsequent
-function call while CPython fails during import. Restricting the remaining
-dynamic annotations to scalar literals avoids widening that known initialization
-boundary. The common
-`x: "int" = 1` spelling is admitted; a shadowed builtin type name remains
-loud, since the annotation lookup then observes the module binding. No
-interpreter or proof judgment changes.
+Dynamic annotations are now lowered to the same two statements as literal
+annotations: store the value first, then evaluate the annotation expression.
+This matches CPython's `STORE_NAME`/annotation-store order and lets a raising
+annotation retain the already-published target in script mode (`x: (1 // 0) =
+3` raises `ZeroDivisionError` with `x == 3`). The explicit
+`__annotations__`-table binding guard remains loud because the omitted table
+mutation is observable through aliases. A shadowed builtin type name is
+evaluated rather than treated as a pure lookup, so its normal resolution and
+failure behavior remains visible. No interpreter or proof judgment changes.
 
 ## `yield from` (pass 5 — the promotion arm returns to gen_moves)
 

@@ -297,8 +297,8 @@
   },
   {
     "file": "harness/scripts/ann_module_effect_script.py",
-    "expect": "unsupported",
-    "note": "Effectful module annotations stay loud because the closed-function initializer cannot propagate annotation failures"
+    "expect": "match",
+    "note": "Module annotations run after the value is stored, so an effectful annotation preserves CPython's exception and published target order"
   },
   {
     "file": "harness/scripts/ann_module_table_script.py",

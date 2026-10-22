@@ -217,6 +217,13 @@ private def usingShadowTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "s"), ("kind", .string "UsingShadowDecl"),
         ("name", .string "value"), ("inner", .array [])]])]}
 
+private def constructorUsingShadowTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "s"), ("kind", .string "ConstructorUsingShadowDecl"),
+        ("name", .string "Base"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -291,6 +298,9 @@ def deductionGuideTranslationWitness : Except String Unit :=
 
 def usingShadowTranslationWitness : Except String Unit :=
   admitUsingShadowDeclaration usingShadowTranslation [0]
+
+def constructorUsingShadowTranslationWitness : Except String Unit :=
+  admitConstructorUsingShadowDeclaration constructorUsingShadowTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -401,6 +411,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard usingShadowTranslationWitness matches .ok ()
 #guard admitUsingShadowDeclaration usingShadowTranslation [] matches .error _
 #guard admitUsingShadowDeclaration functionTranslation [0] matches .error _
+#guard constructorUsingShadowTranslationWitness matches .ok ()
+#guard admitConstructorUsingShadowDeclaration constructorUsingShadowTranslation [] matches .error _
+#guard admitConstructorUsingShadowDeclaration functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

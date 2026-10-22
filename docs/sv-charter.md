@@ -3926,6 +3926,20 @@ so no `tri` is renamed to `wire` and no invalid declaration is salvaged. See
 [the boundary and repricing](sv-tri.md) and the read-only instrument
 `extractors/sv/tri_reprice.py`.
 
+### `interconnect` hierarchical nets — 2026-10-22
+
+`NetSymbol:Interconnect` remains the hierarchical-connectivity boundary. The
+fresh 22,043-path census records it in 15 files: 8 are Interconnect-only and
+7 co-occur with another wall. The sole files contain 10 declarations: three
+initializers, two delay specifications, one min:typ:max delay, one explicit
+data type, one drive/charge strength, two packed dimensions, two unpacked
+dimensions and one per-bit net-type resolution observation (features
+overlap); six are compile-error diagnostic shapes. The envelope has no
+elaborated port graph, bidirectional connection identity or per-bit net-type
+resolution, so no interconnect is rewritten as a local wire and no invalid
+declaration is salvaged. See [the boundary and repricing](sv-interconnect.md)
+and the read-only instrument `extractors/sv/interconnect_reprice.py`.
+
 ### Concurrent assertions — 2026-10-21
 
 Concurrent assertion repricing measures `ConcurrentAssertionStatement` in

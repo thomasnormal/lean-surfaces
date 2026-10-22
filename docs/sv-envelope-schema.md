@@ -121,6 +121,7 @@ emits:
 | `NetSymbol:Tri0` | implicit pull-0 net with strength-sensitive four-state driver resolution |
 | `NetSymbol:Tri1` | implicit pull-1 net with strength-sensitive four-state driver resolution |
 | `NetSymbol:Tri` | resolved-wire net requiring a general four-state driver set and strength resolution |
+| `NetSymbol:Interconnect` | hierarchical net requiring connected-port topology and per-bit net-type resolution |
 | `ExtractorInternal:<PyException>` | defensive catch-all: the extractor itself failed on this node (should not occur; `span` is `null`, `text` is the Python error) |
 
 The tag list may grow with the tier; ingesters must treat **any** unknown
@@ -1597,6 +1598,11 @@ strength ordering or resolved four-state driver set.
 `tri` declarations remain explicit `NetSymbol:Tri` unsupported members; see
 [the resolved-wire boundary](sv-tri.md). The envelope has no general driver
 set, floating high-impedance state or strength resolution for this spelling.
+
+`interconnect` declarations remain explicit `NetSymbol:Interconnect`
+unsupported members; see [the hierarchical-connectivity boundary](sv-interconnect.md).
+The envelope has no elaborated port graph, bidirectional connection identity,
+per-bit net-type resolution or interconnect delay publication.
 
 Concurrent properties remain explicit `ConcurrentAssertionStatement`
 unsupported members; see [the assertion boundary](sv-concurrent-assertions.md).

@@ -727,6 +727,21 @@ set or strength-resolution state, so `tri` is not renamed to `wire` and no
 invalid declaration is salvaged. See [the `tri` boundary](sv-tri.md) and
 `extractors/sv/tri_reprice.py` for the reproducible scan.
 
+## `interconnect` hierarchical nets — 2026-10-22
+
+`NetSymbol:Interconnect` remains the hierarchical-connectivity boundary. The
+fresh **22,043**-path census records it in **15** files: **8** are
+Interconnect-only and **7** co-occur with another wall. Repricing the sole
+files finds **10** declarations: **3** declaration initializers, **2** delay
+specifications, **1** min:typ:max delay, **1** explicit data type, **1**
+drive/charge strength, **2** packed dimensions, **2** unpacked dimensions and
+**1** per-bit net-type resolution observation; **6** are compile-error
+diagnostic shapes (features overlap). The envelope has no elaborated port
+graph, bidirectional connection identity or per-bit net-type resolution, so
+`interconnect` is not rewritten as a local wire and invalid declarations are
+not salvaged. See [the `interconnect` boundary](sv-interconnect.md) and
+`extractors/sv/interconnect_reprice.py` for the reproducible scan.
+
 ## Continuous-assignment delays — 2026-10-22
 
 `ContinuousAssignSymbol:delay` remains the delayed continuous-driver boundary.

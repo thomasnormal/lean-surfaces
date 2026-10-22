@@ -57,6 +57,9 @@ def admitFieldDeclaration (artifact : Artifact) (path : List Nat) :
 def admitMethodDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXMethodDecl" "method"
 
+def admitEnumConstantDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "EnumConstantDecl" "enum-constant"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

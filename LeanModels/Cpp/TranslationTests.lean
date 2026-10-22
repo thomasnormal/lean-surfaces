@@ -51,7 +51,9 @@ private def enumTranslation : Artifact := {emptyTranslation with
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
     ("inner", .array [
       .object [("id", .string "e"), ("kind", .string "EnumDecl"),
-        ("name", .string "Color"), ("inner", .array [])]])]}
+        ("name", .string "Color"), ("inner", .array [
+          .object [("id", .string "red"), ("kind", .string "EnumConstantDecl"),
+            ("name", .string "red"), ("inner", .array [])]])]])]}
 
 private def typedefTranslation : Artifact := {emptyTranslation with
   ast := .object [
@@ -146,6 +148,9 @@ def variableTranslationWitness : Except String Unit :=
 def enumTranslationWitness : Except String Unit :=
   admitEnumDeclaration enumTranslation [0]
 
+def enumConstantTranslationWitness : Except String Unit :=
+  admitEnumConstantDeclaration enumTranslation [0, 0]
+
 def typedefTranslationWitness : Except String Unit :=
   admitTypedefDeclaration typedefTranslation [0]
 
@@ -195,6 +200,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard enumTranslationWitness matches .ok ()
 #guard admitEnumDeclaration enumTranslation [] matches .error _
 #guard admitEnumDeclaration functionTranslation [0] matches .error _
+#guard enumConstantTranslationWitness matches .ok ()
+#guard admitEnumConstantDeclaration enumTranslation [] matches .error _
+#guard admitEnumConstantDeclaration functionTranslation [0] matches .error _
 #guard typedefTranslationWitness matches .ok ()
 #guard admitTypedefDeclaration typedefTranslation [] matches .error _
 #guard admitTypedefDeclaration functionTranslation [0] matches .error _

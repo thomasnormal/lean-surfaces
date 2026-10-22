@@ -274,6 +274,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-null",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung4Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung4Tests",
+    "lean_expression": "callableNullWitness",
+    "cpp_source": "int null_witness(int value) { ; return value; } bool callable_witness() { return null_witness(7) == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "expression.callable-conditional",
     "kind": "expression",
     "corpus": "rung-3 witness",

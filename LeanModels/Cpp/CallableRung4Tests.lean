@@ -144,6 +144,18 @@ def callableContinueWitness : Bool :=
   | .ok (.ok value) => value == signed 4
   | _ => false
 
+def nullFunction : CallableFunction := {
+  switchFunction with
+  body := .block (.sequence
+    .skip
+    (.return_ {expression := .parameter parameter, sourceType := intType, type := intType}))
+}
+
+def callableNullWitness : Bool :=
+  match evaluateCallable 16 .lp64 nullFunction [signed 7] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
 #guard callableSwitchWitness
 #guard callableIfWitness
 #guard callableWhileWitness
@@ -151,6 +163,7 @@ def callableContinueWitness : Bool :=
 #guard callableForWitness
 #guard callableBreakWitness
 #guard callableContinueWitness
+#guard callableNullWitness
 
 theorem callable_switch_witness : callableSwitchWitness = true := by
   rfl
@@ -173,6 +186,9 @@ theorem callable_break_witness : callableBreakWitness = true := by
 theorem callable_continue_witness : callableContinueWitness = true := by
   rfl
 
+theorem callable_null_witness : callableNullWitness = true := by
+  rfl
+
 #print axioms callable_switch_witness
 #print axioms callable_if_witness
 #print axioms callable_while_witness
@@ -180,5 +196,6 @@ theorem callable_continue_witness : callableContinueWitness = true := by
 #print axioms callable_for_witness
 #print axioms callable_break_witness
 #print axioms callable_continue_witness
+#print axioms callable_null_witness
 
 end LeanModels.Cpp.CallableRung4Tests

@@ -245,6 +245,13 @@ private def unresolvedUsingValueTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "u"), ("kind", .string "UnresolvedUsingValueDecl"),
         ("name", .string "value"), ("inner", .array [])]])]}
 
+private def bindingTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "b"), ("kind", .string "BindingDecl"),
+        ("name", .string "first"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -331,6 +338,9 @@ def unresolvedUsingTypenameTranslationWitness : Except String Unit :=
 
 def unresolvedUsingValueTranslationWitness : Except String Unit :=
   admitUnresolvedUsingValueDeclaration unresolvedUsingValueTranslation [0]
+
+def bindingTranslationWitness : Except String Unit :=
+  admitBindingDeclaration bindingTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -453,6 +463,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard unresolvedUsingValueTranslationWitness matches .ok ()
 #guard admitUnresolvedUsingValueDeclaration unresolvedUsingValueTranslation [] matches .error _
 #guard admitUnresolvedUsingValueDeclaration functionTranslation [0] matches .error _
+#guard bindingTranslationWitness matches .ok ()
+#guard admitBindingDeclaration bindingTranslation [] matches .error _
+#guard admitBindingDeclaration functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

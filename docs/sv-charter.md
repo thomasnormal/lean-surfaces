@@ -4465,6 +4465,22 @@ paired-model regression; that comparison is not independent conformance.
 Four kernel theorems bind initialization and retained increments to actual source.
 See [the contract](sv-procedural-lifetimes.md).
 
+### Residual static initializers — 2026-10-22
+
+`StaticLocal:initializer` remains the nonclosed static-initializer boundary.
+The fresh 22,043-path census records it in 167 files: 40 are
+initializer-only and 127 co-occur with another wall. The sole files contain
+47 spans: nine random or constrained-random calls, 13 system-function calls,
+three macro expansions, two package/qualified reads, seven type or size casts,
+six real conversions, five shifts, three powers, five bitwise expressions, one
+conditional, one aggregate assignment pattern and 39 runtime-dependent reads
+(features overlap). Closed pure static values remain admitted; runtime,
+effectful, package-dependent and otherwise nonclosed initializers need an
+ordered evaluation contract absent from the envelope. No initializer is
+folded, dropped or run as a module process, and no second scheduler is added.
+See [the boundary and repricing](sv-static-initializers.md) and the read-only
+instrument `extractors/sv/static_initializer_reprice.py`.
+
 ### Assignment-target boundary — 2026-10-21
 
 The public target matrix remains limited to scalar identifiers, fixed packed

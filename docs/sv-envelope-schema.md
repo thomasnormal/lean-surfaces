@@ -106,6 +106,8 @@ emits:
 | `IntraAssignment:<reason>` | unsupported intra-assignment control, value, destination or context; blocking controls in the admitted surface lower to capture/wait/copyback, while nonblocking publication remains loud |
 | `AssignmentExpression:target` | assignment LHS that is not a plain identifier (bit/part-select, concat LHS, ...) |
 | `ExpressionStatement:<Class>` | expression statement that is not an assignment (`i++;`, void call, ...) |
+| `StaticLocal:initializer` | static procedural initializer outside the closed pure pre-process value fragment |
+| `StaticLocal:initializer-order` | pre-process initializer reads another procedural static store whose order is not represented |
 | `ContinuousAssignSymbol:delay` / `:form` | `assign #5 ...` / malformed continuous assign |
 | `ConditionalStatement:Unique` / `:Unique0` / `:Priority` / `:multi` / `:pattern` | `unique`/`priority` if, multiple `&&&` conditions, `matches` pattern |
 | `ConditionalExpression:multi` / `:pattern` | same, for `?:` |
@@ -1715,3 +1717,9 @@ metadata, not new runtime nodes. Closed/pure initialization, cross-initializer
 order, default-lifetime provenance and whole-source validity are checked before
 admission. Symbolic extraction is unchanged. See
 [the contract](sv-procedural-lifetimes.md).
+
+Residual nonclosed static initializers remain explicit `StaticLocal:initializer`
+unsupported members; see [the residual boundary](sv-static-initializers.md).
+The envelope does not evaluate random/system functions, package-dependent reads,
+macro-expanded effects, runtime storage or unrepresented conversion contexts
+before process entry, and does not choose an initializer order.

@@ -113,6 +113,22 @@ clean designs have identical paired model statuses/transcripts (1,116 completed,
 Four source-bound kernel theorems cover initialization, entry retention and
 retained modular increments. Extraction is distinct from execution conformance.
 
+## Residual static initializers — 2026-10-22
+
+`StaticLocal:initializer` remains the nonclosed static-initializer boundary.
+The fresh **22,043**-path census records it in **167** files: **40** are
+initializer-only and **127** co-occur with another wall. Repricing the sole
+files finds **47** spans: **9** random or constrained-random calls, **13**
+system-function calls, **3** macro expansions, **2** package/qualified reads,
+**7** type or size casts, **6** real conversions, **5** shifts, **3** powers,
+**5** bitwise expressions, **1** conditional, **1** aggregate assignment
+pattern and **39** runtime-dependent reads (features overlap). Closed pure
+values remain admitted; the envelope has no ordered pre-process evaluator,
+random/environment oracle or general conversion context, so no initializer is
+folded, dropped or run as a module process. See [the static-initializer
+boundary](sv-static-initializers.md) and
+`extractors/sv/static_initializer_reprice.py` for the reproducible scan.
+
 | Chapter | Total | Clean | Partial | Include skips |
 |---|---:|---:|---:|---:|
 | 3 | 300 | 60 | 239 | 1 |

@@ -374,6 +374,17 @@
     "rung": 0
   },
   {
+    "id": "translation.class-scope-function-specialization-declaration",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "classScopeFunctionSpecializationTranslationWitness",
+    "cpp_source": "template<class T> struct Box { void f(T); }; template<> void Box<int>::f(int) {}",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

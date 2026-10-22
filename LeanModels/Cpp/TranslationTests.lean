@@ -266,6 +266,13 @@ private def indirectFieldTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "i"), ("kind", .string "IndirectFieldDecl"),
         ("name", .string "first"), ("inner", .array [])]])]}
 
+private def classScopeFunctionSpecializationTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "s"), ("kind", .string "ClassScopeFunctionSpecializationDecl"),
+        ("name", .string "f"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -361,6 +368,9 @@ def decompositionTranslationWitness : Except String Unit :=
 
 def indirectFieldTranslationWitness : Except String Unit :=
   admitIndirectFieldDeclaration indirectFieldTranslation [0]
+
+def classScopeFunctionSpecializationTranslationWitness : Except String Unit :=
+  admitClassScopeFunctionSpecializationDeclaration classScopeFunctionSpecializationTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -492,6 +502,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard indirectFieldTranslationWitness matches .ok ()
 #guard admitIndirectFieldDeclaration indirectFieldTranslation [] matches .error _
 #guard admitIndirectFieldDeclaration functionTranslation [0] matches .error _
+#guard classScopeFunctionSpecializationTranslationWitness matches .ok ()
+#guard admitClassScopeFunctionSpecializationDeclaration classScopeFunctionSpecializationTranslation [] matches .error _
+#guard admitClassScopeFunctionSpecializationDeclaration functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

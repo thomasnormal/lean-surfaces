@@ -138,6 +138,9 @@ def admitDecompositionDeclaration (artifact : Artifact) (path : List Nat) :
 def admitIndirectFieldDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "IndirectFieldDecl" "indirect-field"
 
+def admitClassScopeFunctionSpecializationDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "ClassScopeFunctionSpecializationDecl" "class-scope-function-specialization"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

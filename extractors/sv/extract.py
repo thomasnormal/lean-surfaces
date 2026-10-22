@@ -1114,6 +1114,45 @@ def _fixed_array_cell(sm, expression):
     return _fixed_array_leaf_select(sm, expression)
 
 
+def _fixed_array_constant_uses(symbol):
+    """Collect constant one-dimensional selections of a fixed array symbol.
+
+    Large fixed arrays are represented sparsely in the flat self-check state:
+    only cells that the source selects at a constant index are materialized.
+    A dynamic or aggregate use is deliberately rejected, because a finite
+    list of cells cannot stand in for that operation.
+    """
+    try:
+        instance = symbol.parentScope.containingInstance
+        uses = set()
+        named_count = 0
+        selected_count = 0
+
+        def inspect(node):
+            nonlocal named_count, selected_count
+            kind = type(node).__name__
+            if kind == "ElementSelectExpression":
+                value = node.value
+                if (type(value).__name__ == "NamedValueExpression"
+                        and getattr(value, "symbol", None) is symbol):
+                    selected_count += 1
+                    position = _constant_dimension_selector(node.selector)
+                    if position is None:
+                        uses.add(None)
+                    else:
+                        uses.add(position)
+            elif kind in ("NamedValueExpression", "HierarchicalValueExpression"):
+                if getattr(node, "symbol", None) is symbol:
+                    named_count += 1
+
+        instance.visit(inspect)
+        if None in uses or named_count != selected_count:
+            return None
+        return sorted(uses)
+    except Exception:
+        return None
+
+
 def _unpacked_struct_member(sm, expression):
     """Return the flattened cell for a direct integral unpacked-struct field.
 
@@ -6136,7 +6175,38 @@ def convert_fixed_array_vars(sm, m):
             return None
         dimensions_shape = _fixed_array_dimensions(array_type)
         if dimensions_shape is None:
-            return None
+            # The flat state normally expands every leaf, but the standard
+            # requires implementations to accept arrays much larger than a
+            # practical envelope can enumerate.  For a one-dimensional
+            # integral array, retain only constant-index cells that the
+            # source actually observes. Dynamic, whole-array, and aggregate
+            # uses remain loud rather than receiving a fabricated default.
+            full_shape = _fixed_array_dimensions(array_type, max_cells=None)
+            if full_shape is None:
+                return None
+            full_dimensions, full_leaf = full_shape
+            if len(full_dimensions) != 1:
+                return None
+            width, two, reason = type_width_2s(full_leaf)
+            if width is None or reason is not None:
+                return None
+            positions = _fixed_array_constant_uses(m)
+            if positions is None:
+                return None
+            left, right = full_dimensions[0]
+            positions = [position for position in positions
+                         if min(left, right) <= position <= max(left, right)]
+            positions.sort(reverse=right < left)
+            decls = []
+            for position in positions:
+                init = {"kind": "Literal", "span": None,
+                        "width": width, "bits": "0" * width} if two else None
+                decls.append(signed_metadata({
+                    "kind": "Var", "span": sym_span(sm, m),
+                    "name": f"{_array_storage_name(m)}[{position}]",
+                    "width": width, "init": init,
+                }, full_leaf))
+            return decls
         dimensions, leaf_type = dimensions_shape
         if type(leaf_type).__name__ == "UnpackedStructType":
             # Compose the existing shallow-struct field cells with the

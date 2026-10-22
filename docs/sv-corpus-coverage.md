@@ -3534,3 +3534,12 @@ files: **4** are sole refusals and 32 co-occur. Repricing finds four rejected
 enum spans: three X/Z values on two-state bases and one duplicate value. The
 enum remains loud; see [invalid enums](sv-invalid-enums.md) and
 `extractors/sv/enum_invalid_reprice.py`.
+
+## Large fixed-array sparse cells — 2026-10-23
+
+The 2^24-element fixed unpacked array declaration is admitted when its
+procedural uses are constant element selections. The extractor stores only
+those observed cells, so the self-check interpreter can execute the standard's
+boundary-access test without allocating millions of envelope declarations.
+Dynamic and aggregate uses remain loud. The new differential fixture is
+`Examples/system-verilog/large_fixed_array/large_fixed_array.sv`.

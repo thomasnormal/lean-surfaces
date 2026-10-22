@@ -10,9 +10,9 @@ The extractor and focused tests cover both declarations and selected reads and
 writes, including signed forms.
 
 The current `VariableSymbol:2state` census tag names the shapes outside that
-value tier. The 2026-10-22 corpus snapshot has 4,135 files containing the tag;
-it is the sole refusal in 11 files. The previous snapshot had 4,952 files and
-15 sole refusals. Its current frequent companions are assignment targets
+value tier. The 2026-10-23 corpus snapshot has 4,132 files containing the tag;
+it is the sole refusal in 9 files. The previous snapshot had 4,133 files and
+9 sole refusals. Its current frequent companions are assignment targets
 (3,913 files), statement calls (3,784), expression calls (3,290),
 `NamedValueExpression:2state` (1,481), classes (1,327), member access (1,023),
 real literals (705), and element-select source types (591). The remaining
@@ -91,6 +91,15 @@ into leaf cells. Positional, keyed, and default values preserve each leaf's
 width and two-state squash; partial, effectful, nonintegral, and aggregate
 array forms remain unsupported. The `nested_struct_initializers` fixture
 covers this initializer slice.
+
+Large one-dimensional fixed unpacked arrays use a sparse exception to the
+ordinary 1024-cell expansion bound. If the array's integral cells are observed
+only through constant indices, ingestion emits one vector declaration per
+observed index and preserves the existing two-state startup and x/z squash
+rules. A dynamic index, whole-array read or write, aggregate initializer, or
+nonintegral leaf remains unsupported because the flat state has no compact
+array object. `large_fixed_array` exercises the two endpoint cells of the
+IEEE-required 2^24-element extent.
 
 The public representation has no aggregate heap, queue, object, string, real,
 handle, or event scheduler. The symbolic `PDecl`/`PType` representation also

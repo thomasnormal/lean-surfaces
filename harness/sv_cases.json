@@ -24,6 +24,7 @@
     {"name": "virtual_interface_null_declaration", "file": "Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "string_declaration", "file": "Examples/system-verilog/string_decl/string_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "nested_struct_initializers", "file": "Examples/system-verilog/nested_struct_initializers/nested_struct_initializers.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
+    {"name": "large_fixed_array", "file": "Examples/system-verilog/large_fixed_array/large_fixed_array.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "delay_refusal", "file": "Examples/system-verilog/delay/delay.sv", "module": "delay", "oracle": "refuse", "expect": "refuse"},
     {"name": "event_refusal", "file": "Examples/system-verilog/event/event.sv", "module": "event_wait", "oracle": "refuse", "expect": "refuse"},
     {"name": "always_refusal", "file": "Examples/system-verilog/always/events.sv", "module": "top", "oracle": "refuse", "expect": "refuse"},

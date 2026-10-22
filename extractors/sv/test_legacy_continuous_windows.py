@@ -94,6 +94,26 @@ class LegacyContinuousWindows(unittest.TestCase):
                          [("value[0]", 8), ("value[1]", 8)])
         self.assertEqual(decls[0]["init"]["bits"], "0" * 8)
 
+    def test_large_fixed_array_is_sparse_when_only_constant_cells_are_used(self):
+        envelope = self.extract(
+            "module top; bit value [0:16777215]; initial begin "
+            "value[0] = 1'b1; value[16777215] = 1'b1; "
+            "if (value[0] === 1'b1 && value[16777215] === 1'b1) "
+            "$display(\"PASS\"); end endmodule")
+        decls = envelope["design"]["modules"][0]["decls"]
+        self.assertEqual([d["name"] for d in decls],
+                         ["value[0]", "value[16777215]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in self._walk(envelope)))
+
+    def test_large_fixed_array_dynamic_use_stays_loud(self):
+        envelope = self.extract(
+            "module top; bit value [0:16777215]; int index; "
+            "initial value[index] = 1'b1; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "VariableSymbol:2state"
+                            for node in self._walk(envelope)))
+
     def test_unpacked_struct_integral_fields_flatten_to_cells(self):
         envelope = self.extract(
             "module top; typedef struct { int count; bit [7:0] mask; } item_t; "

@@ -5093,3 +5093,12 @@ files: **4** are sole refusals and 32 co-occur. Repricing finds four rejected
 enum spans: three X/Z values on two-state bases and one duplicate value. The
 enum representation has no invalid-declaration state, so these remain loud. See
 [invalid enums](sv-invalid-enums.md).
+
+### Large fixed-array sparse cells — 2026-10-23
+
+The self-check tier now admits one-dimensional fixed unpacked integral arrays
+whose extent is larger than the flat-state expansion limit when every use is a
+constant element selection. Ingestion materializes only the observed cells,
+retaining two-state zero startup and ordinary assignment semantics. Dynamic,
+whole-array, aggregate, and nonintegral uses remain loud. The
+`large_fixed_array` fixture covers the IEEE minimum 2^24-element declaration.

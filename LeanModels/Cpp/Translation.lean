@@ -120,6 +120,9 @@ def admitUsingShadowDeclaration (artifact : Artifact) (path : List Nat) :
 def admitConstructorUsingShadowDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ConstructorUsingShadowDecl" "constructor-using-shadow"
 
+def admitUsingPackDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "UsingPackDecl" "using-pack"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

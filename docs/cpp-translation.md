@@ -52,12 +52,12 @@ The first executable rung-0 gates are `admitTranslationUnit`,
 `admitNamespaceDeclaration`, `admitFunctionDeclaration`,
 `admitVariableDeclaration`, `admitEnumDeclaration`,
 `admitTypedefDeclaration`, `admitTypeAliasDeclaration`,
-`admitNamespaceAliasDeclaration`, `admitUsingDirectiveDeclaration` and
-`admitUsingDeclaration`. The root gate checks the retained root's explicit
-`kind` for `TranslationUnitDecl`; the
+`admitNamespaceAliasDeclaration`, `admitUsingDirectiveDeclaration`,
+`admitUsingDeclaration` and `admitLinkageSpecification`. The root gate checks
+the retained root's explicit `kind` for `TranslationUnitDecl`; the
 namespace gate then checks a nonempty artifact occurrence path and requires
 `NamespaceDecl` at that exact path, while each declaration gate applies the
-same path check to its corresponding kind. All eleven return typed metadata results without
+same path check to its corresponding kind. All twelve return typed metadata results without
 inspecting or erasing child nodes,
 resolving names, or executing a body. Malformed roots, absent paths and other
 node kinds refuse with named diagnostics. `Translation.execute` remains the

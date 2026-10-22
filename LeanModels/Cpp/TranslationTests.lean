@@ -87,6 +87,13 @@ private def usingTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "u"), ("kind", .string "UsingDecl"),
         ("name", .string "f"), ("inner", .array [])]])]}
 
+private def linkageTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "l"), ("kind", .string "LinkageSpecDecl"),
+        ("language", .string "C"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -113,6 +120,9 @@ def usingDirectiveTranslationWitness : Except String Unit :=
 
 def usingTranslationWitness : Except String Unit :=
   admitUsingDeclaration usingTranslation [1]
+
+def linkageTranslationWitness : Except String Unit :=
+  admitLinkageSpecification linkageTranslation [0]
 
 #guard admitTranslationUnit emptyTranslation matches .ok ()
 #guard admitTranslationUnit wrongRoot matches .error _
@@ -145,6 +155,9 @@ def usingTranslationWitness : Except String Unit :=
 #guard usingTranslationWitness matches .ok ()
 #guard admitUsingDeclaration usingTranslation [] matches .error _
 #guard admitUsingDeclaration usingDirectiveTranslation [1] matches .error _
+#guard linkageTranslationWitness matches .ok ()
+#guard admitLinkageSpecification linkageTranslation [] matches .error _
+#guard admitLinkageSpecification usingTranslation [1] matches .error _
 #guard execute emptyTranslation "f" matches .error "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
 theorem empty_translation_admits : admitTranslationUnit emptyTranslation = .ok () := rfl

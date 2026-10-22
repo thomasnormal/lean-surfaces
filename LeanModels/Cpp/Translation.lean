@@ -66,6 +66,9 @@ def admitUsingDirectiveDeclaration (artifact : Artifact) (path : List Nat) :
 def admitUsingDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "UsingDecl" "using"
 
+def admitLinkageSpecification (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "LinkageSpecDecl" "linkage-specification"
+
 def executionRefusal : String :=
   "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 

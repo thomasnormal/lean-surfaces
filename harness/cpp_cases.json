@@ -110,6 +110,17 @@
     "rung": 0
   },
   {
+    "id": "translation.destructor-declaration",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "destructorTranslationWitness",
+    "cpp_source": "struct Sample { ~Sample() {} };",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

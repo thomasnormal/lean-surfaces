@@ -66,6 +66,9 @@ def admitAccessSpecification (artifact : Artifact) (path : List Nat) :
 def admitConstructorDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXConstructorDecl" "constructor"
 
+def admitDestructorDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXDestructorDecl" "destructor"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

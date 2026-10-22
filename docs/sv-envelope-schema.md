@@ -1909,3 +1909,10 @@ invent a local frame; see [invalid static locals](sv-invalid-static-locals.md).
 assignment when the active `default_nettype` directive rejects an implicit net
 or an invalid net-type value. The envelope does not create an implicit wire or
 reset directive state; see [invalid continuous assignments](sv-invalid-continuous-assignments.md).
+
+## Empty members
+
+`EmptyMemberSymbol:EmptyMember` remains an explicit unsupported marker when
+frontend parsing cannot bind a declaration or design member. The envelope does
+not invent identifiers, flatten nested attributes or reinterpret soft-keyword
+mode; see [empty members](sv-empty-members.md).

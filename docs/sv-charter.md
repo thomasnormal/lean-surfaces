@@ -4815,3 +4815,12 @@ files finds seven rejected assignment spans involving `default_nettype none`,
 invalid `supply0`/`supply1` directives and `undefineall` state. The envelope has
 no implicit-net diagnostic state, so these assignments remain loud. See
 [invalid continuous assignments](sv-invalid-continuous-assignments.md).
+
+### Empty-member boundary — 2026-10-22
+
+The fresh 22,043-path census records `EmptyMemberSymbol:EmptyMember` in **57**
+files: **6** are sole refusals and 51 co-occur. Repricing the sole files finds
+six empty-member spans covering soft-keyword mode, unnamed primitive arrays,
+nested attributes and dollar-leading identifiers. The envelope has no recovery
+node or diagnostic stream, so these members remain loud. See
+[empty members](sv-empty-members.md).

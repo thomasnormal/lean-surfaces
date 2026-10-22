@@ -3256,3 +3256,12 @@ files finds seven rejected assignment spans involving `default_nettype none`,
 invalid `supply0`/`supply1` directives and `undefineall` state. The rejected
 assignment remains loud; see [invalid continuous assignments](sv-invalid-continuous-assignments.md)
 and `extractors/sv/continuous_invalid_reprice.py`.
+
+## Empty-member boundary — 2026-10-22
+
+The fresh 22,043-path census records `EmptyMemberSymbol:EmptyMember` in **57**
+files: **6** are sole refusals and 51 co-occur. Repricing the sole files finds
+six empty-member spans covering soft-keyword mode, unnamed primitive arrays,
+nested attributes and dollar-leading identifiers. The empty member remains
+loud; see [empty members](sv-empty-members.md) and
+`extractors/sv/empty_member_reprice.py`.

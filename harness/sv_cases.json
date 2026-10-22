@@ -9,6 +9,7 @@
     {"name": "streaming_unpack", "file": "Examples/system-verilog/streaming_unpack/streaming_unpack.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "two_state_output", "file": "Examples/system-verilog/two_state_output/two_state_output.sv", "module": "two_state_output", "oracle": ["PASS"], "expect": "match"},
     {"name": "fixed_array_2state", "file": "Examples/system-verilog/fixed_array_2state/fixed_array_2state.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
+    {"name": "fixed_array_packed_leaf_2state", "file": "Examples/system-verilog/fixed_array_packed_leaf_2state/fixed_array_packed_leaf_2state.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "fixed_array_oob", "file": "Examples/system-verilog/fixed_array_oob/fixed_array_oob.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "clog2", "file": "Examples/system-verilog/clog2/clog2.sv", "module": "clog2", "oracle": ["PASS"], "expect": "match"},
     {"name": "unpacked_dynamic", "file": "Examples/system-verilog/unpacked_dynamic/unpacked_dynamic.sv", "module": "top", "oracle": ["PASS1", "PASS2", "PASS3"], "expect": "match"},

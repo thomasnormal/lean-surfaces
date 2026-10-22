@@ -51,7 +51,8 @@ Dynamic arrays, queues, object/event/string/real leaves, effectful or
 shape-mismatched patterns, and nonconstant selections remain loud. The new
 `fixed_array_2state` differential row writes and reads a two-dimensional
 `bit [3:0]` array and checks zero startup of an untouched cell;
-`fixed_array_pattern_2state` checks nested replication.
+`fixed_array_pattern_2state` checks nested replication; the
+`fixed_array_packed_leaf_2state` row checks a multidimensional packed leaf.
 
 Against the previous 22,045-path snapshot, clean files rise **4,326 → 4,345**
 and partial files fall **17,653 → 17,634**. The `VariableSymbol:2state` wall
@@ -63,6 +64,12 @@ The nested-pattern extension moves clean files **4,347 → 4,351** and partial
 files **17,632 → 17,628**. `VariableSymbol:2state` falls **5,666 → 5,660**;
 the differential matrix is now **16 rows, 12 matches, 0 disagreements, and 4
 recorded refusals**.
+
+The packed-leaf extension moves clean files **4,351 → 4,378** and partial
+files **17,628 → 17,601**. `VariableSymbol:2state` falls **5,660 → 5,650**;
+`AssignmentExpression:target` falls **3,980 → 3,961**. The differential
+matrix is now **17 rows, 13 matches, 0 disagreements, and 4 recorded
+refusals**.
 
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 

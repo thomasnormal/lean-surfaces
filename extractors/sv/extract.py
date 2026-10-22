@@ -319,6 +319,15 @@ def type_width_2s(t):
         if cname == "PackedArrayType":
             w = ct.bitWidth
             elem = ct.elementType.canonicalType
+            # Packed dimensions form one contiguous integral vector.  Walk
+            # through every packed layer before checking the scalar leaf for
+            # two-state declarations; the LVec state already preserves the
+            # complete bit ordering. Four-state multidimensional ranges keep
+            # their existing explicit range boundary.
+            if t.isFourState and type(elem).__name__ == "PackedArrayType":
+                return None, None, "range"
+            while type(elem).__name__ == "PackedArrayType":
+                elem = elem.elementType.canonicalType
             if type(elem).__name__ == "ScalarType":
                 return w, (not t.isFourState), None
             return None, None, "range"

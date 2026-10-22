@@ -1,0 +1,248 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/fixed_array_packed_leaf_2state/fixed_array_packed_leaf_2state.sv",
+  "source_sha256": "7a4a5c1780422fc5e639f5ebee7e32df3d1373643775c22b534a4d7db69b34cd",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 8,
+          "col": 1,
+          "end_line": 19,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 18,
+              "end_line": 9,
+              "end_col": 29
+            },
+            "name": "values[0]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 8,
+              "bits": "00000000"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 18,
+              "end_line": 9,
+              "end_col": 29
+            },
+            "name": "values[1]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 8,
+              "bits": "00000000"
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 11,
+              "col": 3,
+              "end_line": 18,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 11,
+                "col": 11,
+                "end_line": 18,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 23
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 12,
+                      "col": 5,
+                      "end_line": 12,
+                      "end_col": 14
+                    },
+                    "width": 8,
+                    "name": "values[0]"
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 8,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 12,
+                        "col": 17,
+                        "end_line": 12,
+                        "end_col": 22
+                      },
+                      "width": 8,
+                      "bits": "10100101"
+                    }
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 24
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 13,
+                      "col": 9,
+                      "end_line": 13,
+                      "end_col": 50
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 13,
+                        "col": 9,
+                        "end_line": 13,
+                        "end_col": 28
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 13,
+                          "col": 9,
+                          "end_line": 13,
+                          "end_col": 18
+                        },
+                        "width": 8,
+                        "name": "values[0]"
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 13,
+                          "col": 23,
+                          "end_line": 13,
+                          "end_col": 28
+                        },
+                        "width": 8,
+                        "bits": "10100101"
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 13,
+                        "col": 32,
+                        "end_line": 13,
+                        "end_col": 50
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 13,
+                          "col": 32,
+                          "end_line": 13,
+                          "end_col": 41
+                        },
+                        "width": 8,
+                        "name": "values[1]"
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 13,
+                          "col": 46,
+                          "end_line": 13,
+                          "end_col": 50
+                        },
+                        "width": 8,
+                        "bits": "00000000"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 14,
+                      "col": 7,
+                      "end_line": 14,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 16,
+                      "col": 7,
+                      "end_line": 16,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

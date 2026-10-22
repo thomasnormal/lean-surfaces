@@ -552,7 +552,9 @@ positional and recursively replicated patterns are flattened in declared range
 order; effectful or shape-mismatched patterns, dynamic or queue arrays,
 nonintegral leaves, and nonconstant selections remain loud. The
 `fixed_array_2state` fixture checks a write/read pair and an untouched cell;
-`fixed_array_pattern_2state` checks nested replication.
+`fixed_array_pattern_2state` checks nested replication. Multidimensional
+packed integral leaves remain one vector cell, with packed bit order preserved;
+`fixed_array_packed_leaf_2state` checks that form.
 
 The fresh 22,045-path census moves clean files **4,326 → 4,345** and partial
 files **17,653 → 17,634**. `VariableSymbol:2state` falls **5,744 → 5,666**;
@@ -564,6 +566,11 @@ The nested-pattern extension moves clean files **4,347 → 4,351**, partial file
 **17,632 → 17,628**, and `VariableSymbol:2state` **5,666 → 5,660**. Its
 differential matrix has **16 rows, 12 matches, 0 disagreements, and 4 recorded
 refusals**.
+
+The packed-leaf extension moves clean files **4,351 → 4,378**, partial files
+**17,628 → 17,601**, `VariableSymbol:2state` **5,660 → 5,650**, and
+`AssignmentExpression:target` **3,980 → 3,961**. Its differential matrix has
+**17 rows, 13 matches, 0 disagreements, and 4 recorded refusals**.
 
 ### Constant out-of-bounds fixed-array writes — 2026-10-22
 

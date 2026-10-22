@@ -85,6 +85,15 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertTrue(all(d["init"]["operand"]["bits"] == "0" * 29 + "101"
                             for d in decls))
 
+    def test_nested_unpacked_cells_accept_multidimensional_packed_leaf(self):
+        envelope = self.extract(
+            "module top; bit [1:0][3:0] value [0:1]; "
+            "initial begin value[0] = 8'hA5; end endmodule")
+        decls = envelope["design"]["modules"][0]["decls"]
+        self.assertEqual([(d["name"], d["width"]) for d in decls],
+                         [("value[0]", 8), ("value[1]", 8)])
+        self.assertEqual(decls[0]["init"]["bits"], "0" * 8)
+
     def test_fixed_array_out_of_bounds_write_is_empty(self):
         envelope = self.extract(
             "module top; int value [0:3]; "

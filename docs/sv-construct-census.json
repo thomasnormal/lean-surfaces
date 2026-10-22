@@ -16,11 +16,11 @@
   "blocker_files": [
    [
     "VariableSymbol:2state",
-    5660
+    5650
    ],
    [
     "AssignmentExpression:target",
-    3980
+    3961
    ],
    [
     "ExpressionStatement:CallExpression",
@@ -60,7 +60,7 @@
    ],
    [
     "MemberAccessExpression",
-    1187
+    1188
    ],
    [
     "PrimitiveInstanceSymbol:PrimitiveInstance",
@@ -84,7 +84,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    614
+    592
    ],
    [
     "CheckerSymbol",
@@ -255,10 +255,6 @@
     64
    ],
    [
-    "VariableSymbol:range",
-    62
-   ],
-   [
     "TypeAlias:invalid-compilation",
     61
    ],
@@ -333,6 +329,10 @@
    [
     "Package:ClassType",
     45
+   ],
+   [
+    "VariableSymbol:range",
+    41
    ],
    [
     "Package:initializer",
@@ -411,10 +411,6 @@
     26
    ],
    [
-    "NamedValueExpression:range",
-    25
-   ],
-   [
     "ParameterSymbol",
     25
    ],
@@ -449,6 +445,10 @@
    [
     "NetSymbol:Tri1",
     20
+   ],
+   [
+    "NamedValueExpression:range",
+    18
    ],
    [
     "TypeParameterSymbol:TypeParameter",
@@ -831,6 +831,10 @@
     2
    ],
    [
+    "RangeSelectExpression:source-type",
+    2
+   ],
+   [
     "Let:used-before-declaration",
     1
    ],
@@ -967,17 +971,13 @@
     1
    ],
    [
-    "RangeSelectExpression:source-type",
-    1
-   ],
-   [
     "VariableDeclStatement:range",
     1
    ]
   ],
   "by_status": {
-   "clean": 4351,
-   "partial": 17628,
+   "clean": 4378,
+   "partial": 17601,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    3763,
+    3790,
     18678
    ],
    "simulation elaboration": [
@@ -1231,17 +1231,17 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 625,
-    "clean": 415,
-    "partial": 627,
+    "blocked_by_more": 619,
+    "clean": 421,
+    "partial": 621,
     "simulation_tests": 1042,
     "top_residual_blockers": [
      [
-      "AssignmentExpression:target",
-      231
+      "VariableSymbol:2state",
+      228
      ],
      [
-      "VariableSymbol:2state",
+      "AssignmentExpression:target",
       228
      ],
      [
@@ -1258,7 +1258,7 @@
      ],
      [
       "VariableDeclStatement:2state",
-      158
+      156
      ],
      [
       "ConversionExpression:width",
@@ -1282,7 +1282,7 @@
      ],
      [
       "ElementSelectExpression:source-type",
-      49
+      47
      ],
      [
       "TransparentMemberSymbol:TransparentMember",
@@ -1313,7 +1313,7 @@
       17
      ],
      [
-      "VariableSymbol:range",
+      "SubroutineSymbol",
       15
      ]
     ],
@@ -1587,25 +1587,25 @@
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 366,
+    "clean": 367,
     "error": 0,
-    "partial": 252,
+    "partial": 251,
     "skip_include": 0,
     "total": 618,
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 428,
+    "clean": 434,
     "error": 0,
-    "partial": 758,
+    "partial": 752,
     "skip_include": 0,
     "total": 1186,
     "unlockable": 4
    },
    "chapter-7": {
-    "clean": 126,
+    "clean": 146,
     "error": 0,
-    "partial": 670,
+    "partial": 650,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

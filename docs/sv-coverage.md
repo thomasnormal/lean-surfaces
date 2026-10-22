@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 16 | 12 | 0 | 4 | sv-tests-2 declarations |
+| 17 | 13 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -22,6 +22,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `streaming_unpack` | `Examples/system-verilog/streaming_unpack/streaming_unpack.sv` | match | **MATCH** | `ok` | MATCH |
 | `two_state_output` | `Examples/system-verilog/two_state_output/two_state_output.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_2state` | `Examples/system-verilog/fixed_array_2state/fixed_array_2state.sv` | match | **MATCH** | `ok` | MATCH |
+| `fixed_array_packed_leaf_2state` | `Examples/system-verilog/fixed_array_packed_leaf_2state/fixed_array_packed_leaf_2state.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_oob` | `Examples/system-verilog/fixed_array_oob/fixed_array_oob.sv` | match | **MATCH** | `ok` | MATCH |
 | `clog2` | `Examples/system-verilog/clog2/clog2.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_dynamic` | `Examples/system-verilog/unpacked_dynamic/unpacked_dynamic.sv` | match | **MATCH** | `ok` | MATCH |
@@ -240,12 +241,12 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22045 | 4351 | 17628 | 66 |
+| 22045 | 4378 | 17601 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `VariableSymbol:2state` | 5660 |
-| `AssignmentExpression:target` | 3980 |
+| `VariableSymbol:2state` | 5650 |
+| `AssignmentExpression:target` | 3961 |
 | `ExpressionStatement:CallExpression` | 3792 |
 | `CallExpression` | 3292 |
 | `Hierarchy:ports` | 2397 |
@@ -255,7 +256,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 | `InvalidStatement` | 1329 |
 | `ClassType` | 1329 |
 | `Hierarchy:module-kind` | 1248 |
-| `MemberAccessExpression` | 1187 |
+| `MemberAccessExpression` | 1188 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1153 |
 | `ConversionExpression:width` | 780 |
 | `HierarchicalValueExpression` | 749 |

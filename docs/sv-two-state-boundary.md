@@ -10,8 +10,8 @@ The extractor and focused tests cover both declarations and selected reads and
 writes, including signed forms.
 
 The current `VariableSymbol:2state` census tag names the shapes outside that
-value tier. The 2026-10-22 corpus snapshot has 5,660 files containing the tag;
-it is the sole refusal in 22 files. The previous snapshot had 5,744 files and
+value tier. The 2026-10-22 corpus snapshot has 5,650 files containing the tag;
+it is the sole refusal in 20 files. The previous snapshot had 5,660 files and
 28 sole refusals. Its current frequent companions are assignment targets
 (3,176 files), statement calls (2,234), expression calls (2,103),
 `NamedValueExpression:2state` (1,409), classes (1,147), member access (1,120),
@@ -27,7 +27,9 @@ x/z-to-zero assignment conversion. Exact positional and recursively replicated
 assignment patterns are flattened into those cells in declared range order;
 the `fixed_array_pattern_2state` fixture exercises nested replication. Dynamic
 or nonconstant selections, effectful or shape-mismatched patterns, and every
-nonintegral leaf remain loud.
+nonintegral leaf remain loud. A multidimensional packed integral leaf is kept
+as one vector cell, preserving packed bit order; the
+`fixed_array_packed_leaf_2state` fixture exercises that form.
 
 The public representation has no aggregate heap, queue, object, string, real,
 handle, or event scheduler. The symbolic `PDecl`/`PType` representation also

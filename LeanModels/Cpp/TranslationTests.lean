@@ -203,6 +203,13 @@ private def conceptTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "c"), ("kind", .string "ConceptDecl"),
         ("name", .string "Integral"), ("inner", .array [])]])]}
 
+private def deductionGuideTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "g"), ("kind", .string "CXXDeductionGuideDecl"),
+        ("name", .string "Box"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -271,6 +278,9 @@ def variableTemplatePartialSpecializationTranslationWitness : Except String Unit
 
 def conceptTranslationWitness : Except String Unit :=
   admitConceptDeclaration conceptTranslation [0]
+
+def deductionGuideTranslationWitness : Except String Unit :=
+  admitDeductionGuideDeclaration deductionGuideTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -375,6 +385,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard conceptTranslationWitness matches .ok ()
 #guard admitConceptDeclaration conceptTranslation [] matches .error _
 #guard admitConceptDeclaration functionTranslation [0] matches .error _
+#guard deductionGuideTranslationWitness matches .ok ()
+#guard admitDeductionGuideDeclaration deductionGuideTranslation [] matches .error _
+#guard admitDeductionGuideDeclaration functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

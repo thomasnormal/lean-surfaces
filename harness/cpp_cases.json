@@ -275,6 +275,17 @@
     "rung": 0
   },
   {
+    "id": "translation.deduction-guide-declaration",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "deductionGuideTranslationWitness",
+    "cpp_source": "template<class T> struct Box { Box(T); }; Box value(1);",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

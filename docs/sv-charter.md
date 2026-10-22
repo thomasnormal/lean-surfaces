@@ -4753,3 +4753,12 @@ spans: four multidimensional net arrays, one generated net-array case, two
 packed-struct nets and one typedef-struct net. The array labels overlap. Net
 driver storage and aggregate field identity are absent from the envelope, so
 no net is flattened or given a variable store. See [net types](sv-net-types.md).
+
+### `supply1` net boundary — 2026-10-22
+
+The fresh 22,043-path census records `NetSymbol:Supply1` in **56** files: **5**
+are sole refusals and 51 co-occur. Repricing the sole files finds **5** supply
+spans: all five carry a supply-strength logic-one driver, and one also tests a
+continuous-assignment strength context. The envelope has no strength lattice
+or supply driver set, so `supply1` is not replaced by a constant. See
+[the `supply1` boundary](sv-supply1.md).

@@ -1859,3 +1859,9 @@ does not replace or flatten that subject; see [case subjects](sv-case-subjects.m
 aggregate or multidimensional driver storage. The envelope does not flatten
 net arrays, copy them into variables or erase packed-struct identity; see [net
 types](sv-net-types.md).
+
+## `supply1` nets
+
+`NetSymbol:Supply1` remains an explicit unsupported net declaration. The
+envelope has no supply-strength driver or resolution lattice, so it does not
+lower `supply1` to a literal one; see [the `supply1` boundary](sv-supply1.md).

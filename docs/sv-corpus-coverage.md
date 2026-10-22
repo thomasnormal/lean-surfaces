@@ -3197,3 +3197,11 @@ four multidimensional net arrays, one generated net-array case, two packed-
 struct nets and one typedef-struct net. Features overlap. The net type remains
 loud; see [net types](sv-net-types.md) and
 `extractors/sv/net_type_reprice.py`.
+
+## `supply1` net boundary — 2026-10-22
+
+The fresh 22,043-path census records `NetSymbol:Supply1` in **56** files: **5**
+are sole refusals and 51 co-occur. Repricing the sole files finds **5** spans;
+all carry a supply-strength logic-one driver and one has a continuous-strength
+context. The net remains loud; see [the `supply1` boundary](sv-supply1.md) and
+`extractors/sv/supply1_reprice.py`.

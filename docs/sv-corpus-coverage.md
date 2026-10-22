@@ -719,6 +719,19 @@ sampler, dependency set or retained result, so no expression event is reduced
 to one operand or a fixed bit. See [the event expression boundary](sv-event-expressions.md)
 and `extractors/sv/event_expression_reprice.py` for the reproducible scan.
 
+## Level-sensitive wait statements — 2026-10-22
+
+`WaitStatement` remains the level-sensitive condition boundary. The fresh
+**22,035**-path census records it in **65** files: **18** are wait-only and
+**47** co-occurring. Repricing the sole files finds **18** spans: **6**
+already-true/no-block cases, **3** negated conditions, **3** four-state
+producer values, **2** trailing-delay releases, **1** conjunction, **1**
+disjunction, **1** case equality, **1** same-time NBA condition and **1**
+while-loop recheck (features overlap). The envelope has no level-wait sampler
+or dependency registration, so no wait is reduced to an edge control or run
+immediately. See [the wait-statement boundary](sv-wait-statements.md) and
+`extractors/sv/wait_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

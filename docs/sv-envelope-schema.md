@@ -138,6 +138,18 @@ operators and selected expressions remain explicit unsupported nodes. They are
 not rewritten to one operand or an arbitrary selected bit. See the
 [event-expression boundary](sv-event-expressions.md).
 
+### Level-sensitive waits
+
+`WaitStatement` is a source-level `wait (expression)` whose condition is
+sampled on entry and re-evaluated after relevant updates until it is true.
+An already-true condition does not block; a false condition retains the
+process continuation and its four-state result. The envelope has no
+level-wait dependency set, condition sampler or re-entry registration, so
+conjunctions, disjunctions, negated conditions, named-event state and
+same-time publication interactions remain explicit unsupported nodes. A wait
+is not rewritten as an edge wait or an immediate body execution. See the
+[wait-statement boundary](sv-wait-statements.md).
+
 ## Module
 
 Key order: `kind`, `span`, `name`, `ports`, `decls`, `processes`, `others`.

@@ -4222,6 +4222,21 @@ operand or a fixed bit and no second scheduler is introduced. See [the event
 expression boundary](sv-event-expressions.md) and the read-only instrument
 `extractors/sv/event_expression_reprice.py`.
 
+### Level-sensitive wait statements — 2026-10-22
+
+`WaitStatement` is the level-sensitive condition boundary. In the fresh
+22,035-path census it occurs in 65 files: 18 are wait-only and 47 co-occur
+with another wall. The sole files contain 18 spans, including six already-true
+or no-block cases, three negated conditions, three four-state producer values,
+two trailing-delay releases, one conjunction, one disjunction, one case
+equality, one same-time NBA condition and one while-loop recheck (features
+overlap). IEEE §§9.4.3 and 12.6.3 sample the condition at entry and retain the
+continuation while a false condition is re-evaluated after relevant updates.
+The envelope has no level-wait sampler or dependency registration, so no wait
+is reduced to an edge control or executed immediately and no second scheduler
+is introduced. See [the wait-statement boundary](sv-wait-statements.md) and
+the read-only instrument `extractors/sv/wait_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

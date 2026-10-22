@@ -1955,3 +1955,10 @@ scale or alter delay rounding; see [hierarchy timescales](sv-timescale.md).
 `NetSymbol:Supply0` remains an explicit unsupported net declaration. The
 envelope has no supply-strength driver or resolution lattice, so it does not
 lower `supply0` to a literal zero; see [`supply0`](sv-supply0.md).
+
+## System-call formatting
+
+`SysCall:format` remains an explicit unsupported system call when macro
+substitution or runtime format arguments require state absent from the
+envelope. The envelope does not expand macros or reorder output; see
+[system-call formatting](sv-syscall-format.md).

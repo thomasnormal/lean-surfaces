@@ -3312,3 +3312,11 @@ The fresh 22,043-path census records `NetSymbol:Supply0` in **48** files:
 **5** are sole refusals and 43 co-occur. Repricing finds five supply-strength
 net spans, including one continuous-strength context. The net remains loud; see
 [`supply0`](sv-supply0.md) and `extractors/sv/supply0_reprice.py`.
+
+## System-call format boundary — 2026-10-22
+
+The fresh 22,043-path census records `SysCall:format` in **6** files: **5**
+are sole refusals and one co-occurs. Repricing finds five format spans, four
+macro default/empty-argument cases and one runtime display format. The call
+remains loud; see [system-call formatting](sv-syscall-format.md) and
+`extractors/sv/syscall_format_reprice.py`.

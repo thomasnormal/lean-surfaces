@@ -4873,3 +4873,11 @@ The fresh 22,043-path census records `NetSymbol:Supply0` in **48** files:
 net spans, including one continuous-strength context. The envelope has no
 strength lattice or supply driver set, so `supply0` remains loud. See
 [`supply0`](sv-supply0.md).
+
+### System-call format boundary — 2026-10-22
+
+The fresh 22,043-path census records `SysCall:format` in **6** files: **5**
+are sole refusals and one co-occurs. Repricing finds five format spans, four
+macro default/empty-argument cases and one runtime display format. The envelope
+has no macro-expansion trace or format-argument model, so these calls remain
+loud. See [system-call formatting](sv-syscall-format.md).

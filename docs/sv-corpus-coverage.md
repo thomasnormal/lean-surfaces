@@ -583,6 +583,20 @@ status and a no-match diagnostic channel, so no qualifier is erased and no
 branch is selected. See [the priority-if boundary](sv-priority-if.md) and
 `extractors/sv/priority_if_reprice.py` for the reproducible scan.
 
+## Unique0 case statements — 2026-10-22
+
+`CaseStatement:Unique0` remains the first-match plus multiple-match
+diagnostic boundary with an explicitly allowed no-match. The fresh **22,044**-
+path census records it in **8** files, all unique0-case-only. Repricing finds
+**10** spans: **10** no-match-allowed paths without a `default`, **9** no-match
+rows without violation, **3** `casex`, **4** wildcard labels, **2** indexed
+selects, **2** `inside` cases, one `casez` and one multiple-match violation
+row (features overlap). The
+ordinary case chain has no overlap status, so no qualifier is erased, no arm
+is selected and no no-match behavior is invented. See [the unique0-case
+boundary](sv-unique0-cases.md) and
+`extractors/sv/unique0_case_reprice.py` for the reproducible scan.
+
 ## Randcase statements — 2026-10-22
 
 `RandCaseStatement` remains the weighted-random branch boundary. The fresh

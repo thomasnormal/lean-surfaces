@@ -189,6 +189,13 @@ private def classTemplatePartialSpecializationTranslation : Artifact := {emptyTr
       .object [("id", .string "p"), ("kind", .string "ClassTemplatePartialSpecializationDecl"),
         ("name", .string "Sample"), ("inner", .array [])]])]}
 
+private def variableTemplatePartialSpecializationTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "p"), ("kind", .string "VarTemplatePartialSpecializationDecl"),
+        ("name", .string "value"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -251,6 +258,9 @@ def variableTemplateSpecializationTranslationWitness : Except String Unit :=
 
 def classTemplatePartialSpecializationTranslationWitness : Except String Unit :=
   admitClassTemplatePartialSpecializationDeclaration classTemplatePartialSpecializationTranslation [0]
+
+def variableTemplatePartialSpecializationTranslationWitness : Except String Unit :=
+  admitVariableTemplatePartialSpecializationDeclaration variableTemplatePartialSpecializationTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -349,6 +359,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard classTemplatePartialSpecializationTranslationWitness matches .ok ()
 #guard admitClassTemplatePartialSpecializationDeclaration classTemplatePartialSpecializationTranslation [] matches .error _
 #guard admitClassTemplatePartialSpecializationDeclaration functionTranslation [0] matches .error _
+#guard variableTemplatePartialSpecializationTranslationWitness matches .ok ()
+#guard admitVariableTemplatePartialSpecializationDeclaration variableTemplatePartialSpecializationTranslation [] matches .error _
+#guard admitVariableTemplatePartialSpecializationDeclaration functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

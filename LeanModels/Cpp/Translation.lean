@@ -105,6 +105,9 @@ def admitVariableTemplateSpecializationDeclaration (artifact : Artifact) (path :
 def admitClassTemplatePartialSpecializationDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ClassTemplatePartialSpecializationDecl" "class-template-partial-specialization"
 
+def admitVariableTemplatePartialSpecializationDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "VarTemplatePartialSpecializationDecl" "variable-template-partial-specialization"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

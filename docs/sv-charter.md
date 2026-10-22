@@ -4004,6 +4004,19 @@ no fixed arm is selected, and no second scheduler is introduced. See [the
 unique-case boundary](sv-unique-cases.md) and the read-only instrument
 `extractors/sv/unique_case_reprice.py`.
 
+### Randcase statements — 2026-10-22
+
+`RandCaseStatement` is the weighted-random branch boundary. In the fresh
+22,043-path census it occurs in 35 files: 31 are randcase-only and four
+co-occur with another wall. The sole files contain 33 spans, including three
+all-zero-weight cases, 12 zero-weight branches, ten expression-weight spans,
+seven indexed targets, 21 increments and one branch block (features overlap).
+IEEE §12.10/§18.16 samples each weight for the execution and excludes zero
+weights; the envelope has no random oracle, sampled weight vector or selection
+trace. No branch is selected by a fixed seed or source order, and no second
+scheduler is introduced. See [the randcase boundary](sv-randcase.md) and the
+read-only instrument `extractors/sv/randcase_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

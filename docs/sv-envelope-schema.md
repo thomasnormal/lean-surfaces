@@ -1358,6 +1358,11 @@ generated automatic action frame, so alternatives, repeats, weights,
 conditionals and action blocks are not lowered into procedural statements.
 See [the randsequence boundary](sv-randsequence.md).
 
+`RandCaseStatement` remains explicit as a weighted-random branch boundary;
+see [the randcase boundary](sv-randcase.md). The envelope has no sampled
+weight vector, random oracle or weighted-selection trace, so no branch is
+lowered by fixed seed or source order.
+
 ### Legacy package storage provenance
 
 Source-defined packages with admitted scalar/packed integral variables lower

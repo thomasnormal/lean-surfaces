@@ -527,6 +527,18 @@ qualifier is erased and no fixed arm is selected. See [the unique-case
 boundary](sv-unique-cases.md) and `extractors/sv/unique_case_reprice.py` for
 the reproducible scan.
 
+## Randcase statements — 2026-10-22
+
+`RandCaseStatement` remains the weighted-random branch boundary. The fresh
+**22,043**-path census records it in **35** files: **31** are randcase-only and
+**4** co-occurring. Repricing the sole files finds **33** spans: **3**
+all-zero-weight cases, **12** with a zero-weight branch, **10** expression-
+weight spans, **7** indexed targets, **21** increments and **1** branch block
+(features overlap). The envelope has no random oracle, sampled weight vector
+or weighted-selection trace, so no branch is chosen by a fixed seed or source
+order. See [the randcase boundary](sv-randcase.md) and
+`extractors/sv/randcase_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

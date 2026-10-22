@@ -106,6 +106,18 @@
     "rung": 2
   },
   {
+    "id": "expression.integral-operators",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.IntegralRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.IntegralRung3Tests",
+    "lean_expression": "integralExpressionWitness",
+    "cpp_source": "bool expression_witness() { int sum = 7 + 5; int quotient = -7 / 3; int remainder = -7 % 3; int bits = (-3) & 6; return sum == 12 && quotient == -2 && remainder == -1 && bits == 4; }",
+    "cpp_expression": "expression_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

@@ -594,6 +594,19 @@ initializer is folded to a constant, dropped or run as a module process. See
 [the package-initializer boundary](sv-package-initializers.md) and
 `extractors/sv/package_initializer_reprice.py` for the reproducible scan.
 
+## Event lists — 2026-10-22
+
+`TimedStatement:EventListControl` remains the multi-event wait boundary. The
+fresh **22,043**-path census records it in **38** files: **24** are event-list-
+only and **14** co-occurring. Repricing the sole files finds **25** spans:
+**21** `or` lists, **6** comma lists, **10** edge events, **4** `iff` filters,
+**3** lists with at least three events, **4** block bodies, **3** `always_ff`
+controls, **1** parenthesized list, **1** indexed expression and **1**
+procedural assign/deassign (features overlap). The envelope has no multi-event
+registration, per-event guard or retained rearming state, so no list is reduced
+to one signal or a fixed sequence. See [the event-list boundary](sv-event-lists.md)
+and `extractors/sv/event_list_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

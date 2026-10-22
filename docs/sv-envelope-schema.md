@@ -1384,6 +1384,11 @@ runtime package-variable reads, so these initializers are not folded to
 constants, dropped or run as module processes. See [the package-initializer
 boundary](sv-package-initializers.md).
 
+`TimedStatement:EventListControl` remains explicit as a multi-event wait
+boundary. The envelope has no multi-event registration, per-event `iff` guard
+or retained rearming state, so event lists are not lowered to one signal or a
+fixed sequence. See [the event-list boundary](sv-event-lists.md).
+
 ### Legacy package storage provenance
 
 Source-defined packages with admitted scalar/packed integral variables lower

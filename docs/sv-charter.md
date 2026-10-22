@@ -4078,6 +4078,21 @@ as a module process, and no second scheduler is introduced. See [the
 package-initializer boundary](sv-package-initializers.md) and the read-only
 instrument `extractors/sv/package_initializer_reprice.py`.
 
+### Event lists — 2026-10-22
+
+`TimedStatement:EventListControl` is the multi-event wait boundary. In the
+fresh 22,043-path census it occurs in 38 files: 24 are event-list-only and 14
+co-occur with another wall. The sole files contain 25 spans, including 21 `or`
+lists, six comma lists, ten edge events, four `iff` filters, three lists with
+at least three events, four block bodies, three `always_ff` controls, one
+parenthesized list, one indexed expression and one procedural assign/deassign
+(features overlap). IEEE §§9.4.2, 12.4 and 12.6 wake a process on any listed
+event, apply edge and adjacent `iff` filters at occurrence time, and re-arm the
+same continuation. The envelope has no multi-event registration, per-event
+guard or retained rearming state. No list is reduced to one signal or a fixed
+sequence, and no second scheduler is introduced. See [the event-list boundary](sv-event-lists.md)
+and the read-only instrument `extractors/sv/event_list_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

@@ -3096,3 +3096,15 @@ multiple-transition rows, one missing input field, one `z` table symbol and
 one invalid initial output value. UDP declarations and tables remain loud; the
 legacy envelope has no truth-table state or transition matcher. See [the UDP
 boundary](sv-udp.md) and `extractors/sv/udp_reprice.py`.
+
+## Concurrent sequence declaration boundary — 2026-10-22
+
+The fresh 22,043-path census records `SequenceSymbol:Sequence` in **284**
+files: **12** are sequence-only and 272 co-occur. Repricing the sole files
+finds **15** sequence spans: five local variables, four formal arguments,
+seven multiclock rows, one `intersect`, nine temporal concatenations, two
+matched endpoints, one end label, one event/local diagnostic, two
+sequence-typed formals and two sampled-value functions. Features overlap across
+spans. Sequence attempts and sampled history remain outside the envelope; see
+[the sequence boundary](sv-sequences.md) and
+`extractors/sv/sequence_reprice.py`.

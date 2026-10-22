@@ -4644,3 +4644,16 @@ with multiple transitions, one missing input field, one `z` table symbol and
 one invalid initial output value. UDP state tables need a declaration and
 transition matcher absent from the envelope; no table evaluator or driver is
 introduced. See [the UDP boundary](sv-udp.md).
+
+### Concurrent sequence declaration boundary — 2026-10-22
+
+`SequenceSymbol:Sequence` remains a sampled-concurrent sequence boundary. The
+fresh 22,043-path census records it in **284** files: 12 are sequence-only and
+272 co-occur. The independent repricer finds **15** sequence spans in the sole
+files. Overlapping features include five local-variable spans, four formal
+arguments, seven multiclock rows, one `intersect`, nine temporal
+concatenations, two matched endpoints, one end label, one event/local
+diagnostic, two sequence-typed formals and two sampled-value functions. The
+envelope has no sequence-attempt, sampled-history or local/formal frame, so no
+sequence is lowered to a Boolean or immediate assertion. See [the sequence
+boundary](sv-sequences.md).

@@ -1786,3 +1786,11 @@ UDP declarations remain explicit unsupported design members with
 ordered truth-table, current-state/transition matcher, or UDP diagnostic
 status. They are not flattened into expressions or built-in primitive drivers;
 see the [UDP boundary](sv-udp.md).
+
+## Concurrent sequence declarations
+
+`SequenceSymbol:Sequence` remains an explicit unsupported declaration member.
+The envelope has no sampled clock history, temporal attempt state,
+local/formal sequence frame, endpoint matcher or multiclock diagnostic state.
+A sequence is not rewritten as an immediate Boolean or assertion; see the
+[sequence boundary](sv-sequences.md).

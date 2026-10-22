@@ -121,6 +121,17 @@
     "rung": 0
   },
   {
+    "id": "translation.static-assertion",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "staticAssertTranslationWitness",
+    "cpp_source": "static_assert(true);",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "object.automatic-lifetime",
     "kind": "lifetime",
     "corpus": "rung-1 witness",

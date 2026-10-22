@@ -46,7 +46,7 @@ PINNED_CLANG = "21.1.8"
 
 RUNG_STATUS = [
     (0, "§5, §6.2–6.6", "executable", "A bounded TranslationUnitDecl root is admitted; declaration and body execution remains refused."),
-    (1, "§6.7, §6.9", "executable", "Static, automatic, and dynamic storage reservation, integral initialization, lifetime end, and dynamic release execute; unsupported storage remains loud."),
+    (1, "§6.7, §6.9", "executable", "Static, thread, automatic, and dynamic storage reservation, integral initialization, lifetime end, and dynamic release execute; unsupported storage remains loud."),
     (2, "§6.8", "executable", "LP64 scalar/integral values and conversions execute definitionally."),
     (3, "§7", "executable", "Bounded integral expressions and selected callable bodies execute; general overloads do not."),
     (4, "§8", "executable", "Selected callable blocks, branches, loops, switch and transfers execute."),

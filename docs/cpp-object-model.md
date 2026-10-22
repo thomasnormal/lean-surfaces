@@ -69,6 +69,11 @@ value, `endLifetime` creates a tombstone, and `releaseStorage` marks the dynamic
 storage released. Borrowed accesses remain tied to that identity and refuse
 after release rather than observing a later allocation.
 
+Thread storage follows the same one-thread state model with `.thread`: a
+thread-local identity retains its value across accesses and updates in the
+current thread. Thread creation, cross-thread isolation, and thread-exit
+destruction are outside this bounded object store.
+
 ## Validation
 
 `LeanModels/Cpp/ObjectModelTests.lean` uses kernel guards for the complete

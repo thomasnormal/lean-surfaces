@@ -9,7 +9,7 @@ Measured against the C++ charter's N4950 clause ladder. `executable` means a bou
 | rung | N4950 clauses | status | measured boundary |
 |---:|---|---|---|
 | 0 | §5, §6.2–6.6 | **executable** | A bounded TranslationUnitDecl root is admitted; declaration and body execution remains refused. |
-| 1 | §6.7, §6.9 | **executable** | Static, automatic, and dynamic storage reservation, integral initialization, lifetime end, and dynamic release execute; unsupported storage remains loud. |
+| 1 | §6.7, §6.9 | **executable** | Static, thread, automatic, and dynamic storage reservation, integral initialization, lifetime end, and dynamic release execute; unsupported storage remains loud. |
 | 2 | §6.8 | **executable** | LP64 scalar/integral values and conversions execute definitionally. |
 | 3 | §7 | **executable** | Bounded integral expressions and selected callable bodies execute; general overloads do not. |
 | 4 | §8 | **executable** | Selected callable blocks, branches, loops, switch and transfers execute. |
@@ -47,6 +47,6 @@ The grammar census uses one source witness per listed Clang AST node kind. The r
 | measurement | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---|---:|---:|---:|---:|---:|---:|
 | grammar witnesses | 24 | 0 | 0 | 0 | 0 | 24 |
-| differential calls | 10 | 0 | 0 | 0 | 0 | 10 |
+| differential calls | 11 | 0 | 0 | 0 | 0 | 11 |
 
-The differential rows include 1 compile-only translation witness, 5 rung-1 lifetime witnesses, and 4 callable rows from `Examples/cpp/tinyxml2/IsUTF8Continuation.lean`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.
+The differential rows include 1 compile-only translation witness, 6 rung-1 lifetime witnesses, and 4 callable rows from `Examples/cpp/tinyxml2/IsUTF8Continuation.lean`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.

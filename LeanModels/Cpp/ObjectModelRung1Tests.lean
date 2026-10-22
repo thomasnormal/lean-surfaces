@@ -109,11 +109,38 @@ def staticStorageLifecycle : Bool :=
                       | _, _ => false
               | _, _ => false
 
+def threadStorageLifecycle : Bool :=
+  match IntegralObjectStore.empty .lp64 with
+  | .error _ => false
+  | .ok store =>
+      match store.allocate .thread (.builtin .int) with
+      | .error _ => false
+      | .ok (allocated, object) =>
+          match allocated.initializeConverted object (.builtin .short) ⟨.signed 16, 7⟩ with
+          | .error _ => false
+          | .ok initialized =>
+              match initialized.objects.object? object, initialized.borrow object with
+              | some entry, .ok access =>
+                  match initialized.assignConverted access (.builtin .short) ⟨.signed 16, 8⟩ with
+                  | .error _ => false
+                  | .ok firstUpdate =>
+                      match firstUpdate.read access,
+                            firstUpdate.assignConverted access (.builtin .short) ⟨.signed 16, 9⟩ with
+                      | .ok firstValue, .ok secondUpdate =>
+                          match secondUpdate.read access with
+                          | .ok secondValue =>
+                              entry.duration == .thread && firstValue.value == 8 &&
+                                secondValue.value == 9
+                          | .error _ => false
+                      | _, _ => false
+              | _, _ => false
+
 #guard automaticDeclarationLifecycle
 #guard automaticInitializedDeclaration
 #guard automaticAssignmentLifecycle
 #guard dynamicStorageLifecycle
 #guard staticStorageLifecycle
+#guard threadStorageLifecycle
 
 theorem automatic_declaration_lifecycle : automaticDeclarationLifecycle = true := by
   rfl
@@ -130,10 +157,14 @@ theorem dynamic_storage_lifecycle : dynamicStorageLifecycle = true := by
 theorem static_storage_lifecycle : staticStorageLifecycle = true := by
   rfl
 
+theorem thread_storage_lifecycle : threadStorageLifecycle = true := by
+  rfl
+
 #print axioms automatic_declaration_lifecycle
 #print axioms automatic_initialized_declaration
 #print axioms automatic_assignment_lifecycle
 #print axioms dynamic_storage_lifecycle
 #print axioms static_storage_lifecycle
+#print axioms thread_storage_lifecycle
 
 end LeanModels.Cpp.ObjectModelRung1Tests

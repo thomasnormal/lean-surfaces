@@ -70,6 +70,18 @@
     "rung": 1
   },
   {
+    "id": "object.thread-storage",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.ObjectModelRung1Tests",
+    "lean_namespace": "LeanModels.Cpp.ObjectModelRung1Tests",
+    "lean_expression": "threadStorageLifecycle",
+    "cpp_source": "int thread_next() { thread_local int value = 7; return ++value; } bool thread_witness() { return thread_next() == 8 && thread_next() == 9; }",
+    "cpp_expression": "thread_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

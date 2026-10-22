@@ -289,6 +289,7 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
                     | .ok result => success rightResult.frame result
               | .ok result => success leftResult.frame result
           | _ => success frame (.unsupported .unresolvedArithmeticConversions)
+      | .call _ _ => success frame (.unsupported .unresolvedArithmeticConversions)
 termination_by structural fuel
 
 /-- The callback already has smaller fuel; fallthrough itself descends the clause list. -/

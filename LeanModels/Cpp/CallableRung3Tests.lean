@@ -73,6 +73,34 @@ def callableAssignmentWitness : Bool :=
   | .ok (.ok value) => value == signed 7
   | _ => false
 
+def calleeParameter : FrontendHandle := {value := "0x20"}
+
+def addThreeCallee : CallableCallee := {
+  signature := {result := intType, parameters := [intType], variadic := false}
+  parameters := [{declaration := calleeParameter, name := some "value", type := intType}]
+  body := .block (.return_ {
+    expression := .binary "+"
+      {expression := .parameter calleeParameter, sourceType := intType, type := intType}
+      {expression := .integer 3, sourceType := intType, type := intType},
+    sourceType := intType, type := intType})
+}
+
+def callFunction : CallableFunction := {
+  incrementFunction with
+  body := .block (.return_ {
+    expression := .call addThreeCallee [{
+      expression := .parameter parameter
+      sourceType := intType
+      type := intType}]
+    sourceType := intType
+    type := intType})
+}
+
+def callableCallWitness : Bool :=
+  match evaluateCallable 32 .lp64 callFunction [signed 4] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
 def conditionalFunction : CallableFunction := {
   incrementFunction with
   body := .block (.return_ {
@@ -138,6 +166,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callablePostfixWitness
 #guard callableCompoundAssignmentWitness
 #guard callableAssignmentWitness
+#guard callableCallWitness
 #guard callableConditionalWitness
 #guard callableLogicalWitness
 #guard callableLogicalOrWitness
@@ -154,6 +183,9 @@ theorem callable_compound_assignment_witness : callableCompoundAssignmentWitness
 theorem callable_assignment_witness : callableAssignmentWitness = true := by
   rfl
 
+theorem callable_call_witness : callableCallWitness = true := by
+  rfl
+
 theorem callable_conditional_witness : callableConditionalWitness = true := by
   rfl
 
@@ -167,6 +199,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_postfix_witness
 #print axioms callable_compound_assignment_witness
 #print axioms callable_assignment_witness
+#print axioms callable_call_witness
 #print axioms callable_conditional_witness
 #print axioms callable_logical_witness
 #print axioms callable_logical_or_witness

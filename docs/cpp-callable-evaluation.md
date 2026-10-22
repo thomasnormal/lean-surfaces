@@ -23,6 +23,13 @@ rather than becoming host-language behavior. A return carries a returned result
 only after its expression succeeds; an integral failure remains a failure with
 the active frame retained for the caller.
 
+Direct call expressions use an already-selected `CallableCallee` and evaluate
+their integral argument expressions left to right before entering that callee.
+The callee receives the existing profile-checked argument conversion and its
+integral result is checked against the call expression's represented type. This
+is the value-only call boundary; the object-backed evaluator keeps direct calls
+loud until a caller/callee frame bridge can retain shared object state.
+
 N4950 §7.6.1.3 [expr.call] initializes every parameter from its corresponding
 argument. This boundary therefore converts and validates all supplied arguments
 before entering the body, including unused parameters. The already-computed

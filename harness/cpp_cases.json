@@ -178,6 +178,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-direct-call",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableCallWitness",
+    "cpp_source": "int add_three(int value) { return value + 3; } int call_witness(int value) { return add_three(value); } bool callable_witness() { return call_witness(4) == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-conditional",
     "kind": "expression",
     "corpus": "rung-3 witness",

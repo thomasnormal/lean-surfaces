@@ -6,6 +6,18 @@ namespace LeanModels.Cpp
 
 open AdmittedAutomaticDeclStmt
 
+structure CallableParameter where
+  declaration : FrontendHandle
+  name : Option String
+  type : CppTypeEvidence
+  deriving Repr, BEq, Inhabited
+
+structure CallableSignature where
+  result : CppTypeEvidence
+  parameters : List CppTypeEvidence
+  variadic : Bool
+  deriving Repr, BEq, Inhabited
+
 mutual
   inductive CallableExpression where
     | integer (value : Nat)
@@ -17,6 +29,7 @@ mutual
     | comma (left right : TypedCallableExpression)
     | logical (operator : String) (left right : TypedCallableExpression)
     | binary (operator : String) (left right : TypedCallableExpression)
+    | call (callee : CallableCallee) (arguments : List TypedCallableExpression)
     deriving Repr, BEq, Inhabited
 
   structure TypedCallableExpression where
@@ -53,6 +66,12 @@ structure CallableSwitchClause where
   label : Option Int
   body : CallableStatement
   deriving Repr, BEq, Inhabited
+
+  structure CallableCallee where
+    signature : CallableSignature
+    parameters : List CallableParameter
+    body : CallableStatement
+    deriving Repr, BEq, Inhabited
 end
 
 mutual
@@ -63,23 +82,12 @@ mutual
         condition.hasEffects || whenTrue.hasEffects || whenFalse.hasEffects
     | .comma left right | .logical _ left right | .binary _ left right =>
         left.hasEffects || right.hasEffects
+    | .call _ _ => true
     | _ => false
 
   def TypedCallableExpression.hasEffects : TypedCallableExpression → Bool
     | ⟨expression, _, _⟩ => expression.hasEffects
 end
-
-structure CallableParameter where
-  declaration : FrontendHandle
-  name : Option String
-  type : CppTypeEvidence
-  deriving Repr, BEq, Inhabited
-
-structure CallableSignature where
-  result : CppTypeEvidence
-  parameters : List CppTypeEvidence
-  variadic : Bool
-  deriving Repr, BEq, Inhabited
 
 structure CallableFunction where
   occurrence : Declaration

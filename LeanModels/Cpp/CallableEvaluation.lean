@@ -183,98 +183,6 @@ private def evaluateParameter (profile : TargetProfile) (parameters : List Calla
   | .undefined reason => pure (.undefined reason)
   | .unsupported reason => pure (.unsupported reason)
 
-private def evaluateTyped (fuel : Nat) (profile : TargetProfile)
-    (parameters : List CallableParameter) (arguments : List IntegralValue)
-    (typed : TypedCallableExpression) :
-    Except CallableEvaluationError (IntegralResult IntegralValue × List IntegralValue) :=
-  match fuel with
-  | 0 => .error .fuelExhausted
-  | fuel + 1 =>
-      match typed.expression with
-      | .integer value => (evaluateInteger profile typed value).map (fun result => (result, arguments))
-      | .parameter declaration =>
-          (evaluateParameter profile parameters arguments typed declaration).map
-            (fun result => (result, arguments))
-      | .increment operator isPostfix declaration => do
-          let (result, updated) ← evaluateIncrement profile parameters arguments operator isPostfix declaration
-          match result with
-          | .ok value =>
-              let expected ← formatFor profile typed.type
-              unless value.format == expected do throw .expressionTypeMismatch
-              pure (result, updated)
-          | _ => pure (result, updated)
-      | .convert operand => do
-          let (operandResult, updated) ← evaluateTyped fuel profile parameters arguments operand
-          match operandResult with
-          | .ok operandValue =>
-              (convertTo profile typed.type operandValue).map (fun result => (result, updated))
-          | result => pure (result, updated)
-      | .unary operator operand => do
-          let some operation := unaryOperator? operator
-            | .error (.unsupportedOperator operator)
-          let (operandResult, updated) ← evaluateTyped fuel profile parameters arguments operand
-          match operandResult with
-          | .ok operandValue =>
-              let result := integralUnary operation operandValue
-              match result with
-              | .ok value =>
-                  let expected ← formatFor profile typed.type
-                  if value.format == expected then pure (result, updated)
-                  else .error .expressionTypeMismatch
-              | result => pure (result, updated)
-          | result => pure (result, updated)
-      | .conditional condition whenTrue whenFalse => do
-          let (conditionResult, afterCondition) ←
-            evaluateTyped fuel profile parameters arguments condition
-          match conditionResult with
-          | .ok value =>
-              if value.value == 0 then
-                evaluateTyped fuel profile parameters afterCondition whenFalse
-              else
-                evaluateTyped fuel profile parameters afterCondition whenTrue
-          | result => pure (result, afterCondition)
-      | .comma left right => do
-          let (leftResult, afterLeft) ← evaluateTyped fuel profile parameters arguments left
-          match leftResult with
-          | .ok _ => evaluateTyped fuel profile parameters afterLeft right
-          | result => pure (result, afterLeft)
-      | .logical operator left right => do
-          unless operator == "&&" || operator == "||" do
-            throw (.unsupportedOperator operator)
-          let (leftResult, afterLeft) ← evaluateTyped fuel profile parameters arguments left
-          match leftResult with
-          | .ok leftValue =>
-              let leftTrue := leftValue.value != 0
-              if operator == "&&" && !leftTrue then
-                pure (.ok (integralBoolean false), afterLeft)
-              else if operator == "||" && leftTrue then
-                pure (.ok (integralBoolean true), afterLeft)
-              else
-                let (rightResult, afterRight) ← evaluateTyped fuel profile parameters afterLeft right
-                match rightResult with
-                | .ok rightValue => pure (.ok (integralBoolean (rightValue.value != 0)), afterRight)
-                | result => pure (result, afterRight)
-          | result => pure (result, afterLeft)
-      | .binary operator left right => do
-          if left.expression.hasEffects || right.expression.hasEffects then
-            throw .unsequencedEffects
-          let some operation := operator? operator
-            | .error (.unsupportedOperator operator)
-          let (leftResult, _) ← evaluateTyped fuel profile parameters arguments left
-          let (rightResult, _) ← evaluateTyped fuel profile parameters arguments right
-          match leftResult, rightResult with
-          | .ok leftValue, .ok rightValue =>
-              let result := integralBinary operation leftValue rightValue
-              match result with
-              | .ok value =>
-                  let expected ← formatFor profile typed.type
-                  if value.format == expected then pure (result, arguments)
-                  else .error .expressionTypeMismatch
-              | result => pure (result, arguments)
-          | .invalid reason, _ | _, .invalid reason => pure (.invalid reason, arguments)
-          | .undefined reason, _ | _, .undefined reason => pure (.undefined reason, arguments)
-          | .unsupported reason, _ | _, .unsupported reason => pure (.unsupported reason, arguments)
-
 private inductive CallableExecution where
   | normal (arguments : List IntegralValue)
   | returned (result : IntegralResult IntegralValue) (arguments : List IntegralValue)
@@ -315,7 +223,168 @@ private def evaluateSwitchClauses
       | .break_ updated => pure (.normal updated)
       | .returned _ _ | .failed _ _ | .continue_ _ => pure result
 
+private def mapIntegralResult (result : IntegralResult α) (map : α → β) : IntegralResult β :=
+  match result with
+  | .ok value => .ok (map value)
+  | .invalid reason => .invalid reason
+  | .undefined reason => .undefined reason
+  | .unsupported reason => .unsupported reason
+
 mutual
+  private def evaluateCallArguments (fuel : Nat) (profile : TargetProfile)
+      (parameters : List CallableParameter) (arguments : List IntegralValue)
+      (expressions : List TypedCallableExpression) :
+      Except CallableEvaluationError (IntegralResult (List IntegralValue) × List IntegralValue) :=
+    match fuel with
+    | 0 => .error .fuelExhausted
+    | fuel + 1 =>
+        match expressions with
+        | [] => .ok (.ok [], arguments)
+        | expression :: rest => do
+            let (result, updated) ← evaluateTyped fuel profile parameters arguments expression
+            match result with
+            | .ok value =>
+                let (tail, finalArguments) ← evaluateCallArguments fuel profile parameters updated rest
+                pure (match tail with
+                  | .ok values => .ok (value :: values)
+                  | .invalid reason => .invalid reason
+                  | .undefined reason => .undefined reason
+                  | .unsupported reason => .unsupported reason,
+                  finalArguments)
+            | result => pure (mapIntegralResult result (fun _ => []), updated)
+
+  termination_by structural fuel
+
+  private def evaluateCallableCallee (fuel : Nat) (profile : TargetProfile)
+      (callee : CallableCallee) (arguments : List IntegralValue) :
+      Except CallableEvaluationError (IntegralResult IntegralValue) := do
+    match fuel with
+    | 0 => throw .fuelExhausted
+    | fuel + 1 =>
+        unless profile.valid do throw .invalidProfile
+        if callee.signature.result == .void then throw (.unsupportedType .void)
+        if arguments.length != callee.parameters.length then throw .arityMismatch
+        let converted ← convertArguments profile callee.parameters arguments
+        match converted with
+        | .ok values =>
+            let execution ← evaluateCallableStatement fuel profile callee.parameters values callee.body
+            match execution with
+            | .normal _ => throw .missingReturn
+            | .returned result _ | .failed result _ => pure result
+            | .break_ _ => throw .breakOutsideLoop
+            | .continue_ _ => throw .continueOutsideLoop
+        | .invalid reason => pure (.invalid reason)
+        | .undefined reason => pure (.undefined reason)
+        | .unsupported reason => pure (.unsupported reason)
+
+  termination_by structural fuel
+
+  private def evaluateTyped (fuel : Nat) (profile : TargetProfile)
+      (parameters : List CallableParameter) (arguments : List IntegralValue)
+      (typed : TypedCallableExpression) :
+      Except CallableEvaluationError (IntegralResult IntegralValue × List IntegralValue) :=
+    match fuel with
+    | 0 => .error .fuelExhausted
+    | fuel + 1 =>
+        match typed.expression with
+        | .integer value => (evaluateInteger profile typed value).map (fun result => (result, arguments))
+        | .parameter declaration =>
+            (evaluateParameter profile parameters arguments typed declaration).map
+              (fun result => (result, arguments))
+        | .increment operator isPostfix declaration => do
+            let (result, updated) ← evaluateIncrement profile parameters arguments operator isPostfix declaration
+            match result with
+            | .ok value =>
+                let expected ← formatFor profile typed.type
+                unless value.format == expected do throw .expressionTypeMismatch
+                pure (result, updated)
+            | _ => pure (result, updated)
+        | .convert operand => do
+            let (operandResult, updated) ← evaluateTyped fuel profile parameters arguments operand
+            match operandResult with
+            | .ok operandValue =>
+                (convertTo profile typed.type operandValue).map (fun result => (result, updated))
+            | result => pure (result, updated)
+        | .unary operator operand => do
+            let some operation := unaryOperator? operator
+              | .error (.unsupportedOperator operator)
+            let (operandResult, updated) ← evaluateTyped fuel profile parameters arguments operand
+            match operandResult with
+            | .ok operandValue =>
+                let result := integralUnary operation operandValue
+                match result with
+                | .ok value =>
+                    let expected ← formatFor profile typed.type
+                    if value.format == expected then pure (result, updated)
+                    else .error .expressionTypeMismatch
+                | result => pure (result, updated)
+            | result => pure (result, updated)
+        | .conditional condition whenTrue whenFalse => do
+            let (conditionResult, afterCondition) ←
+              evaluateTyped fuel profile parameters arguments condition
+            match conditionResult with
+            | .ok value =>
+                if value.value == 0 then
+                  evaluateTyped fuel profile parameters afterCondition whenFalse
+                else
+                  evaluateTyped fuel profile parameters afterCondition whenTrue
+            | result => pure (result, afterCondition)
+        | .comma left right => do
+            let (leftResult, afterLeft) ← evaluateTyped fuel profile parameters arguments left
+            match leftResult with
+            | .ok _ => evaluateTyped fuel profile parameters afterLeft right
+            | result => pure (result, afterLeft)
+        | .logical operator left right => do
+            unless operator == "&&" || operator == "||" do
+              throw (.unsupportedOperator operator)
+            let (leftResult, afterLeft) ← evaluateTyped fuel profile parameters arguments left
+            match leftResult with
+            | .ok leftValue =>
+                let leftTrue := leftValue.value != 0
+                if operator == "&&" && !leftTrue then
+                  pure (.ok (integralBoolean false), afterLeft)
+                else if operator == "||" && leftTrue then
+                  pure (.ok (integralBoolean true), afterLeft)
+                else
+                  let (rightResult, afterRight) ← evaluateTyped fuel profile parameters afterLeft right
+                  match rightResult with
+                  | .ok rightValue => pure (.ok (integralBoolean (rightValue.value != 0)), afterRight)
+                  | result => pure (result, afterRight)
+            | result => pure (result, afterLeft)
+        | .call callee callArguments => do
+            let (argumentResult, afterArguments) ←
+              evaluateCallArguments fuel profile parameters arguments callArguments
+            match argumentResult with
+            | .ok values =>
+                let called ← evaluateCallableCallee fuel profile callee values
+                match called with
+                | .ok value =>
+                    let expected ← formatFor profile typed.type
+                    if value.format == expected then pure (called, afterArguments)
+                    else .error .expressionTypeMismatch
+                | result => pure (result, afterArguments)
+            | result => pure (mapIntegralResult result (fun _ => default), afterArguments)
+        | .binary operator left right => do
+            if left.expression.hasEffects || right.expression.hasEffects then
+              throw .unsequencedEffects
+            let some operation := operator? operator
+              | .error (.unsupportedOperator operator)
+            let (leftResult, _) ← evaluateTyped fuel profile parameters arguments left
+            let (rightResult, _) ← evaluateTyped fuel profile parameters arguments right
+            match leftResult, rightResult with
+            | .ok leftValue, .ok rightValue =>
+                let result := integralBinary operation leftValue rightValue
+                match result with
+                | .ok value =>
+                    let expected ← formatFor profile typed.type
+                    if value.format == expected then pure (result, arguments)
+                    else .error .expressionTypeMismatch
+                | result => pure (result, arguments)
+            | .invalid reason, _ | _, .invalid reason => pure (.invalid reason, arguments)
+            | .undefined reason, _ | _, .undefined reason => pure (.undefined reason, arguments)
+            | .unsupported reason, _ | _, .unsupported reason => pure (.unsupported reason, arguments)
+
+  termination_by structural fuel
   /-- Iterations exclude the initializer, which the for statement executes once.
   Body completion (including continue through a switch) reaches the step only
   after the body has returned. Inner loops consume their own transfers. -/

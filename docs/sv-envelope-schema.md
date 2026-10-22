@@ -1818,3 +1818,10 @@ selection when the source is a scalar, a nested packed-union member array or
 an unpacked array whose out-of-bounds state rule is not represented. The
 envelope does not flatten aggregate layout or fabricate a zero/unknown/base
 value; see [element-select source types](sv-element-select-source.md).
+
+## Package subroutines
+
+`Package:Subroutine` remains an explicit unsupported package declaration. The
+envelope has no package callable table, constant-function frame or DPI ABI
+representation, so package functions and DPI imports are not dropped, inlined
+or replaced with guessed results; see [package subroutines](sv-package-subroutines.md).

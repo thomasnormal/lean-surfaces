@@ -3140,3 +3140,12 @@ member selections, two two-state unpacked-array out-of-bounds reads, two
 four-state out-of-bounds reads and one enum-array base-type result. The source
 type remains loud; see [element-select source types](sv-element-select-source.md)
 and `extractors/sv/element_select_source_reprice.py`.
+
+## Package subroutine boundary — 2026-10-22
+
+The fresh 22,043-path census records `Package:Subroutine` in **194** files:
+**10** are sole refusals and 184 co-occur. Repricing the sole files finds
+**12** spans: ten package function declarations, nine constant-function uses,
+one nonconstant package function and two DPI imports. Features overlap. The
+package callable boundary remains loud; see [package subroutines](sv-package-subroutines.md)
+and `extractors/sv/package_subroutine_reprice.py`.

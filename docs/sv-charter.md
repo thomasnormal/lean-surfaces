@@ -4693,3 +4693,13 @@ The selected-read envelope has no general aggregate layout or
 state-kind-specific out-of-bounds rule, so it does not flatten a union, invent
 a scalar index or choose an unknown/zero result. See [element-select
 source types](sv-element-select-source.md).
+
+### Package subroutine boundary — 2026-10-22
+
+The fresh 22,043-path census records `Package:Subroutine` in **194** files:
+**10** are sole refusals and 184 co-occur. Repricing those sole files finds
+**12** spans: ten package function declarations, nine constant-function uses,
+one nonconstant package function and two DPI imports. The declaration and
+constant-use labels overlap. Package callable tables, constant-function
+frames and DPI linkage are absent from the legacy envelope, so no package
+subroutine is erased or inlined. See [package subroutines](sv-package-subroutines.md).

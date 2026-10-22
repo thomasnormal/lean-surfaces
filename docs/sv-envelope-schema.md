@@ -1368,6 +1368,11 @@ target-scope identity or cancellation continuation. The envelope therefore
 does not lower a disable to `break`, return or silent child cancellation.
 See [the disable boundary](sv-disable.md).
 
+`SpecifyBlockSymbol:SpecifyBlock` remains explicit as a structural timing-model
+boundary. The envelope has no path-delay graph, timing-check monitor, pulse
+state or notifier publication, so specify declarations are not lowered to
+procedural statements or a fixed delay. See [the specify boundary](sv-specify.md).
+
 ### Legacy package storage provenance
 
 Source-defined packages with admitted scalar/packed integral variables lower

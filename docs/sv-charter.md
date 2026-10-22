@@ -4031,6 +4031,22 @@ retained continuation tree. No target is guessed, no disable is lowered to
 introduced. See [the disable boundary](sv-disable.md) and the read-only
 instrument `extractors/sv/disable_reprice.py`.
 
+### Specify blocks — 2026-10-22
+
+`SpecifyBlockSymbol:SpecifyBlock` is the structural timing-model boundary. In
+the fresh 22,043-path census it occurs in 54 files: 28 are specify-only and 26
+co-occur with another wall. The sole files contain 28 spans, including 14
+timing checks, 12 module paths, 14 edge-sensitive forms, ten scalar delays,
+seven notifier references, five state-dependent paths, four indexed terminals,
+three conditional paths, three polarity forms, two tuple delays, one `ifnone`
+path, one illegal edge specification, one invalid concurrent assertion and one
+invalid system task (features overlap). IEEE §§30–32 give these declarations
+path-delay, timing-check, pulse and diagnostic semantics. The envelope has no
+path-delay graph, timing-check monitor, pulse state or notifier publication.
+No specify declaration is dropped or run as a procedural block, and no second
+scheduler is introduced. See [the specify boundary](sv-specify.md) and the
+read-only instrument `extractors/sv/specify_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

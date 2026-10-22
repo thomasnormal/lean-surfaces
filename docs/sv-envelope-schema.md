@@ -1400,6 +1400,12 @@ boundary. The envelope has no package diagnostic provenance or partial-
 elaboration contract, so a rejected package is not salvaged by dropping its
 imports or declarations. See [the invalid-package boundary](sv-package-invalid.md).
 
+`ProceduralAssignStatement` remains explicit as a retained-driver boundary.
+The envelope has no procedural-driver identity, RHS sensitivity set,
+force/release priority or net-resolution restoration state, so procedural
+`assign`/`deassign` and `force`/`release` statements are not rewritten as
+ordinary blocking assignments. See [the procedural assign boundary](sv-procedural-assign.md).
+
 ### Legacy package storage provenance
 
 Source-defined packages with admitted scalar/packed integral variables lower

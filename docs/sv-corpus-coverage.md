@@ -634,6 +634,21 @@ the frontend rejection as a design-level marker; it does not salvage package
 declarations or choose an import resolution. See [the invalid-package boundary](sv-package-invalid.md)
 and `extractors/sv/package_invalid_reprice.py` for the reproducible scan.
 
+## Procedural continuous assignments and force/release — 2026-10-22
+
+`ProceduralAssignStatement` remains the retained-driver boundary. The fresh
+**22,043**-path census records it in **112** files: **23** are
+procedural-assign-only and **89** co-occurring. Repricing the sole files finds
+**27** spans: **16** `assign` and **11** `force`, **13** nonliteral RHS
+expressions, **6** explicit reevaluation/sensitivity scenarios, **7** priority
+cases, **6** active-assignment replacements, **3** mixed-assignment
+diagnostics, **3** net targets, **24** variable targets, **1** concatenation
+LHS, **1** part-select LHS, **1** event-triggered process and **2** chapter-37
+statement forms (features overlap). The envelope has no procedural-driver,
+force-priority or release-restoration state, so these forms are not lowered to
+ordinary assignments. See [the procedural assign boundary](sv-procedural-assign.md)
+and `extractors/sv/procedural_assign_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

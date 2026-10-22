@@ -4126,6 +4126,23 @@ elaborator or second scheduler is introduced. See [the invalid-package
 boundary](sv-package-invalid.md) and the read-only instrument
 `extractors/sv/package_invalid_reprice.py`.
 
+### Procedural continuous assignments and force/release — 2026-10-22
+
+`ProceduralAssignStatement` is the retained-driver boundary. In the fresh
+22,043-path census it occurs in 112 files: 23 are procedural-assign-only and
+89 co-occur with another wall. The sole files contain 27 spans: 16 `assign`
+forms and 11 `force` forms, including nonliteral RHS expressions, explicit
+reevaluation scenarios, force/assign priority, replacement of an active
+assignment, mixed-assignment diagnostics, net and variable targets,
+concatenation and part-select LHS forms, an event-triggered process and two
+chapter-37 statement forms (features overlap). IEEE §§4.9.2, 10.6.1 and
+10.6.2 require retained procedural drivers, source sensitivity, force priority
+and release restoration. The envelope has no such driver or resolution state,
+so `assign`, `deassign`, `force` and `release` remain loud; no second
+scheduler is introduced. See [the procedural assign boundary](sv-procedural-assign.md)
+and the read-only instrument
+`extractors/sv/procedural_assign_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

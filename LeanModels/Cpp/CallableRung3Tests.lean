@@ -54,6 +54,25 @@ def callableCompoundAssignmentWitness : Bool :=
   | .ok (.ok value) => value == signed 7
   | _ => false
 
+def assignmentFunction : CallableFunction := {
+  incrementFunction with
+  body := .block (.sequence
+    (.assign parameter
+      {expression := .binary "+"
+        {expression := .parameter parameter, sourceType := intType, type := intType}
+        {expression := .integer 3, sourceType := intType, type := intType},
+        sourceType := intType, type := intType})
+    (.return_ {
+      expression := .parameter parameter
+      sourceType := intType
+      type := intType}))
+}
+
+def callableAssignmentWitness : Bool :=
+  match evaluateCallable 16 .lp64 assignmentFunction [signed 4] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
 def conditionalFunction : CallableFunction := {
   incrementFunction with
   body := .block (.return_ {
@@ -118,6 +137,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableIncrementWitness
 #guard callablePostfixWitness
 #guard callableCompoundAssignmentWitness
+#guard callableAssignmentWitness
 #guard callableConditionalWitness
 #guard callableLogicalWitness
 #guard callableLogicalOrWitness
@@ -129,6 +149,9 @@ theorem callable_postfix_witness : callablePostfixWitness = true := by
   rfl
 
 theorem callable_compound_assignment_witness : callableCompoundAssignmentWitness = true := by
+  rfl
+
+theorem callable_assignment_witness : callableAssignmentWitness = true := by
   rfl
 
 theorem callable_conditional_witness : callableConditionalWitness = true := by
@@ -143,6 +166,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_increment_witness
 #print axioms callable_postfix_witness
 #print axioms callable_compound_assignment_witness
+#print axioms callable_assignment_witness
 #print axioms callable_conditional_witness
 #print axioms callable_logical_witness
 #print axioms callable_logical_or_witness

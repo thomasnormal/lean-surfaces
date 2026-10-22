@@ -179,3 +179,7 @@ call profile, not whole-program execution.
 Void functions use the [result API](cpp-void-callables.md), where successful
 `none` denotes no value. The integral-only APIs refuse a void result before
 executing the body.
+
+`CallableRung3Tests.lean` adds a kernel-reduced prefix-increment call witness:
+the parameter state is updated once and the returned value is the incremented
+value. The corresponding coverage row calls an unchanged C++ function.

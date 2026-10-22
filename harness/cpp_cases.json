@@ -130,6 +130,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-prefix-increment",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableIncrementWitness",
+    "cpp_source": "int increment_witness(int value) { return ++value; } bool callable_witness() { return increment_witness(4) == 5; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

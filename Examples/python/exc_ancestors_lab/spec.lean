@@ -42,7 +42,7 @@ set_option maxRecDepth 8192
 #py_check exc_ancestors_lab.arithmetic_mutation() = (Val.list #[.int 0, .int 1, .int 3])
 #py_check exc_ancestors_lab.lookup_mutation() = (Val.list #[.int 0, .int 1, .int 3])
 #py_check exc_ancestors_lab.nested_fallthrough() = (Val.list #[.int 0, .int 1, .int 3])
-#py_check exc_ancestors_lab.handler_raises() raises .indexError
+#py_check exc_ancestors_lab.handler_raises() raises .indexErrorTuple
 #py_check exc_ancestors_lab.nested_handler_raises() =
   (Val.list #[.int 0, .int 1, .int 2, .int 3])
 #py_check exc_ancestors_namesake.base_user() = 41
@@ -50,7 +50,7 @@ set_option maxRecDepth 8192
 #py_check exc_ancestors_namesake.arithmetic_user() = 43
 #py_check exc_ancestors_namesake.arithmetic_builtin() raises .zeroDivisionError
 #py_check exc_ancestors_namesake.lookup_user() = 45
-#py_check exc_ancestors_namesake.lookup_builtin() raises .indexError
+#py_check exc_ancestors_namesake.lookup_builtin() raises .indexErrorTuple
 
 #guard callFunction exc_ancestors_lab "parameter_shadow" #[.int 1] 4096 matches .unsupported _
 #guard callFunction exc_ancestors_lab "body_shadow" #[] 4096 matches .unsupported _

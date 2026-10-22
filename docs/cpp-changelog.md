@@ -5,6 +5,21 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.9] — 2026-10-22
+
+### Added
+
+- Rung-0 metadata gates for `CXXMethodDecl`, `EnumConstantDecl`,
+  `AccessSpecDecl`, `CXXConstructorDecl`, `CXXDestructorDecl` and
+  `CXXConversionDecl`, all checked at exact retained AST paths.
+
+### Measured
+
+- The checked-in corpus now contains 57 differential rows and 24 grammar
+  witnesses. With pinned Clang/LLVM 21.1.8 unavailable, the run reports 0
+  MATCH, 0 DIVERGE, 0 REFUSE, 0 TIMEOUT, and 57 ORACLE rows; grammar reports
+  24 ORACLE rows.
+
 ## [0.1.8] — 2026-10-22
 
 ### Added

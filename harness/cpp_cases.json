@@ -165,6 +165,17 @@
     "rung": 0
   },
   {
+    "id": "translation.template-template-parameter",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "templateTemplateParameterTranslationWitness",
+    "cpp_source": "template<template<class> class Q> struct Sample {};",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

@@ -4789,3 +4789,12 @@ finds seven rejected hierarchy spans covering localparam overrides, parameter
 assignment order/duplication, zero-port instance syntax and a hierarchical
 `type()` reference. The envelope has no partial-hierarchy diagnostic state,
 so rejected designs remain loud. See [invalid hierarchies](sv-invalid-hierarchies.md).
+
+### Conditional event (`iff`) boundary — 2026-10-22
+
+The fresh 22,043-path census records `SignalEventControl:iff` in **7** files;
+all **7** are sole refusals. Repricing finds four procedural event guards,
+two `always_ff` guards and one procedural `always` guard, with three edge and
+four level-qualified forms. The wait representation has no occurrence-time
+guard or inferred-clock state, so `iff` controls remain loud. See
+[conditional events](sv-event-iff.md).

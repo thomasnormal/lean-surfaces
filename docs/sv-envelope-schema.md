@@ -1888,3 +1888,10 @@ when frontend elaboration rejects module parameter assignment, port-list
 syntax, localparam overrides or a hierarchical `type()` reference. The
 envelope does not fabricate a partial instance tree or erase the diagnostic;
 see [invalid hierarchies](sv-invalid-hierarchies.md).
+
+## Conditional event controls
+
+`SignalEventControl:iff` remains an explicit unsupported event control when an
+occurrence-time `iff` guard qualifies an ordinary or `always_ff` event. The
+envelope does not drop the guard, turn it into a separate event or fabricate
+an inferred clock; see [conditional events](sv-event-iff.md).

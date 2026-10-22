@@ -3230,3 +3230,11 @@ seven rejected hierarchy spans across parameter assignment, port-list syntax,
 localparam overrides and hierarchical `type()` references. The rejected
 hierarchy remains loud; see [invalid hierarchies](sv-invalid-hierarchies.md)
 and `extractors/sv/hierarchy_invalid_reprice.py`.
+
+## Conditional event (`iff`) boundary — 2026-10-22
+
+The fresh 22,043-path census records `SignalEventControl:iff` in **7** files;
+all **7** are sole refusals. Repricing finds four procedural event guards,
+two `always_ff` guards and one procedural `always` guard, with three edge and
+four level-qualified forms. The guard remains loud; see [conditional events](sv-event-iff.md)
+and `extractors/sv/event_iff_reprice.py`.

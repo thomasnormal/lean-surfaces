@@ -302,7 +302,9 @@ still supplies its own body witness, so this addition does not select an
 overload or execute a variadic method. The real census carries all 23
 parameter witnesses into `IntegralMemberMethodProfile.admit`; all 23 stop at
 the named `unsupported-body` profile refusal, with no enum argument reaching
-setter execution.
+setter execution. `bindWithArgumentParameterValue` now requires that same
+parameter witness before evaluating and invoking a setter call; the call
+record retains it as source provenance.
 
 The kernel battery also mutates independent copies of this evidence: a wrong
 parameter type, an out-of-range ordinal, a malformed parameter-type row, and a

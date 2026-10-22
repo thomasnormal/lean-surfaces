@@ -484,28 +484,22 @@ private def setup : Option
 private def projection (access : IntegralMemberThisFieldAccess)
     (representation : IntegralMemberEnumRepresentation) (input : Int) :
     ClassReceiverProjection :=
-  let hierarchy : ClassHierarchy := {
-    root := access.owner,
-    classes := [{declaration := access.owner, isAbstract := false, bases := [],
-      fields := [access.field], friends := [], name := "Sample"}]}
-  let memory : IntegralObjectStore := {
-    profile := .lp64,
-    objects := {objects := [
-      {duration := .automatic, type := .record access.owner, phase := .aliveInitialized},
-      {duration := .automatic, type := .builtin representation.underlying,
-        phase := .aliveInitialized}]},
-    values := [none, some ⟨.unsigned 32, input⟩]}
+  let shape : ClassShape := {declaration := access.owner, isAbstract := false, bases := [], fields := [access.field], friends := [], name := "Sample"}
+  let hierarchy : ClassHierarchy := {root := access.owner, classes := [shape]}
+  let rootObject : CppObject := {duration := .automatic, type := .record access.owner, phase := .aliveInitialized}
+  let memberObject : CppObject := {duration := .automatic, type := .builtin representation.underlying, phase := .aliveInitialized}
+  let memory : IntegralObjectStore := {profile := .lp64, objects := {objects := [rootObject, memberObject]}, values := [none, some ⟨.unsigned 32, input⟩]}
   {hierarchy, objects := [0], receiverPath := [],
-    snapshot := {memory, object := 0, member := 1, field := access.field}}
+    snapshot := {memory := memory, object := 0, member := 1, field := access.field}}
 
 def cases : List (Int × Int) := [''' + pairs + r''']
 #guard setup.isSome
 #guard cases.all (fun (input, expected) =>
   match setup with
-  | some (callSyntax, setter, access, sourceArgument, _, _, representation) =>
+  | some (callSyntax, setter, access, sourceArgument, sourceParameter, _, representation) =>
       let before := projection access representation 0
-      match IntegralMemberEnumSetterCall.bindWithArgumentValue callSyntax setter access
-          callSyntax.receiver sourceArgument ⟨.unsigned 32, input⟩ before with
+      match IntegralMemberEnumSetterCall.bindWithArgumentParameterValue callSyntax setter access
+          callSyntax.receiver sourceArgument sourceParameter ⟨.unsigned 32, input⟩ before with
       | .ok call =>
           match call.invoke with
           | .ok store =>

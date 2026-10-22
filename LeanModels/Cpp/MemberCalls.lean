@@ -1280,6 +1280,7 @@ structure IntegralMemberEnumSetterCall where
   argument : IntegralMemberEnumValue
   projection : ClassReceiverProjection
   sourceArgument : Option IntegralMemberEnumArgument := none
+  sourceParameter : Option IntegralMemberEnumParameterEvidence := none
   deriving Repr, BEq, Inhabited
 
 inductive IntegralMemberEnumSetterCallError where
@@ -1369,6 +1370,20 @@ def bindWithArgumentValue (callSyntax : IntegralMemberCallSyntax)
   let argument ← IntegralMemberEnumArgument.evaluate sourceArgument setter.representation
       projection.snapshot.memory.profile stored |>.mapError .argumentValueMismatch
   bindWithArgument callSyntax setter access receiver sourceArgument argument projection
+
+/-- Bind a setter call only after both the direct enum argument and its
+probe-backed parameter declaration have been witnessed. The value remains
+caller-supplied; this wrapper adds no conversion or overload lookup. -/
+def bindWithArgumentParameterValue (callSyntax : IntegralMemberCallSyntax)
+    (setter : IntegralMemberEnumSetter) (access : IntegralMemberThisFieldAccess)
+    (receiver : FrontendHandle) (sourceArgument : IntegralMemberEnumArgument)
+    (sourceParameter : IntegralMemberEnumParameterEvidence) (stored : IntegralValue)
+    (projection : ClassReceiverProjection) :
+    Except IntegralMemberEnumSetterCallError IntegralMemberEnumSetterCall := do
+  let _ ← IntegralMemberEnumArgument.bindToEvidence sourceArgument sourceParameter
+    |>.mapError .argumentEvidenceMismatch
+  let call ← bindWithArgumentValue callSyntax setter access receiver sourceArgument stored projection
+  pure {call with sourceParameter := some sourceParameter}
 
 end IntegralMemberEnumSetterCall
 

@@ -761,19 +761,17 @@ private def enumArgumentValueWrongEnum : Bool :=
   | _, _ => false
 
 private def enumSetterCallObserved : Option Int :=
-  match enumSetterEvidence with
-  | some setter =>
-      match enumSetterSourceArgument with
-      | some sourceArgument =>
-        match IntegralMemberEnumSetterCall.bindWithArgumentValue enumSetterCallSyntax setter
-            enumSetterCallAccess receiverHandle sourceArgument ⟨.unsigned 32, 9⟩ enumProjection with
+  match enumSetterEvidence, enumSetterSourceArgument, enumParameterEvidence with
+  | some setter, some sourceArgument, some sourceParameter =>
+        match IntegralMemberEnumSetterCall.bindWithArgumentParameterValue enumSetterCallSyntax
+            setter enumSetterCallAccess receiverHandle sourceArgument sourceParameter
+            ⟨.unsigned 32, 9⟩ enumProjection with
         | .ok call =>
             match call.invoke with
             | .ok memory => memory.values[1]?.bind id |>.map (fun value => value.value)
             | .error _ => none
         | .error _ => none
-      | none => none
-  | none => none
+  | _, _, _ => none
 
 private def enumSetterCallArgumentError : Option IntegralMemberEnumSetterCallError :=
   match enumSetterEvidence with
@@ -794,6 +792,19 @@ private def enumSetterCallValueError : Option IntegralMemberEnumSetterCallError 
       | .error reason => some reason
       | .ok _ => none
   | _, _ => none
+
+private def enumSetterCallParameterError : Option IntegralMemberEnumSetterCallError :=
+  match enumSetterEvidence, enumSetterSourceArgument, enumParameterEvidence with
+  | some setter, some sourceArgument, some sourceParameter =>
+      let wrong := {sourceParameter with type := .enumeration (h "0x99")}
+      match IntegralMemberEnumSetterCall.bindWithArgumentParameterValue enumSetterCallSyntax
+          setter enumSetterCallAccess receiverHandle sourceArgument wrong
+          ⟨.unsigned 32, 9⟩ enumProjection with
+      | .error (.argumentEvidenceMismatch .parameterTypeMismatch) =>
+          some (.argumentEvidenceMismatch .parameterTypeMismatch)
+      | .error reason => some reason
+      | .ok _ => none
+  | _, _, _ => none
 
 private def enumSetterCallResultError : Option IntegralMemberEnumSetterCallError :=
   match enumSetterEvidence with
@@ -965,6 +976,7 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
 #guard enumSetterCallObserved == some 9
 #guard enumSetterCallArgumentError == some .argumentRepresentationMismatch
 #guard enumSetterCallValueError == some (.argumentValueMismatch .underlyingTypeMismatch)
+#guard enumSetterCallParameterError == some (.argumentEvidenceMismatch .parameterTypeMismatch)
 #guard enumSetterCallResultError == some .resultTypeMismatch
 #guard enumCallObserved == some 7
 #guard enumCallResultError == some .resultTypeMismatch

@@ -391,6 +391,133 @@ def cases : List (Int × Int) := [''' + pairs + ''']
 ''')
         print("enum mutation: 4 native assignment/readback rows, -O0/-O2 UBSan; explicit unsigned underlying type")
 
+    def test_enum_setter_probe_differential(self):
+        """Use Clang's retained probe to admit and call a direct enum setter."""
+        library = os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not library:
+            self.skipTest("set matching LEANCPP_PROBE_LIBRARY")
+        source = r'''
+#include <iostream>
+enum Error : unsigned int { zero = 0u, one = 1u, top = 4294967295u };
+struct Sample {
+ Error value;
+ void set(Error next) { value = next; }
+ Error get() const { return value; }
+};
+int main() {
+ Sample object{zero};
+ object.set(zero);
+ std::cout << static_cast<unsigned int>(object.get()) << '\n';
+ object.set(one);
+ std::cout << static_cast<unsigned int>(object.get()) << '\n';
+ object.set(top);
+ std::cout << static_cast<unsigned int>(object.get()) << '\n';
+}
+'''
+        rows = [line.split() for line in self.native(source).splitlines()]
+        self.assertEqual(rows, [[value] for value in ["0", "1", "4294967295"]])
+        fixture = self.work / "enum-setter.cpp"
+        fixture.write_text(source, encoding="utf-8")
+        probe_text = self.run_ok([
+            self.clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", str(fixture), "-Xclang", "-load", "-Xclang",
+            str(pathlib.Path(library).resolve()), "-Xclang", "-plugin", "-Xclang",
+            "leancpp-canonical-probe"])
+        envelope = self.work / "enum-setter-probe.json"
+        envelope.write_text(probe_text, encoding="utf-8")
+        pairs = ", ".join(f"({value}, {expected})" for value, expected in rows)
+        self.lean('''import LeanModels.Cpp.MemberCalls
+open LeanModels.Cpp
+set_option maxRecDepth 100000
+set_option maxHeartbeats 4000000
+load_cpp_probe probe from ''' + json.dumps(str(envelope)) + r'''
+private def stripCallArguments (raw : Raw) : Option Raw := do
+  let .object fields := raw | none
+  let some (.array (member :: _)) := (Raw.object fields).field "inner" | none
+  pure (.object (fields.map (fun (name, value) =>
+    if name == "inner" then (name, .array [member]) else (name, value))))
+
+private def callArgument (raw : Raw) : Option Raw := do
+  let .array (_ :: argument :: _) ← raw.field "inner" | none
+  pure argument
+
+private partial def findSetCall : Raw → Option Raw
+  | node@(.object fields) =>
+      let here :=
+        if node.text "kind" == some "CXXMemberCallExpr" then
+          match node.field "inner" with
+          | some (.array (member :: _)) =>
+              if member.text "kind" == some "MemberExpr" &&
+                  member.text "name" == some "set" then some node else none
+          | _ => none
+        else none
+      match here with
+      | some call => some call
+      | none => fields.firstM (fun (_, value) => findSetCall value)
+  | .array values => values.firstM findSetCall
+  | _ => none
+
+private def setup : Option
+    (IntegralMemberCallSyntax × IntegralMemberEnumSetter ×
+      IntegralMemberThisFieldAccess × IntegralMemberEnumArgument ×
+      IntegralMemberEnumParameterEvidence × IntegralMemberBoundEnumArgument ×
+      IntegralMemberEnumRepresentation) := do
+  let call ← findSetCall probe.ast
+  let callOnly ← stripCallArguments call
+  let callSyntax ← (IntegralMemberCallSyntax.admit callOnly).toOption
+  let callSyntax ← (IntegralMemberCallSyntax.resolveCanonical probe callSyntax).toOption
+  let argumentRaw ← callArgument call
+  let some methodRow := probe.declarations.find?
+    (fun row => row.kind == "CXXMethodDecl" && row.raw.text "name" == some "set" &&
+      row.id == row.canonical) | none
+  let body ← (IntegralMemberMethodBody.admit probe methodRow.canonical).toOption
+  let access ← (IntegralMemberThisFieldAccess.admit probe body).toOption
+  let profile ← (IntegralMemberEnumProfile.admit probe access).toOption
+  let representation ← (IntegralMemberEnumRepresentation.withOracle profile .unsignedInt).toOption
+  let setter ← (IntegralMemberEnumSetter.admit probe methodRow.canonical representation).toOption
+  let argument ← (IntegralMemberEnumArgument.admit argumentRaw representation).toOption
+  let parameter ← (IntegralMemberEnumArgument.parameter probe methodRow.canonical 0
+    representation.profile.enum representation.profile.name).toOption
+  let bound ← (IntegralMemberEnumArgument.bindToEvidence argument parameter).toOption
+  pure (callSyntax, setter, access, argument, parameter, bound, representation)
+
+private def projection (access : IntegralMemberThisFieldAccess)
+    (representation : IntegralMemberEnumRepresentation) (input : Int) :
+    ClassReceiverProjection := {
+  hierarchy := {root := access.owner,
+    classes := [{declaration := access.owner, isAbstract := false, bases := [],
+      fields := [access.field], friends := [], name := "Sample"}]},
+  objects := [0], receiverPath := [],
+  snapshot := {memory := {profile := .lp64,
+      objects := {objects := [
+        {duration := .automatic, type := .record access.owner, phase := .aliveInitialized},
+        {duration := .automatic, type := .builtin representation.underlying,
+          phase := .aliveInitialized}]},
+      values := [none, some ⟨.unsigned 32, input⟩]},
+    object := 0, member := 1, field := access.field}}
+
+def cases : List (Int × Int) := [''' + pairs + r''']
+#guard setup.isSome
+#guard cases.all (fun (input, expected) =>
+  match setup with
+  | some (callSyntax, setter, access, sourceArgument, _, _, representation) =>
+      let before := projection access representation 0
+      match IntegralMemberEnumSetterCall.bindWithArgumentValue callSyntax setter access
+          callSyntax.receiver sourceArgument ⟨.unsigned 32, input⟩ before with
+      | .ok call =>
+          match call.invoke with
+          | .ok store =>
+              let after := {before with snapshot := {before.snapshot with memory := store}}
+              match IntegralMemberEnumValue.read access representation after with
+              | .ok (_, value) => value.value.value == expected
+              | .error _ => false
+          | .error _ => false
+      | .error _ => false
+  | none => false)
+''')
+        print("enum setter probe: 3 direct enum arguments admitted from Clang probe, "
+              "native/probe/Lean -O0/-O2 boundary")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -710,11 +710,12 @@ def evalCompareOp (op : CmpOp) (a b : RVal) : Res Bool :=
           s!"comparison '{op.symbol}' between '{a.typeName}' and '{b.typeName}' is outside the v0 tier"
 
 /-- Tuple repetition with fuel-independent bounds on positive nonempty
-results. Empty tuples and nonpositive counts short-circuit exactly as CPython
-does, without constructing or budgeting the requested magnitude. -/
+results. Nonpositive counts short-circuit exactly as CPython does, without
+constructing or budgeting the requested magnitude; an oversized count raises
+the faithful CPython `OverflowError` before that result can be formed. -/
 def tupleRepeat (xs : Array RVal) (count : Int) : Res RVal :=
   if count.natAbs > seqIndexBudget then
-    .unsupported "sequence repetition count does not fit CPython's index-sized integer"
+    .exn (.overflowError "cannot fit 'int' into an index-sized integer")
   else if count ≤ 0 || xs.isEmpty then
     .ok (.tuple #[])
   else if count.natAbs ≤ seqBudget ∧ xs.size * count.toNat ≤ seqBudget then

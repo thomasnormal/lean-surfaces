@@ -58,7 +58,7 @@ set_option maxRecDepth 8192
   matches .unsupported _
 #guard callFunction tuple_repeat "repeat_empty_length" #[.int (-1048577)] 4096 matches .ok (.int 0)
 #guard callFunction tuple_repeat "repeat_empty" #[.int 1267650600228229401496703205376] 4096
-  matches .unsupported _
+  matches .exn (.overflowError "cannot fit 'int' into an index-sized integer")
 
 theorem repeat_right_length_total (count : PyInt)
     (countBound : count.natAbs ≤ 1048576)

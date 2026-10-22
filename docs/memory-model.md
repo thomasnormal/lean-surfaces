@@ -459,10 +459,12 @@ Tuple and namedtuple repetition shares the pure `tupleRepeat` worker in both
 interpreters, for either operand order, boolean counts, and `*=`. Admission
 requires the original signed count's magnitude and the result's element count
 to be at most `seqBudget` (1,048,576) for positive, nonempty results. Counts
-must first fit the pinned 64-bit CPython `Py_ssize_t`; once that index-sized
-conversion succeeds, empty tuples and non-positive counts short-circuit to an
-empty tuple. Larger counts remain loud rather than guessing `OverflowError` or
-`MemoryError`. The positive-result bounds are fuel-independent.
+must first fit the pinned 64-bit CPython `Py_ssize_t`; a count outside that
+range raises CPython's faithful `OverflowError` with its index-sized message.
+Once that conversion succeeds, empty tuples and non-positive counts
+short-circuit to an empty tuple. Positive results that exceed `seqBudget`
+remain loud rather than guessing `MemoryError`. The positive-result bounds are
+fuel-independent.
 
 Admitted non-positive counts produce an empty tuple. Positive counts retain
 the structural `List.replicate`/`flatten`/`toArray` implementation, with no

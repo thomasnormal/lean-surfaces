@@ -1177,7 +1177,6 @@ SCRIPT_CLASS = {
     "del_def_mid_script": "del.definition-name",
     "del_dunder_script": "del.definition-name",
     "del_import_script": "del.definition-name",
-    "tuple_repeat_order_script": "op.Mult-repetition",
     "decimal_render_limit_script": "render.decimal-limit",
     "exc_handlers_rebound_script": "exc.handler",
     "cls_deco_script": "class.creation-effect",

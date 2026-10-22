@@ -44,6 +44,13 @@ private def enumTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "e"), ("kind", .string "EnumDecl"),
         ("name", .string "Color"), ("inner", .array [])]])]}
 
+private def typedefTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "t"), ("kind", .string "TypedefDecl"),
+        ("name", .string "Count"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -55,6 +62,9 @@ def variableTranslationWitness : Except String Unit :=
 
 def enumTranslationWitness : Except String Unit :=
   admitEnumDeclaration enumTranslation [0]
+
+def typedefTranslationWitness : Except String Unit :=
+  admitTypedefDeclaration typedefTranslation [0]
 
 #guard admitTranslationUnit emptyTranslation matches .ok ()
 #guard admitTranslationUnit wrongRoot matches .error _
@@ -72,6 +82,9 @@ def enumTranslationWitness : Except String Unit :=
 #guard enumTranslationWitness matches .ok ()
 #guard admitEnumDeclaration enumTranslation [] matches .error _
 #guard admitEnumDeclaration functionTranslation [0] matches .error _
+#guard typedefTranslationWitness matches .ok ()
+#guard admitTypedefDeclaration typedefTranslation [] matches .error _
+#guard admitTypedefDeclaration functionTranslation [0] matches .error _
 #guard execute emptyTranslation "f" matches .error "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
 theorem empty_translation_admits : admitTranslationUnit emptyTranslation = .ok () := rfl

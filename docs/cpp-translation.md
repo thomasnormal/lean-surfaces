@@ -49,12 +49,13 @@ verification of preprocessing or C++ well-formedness. No third-party sources
 or machine-specific envelopes are checked into this repository.
 
 The first executable rung-0 gates are `admitTranslationUnit`,
-`admitNamespaceDeclaration`, `admitFunctionDeclaration` and
-`admitVariableDeclaration` and `admitEnumDeclaration`. The root gate
+`admitNamespaceDeclaration`, `admitFunctionDeclaration`,
+`admitVariableDeclaration`, `admitEnumDeclaration` and
+`admitTypedefDeclaration`. The root gate
 checks the retained root's explicit `kind` for `TranslationUnitDecl`; the
 namespace gate then checks a nonempty artifact occurrence path and requires
-`NamespaceDecl` at that exact path, while the function gate applies the same
-path check to `FunctionDecl`, `VarDecl` or `EnumDecl`, respectively. All five return typed metadata results without
+`NamespaceDecl` at that exact path, while each declaration gate applies the
+same path check to its corresponding kind. All six return typed metadata results without
 inspecting or erasing child nodes,
 resolving names, or executing a body. Malformed roots, absent paths and other
 node kinds refuse with named diagnostics. `Translation.execute` remains the

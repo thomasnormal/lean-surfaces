@@ -1,5 +1,15 @@
 [
   {
+    "id": "translation.empty-root",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp",
+    "lean_expression": "admitTranslationUnit cppEmptyArtifact",
+    "cpp_source": "int f() { return 0; }",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

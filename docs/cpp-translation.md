@@ -48,6 +48,15 @@ parser. The trust boundary remains Clang plus extraction/ingestion, not Lean
 verification of preprocessing or C++ well-formedness. No third-party sources
 or machine-specific envelopes are checked into this repository.
 
+The first executable rung-0 gate is `admitTranslationUnit`. It checks the
+retained root's explicit `kind` for `TranslationUnitDecl` and returns a typed
+success for that compilation-unit shape. It does not inspect or erase child
+nodes, resolve declarations or execute a body; malformed or missing root
+metadata refuses with a named diagnostic. `Translation.execute` remains the
+loud boundary for declaration execution, including an otherwise empty
+function, until object, lifetime, type, expression and statement semantics are
+threaded through the artifact.
+
 ## Declaration inspection, not declaration semantics
 
 `Artifact.declarations` is a structurally recursive index over AST `inner`

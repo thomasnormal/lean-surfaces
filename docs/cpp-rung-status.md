@@ -8,7 +8,7 @@ Measured against the C++ charter's N4950 clause ladder. `executable` means a bou
 
 | rung | N4950 clauses | status | measured boundary |
 |---:|---|---|---|
-| 0 | §5, §6.2–6.6 | **specified** | Translation artifacts and declaration identity are retained; execution is refused. |
+| 0 | §5, §6.2–6.6 | **executable** | A bounded TranslationUnitDecl root is admitted; declaration and body execution remains refused. |
 | 1 | §6.7, §6.9 | **specified** | Object-model and lifetime contracts exist; integrated storage execution is not admitted. |
 | 2 | §6.8 | **executable** | LP64 scalar/integral values and conversions execute definitionally. |
 | 3 | §7 | **executable** | Bounded integral expressions and selected callable bodies execute; general overloads do not. |
@@ -42,11 +42,11 @@ The source-owned denominator is the retained 2026-10-20 callable census where av
 
 ## This run's grammar and differential measurements
 
-The grammar census uses one source witness per listed Clang AST node kind. The current translation surface refuses execution for every AST artifact; therefore a successfully compiled witness is a `REFUSE` until its rung is admitted.
+The grammar census uses one source witness per listed Clang AST node kind. The root-shape admission is executable, while declaration and body execution remain loud refusals; therefore a successfully compiled declaration witness is a `REFUSE` until its rung is admitted.
 
 | measurement | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---|---:|---:|---:|---:|---:|---:|
 | grammar witnesses | 24 | 0 | 0 | 0 | 0 | 24 |
-| differential calls | 4 | 0 | 0 | 0 | 0 | 4 |
+| differential calls | 5 | 0 | 0 | 0 | 0 | 5 |
 
-The differential rows are seeded from `Examples/cpp/tinyxml2/IsUTF8Continuation.lean`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the four explicit ORACLE rows with compiled calls.
+The differential rows include the compile-only root witness and four rows from `Examples/cpp/tinyxml2/IsUTF8Continuation.lean`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.

@@ -45,7 +45,7 @@ PINNED_CLANG = "21.1.8"
 
 
 RUNG_STATUS = [
-    (0, "§5, §6.2–6.6", "specified", "Translation artifacts and declaration identity are retained; execution is refused."),
+    (0, "§5, §6.2–6.6", "executable", "A bounded TranslationUnitDecl root is admitted; declaration and body execution remains refused."),
     (1, "§6.7, §6.9", "specified", "Object-model and lifetime contracts exist; integrated storage execution is not admitted."),
     (2, "§6.8", "executable", "LP64 scalar/integral values and conversions execute definitionally."),
     (3, "§7", "executable", "Bounded integral expressions and selected callable bodies execute; general overloads do not."),
@@ -116,19 +116,30 @@ def load_json(path):
 
 
 def render_lean(cases):
-    first = cases[0]
-    lines = [
-        "import %s" % first["lean_module"],
+    modules = []
+    namespaces = []
+    for row in cases:
+        if row["lean_module"] not in modules:
+            modules.append(row["lean_module"])
+        if row.get("lean_namespace") and row["lean_namespace"] not in namespaces:
+            namespaces.append(row["lean_namespace"])
+    lines = ["import %s" % module for module in modules]
+    lines += [
         "open LeanModels.Cpp",
-        "open %s" % first["lean_namespace"],
         "def cppRender : Option Int → String",
         "  | none => \"refuse\"",
         "  | some value => s!\"ok {value}\"",
+        "def cppRenderUnit : Except String Unit → String",
+        "  | .ok _ => \"ok\"",
+        "  | .error message => \"refuse \" ++ message",
+        "def cppEmptyArtifact : Artifact := { sourceFile := \"witness.cpp\", sourceSha256 := \"fixture\", frontend := .null, dependencies := [], ast := .object [(\"kind\", .string \"TranslationUnitDecl\"), (\"inner\", .array [])] }",
     ]
+    lines += ["open %s" % namespace for namespace in namespaces]
     for row in cases:
         expression = row["lean_expression"]
-        lines.append("#eval IO.println (\"CPPCASE|%s|\" ++ cppRender (%s))" %
-                     (row["id"], expression))
+        render = "cppRenderUnit" if row.get("kind") == "translation" else "cppRender"
+        lines.append("#eval IO.println (\"CPPCASE|%s|\" ++ %s (%s))" %
+                     (row["id"], render, expression))
     return "\n".join(lines) + "\n"
 
 
@@ -169,18 +180,35 @@ def clang_info():
 def native_rows(cases, clang):
     if clang is None:
         return {row["id"]: ("ORACLE", "pinned Clang/LLVM %s is unavailable" % PINNED_CLANG) for row in cases}
+    translation = [row for row in cases if row.get("kind") == "translation"]
+    callable_cases = [row for row in cases if row.get("kind", "callable") == "callable"]
+    result = {}
+    if translation:
+        with tempfile.TemporaryDirectory(prefix="cpp-diff-translation-") as directory:
+            for row in translation:
+                source = pathlib.Path(directory) / (row["id"].replace("/", "_") + ".cpp")
+                source.write_text(row["cpp_source"] + "\n", encoding="utf-8")
+                check = run([clang, "-std=c++23", "-pedantic-errors", "-fsyntax-only", str(source)], timeout=60)
+                if check.returncode == 0:
+                    result[row["id"]] = ("NATIVE", "ok")
+                else:
+                    result[row["id"]] = ("ORACLE", "translation compile failed: %s" % (check.stdout + check.stderr)[-1200:])
+    if not callable_cases:
+        return result
     corpus = os.environ.get("LEANCPP_TINYXML2_DIR")
     if not corpus:
-        return {row["id"]: ("ORACLE", "set LEANCPP_TINYXML2_DIR for the unchanged source") for row in cases}
+        result.update({row["id"]: ("ORACLE", "set LEANCPP_TINYXML2_DIR for the unchanged source") for row in callable_cases})
+        return result
     root = pathlib.Path(corpus).resolve()
     implementation = root / "tinyxml2.cpp"
     header = root / "tinyxml2.h"
     if not implementation.is_file() or not header.is_file():
-        return {row["id"]: ("ORACLE", "LEANCPP_TINYXML2_DIR must contain tinyxml2.cpp and tinyxml2.h") for row in cases}
+        result.update({row["id"]: ("ORACLE", "LEANCPP_TINYXML2_DIR must contain tinyxml2.cpp and tinyxml2.h") for row in callable_cases})
+        return result
     with tempfile.TemporaryDirectory(prefix="cpp-diff-native-") as directory:
         wrapper = pathlib.Path(directory) / "caller.cpp"
         body = ["#include <iostream>", "#include <cstdlib>", '#include "tinyxml2.h"', "int main() {"]
-        for row in cases:
+        for row in callable_cases:
             arg = row["args"][0]
             expression = row["cpp_expression"].format(arg=arg)
             body.append("  std::cout << (static_cast<int>(%s) ? 1 : 0) << '\\n';" % expression)
@@ -191,19 +219,25 @@ def native_rows(cases, clang):
                               str(wrapper), str(implementation), "-o", str(binary)], timeout=180)
         if compile_result.returncode != 0:
             reason = "native compile failed: %s" % (compile_result.stdout + compile_result.stderr)[-1200:]
-            return {row["id"]: ("ORACLE", reason) for row in cases}
+            result.update({row["id"]: ("ORACLE", reason) for row in callable_cases})
+            return result
         try:
             execute = run([str(binary)], timeout=30)
         except subprocess.TimeoutExpired:
-            return {row["id"]: ("TIMEOUT", "native caller exceeded 30 seconds") for row in cases}
+            result.update({row["id"]: ("TIMEOUT", "native caller exceeded 30 seconds") for row in callable_cases})
+            return result
         if execute.returncode != 0:
             reason = "native caller failed: %s" % (execute.stdout + execute.stderr)[-1200:]
-            return {row["id"]: ("ORACLE", reason) for row in cases}
+            result.update({row["id"]: ("ORACLE", reason) for row in callable_cases})
+            return result
         outputs = execute.stdout.splitlines()
-        if len(outputs) != len(cases):
-            reason = "native caller emitted %d rows, expected %d" % (len(outputs), len(cases))
-            return {row["id"]: ("ORACLE", reason) for row in cases}
-        return {row["id"]: ("NATIVE", outputs[index].strip()) for index, row in enumerate(cases)}
+        if len(outputs) != len(callable_cases):
+            reason = "native caller emitted %d rows, expected %d" % (len(outputs), len(callable_cases))
+            result.update({row["id"]: ("ORACLE", reason) for row in callable_cases})
+            return result
+        result.update({row["id"]: ("NATIVE", outputs[index].strip())
+                       for index, row in enumerate(callable_cases)})
+        return result
 
 
 def differential(cases, model, native):
@@ -217,7 +251,9 @@ def differential(cases, model, native):
         elif native_status == "NATIVE":
             if row.get("expect") != "match":
                 verdict, detail = "DIVERGE", "native call completed for a recorded refusal"
-            elif model_value == "ok " + native_value:
+            elif row.get("kind") == "translation" and model_value == native_value:
+                verdict, detail = "MATCH", "Lean admission and Clang compilation agree"
+            elif row.get("kind", "callable") == "callable" and model_value == "ok " + native_value:
                 verdict, detail = "MATCH", "Lean and Clang agree"
             else:
                 verdict, detail = "DIVERGE", "model=%s native=%s" % (model_value, native_value)
@@ -317,7 +353,7 @@ def render_rung_page(diff_rows, grammar_rows_value):
         lines.append("*%s:* %s" % (corpus["name"], corpus["note"]))
         lines.append("")
     lines += ["## This run's grammar and differential measurements", "",
-              "The grammar census uses one source witness per listed Clang AST node kind. The current translation surface refuses execution for every AST artifact; therefore a successfully compiled witness is a `REFUSE` until its rung is admitted.",
+              "The grammar census uses one source witness per listed Clang AST node kind. The root-shape admission is executable, while declaration and body execution remain loud refusals; therefore a successfully compiled declaration witness is a `REFUSE` until its rung is admitted.",
               "",
               "| measurement | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |",
               "|---|---:|---:|---:|---:|---:|---:|"]
@@ -331,7 +367,7 @@ def render_rung_page(diff_rows, grammar_rows_value):
                  (len(diff_rows), diff_count.get("MATCH", 0), diff_count.get("DIVERGE", 0),
                   diff_count.get("REFUSE", 0), diff_count.get("TIMEOUT", 0),
                   diff_count.get("ORACLE", 0)))
-    lines += ["", "The differential rows are seeded from `Examples/cpp/tinyxml2/IsUTF8Continuation.lean`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the four explicit ORACLE rows with compiled calls.", ""]
+    lines += ["", "The differential rows include the compile-only root witness and four rows from `Examples/cpp/tinyxml2/IsUTF8Continuation.lean`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.", ""]
     return "\n".join(lines)
 
 
@@ -390,6 +426,8 @@ def main(argv=None):
     ids = [row.get("id") for row in cases]
     if any(not row_id for row_id in ids) or len(ids) != len(set(ids)):
         raise SystemExit("cpp_diff_test: case ids must be nonempty and unique")
+    if any(row.get("kind", "callable") == "callable" and not row.get("lean_namespace") for row in cases):
+        raise SystemExit("cpp_diff_test: callable rows require lean_namespace")
     grammar_ids = [row.get("id") for row in grammar]
     if any(not row_id for row_id in grammar_ids) or len(grammar_ids) != len(set(grammar_ids)):
         raise SystemExit("cpp_diff_test: grammar ids must be nonempty and unique")

@@ -4143,6 +4143,22 @@ scheduler is introduced. See [the procedural assign boundary](sv-procedural-assi
 and the read-only instrument
 `extractors/sv/procedural_assign_reprice.py`.
 
+### Defparam overrides — 2026-10-22
+
+`DefParamSymbol:DefParam` is the hierarchy-elaboration override boundary. In
+the fresh 22,043-path census it occurs in 49 files: 23 are defparam-only and
+26 co-occur with another wall. The sole files contain 33 spans, all with
+hierarchical targets; they include deep and instance-array paths, source-order
+last-wins updates, multi-target statements, parameter-valued RHS expressions,
+instance-override precedence, generate-order dependence, invalid cross-array
+targets, a dependent-parameter chain and a chapter-37 type form (features
+overlap). IEEE §§6.20, 23.10 and 23.10.4 require hierarchy resolution,
+override precedence and parameter-before-generate ordering. The envelope has
+no such elaboration state, so no defparam is rewritten as a local constant or
+inline instance override and no second elaborator or scheduler is introduced.
+See [the defparam boundary](sv-defparam.md) and the read-only instrument
+`extractors/sv/defparam_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

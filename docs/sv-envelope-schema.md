@@ -1406,6 +1406,12 @@ force/release priority or net-resolution restoration state, so procedural
 `assign`/`deassign` and `force`/`release` statements are not rewritten as
 ordinary blocking assignments. See [the procedural assign boundary](sv-procedural-assign.md).
 
+`DefParamSymbol:DefParam` remains explicit as a hierarchy-elaboration
+boundary. The envelope has no instance-path parameter environment, override
+precedence or parameter-before-generate state, so a defparam is not folded to
+a local constant or rewritten as an inline instance assignment. See [the
+defparam boundary](sv-defparam.md).
+
 ### Legacy package storage provenance
 
 Source-defined packages with admitted scalar/packed integral variables lower

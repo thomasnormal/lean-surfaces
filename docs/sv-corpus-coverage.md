@@ -649,6 +649,21 @@ force-priority or release-restoration state, so these forms are not lowered to
 ordinary assignments. See [the procedural assign boundary](sv-procedural-assign.md)
 and `extractors/sv/procedural_assign_reprice.py` for the reproducible scan.
 
+## Defparam overrides — 2026-10-22
+
+`DefParamSymbol:DefParam` remains the hierarchy-elaboration override boundary.
+The fresh **22,043**-path census records it in **49** files: **23** are
+defparam-only and **26** co-occurring. Repricing the sole files finds **33**
+spans: **33** hierarchical targets, **13** deep paths, **4** instance-array
+elements, **9** last-wins cases, **6** multi-target statements, **2** RHS
+parameter references, **1** RHS arithmetic form, **2** instance-precedence
+cases, **1** generate-order case, **2** invalid cross-array diagnostics,
+**1** dependent-parameter chain and **1** chapter-37 type form (features
+overlap). The envelope has no hierarchy-wide parameter environment or
+parameter-before-generate pass, so defparam is not rewritten as a local or
+inline override. See [the defparam boundary](sv-defparam.md) and
+`extractors/sv/defparam_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

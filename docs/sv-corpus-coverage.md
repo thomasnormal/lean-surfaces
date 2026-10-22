@@ -3247,3 +3247,12 @@ files finds seven rejected static-local spans covering lexical errors,
 declaration ordering and block-label syntax. The rejected block remains loud;
 see [invalid static locals](sv-invalid-static-locals.md) and
 `extractors/sv/static_invalid_reprice.py`.
+
+## Invalid continuous-assignment boundary — 2026-10-22
+
+The fresh 22,043-path census records `ContinuousAssignSymbol:InvalidExpression`
+in **14** files: **6** are sole refusals and 8 co-occur. Repricing the sole
+files finds seven rejected assignment spans involving `default_nettype none`,
+invalid `supply0`/`supply1` directives and `undefineall` state. The rejected
+assignment remains loud; see [invalid continuous assignments](sv-invalid-continuous-assignments.md)
+and `extractors/sv/continuous_invalid_reprice.py`.

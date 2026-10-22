@@ -4806,3 +4806,12 @@ The fresh 22,043-path census records `StaticLocal:invalid-compilation` in
 files finds seven rejected static-local spans covering lexical errors,
 declaration ordering and block-label syntax. The envelope has no recovery frame
 or diagnostic stream, so malformed blocks remain loud. See [invalid static locals](sv-invalid-static-locals.md).
+
+### Invalid continuous-assignment boundary — 2026-10-22
+
+The fresh 22,043-path census records `ContinuousAssignSymbol:InvalidExpression`
+in **14** files: **6** are sole refusals and 8 co-occur. Repricing the sole
+files finds seven rejected assignment spans involving `default_nettype none`,
+invalid `supply0`/`supply1` directives and `undefineall` state. The envelope has
+no implicit-net diagnostic state, so these assignments remain loud. See
+[invalid continuous assignments](sv-invalid-continuous-assignments.md).

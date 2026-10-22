@@ -1902,3 +1902,10 @@ an inferred clock; see [conditional events](sv-event-iff.md).
 frontend parsing rejects a procedural local declaration, number token or block
 label. The envelope does not move declarations, recover malformed tokens or
 invent a local frame; see [invalid static locals](sv-invalid-static-locals.md).
+
+## Invalid continuous assignments
+
+`ContinuousAssignSymbol:InvalidExpression` remains an explicit unsupported
+assignment when the active `default_nettype` directive rejects an implicit net
+or an invalid net-type value. The envelope does not create an implicit wire or
+reset directive state; see [invalid continuous assignments](sv-invalid-continuous-assignments.md).

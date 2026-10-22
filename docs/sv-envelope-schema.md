@@ -126,6 +126,18 @@ an `Unsupported` node is reached).
 The measured two-state declaration boundary and its representation rationale
 are recorded in [`sv-two-state-boundary.md`](sv-two-state-boundary.md).
 
+### Expression event controls
+
+`SignalEventControl:clock` covers event controls whose sampled operand is an
+expression rather than a one-bit identifier. IEEE §9.4.2 compares the complete
+value-change result across activations and applies the four-state edge rules to
+that result; a multibit edge uses its least-significant bit. The envelope has
+no sampled-value register, dependency set, result-change filter, or
+aggregate-to-singular conversion, so concatenations, reductions, conditionals,
+operators and selected expressions remain explicit unsupported nodes. They are
+not rewritten to one operand or an arbitrary selected bit. See the
+[event-expression boundary](sv-event-expressions.md).
+
 ## Module
 
 Key order: `kind`, `span`, `name`, `ports`, `decls`, `processes`, `others`.

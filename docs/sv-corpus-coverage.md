@@ -705,6 +705,20 @@ The envelope admits only fixed integral delays, so these expressions are not
 folded to constants. See [the dynamic delay-expression boundary](sv-delay-expressions.md)
 and `extractors/sv/delay_expression_reprice.py` for the reproducible scan.
 
+## Event controls over expressions — 2026-10-22
+
+`SignalEventControl:clock` remains the expression-sampling event boundary.
+The fresh **22,035**-path census records it in **350** files: **20** are
+event-expression-only and **330** co-occurring. Repricing the sole files
+finds **20** spans: **4** multibit edge controls, **16** value-change controls,
+**3** binary expressions, **1** concatenation, **1** conditional expression,
+**3** reductions or unary expressions, **3** selected expressions, **4**
+singular/aggregate cases, **11** result-change scenarios and **1**
+scheduler-context row (features overlap). The envelope has no expression
+sampler, dependency set or retained result, so no expression event is reduced
+to one operand or a fixed bit. See [the event expression boundary](sv-event-expressions.md)
+and `extractors/sv/event_expression_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

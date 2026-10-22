@@ -4205,6 +4205,23 @@ guessed constant and no second time wheel is introduced. See [the dynamic
 delay-expression boundary](sv-delay-expressions.md) and the read-only
 instrument `extractors/sv/delay_expression_reprice.py`.
 
+### Event controls over expressions — 2026-10-22
+
+`SignalEventControl:clock` is the expression-sampling event boundary. In the
+fresh 22,035-path census it occurs in 350 files: 20 are event-expression-only
+and 330 co-occur with another wall. The sole files contain 20 spans, including
+four multibit edge controls whose least-significant bit affects the edge,
+16 value-change controls, three binary expressions, one concatenation, one
+conditional, three reductions or unary expressions, three selected
+expressions, four singular/aggregate cases, 11 result-change scenarios and
+one scheduler-context row (features overlap). IEEE §9.4.2 samples the complete
+expression, retains its prior result and applies four-state edge conversion
+before re-arming the same continuation. The envelope has no expression
+sampler, dependency set or retained result, so no expression is reduced to one
+operand or a fixed bit and no second scheduler is introduced. See [the event
+expression boundary](sv-event-expressions.md) and the read-only instrument
+`extractors/sv/event_expression_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

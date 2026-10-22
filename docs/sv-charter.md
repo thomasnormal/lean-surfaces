@@ -4118,6 +4118,18 @@ process. No qualifier is erased, no fixed arm is chosen, and no scheduler is
 added. See [the unique-if boundary](sv-unique-if.md) and the read-only
 instrument `extractors/sv/unique_if_reprice.py`.
 
+### Priority case statements — 2026-10-22
+
+`CaseStatement:Priority` remains the first-match plus no-match diagnostic
+boundary. The fresh 22,044-path census records it in **12** files, all
+priority-case-only. Repricing finds **13** spans: **6** without a `default`,
+**7** with one, **5** indexed selects, **4** `casez`, **6** wildcard labels,
+**3** `inside` cases, **4** multi-label items, **2** `always_comb` contexts
+and one explicit no-match violation row (features overlap). The ordinary case chain lacks priority status and a no-match
+diagnostic channel, so no qualifier is erased and no arm is selected. See
+[the priority-case boundary](sv-priority-cases.md) and the read-only
+instrument `extractors/sv/priority_case_reprice.py`.
+
 ### Randcase statements — 2026-10-22
 
 `RandCaseStatement` is the weighted-random branch boundary. In the fresh

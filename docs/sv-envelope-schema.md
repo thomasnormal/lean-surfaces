@@ -117,6 +117,7 @@ emits:
 | `PortSymbol:InOut` / `:Ref` | port directions outside in/out |
 | `PortSymbol:...`, `VariableSymbol:...`, `NetSymbol:...` with `:2state` / `:range` / `:type` | unsupported declared type: 2-state nets or symbolic declarations, multidimensional packed ranges, unpacked/nonintegral types (real, string, ...); the legacy/self-check path admits one-dimensional packed scalar ranges and untagged packed struct/union vectors |
 | `NetSymbol:<NetKind>` / `:delay` | net kinds other than `wire` (`Tri0`, `WAnd`, ...), net delays |
+| `NetSymbol:TriReg` | charge-storage net with driver release, capacitive retention, charge strength or decay |
 | `ExtractorInternal:<PyException>` | defensive catch-all: the extractor itself failed on this node (should not occur; `span` is `null`, `text` is the Python error) |
 
 The tag list may grow with the tier; ingesters must treat **any** unknown
@@ -1576,6 +1577,11 @@ Gate, switch and pull primitive instances remain explicit
 `PrimitiveInstanceSymbol:PrimitiveInstance` unsupported members; see [the
 primitive boundary](sv-primitives.md). The envelope has no continuous-driver
 or net-resolution node.
+
+`trireg` declarations remain explicit `NetSymbol:TriReg` unsupported members;
+see [the charge-storage boundary](sv-trireg.md). The envelope has no
+per-net charge state, driver-release transition, charge-strength propagation
+or decay publication.
 
 Concurrent properties remain explicit `ConcurrentAssertionStatement`
 unsupported members; see [the assertion boundary](sv-concurrent-assertions.md).

@@ -678,6 +678,19 @@ transition selector, so these delays are not replaced by immediate assignment.
 See [the net-delay boundary](sv-net-delays.md) and
 `extractors/sv/net_delay_reprice.py` for the reproducible scan.
 
+## `trireg` charge-storage nets — 2026-10-22
+
+`NetSymbol:TriReg` remains the capacitive-net boundary. The fresh **22,043**-
+path census records it in **53** files: **17** are `TriReg`-only and **36**
+co-occur with another wall. Repricing the sole files finds **21** concrete
+declarations: **11** explicit charge-strength forms, **14** driver-release
+forms, **9** retained-charge observations, **4** four-state `x` cases, **2**
+undriven-startup cases, **2** capacitive-network declarations, **1**
+charge-decay delay and **1** signed packed vector (features overlap). The
+envelope has no charge state, driver-release transition or decay publication,
+so `trireg` is not reduced to a wire or variable. See [the `trireg` boundary](sv-trireg.md)
+and `extractors/sv/trireg_reprice.py` for the reproducible scan.
+
 ## Continuous-assignment delays — 2026-10-22
 
 `ContinuousAssignSymbol:delay` remains the delayed continuous-driver boundary.

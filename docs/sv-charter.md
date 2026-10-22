@@ -3873,6 +3873,21 @@ call the existing scheduler with a real driver representation. See [the
 boundary and repricing](sv-primitives.md) and the read-only instrument
 `extractors/sv/primitive_reprice.py`.
 
+### `trireg` charge-storage nets — 2026-10-22
+
+`NetSymbol:TriReg` remains the capacitive-net boundary. The fresh 22,043-path
+census records it in 53 files: 17 are `TriReg`-only and 36 co-occur with
+another wall. The sole files contain 21 concrete declarations, including 11
+explicit charge-strength declarations, 14 driver-release forms, nine retained
+charge observations, four four-state `x` cases, two undriven-startup cases,
+two capacitive-network declarations, one charge-decay delay and one signed
+packed vector (features overlap). A `trireg` needs driver identity, resolved
+four-state publication, charge strength, capacitive retention and optional
+decay scheduling. The envelope has no such state, so no declaration is
+treated as an ordinary wire or variable and no second scheduler is added. See
+[the boundary and repricing](sv-trireg.md) and the read-only instrument
+`extractors/sv/trireg_reprice.py`.
+
 ### Concurrent assertions — 2026-10-21
 
 Concurrent assertion repricing measures `ConcurrentAssertionStatement` in

@@ -2293,6 +2293,26 @@ def strIndex (s sub : String) : Res RVal :=
   | some i => .ok (.int i)
   | Option.none => .exn (.valueError "substring not found")
 
+/-! `str.join` consumes an iterable without running user code between items.
+The supported sequence and heap containers are already represented by the
+runtime, so this worker can read them directly; generators and sets retain
+their stateful/hash-order refusal. -/
+def strJoinList (sep : String) : List RVal → Res RVal
+  | [] => .ok (.str "")
+  | v :: rest =>
+    match v with
+    | .str first =>
+      let rec go (acc : String) : List RVal → Res String
+        | [] => .ok acc
+        | x :: xs =>
+          match x with
+          | .str text => go (acc ++ sep ++ text) xs
+          | _ => .exn (.typeError
+              s!"sequence item {rest.length - xs.length}: expected str instance, {x.typeName} found")
+      go first rest >>= fun text => .ok (.str text)
+    | _ => .exn (.typeError
+        s!"sequence item 0: expected str instance, {v.typeName} found")
+
 /-- `sub in s` on strings: SUBSTRING containment (never element
 membership — CPython's `str.__contains__`), code-point-exact, with
 `"" in s` true for every `s` (`strFindAux` returns 0 there). One of the
@@ -2467,7 +2487,7 @@ refuses loudly — never a fake `AttributeError`: CPython's str carries
 ~45 real methods (`upper`/`split`/`join`/…) plus the dunder protocol,
 and guessing which names exist would be silently wrong. -/
 inductive StrPlan where
-  | swapcase | isupper | islower | upper | index
+  | swapcase | isupper | islower | upper | index | join
   | refuse (msg : String)
 deriving Repr, Inhabited, BEq
 
@@ -2478,8 +2498,9 @@ def strCallPlan (attr : String) : StrPlan :=
   else if attr == "islower" then .islower
   else if attr == "upper" then .upper
   else if attr == "index" then .index
+  else if attr == "join" then .join
   else .refuse
-    s!"method call '.{attr}' on a str is outside the tier ('swapcase'/'isupper'/'islower'/'upper'/'index' only; docs/memory-model.md §string semantics)"
+    s!"method call '.{attr}' on a str is outside the tier ('swapcase'/'isupper'/'islower'/'upper'/'index'/'join' only; docs/memory-model.md §string semantics)"
 
 /-! ## The dict tier (H1-proper, docs/memory-model.md)
 
@@ -2680,6 +2701,27 @@ def dictViewEntries (h : Heap) (a : Addr) : Res (Array (RVal × RVal)) :=
   match Heap.get? h a with
   | some (.dict es _) => .ok es
   | _ => .unsupported danglingMsg
+
+def strJoinH (h : Heap) (sep : String) : RVal → Res RVal
+  | .str text => strJoinList sep (strCharVals text)
+  | .bytes xs => strJoinList sep (bytesIntVals xs)
+  | .tuple xs => strJoinList sep xs.toList
+  | .ntuple _ _ xs => strJoinList sep xs.toList
+  | .listV xs => strJoinList sep xs.toList
+  | .rangeV lo hi step => rangeVals lo.toInt hi.toInt step.toInt >>= strJoinList sep
+  | .ref a =>
+    match Heap.get? h a with
+    | some (.list xs) => strJoinList sep xs.toList
+    | some (.dict es _) => strJoinList sep (dictKeys es).toList
+    | some (.dictView da kind) =>
+      dictViewEntries h da >>= fun es => strJoinList sep (dictViewElems es kind).toList
+    | some (.generator ..) =>
+      .unsupported "str.join() over a generator is outside the tier (consuming a generator is a stateful read)"
+    | some (.pyset _) =>
+      .unsupported "str.join() over a set is outside the tier (hash order; docs/memory-model.md)"
+    | some (.instance _ _) | some (.closure ..) | some (.cell _) | Option.none =>
+      .exn (.typeError "can only join an iterable")
+  | _ => .exn (.typeError "can only join an iterable")
 
 /-- §3c-i-b: the kind a synthetic view builtin stands for (`Ast.lean`
 §the dict-view ingestion rewrite emits these names). -/
@@ -5365,7 +5407,7 @@ gives the same. `time` is deliberately ABSENT: it is the trace-clock
 call, which CONSUMES a reading and so changes the world. -/
 def heapFreeAttr (attr : String) : Bool :=
   attr == "get" || attr == "swapcase" || attr == "isupper"
-    || attr == "islower" || attr == "upper" || attr == "index"
+    || attr == "islower" || attr == "upper" || attr == "index" || attr == "join"
 
 /-- A whitelisted attribute is not some OTHER name — the shape every
 soundness step below wants (each `attrCallPlan`/`strCallPlan` branch is
@@ -6825,6 +6867,11 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                  if vs.length ≤ 3 then
                    .unsupported "str.index() with start/end arguments is outside the tier (docs/memory-model.md §string semantics)"
                  else .exn st (.typeError s!"index expected at most 3 arguments, got {vs.length}")
+             | .join =>
+               evalExprs m fuel st args.toList ⤳ fun st vs =>
+               match vs with
+               | [v] => Run.liftRes st (strJoinH st.world.heap sv v)
+               | vs => .exn st (.typeError s!"str.join() takes exactly one argument ({vs.length} given)")
              | .refuse msg => .unsupported msg)
           | r =>
             .unsupported s!"method call '.{attr}' on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"

@@ -971,6 +971,7 @@ WHITELIST_CLASS = {
     "str_lab::fmt_mapping": "format.percent-heap-operand",
     "str_lab::fmt_seq_arg": "format.percent-heap-operand",
     "str_lab::fmt_dict_leftover": "format.percent-heap-operand",
+    "str_lab::join_generator": "strmethod.generator-operand",
     "int_string::parse_decimal": "builtin.int-of-str",
     "int_string::explicit_base": "builtin.int-of-str",
     "string_repeat::repeat_right_length": "op.Mult-repetition",

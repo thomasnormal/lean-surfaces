@@ -732,6 +732,10 @@ def applyStrMethod (sv : String) : StrPlan → List RVal → SemF RVal
           if vs.length ≤ 3 then
             refuse "str.index() with start/end arguments is outside the tier (docs/memory-model.md §string semantics)"
           else raisePy (.typeError s!"index expected at most 3 arguments, got {vs.length}")
+  | .join, vs =>
+      match vs with
+      | [v] => do liftRes (strJoinH (← frameHeap) sv v)
+      | vs => raisePy (.typeError s!"str.join() takes exactly one argument ({vs.length} given)")
   | .refuse msg, _ => refuse msg
 
 /-! ## §1 THE FUEL-FREE EXPRESSION HALF — structural on `Expr` -/

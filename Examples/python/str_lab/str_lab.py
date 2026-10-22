@@ -92,6 +92,38 @@ def lower_flag(s):
     return s.islower()
 
 
+def join_list(sep):
+    return sep.join(["a", "b", "c"])
+
+
+def join_tuple(sep):
+    return sep.join(("a", "b"))
+
+
+def join_string(sep):
+    return sep.join("ab")
+
+
+def join_empty(sep):
+    return sep.join([])
+
+
+def join_dict(sep):
+    return sep.join({"a": 1, "b": 2})
+
+
+def join_bad_item(sep):
+    return sep.join(["a", 2])
+
+
+def join_bad_arity(sep):
+    return sep.join()
+
+
+def join_generator(sep):
+    return sep.join(x for x in ["a", "b"])
+
+
 def list_slice_is_loud():
     return [1, 2, 3][::-1]
 

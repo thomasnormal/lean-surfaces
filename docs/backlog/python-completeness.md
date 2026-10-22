@@ -42,6 +42,21 @@ inputs are already represented, and the operation is a read-only string result.
 The machine-readable stdlib result is `/var/tmp/ls-python-stdlib-baseline.json`;
 the full refusal log is `/var/tmp/ls-python-refusal-baseline.log`.
 
+## 2026-10-22-pycomplete-50 — `str.join` reads the existing sequence tier
+
+`str.join` now evaluates the separator method on the monadic runner. The
+worker covers strings (code-point iteration), bytes, tuples, namedtuples,
+heap lists, ranges, dictionaries in insertion order, and empty iterables;
+it retains CPython's indexed non-string-item `TypeError` and exact-one-
+argument arity error. Generator and set operands remain loud because their
+consumption would observe state or hash order. The trunk proof interpreter
+has the same arm, with a payload-blindness lemma for the heap read.
+
+`Examples/python/str_lab` adds seven matching rows and one intentional
+generator refusal; the focused differential run is **8 rows, 7 MATCH and
+1 whitelisted refusal, 0 failures**. The full coverage page and case file
+were regenerated from this landing.
+
 ## 2026-08-22-pycomplete-1 — RUNG 3b: the eight consumers that could never meet the hazard their refusal cited
 
 `list(d)`, `tuple(d)`, `sorted(d)`, `sum(d)`, `max(d)`, `min(d)`, `set(d)`,

@@ -103,6 +103,19 @@ load_program str_lab from "Examples/python/str_lab/str_lab.json"
 #py_check str_lab.upper_of("nN1.") = "NN1."
 #py_check str_lab.lower_flag("pq") = true
 #py_check str_lab.lower_flag("pQ") = false
+
+/-! ### `str.join`: sequence and heap-backed iterable forms -/
+
+#py_check str_lab.join_list("-") = "a-b-c"
+#py_check str_lab.join_tuple("/") = "a/b"
+#py_check str_lab.join_string(".") = "a.b"
+#py_check str_lab.join_empty("-") = ""
+#py_check str_lab.join_dict("|") = "a|b"
+#py_check str_lab.join_bad_item("-") raises
+  (.typeError "sequence item 1: expected str instance, int found")
+#py_check str_lab.join_bad_arity("-") raises
+  (.typeError "str.join() takes exactly one argument (0 given)")
+#guard callFunction str_lab "join_generator" #[.str "-"] 4096 matches .unsupported _
 #guard callFunction str_lab "upper_of" #[.str "é"] 4096
   matches .unsupported _
 #guard callFunction str_lab "list_slice_is_loud" #[] 4096 ==

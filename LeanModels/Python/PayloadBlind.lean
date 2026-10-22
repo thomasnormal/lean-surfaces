@@ -749,6 +749,25 @@ theorem dictViewEntries_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
       (Heap.lt_size_of_get? hslot), hslot, ho₀, ho]
   · rw [dictViewEntries, dictViewEntries, Heap.get?_swapAt_ne hd]
 
+/- `str.join` is blind to a running-generator payload.  Its supported
+   containers read only the object constructor at the receiver address;
+   the `.running` twin reaches the same refusal on both sides. -/
+theorem strJoinH_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (sep : String) (v : RVal) :
+    strJoinH (Heap.swapAt h pa o) sep v = strJoinH h sep v := by
+  cases v with
+  | ref b =>
+      rcases Heap.get?_swapAt_twin (b := b) hslot htwin with
+        heq | ⟨_, _, _, _, _, h1, h2⟩
+      · cases hg : Heap.get? h b with
+        | none => simp [strJoinH, heq, hg]
+        | some obj =>
+            cases obj <;>
+              simp [strJoinH, heq, hg, dictViewEntries_swapAt hslot htwin]
+      · simp [strJoinH, h1, h2]
+  | _ => rfl
+
 /- `len(o)` is blind. -/
 theorem heapLen_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
     (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o) (b : Addr) :
@@ -4331,6 +4350,17 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                   cases v <;>
                                     exact PBF.ite (fun _ => PBF.unsupported)
                                       (fun _ => PBF.exn hs2 _)
+                      | join =>
+                          refine PBF.bind (ihEs m s1 args.toList hs1) fun s2 vs _ hs2 => ?_
+                          cases vs with
+                          | nil => exact PBF.exn hs2 _
+                          | cons v rest =>
+                              cases rest with
+                              | nil =>
+                                  simp only [FrameState.swapAt_world, World.swapAt_heap]
+                                  rw [strJoinH_swapAt hs2 htwin]
+                                  exact PBF.liftRes hs2 _
+                              | cons _ _ => exact PBF.exn hs2 _
                   | _ => exact PBF.unsupported
             | _ => exact PBF.unsupported
           -- ===== H6 KEYWORD TIER =====

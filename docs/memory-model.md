@@ -551,6 +551,11 @@ tier).
   carries ~45 real methods plus the dunder protocol). Arity errors
   are faithful `TypeError`s, raised after the arguments evaluate
   (CPython call order).
+  `.join(iterable)` is also admitted for strings, bytes, tuples,
+  namedtuples, lists, ranges, and dictionaries (the latter in insertion
+  order). It requires string elements and reports CPython's indexed
+  `TypeError`; generators and sets remain loud because consuming them
+  observes state or hash order.
 * **Simp doctrine** (the `sortInts`/`heapEq` freeze family): the
   dispatchers (`sliceVal`, `strCallPlan`) are in
   `py_simp`/`interpUnfolds`; the value workers (`strSlice`,
@@ -563,7 +568,7 @@ tier).
   is pure or loud), and since 2026-08-15 **so are the pure str
   METHOD calls**. The attribute-call whitelist is now a named
   predicate, `heapFreeAttr` = `get` plus
-  `swapcase`/`isupper`/`islower`/`upper`/`index`, decided from the
+  `swapcase`/`isupper`/`islower`/`upper`/`index`/`join`, decided from the
   attribute NAME (all syntax knows) with soundness carried per
   receiver kind: on a heap receiver the five str names miss
   `get`/`clear` on a dict and `append`/`pop`/`insert` on a list and

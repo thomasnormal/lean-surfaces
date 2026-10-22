@@ -5,6 +5,25 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-10-22
+
+### Added
+
+- Rung-1 witnesses for vacuous default initialization and its
+  uninitialized-read refusal.
+- Rung-2 scalar conversion, width and promotion evidence, plus rung-3 defined
+  integral expression, unary and shift witnesses with explicit undefined-case
+  outcomes.
+- Scalar and expression check rows in the differential harness, alongside the
+  existing lifecycle and callable rows.
+
+### Measured
+
+- The checked-in corpus now contains 15 differential rows and 24 grammar
+  witnesses. With pinned Clang/LLVM 21.1.8 unavailable, the run reports 0
+  MATCH, 0 DIVERGE, 0 REFUSE, 0 TIMEOUT, and 15 ORACLE rows; grammar reports
+  24 ORACLE rows.
+
 ## [0.1.0] — 2026-10-22
 
 ### Added

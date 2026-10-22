@@ -87,11 +87,11 @@ See [the measured coverage](docs/python-coverage.md) and
 
 ## C++ tier status
 
-The C++ tier prerelease is **v0.1.0 (2026-10-22)**. Tag `cpp-v0.1.0` identifies
+The C++ tier prerelease is **v0.1.1 (2026-10-22)**. Tag `cpp-v0.1.1` identifies
 the release commit on `master`; see the [C++ changelog](docs/cpp-changelog.md).
 The bounded rung-1 surface admits translation roots, typed integral objects,
 and static, thread, automatic, and dynamic storage lifetimes. Its checked-in
-differential corpus has 11 rows and its grammar census has 24 witnesses; this
+differential corpus has 15 rows and its grammar census has 24 witnesses; this
 host reports every native result as an explicit ORACLE because pinned
 Clang/LLVM 21.1.8 is unavailable. See the [C++ coverage](docs/cpp-coverage.md)
 and [rung status](docs/cpp-rung-status.md) pages.

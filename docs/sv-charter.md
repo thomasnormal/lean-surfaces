@@ -4101,6 +4101,23 @@ no fixed arm is selected, and no second scheduler is introduced. See [the
 unique-case boundary](sv-unique-cases.md) and the read-only instrument
 `extractors/sv/unique_case_reprice.py`.
 
+### Unique-if statements — 2026-10-22
+
+`ConditionalStatement:Unique` remains the first-match plus all-condition
+diagnostic boundary. The fresh 22,044-path census records it in **20** files:
+**16** are unique-if-only and **4** co-occur with another wall. Repricing the
+sole files finds **16** spans: **10** no-match paths without a final `else`,
+**6** explicit `else` fallbacks, **4** potentially multiple-true chains,
+**3** `always_comb` contexts, **2** reschedule-flush rows, one nested chain,
+one `always` context, one Observed-region report, one event-resume flush, one
+loop context and one invalid qualifier after `else` (features overlap).
+
+The ordinary `If` envelope has no uniqueness status or diagnostic channel,
+all-condition evaluation record, or pending-report state tied to a retained
+process. No qualifier is erased, no fixed arm is chosen, and no scheduler is
+added. See [the unique-if boundary](sv-unique-if.md) and the read-only
+instrument `extractors/sv/unique_if_reprice.py`.
+
 ### Randcase statements — 2026-10-22
 
 `RandCaseStatement` is the weighted-random branch boundary. In the fresh

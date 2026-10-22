@@ -275,6 +275,13 @@ envelope does not carry portable diagnostic text, status, source-location
 footer or coverage-observation state. Repricing details are in
 `extractors/sv/immediate_assert_error_reprice.py`.
 
+Qualified `unique if` statements remain explicit
+`ConditionalStatement:Unique` unsupported nodes. The ordinary `If` lowering
+retains first-match behavior but has no all-condition uniqueness check,
+no-match/overlap diagnostic channel, Observed-region report state, or pending
+report flush tied to a retained process. See [the unique-if boundary](sv-unique-if.md)
+and `extractors/sv/unique_if_reprice.py`.
+
 Deferred `#0` and `final` assertions remain explicit
 `ImmediateAssertion:deferred` members. The envelope has no Observed/Postponed
 sampling, pending-report maturity, deferred action restriction or

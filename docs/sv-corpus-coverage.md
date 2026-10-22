@@ -543,6 +543,21 @@ qualifier is erased and no fixed arm is selected. See [the unique-case
 boundary](sv-unique-cases.md) and `extractors/sv/unique_case_reprice.py` for
 the reproducible scan.
 
+## Unique-if statements — 2026-10-22
+
+`ConditionalStatement:Unique` remains the first-match plus all-condition
+diagnostic boundary. The fresh **22,044**-path census records it in **20**
+files: **16** are unique-if-only and **4** co-occurring. Repricing the sole
+files finds **16** spans: **10** no-match paths without a final `else`, **6**
+explicit `else` fallbacks, **4** potentially multiple-true chains, **3**
+`always_comb` contexts, **2** reschedule-flush rows, one nested chain, one
+`always` context, one Observed-region report, one event-resume flush, one loop
+context and one invalid qualifier after `else` (features overlap). The
+ordinary conditional envelope has no uniqueness status, all-condition
+evaluation record or pending-report state, so no qualifier is erased and no
+arm is selected. See [the unique-if boundary](sv-unique-if.md) and
+`extractors/sv/unique_if_reprice.py` for the reproducible scan.
+
 ## Randcase statements — 2026-10-22
 
 `RandCaseStatement` remains the weighted-random branch boundary. The fresh

@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22043,
+  "corpus_files": 22045,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -16,19 +16,19 @@
   "blocker_files": [
    [
     "VariableSymbol:2state",
-    5743
+    5744
    ],
    [
     "AssignmentExpression:target",
-    4030
+    4032
    ],
    [
     "ExpressionStatement:CallExpression",
-    3791
+    3792
    ],
    [
     "CallExpression",
-    3291
+    3292
    ],
    [
     "Hierarchy:ports",
@@ -40,7 +40,7 @@
    ],
    [
     "NamedValueExpression:2state",
-    1482
+    1483
    ],
    [
     "ConcurrentAssertionStatement",
@@ -52,7 +52,7 @@
    ],
    [
     "ClassType",
-    1328
+    1329
    ],
    [
     "Hierarchy:module-kind",
@@ -60,7 +60,7 @@
    ],
    [
     "MemberAccessExpression",
-    1187
+    1188
    ],
    [
     "PrimitiveInstanceSymbol:PrimitiveInstance",
@@ -68,7 +68,7 @@
    ],
    [
     "ConversionExpression:width",
-    779
+    780
    ],
    [
     "HierarchicalValueExpression",
@@ -84,7 +84,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    662
+    663
    ],
    [
     "CheckerSymbol",
@@ -124,7 +124,7 @@
    ],
    [
     "TypeAliasType:TypeAlias",
-    299
+    300
    ],
    [
     "SequenceSymbol:Sequence",
@@ -172,11 +172,11 @@
    ],
    [
     "VariableSymbol:type",
-    150
+    151
    ],
    [
     "GenericClassDefSymbol",
-    146
+    147
    ],
    [
     "Package:invalid-compilation",
@@ -555,6 +555,10 @@
     11
    ],
    [
+    "ConversionExpression:BitstreamCast",
+    11
+   ],
+   [
     "ConditionalStatement:Priority",
     11
    ],
@@ -572,10 +576,6 @@
    ],
    [
     "Let:invalid-compilation",
-    10
-   ],
-   [
-    "ConversionExpression:BitstreamCast",
     10
    ],
    [
@@ -977,7 +977,7 @@
   ],
   "by_status": {
    "clean": 4326,
-   "partial": 17651,
+   "partial": 17653,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1039,7 +1039,7 @@
    ],
    "simulation": [
     3741,
-    18676
+    18678
    ],
    "simulation elaboration": [
     2,
@@ -1231,14 +1231,14 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 624,
+    "blocked_by_more": 625,
     "clean": 415,
-    "partial": 626,
-    "simulation_tests": 1041,
+    "partial": 627,
+    "simulation_tests": 1042,
     "top_residual_blockers": [
      [
       "AssignmentExpression:target",
-      230
+      231
      ],
      [
       "VariableSymbol:2state",
@@ -1266,7 +1266,7 @@
      ],
      [
       "TypeAliasType:TypeAlias",
-      93
+      94
      ],
      [
       "InstanceSymbol:Instance",
@@ -1274,7 +1274,7 @@
      ],
      [
       "MemberAccessExpression",
-      54
+      55
      ],
      [
       "RealLiteral",
@@ -1282,7 +1282,7 @@
      ],
      [
       "ElementSelectExpression:source-type",
-      48
+      49
      ],
      [
       "TransparentMemberSymbol:TransparentMember",
@@ -1298,7 +1298,7 @@
      ],
      [
       "Call:$fatal",
-      21
+      22
      ],
      [
       "ClassType:ClassType",
@@ -1413,9 +1413,9 @@
    "chapter-21": {
     "clean": 84,
     "error": 0,
-    "partial": 817,
+    "partial": 818,
     "skip_include": 0,
-    "total": 901,
+    "total": 902,
     "unlockable": 0
    },
    "chapter-22": {
@@ -1597,9 +1597,9 @@
    "chapter-6": {
     "clean": 428,
     "error": 0,
-    "partial": 757,
+    "partial": 758,
     "skip_include": 0,
-    "total": 1185,
+    "total": 1186,
     "unlockable": 4
    },
    "chapter-7": {

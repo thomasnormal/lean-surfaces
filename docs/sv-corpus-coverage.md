@@ -16,23 +16,26 @@ python3.12 extractors/sv/census.py --corpus /path/to/tests --recheck  # determin
 
 Machine-readable results: `harness/sv/conformance/census.json`
 (per-file records + this document's aggregates). The current committed summary
-is the **2026-10-21** snapshot below, measured with Python 3.9 and pyslang 11;
+is the **2026-10-22** snapshot below, measured with Python 3.9 and pyslang 11;
 the dated sections retain their original measurement denominators.
 
 The committed summary uses a portable corpus-layout placeholder, not a
 host-local checkout path. Supply the actual test directory explicitly.
 
-## Fresh extractor census — 2026-10-21
+The executable self-check differential matrix and pyslang grammar census are
+published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
-The chapter-scoped rerun covered **22,043** paths: **4,326 clean**,
-**17,651 partial**, **66 include skips**, and **zero errors**. The adapter
+## Fresh extractor census — 2026-10-22
+
+The chapter-scoped rerun covered **22,045** paths: **4,326 clean**,
+**17,653 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`VariableSymbol:2state` (5,743), `AssignmentExpression:target` (4,030),
-`ExpressionStatement:CallExpression` (3,791), `CallExpression` (3,291),
+`VariableSymbol:2state` (5,744), `AssignmentExpression:target` (4,032),
+`ExpressionStatement:CallExpression` (3,792), `CallExpression` (3,292),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
-`NamedValueExpression:2state` (1,482), `ConcurrentAssertionStatement`
-(1,358), `ClassType` (1,328), and `InvalidStatement` (1,329).
+`NamedValueExpression:2state` (1,483), `ConcurrentAssertionStatement`
+(1,358), `InvalidStatement` (1,329), and `ClassType` (1,329).
 
 The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`

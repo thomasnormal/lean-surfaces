@@ -38,6 +38,11 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+The executable self-check and grammar baseline is generated in
+[`docs/sv-coverage.md`](sv-coverage.md) by
+`harness/sv_coverage_page.py`; its differential rows are pinned to the
+self-check declarations and its grammar rows name one pyslang witness each.
+
 **Proof inventory, with comments excluded.** There are **98 named
 theorems and 10 anonymous examples** in `LeanModels/Sv`, and **121
 theorems and 6 examples** in the SV example directories: **235 actual

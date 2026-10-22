@@ -132,6 +132,9 @@ def admitUnresolvedUsingValueDeclaration (artifact : Artifact) (path : List Nat)
 def admitBindingDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "BindingDecl" "binding"
 
+def admitDecompositionDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "DecompositionDecl" "decomposition"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

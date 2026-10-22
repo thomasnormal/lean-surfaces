@@ -252,6 +252,13 @@ private def bindingTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "b"), ("kind", .string "BindingDecl"),
         ("name", .string "first"), ("inner", .array [])]])]}
 
+private def decompositionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "d"), ("kind", .string "DecompositionDecl"),
+        ("name", .string "pair"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -341,6 +348,9 @@ def unresolvedUsingValueTranslationWitness : Except String Unit :=
 
 def bindingTranslationWitness : Except String Unit :=
   admitBindingDeclaration bindingTranslation [0]
+
+def decompositionTranslationWitness : Except String Unit :=
+  admitDecompositionDeclaration decompositionTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -466,6 +476,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard bindingTranslationWitness matches .ok ()
 #guard admitBindingDeclaration bindingTranslation [] matches .error _
 #guard admitBindingDeclaration functionTranslation [0] matches .error _
+#guard decompositionTranslationWitness matches .ok ()
+#guard admitDecompositionDeclaration decompositionTranslation [] matches .error _
+#guard admitDecompositionDeclaration functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

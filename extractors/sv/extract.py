@@ -2652,6 +2652,73 @@ def _pattern_source_elements(pattern):
     return elements
 
 
+def _fixed_array_pattern_elements(pattern, dimensions):
+    """Flatten an exact assignment pattern over fixed unpacked dimensions.
+
+    The legacy state has one vector slot per fixed-array leaf, so a nested
+    pattern is admissible only when its complete finite shape is known at
+    extraction time.  Replication is expanded at each dimension (including
+    nested replication); positional patterns retain the declared dimension
+    order, with ``_pattern_source_elements`` applying the descending-range
+    rule.  The returned list is in the same order as the flattened storage
+    names produced by ``convert_fixed_array_vars``.
+    """
+    if not dimensions:
+        # At the leaf a pattern element must be one scalar/packed value.  A
+        # composite pattern is consumed by the enclosing unpacked dimension.
+        if type(pattern).__name__ in (
+                "SimpleAssignmentPatternExpression",
+                "StructuredAssignmentPatternExpression",
+                "ReplicatedAssignmentPatternExpression"):
+            return None
+        return [pattern]
+    if getattr(pattern, "bad", False):
+        return None
+    left, right = dimensions[0]
+    count = abs(left - right) + 1
+    tail_count = 1
+    for tail_left, tail_right in dimensions[1:]:
+        tail_count *= abs(tail_left - tail_right) + 1
+    kind = type(pattern).__name__
+    if kind == "ReplicatedAssignmentPatternExpression":
+        repetition = getattr(getattr(pattern, "count", None), "constant", None)
+        try:
+            if hasattr(repetition, "value"):
+                repetition = repetition.value
+            repetition = int(repetition)
+        except (TypeError, ValueError, OverflowError):
+            return None
+        if repetition <= 0:
+            return None
+        sources = _pattern_source_elements(pattern)
+        if not sources:
+            return None
+        flattened_sources = [
+            _fixed_array_pattern_elements(source, dimensions[1:])
+            for source in sources
+        ]
+        if any(flattened is None or len(flattened) != tail_count
+               for flattened in flattened_sources):
+            return None
+        if repetition * len(sources) != count:
+            return None
+        group = [value for flattened in flattened_sources for value in flattened]
+        return group * repetition
+    if kind not in ("SimpleAssignmentPatternExpression",
+                    "StructuredAssignmentPatternExpression"):
+        return None
+    sources = _pattern_source_elements(pattern)
+    if len(sources) != count:
+        return None
+    result = []
+    for source in sources:
+        flattened = _fixed_array_pattern_elements(source, dimensions[1:])
+        if flattened is None or len(flattened) != tail_count:
+            return None
+        result.extend(flattened)
+    return result
+
+
 def _expression_node_cost(node, limit):
     """Count materialized AST nodes with an early stop at the envelope bound."""
     if isinstance(node, dict):
@@ -5543,17 +5610,41 @@ def convert_fixed_array_vars(sm, m):
             return None
         dimensions, leaf_type = dimensions_shape
         if len(dimensions) > 1:
-            # A nested fixed aggregate has no aggregate store in the
-            # self-check interpreter.  Admit the declaration when its leaf
-            # type is integral and it has no initializer, expanding the
-            # finite Cartesian product into independent cells.  Aggregate
-            # initializers remain loud until their source-order semantics can
-            # be represented without guessing.
-            if getattr(m, "initializer", None) is not None:
-                return None
             width, two, reason = type_width_2s(leaf_type)
             if width is None or reason is not None:
                 return None
+            initializer = getattr(m, "initializer", None)
+            values = None
+            if initializer is not None:
+                elements = _fixed_array_pattern_elements(initializer, dimensions)
+                if elements is None:
+                    return None
+                values = []
+                target_name = _array_storage_name(m)
+                for element in elements:
+                    if not _case_source_expression_ok(element, packed_members=True):
+                        return None
+                    reads_target = False
+
+                    def inspect(node):
+                        nonlocal reads_target
+                        if type(node).__name__ in ("NamedValueExpression",
+                                                     "HierarchicalValueExpression"):
+                            try:
+                                reads_target = (reads_target or
+                                                _array_storage_name(node.symbol) == target_name)
+                            except Exception:
+                                reads_target = True
+
+                    _visit_selected_expression(element, inspect)
+                    if reads_target:
+                        return None
+                    value = convert_expr(sm, element)
+                    if (value is None or value.get("kind") == "Unsupported"
+                            or width_of(value) != width
+                            or not _case_expression_ok(value)):
+                        return None
+                    values.append(squash2_wrap(value, width) if two else value)
             positions = [()]
             for left, right in dimensions:
                 step = 1 if right >= left else -1
@@ -5562,9 +5653,9 @@ def convert_fixed_array_vars(sm, m):
                              for position in range(left, right + step, step)]
             declarations = []
             base = _array_storage_name(m)
-            for indexes in positions:
-                init = None
-                if two:
+            for index, indexes in enumerate(positions):
+                init = values[index] if values is not None else None
+                if init is None and two:
                     init = {"kind": "Literal", "span": None,
                             "width": width, "bits": "0" * width}
                 name = base + "".join(f"[{position}]" for position in indexes)

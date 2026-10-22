@@ -47,16 +47,22 @@ The legacy extractor now admits bounded fixed-size unpacked arrays with two
 or more dimensions when their leaf type is integral and the declaration has
 no aggregate initializer. Each finite leaf becomes an ordinary vector cell;
 constant selections such as `matrix[1][2]` use that cell for reads and writes.
-Dynamic arrays, queues, object/event/string/real leaves, aggregate
-initializers, and nonconstant selections remain loud. The new
+Dynamic arrays, queues, object/event/string/real leaves, effectful or
+shape-mismatched patterns, and nonconstant selections remain loud. The new
 `fixed_array_2state` differential row writes and reads a two-dimensional
-`bit [3:0]` array and checks zero startup of an untouched cell.
+`bit [3:0]` array and checks zero startup of an untouched cell;
+`fixed_array_pattern_2state` checks nested replication.
 
 Against the previous 22,045-path snapshot, clean files rise **4,326 → 4,345**
 and partial files fall **17,653 → 17,634**. The `VariableSymbol:2state` wall
 falls **5,744 → 5,666**; the related constant element-selection wall falls
 **663 → 615**. The differential matrix is **14 rows, 10 matches, 0
 disagreements, and 4 recorded refusals**.
+
+The nested-pattern extension moves clean files **4,347 → 4,351** and partial
+files **17,632 → 17,628**. `VariableSymbol:2state` falls **5,666 → 5,660**;
+the differential matrix is now **16 rows, 12 matches, 0 disagreements, and 4
+recorded refusals**.
 
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 

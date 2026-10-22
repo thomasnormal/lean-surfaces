@@ -12,6 +12,7 @@
     {"name": "fixed_array_oob", "file": "Examples/system-verilog/fixed_array_oob/fixed_array_oob.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "clog2", "file": "Examples/system-verilog/clog2/clog2.sv", "module": "clog2", "oracle": ["PASS"], "expect": "match"},
     {"name": "unpacked_dynamic", "file": "Examples/system-verilog/unpacked_dynamic/unpacked_dynamic.sv", "module": "top", "oracle": ["PASS1", "PASS2", "PASS3"], "expect": "match"},
+    {"name": "fixed_array_pattern_2state", "file": "Examples/system-verilog/fixed_array_pattern_2state/fixed_array_pattern_2state.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "delay_refusal", "file": "Examples/system-verilog/delay/delay.sv", "module": "delay", "oracle": "refuse", "expect": "refuse"},
     {"name": "event_refusal", "file": "Examples/system-verilog/event/event.sv", "module": "event_wait", "oracle": "refuse", "expect": "refuse"},
     {"name": "always_refusal", "file": "Examples/system-verilog/always/events.sv", "module": "top", "oracle": "refuse", "expect": "refuse"},

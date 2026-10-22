@@ -72,6 +72,19 @@ class LegacyContinuousWindows(unittest.TestCase):
         stmt = envelope["design"]["modules"][0]["processes"][0]["body"]["stmts"][0]
         self.assertEqual(stmt["target"]["name"], "value[1][2]")
 
+    def test_nested_fixed_array_pattern_initializes_flattened_two_state_cells(self):
+        envelope = self.extract(
+            "module top; int value [1:2][1:3] = '{2\n"
+            "  {'{3{5}}}; initial begin $display(\"%0d\", value[2][3]); "
+            "$finish; end endmodule")
+        decls = envelope["design"]["modules"][0]["decls"]
+        self.assertEqual([d["name"] for d in decls], [
+            "value[1][1]", "value[1][2]", "value[1][3]",
+            "value[2][1]", "value[2][2]", "value[2][3]"])
+        self.assertTrue(all(d["init"]["kind"] == "Squash2" for d in decls))
+        self.assertTrue(all(d["init"]["operand"]["bits"] == "0" * 29 + "101"
+                            for d in decls))
+
     def test_fixed_array_out_of_bounds_write_is_empty(self):
         envelope = self.extract(
             "module top; int value [0:3]; "

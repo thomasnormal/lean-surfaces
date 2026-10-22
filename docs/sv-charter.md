@@ -545,18 +545,25 @@ slice supersedes the older input-port refusal below.
 ### Nested fixed two-state arrays — 2026-10-22
 
 Bounded fixed-size unpacked arrays with two or more dimensions now lower to
-independent vector cells when their leaf type is integral and the declaration
-has no aggregate initializer. Constant element selections reuse those names,
-so ordinary reads, writes, two-state zero startup, and x/z-to-zero conversion
-retain the existing vector semantics. Dynamic or queue arrays, nonintegral
-leaves, aggregate initializers, and nonconstant selections remain loud. The
-`fixed_array_2state` fixture checks a write/read pair and an untouched cell.
+independent vector cells when their leaf type is integral. Constant element
+selections reuse those names, so ordinary reads, writes, two-state zero startup,
+and x/z-to-zero conversion retain the existing vector semantics. Exact
+positional and recursively replicated patterns are flattened in declared range
+order; effectful or shape-mismatched patterns, dynamic or queue arrays,
+nonintegral leaves, and nonconstant selections remain loud. The
+`fixed_array_2state` fixture checks a write/read pair and an untouched cell;
+`fixed_array_pattern_2state` checks nested replication.
 
 The fresh 22,045-path census moves clean files **4,326 → 4,345** and partial
 files **17,653 → 17,634**. `VariableSymbol:2state` falls **5,744 → 5,666**;
 `AssignmentExpression:target` falls **4,032 → 3,982** as the newly admitted
 constant nested selections stop producing target refusals. The differential
 matrix has **14 rows, 10 matches, 0 disagreements, and 4 recorded refusals**.
+
+The nested-pattern extension moves clean files **4,347 → 4,351**, partial files
+**17,632 → 17,628**, and `VariableSymbol:2state` **5,666 → 5,660**. Its
+differential matrix has **16 rows, 12 matches, 0 disagreements, and 4 recorded
+refusals**.
 
 ### Constant out-of-bounds fixed-array writes — 2026-10-22
 

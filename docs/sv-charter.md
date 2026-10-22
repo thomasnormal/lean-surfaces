@@ -4881,3 +4881,11 @@ are sole refusals and one co-occurs. Repricing finds five format spans, four
 macro default/empty-argument cases and one runtime display format. The envelope
 has no macro-expansion trace or format-argument model, so these calls remain
 loud. See [system-call formatting](sv-syscall-format.md).
+
+### Compilation-unit parameter boundary — 2026-10-22
+
+The fresh 22,043-path census records `ParameterSymbol` in **25** files: **5**
+are sole refusals and 20 co-occur. Repricing finds five compilation-unit
+parameter spans, with `$unit::` references, module-parameter context and
+shadowing among the source shapes. The envelope has no unit parameter store or
+scope resolver, so these parameters remain loud. See [parameter scope](sv-parameter-scope.md).

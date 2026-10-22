@@ -1962,3 +1962,9 @@ lower `supply0` to a literal zero; see [`supply0`](sv-supply0.md).
 substitution or runtime format arguments require state absent from the
 envelope. The envelope does not expand macros or reorder output; see
 [system-call formatting](sv-syscall-format.md).
+
+## Compilation-unit parameters
+
+`ParameterSymbol` remains an explicit unsupported declaration for parameters in
+compilation-unit scope. The envelope does not copy unit bindings into modules
+or collapse `$unit::` lookup and shadowing; see [parameter scope](sv-parameter-scope.md).

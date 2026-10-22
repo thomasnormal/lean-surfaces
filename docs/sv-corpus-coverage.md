@@ -3320,3 +3320,11 @@ are sole refusals and one co-occurs. Repricing finds five format spans, four
 macro default/empty-argument cases and one runtime display format. The call
 remains loud; see [system-call formatting](sv-syscall-format.md) and
 `extractors/sv/syscall_format_reprice.py`.
+
+## Compilation-unit parameter boundary — 2026-10-22
+
+The fresh 22,043-path census records `ParameterSymbol` in **25** files: **5**
+are sole refusals and 20 co-occur. Repricing finds five compilation-unit
+parameter spans with `$unit::` references, module context and shadowing. The
+parameter remains loud; see [parameter scope](sv-parameter-scope.md) and
+`extractors/sv/parameter_scope_reprice.py`.

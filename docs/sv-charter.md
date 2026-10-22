@@ -3975,6 +3975,21 @@ admitted by running it at time zero or adding a second scheduler. See [the
 final boundary](sv-final.md) and the read-only instrument
 `extractors/sv/final_reprice.py`.
 
+### Implicit event controls — 2026-10-22
+
+`TimedStatement:ImplicitEventControl` is the inferred-sensitivity boundary
+for `@*` and `@(*)`. In the fresh 22,043-path census it occurs in 53 files:
+38 are implicit-control-only and 15 co-occur with another wall. The sole files
+contain 38 spans: 29 bare `@*`, nine `@(*)`, 25 block bodies, 14 case
+statements, five indexed selects, four conditionals, three nested controls,
+three concatenations and one system call (features overlap). IEEE sensitivity
+inference reads branches, case items, indexes and concatenations while
+excluding identifiers used only in nested timing controls. The envelope has
+no inferred read-set or rearming state, so no implicit event control is
+admitted by guessing a list, running it once or adding a scheduler. See [the
+implicit-event boundary](sv-implicit-events.md) and the read-only instrument
+`extractors/sv/implicit_event_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

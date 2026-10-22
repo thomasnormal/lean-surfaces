@@ -19,7 +19,8 @@ The canonical top-level `always @(posedge signal)` encoding remains
 `AlwaysPosedge`, using its existing wait/body/arm representation. Bare and
 negative-edge controls in the new general body use existing `WaitEvent`
 nodes. Implicit sensitivity, event lists, `iff`, level `wait` statements and
-unsupported control/body forms retain their refusals. `always_ff`,
+unsupported control/body forms retain their refusals; see [implicit event
+controls](sv-implicit-events.md) for the `@*` boundary. `always_ff`,
 `always_comb`, `always_latch` and the symbolic schema keep their existing
 separate boundaries. Invalid frontend compilations containing the lowering
 are refused, so synthetic repetition cannot legitimize an illegal source

@@ -209,7 +209,9 @@ other sensitivity stays unsupported in the M0 cycle path. The legacy
 scheduler envelope can instead carry `Initial` or plain `Always` processes;
 the latter retains its complete source body, including admitted delay, bare
 signal and negative-edge controls. Unsupported body nodes remain visible.
-Event lists, `@*`, `iff`, level waits and `always_latch` remain loud. `body`
+Event lists, `@*`, `iff`, level waits and `always_latch` remain loud; see [the
+implicit-event boundary](sv-implicit-events.md) for the inferred-read-set
+contract. `body`
 is a single statement node (often `Block` or `If`).
 
 The scheduler-facing timed loader admits `Initial`, plain `Always`, and

@@ -501,6 +501,19 @@ end-of-simulation queue, so no final body is admitted by running it at time
 zero or by inventing another scheduler. See [the final boundary](sv-final.md)
 and `extractors/sv/final_reprice.py` for the reproducible scan.
 
+## Implicit event controls — 2026-10-22
+
+`TimedStatement:ImplicitEventControl` remains the inferred-sensitivity
+boundary for `@*` and `@(*)`. The fresh **22,043**-path census records it in
+**53** files: **38** are implicit-control-only and **15** co-occurring.
+Repricing the sole files finds **38** spans: **29** bare `@*` and **9**
+`@(*)`, with **25** block bodies, **14** case statements, **5** indexed
+selects, **4** conditionals, **3** nested controls, **3** concatenations and
+**1** system call (features overlap). The envelope has no inferred read-set or
+rearming state, so no implicit control is admitted by guessing a sensitivity
+list or executing it once. See [the implicit-event boundary](sv-implicit-events.md)
+and `extractors/sv/implicit_event_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

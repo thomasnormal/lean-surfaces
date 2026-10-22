@@ -169,3 +169,16 @@ first target cannot be split without naming the RHS). -/
   (.typeError "byte indices must be integers or slices, not Cell")
 #py_check cls_lab.bytes_contains_instance() raises
   (.typeError "a bytes-like object is required, not 'Cell'")
+
+/-! ### `__slots__`: declared fields, augmented stores, left-to-right tuple
+stores, and the explicit `__dict__` escape hatch -/
+
+#py_check cls_lab.slot_read(7) = 7
+#py_check cls_lab.slot_store(7) = 8
+#py_check cls_lab.slot_aug(7) = 9
+#py_check cls_lab.slot_reject(7) raises .attributeError
+#py_check cls_lab.slot_tuple_reject(7) raises .attributeError
+#py_check cls_lab.slot_dict(7) = (Val.tuple #[.int 7, .int 8])
+
+#guard (findClass cls_lab "SlotCell").isSome
+#guard (findClass cls_lab "SlotDict").isSome

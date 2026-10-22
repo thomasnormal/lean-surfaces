@@ -5205,6 +5205,13 @@ now matches CPython. `cls_data_script.py` continues to pin the pure-body case;
 its extractor-backed creation wall as the ground truth, and the survey's
 `class-creation` wall follows that same structured field.
 
+The slots landing is pinned by `harness/scripts/cls_slots_script.py` and the
+`Examples/python/cls_lab` checks: declared and augmented stores succeed,
+undeclared direct and tuple-target stores raise `AttributeError`, and an
+explicit `__dict__` slot permits an extra attribute.  The extractor tests pin
+the accepted literal forms and the loud duplicate, repeated, and dynamic
+declaration cases.
+
 ### Measured landing
 
 The focused Lean builds, class example, script probes, differential harness,
@@ -5219,11 +5226,17 @@ class attributes, decorators, or metaclass support.
 Of the 79 seed files v0 does not clear: decorated methods 42, dunder
 bindings 34, `__slots__` 28, dotted base 24, multiple inheritance 15,
 imported base 15, builtin-type base 14, body control flow 10, metaclass 9.
-`__slots__` is the cheapest real one — `ClassDefn.slots : Option (Array
-String)`, an attribute STORE outside the set becoming the faithful
-`AttributeError: 'C' object has no attribute 'x'` — and it is worth 4
-seed files and 2 library modules on top of v0. Decorated methods are the
-descriptor protocol and are not a slice.
+`__slots__` was the cheapest real extension — 4 seed files and 2 library
+modules on top of v0 — and is now BUILT.  The extractor recognizes exactly
+one literal string, list, or tuple assignment whose names are unique; the
+ingested `ClassDefn.slots : Option (Array String)` records those names.  A
+slot class accepts stores to its declared names, while an undeclared store
+raises the faithful `AttributeError: 'C' object has no attribute 'x'`.
+Including `"__dict__"` explicitly restores ordinary extra attributes.
+Direct, augmented, and tuple-target attribute stores all use the same slot
+check and preserve CPython's left-to-right partial effects.  A malformed or
+repeated declaration stays loud at class admission.  Decorated methods remain
+the descriptor protocol and are not a slice.
 
 ## Staging (amended)
 

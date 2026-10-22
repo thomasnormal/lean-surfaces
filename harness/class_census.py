@@ -246,7 +246,8 @@ def _body_features(node):
     return feats, kinds
 
 
-def class_row(node, class_names, import_names, truth, recognized=None):
+def class_row(node, class_names, import_names, truth, recognized=None,
+              slots=False):
     """One top-level class: its demands, its shape, the extractor's verdict.
 
     ``recognized`` is the extractor's own structural recognition of the base
@@ -281,6 +282,7 @@ def class_row(node, class_names, import_names, truth, recognized=None):
         "demands": sorted(feats),
         "creation_effects": truth,
         "recognized": recognized,
+        "slots": slots,
     }
 
 
@@ -295,6 +297,13 @@ def unexplained(c):
         ex.add("base:exception")
     if c.get("recognized") == "nt":
         ex.add("base:namedtuple-call")
+    # A literal __slots__ declaration is represented in the class table and
+    # changes instance storage without executing an observable class-body
+    # effect.  It is therefore a priced semantic demand, but not a creation
+    # wall; malformed/repeated declarations have no `slots` marker and remain
+    # unexplained (and loud).
+    if c.get("slots"):
+        ex.add("body:slots")
     # `body:decorated-def` USED to be exempt here — it was THE THIRD DOOR,
     # a demand the extractor did not call an effect. Closed 2026-08-14, so
     # the cross-check now covers it and would go red if it reopened.
@@ -370,7 +379,7 @@ def file_row(path, name):
             rec = ("nt" if d.get("namedtuple_base") is not None
                    else "exc" if d.get("exception_base") else None)
             truth[(d["name"], d["span"]["lineno"])] = (
-                bool(d.get("creation_effects")), rec)
+                bool(d.get("creation_effects")), rec, "slots" in d)
 
     rows = []
     for node in top:
@@ -381,9 +390,9 @@ def file_row(path, name):
                          "creation_effects": True, "bases": [], "nbases": 0,
                          "keywords": False, "decorators": False, "methods": 0,
                          "dunders_beyond_init": [], "kinds": {},
-                         "recognized": None})
+                         "recognized": None, "slots": False})
             continue
-        rows.append(class_row(node, class_names, imports, t[0], t[1]))
+        rows.append(class_row(node, class_names, imports, t[0], t[1], t[2]))
 
     walls = _walls_of(env)
     demands = sorted(set(d for r in rows for d in r["demands"]))
@@ -514,7 +523,7 @@ FIXTURES = [
     ("docstring + pass", "class C:\n    'doc'\n    pass\n", [], False),
     ("computed attribute", "class C:\n    x = f()\n", ["body:assign-call"], True),
     ("name attribute", "class C:\n    x = y\n", ["body:assign-name"], True),
-    ("__slots__", "class C:\n    __slots__ = ()\n", ["body:slots"], True),
+    ("__slots__", "class C:\n    __slots__ = ()\n", ["body:slots"], False),
     ("object base", "class C(object):\n    pass\n", ["base:object"], True),
     ("same-module base",
      "class A:\n    pass\nclass B(A):\n    pass\n", ["base:same-module-class"], True),
@@ -557,10 +566,12 @@ def controls(verbose=True):
         env = _module_envelope(tree)
         truth = [(bool(d.get("creation_effects")),
                   "nt" if d.get("namedtuple_base") is not None
-                  else "exc" if d.get("exception_base") else None)
+                  else "exc" if d.get("exception_base") else None,
+                  "slots" in d)
                  for d in env["body"] if d.get("kind") == "ClassDef"]
         node = top[-1]
-        got = class_row(node, names, imports, truth[-1][0], truth[-1][1])
+        got = class_row(node, names, imports, truth[-1][0], truth[-1][1],
+                       truth[-1][2])
         ok = (got["demands"] == sorted(want)
               and truth[-1][0] == want_effects
               # the cross-check the census runs on every real file, on the

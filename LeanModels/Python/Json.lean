@@ -919,6 +919,11 @@ def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) 
     let hasGlobal := match j.getObjVal? "has_global" with
       | .ok (.bool b) => b
       | _ => false
+    let slots ← match j.getObjVal? "slots" with
+      | .ok value => do
+        let xs ← value.getArr?
+        pure (some (← xs.mapM (·.getStr?)))
+      | .error _ => pure Option.none
     -- the structured namedtuple BASE (extractor: a single plain
     -- `namedtuple(…)` base) — a CANDIDATE here; `recognizeNamedtuples`
     -- promotes it (module census) or demotes the class to the ordinary
@@ -963,7 +968,7 @@ def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) 
       let k ← (← getField stmtJson "kind").getStr?
       if k == "FunctionDef" then pure (methodCreationPure stmtJson)
       else pure (classBodyStmtPure (← parseStmt stmtJson))
-    return ({ name, ok := classUnsupported.isNone, methods, hasGlobal, ntBase,
+    return ({ name, ok := classUnsupported.isNone, methods, slots, hasGlobal, ntBase,
               isExc, creationPure := noCreationEffects && bodyPure, span,
               body := classBody,
               creationExecutable := classCreationExecutableShape classUnsupported

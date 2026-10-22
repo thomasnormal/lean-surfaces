@@ -1386,6 +1386,38 @@ theorem heapAttrStore_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : Paylo
             cases Heap.update h b (Obj.instance ci (Env.set attrs.toList attr v).toArray) <;> rfl
         | _ => simp only [heapAttrStore, Heap.get?_swapAt_ne hba, hget] <;> rfl
 
+/-- The module-aware slot wrapper is payload-blind for the same reason as
+`heapAttrStore`: the perturbation is a running generator, so a slot-store
+receiver is always a different heap address and sees identical class
+metadata on both sides. -/
+theorem heapAttrStoreClass_swapAt (m : Module)
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (b : Addr) (attr : String) (v : RVal) :
+    heapAttrStoreClass m (Heap.swapAt h pa o) b attr v
+      = Res.mapOk (fun h' => Heap.swapAt h' pa o)
+          (heapAttrStoreClass m h b attr v) := by
+  by_cases hba : b = pa
+  · subst hba
+    have hold := heapAttrStore_swapAt hslot htwin b attr v
+    obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+    simpa [heapAttrStoreClass, heapAttrStore, hslot,
+      Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot)] using hold
+  · cases hget : Heap.get? h b with
+    | none =>
+        have hold := heapAttrStore_swapAt hslot htwin b attr v
+        simpa [heapAttrStoreClass, Heap.get?_swapAt_ne hba, hget] using hold
+    | some obj =>
+      cases obj with
+      | «instance» ci attrs =>
+          by_cases ha : classSlotAllowsAttr m ci attr
+          · have hold := heapAttrStore_swapAt hslot htwin b attr v
+            simpa [heapAttrStoreClass, Heap.get?_swapAt_ne hba, hget, ha] using hold
+          · simp [heapAttrStoreClass, Heap.get?_swapAt_ne hba, hget, ha,
+              heapAttrStore, Res.mapOk]
+      | _ =>
+          have hold := heapAttrStore_swapAt hslot htwin b attr v
+          simpa [heapAttrStoreClass, Heap.get?_swapAt_ne hba, hget] using hold
+
 /-- `lst.pop(i)` is blind up to the swap; the popped VALUE is untouched. -/
 theorem heapPop_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
     (b : Addr) (i : Option Int) :
@@ -1546,6 +1578,29 @@ theorem heapAttrStore_slot (hslot : Heap.get? h pa = some o₀) (htwin : Payload
               subst hw
               exact (Heap.get?_update_ne hu hne).trans hslot
       | _ => simp [heapAttrStore, hget] at hw
+
+/-- A successful module-aware store still pins the perturbed slot.  A
+disallowed slot has no successful branch, so the proof reduces to the
+existing module-free writer theorem. -/
+theorem heapAttrStoreClass_slot (m : Module)
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    {b : Addr} {attr : String} {v : RVal} {h' : Heap}
+    (hw : heapAttrStoreClass m h b attr v = .ok h') :
+    Heap.get? h' pa = some o₀ := by
+  cases hget : Heap.get? h b with
+  | none => simp [heapAttrStoreClass, heapAttrStore, hget] at hw
+  | some obj =>
+    cases obj with
+    | «instance» ci attrs =>
+      by_cases ha : classSlotAllowsAttr m ci attr
+      · apply heapAttrStore_slot hslot htwin (b := b) (attr := attr)
+          (v := v) (h' := h')
+        simpa [heapAttrStoreClass, hget, ha] using hw
+      · simp [heapAttrStoreClass, heapAttrStore, hget, ha] at hw
+    | _ =>
+      apply heapAttrStore_slot hslot htwin (b := b) (attr := attr)
+        (v := v) (h' := h')
+      simpa [heapAttrStoreClass, heapAttrStore, hget] using hw
 
 /-- `lst.pop(i)` pins the slot (the popped value rides in `.2`). -/
 theorem heapPop_slot (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
@@ -1804,6 +1859,85 @@ theorem unpackStoreH_swapAt (htwin : PayloadTwin o₀ o) :
           cases vs with
           | nil => exact ⟨by simp only [unpackStoreH, Res.mapOk],
                     fun p hp => by simp [unpackStoreH] at hp⟩
+          | cons v vs' => exact (h4 e es' v vs' rfl rfl).elim
+
+/-! The module-aware tuple writer has the same payload-blind shape.  The
+slot predicate consults only the class table and receiver address, so the
+swap preserves both its success/refusal branch and the threaded heap. -/
+theorem unpackStoreHM_swapAt (m : Module) (htwin : PayloadTwin o₀ o) :
+    ∀ (h : Heap) (env : Env) (es : List Expr) (vs : List RVal),
+      Heap.get? h pa = some o₀ →
+      unpackStoreHM m (Heap.swapAt h pa o) env es vs
+          = Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+              (unpackStoreHM m h env es vs)
+        ∧ ∀ p, unpackStoreHM m h env es vs = .ok p →
+            Heap.get? p.1 pa = some o₀ := by
+  intro h env es vs
+  induction h, env, es, vs using unpackStoreHM.induct with
+  | case1 h env =>
+      intro hslot
+      refine ⟨rfl, fun p hp => ?_⟩
+      simp only [unpackStoreHM, Res.ok.injEq] at hp
+      subst hp
+      exact hslot
+  | case2 h env id sp es v vs ih =>
+      intro hslot
+      obtain ⟨heq, hpin⟩ := ih hslot
+      exact ⟨by simp only [unpackStoreHM]; exact heq,
+        fun p hp => hpin p hp⟩
+  | case3 h env rid sp attr sp' es v vs b hlk ih =>
+      intro hslot
+      refine ⟨?_, fun p hp => ?_⟩
+      · simp only [unpackStoreHM, hlk,
+          heapAttrStoreClass_swapAt m hslot htwin]
+        cases hw : heapAttrStoreClass m h b attr v with
+        | ok h' =>
+            simp only [Res.mapOk, Res.ok_bind]
+            exact (ih h' (heapAttrStoreClass_slot m hslot htwin hw)).1
+        | exn e => simp only [Res.mapOk, Res.exn_bind]
+        | timeout => simp only [Res.mapOk, Res.timeout_bind]
+        | unsupported msg => simp only [Res.mapOk, Res.unsupported_bind]
+      · simp only [unpackStoreHM, hlk] at hp
+        cases hw : heapAttrStoreClass m h b attr v with
+        | ok h' =>
+            simp only [hw, Res.ok_bind] at hp
+            exact (ih h' (heapAttrStoreClass_slot m hslot htwin hw)).2 p hp
+        | exn e => simp [hw] at hp
+        | timeout => simp [hw] at hp
+        | unsupported msg => simp [hw] at hp
+  | case4 h env rid sp attr sp' es v vs val hnr hlk =>
+      intro _
+      cases val with
+      | ref b => exact absurd rfl (hnr b)
+      | _ => exact ⟨by simp only [unpackStoreHM, hlk, Res.mapOk],
+                fun p hp => by simp [unpackStoreHM, hlk] at hp⟩
+  | case5 h env rid sp attr sp' es v vs hlk =>
+      intro _
+      exact ⟨by simp only [unpackStoreHM, hlk, Res.mapOk],
+        fun p hp => by simp [unpackStoreHM, hlk] at hp⟩
+  | case6 h env e es v vs hnn hna =>
+      intro _
+      cases e with
+      | name id sp => exact absurd rfl (hnn id sp)
+      | «attribute» recv attr sp =>
+          cases recv with
+          | name rid sp' => exact absurd rfl (hna rid sp' attr sp)
+          | _ => exact ⟨by simp only [unpackStoreHM, Res.mapOk],
+                    fun p hp => by simp [unpackStoreHM] at hp⟩
+      | _ => exact ⟨by simp only [unpackStoreHM, Res.mapOk],
+                fun p hp => by simp [unpackStoreHM] at hp⟩
+  | case7 es h env vs h1 h2 h3 h4 =>
+      intro _
+      cases es with
+      | nil =>
+          cases vs with
+          | nil => exact absurd rfl (h1 rfl)
+          | cons _ _ => exact ⟨by simp only [unpackStoreHM, Res.mapOk],
+                          fun p hp => by simp [unpackStoreHM] at hp⟩
+      | cons e es' =>
+          cases vs with
+          | nil => exact ⟨by simp only [unpackStoreHM, Res.mapOk],
+                    fun p hp => by simp [unpackStoreHM] at hp⟩
           | cons v vs' => exact (h4 e es' v vs' rfl rfl).elim
 
 end TierB
@@ -2754,9 +2888,9 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                   cases r with
                   | ref b =>
                       simp only [FrameState.swapAt_world, World.swapAt_heap,
-                        heapAttrStore_swapAt hs2 htwin]
+                        heapAttrStoreClass_swapAt m hs2 htwin]
                       exact PBF.liftMapOk hs2 fun h' hw =>
-                        PBF.okWrite (heapAttrStore_slot hs2 htwin hw) _
+                        PBF.okWrite (heapAttrStoreClass_slot m hs2 htwin hw) _
                   | _ => exact PBF.exn hs2 _
               | tuple elts sp' =>
                   refine PBF.ite (fun _ => ?_) (fun _ => ?_)
@@ -2781,11 +2915,11 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                       exact PBF.liftRes hs1 _
                     refine PBF.bind hlift fun s2 xs _ hs2 => ?_
                     simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
-                      World.swapAt_heap, (unpackStoreH_swapAt htwin _ _ _ _ hs2).1]
+                      World.swapAt_heap, (unpackStoreHM_swapAt m htwin _ _ _ _ hs2).1]
                     refine PBF.liftMapOk hs2 fun x hw => ?_
                     obtain ⟨h', env'⟩ := x
                     refine PBF.ok ?_ _
-                    exact (unpackStoreH_swapAt htwin _ _ _ _ hs2).2 _ hw
+                    exact (unpackStoreHM_swapAt m htwin _ _ _ _ hs2).2 _ hw
               | _ =>
                   -- the single-target arm: `assignToH` for every OTHER target
                   -- shape, so the rewrite lands on the goal rather than on a
@@ -2841,9 +2975,9 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                   refine PBF.bind (ihE m s2 value hs2) fun s3 v _ hs3 => ?_
                   refine PBF.bind (PBF.liftRes hs3 _) fun s4 res _ hs4 => ?_
                   simp only [FrameState.swapAt_world, World.swapAt_heap,
-                    heapAttrStore_swapAt hs4 htwin]
+                    heapAttrStoreClass_swapAt m hs4 htwin]
                   exact PBF.liftMapOk hs4 fun h' hw =>
-                    PBF.okWrite (heapAttrStore_slot hs4 htwin hw) _
+                    PBF.okWrite (heapAttrStoreClass_slot m hs4 htwin hw) _
           | _ => exact PBF.exn hs1 _
       | _ => exact PBF.unsupported
   | whileLoop test body orelse sp =>

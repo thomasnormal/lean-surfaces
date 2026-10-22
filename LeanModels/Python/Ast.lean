@@ -487,6 +487,12 @@ structure ClassDefn where
   name : String
   ok : Bool
   methods : Array String
+  /-- Recognized `__slots__` storage names.  `none` means the ordinary
+  instance dictionary is available; `some xs` means an instance may store
+  only the named slots (unless `__dict__` is explicitly present).  The
+  extractor and ingestion accept only literal string/tuple/list forms, so
+  malformed declarations remain the existing loud class boundary. -/
+  slots : Option (Array String) := Option.none
   /-- `has_global` of the whole class subtree (class-level statements
   included — `class C: global x; x = 1` rebinds a module name at import
   time). See `FunctionDefn.hasGlobal`. -/

@@ -1602,6 +1602,50 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # attributes) are flagged here, like args_unsupported: the class is
         # represented, instantiation refuses loudly.
         reasons = []
+        slot_names = None
+        slot_assignment_count = 0
+
+        def parse_slots_value(value):
+            """Return the literal slot names, or None for an unadmitted form."""
+            if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                values = [value.value]
+            elif isinstance(value, (ast.Tuple, ast.List)):
+                values = []
+                for elt in value.elts:
+                    if not (isinstance(elt, ast.Constant)
+                            and isinstance(elt.value, str)):
+                        return None
+                    values.append(elt.value)
+            else:
+                return None
+            # Slot descriptors are named by identifiers.  We conservatively
+            # reject duplicates as well: CPython coalesces those descriptors,
+            # but admitting them would require modeling that class-namespace
+            # construction detail rather than the storage rule below.
+            if any(not name.isidentifier() for name in values):
+                return None
+            if len(values) != len(set(values)):
+                return None
+            return values
+
+        def slot_assignment(stmt):
+            if (isinstance(stmt, ast.Assign) and len(stmt.targets) == 1
+                    and isinstance(stmt.targets[0], ast.Name)
+                    and stmt.targets[0].id == "__slots__"):
+                return True, parse_slots_value(stmt.value)
+            return False, None
+
+        for s in node.body:
+            matched, parsed = slot_assignment(s)
+            if matched:
+                slot_assignment_count += 1
+                if parsed is not None and slot_names is None:
+                    slot_names = parsed
+                else:
+                    # Invalid or repeated declarations are left on the loud
+                    # class-creation path; never guess CPython's descriptor
+                    # construction rules.
+                    slot_names = None
         namedtuple_base = None
         exception_base = False
         if node.bases:
@@ -1642,6 +1686,9 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                 continue
             if isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant):
                 continue  # docstring / stray constant
+            matched, parsed = slot_assignment(s)
+            if matched and parsed is not None and slot_assignment_count == 1:
+                continue
             reasons.append("class-level statements (class attributes)")
             break
         # CREATION EFFECTS, structured separately from the tier reasons
@@ -1676,7 +1723,11 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                 continue
             if isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant):
                 continue
-            if (isinstance(s, ast.Assign) and isinstance(s.value, ast.Constant)
+            matched, parsed = slot_assignment(s)
+            if matched and parsed is not None and slot_assignment_count == 1:
+                continue
+            if (not matched and isinstance(s, ast.Assign)
+                    and isinstance(s.value, ast.Constant)
                     and all(isinstance(t, ast.Name) for t in s.targets)):
                 continue
             creation_effects = True
@@ -1689,6 +1740,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             "creation_effects": creation_effects,
             "body": convert_stmt_list(node.body),
         }
+        if slot_names is not None and slot_assignment_count == 1:
+            out["slots"] = slot_names
         if namedtuple_base is not None:
             out["namedtuple_base"] = namedtuple_base
         if exception_base:

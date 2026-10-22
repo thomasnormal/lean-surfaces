@@ -317,3 +317,56 @@ def bytes_index_instance():
 
 def bytes_contains_instance():
     return Cell(0) in b"a"
+
+
+class SlotCell:
+    """The H3 storage extension: only declared instance slots are writable."""
+
+    __slots__ = ("value",)
+
+    def __init__(self, value):
+        self.value = value
+
+
+class SlotDict:
+    """An explicit __dict__ slot restores ordinary extra attributes."""
+
+    __slots__ = ("value", "__dict__")
+
+    def __init__(self, value):
+        self.value = value
+
+
+def slot_read(value):
+    c = SlotCell(value)
+    return c.value
+
+
+def slot_store(value):
+    c = SlotCell(value)
+    c.value = value + 1
+    return c.value
+
+
+def slot_aug(value):
+    c = SlotCell(value)
+    c.value += 2
+    return c.value
+
+
+def slot_reject(value):
+    c = SlotCell(value)
+    c.other = value
+    return 0
+
+
+def slot_tuple_reject(value):
+    c = SlotCell(0)
+    c.value, c.other = value, value + 1
+    return c.value
+
+
+def slot_dict(value):
+    c = SlotDict(value)
+    c.other = value + 1
+    return (c.value, c.other)

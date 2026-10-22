@@ -1189,7 +1189,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
           let r ← evalOpen K m recvE
           match r with
           | .ref a => do
-              let h' ← liftRes (heapAttrStore (← frameHeap) a attr v)
+              let h' ← liftRes (heapAttrStoreClass m (← frameHeap) a attr v)
               heapPut h'; pure .next
           | _ => raisePy .attributeError
       | [.tuple elts sp] =>
@@ -1201,7 +1201,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
             let v ← evalOpen K m value
             let st ← get
             let xs ← liftRes (unpackSeq st.world.heap elts.size v)
-            let he ← liftRes (unpackStoreH st.world.heap st.locals elts.toList xs)
+            let he ← liftRes (unpackStoreHM m st.world.heap st.locals elts.toList xs)
             modify fun st => { st with world := { st.world with heap := he.1 }, locals := he.2 }
             pure .next
       | [t] => do
@@ -1249,7 +1249,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
               | old => do
                   let v ← evalOpen K m value
                   let res ← binOpM op old v
-                  let h' ← liftRes (heapAttrStore (← frameHeap) a attr res)
+                  let h' ← liftRes (heapAttrStoreClass m (← frameHeap) a attr res)
                   heapPut h'; pure .next
           | _ => raisePy .attributeError
       | t => refuse s!"augmented assignment to '{t.kindName}' is outside the v0 tier"

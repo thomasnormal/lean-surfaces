@@ -3875,6 +3875,52 @@ loudly (`danglingMsg` style). -/
 def getClass? (m : Module) (i : ClassId) : Option ClassDefn :=
   classAt m.classes.toList i
 
+/-- Whether an instance attribute store is permitted by the class's
+`__slots__` declaration.  A class without a recognized declaration keeps
+the ordinary instance dictionary.  `__dict__` explicitly restores that
+dictionary alongside any named slots; inheritance and weak-reference
+descriptors remain outside this narrow class-storage slice. -/
+def classSlotAllowsAttr (m : Module) (ci : ClassId) (attr : String) : Bool :=
+  match getClass? m ci with
+  | some c =>
+    match c.slots with
+    | Option.none => true
+    | some names => names.contains "__dict__" || names.contains attr
+  | Option.none => false
+
+/-- Module-aware instance attribute store.  The older `heapAttrStore` keeps
+its module-free contract for proof walkers and hand-built heap lemmas; the
+interpreter calls this wrapper so a recognized `__slots__` class cannot gain
+an implicit instance dictionary. -/
+def heapAttrStoreClass (m : Module) (h : Heap) (a : Addr) (attr : String)
+    (v : RVal) : Res Heap :=
+  match Heap.get? h a with
+  | some (.instance ci _) =>
+    if classSlotAllowsAttr m ci attr then
+      heapAttrStore h a attr v
+    else
+      .exn .attributeError
+  | _ => heapAttrStore h a attr v
+
+/-- Tuple-target attribute stores with the class-storage check threaded
+through the same left-to-right heap path as `unpackStoreH`.  The original
+module-free helper remains available to the payload-blind proof layer. -/
+def unpackStoreHM (m : Module) (h : Heap) (env : Env) :
+    List Expr → List RVal → Res (Heap × Env)
+  | [], [] => .ok (h, env)
+  | .name id _ :: es, v :: vs => unpackStoreHM m h (Env.set env id v) es vs
+  | .attribute (.name rid _) attr _ :: es, v :: vs =>
+    match Env.lookup env rid with
+    | some (.ref a) =>
+      (heapAttrStoreClass m h a attr v) >>= fun h' =>
+        unpackStoreHM m h' env es vs
+    | some _ => .exn .attributeError
+    | Option.none =>
+      .unsupported s!"tuple-target attribute store through non-local receiver '{rid}' is outside the tier"
+  | e :: _, _ :: _ =>
+    .unsupported s!"tuple-unpack target element '{e.kindName}' (beyond plain names and local-receiver attributes) is outside the tier"
+  | _, _ => .unsupported "internal: unpack arity mismatch after unpackSeq (report this)"
+
 /-- CPython obtains the iterator before rejecting a string or bytes start,
 without requesting an element. In-tier instances have no iteration protocol. -/
 def sumRejectedStart (program : Module) (heap : Heap) (iterable : RVal)
@@ -7294,7 +7340,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
           evalExpr m fuel st recvE ⤳ fun st r =>
           match r with
           | .ref a =>
-            Run.liftRes st (heapAttrStore st.world.heap a attr v) ⤳ fun st h' =>
+            Run.liftRes st (heapAttrStoreClass m st.world.heap a attr v) ⤳ fun st h' =>
             .ok { st with world := { st.world with heap := h' } } .next
           | _ => .exn st .attributeError
       | [.tuple elts sp] =>
@@ -7309,7 +7355,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
           else
             evalExpr m fuel st value ⤳ fun st v =>
             Run.liftRes st (unpackSeq st.world.heap elts.size v) ⤳ fun st xs =>
-            Run.liftRes st (unpackStoreH st.world.heap st.locals elts.toList xs) ⤳ fun st he =>
+            Run.liftRes st (unpackStoreHM m st.world.heap st.locals elts.toList xs) ⤳ fun st he =>
             match he with
             | (h', env') =>
               .ok { st with world := { st.world with heap := h' },
@@ -7371,7 +7417,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
             | old =>
                 evalExpr m fuel st value ⤳ fun st v =>
                 Run.liftRes st (evalBinOp op old v) ⤳ fun st res =>
-                Run.liftRes st (heapAttrStore st.world.heap a attr res) ⤳ fun st h' =>
+                Run.liftRes st (heapAttrStoreClass m st.world.heap a attr res) ⤳ fun st h' =>
                 .ok { st with world := { st.world with heap := h' } } .next)
          | _ => .exn st .attributeError)
       | t => .unsupported s!"augmented assignment to '{t.kindName}' is outside the v0 tier"

@@ -88,6 +88,11 @@
     "expect": "match"
   },
   {
+    "file": "harness/scripts/cls_slots_script.py",
+    "expect": "match",
+    "note": "class storage: declared __slots__ writes succeed and an undeclared attribute raises AttributeError"
+  },
+  {
     "file": "harness/scripts/interleave_script.py",
     "expect": "match"
   },

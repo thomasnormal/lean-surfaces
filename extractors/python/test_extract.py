@@ -1029,6 +1029,41 @@ class ClassDefTests(unittest.TestCase):
         body = self._module_body("class C:\n    x = 1\n")
         self.assertIn("class-level statements", body[0]["class_unsupported"])
 
+    def test_slots_accept_literal_string_tuple_and_list(self):
+        for source, expected in (
+                ("class C:\n    __slots__ = 'x'\n", ["x"]),
+                ("class C:\n    __slots__ = ('x', 'y')\n", ["x", "y"]),
+                ("class C:\n    __slots__ = ['x', 'y']\n", ["x", "y"]),
+                ("class C:\n    __slots__ = ()\n", [])):
+            with self.subTest(source=source):
+                c = self._module_body(source)[0]
+                self.assertEqual(c.get("slots"), expected)
+                self.assertIsNone(c["class_unsupported"])
+                self.assertFalse(c["creation_effects"])
+
+    def test_slots_reject_duplicate_and_repeated_declarations(self):
+        for source in (
+                "class C:\n    __slots__ = ('x', 'x')\n",
+                "class C:\n    __slots__ = ('x',)\n"
+                "    __slots__ = ('y',)\n"):
+            with self.subTest(source=source):
+                c = self._module_body(source)[0]
+                self.assertNotIn("slots", c)
+                self.assertIn("class-level statements", c["class_unsupported"])
+                self.assertTrue(c["creation_effects"])
+
+    def test_slots_reject_nonliteral_or_nonstring_values(self):
+        for source in (
+                "names = ('x',)\nclass C:\n    __slots__ = names\n",
+                "class C:\n    __slots__ = [1]\n",
+                "class C:\n    __slots__ = ('x-y',)\n",
+                "class C:\n    __slots__ = ''\n"):
+            with self.subTest(source=source):
+                c = self._module_body(source)[-1]
+                self.assertNotIn("slots", c)
+                self.assertIn("class-level statements", c["class_unsupported"])
+                self.assertTrue(c["creation_effects"])
+
     # -- THE THIRD DOOR (docs/memory-model.md §class semantics): a
     # DECORATED method is a creation EFFECT. CPython calls the decorator
     # at the `class` statement; the model executes no class body, so

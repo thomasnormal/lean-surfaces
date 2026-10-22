@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/cls_lab/cls_lab.py",
-  "source_sha256": "7f1c12b8c63bd2c471085fda1a3be4c02914a16abdec3955f8d2037c98fca9a5",
+  "source_sha256": "32d69965f2e9b06b8181d2a045fec9de19b9a5685ee3d1f1091f5b7a14cddb9c",
   "module": {
     "kind": "Module",
     "body": [
@@ -8128,6 +8128,1341 @@
                       97
                     ]
                   }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "kind": "ClassDef",
+        "span": {
+          "lineno": 322,
+          "col_offset": 0,
+          "end_lineno": 328,
+          "end_col_offset": 26
+        },
+        "name": "SlotCell",
+        "class_unsupported": null,
+        "creation_effects": false,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 323,
+              "col_offset": 4,
+              "end_lineno": 323,
+              "end_col_offset": 78
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 323,
+                "col_offset": 4,
+                "end_lineno": 323,
+                "end_col_offset": 78
+              },
+              "value": {
+                "type": "str",
+                "value": "The H3 storage extension: only declared instance slots are writable."
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 325,
+              "col_offset": 4,
+              "end_lineno": 325,
+              "end_col_offset": 26
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 325,
+                  "col_offset": 4,
+                  "end_lineno": 325,
+                  "end_col_offset": 13
+                },
+                "id": "__slots__"
+              }
+            ],
+            "value": {
+              "kind": "Tuple",
+              "span": {
+                "lineno": 325,
+                "col_offset": 16,
+                "end_lineno": 325,
+                "end_col_offset": 26
+              },
+              "elts": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 325,
+                    "col_offset": 17,
+                    "end_lineno": 325,
+                    "end_col_offset": 24
+                  },
+                  "value": {
+                    "type": "str",
+                    "value": "value"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "FunctionDef",
+            "span": {
+              "lineno": 327,
+              "col_offset": 4,
+              "end_lineno": 328,
+              "end_col_offset": 26
+            },
+            "name": "__init__",
+            "args": [
+              {
+                "arg": "self",
+                "span": {
+                  "lineno": 327,
+                  "col_offset": 17,
+                  "end_lineno": 327,
+                  "end_col_offset": 21
+                }
+              },
+              {
+                "arg": "value",
+                "span": {
+                  "lineno": 327,
+                  "col_offset": 23,
+                  "end_lineno": 327,
+                  "end_col_offset": 28
+                }
+              }
+            ],
+            "args_unsupported": null,
+            "locals_unsupported": null,
+            "body": [
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 328,
+                  "col_offset": 8,
+                  "end_lineno": 328,
+                  "end_col_offset": 26
+                },
+                "targets": [
+                  {
+                    "kind": "Attribute",
+                    "span": {
+                      "lineno": 328,
+                      "col_offset": 8,
+                      "end_lineno": 328,
+                      "end_col_offset": 18
+                    },
+                    "value": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 328,
+                        "col_offset": 8,
+                        "end_lineno": 328,
+                        "end_col_offset": 12
+                      },
+                      "id": "self"
+                    },
+                    "attr": "value"
+                  }
+                ],
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 328,
+                    "col_offset": 21,
+                    "end_lineno": 328,
+                    "end_col_offset": 26
+                  },
+                  "id": "value"
+                }
+              }
+            ]
+          }
+        ],
+        "slots": [
+          "value"
+        ]
+      },
+      {
+        "kind": "ClassDef",
+        "span": {
+          "lineno": 331,
+          "col_offset": 0,
+          "end_lineno": 337,
+          "end_col_offset": 26
+        },
+        "name": "SlotDict",
+        "class_unsupported": null,
+        "creation_effects": false,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 332,
+              "col_offset": 4,
+              "end_lineno": 332,
+              "end_col_offset": 71
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 332,
+                "col_offset": 4,
+                "end_lineno": 332,
+                "end_col_offset": 71
+              },
+              "value": {
+                "type": "str",
+                "value": "An explicit __dict__ slot restores ordinary extra attributes."
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 334,
+              "col_offset": 4,
+              "end_lineno": 334,
+              "end_col_offset": 37
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 334,
+                  "col_offset": 4,
+                  "end_lineno": 334,
+                  "end_col_offset": 13
+                },
+                "id": "__slots__"
+              }
+            ],
+            "value": {
+              "kind": "Tuple",
+              "span": {
+                "lineno": 334,
+                "col_offset": 16,
+                "end_lineno": 334,
+                "end_col_offset": 37
+              },
+              "elts": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 334,
+                    "col_offset": 17,
+                    "end_lineno": 334,
+                    "end_col_offset": 24
+                  },
+                  "value": {
+                    "type": "str",
+                    "value": "value"
+                  }
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 334,
+                    "col_offset": 26,
+                    "end_lineno": 334,
+                    "end_col_offset": 36
+                  },
+                  "value": {
+                    "type": "str",
+                    "value": "__dict__"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "FunctionDef",
+            "span": {
+              "lineno": 336,
+              "col_offset": 4,
+              "end_lineno": 337,
+              "end_col_offset": 26
+            },
+            "name": "__init__",
+            "args": [
+              {
+                "arg": "self",
+                "span": {
+                  "lineno": 336,
+                  "col_offset": 17,
+                  "end_lineno": 336,
+                  "end_col_offset": 21
+                }
+              },
+              {
+                "arg": "value",
+                "span": {
+                  "lineno": 336,
+                  "col_offset": 23,
+                  "end_lineno": 336,
+                  "end_col_offset": 28
+                }
+              }
+            ],
+            "args_unsupported": null,
+            "locals_unsupported": null,
+            "body": [
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 337,
+                  "col_offset": 8,
+                  "end_lineno": 337,
+                  "end_col_offset": 26
+                },
+                "targets": [
+                  {
+                    "kind": "Attribute",
+                    "span": {
+                      "lineno": 337,
+                      "col_offset": 8,
+                      "end_lineno": 337,
+                      "end_col_offset": 18
+                    },
+                    "value": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 337,
+                        "col_offset": 8,
+                        "end_lineno": 337,
+                        "end_col_offset": 12
+                      },
+                      "id": "self"
+                    },
+                    "attr": "value"
+                  }
+                ],
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 337,
+                    "col_offset": 21,
+                    "end_lineno": 337,
+                    "end_col_offset": 26
+                  },
+                  "id": "value"
+                }
+              }
+            ]
+          }
+        ],
+        "slots": [
+          "value",
+          "__dict__"
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 340,
+          "col_offset": 0,
+          "end_lineno": 342,
+          "end_col_offset": 18
+        },
+        "name": "slot_read",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 340,
+              "col_offset": 14,
+              "end_lineno": 340,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 341,
+              "col_offset": 4,
+              "end_lineno": 341,
+              "end_col_offset": 23
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 341,
+                  "col_offset": 4,
+                  "end_lineno": 341,
+                  "end_col_offset": 5
+                },
+                "id": "c"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 341,
+                "col_offset": 8,
+                "end_lineno": 341,
+                "end_col_offset": 23
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 341,
+                  "col_offset": 8,
+                  "end_lineno": 341,
+                  "end_col_offset": 16
+                },
+                "id": "SlotCell"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 341,
+                    "col_offset": 17,
+                    "end_lineno": 341,
+                    "end_col_offset": 22
+                  },
+                  "id": "value"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 342,
+              "col_offset": 4,
+              "end_lineno": 342,
+              "end_col_offset": 18
+            },
+            "value": {
+              "kind": "Attribute",
+              "span": {
+                "lineno": 342,
+                "col_offset": 11,
+                "end_lineno": 342,
+                "end_col_offset": 18
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 342,
+                  "col_offset": 11,
+                  "end_lineno": 342,
+                  "end_col_offset": 12
+                },
+                "id": "c"
+              },
+              "attr": "value"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 345,
+          "col_offset": 0,
+          "end_lineno": 348,
+          "end_col_offset": 18
+        },
+        "name": "slot_store",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 345,
+              "col_offset": 15,
+              "end_lineno": 345,
+              "end_col_offset": 20
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 346,
+              "col_offset": 4,
+              "end_lineno": 346,
+              "end_col_offset": 23
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 346,
+                  "col_offset": 4,
+                  "end_lineno": 346,
+                  "end_col_offset": 5
+                },
+                "id": "c"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 346,
+                "col_offset": 8,
+                "end_lineno": 346,
+                "end_col_offset": 23
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 346,
+                  "col_offset": 8,
+                  "end_lineno": 346,
+                  "end_col_offset": 16
+                },
+                "id": "SlotCell"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 346,
+                    "col_offset": 17,
+                    "end_lineno": 346,
+                    "end_col_offset": 22
+                  },
+                  "id": "value"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 347,
+              "col_offset": 4,
+              "end_lineno": 347,
+              "end_col_offset": 23
+            },
+            "targets": [
+              {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 347,
+                  "col_offset": 4,
+                  "end_lineno": 347,
+                  "end_col_offset": 11
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 347,
+                    "col_offset": 4,
+                    "end_lineno": 347,
+                    "end_col_offset": 5
+                  },
+                  "id": "c"
+                },
+                "attr": "value"
+              }
+            ],
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 347,
+                "col_offset": 14,
+                "end_lineno": 347,
+                "end_col_offset": 23
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 347,
+                  "col_offset": 14,
+                  "end_lineno": 347,
+                  "end_col_offset": 19
+                },
+                "id": "value"
+              },
+              "op": "Add",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 347,
+                  "col_offset": 22,
+                  "end_lineno": 347,
+                  "end_col_offset": 23
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "1"
+                }
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 348,
+              "col_offset": 4,
+              "end_lineno": 348,
+              "end_col_offset": 18
+            },
+            "value": {
+              "kind": "Attribute",
+              "span": {
+                "lineno": 348,
+                "col_offset": 11,
+                "end_lineno": 348,
+                "end_col_offset": 18
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 348,
+                  "col_offset": 11,
+                  "end_lineno": 348,
+                  "end_col_offset": 12
+                },
+                "id": "c"
+              },
+              "attr": "value"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 351,
+          "col_offset": 0,
+          "end_lineno": 354,
+          "end_col_offset": 18
+        },
+        "name": "slot_aug",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 351,
+              "col_offset": 13,
+              "end_lineno": 351,
+              "end_col_offset": 18
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 352,
+              "col_offset": 4,
+              "end_lineno": 352,
+              "end_col_offset": 23
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 352,
+                  "col_offset": 4,
+                  "end_lineno": 352,
+                  "end_col_offset": 5
+                },
+                "id": "c"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 352,
+                "col_offset": 8,
+                "end_lineno": 352,
+                "end_col_offset": 23
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 352,
+                  "col_offset": 8,
+                  "end_lineno": 352,
+                  "end_col_offset": 16
+                },
+                "id": "SlotCell"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 352,
+                    "col_offset": 17,
+                    "end_lineno": 352,
+                    "end_col_offset": 22
+                  },
+                  "id": "value"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "AugAssign",
+            "span": {
+              "lineno": 353,
+              "col_offset": 4,
+              "end_lineno": 353,
+              "end_col_offset": 16
+            },
+            "target": {
+              "kind": "Attribute",
+              "span": {
+                "lineno": 353,
+                "col_offset": 4,
+                "end_lineno": 353,
+                "end_col_offset": 11
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 353,
+                  "col_offset": 4,
+                  "end_lineno": 353,
+                  "end_col_offset": 5
+                },
+                "id": "c"
+              },
+              "attr": "value"
+            },
+            "op": "Add",
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 353,
+                "col_offset": 15,
+                "end_lineno": 353,
+                "end_col_offset": 16
+              },
+              "value": {
+                "type": "int",
+                "repr": "2"
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 354,
+              "col_offset": 4,
+              "end_lineno": 354,
+              "end_col_offset": 18
+            },
+            "value": {
+              "kind": "Attribute",
+              "span": {
+                "lineno": 354,
+                "col_offset": 11,
+                "end_lineno": 354,
+                "end_col_offset": 18
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 354,
+                  "col_offset": 11,
+                  "end_lineno": 354,
+                  "end_col_offset": 12
+                },
+                "id": "c"
+              },
+              "attr": "value"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 357,
+          "col_offset": 0,
+          "end_lineno": 360,
+          "end_col_offset": 12
+        },
+        "name": "slot_reject",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 357,
+              "col_offset": 16,
+              "end_lineno": 357,
+              "end_col_offset": 21
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 358,
+              "col_offset": 4,
+              "end_lineno": 358,
+              "end_col_offset": 23
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 358,
+                  "col_offset": 4,
+                  "end_lineno": 358,
+                  "end_col_offset": 5
+                },
+                "id": "c"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 358,
+                "col_offset": 8,
+                "end_lineno": 358,
+                "end_col_offset": 23
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 358,
+                  "col_offset": 8,
+                  "end_lineno": 358,
+                  "end_col_offset": 16
+                },
+                "id": "SlotCell"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 358,
+                    "col_offset": 17,
+                    "end_lineno": 358,
+                    "end_col_offset": 22
+                  },
+                  "id": "value"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 359,
+              "col_offset": 4,
+              "end_lineno": 359,
+              "end_col_offset": 19
+            },
+            "targets": [
+              {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 359,
+                  "col_offset": 4,
+                  "end_lineno": 359,
+                  "end_col_offset": 11
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 359,
+                    "col_offset": 4,
+                    "end_lineno": 359,
+                    "end_col_offset": 5
+                  },
+                  "id": "c"
+                },
+                "attr": "other"
+              }
+            ],
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 359,
+                "col_offset": 14,
+                "end_lineno": 359,
+                "end_col_offset": 19
+              },
+              "id": "value"
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 360,
+              "col_offset": 4,
+              "end_lineno": 360,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 360,
+                "col_offset": 11,
+                "end_lineno": 360,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 363,
+          "col_offset": 0,
+          "end_lineno": 366,
+          "end_col_offset": 18
+        },
+        "name": "slot_tuple_reject",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 363,
+              "col_offset": 22,
+              "end_lineno": 363,
+              "end_col_offset": 27
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 364,
+              "col_offset": 4,
+              "end_lineno": 364,
+              "end_col_offset": 19
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 364,
+                  "col_offset": 4,
+                  "end_lineno": 364,
+                  "end_col_offset": 5
+                },
+                "id": "c"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 364,
+                "col_offset": 8,
+                "end_lineno": 364,
+                "end_col_offset": 19
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 364,
+                  "col_offset": 8,
+                  "end_lineno": 364,
+                  "end_col_offset": 16
+                },
+                "id": "SlotCell"
+              },
+              "args": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 364,
+                    "col_offset": 17,
+                    "end_lineno": 364,
+                    "end_col_offset": 18
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 365,
+              "col_offset": 4,
+              "end_lineno": 365,
+              "end_col_offset": 39
+            },
+            "targets": [
+              {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 365,
+                  "col_offset": 4,
+                  "end_lineno": 365,
+                  "end_col_offset": 20
+                },
+                "elts": [
+                  {
+                    "kind": "Attribute",
+                    "span": {
+                      "lineno": 365,
+                      "col_offset": 4,
+                      "end_lineno": 365,
+                      "end_col_offset": 11
+                    },
+                    "value": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 365,
+                        "col_offset": 4,
+                        "end_lineno": 365,
+                        "end_col_offset": 5
+                      },
+                      "id": "c"
+                    },
+                    "attr": "value"
+                  },
+                  {
+                    "kind": "Attribute",
+                    "span": {
+                      "lineno": 365,
+                      "col_offset": 13,
+                      "end_lineno": 365,
+                      "end_col_offset": 20
+                    },
+                    "value": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 365,
+                        "col_offset": 13,
+                        "end_lineno": 365,
+                        "end_col_offset": 14
+                      },
+                      "id": "c"
+                    },
+                    "attr": "other"
+                  }
+                ]
+              }
+            ],
+            "value": {
+              "kind": "Tuple",
+              "span": {
+                "lineno": 365,
+                "col_offset": 23,
+                "end_lineno": 365,
+                "end_col_offset": 39
+              },
+              "elts": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 365,
+                    "col_offset": 23,
+                    "end_lineno": 365,
+                    "end_col_offset": 28
+                  },
+                  "id": "value"
+                },
+                {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 365,
+                    "col_offset": 30,
+                    "end_lineno": 365,
+                    "end_col_offset": 39
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 365,
+                      "col_offset": 30,
+                      "end_lineno": 365,
+                      "end_col_offset": 35
+                    },
+                    "id": "value"
+                  },
+                  "op": "Add",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 365,
+                      "col_offset": 38,
+                      "end_lineno": 365,
+                      "end_col_offset": 39
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 366,
+              "col_offset": 4,
+              "end_lineno": 366,
+              "end_col_offset": 18
+            },
+            "value": {
+              "kind": "Attribute",
+              "span": {
+                "lineno": 366,
+                "col_offset": 11,
+                "end_lineno": 366,
+                "end_col_offset": 18
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 366,
+                  "col_offset": 11,
+                  "end_lineno": 366,
+                  "end_col_offset": 12
+                },
+                "id": "c"
+              },
+              "attr": "value"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 369,
+          "col_offset": 0,
+          "end_lineno": 372,
+          "end_col_offset": 29
+        },
+        "name": "slot_dict",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 369,
+              "col_offset": 14,
+              "end_lineno": 369,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 370,
+              "col_offset": 4,
+              "end_lineno": 370,
+              "end_col_offset": 23
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 370,
+                  "col_offset": 4,
+                  "end_lineno": 370,
+                  "end_col_offset": 5
+                },
+                "id": "c"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 370,
+                "col_offset": 8,
+                "end_lineno": 370,
+                "end_col_offset": 23
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 370,
+                  "col_offset": 8,
+                  "end_lineno": 370,
+                  "end_col_offset": 16
+                },
+                "id": "SlotDict"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 370,
+                    "col_offset": 17,
+                    "end_lineno": 370,
+                    "end_col_offset": 22
+                  },
+                  "id": "value"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 371,
+              "col_offset": 4,
+              "end_lineno": 371,
+              "end_col_offset": 23
+            },
+            "targets": [
+              {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 371,
+                  "col_offset": 4,
+                  "end_lineno": 371,
+                  "end_col_offset": 11
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 371,
+                    "col_offset": 4,
+                    "end_lineno": 371,
+                    "end_col_offset": 5
+                  },
+                  "id": "c"
+                },
+                "attr": "other"
+              }
+            ],
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 371,
+                "col_offset": 14,
+                "end_lineno": 371,
+                "end_col_offset": 23
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 371,
+                  "col_offset": 14,
+                  "end_lineno": 371,
+                  "end_col_offset": 19
+                },
+                "id": "value"
+              },
+              "op": "Add",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 371,
+                  "col_offset": 22,
+                  "end_lineno": 371,
+                  "end_col_offset": 23
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "1"
+                }
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 372,
+              "col_offset": 4,
+              "end_lineno": 372,
+              "end_col_offset": 29
+            },
+            "value": {
+              "kind": "Tuple",
+              "span": {
+                "lineno": 372,
+                "col_offset": 11,
+                "end_lineno": 372,
+                "end_col_offset": 29
+              },
+              "elts": [
+                {
+                  "kind": "Attribute",
+                  "span": {
+                    "lineno": 372,
+                    "col_offset": 12,
+                    "end_lineno": 372,
+                    "end_col_offset": 19
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 372,
+                      "col_offset": 12,
+                      "end_lineno": 372,
+                      "end_col_offset": 13
+                    },
+                    "id": "c"
+                  },
+                  "attr": "value"
+                },
+                {
+                  "kind": "Attribute",
+                  "span": {
+                    "lineno": 372,
+                    "col_offset": 21,
+                    "end_lineno": 372,
+                    "end_col_offset": 28
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 372,
+                      "col_offset": 21,
+                      "end_lineno": 372,
+                      "end_col_offset": 22
+                    },
+                    "id": "c"
+                  },
+                  "attr": "other"
                 }
               ]
             }

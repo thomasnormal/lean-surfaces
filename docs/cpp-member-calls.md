@@ -314,6 +314,12 @@ setter execution. `bindWithArgumentParameterValue` now requires that same
 parameter witness before evaluating and invoking a setter call; the call
 record retains it as source provenance.
 
+The census JSON always emits `enum_argument_parameter_refusals` alongside
+`enum_argument_parameters`, even when both the structured metadata join and
+the AST `ParmVarDecl` join are clean. Malformed method rows, missing
+declarations, ordinal gaps, and type/spelling disagreements therefore remain
+visible as named telemetry instead of disappearing from an empty result.
+
 The kernel battery also mutates independent copies of this evidence: a wrong
 parameter type, an out-of-range ordinal, a malformed parameter-type row, and a
 missing `ParmVarDecl` all refuse before argument binding. These are provenance

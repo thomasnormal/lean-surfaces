@@ -193,6 +193,22 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertTrue(any(item.get("kind") == "Unsupported"
                             for item in self._walk(envelope)))
 
+    def test_chandle_declarations_are_inert_without_an_initializer(self):
+        envelope = self.extract(
+            "module top; chandle module_h; initial begin chandle local_h; "
+            "$display(\"PASS\"); $finish; end endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertEqual(module["decls"], [])
+        self.assertEqual(module["others"], [])
+        self.assertEqual(module["processes"][0]["body"]["stmts"][0]["kind"], "Empty")
+
+    def test_chandle_use_remains_loud(self):
+        envelope = self.extract(
+            "module top; chandle h; initial begin if (h == h) $display(\"PASS\"); "
+            "end endmodule")
+        self.assertTrue(any(item.get("kind") == "Unsupported"
+                            for item in self._walk(envelope)))
+
     @staticmethod
     def _walk(value):
         if isinstance(value, dict):

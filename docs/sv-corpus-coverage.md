@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-22
 
-The chapter-scoped rerun covered **22,035** paths: **4,421 clean**,
-**17,548 partial**, **66 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,035** paths: **4,423 clean**,
+**17,546 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`VariableSymbol:2state` (4,990), `AssignmentExpression:target` (3,913),
+`VariableSymbol:2state` (4,954), `AssignmentExpression:target` (3,913),
 `ExpressionStatement:CallExpression` (3,784), `CallExpression` (3,290),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,481), `ConcurrentAssertionStatement`
@@ -160,6 +160,19 @@ partial files fall **17,550 → 17,548**; `VariableSymbol:2state` falls
 **5,276 → 4,990**. The differential matrix is **23 rows, 19 matches, 0
 disagreements, and 4 recorded refusals**; grammar coverage is **194 witnesses,
 62 MATCH, and 132 REFUSE**.
+
+## Inert chandle declarations — 2026-10-22
+
+Module-scope and declaration-only local `chandle` variables are now admitted
+as inert metadata on the time-zero self-check path. They do not enter the flat
+vector state; handle reads, writes, and cross-type assignments remain loud. The
+`chandle_declaration` differential row covers both scopes.
+
+On the available 22,035-file snapshot, clean files rise **4,421 → 4,423** and
+partial files fall **17,548 → 17,546**; `VariableSymbol:2state` falls
+**4,990 → 4,954**. The differential matrix is **24 rows, 20 matches, 0
+disagreements, and 4 recorded refusals**; grammar coverage is **195 witnesses,
+63 MATCH, and 132 REFUSE**.
 
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 

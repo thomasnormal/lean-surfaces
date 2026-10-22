@@ -378,6 +378,14 @@ def is_module_floating_decl(symbol):
         return False
 
 
+def is_chandle_decl(symbol):
+    """Whether a declaration names the opaque IEEE chandle type."""
+    try:
+        return type(symbol.type.canonicalType).__name__ == "CHandleType"
+    except Exception:
+        return False
+
+
 def is_flat_unpacked_struct_alias(symbol):
     """Whether a typedef names an integral-only unpacked struct tree.
 
@@ -5487,6 +5495,10 @@ def _convert_local_decl(sm, stmt):
         # The module's declaration-identity pass initializes static storage
         # before any process starts, including in blocks never entered.
         return {"kind": "Empty", "span": node_span(sm, stmt)}
+    if _SYM is None and is_chandle_decl(symbol):
+        if getattr(symbol, "initializer", None) is not None:
+            return unsupported(sm, stmt, "VariableDeclStatement:chandle-initializer")
+        return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None:
         cells = convert_fixed_array_vars(sm, symbol)
         if cells is not None:
@@ -6233,6 +6245,8 @@ def _convert_static_procedural_storage(sm, members):
             continue
         if str(symbol.lifetime) != "VariableLifetime.Static":
             continue
+        if is_chandle_decl(symbol):
+            continue
         converted = convert_var(sm, symbol)
         values = converted if isinstance(converted, list) else [converted]
         if (all(value.get("kind") == "Var" for value in values)
@@ -6501,7 +6515,8 @@ def convert_module(sm, inst):
                 if not route and m.name in port_names:
                     continue
                 if k == "Variable":
-                    if is_module_event_decl(m) or is_module_floating_decl(m):
+                    if (is_module_event_decl(m) or is_module_floating_decl(m)
+                            or is_chandle_decl(m)):
                         continue
                     converted = convert_var(sm, m)
                     declarations = converted if isinstance(converted, list) else [converted]
@@ -6762,7 +6777,8 @@ def _declaration_only(member):
             or is_flat_unpacked_struct_alias(member)
             or is_bound_enum_member(member)
             or is_module_event_decl(member)
-            or is_module_floating_decl(member))
+            or is_module_floating_decl(member)
+            or is_chandle_decl(member))
 
 
 def _let_compilation_barriers(sm, comp):

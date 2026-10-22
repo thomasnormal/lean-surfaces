@@ -413,6 +413,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut enumArgumentMethodEnumProfileRefusals : List String := []
   let mut enumArgumentMethodEnumRepresentations : List String := []
   let mut enumArgumentMethodEnumRepresentationRefusals : List String := []
+  let mut enumArgumentSetterProfiles : List String := []
+  let mut enumArgumentSetterRefusals : List String := []
   let mut enumGetterProfiles : List String := []
   let mut enumGetterRefusals : List String := []
   let mut receiverShapes : List String := []
@@ -465,11 +467,19 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
                                       profile.underlyingType.getD "<absent>") ::
                                       enumArgumentMethodEnumProfiles
                                   match IntegralMemberEnumRepresentation.withOracle profile .unsignedInt with
-                                  | .ok representation => enumArgumentMethodEnumRepresentations :=
-                                      (s!"{representation.profile.name}:" ++
-                                        IntegralMemberEnumRepresentation.underlyingName
-                                          representation.underlying) ::
-                                        enumArgumentMethodEnumRepresentations
+                                  | .ok representation => do
+                                      enumArgumentMethodEnumRepresentations :=
+                                        (s!"{representation.profile.name}:" ++
+                                          IntegralMemberEnumRepresentation.underlyingName
+                                            representation.underlying) ::
+                                          enumArgumentMethodEnumRepresentations
+                                      match IntegralMemberEnumSetter.admit probe body.canonical
+                                          representation with
+                                      | .ok setter => enumArgumentSetterProfiles :=
+                                          (s!"{setter.method.method.value}:{setter.fieldName}") ::
+                                            enumArgumentSetterProfiles
+                                      | .error error => enumArgumentSetterRefusals :=
+                                          enumSetterErrorName error :: enumArgumentSetterRefusals
                                   | .error error => enumArgumentMethodEnumRepresentationRefusals :=
                                       enumRepresentationErrorName error ::
                                         enumArgumentMethodEnumRepresentationRefusals
@@ -662,6 +672,8 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("enum_argument_method_enum_representations", counts enumArgumentMethodEnumRepresentations),
     ("enum_argument_method_enum_representation_refusals",
       counts enumArgumentMethodEnumRepresentationRefusals),
+    ("enum_argument_setter_profiles", counts enumArgumentSetterProfiles),
+    ("enum_argument_setter_refusals", counts enumArgumentSetterRefusals),
     ("enum_getter_profiles", counts enumGetterProfiles),
     ("enum_getter_refusals", counts enumGetterRefusals),
     ("unsupported_receiver_shapes", counts receiverShapes),

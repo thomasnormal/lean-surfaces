@@ -315,6 +315,11 @@ Typing that event succeeds for all 23 body witnesses: the field access is
 refusals. The underlying choice is still an oracle input; it is not recovered
 from TinyXML2's absent fixed-underlying spelling.
 
+With that typed witness in hand, `IntegralMemberEnumSetter.admit` is still
+explicitly refused for all 23 positions at `profile:unsupported-body`; no
+setter profile is admitted. This preserves the non-variadic setter contract
+and records the exact wall before any assignment or call transport is used.
+
 `IntegralMemberEnumCall` exposes that read as a call result without widening
 the ordinary integral getter. It requires the already selected method and
 receiver handles, the typed field witness, the oracle-backed enum profile, and

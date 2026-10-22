@@ -109,6 +109,39 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertEqual(stmts[2]["target"]["name"], "item.count")
         self.assertEqual(stmts[3]["target"]["name"], "item.mask")
 
+    def test_unpacked_array_concat_initializer_flattens_source_arrays(self):
+        envelope = self.extract(
+            "module top; typedef int triple_t [0:2]; "
+            "typedef int nine_t [0:8]; initial begin "
+            "triple_t prefix = '{1, 2, 3}; "
+            "nine_t values = {prefix, 4, triple_t'{5, 6, 7}, 8, 9}; "
+            "$display(\"%0d\", values[8]); $finish; end endmodule")
+        decls = envelope["design"]["modules"][0]["decls"]
+        values = [d for d in decls if "values[" in d.get("name", "")]
+        self.assertEqual(len(values), 9)
+        self.assertEqual(values[0]["init"]["operand"]["bits"], "0" * 31 + "1")
+        self.assertEqual(values[-1]["init"]["operand"]["bits"], "0" * 28 + "1001")
+        self.assertFalse(any(n.get("kind") == "Unsupported"
+                             for n in self._walk(envelope)))
+
+    def test_unpacked_array_concat_initializer_rejects_runtime_source(self):
+        envelope = self.extract(
+            "module top; typedef int pair_t [0:1]; pair_t source; "
+            "pair_t value = {source, 3}; endmodule")
+        self.assertTrue(any(n.get("kind") == "Unsupported"
+                            and n.get("sv_kind") == "VariableSymbol:2state"
+                            for n in self._walk(envelope)))
+
+    @staticmethod
+    def _walk(value):
+        if isinstance(value, dict):
+            yield value
+            for child in value.values():
+                yield from LegacyContinuousWindows._walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                yield from LegacyContinuousWindows._walk(child)
+
     def test_fixed_array_out_of_bounds_write_is_empty(self):
         envelope = self.extract(
             "module top; int value [0:3]; "

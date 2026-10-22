@@ -77,6 +77,22 @@ partial**, with zero extraction errors. `VariableSymbol:2state` falls
 disagreements, and 4 recorded refusals**. Grammar coverage remains **192
 witnesses, 60 MATCH, and 132 REFUSE**.
 
+## Unpacked array concatenation initializers — 2026-10-22
+
+Finite unpacked-array declaration initializers may now concatenate constant
+array operands, exact typed array patterns, and integral scalar elements. The
+extractor expands each operand in declared index order, samples source arrays
+before publishing destination cells, and preserves per-cell width and
+two-state conversion. Runtime array reads, self-aliasing, mismatched widths,
+and nonconstant or effectful operands remain loud. The
+`unpacked_concat_initializer` fixture is the differential witness.
+
+On the available 22,035-file corpus snapshot, clean files move **4,413 →
+4,414** and partial files **17,556 → 17,555**; `VariableSymbol:2state` falls
+**5,548 → 5,547**. The differential matrix adds one matching row with no
+disagreements; grammar coverage remains **192 witnesses, 60 MATCH, and 132
+REFUSE**.
+
 **Proof inventory, with comments excluded.** There are **98 named
 theorems and 10 anonymous examples** in `LeanModels/Sv`, and **121
 theorems and 6 examples** in the SV example directories: **235 actual

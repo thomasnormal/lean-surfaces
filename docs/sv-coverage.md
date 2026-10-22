@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 19 | 15 | 0 | 4 | sv-tests-2 declarations |
+| 20 | 16 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -29,6 +29,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `fixed_array_pattern_2state` | `Examples/system-verilog/fixed_array_pattern_2state/fixed_array_pattern_2state.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_struct_integral_fields` | `Examples/system-verilog/unpacked_struct_integral_fields/unpacked_struct_integral_fields.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_struct_initializers` | `Examples/system-verilog/unpacked_struct_initializers/unpacked_struct_initializers.sv` | match | **MATCH** | `ok` | MATCH |
+| `unpacked_concat_initializer` | `Examples/system-verilog/unpacked_concat_initializer/unpacked_concat_initializer.sv` | match | **MATCH** | `ok` | MATCH |
 | `delay_refusal` | `Examples/system-verilog/delay/delay.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `event_refusal` | `Examples/system-verilog/event/event.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `always_refusal` | `Examples/system-verilog/always/events.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
@@ -243,24 +244,24 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22045 | 4413 | 17566 | 66 |
+| 22035 | 4414 | 17555 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `VariableSymbol:2state` | 5551 |
-| `AssignmentExpression:target` | 3922 |
-| `ExpressionStatement:CallExpression` | 3792 |
-| `CallExpression` | 3292 |
+| `VariableSymbol:2state` | 5547 |
+| `AssignmentExpression:target` | 3918 |
+| `ExpressionStatement:CallExpression` | 3784 |
+| `CallExpression` | 3290 |
 | `Hierarchy:ports` | 2397 |
-| `SubroutineSymbol:Subroutine` | 1714 |
-| `NamedValueExpression:2state` | 1483 |
-| `ConcurrentAssertionStatement` | 1358 |
+| `SubroutineSymbol:Subroutine` | 1713 |
+| `NamedValueExpression:2state` | 1481 |
+| `ConcurrentAssertionStatement` | 1353 |
 | `InvalidStatement` | 1329 |
-| `ClassType` | 1329 |
-| `Hierarchy:module-kind` | 1248 |
+| `ClassType` | 1327 |
+| `Hierarchy:module-kind` | 1246 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1153 |
 | `MemberAccessExpression` | 1052 |
-| `ConversionExpression:width` | 780 |
-| `HierarchicalValueExpression` | 749 |
+| `ConversionExpression:width` | 778 |
+| `HierarchicalValueExpression` | 748 |
 
 The committed census provenance identifies frontend family `pyslang-11` and corpus `sv-tests-2`. The corpus snapshot is not silently substituted when the external checkout is unavailable.

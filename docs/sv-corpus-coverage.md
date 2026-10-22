@@ -103,6 +103,19 @@ Clean files rise **4,409 → 4,413** and partial files fall **17,570 → 17,566*
 `VariableSymbol:2state` falls **5,556 → 5,551**. The differential matrix is
 now **19 rows, 15 matches, 0 disagreements, and 4 recorded refusals**.
 
+## Unpacked array concatenation initializers — 2026-10-22
+
+The legacy cell representation now accepts a finite unpacked-array
+declaration initializer whose concatenation mixes a constant source array,
+integral elements, and an exact typed array pattern. Operands are flattened in
+declared order and copied as already-sampled pure values; runtime source
+arrays, self-aliases, width mismatches, and effectful forms remain loud. The
+`unpacked_concat_initializer` row exercises the admitted shape.
+
+Using the available 22,035-file snapshot, clean files rise **4,413 → 4,414**
+and partial files fall **17,556 → 17,555**. `VariableSymbol:2state` falls
+**5,548 → 5,547**; all other leading blocker counts are unchanged.
+
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 
 The target tier now handles the IEEE §7.4.5 rule that a fully constant

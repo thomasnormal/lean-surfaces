@@ -1595,6 +1595,124 @@ def _fixed_array_concat_assignment(sm, expr):
         return None
 
 
+def _fixed_array_initializer_values(sm, initializer, target_name, width, count):
+    """Flatten one finite unpacked-array declaration initializer.
+
+    Assignment patterns and unpacked concatenations both describe a sequence
+    of leaf values.  The legacy state stores those leaves as independent
+    cells, so an initializer is admitted only when every source item has a
+    fixed, integral shape and the resulting sequence has exactly the target
+    length.  Array operands are expanded in their declared index order; all
+    scalar/pattern elements must be pure and width-exact.  A source read of
+    the destination is rejected because declaration initialization samples
+    the complete RHS before publishing any cell.
+    """
+    try:
+        if initializer is None:
+            return [None] * count
+
+        def scalar_value(element):
+            if not _case_source_expression_ok(element, packed_members=True):
+                return None
+            reads_target = False
+
+            def inspect(node):
+                nonlocal reads_target
+                if type(node).__name__ in ("NamedValueExpression",
+                                           "HierarchicalValueExpression"):
+                    try:
+                        reads_target = (reads_target or
+                                        _array_storage_name(node.symbol) == target_name)
+                    except Exception:
+                        reads_target = True
+
+            _visit_selected_expression(element, inspect)
+            if reads_target:
+                return None
+            value = convert_expr(sm, element)
+            if (value is None or value.get("kind") == "Unsupported"
+                    or width_of(value) != width
+                    or not _case_expression_ok(value)):
+                return None
+            return value
+
+        def pattern_values(pattern):
+            kind = type(pattern).__name__
+            if kind not in ("SimpleAssignmentPatternExpression",
+                            "StructuredAssignmentPatternExpression",
+                            "ReplicatedAssignmentPatternExpression"):
+                return None
+            if getattr(pattern, "bad", False):
+                return None
+            pattern_type = pattern.type.canonicalType
+            if type(pattern_type).__name__ != "FixedSizeUnpackedArrayType":
+                return None
+            element_type = pattern_type.elementType
+            pattern_width, _pattern_two, pattern_reason = type_width_2s(element_type)
+            if pattern_width != width or pattern_reason is not None:
+                return None
+            if kind == "ReplicatedAssignmentPatternExpression":
+                repetition = getattr(getattr(pattern, "count", None),
+                                     "constant", None)
+                try:
+                    if hasattr(repetition, "value"):
+                        repetition = repetition.value
+                    repetition = int(repetition)
+                except (TypeError, ValueError, OverflowError):
+                    return None
+                sources = _pattern_source_elements(pattern)
+                if repetition <= 0 or len(sources) != 1:
+                    return None
+                elements = sources * repetition
+            else:
+                elements = _pattern_source_elements(pattern)
+            values = []
+            for element in elements:
+                value = scalar_value(element)
+                if value is None:
+                    return None
+                values.append(value)
+            return values
+
+        if type(initializer).__name__ == "ConcatenationExpression":
+            values = []
+            for operand in initializer.operands:
+                array_shape = _fixed_array_assignment_shape(operand)
+                if array_shape is not None:
+                    source_name, source_width, _source_two, positions = array_shape
+                    if source_width != width or source_name == target_name:
+                        return None
+                    # Procedural local arrays are represented as static cells
+                    # in this runner.  Inline a source array only when its own
+                    # declaration initializer is a complete pure constant;
+                    # otherwise preserving the source read would require a
+                    # runtime local-store operation that this surface does
+                    # not have.
+                    source_symbol = getattr(operand, "symbol", None)
+                    source_values = _fixed_array_initializer_values(
+                        sm, getattr(source_symbol, "initializer", None),
+                        source_name, source_width, len(positions))
+                    if (source_values is None
+                            or any(value is None for value in source_values)):
+                        return None
+                    values.extend(source_values)
+                    continue
+                nested = pattern_values(operand)
+                if nested is not None:
+                    values.extend(nested)
+                    continue
+                value = scalar_value(operand)
+                if value is None:
+                    return None
+                values.append(value)
+            return values if len(values) == count else None
+
+        values = pattern_values(initializer)
+        return values if values is not None and len(values) == count else None
+    except Exception:
+        return None
+
+
 def _fixed_array_pattern_lhs_assignment(sm, expr):
     """Lower a positional unpacked assignment-pattern LHS to scalar cells.
 
@@ -5865,55 +5983,10 @@ def convert_fixed_array_vars(sm, m):
         if count > 1024:
             return None
         initializer = getattr(m, "initializer", None)
-        values = [None] * count
-        if initializer is not None:
-            pattern_kind = type(initializer).__name__
-            if pattern_kind not in (
-                    "SimpleAssignmentPatternExpression",
-                    "StructuredAssignmentPatternExpression",
-                    "ReplicatedAssignmentPatternExpression"):
-                return None
-            if getattr(initializer, "bad", False):
-                return None
-            if pattern_kind == "ReplicatedAssignmentPatternExpression":
-                repetition = getattr(getattr(initializer, "count", None),
-                                     "constant", None)
-                try:
-                    if hasattr(repetition, "value"):
-                        repetition = repetition.value
-                    repetition = int(repetition)
-                except (TypeError, ValueError, OverflowError):
-                    return None
-                if repetition != count or repetition <= 0:
-                    return None
-                source_elements = _pattern_source_elements(initializer)
-                if len(source_elements) != 1:
-                    return None
-                elements = source_elements * repetition
-            else:
-                elements = _pattern_source_elements(initializer)
-                if len(elements) != count:
-                    return None
-            for i, element in enumerate(elements):
-                if not _case_source_expression_ok(element, packed_members=True):
-                    return None
-                value = convert_expr(sm, element)
-                if (value is None or value.get("kind") == "Unsupported"
-                        or width_of(value) != width
-                        or not _case_expression_ok(value)):
-                    return None
-                reads_target = False
-                def inspect(node):
-                    nonlocal reads_target
-                    if type(node).__name__ in ("NamedValueExpression", "HierarchicalValueExpression"):
-                        try:
-                            reads_target = reads_target or _array_storage_name(node.symbol) == _array_storage_name(m)
-                        except Exception:
-                            reads_target = True
-                _visit_selected_expression(element, inspect)
-                if reads_target:
-                    return None
-                values[i] = value
+        values = _fixed_array_initializer_values(
+            sm, initializer, _array_storage_name(m), width, count)
+        if values is None:
+            return None
         step = 1 if right >= left else -1
         decls = []
         for i, position in enumerate(range(left, right + step, step)):

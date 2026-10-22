@@ -41,6 +41,12 @@ same width conversion and `Squash2` boundary; partial or effectful patterns
 remain loud. The `unpacked_struct_integral_fields` and
 `unpacked_struct_initializers` fixtures exercise these two field-level forms.
 
+Finite unpacked-array declaration concatenations receive the same cellwise
+treatment when every operand is a pure constant array, exact typed pattern, or
+integral scalar. The `unpacked_concat_initializer` fixture covers this
+composition; runtime array sources and self-aliasing remain outside the
+representation.
+
 The public representation has no aggregate heap, queue, object, string, real,
 handle, or event scheduler. The symbolic `PDecl`/`PType` representation also
 does not carry a two-state bit, and symbolic `Squash2` is intentionally loud.

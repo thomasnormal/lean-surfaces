@@ -60,6 +60,7 @@ def run_batch(envelopes, fuel):
         env = os.environ.copy()
         env.setdefault("LEAN_NUM_THREADS", "1")
         p = subprocess.run(["prlimit", "--as=" + LEAN_AS, "--", "lake", "env", "lean",
+                            "-j", "1",
                             "--run", str(runner), "--batch", str(listing),
                             "--fuel", str(fuel)], cwd=str(REPO), capture_output=True,
                            text=True, timeout=1800, env=env)

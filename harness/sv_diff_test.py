@@ -126,7 +126,7 @@ def run_model(envelopes, fuel):
         for envelope in envelopes:
             f.write(str(envelope) + "\n")
     try:
-        p = capped(["lake", "env", "lean", "--run", str(RUNNER),
+        p = capped(["lake", "env", "lean", "-j", "1", "--run", str(RUNNER),
                     "--batch", str(listing), "--fuel", str(fuel)], timeout=1800)
         if p.returncode != 0:
             raise RuntimeError("self-check runner failed (%d):\n%s\n%s" %

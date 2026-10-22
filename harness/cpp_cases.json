@@ -319,6 +319,17 @@
     "rung": 0
   },
   {
+    "id": "translation.unresolved-using-typename-declaration",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "unresolvedUsingTypenameTranslationWitness",
+    "cpp_source": "template<class T> struct Holder { using typename T::type; };",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

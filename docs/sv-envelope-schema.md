@@ -1826,6 +1826,12 @@ envelope has no package callable table, constant-function frame or DPI ABI
 representation, so package functions and DPI imports are not dropped, inlined
 or replaced with guessed results; see [package subroutines](sv-package-subroutines.md).
 
+## Inout ports
+
+`PortSymbol:InOut` remains an explicit unsupported port declaration. The
+envelope has no bidirectional port aliasing, connected-driver resolution or
+generic-interface/interconnect declaration state; see [inout ports](sv-inout-ports.md).
+
 ## Variable types
 
 `VariableSymbol:type` remains an explicit unsupported declaration when a

@@ -3150,6 +3150,16 @@ one nonconstant package function and two DPI imports. Features overlap. The
 package callable boundary remains loud; see [package subroutines](sv-package-subroutines.md)
 and `extractors/sv/package_subroutine_reprice.py`.
 
+## Inout port boundary — 2026-10-22
+
+The fresh 22,043-path census records `PortSymbol:InOut` in **10** files: **9**
+are sole refusals and one co-occurs. Repricing the sole files finds **14**
+spans: five generic-interface non-ANSI diagnostics, two unpacked-dimension
+inheritance cases, two integer-to-signed resets, two packed-dimension-to-wire
+resets, one inout initializer, one interconnect initializer and one signed
+interconnect port. The bidirectional port remains loud; see [inout ports](sv-inout-ports.md)
+and `extractors/sv/inout_port_reprice.py`.
+
 ## Variable type boundary — 2026-10-22
 
 The fresh 22,043-path census records `VariableSymbol:type` in **150** files:

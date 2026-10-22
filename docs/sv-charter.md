@@ -4704,6 +4704,17 @@ constant-use labels overlap. Package callable tables, constant-function
 frames and DPI linkage are absent from the legacy envelope, so no package
 subroutine is erased or inlined. See [package subroutines](sv-package-subroutines.md).
 
+### Inout port boundary — 2026-10-22
+
+The fresh 22,043-path census records `PortSymbol:InOut` in **10** files: **9**
+are sole refusals and one co-occurs. Repricing the sole files finds **14**
+spans: five generic-interface non-ANSI diagnostics, two unpacked-dimension
+inheritance cases, two integer-to-signed resets, two packed-dimension-to-wire
+resets, one inout initializer, one interconnect initializer and one signed
+interconnect port. Bidirectional aliasing, resolution and port declaration
+state are absent from the envelope, so no inout is rewritten. See [inout
+ports](sv-inout-ports.md).
+
 ### Variable type boundary — 2026-10-22
 
 The fresh 22,043-path census records `VariableSymbol:type` in **150** files:

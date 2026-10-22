@@ -4865,3 +4865,11 @@ The fresh 22,043-path census records `Hierarchy:timescale` in **27** files:
 with per-module directives and time observations or delays. The hierarchy has
 no scoped time-unit environment, so these designs remain loud. See
 [hierarchy timescales](sv-timescale.md).
+
+### `supply0` net boundary — 2026-10-22
+
+The fresh 22,043-path census records `NetSymbol:Supply0` in **48** files:
+**5** are sole refusals and 43 co-occur. Repricing finds five supply-strength
+net spans, including one continuous-strength context. The envelope has no
+strength lattice or supply driver set, so `supply0` remains loud. See
+[`supply0`](sv-supply0.md).

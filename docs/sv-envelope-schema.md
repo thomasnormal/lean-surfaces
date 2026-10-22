@@ -1949,3 +1949,9 @@ into runtime output or fabricate a pre-simulation diagnostic phase; see
 `Hierarchy:timescale` remains an explicit unsupported hierarchy when modules
 require scoped time units or precision. The envelope does not apply one global
 scale or alter delay rounding; see [hierarchy timescales](sv-timescale.md).
+
+## `supply0` nets
+
+`NetSymbol:Supply0` remains an explicit unsupported net declaration. The
+envelope has no supply-strength driver or resolution lattice, so it does not
+lower `supply0` to a literal zero; see [`supply0`](sv-supply0.md).

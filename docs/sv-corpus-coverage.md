@@ -3305,3 +3305,10 @@ The fresh 22,043-path census records `Hierarchy:timescale` in **27** files:
 with per-module directives and time observations or delays. The scale remains
 loud; see [hierarchy timescales](sv-timescale.md) and
 `extractors/sv/timescale_reprice.py`.
+
+## `supply0` net boundary — 2026-10-22
+
+The fresh 22,043-path census records `NetSymbol:Supply0` in **48** files:
+**5** are sole refusals and 43 co-occur. Repricing finds five supply-strength
+net spans, including one continuous-strength context. The net remains loud; see
+[`supply0`](sv-supply0.md) and `extractors/sv/supply0_reprice.py`.

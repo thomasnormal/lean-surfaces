@@ -72,6 +72,11 @@ private def rawIntegerArgument (id value : String) : Raw := rawObject [
   ("id", rawText id), ("kind", rawText "IntegerLiteral"),
   ("type", rawObject [("qualType", rawText "int")]), ("value", rawText value)]
 
+private def rawIntegerCastArgument : Raw := rawObject [
+  ("kind", rawText "ImplicitCastExpr"), ("castKind", rawText "IntegralCast"),
+  ("type", rawObject [("qualType", rawText "int")]),
+  ("inner", .array [rawIntegerArgument "0xf" "0"])]
+
 private def integerArgument : Option IntegralMemberIntegerArgument :=
   (IntegralMemberIntegerArgument.admit (rawIntegerArgument "0xf" "0")).toOption
 
@@ -986,6 +991,7 @@ private def bindingResultError (raw : Raw) : Option IntegralMemberCallError :=
     some (h "0x10", .builtin .int, 0)
 #guard (IntegralMemberIntegerArgument.admit
     (rawObject [("kind", rawText "CharacterLiteral")])).toOption.isNone
+#guard (IntegralMemberIntegerArgument.admit rawIntegerCastArgument).toOption.isNone
 #guard (IntegralMemberIntegerArgument.admit
     (rawObject [("kind", rawText "IntegerLiteral"),
       ("id", rawText "0xf"), ("type", rawObject [("qualType", rawText "long")]),

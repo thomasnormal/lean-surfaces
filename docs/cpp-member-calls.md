@@ -105,8 +105,9 @@ evidence: the artifact-local literal handle, source spelling (`int`), normalized
 operation requires an explicit parameter handle and independently supplied
 exact-`int` parameter type. It performs no lookup, overload resolution,
 conversion, object mutation, or execution; wrappers and other literal types
-remain loud. This keeps the parameter-binding boundary visible while the
-zero-argument getter remains the only executable member-call path.
+remain loud, including the measured `IntegralCast` wrapper. This keeps the
+parameter-binding and conversion boundaries visible while the zero-argument
+getter remains the only executable member-call path.
 
 `IntegralMemberIntegerArgument.parameter` closes the remaining evidence gap for
 this slice. Given a canonical `CXXMethodDecl` handle and ordinal, it requires a

@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 27 | 0 | 0 | 0 | 0 | 27 |
+| 28 | 0 | 0 | 0 | 0 | 28 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -34,6 +34,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `statement.callable-if` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `statement.callable-while` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `statement.callable-do-while` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
+| `statement.callable-for` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `expression.callable-conditional` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `expression.callable-logical-short-circuit` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `expression.callable-logical-or` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |

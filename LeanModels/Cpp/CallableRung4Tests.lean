@@ -80,10 +80,34 @@ def callableDoWitness : Bool :=
   | .ok (.ok value) => value == signed 1
   | _ => false
 
+def forFunction : CallableFunction := {
+  switchFunction with
+  body := .block (.sequence
+    (.forLoop
+      (.assign parameter {expression := .integer 0, sourceType := intType, type := intType})
+      {expression := .binary "<"
+        {expression := .parameter parameter, sourceType := intType, type := intType}
+        {expression := .integer 3, sourceType := intType, type := intType},
+        sourceType := intType, type := .builtin .boolean}
+      (.expression {
+        expression := .increment "++" false parameter,
+        sourceType := intType,
+        type := intType})
+      (.compoundAssign "+=" parameter
+        {expression := .integer 1, sourceType := intType, type := intType}))
+    (.return_ {expression := .parameter parameter, sourceType := intType, type := intType}))
+}
+
+def callableForWitness : Bool :=
+  match evaluateCallable 64 .lp64 forFunction [signed 9] with
+  | .ok (.ok value) => value == signed 4
+  | _ => false
+
 #guard callableSwitchWitness
 #guard callableIfWitness
 #guard callableWhileWitness
 #guard callableDoWitness
+#guard callableForWitness
 
 theorem callable_switch_witness : callableSwitchWitness = true := by
   rfl
@@ -97,9 +121,13 @@ theorem callable_while_witness : callableWhileWitness = true := by
 theorem callable_do_witness : callableDoWitness = true := by
   rfl
 
+theorem callable_for_witness : callableForWitness = true := by
+  rfl
+
 #print axioms callable_switch_witness
 #print axioms callable_if_witness
 #print axioms callable_while_witness
 #print axioms callable_do_witness
+#print axioms callable_for_witness
 
 end LeanModels.Cpp.CallableRung4Tests

@@ -182,6 +182,13 @@ private def variableTemplateSpecializationTranslation : Artifact := {emptyTransl
       .object [("id", .string "s"), ("kind", .string "VarTemplateSpecializationDecl"),
         ("name", .string "value"), ("inner", .array [])]])]}
 
+private def classTemplatePartialSpecializationTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "p"), ("kind", .string "ClassTemplatePartialSpecializationDecl"),
+        ("name", .string "Sample"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -241,6 +248,9 @@ def classTemplateSpecializationTranslationWitness : Except String Unit :=
 
 def variableTemplateSpecializationTranslationWitness : Except String Unit :=
   admitVariableTemplateSpecializationDeclaration variableTemplateSpecializationTranslation [0]
+
+def classTemplatePartialSpecializationTranslationWitness : Except String Unit :=
+  admitClassTemplatePartialSpecializationDeclaration classTemplatePartialSpecializationTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -336,6 +346,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard variableTemplateSpecializationTranslationWitness matches .ok ()
 #guard admitVariableTemplateSpecializationDeclaration variableTemplateSpecializationTranslation [] matches .error _
 #guard admitVariableTemplateSpecializationDeclaration functionTranslation [0] matches .error _
+#guard classTemplatePartialSpecializationTranslationWitness matches .ok ()
+#guard admitClassTemplatePartialSpecializationDeclaration classTemplatePartialSpecializationTranslation [] matches .error _
+#guard admitClassTemplatePartialSpecializationDeclaration functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

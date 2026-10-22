@@ -2126,13 +2126,13 @@ so the census already counted `x` as bound before the rewrite existed —
 the rewrite tells it nothing new, and the value-less form was already
 counted as a binding too, which is exactly CPython's localisation.
 
-**As built (module annotation subset, 2026-10-19).** A simple module-scope
+**As built (module annotation subset, 2026-10-22).** A simple module-scope
 target with a value and an unshadowed builtin type-name annotation (`int`,
 `str`, `list`, and the other builtin type names in the extractor census)
 lowers to the assignment alone: the lookup cannot fail and the implicit
-`__annotations__` table is unobservable. A literal string, integer, Boolean,
-or `None` annotation still lowers to TWO statements: the assign, then the
-annotation expression. This preserves CPython's value/store/annotation order.
+`__annotations__` table is unobservable. Every other admitted annotation
+lowers to TWO statements: the assign, then the annotation expression. This
+preserves CPython's value/store/annotation order.
 Statement-list conversion splices both nodes through module control shells;
 function-local annotations remain erased, including effectful expressions;
 value-less declarations are erased only when their local binding is unobserved.

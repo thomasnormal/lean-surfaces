@@ -11,7 +11,7 @@ load_program ann_lab from "Examples/python/ann_lab/ann_lab.json"
 
 load_program annotation_effect from "harness/scripts/ann_module_effect_script.json"
 
-#guard callFunction annotation_effect "read_target" #[] 4096 matches .unsupported _
+#guard callFunction annotation_effect "read_target" #[] 4096 matches .ok (.int 3)
 
 theorem ann_module_global_total (offset : PyInt) :
     ann_lab.ann_module_global(offset) ==> 5 + offset := by proofs

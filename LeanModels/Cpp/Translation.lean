@@ -54,6 +54,9 @@ def admitEnumDeclaration (artifact : Artifact) (path : List Nat) :
 def admitTypedefDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "TypedefDecl" "typedef"
 
+def admitTypeAliasDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "TypeAliasDecl" "type-alias"
+
 def executionRefusal : String :=
   "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 

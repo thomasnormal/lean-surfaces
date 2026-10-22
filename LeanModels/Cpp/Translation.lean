@@ -63,6 +63,9 @@ def admitNamespaceAliasDeclaration (artifact : Artifact) (path : List Nat) :
 def admitUsingDirectiveDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "UsingDirectiveDecl" "using-directive"
 
+def admitUsingDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "UsingDecl" "using"
+
 def executionRefusal : String :=
   "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 

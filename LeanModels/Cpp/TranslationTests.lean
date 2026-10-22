@@ -76,6 +76,17 @@ private def usingDirectiveTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "u"), ("kind", .string "UsingDirectiveDecl"),
         ("inner", .array [])]])]}
 
+private def usingTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "n"), ("kind", .string "NamespaceDecl"),
+        ("name", .string "n"), ("inner", .array [
+          .object [("id", .string "f"), ("kind", .string "FunctionDecl"),
+            ("name", .string "f"), ("inner", .array [])]])],
+      .object [("id", .string "u"), ("kind", .string "UsingDecl"),
+        ("name", .string "f"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -99,6 +110,9 @@ def namespaceAliasTranslationWitness : Except String Unit :=
 
 def usingDirectiveTranslationWitness : Except String Unit :=
   admitUsingDirectiveDeclaration usingDirectiveTranslation [1]
+
+def usingTranslationWitness : Except String Unit :=
+  admitUsingDeclaration usingTranslation [1]
 
 #guard admitTranslationUnit emptyTranslation matches .ok ()
 #guard admitTranslationUnit wrongRoot matches .error _
@@ -128,6 +142,9 @@ def usingDirectiveTranslationWitness : Except String Unit :=
 #guard usingDirectiveTranslationWitness matches .ok ()
 #guard admitUsingDirectiveDeclaration usingDirectiveTranslation [] matches .error _
 #guard admitUsingDirectiveDeclaration namespaceAliasTranslation [0] matches .error _
+#guard usingTranslationWitness matches .ok ()
+#guard admitUsingDeclaration usingTranslation [] matches .error _
+#guard admitUsingDeclaration usingDirectiveTranslation [1] matches .error _
 #guard execute emptyTranslation "f" matches .error "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
 theorem empty_translation_admits : admitTranslationUnit emptyTranslation = .ok () := rfl

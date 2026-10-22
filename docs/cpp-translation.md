@@ -48,11 +48,13 @@ parser. The trust boundary remains Clang plus extraction/ingestion, not Lean
 verification of preprocessing or C++ well-formedness. No third-party sources
 or machine-specific envelopes are checked into this repository.
 
-The first executable rung-0 gates are `admitTranslationUnit` and
-`admitNamespaceDeclaration`. The root gate checks the retained root's explicit
-`kind` for `TranslationUnitDecl`; the namespace gate then checks a nonempty
-artifact occurrence path and requires `NamespaceDecl` at that exact path. Both
-return typed metadata results without inspecting or erasing child nodes,
+The first executable rung-0 gates are `admitTranslationUnit`,
+`admitNamespaceDeclaration` and `admitFunctionDeclaration`. The root gate
+checks the retained root's explicit `kind` for `TranslationUnitDecl`; the
+namespace gate then checks a nonempty artifact occurrence path and requires
+`NamespaceDecl` at that exact path, while the function gate applies the same
+path check to `FunctionDecl`. All three return typed metadata results without
+inspecting or erasing child nodes,
 resolving names, or executing a body. Malformed roots, absent paths and other
 node kinds refuse with named diagnostics. `Translation.execute` remains the
 loud boundary for declaration execution, including an otherwise empty

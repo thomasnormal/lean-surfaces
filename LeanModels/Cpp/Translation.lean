@@ -27,16 +27,23 @@ private def rawAtInnerPath : Raw → List Nat → Option Raw
       | _ => none
   | _, _ :: _ => none
 
-def admitNamespaceDeclaration (artifact : Artifact) (path : List Nat) :
-    Except String Unit := do
+private def admitDeclarationKind (artifact : Artifact) (path : List Nat)
+    (expected : String) (label : String) : Except String Unit := do
   let _ ← admitTranslationUnit artifact
   unless !path.isEmpty do
-    throw "translation: namespace declaration path must be below the translation-unit root"
+    throw s!"translation: {label} declaration path must be below the translation-unit root"
   let raw := (rawAtInnerPath artifact.ast path).getD .null
   match raw.text "kind" with
-  | some "NamespaceDecl" => pure ()
-  | some kind => throw s!"translation: expected NamespaceDecl at path, got {kind}"
-  | _ => throw "translation: namespace declaration path is absent or malformed"
+  | some kind =>
+      if kind == expected then pure ()
+      else throw s!"translation: expected {expected} at path, got {kind}"
+  | _ => throw s!"translation: {label} declaration path is absent or malformed"
+
+def admitNamespaceDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "NamespaceDecl" "namespace"
+
+def admitFunctionDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "FunctionDecl" "function"
 
 def executionRefusal : String :=
   "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"

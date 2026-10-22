@@ -22,6 +22,17 @@
     "rung": 0
   },
   {
+    "id": "translation.function-declaration",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "functionTranslationWitness",
+    "cpp_source": "int f() { return 0; }",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "object.automatic-lifetime",
     "kind": "lifetime",
     "corpus": "rung-1 witness",

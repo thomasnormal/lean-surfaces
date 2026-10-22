@@ -4713,3 +4713,14 @@ multidimensional), nine packed-element-plus-unpacked declarations and one
 invalid packed dimension on an aggregate. The labels overlap. The legacy
 envelope has no aggregate runtime store or invalid-type recovery state, so no
 variable is flattened or fabricated. See [variable types](sv-variable-types.md).
+
+### Compilation-unit variable boundary — 2026-10-22
+
+The fresh 22,043-path census records `VariableSymbol` in **76** files: **10**
+are sole refusals and 66 co-occur. Repricing the sole files finds **10** spans:
+nine compilation-unit variable declarations, two multiple-top-level-module
+rows, one enum-range declaration and one invalid packed dimension on `int`.
+The compilation-unit and multiple-top-level labels overlap, as does the
+invalid declaration's unit-scope label. The envelope has no `$unit` store or
+multiple-top-level hierarchy contract, so these variables remain loud. See
+[compilation-unit variables](sv-compilation-unit-variables.md).

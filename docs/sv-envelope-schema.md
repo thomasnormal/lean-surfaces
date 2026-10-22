@@ -1832,3 +1832,10 @@ or replaced with guessed results; see [package subroutines](sv-package-subroutin
 variable needs unpacked aggregate storage or has an invalid packed dimension
 on a struct or union. The envelope does not flatten the declaration or recover
 from the frontend diagnostic; see [variable types](sv-variable-types.md).
+
+## Compilation-unit variables
+
+`VariableSymbol` remains an explicit unsupported declaration for `$unit`-scope
+variables, multiple top-level roots and the residual enum/invalid integer
+declarations. The envelope does not copy a unit variable into a module or
+invent a hierarchy root; see [compilation-unit variables](sv-compilation-unit-variables.md).

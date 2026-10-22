@@ -3159,3 +3159,13 @@ multidimensional, nine packed-plus-unpacked element types and one invalid
 packed dimension on an aggregate. Features overlap. The variable type remains
 loud; see [variable types](sv-variable-types.md) and
 `extractors/sv/variable_type_reprice.py`.
+
+## Compilation-unit variable boundary — 2026-10-22
+
+The fresh 22,043-path census records `VariableSymbol` in **76** files: **10**
+are sole refusals and 66 co-occur. Repricing the sole files finds **10** spans:
+nine compilation-unit variables, two multiple-top-level-module rows, one
+enum-range declaration and one invalid packed dimension on `int`. Features
+overlap. The residual variable boundary remains loud; see
+[compilation-unit variables](sv-compilation-unit-variables.md) and
+`extractors/sv/variable_symbol_reprice.py`.

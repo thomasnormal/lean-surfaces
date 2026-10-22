@@ -514,6 +514,99 @@ def cases : List (Int × Int) := [''' + pairs + r''']
         print("enum setter probe: 3 direct enum arguments admitted from Clang probe, "
               "native/probe/Lean -O0/-O2 boundary")
 
+    def test_enum_getter_probe_differential(self):
+        """Use Clang's retained probe to admit and call a direct enum getter."""
+        library = os.environ.get("LEANCPP_PROBE_LIBRARY")
+        if not library:
+            self.skipTest("set matching LEANCPP_PROBE_LIBRARY")
+        source = r'''
+#include <iostream>
+enum Error : unsigned int { zero = 0u, one = 1u, top = 4294967295u };
+struct Sample {
+ Error value;
+ Error get() const { return value; }
+};
+int main() {
+ Sample object{zero};
+ std::cout << "0 " << static_cast<unsigned int>(object.get()) << '\n';
+ object.value = one;
+ std::cout << "1 " << static_cast<unsigned int>(object.get()) << '\n';
+ object.value = top;
+ std::cout << "4294967295 " << static_cast<unsigned int>(object.get()) << '\n';
+}
+'''
+        rows = [line.split() for line in self.native(source).splitlines()]
+        self.assertEqual(rows, [[value, value] for value in ["0", "1", "4294967295"]])
+        fixture = self.work / "enum-getter.cpp"
+        fixture.write_text(source, encoding="utf-8")
+        probe_text = self.run_ok([
+            self.clang, "--no-default-config", "-std=c++23", "-pedantic-errors",
+            "-fsyntax-only", str(fixture), "-Xclang", "-load", "-Xclang",
+            str(pathlib.Path(library).resolve()), "-Xclang", "-plugin", "-Xclang",
+            "leancpp-canonical-probe"])
+        envelope = self.work / "enum-getter-probe.json"
+        envelope.write_text(probe_text, encoding="utf-8")
+        pairs = ", ".join(f"({value}, {expected})" for value, expected in rows)
+        self.lean('''import LeanModels.Cpp
+open LeanModels.Cpp
+set_option maxRecDepth 100000
+set_option maxHeartbeats 4000000
+load_cpp_probe probe from ''' + json.dumps(str(envelope)) + r'''
+private partial def findGetCall : Raw → Option Raw
+  | node@(.object fields) =>
+      let here :=
+        if node.text "kind" == some "CXXMemberCallExpr" then
+          match node.field "inner" with
+          | some (.array (member :: _)) =>
+              if member.text "kind" == some "MemberExpr" &&
+                  member.text "name" == some "get" then some node else none
+          | _ => none
+        else none
+      match here with
+      | some call => some call
+      | none => fields.firstM (fun (_, value) => findGetCall value)
+  | .array values => values.firstM findGetCall
+  | _ => none
+
+private def setup : Option
+    (IntegralMemberEnumCall × IntegralMemberEnumRepresentation × IntegralMemberThisFieldAccess) := do
+  let call ← findGetCall probe.ast
+  let callSyntax ← (IntegralMemberCallSyntax.admitResolved probe call).toOption
+  let some methodRow := probe.declarations.find?
+    (fun row => row.kind == "CXXMethodDecl" && row.raw.text "name" == some "get" &&
+      row.id == row.canonical) | none
+  let body ← (IntegralMemberMethodBody.admit probe methodRow.canonical).toOption
+  let access ← (IntegralMemberThisFieldAccess.admit probe body).toOption
+  let profile ← (IntegralMemberEnumProfile.admit probe access).toOption
+  let representation ← (IntegralMemberEnumRepresentation.withOracle profile .unsignedInt).toOption
+  let getter ← (IntegralMemberEnumGetter.admit probe methodRow.canonical representation).toOption
+  let hierarchy : ClassHierarchy := {root := access.owner, classes := [
+    {declaration := access.owner, isAbstract := false, bases := [], fields := [access.field],
+      friends := [], name := "Sample"}]}
+  let call ← (IntegralMemberEnumCall.bind callSyntax access representation callSyntax.receiver
+    {hierarchy, objects := [0], receiverPath := [], snapshot := {
+      memory := {profile := .lp64, objects := {objects := [
+        {duration := .automatic, type := .record access.owner, phase := .aliveInitialized},
+        {duration := .automatic, type := .builtin representation.underlying,
+          phase := .aliveInitialized}]}, values := [none, some ⟨.unsigned 32, 0⟩]},
+      object := 0, member := 1, field := access.field}}).toOption
+  pure (call, representation, access)
+
+def cases : List (Int × Int) := [''' + pairs + r''']
+#guard setup.isSome
+#guard cases.all (fun (input, expected) =>
+  match setup with
+  | some (call, representation, access) =>
+      let projection := {call.projection with snapshot := {call.projection.snapshot with
+        memory := {call.projection.snapshot.memory with values := [none, some ⟨.unsigned 32, input⟩]}}}
+      let call := {call with projection := projection}
+      match call.invoke with
+      | .ok (_, value) => value.value.value == expected
+      | .error _ => false
+  | none => false)
+''')
+        print("enum getter probe: 3 native/probe/Lean rows, -O0/-O2; direct enum body witness")
+
 
 if __name__ == "__main__":
     unittest.main()

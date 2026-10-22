@@ -158,6 +158,14 @@ the **38** `XMLError` result calls refuse because their bodies do not expose
 that direct-field shape. This is the next execution precondition, not a
 fallback to a name-based getter.
 
+`MemberGetterTests.test_enum_getter_probe_differential` provides the
+probe-backed counterpart to the representation control. It compiles three
+direct calls to an `Error : unsigned int` getter, loads the Clang probe,
+admits the canonical getter/body/field/profile witnesses, and invokes
+`IntegralMemberEnumCall` against supplied object state before reading each
+result back. Native `-O0`/`-O2` rows are compared with Lean; absent pinned
+Clang/plugin inputs produce an explicit skip.
+
 `IntegralMemberMethodBody.admit` then resolves the body relation independently
 of the profile. The real census finds exactly one definition for each involved
 canonical method: `Set → Set` once and `SetError →` its distinct defining

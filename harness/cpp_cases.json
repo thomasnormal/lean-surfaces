@@ -82,6 +82,18 @@
     "rung": 1
   },
   {
+    "id": "object.default-initialization",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.ObjectModelRung1Tests",
+    "lean_namespace": "LeanModels.Cpp.ObjectModelRung1Tests",
+    "lean_expression": "defaultInitializationLifecycle",
+    "cpp_source": "bool default_witness() { int value; value = static_cast<short>(7); return value == 7; }",
+    "cpp_expression": "default_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

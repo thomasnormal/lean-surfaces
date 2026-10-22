@@ -61,7 +61,9 @@ alias-visible writes, distinct objects, const objects/accesses, stale accesses,
 dynamic release, invalid values/profiles and incoherent externally supplied
 slots. The rung-1 witness in `ObjectModelRung1Tests.lean` additionally traces a
 converted write through a borrowed reference, reads it back, and checks that
-const and ended-lifetime writes remain refused. The optional compiled oracle
+const and ended-lifetime writes remain refused. The rung-1 default-initialization
+witness also checks the uninitialized-read refusal before assigning a converted
+value. The optional compiled oracle
 compares defined automatic and dynamic integral-object traces at `-O0` and `-O2`
 under undefined-behavior sanitization;
 indeterminate and expired reads are never executed by the oracle. It validates

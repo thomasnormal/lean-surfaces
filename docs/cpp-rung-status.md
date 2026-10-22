@@ -47,6 +47,6 @@ The grammar census uses one source witness per listed Clang AST node kind. The r
 | measurement | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---|---:|---:|---:|---:|---:|---:|
 | grammar witnesses | 24 | 0 | 0 | 0 | 0 | 24 |
-| differential calls | 11 | 0 | 0 | 0 | 0 | 11 |
+| differential calls | 12 | 0 | 0 | 0 | 0 | 12 |
 
-The differential rows include 1 compile-only translation witness, 6 rung-1 lifetime witnesses, and 4 callable rows from `Examples/cpp/tinyxml2/IsUTF8Continuation.lean`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.
+The differential rows include 1 compile-only translation witness, 7 rung-1 lifetime witnesses, and 4 callable rows from `Examples/cpp/tinyxml2/IsUTF8Continuation.lean`; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.

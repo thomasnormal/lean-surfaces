@@ -117,7 +117,7 @@ emits:
 | `ConversionExpression:Explicit` / `:BitstreamCast` / `:StreamingConcat` | explicit casts |
 | `NamedValueExpression:<SymbolKind>` | identifier that does not name a variable/net (e.g. `:Parameter`) |
 | `PortSymbol:InOut` / `:Ref` | port directions outside in/out |
-| `PortSymbol:...`, `VariableSymbol:...`, `NetSymbol:...` with `:2state` / `:range` / `:type` | unsupported declared type: 2-state nets or symbolic declarations, multidimensional packed ranges, unpacked/nonintegral types (real, string, ...); the legacy/self-check path admits one-dimensional packed scalar ranges and untagged packed struct/union vectors |
+| `PortSymbol:...`, `VariableSymbol:...`, `NetSymbol:...` with `:2state` / `:range` / `:type` | unsupported declared type: 2-state nets or symbolic declarations, multidimensional packed ranges, dynamic/queue or nonintegral types (real, string, ...); the legacy/self-check path admits one-dimensional packed scalar ranges, bounded fixed-unpacked integral arrays (including flattened multidimensional cells), and untagged packed struct/union vectors |
 | `NetSymbol:<NetKind>` / `:delay` | net kinds other than `wire` (`Tri0`, `WAnd`, ...), net delays |
 | `NetSymbol:TriReg` | charge-storage net with driver release, capacitive retention, charge strength or decay |
 | `NetSymbol:Tri0` | implicit pull-0 net with strength-sensitive four-state driver resolution |

@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-22
 
-The chapter-scoped rerun covered **22,045** paths: **4,326 clean**,
-**17,653 partial**, **66 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,045** paths: **4,345 clean**,
+**17,634 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`VariableSymbol:2state` (5,744), `AssignmentExpression:target` (4,032),
+`VariableSymbol:2state` (5,666), `AssignmentExpression:target` (3,982),
 `ExpressionStatement:CallExpression` (3,792), `CallExpression` (3,292),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,483), `ConcurrentAssertionStatement`
@@ -40,6 +40,23 @@ simulation tier. The leading refusal classes by file are
 The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
 matched all 200 fixed-seed sample classifications.
+
+## Nested fixed two-state arrays — 2026-10-22
+
+The legacy extractor now admits bounded fixed-size unpacked arrays with two
+or more dimensions when their leaf type is integral and the declaration has
+no aggregate initializer. Each finite leaf becomes an ordinary vector cell;
+constant selections such as `matrix[1][2]` use that cell for reads and writes.
+Dynamic arrays, queues, object/event/string/real leaves, aggregate
+initializers, and nonconstant selections remain loud. The new
+`fixed_array_2state` differential row writes and reads a two-dimensional
+`bit [3:0]` array and checks zero startup of an untouched cell.
+
+Against the previous 22,045-path snapshot, clean files rise **4,326 → 4,345**
+and partial files fall **17,653 → 17,634**. The `VariableSymbol:2state` wall
+falls **5,744 → 5,666**; the related constant element-selection wall falls
+**663 → 615**. The differential matrix is **14 rows, 10 matches, 0
+disagreements, and 4 recorded refusals**.
 
 ## Assignment-target boundary — 2026-10-21
 

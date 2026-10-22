@@ -857,6 +857,74 @@ def _array_storage_name(symbol):
     return _storage_name(symbol)
 
 
+def _fixed_array_dimensions(array_type, max_cells=1024):
+    """Return unpacked dimensions and the integral leaf type.
+
+    The self-check state stores vectors under names, so a bounded fixed
+    unpacked aggregate can be represented by one name per leaf.  Keep the
+    bound deliberately small: this helper is only for finite declarations,
+    never queues or dynamic arrays.
+    """
+    try:
+        dimensions = []
+        current = array_type.canonicalType
+        total = 1
+        while type(current).__name__ == "FixedSizeUnpackedArrayType":
+            left, right = int(current.range.left), int(current.range.right)
+            count = abs(left - right) + 1
+            if count <= 0:
+                return None
+            total *= count
+            if max_cells is not None and total > max_cells:
+                return None
+            dimensions.append((left, right))
+            current = current.elementType.canonicalType
+        if not dimensions:
+            return None
+        return dimensions, current
+    except Exception:
+        return None
+
+
+def _fixed_array_leaf_select(sm, expression):
+    """Flatten a constant selection through any number of fixed dimensions."""
+    try:
+        selectors = []
+        current = expression
+        while type(current).__name__ == "ElementSelectExpression":
+            position = _constant_dimension_selector(current.selector)
+            if position is None:
+                return None
+            selectors.append(position)
+            current = current.value
+        if not _storage_expression(current):
+            return None
+        if str(current.symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net"):
+            return None
+        # Selection itself does not allocate the flattened declaration, so
+        # preserve the legacy one-dimensional constant-cell behavior even
+        # for a large finite range. Declaration expansion keeps the bound.
+        shape = _fixed_array_dimensions(current.type, max_cells=None)
+        if shape is None:
+            return None
+        dimensions, leaf_type = shape
+        if len(selectors) != len(dimensions):
+            return None
+        positions = list(reversed(selectors))
+        for position, (left, right) in zip(positions, dimensions):
+            if position < min(left, right) or position > max(left, right):
+                return None
+        width, two_state, reason = type_width_2s(leaf_type)
+        if width is None or reason is not None:
+            return None
+        name = _array_storage_name(current.symbol)
+        for position in positions:
+            name += f"[{position}]"
+        return name, width, two_state
+    except Exception:
+        return None
+
+
 def _foreach_storage_name(symbol):
     """Bind an automatic iterator by its declaration, including anonymous scopes."""
     return _scoped_temp("$foreach:", symbol.location.offset, ":" + symbol.name)
@@ -870,45 +938,16 @@ def _storage_expression(expression):
 
 
 def _fixed_array_cell(sm, expression):
-    """Return the lowered cell for a constant element of a one-dimensional
-    fixed unpacked integral array.
+    """Return the lowered cell for a constant element of a bounded fixed
+    unpacked integral array, including nested dimensions.
 
     The self-check state is a map of vector-valued signals, not a general
     unpacked-array store.  A constant array element can nevertheless be
-    represented exactly by giving each cell its own state name.  Dynamic
-    indices, nested arrays, whole-array expressions, and initializers remain
+    represented exactly by giving each leaf cell its own state name.  Dynamic
+    indices, whole-array expressions, and aggregate initializers remain
     outside this deliberately narrow lowering and stay loud.
     """
-    try:
-        source = expression.value
-        if not _storage_expression(source):
-            return None
-        if str(source.symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net"):
-            return None
-        source_type = source.type
-        array_type = source_type.canonicalType
-        if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
-            return None
-        element_type = array_type.elementType
-        if type(element_type.canonicalType).__name__ == "FixedSizeUnpackedArrayType":
-            return None
-        width, two_state, reason = type_width_2s(element_type)
-        if width is None or reason is not None:
-            return None
-        index = (expression.selector if type(expression).__name__ ==
-                 "ElementSelectExpression" else None)
-        if index is None:
-            return None
-        position = _constant_dimension_selector(index)
-        if position is None:
-            return None
-        left, right = int(array_type.range.left), int(array_type.range.right)
-        lo, hi = min(left, right), max(left, right)
-        if position < lo or position > hi:
-            return None
-        return f"{_array_storage_name(source.symbol)}[{position}]", width, two_state
-    except Exception:
-        return None
+    return _fixed_array_leaf_select(sm, expression)
 
 
 def _fixed_array_shape(source):
@@ -4916,7 +4955,10 @@ def _convert_local_decl(sm, stmt):
         if cells is not None:
             lifetime = str(symbol.lifetime).split(".")[-1]
             if lifetime == "Automatic":
-                element_type = symbol.type.canonicalType.elementType
+                array_shape = _fixed_array_dimensions(symbol.type)
+                if array_shape is None:
+                    return unsupported(sm, stmt, "VariableDeclStatement:array-type")
+                _array_dimensions, element_type = array_shape
                 return {"kind": "Block", "span": node_span(sm, stmt), "stmts": [
                     {"kind": "LocalDecl", "span": cell["span"], "name": cell["name"],
                      "width": cell["width"], "signed": cell.get("signed", False),
@@ -5454,6 +5496,41 @@ def convert_fixed_array_vars(sm, m):
         array_type = m.type.canonicalType
         if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
             return None
+        dimensions_shape = _fixed_array_dimensions(array_type)
+        if dimensions_shape is None:
+            return None
+        dimensions, leaf_type = dimensions_shape
+        if len(dimensions) > 1:
+            # A nested fixed aggregate has no aggregate store in the
+            # self-check interpreter.  Admit the declaration when its leaf
+            # type is integral and it has no initializer, expanding the
+            # finite Cartesian product into independent cells.  Aggregate
+            # initializers remain loud until their source-order semantics can
+            # be represented without guessing.
+            if getattr(m, "initializer", None) is not None:
+                return None
+            width, two, reason = type_width_2s(leaf_type)
+            if width is None or reason is not None:
+                return None
+            positions = [()]
+            for left, right in dimensions:
+                step = 1 if right >= left else -1
+                positions = [prefix + (position,)
+                             for prefix in positions
+                             for position in range(left, right + step, step)]
+            declarations = []
+            base = _array_storage_name(m)
+            for indexes in positions:
+                init = None
+                if two:
+                    init = {"kind": "Literal", "span": None,
+                            "width": width, "bits": "0" * width}
+                name = base + "".join(f"[{position}]" for position in indexes)
+                declarations.append(signed_metadata({
+                    "kind": "Var", "span": sym_span(sm, m),
+                    "name": name, "width": width, "init": init,
+                }, leaf_type))
+            return declarations
         element_type = array_type.elementType
         if type(element_type.canonicalType).__name__ == "FixedSizeUnpackedArrayType":
             return None

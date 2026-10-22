@@ -525,14 +525,14 @@ The legacy value tier already admits scalar, predefined-integral, packed-vector,
 and untagged packed-struct/union two-state variables, with zero startup and
 `x`/`z`-to-zero assignment conversion. The fresh corpus's `VariableSymbol:2state`
 tag is the remaining mix of unpacked/dynamic/queue/object/event/real/string
-declarations and uses. It occurs in 5,743 files, but is the sole refusal in 28;
+declarations and uses. It occurs in 5,744 files, but is the sole refusal in 28;
 the common companions are other storage, call, class, and selected-access
 boundaries. The symbolic `PDecl`/`PType` surface has no two-state metadata and
 keeps `Squash2` loud, so a blanket declaration flag would fabricate semantics
 for representations the tier does not have. The complete admitted slice and
 the measured refusal rationale are recorded in
-[`sv-two-state-boundary.md`](sv-two-state-boundary.md). No aggregate, object,
-string/real, handle, or event scheduler is smuggled into this rung.
+[`sv-two-state-boundary.md`](sv-two-state-boundary.md). No dynamic aggregate,
+object, string/real, handle, or event scheduler is smuggled into this rung.
 
 The ordinary portable suite includes x/z stimuli and an absent-input cycle:
 all five complete cycle traces agree with both independent simulation and
@@ -541,6 +541,22 @@ development build `dad78d525` retains z in unconnected two-state input ports,
 while independent simulation initializes them to zero. This is recorded as
 a simulator divergence, not a model pass. The new integral-variable-port
 slice supersedes the older input-port refusal below.
+
+### Nested fixed two-state arrays — 2026-10-22
+
+Bounded fixed-size unpacked arrays with two or more dimensions now lower to
+independent vector cells when their leaf type is integral and the declaration
+has no aggregate initializer. Constant element selections reuse those names,
+so ordinary reads, writes, two-state zero startup, and x/z-to-zero conversion
+retain the existing vector semantics. Dynamic or queue arrays, nonintegral
+leaves, aggregate initializers, and nonconstant selections remain loud. The
+`fixed_array_2state` fixture checks a write/read pair and an untouched cell.
+
+The fresh 22,045-path census moves clean files **4,326 → 4,345** and partial
+files **17,653 → 17,634**. `VariableSymbol:2state` falls **5,744 → 5,666**;
+`AssignmentExpression:target` falls **4,032 → 3,982** as the newly admitted
+constant nested selections stop producing target refusals. The differential
+matrix has **14 rows, 10 matches, 0 disagreements, and 4 recorded refusals**.
 
 ### Constant `$clog2` calls — 2026-10-14
 

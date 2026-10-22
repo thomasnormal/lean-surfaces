@@ -10,14 +10,23 @@ The extractor and focused tests cover both declarations and selected reads and
 writes, including signed forms.
 
 The current `VariableSymbol:2state` census tag names the shapes outside that
-value tier. The 2026-10-21 corpus snapshot has 5,743 files containing the tag,
-but only 28 files where it is the sole refusal and 490 where it is one of at
-most two refusal kinds. Its frequent companions are assignment targets (3,215
-files), calls (2,243), `NamedValueExpression:2state` (1,409), classes (1,146),
-member access (1,120), real literals (639), and element-select source types
-(575). The sole-tag examples include unpacked arrays, events, real and string
-variables, handles, and other declaration forms with no common bit-vector
-meaning.
+value tier. The 2026-10-22 corpus snapshot has 5,666 files containing the tag;
+it is the sole refusal in 25 files. The previous snapshot had 5,744 files and
+28 sole refusals. Its current frequent companions are assignment targets
+(3,176 files), statement calls (2,234), expression calls (2,103),
+`NamedValueExpression:2state` (1,409), classes (1,147), member access (1,120),
+real literals (639), and element-select source types (536). The remaining
+sole-tag examples include
+dynamic and queue arrays, events, real and string variables, handles, and
+other declaration forms with no common bit-vector meaning.
+
+Bounded fixed-size unpacked arrays with two or more dimensions are now an
+explicit exception: when the leaf type is integral and there is no aggregate
+initializer, ingestion expands the finite Cartesian product into independent
+vector cells. Constant selections use those cells, preserving ordinary
+two-state zero startup and x/z-to-zero assignment conversion. Dynamic or
+nonconstant selections, aggregate initializers, and every nonintegral leaf
+remain loud.
 
 The public representation has no aggregate heap, queue, object, string, real,
 handle, or event scheduler. The symbolic `PDecl`/`PType` representation also
@@ -25,8 +34,9 @@ does not carry a two-state bit, and symbolic `Squash2` is intentionally loud.
 Adding a boolean to the declaration record would therefore accept programs
 whose storage and operations still have no semantics, or would silently erase
 an event/object boundary. The tier keeps those declarations and every use that
-depends on them as `Unsupported`; the existing integral two-state behavior is
-the complete admitted slice for this census item.
+depends on them as `Unsupported`; the scalar/packed behavior and the bounded
+fixed-array cell slice above are the complete admitted forms for this census
+item.
 
 This is a scope decision, not a claim that the language lacks those types.
 Any future aggregate, object, string/real, handle, or event rung must introduce

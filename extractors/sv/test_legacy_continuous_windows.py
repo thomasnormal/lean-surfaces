@@ -60,6 +60,18 @@ class LegacyContinuousWindows(unittest.TestCase):
             "name": "value[0]",
         })
 
+    def test_nested_fixed_array_cells_flatten_in_source_order(self):
+        envelope = self.extract(
+            "module top; bit [3:0] value [2][3]; "
+            "initial begin value[1][2] = 4'ha; end endmodule")
+        decls = envelope["design"]["modules"][0]["decls"]
+        self.assertEqual([d["name"] for d in decls], [
+            "value[0][0]", "value[0][1]", "value[0][2]",
+            "value[1][0]", "value[1][1]", "value[1][2]",
+        ])
+        stmt = envelope["design"]["modules"][0]["processes"][0]["body"]["stmts"][0]
+        self.assertEqual(stmt["target"]["name"], "value[1][2]")
+
     def test_constant_fixed_array_cell_select_is_a_continuous_window(self):
         envelope = self.extract(
             "module top(input logic [1:0] source, output logic [1:0] out); "

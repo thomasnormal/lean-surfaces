@@ -38,6 +38,8 @@ private def returnAndFallthrough : Bool :=
     (.sequence .returnVoid (.assign (h "ref") (literal 99)))) &&
   checkVoid (.block (.sequence (.assign (h "ref") (literal 7)) .returnVoid))
 
+def callableVoidWitness : Bool := returnAndFallthrough
+
 private def failureAndLegacy : Bool :=
   let body := CallableStatement.sequence (.assign (h "ref") (literal 7))
     (.assign (h "missing") (literal 9))
@@ -77,9 +79,15 @@ private def emptyFunction : CallableFunction :=
 #guard evaluateCallableObjectResult 1 .lp64 emptyFunction [] matches .ok (.ok none)
 #guard evaluateCallableObjectResult 0 .lp64 emptyFunction [] matches .error (.frameError .fuelExhausted)
 #guard evaluateCallableObject 1 .lp64 emptyFunction [] matches .error .voidResultRequiresResultAPI
+#guard callableVoidWitness
 
 private theorem voidKernelChecks : (returnAndFallthrough && failureAndLegacy && undefinedIsNotVoid) = true := by decide
+
+theorem callable_void_witness : callableVoidWitness = true := by
+  rfl
+
 #print axioms voidKernelChecks
+#print axioms callable_void_witness
 #print axioms CallableObjectEvaluation.void_fallthrough_eq_return
 
 end LeanModels.Cpp.CallableVoidTests

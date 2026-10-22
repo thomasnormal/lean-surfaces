@@ -286,6 +286,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-void-return",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableVoidTests",
+    "lean_namespace": "LeanModels.Cpp.CallableVoidTests",
+    "lean_expression": "callableVoidWitness",
+    "cpp_source": "void set_value(int& value) { value = 7; return; } bool callable_witness() { int value = 2; set_value(value); return value == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "expression.callable-conditional",
     "kind": "expression",
     "corpus": "rung-3 witness",

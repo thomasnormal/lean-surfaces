@@ -1,0 +1,50 @@
+[
+  {
+    "id": "tinyxml2.IsUTF8Continuation.negative",
+    "corpus": "TinyXML-2",
+    "lean_module": "Examples.cpp.tinyxml2.proof",
+    "lean_namespace": "Examples.cpp.tinyxml2.IsUTF8Continuation",
+    "lean_expression": "observed (-1)",
+    "cpp_include": "tinyxml2.h",
+    "cpp_expression": "tinyxml2::XMLUtil::IsUTF8Continuation(static_cast<char>({arg}))",
+    "args": [-1],
+    "expect": "match",
+    "rung": 2
+  },
+  {
+    "id": "tinyxml2.IsUTF8Continuation.minimum",
+    "corpus": "TinyXML-2",
+    "lean_module": "Examples.cpp.tinyxml2.proof",
+    "lean_namespace": "Examples.cpp.tinyxml2.IsUTF8Continuation",
+    "lean_expression": "observed (-128)",
+    "cpp_include": "tinyxml2.h",
+    "cpp_expression": "tinyxml2::XMLUtil::IsUTF8Continuation(static_cast<char>({arg}))",
+    "args": [-128],
+    "expect": "match",
+    "rung": 2
+  },
+  {
+    "id": "tinyxml2.IsUTF8Continuation.nonnegative",
+    "corpus": "TinyXML-2",
+    "lean_module": "Examples.cpp.tinyxml2.proof",
+    "lean_namespace": "Examples.cpp.tinyxml2.IsUTF8Continuation",
+    "lean_expression": "observed 127",
+    "cpp_include": "tinyxml2.h",
+    "cpp_expression": "tinyxml2::XMLUtil::IsUTF8Continuation(static_cast<char>({arg}))",
+    "args": [127],
+    "expect": "match",
+    "rung": 2
+  },
+  {
+    "id": "tinyxml2.IsUTF8Continuation.zero",
+    "corpus": "TinyXML-2",
+    "lean_module": "Examples.cpp.tinyxml2.proof",
+    "lean_namespace": "Examples.cpp.tinyxml2.IsUTF8Continuation",
+    "lean_expression": "observed 0",
+    "cpp_include": "tinyxml2.h",
+    "cpp_expression": "tinyxml2::XMLUtil::IsUTF8Continuation(static_cast<char>({arg}))",
+    "args": [0],
+    "expect": "match",
+    "rung": 2
+  }
+]

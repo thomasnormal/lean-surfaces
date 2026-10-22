@@ -130,7 +130,9 @@ private def recordTranslation : Artifact := {emptyTranslation with
           .object [("id", .string "d"), ("kind", .string "CXXDestructorDecl"),
             ("name", .string "~Sample"), ("inner", .array [])],
           .object [("id", .string "v"), ("kind", .string "CXXConversionDecl"),
-            ("name", .string "operator int"), ("inner", .array [])]])]])]}
+            ("name", .string "operator int"), ("inner", .array [])],
+          .object [("id", .string "y"), ("kind", .string "FriendDecl"),
+            ("inner", .array [])]])]])]}
 
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
@@ -161,6 +163,9 @@ def destructorTranslationWitness : Except String Unit :=
 
 def conversionTranslationWitness : Except String Unit :=
   admitConversionDeclaration recordTranslation [0, 5]
+
+def friendTranslationWitness : Except String Unit :=
+  admitFriendDeclaration recordTranslation [0, 6]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -226,6 +231,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard conversionTranslationWitness matches .ok ()
 #guard admitConversionDeclaration recordTranslation [] matches .error _
 #guard admitConversionDeclaration functionTranslation [0] matches .error _
+#guard friendTranslationWitness matches .ok ()
+#guard admitFriendDeclaration recordTranslation [] matches .error _
+#guard admitFriendDeclaration functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

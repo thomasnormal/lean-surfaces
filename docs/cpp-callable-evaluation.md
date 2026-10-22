@@ -120,6 +120,13 @@ remaining body and rechecks the loop condition (with a `do` loop's usual
 post-body check); both transfers retain the current parameter state. A transfer
 that reaches the public callable boundary is a typed refusal.
 
+Forward `goto` and its target label are admitted inside a bounded compound
+statement. A jump carries the current parameter state to the target suffix and
+then executes the statements after that label in source order. Missing targets,
+jumps that escape the callable body, and backward or scope-crossing control
+transfers remain loud until their C++ lifetime and control-flow obligations are
+represented explicitly.
+
 Logical `&&` and `||` retain their sequencing guarantee even when the right
 operand increments a parameter: the right side is evaluated only when the left
 side selects it, and its updated state contributes to the boolean result.

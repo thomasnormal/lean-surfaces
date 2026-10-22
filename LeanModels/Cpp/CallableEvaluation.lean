@@ -14,6 +14,7 @@ inductive CallableEvaluationError where
   | missingReturn
   | breakOutsideLoop
   | continueOutsideLoop
+  | gotoOutsideFunction (label : String)
   | unsupportedDeclaration
   | unsequencedEffects
   | fuelExhausted
@@ -189,6 +190,7 @@ private inductive CallableExecution where
   | failed (result : IntegralResult IntegralValue) (arguments : List IntegralValue)
   | break_ (arguments : List IntegralValue)
   | continue_ (arguments : List IntegralValue)
+  | goto_ (label : String) (arguments : List IntegralValue)
 
 private def terminalResult (arguments : List IntegralValue) :
     IntegralResult IntegralValue → CallableExecution
@@ -221,7 +223,7 @@ private def evaluateSwitchClauses
       match result with
       | .normal updated => evaluateSwitchClauses evaluate updated rest
       | .break_ updated => pure (.normal updated)
-      | .returned _ _ | .failed _ _ | .continue_ _ => pure result
+      | .returned _ _ | .failed _ _ | .continue_ _ | .goto_ _ _ => pure result
 
 private def mapIntegralResult (result : IntegralResult α) (map : α → β) : IntegralResult β :=
   match result with
@@ -273,6 +275,7 @@ mutual
             | .returned result _ | .failed result _ => pure result
             | .break_ _ => throw .breakOutsideLoop
             | .continue_ _ => throw .continueOutsideLoop
+            | .goto_ label _ => throw (.gotoOutsideFunction label)
         | .invalid reason => pure (.invalid reason)
         | .undefined reason => pure (.undefined reason)
         | .unsupported reason => pure (.unsupported reason)
@@ -410,7 +413,7 @@ mutual
                       evaluateForIterations fuel profile parameters afterStep condition step body
                   | _ => pure stepResult
               | .break_ updated => pure (.normal updated)
-              | .returned _ _ | .failed _ _ => pure bodyResult
+              | .returned _ _ | .failed _ _ | .goto_ _ _ => pure bodyResult
         | result => pure (.failed result afterCondition)
 
   termination_by structural fuel
@@ -491,7 +494,7 @@ mutual
                     evaluateCallableStatement fuel profile parameters updated
                       (.whileLoop condition body)
                 | .break_ updated => pure (.normal updated)
-                | .returned _ _ | .failed _ _ => pure bodyResult
+                | .returned _ _ | .failed _ _ | .goto_ _ _ => pure bodyResult
           | result => pure (.failed result afterCondition)
       | .doWhile body condition => do
           let bodyResult ← evaluateCallableStatement fuel profile parameters arguments body
@@ -517,7 +520,7 @@ mutual
                       (.doWhile body condition)
               | result => pure (.failed result afterCondition)
           | .break_ updated => pure (.normal updated)
-          | .returned _ _ | .failed _ _ => pure bodyResult
+          | .returned _ _ | .failed _ _ | .goto_ _ _ => pure bodyResult
       | .forLoop initializer condition step body => do
           let initialResult ← evaluateCallableStatement fuel profile parameters arguments initializer
           match initialResult with
@@ -525,10 +528,16 @@ mutual
           | _ => pure initialResult
       | .break_ => pure (.break_ arguments)
       | .continue_ => pure (.continue_ arguments)
+      | .goto_ label => pure (.goto_ label arguments)
+      | .label _ body => evaluateCallableStatement fuel profile parameters arguments body
       | .sequence first second => do
           let firstResult ← evaluateCallableStatement fuel profile parameters arguments first
           match firstResult with
           | .normal updated => evaluateCallableStatement fuel profile parameters updated second
+          | .goto_ label updated =>
+              match second.findLabelSuffix label with
+              | some suffix => evaluateCallableStatement fuel profile parameters updated suffix
+              | none => pure (.goto_ label updated)
           | .returned _ _ | .failed _ _ | .break_ _ | .continue_ _ => pure firstResult
 
   termination_by structural fuel
@@ -551,6 +560,7 @@ def evaluateCallable (fuel : Nat) (profile : TargetProfile) (function : Callable
       | .returned result _ | .failed result _ => .ok result
       | .break_ _ => .error .breakOutsideLoop
       | .continue_ _ => .error .continueOutsideLoop
+      | .goto_ label _ => .error (.gotoOutsideFunction label)
   | .invalid reason => pure (.invalid reason)
   | .undefined reason => pure (.undefined reason)
   | .unsupported reason => pure (.unsupported reason)

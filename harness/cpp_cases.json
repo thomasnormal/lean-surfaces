@@ -298,6 +298,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-goto-label",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung4Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung4Tests",
+    "lean_expression": "callableGotoWitness",
+    "cpp_source": "int goto_witness(int value) { if (value) goto done; value = 7; done: return value; } bool callable_witness() { return goto_witness(1) == 1 && goto_witness(0) == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "expression.callable-conditional",
     "kind": "expression",
     "corpus": "rung-3 witness",

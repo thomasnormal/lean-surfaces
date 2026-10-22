@@ -156,6 +156,24 @@ def callableNullWitness : Bool :=
   | .ok (.ok value) => value == signed 7
   | _ => false
 
+def gotoFunction : CallableFunction := {
+  switchFunction with
+  body := .block (.sequence
+    (.conditional
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      (.goto_ "done") .skip)
+    (.sequence
+      (.assign parameter {expression := .integer 7, sourceType := intType, type := intType})
+      (.label "done" (.return_ {
+        expression := .parameter parameter, sourceType := intType, type := intType}))))
+}
+
+def callableGotoWitness : Bool :=
+  match evaluateCallable 32 .lp64 gotoFunction [signed 1],
+        evaluateCallable 32 .lp64 gotoFunction [signed 0] with
+  | .ok (.ok one), .ok (.ok zero) => one == signed 1 && zero == signed 7
+  | _, _ => false
+
 #guard callableSwitchWitness
 #guard callableIfWitness
 #guard callableWhileWitness
@@ -164,6 +182,7 @@ def callableNullWitness : Bool :=
 #guard callableBreakWitness
 #guard callableContinueWitness
 #guard callableNullWitness
+#guard callableGotoWitness
 
 theorem callable_switch_witness : callableSwitchWitness = true := by
   rfl
@@ -189,6 +208,9 @@ theorem callable_continue_witness : callableContinueWitness = true := by
 theorem callable_null_witness : callableNullWitness = true := by
   rfl
 
+theorem callable_goto_witness : callableGotoWitness = true := by
+  rfl
+
 #print axioms callable_switch_witness
 #print axioms callable_if_witness
 #print axioms callable_while_witness
@@ -197,5 +219,6 @@ theorem callable_null_witness : callableNullWitness = true := by
 #print axioms callable_break_witness
 #print axioms callable_continue_witness
 #print axioms callable_null_witness
+#print axioms callable_goto_witness
 
 end LeanModels.Cpp.CallableRung4Tests

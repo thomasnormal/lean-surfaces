@@ -15,6 +15,7 @@ inductive CallableObjectEvaluationError where
   | missingReturn
   | breakOutsideLoop
   | continueOutsideLoop
+  | gotoOutsideFunction (label : String)
   | frameError (reason : FrameError)
   deriving Repr, BEq, Inhabited
 
@@ -109,6 +110,7 @@ private inductive Execution where
   | failed (result : IntegralResult IntegralValue)
   | break_
   | continue_
+  | goto_ (label : String)
   deriving Inhabited
 
 private def compoundOperator? : String → Option IntegralBinary
@@ -384,6 +386,8 @@ mutual
             | .error reason => failure evaluated.frame reason
             | .ok (.ok value) => success evaluated.frame (.returned (.ok value))
             | .ok result => success evaluated.frame (.failed result)
+        | .goto_ label => success frame (.goto_ label)
+        | .label _ body => evalStatement fuel profile frame body
         | .conditional condition whenTrue whenFalse =>
             let evaluated := evalExpression fuel profile frame condition
             match evaluated.result with
@@ -442,6 +446,10 @@ mutual
             match firstResult.result with
             | .error reason => failure firstResult.frame reason
             | .ok .normal => evalStatement fuel profile firstResult.frame second
+            | .ok (.goto_ label) =>
+                match second.findLabelSuffix label with
+                | some suffix => evalStatement fuel profile firstResult.frame suffix
+                | none => success firstResult.frame (.goto_ label)
             | .ok execution => success firstResult.frame execution
 
   termination_by structural fuel
@@ -478,6 +486,7 @@ mutual
         match bodyResult.result with
         | .error reason => failure bodyResult.frame reason
         | .ok .break_ => success bodyResult.frame .normal
+        | .ok (.goto_ label) => success bodyResult.frame (.goto_ label)
         | .ok .returnedVoid => success bodyResult.frame .returnedVoid
         | .ok (.returned result) => success bodyResult.frame (.returned result)
         | .ok (.failed result) => success bodyResult.frame (.failed result)
@@ -508,6 +517,7 @@ mutual
               match bodyResult.result with
               | .error reason => failure bodyResult.frame reason
               | .ok .break_ => success bodyResult.frame .normal
+              | .ok (.goto_ label) => success bodyResult.frame (.goto_ label)
               | .ok .returnedVoid => success bodyResult.frame .returnedVoid
               | .ok (.returned result) =>
                   success bodyResult.frame (.returned result)
@@ -552,6 +562,7 @@ private def closeCallable (resultType : CppTypeEvidence) (outcome : Outcome Exec
       else failure outcome.frame .returnTypeMismatch
   | .ok .break_ => failure outcome.frame .breakOutsideLoop
   | .ok .continue_ => failure outcome.frame .continueOutsideLoop
+  | .ok (.goto_ label) => failure outcome.frame (.gotoOutsideFunction label)
   | .ok (.failed result) => success outcome.frame (liftIntegralResult result)
   | .ok (.returned result) =>
       if resultType == .void then failure outcome.frame .returnTypeMismatch

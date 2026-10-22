@@ -59,6 +59,8 @@ mutual
         (step body : CallableStatement)
     | break_
     | continue_
+    | goto_ (label : String)
+    | label (label : String) (body : CallableStatement)
     | sequence (first second : CallableStatement)
     deriving Repr, BEq, Inhabited
 
@@ -73,6 +75,19 @@ structure CallableSwitchClause where
     body : CallableStatement
     deriving Repr, BEq, Inhabited
 end
+
+/- A forward goto resumes at the target label and then continues with the
+   statements that follow that label in its enclosing compound statement. The
+   parser/evaluator deliberately keep labels inside the bounded compound
+   profile; a target that is not in the remaining sequence stays loud. -/
+def CallableStatement.findLabelSuffix (label : String) : CallableStatement → Option CallableStatement
+  | .label name body => if name == label then some body else none
+  | .sequence first second =>
+      match first.findLabelSuffix label with
+      | some suffix => some (.sequence suffix second)
+      | none => second.findLabelSuffix label
+  | .block body => (body.findLabelSuffix label).map (fun suffix => .block suffix)
+  | _ => none
 
 mutual
   def CallableExpression.hasEffects : CallableExpression → Bool
@@ -108,6 +123,11 @@ private def rawId (raw : Raw) : Except String FrontendHandle :=
 private def switchLabelKind (raw : Raw) : Except String Bool := do
   let kind ← evidenceText raw "kind"
   pure (kind == "CaseStmt" || kind == "DefaultStmt")
+
+private def callableLabelName (raw : Raw) : Except String String :=
+  match raw.text "name" <|> raw.text "label" with
+  | some name => .ok name
+  | none => .error "callable: label statement lacks a label name"
 
 private def switchCaseValue (raw : Raw) : Except String Int := do
   let kind ← evidenceText raw "kind"
@@ -546,6 +566,14 @@ mutual
       pure (.doWhile body condition)
   | "BreakStmt" => .ok .break_
   | "ContinueStmt" => .ok .continue_
+  | "GotoStmt" => .ok (.goto_ (← callableLabelName statement))
+  | "LabelStmt" => do
+      let children ← rawChildren statement
+      let [child] := children
+        | throw "callable: label statement requires one body"
+      let label ← callableLabelName statement
+      let body ← parseCallableStatement profile parameters expressionRows resultType child
+      pure (.label label body)
   | "NullStmt" => .ok .skip
   | "ExprWithCleanups" =>
       let children ← rawChildren statement
@@ -800,6 +828,15 @@ partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
       pure (.doWhile body condition, scope)
   | "BreakStmt" => pure (.break_, scope)
   | "ContinueStmt" => pure (.continue_, scope)
+  | "GotoStmt" => pure (.goto_ (← callableLabelName statement), scope)
+  | "LabelStmt" => do
+      let children ← rawChildren statement
+      let [child] := children
+        | throw "callable: label statement requires one body"
+      let label ← callableLabelName statement
+      let (body, _) ← parseCallableStatementWithLocals probe typeRows variableRows
+        expressionRows expressionTypes profile resultType scope child
+      pure (.label label body, scope)
   | "NullStmt" => pure (.skip, scope)
   | "ExprWithCleanups" =>
       let children ← rawChildren statement

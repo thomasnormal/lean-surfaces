@@ -4780,3 +4780,12 @@ files: **7** are sole refusals and 30 co-occur. Repricing the sole files finds
 legacy expression value has no real representation, general cast operator or
 aggregate pattern layout, so explicit casts remain loud. See
 [explicit conversions](sv-explicit-casts.md).
+
+### Invalid hierarchy boundary — 2026-10-22
+
+The fresh 22,043-path census records `Hierarchy:invalid-compilation` in **329**
+files: **7** are sole refusals and 322 co-occur. Repricing the sole files
+finds seven rejected hierarchy spans covering localparam overrides, parameter
+assignment order/duplication, zero-port instance syntax and a hierarchical
+`type()` reference. The envelope has no partial-hierarchy diagnostic state,
+so rejected designs remain loud. See [invalid hierarchies](sv-invalid-hierarchies.md).

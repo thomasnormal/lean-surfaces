@@ -1880,3 +1880,11 @@ its type-directed source or target semantics require a real conversion or
 aggregate assignment-pattern layout absent from the envelope. The envelope
 does not replace a cast with a guessed literal or untyped pattern; see
 [explicit conversions](sv-explicit-casts.md).
+
+## Invalid hierarchies
+
+`Hierarchy:invalid-compilation` remains an explicit unsupported design marker
+when frontend elaboration rejects module parameter assignment, port-list
+syntax, localparam overrides or a hierarchical `type()` reference. The
+envelope does not fabricate a partial instance tree or erase the diagnostic;
+see [invalid hierarchies](sv-invalid-hierarchies.md).

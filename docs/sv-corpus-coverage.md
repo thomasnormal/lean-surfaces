@@ -3221,3 +3221,12 @@ files: **7** are sole refusals and 30 co-occur. Repricing the sole files finds
 21 real-to-integral rounding casts and one typed assignment-pattern cast. The
 cast remains loud; see [explicit conversions](sv-explicit-casts.md) and
 `extractors/sv/explicit_cast_reprice.py`.
+
+## Invalid hierarchy boundary — 2026-10-22
+
+The fresh 22,043-path census records `Hierarchy:invalid-compilation` in **329**
+files: **7** are sole refusals and 322 co-occur. Repricing the sole files finds
+seven rejected hierarchy spans across parameter assignment, port-list syntax,
+localparam overrides and hierarchical `type()` references. The rejected
+hierarchy remains loud; see [invalid hierarchies](sv-invalid-hierarchies.md)
+and `extractors/sv/hierarchy_invalid_reprice.py`.

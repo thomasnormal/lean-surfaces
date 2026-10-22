@@ -4159,6 +4159,21 @@ inline instance override and no second elaborator or scheduler is introduced.
 See [the defparam boundary](sv-defparam.md) and the read-only instrument
 `extractors/sv/defparam_reprice.py`.
 
+### Net delays — 2026-10-22
+
+`NetSymbol:delay` is the delayed-net publication boundary. In the fresh
+22,043-path census it occurs in 27 files: 21 are net-delay-only and six
+co-occur with another wall. The sole files contain 22 spans, including
+declaration-time continuous-assignment delays, rise/fall and turn-off values,
+min:typ:max tuples, vector-wide delays, four-state transitions, inertial
+cancellation/rescheduling, net-versus-assignment placement and two chapter-37
+type forms (features overlap). IEEE §§10.3.3, 4.9.1 and 28.16 require delayed
+driver publication and transition-dependent selection. The envelope has no
+transition queue or inertial state, so no net delay is erased or replaced by
+an immediate assignment and no second scheduler is introduced. See [the net
+delay boundary](sv-net-delays.md) and the read-only instrument
+`extractors/sv/net_delay_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

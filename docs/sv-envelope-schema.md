@@ -1412,6 +1412,12 @@ precedence or parameter-before-generate state, so a defparam is not folded to
 a local constant or rewritten as an inline instance assignment. See [the
 defparam boundary](sv-defparam.md).
 
+`NetSymbol:delay` remains explicit as a scheduler-facing publication
+boundary. The envelope has no delayed net driver, transition queue,
+rise/fall/turn-off selector or inertial cancellation state, so net and
+declaration-time continuous-assignment delays are not rewritten as immediate
+assignments. See [the net-delay boundary](sv-net-delays.md).
+
 ### Legacy package storage provenance
 
 Source-defined packages with admitted scalar/packed integral variables lower

@@ -664,6 +664,20 @@ parameter-before-generate pass, so defparam is not rewritten as a local or
 inline override. See [the defparam boundary](sv-defparam.md) and
 `extractors/sv/defparam_reprice.py` for the reproducible scan.
 
+## Net delays — 2026-10-22
+
+`NetSymbol:delay` remains the delayed-net publication boundary. The fresh
+**22,043**-path census records it in **27** files: **21** are net-delay-only
+and **6** co-occurring. Repricing the sole files finds **22** spans: **8**
+declaration-time continuous-assignment forms, **9** rise/fall forms, **2**
+turn-off forms, **1** min:typ:max form, **3** vectors, **4** four-state
+`z` transitions, **3** inertial cancellation/rescheduling cases, **5**
+net-versus-continuous-assignment placement cases and **2** chapter-37 type
+forms (features overlap). The envelope has no delayed-driver queue or
+transition selector, so these delays are not replaced by immediate assignment.
+See [the net-delay boundary](sv-net-delays.md) and
+`extractors/sv/net_delay_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

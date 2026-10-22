@@ -703,6 +703,18 @@ has no implicit pull driver or strength-resolved driver set, so `tri0` is not
 reduced to a constant or ordinary wire. See [the `tri0` boundary](sv-tri0.md)
 and `extractors/sv/net_pull_reprice.py` for the reproducible scan.
 
+## `tri1` implicit pull nets — 2026-10-22
+
+`NetSymbol:Tri1` remains the implicit-driver boundary. The fresh **22,043**-
+path census records it in **20** files: **10** are `Tri1`-only and **10**
+co-occur with another wall. Repricing the sole files finds **10** declarations:
+all carry an implicit pull-1, **6** observe an undriven net, **4** have a
+continuous driver, **3** test a strong-driver override, **1** tests a release
+and **1** tests an `x` driver (features overlap). The envelope has no implicit
+pull driver or strength-resolved driver set, so `tri1` is not reduced to a
+constant or ordinary wire. See [the `tri1` boundary](sv-tri1.md) and
+`extractors/sv/tri1_reprice.py` for the reproducible scan.
+
 ## Continuous-assignment delays — 2026-10-22
 
 `ContinuousAssignSymbol:delay` remains the delayed continuous-driver boundary.

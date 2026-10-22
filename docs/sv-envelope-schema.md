@@ -119,6 +119,7 @@ emits:
 | `NetSymbol:<NetKind>` / `:delay` | net kinds other than `wire` (`Tri0`, `WAnd`, ...), net delays |
 | `NetSymbol:TriReg` | charge-storage net with driver release, capacitive retention, charge strength or decay |
 | `NetSymbol:Tri0` | implicit pull-0 net with strength-sensitive four-state driver resolution |
+| `NetSymbol:Tri1` | implicit pull-1 net with strength-sensitive four-state driver resolution |
 | `ExtractorInternal:<PyException>` | defensive catch-all: the extractor itself failed on this node (should not occur; `span` is `null`, `text` is the Python error) |
 
 The tag list may grow with the tier; ingesters must treat **any** unknown
@@ -1587,6 +1588,10 @@ or decay publication.
 `tri0` declarations remain explicit `NetSymbol:Tri0` unsupported members; see
 [the implicit pull boundary](sv-tri0.md). The envelope has no implicit pull
 driver, strength ordering or resolved four-state driver set.
+
+`tri1` declarations remain explicit `NetSymbol:Tri1` unsupported members; see
+[the pull-up boundary](sv-tri1.md). The envelope has no implicit pull driver,
+strength ordering or resolved four-state driver set.
 
 Concurrent properties remain explicit `ConcurrentAssertionStatement`
 unsupported members; see [the assertion boundary](sv-concurrent-assertions.md).

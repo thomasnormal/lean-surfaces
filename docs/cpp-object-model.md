@@ -53,6 +53,12 @@ API. Its initialized lifetime start is atomic; its separate vacuous-initializati
 operation supplies no value. The metadata transition primitives alone do not
 claim that an arbitrary C++ initialization has completed.
 
+`IntegralObjectStore.declareAutomaticInitialized` is the first typed initialized
+declaration boundary: it reserves automatic storage, starts the lifetime,
+converts the source value to the declared integral type, and publishes the
+initialized value. Reads after `endLifetime` still return the distinct lifetime
+error, so the convenience boundary does not erase tombstone state.
+
 ## Validation
 
 `LeanModels/Cpp/ObjectModelTests.lean` uses kernel guards for the complete

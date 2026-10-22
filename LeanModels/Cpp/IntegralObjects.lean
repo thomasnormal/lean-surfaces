@@ -129,6 +129,15 @@ def initializeConverted (store : IntegralObjectStore) (object : ObjectId)
   let converted ← convertValue store.profile sourceType entry.type value
   initializeValue store object converted
 
+/-- Rung-1 initialized automatic declaration: storage, lifetime start, source
+    conversion, and value initialization are one typed declaration boundary. -/
+def declareAutomaticInitialized (store : IntegralObjectStore)
+    (type sourceType : CppTypeEvidence) (value : IntegralValue) :
+    Except IntegralObjectError (IntegralObjectStore × ObjectId) := do
+  let (reserved, object) ← store.allocate .automatic type
+  let initialized ← reserved.initializeConverted object sourceType value
+  pure (initialized, object)
+
 def defaultInitialize (store : IntegralObjectStore) (object : ObjectId) :
     Except IntegralObjectError IntegralObjectStore := do
   let entry ← store.metadata object

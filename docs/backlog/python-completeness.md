@@ -17,6 +17,31 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-22-pycomplete-49 — public baseline and the next ordinary-language inch
+
+The first post-public-master baseline was measured from `2730f338` (the
+current public tree) with CPython 3.9.25. The full Lean build passed **3,949
+jobs**. `tools/check_python.py --no-build` passed every Python gate: 3,562
+differential rows with zero failures, 140 scripts, the 217-file in-repo survey,
+coverage, axiom, documentation, and both notebooks. The dedicated refusal
+census was clean: **144 grammar witnesses (131 MATCH / 13 REFUSE)**, **312
+curated rows in 63 refusal classes**, and **18 loud scripts in 12 classes**, all
+with zero drift.
+
+The two whole-program sweeps give the priority context. The in-repo corpus is
+**189 MATCH / 28 REFUSE / 0 DIVERGE** (87.1%); its sole-blocker table has 16
+files with no static wall, two class-creation-only files, and two import-only
+files. The CPython 3.9 stdlib sweep is **7 MATCH / 159 REFUSE / 0 DIVERGE**
+over 166 files. Imports are the largest static wall (881 nodes in 141 files),
+but only 21 files have import as their sole blocker and the existing import
+closure measurement shows that a Python-only module system buys little against
+the C/OS boundary. The next ordinary-language frontier is therefore `str.join`:
+the common separator method is currently refused dynamically, its heap-list
+inputs are already represented, and the operation is a read-only string result.
+
+The machine-readable stdlib result is `/var/tmp/ls-python-stdlib-baseline.json`;
+the full refusal log is `/var/tmp/ls-python-refusal-baseline.log`.
+
 ## 2026-08-22-pycomplete-1 — RUNG 3b: the eight consumers that could never meet the hazard their refusal cited
 
 `list(d)`, `tuple(d)`, `sorted(d)`, `sum(d)`, `max(d)`, `min(d)`, `set(d)`,

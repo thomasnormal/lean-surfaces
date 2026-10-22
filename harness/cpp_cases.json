@@ -66,6 +66,17 @@
     "rung": 0
   },
   {
+    "id": "translation.method-declaration",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "methodTranslationWitness",
+    "cpp_source": "struct Sample { int get() const { return 0; } };",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

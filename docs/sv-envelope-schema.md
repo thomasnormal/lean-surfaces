@@ -1761,3 +1761,12 @@ unsupported members; see [the residual boundary](sv-static-initializers.md).
 The envelope does not evaluate random/system functions, package-dependent reads,
 macro-expanded effects, runtime storage or unrepresented conversion contexts
 before process entry, and does not choose an initializer order.
+
+## Invalid elaboration diagnostics
+
+An invalid frontend compilation containing a lowered generate or parameter
+scope retains a design-level `Unsupported` node with
+`sv_kind = "Elaboration:invalid-compilation"`. The envelope does not expose a
+partial elaboration status or diagnostic stream, so an invalid prefix is never
+executed as though it were the source design. See the
+[repricing boundary](sv-elaboration-invalid.md).

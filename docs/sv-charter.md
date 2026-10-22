@@ -4606,3 +4606,17 @@ and distribution functions, sampled-value queries, time/real conversions,
 external tasks, methods, and user calls require an oracle, scheduler history,
 additional value/state representations, or callable frames. None is an
 independent admission in this rung. See [call expressions](sv-call-expressions.md).
+
+### Invalid elaboration diagnostics — 2026-10-22
+
+`Elaboration:invalid-compilation` remains a design-level diagnostic boundary.
+The fresh 22,043-path census records it in **33** files, all 33 as the sole
+refusal. Those rows contain 17 generate-scope name conflicts (including
+inactive and zero-entry blocks), four missing-generate-delimiter spans, three
+nested-region spans, three generate-port declarations, two nonconstant
+generate schemes, four illegal genvar uses, one generate end-label mismatch
+and one macro conditional-expression error (features overlap).
+The lowered generate representation has no partial-elaboration diagnostic
+state, so no invalid prefix is salvaged and no recovery elaborator is added.
+See [invalid elaboration diagnostics](sv-elaboration-invalid.md) and its
+read-only repricer.

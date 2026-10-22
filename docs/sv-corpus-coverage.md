@@ -3059,3 +3059,17 @@ previously extraction-clean delayed packed-struct corpus fixture continues
 to refuse in the self-check runner and now also refuses explicitly in the
 timed loader, closing its constant-zero `$time` leak. This is a corrected
 admission boundary, not additional corpus runtime coverage.
+
+## Invalid elaboration diagnostics — 2026-10-22
+
+The fresh 22,043-path census records `Elaboration:invalid-compilation` in
+**33** files, all sole refusals. The one-span-per-file repricing is split into
+17 generate-scope name conflicts, four missing-delimiter spans, three nested
+generate-region spans, three generate-port declarations, two nonconstant
+generate schemes, four genvar-scope errors, one generate end-label mismatch
+and one macro conditional-expression error. These feature counts overlap the
+same 33 one-span files. The
+frontend has rejected the elaborated design, so these rows remain diagnostic
+boundaries rather than partial runtime programs. See
+[invalid elaboration diagnostics](sv-elaboration-invalid.md) and the
+read-only `extractors/sv/elaboration_invalid_reprice.py` instrument.

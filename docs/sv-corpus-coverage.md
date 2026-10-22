@@ -3108,3 +3108,13 @@ sequence-typed formals and two sampled-value functions. Features overlap across
 spans. Sequence attempts and sampled history remain outside the envelope; see
 [the sequence boundary](sv-sequences.md) and
 `extractors/sv/sequence_reprice.py`.
+
+## Residual module typedef boundary — 2026-10-22
+
+The fresh 22,043-path census records `TypeAliasType:TypeAlias` in **299** files:
+**12** are alias-only and 287 co-occur. Repricing the sole files finds 12
+spans: eight `$bits` queries, nine aggregate typedefs, three enum typedefs,
+two enum-member redefinitions, one nonpositive enum range and one
+nonconstant member initializer. Features overlap. The residual aliases remain
+loud; see [residual module typedefs](sv-type-alias-boundary.md) and
+`extractors/sv/type_alias_reprice.py`.

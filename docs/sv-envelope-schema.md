@@ -1794,3 +1794,11 @@ The envelope has no sampled clock history, temporal attempt state,
 local/formal sequence frame, endpoint matcher or multiclock diagnostic state.
 A sequence is not rewritten as an immediate Boolean or assertion; see the
 [sequence boundary](sv-sequences.md).
+
+## Residual module typedefs
+
+Unsupported module aliases retain `sv_kind = "TypeAliasType:TypeAlias"` when
+their bound aggregate, enum, elaboration query or rejected declaration is
+outside the admitted integral alias metadata. The envelope does not erase the
+alias or execute a partial type declaration; see the [residual typedef
+boundary](sv-type-alias-boundary.md).

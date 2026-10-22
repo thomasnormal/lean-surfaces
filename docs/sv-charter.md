@@ -4657,3 +4657,14 @@ diagnostic, two sequence-typed formals and two sampled-value functions. The
 envelope has no sequence-attempt, sampled-history or local/formal frame, so no
 sequence is lowered to a Boolean or immediate assertion. See [the sequence
 boundary](sv-sequences.md).
+
+### Residual module typedef boundary — 2026-10-22
+
+`TypeAliasType:TypeAlias` remains the residual module-scope typedef boundary
+beside the already-admitted integral alias slice. The fresh 22,043-path census
+records it in **299** files: 12 are alias-only and 287 co-occur. The sole rows
+contain eight `$bits` queries, nine aggregate typedefs, three enum typedefs,
+two enum-member redefinitions, one nonpositive enum range and one
+nonconstant struct-member initializer (features overlap). The envelope has no
+general aggregate type descriptor or rejected-alias diagnostic state, so these
+aliases remain loud. See [residual module typedefs](sv-type-alias-boundary.md).

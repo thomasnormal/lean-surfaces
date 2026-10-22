@@ -302,6 +302,12 @@ parameter witnesses into `IntegralMemberMethodProfile.admit`; all 23 stop at
 the named `unsupported-body` profile refusal, with no enum argument reaching
 setter execution.
 
+The body relation is priced independently so the profile refusal cannot hide
+the next source requirement. All 23 witnessed arguments resolve the same
+canonical-to-defining method pair and expose the first object event
+`this-member:_errorID`; no body or object-event refusal occurs. This remains
+telemetry: the live receiver, field state, and variadic body are not executed.
+
 `IntegralMemberEnumCall` exposes that read as a call result without widening
 the ordinary integral getter. It requires the already selected method and
 receiver handles, the typed field witness, the oracle-backed enum profile, and

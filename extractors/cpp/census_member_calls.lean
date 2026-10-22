@@ -403,6 +403,10 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
   let mut enumArgumentParameterRefusals : List String := []
   let mut enumArgumentMethodProfiles : List String := []
   let mut enumArgumentMethodProfileRefusals : List String := []
+  let mut enumArgumentMethodBodies : List String := []
+  let mut enumArgumentMethodBodyRefusals : List String := []
+  let mut enumArgumentMethodObjectEvents : List String := []
+  let mut enumArgumentMethodObjectRefusals : List String := []
   let mut enumGetterProfiles : List String := []
   let mut enumGetterRefusals : List String := []
   let mut receiverShapes : List String := []
@@ -431,6 +435,19 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
                           profile.method.value :: enumArgumentMethodProfiles
                       | .error error => enumArgumentMethodProfileRefusals :=
                           methodProfileErrorName error :: enumArgumentMethodProfileRefusals
+                      match IntegralMemberMethodBody.admit probe canonical with
+                      | .ok body =>
+                          enumArgumentMethodBodies :=
+                            (s!"{body.canonical.value}:{body.definition.value}") ::
+                              enumArgumentMethodBodies
+                          match methodBodyObjectEvent probe body with
+                          | some event => enumArgumentMethodObjectEvents :=
+                              (s!"{body.canonical.value}:{event}") ::
+                                enumArgumentMethodObjectEvents
+                          | none => enumArgumentMethodObjectRefusals :=
+                              "missing-first-object-event" :: enumArgumentMethodObjectRefusals
+                      | .error error => enumArgumentMethodBodyRefusals :=
+                          methodBodyErrorName error :: enumArgumentMethodBodyRefusals
                       match enumArgumentShape argument name with
                       | .ok shape => enumArgumentShapes := shape :: enumArgumentShapes
                       | .error reason => enumArgumentRefusals := reason :: enumArgumentRefusals
@@ -603,6 +620,10 @@ private def census (probe : DeclarationProbe) : IO UInt32 := do
     ("enum_argument_parameter_refusals", counts enumArgumentParameterRefusals),
     ("enum_argument_method_profiles", counts enumArgumentMethodProfiles),
     ("enum_argument_method_profile_refusals", counts enumArgumentMethodProfileRefusals),
+    ("enum_argument_method_bodies", counts enumArgumentMethodBodies),
+    ("enum_argument_method_body_refusals", counts enumArgumentMethodBodyRefusals),
+    ("enum_argument_method_object_events", counts enumArgumentMethodObjectEvents),
+    ("enum_argument_method_object_refusals", counts enumArgumentMethodObjectRefusals),
     ("enum_getter_profiles", counts enumGetterProfiles),
     ("enum_getter_refusals", counts enumGetterRefusals),
     ("unsupported_receiver_shapes", counts receiverShapes),

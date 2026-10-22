@@ -31,7 +31,7 @@ The chapter-scoped rerun covered **22,035** paths: **4,423 clean**,
 **17,546 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`VariableSymbol:2state` (4,954), `AssignmentExpression:target` (3,913),
+`VariableSymbol:2state` (4,952), `AssignmentExpression:target` (3,913),
 `ExpressionStatement:CallExpression` (3,784), `CallExpression` (3,290),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,481), `ConcurrentAssertionStatement`
@@ -173,6 +173,20 @@ partial files fall **17,548 → 17,546**; `VariableSymbol:2state` falls
 **4,990 → 4,954**. The differential matrix is **24 rows, 20 matches, 0
 disagreements, and 4 recorded refusals**; grammar coverage is **195 witnesses,
 63 MATCH, and 132 REFUSE**.
+
+## Null virtual-interface declarations — 2026-10-22
+
+A module-scope virtual-interface variable initialized to `null` is now admitted
+as inert metadata on the time-zero self-check path. It does not enter the flat
+vector state; non-null interface handles, reads, writes, and interface
+operations remain loud. The `virtual_interface_null_declaration` row covers the
+admitted declaration.
+
+On the available 22,035-file snapshot, clean files rise **4,423 → 4,424** and
+partial files fall **17,546 → 17,545**; `VariableSymbol:2state` falls
+**4,954 → 4,952**. The differential matrix is **25 rows, 21 matches, 0
+disagreements, and 4 recorded refusals**; grammar coverage is **199 witnesses,
+67 MATCH, and 132 REFUSE**.
 
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 

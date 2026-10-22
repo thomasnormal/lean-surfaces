@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "VariableSymbol:2state",
-    4954
+    4952
    ],
    [
     "AssignmentExpression:target",
@@ -976,13 +976,13 @@
    ]
   ],
   "by_status": {
-   "clean": 4423,
-   "partial": 17546,
+   "clean": 4424,
+   "partial": 17545,
    "skip_include": 66
   },
   "clean_by_type": {
    "(none)": [
-    418,
+    419,
     1387
    ],
    "compilation": [
@@ -1547,9 +1547,9 @@
     "unlockable": 0
    },
    "chapter-37": {
-    "clean": 140,
+    "clean": 141,
     "error": 0,
-    "partial": 277,
+    "partial": 276,
     "skip_include": 0,
     "total": 417,
     "unlockable": 0

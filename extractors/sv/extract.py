@@ -386,6 +386,22 @@ def is_chandle_decl(symbol):
         return False
 
 
+def is_module_virtual_interface_null_decl(symbol):
+    """Whether a module virtual-interface variable is initialized to null."""
+    if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
+        return False
+    try:
+        if (symbol.parentScope.isProceduralContext
+                or type(symbol.type.canonicalType).__name__ != "VirtualInterfaceType"):
+            return False
+        initializer = getattr(symbol, "initializer", None)
+        if type(initializer).__name__ != "ConversionExpression":
+            return False
+        return type(getattr(initializer, "operand", None)).__name__ == "NullLiteral"
+    except Exception:
+        return False
+
+
 def is_flat_unpacked_struct_alias(symbol):
     """Whether a typedef names an integral-only unpacked struct tree.
 
@@ -6516,7 +6532,8 @@ def convert_module(sm, inst):
                     continue
                 if k == "Variable":
                     if (is_module_event_decl(m) or is_module_floating_decl(m)
-                            or is_chandle_decl(m)):
+                            or is_chandle_decl(m)
+                            or is_module_virtual_interface_null_decl(m)):
                         continue
                     converted = convert_var(sm, m)
                     declarations = converted if isinstance(converted, list) else [converted]
@@ -6778,7 +6795,8 @@ def _declaration_only(member):
             or is_bound_enum_member(member)
             or is_module_event_decl(member)
             or is_module_floating_decl(member)
-            or is_chandle_decl(member))
+            or is_chandle_decl(member)
+            or is_module_virtual_interface_null_decl(member))
 
 
 def _let_compilation_barriers(sm, comp):

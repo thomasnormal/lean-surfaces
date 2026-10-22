@@ -145,6 +145,19 @@ partial files **17,548 → 17,546**; `VariableSymbol:2state` falls **4,990 →
 4,954**. The differential matrix adds one matching row with no disagreements;
 grammar coverage is **195 witnesses, 63 MATCH, and 132 REFUSE**.
 
+## Null virtual-interface declarations — 2026-10-22
+
+A module-scope virtual-interface variable initialized to `null` is now admitted
+as inert metadata on the time-zero self-check path. It does not enter the flat
+vector state; non-null interface handles, reads, writes, and interface
+operations remain loud. The `virtual_interface_null_declaration` fixture is the
+differential witness.
+
+The available 22,035-file snapshot moves clean files **4,423 → 4,424** and
+partial files **17,546 → 17,545**; `VariableSymbol:2state` falls **4,954 →
+4,952**. The differential matrix adds one matching row with no disagreements;
+grammar coverage is **199 witnesses, 67 MATCH, and 132 REFUSE**.
+
 **Proof inventory, with comments excluded.** There are **98 named
 theorems and 10 anonymous examples** in `LeanModels/Sv`, and **121
 theorems and 6 examples** in the SV example directories: **235 actual

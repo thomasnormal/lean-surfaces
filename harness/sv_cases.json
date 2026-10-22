@@ -21,6 +21,7 @@
     {"name": "event_declaration", "file": "Examples/system-verilog/event_decl/event_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "real_declaration", "file": "Examples/system-verilog/real_decl/real_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "chandle_declaration", "file": "Examples/system-verilog/chandle_decl/chandle_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
+    {"name": "virtual_interface_null_declaration", "file": "Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "delay_refusal", "file": "Examples/system-verilog/delay/delay.sv", "module": "delay", "oracle": "refuse", "expect": "refuse"},
     {"name": "event_refusal", "file": "Examples/system-verilog/event/event.sv", "module": "event_wait", "oracle": "refuse", "expect": "refuse"},
     {"name": "always_refusal", "file": "Examples/system-verilog/always/events.sv", "module": "top", "oracle": "refuse", "expect": "refuse"},

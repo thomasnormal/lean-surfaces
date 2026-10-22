@@ -209,6 +209,23 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertTrue(any(item.get("kind") == "Unsupported"
                             for item in self._walk(envelope)))
 
+    def test_null_virtual_interface_declaration_is_inert(self):
+        envelope = self.extract(
+            "interface SBus; logic req; endinterface module top; "
+            "virtual SBus via_null = null; initial begin $display(\"PASS\"); "
+            "$finish; end endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertEqual(module["decls"], [])
+        self.assertEqual(module["others"], [])
+
+    def test_nonnull_virtual_interface_remains_loud(self):
+        envelope = self.extract(
+            "interface SBus; logic req; endinterface module top; "
+            "virtual SBus via_null; initial begin if (via_null == null) "
+            "$display(\"PASS\"); end endmodule")
+        self.assertTrue(any(item.get("kind") == "Unsupported"
+                            for item in self._walk(envelope)))
+
     @staticmethod
     def _walk(value):
         if isinstance(value, dict):

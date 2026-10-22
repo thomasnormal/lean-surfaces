@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 24 | 20 | 0 | 4 | sv-tests-2 declarations |
+| 25 | 21 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -34,6 +34,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `event_declaration` | `Examples/system-verilog/event_decl/event_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `real_declaration` | `Examples/system-verilog/real_decl/real_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `chandle_declaration` | `Examples/system-verilog/chandle_decl/chandle_decl.sv` | match | **MATCH** | `ok` | MATCH |
+| `virtual_interface_null_declaration` | `Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `delay_refusal` | `Examples/system-verilog/delay/delay.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `event_refusal` | `Examples/system-verilog/event/event.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `always_refusal` | `Examples/system-verilog/always/events.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
@@ -45,7 +46,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 195 | 63 | 132 | pyslang SyntaxKind |
+| 199 | 67 | 132 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -145,6 +146,8 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.IntegerLiteralExpression` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.IntegerType` | `Examples/system-verilog/assignment_patterns/keys.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.IntegerVectorExpression` | `Examples/system-verilog/always/tails.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
+| `SyntaxKind.InterfaceDeclaration` | `Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.InterfaceHeader` | `Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.InvocationExpression` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.JumpStatement` | `Examples/system-verilog/foreach/values.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LessThanEqualExpression` | `Examples/system-verilog/runtime_clog2/boundaries.sv` | **MATCH** | `ok`  |
@@ -174,6 +177,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.NamedParamAssignment` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NamedType` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NonblockingAssignmentExpression` | `Examples/system-verilog/array_reductions/timing.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
+| `SyntaxKind.NullLiteralExpression` | `Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.OrAssignmentExpression` | `Examples/system-verilog/compound_assignments/partial_members.sv` | **REFUSE** | `unsupported` AssignmentExpression:compound-partial-range |
 | `SyntaxKind.OrderedArgument` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.OrderedPortConnection` | `Examples/system-verilog/module_hierarchy/ports.sv` | **REFUSE** | `unsupported` non-initial process 'Hierarchy:ports' (self-check tier runs initial-only designs) |
@@ -240,6 +244,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ValueRangeExpression` | `Examples/system-verilog/case_inside/contexts.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.VariableDimension` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.VariablePortHeader` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
+| `SyntaxKind.VirtualInterfaceType` | `Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.WildcardEqualityExpression` | `Examples/system-verilog/wildcard_equality/values.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.WildcardInequalityExpression` | `Examples/system-verilog/wildcard_equality/values.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.WildcardLiteralExpression` | `Examples/system-verilog/inside/inside.sv` | **MATCH** | `ok`  |
@@ -251,11 +256,11 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22035 | 4423 | 17546 | 66 |
+| 22035 | 4424 | 17545 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `VariableSymbol:2state` | 4954 |
+| `VariableSymbol:2state` | 4952 |
 | `AssignmentExpression:target` | 3913 |
 | `ExpressionStatement:CallExpression` | 3784 |
 | `CallExpression` | 3290 |

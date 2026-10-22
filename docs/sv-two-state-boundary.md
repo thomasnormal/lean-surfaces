@@ -10,8 +10,8 @@ The extractor and focused tests cover both declarations and selected reads and
 writes, including signed forms.
 
 The current `VariableSymbol:2state` census tag names the shapes outside that
-value tier. The 2026-10-22 corpus snapshot has 4,954 files containing the tag;
-it is the sole refusal in 17 files. The previous snapshot had 4,990 files and
+value tier. The 2026-10-22 corpus snapshot has 4,952 files containing the tag;
+it is the sole refusal in 15 files. The previous snapshot had 4,954 files and
 28 sole refusals. Its current frequent companions are assignment targets
 (3,913 files), statement calls (3,784), expression calls (3,290),
 `NamedValueExpression:2state` (1,481), classes (1,327), member access (1,023),
@@ -73,6 +73,12 @@ admitted as inert metadata. They are omitted from the flat vector state;
 handle reads, writes, and cross-type assignments remain unsupported because
 the representation has no handle value. The `chandle_decl` fixture covers
 both scopes.
+
+A module-scope virtual-interface variable initialized to `null` is also
+admitted as inert metadata. It is omitted from the flat vector state;
+non-null interface handles and all interface operations remain unsupported
+because the representation has no interface object. The
+`virtual_interface_decl` fixture covers this declaration-only slice.
 
 The public representation has no aggregate heap, queue, object, string, real,
 handle, or event scheduler. The symbolic `PDecl`/`PType` representation also

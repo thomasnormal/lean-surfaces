@@ -303,6 +303,8 @@ private def nestedBlockDropsLocal : Bool :=
   | .ok (.ok value) => value == signed 0
   | _ => false
 
+def callableNestedBlockWitness : Bool := nestedBlockDropsLocal
+
 private def parserAdmitsAutomaticLocal : Bool :=
   let declaration := handle "0x11"
   let initializer := handle "0x12"
@@ -335,6 +337,7 @@ private def parserAdmitsAutomaticLocal : Bool :=
 #guard valueOnlyRemainsLoud
 #guard selfInitializerRetainsFrame
 #guard nestedBlockDropsLocal
+#guard callableNestedBlockWitness
 #guard localMutation
 #guard callableLocalDeclarationWitness
 #guard localIncrement
@@ -352,6 +355,9 @@ private def parserAdmitsAutomaticLocal : Bool :=
 #guard parserAdmitsAutomaticLocal
 
 theorem callable_local_declaration_witness : callableLocalDeclarationWitness = true := by
+  rfl
+
+theorem callable_nested_block_witness : callableNestedBlockWitness = true := by
   rfl
 
 private def incrementFunction (type : CppIntType) (operator : String)
@@ -423,6 +429,7 @@ private theorem kernelObjectExecution :
 
 #print axioms kernelObjectExecution
 #print axioms callable_local_declaration_witness
+#print axioms callable_nested_block_witness
 
 private def kernelControl (loop : CallableStatement) : Bool :=
   let function : CallableFunction := {

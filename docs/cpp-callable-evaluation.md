@@ -98,6 +98,11 @@ in the active frame; later assignments and reads observe that same object, and
 leaving the block ends its lifetime. Non-integral, volatile, static, reference,
 array and unsupported initializer shapes remain loud.
 
+Nested compound statements enter a fresh object-frame scope and close it on
+normal completion, transfer, return and typed failure. A local declared inside
+the nested block is therefore gone before the enclosing statement reads or
+returns, while the enclosing parameters and locals retain their bindings.
+
 An admitted `forLoop` executes its initializer once, then tests the condition
 before each body. Normal body completion and `continue` execute the step once
 before the next test. Break, return and failure bypass the step; a failed step

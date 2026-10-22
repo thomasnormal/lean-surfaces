@@ -1373,6 +1373,11 @@ boundary. The envelope has no path-delay graph, timing-check monitor, pulse
 state or notifier publication, so specify declarations are not lowered to
 procedural statements or a fixed delay. See [the specify boundary](sv-specify.md).
 
+`NetAliasSymbol:NetAlias` remains explicit as a bidirectional net-topology
+boundary. The envelope has no alias graph or resolved-driver topology, so an
+alias is not lowered to a one-way assignment or an initial copy. See [the
+net-alias boundary](sv-net-alias.md).
+
 ### Legacy package storage provenance
 
 Source-defined packages with admitted scalar/packed integral variables lower

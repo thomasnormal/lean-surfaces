@@ -4047,6 +4047,21 @@ No specify declaration is dropped or run as a procedural block, and no second
 scheduler is introduced. See [the specify boundary](sv-specify.md) and the
 read-only instrument `extractors/sv/specify_reprice.py`.
 
+### Net aliases — 2026-10-22
+
+`NetAliasSymbol:NetAlias` is the bidirectional net-topology boundary. In the
+fresh 22,043-path census it occurs in 35 files: 25 are alias-only and ten
+co-occur with another wall. The sole files contain 31 spans, including 11
+indexed-select spans in seven files, four chained aliases, 12 declarations in
+six files with multiple alias statements, four alias spans in three generated
+placements and one protected-region span (features overlap). IEEE §§6.7.2 and
+10.11 make aliases an elaboration-time relationship among nets; drivers and
+resolved values remain visible through every name. The envelope has no alias
+graph or resolved-driver topology. No alias is erased, made one-way or
+replaced by an initial assignment, and no second elaborator or scheduler is
+introduced. See [the net-alias boundary](sv-net-alias.md) and the read-only
+instrument `extractors/sv/net_alias_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

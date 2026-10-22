@@ -567,6 +567,18 @@ notifier publication, so no specify declaration is dropped or run as a
 procedural block. See [the specify boundary](sv-specify.md) and
 `extractors/sv/specify_reprice.py` for the reproducible scan.
 
+## Net aliases — 2026-10-22
+
+`NetAliasSymbol:NetAlias` remains the bidirectional net-topology boundary. The
+fresh **22,043**-path census records it in **35** files: **25** are alias-only
+and **10** co-occurring. Repricing the sole files finds **31** spans: **11**
+indexed-select spans in **7** files, **4** chained aliases, **12** declarations
+in **6** files with multiple alias statements, **4** alias spans in **3**
+generated placements and **1** protected-region span (features overlap). The
+envelope has no alias graph or resolved-driver topology, so no alias is erased,
+made one-way or replaced by an initial assignment. See [the net-alias boundary](sv-net-alias.md)
+and `extractors/sv/net_alias_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

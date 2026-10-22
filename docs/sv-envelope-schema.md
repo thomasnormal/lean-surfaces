@@ -1975,3 +1975,9 @@ or collapse `$unit::` lookup and shadowing; see [parameter scope](sv-parameter-s
 an aggregate named value requires fixed-array concatenation, pattern context,
 literal conversion or range-aware iteration. The envelope does not treat an
 array name as a scalar; see [residual two-state named values](sv-namedvalue-2state.md).
+
+## Invalid enumerations
+
+`Enum:invalid-compilation` remains an explicit unsupported declaration when an
+enum contains an X/Z value on a two-state base or duplicate enumeration value.
+The envelope does not squash, renumber or drop invalid members; see [invalid enums](sv-invalid-enums.md).

@@ -3337,3 +3337,11 @@ array named-value spans covering unpacked concatenation, indexed patterns,
 array literals and descending `foreach`. The name remains loud; see
 [residual two-state named values](sv-namedvalue-2state.md) and
 `extractors/sv/namedvalue_2state_reprice.py`.
+
+## Invalid enumeration boundary — 2026-10-22
+
+The fresh 22,043-path census records `Enum:invalid-compilation` in **36**
+files: **4** are sole refusals and 32 co-occur. Repricing finds four rejected
+enum spans: three X/Z values on two-state bases and one duplicate value. The
+enum remains loud; see [invalid enums](sv-invalid-enums.md) and
+`extractors/sv/enum_invalid_reprice.py`.

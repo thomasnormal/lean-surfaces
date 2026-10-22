@@ -3213,3 +3213,11 @@ The fresh 22,043-path census records `VariableSymbol:range` in **62** files:
 unsupported range spans: four multidimensional packed ranges and three packed-
 struct array ranges. The range remains loud; see [variable packed ranges](sv-variable-ranges.md)
 and `extractors/sv/variable_range_reprice.py`.
+
+## Explicit conversion boundary — 2026-10-22
+
+The fresh 22,043-path census records `ConversionExpression:Explicit` in **37**
+files: **7** are sole refusals and 30 co-occur. Repricing the sole files finds
+21 real-to-integral rounding casts and one typed assignment-pattern cast. The
+cast remains loud; see [explicit conversions](sv-explicit-casts.md) and
+`extractors/sv/explicit_cast_reprice.py`.

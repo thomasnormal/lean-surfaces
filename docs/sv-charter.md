@@ -4771,3 +4771,12 @@ unsupported range spans: four multidimensional packed ranges and three packed-
 struct array ranges. The legacy variable representation has no complete
 multidimensional range descriptor, so these dimensions remain loud. See
 [variable packed ranges](sv-variable-ranges.md).
+
+### Explicit conversion boundary — 2026-10-22
+
+The fresh 22,043-path census records `ConversionExpression:Explicit` in **37**
+files: **7** are sole refusals and 30 co-occur. Repricing the sole files finds
+21 real-to-integral rounding casts and one typed assignment-pattern cast. The
+legacy expression value has no real representation, general cast operator or
+aggregate pattern layout, so explicit casts remain loud. See
+[explicit conversions](sv-explicit-casts.md).

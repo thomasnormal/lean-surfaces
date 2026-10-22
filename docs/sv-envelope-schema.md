@@ -1872,3 +1872,11 @@ lower `supply1` to a literal one; see [the `supply1` boundary](sv-supply1.md).
 variable has multidimensional packed geometry, including an array of packed
 struct elements. The envelope does not flatten dimensions or invent aggregate
 width and identity metadata; see [variable packed ranges](sv-variable-ranges.md).
+
+## Explicit conversions
+
+`ConversionExpression:Explicit` remains an explicit unsupported expression when
+its type-directed source or target semantics require a real conversion or
+aggregate assignment-pattern layout absent from the envelope. The envelope
+does not replace a cast with a guessed literal or untyped pattern; see
+[explicit conversions](sv-explicit-casts.md).

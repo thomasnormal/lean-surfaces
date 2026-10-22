@@ -1802,3 +1802,11 @@ their bound aggregate, enum, elaboration query or rejected declaration is
 outside the admitted integral alias metadata. The envelope does not erase the
 alias or execute a partial type declaration; see the [residual typedef
 boundary](sv-type-alias-boundary.md).
+
+## Compilation-unit aggregate typedefs
+
+Unsupported compilation-unit aliases retain `sv_kind = "TypeAliasType"` when
+their aggregate or union shape needs layout, tagged-state, dynamic-member or
+diagnostic information absent from the envelope. They are not rewritten as
+integral aliases or lowered to a partial aggregate; see [compilation-unit
+aggregate typedefs](sv-unit-type-aliases.md).

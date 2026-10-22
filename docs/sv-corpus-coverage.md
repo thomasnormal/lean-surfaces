@@ -3118,3 +3118,15 @@ two enum-member redefinitions, one nonpositive enum range and one
 nonconstant member initializer. Features overlap. The residual aliases remain
 loud; see [residual module typedefs](sv-type-alias-boundary.md) and
 `extractors/sv/type_alias_reprice.py`.
+
+## Compilation-unit aggregate typedef boundary — 2026-10-22
+
+The fresh 22,043-path census records `TypeAliasType` in **116** files: **12**
+are unit-alias-only and 104 co-occur. Repricing the sole files finds **13**
+overlapping spans: seven nonintegral packed members, one packed-union width,
+two packed-dimension qualifiers, one unpacked-struct-signing diagnostic, two
+union-member defaults, one void-in-untagged-union diagnostic, two packed
+tagged-union shapes, two tagged-union dynamic members and one untagged-union
+dynamic member. The aliases remain loud; see [compilation-unit aggregate
+typedefs](sv-unit-type-aliases.md) and
+`extractors/sv/unit_type_alias_reprice.py`.

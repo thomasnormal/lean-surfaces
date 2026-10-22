@@ -4668,3 +4668,16 @@ two enum-member redefinitions, one nonpositive enum range and one
 nonconstant struct-member initializer (features overlap). The envelope has no
 general aggregate type descriptor or rejected-alias diagnostic state, so these
 aliases remain loud. See [residual module typedefs](sv-type-alias-boundary.md).
+
+### Compilation-unit aggregate typedef boundary — 2026-10-22
+
+The fresh 22,043-path census records `TypeAliasType` in **116** files: **12**
+are unit-alias-only and 104 co-occur. Repricing those sole files finds **13**
+overlapping aggregate and union spans: seven nonintegral packed members, one
+packed-union width mismatch, two packed-dimension qualifiers, one unpacked
+struct-signing diagnostic, two union-member defaults, one void member in an
+untagged union, two packed tagged-union shapes, two tagged-union dynamic
+members and one untagged-union dynamic member. The legacy envelope has no
+aggregate layout, tagged-union state or dynamic-member representation, so
+these compilation-unit aliases remain loud. See [compilation-unit aggregate
+typedefs](sv-unit-type-aliases.md).

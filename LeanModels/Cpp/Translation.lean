@@ -75,6 +75,9 @@ def admitConversionDeclaration (artifact : Artifact) (path : List Nat) :
 def admitFriendDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "FriendDecl" "friend"
 
+def admitTemplateTypeParameter (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "TemplateTypeParmDecl" "template-type-parameter"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

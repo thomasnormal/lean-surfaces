@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 58 | 0 | 0 | 0 | 0 | 58 |
+| 59 | 0 | 0 | 0 | 0 | 59 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -27,6 +27,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `translation.destructor-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.conversion-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.friend-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
+| `translation.template-type-parameter` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.variable-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.enum-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.typedef-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |

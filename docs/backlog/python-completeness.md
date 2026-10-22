@@ -72,6 +72,19 @@ existing wrong-needle error, and over-arity. `str_lab/spec.lean`, the
 payload-blindness proof, and the clock-erasure proof all build. The next full
 Python gate will regenerate the coverage totals.
 
+## 2026-10-22-pycomplete-52 — scalar `divmod` protocol errors become faithful
+
+The eight scalar nonnumeric `divmod` cases now raise CPython's exact
+`unsupported operand type(s) for divmod(): 'A' and 'B'` `TypeError`, while
+heap-backed and custom numeric protocols remain loud. The change is confined
+to the existing pure `divmodArgs` worker, so argument order, arity, zero
+division, float handling, lexical shadowing, and proof-layer dispatch remain
+unchanged.
+
+The divmod laboratory and differential case cover strings, `None`, tuple, and
+list operands; the focused run confirms all eight cases and refreshes the
+census and coverage totals.
+
 ## 2026-08-22-pycomplete-1 — RUNG 3b: the eight consumers that could never meet the hazard their refusal cited
 
 `list(d)`, `tuple(d)`, `sorted(d)`, `sum(d)`, `max(d)`, `min(d)`, `set(d)`,

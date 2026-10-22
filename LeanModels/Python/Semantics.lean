@@ -3174,7 +3174,10 @@ def divmodArgs : List RVal → Res RVal
       | .float _, _ | _, .float _ => do
         let (quotient, remainder) ← evalFloatDivmod .floatDivmodZeroDivisionError numerator divisor
         return .tuple #[.float quotient, .float remainder]
-      | _, _ => .unsupported "divmod() nonnumeric operand protocols remain unmodelled"
+      | .ref _, _ | _, .ref _ =>
+        .unsupported "divmod() nonnumeric operand protocols remain unmodelled"
+      | _, _ =>
+        .exn (.typeError s!"unsupported operand type(s) for divmod(): '{numerator.typeName}' and '{divisor.typeName}'")
   | values => .exn (.typeError s!"divmod expected 2 arguments, got {values.length}")
 
 mutual

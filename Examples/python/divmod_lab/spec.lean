@@ -44,8 +44,10 @@ set_option maxRecDepth 8192
 #py_check divmod_lab.exception_before_arity() raises .zeroDivisionError
 #py_check divmod_lab.arity_effects() = (Val.list #[.int 0, .int 1, .int 2])
 
-#guard callFunction divmod_lab "pair" #[.str "7", .int 3] 4096 matches .unsupported _
-#guard callFunction divmod_lab "pair" #[.int 7, .none] 4096 matches .unsupported _
+#py_check divmod_lab.pair("7", 3) raises
+  (.typeError "unsupported operand type(s) for divmod(): 'str' and 'int'")
+#py_check divmod_lab.pair(7, Val.none) raises
+  (.typeError "unsupported operand type(s) for divmod(): 'int' and 'NoneType'")
 #py_check divmod_lab.kwargs() raises
   (.typeError "divmod() takes no keyword arguments")
 #guard callFunction divmod_lab "first_class" #[] 4096 matches .unsupported _

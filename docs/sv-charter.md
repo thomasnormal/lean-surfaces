@@ -4735,3 +4735,12 @@ The compilation-unit and multiple-top-level labels overlap, as does the
 invalid declaration's unit-scope label. The envelope has no `$unit` store or
 multiple-top-level hierarchy contract, so these variables remain loud. See
 [compilation-unit variables](sv-compilation-unit-variables.md).
+
+### Case-subject boundary — 2026-10-22
+
+The fresh 22,043-path census records `CaseStatement:subject` in **30** files:
+**8** are sole refusals and 22 co-occur. Repricing the sole files finds **8**
+spans: five `$time` subjects, one constant-expression subject, one packed-union
+member subject and one packed-struct part-select subject. The ordinary case
+chain has no general time, elaboration-constant or aggregate subject plan, so
+no subject is replaced or flattened. See [case subjects](sv-case-subjects.md).

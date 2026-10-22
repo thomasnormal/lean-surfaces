@@ -1845,3 +1845,10 @@ from the frontend diagnostic; see [variable types](sv-variable-types.md).
 variables, multiple top-level roots and the residual enum/invalid integer
 declarations. The envelope does not copy a unit variable into a module or
 invent a hierarchy root; see [compilation-unit variables](sv-compilation-unit-variables.md).
+
+## Case subjects
+
+`CaseStatement:subject` remains an explicit unsupported case when the subject
+is a scheduler-visible time read, an elaboration constant or a packed
+aggregate/member selection outside the ordinary integral path. The envelope
+does not replace or flatten that subject; see [case subjects](sv-case-subjects.md).

@@ -3179,3 +3179,12 @@ enum-range declaration and one invalid packed dimension on `int`. Features
 overlap. The residual variable boundary remains loud; see
 [compilation-unit variables](sv-compilation-unit-variables.md) and
 `extractors/sv/variable_symbol_reprice.py`.
+
+## Case-subject boundary — 2026-10-22
+
+The fresh 22,043-path census records `CaseStatement:subject` in **30** files:
+**8** are sole refusals and 22 co-occur. Repricing the sole files finds **8**
+spans: five `$time` subjects, one constant-expression subject, one packed-union
+member subject and one packed-struct part-select subject. The subject remains
+loud; see [case subjects](sv-case-subjects.md) and
+`extractors/sv/case_subject_reprice.py`.

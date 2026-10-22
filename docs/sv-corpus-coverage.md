@@ -607,6 +607,20 @@ registration, per-event guard or retained rearming state, so no list is reduced
 to one signal or a fixed sequence. See [the event-list boundary](sv-event-lists.md)
 and `extractors/sv/event_list_reprice.py` for the reproducible scan.
 
+## Clocking blocks — 2026-10-22
+
+`ClockingBlockSymbol:ClockingBlock` remains the scheduler-region synchronization
+boundary. The fresh **22,043**-path census records it in **562** files: **24**
+are clocking-only and **538** co-occurring. Repricing the sole files finds **24**
+spans: **8** global declarations, **4** default declarations, **8** input
+clockvar forms, **5** output clockvar forms, **4** sequence/property-containing
+blocks, **5** nested event/control forms (including **1** nested clocking block),
+**3** generated placements, **1** skew declaration, **1** end-label and **1**
+unnamed clocking block (features overlap). The envelope has no clockvar
+sample/drive queues, skew representation or region bridge, so no clocking block
+is reduced to an ordinary event wait. See [the clocking-block boundary](sv-clocking-blocks.md)
+and `extractors/sv/clocking_reprice.py` for the reproducible scan.
+
 ## Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker, not a runtime statement

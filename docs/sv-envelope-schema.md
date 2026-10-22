@@ -1389,6 +1389,12 @@ boundary. The envelope has no multi-event registration, per-event `iff` guard
 or retained rearming state, so event lists are not lowered to one signal or a
 fixed sequence. See [the event-list boundary](sv-event-lists.md).
 
+`ClockingBlockSymbol:ClockingBlock` remains explicit as a scheduler-region
+synchronization boundary. The envelope has no clockvar sample/drive queues,
+skew representation or Preponed/Reactive bridge, so a clocking block is not
+lowered to an ordinary event wait or variable declaration. See [the
+clocking-block boundary](sv-clocking-blocks.md).
+
 ### Legacy package storage provenance
 
 Source-defined packages with admitted scalar/packed integral variables lower

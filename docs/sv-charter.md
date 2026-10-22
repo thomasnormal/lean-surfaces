@@ -4093,6 +4093,23 @@ guard or retained rearming state. No list is reduced to one signal or a fixed
 sequence, and no second scheduler is introduced. See [the event-list boundary](sv-event-lists.md)
 and the read-only instrument `extractors/sv/event_list_reprice.py`.
 
+### Clocking blocks — 2026-10-22
+
+`ClockingBlockSymbol:ClockingBlock` is the scheduler-region synchronization
+boundary. In the fresh 22,043-path census it occurs in 562 files: 24 are
+clocking-only and 538 co-occur with another wall. The sole files contain 24
+spans, including eight global declarations, four default declarations, eight
+input clockvar forms, five output clockvar forms, four sequence/property-
+containing blocks, five nested event/control forms (including one nested
+clocking block), three generated placements, one skew declaration, one
+end-label and one unnamed clocking block (features overlap). IEEE §14 samples
+input clockvars and schedules output drives around the clocking event with
+skew; global/default declarations also affect assertion and sequence scope. The
+envelope has no clockvar sample/drive queues, skew representation or region
+bridge. No block is reduced to an ordinary event wait, and no second scheduler
+is introduced. See [the clocking-block boundary](sv-clocking-blocks.md) and
+the read-only instrument `extractors/sv/clocking_reprice.py`.
+
 ### Invalid statement markers — 2026-10-21
 
 `InvalidStatement` is a frontend recovery marker rather than an IEEE

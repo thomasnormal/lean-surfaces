@@ -618,6 +618,13 @@ private def whileStatementTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "w"), ("kind", .string "WhileStmt"),
         ("name", .string "while"), ("inner", .array [])]])]}
 
+private def doStatementTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "d"), ("kind", .string "DoStmt"),
+        ("name", .string "do"), ("inner", .array [])]])]}
+
 private def forStatementTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -913,6 +920,9 @@ def ifStatementTranslationWitness : Except String Unit :=
 
 def whileStatementTranslationWitness : Except String Unit :=
   admitWhileStatement whileStatementTranslation [0]
+
+def doStatementTranslationWitness : Except String Unit :=
+  admitDoStatement doStatementTranslation [0]
 
 def forStatementTranslationWitness : Except String Unit :=
   admitForStatement forStatementTranslation [0]
@@ -1212,6 +1222,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard whileStatementTranslationWitness matches .ok ()
 #guard admitWhileStatement whileStatementTranslation [] matches .error _
 #guard admitWhileStatement functionTranslation [0] matches .error _
+#guard doStatementTranslationWitness matches .ok ()
+#guard admitDoStatement doStatementTranslation [] matches .error _
+#guard admitDoStatement functionTranslation [0] matches .error _
 #guard forStatementTranslationWitness matches .ok ()
 #guard admitForStatement forStatementTranslation [] matches .error _
 #guard admitForStatement functionTranslation [0] matches .error _

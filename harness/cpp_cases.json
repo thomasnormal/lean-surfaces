@@ -902,6 +902,17 @@
     "rung": 4
   },
   {
+    "id": "translation.do-statement",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "doStatementTranslationWitness",
+    "cpp_source": "int f(int value) { do { --value; } while (value); return value; }",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.for-statement",
     "kind": "translation",
     "corpus": "translation witness",

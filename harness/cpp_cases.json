@@ -1078,6 +1078,17 @@
     "rung": 4
   },
   {
+    "id": "translation.omp-parallel-directive",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "ompParallelDirectiveTranslationWitness",
+    "cpp_source": "void f() {\n#pragma omp parallel\n{}\n}",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

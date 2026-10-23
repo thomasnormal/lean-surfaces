@@ -294,6 +294,13 @@ private def implicitConceptSpecializationTranslation : Artifact := {emptyTransla
       .object [("id", .string "i"), ("kind", .string "ImplicitConceptSpecializationDecl"),
         ("name", .string "C"), ("inner", .array [])]])]}
 
+private def requiresExpressionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "r"), ("kind", .string "RequiresExpr"),
+        ("name", .string "requires"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -401,6 +408,9 @@ def templateParamObjectTranslationWitness : Except String Unit :=
 
 def implicitConceptSpecializationTranslationWitness : Except String Unit :=
   admitImplicitConceptSpecializationDeclaration implicitConceptSpecializationTranslation [0]
+
+def requiresExpressionTranslationWitness : Except String Unit :=
+  admitRequiresExpression requiresExpressionTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -544,6 +554,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard implicitConceptSpecializationTranslationWitness matches .ok ()
 #guard admitImplicitConceptSpecializationDeclaration implicitConceptSpecializationTranslation [] matches .error _
 #guard admitImplicitConceptSpecializationDeclaration functionTranslation [0] matches .error _
+#guard requiresExpressionTranslationWitness matches .ok ()
+#guard admitRequiresExpression requiresExpressionTranslation [] matches .error _
+#guard admitRequiresExpression functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

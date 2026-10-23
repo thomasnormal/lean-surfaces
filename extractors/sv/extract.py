@@ -2811,6 +2811,67 @@ def _fixed_array_slice_pattern_assignment(sm, expr):
         return None
 
 
+def _fixed_array_struct_copy_assignment(sm, expr):
+    """Copy a finite fixed array whose leaves are integral unpacked structs."""
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None):
+            return None
+        lhs, rhs = expr.left, expr.right
+        if not (_storage_expression(lhs) and _storage_expression(rhs)):
+            return None
+        lhs_shape = _fixed_array_dimensions(lhs.type)
+        rhs_shape = _fixed_array_dimensions(rhs.type)
+        if lhs_shape is None or rhs_shape is None:
+            return None
+        lhs_dims, lhs_leaf = lhs_shape
+        rhs_dims, rhs_leaf = rhs_shape
+        if (lhs_dims != rhs_dims
+                or type(lhs_leaf).__name__ != "UnpackedStructType"
+                or type(rhs_leaf).__name__ != "UnpackedStructType"):
+            return None
+        lhs_root = _array_storage_name(lhs.symbol)
+        rhs_root = _array_storage_name(rhs.symbol)
+        if lhs_root == rhs_root or not _case_source_expression_ok(rhs):
+            return None
+        positions = [()]
+        for left, right in lhs_dims:
+            step = 1 if right >= left else -1
+            positions = [prefix + (position,)
+                         for prefix in positions
+                         for position in range(left, right + step, step)]
+        stmts = []
+        for indexes in positions:
+            lhs_base = lhs_root + "".join(f"[{position}]" for position in indexes)
+            rhs_base = rhs_root + "".join(f"[{position}]" for position in indexes)
+            lhs_cells = _unpacked_struct_field_cells(lhs_base, lhs_leaf,
+                                                     node_span(sm, expr))
+            rhs_cells = _unpacked_struct_field_cells(rhs_base, rhs_leaf,
+                                                     node_span(sm, expr))
+            if (lhs_cells is None or rhs_cells is None
+                    or len(lhs_cells) != len(rhs_cells)):
+                return None
+            for (lname, lwidth, _linit, ltype), (rname, rwidth, _rinit, _rtype) in zip(
+                    lhs_cells, rhs_cells):
+                if lwidth != rwidth:
+                    return None
+                value = {"kind": "Ident", "span": node_span(sm, rhs),
+                         "width": rwidth, "name": rname}
+                if not ltype.isFourState:
+                    value = squash2_wrap(value, lwidth)
+                stmts.append({
+                    "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                    "span": node_span(sm, expr),
+                    "target": {"kind": "Ident", "span": node_span(sm, lhs),
+                               "width": lwidth, "name": lname},
+                    "value": value,
+                })
+        return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts,
+                "fixed_array_struct_copy_lowered": True}
+    except Exception:
+        return None
+
+
 def _convert_dimension_query(sm, expression):
     """Fold fixed array metadata without evaluating the queried operand."""
     try:
@@ -6155,6 +6216,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         array_nested_pattern = _fixed_array_nested_pattern_assignment(sm, expr)
         if array_nested_pattern is not None:
             return array_nested_pattern
+        array_struct_copy = _fixed_array_struct_copy_assignment(sm, expr)
+        if array_struct_copy is not None:
+            return array_struct_copy
         array_slice = _fixed_array_slice_pattern_assignment(sm, expr)
         if array_slice is not None:
             return array_slice

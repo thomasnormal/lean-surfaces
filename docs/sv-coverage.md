@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 54 | 50 | 0 | 4 | sv-tests-2 declarations |
+| 55 | 51 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -61,6 +61,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `unpacked_struct_nested_pattern` | `Examples/system-verilog/unpacked_struct_nested_pattern/unpacked_struct_nested_pattern.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_array_nested_pattern` | `Examples/system-verilog/unpacked_array_nested_pattern/unpacked_array_nested_pattern.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_array_subarray_copy` | `Examples/system-verilog/unpacked_array_subarray_copy/unpacked_array_subarray_copy.sv` | match | **MATCH** | `ok` | MATCH |
+| `unpacked_array_struct_copy` | `Examples/system-verilog/unpacked_array_struct_copy/unpacked_array_struct_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `packed_unpacked_subarray_copy` | `Examples/system-verilog/packed_unpacked_subarray_copy/packed_unpacked_subarray_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_struct_pattern` | `Examples/system-verilog/unpacked_struct_pattern/unpacked_struct_pattern.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_struct_keyed_pattern` | `Examples/system-verilog/unpacked_struct_keyed_pattern/unpacked_struct_keyed_pattern.sv` | match | **MATCH** | `ok` | MATCH |
@@ -288,24 +289,24 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22045 | 4614 | 17365 | 66 |
+| 22046 | 4615 | 17365 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 3521 |
+| `AssignmentExpression:target` | 3520 |
 | `VariableSymbol:2state` | 3504 |
-| `ExpressionStatement:CallExpression` | 3475 |
+| `ExpressionStatement:CallExpression` | 3476 |
 | `CallExpression` | 3292 |
 | `Hierarchy:ports` | 2397 |
-| `SubroutineSymbol:Subroutine` | 1714 |
+| `SubroutineSymbol:Subroutine` | 1715 |
 | `NamedValueExpression:2state` | 1483 |
-| `ConcurrentAssertionStatement` | 1358 |
+| `ConcurrentAssertionStatement` | 1359 |
 | `InvalidStatement` | 1329 |
 | `ClassType` | 1329 |
 | `Hierarchy:module-kind` | 1248 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1153 |
-| `MemberAccessExpression` | 1023 |
-| `ConversionExpression:width` | 780 |
+| `MemberAccessExpression` | 1025 |
+| `ConversionExpression:width` | 781 |
 | `HierarchicalValueExpression` | 749 |
 
 The committed census provenance identifies frontend family `pyslang-11` and corpus `sv-tests-2`. The corpus snapshot is not silently substituted when the external checkout is unavailable.

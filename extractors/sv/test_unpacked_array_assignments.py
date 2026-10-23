@@ -396,6 +396,30 @@ class UnpackedArrayAssignments(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_fixed_array_of_structs_copy_flattens_each_element(self):
+        design = extract_source(
+            "module top; typedef struct { int id; int value; } item_t; "
+            "item_t source [0:1]; item_t target [0:1]; "
+            "initial target = source; endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual([a["target"]["name"] for a in assigns],
+                         ["target[0].id", "target[0].value",
+                          "target[1].id", "target[1].value"])
+        self.assertEqual([a["value"]["operand"]["name"] for a in assigns],
+                         ["source[0].id", "source[0].value",
+                          "source[1].id", "source[1].value"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_fixed_array_of_structs_self_copy_stays_loud(self):
+        design = extract_source(
+            "module top; typedef struct { int id; int value; } item_t; "
+            "item_t source [0:1]; initial source = source; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -15,16 +15,16 @@
  "summary": {
   "blocker_files": [
    [
-    "VariableSymbol:2state",
-    3504
-   ],
-   [
     "AssignmentExpression:target",
     3500
    ],
    [
     "ExpressionStatement:CallExpression",
     3476
+   ],
+   [
+    "VariableSymbol:2state",
+    3369
    ],
    [
     "CallExpression",
@@ -140,7 +140,7 @@
    ],
    [
     "StaticLocal:invalid-compilation",
-    229
+    225
    ],
    [
     "BlockStatement:JoinNone",

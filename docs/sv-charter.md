@@ -5464,3 +5464,16 @@ moves **4,639 → 4,645 clean** and **17,341 → 17,335 partial**;
 `AssignmentExpression:target` falls **3,507 → 3,500**. Differential coverage
 is **61 rows, 57 matches, 0 disagreements, and 4 recorded refusals**; grammar
 coverage remains **203 witnesses, 72 MATCH, and 131 REFUSE**.
+
+### Uninitialized procedural floating declarations — 2026-10-23
+
+An uninitialized `real` or `shortreal` declaration inside a procedural
+context now lowers to an empty declaration because floating storage is outside
+the self-check state and the declaration has no initializer effect. Reads and
+initialized declarations remain loud at their existing expression or
+declaration boundaries. The `floating_local_decl` fixture and differential row
+cover the admitted declaration shape. The 22,046-file census moves **4,645 →
+4,645 clean** and **17,335 → 17,335 partial**; `VariableSymbol:2state` falls
+**3,504 → 3,369** after the fresh census. Differential coverage is **62 rows,
+58 matches, 0 disagreements, and 4 recorded refusals**; grammar coverage is
+**203 witnesses, 72 MATCH, and 131 REFUSE**.

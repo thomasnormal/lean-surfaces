@@ -399,6 +399,23 @@ def is_module_floating_decl(symbol):
         return False
 
 
+def is_inert_2state_floating_decl(symbol):
+    """Whether an uninitialized procedural real declaration is inert.
+
+    Real and shortreal storage has no representation in the self-check
+    state. An uninitialized local has no observable effect by itself; reads
+    remain loud at their expression boundary, and initializers are retained.
+    """
+    if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
+        return False
+    try:
+        return (symbol.parentScope.isProceduralContext
+                and type(symbol.type.canonicalType).__name__ == "FloatingType"
+                and getattr(symbol, "initializer", None) is None)
+    except Exception:
+        return False
+
+
 def is_chandle_decl(symbol):
     """Whether a declaration names the opaque IEEE chandle type."""
     try:
@@ -6887,6 +6904,8 @@ def _convert_local_decl(sm, stmt):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None and is_string_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
+    if _SYM is None and is_inert_2state_floating_decl(symbol):
+        return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None and is_inert_2state_queue_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None and is_inert_2state_dynamic_array_decl(symbol):
@@ -7824,7 +7843,8 @@ def _convert_static_procedural_storage(sm, members):
             continue
         if str(symbol.lifetime) != "VariableLifetime.Static":
             continue
-        if is_chandle_decl(symbol) or is_string_decl(symbol):
+        if (is_chandle_decl(symbol) or is_string_decl(symbol)
+                or is_inert_2state_floating_decl(symbol)):
             continue
         converted = convert_var(sm, symbol)
         values = converted if isinstance(converted, list) else [converted]
@@ -9457,6 +9477,8 @@ def convert_port_sym(sm, m):
 
 
 def convert_var_sym(sm, m):
+    if is_inert_2state_floating_decl(m):
+        return {"kind": "Empty", "span": sym_span(sm, m)}
     array_decls = convert_fixed_array_vars_sym(sm, m)
     if array_decls is not None:
         return array_decls

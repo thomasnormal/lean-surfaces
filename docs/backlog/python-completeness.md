@@ -68,6 +68,13 @@ constructor's semantics while naming the original bytes value in errors.
 Non-ASCII bytes and textual NaN payloads remain loud until decoding and NaN
 oracle behavior are modeled.
 
+## 2026-10-23-pycomplete-60 — invalid high-octet `int(bytes)`
+
+`int(bytes)` now classifies non-ASCII octets as malformed input and raises
+CPython's exact bytes-rendered `ValueError`, including for explicit bases.
+The parser still admits only the ASCII numeric grammar; byte decoding,
+iterators, methods, and percent formatting remain separate loud boundaries.
+
 ## 2026-10-22-pycomplete-49 — public baseline and the next ordinary-language inch
 
 The first post-public-master baseline was measured from `2730f338` (the

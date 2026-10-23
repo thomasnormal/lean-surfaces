@@ -118,7 +118,7 @@ def enumerate_bytes(value):
     return tuple(enumerate(value, 3))
 
 
-def numeric_int_still_loud():
+def numeric_int_nonascii():
     return int(b"\xff")
 
 

@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/bytes_lab/bytes_lab.py",
-  "source_sha256": "f3ff82f2aca800d277e99391a1455c5a706418e5f21e81f129803d068d134b3f",
+  "source_sha256": "14fab3d457412f35bf7231ac890afd77410e2ed028f7bc892821b1bb90d62472",
   "module": {
     "kind": "Module",
     "body": [
@@ -3227,7 +3227,7 @@
           "end_lineno": 122,
           "end_col_offset": 23
         },
-        "name": "numeric_int_still_loud",
+        "name": "numeric_int_nonascii",
         "args": [],
         "args_unsupported": null,
         "locals_unsupported": null,

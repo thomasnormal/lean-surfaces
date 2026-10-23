@@ -1749,14 +1749,12 @@ def intOfStr (text : String) (base : Nat := 10) : Res RVal :=
       | Option.none =>
           .unsupported "int() cannot render this invalid literal exactly (docs/memory-model.md §the cast tier)"
 
-/-- `int(bytes)` shares the ASCII decimal grammar with `int(str)`. Bytes with
-non-ASCII octets remain loud until the tier models decoding; invalid ASCII
-forms still raise CPython's bytes-rendered `ValueError` exactly. -/
+/-- `int(bytes)` shares the ASCII decimal grammar with `int(str)`. Non-ASCII
+octets are invalid input (CPython does not decode them as text), so they take
+the same bytes-rendered `ValueError` path as other malformed forms. -/
 def intOfBytes (values : Array UInt8) (base : Nat := 10) : Res RVal :=
   let octets := values.toList
-  if !octets.all (fun octet => octet.toNat < 128) then
-    .unsupported "int() of bytes containing non-ASCII octets is outside the tier (Unicode decoding is not guessed; docs/memory-model.md §the cast tier)"
-  else if intDigitCount (octets.map (fun octet => Char.ofNat octet.toNat)) base > intDigitBudget then
+  if intDigitCount (octets.map (fun octet => Char.ofNat octet.toNat)) base > intDigitBudget then
     .unsupported "int() of these bytes exceeds the tier's 1024-digit budget (CPython's configured conversion limit is not guessed; docs/memory-model.md §the cast tier)"
   else
     let characters := octets.map (fun octet => Char.ofNat octet.toNat)

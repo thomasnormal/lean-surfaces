@@ -2726,8 +2726,7 @@ Decimal conversion retains the 1024-digit count above. Other bases bound all
 ASCII alphanumeric characters in the original input to 1024, including the
 prefix; this is a conservative resource bound, also for power-of-two bases
 that CPython exempts from its configurable conversion limit. Other Unicode
-input, non-ASCII bytes, and heap conversion protocols remain unfinished and
-loud.
+input and heap conversion protocols remain unfinished and loud.
 The frame, clock-erasure and payload-blindness proofs use their pure-worker
 rules. `Examples/python/int_string` adds kernel checks and a symbolic offset
 theorem for a real keyword-base call; the differential suite also checks
@@ -5386,11 +5385,11 @@ names in bytes errors use CPython's 200-byte index/repetition limit and
 100-byte membership/concatenation limit, including the replacement character
 when a UTF-8 prefix ends inside a character.
 
-`int(bytes)` now accepts the ASCII decimal slice already modelled for
+`int(bytes)` now accepts the decimal slice already modelled for
 `int(str)`: the six CPython whitespace characters, signs, single underscores
-between digits, and the tier's digit budget. Invalid ASCII forms raise the
-exact bytes-rendered `ValueError`; non-ASCII octets remain loud until Unicode
-decoding is modelled. Explicit `bytes_iterator` cursors, other bytes methods,
+between digits, and the tier's digit budget. Invalid forms, including
+non-ASCII octets, raise the exact bytes-rendered `ValueError`. Explicit
+`bytes_iterator` cursors, other bytes methods,
 decoding, and bytes percent formatting are still unfinished and refuse loudly;
 they never manufacture a numeric-conversion or non-iterable error for a valid
 bytes program. `Examples/python/bytes_lab` and the whole-file bytes fixture

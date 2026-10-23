@@ -86,8 +86,9 @@ change is listed here under **Changed** or **Removed**.
   effectful annotation expressions remain loud.
 - `int(bytes)` now accepts the ASCII decimal slice shared with `int(str)`,
   including CPython whitespace, signs, underscore grouping, digit-budget
-  refusal, and exact bytes-rendered invalid-literal errors. Non-ASCII bytes,
-  bytes methods, decoding, and bytes percent formatting remain loud.
+  refusal, and exact bytes-rendered invalid-literal errors. Non-ASCII bytes
+  now take that invalid-literal path; bytes methods, decoding, and bytes
+  percent formatting remain loud.
 - Bare `raise ValueError` and the other 15 admitted builtin exception class
   names now work in both interpreters, including ancestor matching, retained
   effects, and generator closure. `Exception` does not catch `BaseException`;

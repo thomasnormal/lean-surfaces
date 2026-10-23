@@ -30,6 +30,8 @@ load_program bytes_lab from "Examples/python/bytes_lab/bytes_lab.json"
 #py_check bytes_lab.numeric_int() = Val.tuple #[.int 12, .int 0, .int 7]
 #py_check bytes_lab.numeric_int_invalid() raises
   (.valueError "invalid literal for int() with base 10: b'12x'")
+#py_check bytes_lab.numeric_int_nonascii() raises
+  (.valueError "invalid literal for int() with base 10: b'\\xff'")
 #py_check bytes_lab.numeric_float() =
   Val.tuple #[.float (Float64.ofBits 0x3ff8000000000000),
     .float (Float64.ofBits 0x4028000000000000)]

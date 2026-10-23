@@ -240,6 +240,9 @@ def admitFloatingLiteralExpression (artifact : Artifact) (path : List Nat) :
 def admitStringLiteralExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "StringLiteral" "string-literal-expression"
 
+def admitIntegerLiteralExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "IntegerLiteral" "integer-literal-expression"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

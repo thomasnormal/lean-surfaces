@@ -513,6 +513,14 @@ private def stringLiteralTranslation : Artifact := {emptyTranslation with
         ("value", .string "hello"), ("name", .string "literal"),
         ("inner", .array [])]])]}
 
+private def integerLiteralTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "i"), ("kind", .string "IntegerLiteral"),
+        ("value", .number "42"), ("name", .string "literal"),
+        ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -710,6 +718,9 @@ def floatingLiteralTranslationWitness : Except String Unit :=
 
 def stringLiteralTranslationWitness : Except String Unit :=
   admitStringLiteralExpression stringLiteralTranslation [0]
+
+def integerLiteralTranslationWitness : Except String Unit :=
+  admitIntegerLiteralExpression integerLiteralTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -943,6 +954,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard stringLiteralTranslationWitness matches .ok ()
 #guard admitStringLiteralExpression stringLiteralTranslation [] matches .error _
 #guard admitStringLiteralExpression functionTranslation [0] matches .error _
+#guard integerLiteralTranslationWitness matches .ok ()
+#guard admitIntegerLiteralExpression integerLiteralTranslation [] matches .error _
+#guard admitIntegerLiteralExpression functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

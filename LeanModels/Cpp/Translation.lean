@@ -486,6 +486,9 @@ def admitOMPTeamsGenericLoopDirective (artifact : Artifact) (path : List Nat) :
 def admitOMPTargetTeamsGenericLoopDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTargetTeamsGenericLoopDirective" "omp-target-teams-generic-loop-directive"
 
+def admitOMPParallelGenericLoopDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPParallelGenericLoopDirective" "omp-parallel-generic-loop-directive"
+
 def admitOMPTargetUpdateDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTargetUpdateDirective" "omp-target-update-directive"
 

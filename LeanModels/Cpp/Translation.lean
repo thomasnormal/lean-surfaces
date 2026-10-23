@@ -372,6 +372,9 @@ def admitOMPParallelMasterDirective (artifact : Artifact) (path : List Nat) :
 def admitOMPOrderedDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPOrderedDirective" "omp-ordered-directive"
 
+def admitOMPAtomicDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPAtomicDirective" "omp-atomic-directive"
+
 def admitConditionalOperatorExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ConditionalOperator" "conditional-operator-expression"
 

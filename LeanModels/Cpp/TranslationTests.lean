@@ -343,6 +343,13 @@ private def lifetimeExtendedTemporaryTranslation : Artifact := {emptyTranslation
       .object [("id", .string "l"), ("kind", .string "LifetimeExtendedTemporaryDecl"),
         ("name", .string "temporary"), ("inner", .array [])]])]}
 
+private def materializeTemporaryTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "m"), ("kind", .string "MaterializeTemporaryExpr"),
+        ("name", .string "materialize"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -471,6 +478,9 @@ def usingEnumTranslationWitness : Except String Unit :=
 
 def lifetimeExtendedTemporaryTranslationWitness : Except String Unit :=
   admitLifetimeExtendedTemporaryDeclaration lifetimeExtendedTemporaryTranslation [0]
+
+def materializeTemporaryTranslationWitness : Except String Unit :=
+  admitMaterializeTemporaryExpression materializeTemporaryTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -635,6 +645,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard lifetimeExtendedTemporaryTranslationWitness matches .ok ()
 #guard admitLifetimeExtendedTemporaryDeclaration lifetimeExtendedTemporaryTranslation [] matches .error _
 #guard admitLifetimeExtendedTemporaryDeclaration functionTranslation [0] matches .error _
+#guard materializeTemporaryTranslationWitness matches .ok ()
+#guard admitMaterializeTemporaryExpression materializeTemporaryTranslation [] matches .error _
+#guard admitMaterializeTemporaryExpression functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

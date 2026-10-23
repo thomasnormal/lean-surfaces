@@ -171,6 +171,9 @@ def admitUsingEnumDeclaration (artifact : Artifact) (path : List Nat) :
 def admitLifetimeExtendedTemporaryDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "LifetimeExtendedTemporaryDecl" "lifetime-extended-temporary"
 
+def admitMaterializeTemporaryExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "MaterializeTemporaryExpr" "materialize-temporary"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

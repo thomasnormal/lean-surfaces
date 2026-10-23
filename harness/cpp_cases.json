@@ -880,6 +880,17 @@
     "rung": 3
   },
   {
+    "id": "translation.c-style-cast-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "cStyleCastTranslationWitness",
+    "cpp_source": "int f(long value) { return (int)value; }",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

@@ -153,6 +153,9 @@ def admitImplicitConceptSpecializationDeclaration (artifact : Artifact) (path : 
 def admitRequiresExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "RequiresExpr" "requires-expression"
 
+def admitTypeRequirement (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "TypeRequirement" "type-requirement"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

@@ -5881,6 +5881,18 @@ def _convert_syscall(sm, s, e):
             args = list(e.arguments)
         except Exception:
             return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        if name == "$printtimescale" and args:
+            if len(args) != 1:
+                return unsupported(sm, s, "ExpressionStatement:CallExpression")
+            scope = args[0]
+            symbol = getattr(scope, "symbol", None)
+            kind = str(getattr(symbol, "kind", "")).split(".")[-1]
+            if (type(scope).__name__ != "ArbitrarySymbolExpression"
+                    or getattr(scope, "bad", False)
+                    or kind not in ("CompilationUnit", "Root", "Instance")):
+                return unsupported(sm, s, "ExpressionStatement:CallExpression")
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "pure_diagnostic": name}
         if not args:
             return {"kind": "Empty", "span": node_span(sm, s),
                     "pure_diagnostic": name}

@@ -5277,3 +5277,16 @@ regression. The census moves **4,558 → 4,577 clean** and **17,411 → 17,392
 partial**; `AssignmentExpression:target` falls **3,568 → 3,542**. Differential
 coverage is **44 rows, 40 matches, 0 disagreements, and 4 recorded refusals**;
 grammar coverage remains **200 witnesses, 69 MATCH, and 131 REFUSE**.
+
+### Validated-scope `$printtimescale` — 2026-10-23
+
+`$printtimescale` with `$unit`, `$root`, or a validated instance scope now
+lowers to the same inert diagnostic node as the no-argument form. Invalid,
+dynamic, and malformed scope expressions remain loud because hierarchy and
+time-scale state are outside the self-check observable model. The
+`printtimescale_scope` fixture and differential row cover the three admitted
+scope categories. The census moves **4,577 → 4,582 clean** and **17,392 →
+17,387 partial**; `ExpressionStatement:CallExpression` falls **3,565 →
+3,558**. Differential coverage is **45 rows, 41 matches, 0 disagreements, and
+4 recorded refusals**; grammar coverage is **202 witnesses, 69 MATCH, and 133
+REFUSE**.

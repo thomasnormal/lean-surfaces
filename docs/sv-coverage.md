@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 44 | 40 | 0 | 4 | sv-tests-2 declarations |
+| 45 | 41 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -48,6 +48,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `fatal_task` | `Examples/system-verilog/fatal_task/fatal_task.sv` | match | **MATCH** | `ok` | MATCH |
 | `associative_array_declaration` | `Examples/system-verilog/associative_array_decl/associative_array_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `printtimescale_declaration` | `Examples/system-verilog/printtimescale_decl/printtimescale_decl.sv` | match | **MATCH** | `ok` | MATCH |
+| `printtimescale_scope` | `Examples/system-verilog/printtimescale_scope/printtimescale_scope.sv` | match | **MATCH** | `ok` | MATCH |
 | `exit_declaration` | `Examples/system-verilog/exit_decl/exit_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `vcd_setup` | `Examples/system-verilog/vcd_setup/vcd_setup.sv` | match | **MATCH** | `ok` | MATCH |
 | `vcd_control` | `Examples/system-verilog/vcd_control/vcd_control.sv` | match | **MATCH** | `ok` | MATCH |
@@ -65,7 +66,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 200 | 69 | 131 | pyslang SyntaxKind |
+| 202 | 71 | 131 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -225,6 +226,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.RepeatedEventControl` | `Examples/system-verilog/intra_assignment/counts.sv` | **REFUSE** | `unsupported` @(event): the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.ReplicatedAssignmentPattern` | `Examples/system-verilog/assignment_patterns/replicated.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ReturnStatement` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
+| `SyntaxKind.RootScope` | `Examples/system-verilog/printtimescale_scope/printtimescale_scope.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ScopedName` | `Examples/system-verilog/array_reductions/automatic.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.SequentialBlockStatement` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.SignalEventExpression` | `Examples/system-verilog/always/events.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
@@ -261,6 +263,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.UnaryPreincrementExpression` | `Examples/system-verilog/dynamic_cast/source_effect.sv` | **REFUSE** | `unsupported` unsupported expression 'DynamicCast:type-or-effects' |
 | `SyntaxKind.UnbasedUnsizedLiteralExpression` | `Examples/system-verilog/assignment_patterns/keys.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnionType` | `Examples/system-verilog/compound_assignments/members.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.UnitScope` | `Examples/system-verilog/printtimescale_scope/printtimescale_scope.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ValueRangeExpression` | `Examples/system-verilog/case_inside/contexts.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.VariableDimension` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.VariablePortHeader` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
@@ -276,11 +279,11 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22035 | 4577 | 17392 | 66 |
+| 22035 | 4582 | 17387 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `ExpressionStatement:CallExpression` | 3565 |
+| `ExpressionStatement:CallExpression` | 3558 |
 | `AssignmentExpression:target` | 3542 |
 | `VariableSymbol:2state` | 3501 |
 | `CallExpression` | 3290 |

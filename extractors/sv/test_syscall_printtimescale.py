@@ -33,10 +33,19 @@ class PrintTimescaleTask(unittest.TestCase):
                              "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
-    def test_scoped_printtimescale_stays_loud(self):
-        design = lower('module top; initial $printtimescale(top); endmodule')
-        self.assertIn("ExpressionStatement:CallExpression",
-                      [node.get("sv_kind") for node in nodes(design)])
+    def test_non_scope_printtimescale_stays_loud(self):
+        design = lower('module top; initial $printtimescale(1); endmodule')
+        kinds = [node.get("sv_kind") for node in nodes(design)]
+        self.assertTrue(any(kind in ("ExpressionStatement:CallExpression",
+                                     "InvalidStatement") for kind in kinds))
+
+    def test_unit_and_root_scopes_are_inert(self):
+        design = lower(
+            'module top; initial begin $printtimescale($unit); '
+            '$printtimescale($root); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
 
 
 if __name__ == "__main__":

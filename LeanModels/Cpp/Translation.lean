@@ -396,6 +396,9 @@ def admitOMPTeamsDirective (artifact : Artifact) (path : List Nat) :
 def admitOMPCancellationPointDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPCancellationPointDirective" "omp-cancellation-point-directive"
 
+def admitOMPCancelDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPCancelDirective" "omp-cancel-directive"
+
 def admitOMPTeamsDistributeDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTeamsDistributeDirective" "omp-teams-distribute-directive"
 

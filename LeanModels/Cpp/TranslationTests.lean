@@ -884,6 +884,13 @@ private def ompCancellationPointDirectiveTranslation : Artifact := {emptyTransla
       .object [("id", .string "o"), ("kind", .string "OMPCancellationPointDirective"),
         ("name", .string "cancellation-point"), ("inner", .array [])]])]}
 
+private def ompCancelDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPCancelDirective"),
+        ("name", .string "cancel"), ("inner", .array [])]])]}
+
 private def ompTeamsDistributeDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1645,6 +1652,9 @@ def ompTeamsDirectiveTranslationWitness : Except String Unit :=
 def ompCancellationPointDirectiveTranslationWitness : Except String Unit :=
   admitOMPCancellationPointDirective ompCancellationPointDirectiveTranslation [0]
 
+def ompCancelDirectiveTranslationWitness : Except String Unit :=
+  admitOMPCancelDirective ompCancelDirectiveTranslation [0]
+
 def ompTeamsDistributeDirectiveTranslationWitness : Except String Unit :=
   admitOMPTeamsDistributeDirective ompTeamsDistributeDirectiveTranslation [0]
 
@@ -2207,6 +2217,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompCancellationPointDirectiveTranslationWitness matches .ok ()
 #guard admitOMPCancellationPointDirective ompCancellationPointDirectiveTranslation [] matches .error _
 #guard admitOMPCancellationPointDirective functionTranslation [0] matches .error _
+#guard ompCancelDirectiveTranslationWitness matches .ok ()
+#guard admitOMPCancelDirective ompCancelDirectiveTranslation [] matches .error _
+#guard admitOMPCancelDirective functionTranslation [0] matches .error _
 #guard ompTeamsDistributeDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTeamsDistributeDirective ompTeamsDistributeDirectiveTranslation [] matches .error _
 #guard admitOMPTeamsDistributeDirective functionTranslation [0] matches .error _

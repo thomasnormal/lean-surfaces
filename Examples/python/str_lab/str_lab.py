@@ -2,7 +2,7 @@
 omitted/negative/clamped bounds, CPython's step-first validation order)
 and the method trio swapcase/isupper/index — every function here runs
 differentially against CPython 3.9 (harness/cases.json). The loud
-frontier (non-ASCII case mapping, out-of-tier str methods, list slices,
+frontier (Unicode case mapping outside Latin-1, out-of-tier str methods, list slices,
 index start/end arguments) is pinned by whitelisted rows."""
 
 
@@ -83,8 +83,8 @@ def idx_arg_raises(s, n):
 
 
 def upper_of(s):
-    # LIVE since H6 (`value()`'s capture lookup needs it); non-ASCII
-    # stays loud
+    # LIVE since H6 (`value()`'s capture lookup needs it); Unicode outside
+    # the Latin-1 case table stays loud
     return s.upper()
 
 

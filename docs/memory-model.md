@@ -539,11 +539,11 @@ tier).
   STORE position stays loud (`assignTo`'s catch-all).
 * **Methods** (`strCallPlan` — the `ntupleCallPlan` free-scrutinee
   discipline, plan decided BEFORE arguments): `.swapcase()`,
-  `.isupper()`, `.islower()`, and `.upper()` on ASCII strings (the H6
-  pair `islower`/`upper` serves the shipped `value()`'s capture arm;
-  Lean core's `Char` case maps ARE the ASCII maps, agreeing with
-  CPython exactly there; a non-ASCII string refuses loudly — the
-  Unicode tables are not guessed), and
+  `.isupper()`, `.islower()`, and `.upper()` on strings whose input
+  characters are in the Latin-1 table (the H6 pair `islower`/`upper`
+  serves the shipped `value()`'s capture arm; CPython's Latin-1 mappings,
+  including sharp-s and micro-sign expansions, are exact; characters
+  outside that table refuse loudly), and
   `.index(sub[, start[, end]])` — code-point-exact substring search with
   CPython's normalized integer bounds, the faithful `ValueError` miss,
   non-str needles and non-index bounds as faithful `TypeError`s. EVERY other attribute on a str
@@ -586,7 +586,7 @@ tier).
   because it MUTATES, and every `sorted` call still leaves the
   fragment.
 * Still loud, deliberately: str unpacking, `%`-formatting, `sorted()`
-  on a str, and non-ASCII case mapping.
+  on a str, and case mapping for characters outside Latin-1.
 * Acceptance: `Examples/python/str_lab` (every function differential);
   leanpy corpus `harness/scripts/str_script.py`; the shipped-file
   theorems in `Examples/python/sunfish` (`Position.rotate`).

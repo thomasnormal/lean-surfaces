@@ -96,6 +96,15 @@ interpreter surfaces use the value frame for the finite rows. `float_lab` and
 the differential battery cover finite mixed counters,
 Boolean starts, faithful invalid-argument errors, and the NaN refusal.
 
+## 2026-10-23-pycomplete-63 — Latin-1 string case mapping
+
+String `swapcase`, `isupper`, `islower`, and `upper` now admit CPython's
+Latin-1 case table, including the micro sign, sharp-s expansion to `SS`, and
+the `ÿ`/`Ÿ` mapping. Characters outside Latin-1 remain loud because their
+full Unicode case tables are not yet represented. The focused `str_lab`
+battery covers accented strings and the multi-character mappings on both
+interpreter surfaces.
+
 ## 2026-10-22-pycomplete-49 — public baseline and the next ordinary-language inch
 
 The first post-public-master baseline was measured from `2730f338` (the

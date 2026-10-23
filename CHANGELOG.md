@@ -36,6 +36,9 @@ change is listed here under **Changed** or **Removed**.
   start/step values through a value-carrying generator frame, preserving
   CPython's first-value subtype and numeric addition on both interpreter
   surfaces. NaN and infinity remain loud.
+- String case methods now admit Latin-1 input characters, including CPython's
+  `µ`, `ß` → `SS`, and `ÿ` → `Ÿ` mappings; characters outside Latin-1 remain
+  loud until the full Unicode case tables are represented.
 
 ## [0.1.14] — 2026-10-21
 

@@ -30,8 +30,8 @@ both step directions, omitted bounds (ingestion's `Constant None`
 normalization), negative indices, out-of-range clamping, and the
 STEP-FIRST validation order (`order_probe`: a zero step's `ValueError`
 beats the lower bound's `TypeError`, exactly `PySlice_Unpack`);
-`swapcase`/`isupper` are the ASCII case maps (non-ASCII refuses
-loudly — Unicode tables are not guessed); `index` is code-point-exact
+`swapcase`/`isupper` use the ASCII and Latin-1 case maps (Unicode outside
+that table refuses loudly); `index` is code-point-exact
 substring search with the faithful `ValueError` miss. The loud
 frontier: any other str method (`upper` — never a fake
 `AttributeError`), list/tuple slices (they ALLOCATE in CPython), and
@@ -67,10 +67,14 @@ load_program str_lab from "Examples/python/str_lab/str_lab.json"
 
 #py_check str_lab.swap("aBcD") = "AbCd"
 #py_check str_lab.swap("PNBRQK.pnbrqk ") = "pnbrqk.PNBRQK "
+#py_check str_lab.swap("café") = "CAFÉ"
+#py_check str_lab.swap("µßÿ") = "ΜSSŸ"
 #py_check str_lab.isup("ABC1") = true
 #py_check str_lab.isup("AbC") = false
 #py_check str_lab.isup("123") = false
 #py_check str_lab.isup("") = false
+#py_check str_lab.isup("É") = true
+#py_check str_lab.isup("µßÿ") = false
 #py_check str_lab.idx("abcab", "b") = 1
 #py_check str_lab.idx("abcab", "ab") = 0
 #py_check str_lab.idx("abc", "") = 0
@@ -110,8 +114,12 @@ load_program str_lab from "Examples/python/str_lab/str_lab.json"
 
 #py_check str_lab.upper_of("abc") = "ABC"
 #py_check str_lab.upper_of("nN1.") = "NN1."
+#py_check str_lab.upper_of("café") = "CAFÉ"
+#py_check str_lab.upper_of("µßÿ") = "ΜSSŸ"
 #py_check str_lab.lower_flag("pq") = true
 #py_check str_lab.lower_flag("pQ") = false
+#py_check str_lab.lower_flag("é") = true
+#py_check str_lab.lower_flag("µßÿ") = true
 
 /-! ### `str.join`: sequence and heap-backed iterable forms -/
 
@@ -125,13 +133,12 @@ load_program str_lab from "Examples/python/str_lab/str_lab.json"
 #py_check str_lab.join_bad_arity("-") raises
   (.typeError "str.join() takes exactly one argument (0 given)")
 #py_check str_lab.join_generator("-") = "a-b"
-#guard callFunction str_lab "upper_of" #[.str "é"] 4096
-  matches .unsupported _
+#guard callFunction str_lab "upper_of" #[.str "é"] 4096 == .ok (.str "É")
 #guard callFunction str_lab "list_slice_is_loud" #[] 4096 ==
   .ok (.list #[.int 3, .int 2, .int 1])
 #guard callFunction str_lab "idx_start" #[.str "abcab", .str "b", .int 2] 4096 == .ok (.int 4)
-#guard callFunction str_lab "swap" #[.str "é"] 4096 matches .unsupported _
-#guard callFunction str_lab "isup" #[.str "É"] 4096 matches .unsupported _
+#guard callFunction str_lab "swap" #[.str "é"] 4096 == .ok (.str "É")
+#guard callFunction str_lab "isup" #[.str "É"] 4096 == .ok (.bool true)
 
 /-! ### the slice NODE stays outside the heap-free fragment when needed
 (H5: str and value-container slices are pure values; heap-list slices

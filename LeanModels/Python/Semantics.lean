@@ -2360,11 +2360,11 @@ def indexVal (container index : RVal) : Res RVal :=
 Pure, fuel-free helpers: strings are immutable values, so the whole tier
 has VALUE semantics — no heap, no aliasing, `worldInv`-trivial. The
 case-mapping methods (`swapcase`/`isupper`) are in tier for ASCII
-strings only: Lean core's `Char.isUpper`/`toLower`/… are exactly the
-ASCII maps, which agree with CPython there; a non-ASCII string is
-refused loudly (CPython consults the full Unicode tables — guessing
-would be silently wrong). `index` and slicing are code-point-exact for
-every string.
+strings only: Lean core's `Char.isUpper`/`toLower`/… provide the ASCII
+maps, and this tier adds the exact one-code-point Latin-1 case ranges;
+characters outside that table remain loud because CPython consults the
+full Unicode tables. `index` and slicing are code-point-exact for every
+string.
 
 Simp-set doctrine (the `sortInts`/`heapEq` freeze family): the DISPATCH
 layers (`sliceVal`, `strCallPlan`) are in `py_simp`/`interpUnfolds`, the
@@ -2376,46 +2376,79 @@ thousands of character-level simp steps (concrete runs — `#py_check`,
 the differential harness — reduce through the kernel/evaluator and never
 consult simp sets). -/
 
-/-- ASCII-only guard for the case-mapping methods. -/
-def strAscii (s : String) : Bool :=
-  s.toList.all (fun c => c.toNat < 128)
+/- Latin-1 input guard for the case-mapping methods. -/
+def strLatin1 (s : String) : Bool :=
+  s.toList.all (fun c => c.toNat < 256)
 
-/-- `swapcase` on one ASCII char: `a-z` ↔ `A-Z`, everything else fixed
-(Lean core's `Char.toUpper`/`toLower` are the ASCII maps). -/
+def latin1Upper (c : Char) : Bool :=
+  c.isUpper || (192 ≤ c.val.toNat && c.val.toNat ≤ 214) ||
+    (216 ≤ c.val.toNat && c.val.toNat ≤ 222)
+
+def latin1Lower (c : Char) : Bool :=
+  c.isLower || c.val.toNat == 181 || c.val.toNat == 223 ||
+    (224 ≤ c.val.toNat && c.val.toNat ≤ 246) ||
+    (248 ≤ c.val.toNat && c.val.toNat ≤ 255)
+
+def latin1Alpha (c : Char) : Bool := latin1Upper c || latin1Lower c
+
+def latin1SwapChar (c : Char) : Option (List Char) :=
+  if latin1Upper c then some [Char.ofNat (c.val.toNat + 32)]
+  else if latin1Lower c then
+    if c.val.toNat == 181 then some [Char.ofNat 924]
+    else if c.val.toNat == 223 then some ['S', 'S']
+    else if c.val.toNat == 255 then some [Char.ofNat 376]
+    else some [Char.ofNat (c.val.toNat - 32)]
+  else some [c]
+
+def latin1UpperChar (c : Char) : Option (List Char) :=
+  if latin1Lower c then
+    if c.val.toNat == 181 then some [Char.ofNat 924]
+    else if c.val.toNat == 223 then some ['S', 'S']
+    else if c.val.toNat == 255 then some [Char.ofNat 376]
+    else some [Char.ofNat (c.val.toNat - 32)]
+  else some [c]
+
+/-- `swapcase` on one Latin-1 character, including CPython's multi-character
+case mappings for sharp s. -/
 def swapChar (c : Char) : Char :=
   if c.isUpper then c.toLower else if c.isLower then c.toUpper else c
 
-/-- `s.swapcase()` (ASCII in tier — the section comment). -/
+/-- `s.swapcase()` for the admitted Latin-1 input table. -/
 def strSwapcase (s : String) : Res RVal :=
-  if strAscii s then .ok (.str (String.ofList (s.toList.map swapChar)))
+  if strLatin1 s then
+    match s.toList.mapM latin1SwapChar with
+    | some css => .ok (.str (String.ofList css.flatten))
+    | Option.none => .unsupported "swapcase() of a Latin-1 character is outside the case table"
   else .unsupported
-    "swapcase() on a non-ASCII string is outside the tier (Unicode case tables; docs/memory-model.md §string semantics)"
+    "swapcase() outside the Latin-1 case table is outside the tier (Unicode case tables; docs/memory-model.md §string semantics)"
 
 /-- `s.isupper()`: at least one cased character and no lowercase one
-(CPython's definition; ASCII cased = alphabetic). -/
+(CPython's definition over the admitted Latin-1 table). -/
 def strIsUpper (s : String) : Res RVal :=
-  if strAscii s then
-    .ok (.bool (s.toList.any (fun c => c.isAlpha) &&
-                s.toList.all (fun c => !c.isAlpha || c.isUpper)))
+  if strLatin1 s then
+    .ok (.bool (s.toList.any latin1Alpha &&
+                s.toList.all (fun c => !latin1Alpha c || latin1Upper c)))
   else .unsupported
-    "isupper() on a non-ASCII string is outside the tier (Unicode case tables; docs/memory-model.md §string semantics)"
+    "isupper() outside the Latin-1 case table is outside the tier (Unicode case tables; docs/memory-model.md §string semantics)"
 
-/-- `s.islower()` (ASCII in tier, `strIsUpper`'s mirror — H6: sunfish's
+/-- `s.islower()` (the mirror of `strIsUpper` — H6: sunfish's
 `value()` capture check `q.islower()`). -/
 def strIsLower (s : String) : Res RVal :=
-  if strAscii s then
-    .ok (.bool (s.toList.any (fun c => c.isAlpha) &&
-                s.toList.all (fun c => !c.isAlpha || c.isLower)))
+  if strLatin1 s then
+    .ok (.bool (s.toList.any latin1Alpha &&
+                s.toList.all (fun c => !latin1Alpha c || latin1Lower c)))
   else .unsupported
-    "islower() on a non-ASCII string is outside the tier (Unicode case tables; docs/memory-model.md §string semantics)"
+    "islower() outside the Latin-1 case table is outside the tier (Unicode case tables; docs/memory-model.md §string semantics)"
 
-/-- `s.upper()` (ASCII in tier — H6: sunfish's `value()` capture lookup
-`pst[q.upper()]`; Lean core's `Char.toUpper` is the ASCII map). -/
+/-- `s.upper()` for the admitted Latin-1 input table — H6: sunfish's
+`value()` capture lookup `pst[q.upper()]`. -/
 def strUpper (s : String) : Res RVal :=
-  if strAscii s then
-    .ok (.str (String.ofList (s.toList.map Char.toUpper)))
+  if strLatin1 s then
+    match s.toList.mapM latin1UpperChar with
+    | some css => .ok (.str (String.ofList css.flatten))
+    | Option.none => .unsupported "upper() of a Latin-1 character is outside the case table"
   else .unsupported
-    "upper() on a non-ASCII string is outside the tier (Unicode case tables; docs/memory-model.md §string semantics)"
+    "upper() outside the Latin-1 case table is outside the tier (Unicode case tables; docs/memory-model.md §string semantics)"
 
 /-- First index where `needle` occurs in `hay` (code-point equality;
 `"".index("")` is 0, as in CPython). Structural (kernel-reducible). -/

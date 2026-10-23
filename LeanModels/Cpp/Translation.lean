@@ -159,6 +159,9 @@ def admitTypeRequirement (artifact : Artifact) (path : List Nat) :
 def admitSimpleRequirement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "SimpleRequirement" "simple-requirement"
 
+def admitCompoundRequirement (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CompoundRequirement" "compound-requirement"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

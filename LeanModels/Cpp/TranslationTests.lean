@@ -315,6 +315,13 @@ private def simpleRequirementTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "s"), ("kind", .string "SimpleRequirement"),
         ("name", .string "simple"), ("inner", .array [])]])]}
 
+private def compoundRequirementTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "c"), ("kind", .string "CompoundRequirement"),
+        ("name", .string "compound"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -431,6 +438,9 @@ def typeRequirementTranslationWitness : Except String Unit :=
 
 def simpleRequirementTranslationWitness : Except String Unit :=
   admitSimpleRequirement simpleRequirementTranslation [0]
+
+def compoundRequirementTranslationWitness : Except String Unit :=
+  admitCompoundRequirement compoundRequirementTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -583,6 +593,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard simpleRequirementTranslationWitness matches .ok ()
 #guard admitSimpleRequirement simpleRequirementTranslation [] matches .error _
 #guard admitSimpleRequirement functionTranslation [0] matches .error _
+#guard compoundRequirementTranslationWitness matches .ok ()
+#guard admitCompoundRequirement compoundRequirementTranslation [] matches .error _
+#guard admitCompoundRequirement functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

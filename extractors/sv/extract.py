@@ -5133,7 +5133,19 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
     index_signed = bool(index.type.isSigned)
     if (expression_kind == "ElementSelectExpression"
             and canonical_kind == "PackedArrayType"
-            and not canonical_select):
+            and _constant_dimension_selector(index) is not None):
+        # Generate elaboration binds genvar arithmetic to a constant, but
+        # slang keeps the original expression tree on the selected target.
+        # Continuous-driver window accounting needs the resulting fixed bit
+        # offset, so normalize every bound constant packed label here (the
+        # non-canonical range case also needs its declared-label conversion).
+        normalized = _packed_constant_index(sm, lhs.value.type, index)
+        if normalized is None:
+            return unsupported(sm, lhs, expression_kind + ":target-source"), False
+        converted_index, index_signed = normalized
+    elif (expression_kind == "ElementSelectExpression"
+          and canonical_kind == "PackedArrayType"
+          and not canonical_select):
         normalized = _packed_constant_index(sm, lhs.value.type, index)
         if normalized is None:
             return unsupported(sm, lhs, expression_kind + ":target-source"), False

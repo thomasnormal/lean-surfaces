@@ -5452,3 +5452,15 @@ clean** and **17,362 → 17,358 partial**; `AssignmentExpression:target` falls
 **3,517 → 3,512**. Differential coverage is **59 rows, 55 matches, 0
 disagreements, and 4 recorded refusals**; grammar coverage remains **202
 witnesses, 71 MATCH, and 131 REFUSE**.
+
+### Generated constant packed targets — 2026-10-23
+
+Elaboration-constant packed element targets in generated assignments now
+normalize their bound genvar arithmetic to fixed bit windows. This admits the
+ordinary generated-chain and stepped-genvar assignments while retaining the
+existing dynamic-index boundary. The `generate_constant_targets` fixture and
+differential row cover the chained generated writes. The 22,046-file census
+moves **4,639 → 4,645 clean** and **17,341 → 17,335 partial**;
+`AssignmentExpression:target` falls **3,507 → 3,500**. Differential coverage
+is **61 rows, 57 matches, 0 disagreements, and 4 recorded refusals**; grammar
+coverage remains **203 witnesses, 72 MATCH, and 131 REFUSE**.

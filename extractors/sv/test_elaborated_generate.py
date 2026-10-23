@@ -162,6 +162,16 @@ class ElaboratedGenerate(unittest.TestCase):
         for name in ('scopes','loops','locals','captures','imports','parameters'):
             self.assertFalse(walls(lower((root/(name+'.sv')).read_text())), name)
 
+    def test_generated_constant_packed_targets_are_continuous_windows(self):
+        d = lower('module top; wire [3:0] chain; assign chain[0]=1\'b1; '
+                  'for(genvar i=0;i<3;i++) begin:g '
+                  'assign chain[i+1]=chain[i]; end endmodule')
+        self.assertFalse(walls(d))
+        assignments = [node for node in nodes(d) if node.get('kind') == 'Assign']
+        self.assertEqual(len(assignments), 4)
+        self.assertEqual([node['target']['index']['bits'][-2:]
+                          for node in assignments], ['00', '01', '10', '11'])
+
 
 if __name__ == '__main__':
     unittest.main()

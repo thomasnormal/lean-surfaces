@@ -15,12 +15,12 @@
  "summary": {
   "blocker_files": [
    [
-    "AssignmentExpression:target",
-    3507
-   ],
-   [
     "VariableSymbol:2state",
     3504
+   ],
+   [
+    "AssignmentExpression:target",
+    3500
    ],
    [
     "ExpressionStatement:CallExpression",
@@ -499,6 +499,10 @@
     14
    ],
    [
+    "SelectTarget:invalid-compilation",
+    13
+   ],
+   [
     "PatternCaseStatement",
     13
    ],
@@ -520,10 +524,6 @@
    ],
    [
     "ElabSystemTaskSymbol:ElabSystemTask",
-    12
-   ],
-   [
-    "SelectTarget:invalid-compilation",
     12
    ],
    [
@@ -972,8 +972,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4639,
-   "partial": 17341,
+   "clean": 4645,
+   "partial": 17335,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1034,7 +1034,7 @@
     52
    ],
    "simulation": [
-    4011,
+    4017,
     18679
    ],
    "simulation elaboration": [
@@ -1049,9 +1049,9 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 231,
-    "clean": 751,
-    "partial": 240,
+    "blocked_by_more": 230,
+    "clean": 752,
+    "partial": 239,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
@@ -1096,7 +1096,7 @@
      ],
      [
       "TimedStatement:DelayControl",
-      10
+      9
      ],
      [
       "MemberAccessExpression",
@@ -1327,9 +1327,9 @@
     "unlockable": 2
    },
    "chapter-11": {
-    "clean": 755,
+    "clean": 756,
     "error": 0,
-    "partial": 279,
+    "partial": 278,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 9
@@ -1423,9 +1423,9 @@
     "unlockable": 2
    },
    "chapter-23": {
-    "clean": 176,
+    "clean": 177,
     "error": 0,
-    "partial": 675,
+    "partial": 674,
     "skip_include": 0,
     "total": 851,
     "unlockable": 0
@@ -1455,9 +1455,9 @@
     "unlockable": 0
    },
    "chapter-27": {
-    "clean": 182,
+    "clean": 186,
     "error": 0,
-    "partial": 172,
+    "partial": 168,
     "skip_include": 0,
     "total": 354,
     "unlockable": 0

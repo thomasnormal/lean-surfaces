@@ -186,6 +186,9 @@ def admitCXXTemporaryObjectExpression (artifact : Artifact) (path : List Nat) :
 def admitCXXNewExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXNewExpr" "new-expression"
 
+def admitCXXDeleteExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXDeleteExpr" "delete-expression"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

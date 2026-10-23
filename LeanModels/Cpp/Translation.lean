@@ -219,6 +219,9 @@ def admitCXXStaticCastExpression (artifact : Artifact) (path : List Nat) :
 def admitCXXConstCastExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXConstCastExpr" "const-cast-expression"
 
+def admitCXXReinterpretCastExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXReinterpretCastExpr" "reinterpret-cast-expression"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

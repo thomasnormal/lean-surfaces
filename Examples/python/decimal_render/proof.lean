@@ -43,10 +43,10 @@ private theorem builtin_not_namedtuple : findNamedTuple decimal_render "str" = n
   rfl
 
 private theorem scalar_decimal (value : PyInt)
-    (valueBound : value.natAbs < 10 ^ 640) :
+    (valueBound : value.natAbs < 10 ^ 1024) :
     intDecimal value = some (toString value) := by
   unfold intDecimal
-  change (if value.natAbs < 10 ^ 640 then some (toString value) else none) = _
+  change (if value.natAbs < 10 ^ 1024 then some (toString value) else none) = _
   exact if_pos valueBound
 
 private theorem scalar_call (value : PyInt) (text : String)
@@ -75,7 +75,7 @@ private theorem scalar_call (value : PyInt) (text : String)
       renderedHeap]
 
 theorem scalar_str_total (value : PyInt)
-    (valueBound : value.natAbs < 10 ^ 640) :
+    (valueBound : value.natAbs < 10 ^ 1024) :
     decimal_render.scalar_str(value) ==> toString value := by
   exact scalar_call value (toString value) (scalar_decimal value valueBound)
 

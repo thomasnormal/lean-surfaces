@@ -26,13 +26,13 @@ set_option exponentiation.threshold 1024
 #py_check decimal_render.namedtuple_str(-27) = "Pair(x=-27, y=7)"
 #py_check decimal_render.fstring_str(-27) = "-27"
 
-#guard intDecimal ((10 : Int) ^ 640 - 1) matches some _
-#guard intDecimal (-((10 : Int) ^ 640 - 1)) matches some _
-#guard intDecimal ((10 : Int) ^ 640) matches none
-#guard intDecimal (-((10 : Int) ^ 640)) matches none
+#guard intDecimal ((10 : Int) ^ 1024 - 1) matches some _
+#guard intDecimal (-((10 : Int) ^ 1024 - 1)) matches some _
+#guard intDecimal ((10 : Int) ^ 1024) matches none
+#guard intDecimal (-((10 : Int) ^ 1024)) matches none
 
 theorem scalar_str_total (value : PyInt)
-    (valueBound : value.natAbs < 10 ^ 640) :
+    (valueBound : value.natAbs < 10 ^ 1024) :
     decimal_render.scalar_str(value) ==> toString value := by proofs
 
 #print axioms scalar_str_total

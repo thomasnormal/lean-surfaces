@@ -52,7 +52,7 @@ set_option exponentiation.threshold 1024
 #guard callFunction repr_lab "set_value" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "closure" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "generator" #[] 4096 matches .unsupported _
-#guard callFunction repr_lab "large_length" #[.int 641] 4096 matches .unsupported _
+#guard callFunction repr_lab "large_length" #[.int 1025] 4096 matches .unsupported _
 #guard callFunction repr_lab "deep" #[.int 65] 4096 matches .ok _
 #guard callFunction repr_lab "deep" #[.int 80] 4096 matches .ok _
 #guard callFunction repr_lab "deep" #[.int 129] 4096 matches .unsupported _
@@ -67,7 +67,7 @@ set_option exponentiation.threshold 1024
 theorem boolean_repr (value : PyBool) :
     repr_lab.of(value) ==> (if value then "True" else "False") := by proofs
 
-theorem integer_repr (value : PyInt) (valueBound : value.natAbs < 10 ^ 640) :
+theorem integer_repr (value : PyInt) (valueBound : value.natAbs < 10 ^ 1024) :
     repr_lab.of(value) ==> toString value := by proofs
 
 #print axioms boolean_repr

@@ -49,7 +49,7 @@ set_option exponentiation.threshold 1024
 theorem boolean_field (value : PyBool) :
     fstring_repr.repr_field(value) ==> ("[" ++ (if value then "True" else "False") ++ "]") := by proofs
 
-theorem integer_field (value : PyInt) (valueBound : value.natAbs < 10 ^ 640) :
+theorem integer_field (value : PyInt) (valueBound : value.natAbs < 10 ^ 1024) :
     fstring_repr.repr_field(value) ==> ("[" ++ toString value ++ "]") := by proofs
 
 theorem unicode_str_field (value : PyStr) :

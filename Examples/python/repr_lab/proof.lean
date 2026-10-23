@@ -13,7 +13,7 @@ theorem boolean_repr (value : PyBool) :
     repr_lab.of(value) ==> (if value then "True" else "False") := by
   py_prove [repr_lab, reprVal]
 
-theorem integer_repr (value : PyInt) (valueBound : value.natAbs < 10 ^ 640) :
+theorem integer_repr (value : PyInt) (valueBound : value.natAbs < 10 ^ 1024) :
     repr_lab.of(value) ==> toString value := by
   have rendered : intDecimal value = some (toString value) := by
     unfold intDecimal

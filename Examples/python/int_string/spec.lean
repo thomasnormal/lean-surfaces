@@ -101,7 +101,7 @@ set_option maxRecDepth 8192
 #py_check int_string.keyword_value_error() raises .zeroDivisionError
 #py_check int_string.arity_value_error() raises .zeroDivisionError
 #guard callFunction int_string "parse_decimal"
-  #[.str (String.ofList (List.replicate 641 '0'))] 4096 matches .unsupported _
+  #[.str (String.ofList (List.replicate 1025 '0'))] 4096 matches .unsupported _
 
 theorem grouped_offset_total (offset : PyInt) :
     int_string.grouped_offset(offset) ==> 1024 + offset := by proofs

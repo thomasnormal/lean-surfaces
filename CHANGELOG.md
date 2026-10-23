@@ -12,6 +12,12 @@ change is listed here under **Changed** or **Removed**.
 
 ## [Unreleased]
 
+### Changed
+
+- The fixed decimal parsing and rendering budget is now 1024 digits. `int`,
+  `str`, `print`, f-strings, percent formatting, and nested container, range,
+  and namedtuple rendering admit the wider boundary and refuse larger values.
+
 ## [0.1.14] — 2026-10-21
 
 ### Added

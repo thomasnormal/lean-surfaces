@@ -2687,12 +2687,12 @@ using the original string's CPython `repr` truncated to 200 rendered
 characters, even when that cuts an escape or the closing quote. Rendering
 reuses `reprStr`, not a second quote/escape implementation.
 
-The tier admits at most **640 ASCII digits in the entire original string**,
-counted before syntax validation. This is the smallest configurable limit
-in the pinned CPython 3.9 family: `PYTHONINTMAXSTRDIGITS` may lower the
-default 4,300 to 640 or disable the limit. Above 640, even an invalid
-spelling's exception depends on that setting and on validation order, so
-the model refuses rather than guesses. Signs, underscores, and surrounding
+The tier admits at most **1024 ASCII digits in the entire original string**,
+counted before syntax validation. This fixed budget keeps kernel rendering
+bounded while covering the ordinary pinned CPython 3.9 configuration (whose
+default is 4,300 digits). A process configured below 1024 is outside the
+model's pinned oracle; above 1024, even an invalid spelling's exception depends
+on that setting and on validation order, so the model refuses rather than guesses. Signs, underscores, and surrounding
 whitespace do not consume the digit budget; whitespace length is not
 bounded. Non-ASCII input, including Unicode digits/whitespace, remains loud.
 `decimalDigitsAux` specializes the structural radix walker described below.
@@ -2716,8 +2716,8 @@ consume a prefix only when it matches the base. Invalid-literal errors name
 the requested base, including zero, and reuse the original value's repr with
 CPython's 200-character truncation.
 
-Decimal conversion retains the 640-digit count above. Other bases bound all
-ASCII alphanumeric characters in the original input to 640, including the
+Decimal conversion retains the 1024-digit count above. Other bases bound all
+ASCII alphanumeric characters in the original input to 1024, including the
 prefix; this is a conservative resource bound, also for power-of-two bases
 that CPython exempts from its configurable conversion limit. Unicode input,
 non-ASCII bytes and heap conversion protocols remain unfinished and loud.
@@ -2730,17 +2730,17 @@ all bases, prefix/underscore errors, validation precedence and retained effects.
 
 `intDecimal` is the single pure renderer for integer decimal text. It checks
 `value.natAbs < 10 ^ intDigitBudget` BEFORE `toString`, admitting exactly
-magnitudes with at most 640 decimal digits, including zero; the negative sign
+magnitudes with at most 1024 decimal digits, including zero; the negative sign
 does not consume the budget. This uses the existing parsing budget, moved
 above the scalar rendering block so the conversion has one source of truth.
 The helper remains kernel-reducible but is opaque to symbolic simplification:
 unrelated interpreter branches must not expand the large closed power while
 walking symbolic programs. A rendering proof unfolds it explicitly when it
 has the magnitude bound.
-Larger magnitudes refuse, never a guessed `ValueError`: CPython 3.9 permits
-the process to set its decimal digit limit to 640, a larger value, or zero
-(disabled), so output above the minimum supported limit is not
-configuration-independent. The model does not consult host configuration.
+Larger magnitudes refuse, never a guessed `ValueError`: the pinned CPython
+3.9 oracle normally permits 4,300 digits, while a process may choose a lower
+or disabled limit. The model uses its fixed 1024-digit budget and does not
+consult host configuration.
 
 All integer-producing rendering paths use this admission: `strOfVal` for
 scalar `str`, `%s`, and `%r`; `%d` after its existing bool-to-int coercion;
@@ -3728,7 +3728,7 @@ through that depth while keeping rendering cost independent of the caller's
 fuel; deeper structures remain loud.
 
 Every displayed integer, including range fields and nested dict keys, also
-obeys the configuration-independent 640-digit magnitude admission described
+obeys the fixed 1024-digit magnitude admission described
 in §decimal integer rendering. An over-budget integer makes the rendering
 refuse; it never invents the process-dependent decimal conversion exception.
 
@@ -4967,7 +4967,7 @@ flag, width, precision, length modifier, or mapping key. Per conversion:
 * `%x` is bounded lowercase hexadecimal over the same `asInt` inventory
   (negative values keep a leading `-`; bools coerce), else the faithful
   integer-required `TypeError`. Its digit count uses the same fixed budget.
-  All integer conversions share `intDecimal`/`intHex`'s 640-digit magnitude
+  All integer conversions share `intDecimal`/`intHex`'s 1024-digit magnitude
   budget (§decimal integer rendering); larger integers refuse loudly.
 * A CONTAINER argument (tuple/namedtuple/list/range) under `%s`/`%r` is
   LOUD: its `repr` is `reprVal`'s heap-recursive walk and this operator

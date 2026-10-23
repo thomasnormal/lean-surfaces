@@ -13,7 +13,7 @@ theorem boolean_field (value : PyBool) :
     fstring_repr.repr_field(value) ==> ("[" ++ (if value then "True" else "False") ++ "]") := by
   py_prove [fstring_repr, reprVal]
 
-theorem integer_field (value : PyInt) (valueBound : value.natAbs < 10 ^ 640) :
+theorem integer_field (value : PyInt) (valueBound : value.natAbs < 10 ^ 1024) :
     fstring_repr.repr_field(value) ==> ("[" ++ toString value ++ "]") := by
   have rendered : intDecimal value = some (toString value) := by
     unfold intDecimal

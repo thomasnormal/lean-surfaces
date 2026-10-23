@@ -744,6 +744,13 @@ private def ompForDirectiveTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "o"), ("kind", .string "OMPForDirective"),
         ("name", .string "for"), ("inner", .array [])]])]}
 
+private def ompSectionsDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPSectionsDirective"),
+        ("name", .string "sections"), ("inner", .array [])]])]}
+
 private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1235,6 +1242,9 @@ def ompParallelDirectiveTranslationWitness : Except String Unit :=
 def ompForDirectiveTranslationWitness : Except String Unit :=
   admitOMPForDirective ompForDirectiveTranslation [0]
 
+def ompSectionsDirectiveTranslationWitness : Except String Unit :=
+  admitOMPSectionsDirective ompSectionsDirectiveTranslation [0]
+
 def conditionalOperatorTranslationWitness : Except String Unit :=
   admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
@@ -1647,6 +1657,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompForDirectiveTranslationWitness matches .ok ()
 #guard admitOMPForDirective ompForDirectiveTranslation [] matches .error _
 #guard admitOMPForDirective functionTranslation [0] matches .error _
+#guard ompSectionsDirectiveTranslationWitness matches .ok ()
+#guard admitOMPSectionsDirective ompSectionsDirectiveTranslation [] matches .error _
+#guard admitOMPSectionsDirective functionTranslation [0] matches .error _
 #guard conditionalOperatorTranslationWitness matches .ok ()
 #guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
 #guard admitConditionalOperatorExpression functionTranslation [0] matches .error _

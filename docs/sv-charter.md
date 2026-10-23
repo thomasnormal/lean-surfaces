@@ -5208,3 +5208,14 @@ The census moves **4,506 → 4,507 clean** and **17,463 → 17,462 partial**;
 `ExpressionStatement:CallExpression` falls **3,602 → 3,599**. Differential
 coverage is **38 rows, 34 matches, 0 disagreements, and 4 recorded refusals**;
 grammar coverage is **200 witnesses, 69 MATCH, and 131 REFUSE**.
+
+### Inert module-originating `$exit` — 2026-10-23
+
+The module-originating `$exit` task now lowers to an inert statement, matching
+IEEE 1800-2023 §24.7's rule that `$exit` is ignored outside a
+program-originating process. Program process control and other contexts remain
+loud. The `exit_decl` fixture and differential row cover the admitted form.
+The census moves **4,507 → 4,511 clean** and **17,462 → 17,458 partial**;
+`ExpressionStatement:CallExpression` falls **3,599 → 3,595**. Differential
+coverage is **39 rows, 35 matches, 0 disagreements, and 4 recorded refusals**;
+grammar coverage remains **200 witnesses, 69 MATCH, and 131 REFUSE**.

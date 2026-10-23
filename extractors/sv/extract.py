@@ -114,8 +114,10 @@ SYSCALL_FATAL = "$fatal"
 # `$printtimescale` reports scope metadata without changing modeled state.  The
 # no-argument form is therefore safe to erase in the self-check tier; explicit
 # scope arguments remain loud because hierarchy/time-scale semantics are not
-# represented in the envelope state.
-SYSCALL_PURE_DIAGNOSTIC = "$printtimescale"
+# represented in the envelope state.  `$exit` is likewise inert for the
+# module-originating initial processes admitted by this tier (§24.7); program
+# process control is outside the self-check surface.
+SYSCALL_PURE_DIAGNOSTIC = ("$printtimescale", "$exit")
 # Severity tasks only affect a simulator's diagnostic stream.  The public
 # self-check state has no diagnostic channel, so a pure literal call can be
 # erased while preserving control flow and all modeled state.  Calls with
@@ -5764,7 +5766,7 @@ def _convert_syscall(sm, s, e):
         is_sys = bool(e.isSystemCall)
     except Exception:
         return unsupported(sm, s, "ExpressionStatement:CallExpression")
-    if is_sys and name == SYSCALL_PURE_DIAGNOSTIC:
+    if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)
         except Exception:

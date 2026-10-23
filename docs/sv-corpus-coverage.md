@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-23
 
-The chapter-scoped rerun covered **22,035** paths: **4,507 clean**,
-**17,462 partial**, **66 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,035** paths: **4,511 clean**,
+**17,458 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`ExpressionStatement:CallExpression` (3,599), `AssignmentExpression:target` (3,592),
+`ExpressionStatement:CallExpression` (3,595), `AssignmentExpression:target` (3,592),
 `VariableSymbol:2state` (3,501), `CallExpression` (3,290),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,481), `ConcurrentAssertionStatement`
@@ -93,6 +93,14 @@ moves clean files **4,506 → 4,507** and partial files **17,463 → 17,462**;
 `ExpressionStatement:CallExpression` falls **3,602 → 3,599**. Differential
 coverage is **38 rows, 34 matches, 0 disagreements, and 4 recorded refusals**;
 grammar coverage is **200 witnesses, 69 MATCH, and 131 REFUSE**.
+
+The module-originating `$exit` task now lowers to an inert statement, matching
+IEEE 1800-2023 §24.7's rule that `$exit` is ignored outside a program-originating
+process. Program process control and other contexts remain loud. The fresh
+rerun moves clean files **4,507 → 4,511** and partial files **17,462 → 17,458**;
+`ExpressionStatement:CallExpression` falls **3,599 → 3,595**. Differential
+coverage is **39 rows, 35 matches, 0 disagreements, and 4 recorded refusals**;
+grammar coverage remains **200 witnesses, 69 MATCH, and 131 REFUSE**.
 
 ## Nested fixed two-state arrays — 2026-10-22
 

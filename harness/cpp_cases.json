@@ -1078,6 +1078,17 @@
     "rung": 4
   },
   {
+    "id": "translation.omp-assume-directive",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "ompAssumeDirectiveTranslationWitness",
+    "cpp_source": "#pragma omp assume no_openmp\nvoid f() {}",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.omp-metadirective",
     "kind": "translation",
     "corpus": "translation witness",

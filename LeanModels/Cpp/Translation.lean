@@ -354,6 +354,9 @@ def admitOMPSingleDirective (artifact : Artifact) (path : List Nat) :
 def admitOMPMasterDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPMasterDirective" "omp-master-directive"
 
+def admitOMPCriticalDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPCriticalDirective" "omp-critical-directive"
+
 def admitOMPTaskDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTaskDirective" "omp-task-directive"
 

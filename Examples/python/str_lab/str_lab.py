@@ -393,7 +393,7 @@ def builtin_round_noargs():
 
 def builtin_format(value):
     # The value-only format() slice shares CPython's default __format__ text
-    # with str(); non-empty specifications remain a loud frontier.
+    # with str(); the bare decimal specification is pinned below.
     return format(value)
 
 
@@ -406,6 +406,8 @@ def builtin_format_noargs():
 
 
 def builtin_format_bad_spec(value):
+    # The bare decimal integer specification is the first non-empty format
+    # mini-language rung; flags, widths, and other codes remain loud.
     return format(value, "d")
 
 

@@ -3719,9 +3719,10 @@ controls, container/DAG/cycle cases, and a kernel-checked script for stdout orde
 rendering workers as `str(value)`. The value-only form accepts the tier's scalar
 and rendered-container inventory; argument evaluation remains left-to-right,
 and CPython's missing-value, non-string-specification, and too-many-arguments
-errors are retained exactly. A non-empty format specification is refused
-loudly: implementing Python's format mini-language and custom `__format__`
-protocols is a separate unfinished boundary, not an out-of-scope feature.
+errors are retained exactly. The first non-empty specification rung is bare
+`"d"` for integers and Booleans, using the fixed decimal renderer. Flags,
+widths, other conversion codes, and custom `__format__` protocols remain loud
+until the full format mini-language is represented.
 
 The call allocates nothing and mutates no world state, so it stays in
 `Expr.heapFree`; the proof layer adds only the ordinary builtin dispatch arms

@@ -531,7 +531,7 @@
   {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_format", "args": [[3], [true], [1.5], ["x"], [null]], "expect": "match", "note": "format()'s value-only slice uses the default scalar __format__ text"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_format_empty", "args": [[-7], ["x"]], "expect": "match", "note": "an explicit empty format specification is equivalent to the value-only form"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_format_noargs", "args": [[]], "expect": "match", "note": "format() keeps CPython's exact missing-value TypeError"},
-  {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_format_bad_spec", "args": [[3]], "expect": "unsupported", "note": "non-empty format specifications remain loud until the format mini-language is modeled"},
+  {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_format_bad_spec", "args": [[3]], "expect": "match", "note": "the bare decimal d specification is admitted for integer values"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_format_bad_type", "args": [[3]], "expect": "match", "note": "the second argument's non-string TypeError is faithful"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "builtin_format_toomany", "args": [[3]], "expect": "match", "note": "format() keeps CPython's exact maximum-arity TypeError"},
   {"file": "Examples/python/str_lab/str_lab.py", "function": "fmt_hex", "args": [[255]], "expect": "match", "note": "bare %x over the scalar integer/Boolean inventory"},

@@ -245,7 +245,7 @@ yet modelled, a container argument, a non-ASCII `%r`, and a mapping RHS. -/
 #py_check str_lab.builtin_format_empty(-7) = "-7"
 #py_check str_lab.builtin_format_noargs() raises
   (.typeError "format expected at least 1 argument, got 0")
-#guard callFunction str_lab "builtin_format_bad_spec" #[.int 3] 4096 matches .unsupported _
+#py_check str_lab.builtin_format_bad_spec(3) = "3"
 #py_check str_lab.builtin_format_bad_type(3) raises
   (.typeError "format() argument 2 must be str, not int")
 #py_check str_lab.builtin_format_toomany(3) raises

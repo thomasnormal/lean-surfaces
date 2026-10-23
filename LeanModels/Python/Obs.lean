@@ -2808,7 +2808,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                   dsimp only
                                   split
                                   · exact .liftResF h₁ _
-                                  · exact .unsupported
+                                  · exact .liftResF h₁ _
                               | cons _ _ => simp only; exact .exn
                         · -- the pass-3 absent-arm live view: the guard
                           -- (funs + top-level def-freedom, both from hm)

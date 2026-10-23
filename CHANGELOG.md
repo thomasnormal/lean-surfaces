@@ -58,6 +58,9 @@ change is listed here under **Changed** or **Removed**.
   trace-clock call remains the admitted form.
 - Container `repr` and `ascii` rendering now use a fixed 256-level depth
   budget; deeper structures remain loud independently of caller fuel.
+- `format(value, "d")` now admits the bare decimal specification for integer
+  and Boolean values through the fixed decimal renderer; other non-empty
+  format specifications remain loud.
 
 ## [0.1.14] — 2026-10-21
 

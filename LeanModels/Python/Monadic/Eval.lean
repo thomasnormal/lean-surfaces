@@ -340,7 +340,7 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     | [v] => do liftRes (strOfValH (← frameHeap) v)
     | [v, .str spec] =>
         if spec == "" then do liftRes (strOfValH (← frameHeap) v)
-        else refuse "format() with a non-empty format specification is outside the tier"
+        else liftRes (formatSpecH v spec)
     | [_, spec] =>
         raisePy (.typeError s!"format() argument 2 must be str, not {spec.typeName}")
     | vs => raisePy (.typeError s!"format expected at most 2 arguments, got {vs.length}")

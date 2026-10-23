@@ -2274,6 +2274,21 @@ def reprArgs (h : Heap) (vs : List RVal) : Res RVal :=
 def formatValueH (heap : Heap) (value : RVal) (reprConversion : Bool) : Res RVal :=
   if reprConversion then reprArgs heap [value] else strOfValH heap value
 
+/-- The measured non-empty format specification rung: bare decimal `d` for
+integers and Booleans. The full format mini-language and non-integral
+protocols remain loud until their grammar is represented. -/
+def formatSpecH (value : RVal) (spec : String) : Res RVal :=
+  if spec == "d" then
+    match value with
+    | .int n =>
+        match intDecimal n with
+        | some text => .ok (.str text)
+        | Option.none => .unsupported "integer decimal rendering beyond intDigitBudget is outside the tier (CPython's configurable digit limit; docs/memory-model.md §decimal integer rendering)"
+    | .bool b => .ok (.str (if b then "1" else "0"))
+    | _ => .unsupported "format() with this value/specification is outside the tier (only bare d for int/bool is modeled)"
+  else
+    .unsupported "format() with a non-empty format specification is outside the tier"
+
 /-- Space-join `print` arguments (CPython's default `sep`); the first
 unrenderable one wins. `print()` is the empty line. -/
 def strOfArgs (h : Heap) : List RVal → Option String
@@ -7018,7 +7033,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     | [v] => Run.liftRes st (strOfValH st.world.heap v)
                     | [v, .str spec] =>
                       if spec == "" then Run.liftRes st (strOfValH st.world.heap v)
-                      else .unsupported "format() with a non-empty format specification is outside the tier"
+                      else Run.liftRes st (formatSpecH v spec)
                     | [_, spec] =>
                       .exn st (.typeError s!"format() argument 2 must be str, not {spec.typeName}")
                     | vs => .exn st (.typeError s!"format expected at most 2 arguments, got {vs.length}")

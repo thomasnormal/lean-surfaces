@@ -179,6 +179,14 @@ active-path and loud-failure boundaries.
 DECIDED: spend a larger fixed rendering budget for ordinary nested containers
 without making rendering depend on caller fuel.
 
+## 2026-10-23-pycomplete-73 — bare decimal `format` specification
+
+The first non-empty builtin `format` specification is now admitted for
+integers and Booleans: `format(value, "d")` reuses the fixed decimal renderer
+and preserves its digit budget. Flags, widths, other conversion codes, and
+custom `__format__` protocols remain loud until the complete mini-language is
+modeled.
+
 ## 2026-10-23-pycomplete-63 — Latin-1 string case mapping
 
 String `swapcase`, `isupper`, `islower`, and `upper` now admit CPython's

@@ -955,7 +955,6 @@ WHITELIST_CLASS = {
     "str_lab::isup": "str.non-ascii",
     "str_lab::fmt_nonascii_r": "str.non-ascii",
     "str_lab::fmt_char": "str.surrogate",
-    "str_lab::builtin_format_bad_spec": "format.minilanguage",
     "str_lab::fmt_width": "format.percent-minilanguage",
     "str_lab::fmt_hex": "format.percent-minilanguage",
     "str_lab::fmt_bad": "format.percent-minilanguage",

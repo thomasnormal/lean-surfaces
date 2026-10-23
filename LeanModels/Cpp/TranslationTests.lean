@@ -667,6 +667,13 @@ private def cxxUnresolvedMemberTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "m"), ("kind", .string "CXXUnresolvedMemberExpr"),
         ("name", .string "member"), ("inner", .array [])]])]}
 
+private def cxxDependentScopeDeclRefTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "d"), ("kind", .string "CXXDependentScopeDeclRefExpr"),
+        ("name", .string "reference"), ("inner", .array [])]])]}
+
 private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1125,6 +1132,9 @@ def cxxPseudoDestructorTranslationWitness : Except String Unit :=
 def cxxUnresolvedMemberTranslationWitness : Except String Unit :=
   admitCXXUnresolvedMemberExpression cxxUnresolvedMemberTranslation [0]
 
+def cxxDependentScopeDeclRefTranslationWitness : Except String Unit :=
+  admitCXXDependentScopeDeclRefExpression cxxDependentScopeDeclRefTranslation [0]
+
 def conditionalOperatorTranslationWitness : Except String Unit :=
   admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
@@ -1504,6 +1514,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard cxxUnresolvedMemberTranslationWitness matches .ok ()
 #guard admitCXXUnresolvedMemberExpression cxxUnresolvedMemberTranslation [] matches .error _
 #guard admitCXXUnresolvedMemberExpression functionTranslation [0] matches .error _
+#guard cxxDependentScopeDeclRefTranslationWitness matches .ok ()
+#guard admitCXXDependentScopeDeclRefExpression cxxDependentScopeDeclRefTranslation [] matches .error _
+#guard admitCXXDependentScopeDeclRefExpression functionTranslation [0] matches .error _
 #guard conditionalOperatorTranslationWitness matches .ok ()
 #guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
 #guard admitConditionalOperatorExpression functionTranslation [0] matches .error _

@@ -786,6 +786,13 @@ private def openACCExitDataConstructTranslation : Artifact := {emptyTranslation 
       .object [("id", .string "o"), ("kind", .string "OpenACCExitDataConstruct"),
         ("name", .string "exit-data"), ("inner", .array [])]])]}
 
+private def openACCHostDataConstructTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OpenACCHostDataConstruct"),
+        ("name", .string "host-data"), ("inner", .array [])]])]}
+
 private def ompMetadirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1813,6 +1820,9 @@ def openACCEnterDataConstructTranslationWitness : Except String Unit :=
 def openACCExitDataConstructTranslationWitness : Except String Unit :=
   admitOpenACCExitDataConstruct openACCExitDataConstructTranslation [0]
 
+def openACCHostDataConstructTranslationWitness : Except String Unit :=
+  admitOpenACCHostDataConstruct openACCHostDataConstructTranslation [0]
+
 def ompMetadirectiveTranslationWitness : Except String Unit :=
   admitOMPMetadirective ompMetadirectiveTranslation [0]
 
@@ -2465,6 +2475,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard openACCExitDataConstructTranslationWitness matches .ok ()
 #guard admitOpenACCExitDataConstruct openACCExitDataConstructTranslation [] matches .error _
 #guard admitOpenACCExitDataConstruct functionTranslation [0] matches .error _
+#guard openACCHostDataConstructTranslationWitness matches .ok ()
+#guard admitOpenACCHostDataConstruct openACCHostDataConstructTranslation [] matches .error _
+#guard admitOpenACCHostDataConstruct functionTranslation [0] matches .error _
 #guard ompMetadirectiveTranslationWitness matches .ok ()
 #guard admitOMPMetadirective ompMetadirectiveTranslation [] matches .error _
 #guard admitOMPMetadirective functionTranslation [0] matches .error _

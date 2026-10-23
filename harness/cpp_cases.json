@@ -1023,6 +1023,17 @@
     "rung": 4
   },
   {
+    "id": "translation.attributed-statement",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "attributedStatementTranslationWitness",
+    "cpp_source": "int f(int value) { [[likely]] if (value) return 1; return 0; }",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

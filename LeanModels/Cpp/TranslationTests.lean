@@ -695,6 +695,13 @@ private def coroutineBodyTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "c"), ("kind", .string "CoroutineBodyStmt"),
         ("name", .string "coroutine"), ("inner", .array [])]])]}
 
+private def attributedStatementTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "a"), ("kind", .string "AttributedStmt"),
+        ("name", .string "attributed"), ("inner", .array [])]])]}
+
 private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1165,6 +1172,9 @@ def cxxStdInitializerListTranslationWitness : Except String Unit :=
 def coroutineBodyTranslationWitness : Except String Unit :=
   admitCoroutineBodyStatement coroutineBodyTranslation [0]
 
+def attributedStatementTranslationWitness : Except String Unit :=
+  admitAttributedStatement attributedStatementTranslation [0]
+
 def conditionalOperatorTranslationWitness : Except String Unit :=
   admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
@@ -1556,6 +1566,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard coroutineBodyTranslationWitness matches .ok ()
 #guard admitCoroutineBodyStatement coroutineBodyTranslation [] matches .error _
 #guard admitCoroutineBodyStatement functionTranslation [0] matches .error _
+#guard attributedStatementTranslationWitness matches .ok ()
+#guard admitAttributedStatement attributedStatementTranslation [] matches .error _
+#guard admitAttributedStatement functionTranslation [0] matches .error _
 #guard conditionalOperatorTranslationWitness matches .ok ()
 #guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
 #guard admitConditionalOperatorExpression functionTranslation [0] matches .error _

@@ -919,6 +919,13 @@ private def ompParallelMaskedTaskLoopDirectiveTranslation : Artifact := {emptyTr
       .object [("id", .string "o"), ("kind", .string "OMPParallelMaskedTaskLoopDirective"),
         ("name", .string "parallel-masked-taskloop"), ("inner", .array [])]])]}
 
+private def ompParallelMaskedTaskLoopSimdDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPParallelMaskedTaskLoopSimdDirective"),
+        ("name", .string "parallel-masked-taskloop-simd"), ("inner", .array [])]])]}
+
 private def ompTeamsDistributeDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1695,6 +1702,9 @@ def ompMaskedTaskLoopSimdDirectiveTranslationWitness : Except String Unit :=
 def ompParallelMaskedTaskLoopDirectiveTranslationWitness : Except String Unit :=
   admitOMPParallelMaskedTaskLoopDirective ompParallelMaskedTaskLoopDirectiveTranslation [0]
 
+def ompParallelMaskedTaskLoopSimdDirectiveTranslationWitness : Except String Unit :=
+  admitOMPParallelMaskedTaskLoopSimdDirective ompParallelMaskedTaskLoopSimdDirectiveTranslation [0]
+
 def ompTeamsDistributeDirectiveTranslationWitness : Except String Unit :=
   admitOMPTeamsDistributeDirective ompTeamsDistributeDirectiveTranslation [0]
 
@@ -2272,6 +2282,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompParallelMaskedTaskLoopDirectiveTranslationWitness matches .ok ()
 #guard admitOMPParallelMaskedTaskLoopDirective ompParallelMaskedTaskLoopDirectiveTranslation [] matches .error _
 #guard admitOMPParallelMaskedTaskLoopDirective functionTranslation [0] matches .error _
+#guard ompParallelMaskedTaskLoopSimdDirectiveTranslationWitness matches .ok ()
+#guard admitOMPParallelMaskedTaskLoopSimdDirective ompParallelMaskedTaskLoopSimdDirectiveTranslation [] matches .error _
+#guard admitOMPParallelMaskedTaskLoopSimdDirective functionTranslation [0] matches .error _
 #guard ompTeamsDistributeDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTeamsDistributeDirective ompTeamsDistributeDirectiveTranslation [] matches .error _
 #guard admitOMPTeamsDistributeDirective functionTranslation [0] matches .error _

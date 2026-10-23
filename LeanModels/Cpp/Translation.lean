@@ -279,6 +279,9 @@ def admitReturnStatement (artifact : Artifact) (path : List Nat) :
 def admitIfStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "IfStmt" "if-statement"
 
+def admitWhileStatement (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "WhileStmt" "while-statement"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

@@ -56,6 +56,8 @@ change is listed here under **Changed** or **Removed**.
 - `time.time(...)` now evaluates positional arguments and raises CPython's
   exact arity `TypeError` without consuming the trace; the zero-argument
   trace-clock call remains the admitted form.
+- Container `repr` and `ascii` rendering now use a fixed 256-level depth
+  budget; deeper structures remain loud independently of caller fuel.
 
 ## [0.1.14] — 2026-10-21
 

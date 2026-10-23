@@ -169,6 +169,16 @@ arguments with CPython's evaluation order and exact `TypeError` payload:
 before the error and the clock trace is left untouched. Keyword syntax and
 other clock-module surfaces remain loud at their existing boundaries.
 
+## 2026-10-23-pycomplete-72 — extend the fixed rendering depth
+
+The caller-independent `reprFuel` budget rises from 128 to 256 levels.
+`repr_lab.deep(129)` now matches CPython on both interpreter surfaces, while
+cycles, decimal magnitude limits, and deeper structures retain their existing
+active-path and loud-failure boundaries.
+
+DECIDED: spend a larger fixed rendering budget for ordinary nested containers
+without making rendering depend on caller fuel.
+
 ## 2026-10-23-pycomplete-63 — Latin-1 string case mapping
 
 String `swapcase`, `isupper`, `islower`, and `upper` now admit CPython's

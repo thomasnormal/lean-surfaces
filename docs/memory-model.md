@@ -3750,7 +3750,7 @@ by an ACTIVE-PATH list rather than by fuel; depth beyond the fixed
 `reprFuel` refuses (a budget refusal must not depend on the caller's
 fuel).
 
-The fixed `reprFuel` is 128 levels. This admits ordinary nested structures
+The fixed `reprFuel` is 256 levels. This admits ordinary nested structures
 through that depth while keeping rendering cost independent of the caller's
 fuel; deeper structures remain loud.
 

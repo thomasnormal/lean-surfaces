@@ -1920,6 +1920,7 @@ theorem fuelMono (fuel : Nat) :
           -- §3a: the trunk's `forDict` arm refuses; both fuels agree
           | forDict tg ad i n sv kd bd => simp only [execGen]; exact Run.le_refl _
           | countFrom cur step => simp only [execGen]; exact Run.le_refl _
+          | countFromVal cur step => simp only [execGen]; exact Run.le_refl _
           | whileLoop test body orelse =>
             simp only [execGen]
             refine Run.le_bind (ihE m st test kf hk) fun st t => ?_

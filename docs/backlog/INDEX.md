@@ -16,11 +16,26 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**467 entries across 17 lanes.** Regenerate with
+**482 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-10-23-pycomplete-62` |  | finite numeric `itertools.count` | python-completeness |
+| `2026-10-23-pycomplete-61` |  | canonical textual NaN construction | python-completeness |
+| `2026-10-23-pycomplete-60` |  | invalid high-octet `int(bytes)` | python-completeness |
+| `2026-10-23-pycomplete-59` |  | ASCII `float(bytes)` | python-completeness |
+| `2026-10-23-pycomplete-58` |  | Unicode decimal `int(str)` | python-completeness |
+| `2026-10-23-pycomplete-57` |  | heap-backed list repetition | python-completeness |
+| `2026-10-23-pycomplete-56` |  | string joins consume generators | python-completeness |
+| `2026-10-23-pycomplete-56` |  | `float.is_integer()` | python-completeness |
+| `2026-10-23-pycomplete-55` |  | integer modular `pow` | python-completeness |
+| `2026-10-23-pycomplete-54` |  | immediate containers in `ascii()` | python-completeness |
+| `2026-10-22-pycomplete-53` |  | extend the fixed container-rendering budget | python-completeness |
+| `2026-10-22-pycomplete-52` |  | scalar `divmod` protocol errors become faithful | python-completeness |
+| `2026-10-22-pycomplete-51` |  | bounded `str.index` closes the adjacent method wall | python-completeness |
+| `2026-10-22-pycomplete-50` |  | `str.join` reads the existing sequence tier | python-completeness |
+| `2026-10-22-pycomplete-49` |  | public baseline and the next ordinary-language inch | python-completeness |
 | `2026-10-21-pycomplete-48` |  | first-class dictionary views retain their source | python-completeness |
 | `2026-10-21-pycomplete-47` |  | starred assignment targets land | python-completeness |
 | `2026-08-27-pycomplete-46` |  | two operational notes bought by a mass deletion | python-completeness |

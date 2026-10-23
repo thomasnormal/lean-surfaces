@@ -556,10 +556,10 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
   else if fname == "count" then
     -- `itertools.count` — INFINITE by construction; a consumer's `break` is
     -- what ends it (sunfish's ray loop `for j in count(i + d, d)`).
-    match countArgs vs with
+    match countArgsVal vs with
     | Option.none => liftRes (countRefusal vs)
     | some (start, step) => do
-        let a ← heapPush (.generator "<count>" [] [.countFrom start step] .suspended)
+        let a ← heapPush (.generator "<count>" [] [.countFromVal start step] .suspended)
         pure (.ref a)
   else if fname == dictDelBuiltinName then
     -- §del: the statement's own effect. `del` has NO VALUE in Python and the
@@ -1911,6 +1911,12 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
       -- never exhausts: `count` is the infinite ray of sunfish's move generator,
       -- and a consumer's `break` is what ends it.
       pure (some (.int cur, .countFrom (cur + step) step :: k'))
+  | .countFromVal cur step :: k' =>
+      match evalBinOp .add cur step with
+      | .ok next => pure (some (cur, .countFromVal next step :: k'))
+      | .exn error => raisePy error
+      | .timeout => exhausted
+      | .unsupported message => refuse message
   | .whileLoop test body orelse :: k' => do
       let t ← evalOpen K m test
       let b ← truthyM t

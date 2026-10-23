@@ -147,6 +147,11 @@ def count_head(start, step):
     return next(count(start, step))
 
 
+def count_prefix(start, step):
+    values = count(start, step)
+    return next(values), next(values), next(values)
+
+
 def count_many():
     return count(1, 2, 3)
 

@@ -32,6 +32,10 @@ change is listed here under **Changed** or **Removed**.
   and NaN arithmetic propagation remain loud.
 - `str.join()` now consumes admitted heap generators, preserving their lazy
   state and CPython's indexed element validation.
+- Monadic `itertools.count` now admits finite integer, Boolean, and binary64
+  start/step values through a value-carrying generator frame, preserving
+  CPython's first-value subtype and numeric addition on both interpreter
+  surfaces. NaN and infinity remain loud.
 
 ## [0.1.14] — 2026-10-21
 

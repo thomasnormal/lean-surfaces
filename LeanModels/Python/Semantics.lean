@@ -1941,6 +1941,7 @@ def floatCastArgs (arguments : List RVal) : Res RVal :=
   | [value] => floatCastVal value
   | _ => .exn (.typeError s!"float expected at most 1 argument, got {arguments.length}")
 
+
 /-- The `ord` builtin: the CODE POINT of a one-character str. CPython
 measures the length in code points and names the found length in its
 message; a non-str argument is the faithful `TypeError` (a `.ref` is
@@ -5432,11 +5433,45 @@ def countArgs : List RVal → Option (Int × Int)
      | _, _ => Option.none)
   | _ => Option.none
 
+def countNumber (value : RVal) : Bool :=
+  match value with
+  | .int _ | .bool _ => true
+  | .float number => !number.isNaN && !number.isInf
+  | _ => false
+
+/- The monadic iterator admits the immediate numeric inventory. Its state is
+   kept as RVal so `count(True, 2)` yields `True` first and then integers, and
+   `count(1, 0.5)` yields the integer first and then binary64 values. -/
+def countArgsVal : List RVal → Option (RVal × RVal)
+  | [] => some (.int 0, .int 1)
+  | [start] =>
+    if countNumber start then
+      match start with
+      | .bool b => some (.int (if b then 1 else 0), .int 1)
+      | _ => some (start, .int 1)
+    else Option.none
+  | [start, step] =>
+    if countNumber start && countNumber step then
+      match start, step with
+      | .bool b, .int 1 => some (.int (if b then 1 else 0), step)
+      | .bool b, .bool true => some (.int (if b then 1 else 0), step)
+      | _, _ => some (start, step)
+    else Option.none
+  | _ => Option.none
+
 /-- Classify an integer-only count-frame admission miss without inventing
 a nonnumeric exception for a valid floating-point counter. -/
 def countRefusal (values : List RVal) : Res RVal :=
   if values.length > 2 then
     .exn (.typeError s!"count() takes at most 2 arguments ({values.length} given)")
+  else if values.any (fun
+      | .float number => number.isNaN
+      | _ => false) then
+    .unsupported "NaN payload/sign propagation in itertools.count requires an explicit floating-point oracle"
+  else if values.any (fun
+      | .float number => number.isInf
+      | _ => false) then
+    .unsupported "infinite floating-point stepping in itertools.count requires an explicit floating-point oracle"
   else if values.all (fun
       | .int _ | .bool _ | .float _ => true
       | _ => false) && values.any (fun
@@ -5482,7 +5517,8 @@ def genBreak : GenCont → Option GenCont
   -- silent pop.
   | .enumSeq .. :: _ | .enumList .. :: _ | .enumDict .. :: _
   | .iterDict .. :: _ | .iterList .. :: _
-  | .countFrom .. :: _ => Option.none
+  | .countFrom _ _ :: _ => Option.none
+  | .countFromVal _ _ :: _ => Option.none
 
 /-- `continue`: drop the pending blocks, KEEP the enclosing loop frame
 (re-entering it takes the next element / re-tests). -/
@@ -5496,7 +5532,8 @@ def genContinue : GenCont → Option GenCont
   | k@(.whileLoop .. :: _) => some k
   | .enumSeq .. :: _ | .enumList .. :: _ | .enumDict .. :: _
   | .iterDict .. :: _ | .iterList .. :: _
-  | .countFrom .. :: _ => Option.none
+  | .countFrom _ _ :: _ => Option.none
+  | .countFromVal _ _ :: _ => Option.none
 
 mutual
   /-- Does this statement contain a `yield` in its own scope? The
@@ -6867,12 +6904,12 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- consumer's `break` is what ends it (sunfish's ray
                     -- loop `for j in count(i + d, d)`)
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
-                    (match countArgs vs with
+                    (match countArgsVal vs with
                      | Option.none =>
                        Run.liftRes st (countRefusal vs)
                      | some (start, step) =>
                        let g : Obj :=
-                         .generator "<count>" [] [.countFrom start step] .suspended
+                         .generator "<count>" [] [.countFromVal start step] .suspended
                        .ok { st with world :=
                                { st.world with heap := st.world.heap.push g } }
                          (.ref st.world.heap.size))
@@ -8380,6 +8417,12 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
       -- never exhausts: `count` is the infinite ray of sunfish's move
       -- generator, and a consumer's `break` is what ends it
       .ok st (some (.int cur, .countFrom (cur + step) step :: k'))
+    | .countFromVal cur step :: k' =>
+      match evalBinOp .add cur step with
+      | .ok next => .ok st (some (cur, .countFromVal next step :: k'))
+      | .exn error => .exn st error
+      | .timeout => .timeout
+      | .unsupported message => .unsupported message
     | .whileLoop test body orelse :: k' =>
       evalExpr m fuel st test ⤳ fun st t =>
       Run.liftRes st (truthyH st.world.heap t) ⤳ fun st b =>

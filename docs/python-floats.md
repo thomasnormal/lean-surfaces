@@ -127,13 +127,15 @@ tuple keys) also refuse. Existing float attributes remain loud rather than
 fabricating missing-attribute exceptions. Other float arithmetic must not fall
 into an integer-only `TypeError`.
 
-The `itertools.count` frame currently supports integer stepping. Valid float
-starts/steps therefore refuse at admission rather than fabricating the
-nonnumeric `TypeError`. Boolean starts with a non-unit step also refuse:
-CPython preserves the initial Boolean in that case, unlike its unit-step
-integer path. Invalid nonnumeric arguments and excessive positional arity
-retain their faithful exceptions. These counter-frame limitations remain
-unfinished work, not scope exclusions.
+The monadic `itertools.count` frame now admits finite immediate integer,
+Boolean, and binary64 start/step values. It keeps the first value's CPython
+subtype (for example, `count(True, 2)` yields `True, 3, 5`) and advances with
+the shared numeric addition worker, so mixed integer/float stepping preserves
+binary64 rounding. NaN and infinite start/step values remain loud because
+their propagation needs an explicit floating-point oracle. The proof
+Both interpreter surfaces use the value-carrying frame for these finite rows;
+invalid nonnumeric arguments and excessive positional arity retain their
+faithful exceptions.
 
 The new value forms add scalar proof cases without changing existing theorem
 statements. `float_lab` proves concrete results against its extracted Python

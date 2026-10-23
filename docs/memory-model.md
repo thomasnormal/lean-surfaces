@@ -737,12 +737,17 @@ inside `bound`'s nested `moves()` are invisible, that whole def being
 `Stmt.unsupported "FunctionDef"`.
 
 **Builtin iterators.** `enumerate` and `itertools.count` are generator
-FRAMES (`enumSeq`/`enumList`/`countFrom`), not a second object kind, so
+FRAMES (`enumSeq`/`enumList`/`countFrom`/`countFromVal`), not a second object kind, so
 `for`/`next`/`stepIter` consume them through one mechanism:
 `enumerate(s)` is as lazy as a `def` with a `yield` (value sequences
 snapshot — all immutable in tier; a heap list gets the live cursor), and
 `count` never exhausts, which is exactly sunfish's ray
 (`for j in count(i + d, d)`, ended by the consumer's `break`).
+Both interpreter surfaces use `countFromVal` for finite immediate integer,
+Boolean, and binary64 values and advance with numeric `+`; the frame preserves
+a Boolean first value where CPython does, while NaN and infinity propagation
+remain an explicit refusal. The legacy integer `countFrom` frame remains in
+the runtime vocabulary for existing pure-frame lemmas.
 
 **Loud, deliberately** — never a fake answer: `send`/`throw`/`close` and
 every other generator method; a `yield` in EXPRESSION position (the

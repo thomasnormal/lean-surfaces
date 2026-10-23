@@ -2757,6 +2757,13 @@ theorem pbExecGen_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) 
       | countFrom cur step =>
           simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
           exact PBF.ok hslot _
+      | countFromVal cur step =>
+          simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
+          cases he : evalBinOp .add cur step <;> simp only [he]
+          · exact PBF.ok hslot _
+          · exact PBF.exn hslot _
+          · exact PBF.timeout
+          · exact PBF.unsupported
       | whileLoop test body orelse =>
           simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
           refine PBF.bind (ihE m st test hslot) fun s2 t _ hs2 => ?_
@@ -4166,7 +4173,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                   -- count
                                   · refine PBF.bind (ihEs m st args.toList hslot)
                                       fun s1 vs _ hs1 => ?_
-                                    cases countArgs vs with
+                                    cases hca : countArgsVal vs with
                                     | none => exact PBF.liftRes hs1 _
                                     | some sst => exact PBF.pushRef hs1 _
                                   refine PBF.ite (fun _ => ?_) fun _ => ?_

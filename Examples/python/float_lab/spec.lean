@@ -23,6 +23,13 @@ set_option exponentiation.threshold 2048
     .overflowError "int too large to convert to float"
 #py_check float_lab.count_head(3, 2) = 3
 #py_check float_lab.count_head(true, 1) = 1
+#py_check float_lab.count_prefix(1, Float64.ofBits 0x3fe0000000000000) =
+  Val.tuple #[.int 1, .float (Float64.ofBits 0x3ff8000000000000),
+    .float (Float64.ofBits 0x4000000000000000)]
+#py_check float_lab.count_prefix(true, 2) =
+  Val.tuple #[.bool true, .int 3, .int 5]
+#py_check float_lab.count_prefix(false, 0) =
+  Val.tuple #[.bool false, .int 0, .int 0]
 #py_check float_lab.count_many() raises
     .typeError "count() takes at most 2 arguments (3 given)"
 #py_check float_lab.addition() = Float64.ofBits 0x4008000000000000

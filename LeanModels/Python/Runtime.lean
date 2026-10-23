@@ -200,6 +200,10 @@ inductive GenFrame where
   | iterList (a : Addr) (i : Nat)
   /-- `itertools.count(start, step)` — never exhausts. -/
   | countFrom (cur : Int) (step : Int)
+  /-- Numeric `itertools.count` state. This value-carrying frame preserves
+  Python's first-value subtype and uses the shared numeric `+` worker for
+  subsequent values on both interpreter surfaces. -/
+  | countFromVal (cur : RVal) (step : RVal)
 deriving Repr, Inhabited, BEq
 
 /-- A suspended generator's continuation: the frame stack, innermost
@@ -374,6 +378,7 @@ def GenFrame.WF (h : Heap) : GenFrame → Prop
   | .block _ => True
   | .whileLoop .. => True
   | .countFrom .. => True
+  | .countFromVal cur step => RVal.WF h cur ∧ RVal.WF h step
 
 /-- Elementwise `GenFrame.WF`. -/
 def GenCont.WF (h : Heap) : GenCont → Prop

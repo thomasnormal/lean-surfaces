@@ -1114,6 +1114,13 @@ theorem ceExecGen_succ (ih : CE fuel) : CEExecGen (fuel + 1) := by
     -- §3a: the trunk never builds a `forDict` frame; its arm refuses
     | forDict tg ad i n sv kd bd => simp only [execGen]; exact .unsupported
     | countFrom cur step => simp only [execGen]; exact .ok h _
+    | countFromVal cur step =>
+      simp only [execGen]
+      cases he : evalBinOp .add cur step <;> simp only [he]
+      · exact .ok h _
+      · exact .exn h _
+      · exact .timeout
+      · exact .unsupported
 
 
 theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
@@ -2271,7 +2278,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           | unsupported msg => exact .unsupported
                     case bcount =>
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
-                      cases hca : countArgs vs with
+                      cases hca : countArgsVal vs with
                       | none => exact .liftRes hs2 _
                       | some pr =>
                         obtain ⟨start, step⟩ := pr

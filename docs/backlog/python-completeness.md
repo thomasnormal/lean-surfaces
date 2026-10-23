@@ -83,6 +83,19 @@ CPython's canonical quiet-NaN binary64 word with the explicit sign bit. The
 same forms work for ASCII bytes. Payload spellings such as `nan(1)`, invalid
 Unicode rendering, and NaN arithmetic payload/sign propagation remain loud.
 
+## 2026-10-23-pycomplete-62 — finite numeric `itertools.count`
+
+The monadic runner now carries `itertools.count`'s immediate numeric state as
+`RVal`, admitting finite integers, Booleans, and binary64 floats for the start
+and step. Each `next` returns the current value and advances through the
+shared numeric addition worker, preserving CPython's first-value subtype (for
+example, `count(True, 2)` yields `True, 3, 5`; a mixed integer/float counter
+rounds as ordinary binary64 addition). NaN and infinity starts or steps remain
+loud because their propagation needs an explicit floating-point oracle. Both
+interpreter surfaces use the value frame for the finite rows. `float_lab` and
+the differential battery cover finite mixed counters,
+Boolean starts, faithful invalid-argument errors, and the NaN refusal.
+
 ## 2026-10-22-pycomplete-49 — public baseline and the next ordinary-language inch
 
 The first post-public-master baseline was measured from `2730f338` (the

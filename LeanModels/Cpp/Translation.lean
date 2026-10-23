@@ -192,6 +192,9 @@ def admitCXXDeleteExpression (artifact : Artifact) (path : List Nat) :
 def admitCXXDefaultInitExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXDefaultInitExpr" "default-init-expression"
 
+def admitCXXScalarValueInitExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXScalarValueInitExpr" "scalar-value-init-expression"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

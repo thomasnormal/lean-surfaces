@@ -392,6 +392,13 @@ private def defaultInitTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "i"), ("kind", .string "CXXDefaultInitExpr"),
         ("name", .string "default"), ("inner", .array [])]])]}
 
+private def scalarValueInitTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "s"), ("kind", .string "CXXScalarValueInitExpr"),
+        ("name", .string "zero"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -541,6 +548,9 @@ def deleteTranslationWitness : Except String Unit :=
 
 def defaultInitTranslationWitness : Except String Unit :=
   admitCXXDefaultInitExpression defaultInitTranslation [0]
+
+def scalarValueInitTranslationWitness : Except String Unit :=
+  admitCXXScalarValueInitExpression scalarValueInitTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -726,6 +736,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard defaultInitTranslationWitness matches .ok ()
 #guard admitCXXDefaultInitExpression defaultInitTranslation [] matches .error _
 #guard admitCXXDefaultInitExpression functionTranslation [0] matches .error _
+#guard scalarValueInitTranslationWitness matches .ok ()
+#guard admitCXXScalarValueInitExpression scalarValueInitTranslation [] matches .error _
+#guard admitCXXScalarValueInitExpression functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

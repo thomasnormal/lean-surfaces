@@ -880,6 +880,17 @@
     "rung": 3
   },
   {
+    "id": "translation.member-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "memberExpressionTranslationWitness",
+    "cpp_source": "struct S { int value; }; int f(S* value) { return value->value; }",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "translation.compound-statement",
     "kind": "translation",
     "corpus": "translation witness",

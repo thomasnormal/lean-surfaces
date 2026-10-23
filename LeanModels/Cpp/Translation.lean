@@ -288,6 +288,9 @@ def admitDoStatement (artifact : Artifact) (path : List Nat) :
 def admitForStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ForStmt" "for-statement"
 
+def admitRangeForStatement (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXForRangeStmt" "range-for-statement"
+
 def admitSwitchStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "SwitchStmt" "switch-statement"
 

@@ -924,6 +924,17 @@
     "rung": 4
   },
   {
+    "id": "translation.range-for-statement",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "rangeForStatementTranslationWitness",
+    "cpp_source": "int f() { int total = 0; int values[2] = {1, 2}; for (int value : values) total += value; return total; }",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.switch-statement",
     "kind": "translation",
     "corpus": "translation witness",

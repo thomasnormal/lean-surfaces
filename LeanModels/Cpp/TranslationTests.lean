@@ -632,6 +632,13 @@ private def forStatementTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "f"), ("kind", .string "ForStmt"),
         ("name", .string "for"), ("inner", .array [])]])]}
 
+private def rangeForStatementTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "r"), ("kind", .string "CXXForRangeStmt"),
+        ("name", .string "range-for"), ("inner", .array [])]])]}
+
 private def switchStatementTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -941,6 +948,9 @@ def doStatementTranslationWitness : Except String Unit :=
 def forStatementTranslationWitness : Except String Unit :=
   admitForStatement forStatementTranslation [0]
 
+def rangeForStatementTranslationWitness : Except String Unit :=
+  admitRangeForStatement rangeForStatementTranslation [0]
+
 def switchStatementTranslationWitness : Except String Unit :=
   admitSwitchStatement switchStatementTranslation [0]
 
@@ -1248,6 +1258,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard forStatementTranslationWitness matches .ok ()
 #guard admitForStatement forStatementTranslation [] matches .error _
 #guard admitForStatement functionTranslation [0] matches .error _
+#guard rangeForStatementTranslationWitness matches .ok ()
+#guard admitRangeForStatement rangeForStatementTranslation [] matches .error _
+#guard admitRangeForStatement functionTranslation [0] matches .error _
 #guard switchStatementTranslationWitness matches .ok ()
 #guard admitSwitchStatement switchStatementTranslation [] matches .error _
 #guard admitSwitchStatement functionTranslation [0] matches .error _

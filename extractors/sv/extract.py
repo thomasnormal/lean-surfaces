@@ -121,7 +121,8 @@ SYSCALL_PURE_DIAGNOSTIC = ("$printtimescale", "$exit")
 # VCD setup tasks affect only an external waveform file, which is outside the
 # self-check oracle's observable state.  Their syntax is retained by the
 # frontend, while the tier erases the static setup calls below.
-SYSCALL_VCD = ("$dumpfile", "$dumpvars")
+SYSCALL_VCD = ("$dumpfile", "$dumpvars", "$dumpon", "$dumpoff",
+               "$dumpall", "$dumpflush", "$dumplimit")
 # Severity tasks only affect a simulator's diagnostic stream.  The public
 # self-check state has no diagnostic channel, so a pure literal call can be
 # erased while preserving control flow and all modeled state.  Calls with
@@ -5783,7 +5784,14 @@ def _convert_syscall(sm, s, e):
             args = list(e.arguments)
         except Exception:
             return unsupported(sm, s, "ExpressionStatement:CallExpression")
-        if name == "$dumpfile":
+        if name in ("$dumpon", "$dumpoff", "$dumpall", "$dumpflush"):
+            if args:
+                return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        elif name == "$dumplimit":
+            converted = convert_expr(sm, args[0]) if len(args) == 1 else None
+            if (converted is None or converted.get("kind") != "Literal"):
+                return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        elif name == "$dumpfile":
             converted = convert_expr(sm, args[0]) if args else None
             literal_arg = (args and
                            (type(args[0]).__name__ == "StringLiteral" or

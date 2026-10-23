@@ -5230,3 +5230,14 @@ census moves **4,511 → 4,525 clean** and **17,458 → 17,444 partial**;
 `ExpressionStatement:CallExpression` falls **3,595 → 3,580**. Differential
 coverage is **40 rows, 36 matches, 0 disagreements, and 4 recorded refusals**;
 grammar coverage remains **200 witnesses, 69 MATCH, and 131 REFUSE**.
+
+### Inert VCD control tasks — 2026-10-23
+
+`$dumpon`, `$dumpoff`, `$dumpall`, `$dumpflush`, and literal `$dumplimit` now
+lower to inert statements because they affect only external waveform recording.
+Dynamic size limits remain loud. The `vcd_control` fixture and differential row
+cover the admitted form. The census moves **4,525 → 4,540 clean** and
+**17,444 → 17,429 partial**; `ExpressionStatement:CallExpression` falls
+**3,580 → 3,565**. Differential coverage is **41 rows, 37 matches, 0
+disagreements, and 4 recorded refusals**; grammar coverage remains **200
+witnesses, 69 MATCH, and 131 REFUSE**.

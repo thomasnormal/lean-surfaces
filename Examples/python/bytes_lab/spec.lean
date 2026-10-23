@@ -42,6 +42,7 @@ load_program bytes_lab from "Examples/python/bytes_lab/bytes_lab.json"
     .float (Float64.ofBits 0xfff8000000000000),
     .float (Float64.ofBits 0x7ff8000000000000)]
 #py_check bytes_lab.dict_still_loud() = 0
+#py_check bytes_lab.formatting_still_loud() = Val.bytes #[97]
 theorem literal : bytes_lab.literal() ==> (#[97, 98, 0, 255] : PyBytes) := by
   exact CallsTo.intro 64 (by rfl)
 

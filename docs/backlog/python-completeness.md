@@ -153,6 +153,14 @@ cursors follow the existing `StopIteration` behavior. The proof interpreter
 keeps this stateful cursor loud because its value-side generator representation
 is intentionally narrower; other bytes protocol methods remain refused.
 
+
+## 2026-10-23-pycomplete-70 — bare bytes `%s` formatting
+
+The binary modulo path now admits the measured `b"%s" % bytes` form, copying
+its bytes operand exactly on both interpreter surfaces. Other bytes format
+strings, conversions, and operand protocols remain loud until their CPython
+grammar and buffer rules are represented.
+
 ## 2026-10-23-pycomplete-63 — Latin-1 string case mapping
 
 String `swapcase`, `isupper`, `islower`, and `upper` now admit CPython's

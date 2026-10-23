@@ -1206,6 +1206,17 @@ def strFormat (fmt : String) (rhs : RVal) : Res RVal := do
   let s ← strFormatWalk fmt.data args (strFormatMappingRhs rhs) ""
   return .str s
 
+/-- The measured bare bytes formatting rung: `b"%s" % bytes` copies the
+operand bytes. Other format strings and operand protocols remain loud until
+CPython's bytes formatting grammar is represented. -/
+def bytesFormat (fmt : Array UInt8) (rhs : RVal) : Res RVal :=
+  if fmt.toList == [37, 115] then
+    match rhs with
+    | .bytes xs => .ok (.bytes xs)
+    | _ => .unsupported "bytes percent formatting with this operand is outside the tier"
+  else
+    .unsupported "bytes percent formatting is outside the tier (only bare %s with bytes is admitted)"
+
 def floatNumber (value : RVal) : Res Float64 :=
   match value with
   | .float number => .ok number
@@ -1354,7 +1365,7 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
         | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
         | .error .nanPayload => .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
     | .add, .str s, .str t => .ok (.str (s ++ t))
-    | .mod, .bytes _, _ => .unsupported "bytes percent formatting is outside the tier"
+    | .mod, .bytes fmt, rhs => bytesFormat fmt rhs
     | .add, .bytes xs, .bytes ys => .ok (.bytes (xs ++ ys))
     | .add, .bytes _, .ref _ => .unsupported "bytes concatenation with heap values requires the buffer protocol"
     | .add, .bytes _, value => .exn (.typeError s!"can't concat {typeNamePrefix value.typeName 100} to bytes")

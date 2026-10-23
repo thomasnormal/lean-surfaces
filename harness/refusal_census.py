@@ -917,7 +917,6 @@ SEC52_CLASSES = ("unsupported", "undefined", "environment", "order-dependence")
 WHITELIST_CLASS = {
     "bytes_lab::numeric_int_still_loud": "bytes.numeric-parsing",
     "bytes_lab::numeric_float_still_loud": "bytes.numeric-parsing",
-    "bytes_lab::formatting_still_loud": "bytes.percent-formatting",
     "float_lab::floor_pair": "float.nan-payload",
     "float_lab::count_head": "iter.count-numeric-frame",
     "float_lab::constructor_heap": "float.constructor-protocols",

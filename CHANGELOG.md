@@ -51,6 +51,8 @@ change is listed here under **Changed** or **Removed**.
   length, hashability, and duplicate-key checks.
 - `iter(bytes)` now creates a lazy immutable byte cursor; `next()` yields
   integer octets and exhaustion follows the existing `StopIteration` behavior.
+- The measured bare `b"%s" % bytes` form now copies its bytes operand;
+  other bytes formatting syntax remains loud.
 
 ## [0.1.14] — 2026-10-21
 

@@ -381,6 +381,9 @@ def admitOpenACCCacheConstruct (artifact : Artifact) (path : List Nat) :
 def admitOpenACCAsteriskSizeExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OpenACCAsteriskSizeExpr" "openacc-asterisk-size-expression"
 
+def admitHLSLOutArgExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "HLSLOutArgExpr" "hlsl-out-arg-expression"
+
 def admitOMPMetadirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPMetaDirective" "omp-metadirective"
 

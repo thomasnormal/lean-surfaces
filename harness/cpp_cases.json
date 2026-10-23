@@ -1265,6 +1265,17 @@
     "rung": 3
   },
   {
+    "id": "translation.hlsl-out-arg-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "hlslOutArgExpressionTranslationWitness",
+    "cpp_source": "void f() {}",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.omp-metadirective",
     "kind": "translation",
     "corpus": "translation witness",

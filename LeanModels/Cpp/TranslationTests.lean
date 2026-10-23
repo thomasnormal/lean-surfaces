@@ -849,6 +849,13 @@ private def openACCAsteriskSizeExpressionTranslation : Artifact := {emptyTransla
       .object [("id", .string "o"), ("kind", .string "OpenACCAsteriskSizeExpr"),
         ("name", .string "asterisk"), ("inner", .array [])]])]}
 
+private def hlslOutArgExpressionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "h"), ("kind", .string "HLSLOutArgExpr"),
+        ("name", .string "out-arg"), ("inner", .array [])]])]}
+
 private def ompMetadirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1903,6 +1910,9 @@ def openACCCacheConstructTranslationWitness : Except String Unit :=
 def openACCAsteriskSizeExpressionTranslationWitness : Except String Unit :=
   admitOpenACCAsteriskSizeExpression openACCAsteriskSizeExpressionTranslation [0]
 
+def hlslOutArgExpressionTranslationWitness : Except String Unit :=
+  admitHLSLOutArgExpression hlslOutArgExpressionTranslation [0]
+
 def ompMetadirectiveTranslationWitness : Except String Unit :=
   admitOMPMetadirective ompMetadirectiveTranslation [0]
 
@@ -2582,6 +2592,10 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard openACCAsteriskSizeExpressionTranslationWitness matches .ok ()
 #guard admitOpenACCAsteriskSizeExpression openACCAsteriskSizeExpressionTranslation [] matches .error _
 #guard admitOpenACCAsteriskSizeExpression functionTranslation [0] matches .error _
+#guard hlslOutArgExpressionTranslationWitness matches .ok ()
+#guard admitHLSLOutArgExpression hlslOutArgExpressionTranslation [] matches .error _
+#guard admitHLSLOutArgExpression emptyTranslation [0] matches .error _
+#guard admitHLSLOutArgExpression functionTranslation [0] matches .error _
 #guard ompMetadirectiveTranslationWitness matches .ok ()
 #guard admitOMPMetadirective ompMetadirectiveTranslation [] matches .error _
 #guard admitOMPMetadirective functionTranslation [0] matches .error _

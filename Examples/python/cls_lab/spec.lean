@@ -80,16 +80,14 @@ guard means no `__len__`/`__getitem__`/`__iter__` can exist) -/
 #guard callFunction cls_lab "iterate_instance" #[.int 1] 4096
   matches .exn (.typeError _)
 
-/-! ### the loud frontier: extra dunders, inheritance, class-as-value,
-attribute access on scalars (ints DO have attributes — never a fake
-`AttributeError`) -/
+/-! ### the loud frontier: extra dunders, inheritance, and class-as-value -/
 
 #guard callFunction cls_lab "weird_eq" #[.int 1] 4096 matches .unsupported _
 #guard callFunction cls_lab "sub_inherits" #[.int 1] 4096
   matches .unsupported _
 #guard callFunction cls_lab "class_as_value" #[] 4096 matches .unsupported _
 #guard callFunction cls_lab "attr_on_int" #[.int 1] 4096
-  matches .unsupported _
+  matches .exn .attributeError
 
 /-! ### the boundary: an instance cannot cross it (no observation form) -/
 

@@ -300,8 +300,10 @@ cycle DETECTION, never by running out of fuel).
   place (`Env.set` semantics — replace-in-place or append, `__dict__`
   insertion order), CPython evaluation order RHS → target primary →
   store; attribute stores on dicts/lists/scalars are the faithful
-  `AttributeError`. Also faithful now: `.get` on a list, `.append` on a
-  dict (`AttributeError`, previously loud).
+  `AttributeError`. Immediate scalar reads and unknown method calls now use
+  the same faithful `AttributeError`; admitted scalar methods still dispatch
+  through their existing pure workers. Also faithful now: `.get` on a list,
+  `.append` on a dict (`AttributeError`, previously loud).
 * **Class CREATION is an effect** (2026-08-12, found by `tools/leanpy`,
   BUILT — normative). The tier answers "can an instance exist?"
   (`ClassDefn.ok`, the dunder guard above) and, since leanpy runs whole

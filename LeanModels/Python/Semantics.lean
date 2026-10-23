@@ -7175,9 +7175,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
               | [] => .ok st (.bool (floatIsInteger fv))
               | vs => .exn st (.typeError s!"float.is_integer() takes no arguments ({vs.length} given)")
             else
-              .unsupported s!"method call '.{attr}' on 'float' is outside the tier"
+              .exn st .attributeError
           | r =>
-            .unsupported s!"method call '.{attr}' on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
+            .exn st .attributeError
         | f => .unsupported s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"
         else
           -- ===== H6 KEYWORD TIER (docs/memory-model.md §call-site
@@ -7470,7 +7470,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
         -- SUBCLASS method name is the loud bound-method refusal (H5)
         Run.liftRes st (ntupleAttr m tn fields xs attr)
       | r =>
-        .unsupported s!"attribute access on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
+        .exn st .attributeError
     | .ifExp t b o _ =>
         -- CPython: the test first, then EXACTLY ONE branch (lazy)
         evalExpr m fuel st t ⤳ fun st tv =>

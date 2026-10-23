@@ -28,7 +28,7 @@ The claims worth naming, each falsifying a cheaper design:
   with the pinned underrun message — never a silent 0, never a timeout
   (fuel-independence pinned by two fuels).
 * **The admission has edges.** A LOCAL `time` shadows the clock
-  (`shadowed` — no pop, the ordinary loud refusal);
+  (`shadowed` — no pop, with CPython's faithful `AttributeError`);
   `time.time(1)` refuses loudly (`call_with_arg` — CPython raises
   `TypeError` AFTER evaluating the arg; the model never fakes it).
 

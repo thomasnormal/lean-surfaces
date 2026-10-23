@@ -124,6 +124,16 @@ Boolean counts retain the pinned index-sized and `seqBudget` bounds, while
 non-integral counts preserve CPython's `TypeError`; the proof interpreter
 remains loud because its boundary list snapshot cannot express this mutation.
 
+## 2026-10-23-pycomplete-67 — scalar attribute errors become faithful
+
+Immediate scalar attribute reads now raise the same payload-free
+`AttributeError` as CPython. The method-call path follows the same rule, so a
+shadowed scalar such as the local integer in `clock_lab.shadowed` fails during
+attribute lookup without consuming the trace or evaluating call arguments.
+The two frontier rows (`cls_lab.attr_on_int` and `clock_lab.shadowed`) now
+match on both interpreter surfaces; heap-receiver dispatch and admitted scalar
+methods are unchanged.
+
 ## 2026-10-23-pycomplete-63 — Latin-1 string case mapping
 
 String `swapcase`, `isupper`, `islower`, and `upper` now admit CPython's

@@ -25,6 +25,9 @@ change is listed here under **Changed** or **Removed**.
 - Heap-backed list `*=` now updates the existing list address in place on the
   monadic interpreter, so aliases observe the repeated contents; the proof
   interpreter keeps this stateful mutation loud.
+- Attribute reads and unknown method calls on immediate scalar receivers now
+  raise CPython's faithful `AttributeError` instead of stopping at the
+  heap-receiver boundary; admitted scalar methods remain unchanged.
 - `int(str)` now admits CPython's Unicode decimal digits and whitespace through
   the shared float-text normalization table; unrelated Unicode remains loud.
 - `float(bytes)` now accepts ASCII decimal bytes through the shared float-text

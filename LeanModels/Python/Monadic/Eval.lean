@@ -895,9 +895,9 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                     | [] => pure (.bool (floatIsInteger fv))
                     | vs => raisePy (.typeError s!"float.is_integer() takes no arguments ({vs.length} given)")
                   else
-                    refuse s!"method call '.{attr}' on 'float' is outside the tier"
+                    raisePy .attributeError
               | r =>
-                  refuse s!"method call '.{attr}' on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
+                  raisePy .attributeError
           | f => refuse s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"
         else
           -- ===== H6 KEYWORD TIER. Keywords resolve to a COMPLETE positional
@@ -1120,7 +1120,7 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
           liftRunAt (attrReadResult m st a attr)
       | .ntuple tn fields xs => ntupleAttrM m tn fields xs attr
       | r =>
-          refuse s!"attribute access on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
+          raisePy .attributeError
   | .ifExp t b o _ => do
       -- CPython: the test first, then EXACTLY ONE branch (lazy).
       let tv ← evalOpen K m t

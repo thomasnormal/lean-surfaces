@@ -2449,7 +2449,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             refine .bind (ihE st recv hrecv) fun st₁ r h₁ => ?_
             cases r <;>
               first
-              | exact .unsupported
+              | exact .exn
               | exact ((ihAttrC st₁ _ attr cargs.toList hattr hargsF).mono
                   (wtrans st st₁ h₁))
               | skip
@@ -2497,7 +2497,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 cases vs with
                 | nil => exact .okF h₂ _
                 | cons _ _ => exact .exn
-              · exact .unsupported
+              · exact .exn
           case name fname _ =>
             -- H2: `sorted` ALLOCATES its result, so the fragment excludes
             -- it (hfree carries `fname != "sorted"` — the branch is
@@ -2865,7 +2865,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         refine .bind (ihE st recv hfree) fun st₁ r h₁ => ?_
         cases r <;>
           first
-          | exact .unsupported
+          | exact .exn
           | exact .liftResF h₁ _
           | exact fun s₂ v₂ he => (attrReadResult_ok he) ▸ h₁
       | unsupported pyKind text _ => simp only [evalExpr]; exact .unsupported

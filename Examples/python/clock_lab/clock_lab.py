@@ -19,7 +19,7 @@ Rows: happy pops (`read_clock`, `read_twice` — subtraction on readings),
 the dead-clock run (`dead_clock`: readings consumed, never binding),
 the armed run (`armed`: Stop mid-loop at the exact reading CPython
 stops), the underrun refusal (short trace), and the admission's edges
-(`shadowed` — a local `time` never pops; `call_with_arg` —
+(`shadowed` — a local `time` never pops and raises `AttributeError`; `call_with_arg` —
 `time.time(1)` refuses loudly; `pure_sum` — no clock at all, the
 lab-scale trace-independence theorem's subject).
 """

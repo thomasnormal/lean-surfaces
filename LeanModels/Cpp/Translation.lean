@@ -468,6 +468,9 @@ def admitOMPTargetTeamsDistributeSimdDirective (artifact : Artifact) (path : Lis
 def admitOMPInteropDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPInteropDirective" "omp-interop-directive"
 
+def admitOMPDispatchDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPDispatchDirective" "omp-dispatch-directive"
+
 def admitOMPTargetUpdateDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTargetUpdateDirective" "omp-target-update-directive"
 

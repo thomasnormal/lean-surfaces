@@ -1010,6 +1010,13 @@ private def ompTargetSimdDirectiveTranslation : Artifact := {emptyTranslation wi
       .object [("id", .string "o"), ("kind", .string "OMPTargetSimdDirective"),
         ("name", .string "target-simd"), ("inner", .array [])]])]}
 
+private def ompTargetTeamsDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPTargetTeamsDirective"),
+        ("name", .string "target-teams"), ("inner", .array [])]])]}
+
 private def ompTargetUpdateDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1755,6 +1762,9 @@ def ompTargetParallelForSimdDirectiveTranslationWitness : Except String Unit :=
 def ompTargetSimdDirectiveTranslationWitness : Except String Unit :=
   admitOMPTargetSimdDirective ompTargetSimdDirectiveTranslation [0]
 
+def ompTargetTeamsDirectiveTranslationWitness : Except String Unit :=
+  admitOMPTargetTeamsDirective ompTargetTeamsDirectiveTranslation [0]
+
 def ompTargetUpdateDirectiveTranslationWitness : Except String Unit :=
   admitOMPTargetUpdateDirective ompTargetUpdateDirectiveTranslation [0]
 
@@ -2341,6 +2351,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompTargetSimdDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTargetSimdDirective ompTargetSimdDirectiveTranslation [] matches .error _
 #guard admitOMPTargetSimdDirective functionTranslation [0] matches .error _
+#guard ompTargetTeamsDirectiveTranslationWitness matches .ok ()
+#guard admitOMPTargetTeamsDirective ompTargetTeamsDirectiveTranslation [] matches .error _
+#guard admitOMPTargetTeamsDirective functionTranslation [0] matches .error _
 #guard ompTargetUpdateDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTargetUpdateDirective ompTargetUpdateDirectiveTranslation [] matches .error _
 #guard admitOMPTargetUpdateDirective functionTranslation [0] matches .error _

@@ -234,6 +234,9 @@ def admitCXXNullPtrLiteralExpression (artifact : Artifact) (path : List Nat) :
 def admitCharacterLiteralExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CharacterLiteral" "character-literal-expression"
 
+def admitFloatingLiteralExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "FloatingLiteral" "floating-literal-expression"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

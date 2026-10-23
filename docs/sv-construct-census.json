@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "ExpressionStatement:CallExpression",
-    3558
+    3555
    ],
    [
     "AssignmentExpression:target",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4582,
-   "partial": 17387,
+   "clean": 4585,
+   "partial": 17384,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    3955,
+    3958,
     18671
    ],
    "simulation elaboration": [
@@ -1142,14 +1142,14 @@
     "unlockable": 9
    },
    "chapter-4": {
-    "blocked_by_more": 237,
-    "clean": 186,
-    "partial": 237,
+    "blocked_by_more": 235,
+    "clean": 188,
+    "partial": 235,
     "simulation_tests": 423,
     "top_residual_blockers": [
      [
       "TimedStatement:DelayControl",
-      182
+      180
      ],
      [
       "InstanceSymbol:Instance",
@@ -1160,12 +1160,12 @@
       24
      ],
      [
-      "Call:$strobe",
+      "TimedStatement:SignalEventControl",
       23
      ],
      [
-      "TimedStatement:SignalEventControl",
-      23
+      "Call:$strobe",
+      21
      ],
      [
       "SubroutineSymbol:Subroutine",
@@ -1197,7 +1197,7 @@
      ],
      [
       "StringLiteral:encoding",
-      13
+      12
      ],
      [
       "PropertySymbol:Property",
@@ -1411,9 +1411,9 @@
     "unlockable": 0
    },
    "chapter-21": {
-    "clean": 115,
+    "clean": 116,
     "error": 0,
-    "partial": 785,
+    "partial": 784,
     "skip_include": 0,
     "total": 900,
     "unlockable": 0
@@ -1571,9 +1571,9 @@
     "unlockable": 0
    },
    "chapter-4": {
-    "clean": 187,
+    "clean": 189,
     "error": 0,
-    "partial": 240,
+    "partial": 238,
     "skip_include": 0,
     "total": 427,
     "unlockable": 0

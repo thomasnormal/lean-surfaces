@@ -109,6 +109,7 @@ LOGICAL_SYMS = ("&&", "||")
 ORDER_CMP_SYMS = ("<", "<=", ">", ">=")
 # System tasks of the self-check tier (statement position only).
 SYSCALL_FMT = ("$display", "$write")
+SYSCALL_STROBE = "$strobe"
 SYSCALL_CTRL = ("$finish", "$stop")
 SYSCALL_FATAL = "$fatal"
 # `$printtimescale` reports scope metadata without changing modeled state.  The
@@ -5896,6 +5897,31 @@ def _convert_syscall(sm, s, e):
         if not args:
             return {"kind": "Empty", "span": node_span(sm, s),
                     "pure_diagnostic": name}
+    if is_sys and name == SYSCALL_STROBE:
+        try:
+            args = list(e.arguments)
+        except Exception:
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        if not args:
+            return {"kind": "SysCall", "span": node_span(sm, s),
+                    "name": name, "format": None, "args": [],
+                    "arg_signed": []}
+        first = args[0]
+        if type(first).__name__ != "StringLiteral":
+            return unsupported(sm, s, "CallExpression:format")
+        converted = [convert_expr(sm, arg) for arg in args[1:]]
+        if any(value is None or value.get("kind") != "Literal"
+               for value in converted):
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        signed = []
+        for arg in args[1:]:
+            try:
+                signed.append(bool(arg.type.isSigned))
+            except Exception:
+                signed.append(True)
+        return {"kind": "SysCall", "span": node_span(sm, s),
+                "name": name, "format": first.value, "args": converted,
+                "arg_signed": signed}
     if is_sys and name in SYSCALL_VCD:
         try:
             args = list(e.arguments)

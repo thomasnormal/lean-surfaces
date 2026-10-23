@@ -303,6 +303,8 @@ inductive SStmt where
   | localDecl (name : String) (width : Nat) (twoState : Bool) (init : Option SExpr)
   /-- `$display` (`write = false`, appends a newline) or `$write`. -/
   | sysCall (write : Bool) (format : Option String) (args : Array (SExpr × Bool))
+  /-- `$strobe`: evaluate and emit at the end of the time-zero slot. -/
+  | strobe (format : Option String) (args : Array (SExpr × Bool))
   | finish  -- `$finish` and `$stop`: halt the run cleanly
   | skip    -- `;` (Empty)
   /-- `#d` — delay control; suspends until `amount` time units pass.
@@ -373,6 +375,8 @@ deriving Repr, BEq, ReflBEq, LawfulBEq, DecidableEq, Inhabited
 structure Out where
   lines : Array String := #[]
   cur : String := ""
+  /-- Deferred `$strobe` calls, evaluated after all Active statements. -/
+  pending : Array SStmt := #[]
   halted : Bool := false
   transfer : LoopTransfer := .normal
 deriving Repr, BEq, Inhabited
@@ -882,6 +886,8 @@ def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
           let vals ← evalArgs fuel st args.toList
           let text ← renderCall format vals
           return (st, nba, out.emit (if write then text else text ++ "\n"))
+      | .strobe format args =>
+          return (st, nba, { out with pending := out.pending.push (.sysCall false format args) })
       | .finish => .ok (st, nba, { out with halted := true })
       | .skip => .ok (st, nba, out)
 
@@ -972,6 +978,19 @@ def runInits (fuel : Nat) : List SProc → SvState → NbaQueue → Out →
       if out'.halted then .ok (st', nba', out')
       else runInits fuel rest st' nba' out' assignmentOrder
 
+def flushStrobes (fuel : Nat) (st : SvState) (out : Out) :
+    Res (SvState × Out) :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+      match out.pending.toList with
+      | [] => .ok (st, { out with pending := #[] })
+      | pending :: rest => do
+          let (st', _, out') ← execSStmt fuel st []
+            { out with pending := #[], halted := false } pending
+          let next := { out' with pending := rest.toArray }
+          flushStrobes fuel st' { next with halted := out.halted }
+
 /-- The self-check entry point: execute every `initial` process once at
 time 0 (source order), collecting the rendered `$display` output lines.
 `$finish` ends the run cleanly. The time-0 NBA queue commits after all
@@ -987,7 +1006,8 @@ def runSelfCheck (d : Design) (fuel : Nat)
     return ← .unsupported
       s!"non-initial process '{tag}' (self-check tier runs initial-only designs)"
   let st ← initDecls fuel d.decls.toList []
-  let (_, _, out) ← runInits fuel d.procs.toList st [] {} assignmentOrder
+  let (st', _, out) ← runInits fuel d.procs.toList st [] {} assignmentOrder
+  let (_, out) ← flushStrobes fuel st' out
   if out.transfer != .normal then
     .unsupported "loop transfer outside a loop"
   else
@@ -1302,6 +1322,16 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
           unless signed.size == args.size do
             throw "SysCall: args/arg_signed length mismatch"
           return .sysCall (name == "$write") format (args.zip signed)
+      | "$strobe" =>
+          let format := (getFOpt j "format").bind (·.getStr?.toOption)
+          let args ← (← getArrF j "args").mapM parseSExpr
+          let signed ← (← getArrF j "arg_signed").mapM fun b =>
+            match b.getBool? with
+            | .ok v => .ok v
+            | .error _ => .error "arg_signed entries must be Bools"
+          unless signed.size == args.size do
+            throw "SysCall: args/arg_signed length mismatch"
+          return .strobe format (args.zip signed)
       | other => .error s!"unknown SysCall name '{other}'"
   | "Empty" => return .skip
   | "Unsupported" =>

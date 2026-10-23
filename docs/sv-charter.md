@@ -5290,3 +5290,16 @@ scope categories. The census moves **4,577 → 4,582 clean** and **17,392 →
 3,558**. Differential coverage is **45 rows, 41 matches, 0 disagreements, and
 4 recorded refusals**; grammar coverage is **202 witnesses, 69 MATCH, and 133
 REFUSE**.
+
+### Literal `$strobe` output — 2026-10-23
+
+Literal-format `$strobe` calls now queue a self-check output event and flush it
+after all active time-zero statements, preserving the IEEE Postponed ordering
+relative to `$display`. Dynamic or effectful arguments, file variants, and
+other timing-dependent forms remain loud. The `strobe_literal` fixture and
+differential row cover the deferred ordering; the self-check runner carries a
+pending strobe queue without adding a second scheduler. The census moves
+**4,582 → 4,585 clean** and **17,387 → 17,384 partial**;
+`ExpressionStatement:CallExpression` falls **3,558 → 3,555**. Differential
+coverage is **46 rows, 42 matches, 0 disagreements, and 4 recorded refusals**;
+grammar coverage remains **202 witnesses, 69 MATCH, and 133 REFUSE**.

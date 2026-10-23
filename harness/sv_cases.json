@@ -36,6 +36,7 @@
     {"name": "associative_array_declaration", "file": "Examples/system-verilog/associative_array_decl/associative_array_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "printtimescale_declaration", "file": "Examples/system-verilog/printtimescale_decl/printtimescale_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "printtimescale_scope", "file": "Examples/system-verilog/printtimescale_scope/printtimescale_scope.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
+    {"name": "strobe_literal", "file": "Examples/system-verilog/strobe_literal/strobe_literal.sv", "module": "top", "oracle": ["DISPLAY", "DISPLAY2", "STROBE"], "expect": "match"},
     {"name": "exit_declaration", "file": "Examples/system-verilog/exit_decl/exit_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "vcd_setup", "file": "Examples/system-verilog/vcd_setup/vcd_setup.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "vcd_control", "file": "Examples/system-verilog/vcd_control/vcd_control.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},

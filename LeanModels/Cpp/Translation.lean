@@ -330,6 +330,9 @@ def admitIndirectGotoStatement (artifact : Artifact) (path : List Nat) :
 def admitCapturedStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CapturedStmt" "captured-statement"
 
+def admitOMPMetadirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPMetaDirective" "omp-metadirective"
+
 def admitOMPParallelDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPParallelDirective" "omp-parallel-directive"
 

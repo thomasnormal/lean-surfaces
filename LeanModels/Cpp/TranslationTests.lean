@@ -730,6 +730,13 @@ private def capturedStatementTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "c"), ("kind", .string "CapturedStmt"),
         ("name", .string "captured"), ("inner", .array [])]])]}
 
+private def ompMetadirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPMetaDirective"),
+        ("name", .string "metadirective"), ("inner", .array [])]])]}
+
 private def ompParallelDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1502,6 +1509,9 @@ def indirectGotoTranslationWitness : Except String Unit :=
 def capturedStatementTranslationWitness : Except String Unit :=
   admitCapturedStatement capturedStatementTranslation [0]
 
+def ompMetadirectiveTranslationWitness : Except String Unit :=
+  admitOMPMetadirective ompMetadirectiveTranslation [0]
+
 def ompParallelDirectiveTranslationWitness : Except String Unit :=
   admitOMPParallelDirective ompParallelDirectiveTranslation [0]
 
@@ -2031,6 +2041,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard capturedStatementTranslationWitness matches .ok ()
 #guard admitCapturedStatement capturedStatementTranslation [] matches .error _
 #guard admitCapturedStatement functionTranslation [0] matches .error _
+#guard ompMetadirectiveTranslationWitness matches .ok ()
+#guard admitOMPMetadirective ompMetadirectiveTranslation [] matches .error _
+#guard admitOMPMetadirective functionTranslation [0] matches .error _
 #guard ompParallelDirectiveTranslationWitness matches .ok ()
 #guard admitOMPParallelDirective ompParallelDirectiveTranslation [] matches .error _
 #guard admitOMPParallelDirective functionTranslation [0] matches .error _

@@ -961,6 +961,13 @@ private def ompTaskwaitDirectiveTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "o"), ("kind", .string "OMPTaskwaitDirective"),
         ("name", .string "taskwait"), ("inner", .array [])]])]}
 
+private def ompTaskgroupDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPTaskgroupDirective"),
+        ("name", .string "taskgroup"), ("inner", .array [])]])]}
+
 private def ompTaskyieldDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1552,6 +1559,9 @@ def ompBarrierDirectiveTranslationWitness : Except String Unit :=
 def ompTaskwaitDirectiveTranslationWitness : Except String Unit :=
   admitOMPTaskwaitDirective ompTaskwaitDirectiveTranslation [0]
 
+def ompTaskgroupDirectiveTranslationWitness : Except String Unit :=
+  admitOMPTaskgroupDirective ompTaskgroupDirectiveTranslation [0]
+
 def ompTaskyieldDirectiveTranslationWitness : Except String Unit :=
   admitOMPTaskyieldDirective ompTaskyieldDirectiveTranslation [0]
 
@@ -2060,6 +2070,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompTaskwaitDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTaskwaitDirective ompTaskwaitDirectiveTranslation [] matches .error _
 #guard admitOMPTaskwaitDirective functionTranslation [0] matches .error _
+#guard ompTaskgroupDirectiveTranslationWitness matches .ok ()
+#guard admitOMPTaskgroupDirective ompTaskgroupDirectiveTranslation [] matches .error _
+#guard admitOMPTaskgroupDirective functionTranslation [0] matches .error _
 #guard ompTaskyieldDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTaskyieldDirective ompTaskyieldDirectiveTranslation [] matches .error _
 #guard admitOMPTaskyieldDirective functionTranslation [0] matches .error _

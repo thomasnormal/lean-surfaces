@@ -825,6 +825,17 @@
     "rung": 3
   },
   {
+    "id": "translation.cxx-rewritten-binary-operator-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "cxxRewrittenBinaryOperatorTranslationWitness",
+    "cpp_source": "bool f(int x) { return x == 1; }",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

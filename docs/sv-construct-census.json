@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    3522
+    3521
    ],
    [
     "VariableSymbol:2state",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4613,
-   "partial": 17366,
+   "clean": 4614,
+   "partial": 17365,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    3985,
+    3986,
     18678
    ],
    "simulation elaboration": [
@@ -1603,9 +1603,9 @@
     "unlockable": 4
    },
    "chapter-7": {
-    "clean": 168,
+    "clean": 169,
     "error": 0,
-    "partial": 628,
+    "partial": 627,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

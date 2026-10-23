@@ -371,6 +371,31 @@ class UnpackedArrayAssignments(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_packed_slice_inside_array_cells_copies_window(self):
+        design = extract_source(
+            "module top; bit [3:0][7:0] joe [0:9]; "
+            "initial joe[7][3:2] = joe[6][1:0]; endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        selected = assigns[-1]
+        self.assertEqual(selected["target"]["kind"], "SelectTarget")
+        self.assertEqual(selected["target"]["index"]["bits"],
+                         "00000000000000000000000000010000")
+        self.assertEqual(selected["value"]["kind"], "Squash2")
+        self.assertEqual(selected["value"]["operand"]["kind"], "SelectRead")
+        self.assertEqual(selected["value"]["operand"]["index"]["bits"],
+                         "00000000000000000000000000000000")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_dynamic_packed_slice_inside_array_cell_stays_loud(self):
+        design = extract_source(
+            "module top; bit [3:0][7:0] joe [0:9]; int i; "
+            "initial joe[7][i +: 2] = joe[6][1:0]; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -3904,7 +3904,8 @@ def _packed_constant_index(sm, source_type, index):
         lo, hi = min(left, right), max(left, right)
         if position < lo or position > hi:
             return None
-        offset = position - right if left > right else right - position
+        element_width = int(ct.elementType.canonicalType.bitWidth)
+        offset = ((position - right) if left > right else (right - position)) * element_width
         width = index.type.bitWidth
         if offset < 0 or offset >= ct.bitWidth or width <= 0:
             return None
@@ -4126,6 +4127,10 @@ def _convert_selected_read(sm, expr, expression_kind):
         dynamic_array = _fixed_array_dynamic_read(sm, expr)
         if dynamic_array is not None:
             return dynamic_array
+    packed_array_window = _fixed_array_packed_window(
+        sm, expr, "SelectRead")
+    if packed_array_window is not None:
+        return packed_array_window
     member_window = _legacy_member_select_window(
         sm, expr, expression_kind, "SelectRead")
     if member_window is not None:
@@ -4210,6 +4215,61 @@ def _convert_legacy_call(sm, expression):
         if recognizes(expression):
             return convert(sm, expression)
     return _convert_fixed_bits_query(sm, expression)
+
+
+def _fixed_array_packed_window(sm, expression, result_kind):
+    """Lower a constant outer slice inside a packed fixed-array cell.
+
+    For ``bit [3:0][7:0] a [0:9]``, ``a[7][3:2]`` is a 16-bit window of the
+    ordinary 32-bit cell ``a[7]``.  The existing selected-read/target nodes
+    already model a constant bit offset, so normalize the outer packed labels
+    to that offset and preserve the source cell as the base value.
+    """
+    try:
+        if type(expression).__name__ != "RangeSelectExpression":
+            return None
+        if str(expression.selectionKind).split(".")[-1] != "Simple":
+            return None
+        base_cell = _fixed_array_cell(sm, expression.value)
+        if base_cell is None:
+            return None
+        base_name, base_width, base_two = base_cell
+        source_type = expression.value.type.canonicalType
+        if type(source_type).__name__ != "PackedArrayType":
+            return None
+        inner_type = source_type.elementType.canonicalType
+        if type(inner_type).__name__ not in ("PackedArrayType",
+                                             "PackedStructType",
+                                             "PackedUnionType"):
+            return None
+        element_width = int(inner_type.bitWidth)
+        if element_width <= 0:
+            return None
+        declared_left, declared_right = int(source_type.range.left), int(source_type.range.right)
+        left = _constant_dimension_selector(expression.left)
+        right = _constant_dimension_selector(expression.right)
+        low, high = min(declared_left, declared_right), max(declared_left, declared_right)
+        if (left is None or right is None or left < low or left > high
+                or right < low or right > high or left < right
+                or expression.type.bitWidth != (left - right + 1) * element_width):
+            return None
+        offset = ((right - declared_right) if declared_left > declared_right
+                  else (declared_right - right)) * element_width
+        if offset < 0 or offset + expression.type.bitWidth > base_width:
+            return None
+        index = {"kind": "Literal", "span": node_span(sm, expression),
+                 "width": 32, "bits": format(offset, "032b")}
+        base = {"kind": "Ident", "span": node_span(sm, expression.value),
+                "width": base_width, "name": base_name}
+        result = {"kind": result_kind, "span": node_span(sm, expression),
+                  "width": expression.type.bitWidth, "value": base,
+                  "index": index, "index_signed": False,
+                  "descending": False}
+        if result_kind == "SelectTarget":
+            result["two_state"] = bool(base_two)
+        return result
+    except Exception:
+        return None
 
 
 def _convert_sym_call_expr(sm, e):
@@ -4536,6 +4596,10 @@ def select_target(sm, lhs):
 def legacy_blocking_target(sm, lhs, concat_leaf=False):
     expression_kind = type(lhs).__name__
     if expression_kind in ("ElementSelectExpression", "RangeSelectExpression"):
+        packed_array_window = _fixed_array_packed_window(
+            sm, lhs, "SelectTarget")
+        if packed_array_window is not None:
+            return packed_array_window, True
         member_window = _legacy_member_select_window(
             sm, lhs, expression_kind, "SelectTarget")
         if member_window is not None:

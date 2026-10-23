@@ -187,6 +187,13 @@ and preserves its digit budget. Flags, widths, other conversion codes, and
 custom `__format__` protocols remain loud until the complete mini-language is
 modeled.
 
+## 2026-10-23-pycomplete-74 — mixed scalar ordering errors
+
+The shared ordering worker now returns CPython's exact `TypeError` for mixed
+immediate scalar pairs such as `sorted([1, "s"])`, preserving the operand order
+in the message. Heap receivers and unsupported comparison protocols remain
+loud. The `drain_lab.sorted_mixed` row is now a concrete match.
+
 ## 2026-10-23-pycomplete-63 — Latin-1 string case mapping
 
 String `swapcase`, `isupper`, `islower`, and `upper` now admit CPython's

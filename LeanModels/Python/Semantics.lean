@@ -602,6 +602,10 @@ mutual
         if right.isNaN then .unsupported "ordering NaNs in containers is outside the tier"
         else .ok (Float64.intLt (if left then 1 else 0) right)
     | .str s, .str t => .ok (strCmp .lt s t)
+    | .str _, .int _ => .exn (.typeError "'<' not supported between instances of 'str' and 'int'")
+    | .str _, .bool _ => .exn (.typeError "'<' not supported between instances of 'str' and 'bool'")
+    | .int _, .str _ => .exn (.typeError "'<' not supported between instances of 'int' and 'str'")
+    | .bool _, .str _ => .exn (.typeError "'<' not supported between instances of 'bool' and 'str'")
     | .bytes xs, .bytes ys => .ok (bytesCmp xs.toList ys.toList)
     | .tuple xs, .tuple ys => rvalLtList xs.toList ys.toList
     | .tuple xs, .ntuple _ _ ys => rvalLtList xs.toList ys.toList

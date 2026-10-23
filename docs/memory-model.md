@@ -864,9 +864,8 @@ sunfish's ordering line is
   and CLASS-ERASED (first `valEq`-differing element decides via
   `rvalLt`; exhaustion → shorter is smaller). `evalCompareOp`'s ordering
   arm gains the tuple case derived from the same worker (`a <= b` as
-  `¬(b < a)` is exact within this tier). Refs and mixed value kinds
-  refuse loudly, as the operator does today — never a guessed
-  `TypeError`.
+  `¬(b < a)` is exact within this tier). Refs remain loud, while mixed
+  immediate scalar kinds carry CPython's exact ordering `TypeError`.
 
 **Sort algorithm**: stable insertion by `rvalLt` only (CPython sorts
 call only `__lt__`); within the tier every total order agrees with

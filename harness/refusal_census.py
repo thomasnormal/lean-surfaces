@@ -1069,7 +1069,6 @@ WHITELIST_CLASS = {
     "exc_lab::raise_shadowed": "exc.raise",
     "exc_lab::exc_as_value": "firstclass.callable",
     "exc_lab::drive_yield_under_try": "exc.handler",
-    "drain_lab::sorted_mixed": "order.mixed-type",
     "closure_lab::uses_nonlocal": "stmt.Nonlocal",
     "closure_lab::def_in_loop": "closure.admission",
     "closure_lab::early_call": "closure.admission",

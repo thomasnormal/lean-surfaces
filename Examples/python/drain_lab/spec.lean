@@ -75,5 +75,5 @@ load_program drain_lab from "Examples/python/drain_lab/drain_lab.json"
 
 /-! ### the loud frontier -/
 
-#guard (match callFunction drain_lab "sorted_mixed" #[.int 1] 10000 with
-  | .unsupported _ => true | _ => false)
+#py_check drain_lab.sorted_mixed(1) raises
+  (.typeError "'<' not supported between instances of 'str' and 'int'")

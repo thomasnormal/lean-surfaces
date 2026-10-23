@@ -70,7 +70,7 @@ def sorted_bools_rev():
 
 
 def sorted_mixed(a):
-    # int vs str: CPython raises TypeError; the tier refuses loudly
+    # int vs str: CPython raises its exact ordering TypeError
     return sorted([a, "s"])
 
 

@@ -336,7 +336,7 @@
   {"file": "Examples/python/drain_lab/drain_lab.py", "function": "sorted_str_rev", "args": [[{"t": "str", "v": "pear"}]], "expect": "match"},
   {"file": "Examples/python/drain_lab/drain_lab.py", "function": "sorted_bools", "args": [[]], "expect": "match"},
   {"file": "Examples/python/drain_lab/drain_lab.py", "function": "sorted_bools_rev", "args": [[]], "expect": "match"},
-  {"file": "Examples/python/drain_lab/drain_lab.py", "function": "sorted_mixed", "args": [[1]], "expect": "unsupported"},
+  {"file": "Examples/python/drain_lab/drain_lab.py", "function": "sorted_mixed", "args": [[1]], "expect": "match", "note": "mixed scalar ordering retains CPython's exact TypeError payload"},
   {"file": "Examples/python/drain_lab/drain_lab.py", "function": "max_gen", "args": [[6, 7], [3, 9]], "expect": "match"},
   {"file": "Examples/python/drain_lab/drain_lab.py", "function": "min_gen", "args": [[6, 7]], "expect": "match"},
   {"file": "Examples/python/drain_lab/drain_lab.py", "function": "max_gen_empty", "args": [[]], "expect": "match"},

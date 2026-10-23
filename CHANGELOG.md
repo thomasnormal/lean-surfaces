@@ -61,6 +61,9 @@ change is listed here under **Changed** or **Removed**.
 - `format(value, "d")` now admits the bare decimal specification for integer
   and Boolean values through the fixed decimal renderer; other non-empty
   format specifications remain loud.
+- Mixed immediate scalar ordering in `sorted`, `max`, `min`, and comparisons
+  now raises CPython's exact `TypeError` payload; heap and unsupported protocol
+  comparisons remain loud.
 
 ## [0.1.14] — 2026-10-21
 

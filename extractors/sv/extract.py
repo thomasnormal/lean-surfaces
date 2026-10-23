@@ -5754,9 +5754,15 @@ def _convert_syscall(sm, s, e):
             # simulation state.  Keep the admitted slice deliberately pure:
             # string literals need no evaluation, while identifiers, queries,
             # and calls could have effects or require unmodeled formatting.
-            if all(type(arg).__name__ == "StringLiteral" for arg in args):
-                return {"kind": "Empty", "span": node_span(sm, s),
-                        "severity_task": name}
+            if args and type(args[0]).__name__ == "StringLiteral":
+                # A literal format and literal arguments have no evaluation
+                # effects.  Do not model the diagnostic text itself, since
+                # the self-check state has no severity stream.
+                converted = [convert_expr(sm, arg) for arg in args[1:]]
+                if all(node is not None and node.get("kind") == "Literal"
+                       for node in converted):
+                    return {"kind": "Empty", "span": node_span(sm, s),
+                            "severity_task": name}
         return unsupported(sm, s, "ExpressionStatement:CallExpression")
     span = node_span(sm, s)
     if name in SYSCALL_CTRL:

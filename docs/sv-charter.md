@@ -5142,6 +5142,17 @@ reduces `VariableSymbol:2state` **3,989 → 3,839**; differential coverage is
 **32 rows, 28 matches, 0 disagreements, and 4 recorded refusals**, with
 **200 grammar witnesses, 68 MATCH, and 132 REFUSE**.
 
+### Literal severity-task arguments — 2026-10-23
+
+Runtime `$info` and `$warning` calls with a literal format and literal
+arguments now lower to inert statements. Identifier, query, and call
+arguments remain loud because evaluating them may have effects; `$error` and
+`$fatal` remain outside the slice. The `severity_task_literals` fixture and
+differential row cover the extension. The census moves **4,462 → 4,467 clean**
+and **17,507 → 17,502 partial**; `ExpressionStatement:CallExpression` falls
+**3,764 → 3,759**. Differential coverage is **34 rows, 30 matches, 0
+disagreements, and 4 recorded refusals**.
+
 ### Declaration-only 2-state dynamic arrays — 2026-10-23
 
 An uninitialized 2-state dynamic-array declaration now lowers to inert

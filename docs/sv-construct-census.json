@@ -15,12 +15,12 @@
  "summary": {
   "blocker_files": [
    [
-    "VariableSymbol:2state",
-    3839
-   ],
-   [
     "ExpressionStatement:CallExpression",
     3764
+   ],
+   [
+    "VariableSymbol:2state",
+    3691
    ],
    [
     "AssignmentExpression:target",
@@ -391,11 +391,11 @@
     30
    ],
    [
-    "VariableDeclStatement:2state",
-    29
+    "InsideExpression:source",
+    28
    ],
    [
-    "InsideExpression:source",
+    "VariableDeclStatement:2state",
     28
    ],
    [
@@ -1072,7 +1072,7 @@
      ],
      [
       "VariableSymbol:2state",
-      66
+      65
      ],
      [
       "CallExpression",
@@ -1238,7 +1238,7 @@
     "top_residual_blockers": [
      [
       "VariableSymbol:2state",
-      208
+      204
      ],
      [
       "CallExpression",

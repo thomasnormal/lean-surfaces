@@ -31,8 +31,8 @@ The chapter-scoped rerun covered **22,035** paths: **4,462 clean**,
 **17,507 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`VariableSymbol:2state` (3,839), `AssignmentExpression:target` (3,592),
-`ExpressionStatement:CallExpression` (3,764), `CallExpression` (3,290),
+`ExpressionStatement:CallExpression` (3,764), `VariableSymbol:2state` (3,691),
+`AssignmentExpression:target` (3,592), `CallExpression` (3,290),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,481), `ConcurrentAssertionStatement`
 (1,353), `InvalidStatement` (1,329), and `ClassType` (1,327).
@@ -47,6 +47,14 @@ rerun keeps clean at **4,462** and partial at **17,507**, while
 `VariableSymbol:2state` falls **3,989 → 3,839**. The differential matrix is
 **32 rows, 28 matches, 0 disagreements, and 4 recorded refusals**; grammar
 coverage is **200 witnesses, 68 MATCH, and 132 REFUSE**.
+
+The dynamic-array declaration slice applies the same inert metadata rule to an
+uninitialized 2-state dynamic array; allocation, initialization, and every
+dynamic-array operation remain loud. Clean and partial totals stay **4,462 /
+17,507**, while `VariableSymbol:2state` falls **3,839 → 3,691**. The
+differential matrix is **33 rows, 29 matches, 0 disagreements, and 4 recorded
+refusals**; grammar coverage remains **200 witnesses, 68 MATCH, and 132
+REFUSE**.
 
 ## Nested fixed two-state arrays — 2026-10-22
 

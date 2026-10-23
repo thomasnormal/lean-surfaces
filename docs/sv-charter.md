@@ -5141,3 +5141,14 @@ declaration-only form. The census keeps **4,462 clean / 17,507 partial** and
 reduces `VariableSymbol:2state` **3,989 → 3,839**; differential coverage is
 **32 rows, 28 matches, 0 disagreements, and 4 recorded refusals**, with
 **200 grammar witnesses, 68 MATCH, and 132 REFUSE**.
+
+### Declaration-only 2-state dynamic arrays — 2026-10-23
+
+An uninitialized 2-state dynamic-array declaration now lowers to inert
+metadata. Allocation, initializers, reads, writes, and all other dynamic-array
+operations remain loud because the self-check state has no dynamic storage
+model. The `dynamic_array_decl` fixture and differential row cover this
+declaration-only form. Clean and partial totals remain **4,462 / 17,507**;
+`VariableSymbol:2state` falls **3,839 → 3,691**. Differential coverage is
+**33 rows, 29 matches, 0 disagreements, and 4 recorded refusals**, with **200
+grammar witnesses, 68 MATCH, and 132 REFUSE**.

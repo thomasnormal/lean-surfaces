@@ -29,6 +29,7 @@
     {"name": "do_while_string_literal", "file": "Examples/system-verilog/do_while_string_literal/do_while_string_literal.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "severity_tasks", "file": "Examples/system-verilog/severity_tasks/severity_tasks.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "queue_declaration", "file": "Examples/system-verilog/queue_decl/queue_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
+    {"name": "dynamic_array_declaration", "file": "Examples/system-verilog/dynamic_array_decl/dynamic_array_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "delay_refusal", "file": "Examples/system-verilog/delay/delay.sv", "module": "delay", "oracle": "refuse", "expect": "refuse"},
     {"name": "event_refusal", "file": "Examples/system-verilog/event/event.sv", "module": "event_wait", "oracle": "refuse", "expect": "refuse"},
     {"name": "always_refusal", "file": "Examples/system-verilog/always/events.sv", "module": "top", "oracle": "refuse", "expect": "refuse"},

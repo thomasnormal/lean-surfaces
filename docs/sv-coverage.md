@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 32 | 28 | 0 | 4 | sv-tests-2 declarations |
+| 33 | 29 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -42,6 +42,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `do_while_string_literal` | `Examples/system-verilog/do_while_string_literal/do_while_string_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `severity_tasks` | `Examples/system-verilog/severity_tasks/severity_tasks.sv` | match | **MATCH** | `ok` | MATCH |
 | `queue_declaration` | `Examples/system-verilog/queue_decl/queue_decl.sv` | match | **MATCH** | `ok` | MATCH |
+| `dynamic_array_declaration` | `Examples/system-verilog/dynamic_array_decl/dynamic_array_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `delay_refusal` | `Examples/system-verilog/delay/delay.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `event_refusal` | `Examples/system-verilog/event/event.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `always_refusal` | `Examples/system-verilog/always/events.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
@@ -268,8 +269,8 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | blocker kind | files |
 |---|---:|
-| `VariableSymbol:2state` | 3839 |
 | `ExpressionStatement:CallExpression` | 3764 |
+| `VariableSymbol:2state` | 3691 |
 | `AssignmentExpression:target` | 3592 |
 | `CallExpression` | 3290 |
 | `Hierarchy:ports` | 2397 |

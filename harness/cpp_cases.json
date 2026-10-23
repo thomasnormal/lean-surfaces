@@ -1001,6 +1001,17 @@
     "rung": 4
   },
   {
+    "id": "translation.goto-statement",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "gotoStatementTranslationWitness",
+    "cpp_source": "int f(int value) { if (value) goto done; value = 7; done: return value; }",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

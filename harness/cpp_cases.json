@@ -792,6 +792,17 @@
     "rung": 3
   },
   {
+    "id": "translation.binary-operator-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "binaryOperatorTranslationWitness",
+    "cpp_source": "int f(int left, int right) { return left + right; }",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

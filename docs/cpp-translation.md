@@ -140,6 +140,7 @@ The first executable rung-0 gates are `admitTranslationUnit`,
 `admitOMPTaskDirective`,
 `admitOMPTaskloopDirective`,
 `admitOMPTeamsDirective`,
+`admitOMPDistributeDirective`,
 `admitConditionalOperatorExpression`,
 `admitCallExpression`,
 `admitCompoundAssignmentOperator`,
@@ -176,7 +177,7 @@ The first executable rung-0 gates are `admitTranslationUnit`,
 the retained root's explicit `kind` for `TranslationUnitDecl`; the
 namespace gate then checks a nonempty artifact occurrence path and requires
 `NamespaceDecl` at that exact path, while each declaration gate applies the
-same path check to its corresponding kind. All one hundred forty-three return typed metadata results without
+same path check to its corresponding kind. All one hundred forty-four return typed metadata results without
 inspecting or erasing child nodes,
 resolving names, or executing a body. Malformed roots, absent paths and other
 node kinds refuse with named diagnostics. `Translation.execute` remains the

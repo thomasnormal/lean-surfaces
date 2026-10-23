@@ -354,6 +354,9 @@ def admitOMPTaskloopDirective (artifact : Artifact) (path : List Nat) :
 def admitOMPTeamsDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTeamsDirective" "omp-teams-directive"
 
+def admitOMPDistributeDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPDistributeDirective" "omp-distribute-directive"
+
 def admitConditionalOperatorExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ConditionalOperator" "conditional-operator-expression"
 

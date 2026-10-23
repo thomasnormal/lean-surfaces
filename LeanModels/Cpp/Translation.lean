@@ -339,6 +339,9 @@ def admitOMPErrorDirective (artifact : Artifact) (path : List Nat) :
 def admitOpenACCComputeConstruct (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OpenACCComputeConstruct" "openacc-compute-construct"
 
+def admitOpenACCLoopConstruct (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OpenACCLoopConstruct" "openacc-loop-construct"
+
 def admitOMPMetadirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPMetaDirective" "omp-metadirective"
 

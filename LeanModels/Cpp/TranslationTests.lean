@@ -898,6 +898,13 @@ private def ompScopeDirectiveTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "o"), ("kind", .string "OMPScopeDirective"),
         ("name", .string "scope"), ("inner", .array [])]])]}
 
+private def ompMaskedTaskLoopDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPMaskedTaskLoopDirective"),
+        ("name", .string "masked-taskloop"), ("inner", .array [])]])]}
+
 private def ompTeamsDistributeDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1665,6 +1672,9 @@ def ompCancelDirectiveTranslationWitness : Except String Unit :=
 def ompScopeDirectiveTranslationWitness : Except String Unit :=
   admitOMPScopeDirective ompScopeDirectiveTranslation [0]
 
+def ompMaskedTaskLoopDirectiveTranslationWitness : Except String Unit :=
+  admitOMPMaskedTaskLoopDirective ompMaskedTaskLoopDirectiveTranslation [0]
+
 def ompTeamsDistributeDirectiveTranslationWitness : Except String Unit :=
   admitOMPTeamsDistributeDirective ompTeamsDistributeDirectiveTranslation [0]
 
@@ -2233,6 +2243,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompScopeDirectiveTranslationWitness matches .ok ()
 #guard admitOMPScopeDirective ompScopeDirectiveTranslation [] matches .error _
 #guard admitOMPScopeDirective functionTranslation [0] matches .error _
+#guard ompMaskedTaskLoopDirectiveTranslationWitness matches .ok ()
+#guard admitOMPMaskedTaskLoopDirective ompMaskedTaskLoopDirectiveTranslation [] matches .error _
+#guard admitOMPMaskedTaskLoopDirective functionTranslation [0] matches .error _
 #guard ompTeamsDistributeDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTeamsDistributeDirective ompTeamsDistributeDirectiveTranslation [] matches .error _
 #guard admitOMPTeamsDistributeDirective functionTranslation [0] matches .error _

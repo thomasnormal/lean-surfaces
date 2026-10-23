@@ -539,6 +539,17 @@
     "rung": 1
   },
   {
+    "id": "translation.new-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "newTranslationWitness",
+    "cpp_source": "int f() { return *new int(7); }",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

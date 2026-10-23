@@ -12,7 +12,7 @@ Measured against the C++ charter's N4950 clause ladder. `executable` means a bou
 | 1 | §6.7, §6.9 | **executable** | Static, thread, automatic, and dynamic storage reservation, integral initialization, lifetime end, and dynamic release execute; LifetimeExtendedTemporaryDecl, MaterializeTemporaryExpr, CXXBindTemporaryExpr, ExprWithCleanups, CXXTemporaryObjectExpr, CXXNewExpr, CXXDeleteExpr, CXXDefaultInitExpr, CXXScalarValueInitExpr, InitListExpr, CXXParenListInitExpr, ImplicitValueInitExpr, ImplicitCastExpr and ParenExpr metadata are admitted, while temporary materialization and unsupported storage remain loud. |
 | 2 | §6.8 | **executable** | LP64 scalar/integral values and conversions execute definitionally; ConstantExpr, CXXBoolLiteralExpr, CXXNullPtrLiteralExpr, CharacterLiteral, FloatingLiteral, StringLiteral and IntegerLiteral metadata are admitted while floating/string execution and general constant evaluation remain bounded. |
 | 3 | §7 | **executable** | Bounded integral expressions and selected callable bodies execute; DeclRefExpr, CXXThisExpr, UnaryOperator, BinaryOperator, ConditionalOperator, CallExpr, CompoundAssignOperator, LambdaExpr and ArraySubscriptExpr metadata are admitted while general overloads do not. |
-| 4 | §8 | **executable** | Selected callable blocks, branches, loops, switch and transfers execute; CompoundStmt, ReturnStmt, IfStmt, WhileStmt, ForStmt, SwitchStmt, DeclStmt, BreakStmt and ContinueStmt metadata are admitted. |
+| 4 | §8 | **executable** | Selected callable blocks, branches, loops, switch and transfers execute; CompoundStmt, ReturnStmt, IfStmt, WhileStmt, ForStmt, SwitchStmt, DeclStmt, BreakStmt, ContinueStmt and NullStmt metadata are admitted. |
 | 5 | §9 | **executable** | The bounded integral declaration/reference frame subset executes. |
 | 6 | §10 | **not started** | Modules and imports have no semantic representation. |
 | 7 | §11 | **specified** | Class, base-subobject and member-getter evidence is specified; CXXDynamicCastExpr metadata is admitted and object construction is bounded. |
@@ -47,6 +47,6 @@ The grammar census uses one source witness per listed Clang AST node kind. The r
 | measurement | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---|---:|---:|---:|---:|---:|---:|
 | grammar witnesses | 24 | 0 | 0 | 0 | 0 | 24 |
-| differential calls | 132 | 0 | 0 | 0 | 0 | 132 |
+| differential calls | 133 | 0 | 0 | 0 | 0 | 133 |
 
-The differential rows include 48 compile-only translation witness, 21 rung-1 lifetime witnesses, 1 rung-2 scalar checks, 10 rung-3 expression checks, 14 rung-4 statement checks, and 38 callable rows across the retained callable witness set; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.
+The differential rows include 48 compile-only translation witness, 21 rung-1 lifetime witnesses, 1 rung-2 scalar checks, 10 rung-3 expression checks, 14 rung-4 statement checks, and 39 callable rows across the retained callable witness set; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.

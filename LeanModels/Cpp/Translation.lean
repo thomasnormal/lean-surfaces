@@ -297,6 +297,9 @@ def admitBreakStatement (artifact : Artifact) (path : List Nat) :
 def admitContinueStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ContinueStmt" "continue-statement"
 
+def admitNullStatement (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "NullStmt" "null-statement"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

@@ -957,6 +957,17 @@
     "rung": 4
   },
   {
+    "id": "translation.null-statement",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "nullStatementTranslationWitness",
+    "cpp_source": "int f(int value) { if (value) ; return value; }",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

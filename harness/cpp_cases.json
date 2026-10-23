@@ -1056,6 +1056,17 @@
     "rung": 10
   },
   {
+    "id": "translation.cxx-throw-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "cxxThrowExpressionTranslationWitness",
+    "cpp_source": "void f() { throw 1; }",
+    "expect": "match",
+    "rung": 10
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

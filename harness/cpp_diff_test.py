@@ -55,7 +55,7 @@ RUNG_STATUS = [
     (7, "§11", "specified", "Class, base-subobject and member-getter evidence is specified; CXXDynamicCastExpr metadata is admitted and object construction is bounded."),
     (8, "§12", "not started", "Clang-selected overload and conversion execution is not admitted."),
     (9, "§13", "not started", "Template instantiation is retained as frontend evidence only."),
-    (10, "§14", "specified", "Exception metadata is retained through CXXTryStmt and CXXCatchStmt, but throw/catch matching, unwinding and cleanup are not executable."),
+    (10, "§14", "specified", "Exception metadata is retained through CXXTryStmt, CXXCatchStmt and CXXThrowExpr, but throw/catch matching, unwinding and cleanup are not executable."),
     (11, "§15", "specified", "Preprocessing remains in the pinned Clang trusted boundary."),
     (12, "§16+", "not started", "The standard-library subset has not been admitted as C++ execution."),
 ]

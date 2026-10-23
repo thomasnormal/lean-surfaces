@@ -554,6 +554,13 @@ private def binaryOperatorTranslation : Artifact := {emptyTranslation with
         ("opcode", .string "+"), ("name", .string "add"),
         ("inner", .array [])]])]}
 
+private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "c"), ("kind", .string "ConditionalOperator"),
+        ("name", .string "select"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -766,6 +773,9 @@ def unaryOperatorTranslationWitness : Except String Unit :=
 
 def binaryOperatorTranslationWitness : Except String Unit :=
   admitBinaryOperatorExpression binaryOperatorTranslation [0]
+
+def conditionalOperatorTranslationWitness : Except String Unit :=
+  admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -1014,6 +1024,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard binaryOperatorTranslationWitness matches .ok ()
 #guard admitBinaryOperatorExpression binaryOperatorTranslation [] matches .error _
 #guard admitBinaryOperatorExpression functionTranslation [0] matches .error _
+#guard conditionalOperatorTranslationWitness matches .ok ()
+#guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
+#guard admitConditionalOperatorExpression functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

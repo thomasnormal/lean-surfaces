@@ -255,6 +255,9 @@ def admitUnaryOperatorExpression (artifact : Artifact) (path : List Nat) :
 def admitBinaryOperatorExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "BinaryOperator" "binary-operator-expression"
 
+def admitConditionalOperatorExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "ConditionalOperator" "conditional-operator-expression"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

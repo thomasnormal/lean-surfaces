@@ -803,6 +803,17 @@
     "rung": 3
   },
   {
+    "id": "translation.conditional-operator-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "conditionalOperatorTranslationWitness",
+    "cpp_source": "int f(bool condition, int left, int right) { return condition ? left : right; }",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

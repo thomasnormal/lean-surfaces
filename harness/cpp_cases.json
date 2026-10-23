@@ -1243,6 +1243,17 @@
     "rung": 4
   },
   {
+    "id": "translation.omp-flush-directive",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "ompFlushDirectiveTranslationWitness",
+    "cpp_source": "void f(int* value) {\n#pragma omp flush\n(value)\n}",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

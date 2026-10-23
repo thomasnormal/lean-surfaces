@@ -243,6 +243,9 @@ def admitStringLiteralExpression (artifact : Artifact) (path : List Nat) :
 def admitIntegerLiteralExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "IntegerLiteral" "integer-literal-expression"
 
+def admitDeclarationReferenceExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "DeclRefExpr" "declaration-reference-expression"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

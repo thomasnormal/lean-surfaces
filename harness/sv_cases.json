@@ -38,6 +38,7 @@
     {"name": "exit_declaration", "file": "Examples/system-verilog/exit_decl/exit_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "vcd_setup", "file": "Examples/system-verilog/vcd_setup/vcd_setup.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "vcd_control", "file": "Examples/system-verilog/vcd_control/vcd_control.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
+    {"name": "unpacked_struct_copy", "file": "Examples/system-verilog/unpacked_struct_copy/unpacked_struct_copy.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "delay_refusal", "file": "Examples/system-verilog/delay/delay.sv", "module": "delay", "oracle": "refuse", "expect": "refuse"},
     {"name": "event_refusal", "file": "Examples/system-verilog/event/event.sv", "module": "event_wait", "oracle": "refuse", "expect": "refuse"},
     {"name": "always_refusal", "file": "Examples/system-verilog/always/events.sv", "module": "top", "oracle": "refuse", "expect": "refuse"},

@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-23
 
-The chapter-scoped rerun covered **22,035** paths: **4,540 clean**,
-**17,429 partial**, **66 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,035** paths: **4,552 clean**,
+**17,417 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`AssignmentExpression:target` (3,592), `ExpressionStatement:CallExpression` (3,565),
+`AssignmentExpression:target` (3,580), `ExpressionStatement:CallExpression` (3,565),
 `VariableSymbol:2state` (3,501), `CallExpression` (3,290),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,481), `ConcurrentAssertionStatement`
@@ -118,6 +118,14 @@ files **17,444 → 17,429**; `ExpressionStatement:CallExpression` falls
 **3,580 → 3,565**. Differential coverage is **41 rows, 37 matches, 0
 disagreements, and 4 recorded refusals**; grammar coverage remains **200
 witnesses, 69 MATCH, and 131 REFUSE**.
+
+Whole copies of flattened integral unpacked structs now lower field by field,
+sampling the source before destination writes; aggregate fields and self-copies
+remain loud. The fresh rerun moves clean files **4,540 → 4,552** and partial
+files **17,429 → 17,417**; `AssignmentExpression:target` falls **3,592 →
+3,580**. Differential coverage is **42 rows, 38 matches, 0 disagreements, and
+4 recorded refusals**; grammar coverage remains **200 witnesses, 69 MATCH, and
+131 REFUSE**.
 
 ## Nested fixed two-state arrays — 2026-10-22
 

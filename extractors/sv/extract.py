@@ -1835,6 +1835,57 @@ def _fixed_array_pattern_assignment(sm, expr):
         return None
 
 
+def _unpacked_struct_copy_assignment(sm, expr):
+    """Lower a whole copy of a flattened integral unpacked struct.
+
+    The legacy state stores each scalar/packed field as its own vector cell,
+    so a copy can be expanded field by field while sampling the source before
+    any destination update. Aggregate fields and self-copies stay loud.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None):
+            return None
+        lhs_path = _unpacked_struct_path(expr.left)
+        rhs_path = _unpacked_struct_path(expr.right)
+        if lhs_path is None or rhs_path is None:
+            return None
+        lhs_name, lhs_type = lhs_path
+        rhs_name, rhs_type = rhs_path
+        if (type(lhs_type).__name__ != "UnpackedStructType"
+                or type(rhs_type).__name__ != "UnpackedStructType"
+                or lhs_name == rhs_name):
+            return None
+        lhs_cells = _unpacked_struct_field_cells(lhs_name, lhs_type,
+                                                 node_span(sm, expr))
+        rhs_cells = _unpacked_struct_field_cells(rhs_name, rhs_type,
+                                                 node_span(sm, expr))
+        if (lhs_cells is None or rhs_cells is None or
+                len(lhs_cells) != len(rhs_cells)):
+            return None
+        if any(lw != rw for (_, lw, _, _), (_, rw, _, _) in
+               zip(lhs_cells, rhs_cells)):
+            return None
+        stmts = []
+        for (lname, lwidth, _linit, ltype), (rname, rwidth, _rinit, _rtype) in zip(
+                lhs_cells, rhs_cells):
+            value = {"kind": "Ident", "span": node_span(sm, expr.right),
+                     "width": rwidth, "name": rname}
+            if not ltype.isFourState:
+                value = squash2_wrap(value, lwidth)
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                           "width": lwidth, "name": lname},
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts,
+                "unpacked_struct_copy_lowered": True}
+    except Exception:
+        return None
+
+
 def _fixed_array_concat_assignment(sm, expr):
     """Lower an exact unpacked-array concatenation into cell assignments."""
     try:
@@ -5625,6 +5676,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         if streaming_target is not None:
             return streaming_target
     if expr.op is None and _SYM is None:
+        struct_copy = _unpacked_struct_copy_assignment(sm, expr)
+        if struct_copy is not None:
+            return struct_copy
         array_pattern_lhs = _fixed_array_pattern_lhs_assignment(sm, expr)
         if array_pattern_lhs is not None:
             return array_pattern_lhs

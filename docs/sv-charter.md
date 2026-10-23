@@ -5241,3 +5241,13 @@ cover the admitted form. The census moves **4,525 → 4,540 clean** and
 **3,580 → 3,565**. Differential coverage is **41 rows, 37 matches, 0
 disagreements, and 4 recorded refusals**; grammar coverage remains **200
 witnesses, 69 MATCH, and 131 REFUSE**.
+
+### Unpacked integral struct copies — 2026-10-23
+
+Whole copies of flattened integral unpacked structs now lower field by field,
+sampling the source before destination writes. Aggregate fields and self-copies
+remain loud. The `unpacked_struct_copy` fixture and differential row cover the
+admitted form. The census moves **4,540 → 4,552 clean** and **17,429 → 17,417
+partial**; `AssignmentExpression:target` falls **3,592 → 3,580**. Differential
+coverage is **42 rows, 38 matches, 0 disagreements, and 4 recorded refusals**;
+grammar coverage remains **200 witnesses, 69 MATCH, and 131 REFUSE**.

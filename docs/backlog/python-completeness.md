@@ -96,6 +96,14 @@ interpreter surfaces use the value frame for the finite rows. `float_lab` and
 the differential battery cover finite mixed counters,
 Boolean starts, faithful invalid-argument errors, and the NaN refusal.
 
+## 2026-10-23-pycomplete-64 — Latin-1 string repr rendering
+
+String `repr` now renders CPython-printable Latin-1 characters directly and
+keeps exact `\xNN` escapes for C1 controls, NBSP, and soft hyphen. This closes
+the non-ASCII wall for `%r`, f-string repr conversion, and nested tuple/list/
+dict/namedtuple rendering on the admitted table; code points above Latin-1
+remain loud because the full Unicode printability database is not represented.
+
 ## 2026-10-23-pycomplete-63 — Latin-1 string case mapping
 
 String `swapcase`, `isupper`, `islower`, and `upper` now admit CPython's

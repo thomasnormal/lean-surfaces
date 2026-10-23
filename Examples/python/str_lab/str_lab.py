@@ -224,8 +224,18 @@ def fmt_nonascii_s():
 
 
 def fmt_nonascii_r():
-    # repr escapes by Unicode PRINTABILITY -- never guessed, so loud
+    # Latin-1 printable characters use CPython's direct repr spelling.
     return "%r" % ("héllo",)
+
+
+def fmt_latin1_controls():
+    # C1 controls, NBSP, and soft hyphen retain CPython's hex escapes.
+    return "%r" % ("\x80\xa0\xad",)
+
+
+def fmt_unicode_r():
+    # Unicode outside the admitted Latin-1 printability table stays loud.
+    return "%r" % ("λ",)
 
 
 def fmt_width(n):

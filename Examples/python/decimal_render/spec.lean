@@ -13,6 +13,7 @@ set_option exponentiation.threshold 1024
 #py_check decimal_render.scalar_str(false) = "False"
 #py_check decimal_render.format_s(-27) = "-27"
 #py_check decimal_render.format_r(-27) = "-27"
+#py_check decimal_render.format_r("hé") = "'hé'"
 #py_check decimal_render.format_d(-27) = "-27"
 #py_check decimal_render.format_d(true) = "1"
 #py_check decimal_render.format_d(false) = "0"
@@ -24,6 +25,11 @@ set_option exponentiation.threshold 1024
 #py_check decimal_render.range_start_str(-27) = "range(-27, -27)"
 #py_check decimal_render.range_step_str(-27) = "range(0, 2, -27)"
 #py_check decimal_render.namedtuple_str(-27) = "Pair(x=-27, y=7)"
+#py_check decimal_render.tuple_str("hé") = "('hé',)"
+#py_check decimal_render.list_str("hé") = "['hé']"
+#py_check decimal_render.dict_key_str("hé") = "{'hé': 7}"
+#py_check decimal_render.dict_value_str("hé") = "{'value': 'hé'}"
+#py_check decimal_render.namedtuple_str("hé") = "Pair(x='hé', y=7)"
 #py_check decimal_render.fstring_str(-27) = "-27"
 
 #guard intDecimal ((10 : Int) ^ 1024 - 1) matches some _

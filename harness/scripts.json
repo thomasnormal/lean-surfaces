@@ -142,7 +142,7 @@
   },
   {
     "file": "harness/scripts/print_nonascii.py",
-    "expect": "unsupported"
+    "expect": "match"
   },
   {
     "file": "harness/scripts/dict_ctor_script.py",

@@ -3747,10 +3747,9 @@ refuse; it never invents the process-dependent decimal conversion exception.
 
 LOUD, never a plausible-looking line: a SET (its `repr` is hash order,
 which the order doctrine forbids guessing), an instance/closure/generator
-(identity lives in the address), and a NON-ASCII string, whose escaping
-depends on Unicode PRINTABILITY — the same table `.swapcase()` refuses to
-guess. `print("héllo")` is fine (that is `str()`); `print(["héllo"])` is
-not (that is `repr()`). Pinned by `print_set.py` and
+(identity lives in the address), and a string outside the admitted Latin-1
+printability table. `print("héllo")` and `print(["héllo"])` are both exact;
+Unicode outside Latin-1 remains loud. Pinned by `print_set.py` and
 `print_nonascii.py`.
 
 Nothing in the proof layer moved: `print` already left `Expr.heapFree`
@@ -4960,10 +4959,10 @@ flag, width, precision, length modifier, or mapping key. Per conversion:
 * `%s` is `strOfVal` VERBATIM (str raw; int/bool/None their
   digits/`True`/`False`/`None`).
 * `%r` is the same, except a str goes through the shipped `reprStr`
-  (quote choice, `\\`/quote/`\n`/`\r`/`\t`/`\xNN` escapes, non-ASCII
-  refused) — because `repr` and `str` COINCIDE on int/bool/None. So a
-  non-ASCII string refuses under `%r` exactly as it refuses inside
-  `print([…])`, and prints raw under `%s` exactly as `print` does: one
+  (quote choice, `\\`/quote/`\n`/`\r`/`\t`/`\xNN` escapes, and printable Latin-1 direct characters; characters
+  outside Latin-1 remain loud) — because `repr` and `str` COINCIDE on int/bool/None. So a
+  strings outside the admitted Latin-1 table refuse under `%r` exactly as
+  they refuse inside `print([…])`, and prints raw under `%s` exactly as `print` does: one
   rendering boundary, not two.
 * `%a` uses ASCII-escaped `repr`: non-ASCII characters render as `\\xNN`,
   `\\uNNNN`, or `\\UNNNNNNNN`, while scalar non-str values retain their

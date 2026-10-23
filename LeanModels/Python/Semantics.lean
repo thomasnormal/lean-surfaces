@@ -940,8 +940,14 @@ contains one and no `"`. -/
 def reprQuote (s : String) : Char :=
   if s.toList.contains '\'' && !s.toList.contains '"' then '"' else '\''
 
-/-- `repr` of one character inside a string literal; `none` = non-ASCII
-(printability is a Unicode table this model does not guess). -/
+/-- CPython's printable Latin-1 intervals. The C1 controls, NBSP, and soft
+hyphen retain their `\\xNN` escapes; code points above Latin-1 remain loud
+until the full Unicode printability table is represented. -/
+def latin1ReprPrintable (c : Char) : Bool :=
+  let n := c.val.toNat
+  (0xA1 ≤ n && n ≤ 0xAC) || (0xAE ≤ n && n ≤ 0xFF)
+
+/-- `repr` of one character inside a string literal. -/
 def reprChar (q : Char) : Char → Option String
   | '\\' => some "\\\\"
   | '\n' => some "\\n"
@@ -951,6 +957,8 @@ def reprChar (q : Char) : Char → Option String
     if c == q then some (String.mk ['\\', c])
     else if c.val < 0x20 || c.val == 0x7f then some ("\\x" ++ hex2 c.val.toNat)
     else if c.val < 0x7f then some (String.mk [c])
+    else if latin1ReprPrintable c then some (String.mk [c])
+    else if c.val < 0x100 then some ("\\x" ++ hex2 c.val.toNat)
     else Option.none
 
 /-- `reprChar` over a character list. -/
@@ -962,8 +970,8 @@ def reprChars (q : Char) : List Char → Option String
     return a ++ rest
 
 /-- CPython `repr` of a str: the quote choice above, backslash/quote/
-`\n`/`\r`/`\t` escapes, `\xNN` for the other C0 controls and DEL, and a
-LOUD refusal on anything non-ASCII. -/
+`\n`/`\r`/`\t` escapes, `\xNN` for the other C0/C1 controls and DEL, direct
+rendering for CPython-printable Latin-1, and a loud refusal above Latin-1. -/
 def reprStr (s : String) : Option String := do
   let q := reprQuote s
   let body ← reprChars q s.data
@@ -1006,8 +1014,7 @@ def strFormatStr (v : RVal) : Option String :=
 
 /-- `%r` of an argument. Only a str differs from `%s` — CPython's `repr`
 and `str` COINCIDE on int/bool/None — and its quoting/escaping IS the
-shipped `reprStr`, so a non-ASCII string refuses here exactly as it
-refuses inside `print([…])`. -/
+shipped `reprStr`, including the admitted printable Latin-1 strings. -/
 def strFormatRepr (v : RVal) : Option String :=
   match v with
   | .str s => reprStr s
@@ -2046,8 +2053,8 @@ go through `str()`, and every value INSIDE a container goes through
 `repr("a")` is `'a'` — which is why `print(["a"])` shows quotes and
 `print("a")` does not. Everything the tier cannot render EXACTLY refuses
 loudly: a set (hash order), an instance/closure/generator (identity in
-the address), a non-ASCII string (Unicode printability is never guessed —
-the `.swapcase` doctrine), and a structure deeper than `reprFuel`. The
+ the address), a string outside the admitted Latin-1 printability table,
+ and a structure deeper than `reprFuel`. The
 SCALAR half of the rule — `strOfVal` and a str's `reprStr` — lives above
 the operator block (§scalar rendering), because the `%` operator needs
 it and `evalBinOp` comes first in this file; what follows is the
@@ -7030,7 +7037,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                        .ok { st with world :=
                                { st.world with stdout := st.world.stdout ++ [line] } } .none
                      | Option.none =>
-                       .unsupported "print() of a value the tier cannot render EXACTLY: a set (hash order), an instance/closure/generator (identity), a non-ASCII string (Unicode printability is never guessed), or a structure deeper than the repr budget — docs/memory-model.md §effects")
+                       .unsupported "print() of a value the tier cannot render EXACTLY: a set (hash order), an instance/closure/generator (identity), a string outside the Latin-1 printability table, or a structure deeper than the repr budget — docs/memory-model.md §effects")
                   else if isModuleDunder fname then
                     .unsupported s!"module attribute '{fname}' is bound by the import machinery, not by a statement — outside the G1 tier"
                   else
@@ -7876,7 +7883,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
       -- and is observable whenever it has an effect. The rendering is
       -- `printOne` — `print`'s own one-argument `str()` — so the two
       -- agree by construction and the unrenderable cases (a set, an
-      -- instance, a non-ASCII string) refuse LOUDLY here too.
+      -- instance, a string outside the Latin-1 printability table) refuse LOUDLY here too.
       (evalExpr m fuel st test ⤳ fun st t =>
        Run.liftRes st (truthyH st.world.heap t) ⤳ fun st b =>
        if b then .ok st .next
@@ -7888,7 +7895,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
            match printOne st.world.heap v with
            | some rendered => .exn st (.assertionError (some rendered))
            | Option.none =>
-             .unsupported "assert message: the tier cannot render this value EXACTLY — a set (hash order), an instance/closure/generator (identity), a non-ASCII string (Unicode printability is never guessed), or a structure deeper than the repr budget — docs/memory-model.md §the assert statement")
+             .unsupported "assert message: the tier cannot render this value EXACTLY — a set (hash order), an instance/closure/generator (identity), a string outside the Latin-1 printability table, or a structure deeper than the repr budget — docs/memory-model.md §the assert statement")
     | .delStmt names _ =>
       -- the tail batch (docs/memory-model.md §the del statement): the
       -- FUNCTION-scope arm. `delNames` threads the locals left to right

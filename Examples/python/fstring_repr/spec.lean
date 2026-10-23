@@ -16,6 +16,7 @@ set_option exponentiation.threshold 1024
 #py_check fstring_repr.repr_field(Val.none) = "[None]"
 #py_check fstring_repr.repr_field("quoted") = "['quoted']"
 #py_check fstring_repr.repr_field("a'b") = "[\"a'b\"]"
+#py_check fstring_repr.repr_field("é") = "['é']"
 #py_check fstring_repr.repr_field("\n\r\t") = "['\\n\\r\\t']"
 #py_check fstring_repr.repr_field("\x00\x7f") = "['\\x00\\x7f']"
 #py_check fstring_repr.str_field("héllo") = "[héllo]"
@@ -35,7 +36,7 @@ set_option exponentiation.threshold 1024
 #py_check fstring_shadow.fields(3) = "3/3/3"
 #py_check fstring_shadow.captured() = (Val.tuple #[.str "1:1", .str "2:2"])
 
-#guard callFunction fstring_repr "repr_field" #[.str "é"] 4096 matches .unsupported _
+#guard callFunction fstring_repr "repr_field" #[.str "😀"] 4096 matches .unsupported _
 #guard callFunction fstring_repr "instance" #[] 4096 matches .unsupported _
 #guard callFunction fstring_repr "repr_field" #[.bool true] 1 matches .timeout
 #guard (Expr.formattedValue (.constant (.bool true) default) true default).heapFree

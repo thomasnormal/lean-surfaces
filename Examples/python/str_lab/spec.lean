@@ -173,6 +173,9 @@ and it was that file's SOLE wall. Every row here is differential
 #py_check str_lab.fmt_pct(42) = "42% done"
 #py_check str_lab.fmt_noargs() = "abc"
 #py_check str_lab.fmt_nonascii_s() = "héllo"
+#py_check str_lab.fmt_nonascii_r() = "'héllo'"
+#py_check str_lab.fmt_latin1_controls() = "'\\x80\\xa0\\xad'"
+#guard callFunction str_lab "fmt_unicode_r" #[] 4096 matches .unsupported _
 
 /-! The two arity `TypeError`s and the `%d` type error, verbatim (the
 type name is UNQUOTED here — CPython's own wording, measured), plus the

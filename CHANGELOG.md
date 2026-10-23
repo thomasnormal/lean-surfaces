@@ -39,6 +39,7 @@ change is listed here under **Changed** or **Removed**.
 - String case methods now admit Latin-1 input characters, including CPython's
   `µ`, `ß` → `SS`, and `ÿ` → `Ÿ` mappings; characters outside Latin-1 remain
   loud until the full Unicode case tables are represented.
+- String `repr` now renders printable Latin-1 characters directly, with exact `\xNN` escapes for C1 controls, NBSP, and soft hyphen; Unicode above Latin-1 remains loud.
 
 ## [0.1.14] — 2026-10-21
 

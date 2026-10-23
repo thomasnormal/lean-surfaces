@@ -1474,6 +1474,17 @@
     "rung": 4
   },
   {
+    "id": "translation.omp-parallel-master-taskloop-directive",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "ompParallelMasterTaskloopDirectiveTranslationWitness",
+    "cpp_source": "void f() {\n#pragma omp parallel master taskloop\nfor (int i = 0; i < 1; ++i) {}\n}",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.omp-taskyield-directive",
     "kind": "translation",
     "corpus": "translation witness",

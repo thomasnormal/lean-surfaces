@@ -1001,6 +1001,17 @@
     "rung": 3
   },
   {
+    "id": "translation.cxx-std-initializer-list-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "cxxStdInitializerListTranslationWitness",
+    "cpp_source": "#include <initializer_list>\nint f() { return std::initializer_list<int>{1}.size(); }",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

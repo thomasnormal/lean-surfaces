@@ -309,6 +309,9 @@ def admitCXXDependentScopeDeclRefExpression (artifact : Artifact) (path : List N
 def admitCXXInheritedConstructorInitExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXInheritedCtorInitExpr" "inherited-constructor-initializer-expression"
 
+def admitCXXStdInitializerListExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXStdInitializerListExpr" "standard-initializer-list-expression"
+
 def admitConditionalOperatorExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ConditionalOperator" "conditional-operator-expression"
 

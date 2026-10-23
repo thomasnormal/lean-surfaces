@@ -681,6 +681,13 @@ private def cxxInheritedConstructorInitTranslation : Artifact := {emptyTranslati
       .object [("id", .string "i"), ("kind", .string "CXXInheritedCtorInitExpr"),
         ("name", .string "initializer"), ("inner", .array [])]])]}
 
+private def cxxStdInitializerListTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "s"), ("kind", .string "CXXStdInitializerListExpr"),
+        ("name", .string "initializer-list"), ("inner", .array [])]])]}
+
 private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1145,6 +1152,9 @@ def cxxDependentScopeDeclRefTranslationWitness : Except String Unit :=
 def cxxInheritedConstructorInitTranslationWitness : Except String Unit :=
   admitCXXInheritedConstructorInitExpression cxxInheritedConstructorInitTranslation [0]
 
+def cxxStdInitializerListTranslationWitness : Except String Unit :=
+  admitCXXStdInitializerListExpression cxxStdInitializerListTranslation [0]
+
 def conditionalOperatorTranslationWitness : Except String Unit :=
   admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
@@ -1530,6 +1540,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard cxxInheritedConstructorInitTranslationWitness matches .ok ()
 #guard admitCXXInheritedConstructorInitExpression cxxInheritedConstructorInitTranslation [] matches .error _
 #guard admitCXXInheritedConstructorInitExpression functionTranslation [0] matches .error _
+#guard cxxStdInitializerListTranslationWitness matches .ok ()
+#guard admitCXXStdInitializerListExpression cxxStdInitializerListTranslation [] matches .error _
+#guard admitCXXStdInitializerListExpression functionTranslation [0] matches .error _
 #guard conditionalOperatorTranslationWitness matches .ok ()
 #guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
 #guard admitConditionalOperatorExpression functionTranslation [0] matches .error _

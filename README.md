@@ -108,6 +108,16 @@ host reports every native result as an explicit ORACLE because pinned
 Clang/LLVM 21.1.8 is unavailable. See the [C++ coverage](docs/cpp-coverage.md)
 and [rung status](docs/cpp-rung-status.md) pages.
 
+## SystemVerilog tier status
+
+The SystemVerilog tier prerelease is **v0.1.0 (2026-10-23)**. Tag
+`sv-v0.1.0` identifies the release commit on `master`; see the
+[SV changelog](docs/sv-changelog.md) and [measured SV coverage](docs/sv-coverage.md).
+The self-check surface has 57 differential rows (53 matches and 4 recorded
+refusals), 202 grammar witnesses (71 MATCH and 131 REFUSE), and a
+22,046-file corpus measurement of 4,617 clean files, 17,363 partial files,
+and 66 include skips.
+
 ## Quickstart (Python tier)
 
 You need git, Python ≥ 3.9, and [elan](https://github.com/leanprover/elan)

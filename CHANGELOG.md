@@ -24,6 +24,9 @@ change is listed here under **Changed** or **Removed**.
   bounds; the value-side proof interpreter keeps this stateful shape loud.
 - `int(str)` now admits CPython's Unicode decimal digits and whitespace through
   the shared float-text normalization table; unrelated Unicode remains loud.
+- `float(bytes)` now accepts ASCII decimal bytes through the shared float-text
+  parser and preserves CPython's bytes-rendered conversion errors; non-ASCII
+  bytes and textual NaN payloads remain loud.
 
 ## [0.1.14] — 2026-10-21
 

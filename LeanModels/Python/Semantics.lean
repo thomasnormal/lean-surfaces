@@ -1922,7 +1922,17 @@ def floatCastVal : RVal → Res RVal
       match reprStr text with
       | some rendered => .exn (.valueError s!"could not convert string to float: {rendered}")
       | none => .unsupported "float() cannot render this invalid Unicode literal exactly (docs/python-floats.md)"
-  | .bytes _ => .unsupported "float() parsing of bytes is outside the tier"
+  | .bytes values =>
+    if !values.toList.all (fun octet => octet.toNat < 128) then
+      .unsupported "float() parsing of bytes containing non-ASCII octets is outside the tier"
+    else
+      let text := String.ofList (values.toList.map (fun octet => Char.ofNat octet.toNat))
+      match Float64.fromText text with
+      | .ok value => .ok (.float value)
+      | .error .nanPayload =>
+        .unsupported "float() textual NaN requires an explicit payload oracle (docs/python-floats.md)"
+      | .error .invalid =>
+        .exn (.valueError s!"could not convert string to float: {bytesRepr values}")
   | .ref _ =>
     .unsupported "float() heap-object conversion protocols remain unmodelled (docs/python-floats.md)"
   | value => .exn (.typeError s!"float() argument must be a string or a number, not '{value.typeName}'")

@@ -59,6 +59,15 @@ same bounded ASCII grammar; unrelated non-decimal characters remain loud.
 The interpreters preserve exact malformed-input errors and the fixed digit
 budget.
 
+## 2026-10-23-pycomplete-59 — ASCII `float(bytes)`
+
+The float constructor now feeds ASCII bytes through the existing Unicode-aware
+decimal text parser. Finite values, decimal underscores, whitespace, signed
+zero, overflow, and malformed-input `ValueError` rendering share the string
+constructor's semantics while naming the original bytes value in errors.
+Non-ASCII bytes and textual NaN payloads remain loud until decoding and NaN
+oracle behavior are modeled.
+
 ## 2026-10-22-pycomplete-49 — public baseline and the next ordinary-language inch
 
 The first post-public-master baseline was measured from `2730f338` (the

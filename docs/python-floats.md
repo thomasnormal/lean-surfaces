@@ -165,14 +165,15 @@ strictly between digits. Unicode decimal digits and surrounding whitespace
 use the pinned CPython 3.9 Unicode 13.0.0 inventory; ASCII control characters
 are not broadened to Unicode `isspace`. `inf` and `infinity` are case-insensitive.
 Decimal overflow produces signed infinity, underflow produces signed zero,
-and finite results use the same exact rational rounding as arithmetic.
+and finite results use the same exact rational rounding as arithmetic. ASCII
+bytes use the same parser and preserve the bytes-specific `ValueError`
+rendering; non-ASCII bytes and textual NaN payloads remain loud.
 
 Malformed strings raise the repr-rendered `ValueError` when the shared
 string renderer can decide its message exactly. Quote selection traverses
 the structural code-point list, keeping error rendering kernel-reducible.
-Unresolved Unicode repr,
-textual NaN payloads, bytes-like inputs and object conversion protocols remain
-explicit unfinished work. Existing NaN words are preserved without selecting
+Unresolved Unicode repr and object conversion protocols remain explicit
+unfinished work. Existing NaN words are preserved without selecting
 a new payload. Positional arity and immediate nonnumeric type errors retain
 CPython's exception classes and messages; keyword construction stays loud
 until its evaluation and positional-only protocol are modeled.

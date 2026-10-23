@@ -130,8 +130,12 @@ def numeric_int_invalid():
     return int(b"12x")
 
 
-def numeric_float_still_loud():
-    return float(b"1.5")
+def numeric_float():
+    return float(b"1.5"), float(b" +1_2\n")
+
+
+def numeric_float_invalid():
+    return float(b"12x")
 
 
 def iterator_still_loud():

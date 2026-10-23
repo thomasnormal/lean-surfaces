@@ -30,6 +30,11 @@ load_program bytes_lab from "Examples/python/bytes_lab/bytes_lab.json"
 #py_check bytes_lab.numeric_int() = Val.tuple #[.int 12, .int 0, .int 7]
 #py_check bytes_lab.numeric_int_invalid() raises
   (.valueError "invalid literal for int() with base 10: b'12x'")
+#py_check bytes_lab.numeric_float() =
+  Val.tuple #[.float (Float64.ofBits 0x3ff8000000000000),
+    .float (Float64.ofBits 0x4028000000000000)]
+#py_check bytes_lab.numeric_float_invalid() raises
+  (.valueError "could not convert string to float: b'12x'")
 theorem literal : bytes_lab.literal() ==> (#[97, 98, 0, 255] : PyBytes) := by
   exact CallsTo.intro 64 (by rfl)
 

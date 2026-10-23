@@ -595,6 +595,15 @@
       "expect": "match"
     },
     {
+      "name": "time_scale_query",
+      "file": "Examples/system-verilog/time_scale_query/time_scale_query.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "delay_refusal",
       "file": "Examples/system-verilog/delay/delay.sv",
       "module": "delay",

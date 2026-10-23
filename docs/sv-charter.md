@@ -5574,3 +5574,18 @@ The fresh 22,046-file census moves **4,678 → 4,679 clean** and **17,302 →
 17,301 partial**. `AssignmentExpression:target` falls **3,464 → 3,441** files
 and `MemberAccessExpression` falls **1,025 → 1,022**. Differential coverage
 moves **68/64/0/4 → 69/65/0/4**; grammar coverage remains **206/75/131**.
+
+## Literal `$timeunit` and `$timeprecision` queries — 2026-10-23
+
+System functions `$timeunit` and `$timeprecision` now fold when the source has a
+literal `` `timescale 1<unit>/1<precision> `` directive. The result is the
+signed IEEE time exponent (for example, `1ns/1ps` gives `-9` and `-12`), so the
+existing integral evaluator handles assignments and comparisons without a
+scheduler. Missing, malformed, or nonliteral scale metadata remains loud.
+The `time_scale_query` fixture and differential row cover both queries.
+
+The fresh 22,046-file census moves **4,679 → 4,684 clean** and **17,301 →
+17,296 partial**. `CallExpression` falls **3,292 → 3,283** files; the two
+assignment and expression-statement leaders are unchanged. Differential
+coverage moves **69/65/0/4 → 70/66/0/4** and grammar coverage remains
+**206/75/131**.

@@ -30,6 +30,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import sys
 
 import pyslang
@@ -981,6 +982,45 @@ def _convert_time_call(sm, expression):
         "bits": "0" * expression.type.bitWidth,
         "time_zero": True,
     }
+
+
+_TIME_UNIT_EXPONENTS = {
+    "s": 0, "ms": -3, "us": -6, "ns": -9, "ps": -12, "fs": -15,
+}
+
+
+def _time_scale_call(expression):
+    try:
+        return (type(expression).__name__ == "CallExpression"
+                and expression.isSystemCall
+                and expression.subroutineName in ("$timeunit", "$timeprecision")
+                and not expression.arguments)
+    except Exception:
+        return False
+
+
+def _convert_time_scale_call(sm, expression):
+    """Fold `$timeunit`/`$timeprecision` from a literal source timescale."""
+    try:
+        if (not _time_scale_call(expression) or expression.type.bitWidth != 32
+                or not expression.type.isSigned):
+            return None
+        text = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        matches = list(re.finditer(
+            r"`timescale\s+(?:1\s*)?([munpf]?s)\s*/\s*(?:1\s*)?([munpf]?s)",
+            text, flags=re.IGNORECASE))
+        if not matches:
+            return None
+        match = matches[-1]
+        unit = match.group(1 if expression.subroutineName == "$timeunit" else 2).lower()
+        exponent = _TIME_UNIT_EXPONENTS.get(unit)
+        if exponent is None:
+            return None
+        return {"kind": "Literal", "span": node_span(sm, expression),
+                "width": 32, "bits": format(exponent & 0xffffffff, "032b"),
+                "signed": True, "time_scale_query": expression.subroutineName}
+    except Exception:
+        return None
 
 
 def _convert_time_literal(sm, expression):
@@ -4928,6 +4968,7 @@ def _convert_selected_read(sm, expr, expression_kind):
 
 def _convert_legacy_call(sm, expression):
     for recognizes, convert in (
+            (_time_scale_call, _convert_time_scale_call),
             (_plusargs_call, _convert_plusargs_call),
             (_dynamic_cast_call, _convert_dynamic_cast),
             (_array_reduction_call, _convert_array_reduction),

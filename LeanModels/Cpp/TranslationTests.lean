@@ -385,6 +385,13 @@ private def deleteTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "d"), ("kind", .string "CXXDeleteExpr"),
         ("name", .string "delete"), ("inner", .array [])]])]}
 
+private def defaultInitTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "i"), ("kind", .string "CXXDefaultInitExpr"),
+        ("name", .string "default"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -531,6 +538,9 @@ def newTranslationWitness : Except String Unit :=
 
 def deleteTranslationWitness : Except String Unit :=
   admitCXXDeleteExpression deleteTranslation [0]
+
+def defaultInitTranslationWitness : Except String Unit :=
+  admitCXXDefaultInitExpression defaultInitTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -713,6 +723,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard deleteTranslationWitness matches .ok ()
 #guard admitCXXDeleteExpression deleteTranslation [] matches .error _
 #guard admitCXXDeleteExpression functionTranslation [0] matches .error _
+#guard defaultInitTranslationWitness matches .ok ()
+#guard admitCXXDefaultInitExpression defaultInitTranslation [] matches .error _
+#guard admitCXXDefaultInitExpression functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

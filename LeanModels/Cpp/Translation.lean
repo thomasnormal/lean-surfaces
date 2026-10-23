@@ -189,6 +189,9 @@ def admitCXXNewExpression (artifact : Artifact) (path : List Nat) :
 def admitCXXDeleteExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXDeleteExpr" "delete-expression"
 
+def admitCXXDefaultInitExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXDefaultInitExpr" "default-init-expression"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

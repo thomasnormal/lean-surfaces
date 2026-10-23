@@ -561,6 +561,17 @@
     "rung": 1
   },
   {
+    "id": "translation.default-init-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "defaultInitTranslationWitness",
+    "cpp_source": "struct S { int value; }; int f() { S object{}; return object.value; }",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

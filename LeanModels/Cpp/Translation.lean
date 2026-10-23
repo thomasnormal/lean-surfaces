@@ -384,6 +384,9 @@ def admitOMPBarrierDirective (artifact : Artifact) (path : List Nat) :
 def admitOMPTaskwaitDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTaskwaitDirective" "omp-taskwait-directive"
 
+def admitOMPTaskyieldDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPTaskyieldDirective" "omp-taskyield-directive"
+
 def admitConditionalOperatorExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ConditionalOperator" "conditional-operator-expression"
 

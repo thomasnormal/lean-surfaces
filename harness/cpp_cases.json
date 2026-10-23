@@ -605,6 +605,17 @@
     "rung": 1
   },
   {
+    "id": "translation.implicit-value-init-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "implicitValueInitTranslationWitness",
+    "cpp_source": "int f() { int values[2] = {}; return values[1]; }",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

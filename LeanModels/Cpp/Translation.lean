@@ -201,6 +201,9 @@ def admitInitializerListExpression (artifact : Artifact) (path : List Nat) :
 def admitCXXParenListInitExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXParenListInitExpr" "paren-list-init-expression"
 
+def admitImplicitValueInitExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "ImplicitValueInitExpr" "implicit-value-init-expression"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

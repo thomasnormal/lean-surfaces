@@ -682,6 +682,17 @@
     "rung": 2
   },
   {
+    "id": "translation.dynamic-cast-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "dynamicCastTranslationWitness",
+    "cpp_source": "struct Base { virtual ~Base() = default; }; struct Derived : Base {}; Derived* f(Base* pointer) { return dynamic_cast<Derived*>(pointer); }",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

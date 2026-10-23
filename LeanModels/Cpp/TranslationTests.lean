@@ -322,6 +322,13 @@ private def compoundRequirementTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "c"), ("kind", .string "CompoundRequirement"),
         ("name", .string "compound"), ("inner", .array [])]])]}
 
+private def nestedRequirementTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "n"), ("kind", .string "NestedRequirement"),
+        ("name", .string "nested"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -441,6 +448,9 @@ def simpleRequirementTranslationWitness : Except String Unit :=
 
 def compoundRequirementTranslationWitness : Except String Unit :=
   admitCompoundRequirement compoundRequirementTranslation [0]
+
+def nestedRequirementTranslationWitness : Except String Unit :=
+  admitNestedRequirement nestedRequirementTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -596,6 +606,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard compoundRequirementTranslationWitness matches .ok ()
 #guard admitCompoundRequirement compoundRequirementTranslation [] matches .error _
 #guard admitCompoundRequirement functionTranslation [0] matches .error _
+#guard nestedRequirementTranslationWitness matches .ok ()
+#guard admitNestedRequirement nestedRequirementTranslation [] matches .error _
+#guard admitNestedRequirement functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

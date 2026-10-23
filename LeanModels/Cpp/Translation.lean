@@ -312,6 +312,9 @@ def admitNullStatement (artifact : Artifact) (path : List Nat) :
 def admitGotoStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "GotoStmt" "goto-statement"
 
+def admitLabelStatement (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "LabelStmt" "label-statement"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

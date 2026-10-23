@@ -316,6 +316,18 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_struct_pattern_accepts_time_literals(self):
+        design = extract_source(
+            "typedef struct { int a; time b; } ab_t; module top; ab_t abkey[1:0]; "
+            "initial abkey = '{'{a:1, b:2ns}, '{int:5, time:$time}}; endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual([a["target"]["name"] for a in assigns],
+                         ["abkey[1].a", "abkey[1].b", "abkey[0].a", "abkey[0].b"])
+        self.assertEqual(assigns[1]["value"]["bits"], "0" * 62 + "10")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_whole_array_equality_pairs_cells(self):
         design = extract_source(
             "module top; logic [7:0] a [0:1]; logic [7:0] b [0:1]; "

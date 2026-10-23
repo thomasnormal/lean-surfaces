@@ -965,6 +965,24 @@ def _convert_time_call(sm, expression):
     }
 
 
+def _convert_time_literal(sm, expression):
+    """Convert a finite time literal to the integral time representation."""
+    try:
+        value = int(round(float(expression.value)))
+        width = expression.type.bitWidth
+        if width <= 0 or value < 0:
+            return unsupported(sm, expression, "TimeLiteral:value")
+        return {
+            "kind": "Literal",
+            "span": node_span(sm, expression),
+            "width": width,
+            "bits": format(value & ((1 << width) - 1), f"0{width}b"),
+            "time_literal": True,
+        }
+    except Exception:
+        return unsupported(sm, expression, "TimeLiteral:value")
+
+
 def _fixed_query_dimensions(value_type):
     """Declared dimensions, unpacked first, for fixed integral bitstreams."""
     if not value_type.isFixedSize:
@@ -3378,6 +3396,8 @@ def _convert_expr(sm, e):
         return _convert_integer_expr(sm, e, cname)
     if cname == "StringLiteral":
         return _convert_string_expr(sm, e)
+    if cname == "TimeLiteral":
+        return _convert_time_literal(sm, e)
     if cname == "UnaryExpression":
         return _convert_unary_expr(sm, e)
     if cname == "BinaryExpression":
@@ -6144,6 +6164,8 @@ def _lower_stateful_processes(processes):
 
 
 def _case_skip_call_purity(node, packed_members):
+    if _SYM is None and _time_call(node):
+        return len(node.arguments) == 0
     if _SYM is None and _clog2_call(node):
         return len(node.arguments) == 1 and all(
             _case_source_expression_ok(argument, packed_members=packed_members)
@@ -6194,6 +6216,7 @@ def _case_source_expression_ok(expression, *, packed_members=False):
             return
         pure = pure and not getattr(node, "bad", False) and kind in (
             "IntegerLiteral", "UnbasedUnsizedIntegerLiteral", "StringLiteral",
+            "TimeLiteral",
             "NamedValueExpression", "ConversionExpression", "UnaryExpression",
             "BinaryExpression", "ConditionalExpression", "ConcatenationExpression",
             "SimpleAssignmentPatternExpression", "StructuredAssignmentPatternExpression",

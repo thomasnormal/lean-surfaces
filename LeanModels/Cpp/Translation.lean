@@ -165,6 +165,9 @@ def admitCompoundRequirement (artifact : Artifact) (path : List Nat) :
 def admitNestedRequirement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "NestedRequirement" "nested-requirement"
 
+def admitUsingEnumDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "UsingEnumDecl" "using-enum"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

@@ -473,6 +473,17 @@
     "rung": 3
   },
   {
+    "id": "translation.using-enum-declaration",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "usingEnumTranslationWitness",
+    "cpp_source": "enum class Color { red }; using enum Color;",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

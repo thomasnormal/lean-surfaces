@@ -420,6 +420,14 @@ private def implicitValueInitTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "v"), ("kind", .string "ImplicitValueInitExpr"),
         ("name", .string "zero"), ("inner", .array [])]])]}
 
+private def implicitCastTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "c"), ("kind", .string "ImplicitCastExpr"),
+        ("castKind", .string "IntegralCast"), ("name", .string "cast"),
+        ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -581,6 +589,9 @@ def parenListInitTranslationWitness : Except String Unit :=
 
 def implicitValueInitTranslationWitness : Except String Unit :=
   admitImplicitValueInitExpression implicitValueInitTranslation [0]
+
+def implicitCastTranslationWitness : Except String Unit :=
+  admitImplicitCastExpression implicitCastTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -778,6 +789,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard implicitValueInitTranslationWitness matches .ok ()
 #guard admitImplicitValueInitExpression implicitValueInitTranslation [] matches .error _
 #guard admitImplicitValueInitExpression functionTranslation [0] matches .error _
+#guard implicitCastTranslationWitness matches .ok ()
+#guard admitImplicitCastExpression implicitCastTranslation [] matches .error _
+#guard admitImplicitCastExpression functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

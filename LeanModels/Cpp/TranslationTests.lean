@@ -406,6 +406,13 @@ private def initializerListTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "l"), ("kind", .string "InitListExpr"),
         ("name", .string "list"), ("inner", .array [])]])]}
 
+private def parenListInitTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "p"), ("kind", .string "CXXParenListInitExpr"),
+        ("name", .string "paren-list"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -561,6 +568,9 @@ def scalarValueInitTranslationWitness : Except String Unit :=
 
 def initializerListTranslationWitness : Except String Unit :=
   admitInitializerListExpression initializerListTranslation [0]
+
+def parenListInitTranslationWitness : Except String Unit :=
+  admitCXXParenListInitExpression parenListInitTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -752,6 +762,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard initializerListTranslationWitness matches .ok ()
 #guard admitInitializerListExpression initializerListTranslation [] matches .error _
 #guard admitInitializerListExpression functionTranslation [0] matches .error _
+#guard parenListInitTranslationWitness matches .ok ()
+#guard admitCXXParenListInitExpression parenListInitTranslation [] matches .error _
+#guard admitCXXParenListInitExpression functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

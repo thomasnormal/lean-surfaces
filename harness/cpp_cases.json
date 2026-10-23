@@ -594,6 +594,17 @@
     "rung": 1
   },
   {
+    "id": "translation.paren-list-init-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "parenListInitTranslationWitness",
+    "cpp_source": "struct S { int left; int right; }; int f() { S value(1, 2); return value.left; }",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

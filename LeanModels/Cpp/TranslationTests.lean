@@ -1031,6 +1031,13 @@ private def ompTargetTeamsDistributeParallelForDirectiveTranslation : Artifact :
       .object [("id", .string "o"), ("kind", .string "OMPTargetTeamsDistributeParallelForDirective"),
         ("name", .string "target-teams-distribute-parallel-for"), ("inner", .array [])]])]}
 
+private def ompTargetTeamsDistributeParallelForSimdDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPTargetTeamsDistributeParallelForSimdDirective"),
+        ("name", .string "target-teams-distribute-parallel-for-simd"), ("inner", .array [])]])]}
+
 private def ompTargetUpdateDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1785,6 +1792,9 @@ def ompTargetTeamsDistributeDirectiveTranslationWitness : Except String Unit :=
 def ompTargetTeamsDistributeParallelForDirectiveTranslationWitness : Except String Unit :=
   admitOMPTargetTeamsDistributeParallelForDirective ompTargetTeamsDistributeParallelForDirectiveTranslation [0]
 
+def ompTargetTeamsDistributeParallelForSimdDirectiveTranslationWitness : Except String Unit :=
+  admitOMPTargetTeamsDistributeParallelForSimdDirective ompTargetTeamsDistributeParallelForSimdDirectiveTranslation [0]
+
 def ompTargetUpdateDirectiveTranslationWitness : Except String Unit :=
   admitOMPTargetUpdateDirective ompTargetUpdateDirectiveTranslation [0]
 
@@ -2380,6 +2390,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompTargetTeamsDistributeParallelForDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTargetTeamsDistributeParallelForDirective ompTargetTeamsDistributeParallelForDirectiveTranslation [] matches .error _
 #guard admitOMPTargetTeamsDistributeParallelForDirective functionTranslation [0] matches .error _
+#guard ompTargetTeamsDistributeParallelForSimdDirectiveTranslationWitness matches .ok ()
+#guard admitOMPTargetTeamsDistributeParallelForSimdDirective ompTargetTeamsDistributeParallelForSimdDirectiveTranslation [] matches .error _
+#guard admitOMPTargetTeamsDistributeParallelForSimdDirective functionTranslation [0] matches .error _
 #guard ompTargetUpdateDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTargetUpdateDirective ompTargetUpdateDirectiveTranslation [] matches .error _
 #guard admitOMPTargetUpdateDirective functionTranslation [0] matches .error _

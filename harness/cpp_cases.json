@@ -1199,6 +1199,17 @@
     "rung": 4
   },
   {
+    "id": "translation.openacc-shutdown-construct",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "openACCShutdownConstructTranslationWitness",
+    "cpp_source": "void f() {\n#pragma acc shutdown\n}",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.omp-metadirective",
     "kind": "translation",
     "corpus": "translation witness",

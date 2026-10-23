@@ -55,6 +55,17 @@
     "rung": 0
   },
   {
+    "id": "translation.base-specifier",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "baseSpecifierTranslationWitness",
+    "cpp_source": "struct B {}; struct D : B {};",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "translation.field-declaration",
     "kind": "translation",
     "corpus": "translation witness",

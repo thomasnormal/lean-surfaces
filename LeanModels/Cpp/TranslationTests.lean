@@ -134,6 +134,13 @@ private def recordTranslation : Artifact := {emptyTranslation with
           .object [("id", .string "y"), ("kind", .string "FriendDecl"),
             ("inner", .array [])]])]])]}
 
+private def baseSpecifierTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "b"), ("kind", .string "CXXBaseSpecifier"),
+        ("name", .string "Base"), ("inner", .array [])]])]}
+
 private def templateParameterTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -742,6 +749,9 @@ def parameterTranslationWitness : Except String Unit :=
 def recordTranslationWitness : Except String Unit :=
   admitRecordDeclaration recordTranslation [0]
 
+def baseSpecifierTranslationWitness : Except String Unit :=
+  admitBaseSpecifier baseSpecifierTranslation [0]
+
 def fieldTranslationWitness : Except String Unit :=
   admitFieldDeclaration recordTranslation [0, 0]
 
@@ -1064,6 +1074,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard recordTranslationWitness matches .ok ()
 #guard admitRecordDeclaration recordTranslation [] matches .error _
 #guard admitRecordDeclaration functionTranslation [0] matches .error _
+#guard baseSpecifierTranslationWitness matches .ok ()
+#guard admitBaseSpecifier baseSpecifierTranslation [] matches .error _
+#guard admitBaseSpecifier functionTranslation [0] matches .error _
 #guard fieldTranslationWitness matches .ok ()
 #guard admitFieldDeclaration recordTranslation [] matches .error _
 #guard admitFieldDeclaration functionTranslation [0] matches .error _

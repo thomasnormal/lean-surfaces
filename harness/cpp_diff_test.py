@@ -52,7 +52,7 @@ RUNG_STATUS = [
     (4, "§8", "executable", "Selected callable blocks, branches, loops, switch and transfers execute; CompoundStmt, ReturnStmt, IfStmt, WhileStmt, DoStmt, ForStmt, CXXForRangeStmt, SwitchStmt, CaseStmt, DefaultStmt, DeclStmt, BreakStmt, ContinueStmt, NullStmt, GotoStmt and LabelStmt metadata are admitted."),
     (5, "§9", "executable", "The bounded integral declaration/reference frame subset executes."),
     (6, "§10", "not started", "Modules and imports have no semantic representation."),
-    (7, "§11", "specified", "Class, base-subobject and member-getter evidence is specified; CXXDynamicCastExpr and CXXConstructExpr metadata are admitted and object construction remains bounded."),
+    (7, "§11", "specified", "Class, base-subobject and member-getter evidence is specified; CXXBaseSpecifier, CXXDynamicCastExpr and CXXConstructExpr metadata are admitted and object construction remains bounded."),
     (8, "§12", "not started", "Clang-selected overload and conversion execution is not admitted."),
     (9, "§13", "not started", "Template instantiation is retained as frontend evidence only."),
     (10, "§14", "specified", "Exception metadata is retained through CXXTryStmt, CXXCatchStmt and CXXThrowExpr, but throw/catch matching, unwinding and cleanup are not executable."),

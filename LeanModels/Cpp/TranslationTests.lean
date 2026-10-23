@@ -336,6 +336,13 @@ private def usingEnumTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "u"), ("kind", .string "UsingEnumDecl"),
         ("name", .string "Color"), ("inner", .array [])]])]}
 
+private def lifetimeExtendedTemporaryTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "l"), ("kind", .string "LifetimeExtendedTemporaryDecl"),
+        ("name", .string "temporary"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -461,6 +468,9 @@ def nestedRequirementTranslationWitness : Except String Unit :=
 
 def usingEnumTranslationWitness : Except String Unit :=
   admitUsingEnumDeclaration usingEnumTranslation [0]
+
+def lifetimeExtendedTemporaryTranslationWitness : Except String Unit :=
+  admitLifetimeExtendedTemporaryDeclaration lifetimeExtendedTemporaryTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -622,6 +632,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard usingEnumTranslationWitness matches .ok ()
 #guard admitUsingEnumDeclaration usingEnumTranslation [] matches .error _
 #guard admitUsingEnumDeclaration functionTranslation [0] matches .error _
+#guard lifetimeExtendedTemporaryTranslationWitness matches .ok ()
+#guard admitLifetimeExtendedTemporaryDeclaration lifetimeExtendedTemporaryTranslation [] matches .error _
+#guard admitLifetimeExtendedTemporaryDeclaration functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

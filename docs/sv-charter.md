@@ -5124,7 +5124,7 @@ Statement-position `$info` and `$warning` calls with only string-literal
 arguments now lower to inert `Empty` statements. IEEE 1800-2023 §20.10 says
 these tasks report diagnostics without terminating simulation; the public
 self-check state has no diagnostic stream, so erasing a pure call preserves
-the modeled control flow. Dynamic arguments, `$error`, `$fatal`, and all other
+the modeled control flow. Dynamic arguments, `$fatal`, and all other
 unmodeled system calls remain loud. The `severity_tasks` fixture and
 differential row cover the admitted form. The 22,035-file census moves from
 **4,442 → 4,462 clean** and **17,527 → 17,507 partial**; the
@@ -5146,11 +5146,23 @@ reduces `VariableSymbol:2state` **3,989 → 3,839**; differential coverage is
 
 Runtime `$info` and `$warning` calls with a literal format and literal
 arguments now lower to inert statements. Identifier, query, and call
-arguments remain loud because evaluating them may have effects; `$error` and
-`$fatal` remain outside the slice. The `severity_task_literals` fixture and
+arguments remain loud because evaluating them may have effects; `$fatal` remains
+outside the slice. The `severity_task_literals` fixture and
 differential row cover the extension. The census moves **4,462 → 4,467 clean**
 and **17,507 → 17,502 partial**; `ExpressionStatement:CallExpression` falls
 **3,764 → 3,759**. Differential coverage is **34 rows, 30 matches, 0
+disagreements, and 4 recorded refusals**.
+
+### Literal `$error` diagnostics — 2026-10-23
+
+Statement-position `$error` with a literal format and literal arguments now
+lowers to an inert statement. IEEE 1800-2023 §20.10 specifies that `$error`
+reports a runtime diagnostic and does not terminate simulation, so removing
+the unmodeled diagnostic stream preserves the self-check control flow.
+Nonliteral arguments and `$fatal` remain loud. The `error_task` fixture and
+differential row cover the admitted form. The census moves **4,467 → 4,476
+clean** and **17,502 → 17,493 partial**; `ExpressionStatement:CallExpression`
+falls **3,759 → 3,749**. Differential coverage is **35 rows, 31 matches, 0
 disagreements, and 4 recorded refusals**.
 
 ### Declaration-only 2-state dynamic arrays — 2026-10-23

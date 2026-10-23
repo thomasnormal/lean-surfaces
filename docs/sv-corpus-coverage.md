@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-23
 
-The chapter-scoped rerun covered **22,035** paths: **4,467 clean**,
-**17,502 partial**, **66 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,035** paths: **4,476 clean**,
+**17,493 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`ExpressionStatement:CallExpression` (3,759), `VariableSymbol:2state` (3,691),
+`ExpressionStatement:CallExpression` (3,749), `VariableSymbol:2state` (3,691),
 `AssignmentExpression:target` (3,592), `CallExpression` (3,290),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,481), `ConcurrentAssertionStatement`
@@ -63,6 +63,13 @@ identifier or call arguments remain loud. The fresh rerun moves clean files
 `ExpressionStatement:CallExpression` falls **3,764 → 3,759**. Differential
 coverage is **34 rows, 30 matches, 0 disagreements, and 4 recorded refusals**;
 grammar coverage remains **200 witnesses, 68 MATCH, and 132 REFUSE**.
+
+Literal `$error` calls now share the diagnostic-only lowering because IEEE
+1800-2023 §20.10 requires simulation to continue after `$error`. The fresh
+rerun moves clean files **4,467 → 4,476** and partial files **17,502 → 17,493**;
+`ExpressionStatement:CallExpression` falls **3,759 → 3,749**. `$fatal` and
+nonliteral `$error` arguments remain loud. Differential coverage is **35 rows,
+31 matches, 0 disagreements, and 4 recorded refusals**.
 
 ## Nested fixed two-state arrays — 2026-10-22
 

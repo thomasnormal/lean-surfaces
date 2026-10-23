@@ -115,7 +115,7 @@ SYSCALL_CTRL = ("$finish", "$stop")
 # erased while preserving control flow and all modeled state.  Calls with
 # evaluated arguments remain outside this slice: evaluating an argument can
 # itself have observable effects.
-SYSCALL_QUIET = ("$info", "$warning")
+SYSCALL_QUIET = ("$info", "$warning", "$error")
 UNARY_OPS = {
     UnaryOperator.BitwiseNot: "~",
     UnaryOperator.LogicalNot: "!",

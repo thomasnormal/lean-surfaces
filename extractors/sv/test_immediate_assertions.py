@@ -56,7 +56,7 @@ class ImmediateActions(unittest.TestCase):
     def test_unsupported_actions_remain_visible(self):
         design = lower('module top; initial assert(0) else $error("failed"); endmodule')
         check, = [n for n in nodes(design) if n.get("assertion_lowered")]
-        self.assertEqual(check["else"]["kind"], "Unsupported")
+        self.assertEqual(check["else"]["kind"], "Empty")
 
     def test_invalid_source_remains_a_design_barrier(self):
         design = lower("module top; initial assert(1) else begin end initial missing=1; endmodule", require_valid=False)

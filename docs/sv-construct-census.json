@@ -15,16 +15,16 @@
  "summary": {
   "blocker_files": [
    [
-    "AssignmentExpression:target",
-    3491
-   ],
-   [
     "ExpressionStatement:CallExpression",
     3476
    ],
    [
+    "AssignmentExpression:target",
+    3464
+   ],
+   [
     "VariableSymbol:2state",
-    3369
+    3383
    ],
    [
     "CallExpression",
@@ -155,12 +155,12 @@
     194
    ],
    [
-    "TimedStatement:DelayControl:expression",
-    169
+    "StaticLocal:initializer",
+    173
    ],
    [
-    "StaticLocal:initializer",
-    167
+    "TimedStatement:DelayControl:expression",
+    169
    ],
    [
     "NamedValueExpression:ClockVar",
@@ -184,7 +184,7 @@
    ],
    [
     "ForeachLoopStatement:array",
-    132
+    128
    ],
    [
     "SubroutineSymbol",
@@ -367,15 +367,15 @@
     36
    ],
    [
-    "ArrayReduction:storage-or-effects",
-    36
-   ],
-   [
     "NetAliasSymbol:NetAlias",
     35
    ],
    [
     "RandCaseStatement",
+    35
+   ],
+   [
+    "ArrayReduction:storage-or-effects",
     35
    ],
    [
@@ -591,10 +591,6 @@
     8
    ],
    [
-    "AssignmentExpression:compound-target",
-    8
-   ],
-   [
     "CaseStatement:Unique0",
     8
    ],
@@ -608,6 +604,10 @@
    ],
    [
     "NetType:NetType",
+    7
+   ],
+   [
+    "AssignmentExpression:compound-target",
     7
    ],
    [
@@ -633,10 +633,6 @@
    [
     "Package:TypeAlias",
     7
-   ],
-   [
-    "InsideExpression:item",
-    6
    ],
    [
     "BinaryExpression:Divide-type",
@@ -679,6 +675,10 @@
     5
    ],
    [
+    "InsideExpression:item",
+    5
+   ],
+   [
     "Package:Checker",
     5
    ],
@@ -716,6 +716,10 @@
    ],
    [
     "RepeatLoopStatement:count",
+    4
+   ],
+   [
+    "ForeachLoopStatement:dimension",
     4
    ],
    [
@@ -972,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4654,
-   "partial": 17326,
+   "clean": 4656,
+   "partial": 17324,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1034,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4026,
+    4028,
     18679
    ],
    "simulation elaboration": [
@@ -1234,7 +1238,7 @@
     "top_residual_blockers": [
      [
       "VariableSymbol:2state",
-      199
+      200
      ],
      [
       "CallExpression",
@@ -1599,9 +1603,9 @@
     "unlockable": 4
    },
    "chapter-7": {
-    "clean": 174,
+    "clean": 176,
     "error": 0,
-    "partial": 622,
+    "partial": 620,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

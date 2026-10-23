@@ -45,6 +45,36 @@ class DynamicArrayDeclarations(unittest.TestCase):
         self.assertIn("VariableSymbol:type",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_constant_new_dynamic_array_flattens_for_fixed_copy(self):
+        design = lower(
+            """module top;
+               int fixed_values[3];
+               int dynamic_values[] = new[3];
+               initial begin
+                 for (int i = 0; i < 3; i++) dynamic_values[i] = i + 1;
+                 fixed_values = dynamic_values;
+                 $display("PASS");
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("kind") == "Var" and
+                            node.get("name") == "dynamic_values[2]"
+                            for node in nodes(design)))
+
+    def test_dynamic_to_fixed_size_mismatch_stays_loud(self):
+        design = lower(
+            """module top;
+               int fixed_values[2];
+               int dynamic_values[] = new[3];
+               initial begin
+                 fixed_values = dynamic_values;
+               end
+               endmodule""")
+        self.assertTrue(any(node.get("kind") == "Unsupported" and
+                            node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

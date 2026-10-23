@@ -493,7 +493,8 @@ def is_inert_2state_dynamic_array_decl(symbol):
     try:
         return (not symbol.type.isFourState
                 and type(symbol.type.canonicalType).__name__ == "DynamicArrayType"
-                and getattr(symbol, "initializer", None) is None)
+                and getattr(symbol, "initializer", None) is None
+                and _dynamic_array_constant_extent(symbol) is None)
     except Exception:
         return False
 
@@ -1510,15 +1511,88 @@ def _unpacked_struct_decls(sm, symbol):
         return None
 
 
+def _dynamic_array_constant_extent(symbol):
+    """Find the one constant ``new[N]`` allocation of a dynamic array.
+
+    The flat self-check store can model a dynamic array after its size has
+    been sampled, but it cannot represent a later resize or whole-array
+    rebinding.  Accept exactly one constant allocation, either in the
+    declaration or as a procedural assignment, and leave all other shapes
+    loud.
+    """
+    try:
+        if str(symbol.kind) != "SymbolKind.Variable":
+            return None
+        if type(symbol.type.canonicalType).__name__ != "DynamicArrayType":
+            return None
+        candidates = []
+        initializer = getattr(symbol, "initializer", None)
+        if initializer is not None:
+            candidates.append(initializer)
+        instance = symbol.parentScope.containingInstance
+        if instance is None:
+            return None
+        whole_assignments = []
+
+        def inspect(node):
+            if type(node).__name__ != "AssignmentExpression":
+                return
+            lhs = getattr(node, "left", None)
+            if (type(lhs).__name__ == "NamedValueExpression"
+                    and getattr(lhs, "symbol", None) is symbol):
+                whole_assignments.append(node.right)
+
+        instance.visit(inspect)
+        candidates.extend(whole_assignments)
+        if len(candidates) != 1:
+            return None
+        allocation = candidates[0]
+        if type(allocation).__name__ == "ConversionExpression":
+            allocation = getattr(allocation, "operand", None)
+        if type(allocation).__name__ != "NewArrayExpression":
+            return None
+        if getattr(allocation, "initExpr", None) is not None:
+            return None
+        size = getattr(allocation, "sizeExpr", None)
+        if (type(size).__name__ != "IntegerLiteral"
+                or getattr(size, "bad", False)):
+            return None
+        count = int(getattr(size, "value", -1))
+        return count if 0 < count <= 1024 else None
+    except Exception:
+        return None
+
+
 def _fixed_array_shape(source):
     """Return the lowered-cell shape for a one-dimensional fixed array."""
     try:
+        # Assignment compatibility wraps an unpacked array RHS in a
+        # ConversionExpression even though the value is still the same
+        # storage.  Shape discovery is structural, so inspect its operand.
+        if type(source).__name__ == "ConversionExpression":
+            source = getattr(source, "operand", None)
+            if source is None:
+                return None
         if not _storage_expression(source):
             return None
         if str(source.symbol.kind) != "SymbolKind.Variable":
             return None
         array_type = source.type.canonicalType
-        if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
+        array_kind = type(array_type).__name__
+        if array_kind == "DynamicArrayType":
+            # A dynamic array is representable by the flat state only when
+            # its declaration samples a constant new[N] allocation.  The
+            # allocation is then a fixed, zero-based window for this narrow
+            # surface; later resize/assignment remains outside the model.
+            if source.type.isFourState:
+                return None
+            count = _dynamic_array_constant_extent(source.symbol)
+            if count is None:
+                return None
+            left, right = 0, count - 1
+        elif array_kind == "FixedSizeUnpackedArrayType":
+            left, right = int(array_type.range.left), int(array_type.range.right)
+        else:
             return None
         element_type = array_type.elementType
         if type(element_type.canonicalType).__name__ == "FixedSizeUnpackedArrayType":
@@ -1526,7 +1600,6 @@ def _fixed_array_shape(source):
         width, two_state, reason = type_width_2s(element_type)
         if width is None or reason is not None:
             return None
-        left, right = int(array_type.range.left), int(array_type.range.right)
         count = abs(left - right) + 1
         if count <= 0 or count > 1024:
             return None
@@ -1644,8 +1717,42 @@ def _fixed_array_subarray_copy_assignment(sm, expr):
         if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
                 or expr.timingControl is not None):
             return None
-        lhs_shape = _fixed_array_assignment_shape(expr.left)
+        lhs_subarray = _fixed_array_subarray_shape(expr.left)
+        lhs_shape = (_fixed_array_assignment_shape(expr.left)
+                     if lhs_subarray is None else None)
         rhs_shape = _fixed_array_subarray_shape(expr.right)
+        rhs_array = _fixed_array_assignment_shape(expr.right)
+        if lhs_subarray is not None and rhs_shape is None and rhs_array is not None:
+            lhs_root, lhs_cells, lhs_width, lhs_two = lhs_subarray
+            rhs_root, rhs_width, _rhs_two, rhs_positions = rhs_array
+            if (len(lhs_cells) != len(rhs_positions) or lhs_width != rhs_width
+                    or lhs_root == rhs_root
+                    or not _case_source_expression_ok(expr.right)):
+                return None
+            stmts = []
+            for lhs_name, rhs_position in zip(lhs_cells, rhs_positions):
+                value = {
+                    "kind": "Ident",
+                    "span": node_span(sm, expr.right),
+                    "width": rhs_width,
+                    "name": f"{rhs_root}[{rhs_position}]",
+                }
+                if lhs_two:
+                    value = squash2_wrap(value, lhs_width)
+                stmts.append({
+                    "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                    "span": node_span(sm, expr),
+                    "target": {
+                        "kind": "Ident",
+                        "span": node_span(sm, expr.left),
+                        "width": lhs_width,
+                        "name": lhs_name,
+                    },
+                    "value": value,
+                })
+            return {"kind": "Block", "span": node_span(sm, expr),
+                    "stmts": stmts,
+                    "fixed_array_subarray_copy_lowered": True}
         if lhs_shape is None or rhs_shape is None:
             return None
         lhs_name, lhs_width, lhs_two, lhs_positions = lhs_shape
@@ -1918,6 +2025,40 @@ def _fixed_array_dynamic_assignment(sm, expr):
                 "else": result,
             }
         return result
+    except Exception:
+        return None
+
+
+def _dynamic_array_allocation_assignment(sm, expr):
+    """Erase a sampled constant ``dynamic = new[N]`` allocation.
+
+    The declaration pass materializes the allocated cells after checking the
+    complete module's single allocation.  The procedural allocation then
+    has no separate flat-state effect; nonconstant and repeated allocations
+    remain ordinary assignment-target refusals.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None
+                or type(expr.left).__name__ != "NamedValueExpression"):
+            return None
+        symbol = getattr(expr.left, "symbol", None)
+        if symbol is None or type(symbol.type.canonicalType).__name__ != "DynamicArrayType":
+            return None
+        allocation = expr.right
+        if type(allocation).__name__ == "ConversionExpression":
+            allocation = getattr(allocation, "operand", None)
+        if type(allocation).__name__ != "NewArrayExpression":
+            return None
+        if _dynamic_array_constant_extent(symbol) is None:
+            return None
+        if getattr(allocation, "initExpr", None) is not None:
+            return None
+        size = getattr(allocation, "sizeExpr", None)
+        if type(size).__name__ != "IntegerLiteral" or getattr(size, "bad", False):
+            return None
+        return {"kind": "Empty", "span": node_span(sm, expr),
+                "dynamic_array_allocation_lowered": True}
     except Exception:
         return None
 
@@ -7024,6 +7165,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         if streaming_target is not None:
             return streaming_target
     if expr.op is None and _SYM is None:
+        dynamic_allocation = _dynamic_array_allocation_assignment(sm, expr)
+        if dynamic_allocation is not None:
+            return dynamic_allocation
         struct_pattern = _unpacked_struct_pattern_assignment(sm, expr)
         if struct_pattern is not None:
             return struct_pattern
@@ -7849,6 +7993,30 @@ def convert_fixed_array_vars(sm, m):
     """
     try:
         array_type = m.type.canonicalType
+        if type(array_type).__name__ == "DynamicArrayType":
+            # Keep the dynamic allocation itself out of the flat state, but
+            # materialize its sampled constant extent as ordinary cells. An
+            # uninitialized or later-resized dynamic array has no fixed shape
+            # that this representation could soundly provide.
+            if m.type.isFourState:
+                return None
+            count = _dynamic_array_constant_extent(m)
+            if count is None:
+                return None
+            element_type = array_type.elementType
+            width, two, reason = type_width_2s(element_type)
+            if width is None or reason is not None:
+                return None
+            base = _array_storage_name(m)
+            return [signed_metadata({
+                "kind": "Var",
+                "span": sym_span(sm, m),
+                "name": f"{base}[{position}]",
+                "width": width,
+                "init": ({"kind": "Literal", "span": None,
+                          "width": width, "bits": "0" * width}
+                         if two else None),
+            }, element_type) for position in range(count)]
         if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
             return None
         dimensions_shape = _fixed_array_dimensions(array_type)

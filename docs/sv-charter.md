@@ -5528,3 +5528,20 @@ census moves **4,653 → 4,654 clean** and **17,327 → 17,326 partial**;
 `AssignmentExpression:target` falls **3,492 → 3,491**. Differential coverage
 is **66 rows, 62 matches, 0 disagreements, and 4 recorded refusals**; grammar
 coverage is **204 witnesses, 73 MATCH, and 131 REFUSE**.
+
+## Constant-size dynamic arrays copied to fixed arrays — 2026-10-23
+
+A 2-state dynamic array whose single allocation is a constant `new[N]` now
+uses the existing flat vector-cell representation. The declaration materializes
+zero-based cells, a procedural `dynamic = new[N]` allocation is retained as an
+empty state transition, dynamic element reads and writes reuse the guarded
+finite-cell lowering, and equal-length fixed-array copies preserve declaration
+order. Four-state arrays, uninitialized or repeated allocations, nonconstant
+sizes, and size-mismatched fixed targets remain loud; no runtime resize model is
+implied. The `dynamic_fixed_array_copy` fixture and differential row exercise
+both declaration and procedural allocation shapes.
+
+The fresh 22,046-file census moves **4,654 → 4,656 clean** and **17,326 →
+17,324 partial**; `AssignmentExpression:target` falls **3,491 → 3,464**.
+Differential coverage moves **66/62/0/4 → 67/63/0/4** (rows/agree/disagree/
+recorded refusals), and the grammar census moves **204/73/131 → 206/75/131**.

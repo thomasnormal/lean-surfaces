@@ -1886,6 +1886,52 @@ def _unpacked_struct_copy_assignment(sm, expr):
         return None
 
 
+def _unpacked_struct_pattern_assignment(sm, expr):
+    """Lower a complete positional assignment pattern for an integral struct."""
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None):
+            return None
+        path = _unpacked_struct_path(expr.left)
+        if path is None:
+            return None
+        name, aggregate = path
+        if type(aggregate).__name__ != "UnpackedStructType":
+            return None
+        pattern = expr.right
+        if type(pattern).__name__ != "SimpleAssignmentPatternExpression":
+            return None
+        fields = list(aggregate)
+        elements = list(pattern.elements)
+        if len(fields) != len(elements) or not fields:
+            return None
+        cells = _unpacked_struct_field_cells(name, aggregate, node_span(sm, expr))
+        if cells is None or len(cells) != len(fields):
+            return None
+        stmts = []
+        for field, element, (cell_name, width, _init, field_type) in zip(
+                fields, elements, cells):
+            if not _case_source_expression_ok(element, packed_members=True):
+                return None
+            value = convert_expr(sm, element)
+            if (value is None or value.get("kind") == "Unsupported"
+                    or width_of(value) != width or not _case_expression_ok(value)):
+                return None
+            if not field_type.isFourState:
+                value = squash2_wrap(value, width)
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                           "width": width, "name": cell_name},
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts,
+                "unpacked_struct_pattern_lowered": True}
+    except Exception:
+        return None
+
+
 def _fixed_array_concat_assignment(sm, expr):
     """Lower an exact unpacked-array concatenation into cell assignments."""
     try:
@@ -5676,6 +5722,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         if streaming_target is not None:
             return streaming_target
     if expr.op is None and _SYM is None:
+        struct_pattern = _unpacked_struct_pattern_assignment(sm, expr)
+        if struct_pattern is not None:
+            return struct_pattern
         struct_copy = _unpacked_struct_copy_assignment(sm, expr)
         if struct_copy is not None:
             return struct_copy

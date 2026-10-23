@@ -41,6 +41,20 @@ class UnpackedStructCopy(unittest.TestCase):
         self.assertIn("AssignmentExpression:target",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_positional_struct_pattern_is_fieldwise(self):
+        design = lower(
+            "typedef struct { bit [3:0] a; logic [3:0] b; } T; "
+            "module top; T x; initial x = '{4'b1x01, 4'b0101}; endmodule")
+        lowered = [node for node in nodes(design)
+                   if node.get("unpacked_struct_pattern_lowered")]
+        self.assertEqual(len(lowered), 1)
+        stmts = lowered[0]["stmts"]
+        self.assertEqual([stmt["target"]["name"] for stmt in stmts],
+                         ["x.a", "x.b"])
+        self.assertEqual(stmts[0]["value"]["kind"], "Squash2")
+        self.assertEqual(stmts[0]["value"]["operand"]["bits"], "1x01")
+        self.assertEqual(stmts[1]["value"]["bits"], "0101")
+
 
 if __name__ == "__main__":
     unittest.main()

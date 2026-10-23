@@ -5251,3 +5251,16 @@ admitted form. The census moves **4,540 → 4,552 clean** and **17,429 → 17,41
 partial**; `AssignmentExpression:target` falls **3,592 → 3,580**. Differential
 coverage is **42 rows, 38 matches, 0 disagreements, and 4 recorded refusals**;
 grammar coverage remains **200 witnesses, 69 MATCH, and 131 REFUSE**.
+
+### Unpacked integral struct positional patterns — 2026-10-23
+
+Complete positional assignment patterns for flattened integral unpacked structs
+now lower field by field in elaborated declaration order. Each destination cell
+keeps its declared width and two-state `Squash2` conversion, while incomplete,
+nested, aggregate, effectful, and nonintegral patterns remain loud. The
+`unpacked_struct_pattern` fixture and differential row cover the admitted form;
+the focused extractor regression checks field order and two-state preservation.
+The census moves **4,552 → 4,558 clean** and **17,417 → 17,411 partial**;
+`AssignmentExpression:target` falls **3,580 → 3,568**. Differential coverage
+is **43 rows, 39 matches, 0 disagreements, and 4 recorded refusals**; grammar
+coverage remains **200 witnesses, 69 MATCH, and 131 REFUSE**.

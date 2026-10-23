@@ -1899,7 +1899,9 @@ def _unpacked_struct_pattern_assignment(sm, expr):
         if type(aggregate).__name__ != "UnpackedStructType":
             return None
         pattern = expr.right
-        if type(pattern).__name__ != "SimpleAssignmentPatternExpression":
+        if type(pattern).__name__ not in (
+                "SimpleAssignmentPatternExpression",
+                "StructuredAssignmentPatternExpression"):
             return None
         fields = list(aggregate)
         elements = list(pattern.elements)

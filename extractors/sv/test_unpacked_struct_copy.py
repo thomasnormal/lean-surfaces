@@ -55,6 +55,21 @@ class UnpackedStructCopy(unittest.TestCase):
         self.assertEqual(stmts[0]["value"]["operand"]["bits"], "1x01")
         self.assertEqual(stmts[1]["value"]["bits"], "0101")
 
+    def test_keyed_struct_pattern_uses_declaration_order(self):
+        design = lower(
+            "typedef struct { logic [7:0] r; bit [7:0] g; logic [7:0] b; } T; "
+            "module top; T x; initial x = '{b:8'h00, r:8'hFF, g:8'h80}; endmodule")
+        lowered = [node for node in nodes(design)
+                   if node.get("unpacked_struct_pattern_lowered")]
+        self.assertEqual(len(lowered), 1)
+        stmts = lowered[0]["stmts"]
+        self.assertEqual([stmt["target"]["name"] for stmt in stmts],
+                         ["x.r", "x.g", "x.b"])
+        self.assertEqual(stmts[0]["value"]["bits"], "11111111")
+        self.assertEqual(stmts[1]["value"]["kind"], "Squash2")
+        self.assertEqual(stmts[1]["value"]["operand"]["bits"], "10000000")
+        self.assertEqual(stmts[2]["value"]["bits"], "00000000")
+
 
 if __name__ == "__main__":
     unittest.main()

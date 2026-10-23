@@ -5264,3 +5264,16 @@ The census moves **4,552 → 4,558 clean** and **17,417 → 17,411 partial**;
 `AssignmentExpression:target` falls **3,580 → 3,568**. Differential coverage
 is **43 rows, 39 matches, 0 disagreements, and 4 recorded refusals**; grammar
 coverage remains **200 witnesses, 69 MATCH, and 131 REFUSE**.
+
+### Unpacked integral struct keyed patterns — 2026-10-23
+
+Complete keyed assignment patterns for flattened integral unpacked structs now
+reuse the fieldwise lowering, with pyslang's elaborated elements preserving
+declaration order regardless of source key order. Each field keeps its width and
+two-state conversion; incomplete, nested, aggregate, effectful, and
+nonintegral patterns remain loud. The `unpacked_struct_keyed_pattern` fixture
+and differential row cover this form, alongside the focused field-order
+regression. The census moves **4,558 → 4,577 clean** and **17,411 → 17,392
+partial**; `AssignmentExpression:target` falls **3,568 → 3,542**. Differential
+coverage is **44 rows, 40 matches, 0 disagreements, and 4 recorded refusals**;
+grammar coverage remains **200 witnesses, 69 MATCH, and 131 REFUSE**.

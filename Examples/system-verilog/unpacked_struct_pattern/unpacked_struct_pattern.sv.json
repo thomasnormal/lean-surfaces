@@ -6,7 +6,7 @@
     "family": "pyslang-11"
   },
   "source_file": "Examples/system-verilog/unpacked_struct_pattern/unpacked_struct_pattern.sv",
-  "source_sha256": "fd22a763c1a937eb3991101b7f262fcbb629f33acb6c60cd96522a9ce7861d15",
+  "source_sha256": "0ac1d38b875905cdec1ed38a3e1ac9e837c145cb6c5d27d7cb9ea13889d7516c",
   "design": {
     "kind": "Design",
     "modules": [
@@ -15,7 +15,7 @@
         "span": {
           "line": 14,
           "col": 1,
-          "end_line": 24,
+          "end_line": 27,
           "end_col": 10
         },
         "name": "top",
@@ -56,49 +56,85 @@
             "name": "color.b",
             "width": 8,
             "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 16,
+              "col": 9,
+              "end_line": 16,
+              "end_col": 14
+            },
+            "name": "keyed.r",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 16,
+              "col": 9,
+              "end_line": 16,
+              "end_col": 14
+            },
+            "name": "keyed.g",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 16,
+              "col": 9,
+              "end_line": 16,
+              "end_col": 14
+            },
+            "name": "keyed.b",
+            "width": 8,
+            "init": null
           }
         ],
         "processes": [
           {
             "kind": "Initial",
             "span": {
-              "line": 16,
+              "line": 17,
               "col": 3,
-              "end_line": 23,
+              "end_line": 26,
               "end_col": 6
             },
             "body": {
               "kind": "Block",
               "span": {
-                "line": 16,
+                "line": 17,
                 "col": 11,
-                "end_line": 23,
+                "end_line": 26,
                 "end_col": 6
               },
               "stmts": [
                 {
                   "kind": "Block",
                   "span": {
-                    "line": 17,
+                    "line": 18,
                     "col": 5,
-                    "end_line": 17,
+                    "end_line": 18,
                     "end_col": 35
                   },
                   "stmts": [
                     {
                       "kind": "BlockingAssign",
                       "span": {
-                        "line": 17,
+                        "line": 18,
                         "col": 5,
-                        "end_line": 17,
+                        "end_line": 18,
                         "end_col": 35
                       },
                       "target": {
                         "kind": "Ident",
                         "span": {
-                          "line": 17,
+                          "line": 18,
                           "col": 5,
-                          "end_line": 17,
+                          "end_line": 18,
                           "end_col": 10
                         },
                         "width": 8,
@@ -107,9 +143,9 @@
                       "value": {
                         "kind": "Literal",
                         "span": {
-                          "line": 17,
+                          "line": 18,
                           "col": 15,
-                          "end_line": 17,
+                          "end_line": 18,
                           "end_col": 20
                         },
                         "width": 8,
@@ -119,17 +155,17 @@
                     {
                       "kind": "BlockingAssign",
                       "span": {
-                        "line": 17,
+                        "line": 18,
                         "col": 5,
-                        "end_line": 17,
+                        "end_line": 18,
                         "end_col": 35
                       },
                       "target": {
                         "kind": "Ident",
                         "span": {
-                          "line": 17,
+                          "line": 18,
                           "col": 5,
-                          "end_line": 17,
+                          "end_line": 18,
                           "end_col": 10
                         },
                         "width": 8,
@@ -138,9 +174,9 @@
                       "value": {
                         "kind": "Literal",
                         "span": {
-                          "line": 17,
+                          "line": 18,
                           "col": 22,
-                          "end_line": 17,
+                          "end_line": 18,
                           "end_col": 27
                         },
                         "width": 8,
@@ -150,17 +186,17 @@
                     {
                       "kind": "BlockingAssign",
                       "span": {
-                        "line": 17,
+                        "line": 18,
                         "col": 5,
-                        "end_line": 17,
+                        "end_line": 18,
                         "end_col": 35
                       },
                       "target": {
                         "kind": "Ident",
                         "span": {
-                          "line": 17,
+                          "line": 18,
                           "col": 5,
-                          "end_line": 17,
+                          "end_line": 18,
                           "end_col": 10
                         },
                         "width": 8,
@@ -169,10 +205,115 @@
                       "value": {
                         "kind": "Literal",
                         "span": {
-                          "line": 17,
+                          "line": 18,
                           "col": 29,
-                          "end_line": 17,
+                          "end_line": 18,
                           "end_col": 34
+                        },
+                        "width": 8,
+                        "bits": "00000000"
+                      }
+                    }
+                  ],
+                  "unpacked_struct_pattern_lowered": true
+                },
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 19,
+                    "col": 5,
+                    "end_line": 19,
+                    "end_col": 41
+                  },
+                  "stmts": [
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 19,
+                        "col": 5,
+                        "end_line": 19,
+                        "end_col": 41
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 19,
+                          "col": 5,
+                          "end_line": 19,
+                          "end_col": 10
+                        },
+                        "width": 8,
+                        "name": "keyed.r"
+                      },
+                      "value": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 19,
+                          "col": 26,
+                          "end_line": 19,
+                          "end_col": 31
+                        },
+                        "width": 8,
+                        "bits": "11111111"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 19,
+                        "col": 5,
+                        "end_line": 19,
+                        "end_col": 41
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 19,
+                          "col": 5,
+                          "end_line": 19,
+                          "end_col": 10
+                        },
+                        "width": 8,
+                        "name": "keyed.g"
+                      },
+                      "value": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 19,
+                          "col": 35,
+                          "end_line": 19,
+                          "end_col": 40
+                        },
+                        "width": 8,
+                        "bits": "10000000"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 19,
+                        "col": 5,
+                        "end_line": 19,
+                        "end_col": 41
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 19,
+                          "col": 5,
+                          "end_line": 19,
+                          "end_col": 10
+                        },
+                        "width": 8,
+                        "name": "keyed.b"
+                      },
+                      "value": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 19,
+                          "col": 17,
+                          "end_line": 19,
+                          "end_col": 22
                         },
                         "width": 8,
                         "bits": "00000000"
@@ -184,17 +325,17 @@
                 {
                   "kind": "If",
                   "span": {
-                    "line": 18,
+                    "line": 20,
                     "col": 5,
-                    "end_line": 21,
+                    "end_line": 24,
                     "end_col": 24
                   },
                   "cond": {
                     "kind": "Binary",
                     "span": {
-                      "line": 18,
+                      "line": 20,
                       "col": 9,
-                      "end_line": 18,
+                      "end_line": 21,
                       "end_col": 65
                     },
                     "width": 1,
@@ -202,9 +343,9 @@
                     "left": {
                       "kind": "Binary",
                       "span": {
-                        "line": 18,
+                        "line": 20,
                         "col": 9,
-                        "end_line": 18,
+                        "end_line": 21,
                         "end_col": 45
                       },
                       "width": 1,
@@ -212,42 +353,174 @@
                       "left": {
                         "kind": "Binary",
                         "span": {
-                          "line": 18,
+                          "line": 20,
                           "col": 9,
-                          "end_line": 18,
+                          "end_line": 21,
                           "end_col": 25
                         },
                         "width": 1,
-                        "op": "==",
+                        "op": "&&",
                         "left": {
-                          "kind": "Ident",
+                          "kind": "Binary",
                           "span": {
-                            "line": 18,
+                            "line": 20,
                             "col": 9,
-                            "end_line": 18,
-                            "end_col": 16
+                            "end_line": 20,
+                            "end_col": 65
                           },
-                          "width": 8,
-                          "name": "color.r"
+                          "width": 1,
+                          "op": "&&",
+                          "left": {
+                            "kind": "Binary",
+                            "span": {
+                              "line": 20,
+                              "col": 9,
+                              "end_line": 20,
+                              "end_col": 45
+                            },
+                            "width": 1,
+                            "op": "&&",
+                            "left": {
+                              "kind": "Binary",
+                              "span": {
+                                "line": 20,
+                                "col": 9,
+                                "end_line": 20,
+                                "end_col": 25
+                              },
+                              "width": 1,
+                              "op": "==",
+                              "left": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 20,
+                                  "col": 9,
+                                  "end_line": 20,
+                                  "end_col": 16
+                                },
+                                "width": 8,
+                                "name": "color.r"
+                              },
+                              "right": {
+                                "kind": "Literal",
+                                "span": {
+                                  "line": 20,
+                                  "col": 20,
+                                  "end_line": 20,
+                                  "end_col": 25
+                                },
+                                "width": 8,
+                                "bits": "11111111"
+                              }
+                            },
+                            "right": {
+                              "kind": "Binary",
+                              "span": {
+                                "line": 20,
+                                "col": 29,
+                                "end_line": 20,
+                                "end_col": 45
+                              },
+                              "width": 1,
+                              "op": "==",
+                              "left": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 20,
+                                  "col": 29,
+                                  "end_line": 20,
+                                  "end_col": 36
+                                },
+                                "width": 8,
+                                "name": "color.g"
+                              },
+                              "right": {
+                                "kind": "Literal",
+                                "span": {
+                                  "line": 20,
+                                  "col": 40,
+                                  "end_line": 20,
+                                  "end_col": 45
+                                },
+                                "width": 8,
+                                "bits": "10000000"
+                              }
+                            }
+                          },
+                          "right": {
+                            "kind": "Binary",
+                            "span": {
+                              "line": 20,
+                              "col": 49,
+                              "end_line": 20,
+                              "end_col": 65
+                            },
+                            "width": 1,
+                            "op": "==",
+                            "left": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 20,
+                                "col": 49,
+                                "end_line": 20,
+                                "end_col": 56
+                              },
+                              "width": 8,
+                              "name": "color.b"
+                            },
+                            "right": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 20,
+                                "col": 60,
+                                "end_line": 20,
+                                "end_col": 65
+                              },
+                              "width": 8,
+                              "bits": "00000000"
+                            }
+                          }
                         },
                         "right": {
-                          "kind": "Literal",
+                          "kind": "Binary",
                           "span": {
-                            "line": 18,
-                            "col": 20,
-                            "end_line": 18,
+                            "line": 21,
+                            "col": 9,
+                            "end_line": 21,
                             "end_col": 25
                           },
-                          "width": 8,
-                          "bits": "11111111"
+                          "width": 1,
+                          "op": "==",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 21,
+                              "col": 9,
+                              "end_line": 21,
+                              "end_col": 16
+                            },
+                            "width": 8,
+                            "name": "keyed.r"
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 21,
+                              "col": 20,
+                              "end_line": 21,
+                              "end_col": 25
+                            },
+                            "width": 8,
+                            "bits": "11111111"
+                          }
                         }
                       },
                       "right": {
                         "kind": "Binary",
                         "span": {
-                          "line": 18,
+                          "line": 21,
                           "col": 29,
-                          "end_line": 18,
+                          "end_line": 21,
                           "end_col": 45
                         },
                         "width": 1,
@@ -255,20 +528,20 @@
                         "left": {
                           "kind": "Ident",
                           "span": {
-                            "line": 18,
+                            "line": 21,
                             "col": 29,
-                            "end_line": 18,
+                            "end_line": 21,
                             "end_col": 36
                           },
                           "width": 8,
-                          "name": "color.g"
+                          "name": "keyed.g"
                         },
                         "right": {
                           "kind": "Literal",
                           "span": {
-                            "line": 18,
+                            "line": 21,
                             "col": 40,
-                            "end_line": 18,
+                            "end_line": 21,
                             "end_col": 45
                           },
                           "width": 8,
@@ -279,9 +552,9 @@
                     "right": {
                       "kind": "Binary",
                       "span": {
-                        "line": 18,
+                        "line": 21,
                         "col": 49,
-                        "end_line": 18,
+                        "end_line": 21,
                         "end_col": 65
                       },
                       "width": 1,
@@ -289,20 +562,20 @@
                       "left": {
                         "kind": "Ident",
                         "span": {
-                          "line": 18,
+                          "line": 21,
                           "col": 49,
-                          "end_line": 18,
+                          "end_line": 21,
                           "end_col": 56
                         },
                         "width": 8,
-                        "name": "color.b"
+                        "name": "keyed.b"
                       },
                       "right": {
                         "kind": "Literal",
                         "span": {
-                          "line": 18,
+                          "line": 21,
                           "col": 60,
-                          "end_line": 18,
+                          "end_line": 21,
                           "end_col": 65
                         },
                         "width": 8,
@@ -313,9 +586,9 @@
                   "then": {
                     "kind": "SysCall",
                     "span": {
-                      "line": 19,
+                      "line": 22,
                       "col": 7,
-                      "end_line": 19,
+                      "end_line": 22,
                       "end_col": 24
                     },
                     "name": "$display",
@@ -326,9 +599,9 @@
                   "else": {
                     "kind": "SysCall",
                     "span": {
-                      "line": 21,
+                      "line": 24,
                       "col": 7,
-                      "end_line": 21,
+                      "end_line": 24,
                       "end_col": 24
                     },
                     "name": "$display",
@@ -340,9 +613,9 @@
                 {
                   "kind": "SysCall",
                   "span": {
-                    "line": 22,
+                    "line": 25,
                     "col": 5,
-                    "end_line": 22,
+                    "end_line": 25,
                     "end_col": 13
                   },
                   "name": "$finish",

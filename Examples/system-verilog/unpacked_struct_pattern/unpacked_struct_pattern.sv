@@ -13,9 +13,12 @@ typedef struct {
 
 module top;
   rgb_t color;
+  rgb_t keyed;
   initial begin
     color = '{8'hFF, 8'h80, 8'h00};
-    if (color.r == 8'hFF && color.g == 8'h80 && color.b == 8'h00)
+    keyed = '{b:8'h00, r:8'hFF, g:8'h80};
+    if (color.r == 8'hFF && color.g == 8'h80 && color.b == 8'h00 &&
+        keyed.r == 8'hFF && keyed.g == 8'h80 && keyed.b == 8'h00)
       $display("PASS");
     else
       $display("FAIL");

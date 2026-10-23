@@ -5410,3 +5410,18 @@ clean** and **17,364 → 17,363 partial**; `AssignmentExpression:target` falls
 **3,519 → 3,518**. Differential coverage is **57 rows, 53 matches, 0
 disagreements, and 4 recorded refusals**; grammar coverage remains **202
 witnesses, 71 MATCH, and 131 REFUSE**.
+
+### Runtime indexed slices of fixed unpacked arrays — 2026-10-23
+
+Constant-width indexed part-select assignment over distinct bounded
+one-dimensional integral unpacked arrays now lowers to guarded per-cell writes.
+`IndexedUp` and `IndexedDown` preserve their source and destination directions;
+runtime starts are evaluated once and source cells are read through a complete
+conditional snapshot before the destination block executes. Invalid windows,
+dynamic or nonpositive widths, nested or aggregate arrays, and alias-sensitive
+self-copies remain loud. The `fixed_array_indexed_slice` fixture and
+differential row cover the `A[i+:c] = B[j+:c]` form. The 22,046-file census
+moves **4,617 → 4,618 clean** and **17,363 → 17,362 partial**;
+`AssignmentExpression:target` falls **3,518 → 3,517**. Differential coverage is
+**58 rows, 54 matches, 0 disagreements, and 4 recorded refusals**; grammar
+coverage remains **202 witnesses, 71 MATCH, and 131 REFUSE**.

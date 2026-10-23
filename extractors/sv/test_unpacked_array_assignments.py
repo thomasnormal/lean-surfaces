@@ -222,6 +222,71 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_indexed_slice_copy_pairs_runtime_windows(self):
+        design = extract_source(
+            "module top; int source [0:9]; int value [0:9]; int i, j; "
+            "parameter int c = 3; initial begin "
+            "i = 2; j = 5; value[i+:c] = source[j+:c]; end endmodule")
+        roots = [node for node in nodes(design)
+                 if node.get("kind") == "If" and
+                 node.get("cond", {}).get("op") == "==="]
+        self.assertGreaterEqual(len(roots), 8)
+        branch = next(root["then"] for root in roots
+                      if root["cond"]["right"]["bits"].endswith("0010"))
+        assigns = branch["stmts"]
+        self.assertEqual([a["target"]["name"] for a in assigns],
+                         ["value[2]", "value[3]", "value[4]"])
+        self.assertTrue(all(a["value"].get("kind") == "Squash2"
+                            for a in assigns))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_indexed_down_slice_preserves_source_direction(self):
+        design = extract_source(
+            "module top; int source [0:9]; int value [0:9]; int i, j; "
+            "parameter int c = 3; initial begin "
+            "i = 4; j = 7; value[i-:c] = source[j-:c]; end endmodule")
+        roots = [node for node in nodes(design)
+                 if node.get("kind") == "If" and
+                 node.get("cond", {}).get("op") == "==="]
+        self.assertGreaterEqual(len(roots), 8)
+        branch = next(root["then"] for root in roots
+                      if root["cond"]["right"]["bits"].endswith("0100"))
+        assigns = branch["stmts"]
+        self.assertEqual([a["target"]["name"] for a in assigns],
+                         ["value[4]", "value[3]", "value[2]"])
+        def then_names(node):
+            out = []
+            while isinstance(node, dict) and node.get("kind") == "Ternary":
+                out.append(node["then"]["name"])
+                node = node["else"]
+            return out
+        def selected_name(node, bits):
+            while isinstance(node, dict) and node.get("kind") == "Ternary":
+                if node["cond"]["right"]["bits"].endswith(bits):
+                    return node["then"]["name"]
+                node = node["else"]
+            return None
+        self.assertEqual([selected_name(a["value"]["operand"], bits)
+                          for a, bits in zip(assigns, ("0111", "0111", "0111"))],
+                         ["source[7]", "source[6]", "source[5]"])
+
+    def test_indexed_slice_requires_positive_constant_width(self):
+        design = extract_source(
+            "module top; int source [0:3]; int value [0:3]; int i, j, c; "
+            "initial value[i+:c] = source[j+:c]; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "InvalidStatement"
+                            for node in nodes(design)))
+
+    def test_indexed_slice_self_copy_stays_loud(self):
+        design = extract_source(
+            "module top; int value [0:3]; int i, j; parameter int c = 2; "
+            "initial value[i+:c] = value[j+:c]; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
     def test_whole_array_equality_pairs_cells(self):
         design = extract_source(
             "module top; logic [7:0] a [0:1]; logic [7:0] b [0:1]; "

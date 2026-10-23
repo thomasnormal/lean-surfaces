@@ -1887,6 +1887,204 @@ def _fixed_array_dynamic_assignment(sm, expr):
         return None
 
 
+def _fixed_array_indexed_slice_info(sm, expression):
+    """Describe a runtime indexed slice over a one-dimensional fixed array.
+
+    The legacy state has one vector per array cell, so an indexed slice is
+    admitted only when its element count is a positive constant and every
+    possible start can be enumerated.  The runtime start is kept as a pure
+    converted expression; invalid starts fall through to the all-``x`` read
+    or no-op write supplied by the caller.
+    """
+    try:
+        if type(expression).__name__ != "RangeSelectExpression":
+            return None
+        selection = str(expression.selectionKind).split(".")[-1]
+        if selection not in ("IndexedUp", "IndexedDown"):
+            return None
+        shape = _fixed_array_shape(expression.value)
+        if shape is None:
+            return None
+        name, width, two_state, array_left, array_right = shape
+        count = _constant_dimension_selector(expression.right)
+        if count is None or count <= 0:
+            return None
+        lo, hi = min(array_left, array_right), max(array_left, array_right)
+        if count > hi - lo + 1 or count > 1024:
+            return None
+        index = expression.left
+        if _constant_dimension_selector(index) is not None:
+            # Constant indexed slices are intentionally kept on the dynamic
+            # path only when they are actually runtime expressions.  The
+            # existing constant simple-slice lowering remains the narrow
+            # aggregate path for declarations and reads.
+            return None
+        index_width, _index_two, index_reason = type_width_2s(index.type)
+        if (index_width is None or index_reason is not None
+                or not _case_source_expression_ok(index)):
+            return None
+        converted_index = convert_expr(sm, index)
+        if (converted_index is None or not _case_expression_ok(converted_index)
+                or width_of(converted_index) != index_width):
+            return None
+        direction = 1 if selection == "IndexedUp" else -1
+        if direction > 0:
+            starts = list(range(lo, hi - count + 2))
+        else:
+            starts = list(range(lo + count - 1, hi + 1))
+        if not starts:
+            return None
+        return {
+            "name": name,
+            "width": width,
+            "two_state": two_state,
+            "count": count,
+            "direction": direction,
+            "starts": starts,
+            "index": index,
+            "index_width": index_width,
+            "converted_index": converted_index,
+            "span": node_span(sm, expression),
+        }
+    except Exception:
+        return None
+
+
+def _fixed_array_dynamic_index_reads_root(expression, root_name):
+    """Whether a runtime index expression reads a flattened array root."""
+    try:
+        reads = False
+
+        def inspect(node):
+            nonlocal reads
+            if type(node).__name__ in ("NamedValueExpression",
+                                       "HierarchicalValueExpression"):
+                try:
+                    reads = reads or _array_storage_name(node.symbol) == root_name
+                except Exception:
+                    reads = True
+
+        _visit_selected_expression(expression, inspect)
+        return reads
+    except Exception:
+        return True
+
+
+def _fixed_array_dynamic_indexed_cell_read(info, offset):
+    """Build one cell of a runtime indexed slice as a finite conditional."""
+    width = info["width"]
+    result = {
+        "kind": "Literal",
+        "span": info["span"],
+        "width": width,
+        "bits": "x" * width,
+    }
+    mask = (1 << info["index_width"]) - 1
+    for start in reversed(info["starts"]):
+        position = start + info["direction"] * offset
+        literal = {
+            "kind": "Literal",
+            "span": info["span"],
+            "width": info["index_width"],
+            "bits": format(start & mask, f"0{info['index_width']}b"),
+        }
+        result = {
+            "kind": "Ternary",
+            "span": info["span"],
+            "width": width,
+            "cond": {
+                "kind": "Binary",
+                "span": info["span"],
+                "width": 1,
+                "op": "===",
+                "left": info["converted_index"],
+                "right": literal,
+            },
+            "then": {
+                "kind": "Ident",
+                "span": info["span"],
+                "width": width,
+                "name": f"{info['name']}[{position}]",
+            },
+            "else": result,
+        }
+    return squash2_wrap(result, width) if info["two_state"] else result
+
+
+def _fixed_array_dynamic_slice_assignment(sm, expr):
+    """Lower ``A[i +: c] = B[j -: c]`` cell by cell.
+
+    Both starts are pure runtime expressions and ``c`` is a positive constant.
+    Source and destination roots must differ: a sequential cell expansion of
+    an overlapping self-copy would expose an earlier write to a later source
+    read.  Each branch reads the source slice through a complete conditional
+    snapshot before issuing its destination writes; invalid destination starts
+    execute no branch, matching an unpacked-slice no-op.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None
+                or type(expr.left).__name__ != "RangeSelectExpression"
+                or type(expr.right).__name__ != "RangeSelectExpression"):
+            return None
+        lhs = _fixed_array_indexed_slice_info(sm, expr.left)
+        rhs = _fixed_array_indexed_slice_info(sm, expr.right)
+        if lhs is None or rhs is None:
+            return None
+        if (lhs["name"] == rhs["name"] or lhs["count"] != rhs["count"]
+                or lhs["width"] != rhs["width"]):
+            return None
+        # A source index that reads the destination root could change after
+        # the first blocking cell update.  Refuse that alias-sensitive shape.
+        if _fixed_array_dynamic_index_reads_root(rhs["index"], lhs["name"]):
+            return None
+        result = None
+        for start in reversed(lhs["starts"]):
+            stmts = []
+            for offset in range(lhs["count"]):
+                position = start + lhs["direction"] * offset
+                value = _fixed_array_dynamic_indexed_cell_read(rhs, offset)
+                if lhs["two_state"]:
+                    value = squash2_wrap(value, lhs["width"])
+                stmts.append({
+                    "kind": ("NonblockingAssign" if expr.isNonBlocking
+                              else "BlockingAssign"),
+                    "span": node_span(sm, expr),
+                    "target": {
+                        "kind": "Ident",
+                        "span": node_span(sm, expr.left),
+                        "width": lhs["width"],
+                        "name": f"{lhs['name']}[{position}]",
+                    },
+                    "value": value,
+                })
+            literal = {
+                "kind": "Literal",
+                "span": lhs["span"],
+                "width": lhs["index_width"],
+                "bits": format(start & ((1 << lhs["index_width"]) - 1),
+                                f"0{lhs['index_width']}b"),
+            }
+            result = {
+                "kind": "If",
+                "span": node_span(sm, expr),
+                "cond": {
+                    "kind": "Binary",
+                    "span": lhs["span"],
+                    "width": 1,
+                    "op": "===",
+                    "left": lhs["converted_index"],
+                    "right": literal,
+                },
+                "then": {"kind": "Block", "span": node_span(sm, expr),
+                         "stmts": stmts},
+                "else": result,
+            }
+        return result
+    except Exception:
+        return None
+
+
 def _fixed_array_pattern_assignment(sm, expr):
     """Lower one exact assignment pattern to a fixed-array's cells.
 
@@ -6408,6 +6606,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         array_conditional = _fixed_array_conditional_assignment(sm, expr)
         if array_conditional is not None:
             return array_conditional
+        array_dynamic_slice = _fixed_array_dynamic_slice_assignment(sm, expr)
+        if array_dynamic_slice is not None:
+            return array_dynamic_slice
         array_copy = _fixed_array_copy_assignment(sm, expr)
         if array_copy is not None:
             return array_copy

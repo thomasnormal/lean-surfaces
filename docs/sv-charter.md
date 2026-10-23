@@ -5516,3 +5516,15 @@ partial**; `AssignmentExpression:target` falls **3,500 → 3,496**.
 Differential coverage is **63 rows, 59 matches, 0 disagreements, and 4
 recorded refusals**; grammar coverage remains **203 witnesses, 72 MATCH, and
 131 REFUSE**.
+
+### Constant-range right-streaming `with` targets — 2026-10-23
+
+An unsized right-streaming assignment with a constant simple `with [left:right]`
+range now expands only the selected cells of a fixed unpacked integral array.
+The unselected cells retain their prior values; dynamic, reversed, partial
+multidimensional, and aggregate ranges remain loud. The `streaming_with_range`
+fixture and differential row cover the selected-prefix form. The 22,046-file
+census moves **4,653 → 4,654 clean** and **17,327 → 17,326 partial**;
+`AssignmentExpression:target` falls **3,492 → 3,491**. Differential coverage
+is **66 rows, 62 matches, 0 disagreements, and 4 recorded refusals**; grammar
+coverage is **204 witnesses, 73 MATCH, and 131 REFUSE**.

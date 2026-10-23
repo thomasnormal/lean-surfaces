@@ -5434,6 +5434,40 @@ def _streaming_struct_source(sm, operand):
         return None
 
 
+def _fixed_array_stream_targets_with(sm, operand, with_expr, symbolic=False):
+    """Expand a constant simple ``with`` range of a fixed unpacked array."""
+    try:
+        if type(with_expr).__name__ != "RangeSelectExpression":
+            return None
+        if str(with_expr.selectionKind).split(".")[-1] != "Simple":
+            return None
+        left = _constant_dimension_selector(with_expr.left)
+        right = _constant_dimension_selector(with_expr.right)
+        if left is None or right is None:
+            return None
+        shape = _fixed_array_shape(operand)
+        if shape is None:
+            return None
+        _name, _width, _two_state, array_left, array_right = shape
+        lo, hi = min(array_left, array_right), max(array_left, array_right)
+        if (left < lo or left > hi or right < lo or right > hi
+                or left > right):
+            return None
+        targets = _fixed_array_stream_targets(sm, operand, symbolic)
+        if targets is None:
+            return None
+        by_position = {}
+        step = 1 if array_right >= array_left else -1
+        positions = list(range(array_left, array_right + step, step))
+        if len(positions) != len(targets):
+            return None
+        by_position.update(zip(positions, targets))
+        selected = [by_position[position] for position in range(left, right + 1)]
+        return selected
+    except Exception:
+        return None
+
+
 def _convert_streaming_source(sm, expression):
     """Convert a simple right-streaming source, including unpacked structs."""
     try:
@@ -5503,9 +5537,12 @@ def _streaming_left_target_assignment(sm, expr, symbolic=False):
         total_width = 0
         for stream in lhs.streams:
             operand = getattr(stream, "operand", None)
-            if operand is None or getattr(stream, "withExpr", None) is not None:
+            if operand is None:
                 return None
-            array_targets = _fixed_array_stream_targets(sm, operand, symbolic)
+            with_expr = getattr(stream, "withExpr", None)
+            array_targets = (_fixed_array_stream_targets_with(
+                sm, operand, with_expr, symbolic) if with_expr is not None else
+                _fixed_array_stream_targets(sm, operand, symbolic))
             if array_targets is not None:
                 targets = array_targets
             else:
@@ -5619,9 +5656,12 @@ def _streaming_target_assignment(sm, expr):
         total_width = 0
         for stream in lhs.streams:
             operand = getattr(stream, "operand", None)
-            if operand is None or getattr(stream, "withExpr", None) is not None:
+            if operand is None:
                 return None
-            array_targets = _fixed_array_stream_targets(sm, operand, False)
+            with_expr = getattr(stream, "withExpr", None)
+            array_targets = (_fixed_array_stream_targets_with(
+                sm, operand, with_expr, False) if with_expr is not None else
+                _fixed_array_stream_targets(sm, operand, False))
             if array_targets is not None:
                 parts.extend(array_targets)
                 total_width += sum(target["width"] for target in array_targets)

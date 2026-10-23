@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 65 | 61 | 0 | 4 | sv-tests-2 declarations |
+| 66 | 62 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -75,6 +75,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `generate_indexed_targets` | `Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv` | match | **MATCH** | `ok` | MATCH |
 | `oob_struct_read` | `Examples/system-verilog/oob_struct_read/oob_struct_read.sv` | match | **MATCH** | `ok` | MATCH |
 | `streaming_struct_source` | `Examples/system-verilog/streaming_struct_source/streaming_struct_source.sv` | match | **MATCH** | `ok` | MATCH |
+| `streaming_with_range` | `Examples/system-verilog/streaming_with_range/streaming_with_range.sv` | match | **MATCH** | `ok` | MATCH |
 | `delay_refusal` | `Examples/system-verilog/delay/delay.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `event_refusal` | `Examples/system-verilog/event/event.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `always_refusal` | `Examples/system-verilog/always/events.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
@@ -86,7 +87,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 203 | 72 | 131 | pyslang SyntaxKind |
+| 204 | 73 | 131 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -256,6 +257,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.SimpleSequenceExpr` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.StandardCaseItem` | `Examples/system-verilog/case_inside/array_widening.sv` | **REFUSE** | `unsupported` unsupported statement 'CaseStatement:pattern' |
 | `SyntaxKind.StreamExpression` | `Examples/system-verilog/sem2/fixed_array_stream_continuous/fixed_array_stream_continuous.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
+| `SyntaxKind.StreamExpressionWithRange` | `Examples/system-verilog/streaming_with_range/streaming_with_range.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.StreamingConcatenationExpression` | `Examples/system-verilog/sem2/fixed_array_stream_continuous/fixed_array_stream_continuous.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.StringLiteralExpression` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.StringType` | `Examples/system-verilog/do_while_string_literal/do_while_string_literal.sv` | **MATCH** | `ok`  |
@@ -300,11 +302,11 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22046 | 4653 | 17327 | 66 |
+| 22046 | 4654 | 17326 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 3492 |
+| `AssignmentExpression:target` | 3491 |
 | `ExpressionStatement:CallExpression` | 3476 |
 | `VariableSymbol:2state` | 3369 |
 | `CallExpression` | 3292 |

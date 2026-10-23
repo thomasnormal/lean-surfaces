@@ -196,11 +196,25 @@ class PackedAssignmentTargets(unittest.TestCase):
 
     def test_right_streaming_with_clause_stays_loud(self):
         design = extract_source(
-            "module top; logic [63:0] source; int grid[4]; "
-            "initial {>> {grid with [0:1]}} = source; endmodule")
+            "module top; logic [63:0] source; int grid[4]; integer i; "
+            "initial {>> {grid with [i:1]}} = source; endmodule")
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
+
+    def test_right_streaming_constant_with_range_selects_array_cells(self):
+        design = extract_source(
+            "module top; bit [63:0] source; int arr[4]; "
+            "initial {>> {arr with [0:1]}} = source; endmodule")
+        statement, = [node for node in nodes(design)
+                      if node.get("kind") == "BlockingAssign"
+                      and node.get("target", {}).get("kind") == "ConcatTarget"]
+        self.assertEqual([part["name"].split(":")[-1]
+                          for part in statement["target"]["parts"]],
+                         ["arr[0]", "arr[1]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
 
     def test_left_streaming_fixed_chunks_reverse_source_order(self):
         design = extract_source(

@@ -62,6 +62,7 @@
     {"name": "generate_indexed_targets", "file": "Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "oob_struct_read", "file": "Examples/system-verilog/oob_struct_read/oob_struct_read.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "streaming_struct_source", "file": "Examples/system-verilog/streaming_struct_source/streaming_struct_source.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
+    {"name": "streaming_with_range", "file": "Examples/system-verilog/streaming_with_range/streaming_with_range.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "delay_refusal", "file": "Examples/system-verilog/delay/delay.sv", "module": "delay", "oracle": "refuse", "expect": "refuse"},
     {"name": "event_refusal", "file": "Examples/system-verilog/event/event.sv", "module": "event_wait", "oracle": "refuse", "expect": "refuse"},
     {"name": "always_refusal", "file": "Examples/system-verilog/always/events.sv", "module": "top", "oracle": "refuse", "expect": "refuse"},

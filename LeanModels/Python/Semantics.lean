@@ -1851,8 +1851,47 @@ def binVal : RVal → Res RVal
     | Option.none =>
       .exn (.typeError s!"'{v.typeName}' object cannot be interpreted as an integer")
 
+mutual
+  /-- ASCII-escaped repr for immediate containers. Heap-backed objects stay
+  loud; these values carry their complete contents and need no heap lookup. -/
+  def asciiReprVal : Nat → RVal → Option String
+    | 0, _ => Option.none
+    | fuel + 1, .int value => intDecimal value
+    | fuel + 1, .float value => value.repr
+    | fuel + 1, .bool b => some (if b then "True" else "False")
+    | fuel + 1, .none => some "None"
+    | fuel + 1, .ellipsis => some "Ellipsis"
+    | fuel + 1, .str s => some (asciiStr s)
+    | fuel + 1, .bytes values => some (bytesRepr values)
+    | fuel + 1, .tuple xs => do
+      let parts ← asciiReprVals fuel xs.toList
+      if parts.length == 1 then
+        return "(" ++ parts.head! ++ ",)"
+      else return "(" ++ String.intercalate ", " parts ++ ")"
+    | fuel + 1, .listV xs => do
+      let parts ← asciiReprVals fuel xs.toList
+      return "[" ++ String.intercalate ", " parts ++ "]"
+    | fuel + 1, .ntuple _ _ _ | fuel + 1, .rangeV _ _ _ => Option.none
+    | fuel + 1, .ref _ => Option.none
+
+  def asciiReprVals : Nat → List RVal → Option (List String)
+    | _, [] => some []
+    | fuel, v :: vs => do
+      let text ← asciiReprVal fuel v
+      let rest ← asciiReprVals fuel vs
+      return text :: rest
+end
+
 def asciiVal : RVal → Res RVal
   | .str s => .ok (.str (asciiStr s))
+  | .tuple xs =>
+    match asciiReprVal 128 (.tuple xs) with
+    | some text => .ok (.str text)
+    | Option.none => .unsupported "ascii() of an immediate container is outside the tier"
+  | .listV xs =>
+    match asciiReprVal 128 (.listV xs) with
+    | some text => .ok (.str text)
+    | Option.none => .unsupported "ascii() of an immediate container is outside the tier"
   | v =>
     match strFormatRepr v with
     | some text => .ok (.str text)
@@ -2081,6 +2120,88 @@ mutual
       let more ← reprEntries h fuel active rest
       return (ks ++ ": " ++ vs) :: more
 end
+
+mutual
+  /-- CPython's `ascii()` rendering over the same heap-backed container
+  inventory as `reprVal`. The only difference is that every string leaf is
+  escaped with `asciiStr`; active-path cycle markers and the fixed depth
+  budget remain identical to `repr`. -/
+  def asciiReprValH (h : Heap) (fuel : Nat) (active : List Addr) :
+      RVal → Option String
+    | .int value => intDecimal value
+    | .float value => value.repr
+    | .bool b => some (if b then "True" else "False")
+    | .none => some "None"
+    | .ellipsis => some "Ellipsis"
+    | .str t => some (asciiStr t)
+    | .bytes xs => some (bytesRepr xs)
+    | .tuple xs => do
+      match fuel with
+      | 0 => Option.none
+      | fuel + 1 =>
+        let parts ← asciiReprValsH h fuel active xs.toList
+        if parts.length == 1 then
+          return "(" ++ parts.head! ++ ",)"
+        else return "(" ++ commaJoin parts ++ ")"
+    | .ntuple tname fields xs => do
+      match fuel with
+      | 0 => Option.none
+      | fuel + 1 =>
+        let parts ← asciiReprValsH h fuel active xs.toList
+        return tname ++ "(" ++ commaJoin (zipNames fields.toList parts) ++ ")"
+    | .listV xs => do
+      match fuel with
+      | 0 => Option.none
+      | fuel + 1 =>
+        let parts ← asciiReprValsH h fuel active xs.toList
+        return "[" ++ commaJoin parts ++ "]"
+    | .rangeV lo hi step => do
+      let start ← rangeBoundRepr lo
+      let stop ← rangeBoundRepr hi
+      if step.toInt == 1 then return "range(" ++ start ++ ", " ++ stop ++ ")"
+      else
+        let stride ← rangeBoundRepr step
+        return "range(" ++ start ++ ", " ++ stop ++ ", " ++ stride ++ ")"
+    | .ref a =>
+      match fuel with
+      | 0 => Option.none
+      | fuel + 1 =>
+        match Heap.get? h a with
+        | some (.list xs) =>
+          if active.contains a then some "[...]"
+          else do
+            let parts ← asciiReprValsH h fuel (a :: active) xs.toList
+            return "[" ++ commaJoin parts ++ "]"
+        | some (.dict entries _) =>
+          if active.contains a then some "{...}"
+          else do
+            let parts ← asciiReprEntriesH h fuel (a :: active) entries.toList
+            return "{" ++ commaJoin parts ++ "}"
+        | _ => Option.none
+
+  def asciiReprValsH (h : Heap) (fuel : Nat) (active : List Addr) :
+      List RVal → Option (List String)
+    | [] => some []
+    | v :: vs => do
+      let text ← asciiReprValH h fuel active v
+      let rest ← asciiReprValsH h fuel active vs
+      return text :: rest
+
+  def asciiReprEntriesH (h : Heap) (fuel : Nat) (active : List Addr) :
+      List (RVal × RVal) → Option (List String)
+    | [] => some []
+    | (k, v) :: rest => do
+      let ks ← asciiReprValH h fuel active k
+      let vs ← asciiReprValH h fuel active v
+      let more ← asciiReprEntriesH h fuel active rest
+      return (ks ++ ": " ++ vs) :: more
+end
+
+def asciiValH (h : Heap) (v : RVal) : Res RVal :=
+  match asciiReprValH h reprFuel [] v with
+  | some text => .ok (.str text)
+  | Option.none =>
+    .unsupported s!"ascii() of '{v.typeName}' is outside the tier (its rendering refuses; docs/memory-model.md §the cast tier)"
 
 /-- CPython `str()` of a value as `print` sees it: a str prints RAW,
 everything else through `repr`. -/
@@ -6734,7 +6855,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     match vs with
                     | [v] =>
                       Run.liftRes st
-                        (if fname == "ascii" then asciiVal v
+                        (if fname == "ascii" then asciiValH st.world.heap v
                          else if fname == "hex" then hexVal v
                          else if fname == "oct" then octVal v else binVal v)
                     | vs => .exn st (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)")

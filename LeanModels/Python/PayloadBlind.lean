@@ -1073,6 +1073,39 @@ theorem heapEq_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin 
   | case13 => simp_all [heapEq]
   | _ => simp_all [heapEq, heapEqList, heapEqEntries]
 
+theorem asciiReprValH_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (fuel : Nat) (active : List Addr) (v : RVal) :
+    asciiReprValH (Heap.swapAt h pa o) fuel active v =
+      asciiReprValH h fuel active v := by
+  obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+  induction fuel, active, v using asciiReprValH.induct (h := h)
+    (motive2 := fun f act es =>
+      asciiReprEntriesH (Heap.swapAt h pa (.generator q l₁ c₁ .running)) f act es =
+        asciiReprEntriesH h f act es)
+    (motive3 := fun f act vs =>
+      asciiReprValsH (Heap.swapAt h pa (.generator q l₁ c₁ .running)) f act vs =
+        asciiReprValsH h f act vs) with
+  | case16 _ a _ _ hb _ =>
+      simp_all [asciiReprValH, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
+  | case17 _ a _ _ hb _ ih =>
+      simp_all [asciiReprValH, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
+  | case18 _ a _ _ _ hb _ =>
+      simp_all [asciiReprValH, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
+  | case19 _ a _ _ _ hb _ ih =>
+      simp_all [asciiReprValH, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
+  | case20 _ a _ hnl hnd =>
+      rcases Heap.get?_swapAt_twin (b := a) hslot
+          ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with heq |
+        ⟨_, _, _, _, _, _, h2⟩
+      · simp only [asciiReprValH, heq]
+      · simp only [asciiReprValH, h2]
+  | _ => simp_all [asciiReprValH, asciiReprValsH, asciiReprEntriesH]
+
+theorem asciiValH_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (v : RVal) :
+    asciiValH (Heap.swapAt h pa o) v = asciiValH h v := by
+  simp only [asciiValH, asciiReprValH_swapAt hslot htwin]
+
 /-- `print`'s rendering of one value is blind. -/
 theorem printOne_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
     (v : RVal) : printOne (Heap.swapAt h pa o) v = printOne h v := by
@@ -4200,7 +4233,10 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                     | cons v rest =>
                                         cases rest with
                                         | cons _ _ => exact PBF.exn hs1 _
-                                        | nil => exact PBF.liftRes hs1 _
+                                        | nil =>
+                                            simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                              asciiValH_swapAt hs1 htwin]
+                                            exact PBF.liftRes hs1 _
                                   refine PBF.ite (fun _ => ?_) fun _ => ?_
                                   · refine PBF.bind (ihEs m st args.toList hslot)
                                       fun nextState values _ invariant => ?_

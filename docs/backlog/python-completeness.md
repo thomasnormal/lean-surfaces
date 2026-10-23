@@ -85,6 +85,14 @@ The divmod laboratory and differential case cover strings, `None`, tuple, and
 list operands; the focused run confirms all eight cases and refreshes the
 census and coverage totals.
 
+## 2026-10-23-pycomplete-54 — immediate containers in `ascii()`
+
+`ascii()` now renders tuple, namedtuple, list, range, and heap list/dict values
+with the existing deterministic ASCII escape rules. The heap path shares the
+active-address cycle and fixed-depth handling used by `repr`, while applying
+`asciiStr` to nested string leaves. The existing
+`str_lab.builtin_ascii_container` witness now matches CPython.
+
 ## 2026-10-22-pycomplete-53 — extend the fixed container-rendering budget
 
 The renderer's caller-independent depth budget rises from 64 to 128 levels.

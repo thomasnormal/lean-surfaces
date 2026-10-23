@@ -2669,11 +2669,14 @@ PINNED as the file's designed boundary — the real UCI interface is an
 EXTERNAL module (shipped in the wheel), so whole-file coverage of
 sunfish.py ends there BY THE FILE'S OWN STRUCTURE, not by a tier gap.
 
-**ASCII builtin extension (2026-10-12):** `ascii(x)` now covers the scalar
+**ASCII builtin extension (2026-10-23):** `ascii(x)` covers the scalar
 inventory (`int`, `bool`, finite/non-finite `float`, `None`, `Ellipsis`) and
-strings, using CPython's ASCII-escaped `repr` for non-ASCII strings. It keeps
-CPython's exact one-argument arity error. Heap-recursive values remain loud
-until their repr path is extended with ASCII escaping rather than guessed.
+strings, using CPython's ASCII-escaped `repr` for non-ASCII strings. It also
+walks the in-tier tuple, namedtuple, list, range, and heap list/dict forms.
+Heap traversal uses the same active-address cycle markers and fixed rendering
+budget as `repr`, with `asciiStr` applied at every string leaf. It keeps
+CPython's exact one-argument arity error; values outside the deterministic
+rendering inventory remain loud.
 
 **2026-10-09 ASCII decimal extension (current):** `int(str)` decides the
 complete ASCII decimal grammar: surrounding space, TAB, LF, VT, FF, or CR;

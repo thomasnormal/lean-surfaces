@@ -218,7 +218,7 @@ yet modelled, a container argument, a non-ASCII `%r`, and a mapping RHS. -/
 #py_check str_lab.builtin_ascii("€") = "'\\u20ac'"
 #py_check str_lab.builtin_ascii_noargs() raises
   (.typeError "ascii() takes exactly one argument (0 given)")
-#guard callFunction str_lab "builtin_ascii_container" #[] 4096 matches .unsupported _
+#py_check str_lab.builtin_ascii_container() = "[1]"
 
 #py_check str_lab.builtin_round(3) = 3
 #py_check str_lab.builtin_round(-7) = -7

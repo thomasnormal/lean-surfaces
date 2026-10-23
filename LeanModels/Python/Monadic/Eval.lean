@@ -330,7 +330,9 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     | vs => raisePy (.typeError s!"chr() takes exactly one argument ({vs.length} given)")
   else if fname == "ascii" || fname == "hex" || fname == "oct" || fname == "bin" then
     match vs with
-    | [v] => liftRes (if fname == "ascii" then asciiVal v else if fname == "hex" then hexVal v else if fname == "oct" then octVal v else binVal v)
+    | [v] => do
+      let h ← frameHeap
+      liftRes (if fname == "ascii" then asciiValH h v else if fname == "hex" then hexVal v else if fname == "oct" then octVal v else binVal v)
     | vs => raisePy (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)")
   else if fname == "format" then
     match vs with

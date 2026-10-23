@@ -707,7 +707,8 @@ def applyAttrPlan (K : Kont) (a : Addr) (attr : String) :
 
 /-- The str method tier. Strings are immutable values, so every in-tier arm is
 arguments plus a pure worker. -/
-def applyStrMethod (sv : String) : StrPlan → List RVal → SemF RVal
+def applyStrMethod (sv : String) (drainIter : Addr → SemW (List RVal)) :
+    StrPlan → List RVal → SemF RVal
   | .swapcase, vs =>
       match vs with
       | [] => liftRes (strSwapcase sv)
@@ -740,7 +741,16 @@ def applyStrMethod (sv : String) : StrPlan → List RVal → SemF RVal
           else raisePy (.typeError s!"index expected at most 3 arguments, got {vs.length}")
   | .join, vs =>
       match vs with
-      | [v] => do liftRes (strJoinH (← frameHeap) sv v)
+      | [v] => do
+          let h ← frameHeap
+          match v with
+          | .ref a =>
+              match Heap.get? h a with
+              | some (.generator ..) =>
+                  let vals ← inFrame (drainIter a)
+                  liftRes (strJoinList sv vals)
+              | _ => liftRes (strJoinH h sv v)
+          | _ => liftRes (strJoinH h sv v)
       | vs => raisePy (.typeError s!"str.join() takes exactly one argument ({vs.length} given)")
   | .refuse msg, _ => refuse msg
 
@@ -877,7 +887,7 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                   | _ => refuse "internal: namedtuple call plan out of range (report this)"
               | .str sv => do
                   let vs ← evalOpenList K m args.toList
-                  applyStrMethod sv (strCallPlan attr) vs
+                  applyStrMethod sv K.drainIter (strCallPlan attr) vs
               | .float fv =>
                   if attr == "is_integer" then do
                     let vs ← evalOpenList K m args.toList

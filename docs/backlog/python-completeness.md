@@ -4074,3 +4074,14 @@ allocation while the monadic runner is the acceptance surface. The focused
 battery is 26 rows (23 matches, 3 intentional refusals), and
 `harness/scripts/dict_view_script.py` covers mutation after each view kind is
 escaped.
+
+## 2026-10-23-pycomplete-56 — string joins consume generators
+
+The monadic runner now admits `separator.join(generator_expression)` for a
+heap generator. It drains the generator through the existing stateful cursor,
+then applies the same indexed string-element checks as other `str.join`
+operands, so generator effects and consumption remain observable and faithful
+to CPython. `str_lab.join_generator` is now a concrete `#py_check` and a
+differential MATCH row. The trunk proof interpreter remains intentionally
+loud for generator state, so this extension is confined to the executable
+monadic surface.

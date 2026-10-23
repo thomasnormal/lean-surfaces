@@ -304,10 +304,14 @@ theorem applyAttrPlan_mono (K K' : Kont) (hK : KontLe K K') (a : Addr) (attr : S
   mono_with (first | exact hcall _ _ | assumption)
 
 set_option maxRecDepth 8000 in
-theorem applyStrMethod_mono (sv : String) :
+theorem applyStrMethod_mono (sv : String)
+    (drain drain' : Addr → SemW (List RVal))
+    (hd : ∀ a, drain a ⊑ₚ drain' a) :
     ∀ (p : StrPlan) (vs : List RVal),
-      applyStrMethod sv p vs ⊑ₚ applyStrMethod sv p vs :=
-  fun _ _ => PyLe.refl' _
+      applyStrMethod sv drain p vs ⊑ₚ applyStrMethod sv drain' p vs := by
+  intro p vs
+  unfold applyStrMethod
+  mono_with (first | exact hd _ | assumption)
 
 set_option maxRecDepth 8000 in
 theorem applyCallPlan_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
@@ -354,6 +358,7 @@ theorem evalOpen_monoAll (K K' : Kont) (hK : KontLe K K') (m : Module) :
     mono_with (first
       | exact hCP _ _
       | exact hAP _ _ _ _
+      | exact applyStrMethod_mono _ _ _ hdrain _ _
       | exact hcall _ _
       | exact hcallClo _ _ _
       | exact hdictItems _ _

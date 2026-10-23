@@ -552,10 +552,12 @@ tier).
   are faithful `TypeError`s, raised after the arguments evaluate
   (CPython call order).
   `.join(iterable)` is also admitted for strings, bytes, tuples,
-  namedtuples, lists, ranges, and dictionaries (the latter in insertion
-  order). It requires string elements and reports CPython's indexed
-  `TypeError`; generators and sets remain loud because consuming them
-  observes state or hash order.
+  namedtuples, lists, ranges, dictionaries (the latter in insertion
+  order), and heap generators. It requires string elements and reports
+  CPython's indexed `TypeError`; generator operands are drained to
+  exhaustion in their existing heap frame, so the join observes and consumes
+  generator state exactly as CPython does. Sets remain loud because their
+  iteration order is hash-dependent.
 * **Simp doctrine** (the `sortInts`/`heapEq` freeze family): the
   dispatchers (`sliceVal`, `strCallPlan`) are in
   `py_simp`/`interpUnfolds`; the value workers (`strSlice`,

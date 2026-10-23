@@ -124,7 +124,7 @@ load_program str_lab from "Examples/python/str_lab/str_lab.json"
   (.typeError "sequence item 1: expected str instance, int found")
 #py_check str_lab.join_bad_arity("-") raises
   (.typeError "str.join() takes exactly one argument (0 given)")
-#guard callFunction str_lab "join_generator" #[.str "-"] 4096 matches .unsupported _
+#py_check str_lab.join_generator("-") = "a-b"
 #guard callFunction str_lab "upper_of" #[.str "é"] 4096
   matches .unsupported _
 #guard callFunction str_lab "list_slice_is_loud" #[] 4096 ==

@@ -339,6 +339,9 @@ def admitOMPTileDirective (artifact : Artifact) (path : List Nat) :
 def admitOMPStripeDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPStripeDirective" "omp-stripe-directive"
 
+def admitOMPUnrollDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPUnrollDirective" "omp-unroll-directive"
+
 def admitOMPParallelDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPParallelDirective" "omp-parallel-directive"
 

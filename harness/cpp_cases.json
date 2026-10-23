@@ -836,6 +836,17 @@
     "rung": 3
   },
   {
+    "id": "translation.lambda-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "lambdaTranslationWitness",
+    "cpp_source": "int f() { auto value = [] { return 1; }; return value(); }",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

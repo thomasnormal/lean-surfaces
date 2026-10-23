@@ -264,6 +264,9 @@ def admitCallExpression (artifact : Artifact) (path : List Nat) :
 def admitCompoundAssignmentOperator (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CompoundAssignOperator" "compound-assignment-operator"
 
+def admitLambdaExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "LambdaExpr" "lambda-expression"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

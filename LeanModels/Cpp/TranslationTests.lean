@@ -576,6 +576,13 @@ private def compoundAssignmentTranslation : Artifact := {emptyTranslation with
         ("opcode", .string "+="), ("name", .string "add-assign"),
         ("inner", .array [])]])]}
 
+private def lambdaTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "l"), ("kind", .string "LambdaExpr"),
+        ("name", .string "lambda"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -797,6 +804,9 @@ def callTranslationWitness : Except String Unit :=
 
 def compoundAssignmentTranslationWitness : Except String Unit :=
   admitCompoundAssignmentOperator compoundAssignmentTranslation [0]
+
+def lambdaTranslationWitness : Except String Unit :=
+  admitLambdaExpression lambdaTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -1054,6 +1064,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard compoundAssignmentTranslationWitness matches .ok ()
 #guard admitCompoundAssignmentOperator compoundAssignmentTranslation [] matches .error _
 #guard admitCompoundAssignmentOperator functionTranslation [0] matches .error _
+#guard lambdaTranslationWitness matches .ok ()
+#guard admitLambdaExpression lambdaTranslation [] matches .error _
+#guard admitLambdaExpression functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

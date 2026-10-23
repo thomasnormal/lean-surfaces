@@ -758,6 +758,13 @@ private def openACCLoopConstructTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "o"), ("kind", .string "OpenACCLoopConstruct"),
         ("name", .string "loop"), ("inner", .array [])]])]}
 
+private def openACCCombinedConstructTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OpenACCCombinedConstruct"),
+        ("name", .string "parallel-loop"), ("inner", .array [])]])]}
+
 private def ompMetadirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1773,6 +1780,9 @@ def openACCComputeConstructTranslationWitness : Except String Unit :=
 def openACCLoopConstructTranslationWitness : Except String Unit :=
   admitOpenACCLoopConstruct openACCLoopConstructTranslation [0]
 
+def openACCCombinedConstructTranslationWitness : Except String Unit :=
+  admitOpenACCCombinedConstruct openACCCombinedConstructTranslation [0]
+
 def ompMetadirectiveTranslationWitness : Except String Unit :=
   admitOMPMetadirective ompMetadirectiveTranslation [0]
 
@@ -2413,6 +2423,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard openACCLoopConstructTranslationWitness matches .ok ()
 #guard admitOpenACCLoopConstruct openACCLoopConstructTranslation [] matches .error _
 #guard admitOpenACCLoopConstruct functionTranslation [0] matches .error _
+#guard openACCCombinedConstructTranslationWitness matches .ok ()
+#guard admitOpenACCCombinedConstruct openACCCombinedConstructTranslation [] matches .error _
+#guard admitOpenACCCombinedConstruct functionTranslation [0] matches .error _
 #guard ompMetadirectiveTranslationWitness matches .ok ()
 #guard admitOMPMetadirective ompMetadirectiveTranslation [] matches .error _
 #guard admitOMPMetadirective functionTranslation [0] matches .error _

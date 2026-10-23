@@ -1122,6 +1122,17 @@
     "rung": 4
   },
   {
+    "id": "translation.openacc-combined-construct",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "openACCCombinedConstructTranslationWitness",
+    "cpp_source": "void f() {\n#pragma acc parallel loop\nfor (int i = 0; i < 1; ++i) {}\n}",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.omp-metadirective",
     "kind": "translation",
     "corpus": "translation witness",

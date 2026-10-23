@@ -15,12 +15,12 @@
  "summary": {
   "blocker_files": [
    [
-    "ExpressionStatement:CallExpression",
-    3451
-   ],
-   [
     "AssignmentExpression:target",
     3441
+   ],
+   [
+    "ExpressionStatement:CallExpression",
+    3419
    ],
    [
     "VariableSymbol:2state",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4684,
-   "partial": 17296,
+   "clean": 4689,
+   "partial": 17291,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4056,
+    4061,
     18679
    ],
    "simulation elaboration": [
@@ -1507,9 +1507,9 @@
     "unlockable": 0
    },
    "chapter-32": {
-    "clean": 0,
+    "clean": 5,
     "error": 0,
-    "partial": 286,
+    "partial": 281,
     "skip_include": 0,
     "total": 286,
     "unlockable": 0

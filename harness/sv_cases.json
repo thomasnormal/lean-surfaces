@@ -604,6 +604,15 @@
       "expect": "match"
     },
     {
+      "name": "sdf_annotate",
+      "file": "Examples/system-verilog/sdf_annotate/sdf_annotate.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "delay_refusal",
       "file": "Examples/system-verilog/delay/delay.sv",
       "module": "delay",

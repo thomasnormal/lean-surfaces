@@ -5589,3 +5589,19 @@ The fresh 22,046-file census moves **4,679 → 4,684 clean** and **17,301 →
 assignment and expression-statement leaders are unchanged. Differential
 coverage moves **69/65/0/4 → 70/66/0/4** and grammar coverage remains
 **206/75/131**.
+
+## Inert literal `$sdf_annotate` calls — 2026-10-23
+
+The self-check tier now erases `$sdf_annotate` when its only argument is a
+literal SDF filename, or when the three-argument spelling supplies a literal
+module scope and the explicitly empty `config_file`. These forms have no
+timing annotation to apply in the time-zero state. Calls with dynamic
+filenames, nonempty configuration, or other optional arguments remain loud;
+this does not introduce an SDF timing model.
+
+The `sdf_annotate` fixture and differential row cover both admitted forms. The
+fresh 22,046-file census moves **4,684 → 4,689 clean** and **17,296 → 17,291
+partial**; `ExpressionStatement:CallExpression` falls **3,451 → 3,419** and
+`AssignmentExpression:target` becomes the leading blocker at 3,441.
+Differential coverage moves **70/66/0/4 → 71/67/0/4** and grammar coverage
+remains **206/75/131**.

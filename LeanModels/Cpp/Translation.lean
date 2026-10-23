@@ -351,6 +351,9 @@ def admitOpenACCDataConstruct (artifact : Artifact) (path : List Nat) :
 def admitOpenACCEnterDataConstruct (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OpenACCEnterDataConstruct" "openacc-enter-data-construct"
 
+def admitOpenACCExitDataConstruct (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OpenACCExitDataConstruct" "openacc-exit-data-construct"
+
 def admitOMPMetadirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPMetaDirective" "omp-metadirective"
 

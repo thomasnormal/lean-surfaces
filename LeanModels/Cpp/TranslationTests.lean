@@ -779,6 +779,13 @@ private def openACCEnterDataConstructTranslation : Artifact := {emptyTranslation
       .object [("id", .string "o"), ("kind", .string "OpenACCEnterDataConstruct"),
         ("name", .string "enter-data"), ("inner", .array [])]])]}
 
+private def openACCExitDataConstructTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OpenACCExitDataConstruct"),
+        ("name", .string "exit-data"), ("inner", .array [])]])]}
+
 private def ompMetadirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1803,6 +1810,9 @@ def openACCDataConstructTranslationWitness : Except String Unit :=
 def openACCEnterDataConstructTranslationWitness : Except String Unit :=
   admitOpenACCEnterDataConstruct openACCEnterDataConstructTranslation [0]
 
+def openACCExitDataConstructTranslationWitness : Except String Unit :=
+  admitOpenACCExitDataConstruct openACCExitDataConstructTranslation [0]
+
 def ompMetadirectiveTranslationWitness : Except String Unit :=
   admitOMPMetadirective ompMetadirectiveTranslation [0]
 
@@ -2452,6 +2462,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard openACCEnterDataConstructTranslationWitness matches .ok ()
 #guard admitOpenACCEnterDataConstruct openACCEnterDataConstructTranslation [] matches .error _
 #guard admitOpenACCEnterDataConstruct functionTranslation [0] matches .error _
+#guard openACCExitDataConstructTranslationWitness matches .ok ()
+#guard admitOpenACCExitDataConstruct openACCExitDataConstructTranslation [] matches .error _
+#guard admitOpenACCExitDataConstruct functionTranslation [0] matches .error _
 #guard ompMetadirectiveTranslationWitness matches .ok ()
 #guard admitOMPMetadirective ompMetadirectiveTranslation [] matches .error _
 #guard admitOMPMetadirective functionTranslation [0] matches .error _

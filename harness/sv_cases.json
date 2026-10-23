@@ -34,6 +34,7 @@
     {"name": "error_task", "file": "Examples/system-verilog/error_task/error_task.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "fatal_task", "file": "Examples/system-verilog/fatal_task/fatal_task.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "associative_array_declaration", "file": "Examples/system-verilog/associative_array_decl/associative_array_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
+    {"name": "printtimescale_declaration", "file": "Examples/system-verilog/printtimescale_decl/printtimescale_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "delay_refusal", "file": "Examples/system-verilog/delay/delay.sv", "module": "delay", "oracle": "refuse", "expect": "refuse"},
     {"name": "event_refusal", "file": "Examples/system-verilog/event/event.sv", "module": "event_wait", "oracle": "refuse", "expect": "refuse"},
     {"name": "always_refusal", "file": "Examples/system-verilog/always/events.sv", "module": "top", "oracle": "refuse", "expect": "refuse"},

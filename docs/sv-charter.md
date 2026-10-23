@@ -5197,3 +5197,14 @@ declaration-only form. The census moves **4,505 → 4,506 clean** and
 **17,464 → 17,463 partial**; `VariableSymbol:2state` falls **3,691 → 3,501**.
 Differential coverage is **37 rows, 33 matches, 0 disagreements, and 4
 recorded refusals**, with **200 grammar witnesses, 68 MATCH, and 132 REFUSE**.
+
+### Inert no-argument `$printtimescale` — 2026-10-23
+
+The no-argument `$printtimescale` task now lowers to an inert diagnostic
+statement. Explicit scope arguments and other time-format tasks remain loud
+because hierarchy and time-scale state are outside the self-check model. The
+`printtimescale_decl` fixture and differential row cover the admitted form.
+The census moves **4,506 → 4,507 clean** and **17,463 → 17,462 partial**;
+`ExpressionStatement:CallExpression` falls **3,602 → 3,599**. Differential
+coverage is **38 rows, 34 matches, 0 disagreements, and 4 recorded refusals**;
+grammar coverage is **200 witnesses, 69 MATCH, and 131 REFUSE**.

@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-23
 
-The chapter-scoped rerun covered **22,035** paths: **4,506 clean**,
-**17,463 partial**, **66 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,035** paths: **4,507 clean**,
+**17,462 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`ExpressionStatement:CallExpression` (3,602), `AssignmentExpression:target` (3,592),
+`ExpressionStatement:CallExpression` (3,599), `AssignmentExpression:target` (3,592),
 `VariableSymbol:2state` (3,501), `CallExpression` (3,290),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,481), `ConcurrentAssertionStatement`
@@ -85,6 +85,14 @@ numbers and message arguments remain loud. The fresh rerun moves clean files
 **4,476 → 4,505** and partial files **17,493 → 17,464**;
 `ExpressionStatement:CallExpression` falls **3,749 → 3,602**. Differential
 coverage is **36 rows, 32 matches, 0 disagreements, and 4 recorded refusals**.
+
+The no-argument `$printtimescale` task now lowers to an inert diagnostic
+statement; explicit scope arguments and all other time-format tasks remain
+loud because hierarchy and time-scale state are not modeled. The fresh rerun
+moves clean files **4,506 → 4,507** and partial files **17,463 → 17,462**;
+`ExpressionStatement:CallExpression` falls **3,602 → 3,599**. Differential
+coverage is **38 rows, 34 matches, 0 disagreements, and 4 recorded refusals**;
+grammar coverage is **200 witnesses, 69 MATCH, and 131 REFUSE**.
 
 ## Nested fixed two-state arrays — 2026-10-22
 

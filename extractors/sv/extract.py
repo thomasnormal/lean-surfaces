@@ -111,6 +111,11 @@ ORDER_CMP_SYMS = ("<", "<=", ">", ">=")
 SYSCALL_FMT = ("$display", "$write")
 SYSCALL_CTRL = ("$finish", "$stop")
 SYSCALL_FATAL = "$fatal"
+# `$printtimescale` reports scope metadata without changing modeled state.  The
+# no-argument form is therefore safe to erase in the self-check tier; explicit
+# scope arguments remain loud because hierarchy/time-scale semantics are not
+# represented in the envelope state.
+SYSCALL_PURE_DIAGNOSTIC = "$printtimescale"
 # Severity tasks only affect a simulator's diagnostic stream.  The public
 # self-check state has no diagnostic channel, so a pure literal call can be
 # erased while preserving control flow and all modeled state.  Calls with
@@ -5759,6 +5764,14 @@ def _convert_syscall(sm, s, e):
         is_sys = bool(e.isSystemCall)
     except Exception:
         return unsupported(sm, s, "ExpressionStatement:CallExpression")
+    if is_sys and name == SYSCALL_PURE_DIAGNOSTIC:
+        try:
+            args = list(e.arguments)
+        except Exception:
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        if not args:
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "pure_diagnostic": name}
     if not is_sys or name not in SYSCALL_FMT + SYSCALL_CTRL:
         if is_sys and name == SYSCALL_FATAL:
             try:

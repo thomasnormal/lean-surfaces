@@ -853,9 +853,8 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
               -- fuel-independent, because it is a spec error in the run's INPUT
               -- and never a silent 0. Decided BEFORE the receiver evaluates,
               -- since evaluating the receiver is itself the poisoned refusal.
-              -- `time.time(args…)` refuses loudly: CPython would evaluate the
-              -- args then raise TypeError, and the model never fakes what it can
-              -- refuse. =====
+              -- `time.time(args…)` evaluates the args then raises CPython's
+              -- exact arity TypeError without consuming the trace. =====
               let st0 ← get
               if isClockCall m st0 recv attr then
                 match args.toList with
@@ -867,7 +866,7 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                         set { st0 with world := { st0.world with clock := ts } }
                         pure (.int t)
                 | _ :: _ =>
-                    refuse "time.time() with arguments is outside the trace-clock tier (docs/memory-model.md §the trace clock)"
+                    raisePy (.typeError s!"time.time() takes no arguments ({args.size} given)")
               else do
               let r ← evalOpen K m recv
               match r with

@@ -161,6 +161,14 @@ its bytes operand exactly on both interpreter surfaces. Other bytes format
 strings, conversions, and operand protocols remain loud until their CPython
 grammar and buffer rules are represented.
 
+## 2026-10-23-pycomplete-71 — trace-clock arity errors
+
+The admitted `time.time()` trace-clock call now handles positional
+arguments with CPython's evaluation order and exact `TypeError` payload:
+`time.time() takes no arguments (N given)`. The arguments are evaluated
+before the error and the clock trace is left untouched. Keyword syntax and
+other clock-module surfaces remain loud at their existing boundaries.
+
 ## 2026-10-23-pycomplete-63 — Latin-1 string case mapping
 
 String `swapcase`, `isupper`, `islower`, and `upper` now admit CPython's

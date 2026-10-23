@@ -1084,7 +1084,6 @@ WHITELIST_CLASS = {
     "seq_lab::shl": "op.LShift-budget",
     "clock_lab::armed": "exc.handler",
     "clock_lab::read_clock": "clock.underrun",
-    "clock_lab::call_with_arg": "clock.arity",
     "star_lab::star_call": "starred.position",
     "star_lab::star_set": "set.order",
     "star_lab::star_target": "starred.position",

@@ -7096,9 +7096,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
           -- run's INPUT, never a silent 0). Decided BEFORE the receiver
           -- evaluates (receiver evaluation is the poisoned refusal);
           -- everything failing `isClockCall` takes the paths below
-          -- verbatim. `time.time(args…)` refuses loudly: CPython would
-          -- evaluate the args then raise `TypeError`, and the model
-          -- never fakes what it can refuse. =====
+          -- verbatim. `time.time(args…)` evaluates the args then raises
+          -- CPython's exact arity `TypeError` without consuming the trace. =====
           if isClockCall m st recv attr then
             match args.toList with
             | [] =>
@@ -7108,7 +7107,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
               | t :: ts =>
                 .ok { st with world := { st.world with clock := ts } } (.int t)
             | _ :: _ =>
-              .unsupported "time.time() with arguments is outside the trace-clock tier (docs/memory-model.md §the trace clock)"
+              .exn st (.typeError s!"time.time() takes no arguments ({args.size} given)")
           else
           -- Method calls (dict `.get`, H2 list `.append`/`.pop`, H3
           -- instance methods). CPython order: the receiver (and its

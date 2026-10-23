@@ -674,7 +674,7 @@
   {"file": "Examples/python/clock_lab/clock_lab.py", "function": "armed", "args": [[7, 100]], "clock": [5], "expect": "unsupported"},
   {"file": "Examples/python/clock_lab/clock_lab.py", "function": "read_clock", "args": [[]], "clock": [], "expect": "unsupported"},
   {"file": "Examples/python/clock_lab/clock_lab.py", "function": "shadowed", "args": [[]], "clock": [123], "expect": "match"},
-  {"file": "Examples/python/clock_lab/clock_lab.py", "function": "call_with_arg", "args": [[]], "clock": [123], "expect": "unsupported"},
+  {"file": "Examples/python/clock_lab/clock_lab.py", "function": "call_with_arg", "args": [[]], "clock": [123], "expect": "match"},
   {"file": "Examples/python/clock_lab/clock_lab.py", "function": "pure_sum", "args": [[10], [0]], "expect": "match"},
   {"file": "Examples/python/star_lab/star_lab.py", "function": "list_tail", "args": [[3], [-1]], "expect": "match"},
   {"file": "Examples/python/star_lab/star_lab.py", "function": "list_head", "args": [[0], [-1]], "expect": "match"},

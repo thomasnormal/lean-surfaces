@@ -53,6 +53,9 @@ change is listed here under **Changed** or **Removed**.
   integer octets and exhaustion follows the existing `StopIteration` behavior.
 - The measured bare `b"%s" % bytes` form now copies its bytes operand;
   other bytes formatting syntax remains loud.
+- `time.time(...)` now evaluates positional arguments and raises CPython's
+  exact arity `TypeError` without consuming the trace; the zero-argument
+  trace-clock call remains the admitted form.
 
 ## [0.1.14] — 2026-10-21
 

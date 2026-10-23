@@ -1564,6 +1564,10 @@ Everything else in this section stands: the poisoned binding remains
 the abstraction for every OTHER impure surface (`time` as a value,
 `time.sleep`, any other module attribute), and no reading is ever
 invented — readings come from the trace or the evaluation refuses.
+The admitted zero-argument call also checks CPython's arity boundary:
+`time.time(args…)` evaluates its arguments and then raises the exact
+`TypeError` `time.time() takes no arguments (N given)` without consuming
+the trace.
 
 ## bound() end-to-end (pass 4 capstone — the last mechanical constructs)
 
@@ -2437,8 +2441,8 @@ refusal), if and only if ALL of:
    some out-of-tier rebinding's.
 
 Everything failing the admission takes today's path (poisoned refusal /
-faithful errors), verbatim. `time.time(x)` refuses loudly (CPython would
-evaluate args then raise `TypeError`; the model never fakes it).
+faithful errors), verbatim. `time.time(x)` evaluates its arguments and
+then raises CPython's exact arity `TypeError`; the clock trace is untouched.
 `time.time()` under kwargs syntax rides the H6 loud arm unchanged.
 
 **Fragments and meta-theorems.** The clock call is an attribute call

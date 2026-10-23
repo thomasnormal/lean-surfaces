@@ -29,8 +29,8 @@ The claims worth naming, each falsifying a cheaper design:
   (fuel-independence pinned by two fuels).
 * **The admission has edges.** A LOCAL `time` shadows the clock
   (`shadowed` — no pop, with CPython's faithful `AttributeError`);
-  `time.time(1)` refuses loudly (`call_with_arg` — CPython raises
-  `TypeError` AFTER evaluating the arg; the model never fakes it).
+  `time.time(1)` raises CPython's exact arity `TypeError` after evaluating
+  the argument (`call_with_arg`); the trace is not consumed.
 
 `pure_sum` never consults the clock: `pure_sum_all_traces`
 (`proof.lean`) is the LAB-SCALE trace-quantified theorem — the result
@@ -89,8 +89,8 @@ driver's handler (the pass-4 composition) -/
 
 #guard callFunctionClock clock_lab "shadowed" #[] [123] 4096 matches
   .unsupported _
-#guard callFunctionClock clock_lab "call_with_arg" #[] [123] 4096 matches
-  .unsupported "time.time() with arguments is outside the trace-clock tier (docs/memory-model.md §the trace clock)"
+#py_check clock_lab.call_with_arg() raises
+  (.typeError "time.time() takes no arguments (1 given)")
 
 /-! ### the boundary identity: `callFunction` IS the empty trace -/
 

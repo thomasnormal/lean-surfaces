@@ -20,7 +20,8 @@ the dead-clock run (`dead_clock`: readings consumed, never binding),
 the armed run (`armed`: Stop mid-loop at the exact reading CPython
 stops), the underrun refusal (short trace), and the admission's edges
 (`shadowed` — a local `time` never pops and raises `AttributeError`; `call_with_arg` —
-`time.time(1)` refuses loudly; `pure_sum` — no clock at all, the
+`time.time(1)` raises CPython's exact arity `TypeError` after evaluating its
+argument; `pure_sum` — no clock at all, the
 lab-scale trace-independence theorem's subject).
 """
 
@@ -87,8 +88,7 @@ def shadowed():
 
 
 def call_with_arg():
-    # CPython evaluates the arg then raises TypeError; the model refuses
-    # loudly (never fakes what it can refuse)
+    # CPython evaluates the arg then raises its exact arity TypeError.
     return time.time(1)
 
 

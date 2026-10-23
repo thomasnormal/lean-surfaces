@@ -1,73 +1,626 @@
 {
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
-    {"name": "increment", "file": "Examples/system-verilog/increment/incdec.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "streaming_aggregate_member", "file": "Examples/system-verilog/streaming_aggregate_member/streaming_aggregate_member.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "unpacked_pattern_replication", "file": "Examples/system-verilog/unpacked_pattern_replication/unpacked_pattern_replication.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "unpacked_concat_pattern", "file": "Examples/system-verilog/unpacked_concat_pattern/unpacked_concat_pattern.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "packed_struct_nested", "file": "Examples/system-verilog/packed_struct_nested/packed_struct_nested.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "streaming_unpack", "file": "Examples/system-verilog/streaming_unpack/streaming_unpack.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "two_state_output", "file": "Examples/system-verilog/two_state_output/two_state_output.sv", "module": "two_state_output", "oracle": ["PASS"], "expect": "match"},
-    {"name": "fixed_array_2state", "file": "Examples/system-verilog/fixed_array_2state/fixed_array_2state.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "fixed_array_packed_leaf_2state", "file": "Examples/system-verilog/fixed_array_packed_leaf_2state/fixed_array_packed_leaf_2state.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "fixed_array_oob", "file": "Examples/system-verilog/fixed_array_oob/fixed_array_oob.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "clog2", "file": "Examples/system-verilog/clog2/clog2.sv", "module": "clog2", "oracle": ["PASS"], "expect": "match"},
-    {"name": "unpacked_dynamic", "file": "Examples/system-verilog/unpacked_dynamic/unpacked_dynamic.sv", "module": "top", "oracle": ["PASS1", "PASS2", "PASS3"], "expect": "match"},
-    {"name": "fixed_array_pattern_2state", "file": "Examples/system-verilog/fixed_array_pattern_2state/fixed_array_pattern_2state.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "unpacked_struct_integral_fields", "file": "Examples/system-verilog/unpacked_struct_integral_fields/unpacked_struct_integral_fields.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "unpacked_struct_initializers", "file": "Examples/system-verilog/unpacked_struct_initializers/unpacked_struct_initializers.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "unpacked_concat_initializer", "file": "Examples/system-verilog/unpacked_concat_initializer/unpacked_concat_initializer.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "unpacked_struct_array", "file": "Examples/system-verilog/unpacked_struct_array/unpacked_struct_array.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "event_declaration", "file": "Examples/system-verilog/event_decl/event_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "real_declaration", "file": "Examples/system-verilog/real_decl/real_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "chandle_declaration", "file": "Examples/system-verilog/chandle_decl/chandle_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "virtual_interface_null_declaration", "file": "Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "string_declaration", "file": "Examples/system-verilog/string_decl/string_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "string_literal_declaration", "file": "Examples/system-verilog/string_literal_decl/string_literal_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "nested_struct_initializers", "file": "Examples/system-verilog/nested_struct_initializers/nested_struct_initializers.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "large_fixed_array", "file": "Examples/system-verilog/large_fixed_array/large_fixed_array.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "do_while_string_literal", "file": "Examples/system-verilog/do_while_string_literal/do_while_string_literal.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "severity_tasks", "file": "Examples/system-verilog/severity_tasks/severity_tasks.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "queue_declaration", "file": "Examples/system-verilog/queue_decl/queue_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "dynamic_array_declaration", "file": "Examples/system-verilog/dynamic_array_decl/dynamic_array_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "severity_task_literals", "file": "Examples/system-verilog/severity_task_literals/severity_task_literals.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "error_task", "file": "Examples/system-verilog/error_task/error_task.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "fatal_task", "file": "Examples/system-verilog/fatal_task/fatal_task.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "fatal_dynamic", "file": "Examples/system-verilog/fatal_dynamic/fatal_dynamic.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "associative_array_declaration", "file": "Examples/system-verilog/associative_array_decl/associative_array_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "printtimescale_declaration", "file": "Examples/system-verilog/printtimescale_decl/printtimescale_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "printtimescale_scope", "file": "Examples/system-verilog/printtimescale_scope/printtimescale_scope.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "strobe_literal", "file": "Examples/system-verilog/strobe_literal/strobe_literal.sv", "module": "top", "oracle": ["DISPLAY", "DISPLAY2", "STROBE"], "expect": "match"},
-    {"name": "fdisplay_stdout", "file": "Examples/system-verilog/fdisplay_stdout/fdisplay_stdout.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "severity_dynamic", "file": "Examples/system-verilog/severity_dynamic/severity_dynamic.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "exit_declaration", "file": "Examples/system-verilog/exit_decl/exit_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "vcd_setup", "file": "Examples/system-verilog/vcd_setup/vcd_setup.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "vcd_control", "file": "Examples/system-verilog/vcd_control/vcd_control.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "unpacked_struct_copy", "file": "Examples/system-verilog/unpacked_struct_copy/unpacked_struct_copy.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "unpacked_struct_conditional", "file": "Examples/system-verilog/unpacked_struct_conditional/unpacked_struct_conditional.sv", "module": "top", "oracle": ["PASS1", "PASS2"], "expect": "match"},
-    {"name": "unpacked_struct_nested_pattern", "file": "Examples/system-verilog/unpacked_struct_nested_pattern/unpacked_struct_nested_pattern.sv", "module": "top", "oracle": ["PASS1", "PASS2"], "expect": "match"},
-    {"name": "unpacked_array_nested_pattern", "file": "Examples/system-verilog/unpacked_array_nested_pattern/unpacked_array_nested_pattern.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "unpacked_array_subarray_copy", "file": "Examples/system-verilog/unpacked_array_subarray_copy/unpacked_array_subarray_copy.sv", "module": "top", "oracle": ["PASS", "PASS2"], "expect": "match"},
-    {"name": "unpacked_array_struct_copy", "file": "Examples/system-verilog/unpacked_array_struct_copy/unpacked_array_struct_copy.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "packed_unpacked_subarray_copy", "file": "Examples/system-verilog/packed_unpacked_subarray_copy/packed_unpacked_subarray_copy.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "unpacked_struct_pattern", "file": "Examples/system-verilog/unpacked_struct_pattern/unpacked_struct_pattern.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "unpacked_struct_keyed_pattern", "file": "Examples/system-verilog/unpacked_struct_keyed_pattern/unpacked_struct_keyed_pattern.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "streaming_nested_fixed_array", "file": "Examples/system-verilog/streaming_nested_fixed_array/streaming_nested_fixed_array.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "streaming_left_target", "file": "Examples/system-verilog/streaming_left_target/streaming_left_target.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "fixed_array_indexed_slice", "file": "Examples/system-verilog/fixed_array_indexed_slice/fixed_array_indexed_slice.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "fixed_array_bitstream_cast", "file": "Examples/system-verilog/fixed_array_bitstream_cast/fixed_array_bitstream_cast.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "fixed_array_struct_pattern", "file": "Examples/system-verilog/fixed_array_struct_pattern/fixed_array_struct_pattern.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "generate_constant_targets", "file": "Examples/system-verilog/generate_constant_targets/generate_constant_targets.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "floating_local_decl", "file": "Examples/system-verilog/floating_local_decl/floating_local_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "generate_indexed_targets", "file": "Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "oob_struct_read", "file": "Examples/system-verilog/oob_struct_read/oob_struct_read.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "streaming_struct_source", "file": "Examples/system-verilog/streaming_struct_source/streaming_struct_source.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "streaming_with_range", "file": "Examples/system-verilog/streaming_with_range/streaming_with_range.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "dynamic_fixed_array_copy", "file": "Examples/system-verilog/dynamic_fixed_array_copy/dynamic_fixed_array_copy.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
-    {"name": "strobe_dynamic", "file": "Examples/system-verilog/strobe_dynamic/strobe_dynamic.sv", "module": "top", "oracle": ["PASS", "VALUE=9"], "expect": "match"},
-    {"name": "delay_refusal", "file": "Examples/system-verilog/delay/delay.sv", "module": "delay", "oracle": "refuse", "expect": "refuse"},
-    {"name": "event_refusal", "file": "Examples/system-verilog/event/event.sv", "module": "event_wait", "oracle": "refuse", "expect": "refuse"},
-    {"name": "always_refusal", "file": "Examples/system-verilog/always/events.sv", "module": "top", "oracle": "refuse", "expect": "refuse"},
-    {"name": "delayed_refusal", "file": "Examples/system-verilog/time_boundary/delayed.sv", "module": "top", "oracle": "refuse", "expect": "refuse"}
+    {
+      "name": "increment",
+      "file": "Examples/system-verilog/increment/incdec.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_aggregate_member",
+      "file": "Examples/system-verilog/streaming_aggregate_member/streaming_aggregate_member.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_pattern_replication",
+      "file": "Examples/system-verilog/unpacked_pattern_replication/unpacked_pattern_replication.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_concat_pattern",
+      "file": "Examples/system-verilog/unpacked_concat_pattern/unpacked_concat_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "packed_struct_nested",
+      "file": "Examples/system-verilog/packed_struct_nested/packed_struct_nested.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_unpack",
+      "file": "Examples/system-verilog/streaming_unpack/streaming_unpack.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "two_state_output",
+      "file": "Examples/system-verilog/two_state_output/two_state_output.sv",
+      "module": "two_state_output",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_2state",
+      "file": "Examples/system-verilog/fixed_array_2state/fixed_array_2state.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_packed_leaf_2state",
+      "file": "Examples/system-verilog/fixed_array_packed_leaf_2state/fixed_array_packed_leaf_2state.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_oob",
+      "file": "Examples/system-verilog/fixed_array_oob/fixed_array_oob.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "clog2",
+      "file": "Examples/system-verilog/clog2/clog2.sv",
+      "module": "clog2",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_dynamic",
+      "file": "Examples/system-verilog/unpacked_dynamic/unpacked_dynamic.sv",
+      "module": "top",
+      "oracle": [
+        "PASS1",
+        "PASS2",
+        "PASS3"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_pattern_2state",
+      "file": "Examples/system-verilog/fixed_array_pattern_2state/fixed_array_pattern_2state.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_integral_fields",
+      "file": "Examples/system-verilog/unpacked_struct_integral_fields/unpacked_struct_integral_fields.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_initializers",
+      "file": "Examples/system-verilog/unpacked_struct_initializers/unpacked_struct_initializers.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_concat_initializer",
+      "file": "Examples/system-verilog/unpacked_concat_initializer/unpacked_concat_initializer.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_array",
+      "file": "Examples/system-verilog/unpacked_struct_array/unpacked_struct_array.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "event_declaration",
+      "file": "Examples/system-verilog/event_decl/event_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "real_declaration",
+      "file": "Examples/system-verilog/real_decl/real_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "chandle_declaration",
+      "file": "Examples/system-verilog/chandle_decl/chandle_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "virtual_interface_null_declaration",
+      "file": "Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_declaration",
+      "file": "Examples/system-verilog/string_decl/string_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_literal_declaration",
+      "file": "Examples/system-verilog/string_literal_decl/string_literal_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "nested_struct_initializers",
+      "file": "Examples/system-verilog/nested_struct_initializers/nested_struct_initializers.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "large_fixed_array",
+      "file": "Examples/system-verilog/large_fixed_array/large_fixed_array.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "do_while_string_literal",
+      "file": "Examples/system-verilog/do_while_string_literal/do_while_string_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "severity_tasks",
+      "file": "Examples/system-verilog/severity_tasks/severity_tasks.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "queue_declaration",
+      "file": "Examples/system-verilog/queue_decl/queue_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_declaration",
+      "file": "Examples/system-verilog/dynamic_array_decl/dynamic_array_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "severity_task_literals",
+      "file": "Examples/system-verilog/severity_task_literals/severity_task_literals.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "error_task",
+      "file": "Examples/system-verilog/error_task/error_task.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fatal_task",
+      "file": "Examples/system-verilog/fatal_task/fatal_task.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fatal_dynamic",
+      "file": "Examples/system-verilog/fatal_dynamic/fatal_dynamic.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "associative_array_declaration",
+      "file": "Examples/system-verilog/associative_array_decl/associative_array_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "printtimescale_declaration",
+      "file": "Examples/system-verilog/printtimescale_decl/printtimescale_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "printtimescale_scope",
+      "file": "Examples/system-verilog/printtimescale_scope/printtimescale_scope.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "strobe_literal",
+      "file": "Examples/system-verilog/strobe_literal/strobe_literal.sv",
+      "module": "top",
+      "oracle": [
+        "DISPLAY",
+        "DISPLAY2",
+        "STROBE"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fdisplay_stdout",
+      "file": "Examples/system-verilog/fdisplay_stdout/fdisplay_stdout.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "severity_dynamic",
+      "file": "Examples/system-verilog/severity_dynamic/severity_dynamic.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "exit_declaration",
+      "file": "Examples/system-verilog/exit_decl/exit_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "vcd_setup",
+      "file": "Examples/system-verilog/vcd_setup/vcd_setup.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "vcd_control",
+      "file": "Examples/system-verilog/vcd_control/vcd_control.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_copy",
+      "file": "Examples/system-verilog/unpacked_struct_copy/unpacked_struct_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_conditional",
+      "file": "Examples/system-verilog/unpacked_struct_conditional/unpacked_struct_conditional.sv",
+      "module": "top",
+      "oracle": [
+        "PASS1",
+        "PASS2"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_nested_pattern",
+      "file": "Examples/system-verilog/unpacked_struct_nested_pattern/unpacked_struct_nested_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS1",
+        "PASS2"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_array_nested_pattern",
+      "file": "Examples/system-verilog/unpacked_array_nested_pattern/unpacked_array_nested_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_array_subarray_copy",
+      "file": "Examples/system-verilog/unpacked_array_subarray_copy/unpacked_array_subarray_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "PASS2"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_array_struct_copy",
+      "file": "Examples/system-verilog/unpacked_array_struct_copy/unpacked_array_struct_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "packed_unpacked_subarray_copy",
+      "file": "Examples/system-verilog/packed_unpacked_subarray_copy/packed_unpacked_subarray_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_pattern",
+      "file": "Examples/system-verilog/unpacked_struct_pattern/unpacked_struct_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "unpacked_struct_keyed_pattern",
+      "file": "Examples/system-verilog/unpacked_struct_keyed_pattern/unpacked_struct_keyed_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_nested_fixed_array",
+      "file": "Examples/system-verilog/streaming_nested_fixed_array/streaming_nested_fixed_array.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_left_target",
+      "file": "Examples/system-verilog/streaming_left_target/streaming_left_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_indexed_slice",
+      "file": "Examples/system-verilog/fixed_array_indexed_slice/fixed_array_indexed_slice.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_bitstream_cast",
+      "file": "Examples/system-verilog/fixed_array_bitstream_cast/fixed_array_bitstream_cast.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "fixed_array_struct_pattern",
+      "file": "Examples/system-verilog/fixed_array_struct_pattern/fixed_array_struct_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "generate_constant_targets",
+      "file": "Examples/system-verilog/generate_constant_targets/generate_constant_targets.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "floating_local_decl",
+      "file": "Examples/system-verilog/floating_local_decl/floating_local_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "generate_indexed_targets",
+      "file": "Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "oob_struct_read",
+      "file": "Examples/system-verilog/oob_struct_read/oob_struct_read.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_struct_source",
+      "file": "Examples/system-verilog/streaming_struct_source/streaming_struct_source.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "streaming_with_range",
+      "file": "Examples/system-verilog/streaming_with_range/streaming_with_range.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_fixed_array_copy",
+      "file": "Examples/system-verilog/dynamic_fixed_array_copy/dynamic_fixed_array_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "strobe_dynamic",
+      "file": "Examples/system-verilog/strobe_dynamic/strobe_dynamic.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "VALUE=9"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_cells",
+      "file": "Examples/system-verilog/dynamic_array_cells/dynamic_array_cells.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "delay_refusal",
+      "file": "Examples/system-verilog/delay/delay.sv",
+      "module": "delay",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
+      "name": "event_refusal",
+      "file": "Examples/system-verilog/event/event.sv",
+      "module": "event_wait",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
+      "name": "always_refusal",
+      "file": "Examples/system-verilog/always/events.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
+      "name": "delayed_refusal",
+      "file": "Examples/system-verilog/time_boundary/delayed.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    }
   ]
 }

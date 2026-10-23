@@ -15,12 +15,12 @@
  "summary": {
   "blocker_files": [
    [
-    "AssignmentExpression:target",
-    3464
-   ],
-   [
     "ExpressionStatement:CallExpression",
     3451
+   ],
+   [
+    "AssignmentExpression:target",
+    3441
    ],
    [
     "VariableSymbol:2state",
@@ -64,7 +64,7 @@
    ],
    [
     "MemberAccessExpression",
-    1025
+    1022
    ],
    [
     "ConversionExpression:width",
@@ -84,7 +84,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    592
+    578
    ],
    [
     "CheckerSymbol",
@@ -607,10 +607,6 @@
     7
    ],
    [
-    "AssignmentExpression:compound-target",
-    7
-   ],
-   [
     "BinaryExpression:BinaryXnor",
     7
    ],
@@ -633,6 +629,10 @@
    [
     "Package:TypeAlias",
     7
+   ],
+   [
+    "AssignmentExpression:compound-target",
+    6
    ],
    [
     "BinaryExpression:Divide-type",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4678,
-   "partial": 17302,
+   "clean": 4679,
+   "partial": 17301,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4050,
+    4051,
     18679
    ],
    "simulation elaboration": [
@@ -1053,18 +1053,18 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 228,
-    "clean": 754,
-    "partial": 237,
+    "blocked_by_more": 227,
+    "clean": 755,
+    "partial": 236,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
       "AssignmentExpression:target",
-      107
+      105
      ],
      [
       "VariableDeclStatement:2state",
-      98
+      97
      ],
      [
       "NamedValueExpression:2state",
@@ -1096,7 +1096,7 @@
      ],
      [
       "ElementSelectExpression:source-type",
-      15
+      13
      ],
      [
       "TimedStatement:DelayControl",
@@ -1250,7 +1250,7 @@
      ],
      [
       "AssignmentExpression:target",
-      158
+      157
      ],
      [
       "VariableDeclStatement:2state",
@@ -1331,9 +1331,9 @@
     "unlockable": 2
    },
    "chapter-11": {
-    "clean": 758,
+    "clean": 759,
     "error": 0,
-    "partial": 276,
+    "partial": 275,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 9

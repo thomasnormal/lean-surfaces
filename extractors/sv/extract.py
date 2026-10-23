@@ -1135,7 +1135,13 @@ def _fixed_array_selection_prefix(expression):
             return None
         if str(current.symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net"):
             return None
-        shape = _fixed_array_dimensions(current.type, max_cells=None)
+        if type(current.type.canonicalType).__name__ == "DynamicArrayType":
+            count = _dynamic_array_constant_extent(current.symbol)
+            if count is None:
+                return None
+            shape = ([(0, count - 1)], current.type.canonicalType.elementType)
+        else:
+            shape = _fixed_array_dimensions(current.type, max_cells=None)
         if shape is None:
             return None
         dimensions, leaf_type = shape
@@ -7234,6 +7240,26 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         oob_struct = _unpacked_struct_oob_assignment(sm, expr)
         if oob_struct is not None:
             return oob_struct
+        if expr.op is None and type(expr.left).__name__ == "ElementSelectExpression":
+            cell = _fixed_array_cell(sm, expr.left)
+            base = expr.left.value
+            if (cell is not None and
+                    type(base.type.canonicalType).__name__ == "DynamicArrayType"
+                    and _case_source_expression_ok(expr.right)):
+                name, width, two_state = cell
+                value = convert_expr(sm, expr.right)
+                if (value is not None and _case_expression_ok(value)
+                        and width_of(value) == width):
+                    if two_state:
+                        value = squash2_wrap(value, width)
+                    return {
+                        "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                        "span": node_span(sm, span_node or expr),
+                        "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                                   "width": width, "name": name},
+                        "value": value,
+                        "dynamic_array_cell_lowered": True,
+                    }
         target, ok = legacy_blocking_target(sm, expr.left)
     else:
         target, ok = select_target(sm, expr.left)

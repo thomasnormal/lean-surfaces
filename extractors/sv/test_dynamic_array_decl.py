@@ -75,6 +75,20 @@ class DynamicArrayDeclarations(unittest.TestCase):
                             node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_procedural_constant_allocation_and_cells_are_live(self):
+        design = lower(
+            """module top;
+               initial begin
+                 int values[];
+                 values = new[2];
+                 values[0] = 10;
+                 values[1] = 20;
+                 if (values[1] == 20) $display("PASS");
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

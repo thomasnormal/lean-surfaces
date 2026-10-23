@@ -5560,3 +5560,17 @@ The fresh 22,046-file census moves **4,656 → 4,678 clean** and **17,324 →
 3,451** files while `AssignmentExpression:target` remains **3,464**.
 Differential coverage moves **67/63/0/4 → 68/64/0/4** and grammar coverage
 remains **206/75/131**.
+
+## Constant indexed writes to sampled dynamic arrays — 2026-10-23
+
+A dynamic array with one constant `new[N]` allocation now flattens into the
+existing zero-based vector-cell state. Constant element writes and reads in
+procedural contexts update those cells, including local declarations whose
+allocation is sampled from the enclosing initial block. Nonconstant or repeated
+allocation, resizing, aggregate operations, associative and real indices, and
+continuous assignments to dynamic elements remain loud.
+
+The fresh 22,046-file census moves **4,678 → 4,679 clean** and **17,302 →
+17,301 partial**. `AssignmentExpression:target` falls **3,464 → 3,441** files
+and `MemberAccessExpression` falls **1,025 → 1,022**. Differential coverage
+moves **68/64/0/4 → 69/65/0/4**; grammar coverage remains **206/75/131**.

@@ -110,6 +110,7 @@ ORDER_CMP_SYMS = ("<", "<=", ">", ">=")
 # System tasks of the self-check tier (statement position only).
 SYSCALL_FMT = ("$display", "$write")
 SYSCALL_STROBE = "$strobe"
+SYSCALL_FILE_FMT = "$fdisplay"
 SYSCALL_CTRL = ("$finish", "$stop")
 SYSCALL_FATAL = "$fatal"
 # `$printtimescale` reports scope metadata without changing modeled state.  The
@@ -5922,6 +5923,38 @@ def _convert_syscall(sm, s, e):
         return {"kind": "SysCall", "span": node_span(sm, s),
                 "name": name, "format": first.value, "args": converted,
                 "arg_signed": signed}
+    if is_sys and name == SYSCALL_FILE_FMT:
+        try:
+            args = list(e.arguments)
+        except Exception:
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        if len(args) < 2:
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        fd = convert_expr(sm, args[0])
+        if fd is None or fd.get("kind") != "Literal":
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        bits = fd.get("bits", "")
+        if not bits or any(bit not in "01" for bit in bits):
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        fd_value = int(bits, 2)
+        if fd_value not in (1, 0x80000001):
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        first = args[1]
+        if type(first).__name__ != "StringLiteral":
+            return unsupported(sm, s, "CallExpression:format")
+        converted = [convert_expr(sm, arg) for arg in args[2:]]
+        signed = []
+        for arg, value in zip(args[2:], converted):
+            if value is None or value.get("kind") == "Unsupported":
+                return unsupported(sm, s, "ExpressionStatement:CallExpression")
+            try:
+                signed.append(bool(arg.type.isSigned))
+            except Exception:
+                signed.append(True)
+        return {"kind": "SysCall", "span": node_span(sm, s),
+                "name": "$display", "format": first.value,
+                "args": converted, "arg_signed": signed,
+                "stdout_file_descriptor": fd_value}
     if is_sys and name in SYSCALL_VCD:
         try:
             args = list(e.arguments)

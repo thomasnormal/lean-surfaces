@@ -5303,3 +5303,15 @@ pending strobe queue without adding a second scheduler. The census moves
 `ExpressionStatement:CallExpression` falls **3,558 → 3,555**. Differential
 coverage is **46 rows, 42 matches, 0 disagreements, and 4 recorded refusals**;
 grammar coverage remains **202 witnesses, 69 MATCH, and 133 REFUSE**.
+
+### Standard-output `$fdisplay` — 2026-10-23
+
+`$fdisplay` with the predefined standard-output descriptor (`1` or
+`32'h8000_0001`) now reuses the existing `$display` renderer and observable
+output stream. Other file descriptors, dynamic handles, and file-output task
+variants remain loud because the self-check state has no file system model. The
+`fdisplay_stdout` fixture and differential row cover the admitted descriptor
+slice. The census moves **4,585 → 4,586 clean** and **17,384 → 17,383 partial**;
+`ExpressionStatement:CallExpression` falls **3,555 → 3,554**. Differential
+coverage is **47 rows, 43 matches, 0 disagreements, and 4 recorded refusals**;
+grammar coverage remains **202 witnesses, 69 MATCH, and 133 REFUSE**.

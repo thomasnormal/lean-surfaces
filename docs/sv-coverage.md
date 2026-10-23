@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 46 | 42 | 0 | 4 | sv-tests-2 declarations |
+| 47 | 43 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -50,6 +50,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `printtimescale_declaration` | `Examples/system-verilog/printtimescale_decl/printtimescale_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `printtimescale_scope` | `Examples/system-verilog/printtimescale_scope/printtimescale_scope.sv` | match | **MATCH** | `ok` | MATCH |
 | `strobe_literal` | `Examples/system-verilog/strobe_literal/strobe_literal.sv` | match | **MATCH** | `ok` | MATCH |
+| `fdisplay_stdout` | `Examples/system-verilog/fdisplay_stdout/fdisplay_stdout.sv` | match | **MATCH** | `ok` | MATCH |
 | `exit_declaration` | `Examples/system-verilog/exit_decl/exit_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `vcd_setup` | `Examples/system-verilog/vcd_setup/vcd_setup.sv` | match | **MATCH** | `ok` | MATCH |
 | `vcd_control` | `Examples/system-verilog/vcd_control/vcd_control.sv` | match | **MATCH** | `ok` | MATCH |
@@ -280,11 +281,11 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22035 | 4585 | 17384 | 66 |
+| 22035 | 4586 | 17383 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `ExpressionStatement:CallExpression` | 3555 |
+| `ExpressionStatement:CallExpression` | 3554 |
 | `AssignmentExpression:target` | 3542 |
 | `VariableSymbol:2state` | 3501 |
 | `CallExpression` | 3290 |

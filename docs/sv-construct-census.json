@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "ExpressionStatement:CallExpression",
-    3555
+    3554
    ],
    [
     "AssignmentExpression:target",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4585,
-   "partial": 17384,
+   "clean": 4586,
+   "partial": 17383,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    3958,
+    3959,
     18671
    ],
    "simulation elaboration": [
@@ -1411,9 +1411,9 @@
     "unlockable": 0
    },
    "chapter-21": {
-    "clean": 116,
+    "clean": 117,
     "error": 0,
-    "partial": 784,
+    "partial": 783,
     "skip_include": 0,
     "total": 900,
     "unlockable": 0

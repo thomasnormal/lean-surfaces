@@ -849,6 +849,13 @@ private def ompTargetDataDirectiveTranslation : Artifact := {emptyTranslation wi
       .object [("id", .string "o"), ("kind", .string "OMPTargetDataDirective"),
         ("name", .string "target-data"), ("inner", .array [])]])]}
 
+private def ompTargetEnterDataDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPTargetEnterDataDirective"),
+        ("name", .string "target-enter-data"), ("inner", .array [])]])]}
+
 private def ompDistributeDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1483,6 +1490,9 @@ def ompTargetDirectiveTranslationWitness : Except String Unit :=
 def ompTargetDataDirectiveTranslationWitness : Except String Unit :=
   admitOMPTargetDataDirective ompTargetDataDirectiveTranslation [0]
 
+def ompTargetEnterDataDirectiveTranslationWitness : Except String Unit :=
+  admitOMPTargetEnterDataDirective ompTargetEnterDataDirectiveTranslation [0]
+
 def ompDistributeDirectiveTranslationWitness : Except String Unit :=
   admitOMPDistributeDirective ompDistributeDirectiveTranslation [0]
 
@@ -1982,6 +1992,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompTargetDataDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTargetDataDirective ompTargetDataDirectiveTranslation [] matches .error _
 #guard admitOMPTargetDataDirective functionTranslation [0] matches .error _
+#guard ompTargetEnterDataDirectiveTranslationWitness matches .ok ()
+#guard admitOMPTargetEnterDataDirective ompTargetEnterDataDirectiveTranslation [] matches .error _
+#guard admitOMPTargetEnterDataDirective functionTranslation [0] matches .error _
 #guard ompDistributeDirectiveTranslationWitness matches .ok ()
 #guard admitOMPDistributeDirective ompDistributeDirectiveTranslation [] matches .error _
 #guard admitOMPDistributeDirective functionTranslation [0] matches .error _

@@ -5129,3 +5129,15 @@ unmodeled system calls remain loud. The `severity_tasks` fixture and
 differential row cover the admitted form. The 22,035-file census moves from
 **4,442 → 4,462 clean** and **17,527 → 17,507 partial**; the
 `ExpressionStatement:CallExpression` blocker falls **3,784 → 3,764**.
+
+### Declaration-only 2-state queues — 2026-10-23
+
+An uninitialized 2-state queue declaration now lowers to inert metadata, so a
+queue that has no admitted operation does not create a false `Variable` state
+slot. Queue initializers, reads, writes, methods, and all 4-state queues remain
+loud because their value and mutation semantics are not represented in the
+self-check state. The `queue_decl` fixture and differential row cover the
+declaration-only form. The census keeps **4,462 clean / 17,507 partial** and
+reduces `VariableSymbol:2state` **3,989 → 3,839**; differential coverage is
+**32 rows, 28 matches, 0 disagreements, and 4 recorded refusals**, with
+**200 grammar witnesses, 68 MATCH, and 132 REFUSE**.

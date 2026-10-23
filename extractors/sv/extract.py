@@ -436,6 +436,24 @@ def is_string_decl(symbol):
         return False
 
 
+def is_inert_2state_queue_decl(symbol):
+    """Whether an uninitialized 2-state queue is only declaration metadata.
+
+    Queue reads, writes, methods, and aggregate values remain outside the
+    self-check state.  An uninitialized queue declaration therefore has no
+    observable effect in a design whose uses are still loud; an initializer
+    is retained as a boundary because it creates a value that could matter.
+    """
+    if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
+        return False
+    try:
+        return (not symbol.type.isFourState
+                and type(symbol.type.canonicalType).__name__ == "QueueType"
+                and getattr(symbol, "initializer", None) is None)
+    except Exception:
+        return False
+
+
 def is_flat_unpacked_struct_alias(symbol):
     """Whether a typedef names an integral-only unpacked struct tree.
 
@@ -5653,6 +5671,8 @@ def _convert_local_decl(sm, stmt):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None and is_string_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
+    if _SYM is None and is_inert_2state_queue_decl(symbol):
+        return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None:
         cells = convert_fixed_array_vars(sm, symbol)
         if cells is not None:
@@ -6178,6 +6198,8 @@ def convert_var(sm, m):
     array_decls = convert_fixed_array_vars(sm, m)
     if array_decls is not None:
         return array_decls
+    if _SYM is None and is_inert_2state_queue_decl(m):
+        return {"kind": "Empty", "span": sym_span(sm, m)}
     w, two, reason = type_width_2s(m.type)
     if w is None:
         if reason == "type" and not getattr(m.type, "isFourState", True):
@@ -6715,7 +6737,8 @@ def convert_module(sm, inst):
                     if (is_module_event_decl(m) or is_module_floating_decl(m)
                             or is_chandle_decl(m)
                             or is_module_virtual_interface_null_decl(m)
-                            or is_string_decl(m)):
+                            or is_string_decl(m)
+                            or is_inert_2state_queue_decl(m)):
                         continue
                     converted = convert_var(sm, m)
                     declarations = converted if isinstance(converted, list) else [converted]
@@ -6979,7 +7002,8 @@ def _declaration_only(member):
             or is_module_floating_decl(member)
             or is_chandle_decl(member)
             or is_module_virtual_interface_null_decl(member)
-            or is_string_decl(member))
+            or is_string_decl(member)
+            or is_inert_2state_queue_decl(member))
 
 
 def _let_compilation_barriers(sm, comp):

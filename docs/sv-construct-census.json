@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "VariableSymbol:2state",
-    3989
+    3839
    ],
    [
     "ExpressionStatement:CallExpression",
@@ -223,12 +223,12 @@
     82
    ],
    [
-    "VariableSymbol",
-    75
-   ],
-   [
     "TypeAliasType",
     74
+   ],
+   [
+    "VariableSymbol",
+    73
    ],
    [
     "RandSequenceStatement",
@@ -1072,7 +1072,7 @@
      ],
      [
       "VariableSymbol:2state",
-      67
+      66
      ],
      [
       "CallExpression",
@@ -1168,10 +1168,6 @@
       23
      ],
      [
-      "VariableSymbol:2state",
-      23
-     ],
-     [
       "SubroutineSymbol:Subroutine",
       19
      ],
@@ -1182,6 +1178,10 @@
      [
       "ProceduralAssignStatement",
       17
+     ],
+     [
+      "VariableSymbol:2state",
+      16
      ],
      [
       "ProceduralDeassignStatement",
@@ -1238,7 +1238,7 @@
     "top_residual_blockers": [
      [
       "VariableSymbol:2state",
-      218
+      208
      ],
      [
       "CallExpression",

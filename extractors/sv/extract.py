@@ -4869,6 +4869,122 @@ def _fixed_array_stream_targets(sm, operand, symbolic=False):
         return None
 
 
+def _streaming_left_target_assignment(sm, expr, symbolic=False):
+    """Lower an explicit-slice left stream over direct integral leaves.
+
+    Left streaming reverses fixed-size chunks: the first target leaf receives
+    the source's least-significant chunk, then the next chunk, and so on.  The
+    admitted shape requires an explicit positive slice size, exact source and
+    target widths, and one target leaf per chunk.  This keeps the lowering a
+    pure sampled vector operation while leaving unsized, partial, dynamic,
+    nested, and aggregate forms loud.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None
+                or (symbolic and expr.isNonBlocking)):
+            return None
+        lhs = expr.left
+        if type(lhs).__name__ != "StreamingConcatenationExpression":
+            return None
+        token = getattr(getattr(lhs, "syntax", None), "operatorToken", None)
+        operator = str(getattr(token, "kind", "")).split(".")[-1]
+        syntax = getattr(lhs, "syntax", None)
+        if operator != "LeftShift" or syntax is None:
+            return None
+        if getattr(syntax, "sliceSize", None) is None:
+            return None
+        slice_size = getattr(lhs, "sliceSize", None)
+        if not isinstance(slice_size, int) or slice_size <= 0:
+            return None
+        parts = []
+        leaf_two_state = []
+        total_width = 0
+        for stream in lhs.streams:
+            operand = getattr(stream, "operand", None)
+            if operand is None or getattr(stream, "withExpr", None) is not None:
+                return None
+            array_targets = _fixed_array_stream_targets(sm, operand, symbolic)
+            if array_targets is not None:
+                targets = array_targets
+            else:
+                target, admitted = (select_target(sm, operand)
+                                    if symbolic else
+                                    legacy_blocking_target(sm, operand, True))
+                if not admitted or target is None:
+                    return None
+                if target.get("kind") not in ("Ident", "BitSel", "PartSel",
+                                               "SelectTarget"):
+                    return None
+                if target.get("kind") in ("BitSel", "PartSel"):
+                    base = target.get("value")
+                    if base is None or base.get("kind") != "Ident":
+                        return None
+                    if target.get("kind") == "BitSel":
+                        if target.get("index", {}).get("kind") != "Int":
+                            return None
+                    elif (target.get("msb", {}).get("kind") != "Int"
+                          or target.get("lsb", {}).get("kind") != "Int"):
+                        return None
+                targets = [target]
+            if any(target.get("width") != slice_size for target in targets):
+                return None
+            parts.extend(targets)
+            total_width += sum(target["width"] for target in targets)
+            if symbolic:
+                leaf_two_state.extend([bool(target.get("two_state", False))
+                                       for target in targets])
+        if not parts or total_width % slice_size != 0:
+            return None
+        value = convert_expr(sm, expr.right)
+        if (value is None or value.get("kind") == "Unsupported"
+                or not _case_source_expression_ok(expr.right)
+                or width_of(value) != total_width
+                or not _case_expression_ok(value)):
+            return None
+        source_parts = []
+        for offset in range(0, total_width, slice_size):
+            if symbolic:
+                source_parts.append({
+                    "kind": "PartSel", "span": node_span(sm, expr.right),
+                    "width": slice_size, "value": value,
+                    "msb": {"kind": "Int", "span": node_span(sm, expr.right),
+                            "value": offset + slice_size - 1},
+                    "lsb": {"kind": "Int", "span": node_span(sm, expr.right),
+                            "value": offset},
+                })
+            else:
+                index_width = max(32, offset.bit_length())
+                source_parts.append({
+                    "kind": "SelectRead", "span": node_span(sm, expr.right),
+                    "width": slice_size, "value": value,
+                    "index": {"kind": "Literal", "span": node_span(sm, expr.right),
+                               "width": index_width,
+                               "bits": format(offset, "0%db" % index_width)},
+                    "index_signed": False, "descending": False,
+                })
+        packed = {"kind": "Concat", "span": node_span(sm, expr.right),
+                  "width": total_width, "parts": source_parts}
+        if symbolic:
+            if any(leaf_two_state) and not all(leaf_two_state):
+                return None
+            if all(leaf_two_state):
+                packed = squash2_wrap(packed, total_width)
+        target = {"kind": "ConcatTarget", "span": node_span(sm, lhs),
+                  "width": total_width, "parts": parts}
+        windows = _symbolic_target_windows(target)
+        if windows is None or any(
+                old_base == base and not (high < old_low or old_high < low)
+                for i, (base, low, high) in enumerate(windows)
+                for old_base, old_low, old_high in windows[:i]):
+            return None
+        return {"kind": "NonblockingAssign" if expr.isNonBlocking
+                else "BlockingAssign", "span": node_span(sm, expr),
+                "target": target, "value": packed}
+    except Exception:
+        return None
+
+
 def _streaming_target_assignment(sm, expr):
     """Lower a simple right-streaming unpack into packed target leaves.
 
@@ -4888,10 +5004,12 @@ def _streaming_target_assignment(sm, expr):
         lhs = expr.left
         if type(lhs).__name__ != "StreamingConcatenationExpression":
             return None
-        if _streaming_has_slice_size(lhs):
-            return None
         token = getattr(getattr(lhs, "syntax", None), "operatorToken", None)
         operator = str(getattr(token, "kind", "")).split(".")[-1]
+        if operator == "LeftShift":
+            return _streaming_left_target_assignment(sm, expr, False)
+        if _streaming_has_slice_size(lhs):
+            return None
         if operator != "RightShift":
             return None
         parts = []
@@ -4967,10 +5085,12 @@ def _symbolic_streaming_target_assignment(sm, expr):
         lhs = expr.left
         if type(lhs).__name__ != "StreamingConcatenationExpression":
             return None
-        if _streaming_has_slice_size(lhs):
-            return None
         token = getattr(getattr(lhs, "syntax", None), "operatorToken", None)
         operator = str(getattr(token, "kind", "")).split(".")[-1]
+        if operator == "LeftShift":
+            return _streaming_left_target_assignment(sm, expr, True)
+        if _streaming_has_slice_size(lhs):
+            return None
         if operator != "RightShift":
             return None
         parts = []

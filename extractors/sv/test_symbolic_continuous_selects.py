@@ -719,6 +719,19 @@ class SymbolicContinuousSelects(unittest.TestCase):
                           "grid[1][0]", "grid[1][1]"])
         self.assertEqual(target["width"], 128)
 
+    def test_left_streaming_accepts_fixed_chunks(self):
+        envelope = self.extract(
+            "module top(input logic [31:0] source, output logic [7:0] out); "
+            "logic [7:0] le[4]; always_comb begin "
+            "{<<8{le[0], le[1], le[2], le[3]}} = source; end "
+            "assign out = le[0]; endmodule")
+        statement = envelope["design"]["modules"][0]["processes"][0]["body"]["stmts"][0]
+        self.assertEqual(statement["target"]["kind"], "ConcatTarget")
+        self.assertEqual([part["name"] for part in statement["target"]["parts"]],
+                         ["le[0]", "le[1]", "le[2]", "le[3]"])
+        self.assertEqual([part["lsb"]["value"] for part in statement["value"]["parts"]],
+                         [0, 8, 16, 24])
+
     def test_right_streaming_accepts_constant_cell_slice(self):
         envelope = self.extract(
             "module top(input logic [3:0] source, output logic [1:0] out); "

@@ -53,6 +53,7 @@
     {"name": "unpacked_struct_pattern", "file": "Examples/system-verilog/unpacked_struct_pattern/unpacked_struct_pattern.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "unpacked_struct_keyed_pattern", "file": "Examples/system-verilog/unpacked_struct_keyed_pattern/unpacked_struct_keyed_pattern.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "streaming_nested_fixed_array", "file": "Examples/system-verilog/streaming_nested_fixed_array/streaming_nested_fixed_array.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
+    {"name": "streaming_left_target", "file": "Examples/system-verilog/streaming_left_target/streaming_left_target.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "delay_refusal", "file": "Examples/system-verilog/delay/delay.sv", "module": "delay", "oracle": "refuse", "expect": "refuse"},
     {"name": "event_refusal", "file": "Examples/system-verilog/event/event.sv", "module": "event_wait", "oracle": "refuse", "expect": "refuse"},
     {"name": "always_refusal", "file": "Examples/system-verilog/always/events.sv", "module": "top", "oracle": "refuse", "expect": "refuse"},

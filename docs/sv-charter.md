@@ -5380,3 +5380,33 @@ literal strings, and all three severity tasks. The census moves **4,586 →
 `ExpressionStatement:CallExpression` falls **3,554 → 3,551**. Differential
 coverage is **48 rows, 44 matches, 0 disagreements, and 4 recorded refusals**;
 grammar coverage remains **202 witnesses, 69 MATCH, and 133 REFUSE**.
+
+### Recursive nested-array streaming unpack — 2026-10-23
+
+Unsized right-streaming assignment now admits a complete finite multidimensional
+fixed unpacked array of integral leaves. The extractor flattens the array in
+declared dimension order into the existing scalar-cell `ConcatTarget`, so the
+MSB-first sampled source window and per-cell two-state conversion remain the
+same as explicit scalar targets. Partial subarrays, dynamic selections, sized
+or left streams, aggregate leaves, and streaming `with` clauses remain loud.
+The `streaming_nested_fixed_array` fixture and differential row cover the
+recursive target shape. The 22,046-file census moves **4,615 → 4,616 clean**
+and **17,365 → 17,364 partial**; `AssignmentExpression:target` falls **3,520
+→ 3,519**. Differential coverage is **56 rows, 52 matches, 0 disagreements,
+and 4 recorded refusals**; grammar coverage remains **202 witnesses, 71 MATCH,
+and 131 REFUSE**.
+
+### Fixed-slice left-streaming targets — 2026-10-23
+
+Explicit positive-slice left streaming now admits direct integral target leaves
+whose widths equal the slice size. The first target receives the source's
+least-significant chunk, followed by the remaining chunks in source order,
+preserving the sampled vector and existing two-state behavior. Unsized or
+dynamic targets, streaming `with` clauses, partial arrays, nested aggregates,
+and mixed-state windows remain loud. The `streaming_left_target` fixture and
+differential row cover the byte-reversal form, with symbolic and legacy
+extractor regressions for chunk geometry. The census moves **4,616 → 4,617
+clean** and **17,364 → 17,363 partial**; `AssignmentExpression:target` falls
+**3,519 → 3,518**. Differential coverage is **57 rows, 53 matches, 0
+disagreements, and 4 recorded refusals**; grammar coverage remains **202
+witnesses, 71 MATCH, and 131 REFUSE**.

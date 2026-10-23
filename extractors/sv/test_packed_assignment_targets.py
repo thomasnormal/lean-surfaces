@@ -160,8 +160,10 @@ class PackedAssignmentTargets(unittest.TestCase):
         design = extract_source(
             "module top; bit [7:0] source; bit [3:0] hi, lo; "
             "initial {>> {hi, lo}} = source; endmodule")
-        target, = [node for node in nodes(design)
-                   if node.get("kind") == "ConcatTarget"]
+        statement, = [node for node in nodes(design)
+                      if node.get("kind") == "BlockingAssign"
+                      and node.get("target", {}).get("kind") == "ConcatTarget"]
+        target = statement["target"]
         self.assertEqual(target["width"], 8)
         self.assertEqual([part["name"] for part in target["parts"]],
                          ["hi", "lo"])
@@ -172,8 +174,10 @@ class PackedAssignmentTargets(unittest.TestCase):
         design = extract_source(
             "module top; logic [127:0] source; int grid[2][2]; "
             "initial {>> {grid}} = source; endmodule")
-        target, = [node for node in nodes(design)
-                   if node.get("kind") == "ConcatTarget"]
+        statement, = [node for node in nodes(design)
+                      if node.get("kind") == "BlockingAssign"
+                      and node.get("target", {}).get("kind") == "ConcatTarget"]
+        target = statement["target"]
         self.assertEqual(target["width"], 128)
         self.assertEqual([part["name"] for part in target["parts"]],
                          ["grid[0][0]", "grid[0][1]",
@@ -194,6 +198,27 @@ class PackedAssignmentTargets(unittest.TestCase):
         design = extract_source(
             "module top; logic [63:0] source; int grid[4]; "
             "initial {>> {grid with [0:1]}} = source; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
+    def test_left_streaming_fixed_chunks_reverse_source_order(self):
+        design = extract_source(
+            "module top; bit [31:0] source; bit [7:0] le[4]; "
+            "initial {<<8 {le[0], le[1], le[2], le[3]}} = source; endmodule")
+        statement, = [node for node in nodes(design)
+                      if node.get("kind") == "BlockingAssign"
+                      and node.get("target", {}).get("kind") == "ConcatTarget"]
+        target = statement["target"]
+        self.assertEqual([part["name"] for part in target["parts"]],
+                         ["le[0]", "le[1]", "le[2]", "le[3]"])
+        self.assertEqual([int(part["index"]["bits"], 2)
+                          for part in statement["value"]["parts"]], [0, 8, 16, 24])
+
+    def test_left_streaming_unsized_target_stays_loud(self):
+        design = extract_source(
+            "module top; bit [31:0] source; bit [7:0] le[4]; "
+            "initial {<< {le[0], le[1], le[2], le[3]}} = source; endmodule")
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))

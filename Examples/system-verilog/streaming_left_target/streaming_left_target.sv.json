@@ -1,0 +1,654 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/streaming_left_target/streaming_left_target.sv",
+  "source_sha256": "6b5cb79366453b1d2c195085c5491852f0693e45cf79fe4eae24210cdde63c17",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 21,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 14,
+              "end_line": 8,
+              "end_col": 20
+            },
+            "name": "source",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 13,
+              "end_line": 9,
+              "end_col": 18
+            },
+            "name": "le[0]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 8,
+              "bits": "00000000"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 13,
+              "end_line": 9,
+              "end_col": 18
+            },
+            "name": "le[1]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 8,
+              "bits": "00000000"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 13,
+              "end_line": 9,
+              "end_col": 18
+            },
+            "name": "le[2]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 8,
+              "bits": "00000000"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 13,
+              "end_line": 9,
+              "end_col": 18
+            },
+            "name": "le[3]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 8,
+              "bits": "00000000"
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 11,
+              "col": 3,
+              "end_line": 20,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 11,
+                "col": 11,
+                "end_line": 20,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 28
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 12,
+                      "col": 5,
+                      "end_line": 12,
+                      "end_col": 11
+                    },
+                    "width": 32,
+                    "name": "source"
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 12,
+                        "col": 14,
+                        "end_line": 12,
+                        "end_col": 27
+                      },
+                      "width": 32,
+                      "bits": "01000001010000100100001101000100"
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 48
+                  },
+                  "target": {
+                    "kind": "ConcatTarget",
+                    "span": {
+                      "line": 13,
+                      "col": 5,
+                      "end_line": 13,
+                      "end_col": 39
+                    },
+                    "width": 32,
+                    "parts": [
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 13,
+                          "col": 11,
+                          "end_line": 13,
+                          "end_col": 16
+                        },
+                        "width": 8,
+                        "name": "le[0]",
+                        "two_state": true
+                      },
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 13,
+                          "col": 18,
+                          "end_line": 13,
+                          "end_col": 23
+                        },
+                        "width": 8,
+                        "name": "le[1]",
+                        "two_state": true
+                      },
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 13,
+                          "col": 25,
+                          "end_line": 13,
+                          "end_col": 30
+                        },
+                        "width": 8,
+                        "name": "le[2]",
+                        "two_state": true
+                      },
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 13,
+                          "col": 32,
+                          "end_line": 13,
+                          "end_col": 37
+                        },
+                        "width": 8,
+                        "name": "le[3]",
+                        "two_state": true
+                      }
+                    ]
+                  },
+                  "value": {
+                    "kind": "Concat",
+                    "span": {
+                      "line": 13,
+                      "col": 42,
+                      "end_line": 13,
+                      "end_col": 48
+                    },
+                    "width": 32,
+                    "parts": [
+                      {
+                        "kind": "SelectRead",
+                        "span": {
+                          "line": 13,
+                          "col": 42,
+                          "end_line": 13,
+                          "end_col": 48
+                        },
+                        "width": 8,
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 13,
+                            "col": 42,
+                            "end_line": 13,
+                            "end_col": 48
+                          },
+                          "width": 32,
+                          "name": "source"
+                        },
+                        "index": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 13,
+                            "col": 42,
+                            "end_line": 13,
+                            "end_col": 48
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000000"
+                        },
+                        "index_signed": false,
+                        "descending": false
+                      },
+                      {
+                        "kind": "SelectRead",
+                        "span": {
+                          "line": 13,
+                          "col": 42,
+                          "end_line": 13,
+                          "end_col": 48
+                        },
+                        "width": 8,
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 13,
+                            "col": 42,
+                            "end_line": 13,
+                            "end_col": 48
+                          },
+                          "width": 32,
+                          "name": "source"
+                        },
+                        "index": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 13,
+                            "col": 42,
+                            "end_line": 13,
+                            "end_col": 48
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000001000"
+                        },
+                        "index_signed": false,
+                        "descending": false
+                      },
+                      {
+                        "kind": "SelectRead",
+                        "span": {
+                          "line": 13,
+                          "col": 42,
+                          "end_line": 13,
+                          "end_col": 48
+                        },
+                        "width": 8,
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 13,
+                            "col": 42,
+                            "end_line": 13,
+                            "end_col": 48
+                          },
+                          "width": 32,
+                          "name": "source"
+                        },
+                        "index": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 13,
+                            "col": 42,
+                            "end_line": 13,
+                            "end_col": 48
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000010000"
+                        },
+                        "index_signed": false,
+                        "descending": false
+                      },
+                      {
+                        "kind": "SelectRead",
+                        "span": {
+                          "line": 13,
+                          "col": 42,
+                          "end_line": 13,
+                          "end_col": 48
+                        },
+                        "width": 8,
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 13,
+                            "col": 42,
+                            "end_line": 13,
+                            "end_col": 48
+                          },
+                          "width": 32,
+                          "name": "source"
+                        },
+                        "index": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 13,
+                            "col": 42,
+                            "end_line": 13,
+                            "end_col": 48
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000011000"
+                        },
+                        "index_signed": false,
+                        "descending": false
+                      }
+                    ]
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 18,
+                    "end_col": 24
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 14,
+                      "col": 9,
+                      "end_line": 15,
+                      "end_col": 43
+                    },
+                    "width": 1,
+                    "op": "||",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 14,
+                        "col": 9,
+                        "end_line": 15,
+                        "end_col": 24
+                      },
+                      "width": 1,
+                      "op": "||",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 14,
+                          "col": 9,
+                          "end_line": 14,
+                          "end_col": 43
+                        },
+                        "width": 1,
+                        "op": "||",
+                        "left": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 14,
+                            "col": 9,
+                            "end_line": 14,
+                            "end_col": 24
+                          },
+                          "width": 1,
+                          "op": "!==",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 14,
+                              "col": 9,
+                              "end_line": 14,
+                              "end_col": 14
+                            },
+                            "width": 8,
+                            "name": "le[0]"
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 14,
+                              "col": 19,
+                              "end_line": 14,
+                              "end_col": 24
+                            },
+                            "width": 8,
+                            "bits": "01000100"
+                          }
+                        },
+                        "right": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 14,
+                            "col": 28,
+                            "end_line": 14,
+                            "end_col": 43
+                          },
+                          "width": 1,
+                          "op": "!==",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 14,
+                              "col": 28,
+                              "end_line": 14,
+                              "end_col": 33
+                            },
+                            "width": 8,
+                            "name": "le[1]"
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 14,
+                              "col": 38,
+                              "end_line": 14,
+                              "end_col": 43
+                            },
+                            "width": 8,
+                            "bits": "01000011"
+                          }
+                        }
+                      },
+                      "right": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 15,
+                          "col": 9,
+                          "end_line": 15,
+                          "end_col": 24
+                        },
+                        "width": 1,
+                        "op": "!==",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 15,
+                            "col": 9,
+                            "end_line": 15,
+                            "end_col": 14
+                          },
+                          "width": 8,
+                          "name": "le[2]"
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 15,
+                            "col": 19,
+                            "end_line": 15,
+                            "end_col": 24
+                          },
+                          "width": 8,
+                          "bits": "01000010"
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 15,
+                        "col": 28,
+                        "end_line": 15,
+                        "end_col": 43
+                      },
+                      "width": 1,
+                      "op": "!==",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 15,
+                          "col": 28,
+                          "end_line": 15,
+                          "end_col": 33
+                        },
+                        "width": 8,
+                        "name": "le[3]"
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 15,
+                          "col": 38,
+                          "end_line": 15,
+                          "end_col": 43
+                        },
+                        "width": 8,
+                        "bits": "01000001"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 16,
+                      "col": 7,
+                      "end_line": 16,
+                      "end_col": 64
+                    },
+                    "name": "$display",
+                    "format": "FAIL %h %h %h %h",
+                    "args": [
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 16,
+                          "col": 36,
+                          "end_line": 16,
+                          "end_col": 41
+                        },
+                        "width": 8,
+                        "name": "le[0]"
+                      },
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 16,
+                          "col": 43,
+                          "end_line": 16,
+                          "end_col": 48
+                        },
+                        "width": 8,
+                        "name": "le[1]"
+                      },
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 16,
+                          "col": 50,
+                          "end_line": 16,
+                          "end_col": 55
+                        },
+                        "width": 8,
+                        "name": "le[2]"
+                      },
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 16,
+                          "col": 57,
+                          "end_line": 16,
+                          "end_col": 62
+                        },
+                        "width": 8,
+                        "name": "le[3]"
+                      }
+                    ],
+                    "arg_signed": [
+                      false,
+                      false,
+                      false,
+                      false
+                    ]
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 18,
+                      "col": 7,
+                      "end_line": 18,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 19,
+                    "col": 5,
+                    "end_line": 19,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

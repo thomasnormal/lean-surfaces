@@ -528,6 +528,17 @@
     "rung": 1
   },
   {
+    "id": "translation.temporary-object-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "temporaryObjectTranslationWitness",
+    "cpp_source": "struct S { S() {} }; int f() { return (S(), 0); }",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

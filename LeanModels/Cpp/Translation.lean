@@ -270,6 +270,9 @@ def admitLambdaExpression (artifact : Artifact) (path : List Nat) :
 def admitArraySubscriptExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ArraySubscriptExpr" "array-subscript-expression"
 
+def admitCompoundStatement (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CompoundStmt" "compound-statement"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

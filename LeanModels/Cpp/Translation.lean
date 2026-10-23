@@ -342,6 +342,9 @@ def admitOMPSectionsDirective (artifact : Artifact) (path : List Nat) :
 def admitOMPSingleDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPSingleDirective" "omp-single-directive"
 
+def admitOMPMasterDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPMasterDirective" "omp-master-directive"
+
 def admitConditionalOperatorExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ConditionalOperator" "conditional-operator-expression"
 

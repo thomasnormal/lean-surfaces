@@ -327,6 +327,9 @@ def admitCoreturnStatement (artifact : Artifact) (path : List Nat) :
 def admitIndirectGotoStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "IndirectGotoStmt" "indirect-goto-statement"
 
+def admitCapturedStatement (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CapturedStmt" "captured-statement"
+
 def admitConditionalOperatorExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ConditionalOperator" "conditional-operator-expression"
 

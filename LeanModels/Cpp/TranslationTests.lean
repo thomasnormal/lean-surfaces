@@ -723,6 +723,13 @@ private def indirectGotoTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "g"), ("kind", .string "IndirectGotoStmt"),
         ("name", .string "goto"), ("inner", .array [])]])]}
 
+private def capturedStatementTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "c"), ("kind", .string "CapturedStmt"),
+        ("name", .string "captured"), ("inner", .array [])]])]}
+
 private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1205,6 +1212,9 @@ def coreturnTranslationWitness : Except String Unit :=
 def indirectGotoTranslationWitness : Except String Unit :=
   admitIndirectGotoStatement indirectGotoTranslation [0]
 
+def capturedStatementTranslationWitness : Except String Unit :=
+  admitCapturedStatement capturedStatementTranslation [0]
+
 def conditionalOperatorTranslationWitness : Except String Unit :=
   admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
@@ -1608,6 +1618,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard indirectGotoTranslationWitness matches .ok ()
 #guard admitIndirectGotoStatement indirectGotoTranslation [] matches .error _
 #guard admitIndirectGotoStatement functionTranslation [0] matches .error _
+#guard capturedStatementTranslationWitness matches .ok ()
+#guard admitCapturedStatement capturedStatementTranslation [] matches .error _
+#guard admitCapturedStatement functionTranslation [0] matches .error _
 #guard conditionalOperatorTranslationWitness matches .ok ()
 #guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
 #guard admitConditionalOperatorExpression functionTranslation [0] matches .error _

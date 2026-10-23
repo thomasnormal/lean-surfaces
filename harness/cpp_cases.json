@@ -1661,6 +1661,17 @@
     "rung": 4
   },
   {
+    "id": "translation.omp-target-parallel-generic-loop-directive",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "ompTargetParallelGenericLoopDirectiveTranslationWitness",
+    "cpp_source": "void f() {\n#pragma omp target parallel loop\nfor (int i = 0; i < 1; ++i) {}\n}",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.omp-target-update-directive",
     "kind": "translation",
     "corpus": "translation witness",

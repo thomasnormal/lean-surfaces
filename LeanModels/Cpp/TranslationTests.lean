@@ -1101,6 +1101,13 @@ private def ompParallelGenericLoopDirectiveTranslation : Artifact := {emptyTrans
       .object [("id", .string "o"), ("kind", .string "OMPParallelGenericLoopDirective"),
         ("name", .string "parallel-generic-loop"), ("inner", .array [])]])]}
 
+private def ompTargetParallelGenericLoopDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPTargetParallelGenericLoopDirective"),
+        ("name", .string "target-parallel-generic-loop"), ("inner", .array [])]])]}
+
 private def ompTargetUpdateDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1885,6 +1892,9 @@ def ompTargetTeamsGenericLoopDirectiveTranslationWitness : Except String Unit :=
 def ompParallelGenericLoopDirectiveTranslationWitness : Except String Unit :=
   admitOMPParallelGenericLoopDirective ompParallelGenericLoopDirectiveTranslation [0]
 
+def ompTargetParallelGenericLoopDirectiveTranslationWitness : Except String Unit :=
+  admitOMPTargetParallelGenericLoopDirective ompTargetParallelGenericLoopDirectiveTranslation [0]
+
 def ompTargetUpdateDirectiveTranslationWitness : Except String Unit :=
   admitOMPTargetUpdateDirective ompTargetUpdateDirectiveTranslation [0]
 
@@ -2510,6 +2520,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompParallelGenericLoopDirectiveTranslationWitness matches .ok ()
 #guard admitOMPParallelGenericLoopDirective ompParallelGenericLoopDirectiveTranslation [] matches .error _
 #guard admitOMPParallelGenericLoopDirective functionTranslation [0] matches .error _
+#guard ompTargetParallelGenericLoopDirectiveTranslationWitness matches .ok ()
+#guard admitOMPTargetParallelGenericLoopDirective ompTargetParallelGenericLoopDirectiveTranslation [] matches .error _
+#guard admitOMPTargetParallelGenericLoopDirective functionTranslation [0] matches .error _
 #guard ompTargetUpdateDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTargetUpdateDirective ompTargetUpdateDirectiveTranslation [] matches .error _
 #guard admitOMPTargetUpdateDirective functionTranslation [0] matches .error _

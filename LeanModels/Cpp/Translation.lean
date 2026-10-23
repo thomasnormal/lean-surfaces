@@ -297,6 +297,9 @@ def admitCXXUnresolvedConstructExpression (artifact : Artifact) (path : List Nat
 def admitUnresolvedLookupExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "UnresolvedLookupExpr" "unresolved-lookup-expression"
 
+def admitCXXPseudoDestructorExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXPseudoDestructorExpr" "pseudo-destructor-expression"
+
 def admitConditionalOperatorExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ConditionalOperator" "conditional-operator-expression"
 

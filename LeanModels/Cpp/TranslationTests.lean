@@ -653,6 +653,13 @@ private def unresolvedLookupTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "l"), ("kind", .string "UnresolvedLookupExpr"),
         ("name", .string "lookup"), ("inner", .array [])]])]}
 
+private def cxxPseudoDestructorTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "p"), ("kind", .string "CXXPseudoDestructorExpr"),
+        ("name", .string "destroy"), ("inner", .array [])]])]}
+
 private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1105,6 +1112,9 @@ def cxxUnresolvedConstructTranslationWitness : Except String Unit :=
 def unresolvedLookupTranslationWitness : Except String Unit :=
   admitUnresolvedLookupExpression unresolvedLookupTranslation [0]
 
+def cxxPseudoDestructorTranslationWitness : Except String Unit :=
+  admitCXXPseudoDestructorExpression cxxPseudoDestructorTranslation [0]
+
 def conditionalOperatorTranslationWitness : Except String Unit :=
   admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
@@ -1478,6 +1488,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard unresolvedLookupTranslationWitness matches .ok ()
 #guard admitUnresolvedLookupExpression unresolvedLookupTranslation [] matches .error _
 #guard admitUnresolvedLookupExpression functionTranslation [0] matches .error _
+#guard cxxPseudoDestructorTranslationWitness matches .ok ()
+#guard admitCXXPseudoDestructorExpression cxxPseudoDestructorTranslation [] matches .error _
+#guard admitCXXPseudoDestructorExpression functionTranslation [0] matches .error _
 #guard conditionalOperatorTranslationWitness matches .ok ()
 #guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
 #guard admitConditionalOperatorExpression functionTranslation [0] matches .error _

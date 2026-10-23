@@ -1997,7 +1997,7 @@ heap-recursive half built on top of it. -/
 /-- Depth budget for `repr` — FIXED (the loudness doctrine: a budget
 refusal must not depend on the caller's fuel). Cycles are caught by the
 active-path list instead, faithfully. -/
-def reprFuel : Nat := 64
+def reprFuel : Nat := 128
 
 /-- Render a retained range field through the canonical scalar renderer. -/
 def rangeBoundRepr (bound : RangeBound) : Option String :=

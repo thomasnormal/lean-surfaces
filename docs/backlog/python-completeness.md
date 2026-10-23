@@ -85,6 +85,17 @@ The divmod laboratory and differential case cover strings, `None`, tuple, and
 list operands; the focused run confirms all eight cases and refreshes the
 census and coverage totals.
 
+## 2026-10-22-pycomplete-53 — extend the fixed container-rendering budget
+
+The renderer's caller-independent depth budget rises from 64 to 128 levels.
+The two existing `repr_lab.deep` cases at depths 65 and 80 now match CPython;
+cycles still use the active-address path and the over-budget integer and
+identity boundaries remain unchanged.
+
+DECIDED: spend a larger fixed rendering budget for ordinary nested containers,
+while retaining loud failure beyond 128 so behavior does not depend on caller
+fuel.
+
 ## 2026-08-22-pycomplete-1 — RUNG 3b: the eight consumers that could never meet the hazard their refusal cited
 
 `list(d)`, `tuple(d)`, `sorted(d)`, `sum(d)`, `max(d)`, `min(d)`, `set(d)`,

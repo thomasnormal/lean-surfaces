@@ -3720,6 +3720,10 @@ by an ACTIVE-PATH list rather than by fuel; depth beyond the fixed
 `reprFuel` refuses (a budget refusal must not depend on the caller's
 fuel).
 
+The fixed `reprFuel` is 128 levels. This admits ordinary nested structures
+through that depth while keeping rendering cost independent of the caller's
+fuel; deeper structures remain loud.
+
 Every displayed integer, including range fields and nested dict keys, also
 obeys the configuration-independent 640-digit magnitude admission described
 in §decimal integer rendering. An over-budget integer makes the rendering

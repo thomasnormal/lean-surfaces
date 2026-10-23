@@ -5,6 +5,20 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.27] — 2026-10-23
+
+### Added
+
+- Rung-8 metadata gate for `CXXOperatorCallExpr`, checked at an exact
+  retained AST path; overload and conversion execution remain loud.
+
+### Measured
+
+- The checked-in corpus now contains 147 differential rows and 24 grammar
+  witnesses. With pinned Clang/LLVM 21.1.8 unavailable, the run reports 0
+  MATCH, 0 DIVERGE, 0 REFUSE, 0 TIMEOUT, and 147 ORACLE rows; grammar reports
+  24 ORACLE rows.
+
 ## [0.1.26] — 2026-10-23
 
 ### Added

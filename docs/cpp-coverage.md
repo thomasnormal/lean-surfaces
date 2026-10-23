@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 230 | 0 | 0 | 0 | 0 | 230 |
+| 231 | 0 | 0 | 0 | 0 | 231 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -151,6 +151,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `translation.omp-target-parallel-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.omp-target-parallel-for-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.omp-target-parallel-for-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
+| `translation.omp-target-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.omp-target-update-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.omp-distribute-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.omp-distribute-parallel-for-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |

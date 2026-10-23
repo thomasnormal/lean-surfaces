@@ -447,6 +447,9 @@ def admitOMPTargetParallelForDirective (artifact : Artifact) (path : List Nat) :
 def admitOMPTargetParallelForSimdDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTargetParallelForSimdDirective" "omp-target-parallel-for-simd-directive"
 
+def admitOMPTargetSimdDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPTargetSimdDirective" "omp-target-simd-directive"
+
 def admitOMPTargetUpdateDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTargetUpdateDirective" "omp-target-update-directive"
 

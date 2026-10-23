@@ -5,6 +5,23 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.29] — 2026-10-23
+
+### Added
+
+- Rung-3 metadata gates for `CXXCoawaitExpr`, `CStyleCastExpr`,
+  `UnaryExprOrTypeTraitExpr`, `VAArgExpr` and
+  `CXXDependentScopeMemberExpr`, each checked at an exact retained AST path;
+  coroutine, cast, type-trait, variadic and dependent member execution remains
+  bounded.
+
+### Measured
+
+- The checked-in corpus now contains 157 differential rows and 24 grammar
+  witnesses. With pinned Clang/LLVM 21.1.8 unavailable, the run reports 0
+  MATCH, 0 DIVERGE, 0 REFUSE, 0 TIMEOUT, and 157 ORACLE rows; grammar reports
+  24 ORACLE rows.
+
 ## [0.1.28] — 2026-10-23
 
 ### Added

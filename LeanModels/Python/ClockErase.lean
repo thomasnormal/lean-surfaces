@@ -2112,7 +2112,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           | nil => exact .liftRes hs2 _
                           | cons _ rest =>
                             cases rest with
-                            | nil => exact .unsupported
+                            | nil => exact .liftRes hs2 _
                             | cons _ _ => exact .exn hs2 _
                     case bsum =>
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_

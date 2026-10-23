@@ -2695,7 +2695,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                               | nil => exact .liftResF h₁ _
                               | cons _ rest =>
                                 cases rest with
-                                | nil => exact .unsupported
+                                | nil => exact .liftResF h₁ _
                                 | cons _ _ => exact .exn
                         · -- sum
                           cases sumArgs vs with

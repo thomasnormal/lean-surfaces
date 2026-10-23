@@ -1826,8 +1826,12 @@ bounded integer power, using `Float64.divideInt` after `x ^ n`. The zero base
 keeps CPython's distinct `ZeroDivisionError` message. `floatPowBudget = 1024`
 is a fixed admission bound: larger negative exponents refuse before an
 unbounded kernel `Int.pow`, rather than risking an internal abort or inventing
-a floating result. The builtin `pow(x, n)` shares this path; the three-
-argument modulus form remains a separate loud boundary.
+floating result. The builtin `pow(x, n)` shares this path. The three-argument
+`pow(x, n, m)` form admits integer arguments with a
+positive modulus and a nonnegative exponent, using Python's nonnegative
+remainder. Zero modulus keeps CPython's `ValueError`; negative exponents,
+negative moduli, and non-integral arguments remain loud until modular inverse
+and protocol semantics are pinned.
 
 ## Dict iteration — the census, and the tier it forces (§L51 rung 3)
 

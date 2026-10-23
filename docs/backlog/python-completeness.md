@@ -17,6 +17,22 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-23-pycomplete-55 — integer modular `pow`
+
+The next measured frontier after the decimal-rendering budget was the
+three-argument `pow` builtin. Its single curated refusal was a pure integer
+operation, unlike the larger list-repetition and exception-handler walls.
+The tier now admits integer bases, nonnegative exponents, and positive
+moduli, computes Python's nonnegative remainder, and preserves the exact
+zero-modulus `ValueError`. Negative exponents, negative moduli, and
+non-integral arguments remain loud until modular inverses and conversion
+protocols are modeled.
+
+The change uses one `powModArgs` worker in both interpreters, with the same
+payload-blind, clock-erased, and fuel-monotone pure-worker treatment as the
+existing two-argument `pow` path. `arith` proves positive, negative-base, and
+zero-modulus cases; the negative-exponent row remains an explicit refusal.
+
 ## 2026-10-22-pycomplete-49 — public baseline and the next ordinary-language inch
 
 The first post-public-master baseline was measured from `2730f338` (the

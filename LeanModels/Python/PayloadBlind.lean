@@ -3896,7 +3896,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                             | nil => exact PBF.liftRes hs1 _
                                             | cons _ rest =>
                                                 cases rest with
-                                                | nil => exact PBF.unsupported
+                                                | nil => exact PBF.liftRes hs1 _
                                                 | cons _ _ => exact PBF.exn hs1 _
                                   refine PBF.ite (fun _ => ?_) fun _ => ?_
                                   -- sum

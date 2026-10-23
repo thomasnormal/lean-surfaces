@@ -3302,6 +3302,42 @@ def divmodArgs : List RVal → Res RVal
         .exn (.typeError s!"unsupported operand type(s) for divmod(): '{numerator.typeName}' and '{divisor.typeName}'")
   | values => .exn (.typeError s!"divmod expected 2 arguments, got {values.length}")
 
+/-- Binary modular exponentiation with a structural fuel bound. The exponent
+is halved at each step, so the fixed shift budget bounds work while avoiding
+materializing the enormous unmodded power. -/
+def powModFuel : Nat → Nat → Int → Int → Int → Int
+  | 0, _, _, _, acc => acc
+  | fuel + 1, exponent, base, modulus, acc =>
+    if exponent = 0 then acc
+    else
+      let nextAcc := if exponent % 2 = 1 then Int.emod (acc * base) modulus else acc
+      powModFuel fuel (exponent / 2) (Int.emod (base * base) modulus) modulus nextAcc
+
+def powMod (base exponent modulus : Int) : Int :=
+  powModFuel shiftBudget exponent.toNat (Int.emod base modulus) modulus
+    (Int.emod 1 modulus)
+
+/-- The three-argument integer `pow` slice. Positive moduli use Python's
+nonnegative remainder; negative exponents and non-integral protocol cases stay
+loud until modular inverses and those protocols have a pinned model. -/
+def powModArgs : List RVal → Res RVal
+  | [base, exponent, modulus] =>
+    match asInt base, asInt exponent, asInt modulus with
+    | some x, some y, some m =>
+      if m = 0 then
+        .exn (.valueError "pow() 3rd argument cannot be 0")
+      else if m < 0 then
+        .unsupported "pow() with a negative modulus is outside the tier"
+      else if y < 0 then
+        .unsupported "pow() with a negative exponent and modulus is outside the tier"
+      else if y.natAbs > shiftBudget then
+        .unsupported "pow() modular exponent beyond shiftBudget is outside the tier"
+      else
+        .ok (.int (powMod x y m))
+    | _, _, _ =>
+      .exn (.typeError "pow() 3rd argument not allowed unless all arguments are integers")
+  | values => .exn (.typeError s!"pow() expected 2 or 3 arguments, got {values.length}")
+
 mutual
   /-- Python `==` over the heap (docs/memory-model.md §identity) — the
   H1-complete equality. Ref/ref: (1) identity shortcut (`d == d` holds
@@ -6591,8 +6627,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     (match vs with
                      | [base, exponent] => Run.liftRes st (evalBinOp .pow base exponent)
-                     | [_, _, _] =>
-                       .unsupported "pow() with a modulus is outside the v0 tier"
+                     | [base, exponent, modulus] =>
+                       Run.liftRes st (powModArgs [base, exponent, modulus])
                      | vs =>
                        .exn st (.typeError s!"pow() expected 2 or 3 arguments, got {vs.length}"))
                   else if fname == "sum" then

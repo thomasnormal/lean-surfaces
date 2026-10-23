@@ -36,7 +36,12 @@ full differential matrix against CPython lives in harness/cases.json. -/
 #py_check arith.builtin_powi(-2, 3) = -8
 #py_check arith.builtin_powi(2, -1) = Float64.ofBits 0x3fe0000000000000
 #guard (callFunction arith "builtin_powi" #[.int 2, .int (-1025)] 20 matches .unsupported _)
-#guard (callFunction arith "builtin_pow_mod" #[.int 2, .int 3, .int 5] 20 matches .unsupported _)
+#py_check arith.builtin_pow_mod(2, 3, 5) = 3
+#py_check arith.builtin_pow_mod(-2, 3, 5) = 2
+#py_check arith.builtin_pow_mod(7, 0, 1) = 0
+#py_check arith.builtin_pow_mod(2, 3, 0) raises
+  (.valueError "pow() 3rd argument cannot be 0")
+#guard (callFunction arith "builtin_pow_mod" #[.int 2, .int (-1), .int 5] 20 matches .unsupported _)
 #py_check arith.choose(0, 5) = 5
 #py_check arith.choose(3, 7) = 3
 #py_check arith.chain(1, 2, 3) = true

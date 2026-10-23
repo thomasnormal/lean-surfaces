@@ -632,6 +632,13 @@ private def cxxDependentScopeMemberTranslation : Artifact := {emptyTranslation w
       .object [("id", .string "m"), ("kind", .string "CXXDependentScopeMemberExpr"),
         ("name", .string "member"), ("inner", .array [])]])]}
 
+private def cxxDefaultArgumentTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "a"), ("kind", .string "CXXDefaultArgExpr"),
+        ("name", .string "default"), ("inner", .array [])]])]}
+
 private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1075,6 +1082,9 @@ def vaArgTranslationWitness : Except String Unit :=
 def cxxDependentScopeMemberTranslationWitness : Except String Unit :=
   admitCXXDependentScopeMemberExpression cxxDependentScopeMemberTranslation [0]
 
+def cxxDefaultArgumentTranslationWitness : Except String Unit :=
+  admitCXXDefaultArgumentExpression cxxDefaultArgumentTranslation [0]
+
 def conditionalOperatorTranslationWitness : Except String Unit :=
   admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
@@ -1439,6 +1449,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard cxxDependentScopeMemberTranslationWitness matches .ok ()
 #guard admitCXXDependentScopeMemberExpression cxxDependentScopeMemberTranslation [] matches .error _
 #guard admitCXXDependentScopeMemberExpression functionTranslation [0] matches .error _
+#guard cxxDefaultArgumentTranslationWitness matches .ok ()
+#guard admitCXXDefaultArgumentExpression cxxDefaultArgumentTranslation [] matches .error _
+#guard admitCXXDefaultArgumentExpression functionTranslation [0] matches .error _
 #guard conditionalOperatorTranslationWitness matches .ok ()
 #guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
 #guard admitConditionalOperatorExpression functionTranslation [0] matches .error _

@@ -924,6 +924,17 @@
     "rung": 3
   },
   {
+    "id": "translation.cxx-default-argument-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "cxxDefaultArgumentTranslationWitness",
+    "cpp_source": "int f(int value = 1) { return value; } int g() { return f(); }",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

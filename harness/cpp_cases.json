@@ -869,6 +869,17 @@
     "rung": 3
   },
   {
+    "id": "translation.cxx-coawait-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "cxxCoawaitTranslationWitness",
+    "cpp_source": "struct Task { bool await_ready(); }; bool f(Task task) { return co_await task; }",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

@@ -273,6 +273,9 @@ def admitCXXTypeidExpression (artifact : Artifact) (path : List Nat) :
 def admitCXXFoldExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXFoldExpr" "fold-expression"
 
+def admitCXXCoawaitExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXCoawaitExpr" "coawait-expression"
+
 def admitConditionalOperatorExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ConditionalOperator" "conditional-operator-expression"
 

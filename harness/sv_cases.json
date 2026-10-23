@@ -59,6 +59,7 @@
     {"name": "fixed_array_struct_pattern", "file": "Examples/system-verilog/fixed_array_struct_pattern/fixed_array_struct_pattern.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "generate_constant_targets", "file": "Examples/system-verilog/generate_constant_targets/generate_constant_targets.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "floating_local_decl", "file": "Examples/system-verilog/floating_local_decl/floating_local_decl.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
+    {"name": "generate_indexed_targets", "file": "Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "delay_refusal", "file": "Examples/system-verilog/delay/delay.sv", "module": "delay", "oracle": "refuse", "expect": "refuse"},
     {"name": "event_refusal", "file": "Examples/system-verilog/event/event.sv", "module": "event_wait", "oracle": "refuse", "expect": "refuse"},
     {"name": "always_refusal", "file": "Examples/system-verilog/always/events.sv", "module": "top", "oracle": "refuse", "expect": "refuse"},

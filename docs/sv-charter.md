@@ -5477,3 +5477,16 @@ cover the admitted declaration shape. The 22,046-file census moves **4,645 →
 **3,504 → 3,369** after the fresh census. Differential coverage is **62 rows,
 58 matches, 0 disagreements, and 4 recorded refusals**; grammar coverage is
 **203 witnesses, 72 MATCH, and 131 REFUSE**.
+
+### Generated constant indexed packed targets — 2026-10-23
+
+Indexed packed part-select targets whose genvar arithmetic is resolved during
+legacy elaboration now normalize to fixed vector windows. Both `IndexedUp` and
+`IndexedDown` preserve the elaborated base label and direction; runtime or
+out-of-range indexed selections remain loud. The `generate_indexed_targets`
+fixture and differential row cover both directions in generated assignments.
+The 22,046-file census moves **4,645 → 4,649 clean** and **17,335 → 17,331
+partial**; `AssignmentExpression:target` falls **3,500 → 3,496**.
+Differential coverage is **63 rows, 59 matches, 0 disagreements, and 4
+recorded refusals**; grammar coverage remains **203 witnesses, 72 MATCH, and
+131 REFUSE**.

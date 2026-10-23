@@ -5169,6 +5169,19 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
         converted_index, index_signed = normalized
     elif (expression_kind == "RangeSelectExpression"
           and canonical_kind == "PackedArrayType"
+          and _constant_dimension_selector(index) is not None
+          and str(lhs.selectionKind).split(".")[-1] in ("IndexedUp", "IndexedDown")):
+        # Generate elaboration binds a genvar-based indexed part-select to a
+        # constant label, but slang retains the arithmetic expression on the
+        # selected target. Normalize that label to the flat vector offset.
+        normalized = _packed_constant_indexed_index(
+            sm, lhs.value.type, index, lhs.type.bitWidth,
+            str(lhs.selectionKind).split(".")[-1] == "IndexedDown")
+        if normalized is None:
+            return unsupported(sm, lhs, expression_kind + ":target-source"), False
+        converted_index, index_signed = normalized
+    elif (expression_kind == "RangeSelectExpression"
+          and canonical_kind == "PackedArrayType"
           and not canonical_select):
         selection = str(lhs.selectionKind).split(".")[-1]
         if selection == "Simple":

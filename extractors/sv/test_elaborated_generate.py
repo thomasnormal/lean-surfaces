@@ -162,6 +162,24 @@ class ElaboratedGenerate(unittest.TestCase):
         for name in ('scopes','loops','locals','captures','imports','parameters'):
             self.assertFalse(walls(lower((root/(name+'.sv')).read_text())), name)
 
+    def test_generated_constant_indexed_part_select_targets_are_windows(self):
+        d = lower("module top; wire [7:0] values; "
+                   "for(genvar i=0;i<4;i++) begin:g "
+                   "assign values[i*2 +: 2] = i; end endmodule")
+        self.assertNotIn("AssignmentExpression:target", walls(d))
+        assignments = [node for node in nodes(d) if node.get("kind") == "Assign"]
+        self.assertEqual(len(assignments), 4)
+        self.assertEqual([node["target"]["index"]["bits"][-4:]
+                          for node in assignments], ["0000", "0010", "0100", "0110"])
+
+        d = lower("module top; wire [7:0] values; "
+                   "for(genvar i=0;i<4;i++) begin:g "
+                   "assign values[7-i*2 -: 2] = i; end endmodule")
+        self.assertNotIn("AssignmentExpression:target", walls(d))
+        assignments = [node for node in nodes(d) if node.get("kind") == "Assign"]
+        self.assertEqual([node["target"]["index"]["bits"][-4:]
+                          for node in assignments], ["0111", "0101", "0011", "0001"])
+
     def test_generated_constant_packed_targets_are_continuous_windows(self):
         d = lower('module top; wire [3:0] chain; assign chain[0]=1\'b1; '
                   'for(genvar i=0;i<3;i++) begin:g '

@@ -770,6 +770,17 @@
     "rung": 3
   },
   {
+    "id": "translation.this-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "thisTranslationWitness",
+    "cpp_source": "struct S { S* self() { return this; } };",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

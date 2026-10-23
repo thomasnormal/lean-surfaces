@@ -715,6 +715,17 @@
     "rung": 2
   },
   {
+    "id": "translation.character-literal-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "characterLiteralTranslationWitness",
+    "cpp_source": "int f() { return 'a'; }",
+    "expect": "match",
+    "rung": 2
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

@@ -5411,6 +5411,65 @@ def _fixed_array_stream_targets(sm, operand, symbolic=False):
         return None
 
 
+def _streaming_struct_source(sm, operand):
+    """Flatten one unpacked integral struct operand in declaration order."""
+    try:
+        path = _unpacked_struct_path(operand)
+        if path is None:
+            return None
+        base, aggregate = path
+        if type(aggregate).__name__ != "UnpackedStructType":
+            return None
+        cells = _unpacked_struct_field_cells(base, aggregate,
+                                              node_span(sm, operand))
+        if not cells:
+            return None
+        parts = [{"kind": "Ident", "span": node_span(sm, operand),
+                  "width": width, "name": name}
+                 for name, width, _init, _type in cells]
+        return {"kind": "Concat", "span": node_span(sm, operand),
+                "width": sum(part["width"] for part in parts),
+                "parts": parts}
+    except Exception:
+        return None
+
+
+def _convert_streaming_source(sm, expression):
+    """Convert a simple right-streaming source, including unpacked structs."""
+    try:
+        if type(expression).__name__ != "StreamingConcatenationExpression":
+            return None
+        token = getattr(getattr(expression, "syntax", None), "operatorToken", None)
+        if str(getattr(token, "kind", "")).split(".")[-1] != "RightShift":
+            return None
+        if _streaming_has_slice_size(expression):
+            return None
+        parts = []
+        for stream in expression.streams:
+            operand = getattr(stream, "operand", None)
+            if operand is None or getattr(stream, "withExpr", None) is not None:
+                return None
+            part = _streaming_struct_source(sm, operand)
+            if part is None:
+                width, _two_state, reason = type_width_2s(operand.type)
+                if width is None or reason is not None or not _case_source_expression_ok(operand):
+                    return None
+                part = convert_expr(sm, operand)
+                if (part is None or width_of(part) != width
+                        or not _case_expression_ok(part)):
+                    return None
+            parts.append(part)
+        if not parts:
+            return None
+        width = sum(width_of(part) for part in parts)
+        if width != expression.bitstreamWidth:
+            return None
+        return {"kind": "Concat", "span": node_span(sm, expression),
+                "width": width, "parts": parts}
+    except Exception:
+        return None
+
+
 def _streaming_left_target_assignment(sm, expr, symbolic=False):
     """Lower an explicit-slice left stream over direct integral leaves.
 
@@ -5478,7 +5537,9 @@ def _streaming_left_target_assignment(sm, expr, symbolic=False):
                                        for target in targets])
         if not parts or total_width % slice_size != 0:
             return None
-        value = convert_expr(sm, expr.right)
+        value = _convert_streaming_source(sm, expr.right)
+        if value is None:
+            value = convert_expr(sm, expr.right)
         if (value is None or value.get("kind") == "Unsupported"
                 or not _case_source_expression_ok(expr.right)
                 or width_of(value) != total_width
@@ -5582,9 +5643,12 @@ def _streaming_target_assignment(sm, expr):
             total_width += width
         if not parts:
             return None
-        value = convert_expr(sm, expr.right)
+        value = _convert_streaming_source(sm, expr.right)
+        source_lowered = value is not None
+        if value is None:
+            value = convert_expr(sm, expr.right)
         if (value is None or value.get("kind") == "Unsupported"
-                or not _case_source_expression_ok(expr.right)
+                or (not source_lowered and not _case_source_expression_ok(expr.right))
                 or width_of(value) is None or width_of(value) < total_width
                 or not _case_expression_ok(value)):
             return None

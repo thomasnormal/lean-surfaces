@@ -270,6 +270,19 @@ class PackedAssignmentTargets(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_right_streaming_unpack_struct_source_into_array_cells(self):
+        design = extract_source(
+            "module top; typedef struct packed { int b1; int b2; } T; "
+            "initial begin T s; int arr[2]; s.b1 = 10; s.b2 = 20; "
+            "{>> {arr[0], arr[1]}} = {>> {s}}; end endmodule")
+        statement, = [node for node in nodes(design)
+                      if node.get("kind") == "BlockingAssign"
+                      and node.get("target", {}).get("kind") == "ConcatTarget"]
+        self.assertEqual([part["name"].split(":")[-1] for part in
+                          statement["target"]["parts"]], ["arr[0]", "arr[1]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_right_streaming_unpack_whole_packed_union(self):
         design = extract_source(
             "module top; union packed { logic [3:0] first; "

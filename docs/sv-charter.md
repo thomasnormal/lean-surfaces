@@ -5478,6 +5478,19 @@ cover the admitted declaration shape. The 22,046-file census moves **4,645 →
 58 matches, 0 disagreements, and 4 recorded refusals**; grammar coverage is
 **203 witnesses, 72 MATCH, and 131 REFUSE**.
 
+### Right-streaming packed-struct sources into array cells — 2026-10-23
+
+Unsized right-streaming assignment now accepts a packed struct source streamed
+into direct integral unpacked-array cells. The source stream is lowered to its
+single sampled packed vector, then split across the target cells in declaration
+order; nested streams, partial arrays, and `with` clauses remain loud. The
+`streaming_struct_source` fixture and differential row cover the
+§11.4.14.1 declaration-order case. The 22,046-file census moves **4,652 →
+4,653 clean** and **17,328 → 17,327 partial**; `AssignmentExpression:target`
+falls **3,493 → 3,492**. Differential coverage is **65 rows, 61 matches, 0
+disagreements, and 4 recorded refusals**; grammar coverage remains **203
+witnesses, 72 MATCH, and 131 REFUSE**.
+
 ### Out-of-bounds fixed-array unpacked-struct reads — 2026-10-23
 
 Assignments from a fully constant out-of-bounds fixed unpacked-array element

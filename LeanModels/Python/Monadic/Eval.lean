@@ -796,7 +796,7 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
   | .binOp l op r _ => do
       let a ← evalOpen K m l
       let b ← evalOpen K m r
-      binOpM op a b
+      binOpHM op a b
   | .unaryOp op operand _ => do
       let v ← evalOpen K m operand
       unaryOpM op v
@@ -1172,6 +1172,49 @@ def evalCompareChainM (K : Kont) (m : Module) (lhs : RVal) :
       if b then evalCompareChainM K m rhs ops' rest else pure (.bool false)
   | _, _ => refuse "Compare with mismatched ops/comparators"
   termination_by structural _ops es => es
+
+/-- Heap-backed list repetition allocates a fresh list, as CPython does for
+`list * int` even when the count is zero or negative. The source list remains
+untouched, so aliases continue to observe the original object. -/
+def listRepeatH (h : Heap) (xs : Array RVal) (count : Int) : Res (Heap × RVal) :=
+  if count.natAbs > seqIndexBudget then
+    .exn (.overflowError "cannot fit 'int' into an index-sized integer")
+  else if count ≤ 0 || xs.isEmpty then
+    .ok (h.push (.list #[]), .ref h.size)
+  else if count.natAbs ≤ seqBudget && xs.size * count.toNat ≤ seqBudget then
+    .ok (h.push (.list ((List.replicate count.toNat xs.toList).flatten.toArray)), .ref h.size)
+  else
+    .unsupported "list repetition beyond seqBudget is outside the tier (count magnitude or output element count; docs/memory-model.md §list repetition)"
+
+/-- Stateful multiplication dispatch for heap-backed lists. All other
+operators retain the pure worker used by the trunk interpreter. -/
+def binOpHM (op : BinOp) (a b : RVal) : SemF RVal := do
+  if op == .mult then
+    let h ← frameHeap
+    match a, b with
+    | .ref addr, count =>
+      match Heap.get? h addr with
+      | some (.list xs) =>
+        match asInt count with
+        | some n =>
+          let (h', result) ← liftRes (listRepeatH h xs n)
+          heapPut h'
+          pure result
+        | none => raisePy (.typeError s!"can't multiply sequence by non-int of type '{RVal.typeNameH h count}'")
+      | _ => binOpM op a b
+    | count, .ref addr =>
+      match Heap.get? h addr with
+      | some (.list xs) =>
+        match asInt count with
+        | some n =>
+          let (h', result) ← liftRes (listRepeatH h xs n)
+          heapPut h'
+          pure result
+        | none => raisePy (.typeError s!"can't multiply sequence by non-int of type '{RVal.typeNameH h count}'")
+      | _ => binOpM op a b
+    | _, _ => binOpM op a b
+  else
+    binOpM op a b
 
 end
 

@@ -4414,6 +4414,15 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                   rw [strJoinH_swapAt hs2 htwin]
                                   exact PBF.liftRes hs2 _
                               | cons _ _ => exact PBF.exn hs2 _
+                  | float fv =>
+                      simp only []
+                      split
+                      · refine PBF.bind (ihEs m s1 args.toList hs1)
+                          fun s2 vs _ hs2 => ?_
+                        cases vs with
+                        | nil => exact PBF.ok hs2 _
+                        | cons _ _ => exact PBF.exn hs2 _
+                      · exact PBF.unsupported
                   | _ => exact PBF.unsupported
             | _ => exact PBF.unsupported
           -- ===== H6 KEYWORD TIER =====

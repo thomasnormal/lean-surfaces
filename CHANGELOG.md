@@ -19,6 +19,9 @@ change is listed here under **Changed** or **Removed**.
   and namedtuple rendering admit the wider boundary and refuse larger values.
 - The integer three-argument `pow` builtin now handles positive moduli and
   nonnegative exponents, including the faithful zero-modulus `ValueError`.
+- Heap-backed `list * int` and `int * list` now allocate fresh repeated lists
+  on the monadic interpreter, with CPython's index-size and materialization
+  bounds; the value-side proof interpreter keeps this stateful shape loud.
 
 ## [0.1.14] — 2026-10-21
 

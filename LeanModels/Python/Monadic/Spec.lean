@@ -267,7 +267,7 @@ theorem assign_binop_M (K : Kont) (M : Module) (w : World) (e : REnv)
   -- `grind` wired into `mvcgen_trivial_extensible` (Core/Outcome.lean §0) the
   -- closing script is gone entirely. The four `have`s above are still load-bearing:
   -- they are the computed-shape residues `grind` is given, not decoration.
-  mvcgen [execOpen, evalOpen]
+  mvcgen [execOpen, evalOpen, binOpHM]
 
 /-- **The gate that closes the pilot's fidelity gap.** `row = pst[p]`, where the
 receiver resolves through the STATIC GLOBALS FOLD — the arm the shallow twin did

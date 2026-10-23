@@ -41,6 +41,15 @@ NaN and infinities return `False`, and nonzero argument counts retain the
 faithful positional-only `TypeError`. The trunk and monadic evaluators and
 their fuel/world proof walkers cover the pure method call.
 
+## 2026-10-23-pycomplete-57 — heap-backed list repetition
+
+The monadic interpreter now handles `list * int` and `int * list` by reading
+the source heap list and allocating a fresh repeated list. Zero and negative
+counts still allocate fresh empty lists, oversized index counts preserve
+CPython's `OverflowError`, and materializations beyond `seqBudget` remain
+loud. The trunk proof interpreter retains its declared refusal because its
+boundary list representation cannot state the heap allocation and aliasing.
+
 ## 2026-10-22-pycomplete-49 — public baseline and the next ordinary-language inch
 
 The first post-public-master baseline was measured from `2730f338` (the

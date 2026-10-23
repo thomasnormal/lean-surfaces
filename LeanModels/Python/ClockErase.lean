@@ -2481,6 +2481,17 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                   | nil => exact .liftRes hs3 _
                   | cons _ _ => exact .exn hs3 _
               | refuse msg => exact .unsupported
+            case float fv =>
+              try dsimp only
+              cases hattr : attr == "is_integer" with
+              | true =>
+                simp only [hattr]
+                refine .bind (ihEs m s2 args.toList hs2) fun s3 vs hs3 => ?_
+                cases vs with
+                | nil => exact .ok hs3 _
+                | cons _ _ => exact .exn hs3 _
+              | false =>
+                exact .unsupported
       case kw =>
         cases f <;> try exact .unsupported
         case name fname sp2 =>

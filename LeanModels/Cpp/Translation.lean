@@ -285,6 +285,9 @@ def admitUnaryExprOrTypeTraitExpression (artifact : Artifact) (path : List Nat) 
 def admitVAArgExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VAArgExpr" "va-arg-expression"
 
+def admitCXXDependentScopeMemberExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXDependentScopeMemberExpr" "dependent-scope-member-expression"
+
 def admitConditionalOperatorExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ConditionalOperator" "conditional-operator-expression"
 

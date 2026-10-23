@@ -625,6 +625,13 @@ private def vaArgTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "v"), ("kind", .string "VAArgExpr"),
         ("name", .string "va_arg"), ("inner", .array [])]])]}
 
+private def cxxDependentScopeMemberTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "m"), ("kind", .string "CXXDependentScopeMemberExpr"),
+        ("name", .string "member"), ("inner", .array [])]])]}
+
 private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1065,6 +1072,9 @@ def unaryExprOrTypeTraitTranslationWitness : Except String Unit :=
 def vaArgTranslationWitness : Except String Unit :=
   admitVAArgExpression vaArgTranslation [0]
 
+def cxxDependentScopeMemberTranslationWitness : Except String Unit :=
+  admitCXXDependentScopeMemberExpression cxxDependentScopeMemberTranslation [0]
+
 def conditionalOperatorTranslationWitness : Except String Unit :=
   admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
@@ -1426,6 +1436,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard vaArgTranslationWitness matches .ok ()
 #guard admitVAArgExpression vaArgTranslation [] matches .error _
 #guard admitVAArgExpression functionTranslation [0] matches .error _
+#guard cxxDependentScopeMemberTranslationWitness matches .ok ()
+#guard admitCXXDependentScopeMemberExpression cxxDependentScopeMemberTranslation [] matches .error _
+#guard admitCXXDependentScopeMemberExpression functionTranslation [0] matches .error _
 #guard conditionalOperatorTranslationWitness matches .ok ()
 #guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
 #guard admitConditionalOperatorExpression functionTranslation [0] matches .error _

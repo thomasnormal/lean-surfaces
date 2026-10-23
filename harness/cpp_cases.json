@@ -1155,6 +1155,17 @@
     "rung": 4
   },
   {
+    "id": "translation.omp-scan-directive",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "ompScanDirectiveTranslationWitness",
+    "cpp_source": "void f() {\nint x = 0;\n#pragma omp parallel for reduction(inscan, +: x)\nfor (int i = 0; i < 1; ++i) { x += i;\n#pragma omp scan inclusive(x)\n}\n}",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.omp-parallel-directive",
     "kind": "translation",
     "corpus": "translation witness",

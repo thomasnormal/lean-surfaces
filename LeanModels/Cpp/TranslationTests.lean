@@ -821,6 +821,13 @@ private def ompParallelMasterDirectiveTranslation : Artifact := {emptyTranslatio
       .object [("id", .string "o"), ("kind", .string "OMPParallelMasterDirective"),
         ("name", .string "parallel-master"), ("inner", .array [])]])]}
 
+private def ompOrderedDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPOrderedDirective"),
+        ("name", .string "ordered"), ("inner", .array [])]])]}
+
 private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1345,6 +1352,9 @@ def ompParallelSectionsDirectiveTranslationWitness : Except String Unit :=
 def ompParallelMasterDirectiveTranslationWitness : Except String Unit :=
   admitOMPParallelMasterDirective ompParallelMasterDirectiveTranslation [0]
 
+def ompOrderedDirectiveTranslationWitness : Except String Unit :=
+  admitOMPOrderedDirective ompOrderedDirectiveTranslation [0]
+
 def conditionalOperatorTranslationWitness : Except String Unit :=
   admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
@@ -1790,6 +1800,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompParallelMasterDirectiveTranslationWitness matches .ok ()
 #guard admitOMPParallelMasterDirective ompParallelMasterDirectiveTranslation [] matches .error _
 #guard admitOMPParallelMasterDirective functionTranslation [0] matches .error _
+#guard ompOrderedDirectiveTranslationWitness matches .ok ()
+#guard admitOMPOrderedDirective ompOrderedDirectiveTranslation [] matches .error _
+#guard admitOMPOrderedDirective functionTranslation [0] matches .error _
 #guard conditionalOperatorTranslationWitness matches .ok ()
 #guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
 #guard admitConditionalOperatorExpression functionTranslation [0] matches .error _

@@ -5,6 +5,21 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.22] — 2026-10-23
+
+### Added
+
+- Rung-3 metadata gates for `CallExpr`, `CompoundAssignOperator`, `LambdaExpr`
+  and `ArraySubscriptExpr`, plus the rung-4 `CompoundStmt` gate, all checked
+  at exact retained AST paths.
+
+### Measured
+
+- The checked-in corpus now contains 124 differential rows and 24 grammar
+  witnesses. With pinned Clang/LLVM 21.1.8 unavailable, the run reports 0
+  MATCH, 0 DIVERGE, 0 REFUSE, 0 TIMEOUT, and 124 ORACLE rows; grammar reports
+  24 ORACLE rows.
+
 ## [0.1.21] — 2026-10-23
 
 ### Added

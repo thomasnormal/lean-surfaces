@@ -65,8 +65,9 @@ The float constructor now feeds ASCII bytes through the existing Unicode-aware
 decimal text parser. Finite values, decimal underscores, whitespace, signed
 zero, overflow, and malformed-input `ValueError` rendering share the string
 constructor's semantics while naming the original bytes value in errors.
-Non-ASCII bytes and textual NaN payloads remain loud until decoding and NaN
-oracle behavior are modeled.
+Non-ASCII bytes and NaN payload spellings remain loud until decoding and NaN
+oracle behavior are modeled; canonical `nan`/`-NaN`/`+nAn` forms now preserve
+CPython's quiet-NaN word and sign bit.
 
 ## 2026-10-23-pycomplete-60 — invalid high-octet `int(bytes)`
 
@@ -74,6 +75,13 @@ oracle behavior are modeled.
 CPython's exact bytes-rendered `ValueError`, including for explicit bases.
 The parser still admits only the ASCII numeric grammar; byte decoding,
 iterators, methods, and percent formatting remain separate loud boundaries.
+
+## 2026-10-23-pycomplete-61 — canonical textual NaN construction
+
+`float("nan")`, `float("-NaN")`, and case-insensitive sign variants now return
+CPython's canonical quiet-NaN binary64 word with the explicit sign bit. The
+same forms work for ASCII bytes. Payload spellings such as `nan(1)`, invalid
+Unicode rendering, and NaN arithmetic payload/sign propagation remain loud.
 
 ## 2026-10-22-pycomplete-49 — public baseline and the next ordinary-language inch
 

@@ -1915,7 +1915,7 @@ def floatCastVal : RVal → Res RVal
     match Float64.fromText text with
     | .ok value => .ok (.float value)
     | .error .nanPayload =>
-      .unsupported "float() textual NaN requires an explicit payload oracle (docs/python-floats.md)"
+      .unsupported "float() textual NaN payload spelling requires an explicit payload oracle (docs/python-floats.md)"
     | .error .invalid =>
       match reprStr text with
       | some rendered => .exn (.valueError s!"could not convert string to float: {rendered}")
@@ -1928,7 +1928,7 @@ def floatCastVal : RVal → Res RVal
       match Float64.fromText text with
       | .ok value => .ok (.float value)
       | .error .nanPayload =>
-        .unsupported "float() textual NaN requires an explicit payload oracle (docs/python-floats.md)"
+        .unsupported "float() textual NaN payload spelling requires an explicit payload oracle (docs/python-floats.md)"
       | .error .invalid =>
         .exn (.valueError s!"could not convert string to float: {bytesRepr values}")
   | .ref _ =>

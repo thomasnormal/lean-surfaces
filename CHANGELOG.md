@@ -26,7 +26,10 @@ change is listed here under **Changed** or **Removed**.
   the shared float-text normalization table; unrelated Unicode remains loud.
 - `float(bytes)` now accepts ASCII decimal bytes through the shared float-text
   parser and preserves CPython's bytes-rendered conversion errors; non-ASCII
-  bytes and textual NaN payloads remain loud.
+  bytes and NaN payload spellings remain loud.
+- `float("nan")` now accepts canonical case-insensitive textual NaN forms,
+  preserving CPython's quiet-NaN word and explicit sign bit. Payload spellings
+  and NaN arithmetic propagation remain loud.
 - `str.join()` now consumes admitted heap generators, preserving their lazy
   state and CPython's indexed element validation.
 

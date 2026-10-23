@@ -34,6 +34,9 @@ set_option exponentiation.threshold 2048
 #py_check float_lab.constructor_zero() = Float64.ofBits 0
 #py_check float_lab.constructor_tenth() = Float64.ofBits 0x3fb999999999999a
 #py_check float_lab.constructor_unicode() = Float64.ofBits 0x3fb999999999999a
+#py_check float_lab.constructor("nan") = Float64.ofBits 0x7ff8000000000000
+#py_check float_lab.constructor("-NaN") = Float64.ofBits 0xfff8000000000000
+#py_check float_lab.constructor("+nAn") = Float64.ofBits 0x7ff8000000000000
 #py_check float_lab.constructor_rounding() = Float64.ofBits 0x4340000000000000
 #py_check float_lab.constructor_invalid_caught() = 17
 #py_check float_lab.constructor_many() raises

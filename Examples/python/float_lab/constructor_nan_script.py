@@ -1,2 +1,2 @@
-print("before unresolved NaN payload")
+print("before canonical NaN")
 float("nan")

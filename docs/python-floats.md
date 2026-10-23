@@ -167,12 +167,14 @@ are not broadened to Unicode `isspace`. `inf` and `infinity` are case-insensitiv
 Decimal overflow produces signed infinity, underflow produces signed zero,
 and finite results use the same exact rational rounding as arithmetic. ASCII
 bytes use the same parser and preserve the bytes-specific `ValueError`
-rendering; non-ASCII bytes and textual NaN payloads remain loud.
+rendering; non-ASCII bytes and NaN payload spellings remain loud. Canonical
+case-insensitive `nan`, `-NaN`, and `+nAn` forms preserve CPython's quiet-NaN
+word and explicit sign bit.
 
 Malformed strings raise the repr-rendered `ValueError` when the shared
 string renderer can decide its message exactly. Quote selection traverses
 the structural code-point list, keeping error rendering kernel-reducible.
-Unresolved Unicode repr and object conversion protocols remain explicit
+Unresolved Unicode repr, payload spellings such as `nan(1)`, and object conversion protocols remain explicit
 unfinished work. Existing NaN words are preserved without selecting
 a new payload. Positional arity and immediate nonnumeric type errors retain
 CPython's exception classes and messages; keyword construction stays loud

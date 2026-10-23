@@ -460,7 +460,7 @@
   },
   {
     "file": "Examples/python/float_lab/constructor_nan_script.py",
-    "expect": "unsupported"
+    "expect": "match"
   },
   {
     "file": "Examples/python/float_lab/division_infinity_script.py",

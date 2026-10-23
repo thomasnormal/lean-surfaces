@@ -138,6 +138,10 @@ def numeric_float_invalid():
     return float(b"12x")
 
 
+def numeric_float_nan():
+    return float(b"nan"), float(b"-NaN"), float(b"+nAn")
+
+
 def iterator_still_loud():
     return next(iter(b"ab"))
 

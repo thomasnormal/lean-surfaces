@@ -243,7 +243,11 @@ theorem text_ascii_control : fromText "\x1c1\x1c" = .error .invalid := rfl
 theorem text_overflow : fromText "-1e999999999999999999999999" =
     .ok (ofBits 0xfff0000000000000) := rfl
 
-theorem text_nan_requires_oracle : fromText "-NaN" = .error .nanPayload := rfl
+theorem text_nan_canonical : fromText "-NaN" =
+    .ok (ofBits 0xfff8000000000000) := rfl
+
+theorem text_nan_positive_canonical : fromText "+nAn" =
+    .ok (ofBits 0x7ff8000000000000) := rfl
 
 #print axioms text_tenth
 #print axioms text_negative_zero
@@ -252,6 +256,7 @@ theorem text_nan_requires_oracle : fromText "-NaN" = .error .nanPayload := rfl
 #print axioms text_invalid_underscore
 #print axioms text_ascii_control
 #print axioms text_overflow
-#print axioms text_nan_requires_oracle
+#print axioms text_nan_canonical
+#print axioms text_nan_positive_canonical
 
 end LeanModels.Python.Float64.Tests

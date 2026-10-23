@@ -215,7 +215,11 @@ def fromText (text : String) : Except TextError Float64 :=
   let signBits := if negative then 2 ^ 63 else 0
   if folded == ['i', 'n', 'f'] || folded == ['i', 'n', 'f', 'i', 'n', 'i', 't', 'y'] then
     .ok (ofBits (signBits + 2047 * 2 ^ 52))
-  else if folded == ['n', 'a', 'n'] then .error .nanPayload
+  else if folded == ['n', 'a', 'n'] then
+    -- CPython's textual NaN constructor uses the canonical quiet-NaN word;
+    -- preserve only its explicit sign here. Arithmetic NaN payload/sign
+    -- propagation remains a separate unresolved operation.
+    .ok (ofBits (signBits + 2047 * 2 ^ 52 + 2 ^ 51))
   else
     match decimalRatio characters with
     | none => .error .invalid

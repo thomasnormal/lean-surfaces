@@ -37,6 +37,10 @@ load_program bytes_lab from "Examples/python/bytes_lab/bytes_lab.json"
     .float (Float64.ofBits 0x4028000000000000)]
 #py_check bytes_lab.numeric_float_invalid() raises
   (.valueError "could not convert string to float: b'12x'")
+#py_check bytes_lab.numeric_float_nan() =
+  Val.tuple #[.float (Float64.ofBits 0x7ff8000000000000),
+    .float (Float64.ofBits 0xfff8000000000000),
+    .float (Float64.ofBits 0x7ff8000000000000)]
 theorem literal : bytes_lab.literal() ==> (#[97, 98, 0, 255] : PyBytes) := by
   exact CallsTo.intro 64 (by rfl)
 

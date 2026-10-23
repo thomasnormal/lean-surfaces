@@ -307,6 +307,9 @@ inductive SStmt where
   | strobe (format : Option String) (args : Array (SExpr × Bool))
   /-- Severity diagnostics evaluate arguments but have no self-check stream. -/
   | severity (args : Array (SExpr × Bool))
+  /-- `$fatal` evaluates its arguments, reports outside the self-check stream,
+  then halts the run. -/
+  | fatal (args : Array (SExpr × Bool))
   | finish  -- `$finish` and `$stop`: halt the run cleanly
   | skip    -- `;` (Empty)
   /-- `#d` — delay control; suspends until `amount` time units pass.
@@ -893,6 +896,9 @@ def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
       | .severity args => do
           let _ ← evalArgs fuel st args.toList
           return (st, nba, out)
+      | .fatal args => do
+          let _ ← evalArgs fuel st args.toList
+          return (st, nba, { out with halted := true })
       | .finish => .ok (st, nba, { out with halted := true })
       | .skip => .ok (st, nba, out)
 
@@ -1316,7 +1322,18 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
   | "SysCall" =>
       let name ← getStrF j "name"
       match name with
-      | "$finish" | "$stop" => return .finish
+      | "$finish" | "$stop" =>
+          let fatalTask := (getFOpt j "fatal_task").bind (·.getBool?.toOption)
+          if name == "$finish" && fatalTask == some true then
+            let args ← (← getArrF j "args").mapM parseSExpr
+            let signed ← (← getArrF j "arg_signed").mapM fun b =>
+              match b.getBool? with
+              | .ok v => .ok v
+              | .error _ => .error "arg_signed entries must be Bools"
+            unless signed.size == args.size do
+              throw "SysCall: args/arg_signed length mismatch"
+            return .fatal (args.zip signed)
+          return .finish
       | "$display" | "$write" =>
           let format := (getFOpt j "format").bind (·.getStr?.toOption)
           let args ← (← getArrF j "args").mapM parseSExpr

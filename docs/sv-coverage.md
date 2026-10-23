@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 48 | 44 | 0 | 4 | sv-tests-2 declarations |
+| 49 | 45 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -46,6 +46,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `severity_task_literals` | `Examples/system-verilog/severity_task_literals/severity_task_literals.sv` | match | **MATCH** | `ok` | MATCH |
 | `error_task` | `Examples/system-verilog/error_task/error_task.sv` | match | **MATCH** | `ok` | MATCH |
 | `fatal_task` | `Examples/system-verilog/fatal_task/fatal_task.sv` | match | **MATCH** | `ok` | MATCH |
+| `fatal_dynamic` | `Examples/system-verilog/fatal_dynamic/fatal_dynamic.sv` | match | **MATCH** | `ok` | MATCH |
 | `associative_array_declaration` | `Examples/system-verilog/associative_array_decl/associative_array_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `printtimescale_declaration` | `Examples/system-verilog/printtimescale_decl/printtimescale_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `printtimescale_scope` | `Examples/system-verilog/printtimescale_scope/printtimescale_scope.sv` | match | **MATCH** | `ok` | MATCH |
@@ -282,24 +283,24 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22035 | 4589 | 17380 | 66 |
+| 22045 | 4593 | 17386 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `ExpressionStatement:CallExpression` | 3551 |
-| `AssignmentExpression:target` | 3542 |
-| `VariableSymbol:2state` | 3501 |
-| `CallExpression` | 3290 |
+| `AssignmentExpression:target` | 3546 |
+| `VariableSymbol:2state` | 3504 |
+| `ExpressionStatement:CallExpression` | 3475 |
+| `CallExpression` | 3292 |
 | `Hierarchy:ports` | 2397 |
-| `SubroutineSymbol:Subroutine` | 1713 |
-| `NamedValueExpression:2state` | 1481 |
-| `ConcurrentAssertionStatement` | 1353 |
+| `SubroutineSymbol:Subroutine` | 1714 |
+| `NamedValueExpression:2state` | 1483 |
+| `ConcurrentAssertionStatement` | 1358 |
 | `InvalidStatement` | 1329 |
-| `ClassType` | 1327 |
-| `Hierarchy:module-kind` | 1246 |
+| `ClassType` | 1329 |
+| `Hierarchy:module-kind` | 1248 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1153 |
 | `MemberAccessExpression` | 1023 |
-| `ConversionExpression:width` | 778 |
-| `HierarchicalValueExpression` | 748 |
+| `ConversionExpression:width` | 780 |
+| `HierarchicalValueExpression` | 749 |
 
 The committed census provenance identifies frontend family `pyslang-11` and corpus `sv-tests-2`. The corpus snapshot is not silently substituted when the external checkout is unavailable.

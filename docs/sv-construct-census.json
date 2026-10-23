@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22035,
+  "corpus_files": 22045,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -15,20 +15,20 @@
  "summary": {
   "blocker_files": [
    [
-    "ExpressionStatement:CallExpression",
-    3551
-   ],
-   [
     "AssignmentExpression:target",
-    3542
+    3546
    ],
    [
     "VariableSymbol:2state",
-    3501
+    3504
+   ],
+   [
+    "ExpressionStatement:CallExpression",
+    3475
    ],
    [
     "CallExpression",
-    3290
+    3292
    ],
    [
     "Hierarchy:ports",
@@ -36,15 +36,15 @@
    ],
    [
     "SubroutineSymbol:Subroutine",
-    1713
+    1714
    ],
    [
     "NamedValueExpression:2state",
-    1481
+    1483
    ],
    [
     "ConcurrentAssertionStatement",
-    1353
+    1358
    ],
    [
     "InvalidStatement",
@@ -52,11 +52,11 @@
    ],
    [
     "ClassType",
-    1327
+    1329
    ],
    [
     "Hierarchy:module-kind",
-    1246
+    1248
    ],
    [
     "PrimitiveInstanceSymbol:PrimitiveInstance",
@@ -68,11 +68,11 @@
    ],
    [
     "ConversionExpression:width",
-    778
+    780
    ],
    [
     "HierarchicalValueExpression",
-    748
+    749
    ],
    [
     "CovergroupType:CovergroupType",
@@ -84,7 +84,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    591
+    592
    ],
    [
     "CheckerSymbol",
@@ -116,7 +116,7 @@
    ],
    [
     "Hierarchy:invalid-compilation",
-    328
+    329
    ],
    [
     "BlockStatement:JoinAll",
@@ -124,7 +124,7 @@
    ],
    [
     "SequenceSymbol:Sequence",
-    283
+    284
    ],
    [
     "InterfacePortSymbol:InterfacePort",
@@ -152,11 +152,11 @@
    ],
    [
     "Package:Subroutine",
-    193
+    194
    ],
    [
     "TimedStatement:DelayControl:expression",
-    168
+    169
    ],
    [
     "StaticLocal:initializer",
@@ -168,19 +168,19 @@
    ],
    [
     "GenericClassDefSymbol",
+    147
+   ],
+   [
+    "TypeAliasType:TypeAlias",
+    146
+   ],
+   [
+    "Package:invalid-compilation",
     146
    ],
    [
     "TimedStatement:CycleDelayControl",
     145
-   ],
-   [
-    "Package:invalid-compilation",
-    145
-   ],
-   [
-    "TypeAliasType:TypeAlias",
-    144
    ],
    [
     "ForeachLoopStatement:array",
@@ -215,12 +215,12 @@
     88
    ],
    [
-    "ImmediateAssertion:condition",
+    "ProceduralDeassignStatement",
     83
    ],
    [
-    "ProceduralDeassignStatement",
-    82
+    "ImmediateAssertion:condition",
+    83
    ],
    [
     "TypeAliasType",
@@ -231,12 +231,12 @@
     73
    ],
    [
-    "RandSequenceStatement",
+    "VariableSymbol:type",
     72
    ],
    [
-    "VariableSymbol:type",
-    71
+    "RandSequenceStatement",
+    72
    ],
    [
     "NetSymbol:Tri",
@@ -547,6 +547,10 @@
     11
    ],
    [
+    "ConversionExpression:BitstreamCast",
+    11
+   ],
+   [
     "ConditionalStatement:Priority",
     11
    ],
@@ -564,10 +568,6 @@
    ],
    [
     "Let:invalid-compilation",
-    10
-   ],
-   [
-    "ConversionExpression:BitstreamCast",
     10
    ],
    [
@@ -976,14 +976,14 @@
    ]
   ],
   "by_status": {
-   "clean": 4589,
-   "partial": 17380,
+   "clean": 4593,
+   "partial": 17386,
    "skip_include": 66
   },
   "clean_by_type": {
    "(none)": [
     438,
-    1387
+    1388
    ],
    "compilation": [
     0,
@@ -1030,16 +1030,16 @@
     22
    ],
    "runtime_error": [
-    7,
-    42
+    8,
+    44
    ],
    "shell": [
     52,
     52
    ],
    "simulation": [
-    3962,
-    18671
+    3965,
+    18678
    ],
    "simulation elaboration": [
     2,
@@ -1231,10 +1231,10 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 598,
+    "blocked_by_more": 599,
     "clean": 441,
-    "partial": 600,
-    "simulation_tests": 1041,
+    "partial": 601,
+    "simulation_tests": 1042,
     "top_residual_blockers": [
      [
       "VariableSymbol:2state",
@@ -1250,7 +1250,7 @@
      ],
      [
       "AssignmentExpression:target",
-      161
+      162
      ],
      [
       "VariableDeclStatement:2state",
@@ -1266,7 +1266,7 @@
      ],
      [
       "TypeAliasType:TypeAlias",
-      86
+      87
      ],
      [
       "InstanceSymbol:Instance",
@@ -1278,7 +1278,7 @@
      ],
      [
       "ElementSelectExpression:source-type",
-      46
+      47
      ],
      [
       "TransparentMemberSymbol:TransparentMember",
@@ -1325,9 +1325,9 @@
    "chapter-10": {
     "clean": 277,
     "error": 0,
-    "partial": 380,
+    "partial": 381,
     "skip_include": 0,
-    "total": 657,
+    "total": 658,
     "unlockable": 2
    },
    "chapter-11": {
@@ -1373,9 +1373,9 @@
    "chapter-16": {
     "clean": 63,
     "error": 0,
-    "partial": 1480,
+    "partial": 1485,
     "skip_include": 0,
-    "total": 1543,
+    "total": 1548,
     "unlockable": 0
    },
    "chapter-17": {
@@ -1403,9 +1403,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 259,
+    "clean": 260,
     "error": 0,
-    "partial": 566,
+    "partial": 565,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0
@@ -1413,9 +1413,9 @@
    "chapter-21": {
     "clean": 117,
     "error": 0,
-    "partial": 783,
+    "partial": 785,
     "skip_include": 0,
-    "total": 900,
+    "total": 902,
     "unlockable": 0
    },
    "chapter-22": {
@@ -1459,9 +1459,9 @@
     "unlockable": 0
    },
    "chapter-27": {
-    "clean": 179,
+    "clean": 182,
     "error": 0,
-    "partial": 175,
+    "partial": 172,
     "skip_include": 0,
     "total": 354,
     "unlockable": 0
@@ -1485,9 +1485,9 @@
    "chapter-3": {
     "clean": 60,
     "error": 0,
-    "partial": 239,
+    "partial": 240,
     "skip_include": 1,
-    "total": 300,
+    "total": 301,
     "unlockable": 0
    },
    "chapter-30": {
@@ -1597,9 +1597,9 @@
    "chapter-6": {
     "clean": 455,
     "error": 0,
-    "partial": 730,
+    "partial": 731,
     "skip_include": 0,
-    "total": 1185,
+    "total": 1186,
     "unlockable": 4
    },
    "chapter-7": {

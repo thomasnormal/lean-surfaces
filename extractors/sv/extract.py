@@ -5988,14 +5988,22 @@ def _convert_syscall(sm, s, e):
             except Exception:
                 return unsupported(sm, s, "ExpressionStatement:CallExpression")
             converted = [convert_expr(sm, arg) for arg in args]
-            if all(node is not None and node.get("kind") == "Literal"
+            if all(node is not None and node.get("kind") != "Unsupported"
                    for node in converted):
-                # `$fatal` terminates the simulation after reporting a
-                # diagnostic.  The self-check state has no diagnostic stream,
-                # so reuse the existing whole-run halt for pure arguments.
+                # `$fatal` terminates the simulation after evaluating its
+                # severity and optional format arguments.  The self-check
+                # state has no diagnostic stream, so reuse the existing
+                # whole-run halt while retaining the pure argument nodes.
+                signed = []
+                for arg in args:
+                    try:
+                        signed.append(bool(arg.type.isSigned))
+                    except Exception:
+                        signed.append(True)
                 return {"kind": "SysCall", "span": node_span(sm, s),
-                        "name": "$finish", "format": None, "args": [],
-                        "arg_signed": [], "fatal_task": True}
+                        "name": "$finish", "format": None,
+                        "args": converted, "arg_signed": signed,
+                        "fatal_task": True}
         if is_sys and name in SYSCALL_QUIET:
             try:
                 args = list(e.arguments)

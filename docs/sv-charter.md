@@ -5304,6 +5304,19 @@ pending strobe queue without adding a second scheduler. The census moves
 coverage is **46 rows, 42 matches, 0 disagreements, and 4 recorded refusals**;
 grammar coverage remains **202 witnesses, 69 MATCH, and 133 REFUSE**.
 
+### Dynamic `$fatal` arguments — 2026-10-23
+
+`$fatal` now evaluates pure dynamic severity, format, and value arguments in
+source order before halting the self-check run. The diagnostic stream remains
+outside the observable state, while effectful calls and unsupported argument
+expressions remain loud. The `fatal_dynamic` fixture and differential row cover
+the dynamic path; the focused extractor regression keeps effectful arguments
+refused. On the current 22,045-file corpus snapshot, the census moves **4,589
+→ 4,593 clean** and **17,390 → 17,386 partial**; the
+`ExpressionStatement:CallExpression` blocker falls **3,559 → 3,475**.
+Differential coverage is **49 rows, 45 matches, 0 disagreements, and 4 recorded
+refusals**; grammar coverage remains **202 witnesses, 71 MATCH, and 131 REFUSE**.
+
 ### Standard-output `$fdisplay` — 2026-10-23
 
 `$fdisplay` with the predefined standard-output descriptor (`1` or

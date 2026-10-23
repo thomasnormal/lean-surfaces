@@ -47,7 +47,7 @@ class QuietSeverityTasks(unittest.TestCase):
         design = lower(
             'module top; initial begin $error("e"); $fatal(1, "f"); end endmodule')
         kinds = [node.get("sv_kind") for node in nodes(design)]
-        self.assertEqual(kinds.count("ExpressionStatement:CallExpression"), 1)
+        self.assertEqual(kinds.count("ExpressionStatement:CallExpression"), 0)
 
 
 if __name__ == "__main__":

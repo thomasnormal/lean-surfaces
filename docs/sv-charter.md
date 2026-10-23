@@ -5165,6 +5165,17 @@ clean** and **17,502 → 17,493 partial**; `ExpressionStatement:CallExpression`
 falls **3,759 → 3,749**. Differential coverage is **35 rows, 31 matches, 0
 disagreements, and 4 recorded refusals**.
 
+### Literal `$fatal` termination — 2026-10-23
+
+Statement-position `$fatal` with only literal arguments now lowers to the
+existing whole-run halt. This preserves its terminating control-flow effect
+while omitting the diagnostic stream absent from the self-check state. Dynamic
+finish numbers and message arguments remain loud. The `fatal_task` fixture and
+differential row cover the admitted form. The census moves **4,476 → 4,505
+clean** and **17,493 → 17,464 partial**; `ExpressionStatement:CallExpression`
+falls **3,749 → 3,602**. Differential coverage is **36 rows, 32 matches, 0
+disagreements, and 4 recorded refusals**.
+
 ### Declaration-only 2-state dynamic arrays — 2026-10-23
 
 An uninitialized 2-state dynamic-array declaration now lowers to inert

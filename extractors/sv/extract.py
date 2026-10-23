@@ -110,6 +110,7 @@ ORDER_CMP_SYMS = ("<", "<=", ">", ">=")
 # System tasks of the self-check tier (statement position only).
 SYSCALL_FMT = ("$display", "$write")
 SYSCALL_CTRL = ("$finish", "$stop")
+SYSCALL_FATAL = "$fatal"
 # Severity tasks only affect a simulator's diagnostic stream.  The public
 # self-check state has no diagnostic channel, so a pure literal call can be
 # erased while preserving control flow and all modeled state.  Calls with
@@ -5745,6 +5746,20 @@ def _convert_syscall(sm, s, e):
     except Exception:
         return unsupported(sm, s, "ExpressionStatement:CallExpression")
     if not is_sys or name not in SYSCALL_FMT + SYSCALL_CTRL:
+        if is_sys and name == SYSCALL_FATAL:
+            try:
+                args = list(e.arguments)
+            except Exception:
+                return unsupported(sm, s, "ExpressionStatement:CallExpression")
+            converted = [convert_expr(sm, arg) for arg in args]
+            if all(node is not None and node.get("kind") == "Literal"
+                   for node in converted):
+                # `$fatal` terminates the simulation after reporting a
+                # diagnostic.  The self-check state has no diagnostic stream,
+                # so reuse the existing whole-run halt for pure arguments.
+                return {"kind": "SysCall", "span": node_span(sm, s),
+                        "name": "$finish", "format": None, "args": [],
+                        "arg_signed": [], "fatal_task": True}
         if is_sys and name in SYSCALL_QUIET:
             try:
                 args = list(e.arguments)

@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-23
 
-The chapter-scoped rerun covered **22,035** paths: **4,476 clean**,
-**17,493 partial**, **66 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,035** paths: **4,505 clean**,
+**17,464 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`ExpressionStatement:CallExpression` (3,749), `VariableSymbol:2state` (3,691),
+`VariableSymbol:2state` (3,691), `ExpressionStatement:CallExpression` (3,602),
 `AssignmentExpression:target` (3,592), `CallExpression` (3,290),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,481), `ConcurrentAssertionStatement`
@@ -70,6 +70,13 @@ rerun moves clean files **4,467 → 4,476** and partial files **17,502 → 17,49
 `ExpressionStatement:CallExpression` falls **3,759 → 3,749**. `$fatal` and
 nonliteral `$error` arguments remain loud. Differential coverage is **35 rows,
 31 matches, 0 disagreements, and 4 recorded refusals**.
+
+Pure literal `$fatal` calls now lower to the existing whole-run halt, retaining
+termination while omitting the unmodeled diagnostic stream. Dynamic finish
+numbers and message arguments remain loud. The fresh rerun moves clean files
+**4,476 → 4,505** and partial files **17,493 → 17,464**;
+`ExpressionStatement:CallExpression` falls **3,749 → 3,602**. Differential
+coverage is **36 rows, 32 matches, 0 disagreements, and 4 recorded refusals**.
 
 ## Nested fixed two-state arrays — 2026-10-22
 

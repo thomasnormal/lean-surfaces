@@ -36,8 +36,10 @@ class ErrorTask(unittest.TestCase):
     def test_fatal_remains_loud(self):
         design = lower(
             'module top; initial $fatal(1, "fatal"); endmodule')
-        self.assertIn("ExpressionStatement:CallExpression",
-                      [node.get("sv_kind") for node in nodes(design)])
+        calls = [node for node in nodes(design) if node.get("kind") == "SysCall"]
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0]["name"], "$finish")
+        self.assertTrue(calls[0]["fatal_task"])
 
     def test_dynamic_error_argument_remains_loud(self):
         design = lower(

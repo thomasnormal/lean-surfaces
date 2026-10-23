@@ -357,6 +357,13 @@ private def bindTemporaryTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "b"), ("kind", .string "CXXBindTemporaryExpr"),
         ("name", .string "bind"), ("inner", .array [])]])]}
 
+private def expressionWithCleanupsTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "e"), ("kind", .string "ExprWithCleanups"),
+        ("name", .string "cleanup"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -491,6 +498,9 @@ def materializeTemporaryTranslationWitness : Except String Unit :=
 
 def bindTemporaryTranslationWitness : Except String Unit :=
   admitCXXBindTemporaryExpression bindTemporaryTranslation [0]
+
+def expressionWithCleanupsTranslationWitness : Except String Unit :=
+  admitExpressionWithCleanups expressionWithCleanupsTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -661,6 +671,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard bindTemporaryTranslationWitness matches .ok ()
 #guard admitCXXBindTemporaryExpression bindTemporaryTranslation [] matches .error _
 #guard admitCXXBindTemporaryExpression functionTranslation [0] matches .error _
+#guard expressionWithCleanupsTranslationWitness matches .ok ()
+#guard admitExpressionWithCleanups expressionWithCleanupsTranslation [] matches .error _
+#guard admitExpressionWithCleanups functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

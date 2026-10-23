@@ -177,6 +177,9 @@ def admitMaterializeTemporaryExpression (artifact : Artifact) (path : List Nat) 
 def admitCXXBindTemporaryExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXBindTemporaryExpr" "bind-temporary"
 
+def admitExpressionWithCleanups (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "ExprWithCleanups" "expression-with-cleanups"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

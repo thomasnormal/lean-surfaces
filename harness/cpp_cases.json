@@ -517,6 +517,17 @@
     "rung": 1
   },
   {
+    "id": "translation.expression-with-cleanups",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "expressionWithCleanupsTranslationWitness",
+    "cpp_source": "struct S { ~S() {} }; int f() { S value; return 0; }",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

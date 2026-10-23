@@ -5,6 +5,22 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.37] — 2026-10-23
+
+### Added
+
+- Rung-4 metadata gates for `OMPTargetDirective`, `OMPTargetDataDirective`,
+  `OMPTargetEnterDataDirective`, `OMPTargetExitDataDirective` and
+  `OMPTargetUpdateDirective`, each checked at an exact retained AST path while
+  target offload, mapping and execution remain bounded.
+
+### Measured
+
+- The checked-in corpus now contains 205 differential rows and 24 grammar
+  witnesses. With pinned Clang/LLVM 21.1.8 unavailable, the run reports 0
+  MATCH, 0 DIVERGE, 0 REFUSE, 0 TIMEOUT, and 205 ORACLE rows; grammar reports
+  24 ORACLE rows.
+
 ## [0.1.36] — 2026-10-23
 
 ### Added

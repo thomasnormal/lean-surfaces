@@ -384,6 +384,9 @@ def admitOMPTargetDataDirective (artifact : Artifact) (path : List Nat) :
 def admitOMPTargetEnterDataDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTargetEnterDataDirective" "omp-target-enter-data-directive"
 
+def admitOMPTargetExitDataDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPTargetExitDataDirective" "omp-target-exit-data-directive"
+
 def admitOMPDistributeDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPDistributeDirective" "omp-distribute-directive"
 

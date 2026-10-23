@@ -348,6 +348,9 @@ def admitOMPReverseDirective (artifact : Artifact) (path : List Nat) :
 def admitOMPInterchangeDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPInterchangeDirective" "omp-interchange-directive"
 
+def admitOMPDepobjDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPDepobjDirective" "omp-depobj-directive"
+
 def admitOMPParallelDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPParallelDirective" "omp-parallel-directive"
 

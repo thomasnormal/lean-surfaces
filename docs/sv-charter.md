@@ -5219,3 +5219,14 @@ The census moves **4,507 → 4,511 clean** and **17,462 → 17,458 partial**;
 `ExpressionStatement:CallExpression` falls **3,599 → 3,595**. Differential
 coverage is **39 rows, 35 matches, 0 disagreements, and 4 recorded refusals**;
 grammar coverage remains **200 witnesses, 69 MATCH, and 131 REFUSE**.
+
+### Inert VCD setup tasks — 2026-10-23
+
+`$dumpfile` and `$dumpvars` now lower to inert statements because their only
+effect is external waveform output outside the self-check observable state.
+Literal or omitted `$dumpfile` names are admitted; dynamic names remain loud.
+The `vcd_setup` fixture and differential row cover the admitted form. The
+census moves **4,511 → 4,525 clean** and **17,458 → 17,444 partial**;
+`ExpressionStatement:CallExpression` falls **3,595 → 3,580**. Differential
+coverage is **40 rows, 36 matches, 0 disagreements, and 4 recorded refusals**;
+grammar coverage remains **200 witnesses, 69 MATCH, and 131 REFUSE**.

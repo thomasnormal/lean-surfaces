@@ -102,6 +102,14 @@ rerun moves clean files **4,507 → 4,511** and partial files **17,462 → 17,45
 coverage is **39 rows, 35 matches, 0 disagreements, and 4 recorded refusals**;
 grammar coverage remains **200 witnesses, 69 MATCH, and 131 REFUSE**.
 
+VCD setup tasks `$dumpfile` and `$dumpvars` now lower to inert statements.
+They affect only external waveform output, which is outside the self-check
+oracle; dynamic `$dumpfile` names remain loud. The fresh rerun moves clean files
+**4,511 → 4,525** and partial files **17,458 → 17,444**;
+`ExpressionStatement:CallExpression` falls **3,595 → 3,580**. Differential
+coverage is **40 rows, 36 matches, 0 disagreements, and 4 recorded refusals**;
+grammar coverage remains **200 witnesses, 69 MATCH, and 131 REFUSE**.
+
 ## Nested fixed two-state arrays — 2026-10-22
 
 The legacy extractor now admits bounded fixed-size unpacked arrays with two

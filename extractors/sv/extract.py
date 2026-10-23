@@ -118,6 +118,10 @@ SYSCALL_FATAL = "$fatal"
 # module-originating initial processes admitted by this tier (§24.7); program
 # process control is outside the self-check surface.
 SYSCALL_PURE_DIAGNOSTIC = ("$printtimescale", "$exit")
+# VCD setup tasks affect only an external waveform file, which is outside the
+# self-check oracle's observable state.  Their syntax is retained by the
+# frontend, while the tier erases the static setup calls below.
+SYSCALL_VCD = ("$dumpfile", "$dumpvars")
 # Severity tasks only affect a simulator's diagnostic stream.  The public
 # self-check state has no diagnostic channel, so a pure literal call can be
 # erased while preserving control flow and all modeled state.  Calls with
@@ -5774,6 +5778,25 @@ def _convert_syscall(sm, s, e):
         if not args:
             return {"kind": "Empty", "span": node_span(sm, s),
                     "pure_diagnostic": name}
+    if is_sys and name in SYSCALL_VCD:
+        try:
+            args = list(e.arguments)
+        except Exception:
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        if name == "$dumpfile":
+            converted = convert_expr(sm, args[0]) if args else None
+            literal_arg = (args and
+                           (type(args[0]).__name__ == "StringLiteral" or
+                            (type(args[0]).__name__ == "ConversionExpression" and
+                             type(getattr(args[0], "operand", None)).__name__ ==
+                             "StringLiteral")))
+            if len(args) > 1 or (args and
+                                 (not literal_arg or converted is None)):
+                return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        # `$dumpvars` arguments are elaborated scope metadata rather than
+        # evaluated expressions; the self-check state has no VCD stream.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "pure_diagnostic": name}
     if not is_sys or name not in SYSCALL_FMT + SYSCALL_CTRL:
         if is_sys and name == SYSCALL_FATAL:
             try:

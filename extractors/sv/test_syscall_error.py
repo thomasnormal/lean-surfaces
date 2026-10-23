@@ -41,11 +41,12 @@ class ErrorTask(unittest.TestCase):
         self.assertEqual(calls[0]["name"], "$finish")
         self.assertTrue(calls[0]["fatal_task"])
 
-    def test_dynamic_error_argument_remains_loud(self):
+    def test_dynamic_error_argument_is_evaluated(self):
         design = lower(
             'module top; logic [3:0] x; initial $error("x=%0d", x); endmodule')
-        self.assertIn("ExpressionStatement:CallExpression",
-                      [node.get("sv_kind") for node in nodes(design)])
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
 
 
 if __name__ == "__main__":

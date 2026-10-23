@@ -34,11 +34,12 @@ class QuietSeverityLiterals(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
-    def test_identifier_argument_stays_loud(self):
+    def test_identifier_argument_is_admitted(self):
         design = lower(
             'module top; logic [3:0] x; initial $warning("x=%0d", x); endmodule')
-        self.assertIn("ExpressionStatement:CallExpression",
-                      [node.get("sv_kind") for node in nodes(design)])
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
 
 
 if __name__ == "__main__":

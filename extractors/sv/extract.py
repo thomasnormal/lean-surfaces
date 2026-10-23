@@ -6001,19 +6001,24 @@ def _convert_syscall(sm, s, e):
                 args = list(e.arguments)
             except Exception:
                 return unsupported(sm, s, "ExpressionStatement:CallExpression")
-            # `$info` and `$warning` report diagnostics but do not alter
-            # simulation state.  Keep the admitted slice deliberately pure:
-            # string literals need no evaluation, while identifiers, queries,
-            # and calls could have effects or require unmodeled formatting.
-            if args and type(args[0]).__name__ == "StringLiteral":
-                # A literal format and literal arguments have no evaluation
-                # effects.  Do not model the diagnostic text itself, since
-                # the self-check state has no severity stream.
-                converted = [convert_expr(sm, arg) for arg in args[1:]]
-                if all(node is not None and node.get("kind") == "Literal"
-                       for node in converted):
-                    return {"kind": "Empty", "span": node_span(sm, s),
-                            "severity_task": name}
+            # Severity tasks report a diagnostic but do not alter the
+            # self-check state. Keep the format literal while evaluating the
+            # ordinary pure expressions used as display-style arguments.
+            if not args or type(args[0]).__name__ != "StringLiteral":
+                return unsupported(sm, s, "ExpressionStatement:CallExpression")
+            converted = [convert_expr(sm, arg) for arg in args[1:]]
+            if any(node is None or node.get("kind") == "Unsupported"
+                   for node in converted):
+                return unsupported(sm, s, "ExpressionStatement:CallExpression")
+            signed = []
+            for arg in args[1:]:
+                try:
+                    signed.append(bool(arg.type.isSigned))
+                except Exception:
+                    signed.append(True)
+            return {"kind": "SysCall", "span": node_span(sm, s),
+                    "name": name, "format": args[0].value,
+                    "args": converted, "arg_signed": signed}
         return unsupported(sm, s, "ExpressionStatement:CallExpression")
     span = node_span(sm, s)
     if name in SYSCALL_CTRL:

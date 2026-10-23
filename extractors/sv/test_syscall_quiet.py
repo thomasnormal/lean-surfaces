@@ -31,15 +31,23 @@ class QuietSeverityTasks(unittest.TestCase):
         design = lower(
             'module top; initial begin $info("i"); $warning("w"); end endmodule')
         self.assertEqual(
-            [node["kind"] for node in nodes(design) if node.get("kind") == "Empty"],
-            ["Empty", "Empty"],
+            [node["name"] for node in nodes(design) if node.get("kind") == "SysCall"],
+            ["$info", "$warning"],
         )
         self.assertFalse(any(node.get("sv_kind") == "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
-    def test_dynamic_argument_stays_loud(self):
+    def test_dynamic_integral_argument_is_evaluated_and_diagnostic_dropped(self):
         design = lower(
             'module top; logic [3:0] x; initial $info("x=%0d", x); endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_effectful_argument_stays_loud(self):
+        design = lower(
+            'module top; function int f(); return 1; endfunction '
+            'initial $warning("x=%0d", f()); endmodule')
         self.assertIn("ExpressionStatement:CallExpression",
                       [node.get("sv_kind") for node in nodes(design)])
 

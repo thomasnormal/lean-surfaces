@@ -305,6 +305,8 @@ inductive SStmt where
   | sysCall (write : Bool) (format : Option String) (args : Array (SExpr × Bool))
   /-- `$strobe`: evaluate and emit at the end of the time-zero slot. -/
   | strobe (format : Option String) (args : Array (SExpr × Bool))
+  /-- Severity diagnostics evaluate arguments but have no self-check stream. -/
+  | severity (args : Array (SExpr × Bool))
   | finish  -- `$finish` and `$stop`: halt the run cleanly
   | skip    -- `;` (Empty)
   /-- `#d` — delay control; suspends until `amount` time units pass.
@@ -888,6 +890,9 @@ def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
           return (st, nba, out.emit (if write then text else text ++ "\n"))
       | .strobe format args =>
           return (st, nba, { out with pending := out.pending.push (.sysCall false format args) })
+      | .severity args => do
+          let _ ← evalArgs fuel st args.toList
+          return (st, nba, out)
       | .finish => .ok (st, nba, { out with halted := true })
       | .skip => .ok (st, nba, out)
 
@@ -1332,6 +1337,15 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
           unless signed.size == args.size do
             throw "SysCall: args/arg_signed length mismatch"
           return .strobe format (args.zip signed)
+      | "$info" | "$warning" | "$error" =>
+          let args ← (← getArrF j "args").mapM parseSExpr
+          let signed ← (← getArrF j "arg_signed").mapM fun b =>
+            match b.getBool? with
+            | .ok v => .ok v
+            | .error _ => .error "arg_signed entries must be Bools"
+          unless signed.size == args.size do
+            throw "SysCall: args/arg_signed length mismatch"
+          return .severity (args.zip signed)
       | other => .error s!"unknown SysCall name '{other}'"
   | "Empty" => return .skip
   | "Unsupported" =>

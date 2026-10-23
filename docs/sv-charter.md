@@ -5315,3 +5315,16 @@ slice. The census moves **4,585 → 4,586 clean** and **17,384 → 17,383 partia
 `ExpressionStatement:CallExpression` falls **3,555 → 3,554**. Differential
 coverage is **47 rows, 43 matches, 0 disagreements, and 4 recorded refusals**;
 grammar coverage remains **202 witnesses, 69 MATCH, and 133 REFUSE**.
+
+### Dynamic severity-task arguments — 2026-10-23
+
+`$info`, `$warning`, and `$error` with a literal format and ordinary pure
+expression arguments now evaluate those arguments in order and discard only
+the diagnostic stream, which is outside the self-check observable output.
+Effectful calls, nonliteral formats, and unsupported expression forms remain
+loud. The `severity_dynamic` fixture and differential row cover reads,
+literal strings, and all three severity tasks. The census moves **4,586 →
+4,589 clean** and **17,383 → 17,380 partial**;
+`ExpressionStatement:CallExpression` falls **3,554 → 3,551**. Differential
+coverage is **48 rows, 44 matches, 0 disagreements, and 4 recorded refusals**;
+grammar coverage remains **202 witnesses, 69 MATCH, and 133 REFUSE**.

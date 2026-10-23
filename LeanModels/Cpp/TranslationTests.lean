@@ -660,6 +660,13 @@ private def cxxPseudoDestructorTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "p"), ("kind", .string "CXXPseudoDestructorExpr"),
         ("name", .string "destroy"), ("inner", .array [])]])]}
 
+private def cxxUnresolvedMemberTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "m"), ("kind", .string "CXXUnresolvedMemberExpr"),
+        ("name", .string "member"), ("inner", .array [])]])]}
+
 private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1115,6 +1122,9 @@ def unresolvedLookupTranslationWitness : Except String Unit :=
 def cxxPseudoDestructorTranslationWitness : Except String Unit :=
   admitCXXPseudoDestructorExpression cxxPseudoDestructorTranslation [0]
 
+def cxxUnresolvedMemberTranslationWitness : Except String Unit :=
+  admitCXXUnresolvedMemberExpression cxxUnresolvedMemberTranslation [0]
+
 def conditionalOperatorTranslationWitness : Except String Unit :=
   admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
@@ -1491,6 +1501,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard cxxPseudoDestructorTranslationWitness matches .ok ()
 #guard admitCXXPseudoDestructorExpression cxxPseudoDestructorTranslation [] matches .error _
 #guard admitCXXPseudoDestructorExpression functionTranslation [0] matches .error _
+#guard cxxUnresolvedMemberTranslationWitness matches .ok ()
+#guard admitCXXUnresolvedMemberExpression cxxUnresolvedMemberTranslation [] matches .error _
+#guard admitCXXUnresolvedMemberExpression functionTranslation [0] matches .error _
 #guard conditionalOperatorTranslationWitness matches .ok ()
 #guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
 #guard admitConditionalOperatorExpression functionTranslation [0] matches .error _

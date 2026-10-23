@@ -432,6 +432,9 @@ def admitOMPTaskwaitDirective (artifact : Artifact) (path : List Nat) :
 def admitOMPTaskgroupDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTaskgroupDirective" "omp-taskgroup-directive"
 
+def admitOMPMasterTaskloopDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPMasterTaskloopDirective" "omp-master-taskloop-directive"
+
 def admitOMPTaskyieldDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTaskyieldDirective" "omp-taskyield-directive"
 

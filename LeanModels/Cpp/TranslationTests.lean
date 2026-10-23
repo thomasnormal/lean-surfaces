@@ -968,6 +968,13 @@ private def ompTaskgroupDirectiveTranslation : Artifact := {emptyTranslation wit
       .object [("id", .string "o"), ("kind", .string "OMPTaskgroupDirective"),
         ("name", .string "taskgroup"), ("inner", .array [])]])]}
 
+private def ompMasterTaskloopDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPMasterTaskloopDirective"),
+        ("name", .string "master-taskloop"), ("inner", .array [])]])]}
+
 private def ompTaskyieldDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1562,6 +1569,9 @@ def ompTaskwaitDirectiveTranslationWitness : Except String Unit :=
 def ompTaskgroupDirectiveTranslationWitness : Except String Unit :=
   admitOMPTaskgroupDirective ompTaskgroupDirectiveTranslation [0]
 
+def ompMasterTaskloopDirectiveTranslationWitness : Except String Unit :=
+  admitOMPMasterTaskloopDirective ompMasterTaskloopDirectiveTranslation [0]
+
 def ompTaskyieldDirectiveTranslationWitness : Except String Unit :=
   admitOMPTaskyieldDirective ompTaskyieldDirectiveTranslation [0]
 
@@ -2073,6 +2083,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompTaskgroupDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTaskgroupDirective ompTaskgroupDirectiveTranslation [] matches .error _
 #guard admitOMPTaskgroupDirective functionTranslation [0] matches .error _
+#guard ompMasterTaskloopDirectiveTranslationWitness matches .ok ()
+#guard admitOMPMasterTaskloopDirective ompMasterTaskloopDirectiveTranslation [] matches .error _
+#guard admitOMPMasterTaskloopDirective functionTranslation [0] matches .error _
 #guard ompTaskyieldDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTaskyieldDirective ompTaskyieldDirectiveTranslation [] matches .error _
 #guard admitOMPTaskyieldDirective functionTranslation [0] matches .error _

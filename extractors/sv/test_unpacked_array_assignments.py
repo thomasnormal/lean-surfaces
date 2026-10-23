@@ -287,6 +287,23 @@ class UnpackedArrayAssignments(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_bitstream_cast_fills_fixed_array_from_msb(self):
+        design = extract_source(
+            "module top; typedef bit [23:0] bits_t; typedef bit [7:0] bytes_t [3]; "
+            "initial begin bits_t bits; bytes_t bytes; bits = 24'habcdef; "
+            "bytes = bytes_t'(bits); if (bytes[0] === 8'hab && "
+            "bytes[1] === 8'hcd && bytes[2] === 8'hef) $display(\"PASS\"); end endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual([a["target"]["name"].split(":bytes", 1)[1]
+                          for a in assigns[-3:]],
+                         ["[0]", "[1]", "[2]"])
+        self.assertEqual([a["value"]["operand"]["index"]["bits"]
+                          for a in assigns[-3:]],
+                         [format(n, "032b") for n in (16, 8, 0)])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_whole_array_equality_pairs_cells(self):
         design = extract_source(
             "module top; logic [7:0] a [0:1]; logic [7:0] b [0:1]; "

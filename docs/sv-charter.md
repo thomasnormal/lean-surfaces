@@ -5425,3 +5425,17 @@ moves **4,617 → 4,618 clean** and **17,363 → 17,362 partial**;
 `AssignmentExpression:target` falls **3,518 → 3,517**. Differential coverage is
 **58 rows, 54 matches, 0 disagreements, and 4 recorded refusals**; grammar
 coverage remains **202 witnesses, 71 MATCH, and 131 REFUSE**.
+
+### Integral bit-stream casts into fixed unpacked arrays — 2026-10-23
+
+Bit-stream casts from an integral source into a complete finite fixed unpacked
+array now lower to scalar leaf writes in declaration order, with element zero
+receiving the source's most-significant bits. Equal total widths, integral
+leaves, and two-state conversion are checked before admission; dynamic arrays,
+queues, aggregate leaves, and mismatched widths remain loud. The
+`fixed_array_bitstream_cast` fixture and differential row cover the
+`bytes = bytes_t'(bits)` form. The 22,046-file census moves **4,618 → 4,622
+clean** and **17,362 → 17,358 partial**; `AssignmentExpression:target` falls
+**3,517 → 3,512**. Differential coverage is **59 rows, 55 matches, 0
+disagreements, and 4 recorded refusals**; grammar coverage remains **202
+witnesses, 71 MATCH, and 131 REFUSE**.

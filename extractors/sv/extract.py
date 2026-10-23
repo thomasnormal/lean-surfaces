@@ -2085,6 +2085,91 @@ def _fixed_array_dynamic_slice_assignment(sm, expr):
         return None
 
 
+def _fixed_array_bitstream_cast_assignment(sm, expr):
+    """Expand an integral bit-stream cast into fixed-array leaf writes.
+
+    IEEE 1800 §6.24.3 maps the most-significant source bits to element zero
+    and then walks the destination dimensions in declaration order.  The
+    legacy state already stores each bounded array leaf as an independent
+    vector, so a cast with equal total widths can be represented by constant
+    source windows.  Dynamic/queue/aggregate leaves and mismatched widths stay
+    loud rather than receiving a fabricated aggregate value.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None
+                or type(expr.right).__name__ != "ConversionExpression"
+                or str(expr.right.conversionKind).split(".")[-1] != "BitstreamCast"):
+            return None
+        lhs = expr.left
+        if not _storage_expression(lhs):
+            return None
+        dims_shape = _fixed_array_dimensions(lhs.type)
+        if dims_shape is None:
+            return None
+        dimensions, leaf_type = dims_shape
+        if type(leaf_type).__name__ in ("FixedSizeUnpackedArrayType",
+                                        "UnpackedStructType", "UnpackedUnionType",
+                                        "DynamicArrayType", "QueueType",
+                                        "AssociativeArrayType"):
+            return None
+        leaf_width, leaf_two, leaf_reason = type_width_2s(leaf_type)
+        source_width, _source_two, source_reason = type_width_2s(expr.right.operand.type)
+        if (leaf_width is None or leaf_reason is not None
+                or source_width is None or source_reason is not None):
+            return None
+        count = 1
+        positions = [()]
+        for left, right in dimensions:
+            step = 1 if right >= left else -1
+            axis = list(range(int(left), int(right) + step, step))
+            count *= len(axis)
+            positions = [prefix + (position,)
+                         for prefix in positions for position in axis]
+        if count <= 0 or count > 1024 or count * leaf_width != source_width:
+            return None
+        if not _case_source_expression_ok(expr.right.operand):
+            return None
+        source = convert_expr(sm, expr.right.operand)
+        if source is None or not _case_expression_ok(source):
+            return None
+        root = _array_storage_name(lhs.symbol)
+        stmts = []
+        for index, suffix in enumerate(positions):
+            offset = source_width - (index + 1) * leaf_width
+            value = {
+                "kind": "SelectRead",
+                "span": node_span(sm, expr.right),
+                "width": leaf_width,
+                "value": source,
+                "index": {
+                    "kind": "Literal",
+                    "span": node_span(sm, expr.right),
+                    "width": 32,
+                    "bits": format(offset & ((1 << 32) - 1), "032b"),
+                },
+                "index_signed": False,
+                "descending": False,
+            }
+            if leaf_two:
+                value = squash2_wrap(value, leaf_width)
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {
+                    "kind": "Ident",
+                    "span": node_span(sm, expr.left),
+                    "width": leaf_width,
+                    "name": root + "".join(f"[{position}]" for position in suffix),
+                },
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts,
+                "fixed_array_bitstream_cast_lowered": True}
+    except Exception:
+        return None
+
+
 def _fixed_array_pattern_assignment(sm, expr):
     """Lower one exact assignment pattern to a fixed-array's cells.
 
@@ -6609,6 +6694,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         array_dynamic_slice = _fixed_array_dynamic_slice_assignment(sm, expr)
         if array_dynamic_slice is not None:
             return array_dynamic_slice
+        array_bitstream_cast = _fixed_array_bitstream_cast_assignment(sm, expr)
+        if array_bitstream_cast is not None:
+            return array_bitstream_cast
         array_copy = _fixed_array_copy_assignment(sm, expr)
         if array_copy is not None:
             return array_copy

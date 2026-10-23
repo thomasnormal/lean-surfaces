@@ -110,6 +110,12 @@ ORDER_CMP_SYMS = ("<", "<=", ">", ">=")
 # System tasks of the self-check tier (statement position only).
 SYSCALL_FMT = ("$display", "$write")
 SYSCALL_CTRL = ("$finish", "$stop")
+# Severity tasks only affect a simulator's diagnostic stream.  The public
+# self-check state has no diagnostic channel, so a pure literal call can be
+# erased while preserving control flow and all modeled state.  Calls with
+# evaluated arguments remain outside this slice: evaluating an argument can
+# itself have observable effects.
+SYSCALL_QUIET = ("$info", "$warning")
 UNARY_OPS = {
     UnaryOperator.BitwiseNot: "~",
     UnaryOperator.LogicalNot: "!",
@@ -5705,6 +5711,18 @@ def _convert_syscall(sm, s, e):
     except Exception:
         return unsupported(sm, s, "ExpressionStatement:CallExpression")
     if not is_sys or name not in SYSCALL_FMT + SYSCALL_CTRL:
+        if is_sys and name in SYSCALL_QUIET:
+            try:
+                args = list(e.arguments)
+            except Exception:
+                return unsupported(sm, s, "ExpressionStatement:CallExpression")
+            # `$info` and `$warning` report diagnostics but do not alter
+            # simulation state.  Keep the admitted slice deliberately pure:
+            # string literals need no evaluation, while identifiers, queries,
+            # and calls could have effects or require unmodeled formatting.
+            if all(type(arg).__name__ == "StringLiteral" for arg in args):
+                return {"kind": "Empty", "span": node_span(sm, s),
+                        "severity_task": name}
         return unsupported(sm, s, "ExpressionStatement:CallExpression")
     span = node_span(sm, s)
     if name in SYSCALL_CTRL:

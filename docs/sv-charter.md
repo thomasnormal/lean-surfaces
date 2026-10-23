@@ -5117,3 +5117,15 @@ Procedural assignments of a pure string literal to an opaque string are erased
 as no-op state updates. Nonliteral writes and every string read or operation
 remain loud. The `do_while_string_literal` fixture supplies differential
 coverage for this assignment slice.
+
+### Runtime severity diagnostics — 2026-10-23
+
+Statement-position `$info` and `$warning` calls with only string-literal
+arguments now lower to inert `Empty` statements. IEEE 1800-2023 §20.10 says
+these tasks report diagnostics without terminating simulation; the public
+self-check state has no diagnostic stream, so erasing a pure call preserves
+the modeled control flow. Dynamic arguments, `$error`, `$fatal`, and all other
+unmodeled system calls remain loud. The `severity_tasks` fixture and
+differential row cover the admitted form. The 22,035-file census moves from
+**4,442 → 4,462 clean** and **17,527 → 17,507 partial**; the
+`ExpressionStatement:CallExpression` blocker falls **3,784 → 3,764**.

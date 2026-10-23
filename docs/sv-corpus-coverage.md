@@ -16,7 +16,7 @@ python3.12 extractors/sv/census.py --corpus /path/to/tests --recheck  # determin
 
 Machine-readable results: `harness/sv/conformance/census.json`
 (per-file records + this document's aggregates). The current committed summary
-is the **2026-10-22** snapshot below, measured with Python 3.9 and pyslang 11;
+is the **2026-10-23** snapshot below, measured with Python 3.9 and pyslang 11;
 the dated sections retain their original measurement denominators.
 
 The committed summary uses a portable corpus-layout placeholder, not a
@@ -25,14 +25,14 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
-## Fresh extractor census — 2026-10-22
+## Fresh extractor census — 2026-10-23
 
-The chapter-scoped rerun covered **22,035** paths: **4,429 clean**,
-**17,540 partial**, **66 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,035** paths: **4,462 clean**,
+**17,507 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
 `VariableSymbol:2state` (4,133), `AssignmentExpression:target` (3,913),
-`ExpressionStatement:CallExpression` (3,784), `CallExpression` (3,290),
+`ExpressionStatement:CallExpression` (3,764), `CallExpression` (3,290),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,481), `ConcurrentAssertionStatement`
 (1,353), `InvalidStatement` (1,329), and `ClassType` (1,327).

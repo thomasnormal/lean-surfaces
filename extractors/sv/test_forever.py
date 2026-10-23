@@ -39,10 +39,17 @@ class ForeverLoops(unittest.TestCase):
         self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(design)))
 
     def test_disable_and_other_body_effects_are_not_discarded(self):
-        for body in ("disable outer;", "$warning(\"body\");"):
-            design = lower("module top; initial begin : outer forever " + body + " end endmodule")
-            self.assertTrue(any(n.get("kind") == "Forever" for n in nodes(design)))
-            self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+        design = lower("module top; initial begin : outer forever disable outer; end endmodule")
+        self.assertTrue(any(n.get("kind") == "Forever" for n in nodes(design)))
+        self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+
+        # A literal severity diagnostic is now an admitted no-op.  It remains
+        # inside the retained loop body, so the forever construct itself still
+        # carries the source and control-flow shape.
+        design = lower(
+            'module top; initial begin : outer forever $warning("body"); end endmodule')
+        self.assertTrue(any(n.get("kind") == "Forever" for n in nodes(design)))
+        self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(design)))
 
     def test_symbolic_forever_stays_loud(self):
         design = symbolic("module divider; initial forever #2; endmodule")

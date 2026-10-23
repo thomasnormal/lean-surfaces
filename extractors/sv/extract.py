@@ -4898,7 +4898,7 @@ def _streaming_target_assignment(sm, expr):
         total_width = 0
         for stream in lhs.streams:
             operand = getattr(stream, "operand", None)
-            if operand is None:
+            if operand is None or getattr(stream, "withExpr", None) is not None:
                 return None
             array_targets = _fixed_array_stream_targets(sm, operand, False)
             if array_targets is not None:
@@ -4978,7 +4978,7 @@ def _symbolic_streaming_target_assignment(sm, expr):
         leaf_two_state = []
         for stream in lhs.streams:
             operand = getattr(stream, "operand", None)
-            if operand is None:
+            if operand is None or getattr(stream, "withExpr", None) is not None:
                 return None
             array_targets = _fixed_array_stream_targets(sm, operand, True)
             if array_targets is not None:

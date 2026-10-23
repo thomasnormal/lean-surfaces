@@ -190,6 +190,14 @@ class PackedAssignmentTargets(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_right_streaming_with_clause_stays_loud(self):
+        design = extract_source(
+            "module top; logic [63:0] source; int grid[4]; "
+            "initial {>> {grid with [0:1]}} = source; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
     def test_right_streaming_wider_source_keeps_leading_bits(self):
         design = extract_source(
             "module top; logic [3:0] hi, lo; "

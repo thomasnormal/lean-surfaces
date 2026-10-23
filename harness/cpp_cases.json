@@ -1210,6 +1210,17 @@
     "rung": 4
   },
   {
+    "id": "translation.openacc-set-construct",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "openACCSetConstructTranslationWitness",
+    "cpp_source": "void f() {\n#pragma acc set device_num(0)\n}",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.omp-metadirective",
     "kind": "translation",
     "corpus": "translation witness",

@@ -649,6 +649,17 @@
     "rung": 2
   },
   {
+    "id": "translation.static-cast-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "staticCastTranslationWitness",
+    "cpp_source": "int f(short value) { return static_cast<int>(value); }",
+    "expect": "match",
+    "rung": 2
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

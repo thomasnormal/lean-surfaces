@@ -5,7 +5,7 @@ open LeanModels LeanModels.Python
 load_program decimal_render from "Examples/python/decimal_render/decimal_render.json"
 
 set_option maxRecDepth 8192
-set_option exponentiation.threshold 1024
+set_option exponentiation.threshold 4300
 
 #py_check decimal_render.scalar_str(0) = "0"
 #py_check decimal_render.scalar_str(-27) = "-27"
@@ -32,13 +32,15 @@ set_option exponentiation.threshold 1024
 #py_check decimal_render.namedtuple_str("hé") = "Pair(x='hé', y=7)"
 #py_check decimal_render.fstring_str(-27) = "-27"
 
-#guard intDecimal ((10 : Int) ^ 1024 - 1) matches some _
-#guard intDecimal (-((10 : Int) ^ 1024 - 1)) matches some _
-#guard intDecimal ((10 : Int) ^ 1024) matches none
-#guard intDecimal (-((10 : Int) ^ 1024)) matches none
+#guard intDecimal ((10 : Int) ^ 4300 - 1) matches some _
+#guard intDecimal (-((10 : Int) ^ 4300 - 1)) matches some _
+#guard intDecimal ((10 : Int) ^ 4300) matches none
+#guard intDecimal (-((10 : Int) ^ 4300)) matches none
+#guard intDecimal ((10 : Int) ^ 4301) matches none
+#guard intDecimal (-((10 : Int) ^ 4301)) matches none
 
 theorem scalar_str_total (value : PyInt)
-    (valueBound : value.natAbs < 10 ^ 1024) :
+    (valueBound : value.natAbs < 10 ^ 4300) :
     decimal_render.scalar_str(value) ==> toString value := by proofs
 
 #print axioms scalar_str_total

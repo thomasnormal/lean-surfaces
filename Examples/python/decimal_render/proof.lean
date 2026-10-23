@@ -8,7 +8,7 @@ load_program decimal_render from "Examples/python/decimal_render/decimal_render.
 
 set_option maxRecDepth 8192
 set_option maxHeartbeats 2000000
-set_option exponentiation.threshold 1024
+set_option exponentiation.threshold 4300
 
 private def scalarFunction : FunctionDefn :=
   { name := "scalar_str"
@@ -43,10 +43,10 @@ private theorem builtin_not_namedtuple : findNamedTuple decimal_render "str" = n
   rfl
 
 private theorem scalar_decimal (value : PyInt)
-    (valueBound : value.natAbs < 10 ^ 1024) :
+    (valueBound : value.natAbs < 10 ^ 4300) :
     intDecimal value = some (toString value) := by
   unfold intDecimal
-  change (if value.natAbs < 10 ^ 1024 then some (toString value) else none) = _
+  change (if value.natAbs < 10 ^ 4300 then some (toString value) else none) = _
   exact if_pos valueBound
 
 private theorem scalar_call (value : PyInt) (text : String)
@@ -75,7 +75,7 @@ private theorem scalar_call (value : PyInt) (text : String)
       renderedHeap]
 
 theorem scalar_str_total (value : PyInt)
-    (valueBound : value.natAbs < 10 ^ 1024) :
+    (valueBound : value.natAbs < 10 ^ 4300) :
     decimal_render.scalar_str(value) ==> toString value := by
   exact scalar_call value (toString value) (scalar_decimal value valueBound)
 

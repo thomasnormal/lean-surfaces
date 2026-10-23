@@ -29,7 +29,7 @@ and `*=`, with both the original count magnitude and output code-point length
 bounded by 1,048,576. Tuple and namedtuple repetition
 also checks the original count magnitude before empty-sequence or negative-count
 handling, with the same independent element-count budget. Decimal output shares
-the 1024-digit admission across `str`, `print`, f-strings, container and range
+the 4300-digit admission across `str`, `print`, f-strings, container and range
 rendering, and bare `%s`/`%r`/`%d`; larger magnitudes refuse before conversion.
 Range construction retains Boolean fields for faithful rendering, while
 numerical consumers use their integer projections.

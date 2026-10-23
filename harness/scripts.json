@@ -346,7 +346,7 @@
   {
     "file": "harness/scripts/decimal_render_script.py",
     "expect": "match",
-    "note": "Ordinary rendering and both signs of exactly 1024-digit integer magnitudes remain admitted across scalar, percent, f-string, container, namedtuple, and range fields; the minus sign is outside the magnitude budget."
+    "note": "Ordinary rendering and both signs of exactly 4300-digit integer magnitudes remain admitted across scalar, percent, f-string, container, namedtuple, and range fields; the minus sign is outside the magnitude budget."
   },
   {
     "file": "harness/scripts/decimal_render_effects_script.py",
@@ -356,7 +356,7 @@
   {
     "file": "harness/scripts/decimal_render_limit_script.py",
     "expect": "unsupported",
-    "note": "Conservative configurable CPython digit-limit boundary: this 1025-digit rendering succeeds at the pinned oracle's default limit 4300 but is beyond the model's fixed 1024-digit budget. The model refuses loudly rather than inventing a host-dependent answer."
+    "note": "Conservative configurable CPython digit-limit boundary: this 4301-digit rendering succeeds at the pinned oracle's default limit 4300 but is beyond the model's fixed 4300-digit budget. The model refuses loudly rather than inventing a host-dependent answer."
   },
   {
     "file": "harness/scripts/range_bool_script.py",

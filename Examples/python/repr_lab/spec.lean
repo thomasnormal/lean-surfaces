@@ -8,7 +8,7 @@ load_program repr_shadow from "Examples/python/repr_lab/repr_shadow.json"
 load_program repr_script from "Examples/python/repr_lab/repr_script.json"
 
 set_option maxRecDepth 8192
-set_option exponentiation.threshold 1024
+set_option exponentiation.threshold 4300
 
 #py_check repr_lab.of(0) = "0"
 #py_check repr_lab.of(-17) = "-17"
@@ -43,7 +43,7 @@ set_option exponentiation.threshold 1024
 #py_check repr_shadow.direct(-7) = 4
 #py_check repr_shadow.captured_generator() = (Val.tuple #[.int 12, .int 13])
 
-#guard callFunction repr_lab "of" #[.str "é"] 4096 matches .unsupported _
+#py_check repr_lab.of("é") = "'é'"
 #py_check repr_lab.keyword() raises
   .typeError "repr() takes no keyword arguments"
 #guard callFunction repr_lab "first_class" #[] 4096 matches .unsupported _
@@ -52,7 +52,7 @@ set_option exponentiation.threshold 1024
 #guard callFunction repr_lab "set_value" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "closure" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "generator" #[] 4096 matches .unsupported _
-#guard callFunction repr_lab "large_length" #[.int 1025] 4096 matches .unsupported _
+#guard callFunction repr_lab "large_length" #[.int 4301] 4096 matches .unsupported _
 #guard callFunction repr_lab "deep" #[.int 65] 4096 matches .ok _
 #guard callFunction repr_lab "deep" #[.int 80] 4096 matches .ok _
 #guard callFunction repr_lab "deep" #[.int 129] 4096 matches .unsupported _
@@ -67,7 +67,7 @@ set_option exponentiation.threshold 1024
 theorem boolean_repr (value : PyBool) :
     repr_lab.of(value) ==> (if value then "True" else "False") := by proofs
 
-theorem integer_repr (value : PyInt) (valueBound : value.natAbs < 10 ^ 1024) :
+theorem integer_repr (value : PyInt) (valueBound : value.natAbs < 10 ^ 4300) :
     repr_lab.of(value) ==> toString value := by proofs
 
 #print axioms boolean_repr

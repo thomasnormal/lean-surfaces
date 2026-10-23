@@ -832,11 +832,11 @@ verbatim from §rendering, which keeps the heap-recursive `reprVal`/
 `printOne`/`strOfValH` built on top of them. -/
 
 /-- The fixed decimal conversion budget used by this tier. CPython 3.9 permits
-the process to configure a limit as low as 640 digits; choosing 1024 admits a
-larger configuration-independent slice while keeping rendering bounded. -/
-def intDigitBudget : Nat := 1024
+the process to configure a limit as low as 640 digits; the pinned oracle
+uses its default 4300-digit limit, which is the tier's fixed rendering/parsing boundary. -/
+def intDigitBudget : Nat := 4300
 
-/-- Decimal integer rendering within the configuration-independent budget,
+/-- Decimal integer rendering within the fixed pinned budget,
 checked on the magnitude before materializing its digits. Kept opaque to
 symbolic simplification so unrelated branches do not expand the digit bound. -/
 @[irreducible] def intDecimal (value : Int) : Option String :=
@@ -1745,7 +1745,7 @@ def intOfStr (text : String) (base : Nat := 10) : Res RVal :=
   if !characters.all (fun character => character.toNat < 128) then
     .unsupported "int() of this str contains non-decimal Unicode characters outside the tier (docs/memory-model.md §the cast tier)"
   else if intDigitCount characters base > intDigitBudget then
-    .unsupported "int() of this str exceeds the tier's 1024-digit budget (CPython's configured conversion limit is not guessed; docs/memory-model.md §the cast tier)"
+    .unsupported "int() of this str exceeds the tier's 4300-digit budget (CPython's configured conversion limit is not guessed; docs/memory-model.md §the cast tier)"
   else
     match radixInt characters base with
     | some value => .ok (.int value)
@@ -1762,7 +1762,7 @@ the same bytes-rendered `ValueError` path as other malformed forms. -/
 def intOfBytes (values : Array UInt8) (base : Nat := 10) : Res RVal :=
   let octets := values.toList
   if intDigitCount (octets.map (fun octet => Char.ofNat octet.toNat)) base > intDigitBudget then
-    .unsupported "int() of these bytes exceeds the tier's 1024-digit budget (CPython's configured conversion limit is not guessed; docs/memory-model.md §the cast tier)"
+    .unsupported "int() of these bytes exceeds the tier's 4300-digit budget (CPython's configured conversion limit is not guessed; docs/memory-model.md §the cast tier)"
   else
     let characters := octets.map (fun octet => Char.ofNat octet.toNat)
     match radixInt characters base with

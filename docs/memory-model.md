@@ -2698,11 +2698,11 @@ using the original string's CPython `repr` truncated to 200 rendered
 characters, even when that cuts an escape or the closing quote. Rendering
 reuses `reprStr`, not a second quote/escape implementation.
 
-The tier admits at most **1024 ASCII digits in the entire original string**,
+The tier admits at most **4300 ASCII digits in the entire original string**,
 counted before syntax validation. This fixed budget keeps kernel rendering
 bounded while covering the ordinary pinned CPython 3.9 configuration (whose
-default is 4,300 digits). A process configured below 1024 is outside the
-model's pinned oracle; above 1024, even an invalid spelling's exception depends
+default is 4,300 digits). A process configured below 4300 is outside the
+model's pinned oracle; above 4300, even an invalid spelling's exception depends
 on that setting and on validation order, so the model refuses rather than guesses. Signs, underscores, and surrounding
 whitespace do not consume the digit budget; whitespace length is not
 bounded. Unicode decimal digits and Unicode whitespace use the same
@@ -2729,8 +2729,8 @@ consume a prefix only when it matches the base. Invalid-literal errors name
 the requested base, including zero, and reuse the original value's repr with
 CPython's 200-character truncation.
 
-Decimal conversion retains the 1024-digit count above. Other bases bound all
-ASCII alphanumeric characters in the original input to 1024, including the
+Decimal conversion retains the 4300-digit count above. Other bases bound all
+ASCII alphanumeric characters in the original input to 4300, including the
 prefix; this is a conservative resource bound, also for power-of-two bases
 that CPython exempts from its configurable conversion limit. Other Unicode
 input and heap conversion protocols remain unfinished and loud.
@@ -2743,7 +2743,7 @@ all bases, prefix/underscore errors, validation precedence and retained effects.
 
 `intDecimal` is the single pure renderer for integer decimal text. It checks
 `value.natAbs < 10 ^ intDigitBudget` BEFORE `toString`, admitting exactly
-magnitudes with at most 1024 decimal digits, including zero; the negative sign
+magnitudes with at most 4300 decimal digits, including zero; the negative sign
 does not consume the budget. This uses the existing parsing budget, moved
 above the scalar rendering block so the conversion has one source of truth.
 The helper remains kernel-reducible but is opaque to symbolic simplification:
@@ -2752,7 +2752,7 @@ walking symbolic programs. A rendering proof unfolds it explicitly when it
 has the magnitude bound.
 Larger magnitudes refuse, never a guessed `ValueError`: the pinned CPython
 3.9 oracle normally permits 4,300 digits, while a process may choose a lower
-or disabled limit. The model uses its fixed 1024-digit budget and does not
+or disabled limit. The model uses its fixed 4300-digit budget and does not
 consult host configuration.
 
 All integer-producing rendering paths use this admission: `strOfVal` for
@@ -3741,7 +3741,7 @@ through that depth while keeping rendering cost independent of the caller's
 fuel; deeper structures remain loud.
 
 Every displayed integer, including range fields and nested dict keys, also
-obeys the fixed 1024-digit magnitude admission described
+obeys the fixed 4300-digit magnitude admission described
 in §decimal integer rendering. An over-budget integer makes the rendering
 refuse; it never invents the process-dependent decimal conversion exception.
 
@@ -4979,7 +4979,7 @@ flag, width, precision, length modifier, or mapping key. Per conversion:
 * `%x` is bounded lowercase hexadecimal over the same `asInt` inventory
   (negative values keep a leading `-`; bools coerce), else the faithful
   integer-required `TypeError`. Its digit count uses the same fixed budget.
-  All integer conversions share `intDecimal`/`intHex`'s 1024-digit magnitude
+  All integer conversions share `intDecimal`/`intHex`'s 4300-digit magnitude
   budget (§decimal integer rendering); larger integers refuse loudly.
 * A CONTAINER argument (tuple/namedtuple/list/range) under `%s`/`%r` is
   LOUD: its `repr` is `reprVal`'s heap-recursive walk and this operator

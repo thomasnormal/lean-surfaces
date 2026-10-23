@@ -80,7 +80,7 @@ fields and explicit empty format specifications. ASCII conversion, nonempty
 format specifications, and custom formatting protocols remain unfinished gaps.
 
 [`decimal_render`](decimal_render/) proves that `str(value)` returns the exact
-decimal string when `value.natAbs < 10 ^ 1024`. The same magnitude admission
+decimal string when `value.natAbs < 10 ^ 4300`. The same magnitude admission
 guards integer fields in container and range rendering and bare `%s`/`%r`/`%d`;
 larger values refuse rather than guessing CPython's configurable digit limit.
 

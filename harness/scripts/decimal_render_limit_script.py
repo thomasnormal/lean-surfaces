@@ -1,2 +1,2 @@
-value = 10 ** 1025 - 1
+value = 10 ** 4301 - 1
 print(str(value))

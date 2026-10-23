@@ -7,13 +7,13 @@ open LeanModels LeanModels.Python
 load_program repr_lab from "Examples/python/repr_lab/repr_lab.json"
 
 set_option maxRecDepth 8192
-set_option exponentiation.threshold 1024
+set_option exponentiation.threshold 4300
 
 theorem boolean_repr (value : PyBool) :
     repr_lab.of(value) ==> (if value then "True" else "False") := by
   py_prove [repr_lab, reprVal]
 
-theorem integer_repr (value : PyInt) (valueBound : value.natAbs < 10 ^ 1024) :
+theorem integer_repr (value : PyInt) (valueBound : value.natAbs < 10 ^ 4300) :
     repr_lab.of(value) ==> toString value := by
   have rendered : intDecimal value = some (toString value) := by
     unfold intDecimal

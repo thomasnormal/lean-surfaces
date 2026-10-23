@@ -104,6 +104,17 @@ the non-ASCII wall for `%r`, f-string repr conversion, and nested tuple/list/
 dict/namedtuple rendering on the admitted table; code points above Latin-1
 remain loud because the full Unicode printability database is not represented.
 
+## 2026-10-23-pycomplete-65 — pinned decimal rendering budget
+
+The shared integer conversion budget is now pinned to CPython 3.9's default
+`sys.get_int_max_str_digits()` boundary: scalar decimal rendering and explicit
+base parsing admit values with at most 4300 digits, while 4301-digit values
+refuse before conversion. The same boundary is used by `str`, `print`, f-strings,
+percent formatting, `repr`, ranges, tuples, lists, dicts, namedtuples, and the
+ASCII `int(str)`/`int(bytes)` parsers. This keeps the tier deterministic while
+covering the oracle's ordinary default; processes configured below or above
+4300 remain outside the pinned model.
+
 ## 2026-10-23-pycomplete-63 — Latin-1 string case mapping
 
 String `swapcase`, `isupper`, `islower`, and `upper` now admit CPython's

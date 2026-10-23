@@ -14,9 +14,9 @@ change is listed here under **Changed** or **Removed**.
 
 ### Changed
 
-- The fixed decimal parsing and rendering budget is now 1024 digits. `int`,
+- The fixed decimal parsing and rendering budget is now 4300 digits. `int`,
   `str`, `print`, f-strings, percent formatting, and nested container, range,
-  and namedtuple rendering admit the wider boundary and refuse larger values.
+  and namedtuple rendering admit the pinned CPython default boundary and refuse larger values.
 - The integer three-argument `pow` builtin now handles positive moduli and
   nonnegative exponents, including the faithful zero-modulus `ValueError`.
 - Heap-backed `list * int` and `int * list` now allocate fresh repeated lists

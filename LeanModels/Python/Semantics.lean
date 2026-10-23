@@ -1210,6 +1210,14 @@ def floatNumber (value : RVal) : Res Float64 :=
       | Option.none => .exn (.overflowError "int too large to convert to float")
     | Option.none => .unsupported "float arithmetic with a nonnumeric operand requires its numeric protocol"
 
+def floatIsInteger (value : Float64) : Bool :=
+  let exponent := value.exponent
+  if exponent == 2047 then false
+  else if exponent == 0 then value.fraction == 0
+  else if exponent < 1023 then false
+  else if exponent >= 1075 then true
+  else value.fraction % 2 ^ (1075 - exponent) == 0
+
 def evalFloatArithmetic (operator : Float64.ArithmeticOp) (left right : RVal) : Res RVal := do
   let leftNumber ← floatNumber left
   let rightNumber ← floatNumber right
@@ -5583,10 +5591,12 @@ knows; soundness is then per receiver kind, and every kind is covered:
 
 * `.get` — the dict READ. The one member with a live `.ok` arm that
   touches the heap, and it only reads (`heapGet`).
-* `swapcase`/`isupper`/`islower`/`upper`/`index` — the PURE str methods
+* `swapcase`/`isupper`/`islower`/`upper`/`index`/`join` — the PURE str methods
   (H5 strings). Strings are immutable VALUES: each arm is argument
   evaluation followed by `Run.liftRes` on a total pure worker, so the
   world rides through untouched.
+* `is_integer` — the zero-argument float predicate. It is a pure numeric
+  query and returns `False` for NaN and infinities, matching CPython.
 
 Every other receiver is vacuous for `.ok`-invariance rather than merely
 unlikely, which is why this is sound and not optimistic. On a heap
@@ -5601,6 +5611,7 @@ call, which CONSUMES a reading and so changes the world. -/
 def heapFreeAttr (attr : String) : Bool :=
   attr == "get" || attr == "swapcase" || attr == "isupper"
     || attr == "islower" || attr == "upper" || attr == "index" || attr == "join"
+    || attr == "is_integer"
 
 /-- A whitelisted attribute is not some OTHER name — the shape every
 soundness step below wants (each `attrCallPlan`/`strCallPlan` branch is
@@ -7070,6 +7081,14 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                | [v] => Run.liftRes st (strJoinH st.world.heap sv v)
                | vs => .exn st (.typeError s!"str.join() takes exactly one argument ({vs.length} given)")
              | .refuse msg => .unsupported msg)
+          | .float fv =>
+            if attr == "is_integer" then
+              evalExprs m fuel st args.toList ⤳ fun st vs =>
+              match vs with
+              | [] => .ok st (.bool (floatIsInteger fv))
+              | vs => .exn st (.typeError s!"float.is_integer() takes no arguments ({vs.length} given)")
+            else
+              .unsupported s!"method call '.{attr}' on 'float' is outside the tier"
           | r =>
             .unsupported s!"method call '.{attr}' on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
         | f => .unsupported s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"

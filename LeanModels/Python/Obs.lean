@@ -790,6 +790,14 @@ theorem fuelMono (fuel : Nat) :
                     | exact Run.le_refl _
                     | exact Run.le_bind (ihEs m st cargs.toList k hk)
                         fun st vs => Run.le_refl _
+                case float fv =>
+                  -- `float.is_integer()` is a pure zero-argument query;
+                  -- argument evaluation is the only recursive part.
+                  dsimp only
+                  split
+                  · exact Run.le_bind (ihEs m st cargs.toList k hk)
+                      fun st vs => Run.le_refl _
+                  · exact Run.le_refl _
               case name fname _ =>
                 dsimp only
                 cases Env.lookup st.locals fname with
@@ -2477,6 +2485,18 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                      | exact .liftResF h₂ _
                      | exact .exn
                      | exact .unsupported)
+            case float fv =>
+              -- `float.is_integer()` preserves the world after its
+              -- arguments have been evaluated, and its arity error is an
+              -- exception carrying that same state.
+              dsimp only
+              split
+              · refine .bind ((ihEs st₁ cargs.toList hargsF).mono
+                  (wtrans st st₁ h₁)) fun st₂ vs h₂ => ?_
+                cases vs with
+                | nil => exact .okF h₂ _
+                | cons _ _ => exact .exn
+              · exact .unsupported
           case name fname _ =>
             -- H2: `sorted` ALLOCATES its result, so the fragment excludes
             -- it (hfree carries `fname != "sorted"` — the branch is

@@ -33,6 +33,14 @@ payload-blind, clock-erased, and fuel-monotone pure-worker treatment as the
 existing two-argument `pow` path. `arith` proves positive, negative-base, and
 zero-modulus cases; the negative-exponent row remains an explicit refusal.
 
+## 2026-10-23-pycomplete-56 — `float.is_integer()`
+
+The scalar `float.is_integer()` method now returns the exact CPython boolean
+for finite binary64 values, including signed zero and large integral values;
+NaN and infinities return `False`, and nonzero argument counts retain the
+faithful positional-only `TypeError`. The trunk and monadic evaluators and
+their fuel/world proof walkers cover the pure method call.
+
 ## 2026-10-22-pycomplete-49 — public baseline and the next ordinary-language inch
 
 The first post-public-master baseline was measured from `2730f338` (the

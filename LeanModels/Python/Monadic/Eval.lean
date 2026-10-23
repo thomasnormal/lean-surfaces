@@ -878,6 +878,14 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
               | .str sv => do
                   let vs ← evalOpenList K m args.toList
                   applyStrMethod sv (strCallPlan attr) vs
+              | .float fv =>
+                  if attr == "is_integer" then do
+                    let vs ← evalOpenList K m args.toList
+                    match vs with
+                    | [] => pure (.bool (floatIsInteger fv))
+                    | vs => raisePy (.typeError s!"float.is_integer() takes no arguments ({vs.length} given)")
+                  else
+                    refuse s!"method call '.{attr}' on 'float' is outside the tier"
               | r =>
                   refuse s!"method call '.{attr}' on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
           | f => refuse s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"

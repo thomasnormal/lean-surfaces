@@ -12,6 +12,7 @@ set_option exponentiation.threshold 2048
 #py_check float_lab.mixed_left() = Val.float (Float64.ofBits 0x4004000000000000)
 #py_check float_lab.mixed_right() = Val.float (Float64.ofBits 0x4004000000000000)
 #py_check float_lab.integer_true() = Float64.ofBits 0x4004000000000000
+#py_check float_lab.attribute_still_loud() = true
 #py_check float_lab.signed_zero() = Val.float (Float64.ofBits 0x8000000000000000)
 #py_check float_lab.comparisons() =
     Val.tuple #[.bool true, .bool false, .bool true]

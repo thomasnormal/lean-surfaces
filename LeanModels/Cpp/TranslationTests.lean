@@ -371,6 +371,13 @@ private def temporaryObjectTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "o"), ("kind", .string "CXXTemporaryObjectExpr"),
         ("name", .string "temporary"), ("inner", .array [])]])]}
 
+private def cxxConstructExpressionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "c"), ("kind", .string "CXXConstructExpr"),
+        ("name", .string "construct"), ("inner", .array [])]])]}
+
 private def newTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -864,6 +871,9 @@ def expressionWithCleanupsTranslationWitness : Except String Unit :=
 def temporaryObjectTranslationWitness : Except String Unit :=
   admitCXXTemporaryObjectExpression temporaryObjectTranslation [0]
 
+def cxxConstructExpressionTranslationWitness : Except String Unit :=
+  admitCXXConstructExpression cxxConstructExpressionTranslation [0]
+
 def newTranslationWitness : Except String Unit :=
   admitCXXNewExpression newTranslation [0]
 
@@ -1183,6 +1193,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard temporaryObjectTranslationWitness matches .ok ()
 #guard admitCXXTemporaryObjectExpression temporaryObjectTranslation [] matches .error _
 #guard admitCXXTemporaryObjectExpression functionTranslation [0] matches .error _
+#guard cxxConstructExpressionTranslationWitness matches .ok ()
+#guard admitCXXConstructExpression cxxConstructExpressionTranslation [] matches .error _
+#guard admitCXXConstructExpression functionTranslation [0] matches .error _
 #guard newTranslationWitness matches .ok ()
 #guard admitCXXNewExpression newTranslation [] matches .error _
 #guard admitCXXNewExpression functionTranslation [0] matches .error _

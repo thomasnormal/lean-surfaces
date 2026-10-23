@@ -183,6 +183,9 @@ def admitExpressionWithCleanups (artifact : Artifact) (path : List Nat) :
 def admitCXXTemporaryObjectExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXTemporaryObjectExpr" "temporary-object"
 
+def admitCXXConstructExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXConstructExpr" "construct-expression"
+
 def admitCXXNewExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXNewExpr" "new-expression"
 

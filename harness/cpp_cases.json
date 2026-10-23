@@ -539,6 +539,17 @@
     "rung": 1
   },
   {
+    "id": "translation.cxx-construct-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "cxxConstructExpressionTranslationWitness",
+    "cpp_source": "struct S { S() {} }; int f() { return (S(), 0); }",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "translation.new-expression",
     "kind": "translation",
     "corpus": "translation witness",

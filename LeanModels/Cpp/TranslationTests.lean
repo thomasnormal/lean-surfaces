@@ -933,6 +933,13 @@ private def ompTargetExitDataDirectiveTranslation : Artifact := {emptyTranslatio
       .object [("id", .string "o"), ("kind", .string "OMPTargetExitDataDirective"),
         ("name", .string "target-exit-data"), ("inner", .array [])]])]}
 
+private def ompTargetParallelDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPTargetParallelDirective"),
+        ("name", .string "target-parallel"), ("inner", .array [])]])]}
+
 private def ompTargetUpdateDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1645,6 +1652,9 @@ def ompTargetEnterDataDirectiveTranslationWitness : Except String Unit :=
 def ompTargetExitDataDirectiveTranslationWitness : Except String Unit :=
   admitOMPTargetExitDataDirective ompTargetExitDataDirectiveTranslation [0]
 
+def ompTargetParallelDirectiveTranslationWitness : Except String Unit :=
+  admitOMPTargetParallelDirective ompTargetParallelDirectiveTranslation [0]
+
 def ompTargetUpdateDirectiveTranslationWitness : Except String Unit :=
   admitOMPTargetUpdateDirective ompTargetUpdateDirectiveTranslation [0]
 
@@ -2198,6 +2208,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompTargetExitDataDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTargetExitDataDirective ompTargetExitDataDirectiveTranslation [] matches .error _
 #guard admitOMPTargetExitDataDirective functionTranslation [0] matches .error _
+#guard ompTargetParallelDirectiveTranslationWitness matches .ok ()
+#guard admitOMPTargetParallelDirective ompTargetParallelDirectiveTranslation [] matches .error _
+#guard admitOMPTargetParallelDirective functionTranslation [0] matches .error _
 #guard ompTargetUpdateDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTargetUpdateDirective ompTargetUpdateDirectiveTranslation [] matches .error _
 #guard admitOMPTargetUpdateDirective functionTranslation [0] matches .error _

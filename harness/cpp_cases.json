@@ -1254,6 +1254,17 @@
     "rung": 4
   },
   {
+    "id": "translation.openacc-asterisk-size-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "openACCAsteriskSizeExpressionTranslationWitness",
+    "cpp_source": "void f() {\n#pragma acc tile sizes(*)\nfor (int i = 0; i < 1; ++i) {}\n}",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.omp-metadirective",
     "kind": "translation",
     "corpus": "translation witness",

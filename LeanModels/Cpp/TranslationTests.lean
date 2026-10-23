@@ -842,6 +842,13 @@ private def openACCCacheConstructTranslation : Artifact := {emptyTranslation wit
       .object [("id", .string "o"), ("kind", .string "OpenACCCacheConstruct"),
         ("name", .string "cache"), ("inner", .array [])]])]}
 
+private def openACCAsteriskSizeExpressionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OpenACCAsteriskSizeExpr"),
+        ("name", .string "asterisk"), ("inner", .array [])]])]}
+
 private def ompMetadirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1893,6 +1900,9 @@ def openACCAtomicConstructTranslationWitness : Except String Unit :=
 def openACCCacheConstructTranslationWitness : Except String Unit :=
   admitOpenACCCacheConstruct openACCCacheConstructTranslation [0]
 
+def openACCAsteriskSizeExpressionTranslationWitness : Except String Unit :=
+  admitOpenACCAsteriskSizeExpression openACCAsteriskSizeExpressionTranslation [0]
+
 def ompMetadirectiveTranslationWitness : Except String Unit :=
   admitOMPMetadirective ompMetadirectiveTranslation [0]
 
@@ -2569,6 +2579,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard openACCCacheConstructTranslationWitness matches .ok ()
 #guard admitOpenACCCacheConstruct openACCCacheConstructTranslation [] matches .error _
 #guard admitOpenACCCacheConstruct functionTranslation [0] matches .error _
+#guard openACCAsteriskSizeExpressionTranslationWitness matches .ok ()
+#guard admitOpenACCAsteriskSizeExpression openACCAsteriskSizeExpressionTranslation [] matches .error _
+#guard admitOpenACCAsteriskSizeExpression functionTranslation [0] matches .error _
 #guard ompMetadirectiveTranslationWitness matches .ok ()
 #guard admitOMPMetadirective ompMetadirectiveTranslation [] matches .error _
 #guard admitOMPMetadirective functionTranslation [0] matches .error _

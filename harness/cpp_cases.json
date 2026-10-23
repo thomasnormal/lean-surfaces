@@ -1232,6 +1232,17 @@
     "rung": 4
   },
   {
+    "id": "translation.openacc-atomic-construct",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "openACCAtomicConstructTranslationWitness",
+    "cpp_source": "void f(int *p) {\n#pragma acc atomic update\n*p += 1;\n}",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.omp-metadirective",
     "kind": "translation",
     "corpus": "translation witness",

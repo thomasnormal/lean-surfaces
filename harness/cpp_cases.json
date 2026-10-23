@@ -990,6 +990,17 @@
     "rung": 3
   },
   {
+    "id": "translation.cxx-inherited-constructor-init-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "cxxInheritedConstructorInitTranslationWitness",
+    "cpp_source": "struct B { B(int); }; struct D : B { using B::B; };",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

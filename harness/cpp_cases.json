@@ -858,6 +858,17 @@
     "rung": 3
   },
   {
+    "id": "translation.cxx-fold-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "cxxFoldTranslationWitness",
+    "cpp_source": "template<class... T> int f(T... values) { return (values + ...); }",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

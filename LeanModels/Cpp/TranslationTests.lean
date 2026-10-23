@@ -590,6 +590,13 @@ private def cxxTypeidTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "t"), ("kind", .string "CXXTypeidExpr"),
         ("name", .string "typeid"), ("inner", .array [])]])]}
 
+private def cxxFoldTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "f"), ("kind", .string "CXXFoldExpr"),
+        ("name", .string "fold"), ("inner", .array [])]])]}
+
 private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1015,6 +1022,9 @@ def cxxNoexceptTranslationWitness : Except String Unit :=
 def cxxTypeidTranslationWitness : Except String Unit :=
   admitCXXTypeidExpression cxxTypeidTranslation [0]
 
+def cxxFoldTranslationWitness : Except String Unit :=
+  admitCXXFoldExpression cxxFoldTranslation [0]
+
 def conditionalOperatorTranslationWitness : Except String Unit :=
   admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
@@ -1361,6 +1371,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard cxxTypeidTranslationWitness matches .ok ()
 #guard admitCXXTypeidExpression cxxTypeidTranslation [] matches .error _
 #guard admitCXXTypeidExpression functionTranslation [0] matches .error _
+#guard cxxFoldTranslationWitness matches .ok ()
+#guard admitCXXFoldExpression cxxFoldTranslation [] matches .error _
+#guard admitCXXFoldExpression functionTranslation [0] matches .error _
 #guard conditionalOperatorTranslationWitness matches .ok ()
 #guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
 #guard admitConditionalOperatorExpression functionTranslation [0] matches .error _

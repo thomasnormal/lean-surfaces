@@ -76,6 +76,18 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_nested_array_pattern_writes_all_leaf_cells(self):
+        design = extract_source(
+            "module top; int value [0:1][0:2]; "
+            "initial value = '{2{'{3{7}}}}; endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual([a["target"]["name"] for a in assigns],
+                         ["value[0][0]", "value[0][1]", "value[0][2]",
+                          "value[1][0]", "value[1][1]", "value[1][2]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_wrong_length_replicated_pattern_stays_loud(self):
         design = extract_source(
             "module top; logic [7:0] value [0:2]; "

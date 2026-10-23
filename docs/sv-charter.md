@@ -5317,6 +5317,19 @@ partial files **17,386 → 17,385**; `AssignmentExpression:target` falls
 disagreements, and 4 recorded refusals**; grammar coverage remains **202
 witnesses, 71 MATCH, and 131 REFUSE**.
 
+### Nested fixed-array assignment patterns — 2026-10-23
+
+Complete assignment patterns over finite multidimensional unpacked arrays now
+flatten through every dimension into ordinary vector-cell writes. Replication
+is expanded at each dimension, source cells are sampled before writes, and
+dynamic, partial, aliased, or aggregate-element patterns remain loud. The
+`unpacked_array_nested_pattern` fixture and differential row cover nested
+replication. On the 22,045-file corpus snapshot, clean files move **4,604 →
+4,612** and partial files **17,375 → 17,367**; `AssignmentExpression:target`
+falls **3,535 → 3,524**. Differential coverage is **52 rows, 48 matches, 0
+disagreements, and 4 recorded refusals**; grammar coverage remains **202
+witnesses, 71 MATCH, and 131 REFUSE**.
+
 ### Nested integral unpacked-struct patterns — 2026-10-23
 
 Complete nested assignment patterns for flattened integral unpacked structs now

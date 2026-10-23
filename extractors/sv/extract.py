@@ -1837,6 +1837,87 @@ def _fixed_array_pattern_assignment(sm, expr):
         return None
 
 
+def _fixed_array_nested_pattern_assignment(sm, expr):
+    """Lower complete assignment patterns over nested fixed arrays.
+
+    Declaration lowering already flattens finite dimensions with
+    `_fixed_array_pattern_elements`; use the same expansion for procedural
+    writes so each leaf is an ordinary vector-cell assignment. Dynamic,
+    partial, aggregate-element, and aliasing patterns remain unsupported.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None or not _storage_expression(expr.left)):
+            return None
+        array_type = expr.left.type.canonicalType
+        if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
+            return None
+        shape = _fixed_array_dimensions(array_type)
+        if shape is None:
+            return None
+        dimensions, leaf_type = shape
+        if len(dimensions) <= 1:
+            return None
+        if type(leaf_type).__name__ in ("FixedSizeUnpackedArrayType", "UnpackedStructType",
+                                        "UnpackedUnionType", "DynamicArrayType",
+                                        "QueueType", "AssociativeArrayType"):
+            return None
+        width, two_state, reason = type_width_2s(leaf_type)
+        if width is None or reason is not None:
+            return None
+        pattern_kind = type(expr.right).__name__
+        if pattern_kind not in ("SimpleAssignmentPatternExpression",
+                                "StructuredAssignmentPatternExpression",
+                                "ReplicatedAssignmentPatternExpression"):
+            return None
+        elements = _fixed_array_pattern_elements(expr.right, dimensions)
+        if elements is None:
+            return None
+        positions = [()]
+        for left, right in dimensions:
+            step = 1 if right >= left else -1
+            positions = [prefix + (position,)
+                         for prefix in positions
+                         for position in range(left, right + step, step)]
+        if len(elements) != len(positions):
+            return None
+        base = _array_storage_name(expr.left.symbol)
+        values = []
+        for element in elements:
+            if not _case_source_expression_ok(element, packed_members=True):
+                return None
+            reads_target = False
+            def inspect(node):
+                nonlocal reads_target
+                if type(node).__name__ in ("NamedValueExpression", "HierarchicalValueExpression"):
+                    try:
+                        reads_target = reads_target or _array_storage_name(node.symbol) == base
+                    except Exception:
+                        reads_target = True
+            _visit_selected_expression(element, inspect)
+            if reads_target:
+                return None
+            value = convert_expr(sm, element)
+            if (value is None or value.get("kind") == "Unsupported"
+                    or width_of(value) != width or not _case_expression_ok(value)):
+                return None
+            values.append(squash2_wrap(value, width) if two_state else value)
+        stmts = []
+        for indexes, value in zip(positions, values):
+            name = base + "".join(f"[{position}]" for position in indexes)
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                           "width": width, "name": name},
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts,
+                "fixed_array_nested_pattern_lowered": True}
+    except Exception:
+        return None
+
+
 def _unpacked_struct_copy_assignment(sm, expr):
     """Lower a whole copy of a flattened integral unpacked struct.
 
@@ -5834,6 +5915,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         array_pattern_lhs = _fixed_array_pattern_lhs_assignment(sm, expr)
         if array_pattern_lhs is not None:
             return array_pattern_lhs
+        array_nested_pattern = _fixed_array_nested_pattern_assignment(sm, expr)
+        if array_nested_pattern is not None:
+            return array_nested_pattern
         array_slice = _fixed_array_slice_pattern_assignment(sm, expr)
         if array_slice is not None:
             return array_slice

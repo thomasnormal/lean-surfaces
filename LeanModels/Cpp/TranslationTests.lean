@@ -807,6 +807,13 @@ private def ompTeamsDirectiveTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "o"), ("kind", .string "OMPTeamsDirective"),
         ("name", .string "teams"), ("inner", .array [])]])]}
 
+private def ompTeamsDistributeDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPTeamsDistributeDirective"),
+        ("name", .string "teams-distribute"), ("inner", .array [])]])]}
+
 private def ompDistributeDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1423,6 +1430,9 @@ def ompTaskloopSimdDirectiveTranslationWitness : Except String Unit :=
 def ompTeamsDirectiveTranslationWitness : Except String Unit :=
   admitOMPTeamsDirective ompTeamsDirectiveTranslation [0]
 
+def ompTeamsDistributeDirectiveTranslationWitness : Except String Unit :=
+  admitOMPTeamsDistributeDirective ompTeamsDistributeDirectiveTranslation [0]
+
 def ompDistributeDirectiveTranslationWitness : Except String Unit :=
   admitOMPDistributeDirective ompDistributeDirectiveTranslation [0]
 
@@ -1904,6 +1914,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompTeamsDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTeamsDirective ompTeamsDirectiveTranslation [] matches .error _
 #guard admitOMPTeamsDirective functionTranslation [0] matches .error _
+#guard ompTeamsDistributeDirectiveTranslationWitness matches .ok ()
+#guard admitOMPTeamsDistributeDirective ompTeamsDistributeDirectiveTranslation [] matches .error _
+#guard admitOMPTeamsDistributeDirective functionTranslation [0] matches .error _
 #guard ompDistributeDirectiveTranslationWitness matches .ok ()
 #guard admitOMPDistributeDirective ompDistributeDirectiveTranslation [] matches .error _
 #guard admitOMPDistributeDirective functionTranslation [0] matches .error _

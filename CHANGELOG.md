@@ -18,7 +18,8 @@ change is listed here under **Changed** or **Removed**.
   `str`, `print`, f-strings, percent formatting, and nested container, range,
   and namedtuple rendering admit the pinned CPython default boundary and refuse larger values.
 - The integer three-argument `pow` builtin now handles positive moduli and
-  nonnegative exponents, including the faithful zero-modulus `ValueError`.
+  nonnegative and bounded negative exponents, including the faithful
+  zero-modulus and non-invertible-base `ValueError`s.
 - Heap-backed `list * int` and `int * list` now allocate fresh repeated lists
   on the monadic interpreter, with CPython's index-size and materialization
   bounds; the value-side proof interpreter keeps this stateful shape loud.

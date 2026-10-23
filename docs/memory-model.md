@@ -1849,9 +1849,12 @@ unbounded kernel `Int.pow`, rather than risking an internal abort or inventing
 floating result. The builtin `pow(x, n)` shares this path. The three-argument
 `pow(x, n, m)` form admits integer arguments with a
 positive modulus and a nonnegative exponent, using Python's nonnegative
-remainder. Zero modulus keeps CPython's `ValueError`; negative exponents,
-negative moduli, and non-integral arguments remain loud until modular inverse
-and protocol semantics are pinned.
+remainder. Zero modulus keeps CPython's `ValueError`. Negative exponents use a
+bounded extended-Euclid modular inverse and preserve CPython's
+`base is not invertible for the given modulus` `ValueError`; negative moduli
+and non-integral arguments remain loud until those protocols are modeled.
+The `arith` acceptance matrix pins both the invertible and non-invertible
+negative-exponent paths.
 
 ## Dict iteration — the census, and the tier it forces (§L51 rung 3)
 

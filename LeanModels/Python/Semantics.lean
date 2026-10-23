@@ -3407,9 +3407,27 @@ def powMod (base exponent modulus : Int) : Int :=
   powModFuel shiftBudget exponent.toNat (Int.emod base modulus) modulus
     (Int.emod 1 modulus)
 
+/-/ Extended Euclid for modular inverses. The remainder operands stay
+nonnegative because the caller normalises the base and requires a positive
+modulus; the coefficient may be signed. -/
+def modInverseFuel : Nat → Int → Int → Int → Int → Option (Int × Int)
+  | 0, _, _, _, _ => Option.none
+  | fuel + 1, oldR, r, oldS, s =>
+      if r = 0 then
+        some (oldR, oldS)
+      else
+        let q := Int.fdiv oldR r
+        modInverseFuel fuel r (Int.emod oldR r) s (oldS - q * s)
+
+def modInverse (base modulus : Int) : Option Int :=
+  match modInverseFuel shiftBudget (Int.emod base modulus) modulus 1 0 with
+  | some (gcd, coefficient) =>
+      if gcd = 1 then some (Int.emod coefficient modulus) else Option.none
+  | Option.none => Option.none
+
 /-- The three-argument integer `pow` slice. Positive moduli use Python's
-nonnegative remainder; negative exponents and non-integral protocol cases stay
-loud until modular inverses and those protocols have a pinned model. -/
+nonnegative remainder; negative exponents use a bounded extended-Euclid
+modular inverse, while non-integral protocol cases stay loud. -/
 def powModArgs : List RVal → Res RVal
   | [base, exponent, modulus] =>
     match asInt base, asInt exponent, asInt modulus with
@@ -3419,7 +3437,12 @@ def powModArgs : List RVal → Res RVal
       else if m < 0 then
         .unsupported "pow() with a negative modulus is outside the tier"
       else if y < 0 then
-        .unsupported "pow() with a negative exponent and modulus is outside the tier"
+        if y.natAbs > shiftBudget then
+          .unsupported "pow() modular exponent beyond shiftBudget is outside the tier"
+        else
+          match modInverse x m with
+          | some inverse => .ok (.int (powMod inverse y.natAbs m))
+          | Option.none => .exn (.valueError "base is not invertible for the given modulus")
       else if y.natAbs > shiftBudget then
         .unsupported "pow() modular exponent beyond shiftBudget is outside the tier"
       else

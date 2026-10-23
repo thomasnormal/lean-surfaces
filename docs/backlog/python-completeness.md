@@ -24,14 +24,14 @@ three-argument `pow` builtin. Its single curated refusal was a pure integer
 operation, unlike the larger list-repetition and exception-handler walls.
 The tier now admits integer bases, nonnegative exponents, and positive
 moduli, computes Python's nonnegative remainder, and preserves the exact
-zero-modulus `ValueError`. Negative exponents, negative moduli, and
-non-integral arguments remain loud until modular inverses and conversion
-protocols are modeled.
+zero-modulus `ValueError`. Negative exponents use bounded modular inverses
+and preserve the exact non-invertible-base `ValueError`; negative moduli and
+non-integral arguments remain loud until those protocols are modeled.
 
 The change uses one `powModArgs` worker in both interpreters, with the same
 payload-blind, clock-erased, and fuel-monotone pure-worker treatment as the
-existing two-argument `pow` path. `arith` proves positive, negative-base, and
-zero-modulus cases; the negative-exponent row remains an explicit refusal.
+existing two-argument `pow` path. `arith` proves positive, negative-base,
+zero-modulus, and invertible and non-invertible negative-exponent cases.
 
 ## 2026-10-23-pycomplete-56 — `float.is_integer()`
 

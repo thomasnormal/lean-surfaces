@@ -41,7 +41,9 @@ full differential matrix against CPython lives in harness/cases.json. -/
 #py_check arith.builtin_pow_mod(7, 0, 1) = 0
 #py_check arith.builtin_pow_mod(2, 3, 0) raises
   (.valueError "pow() 3rd argument cannot be 0")
-#guard (callFunction arith "builtin_pow_mod" #[.int 2, .int (-1), .int 5] 20 matches .unsupported _)
+#py_check arith.builtin_pow_mod(2, -1, 5) = 3
+#py_check arith.builtin_pow_mod(2, -1, 4) raises
+  (.valueError "base is not invertible for the given modulus")
 #py_check arith.choose(0, 5) = 5
 #py_check arith.choose(3, 7) = 3
 #py_check arith.chain(1, 2, 3) = true

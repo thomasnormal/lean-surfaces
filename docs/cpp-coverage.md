@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 159 | 0 | 0 | 0 | 0 | 159 |
+| 160 | 0 | 0 | 0 | 0 | 160 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -100,6 +100,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `translation.cxx-dependent-scope-member-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.cxx-default-argument-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.cxx-unresolved-construct-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
+| `translation.unresolved-lookup-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.conditional-operator-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.call-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.compound-assignment-operator` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |

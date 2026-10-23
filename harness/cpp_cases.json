@@ -946,6 +946,17 @@
     "rung": 3
   },
   {
+    "id": "translation.unresolved-lookup-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "unresolvedLookupTranslationWitness",
+    "cpp_source": "template<class T> int f(T value) { return helper(value); }",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

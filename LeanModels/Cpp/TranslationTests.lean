@@ -639,6 +639,13 @@ private def caseStatementTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "c"), ("kind", .string "CaseStmt"),
         ("name", .string "case"), ("inner", .array [])]])]}
 
+private def defaultStatementTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "d"), ("kind", .string "DefaultStmt"),
+        ("name", .string "default"), ("inner", .array [])]])]}
+
 private def declarationStatementTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -915,6 +922,9 @@ def switchStatementTranslationWitness : Except String Unit :=
 
 def caseStatementTranslationWitness : Except String Unit :=
   admitCaseStatement caseStatementTranslation [0]
+
+def defaultStatementTranslationWitness : Except String Unit :=
+  admitDefaultStatement defaultStatementTranslation [0]
 
 def declarationStatementTranslationWitness : Except String Unit :=
   admitDeclarationStatement declarationStatementTranslation [0]
@@ -1211,6 +1221,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard caseStatementTranslationWitness matches .ok ()
 #guard admitCaseStatement caseStatementTranslation [] matches .error _
 #guard admitCaseStatement functionTranslation [0] matches .error _
+#guard defaultStatementTranslationWitness matches .ok ()
+#guard admitDefaultStatement defaultStatementTranslation [] matches .error _
+#guard admitDefaultStatement functionTranslation [0] matches .error _
 #guard declarationStatementTranslationWitness matches .ok ()
 #guard admitDeclarationStatement declarationStatementTranslation [] matches .error _
 #guard admitDeclarationStatement functionTranslation [0] matches .error _

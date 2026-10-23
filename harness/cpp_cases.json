@@ -946,6 +946,17 @@
     "rung": 4
   },
   {
+    "id": "translation.default-statement",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "defaultStatementTranslationWitness",
+    "cpp_source": "int f(int value) { switch (value) { case 1: return 10; default: return 0; } }",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.break-statement",
     "kind": "translation",
     "corpus": "translation witness",

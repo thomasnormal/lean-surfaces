@@ -291,6 +291,9 @@ def admitSwitchStatement (artifact : Artifact) (path : List Nat) :
 def admitCaseStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CaseStmt" "case-statement"
 
+def admitDefaultStatement (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "DefaultStmt" "default-statement"
+
 def admitDeclarationStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "DeclStmt" "declaration-statement"
 

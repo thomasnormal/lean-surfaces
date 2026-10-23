@@ -1196,6 +1196,37 @@ def listRepeatH (h : Heap) (xs : Array RVal) (count : Int) : Res (Heap × RVal) 
   else
     .unsupported "list repetition beyond seqBudget is outside the tier (count magnitude or output element count; docs/memory-model.md §list repetition)"
 
+/-- Update an existing heap list for `xs *= count`.  The address is retained so
+aliases observe the in-place mutation, including the empty result for a
+non-positive count. -/
+def listRepeatUpdate (h : Heap) (a : Addr) (xs : Array RVal) (count : Int) : Res Heap :=
+  if count.natAbs > seqIndexBudget then
+    .exn (.overflowError "cannot fit 'int' into an index-sized integer")
+  else if count ≤ 0 then
+    match Heap.update h a (.list #[]) with
+    | some h' => .ok h'
+    | none => .unsupported "dangling list reference during augmented repetition"
+  else if count.natAbs ≤ seqBudget && xs.size * count.toNat ≤ seqBudget then
+    let ys := (List.replicate count.toNat xs.toList).flatten.toArray
+    match Heap.update h a (.list ys) with
+    | some h' => .ok h'
+    | none => .unsupported "dangling list reference during augmented repetition"
+  else
+    .unsupported "list repetition beyond seqBudget is outside the tier (count magnitude or output element count; docs/memory-model.md §list repetition)"
+
+def listRepeatUpdateM (a : Addr) (count : RVal) : SemF Unit := do
+  let h ← frameHeap
+  match Heap.get? h a with
+  | some (.list xs) =>
+      match asInt count with
+      | some n =>
+          let h' ← liftRes (listRepeatUpdate h a xs n)
+          heapPut h'
+      | none =>
+          raisePy (.typeError s!"can't multiply sequence by non-int of type '{RVal.typeNameH h count}'")
+  | some _ => refuse "augmented repetition receiver is not a list"
+  | none => refuse danglingMsg
+
 /-- Stateful multiplication dispatch for heap-backed lists. All other
 operators retain the pure worker used by the trunk interpreter. -/
 def binOpHM (op : BinOp) (a b : RVal) : SemF RVal := do
@@ -1295,10 +1326,18 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
           -- CPython order: the target is LOADED before the value is evaluated.
           match ← envGet id with
           | Option.none => raisePy (.nameError id)
+          | some (.ref a) =>
+              if op == .mult then
+                match Heap.get? (← frameHeap) a with
+                | some (.list _) => do
+                    let v ← evalOpen K m value
+                    listRepeatUpdateM a v
+                    pure .next
+                | _ => refuse "augmented assignment to a heap object is outside the H1 tier (docs/memory-model.md)"
+              else
+                refuse "augmented assignment to a heap object is outside the H1 tier (docs/memory-model.md)"
           | some (.listV _) =>
               refuse "augmented assignment to a list ('+=' mutates in place, visible through aliases) is outside the v0 tier"
-          | some (.ref _) =>
-              refuse "augmented assignment to a heap object is outside the H1 tier (docs/memory-model.md)"
           | some old => do
               let v ← evalOpen K m value
               let r ← binOpM op old v

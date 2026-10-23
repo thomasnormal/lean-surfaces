@@ -242,12 +242,20 @@ cycle DETECTION, never by running out of fuel).
   layering); the wrapper's freeze takes the PURE fast path on ref-free
   results (`RVal.refFree` — the `heapEq` doctrine at the boundary) and
   only ref-carrying results enter the fueled `freezeH`.
-* Loud, deliberately: list concatenation `+` and repetition (allocating
-  operators would evict every `BinOp` from the heap-free fragment — they
-  need an allocation-aware frame story first), `+=`/`.extend`,
+* Loud, deliberately: list concatenation `+` (an allocating operator that
+  would evict every `BinOp` from the heap-free fragment — it needs an
+  allocation-aware frame story first), `.extend`,
   `.remove/.index/.sort/...`, `del lst[i]`, comprehensions,
   `.get`-style method calls on lists (a faithful `AttributeError`
   awaiting a `PyErr` form).
+
+  The executable monadic tier now admits heap-list `*=` for integer and
+  Boolean counts. It updates the existing list address in place, so aliases
+  observe the repeated contents; non-positive counts clear the list, the
+  pinned index-sized conversion and `seqBudget` bounds are retained, and
+  non-integral counts keep the faithful `TypeError`. The proof interpreter
+  remains loud because its boundary list representation cannot express this
+  heap mutation.
 
 ## Class semantics (H3 inventory — BUILT, 2026-08-08)
 

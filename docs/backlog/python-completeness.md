@@ -115,6 +115,15 @@ ASCII `int(str)`/`int(bytes)` parsers. This keeps the tier deterministic while
 covering the oracle's ordinary default; processes configured below or above
 4300 remain outside the pinned model.
 
+## 2026-10-23-pycomplete-66 — heap-list augmented repetition
+
+Heap-backed list `*=` is now live on the executable monadic surface. The
+existing list address is updated in place, so aliases observe the repeated
+contents and zero or negative counts clear that same object. Integer and
+Boolean counts retain the pinned index-sized and `seqBudget` bounds, while
+non-integral counts preserve CPython's `TypeError`; the proof interpreter
+remains loud because its boundary list snapshot cannot express this mutation.
+
 ## 2026-10-23-pycomplete-63 — Latin-1 string case mapping
 
 String `swapcase`, `isupper`, `islower`, and `upper` now admit CPython's

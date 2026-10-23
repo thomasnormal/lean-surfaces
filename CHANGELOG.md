@@ -22,6 +22,9 @@ change is listed here under **Changed** or **Removed**.
 - Heap-backed `list * int` and `int * list` now allocate fresh repeated lists
   on the monadic interpreter, with CPython's index-size and materialization
   bounds; the value-side proof interpreter keeps this stateful shape loud.
+- Heap-backed list `*=` now updates the existing list address in place on the
+  monadic interpreter, so aliases observe the repeated contents; the proof
+  interpreter keeps this stateful mutation loud.
 - `int(str)` now admits CPython's Unicode decimal digits and whitespace through
   the shared float-text normalization table; unrelated Unicode remains loud.
 - `float(bytes)` now accepts ASCII decimal bytes through the shared float-text

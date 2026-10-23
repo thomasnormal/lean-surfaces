@@ -25,7 +25,7 @@ integer parsing in bases 2–36 and base zero, with prefix detection, underscore
 grouping, all six integer whitespace characters, and exact invalid-literal
 errors within the documented digit budgets. Unicode input and non-ASCII bytes
 remain loud. String repetition supports both operand orders, boolean counts,
-and `*=`, with both the original count magnitude and output code-point length
+and `*=`, including in-place heap-list `*=`, with both the original count magnitude and output code-point length
 bounded by 1,048,576. Tuple and namedtuple repetition
 also checks the original count magnitude before empty-sequence or negative-count
 handling, with the same independent element-count budget. Decimal output shares

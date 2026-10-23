@@ -23,6 +23,13 @@ def repeat_live_list(count):
     return [1, 2] * count
 
 
+def repeat_aug_live_list(count):
+    xs = [1, 2]
+    ys = xs
+    xs *= count
+    return (xs is ys, ys)
+
+
 def repeat_right_length(text, count):
     result = text * count
     return len(result)

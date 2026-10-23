@@ -598,5 +598,10 @@
   {
     "file": "harness/scripts/dict_view_script.py",
     "expect": "match"
+  },
+  {
+    "file": "harness/scripts/list_aug_repeat_script.py",
+    "expect": "match",
+    "note": "List `*=` updates the existing heap address, so the alias prints the repeated list."
   }
 ]

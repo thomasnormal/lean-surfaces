@@ -187,6 +187,13 @@ and preserves its digit budget. Flags, widths, other conversion codes, and
 custom `__format__` protocols remain loud until the complete mini-language is
 modeled.
 
+## 2026-10-23-pycomplete-75 — f-string ASCII conversion
+
+F-string `!a` fields now lower to a distinct intrinsic AST constructor and use
+`asciiValH` on both interpreter surfaces. ASCII escaping, including the
+existing Unicode escape table, is shared with the `ascii()` builtin; non-empty
+format specifications and custom protocols remain loud.
+
 ## 2026-10-23-pycomplete-74 — mixed scalar ordering errors
 
 The shared ordering worker now returns CPython's exact `TypeError` for mixed

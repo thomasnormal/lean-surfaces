@@ -4163,6 +4163,10 @@ recorded reason was not.
 unnamed conversion must never fall through to the in-tier path by
 accident — `conversion_ascii` is the row that says so.
 
+`!a` was later admitted as a distinct intrinsic conversion through the
+shared `asciiValH` renderer; this historical note records the earlier
+boundary only.
+
 ### Historical str shadow census (removed 2026-10-10)
 
 The lowering spells rendering as a call of the NAME `str`, which is a

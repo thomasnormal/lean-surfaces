@@ -93,6 +93,7 @@ inductive Expr where
   | binOp (left : Expr) (op : BinOp) (right : Expr) (span : Span)
   | unaryOp (op : UnaryOp) (operand : Expr) (span : Span)
   | formattedValue (value : Expr) (reprConversion : Bool) (span : Span)
+  | formattedValueAscii (value : Expr) (span : Span)
   | boolOp (op : BoolOp) (values : Array Expr) (span : Span)
   | compare (left : Expr) (ops : Array CmpOp) (comparators : Array Expr) (span : Span)
   /-- Call. `kwargs` are the structured plain named keywords (H6,
@@ -323,6 +324,7 @@ mutual
     | .binOp left _ right _ => exprMentionsAny names left || exprMentionsAny names right
     | .unaryOp _ operand _ => exprMentionsAny names operand
     | .formattedValue value _ _ => exprMentionsAny names value
+    | .formattedValueAscii value _ => exprMentionsAny names value
     | .boolOp _ values _ => exprListMentionsAny names values.toList
     | .compare left _ comparators _ =>
         exprMentionsAny names left || exprListMentionsAny names comparators.toList

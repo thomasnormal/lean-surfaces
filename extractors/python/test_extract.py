@@ -313,14 +313,18 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(specification["kind"], "JoinedStr")
         self.assertEqual(specification["values"], [])
 
-    def test_fstring_ascii_and_nonempty_format_specs_remain_loud(self):
-        for field, kind in (("value!a", "JoinedStr:conversion_a"),
-                            ("value!r:>5", "JoinedStr:format_spec"),
-                            ("value!s:03d", "JoinedStr:format_spec")):
+    def test_fstring_ascii_conversion_is_structured(self):
+        expression = self._first_return_expr(
+            "def f(value):\n    return f'{value!a}'\n")
+        self.assertEqual(expression["kind"], "JoinedStr")
+        self.assertEqual(expression["values"][0]["conversion"], 97)
+
+    def test_fstring_nonempty_format_specs_remain_loud(self):
+        for field in ("value!r:>5", "value!s:03d"):
             expression = self._first_return_expr(
                 "def f(value):\n    return f'{" + field + "}'\n")
             self.assertEqual(expression["kind"], "Unsupported")
-            self.assertEqual(expression["py_kind"], kind)
+            self.assertEqual(expression["py_kind"], "JoinedStr:format_spec")
 
     def test_is_none_survives_either_side(self):
         for src, ops in (

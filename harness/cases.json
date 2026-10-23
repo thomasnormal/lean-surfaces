@@ -752,7 +752,7 @@
   {"file": "Examples/python/fstring_lab/fstring_lab.py", "function": "debug_spec_str", "args": [[3], [-2]], "expect": "match"},
   {"file": "Examples/python/fstring_lab/fstring_lab.py", "function": "nested_fstring", "args": [[3], [-2]], "expect": "match"},
   {"file": "Examples/python/fstring_lab/fstring_lab.py", "function": "conversion_repr", "args": [[3]], "expect": "match"},
-  {"file": "Examples/python/fstring_lab/fstring_lab.py", "function": "conversion_ascii", "args": [[3]], "expect": "unsupported"},
+  {"file": "Examples/python/fstring_lab/fstring_lab.py", "function": "conversion_ascii", "args": [[3]], "expect": "match", "note": "f-string !a uses the shared ASCII renderer"},
   {"file": "Examples/python/fstring_lab/fstring_lab.py", "function": "format_spec", "args": [[3]], "expect": "unsupported"},
   {"file": "Examples/python/fstring_lab/fstring_lab.py", "function": "format_spec_num", "args": [[3]], "expect": "unsupported"},
   {"file": "Examples/python/fstring_lab/fstring_lab.py", "function": "debug_spec", "args": [[3]], "expect": "match"},

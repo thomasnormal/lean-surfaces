@@ -390,9 +390,7 @@ def convert_fstring(node):
                     not (isinstance(part.format_spec, ast.JoinedStr) and
                          not part.format_spec.values)):
                 return unsupported(node, "JoinedStr:format_spec")
-            if part.conversion == 97:
-                return unsupported(node, "JoinedStr:conversion_a")
-            if part.conversion not in (-1, 115, 114):
+            if part.conversion not in (-1, 97, 115, 114):
                 return unsupported(node, "JoinedStr:conversion")
             parts.append({
                 "kind": "FormattedValue",

@@ -1969,15 +1969,36 @@
               "end_col_offset": 19
             },
             "value": {
-              "kind": "Unsupported",
+              "kind": "JoinedStr",
               "span": {
                 "lineno": 126,
                 "col_offset": 11,
                 "end_lineno": 126,
                 "end_col_offset": 19
               },
-              "py_kind": "JoinedStr:conversion_a",
-              "text": "f'{s!a}'"
+              "values": [
+                {
+                  "kind": "FormattedValue",
+                  "span": {
+                    "lineno": 126,
+                    "col_offset": 11,
+                    "end_lineno": 126,
+                    "end_col_offset": 19
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 126,
+                      "col_offset": 14,
+                      "end_lineno": 126,
+                      "end_col_offset": 15
+                    },
+                    "id": "s"
+                  },
+                  "conversion": 97,
+                  "format_spec": null
+                }
+              ]
             }
           }
         ]

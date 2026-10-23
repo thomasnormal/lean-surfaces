@@ -64,6 +64,8 @@ change is listed here under **Changed** or **Removed**.
 - Mixed immediate scalar ordering in `sorted`, `max`, `min`, and comparisons
   now raises CPython's exact `TypeError` payload; heap and unsupported protocol
   comparisons remain loud.
+- F-string `!a` fields now use the shared ASCII renderer on both interpreter
+  surfaces; non-empty format specifications and custom protocols remain loud.
 
 ## [0.1.14] — 2026-10-21
 

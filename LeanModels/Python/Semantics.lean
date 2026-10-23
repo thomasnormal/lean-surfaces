@@ -267,6 +267,7 @@ def Expr.kindName : Expr → String
   | .binOp .. => "BinOp"
   | .unaryOp .. => "UnaryOp"
   | .formattedValue .. => "FormattedValue"
+  | .formattedValueAscii .. => "FormattedValue"
   | .boolOp .. => "BoolOp"
   | .compare .. => "Compare"
   | .call .. => "Call"
@@ -4662,6 +4663,10 @@ def evalGlobalExpr (h : Heap) (gs : REnv) (fuel : Nat) (e : Expr) :
         let (heapAfter, value) ← evalGlobalExpr h gs fuel expression
         let result ← formatValueH heapAfter value reprConversion
         return (heapAfter, result)
+    | .formattedValueAscii expression _ => do
+        let (heapAfter, value) ← evalGlobalExpr h gs fuel expression
+        let result ← asciiValH heapAfter value
+        return (heapAfter, result)
     | .list elts _ => do
         -- H2: module-level list displays allocate into the init heap
         -- (module tables — shared across nested calls within one public
@@ -4971,6 +4976,7 @@ mutual
     | .binOp l _ r _ => g1HeapPure acc l && g1HeapPure acc r
     | .unaryOp _ e _ => g1HeapPure acc e
     | .formattedValue value _ _ => g1HeapPure acc value
+    | .formattedValueAscii value _ => g1HeapPure acc value
     | .boolOp _ vs _ => g1HeapPureList acc vs.toList
     | .compare l _ cs _ => g1HeapPure acc l && g1HeapPureList acc cs.toList
     | .ifExp t b o _ => g1HeapPure acc t && g1HeapPure acc b && g1HeapPure acc o
@@ -5754,6 +5760,7 @@ mutual
     | .binOp l _ r _ => l.heapFree && r.heapFree
     | .unaryOp _ e _ => e.heapFree
     | .formattedValue value _ _ => value.heapFree
+    | .formattedValueAscii value _ => value.heapFree
     | .boolOp _ vs _ => Expr.heapFreeList vs.toList
     | .compare l _ cs _ => l.heapFree && Expr.heapFreeList cs.toList
     -- H2 soundness carve-outs: `sorted` ALLOCATES its result when the
@@ -5936,6 +5943,7 @@ mutual
     | .binOp l _ r _ => l.genAllocFree && r.genAllocFree
     | .unaryOp _ e _ => e.genAllocFree
     | .formattedValue value _ _ => value.genAllocFree
+    | .formattedValueAscii value _ => value.genAllocFree
     | .boolOp _ vs _ => Expr.genAllocFreeList vs.toList
     | .compare l _ cs _ => l.genAllocFree && Expr.genAllocFreeList cs.toList
     | .call (.name id _) args kwargs _ _ =>
@@ -6359,6 +6367,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
     | .formattedValue expression reprConversion _ =>
         evalExpr m fuel st expression ⤳ fun nextState value =>
         Run.liftRes nextState (formatValueH nextState.world.heap value reprConversion)
+    | .formattedValueAscii expression _ =>
+        evalExpr m fuel st expression ⤳ fun nextState value =>
+        Run.liftRes nextState (asciiValH nextState.world.heap value)
     | .boolOp op values _ =>
       match values.toList with
       | [] => .unsupported "BoolOp with no operands"

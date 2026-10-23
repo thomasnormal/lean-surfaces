@@ -3354,6 +3354,12 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
       simp only [FrameState.swapAt_world, World.swapAt_heap,
         formatValueH_swapAt heapWitness htwin]
       exact PBF.liftRes heapWitness _
+  | formattedValueAscii expression span =>
+      simp only [evalExpr]
+      refine PBF.bind (ihE m st expression hslot) fun nextState value _ heapWitness => ?_
+      simp only [FrameState.swapAt_world, World.swapAt_heap,
+        asciiValH_swapAt heapWitness htwin]
+      exact PBF.liftRes heapWitness _
   | boolOp op values sp =>
       simp only [evalExpr]
       cases values.toList with

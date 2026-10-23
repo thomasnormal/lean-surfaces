@@ -600,6 +600,9 @@ theorem fuelMono (fuel : Nat) :
         | formattedValue expression reprConversion _ =>
           simp only [evalExpr]
           exact Run.le_bind (ihE m st expression k hk) fun nextState value => Run.le_refl _
+        | formattedValueAscii expression _ =>
+          simp only [evalExpr]
+          exact Run.le_bind (ihE m st expression k hk) fun nextState value => Run.le_refl _
         | boolOp op values _ =>
           simp only [evalExpr]
           cases values.toList with
@@ -2404,6 +2407,10 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         simp only [evalExpr]
         exact .bind (ihE st operand hfree) fun st₁ v h₁ => .liftResF h₁ _
       | formattedValue expression reprConversion _ =>
+        simp only [Expr.heapFree] at hfree
+        simp only [evalExpr]
+        exact .bind (ihE st expression hfree) fun nextState value worldEq => .liftResF worldEq _
+      | formattedValueAscii expression _ =>
         simp only [Expr.heapFree] at hfree
         simp only [evalExpr]
         exact .bind (ihE st expression hfree) fun nextState value worldEq => .liftResF worldEq _

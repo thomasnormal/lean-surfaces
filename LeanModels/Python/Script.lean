@@ -138,6 +138,7 @@ mutual
     | .binOp l _ r _ => l.allNames ++ r.allNames
     | .unaryOp _ e _ => e.allNames
     | .formattedValue value _ _ => value.allNames
+    | .formattedValueAscii value _ => value.allNames
     | .boolOp _ vs _ => Expr.allNamesList vs.toList
     | .compare l _ cs _ => l.allNames ++ Expr.allNamesList cs.toList
     | .call f args kwargs _ _ =>

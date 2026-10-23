@@ -1092,7 +1092,6 @@ WHITELIST_CLASS = {
     "ann_lab::ann_novalue_shadows_global": "annassign.no-value",
     "ann_lab::ann_attr_target": "annassign.non-simple-target",
     "assert_lab::msg_set": "set.order",
-    "fstring_lab::conversion_ascii": "fstring.conversion",
     "fstring_lab::format_spec": "fstring.format-spec",
     "fstring_lab::format_spec_num": "fstring.format-spec",
     "fstring_lab::set_field": "set.order",

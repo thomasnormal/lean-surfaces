@@ -440,6 +440,17 @@
     "rung": 3
   },
   {
+    "id": "translation.simple-requirement",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "simpleRequirementTranslationWitness",
+    "cpp_source": "template<class T> concept C = requires(T x) { x + x; };",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

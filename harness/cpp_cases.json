@@ -693,6 +693,17 @@
     "rung": 7
   },
   {
+    "id": "translation.bool-literal-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "boolLiteralTranslationWitness",
+    "cpp_source": "bool f() { return true; }",
+    "expect": "match",
+    "rung": 2
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

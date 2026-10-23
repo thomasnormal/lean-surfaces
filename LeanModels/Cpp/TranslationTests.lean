@@ -709,6 +709,13 @@ private def cxxTryStatementTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "t"), ("kind", .string "CXXTryStmt"),
         ("name", .string "try"), ("inner", .array [])]])]}
 
+private def cxxCatchStatementTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "c"), ("kind", .string "CXXCatchStmt"),
+        ("name", .string "catch"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -987,6 +994,9 @@ def labelStatementTranslationWitness : Except String Unit :=
 
 def cxxTryStatementTranslationWitness : Except String Unit :=
   admitCXXTryStatement cxxTryStatementTranslation [0]
+
+def cxxCatchStatementTranslationWitness : Except String Unit :=
+  admitCXXCatchStatement cxxCatchStatementTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -1301,6 +1311,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard cxxTryStatementTranslationWitness matches .ok ()
 #guard admitCXXTryStatement cxxTryStatementTranslation [] matches .error _
 #guard admitCXXTryStatement functionTranslation [0] matches .error _
+#guard cxxCatchStatementTranslationWitness matches .ok ()
+#guard admitCXXCatchStatement cxxCatchStatementTranslation [] matches .error _
+#guard admitCXXCatchStatement functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

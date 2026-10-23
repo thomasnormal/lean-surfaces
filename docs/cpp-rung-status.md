@@ -18,7 +18,7 @@ Measured against the C++ charter's N4950 clause ladder. `executable` means a bou
 | 7 | §11 | **specified** | Class, base-subobject and member-getter evidence is specified; CXXDynamicCastExpr metadata is admitted and object construction is bounded. |
 | 8 | §12 | **not started** | Clang-selected overload and conversion execution is not admitted. |
 | 9 | §13 | **not started** | Template instantiation is retained as frontend evidence only. |
-| 10 | §14 | **specified** | Exception metadata is retained through CXXTryStmt, but throw/catch matching, unwinding and cleanup are not executable. |
+| 10 | §14 | **specified** | Exception metadata is retained through CXXTryStmt and CXXCatchStmt, but throw/catch matching, unwinding and cleanup are not executable. |
 | 11 | §15 | **specified** | Preprocessing remains in the pinned Clang trusted boundary. |
 | 12 | §16+ | **not started** | The standard-library subset has not been admitted as C++ execution. |
 
@@ -47,6 +47,6 @@ The grammar census uses one source witness per listed Clang AST node kind. The r
 | measurement | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---|---:|---:|---:|---:|---:|---:|
 | grammar witnesses | 24 | 0 | 0 | 0 | 0 | 24 |
-| differential calls | 140 | 0 | 0 | 0 | 0 | 140 |
+| differential calls | 141 | 0 | 0 | 0 | 0 | 141 |
 
-The differential rows include 48 compile-only translation witness, 21 rung-1 lifetime witnesses, 1 rung-2 scalar checks, 10 rung-3 expression checks, 14 rung-4 statement checks, and 46 callable rows across the retained callable witness set; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.
+The differential rows include 48 compile-only translation witness, 21 rung-1 lifetime witnesses, 1 rung-2 scalar checks, 10 rung-3 expression checks, 14 rung-4 statement checks, and 47 callable rows across the retained callable witness set; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.

@@ -1045,6 +1045,17 @@
     "rung": 10
   },
   {
+    "id": "translation.cxx-catch-statement",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "cxxCatchStatementTranslationWitness",
+    "cpp_source": "int f() { try { return 0; } catch (...) { return 1; } }",
+    "expect": "match",
+    "rung": 10
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

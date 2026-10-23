@@ -321,6 +321,9 @@ def admitLabelStatement (artifact : Artifact) (path : List Nat) :
 def admitCXXTryStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXTryStmt" "try-statement"
 
+def admitCXXCatchStatement (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXCatchStmt" "catch-statement"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

@@ -836,6 +836,17 @@
     "rung": 3
   },
   {
+    "id": "translation.cxx-noexcept-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "cxxNoexceptTranslationWitness",
+    "cpp_source": "bool f() { return noexcept(1); }",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

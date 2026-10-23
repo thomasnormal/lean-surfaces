@@ -576,6 +576,13 @@ private def cxxRewrittenBinaryOperatorTranslation : Artifact := {emptyTranslatio
         ("opcode", .string "=="), ("name", .string "rewritten-equality"),
         ("inner", .array [])]])]}
 
+private def cxxNoexceptTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "n"), ("kind", .string "CXXNoexceptExpr"),
+        ("name", .string "noexcept"), ("inner", .array [])]])]}
+
 private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -995,6 +1002,9 @@ def binaryOperatorTranslationWitness : Except String Unit :=
 def cxxRewrittenBinaryOperatorTranslationWitness : Except String Unit :=
   admitCXXRewrittenBinaryOperatorExpression cxxRewrittenBinaryOperatorTranslation [0]
 
+def cxxNoexceptTranslationWitness : Except String Unit :=
+  admitCXXNoexceptExpression cxxNoexceptTranslation [0]
+
 def conditionalOperatorTranslationWitness : Except String Unit :=
   admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
@@ -1335,6 +1345,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard cxxRewrittenBinaryOperatorTranslationWitness matches .ok ()
 #guard admitCXXRewrittenBinaryOperatorExpression cxxRewrittenBinaryOperatorTranslation [] matches .error _
 #guard admitCXXRewrittenBinaryOperatorExpression functionTranslation [0] matches .error _
+#guard cxxNoexceptTranslationWitness matches .ok ()
+#guard admitCXXNoexceptExpression cxxNoexceptTranslation [] matches .error _
+#guard admitCXXNoexceptExpression functionTranslation [0] matches .error _
 #guard conditionalOperatorTranslationWitness matches .ok ()
 #guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
 #guard admitConditionalOperatorExpression functionTranslation [0] matches .error _

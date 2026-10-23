@@ -1905,6 +1905,25 @@ def _unpacked_struct_pattern_assignment(sm, expr):
                 "SimpleAssignmentPatternExpression",
                 "StructuredAssignmentPatternExpression"):
             return None
+        # Nested struct patterns are already normalized recursively by the
+        # same cell flattener used for declaration initializers. Reuse those
+        # converted leaf values so nested defaults and two-state fields keep
+        # exactly the declaration-path behavior.
+        if any(type(field.type.canonicalType).__name__ == "UnpackedStructType"
+               for field in aggregate):
+            nested_cells = _unpacked_struct_initializer_cells(
+                sm, name, aggregate, pattern)
+            if nested_cells is None:
+                return None
+            stmts = [{
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                           "width": width, "name": cell_name},
+                "value": value,
+            } for cell_name, width, value, _field_type in nested_cells]
+            return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts,
+                    "unpacked_struct_pattern_lowered": True}
         fields = list(aggregate)
         elements = list(pattern.elements)
         if len(fields) != len(elements) or not fields:

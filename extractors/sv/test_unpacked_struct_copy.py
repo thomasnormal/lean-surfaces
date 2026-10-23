@@ -94,6 +94,25 @@ class UnpackedStructCopy(unittest.TestCase):
         self.assertIn("AssignmentExpression:target",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_nested_struct_pattern_flattens_recursively(self):
+        design = lower(
+            "typedef struct { int a; struct { int b; int c; } inner; } T; "
+            "module top; T value; initial value = '{a: 1, inner: '{b: 2, c: 3}}; endmodule")
+        lowered = [node for node in nodes(design)
+                   if node.get("unpacked_struct_pattern_lowered")]
+        self.assertEqual(len(lowered), 1)
+        self.assertEqual([stmt["target"]["name"] for stmt in lowered[0]["stmts"]],
+                         ["value.a", "value.inner.b", "value.inner.c"])
+
+    def test_nested_default_pattern_flattens_recursively(self):
+        design = lower(
+            "typedef struct { int a; struct { int b; int c; } inner; } T; "
+            "module top; T value; initial value = '{default: 7}; endmodule")
+        lowered = [node for node in nodes(design)
+                   if node.get("unpacked_struct_pattern_lowered")]
+        self.assertEqual(len(lowered), 1)
+        self.assertEqual(len(lowered[0]["stmts"]), 3)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -5317,6 +5317,19 @@ partial files **17,386 → 17,385**; `AssignmentExpression:target` falls
 disagreements, and 4 recorded refusals**; grammar coverage remains **202
 witnesses, 71 MATCH, and 131 REFUSE**.
 
+### Nested integral unpacked-struct patterns — 2026-10-23
+
+Complete nested assignment patterns for flattened integral unpacked structs now
+reuse the recursive declaration flattener, preserving declaration order,
+recursive `default` values, leaf widths, and two-state conversion. Unsupported
+aggregate leaves and incomplete patterns remain loud. The
+`unpacked_struct_nested_pattern` fixture and differential row cover explicit
+and default nested patterns. On the 22,045-file corpus snapshot, clean files
+move **4,594 → 4,604** and partial files **17,385 → 17,375**;
+`AssignmentExpression:target` falls **3,545 → 3,535**. Differential coverage is
+**51 rows, 47 matches, 0 disagreements, and 4 recorded refusals**; grammar
+coverage remains **202 witnesses, 71 MATCH, and 131 REFUSE**.
+
 ### Dynamic `$fatal` arguments — 2026-10-23
 
 `$fatal` now evaluates pure dynamic severity, format, and value arguments in

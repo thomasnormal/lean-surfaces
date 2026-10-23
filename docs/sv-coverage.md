@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 50 | 46 | 0 | 4 | sv-tests-2 declarations |
+| 51 | 47 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -58,6 +58,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `vcd_control` | `Examples/system-verilog/vcd_control/vcd_control.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_struct_copy` | `Examples/system-verilog/unpacked_struct_copy/unpacked_struct_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_struct_conditional` | `Examples/system-verilog/unpacked_struct_conditional/unpacked_struct_conditional.sv` | match | **MATCH** | `ok` | MATCH |
+| `unpacked_struct_nested_pattern` | `Examples/system-verilog/unpacked_struct_nested_pattern/unpacked_struct_nested_pattern.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_struct_pattern` | `Examples/system-verilog/unpacked_struct_pattern/unpacked_struct_pattern.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_struct_keyed_pattern` | `Examples/system-verilog/unpacked_struct_keyed_pattern/unpacked_struct_keyed_pattern.sv` | match | **MATCH** | `ok` | MATCH |
 | `delay_refusal` | `Examples/system-verilog/delay/delay.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
@@ -284,11 +285,11 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22045 | 4594 | 17385 | 66 |
+| 22045 | 4604 | 17375 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 3545 |
+| `AssignmentExpression:target` | 3535 |
 | `VariableSymbol:2state` | 3504 |
 | `ExpressionStatement:CallExpression` | 3475 |
 | `CallExpression` | 3292 |

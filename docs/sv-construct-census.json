@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    3545
+    3535
    ],
    [
     "VariableSymbol:2state",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4594,
-   "partial": 17385,
+   "clean": 4604,
+   "partial": 17375,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    3966,
+    3976,
     18678
    ],
    "simulation elaboration": [
@@ -1323,9 +1323,9 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 277,
+    "clean": 286,
     "error": 0,
-    "partial": 381,
+    "partial": 372,
     "skip_include": 0,
     "total": 658,
     "unlockable": 2
@@ -1587,9 +1587,9 @@
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 383,
+    "clean": 384,
     "error": 0,
-    "partial": 235,
+    "partial": 234,
     "skip_include": 0,
     "total": 618,
     "unlockable": 1

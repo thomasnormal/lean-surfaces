@@ -16,6 +16,7 @@ HISTORY, not instruction. -/
 #py_check str_lab.cast_int("-0") = 0
 #py_check str_lab.cast_str(-3) = "-3"
 #py_check str_lab.cast_int("1_2") = 12
+#py_check str_lab.cast_int("٣") = 3
 #py_check str_lab.cast_int("12x3") raises
   (.valueError "invalid literal for int() with base 10: '12x3'")
 #guard callFunction str_lab "cast_int" #[.str ""] 4096 matches .exn (.valueError _)

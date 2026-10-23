@@ -1727,14 +1727,16 @@ def intDigitCount (characters : List Char) (base : Nat) : Nat :=
   characters.countP (fun character =>
     if base == 10 then character.isDigit else intRadixDigit character < 36)
 
-/-- `int(<str>, base)` decides ASCII integer syntax within `intDigitBudget`,
-including base-zero prefixes, underscore grouping, and six whitespace characters.
-Non-ASCII input and larger digit counts refuse loudly; invalid ASCII input
-raises CPython's repr-rendered, 200-character-truncated `ValueError`. -/
+/-- `int(<str>, base)` decides integer syntax within `intDigitBudget`,
+including base-zero prefixes, underscore grouping, and CPython's Unicode
+decimal digits and whitespace. The shared float-text normalizer maps the
+Unicode decimal and whitespace inventory to the ASCII grammar; other
+non-ASCII characters still refuse loudly. Invalid input raises CPython's
+repr-rendered, 200-character-truncated `ValueError`. -/
 def intOfStr (text : String) (base : Nat := 10) : Res RVal :=
-  let characters := text.toList
+  let characters := text.toList.map Float64.normalizeDecimalChar
   if !characters.all (fun character => character.toNat < 128) then
-    .unsupported "int() of a non-ASCII str is outside the tier (Unicode digits and whitespace are not guessed; docs/memory-model.md §the cast tier)"
+    .unsupported "int() of this str contains non-decimal Unicode characters outside the tier (docs/memory-model.md §the cast tier)"
   else if intDigitCount characters base > intDigitBudget then
     .unsupported "int() of this str exceeds the tier's 1024-digit budget (CPython's configured conversion limit is not guessed; docs/memory-model.md §the cast tier)"
   else

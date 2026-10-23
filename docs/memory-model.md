@@ -2698,7 +2698,9 @@ default is 4,300 digits). A process configured below 1024 is outside the
 model's pinned oracle; above 1024, even an invalid spelling's exception depends
 on that setting and on validation order, so the model refuses rather than guesses. Signs, underscores, and surrounding
 whitespace do not consume the digit budget; whitespace length is not
-bounded. Non-ASCII input, including Unicode digits/whitespace, remains loud.
+bounded. Unicode decimal digits and Unicode whitespace use the same
+normalization as the float-text parser; unrelated non-decimal Unicode
+characters remain loud.
 `decimalDigitsAux` specializes the structural radix walker described below.
 No interpreter recursion point, heap-free predicate, or public judgment changes.
 
@@ -2723,8 +2725,9 @@ CPython's 200-character truncation.
 Decimal conversion retains the 1024-digit count above. Other bases bound all
 ASCII alphanumeric characters in the original input to 1024, including the
 prefix; this is a conservative resource bound, also for power-of-two bases
-that CPython exempts from its configurable conversion limit. Unicode input,
-non-ASCII bytes and heap conversion protocols remain unfinished and loud.
+that CPython exempts from its configurable conversion limit. Other Unicode
+input, non-ASCII bytes, and heap conversion protocols remain unfinished and
+loud.
 The frame, clock-erasure and payload-blindness proofs use their pure-worker
 rules. `Examples/python/int_string` adds kernel checks and a symbolic offset
 theorem for a real keyword-base call; the differential suite also checks

@@ -22,6 +22,8 @@ change is listed here under **Changed** or **Removed**.
 - Heap-backed `list * int` and `int * list` now allocate fresh repeated lists
   on the monadic interpreter, with CPython's index-size and materialization
   bounds; the value-side proof interpreter keeps this stateful shape loud.
+- `int(str)` now admits CPython's Unicode decimal digits and whitespace through
+  the shared float-text normalization table; unrelated Unicode remains loud.
 
 ## [0.1.14] — 2026-10-21
 

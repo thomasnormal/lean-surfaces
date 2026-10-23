@@ -50,6 +50,15 @@ CPython's `OverflowError`, and materializations beyond `seqBudget` remain
 loud. The trunk proof interpreter retains its declared refusal because its
 boundary list representation cannot state the heap allocation and aliasing.
 
+## 2026-10-23-pycomplete-58 — Unicode decimal `int(str)`
+
+The `int(str)` decimal parser now reuses the existing CPython Unicode decimal
+digit and whitespace normalization table from the float-text parser. Arabic
+and fullwidth decimal digits, and Unicode spaces around a value, map into the
+same bounded ASCII grammar; unrelated non-decimal characters remain loud.
+The interpreters preserve exact malformed-input errors and the fixed digit
+budget.
+
 ## 2026-10-22-pycomplete-49 — public baseline and the next ordinary-language inch
 
 The first post-public-master baseline was measured from `2730f338` (the

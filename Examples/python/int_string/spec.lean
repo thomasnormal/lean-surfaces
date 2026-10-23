@@ -57,10 +57,13 @@ set_option maxRecDepth 8192
   (.valueError ("invalid literal for int() with base 10: '" ++
     String.join (List.replicate 49 "\\x00") ++ "\\x0"))
 
-#guard callFunction int_string "parse_decimal" #[.str "٣"] 4096 matches .unsupported _
-#guard callFunction int_string "parse_decimal" #[.str "１２"] 4096 matches .unsupported _
-#guard callFunction int_string "parse_decimal" #[.str "\u00a01"] 4096 matches .unsupported _
+#py_check int_string.parse_decimal("٣") = 3
+#py_check int_string.parse_decimal("１２") = 12
+#py_check int_string.parse_decimal(" 1") = 1
+#py_check int_string.parse_decimal("1 ") = 1
 #guard callFunction int_string "parse_decimal" #[.str "é"] 4096 matches .unsupported _
+#py_check int_string.explicit_base("٣", 16) = 3
+#py_check int_string.explicit_base(" 1", 0) = 1
 #py_check int_string.explicit_base("12", 10) = 12
 #py_check int_string.explicit_base("0xff", 0) = 255
 #py_check int_string.explicit_base("-0B_1_0", 0) = -2

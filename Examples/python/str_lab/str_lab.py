@@ -150,9 +150,8 @@ def idx_bad_bound(s, t, a):
 
 def cast_int(s):
     # pass 8 (docs/memory-model.md §the cast tier): int(<str>) -- the
-    # honest ASCII subset; exotic acceptances (underscores, Unicode
-    # digits) refuse loudly, malformed safe-alphabet strings raise the
-    # faithful ValueError
+    # bounded decimal grammar, including CPython's Unicode decimal digits
+    # and whitespace; malformed strings raise the faithful ValueError
     return int(s)
 
 

@@ -611,6 +611,13 @@ private def cStyleCastTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "c"), ("kind", .string "CStyleCastExpr"),
         ("name", .string "cast"), ("inner", .array [])]])]}
 
+private def unaryExprOrTypeTraitTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "s"), ("kind", .string "UnaryExprOrTypeTraitExpr"),
+        ("name", .string "sizeof"), ("inner", .array [])]])]}
+
 private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1045,6 +1052,9 @@ def cxxCoawaitTranslationWitness : Except String Unit :=
 def cStyleCastTranslationWitness : Except String Unit :=
   admitCStyleCastExpression cStyleCastTranslation [0]
 
+def unaryExprOrTypeTraitTranslationWitness : Except String Unit :=
+  admitUnaryExprOrTypeTraitExpression unaryExprOrTypeTraitTranslation [0]
+
 def conditionalOperatorTranslationWitness : Except String Unit :=
   admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
@@ -1400,6 +1410,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard cStyleCastTranslationWitness matches .ok ()
 #guard admitCStyleCastExpression cStyleCastTranslation [] matches .error _
 #guard admitCStyleCastExpression functionTranslation [0] matches .error _
+#guard unaryExprOrTypeTraitTranslationWitness matches .ok ()
+#guard admitUnaryExprOrTypeTraitExpression unaryExprOrTypeTraitTranslation [] matches .error _
+#guard admitUnaryExprOrTypeTraitExpression functionTranslation [0] matches .error _
 #guard conditionalOperatorTranslationWitness matches .ok ()
 #guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
 #guard admitConditionalOperatorExpression functionTranslation [0] matches .error _

@@ -891,6 +891,17 @@
     "rung": 3
   },
   {
+    "id": "translation.unary-expression-or-type-trait-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "unaryExprOrTypeTraitTranslationWitness",
+    "cpp_source": "bool f() { return sizeof(int) == sizeof(int); }",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

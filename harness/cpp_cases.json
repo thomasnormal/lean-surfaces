@@ -1243,6 +1243,17 @@
     "rung": 4
   },
   {
+    "id": "translation.openacc-cache-construct",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "openACCCacheConstructTranslationWitness",
+    "cpp_source": "void f(int *p) {\n#pragma acc cache(p)\n}",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.omp-metadirective",
     "kind": "translation",
     "corpus": "translation witness",

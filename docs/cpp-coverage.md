@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 260 | 0 | 0 | 0 | 0 | 260 |
+| 261 | 0 | 0 | 0 | 0 | 261 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -127,6 +127,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `translation.openacc-set-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.openacc-update-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.openacc-atomic-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
+| `translation.openacc-cache-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.omp-metadirective` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.omp-tile-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
 | `translation.omp-stripe-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |

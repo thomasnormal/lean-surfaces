@@ -1034,6 +1034,17 @@
     "rung": 4
   },
   {
+    "id": "translation.designated-initializer-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "designatedInitializerTranslationWitness",
+    "cpp_source": "struct S { int value; }; S f() { return S{.value = 1}; }",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

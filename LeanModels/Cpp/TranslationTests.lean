@@ -482,6 +482,13 @@ private def boolLiteralTranslation : Artifact := {emptyTranslation with
         ("value", .bool true), ("name", .string "literal"),
         ("inner", .array [])]])]}
 
+private def nullPtrLiteralTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "n"), ("kind", .string "CXXNullPtrLiteralExpr"),
+        ("name", .string "nullptr"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -667,6 +674,9 @@ def dynamicCastTranslationWitness : Except String Unit :=
 
 def boolLiteralTranslationWitness : Except String Unit :=
   admitCXXBoolLiteralExpression boolLiteralTranslation [0]
+
+def nullPtrLiteralTranslationWitness : Except String Unit :=
+  admitCXXNullPtrLiteralExpression nullPtrLiteralTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -888,6 +898,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard boolLiteralTranslationWitness matches .ok ()
 #guard admitCXXBoolLiteralExpression boolLiteralTranslation [] matches .error _
 #guard admitCXXBoolLiteralExpression functionTranslation [0] matches .error _
+#guard nullPtrLiteralTranslationWitness matches .ok ()
+#guard admitCXXNullPtrLiteralExpression nullPtrLiteralTranslation [] matches .error _
+#guard admitCXXNullPtrLiteralExpression functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

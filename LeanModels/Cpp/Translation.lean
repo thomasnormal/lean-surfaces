@@ -228,6 +228,9 @@ def admitCXXDynamicCastExpression (artifact : Artifact) (path : List Nat) :
 def admitCXXBoolLiteralExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXBoolLiteralExpr" "bool-literal-expression"
 
+def admitCXXNullPtrLiteralExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXNullPtrLiteralExpr" "nullptr-literal-expression"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

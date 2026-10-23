@@ -704,6 +704,17 @@
     "rung": 2
   },
   {
+    "id": "translation.nullptr-literal-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "nullPtrLiteralTranslationWitness",
+    "cpp_source": "void* f() { return nullptr; }",
+    "expect": "match",
+    "rung": 2
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

@@ -5545,3 +5545,18 @@ The fresh 22,046-file census moves **4,654 → 4,656 clean** and **17,326 →
 17,324 partial**; `AssignmentExpression:target` falls **3,491 → 3,464**.
 Differential coverage moves **66/62/0/4 → 67/63/0/4** (rows/agree/disagree/
 recorded refusals), and the grammar census moves **204/73/131 → 206/75/131**.
+
+## Pure `$strobe` arguments — 2026-10-23
+
+`$strobe` now accepts pure converted scalar expressions as deferred arguments.
+The self-check evaluator already queues the call for the postponed end of the
+time-zero slot, so a later blocking assignment is observed exactly by the
+strobe. Effectful, aggregate, and otherwise unsupported arguments remain loud;
+no general postponed scheduler is introduced. The `strobe_dynamic` fixture and
+differential row cover the final-value behavior.
+
+The fresh 22,046-file census moves **4,656 → 4,678 clean** and **17,324 →
+17,302 partial**. `ExpressionStatement:CallExpression` falls **3,476 →
+3,451** files while `AssignmentExpression:target` remains **3,464**.
+Differential coverage moves **67/63/0/4 → 68/64/0/4** and grammar coverage
+remains **206/75/131**.

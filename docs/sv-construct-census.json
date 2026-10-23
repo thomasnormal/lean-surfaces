@@ -15,12 +15,12 @@
  "summary": {
   "blocker_files": [
    [
-    "ExpressionStatement:CallExpression",
-    3476
-   ],
-   [
     "AssignmentExpression:target",
     3464
+   ],
+   [
+    "ExpressionStatement:CallExpression",
+    3451
    ],
    [
     "VariableSymbol:2state",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4656,
-   "partial": 17324,
+   "clean": 4678,
+   "partial": 17302,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4028,
+    4050,
     18679
    ],
    "simulation elaboration": [
@@ -1142,14 +1142,14 @@
     "unlockable": 9
    },
    "chapter-4": {
-    "blocked_by_more": 235,
-    "clean": 188,
-    "partial": 235,
+    "blocked_by_more": 217,
+    "clean": 206,
+    "partial": 217,
     "simulation_tests": 423,
     "top_residual_blockers": [
      [
       "TimedStatement:DelayControl",
-      180
+      162
      ],
      [
       "InstanceSymbol:Instance",
@@ -1161,10 +1161,6 @@
      ],
      [
       "TimedStatement:SignalEventControl",
-      23
-     ],
-     [
-      "Call:$strobe",
       21
      ],
      [
@@ -1180,10 +1176,6 @@
       17
      ],
      [
-      "VariableSymbol:2state",
-      16
-     ],
-     [
       "ProceduralDeassignStatement",
       16
      ],
@@ -1192,20 +1184,24 @@
       15
      ],
      [
-      "SignalEventControl:None_",
-      13
-     ],
-     [
-      "StringLiteral:encoding",
-      12
+      "VariableSymbol:2state",
+      14
      ],
      [
       "PropertySymbol:Property",
       12
      ],
      [
+      "StringLiteral:encoding",
+      11
+     ],
+     [
       "ClockingBlockSymbol:ClockingBlock",
       11
+     ],
+     [
+      "SignalEventControl:None_",
+      10
      ],
      [
       "NamedValueExpression:2state",
@@ -1225,6 +1221,10 @@
      ],
      [
       "ElementSelectExpression:source-type",
+      8
+     ],
+     [
+      "NamedValueExpression:ClockVar",
       8
      ]
     ],
@@ -1411,9 +1411,9 @@
     "unlockable": 0
    },
    "chapter-21": {
-    "clean": 117,
+    "clean": 121,
     "error": 0,
-    "partial": 785,
+    "partial": 781,
     "skip_include": 0,
     "total": 902,
     "unlockable": 0
@@ -1571,9 +1571,9 @@
     "unlockable": 0
    },
    "chapter-4": {
-    "clean": 189,
+    "clean": 207,
     "error": 0,
-    "partial": 238,
+    "partial": 220,
     "skip_include": 0,
     "total": 427,
     "unlockable": 0

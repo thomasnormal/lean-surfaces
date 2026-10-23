@@ -7382,7 +7382,8 @@ def _convert_syscall(sm, s, e):
         if type(first).__name__ != "StringLiteral":
             return unsupported(sm, s, "CallExpression:format")
         converted = [convert_expr(sm, arg) for arg in args[1:]]
-        if any(value is None or value.get("kind") != "Literal"
+        if any(value is None or value.get("kind") == "Unsupported"
+               or not _case_expression_ok(value)
                for value in converted):
             return unsupported(sm, s, "ExpressionStatement:CallExpression")
         signed = []

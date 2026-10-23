@@ -34,10 +34,18 @@ class StrobeTask(unittest.TestCase):
         self.assertEqual([node["name"] for node in calls],
                          ["$display", "$strobe", "$display"])
 
-    def test_dynamic_strobe_argument_stays_loud(self):
+    def test_pure_dynamic_strobe_argument_is_deferred(self):
         design = lower(
             'module top; logic [3:0] x; '
-            'initial $strobe("x=%0d", x); endmodule')
+            'initial begin x = 4; $strobe("x=%0d", x); x = 9; end endmodule')
+        calls = [node for node in nodes(design) if node.get("kind") == "SysCall"]
+        self.assertEqual([node["name"] for node in calls], ["$strobe"])
+        self.assertEqual(calls[0]["args"][0]["kind"], "Ident")
+
+    def test_effectful_strobe_argument_stays_loud(self):
+        design = lower(
+            'module top; logic [3:0] x; '
+            'initial $strobe("x=%0d", x++); endmodule')
         self.assertIn("ExpressionStatement:CallExpression",
                       [node.get("sv_kind") for node in nodes(design)])
 

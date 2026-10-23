@@ -261,6 +261,9 @@ def admitConditionalOperatorExpression (artifact : Artifact) (path : List Nat) :
 def admitCallExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CallExpr" "call-expression"
 
+def admitCompoundAssignmentOperator (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CompoundAssignOperator" "compound-assignment-operator"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

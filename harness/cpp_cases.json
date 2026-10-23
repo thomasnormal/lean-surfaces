@@ -825,6 +825,17 @@
     "rung": 3
   },
   {
+    "id": "translation.compound-assignment-operator",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "compoundAssignmentTranslationWitness",
+    "cpp_source": "int f(int value) { value += 3; return value; }",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.variable-declaration",
     "kind": "translation",
     "corpus": "translation witness",

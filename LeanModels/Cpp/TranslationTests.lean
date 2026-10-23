@@ -625,6 +625,13 @@ private def forStatementTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "f"), ("kind", .string "ForStmt"),
         ("name", .string "for"), ("inner", .array [])]])]}
 
+private def switchStatementTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "s"), ("kind", .string "SwitchStmt"),
+        ("name", .string "switch"), ("inner", .array [])]])]}
+
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
@@ -867,6 +874,9 @@ def whileStatementTranslationWitness : Except String Unit :=
 
 def forStatementTranslationWitness : Except String Unit :=
   admitForStatement forStatementTranslation [0]
+
+def switchStatementTranslationWitness : Except String Unit :=
+  admitSwitchStatement switchStatementTranslation [0]
 
 def variableTranslationWitness : Except String Unit :=
   admitVariableDeclaration variableTranslation [0]
@@ -1145,6 +1155,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard forStatementTranslationWitness matches .ok ()
 #guard admitForStatement forStatementTranslation [] matches .error _
 #guard admitForStatement functionTranslation [0] matches .error _
+#guard switchStatementTranslationWitness matches .ok ()
+#guard admitSwitchStatement switchStatementTranslation [] matches .error _
+#guard admitSwitchStatement functionTranslation [0] matches .error _
 #guard variableTranslationWitness matches .ok ()
 #guard admitVariableDeclaration variableTranslation [] matches .error _
 #guard admitVariableDeclaration functionTranslation [0] matches .error _

@@ -285,6 +285,9 @@ def admitWhileStatement (artifact : Artifact) (path : List Nat) :
 def admitForStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ForStmt" "for-statement"
 
+def admitSwitchStatement (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "SwitchStmt" "switch-statement"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

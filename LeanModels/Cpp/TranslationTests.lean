@@ -611,6 +611,13 @@ private def memberExpressionTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "m"), ("kind", .string "MemberExpr"),
         ("name", .string "value"), ("inner", .array [])]])]}
 
+private def cxxMemberCallExpressionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "c"), ("kind", .string "CXXMemberCallExpr"),
+        ("name", .string "get"), ("inner", .array [])]])]}
+
 private def compoundStatementTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -981,6 +988,9 @@ def arraySubscriptTranslationWitness : Except String Unit :=
 def memberExpressionTranslationWitness : Except String Unit :=
   admitMemberExpression memberExpressionTranslation [0]
 
+def cxxMemberCallExpressionTranslationWitness : Except String Unit :=
+  admitCXXMemberCallExpression cxxMemberCallExpressionTranslation [0]
+
 def compoundStatementTranslationWitness : Except String Unit :=
   admitCompoundStatement compoundStatementTranslation [0]
 
@@ -1309,6 +1319,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard memberExpressionTranslationWitness matches .ok ()
 #guard admitMemberExpression memberExpressionTranslation [] matches .error _
 #guard admitMemberExpression functionTranslation [0] matches .error _
+#guard cxxMemberCallExpressionTranslationWitness matches .ok ()
+#guard admitCXXMemberCallExpression cxxMemberCallExpressionTranslation [] matches .error _
+#guard admitCXXMemberCallExpression functionTranslation [0] matches .error _
 #guard compoundStatementTranslationWitness matches .ok ()
 #guard admitCompoundStatement compoundStatementTranslation [] matches .error _
 #guard admitCompoundStatement functionTranslation [0] matches .error _

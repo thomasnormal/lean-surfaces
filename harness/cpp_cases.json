@@ -891,6 +891,17 @@
     "rung": 7
   },
   {
+    "id": "translation.cxx-member-call-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "cxxMemberCallExpressionTranslationWitness",
+    "cpp_source": "struct S { int get() const { return 1; } }; int f(S* value) { return value->get(); }",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "translation.compound-statement",
     "kind": "translation",
     "corpus": "translation witness",

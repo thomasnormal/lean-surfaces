@@ -279,6 +279,9 @@ def admitArraySubscriptExpression (artifact : Artifact) (path : List Nat) :
 def admitMemberExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "MemberExpr" "member-expression"
 
+def admitCXXMemberCallExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXMemberCallExpr" "member-call-expression"
+
 def admitCompoundStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CompoundStmt" "compound-statement"
 

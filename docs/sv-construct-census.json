@@ -15,16 +15,16 @@
  "summary": {
   "blocker_files": [
    [
-    "VariableSymbol:2state",
-    3691
-   ],
-   [
     "ExpressionStatement:CallExpression",
     3602
    ],
    [
     "AssignmentExpression:target",
     3592
+   ],
+   [
+    "VariableSymbol:2state",
+    3501
    ],
    [
     "CallExpression",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4505,
-   "partial": 17464,
+   "clean": 4506,
+   "partial": 17463,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1002,7 +1002,7 @@
     25
    ],
    "compile_error": [
-    108,
+    109,
     1750
    ],
    "compile_fail": [
@@ -1238,7 +1238,7 @@
     "top_residual_blockers": [
      [
       "VariableSymbol:2state",
-      204
+      199
      ],
      [
       "CallExpression",
@@ -1603,9 +1603,9 @@
     "unlockable": 4
    },
    "chapter-7": {
-    "clean": 162,
+    "clean": 163,
     "error": 0,
-    "partial": 634,
+    "partial": 633,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

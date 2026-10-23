@@ -27,12 +27,12 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-23
 
-The chapter-scoped rerun covered **22,035** paths: **4,505 clean**,
-**17,464 partial**, **66 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,035** paths: **4,506 clean**,
+**17,463 partial**, **66 include skips**, and **zero errors**. The adapter
 walk found **27 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`VariableSymbol:2state` (3,691), `ExpressionStatement:CallExpression` (3,602),
-`AssignmentExpression:target` (3,592), `CallExpression` (3,290),
+`ExpressionStatement:CallExpression` (3,602), `AssignmentExpression:target` (3,592),
+`VariableSymbol:2state` (3,501), `CallExpression` (3,290),
 `Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
 `NamedValueExpression:2state` (1,481), `ConcurrentAssertionStatement`
 (1,353), `InvalidStatement` (1,329), and `ClassType` (1,327).
@@ -55,6 +55,14 @@ dynamic-array operation remain loud. Clean and partial totals stay **4,462 /
 differential matrix is **33 rows, 29 matches, 0 disagreements, and 4 recorded
 refusals**; grammar coverage remains **200 witnesses, 68 MATCH, and 132
 REFUSE**.
+
+The associative-array declaration slice applies the same inert metadata rule
+to an uninitialized 2-state associative array; initializers, reads, writes,
+and every 4-state associative array remain loud. The fresh rerun moves clean
+files **4,505 → 4,506** and partial files **17,464 → 17,463** while
+`VariableSymbol:2state` falls **3,691 → 3,501**. Differential coverage is
+**37 rows, 33 matches, 0 disagreements, and 4 recorded refusals**; grammar
+coverage remains **200 witnesses, 68 MATCH, and 132 REFUSE**.
 
 Literal-only severity-task arguments now join the existing pure `$info` and
 `$warning` slice: a literal format and literal values are erased, while

@@ -467,6 +467,18 @@ def is_inert_2state_dynamic_array_decl(symbol):
         return False
 
 
+def is_inert_2state_associative_array_decl(symbol):
+    """Whether an uninitialized 2-state associative array is declaration-only."""
+    if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
+        return False
+    try:
+        return (not symbol.type.isFourState
+                and type(symbol.type.canonicalType).__name__ == "AssociativeArrayType"
+                and getattr(symbol, "initializer", None) is None)
+    except Exception:
+        return False
+
+
 def is_flat_unpacked_struct_alias(symbol):
     """Whether a typedef names an integral-only unpacked struct tree.
 
@@ -5688,6 +5700,8 @@ def _convert_local_decl(sm, stmt):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None and is_inert_2state_dynamic_array_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
+    if _SYM is None and is_inert_2state_associative_array_decl(symbol):
+        return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None:
         cells = convert_fixed_array_vars(sm, symbol)
         if cells is not None:
@@ -6237,6 +6251,8 @@ def convert_var(sm, m):
         return {"kind": "Empty", "span": sym_span(sm, m)}
     if _SYM is None and is_inert_2state_dynamic_array_decl(m):
         return {"kind": "Empty", "span": sym_span(sm, m)}
+    if _SYM is None and is_inert_2state_associative_array_decl(m):
+        return {"kind": "Empty", "span": sym_span(sm, m)}
     w, two, reason = type_width_2s(m.type)
     if w is None:
         if reason == "type" and not getattr(m.type, "isFourState", True):
@@ -6776,7 +6792,8 @@ def convert_module(sm, inst):
                             or is_module_virtual_interface_null_decl(m)
                             or is_string_decl(m)
                             or is_inert_2state_queue_decl(m)
-                            or is_inert_2state_dynamic_array_decl(m)):
+                            or is_inert_2state_dynamic_array_decl(m)
+                            or is_inert_2state_associative_array_decl(m)):
                         continue
                     converted = convert_var(sm, m)
                     declarations = converted if isinstance(converted, list) else [converted]
@@ -7042,7 +7059,8 @@ def _declaration_only(member):
             or is_module_virtual_interface_null_decl(member)
             or is_string_decl(member)
             or is_inert_2state_queue_decl(member)
-            or is_inert_2state_dynamic_array_decl(member))
+            or is_inert_2state_dynamic_array_decl(member)
+            or is_inert_2state_associative_array_decl(member))
 
 
 def _let_compilation_barriers(sm, comp):

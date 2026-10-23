@@ -5186,3 +5186,14 @@ declaration-only form. Clean and partial totals remain **4,462 / 17,507**;
 `VariableSymbol:2state` falls **3,839 → 3,691**. Differential coverage is
 **33 rows, 29 matches, 0 disagreements, and 4 recorded refusals**, with **200
 grammar witnesses, 68 MATCH, and 132 REFUSE**.
+
+### Declaration-only 2-state associative arrays — 2026-10-23
+
+An uninitialized 2-state associative-array declaration now lowers to inert
+metadata. Initializers, reads, writes, and all 4-state associative arrays
+remain loud because the self-check state has no associative storage model.
+The `associative_array_decl` fixture and differential row cover this
+declaration-only form. The census moves **4,505 → 4,506 clean** and
+**17,464 → 17,463 partial**; `VariableSymbol:2state` falls **3,691 → 3,501**.
+Differential coverage is **37 rows, 33 matches, 0 disagreements, and 4
+recorded refusals**, with **200 grammar witnesses, 68 MATCH, and 132 REFUSE**.

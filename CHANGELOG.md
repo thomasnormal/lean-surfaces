@@ -46,6 +46,9 @@ change is listed here under **Changed** or **Removed**.
   `µ`, `ß` → `SS`, and `ÿ` → `Ÿ` mappings; characters outside Latin-1 remain
   loud until the full Unicode case tables are represented.
 - String `repr` now renders printable Latin-1 characters directly, with exact `\xNN` escapes for C1 controls, NBSP, and soft hyphen; Unicode above Latin-1 remains loud.
+- `dict()` now accepts pair sequences from immediate and heap-backed lists,
+  tuples, bytes, strings, and namedtuples, preserving CPython's ordered
+  length, hashability, and duplicate-key checks.
 
 ## [0.1.14] — 2026-10-21
 

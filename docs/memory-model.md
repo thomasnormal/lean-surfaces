@@ -3776,10 +3776,11 @@ MATCH (82.2%)**, 0 DIVERGE.
 `dict()` is the empty mapping; `dict(k=v, …)` builds one in the CALL's own
 order (duplicate keywords are a SyntaxError, so no insert can collide);
 `dict(d)` is CPython's shallow COPY — a fresh object, never an alias,
-which is the whole point of writing it. Plain sequence inputs still stay
-LOUD, but a single-clause comprehension lowers to a generator of 2-tuples
-and uses the same ordered builder; each pair's length and key hashability
-are checked before insertion. Like every allocating call,
+which is the whole point of writing it. Pair-sequence inputs are also live for
+immediate and heap-backed list, tuple, bytes, string, and namedtuple values;
+a single-clause comprehension lowers to a generator of 2-tuples and uses the
+same ordered builder. Each pair's length and key hashability are checked
+before insertion. Like every allocating call,
 `dict` leaves `Expr.heapFree` (`worldInv` gains `hdctx`, `fuelMono` two
 arms — the positional and the keyword form — and `clockErase` a `bdict`
 and a `bdictkw` case over a new `allocDict` leaf lemma).

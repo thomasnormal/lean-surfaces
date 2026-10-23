@@ -361,10 +361,11 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
         refuseOrder "print() of a value the tier cannot render EXACTLY: a set (hash order), an instance/closure/generator (identity), a non-ASCII string (Unicode printability is never guessed), or a structure deeper than the repr budget — docs/memory-model.md §effects"
   else if fname == "dict" then
     -- `dict()` is the empty mapping and `dict(d)` is CPython's shallow COPY (a
-    -- fresh object, never an alias — the whole point of writing it). Plain
-    -- sequence inputs stay loud; the generator form used by dict
-    -- comprehensions is drained and passed through the ordered builder. The
-    -- keyword form `dict(k=v, …)` lives in the kwargs arm.
+    -- fresh object, never an alias — the whole point of writing it). Pair
+    -- sequences use the same ordered builder as dict comprehensions;
+    -- immediate and heap-backed list, tuple, bytes, string, and namedtuple
+    -- sequences are admitted. The keyword form `dict(k=v, …)` lives in the
+    -- kwargs arm.
     match vs with
     | [] => do let a ← heapPush (.dict #[] 0); pure (.ref a)
     | [v] =>
@@ -374,8 +375,11 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
           | some (.dict entries _) => do
               let a ← heapPush (.dict entries 0); pure (.ref a)
           | some (.dictView ..) => refuse "dict() over a dictionary view is outside the tier"
-          | some (.list _) =>
-              refuse "dict() over a sequence of key/value pairs is outside the tier (the per-insert hashability and duplicate-key rules are not guessed; a dict display or dict(k=v, …) is in tier)"
+          | some (.list xs) => do
+              let items ← liftRes (dictPairs (← frameHeap) 0 xs.toList)
+              let entries ← dictBuildM items
+              let a ← heapPush (.dict entries.toArray 0)
+              pure (.ref a)
           | some (.generator ..) => do
               let vals ← inFrame (K.drainIter ad)
               let items ← liftRes (dictPairs (← frameHeap) 0 vals)
@@ -388,9 +392,14 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
           | some (.cell _) => refuse cellInternal
           | some (.closure ..) => raisePy (.typeError "'function' object is not iterable")
           | Option.none => refuse danglingMsg
-      | .listV _ | .bytes _ =>
-          refuse "dict() over a sequence of key/value pairs is outside the tier (the per-insert hashability and duplicate-key rules are not guessed; a dict display or dict(k=v, …) is in tier)"
-      | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
+      | v => do
+          match dictPairValues (← frameHeap) v with
+          | some values => do
+              let items ← liftRes (dictPairs (← frameHeap) 0 values)
+              let entries ← dictBuildM items
+              let a ← heapPush (.dict entries.toArray 0)
+              pure (.ref a)
+          | Option.none => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
     | vs => raisePy (.typeError s!"dict expected at most 1 argument, got {vs.length}")
   else if fname == "range" then
     liftRes (rangeMake (← frameHeap) vs)

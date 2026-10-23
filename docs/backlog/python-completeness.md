@@ -134,6 +134,16 @@ The two frontier rows (`cls_lab.attr_on_int` and `clock_lab.shadowed`) now
 match on both interpreter surfaces; heap-receiver dispatch and admitted scalar
 methods are unchanged.
 
+
+## 2026-10-23-pycomplete-68 — pair sequences for `dict()`
+
+The `dict()` constructor now consumes immediate and heap-backed list, tuple,
+bytes, string, and namedtuple pair sequences. Each element is checked for
+length two and each key for hashability before insertion, retaining CPython's
+ordered duplicate-key behavior. The executable and proof interpreters agree
+on the bytes frontier row `len(dict(b"")) == 0`; generators and dictionary
+views keep their existing dedicated paths and unsupported cases remain loud.
+
 ## 2026-10-23-pycomplete-63 — Latin-1 string case mapping
 
 String `swapcase`, `isupper`, `islower`, and `upper` now admit CPython's

@@ -6867,11 +6867,11 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- 2026-08-13: the dict CONSTRUCTOR, positional forms.
                     -- `dict()` is the empty mapping and `dict(d)` is
                     -- CPython's shallow COPY (a fresh object, never an
-                    -- alias — the whole point of writing it). Plain sequence
-                    -- inputs stay loud; the generator form used by dict
-                    -- comprehensions is drained and passed through the
-                    -- ordered builder. The keyword form `dict(k=v, …)` is in
-                    -- the kwargs arm.
+                    -- alias — the whole point of writing it). Pair-sequence
+                    -- inputs use the same ordered builder as dict
+                    -- comprehensions; immediate and heap-backed list, tuple,
+                    -- bytes, string, and namedtuple sequences are admitted.
+                    -- The keyword form `dict(k=v, …)` is in the kwargs arm.
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     (match vs with
                      | [] => allocDictRun st #[]
@@ -6880,8 +6880,10 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                         | .ref a =>
                           (match Heap.get? st.world.heap a with
                            | some (.dict entries _) => allocDictRun st entries
-                           | some (.list _) =>
-                             .unsupported "dict() over a sequence of key/value pairs is outside the tier (the per-insert hashability and duplicate-key rules are not guessed; a dict display or dict(k=v, …) is in tier)"
+                           | some (.list xs) =>
+                             Run.liftRes st (dictPairs st.world.heap 0 xs.toList) ⤳ fun st items =>
+                             Run.liftRes st (dictBuild st.world.heap [] items) ⤳ fun st entries =>
+                             allocDictRun st entries.toArray
                            | some (.generator ..) =>
                              Run.withLocals st.locals (drainIter m fuel st.world a) ⤳ fun st vals =>
                              Run.liftRes st (dictPairs st.world.heap 0 vals) ⤳ fun st items =>
@@ -6896,9 +6898,13 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            | some (.closure ..) =>
                              .exn st (.typeError "'function' object is not iterable")
                            | Option.none => .unsupported danglingMsg)
-                        | .listV _ | .bytes _ =>
-                          .unsupported "dict() over a sequence of key/value pairs is outside the tier (the per-insert hashability and duplicate-key rules are not guessed; a dict display or dict(k=v, …) is in tier)"
-                        | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
+                        | v =>
+                          (match dictPairValues st.world.heap v with
+                           | some values =>
+                             Run.liftRes st (dictPairs st.world.heap 0 values) ⤳ fun st items =>
+                             Run.liftRes st (dictBuild st.world.heap [] items) ⤳ fun st entries =>
+                             allocDictRun st entries.toArray
+                           | Option.none => .exn st (.typeError s!"'{v.typeName}' object is not iterable")))
                      | vs => .exn st (.typeError s!"dict expected at most 1 argument, got {vs.length}"))
                   else if fname == "range" then
                     -- pass 3: an IMMEDIATE `rangeV` value (pure — no

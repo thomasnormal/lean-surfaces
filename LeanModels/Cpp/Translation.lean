@@ -210,6 +210,9 @@ def admitImplicitCastExpression (artifact : Artifact) (path : List Nat) :
 def admitParenthesizedExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ParenExpr" "parenthesized-expression"
 
+def admitConstantExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "ConstantExpr" "constant-expression"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

@@ -1287,6 +1287,17 @@
     "rung": 4
   },
   {
+    "id": "translation.omp-target-update-directive",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "ompTargetUpdateDirectiveTranslationWitness",
+    "cpp_source": "void f(int *x) {\n#pragma omp target update to(x[0:1])\n}",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.omp-distribute-directive",
     "kind": "translation",
     "corpus": "translation witness",

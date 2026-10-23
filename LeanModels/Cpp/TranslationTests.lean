@@ -863,6 +863,13 @@ private def ompTargetExitDataDirectiveTranslation : Artifact := {emptyTranslatio
       .object [("id", .string "o"), ("kind", .string "OMPTargetExitDataDirective"),
         ("name", .string "target-exit-data"), ("inner", .array [])]])]}
 
+private def ompTargetUpdateDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPTargetUpdateDirective"),
+        ("name", .string "target-update"), ("inner", .array [])]])]}
+
 private def ompDistributeDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1503,6 +1510,9 @@ def ompTargetEnterDataDirectiveTranslationWitness : Except String Unit :=
 def ompTargetExitDataDirectiveTranslationWitness : Except String Unit :=
   admitOMPTargetExitDataDirective ompTargetExitDataDirectiveTranslation [0]
 
+def ompTargetUpdateDirectiveTranslationWitness : Except String Unit :=
+  admitOMPTargetUpdateDirective ompTargetUpdateDirectiveTranslation [0]
+
 def ompDistributeDirectiveTranslationWitness : Except String Unit :=
   admitOMPDistributeDirective ompDistributeDirectiveTranslation [0]
 
@@ -2008,6 +2018,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompTargetExitDataDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTargetExitDataDirective ompTargetExitDataDirectiveTranslation [] matches .error _
 #guard admitOMPTargetExitDataDirective functionTranslation [0] matches .error _
+#guard ompTargetUpdateDirectiveTranslationWitness matches .ok ()
+#guard admitOMPTargetUpdateDirective ompTargetUpdateDirectiveTranslation [] matches .error _
+#guard admitOMPTargetUpdateDirective functionTranslation [0] matches .error _
 #guard ompDistributeDirectiveTranslationWitness matches .ok ()
 #guard admitOMPDistributeDirective ompDistributeDirectiveTranslation [] matches .error _
 #guard admitOMPDistributeDirective functionTranslation [0] matches .error _

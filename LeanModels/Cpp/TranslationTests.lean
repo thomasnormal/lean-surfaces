@@ -814,6 +814,13 @@ private def ompParallelSectionsDirectiveTranslation : Artifact := {emptyTranslat
       .object [("id", .string "o"), ("kind", .string "OMPParallelSectionsDirective"),
         ("name", .string "parallel-sections"), ("inner", .array [])]])]}
 
+private def ompParallelMasterDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPParallelMasterDirective"),
+        ("name", .string "parallel-master"), ("inner", .array [])]])]}
+
 private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1335,6 +1342,9 @@ def ompParallelForDirectiveTranslationWitness : Except String Unit :=
 def ompParallelSectionsDirectiveTranslationWitness : Except String Unit :=
   admitOMPParallelSectionsDirective ompParallelSectionsDirectiveTranslation [0]
 
+def ompParallelMasterDirectiveTranslationWitness : Except String Unit :=
+  admitOMPParallelMasterDirective ompParallelMasterDirectiveTranslation [0]
+
 def conditionalOperatorTranslationWitness : Except String Unit :=
   admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
@@ -1777,6 +1787,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompParallelSectionsDirectiveTranslationWitness matches .ok ()
 #guard admitOMPParallelSectionsDirective ompParallelSectionsDirectiveTranslation [] matches .error _
 #guard admitOMPParallelSectionsDirective functionTranslation [0] matches .error _
+#guard ompParallelMasterDirectiveTranslationWitness matches .ok ()
+#guard admitOMPParallelMasterDirective ompParallelMasterDirectiveTranslation [] matches .error _
+#guard admitOMPParallelMasterDirective functionTranslation [0] matches .error _
 #guard conditionalOperatorTranslationWitness matches .ok ()
 #guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
 #guard admitConditionalOperatorExpression functionTranslation [0] matches .error _

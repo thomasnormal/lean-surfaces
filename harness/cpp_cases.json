@@ -847,6 +847,17 @@
     "rung": 3
   },
   {
+    "id": "translation.cxx-typeid-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "cxxTypeidTranslationWitness",
+    "cpp_source": "#include <typeinfo>\nbool f() { return typeid(1).hash_code() != 0; }",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

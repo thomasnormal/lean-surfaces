@@ -267,6 +267,9 @@ def admitCXXRewrittenBinaryOperatorExpression (artifact : Artifact) (path : List
 def admitCXXNoexceptExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXNoexceptExpr" "noexcept-expression"
 
+def admitCXXTypeidExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXTypeidExpr" "typeid-expression"
+
 def admitConditionalOperatorExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ConditionalOperator" "conditional-operator-expression"
 

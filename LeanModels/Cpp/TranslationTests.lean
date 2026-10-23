@@ -821,6 +821,13 @@ private def ompTeamsDistributeSimdDirectiveTranslation : Artifact := {emptyTrans
       .object [("id", .string "o"), ("kind", .string "OMPTeamsDistributeSimdDirective"),
         ("name", .string "teams-distribute-simd"), ("inner", .array [])]])]}
 
+private def ompTeamsDistributeParallelForDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPTeamsDistributeParallelForDirective"),
+        ("name", .string "teams-distribute-parallel-for"), ("inner", .array [])]])]}
+
 private def ompDistributeDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1443,6 +1450,9 @@ def ompTeamsDistributeDirectiveTranslationWitness : Except String Unit :=
 def ompTeamsDistributeSimdDirectiveTranslationWitness : Except String Unit :=
   admitOMPTeamsDistributeSimdDirective ompTeamsDistributeSimdDirectiveTranslation [0]
 
+def ompTeamsDistributeParallelForDirectiveTranslationWitness : Except String Unit :=
+  admitOMPTeamsDistributeParallelForDirective ompTeamsDistributeParallelForDirectiveTranslation [0]
+
 def ompDistributeDirectiveTranslationWitness : Except String Unit :=
   admitOMPDistributeDirective ompDistributeDirectiveTranslation [0]
 
@@ -1930,6 +1940,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompTeamsDistributeSimdDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTeamsDistributeSimdDirective ompTeamsDistributeSimdDirectiveTranslation [] matches .error _
 #guard admitOMPTeamsDistributeSimdDirective functionTranslation [0] matches .error _
+#guard ompTeamsDistributeParallelForDirectiveTranslationWitness matches .ok ()
+#guard admitOMPTeamsDistributeParallelForDirective ompTeamsDistributeParallelForDirectiveTranslation [] matches .error _
+#guard admitOMPTeamsDistributeParallelForDirective functionTranslation [0] matches .error _
 #guard ompDistributeDirectiveTranslationWitness matches .ok ()
 #guard admitOMPDistributeDirective ompDistributeDirectiveTranslation [] matches .error _
 #guard admitOMPDistributeDirective functionTranslation [0] matches .error _

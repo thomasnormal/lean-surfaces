@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    3520
+    3519
    ],
    [
     "VariableSymbol:2state",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4615,
-   "partial": 17365,
+   "clean": 4616,
+   "partial": 17364,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    3987,
+    3988,
     18679
    ],
    "simulation elaboration": [
@@ -1053,14 +1053,14 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 240,
-    "clean": 742,
-    "partial": 249,
+    "blocked_by_more": 239,
+    "clean": 743,
+    "partial": 248,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
       "AssignmentExpression:target",
-      111
+      110
      ],
      [
       "VariableDeclStatement:2state",
@@ -1331,9 +1331,9 @@
     "unlockable": 2
    },
    "chapter-11": {
-    "clean": 746,
+    "clean": 747,
     "error": 0,
-    "partial": 288,
+    "partial": 287,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 9

@@ -168,6 +168,28 @@ class PackedAssignmentTargets(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_right_streaming_unpack_recursively_expands_nested_fixed_array(self):
+        design = extract_source(
+            "module top; logic [127:0] source; int grid[2][2]; "
+            "initial {>> {grid}} = source; endmodule")
+        target, = [node for node in nodes(design)
+                   if node.get("kind") == "ConcatTarget"]
+        self.assertEqual(target["width"], 128)
+        self.assertEqual([part["name"] for part in target["parts"]],
+                         ["grid[0][0]", "grid[0][1]",
+                          "grid[1][0]", "grid[1][1]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_right_streaming_partial_nested_array_stays_loud(self):
+        design = extract_source(
+            "module top; logic [127:0] source; int grid[2][2]; "
+            "initial {>> {grid[0]}} = source; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
     def test_right_streaming_wider_source_keeps_leading_bits(self):
         design = extract_source(
             "module top; logic [3:0] hi, lo; "

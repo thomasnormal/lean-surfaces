@@ -705,6 +705,20 @@ class SymbolicContinuousSelects(unittest.TestCase):
                          ["arr[0]", "out"])
         self.assertEqual(target["width"], 5)
 
+    def test_right_streaming_accepts_nested_fixed_array(self):
+        envelope = self.extract(
+            "module top(input logic [127:0] source, output logic [31:0] out); "
+            "logic [31:0] grid[2][2]; always_comb begin "
+            "{>>{grid}} = source; end assign out = grid[0][0]; endmodule")
+        module = envelope["design"]["modules"][0]
+        statement = module["processes"][0]["body"]["stmts"][0]
+        target = statement["target"]
+        self.assertEqual(target["kind"], "ConcatTarget")
+        self.assertEqual([part["name"] for part in target["parts"]],
+                         ["grid[0][0]", "grid[0][1]",
+                          "grid[1][0]", "grid[1][1]"])
+        self.assertEqual(target["width"], 128)
+
     def test_right_streaming_accepts_constant_cell_slice(self):
         envelope = self.extract(
             "module top(input logic [3:0] source, output logic [1:0] out); "

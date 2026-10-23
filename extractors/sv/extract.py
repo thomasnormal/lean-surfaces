@@ -4827,6 +4827,48 @@ def _streaming_source_window(value, width, symbolic):
     }
 
 
+def _fixed_array_stream_targets(sm, operand, symbolic=False):
+    """Expand a complete fixed unpacked array into its flattened cells.
+
+    The storage tier represents every constant leaf of a bounded unpacked
+    array by an ordinary vector name.  A right-streaming unpack of the whole
+    array therefore has the same target geometry as an explicit list of
+    element selects: dimensions and indices are visited in declaration order
+    (the leftmost dimension is the outer loop).  Partial selections, dynamic
+    indices, and non-integral leaves deliberately return ``None`` so their
+    existing loud boundary remains in force.
+    """
+    try:
+        if not _storage_expression(operand):
+            return None
+        if str(operand.symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net"):
+            return None
+        shape = _fixed_array_dimensions(operand.type)
+        if shape is None:
+            return None
+        dimensions, leaf_type = shape
+        width, two_state, reason = type_width_2s(leaf_type)
+        if width is None or reason is not None:
+            return None
+        positions = [()]
+        for left, right in dimensions:
+            step = 1 if right >= left else -1
+            positions = [prefix + (position,)
+                         for prefix in positions
+                         for position in range(left, right + step, step)]
+        base = (_storage_name(operand.symbol) if symbolic
+                else _array_storage_name(operand.symbol))
+        return [{
+            "kind": "Ident",
+            "span": node_span(sm, operand),
+            "width": width,
+            "name": base + "".join(f"[{position}]" for position in indexes),
+            "two_state": two_state,
+        } for indexes in positions]
+    except Exception:
+        return None
+
+
 def _streaming_target_assignment(sm, expr):
     """Lower a simple right-streaming unpack into packed target leaves.
 
@@ -4858,6 +4900,11 @@ def _streaming_target_assignment(sm, expr):
             operand = getattr(stream, "operand", None)
             if operand is None:
                 return None
+            array_targets = _fixed_array_stream_targets(sm, operand, False)
+            if array_targets is not None:
+                parts.extend(array_targets)
+                total_width += sum(target["width"] for target in array_targets)
+                continue
             target, admitted = legacy_blocking_target(sm, operand, True)
             if not admitted or target.get("kind") not in ("Ident", "SelectTarget"):
                 return None
@@ -4933,6 +4980,13 @@ def _symbolic_streaming_target_assignment(sm, expr):
             operand = getattr(stream, "operand", None)
             if operand is None:
                 return None
+            array_targets = _fixed_array_stream_targets(sm, operand, True)
+            if array_targets is not None:
+                parts.extend(array_targets)
+                leaf_two_state.extend(
+                    [target["two_state"] for target in array_targets])
+                total_width += sum(target["width"] for target in array_targets)
+                continue
             target, admitted = select_target(sm, operand)
             if not admitted or target is None:
                 return None
@@ -8904,6 +8958,50 @@ def convert_fixed_array_vars_sym(sm, m):
         array_type = m.type.canonicalType
         if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
             return None
+        dimensions_shape = _fixed_array_dimensions(array_type)
+        if dimensions_shape is not None and len(dimensions_shape[0]) > 1:
+            dimensions, leaf_type = dimensions_shape
+            width, two, reason = type_width_2s(leaf_type)
+            if width is None or reason is not None:
+                return None
+            if getattr(m, "initializer", None) is not None:
+                return None
+            dtype, dtype_reason = _dtype_sym(sm, leaf_type, _decl_type_syntax(m))
+            if (dtype is not None and dtype_reason is None
+                    and dtype.get("kind") == "PackedType"
+                    and dtype.get("packed") is None):
+                dims = []
+                current = leaf_type.canonicalType
+                while type(current).__name__ == "PackedArrayType":
+                    rng = current.range
+                    dims.append({
+                        "msb": {"kind": "Int", "span": None,
+                                "value": int(rng.left), "resolved_width": None},
+                        "lsb": {"kind": "Int", "span": None,
+                                "value": int(rng.right), "resolved_width": None},
+                    })
+                    current = current.elementType.canonicalType
+                if type(current).__name__ != "ScalarType" or not dims:
+                    return None
+                dtype["packed"] = dims
+            if dtype is None or dtype_reason is not None:
+                return None
+            positions = [()]
+            for left, right in dimensions:
+                step = 1 if right >= left else -1
+                positions = [prefix + (position,)
+                             for prefix in positions
+                             for position in range(left, right + step, step)]
+            decls = []
+            for indexes in positions:
+                init = ({"kind": "Literal", "span": None, "width": width,
+                         "bits": "0" * width} if two else None)
+                decls.append({
+                    "kind": "Var", "span": sym_span(sm, m),
+                    "name": m.name + "".join(f"[{position}]" for position in indexes),
+                    "width": dtype, "init": init,
+                })
+            return decls
         element_type = array_type.elementType
         if type(element_type.canonicalType).__name__ == "FixedSizeUnpackedArrayType":
             return None

@@ -282,6 +282,9 @@ def admitCStyleCastExpression (artifact : Artifact) (path : List Nat) :
 def admitUnaryExprOrTypeTraitExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "UnaryExprOrTypeTraitExpr" "unary-expression-or-type-trait-expression"
 
+def admitVAArgExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "VAArgExpr" "va-arg-expression"
+
 def admitConditionalOperatorExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ConditionalOperator" "conditional-operator-expression"
 

@@ -198,6 +198,8 @@ inductive GenFrame where
   witnessable in-tier yet: writing the witness needs `del xs[i]`, which is
   its own refused row. See the stepper's arm in `Monadic/Eval.lean`. -/
   | iterList (a : Addr) (i : Nat)
+  /-- §iterBytes: `iter(bytes)` over an immutable byte sequence. -/
+  | iterBytes (xs : Array UInt8) (i : Nat)
   /-- `itertools.count(start, step)` — never exhausts. -/
   | countFrom (cur : Int) (step : Int)
   /-- Numeric `itertools.count` state. This value-carrying frame preserves
@@ -215,7 +217,7 @@ an actual generator closes its frame. The continuation distinguishes these
 lifecycles without relying on synthesized function names. -/
 def GenCont.exceptionStatus (cont : GenCont) (error : PyErr) : GenStatus :=
   match cont with
-  | [.iterDict ..] | [.enumDict ..] => .failed error
+  | [.iterDict ..] | [.enumDict ..] | [.iterBytes ..] => .failed error
   | _ => .closed
 
 /-- Heap objects — identity-bearing, mutated in place. `shapeVersion`
@@ -375,6 +377,7 @@ def GenFrame.WF (h : Heap) : GenFrame → Prop
   | .enumDict _ a _ _ _ _ => a < h.size
   | .iterDict a _ _ _ => a < h.size
   | .iterList a _ => a < h.size
+  | .iterBytes xs _ => RVal.WFList h (xs.toList.map (fun x => RVal.int (Int.ofNat x.toNat)))
   | .block _ => True
   | .whileLoop .. => True
   | .countFrom .. => True

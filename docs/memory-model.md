@@ -5405,11 +5405,14 @@ when a UTF-8 prefix ends inside a character.
 `int(bytes)` now accepts the decimal slice already modelled for
 `int(str)`: the six CPython whitespace characters, signs, single underscores
 between digits, and the tier's digit budget. Invalid forms, including
-non-ASCII octets, raise the exact bytes-rendered `ValueError`. Explicit
-`bytes_iterator` cursors, other bytes methods,
-decoding, and bytes percent formatting are still unfinished and refuse loudly;
-they never manufacture a numeric-conversion or non-iterable error for a valid
-bytes program. `Examples/python/bytes_lab` and the whole-file bytes fixture
+non-ASCII octets, raise the exact bytes-rendered `ValueError`. `iter(bytes)`
+now allocates an immutable `bytes_iterator` cursor. `next()` returns one
+integer octet at a time and exhausted cursors follow the existing
+`StopIteration` path; the cursor is represented as a generator frame, so
+ordinary `for` and draining consumers use the same lazy stepper. Other bytes
+methods, decoding, and bytes percent formatting remain unfinished and refuse
+loudly; they never manufacture a numeric-conversion or non-iterable error for a
+valid bytes program. `Examples/python/bytes_lab` and the whole-file bytes fixture
 exercise the native and proof interpreters against CPython 3.9, including
 boundary values, high octets, error paths, consumers, and dictionary keys.
 

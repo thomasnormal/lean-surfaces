@@ -5413,7 +5413,7 @@ def iterFrame (h : Heap) : RVal → Res GenFrame
      | Option.none => .unsupported danglingMsg)
   | .str _ =>
       .unsupported "iter() over a str is outside the tier (CPython's `str_iterator` is its own cursor; docs/memory-model.md §dict iteration)"
-  | .bytes _ => .unsupported "iter() over bytes requires a bytes_iterator cursor (outside the current tier)"
+  | .bytes xs => .ok (.iterBytes xs 0)
   | .tuple _ =>
       .unsupported "iter() over a tuple is outside the tier (CPython's `tuple_iterator` is its own cursor; docs/memory-model.md §dict iteration)"
   | .listV _ =>
@@ -5556,7 +5556,7 @@ def genBreak : GenCont → Option GenCont
   -- unwind inside a body, and these frames have no body). Loud, not a
   -- silent pop.
   | .enumSeq .. :: _ | .enumList .. :: _ | .enumDict .. :: _
-  | .iterDict .. :: _ | .iterList .. :: _
+  | .iterDict .. :: _ | .iterList .. :: _ | .iterBytes .. :: _
   | .countFrom _ _ :: _ => Option.none
   | .countFromVal _ _ :: _ => Option.none
 
@@ -5571,7 +5571,7 @@ def genContinue : GenCont → Option GenCont
   | k@(.forGen ..  :: _) => some k
   | k@(.whileLoop .. :: _) => some k
   | .enumSeq .. :: _ | .enumList .. :: _ | .enumDict .. :: _
-  | .iterDict .. :: _ | .iterList .. :: _
+  | .iterDict .. :: _ | .iterList .. :: _ | .iterBytes .. :: _
   | .countFrom _ _ :: _ => Option.none
   | .countFromVal _ _ :: _ => Option.none
 
@@ -8452,6 +8452,8 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
       -- §iterList: same arrangement as `iterDict` directly above — the trunk
       -- has no `iter` arm, so it never builds this frame either.
       .unsupported "stepping an iter() over a list is outside this interpreter's tier — the live cursor is the monadic rebuild's (docs/memory-model.md §dict iteration)"
+    | .iterBytes .. :: _ =>
+      .unsupported "stepping an iter() over bytes is outside this interpreter's tier — the monadic rebuild owns the bytes cursor"
     | .forDict .. :: _ =>
       -- THE LEGACY INTERPRETER'S CONTRACT under no-backwards-compat: this
       -- interpreter never CONSTRUCTS a `forDict` frame (only

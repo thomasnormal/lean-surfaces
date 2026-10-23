@@ -144,6 +144,15 @@ ordered duplicate-key behavior. The executable and proof interpreters agree
 on the bytes frontier row `len(dict(b"")) == 0`; generators and dictionary
 views keep their existing dedicated paths and unsupported cases remain loud.
 
+
+## 2026-10-23-pycomplete-69 — bytes iterator cursor
+
+The executable monadic interpreter now models `iter(bytes)` with an immutable
+cursor frame. `next()` yields integer octets one at a time and exhausted
+cursors follow the existing `StopIteration` behavior. The proof interpreter
+keeps this stateful cursor loud because its value-side generator representation
+is intentionally narrower; other bytes protocol methods remain refused.
+
 ## 2026-10-23-pycomplete-63 — Latin-1 string case mapping
 
 String `swapcase`, `isupper`, `islower`, and `upper` now admit CPython's

@@ -1955,6 +1955,11 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
           else K.execGen k'
       | some _ => refuse "internal: an iter() cursor over a non-list object (report this)"
       | Option.none => refuse danglingMsg
+  | .iterBytes xs cur :: k' =>
+      if h : cur < xs.size then
+        let b := xs[cur]
+        pure (some (.int b.toNat, .iterBytes xs (cur + 1) :: k'))
+      else K.execGen k'
   | .countFrom cur step :: k' =>
       -- never exhausts: `count` is the infinite ray of sunfish's move generator,
       -- and a consumer's `break` is what ends it.

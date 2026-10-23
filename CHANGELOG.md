@@ -49,6 +49,8 @@ change is listed here under **Changed** or **Removed**.
 - `dict()` now accepts pair sequences from immediate and heap-backed lists,
   tuples, bytes, strings, and namedtuples, preserving CPython's ordered
   length, hashability, and duplicate-key checks.
+- `iter(bytes)` now creates a lazy immutable byte cursor; `next()` yields
+  integer octets and exhaustion follows the existing `StopIteration` behavior.
 
 ## [0.1.14] — 2026-10-21
 

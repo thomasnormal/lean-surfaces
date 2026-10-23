@@ -420,6 +420,9 @@ def admitOMPTargetExitDataDirective (artifact : Artifact) (path : List Nat) :
 def admitOMPTargetParallelDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTargetParallelDirective" "omp-target-parallel-directive"
 
+def admitOMPTargetParallelForDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPTargetParallelForDirective" "omp-target-parallel-for-directive"
+
 def admitOMPTargetUpdateDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTargetUpdateDirective" "omp-target-update-directive"
 

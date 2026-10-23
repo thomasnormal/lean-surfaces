@@ -1012,6 +1012,17 @@
     "rung": 1
   },
   {
+    "id": "translation.coroutine-body-statement",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "coroutineBodyTranslationWitness",
+    "cpp_source": "struct Task { struct promise_type {}; }; Task f() { co_return; }",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.conditional-operator-expression",
     "kind": "translation",
     "corpus": "translation witness",

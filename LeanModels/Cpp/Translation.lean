@@ -312,6 +312,9 @@ def admitCXXInheritedConstructorInitExpression (artifact : Artifact) (path : Lis
 def admitCXXStdInitializerListExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXStdInitializerListExpr" "standard-initializer-list-expression"
 
+def admitCoroutineBodyStatement (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CoroutineBodyStmt" "coroutine-body-statement"
+
 def admitConditionalOperatorExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ConditionalOperator" "conditional-operator-expression"
 

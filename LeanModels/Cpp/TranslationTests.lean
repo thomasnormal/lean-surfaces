@@ -688,6 +688,13 @@ private def cxxStdInitializerListTranslation : Artifact := {emptyTranslation wit
       .object [("id", .string "s"), ("kind", .string "CXXStdInitializerListExpr"),
         ("name", .string "initializer-list"), ("inner", .array [])]])]}
 
+private def coroutineBodyTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "c"), ("kind", .string "CoroutineBodyStmt"),
+        ("name", .string "coroutine"), ("inner", .array [])]])]}
+
 private def conditionalOperatorTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1155,6 +1162,9 @@ def cxxInheritedConstructorInitTranslationWitness : Except String Unit :=
 def cxxStdInitializerListTranslationWitness : Except String Unit :=
   admitCXXStdInitializerListExpression cxxStdInitializerListTranslation [0]
 
+def coroutineBodyTranslationWitness : Except String Unit :=
+  admitCoroutineBodyStatement coroutineBodyTranslation [0]
+
 def conditionalOperatorTranslationWitness : Except String Unit :=
   admitConditionalOperatorExpression conditionalOperatorTranslation [0]
 
@@ -1543,6 +1553,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard cxxStdInitializerListTranslationWitness matches .ok ()
 #guard admitCXXStdInitializerListExpression cxxStdInitializerListTranslation [] matches .error _
 #guard admitCXXStdInitializerListExpression functionTranslation [0] matches .error _
+#guard coroutineBodyTranslationWitness matches .ok ()
+#guard admitCoroutineBodyStatement coroutineBodyTranslation [] matches .error _
+#guard admitCoroutineBodyStatement functionTranslation [0] matches .error _
 #guard conditionalOperatorTranslationWitness matches .ok ()
 #guard admitConditionalOperatorExpression conditionalOperatorTranslation [] matches .error _
 #guard admitConditionalOperatorExpression functionTranslation [0] matches .error _

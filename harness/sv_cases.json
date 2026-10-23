@@ -47,6 +47,7 @@
     {"name": "unpacked_struct_conditional", "file": "Examples/system-verilog/unpacked_struct_conditional/unpacked_struct_conditional.sv", "module": "top", "oracle": ["PASS1", "PASS2"], "expect": "match"},
     {"name": "unpacked_struct_nested_pattern", "file": "Examples/system-verilog/unpacked_struct_nested_pattern/unpacked_struct_nested_pattern.sv", "module": "top", "oracle": ["PASS1", "PASS2"], "expect": "match"},
     {"name": "unpacked_array_nested_pattern", "file": "Examples/system-verilog/unpacked_array_nested_pattern/unpacked_array_nested_pattern.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
+    {"name": "unpacked_array_subarray_copy", "file": "Examples/system-verilog/unpacked_array_subarray_copy/unpacked_array_subarray_copy.sv", "module": "top", "oracle": ["PASS", "PASS2"], "expect": "match"},
     {"name": "unpacked_struct_pattern", "file": "Examples/system-verilog/unpacked_struct_pattern/unpacked_struct_pattern.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "unpacked_struct_keyed_pattern", "file": "Examples/system-verilog/unpacked_struct_keyed_pattern/unpacked_struct_keyed_pattern.sv", "module": "top", "oracle": ["PASS"], "expect": "match"},
     {"name": "delay_refusal", "file": "Examples/system-verilog/delay/delay.sv", "module": "delay", "oracle": "refuse", "expect": "refuse"},

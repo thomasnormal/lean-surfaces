@@ -331,6 +331,46 @@ class UnpackedArrayAssignments(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_constant_subarray_copy_pairs_remaining_cells(self):
+        design = extract_source(
+            "module top; int source [0:1][0:2]; int row [0:2]; "
+            "initial row = source[1]; endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual([a["target"]["name"] for a in assigns],
+                         ["row[0]", "row[1]", "row[2]"])
+        self.assertEqual([a["value"]["operand"]["name"] for a in assigns],
+                         ["source[1][0]", "source[1][1]", "source[1][2]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_constant_subarray_pattern_writes_remaining_cells(self):
+        design = extract_source(
+            "module top; int value [0:1][0:2]; "
+            "initial value[1] = '{10, 20, 30}; endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual([a["target"]["name"] for a in assigns],
+                         ["value[1][0]", "value[1][1]", "value[1][2]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_dynamic_subarray_copy_stays_loud(self):
+        design = extract_source(
+            "module top; int source [0:1][0:2]; int row [0:2]; int i; "
+            "initial row = source[i]; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
+    def test_subarray_self_copy_stays_loud(self):
+        design = extract_source(
+            "module top; int value [0:1][0:2]; "
+            "initial value[0] = value[1]; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

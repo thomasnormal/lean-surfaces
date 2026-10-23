@@ -1539,6 +1539,179 @@ def _fixed_array_assignment_shape(source):
     return name, width, two_state, list(range(left, right + step, step))
 
 
+def _fixed_array_subarray_shape(source):
+    """Return the flattened cells of a constant fixed-array subarray.
+
+    A selection that omits one or more rightmost unpacked dimensions is an
+    unpacked subarray value (for example ``A[1]`` for ``int A[2][3]``).  The
+    flat self-check state has no aggregate slot, so retain only the complete
+    constant prefix and enumerate the remaining dimensions in declaration
+    order.  Fully selected leaves and dynamic selections are handled by the
+    ordinary element-select path and are deliberately not accepted here.
+    """
+    try:
+        if type(source).__name__ != "ElementSelectExpression":
+            return None
+        selectors = []
+        current = source
+        while type(current).__name__ == "ElementSelectExpression":
+            position = _constant_dimension_selector(current.selector)
+            if position is None:
+                return None
+            selectors.append(position)
+            current = current.value
+        if not _storage_expression(current):
+            return None
+        if str(current.symbol.kind) != "SymbolKind.Variable":
+            return None
+        shape = _fixed_array_dimensions(current.type)
+        if shape is None:
+            return None
+        dimensions, leaf_type = shape
+        if not selectors or len(selectors) >= len(dimensions):
+            return None
+        prefix_positions = list(reversed(selectors))
+        for position, (left, right) in zip(prefix_positions, dimensions):
+            if position < min(left, right) or position > max(left, right):
+                return None
+        width, two_state, reason = type_width_2s(leaf_type)
+        if width is None or reason is not None:
+            return None
+        remaining = dimensions[len(prefix_positions):]
+        positions = [()]
+        for left, right in remaining:
+            step = 1 if right >= left else -1
+            positions = [prefix + (position,)
+                         for prefix in positions
+                         for position in range(left, right + step, step)]
+        if not positions or len(positions) > 1024:
+            return None
+        root_name = _array_storage_name(current.symbol)
+        prefix_name = root_name + "".join(
+            f"[{position}]" for position in prefix_positions)
+        cells = [prefix_name + "".join(f"[{position}]" for position in suffix)
+                 for suffix in positions]
+        return root_name, cells, width, two_state
+    except Exception:
+        return None
+
+
+def _fixed_array_subarray_copy_assignment(sm, expr):
+    """Copy a selected fixed-array row into a flat fixed-array destination.
+
+    SystemVerilog permits omitting trailing unpacked indices when selecting a
+    subarray.  Once both arrays are represented as independent vector cells,
+    a constant source prefix can be copied cellwise.  Reject destination/source
+    aliasing because a sequential expansion would otherwise observe an earlier
+    write, and require the source selection to be a pure expression.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None):
+            return None
+        lhs_shape = _fixed_array_assignment_shape(expr.left)
+        rhs_shape = _fixed_array_subarray_shape(expr.right)
+        if lhs_shape is None or rhs_shape is None:
+            return None
+        lhs_name, lhs_width, lhs_two, lhs_positions = lhs_shape
+        rhs_root, rhs_cells, rhs_width, _rhs_two = rhs_shape
+        if (len(lhs_positions) != len(rhs_cells) or lhs_width != rhs_width
+                or lhs_name == rhs_root):
+            return None
+        if not _case_source_expression_ok(expr.right):
+            return None
+        stmts = []
+        for lhs_position, rhs_name in zip(lhs_positions, rhs_cells):
+            value = {
+                "kind": "Ident",
+                "span": node_span(sm, expr.right),
+                "width": rhs_width,
+                "name": rhs_name,
+            }
+            if lhs_two:
+                value = squash2_wrap(value, lhs_width)
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {
+                    "kind": "Ident",
+                    "span": node_span(sm, expr.left),
+                    "width": lhs_width,
+                    "name": f"{lhs_name}[{lhs_position}]",
+                },
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr),
+                "stmts": stmts, "fixed_array_subarray_copy_lowered": True}
+    except Exception:
+        return None
+
+
+def _fixed_array_subarray_pattern_assignment(sm, expr):
+    """Lower an exact pattern assigned to a constant array subarray."""
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None):
+            return None
+        lhs_shape = _fixed_array_subarray_shape(expr.left)
+        if lhs_shape is None:
+            return None
+        root_name, cells, width, two_state = lhs_shape
+        pattern_kind = type(expr.right).__name__
+        if pattern_kind not in ("SimpleAssignmentPatternExpression",
+                                "StructuredAssignmentPatternExpression",
+                                "ReplicatedAssignmentPatternExpression"):
+            return None
+        dimensions_shape = _fixed_array_dimensions(expr.left.type)
+        if dimensions_shape is None:
+            return None
+        dimensions, leaf_type = dimensions_shape
+        if type(leaf_type).__name__ in ("FixedSizeUnpackedArrayType",
+                                        "UnpackedStructType", "UnpackedUnionType",
+                                        "DynamicArrayType", "QueueType",
+                                        "AssociativeArrayType"):
+            return None
+        elements = _fixed_array_pattern_elements(expr.right, dimensions)
+        if elements is None or len(elements) != len(cells):
+            return None
+        values = []
+        for element in elements:
+            if not _case_source_expression_ok(element, packed_members=True):
+                return None
+            reads_root = False
+
+            def inspect(node):
+                nonlocal reads_root
+                if type(node).__name__ in ("NamedValueExpression",
+                                            "HierarchicalValueExpression"):
+                    try:
+                        reads_root = reads_root or _array_storage_name(node.symbol) == root_name
+                    except Exception:
+                        reads_root = True
+
+            _visit_selected_expression(element, inspect)
+            if reads_root:
+                return None
+            value = convert_expr(sm, element)
+            if (value is None or value.get("kind") == "Unsupported"
+                    or width_of(value) != width or not _case_expression_ok(value)):
+                return None
+            values.append(squash2_wrap(value, width) if two_state else value)
+        stmts = []
+        for cell, value in zip(cells, values):
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                           "width": width, "name": cell},
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr),
+                "stmts": stmts, "fixed_array_subarray_pattern_lowered": True}
+    except Exception:
+        return None
+
+
 def _fixed_array_compare_expr(sm, expression, operator):
     """Lower equality of equal-length cell-expanded arrays to cell comparisons."""
     try:
@@ -5924,6 +6097,12 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         array_concat = _fixed_array_concat_assignment(sm, expr)
         if array_concat is not None:
             return array_concat
+        array_subarray_pattern = _fixed_array_subarray_pattern_assignment(sm, expr)
+        if array_subarray_pattern is not None:
+            return array_subarray_pattern
+        array_subarray_copy = _fixed_array_subarray_copy_assignment(sm, expr)
+        if array_subarray_copy is not None:
+            return array_subarray_copy
         array_conditional = _fixed_array_conditional_assignment(sm, expr)
         if array_conditional is not None:
             return array_conditional

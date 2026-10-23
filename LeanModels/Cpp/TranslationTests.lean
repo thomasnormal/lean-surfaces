@@ -989,6 +989,13 @@ private def ompParallelMasterTaskloopDirectiveTranslation : Artifact := {emptyTr
       .object [("id", .string "o"), ("kind", .string "OMPParallelMasterTaskloopDirective"),
         ("name", .string "parallel-master-taskloop"), ("inner", .array [])]])]}
 
+private def ompParallelMasterTaskloopSimdDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPParallelMasterTaskloopSimdDirective"),
+        ("name", .string "parallel-master-taskloop-simd"), ("inner", .array [])]])]}
+
 private def ompTaskyieldDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1592,6 +1599,9 @@ def ompMasterTaskloopSimdDirectiveTranslationWitness : Except String Unit :=
 def ompParallelMasterTaskloopDirectiveTranslationWitness : Except String Unit :=
   admitOMPParallelMasterTaskloopDirective ompParallelMasterTaskloopDirectiveTranslation [0]
 
+def ompParallelMasterTaskloopSimdDirectiveTranslationWitness : Except String Unit :=
+  admitOMPParallelMasterTaskloopSimdDirective ompParallelMasterTaskloopSimdDirectiveTranslation [0]
+
 def ompTaskyieldDirectiveTranslationWitness : Except String Unit :=
   admitOMPTaskyieldDirective ompTaskyieldDirectiveTranslation [0]
 
@@ -2112,6 +2122,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompParallelMasterTaskloopDirectiveTranslationWitness matches .ok ()
 #guard admitOMPParallelMasterTaskloopDirective ompParallelMasterTaskloopDirectiveTranslation [] matches .error _
 #guard admitOMPParallelMasterTaskloopDirective functionTranslation [0] matches .error _
+#guard ompParallelMasterTaskloopSimdDirectiveTranslationWitness matches .ok ()
+#guard admitOMPParallelMasterTaskloopSimdDirective ompParallelMasterTaskloopSimdDirectiveTranslation [] matches .error _
+#guard admitOMPParallelMasterTaskloopSimdDirective functionTranslation [0] matches .error _
 #guard ompTaskyieldDirectiveTranslationWitness matches .ok ()
 #guard admitOMPTaskyieldDirective ompTaskyieldDirectiveTranslation [] matches .error _
 #guard admitOMPTaskyieldDirective functionTranslation [0] matches .error _

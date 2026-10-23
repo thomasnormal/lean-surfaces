@@ -249,6 +249,9 @@ def admitDeclarationReferenceExpression (artifact : Artifact) (path : List Nat) 
 def admitCXXThisExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXThisExpr" "this-expression"
 
+def admitUnaryOperatorExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "UnaryOperator" "unary-operator-expression"
+
 def admitVariableDeclaration (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "VarDecl" "variable"
 

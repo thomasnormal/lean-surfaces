@@ -474,6 +474,9 @@ def admitOMPDispatchDirective (artifact : Artifact) (path : List Nat) :
 def admitOMPMaskedDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPMaskedDirective" "omp-masked-directive"
 
+def admitOMPParallelMaskedDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPParallelMaskedDirective" "omp-parallel-masked-directive"
+
 def admitOMPTargetUpdateDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTargetUpdateDirective" "omp-target-update-directive"
 

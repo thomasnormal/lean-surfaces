@@ -321,6 +321,9 @@ def admitAttributedStatement (artifact : Artifact) (path : List Nat) :
 def admitDesignatedInitializerExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "DesignatedInitExpr" "designated-initializer-expression"
 
+def admitCoreturnStatement (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CoreturnStmt" "coreturn-statement"
+
 def admitConditionalOperatorExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "ConditionalOperator" "conditional-operator-expression"
 

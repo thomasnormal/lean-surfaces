@@ -814,6 +814,13 @@ private def ompDistributeParallelForSimdDirectiveTranslation : Artifact := {empt
       .object [("id", .string "o"), ("kind", .string "OMPDistributeParallelForSimdDirective"),
         ("name", .string "distribute-parallel-for-simd"), ("inner", .array [])]])]}
 
+private def ompDistributeSimdDirectiveTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "o"), ("kind", .string "OMPDistributeSimdDirective"),
+        ("name", .string "distribute-simd"), ("inner", .array [])]])]}
+
 private def ompParallelForDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1398,6 +1405,9 @@ def ompDistributeParallelForDirectiveTranslationWitness : Except String Unit :=
 def ompDistributeParallelForSimdDirectiveTranslationWitness : Except String Unit :=
   admitOMPDistributeParallelForSimdDirective ompDistributeParallelForSimdDirectiveTranslation [0]
 
+def ompDistributeSimdDirectiveTranslationWitness : Except String Unit :=
+  admitOMPDistributeSimdDirective ompDistributeSimdDirectiveTranslation [0]
+
 def ompParallelForDirectiveTranslationWitness : Except String Unit :=
   admitOMPParallelForDirective ompParallelForDirectiveTranslation [0]
 
@@ -1867,6 +1877,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard ompDistributeParallelForSimdDirectiveTranslationWitness matches .ok ()
 #guard admitOMPDistributeParallelForSimdDirective ompDistributeParallelForSimdDirectiveTranslation [] matches .error _
 #guard admitOMPDistributeParallelForSimdDirective functionTranslation [0] matches .error _
+#guard ompDistributeSimdDirectiveTranslationWitness matches .ok ()
+#guard admitOMPDistributeSimdDirective ompDistributeSimdDirectiveTranslation [] matches .error _
+#guard admitOMPDistributeSimdDirective functionTranslation [0] matches .error _
 #guard ompParallelForDirectiveTranslationWitness matches .ok ()
 #guard admitOMPParallelForDirective ompParallelForDirectiveTranslation [] matches .error _
 #guard admitOMPParallelForDirective functionTranslation [0] matches .error _

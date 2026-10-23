@@ -902,6 +902,17 @@
     "rung": 7
   },
   {
+    "id": "translation.cxx-operator-call-expression",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "cxxOperatorCallExpressionTranslationWitness",
+    "cpp_source": "struct S { int operator+(int value) const { return value; } }; int f(S value) { return value + 1; }",
+    "expect": "match",
+    "rung": 8
+  },
+  {
     "id": "translation.compound-statement",
     "kind": "translation",
     "corpus": "translation witness",

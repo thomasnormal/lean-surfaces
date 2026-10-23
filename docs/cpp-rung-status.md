@@ -16,7 +16,7 @@ Measured against the C++ charter's N4950 clause ladder. `executable` means a bou
 | 5 | §9 | **executable** | The bounded integral declaration/reference frame subset executes. |
 | 6 | §10 | **not started** | Modules and imports have no semantic representation. |
 | 7 | §11 | **specified** | Class, base-subobject and member-getter evidence is specified; CXXBaseSpecifier, MemberExpr, CXXMemberCallExpr, CXXDynamicCastExpr and CXXConstructExpr metadata are admitted and object construction remains bounded. |
-| 8 | §12 | **not started** | Clang-selected overload and conversion execution is not admitted. |
+| 8 | §12 | **specified** | Clang-selected overload metadata is retained through CXXOperatorCallExpr; overload and conversion execution is not admitted. |
 | 9 | §13 | **not started** | Template instantiation is retained as frontend evidence only. |
 | 10 | §14 | **specified** | Exception metadata is retained through CXXTryStmt, CXXCatchStmt and CXXThrowExpr, but throw/catch matching, unwinding and cleanup are not executable. |
 | 11 | §15 | **specified** | Preprocessing remains in the pinned Clang trusted boundary. |
@@ -47,6 +47,6 @@ The grammar census uses one source witness per listed Clang AST node kind. The r
 | measurement | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---|---:|---:|---:|---:|---:|---:|
 | grammar witnesses | 24 | 0 | 0 | 0 | 0 | 24 |
-| differential calls | 146 | 0 | 0 | 0 | 0 | 146 |
+| differential calls | 147 | 0 | 0 | 0 | 0 | 147 |
 
-The differential rows include 48 compile-only translation witness, 21 rung-1 lifetime witnesses, 1 rung-2 scalar checks, 10 rung-3 expression checks, 14 rung-4 statement checks, and 52 callable rows across the retained callable witness set; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.
+The differential rows include 48 compile-only translation witness, 21 rung-1 lifetime witnesses, 1 rung-2 scalar checks, 10 rung-3 expression checks, 14 rung-4 statement checks, and 53 callable rows across the retained callable witness set; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.

@@ -53,7 +53,7 @@ RUNG_STATUS = [
     (5, "§9", "executable", "The bounded integral declaration/reference frame subset executes."),
     (6, "§10", "not started", "Modules and imports have no semantic representation."),
     (7, "§11", "specified", "Class, base-subobject and member-getter evidence is specified; CXXBaseSpecifier, MemberExpr, CXXMemberCallExpr, CXXDynamicCastExpr and CXXConstructExpr metadata are admitted and object construction remains bounded."),
-    (8, "§12", "not started", "Clang-selected overload and conversion execution is not admitted."),
+    (8, "§12", "specified", "Clang-selected overload metadata is retained through CXXOperatorCallExpr; overload and conversion execution is not admitted."),
     (9, "§13", "not started", "Template instantiation is retained as frontend evidence only."),
     (10, "§14", "specified", "Exception metadata is retained through CXXTryStmt, CXXCatchStmt and CXXThrowExpr, but throw/catch matching, unwinding and cleanup are not executable."),
     (11, "§15", "specified", "Preprocessing remains in the pinned Clang trusted boundary."),

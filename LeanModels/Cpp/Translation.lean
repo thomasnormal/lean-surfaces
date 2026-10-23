@@ -282,6 +282,9 @@ def admitMemberExpression (artifact : Artifact) (path : List Nat) :
 def admitCXXMemberCallExpression (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXMemberCallExpr" "member-call-expression"
 
+def admitCXXOperatorCallExpression (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "CXXOperatorCallExpr" "operator-call-expression"
+
 def admitCompoundStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CompoundStmt" "compound-statement"
 

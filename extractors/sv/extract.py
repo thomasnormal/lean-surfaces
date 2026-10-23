@@ -2170,6 +2170,87 @@ def _fixed_array_bitstream_cast_assignment(sm, expr):
         return None
 
 
+def _fixed_array_struct_pattern_assignment(sm, expr):
+    """Expand a complete positional pattern of integral struct elements."""
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None or not _storage_expression(expr.left)):
+            return None
+        array_type = expr.left.type.canonicalType
+        if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
+            return None
+        element_type = array_type.elementType.canonicalType
+        if type(element_type).__name__ != "UnpackedStructType":
+            return None
+        if getattr(element_type, "isTagged", False):
+            return None
+        if type(expr.right).__name__ not in (
+                "SimpleAssignmentPatternExpression",
+                "StructuredAssignmentPatternExpression",
+                "ReplicatedAssignmentPatternExpression"):
+            return None
+        left, right = int(array_type.range.left), int(array_type.range.right)
+        positions = list(range(left, right + (1 if right >= left else -1),
+                               1 if right >= left else -1))
+        elements = _pattern_source_elements(expr.right)
+        if not elements:
+            return None
+        if type(expr.right).__name__ == "ReplicatedAssignmentPatternExpression":
+            repetition = getattr(getattr(expr.right, "count", None), "constant", None)
+            try:
+                if hasattr(repetition, "value"):
+                    repetition = repetition.value
+                repetition = int(repetition)
+            except (TypeError, ValueError, OverflowError):
+                return None
+            if repetition <= 0 or repetition * len(elements) != len(positions):
+                return None
+            elements = elements * repetition
+        if len(elements) != len(positions):
+            return None
+        root = _array_storage_name(expr.left.symbol)
+        cells = []
+        for position, element in zip(positions, elements):
+            if type(element).__name__ not in (
+                    "SimpleAssignmentPatternExpression",
+                    "StructuredAssignmentPatternExpression"):
+                return None
+            reads_target = False
+            def inspect(node):
+                nonlocal reads_target
+                if type(node).__name__ in ("NamedValueExpression",
+                                           "HierarchicalValueExpression"):
+                    try:
+                        reads_target = reads_target or _array_storage_name(node.symbol) == root
+                    except Exception:
+                        reads_target = True
+            _visit_selected_expression(element, inspect)
+            if reads_target:
+                return None
+            fields = _unpacked_struct_initializer_cells(
+                sm, f"{root}[{position}]", element_type, element)
+            if fields is None:
+                return None
+            cells.extend(fields)
+        stmts = []
+        for name, width, value, field_type in cells:
+            if value is None:
+                return None
+            if not field_type.isFourState:
+                value = squash2_wrap(value, width)
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                           "width": width, "name": name},
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts,
+                "fixed_array_struct_pattern_lowered": True}
+    except Exception:
+        return None
+
+
 def _fixed_array_pattern_assignment(sm, expr):
     """Lower one exact assignment pattern to a fixed-array's cells.
 
@@ -6697,6 +6778,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         array_bitstream_cast = _fixed_array_bitstream_cast_assignment(sm, expr)
         if array_bitstream_cast is not None:
             return array_bitstream_cast
+        array_struct_pattern = _fixed_array_struct_pattern_assignment(sm, expr)
+        if array_struct_pattern is not None:
+            return array_struct_pattern
         array_copy = _fixed_array_copy_assignment(sm, expr)
         if array_copy is not None:
             return array_copy

@@ -5343,6 +5343,19 @@ move **4,594 → 4,604** and partial files **17,385 → 17,375**;
 **51 rows, 47 matches, 0 disagreements, and 4 recorded refusals**; grammar
 coverage remains **202 witnesses, 71 MATCH, and 131 REFUSE**.
 
+### Fixed-array patterns with integral struct elements — 2026-10-23
+
+Complete positional patterns whose elements are finite integral unpacked structs
+now flatten each array row and struct field into ordinary scalar writes. The
+existing recursive struct flattener preserves field order and two-state
+conversion, while incomplete, dynamic, aggregate, and aliased patterns remain
+loud. The `fixed_array_struct_pattern` fixture and differential row cover
+complete row patterns. The 22,046-file census moves **4,622 → 4,624 clean**
+and **17,358 → 17,356 partial**; `AssignmentExpression:target` falls
+**3,512 → 3,510**. Differential coverage is **60 rows, 56 matches, 0
+disagreements, and 4 recorded refusals**; grammar coverage is now **203
+witnesses, 72 MATCH, and 131 REFUSE**.
+
 ### Dynamic `$fatal` arguments — 2026-10-23
 
 `$fatal` now evaluates pure dynamic severity, format, and value arguments in

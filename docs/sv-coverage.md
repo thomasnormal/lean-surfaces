@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 59 | 55 | 0 | 4 | sv-tests-2 declarations |
+| 60 | 56 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -69,6 +69,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `streaming_left_target` | `Examples/system-verilog/streaming_left_target/streaming_left_target.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_indexed_slice` | `Examples/system-verilog/fixed_array_indexed_slice/fixed_array_indexed_slice.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_bitstream_cast` | `Examples/system-verilog/fixed_array_bitstream_cast/fixed_array_bitstream_cast.sv` | match | **MATCH** | `ok` | MATCH |
+| `fixed_array_struct_pattern` | `Examples/system-verilog/fixed_array_struct_pattern/fixed_array_struct_pattern.sv` | match | **MATCH** | `ok` | MATCH |
 | `delay_refusal` | `Examples/system-verilog/delay/delay.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `event_refusal` | `Examples/system-verilog/event/event.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `always_refusal` | `Examples/system-verilog/always/events.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
@@ -80,7 +81,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 202 | 71 | 131 | pyslang SyntaxKind |
+| 203 | 72 | 131 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -259,6 +260,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.SubtractAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.SubtractExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.SystemName` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
+| `SyntaxKind.TimeType` | `Examples/system-verilog/fixed_array_struct_pattern/fixed_array_struct_pattern.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.TimeUnitsDeclaration` | `Examples/system-verilog/intra_assignment/capture.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.TimingControlExpression` | `Examples/system-verilog/elaborated_generate/captures.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.TimingControlStatement` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
@@ -293,11 +295,11 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22046 | 4622 | 17358 | 66 |
+| 22046 | 4624 | 17356 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 3512 |
+| `AssignmentExpression:target` | 3510 |
 | `VariableSymbol:2state` | 3504 |
 | `ExpressionStatement:CallExpression` | 3476 |
 | `CallExpression` | 3292 |

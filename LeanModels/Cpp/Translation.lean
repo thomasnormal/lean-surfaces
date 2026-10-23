@@ -333,6 +333,9 @@ def admitGotoStatement (artifact : Artifact) (path : List Nat) :
 def admitLabelStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "LabelStmt" "label-statement"
 
+def admitLabelDeclaration (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "LabelDecl" "label-declaration"
+
 def admitCXXTryStatement (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "CXXTryStmt" "try-statement"
 

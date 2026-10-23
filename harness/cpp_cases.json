@@ -1089,6 +1089,17 @@
     "rung": 4
   },
   {
+    "id": "translation.label-declaration",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "labelDeclarationTranslationWitness",
+    "cpp_source": "int f() { goto done; done: return 0; }",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "translation.cxx-try-statement",
     "kind": "translation",
     "corpus": "translation witness",

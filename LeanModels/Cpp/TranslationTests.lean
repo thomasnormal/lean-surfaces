@@ -737,6 +737,13 @@ private def labelStatementTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "l"), ("kind", .string "LabelStmt"),
         ("name", .string "done"), ("inner", .array [])]])]}
 
+private def labelDeclarationTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "l"), ("kind", .string "LabelDecl"),
+        ("name", .string "done"), ("inner", .array [])]])]}
+
 private def cxxTryStatementTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1048,6 +1055,9 @@ def gotoStatementTranslationWitness : Except String Unit :=
 
 def labelStatementTranslationWitness : Except String Unit :=
   admitLabelStatement labelStatementTranslation [0]
+
+def labelDeclarationTranslationWitness : Except String Unit :=
+  admitLabelDeclaration labelDeclarationTranslation [0]
 
 def cxxTryStatementTranslationWitness : Except String Unit :=
   admitCXXTryStatement cxxTryStatementTranslation [0]
@@ -1383,6 +1393,9 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard labelStatementTranslationWitness matches .ok ()
 #guard admitLabelStatement labelStatementTranslation [] matches .error _
 #guard admitLabelStatement functionTranslation [0] matches .error _
+#guard labelDeclarationTranslationWitness matches .ok ()
+#guard admitLabelDeclaration labelDeclarationTranslation [] matches .error _
+#guard admitLabelDeclaration functionTranslation [0] matches .error _
 #guard cxxTryStatementTranslationWitness matches .ok ()
 #guard admitCXXTryStatement cxxTryStatementTranslation [] matches .error _
 #guard admitCXXTryStatement functionTranslation [0] matches .error _

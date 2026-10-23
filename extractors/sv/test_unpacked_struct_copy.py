@@ -70,6 +70,30 @@ class UnpackedStructCopy(unittest.TestCase):
         self.assertEqual(stmts[1]["value"]["operand"]["bits"], "10000000")
         self.assertEqual(stmts[2]["value"]["bits"], "00000000")
 
+    def test_conditional_struct_assignment_is_fieldwise(self):
+        design = lower(
+            "typedef struct { int count; byte code; } T; "
+            "module top; T left, right, selected; logic choose; "
+            "initial selected = choose ? left : right; endmodule")
+        lowered = [node for node in nodes(design)
+                   if node.get("unpacked_struct_conditional_lowered")]
+        self.assertEqual(len(lowered), 1)
+        stmts = lowered[0]["stmts"]
+        self.assertEqual([stmt["target"]["name"] for stmt in stmts],
+                         ["selected.count", "selected.code"])
+        self.assertTrue(all(stmt["value"].get("kind") in ("Ternary", "Squash2")
+                             for stmt in stmts))
+        self.assertTrue(any(stmt["value"].get("kind") == "Squash2"
+                             for stmt in stmts))
+
+    def test_conditional_struct_self_alias_stays_loud(self):
+        design = lower(
+            "typedef struct { int count; byte code; } T; "
+            "module top; T left, selected; logic choose; "
+            "initial selected = choose ? selected : left; endmodule")
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
+
 
 if __name__ == "__main__":
     unittest.main()

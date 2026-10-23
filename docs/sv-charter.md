@@ -5304,6 +5304,19 @@ pending strobe queue without adding a second scheduler. The census moves
 coverage is **46 rows, 42 matches, 0 disagreements, and 4 recorded refusals**;
 grammar coverage remains **202 witnesses, 69 MATCH, and 133 REFUSE**.
 
+### Conditional integral unpacked-struct assignments — 2026-10-23
+
+Assignments of a pure conditional expression between flattened integral
+unpacked structs now lower one ternary per field, sampling the condition once
+and retaining four-state conditional merging. Aggregate fields, effectful
+conditions, and destination/source aliasing remain loud. The
+`unpacked_struct_conditional` fixture and differential row cover both branches.
+On the 22,045-file corpus snapshot, clean files move **4,593 → 4,594** and
+partial files **17,386 → 17,385**; `AssignmentExpression:target` falls
+**3,546 → 3,545**. Differential coverage is **50 rows, 46 matches, 0
+disagreements, and 4 recorded refusals**; grammar coverage remains **202
+witnesses, 71 MATCH, and 131 REFUSE**.
+
 ### Dynamic `$fatal` arguments — 2026-10-23
 
 `$fatal` now evaluates pure dynamic severity, format, and value arguments in

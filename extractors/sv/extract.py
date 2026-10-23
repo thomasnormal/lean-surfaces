@@ -1936,6 +1936,83 @@ def _unpacked_struct_pattern_assignment(sm, expr):
         return None
 
 
+def _unpacked_struct_conditional_assignment(sm, expr):
+    """Lower a pure conditional whole-struct assignment field by field.
+
+    An unpacked struct has no aggregate slot in the legacy state.  A
+    conditional expression therefore becomes one ternary per flattened leaf;
+    this preserves X merging in the existing vector evaluator and samples the
+    condition once for the whole assignment.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None
+                or type(expr.right).__name__ != "ConditionalExpression"):
+            return None
+        lhs_path = _unpacked_struct_path(expr.left)
+        if lhs_path is None:
+            return None
+        lhs_name, lhs_type = lhs_path
+        if type(lhs_type).__name__ != "UnpackedStructType":
+            return None
+        conditional = expr.right
+        if (len(conditional.conditions) != 1
+                or conditional.conditions[0].pattern is not None):
+            return None
+        then_path = _unpacked_struct_path(conditional.left)
+        else_path = _unpacked_struct_path(conditional.right)
+        if then_path is None or else_path is None:
+            return None
+        then_name, then_type = then_path
+        else_name, else_type = else_path
+        if (type(then_type).__name__ != "UnpackedStructType"
+                or type(else_type).__name__ != "UnpackedStructType"
+                or lhs_name in (then_name, else_name)):
+            return None
+        lhs_cells = _unpacked_struct_field_cells(lhs_name, lhs_type,
+                                                 node_span(sm, expr))
+        then_cells = _unpacked_struct_field_cells(then_name, then_type,
+                                                  node_span(sm, expr))
+        else_cells = _unpacked_struct_field_cells(else_name, else_type,
+                                                  node_span(sm, expr))
+        if (lhs_cells is None or then_cells is None or else_cells is None
+                or len(lhs_cells) != len(then_cells)
+                or len(lhs_cells) != len(else_cells)):
+            return None
+        source_cond = conditional.conditions[0].expr
+        if not _case_source_expression_ok(source_cond):
+            return None
+        condition = convert_expr(sm, source_cond)
+        if condition is None or not _case_expression_ok(condition):
+            return None
+        stmts = []
+        for (lname, lwidth, _linit, ltype), (tname, twidth, _tinit, _ttype), \
+                (ename, ewidth, _einit, _etype) in zip(lhs_cells, then_cells, else_cells):
+            if lwidth != twidth or lwidth != ewidth:
+                return None
+            value = {
+                "kind": "Ternary", "span": node_span(sm, expr.right),
+                "width": lwidth, "cond": condition,
+                "then": {"kind": "Ident", "span": node_span(sm, conditional.left),
+                          "width": twidth, "name": tname},
+                "else": {"kind": "Ident", "span": node_span(sm, conditional.right),
+                         "width": ewidth, "name": ename},
+            }
+            if not ltype.isFourState:
+                value = squash2_wrap(value, lwidth)
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                           "width": lwidth, "name": lname},
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts,
+                "unpacked_struct_conditional_lowered": True}
+    except Exception:
+        return None
+
+
 def _fixed_array_concat_assignment(sm, expr):
     """Lower an exact unpacked-array concatenation into cell assignments."""
     try:
@@ -5732,6 +5809,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         struct_copy = _unpacked_struct_copy_assignment(sm, expr)
         if struct_copy is not None:
             return struct_copy
+        struct_conditional = _unpacked_struct_conditional_assignment(sm, expr)
+        if struct_conditional is not None:
+            return struct_conditional
         array_pattern_lhs = _fixed_array_pattern_lhs_assignment(sm, expr)
         if array_pattern_lhs is not None:
             return array_pattern_lhs

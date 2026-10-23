@@ -5478,6 +5478,19 @@ cover the admitted declaration shape. The 22,046-file census moves **4,645 →
 58 matches, 0 disagreements, and 4 recorded refusals**; grammar coverage is
 **203 witnesses, 72 MATCH, and 131 REFUSE**.
 
+### Out-of-bounds fixed-array unpacked-struct reads — 2026-10-23
+
+Assignments from a fully constant out-of-bounds fixed unpacked-array element
+now admit unpacked struct leaves. The extractor expands the destination fields
+and supplies each field's IEEE §7.4.5 default, including a declared member
+initializer; aggregate leaves, dynamic indices, and non-struct out-of-bounds
+forms remain loud. The `oob_struct_read` fixture and differential row cover
+the initialized and type-default fields. The 22,046-file census moves
+**4,649 → 4,652 clean** and **17,331 → 17,328 partial**;
+`AssignmentExpression:target` falls **3,496 → 3,493**. Differential coverage
+is **64 rows, 60 matches, 0 disagreements, and 4 recorded refusals**; grammar
+coverage remains **203 witnesses, 72 MATCH, and 131 REFUSE**.
+
 ### Generated constant indexed packed targets — 2026-10-23
 
 Indexed packed part-select targets whose genvar arithmetic is resolved during

@@ -2541,6 +2541,122 @@ def _unpacked_struct_copy_assignment(sm, expr):
         return None
 
 
+def _fixed_array_oob_struct_select(expression):
+    """Recognize a fully constant out-of-bounds fixed-array struct read."""
+    try:
+        selectors = []
+        current = expression
+        while type(current).__name__ == "ElementSelectExpression":
+            position = _constant_dimension_selector(current.selector)
+            if position is None:
+                return None
+            selectors.append(position)
+            current = current.value
+        if not _storage_expression(current):
+            return None
+        if str(current.symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net"):
+            return None
+        shape = _fixed_array_dimensions(current.type, max_cells=None)
+        if shape is None:
+            return None
+        dimensions, leaf_type = shape
+        if len(selectors) != len(dimensions):
+            return None
+        out_of_range = any(
+            position < min(left, right) or position > max(left, right)
+            for position, (left, right) in zip(reversed(selectors), dimensions))
+        if not out_of_range:
+            return None
+        aggregate = leaf_type.canonicalType
+        if type(aggregate).__name__ != "UnpackedStructType":
+            return None
+        return aggregate
+    except Exception:
+        return None
+
+
+def _unpacked_struct_oob_defaults(sm, base_name, aggregate, span, seen=None):
+    """Flatten IEEE §7.4.5 defaults for an out-of-bounds struct value."""
+    if seen is None:
+        seen = set()
+    try:
+        marker = id(aggregate)
+        if marker in seen or type(aggregate).__name__ != "UnpackedStructType":
+            return None
+        seen = seen | {marker}
+        fields = list(aggregate)
+        if not fields:
+            return None
+        cells = []
+        for field in fields:
+            leaf = field.type.canonicalType
+            name = f"{base_name}.{field.name}"
+            if type(leaf).__name__ == "UnpackedStructType":
+                nested = _unpacked_struct_oob_defaults(sm, name, leaf, span, seen)
+                if nested is None:
+                    return None
+                cells.extend(nested)
+                continue
+            width, _two_state, reason = type_width_2s(field.type)
+            if (width is None or reason is not None or type(leaf).__name__ in
+                    ("FixedSizeUnpackedArrayType", "DynamicArrayType",
+                     "QueueType", "AssociativeArrayType", "UnpackedUnionType")):
+                return None
+            initializer = getattr(field, "initializer", None)
+            if initializer is not None:
+                value = convert_expr(sm, initializer)
+                if (value is None or width_of(value) != width
+                        or not _case_expression_ok(value)):
+                    return None
+            else:
+                value = {"kind": "Literal", "span": span, "width": width,
+                         "bits": ("0" if not field.type.isFourState else "x") * width}
+            cells.append((name, width, value, field.type))
+        return cells
+    except Exception:
+        return None
+
+
+def _unpacked_struct_oob_assignment(sm, expr):
+    """Assign an out-of-bounds fixed-array struct read field by field."""
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None):
+            return None
+        lhs_path = _unpacked_struct_path(expr.left)
+        source_type = _fixed_array_oob_struct_select(expr.right)
+        if lhs_path is None or source_type is None:
+            return None
+        lhs_name, lhs_type = lhs_path
+        if type(lhs_type).__name__ != "UnpackedStructType":
+            return None
+        lhs_cells = _unpacked_struct_field_cells(lhs_name, lhs_type,
+                                                 node_span(sm, expr))
+        values = _unpacked_struct_oob_defaults(
+            sm, "$oob", source_type, node_span(sm, expr))
+        if lhs_cells is None or values is None or len(lhs_cells) != len(values):
+            return None
+        if any(lwidth != vwidth for (_lname, lwidth, _init, _ltype),
+               (_vname, vwidth, _value, _vtype) in zip(lhs_cells, values)):
+            return None
+        stmts = []
+        for (name, width, _init, ltype), (_vname, _vwidth, value, _vtype) in zip(
+                lhs_cells, values):
+            if not ltype.isFourState:
+                value = squash2_wrap(value, width)
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                           "width": width, "name": name},
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts,
+                "unpacked_struct_oob_lowered": True}
+    except Exception:
+        return None
+
+
 def _unpacked_struct_pattern_assignment(sm, expr):
     """Lower a complete positional assignment pattern for an integral struct."""
     try:
@@ -6867,6 +6983,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                     "oob_write_noop": True}
     if _SYM is None:
+        oob_struct = _unpacked_struct_oob_assignment(sm, expr)
+        if oob_struct is not None:
+            return oob_struct
         target, ok = legacy_blocking_target(sm, expr.left)
     else:
         target, ok = select_target(sm, expr.left)

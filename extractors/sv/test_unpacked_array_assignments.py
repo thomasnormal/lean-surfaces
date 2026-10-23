@@ -136,6 +136,25 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_out_of_bounds_struct_read_uses_member_defaults(self):
+        design = extract_source(
+            "module top; typedef struct { int a = 42; int b; } pair_t; "
+            "pair_t arr[3]; pair_t value; initial begin value = arr[10]; "
+            "if (value.a === 42 && value.b === 0) $display(\"PASS\"); "
+            "end endmodule")
+        blocks = [node for node in nodes(design)
+                  if node.get("kind") == "Block"
+                  and node.get("unpacked_struct_oob_lowered")]
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual([stmt["target"]["name"] for stmt in blocks[0]["stmts"]],
+                         ["value.a", "value.b"])
+        self.assertEqual(blocks[0]["stmts"][0]["value"]["operand"]["bits"],
+                         format(42, "032b"))
+        self.assertEqual(blocks[0]["stmts"][1]["value"]["operand"]["bits"],
+                         "0" * 32)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_mismatched_array_copy_stays_loud(self):
         design = extract_source(
             "module top; logic [7:0] source [0:2]; logic [7:0] value [0:1]; "

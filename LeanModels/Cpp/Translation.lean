@@ -393,6 +393,9 @@ def admitOMPTaskloopSimdDirective (artifact : Artifact) (path : List Nat) :
 def admitOMPTeamsDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTeamsDirective" "omp-teams-directive"
 
+def admitOMPCancellationPointDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPCancellationPointDirective" "omp-cancellation-point-directive"
+
 def admitOMPTeamsDistributeDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTeamsDistributeDirective" "omp-teams-distribute-directive"
 

@@ -465,6 +465,9 @@ def admitOMPTargetTeamsDistributeParallelForSimdDirective (artifact : Artifact) 
 def admitOMPTargetTeamsDistributeSimdDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTargetTeamsDistributeSimdDirective" "omp-target-teams-distribute-simd-directive"
 
+def admitOMPInteropDirective (artifact : Artifact) (path : List Nat) :
+    Except String Unit := admitDeclarationKind artifact path "OMPInteropDirective" "omp-interop-directive"
+
 def admitOMPTargetUpdateDirective (artifact : Artifact) (path : List Nat) :
     Except String Unit := admitDeclarationKind artifact path "OMPTargetUpdateDirective" "omp-target-update-directive"
 

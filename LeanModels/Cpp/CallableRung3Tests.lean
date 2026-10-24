@@ -121,6 +121,26 @@ def callableMixedCompoundWitness : Bool :=
   | .ok (.ok value) => value == ⟨.signed 16, 0⟩
   | _ => false
 
+def mixedComparisonFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := .builtin .boolean, parameters := [shortType, unsignedIntType], variadic := false}
+  parameters := [
+    {declaration := mixedLeftParameter, name := some "left", type := shortType},
+    {declaration := mixedRightParameter, name := some "right", type := unsignedIntType}]
+  body := .block (.return_ {
+    expression := .binary "<"
+      {expression := .parameter mixedLeftParameter, sourceType := shortType, type := unsignedIntType}
+      {expression := .parameter mixedRightParameter, sourceType := unsignedIntType, type := unsignedIntType},
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableMixedComparisonWitness : Bool :=
+  match evaluateCallable 16 .lp64 mixedComparisonFunction
+      [⟨.signed 16, -1⟩, ⟨.unsigned 32, 1⟩] with
+  | .ok (.ok value) => value == integralBoolean false
+  | _ => false
+
 def calleeParameter : FrontendHandle := {value := "0x20"}
 
 def addThreeCallee : CallableCallee := {
@@ -216,6 +236,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableAssignmentWitness
 #guard callableMixedArithmeticWitness
 #guard callableMixedCompoundWitness
+#guard callableMixedComparisonWitness
 #guard callableCallWitness
 #guard callableConditionalWitness
 #guard callableLogicalWitness
@@ -239,6 +260,9 @@ theorem callable_mixed_arithmetic_witness : callableMixedArithmeticWitness = tru
 theorem callable_mixed_compound_witness : callableMixedCompoundWitness = true := by
   rfl
 
+theorem callable_mixed_comparison_witness : callableMixedComparisonWitness = true := by
+  rfl
+
 theorem callable_call_witness : callableCallWitness = true := by
   rfl
 
@@ -257,6 +281,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_assignment_witness
 #print axioms callable_mixed_arithmetic_witness
 #print axioms callable_mixed_compound_witness
+#print axioms callable_mixed_comparison_witness
 #print axioms callable_call_witness
 #print axioms callable_conditional_witness
 #print axioms callable_logical_witness

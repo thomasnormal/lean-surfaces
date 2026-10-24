@@ -155,6 +155,15 @@ def defaultInitialize (store : IntegralObjectStore) (object : ObjectId) :
   let objects ← (store.objects.beginLifetime object).mapError IntegralObjectError.lifetime
   pure {store with objects, values := store.values.modify object (fun _ => none)}
 
+/-- Zero-initialize an integral object with the destination type's own format.
+    Unlike vacuous default-initialization, this publishes a defined zero value
+    and is permitted for const-qualified objects. -/
+def zeroInitialize (store : IntegralObjectStore) (object : ObjectId) :
+    Except IntegralObjectError IntegralObjectStore := do
+  let entry ← store.metadata object
+  let format ← formatFor store.profile entry.type
+  store.initializeValue object ⟨format, 0⟩
+
 def borrow (store : IntegralObjectStore) (object : ObjectId) (readOnly : Bool := false) :
     Except IntegralObjectError IntegralObjectRef := do
   let entry ← store.metadata object

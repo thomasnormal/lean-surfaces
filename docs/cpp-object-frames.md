@@ -24,8 +24,9 @@ self-reference therefore resolves to the new not-yet-live object and returns
 the store's lifetime refusal. A successful expression initializer then uses
 `initializeConverted`, preserving the source type and destination conversion.
 Default initialization uses `defaultInitialize`: a mutable scalar is alive but
-uninitialized and can be assigned without a read. Zero initialization is kept
-separate from default initialization. Const access and unsupported structured
+uninitialized and can be assigned without a read. Zero initialization uses the
+separate `zeroInitialize` boundary, which publishes a typed zero and also
+admits const-qualified integral locals. Const access and unsupported structured
 types continue to be rejected by `IntegralObjectStore`.
 
 `FrameOutcome` always returns the mutated frame alongside its result. A failed

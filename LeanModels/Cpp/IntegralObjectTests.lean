@@ -74,6 +74,12 @@ def materializedTemporaryLifecycle : Bool :=
   let store ← store.assign access (signed 11)
   store.read access : Except IntegralObjectError IntegralValue)
 
+#guard matchesValue (signed 0) (do
+  let (store, object) ← allocated (.qualified true false (.builtin .int))
+  let store ← store.zeroInitialize object
+  let access ← store.borrow object true
+  store.read access : Except IntegralObjectError IntegralValue)
+
 #guard (do
   let (store, object) ← allocated
   store.borrow object : Except IntegralObjectError IntegralObjectRef) matches

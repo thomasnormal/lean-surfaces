@@ -2569,6 +2569,18 @@
     "rung": 1
   },
   {
+    "id": "object.zero-initialization",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_namespace": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_expression": "zeroInitializationLifecycle",
+    "cpp_source": "bool zero_initialization_witness() { const int value{}; int other{}; return value == 0 && other == 0; }",
+    "cpp_expression": "zero_initialization_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "object.storage-reuse",
     "kind": "lifetime",
     "corpus": "rung-1 witness",

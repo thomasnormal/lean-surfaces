@@ -374,7 +374,13 @@ def declareLocalDefault (frame : IntegralObjectFrame) (declaration : FrontendHan
 
 def declareLocalZero (frame : IntegralObjectFrame) (declaration : FrontendHandle)
     (type : CppTypeEvidence) : FrameOutcome ObjectId :=
-  declareLocalInitialized 1 frame declaration type (.builtin .int) (.literal ⟨.signed 32, 0⟩)
+  let reserved := reserve frame declaration type .local
+  match reserved.result with
+  | .error reason => failure reserved.frame reason
+  | .ok object =>
+      match reserved.frame.store.zeroInitialize object with
+      | .ok store => success {reserved.frame with store} object
+      | .error reason => failure reserved.frame (.object reason)
 
 def assignValue (frame : IntegralObjectFrame) (declaration : FrontendHandle)
     (sourceType : CppTypeEvidence) (value : IntegralValue) : FrameOutcome Unit :=

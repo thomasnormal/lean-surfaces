@@ -17,6 +17,11 @@ without first reading it. Reading an indeterminate value remains a loud refusal;
 this layer does not invent an integer or claim all indeterminate reads have the
 same C++ undefined-behavior rule.
 
+`zeroInitialize` is the distinct value-initialization boundary for integral
+objects. It selects the destination type's checked format, starts the lifetime,
+and publishes the representable zero value. Const-qualified integral objects
+may be zero-initialized; their resulting access remains read-only.
+
 `borrow` creates a typed non-owning access to a live object. Accesses can add
 const qualification. `assign` checks both the object's and the access's const
 qualification, validates the already-converted value, and updates the one object

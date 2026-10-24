@@ -332,6 +332,22 @@ def temporaryReferenceLifecycle : Bool :=
             okUnit exited && objectPhase? exited.frame object == some .ended &&
             (exited.frame.read (handle "0x1")).result matches
               .error (.missingBinding _)
+
+def zeroInitializationLifecycle : Bool :=
+  match opened with
+  | .error _ => false
+  | .ok frame =>
+      let declared := frame.declareLocalZero (handle "0x1")
+        (.qualified true false intType)
+      let constDeclared := declared.frame.declareLocalZero (handle "0x2") intType
+      match declared.result, constDeclared.result with
+      | .ok object, .ok constObject =>
+          objectPhase? constDeclared.frame object == some .aliveInitialized &&
+            objectPhase? constDeclared.frame constObject == some .aliveInitialized &&
+            okValue (signed 0) (constDeclared.frame.read (handle "0x1")) &&
+            okValue (signed 0) (constDeclared.frame.read (handle "0x2"))
+      | _, _ => false
+
 private def temporaryReferenceStatement : Bool :=
   match opened with
   | .error _ => false
@@ -385,6 +401,7 @@ private def executeOutsideTransferLoud : Bool :=
 #guard executeFailureRetainsScope
 #guard executeOutsideTransferLoud
 #guard temporaryReferenceLifecycle
+#guard zeroInitializationLifecycle
 #guard temporaryReferenceStatement
 #guard temporaryReferenceRefusals
 

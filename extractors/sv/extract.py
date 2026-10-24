@@ -6059,6 +6059,84 @@ def _empty_queue_literal(expr):
         return False
 
 
+def _queue_literal_element(expr):
+    """Whether an expression is a scalar literal usable in a queue write."""
+    node = expr
+    while type(node).__name__ == "ConversionExpression":
+        node = getattr(node, "operand", None)
+        if node is None:
+            return False
+    return type(node).__name__ in (
+        "IntegerLiteral", "UnbasedUnsizedIntegerLiteral", "StringLiteral",
+        "NullLiteral", "RealLiteral") and not getattr(node, "bad", False)
+
+
+def _queue_literal_write_noop(expression):
+    """Recognize an unobserved blocking write of literal-only queue data.
+
+    Queue storage is intentionally outside the flat self-check state.  A
+    literal-only write whose queue name is never subsequently read or used has
+    no observable effect, so it can be erased.  The source-occurrence check
+    keeps every element/method/read use on the ordinary loud boundary.
+    """
+    try:
+        if (type(expression).__name__ != "AssignmentExpression"
+                or expression.op is not None or expression.timingControl is not None
+                or expression.isNonBlocking
+                or type(expression.left).__name__ != "NamedValueExpression"
+                or type(expression.left.type.canonicalType).__name__ != "QueueType"):
+            return False
+        rhs = expression.right
+        while type(rhs).__name__ == "ConversionExpression":
+            rhs = getattr(rhs, "operand", None)
+            if rhs is None:
+                return False
+
+        def literal_tree(node):
+            while type(node).__name__ == "ConversionExpression":
+                node = getattr(node, "operand", None)
+                if node is None:
+                    return False
+            kind = type(node).__name__
+            if kind in ("ConcatenationExpression", "AssignmentPatternExpression"):
+                try:
+                    operands = list(node.operands)
+                except Exception:
+                    return False
+                return bool(operands) and all(literal_tree(item) for item in operands)
+            if kind == "ReplicationExpression":
+                count = getattr(node, "count", None)
+                while type(count).__name__ == "ConversionExpression":
+                    count = getattr(count, "operand", None)
+                    if count is None:
+                        return False
+                return (_literal_integral_value(count) is not None
+                        and _literal_integral_value(count) >= 0
+                        and literal_tree(getattr(node, "concat", None)))
+            return _queue_literal_element(node)
+
+        if not literal_tree(rhs):
+            return False
+        name = getattr(expression.left.symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        if not name or not source:
+            return False
+        occurrences = list(re.finditer(r"(?<![A-Za-z0-9_$])" + re.escape(name)
+                                       + r"(?![A-Za-z0-9_$])", source))
+        assignment_seen = False
+        for match in occurrences:
+            tail = source[match.end():].lstrip()
+            if tail.startswith("[$]") or tail.startswith(";"):
+                continue  # declaration-only occurrence
+            if tail.startswith("="):
+                assignment_seen = True
+                continue
+            return False
+        return assignment_seen
+    except Exception:
+        return False
+
+
 def _zero_size_method(expression):
     """Recognize a zero-valued ``size``/``len`` query on inert storage.
 
@@ -8468,6 +8546,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
                 "string_literal_replication_write_noop": True}
     # An empty queue literal likewise carries no state in the flat self-check
     # store. Keep nonempty queue construction and observations loud.
+    if (_SYM is None and _queue_literal_write_noop(expr)):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "queue_literal_write_noop": True}
     if (_SYM is None and expr.op is None and expr.timingControl is None
             and not expr.isNonBlocking
             and type(expr.left).__name__ == "NamedValueExpression"

@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "unobserved_queue_literal_write",
+      "file": "Examples/system-verilog/unobserved_queue_literal_write/unobserved_queue_literal_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "semaphore_zero_key_methods",
       "file": "Examples/system-verilog/semaphore_zero_key_methods/semaphore_zero_key_methods.sv",
       "module": "top",

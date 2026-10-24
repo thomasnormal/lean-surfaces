@@ -36,9 +36,27 @@ class EmptyQueueWrites(unittest.TestCase):
         self.assertTrue(any(node.get("empty_queue_write_noop")
                             for node in nodes(design)))
 
-    def test_nonempty_queue_literal_stays_loud(self):
+    def test_unobserved_literal_queue_write_is_inert(self):
         design = lower(
-            'module top; int q[$]; initial begin q = {1, 2}; end endmodule')
+            'module top; int q[$]; initial begin q = {1, 2}; '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("queue_literal_write_noop")
+                            for node in nodes(design)))
+
+    def test_observed_literal_queue_write_stays_loud(self):
+        design = lower(
+            'module top; int q[$]; initial begin q = {1, 2}; '
+            'if (q.size() == 2) $display("PASS"); end endmodule')
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
+
+    def test_dynamic_queue_write_stays_loud(self):
+        design = lower(
+            'module top; int q[$]; int value; initial begin '
+            'q = {value}; end endmodule')
         self.assertIn("AssignmentExpression:target",
                       [node.get("sv_kind") for node in nodes(design)])
 

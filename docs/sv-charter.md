@@ -59,6 +59,22 @@ The fresh 22,049-file census moves **4,840 → 4,841 clean** and **17,143 →
 matching its declared `PASS` output and no disagreements. Grammar coverage is
 unchanged at **214 witnesses, 83 MATCH, and 131 REFUSE**.
 
+## Unobserved literal queue writes — 2026-10-24
+
+The self-check surface now erases a blocking assignment of a queue built only
+from scalar literals when the queue has no later source occurrence. Queue
+storage is outside the flat state, so this write is unobservable at the end of
+the initial block and can be dropped exactly. A later read or method, a
+dynamic/effectful element, or a nonblocking write keeps the existing loud
+`AssignmentExpression:target` boundary. The `unobserved_queue_literal_write`
+fixture and differential row exercise the admitted shape.
+
+The 22,049-file corpus census is unchanged at **4,841 clean**, **17,142
+partial**, and **66 include skips** because no sv-tests-2 file has this
+unobserved-only queue shape. Differential coverage grows **140 → 141 rows**
+with **137 matches, 0 disagreements, and 4 refusals**; grammar coverage stays
+at **214 witnesses, 83 MATCH, and 131 REFUSE**.
+
 ## Shallow unpacked integral structs — 2026-10-22
 
 The self-check surface now admits an untagged unpacked struct when every direct

@@ -2905,6 +2905,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-shift-left",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableShiftLeftWitness",
+    "cpp_source": "int shift_left(int left, int right) { return left << right; } bool callable_witness() { return shift_left(1, 4) == 16; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

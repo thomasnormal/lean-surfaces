@@ -1009,6 +1009,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "overlapping_literal_net_windows",
+      "file": "Examples/system-verilog/overlapping_literal_net_windows/overlapping_literal_net_windows.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

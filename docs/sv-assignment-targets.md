@@ -133,6 +133,15 @@ is a pure integral literal. An overlapping window or any dynamic peer remains
 loud; it needs per-bit net resolution and live driver updates. The
 `disjoint_literal_net_windows` witness covers the admitted disjoint form.
 
+## Static literal continuous packed-window resolution — 2026-10-24
+
+The same fixed-window lowering now resolves overlapping literal drivers on one
+packed wire per bit using the existing four-state table: `z` yields, equal
+active values remain, and conflicts or `x` produce `x`. Dynamic peers,
+out-of-range windows, strengths, and future source changes remain loud. The
+`overlapping_literal_net_windows` witness checks both the conflict bit and the
+unchanged bits.
+
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 
 IEEE 1800-2023 §7.4.5 makes a write through a constant invalid index on a

@@ -34,18 +34,20 @@ class ContinuousLiteralDrivers(unittest.TestCase):
         processes = design["modules"][0]["processes"]
         self.assertEqual([process["kind"] for process in processes],
                          ["Initial", "Initial"])
-        self.assertTrue(all(process.get("continuous_selected_constant_lowered")
+        self.assertTrue(all(process.get("continuous_selected_static_resolution")
                              for process in processes))
+        self.assertEqual(processes[0]["body"]["value"]["bits"], "1001")
 
-    def test_overlapping_selected_literal_drivers_stay_on_continuous_boundary(self):
+    def test_overlapping_selected_literal_drivers_resolve_at_time_zero(self):
         design = extract_source(
             "module top; wire [3:0] bus; assign bus[2:0] = 3'b101; "
-            "assign bus[3:1] = 3'b010; endmodule")
+            "assign bus[3:1] = 3'b100; endmodule")
         processes = design["modules"][0]["processes"]
         self.assertEqual([process["kind"] for process in processes],
-                         ["Assign", "Unsupported"])
-        self.assertEqual(processes[1]["sv_kind"],
-                         "AssignmentExpression:target")
+                         ["Initial", "Initial"])
+        self.assertTrue(all(process.get("continuous_selected_static_resolution")
+                             for process in processes))
+        self.assertEqual(processes[0]["body"]["value"]["bits"], "1x01")
 
     def test_literal_fixed_array_variable_cells_lower_to_time_zero_writes(self):
         design = extract_source(

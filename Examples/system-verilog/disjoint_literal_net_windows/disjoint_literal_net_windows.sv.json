@@ -52,39 +52,15 @@
                 "end_col": 26
               },
               "target": {
-                "kind": "SelectTarget",
+                "kind": "Ident",
                 "span": {
                   "line": 4,
                   "col": 10,
                   "end_line": 4,
                   "end_col": 18
                 },
-                "width": 2,
-                "value": {
-                  "kind": "Ident",
-                  "span": {
-                    "line": 4,
-                    "col": 10,
-                    "end_line": 4,
-                    "end_col": 13
-                  },
-                  "width": 4,
-                  "name": "bus"
-                },
-                "index": {
-                  "kind": "Literal",
-                  "span": {
-                    "line": 4,
-                    "col": 16,
-                    "end_line": 4,
-                    "end_col": 17
-                  },
-                  "width": 32,
-                  "bits": "00000000000000000000000000000000"
-                },
-                "index_signed": true,
-                "descending": false,
-                "two_state": false
+                "width": 4,
+                "name": "bus"
               },
               "value": {
                 "kind": "Literal",
@@ -94,12 +70,12 @@
                   "end_line": 4,
                   "end_col": 26
                 },
-                "width": 2,
-                "bits": "01"
+                "width": 4,
+                "bits": "1001"
               },
-              "continuous_selected_constant_lowered": true
+              "continuous_selected_static_resolution": true
             },
-            "continuous_selected_constant_lowered": true
+            "continuous_selected_static_resolution": true
           },
           {
             "kind": "Initial",
@@ -110,62 +86,15 @@
               "end_col": 26
             },
             "body": {
-              "kind": "BlockingAssign",
+              "kind": "Empty",
               "span": {
                 "line": 5,
                 "col": 10,
                 "end_line": 5,
                 "end_col": 26
-              },
-              "target": {
-                "kind": "SelectTarget",
-                "span": {
-                  "line": 5,
-                  "col": 10,
-                  "end_line": 5,
-                  "end_col": 18
-                },
-                "width": 2,
-                "value": {
-                  "kind": "Ident",
-                  "span": {
-                    "line": 5,
-                    "col": 10,
-                    "end_line": 5,
-                    "end_col": 13
-                  },
-                  "width": 4,
-                  "name": "bus"
-                },
-                "index": {
-                  "kind": "Literal",
-                  "span": {
-                    "line": 5,
-                    "col": 16,
-                    "end_line": 5,
-                    "end_col": 17
-                  },
-                  "width": 32,
-                  "bits": "00000000000000000000000000000010"
-                },
-                "index_signed": true,
-                "descending": false,
-                "two_state": false
-              },
-              "value": {
-                "kind": "Literal",
-                "span": {
-                  "line": 5,
-                  "col": 21,
-                  "end_line": 5,
-                  "end_col": 26
-                },
-                "width": 2,
-                "bits": "10"
-              },
-              "continuous_selected_constant_lowered": true
+              }
             },
-            "continuous_selected_constant_lowered": true
+            "continuous_selected_static_resolution": true
           },
           {
             "kind": "Initial",

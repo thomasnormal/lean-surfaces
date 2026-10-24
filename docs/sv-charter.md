@@ -6165,3 +6165,14 @@ updates. `disjoint_literal_net_windows` supplies the differential witness.
 The corpus census remains **4,806 clean / 17,176 partial / 66 include skips**
 with `AssignmentExpression:target` at **3,037 files**; differential coverage
 moves **111/107/0/4 → 112/108/0/4**.
+
+## Static literal continuous packed-window resolution — 2026-10-24
+
+The selected-window lowering now resolves overlapping literal drivers on one
+packed wire per bit with the IEEE `z`/equal/conflict/`x` table. Dynamic peers,
+out-of-range windows, strengths, and future source changes remain loud because
+they need live driver and resolution state. `overlapping_literal_net_windows`
+supplies the conflict and unchanged-bit witness. The corpus census remains
+**4,806 clean / 17,176 partial / 66 include skips**, with
+`AssignmentExpression:target` at **3,037 files**; differential coverage moves
+**112/108/0/4 → 113/109/0/4**.

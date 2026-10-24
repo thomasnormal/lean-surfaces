@@ -8897,8 +8897,114 @@ def _lower_disjoint_literal_select_drivers(processes):
             }
 
 
+def _resolve_literal_select_drivers(processes, resolvable_nets):
+    """Resolve a fixed literal packed-window driver set per bit.
+
+    Selected windows are represented with their constant low offset and source
+    width.  Reconstruct one full net literal in the existing flat storage,
+    applying the same four-state table as whole-net resolution.  A dynamic
+    peer, out-of-range window, or variable destination stays on the live
+    continuous-driver boundary.
+    """
+    groups = {}
+    for index, process in enumerate(processes):
+        if (process.get("kind") != "Assign"
+                or not process.get("continuous_literal_source")
+                or process.get("target", {}).get("kind") != "SelectTarget"):
+            continue
+        target = process["target"]
+        base = target.get("value", {}).get("name")
+        if base not in resolvable_nets:
+            continue
+        window = _symbolic_target_windows(target)
+        value = process.get("value", {})
+        if (not base or window is None or len(window) != 1
+                or value.get("kind") != "Literal"
+                or not isinstance(value.get("bits"), str)):
+            continue
+        groups.setdefault(base, []).append((index, target, value, window[0]))
+    for base, entries in groups.items():
+        if len(entries) < 2:
+            continue
+        peers = [
+            process for process in processes
+            if (process.get("kind") == "Assign"
+                and process.get("target", {}).get("kind") == "SelectTarget"
+                and process.get("target", {}).get("value", {}).get("name") == base)
+        ]
+        if len(peers) != len(entries):
+            continue
+        base_width = entries[0][1].get("value", {}).get("width")
+        if (not isinstance(base_width, int) or base_width <= 0
+                or any(target.get("value", {}).get("width") != base_width
+                       for _index, target, _value, _window in entries)):
+            continue
+        drivers = [[] for _ in range(base_width)]
+        valid = True
+        for _index, target, value, _window in entries:
+            width = target.get("width")
+            bits = value.get("bits")
+            index_bits = target.get("index", {}).get("bits")
+            if (not isinstance(width, int) or width <= 0
+                    or len(bits) != width
+                    or not isinstance(index_bits, str)
+                    or any(bit not in "01" for bit in index_bits)):
+                valid = False
+                break
+            position = int(index_bits, 2)
+            low = position - width + 1 if target.get("descending") else position
+            if low < 0 or low + width > base_width:
+                valid = False
+                break
+            for offset in range(width):
+                drivers[low + offset].append(bits[-1 - offset])
+        if not valid:
+            continue
+        resolved = []
+        for bits in drivers:
+            # Merge one scalar position with the same truth table used by
+            # whole-net resolution.
+            active = [bit for bit in bits if bit != "z"]
+            if not active:
+                resolved.append("z")
+            elif any(bit == "x" for bit in active):
+                resolved.append("x")
+            elif all(bit == active[0] for bit in active):
+                resolved.append(active[0])
+            else:
+                resolved.append("x")
+        literal = dict(entries[0][2])
+        literal["width"] = base_width
+        literal["bits"] = "".join(reversed(resolved))
+        first = entries[0][0]
+        process = processes[first]
+        target = {"kind": "Ident", "span": process["target"].get("span"),
+                  "width": base_width, "name": base}
+        processes[first] = {
+            "kind": "Initial",
+            "span": process.get("span"),
+            "body": {
+                "kind": "BlockingAssign",
+                "span": process.get("span"),
+                "target": target,
+                "value": literal,
+                "continuous_selected_static_resolution": True,
+            },
+            "continuous_selected_static_resolution": True,
+        }
+        for index, _target, _value, _window in entries[1:]:
+            processes[index] = {
+                "kind": "Initial",
+                "span": processes[index].get("span"),
+                "body": {"kind": "Empty",
+                         "span": processes[index].get("span")},
+                "continuous_selected_static_resolution": True,
+            }
+
+
 def _reject_overlapping_symbolic_drivers(processes, resolvable_nets=None):
     """Resolve fixed literal legacy net drivers; reject other overlaps."""
+    _resolve_literal_select_drivers(processes, resolvable_nets or set())
     _lower_disjoint_literal_select_drivers(processes)
     if _SYM is None and resolvable_nets:
         groups = {}

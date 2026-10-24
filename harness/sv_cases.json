@@ -576,6 +576,15 @@
       "expect": "match"
     },
     {
+      "name": "empty_dynamic_array_write",
+      "file": "Examples/system-verilog/empty_dynamic_array_write/empty_dynamic_array_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "empty_subroutine_call",
       "file": "Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv",
       "module": "top",

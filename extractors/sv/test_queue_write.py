@@ -48,6 +48,15 @@ class EmptyQueueWrites(unittest.TestCase):
         self.assertIn("AssignmentExpression:target",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_empty_dynamic_array_write_is_inert(self):
+        design = lower(
+            'module top; int values[]; initial begin values = {}; '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("empty_dynamic_array_write_noop")
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

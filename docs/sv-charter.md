@@ -5770,3 +5770,16 @@ The fresh 22,046-file census keeps **4,747 clean / 17,233 partial** and lowers
 `AssignmentExpression:target` **3,153 → 3,145**. Differential coverage moves
 **82/78/0/4 → 83/79/0/4**, and grammar coverage moves
 **210/79/131 → 211/80/131** with the empty-queue witness.
+
+## Empty dynamic-array literal writes — 2026-10-24
+
+A blocking assignment of a zero-item literal to a named dynamic array now
+erases through the flat self-check boundary, which has no dynamic-array object
+state. Nonempty values, nonblocking or timed forms, and later size or element
+reads remain loud. The `empty_dynamic_array_write` fixture and differential row
+cover the admitted form, with extractor tests pinning the publication and
+nonempty boundaries.
+
+The fresh 22,046-file census keeps **4,747 clean / 17,233 partial** and lowers
+`AssignmentExpression:target` **3,145 → 3,144**. Differential coverage moves
+**83/79/0/4 → 84/80/0/4**; grammar coverage remains **211/80/131**.

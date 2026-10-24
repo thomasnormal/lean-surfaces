@@ -289,6 +289,8 @@ private def executeBlockScopes : Bool :=
       | .error _ => false
   | .error _ => false
 
+def callableFrameBlockScopeWitness : Bool := executeBlockScopes
+
 private def executeForScope : Bool :=
   match opened with
   | .ok frame =>
@@ -681,6 +683,7 @@ def callableLocalReferenceWitness : Bool := aliasLifetimeAndConst && aliasUninit
 #guard callableThreadLocalStatementWitness
 #guard callableFrameForScopeWitness
 #guard callableFrameContinueBreakWitness
+#guard callableFrameBlockScopeWitness
 
 private theorem kernelReferenceBindings :
     (aliasLifetimeAndConst && aliasUninitializedAndEnded) = true := rfl

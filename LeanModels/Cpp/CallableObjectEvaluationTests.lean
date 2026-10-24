@@ -303,6 +303,8 @@ private def readsParameter : Bool :=
   | .ok (.ok value) => value == signed 7
   | _ => false
 
+def callableReadsParameterWitness : Bool := readsParameter
+
 private def valueOnlyRemainsLoud : Bool :=
   match evaluateCallable 32 .lp64 (functionWithLocal (.read (handle "0x10"))) [signed 7] with
   | .error .unsupportedDeclaration => true
@@ -393,6 +395,7 @@ def callableParserAutomaticLocalWitness : Bool := parserAdmitsAutomaticLocal
 #guard callableReturnFailureRetainsFrameWitness
 #guard callableForInitializerFailureRetainsFrameWitness
 #guard callableSwitchScopeFailureWitness
+#guard callableReadsParameterWitness
 
 theorem callable_local_declaration_witness : callableLocalDeclarationWitness = true := by
   rfl

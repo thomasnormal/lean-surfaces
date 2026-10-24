@@ -15,16 +15,16 @@
  "summary": {
   "blocker_files": [
    [
-    "CallExpression",
-    3074
-   ],
-   [
     "AssignmentExpression:target",
     3046
    ],
    [
     "ExpressionStatement:CallExpression",
     3019
+   ],
+   [
+    "CallExpression",
+    2997
    ],
    [
     "Hierarchy:ports",
@@ -36,7 +36,7 @@
    ],
    [
     "SubroutineSymbol:Subroutine",
-    1665
+    1636
    ],
    [
     "NamedValueExpression:2state",
@@ -976,13 +976,13 @@
    ]
   ],
   "by_status": {
-   "clean": 4775,
-   "partial": 17205,
+   "clean": 4783,
+   "partial": 17197,
    "skip_include": 66
   },
   "clean_by_type": {
    "(none)": [
-    464,
+    465,
     1388
    ],
    "compilation": [
@@ -1002,7 +1002,7 @@
     25
    ],
    "compile_error": [
-    118,
+    120,
     1750
    ],
    "compile_fail": [
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4113,
+    4118,
     18679
    ],
    "simulation elaboration": [
@@ -1231,9 +1231,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 596,
-    "clean": 444,
-    "partial": 598,
+    "blocked_by_more": 594,
+    "clean": 446,
+    "partial": 596,
     "simulation_tests": 1042,
     "top_residual_blockers": [
      [
@@ -1241,16 +1241,16 @@
       183
      ],
      [
-      "CallExpression",
-      168
-     ],
-     [
       "NamedValueExpression:2state",
       164
      ],
      [
+      "CallExpression",
+      164
+     ],
+     [
       "VariableDeclStatement:2state",
-      151
+      150
      ],
      [
       "TimedStatement:DelayControl",
@@ -1286,7 +1286,7 @@
      ],
      [
       "SubroutineSymbol:Subroutine",
-      39
+      37
      ],
      [
       "MemberAccessExpression",
@@ -1427,9 +1427,9 @@
     "unlockable": 2
    },
    "chapter-23": {
-    "clean": 177,
+    "clean": 178,
     "error": 0,
-    "partial": 674,
+    "partial": 673,
     "skip_include": 0,
     "total": 851,
     "unlockable": 0
@@ -1459,9 +1459,9 @@
     "unlockable": 0
    },
    "chapter-27": {
-    "clean": 190,
+    "clean": 191,
     "error": 0,
-    "partial": 164,
+    "partial": 163,
     "skip_include": 0,
     "total": 354,
     "unlockable": 0
@@ -1531,9 +1531,9 @@
     "unlockable": 0
    },
    "chapter-35": {
-    "clean": 26,
+    "clean": 29,
     "error": 0,
-    "partial": 231,
+    "partial": 228,
     "skip_include": 0,
     "total": 257,
     "unlockable": 0
@@ -1547,9 +1547,9 @@
     "unlockable": 0
    },
    "chapter-37": {
-    "clean": 148,
+    "clean": 149,
     "error": 0,
-    "partial": 269,
+    "partial": 268,
     "skip_include": 0,
     "total": 417,
     "unlockable": 0
@@ -1595,9 +1595,9 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 458,
+    "clean": 460,
     "error": 0,
-    "partial": 728,
+    "partial": 726,
     "skip_include": 0,
     "total": 1186,
     "unlockable": 4

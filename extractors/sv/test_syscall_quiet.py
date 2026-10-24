@@ -48,8 +48,9 @@ class QuietSeverityTasks(unittest.TestCase):
         design = lower(
             'module top; function int f(); return 1; endfunction '
             'initial $warning("x=%0d", f()); endmodule')
-        self.assertIn("ExpressionStatement:CallExpression",
-                      [node.get("sv_kind") for node in nodes(design)])
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
 
     def test_error_and_fatal_stay_loud(self):
         design = lower(

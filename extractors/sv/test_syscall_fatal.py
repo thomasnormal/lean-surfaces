@@ -48,8 +48,10 @@ class FatalTask(unittest.TestCase):
         design = lower(
             'module top; function int f(); return 1; endfunction '
             'initial $fatal(1, "x=%0d", f()); endmodule')
-        self.assertIn("ExpressionStatement:CallExpression",
-                      [node.get("sv_kind") for node in nodes(design)])
+        calls = [node for node in nodes(design) if node.get("kind") == "SysCall"]
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0]["name"], "$finish")
+        self.assertTrue(calls[0]["fatal_task"])
 
 
 if __name__ == "__main__":

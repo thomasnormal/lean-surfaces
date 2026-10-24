@@ -97,7 +97,7 @@ class ModuleHierarchy(unittest.TestCase):
     def test_active_child_members_are_not_ignored(self):
         d = lower('module child;function int f();return 1;endfunction endmodule '
                   'module top;child u();endmodule')
-        self.assertIn('SubroutineSymbol:Subroutine', walls(d))
+        self.assertNotIn('SubroutineSymbol:Subroutine', walls(d))
 
     def test_child_ports_refuse_even_when_unconnected(self):
         self.assertIn('Hierarchy:ports', walls(fixture('ports')))

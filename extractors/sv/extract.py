@@ -5068,6 +5068,34 @@ def _convert_selected_read(sm, expr, expression_kind):
     return squash2_wrap(result, expr.type.bitWidth) if source_two_state else result
 
 
+def _literal_function_return(expression):
+    """Recognize a literal-only function return without evaluating code."""
+    kind = type(expression).__name__
+    if kind in ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
+        return not getattr(expression, "bad", False)
+    if kind == "ConversionExpression":
+        return _literal_function_return(getattr(expression, "operand", None))
+    if kind == "UnaryExpression":
+        op = str(getattr(expression, "op", "")).split(".")[-1]
+        return op in ("Plus", "Minus") and _literal_function_return(
+            getattr(expression, "operand", None))
+    return False
+
+
+def _literal_function_symbol(subroutine):
+    """Whether a function declaration is erased after literal call lowering."""
+    try:
+        if (str(getattr(subroutine, "subroutineKind", "")).split(".")[-1]
+                != "Function" or list(getattr(subroutine, "arguments", []))):
+            return False
+        body = getattr(subroutine, "body", None)
+        returned = (getattr(body, "expr", None)
+                    if type(body).__name__ == "ReturnStatement" else None)
+        return returned is not None and _literal_function_return(returned)
+    except Exception:
+        return False
+
+
 def _convert_legacy_call(sm, expression):
     # An empty zero-argument function returns its type's default value.  The
     # declaration has already been erased as metadata; materialize that
@@ -5078,9 +5106,9 @@ def _convert_legacy_call(sm, expression):
         body_list = (list(body.list)
                      if type(body).__name__ == "StatementList" else None)
         kind = str(getattr(subroutine, "subroutineKind", "")).split(".")[-1]
-        if (kind == "Function" and list(expression.arguments) == []
-                and list(getattr(subroutine, "arguments", [])) == []
-                and body_list == []):
+        no_args = (kind == "Function" and list(expression.arguments) == []
+                   and list(getattr(subroutine, "arguments", [])) == [])
+        if no_args and body_list == []:
             width, two_state, reason = type_width_2s(expression.type)
             if width is not None and reason is None:
                 return signed_metadata({
@@ -5089,6 +5117,24 @@ def _convert_legacy_call(sm, expression):
                     "bits": ("0" if two_state else "x") * width,
                     "empty_function_default": True,
                 }, expression.type)
+        # A zero-argument function whose body is one literal return has no
+        # storage, timing, or call effects.  The return expression has already
+        # undergone SystemVerilog's function-result sizing in pyslang, so the
+        # converted literal can be used directly at the call site.  Keep this
+        # deliberately narrower than general constant-function evaluation:
+        # names, operators, nested calls, and multi-statement bodies remain
+        # ordinary unsupported calls rather than silently erasing effects.
+        if no_args and type(body).__name__ == "ReturnStatement":
+            returned = getattr(body, "expr", None)
+            if (returned is not None and _literal_function_return(returned)
+                    and _case_source_expression_ok(returned)):
+                value = convert_expr(sm, returned)
+                if (value is not None and value.get("kind") != "Unsupported"
+                        and width_of(value) == expression.type.bitWidth):
+                    value = signed_metadata(value, expression.type)
+                    value["literal_function_return"] = True
+                    value["span"] = node_span(sm, expression)
+                    return value
     except Exception:
         pass
     for recognizes, convert in (
@@ -9164,7 +9210,8 @@ def convert_module(sm, inst):
                 formal_args = list(getattr(m, "arguments", []))
                 body_list = (list(body.list)
                              if type(body).__name__ == "StatementList" else None)
-                if formal_args == [] and body_list == []:
+                if formal_args == [] and (body_list == [] or
+                                           _literal_function_symbol(m)):
                     # The declaration has no runtime node at all; keeping an
                     # Empty in Module.others would make the self-check runner
                     # classify it as a non-initial process.

@@ -46,6 +46,25 @@ class EmptyFunctionCalls(unittest.TestCase):
                             and set(node.get("bits", "")) == {"x"}
                             for node in nodes(design)))
 
+    def test_literal_return_is_materialized_at_call_site(self):
+        design = lower(
+            'module top; function bit [3:0] seven(); return 4\'d7; endfunction '
+            'initial begin if (seven() == 4\'d7) $display("PASS"); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("literal_function_return")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(values[0]["bits"], "0111")
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_literal_return_boundary_rejects_effectful_body(self):
+        design = lower(
+            'module top; logic [3:0] value; '
+            'function bit [3:0] read(); return value; endfunction '
+            'initial if (read() == 0) $display("PASS"); endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

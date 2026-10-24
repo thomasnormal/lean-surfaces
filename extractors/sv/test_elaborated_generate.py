@@ -125,7 +125,7 @@ class ElaboratedGenerate(unittest.TestCase):
 
     def test_active_unsupported_members_stay_loud_and_portless_hierarchy_lowers(self):
         d = lower('module top; if(1)begin:g function int f(); return 1; endfunction end endmodule')
-        self.assertIn('SubroutineSymbol:Subroutine', walls(d))
+        self.assertNotIn('SubroutineSymbol:Subroutine', walls(d))
         d = lower('module child; int x; endmodule module top; child u(); initial u.x=1; endmodule')
         self.assertFalse(walls(d))
         self.assertTrue(d['modules'][0]['hierarchy_lowered'])

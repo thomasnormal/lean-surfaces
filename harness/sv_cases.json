@@ -838,6 +838,15 @@
       "expect": "match"
     },
     {
+      "name": "literal_function_return",
+      "file": "Examples/system-verilog/literal_function_return/literal_function_return.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "delay_refusal",
       "file": "Examples/system-verilog/delay/delay.sv",
       "module": "delay",

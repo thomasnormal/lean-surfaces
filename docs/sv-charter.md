@@ -5952,3 +5952,18 @@ form, with extractor tests pinning the positive-allocation boundary. The fresh
 partial**; `CallExpression` falls **3,077 → 3,074** and
 `AssignmentExpression:target` falls **3,049 → 3,046**. Differential coverage
 moves **95/91/0/4 → 96/92/0/4**, and grammar coverage remains **211/80/131**.
+
+## Zero-argument literal-return function calls — 2026-10-24
+
+A zero-argument function whose complete body is one integral literal return is
+now lowered at each call site to that already-sized literal. The declaration is
+metadata-only, matching the existing empty-function treatment. Arguments,
+named-value reads, nested calls, operators, and multi-statement bodies remain
+loud so the extractor never erases runtime state or evaluation order.
+
+The `literal_function_return` fixture and differential row cover the admitted
+call, with extractor tests pinning effectful and nonliteral boundaries. The
+fresh 22,046-file census moves **4,775 → 4,783 clean** and **17,205 → 17,197
+partial**; `CallExpression` falls **3,074 → 2,997** and
+`SubroutineSymbol:Subroutine` falls **1,665 → 1,636**. Differential coverage
+moves **96/92/0/4 → 97/93/0/4**, and grammar coverage remains **211/80/131**.

@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "dynamic_array_continuous_target",
+      "file": "Examples/system-verilog/dynamic_array_continuous_target/dynamic_array_continuous_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "bitstoshortreal_literal_statement",
       "file": "Examples/system-verilog/bitstoshortreal_literal_statement/bitstoshortreal_literal_statement.sv",
       "module": "top",

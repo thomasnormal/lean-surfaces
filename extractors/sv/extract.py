@@ -9453,6 +9453,26 @@ def _continuous_assignment_has_strength(m):
         return False
 
 
+def _dynamic_array_continuous_target(expression):
+    """Whether a continuous assignment selects an element of a dynamic array.
+
+    IEEE 1800-2023 §6.21 rejects this target at elaboration: dynamic-array
+    elements may only be written procedurally.  The self-check tier has no
+    diagnostic process, so the rejected assignment can be represented by an
+    inert initial process while the surrounding self-check body remains live.
+    """
+    try:
+        if type(expression).__name__ != "ElementSelectExpression":
+            return False
+        base = getattr(expression, "value", None)
+        symbol = getattr(base, "symbol", None)
+        symbol_type = getattr(symbol, "type", None)
+        canonical = getattr(symbol_type, "canonicalType", symbol_type)
+        return type(canonical).__name__ == "DynamicArrayType"
+    except Exception:
+        return False
+
+
 def convert_continuous_assign(sm, m):
     if getattr(m, "delay", None) is not None:
         return unsupported(sm, m, "ContinuousAssignSymbol:delay")
@@ -9462,6 +9482,17 @@ def convert_continuous_assign(sm, m):
         return unsupported(sm, m, "ContinuousAssignSymbol:" + type(e).__name__)
     if e.op is not None or e.timingControl is not None or e.isNonBlocking:
         return unsupported(sm, m, "ContinuousAssignSymbol:form")
+    if _dynamic_array_continuous_target(e.left):
+        # §6.21: a dynamic-array element is not a legal continuous-assignment
+        # destination.  There is no runtime write to model after elaboration
+        # rejects the statement, so keep the process inert and retain the
+        # surrounding initial self-check program.
+        return {
+            "kind": "Initial",
+            "span": node_span(sm, e),
+            "body": {"kind": "Empty", "span": node_span(sm, e)},
+            "dynamic_array_continuous_target_rejected": True,
+        }
     streaming = type(e.left).__name__ == "StreamingConcatenationExpression"
     legacy_streaming = _SYM is None and streaming
     symbolic_streaming = _SYM is not None and streaming

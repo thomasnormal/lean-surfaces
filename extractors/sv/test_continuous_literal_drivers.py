@@ -188,6 +188,20 @@ class ContinuousLiteralDrivers(unittest.TestCase):
         self.assertEqual(process["kind"], "Assign")
         self.assertTrue(process.get("continuous_strength"))
 
+    def test_dynamic_array_element_continuous_target_is_rejected_inertly(self):
+        design = extract_source(
+            'module top; int dyn[]; assign dyn[0] = 1; '
+            'initial begin $display("PASS"); $finish; end endmodule')
+        module = design["modules"][0]
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+        rejected = [process for process in module["processes"]
+                    if process.get("dynamic_array_continuous_target_rejected")]
+        self.assertEqual(len(rejected), 1)
+        self.assertEqual(rejected[0]["body"]["kind"], "Empty")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -6465,3 +6465,20 @@ include skips**, with `CallExpression` unchanged at **2,973** and
 `ExpressionStatement:CallExpression` at **2,985** because the corpus has no
 literal discarded conversion. Differential coverage moves **132/128/0/4 →
 133/129/0/4**; grammar coverage remains **214/83/131**.
+
+## Dynamic-array continuous-assignment targets — 2026-10-24
+
+IEEE 1800-2023 §6.21 rejects a continuous assignment whose destination is an
+element of a dynamic array: such elements may only be written procedurally.
+The extractor now recognizes this elaboration-invalid target and emits an inert
+process, so the self-check body can still run without fabricating dynamic-array
+storage or a continuous-driver scheduler rule. Procedural dynamic-array writes,
+reads, resizes, and all other dynamic targets remain loud. The
+`dynamic_array_continuous_target` fixture supplies the PASS transcript and the
+extractor test pins the rejected target metadata.
+
+The fresh corpus census moves **4,829 → 4,830 clean** and **17,153 → 17,152
+partial** (66 include skips); `AssignmentExpression:target` falls **3,035 →
+3,034 files** because this compile-error target is now erased in the snapshot.
+Differential coverage moves **133/129/0/4 → 134/130/0/4**;
+grammar coverage remains **214/83/131**.

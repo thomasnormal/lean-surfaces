@@ -27,13 +27,25 @@ class ContinuousLiteralDrivers(unittest.TestCase):
         self.assertEqual(assignment["target"]["kind"], "SelectTarget")
         self.assertTrue(process.get("continuous_constant_lowered"))
 
-    def test_multiple_selected_drivers_stay_on_continuous_boundary(self):
+    def test_multiple_disjoint_selected_literal_drivers_lower(self):
         design = extract_source(
-            "module top; wire [1:0] bus; assign bus[0] = 1'b1; "
-            "assign bus[1] = 1'b0; endmodule")
+            "module top; wire [3:0] bus; assign bus[1:0] = 2'b01; "
+            "assign bus[3:2] = 2'b10; endmodule")
         processes = design["modules"][0]["processes"]
         self.assertEqual([process["kind"] for process in processes],
-                         ["Assign", "Assign"])
+                         ["Initial", "Initial"])
+        self.assertTrue(all(process.get("continuous_selected_constant_lowered")
+                             for process in processes))
+
+    def test_overlapping_selected_literal_drivers_stay_on_continuous_boundary(self):
+        design = extract_source(
+            "module top; wire [3:0] bus; assign bus[2:0] = 3'b101; "
+            "assign bus[3:1] = 3'b010; endmodule")
+        processes = design["modules"][0]["processes"]
+        self.assertEqual([process["kind"] for process in processes],
+                         ["Assign", "Unsupported"])
+        self.assertEqual(processes[1]["sv_kind"],
+                         "AssignmentExpression:target")
 
     def test_literal_fixed_array_variable_cells_lower_to_time_zero_writes(self):
         design = extract_source(

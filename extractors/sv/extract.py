@@ -8843,8 +8843,63 @@ def _resolve_literal_driver_bits(values):
     return "".join(result)
 
 
+def _lower_disjoint_literal_select_drivers(processes):
+    """Lower disjoint constant packed-window drivers to time-zero writes.
+
+    A selected literal driver has no future source reevaluation.  When every
+    selected driver on a vector is literal and their fixed windows are
+    disjoint, each driver is exactly one independent scalar-state write.  Any
+    overlap or dynamic peer remains on the continuous-driver boundary, where
+    the scheduler and net-resolution rules are still required.
+    """
+    groups = {}
+    for index, process in enumerate(processes):
+        if (process.get("kind") != "Assign"
+                or not process.get("continuous_literal_source")
+                or process.get("target", {}).get("kind") != "SelectTarget"):
+            continue
+        target = process["target"]
+        base = target.get("value", {}).get("name")
+        window = _symbolic_target_windows(target)
+        if not base or window is None or len(window) != 1:
+            continue
+        groups.setdefault(base, []).append((index, window[0]))
+    for base, entries in groups.items():
+        # A group with an unmarked selected assignment is dynamic/effectful;
+        # do not erase the literal peer while that driver can still change.
+        peers = [
+            process for process in processes
+            if (process.get("kind") == "Assign"
+                and process.get("target", {}).get("kind") == "SelectTarget"
+                and process.get("target", {}).get("value", {}).get("name") == base)
+        ]
+        if len(peers) != len(entries):
+            continue
+        windows = [window for _index, window in entries]
+        if any(old_base == new_base and not (
+                new_high < old_low or old_high < new_low)
+                for position, (old_base, old_low, old_high) in enumerate(windows)
+                for new_base, new_low, new_high in windows[position + 1:]):
+            continue
+        for index, _window in entries:
+            process = processes[index]
+            processes[index] = {
+                "kind": "Initial",
+                "span": process.get("span"),
+                "body": {
+                    "kind": "BlockingAssign",
+                    "span": process.get("span"),
+                    "target": dict(process["target"]),
+                    "value": process["value"],
+                    "continuous_selected_constant_lowered": True,
+                },
+                "continuous_selected_constant_lowered": True,
+            }
+
+
 def _reject_overlapping_symbolic_drivers(processes, resolvable_nets=None):
     """Resolve fixed literal legacy net drivers; reject other overlaps."""
+    _lower_disjoint_literal_select_drivers(processes)
     if _SYM is None and resolvable_nets:
         groups = {}
         for index, process in enumerate(processes):
@@ -9045,7 +9100,7 @@ def convert_continuous_assign(sm, m):
         "target": target,
         "value": value,
     }
-    if (_SYM is None and target.get("kind") == "Ident"
+    if (_SYM is None and target.get("kind") in ("Ident", "SelectTarget")
             and _integral_literal_source(e.right)):
         result["continuous_literal_source"] = True
     return result

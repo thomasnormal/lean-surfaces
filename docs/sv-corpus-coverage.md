@@ -3750,3 +3750,14 @@ interpreter operations. The 22,048-path census remains **4,806 clean / 17,176
 partial / 66 include skips**, with `AssignmentExpression:target` at **3,037
 files**. Differential coverage moves **110/106/0/4 → 111/107/0/4**; grammar
 coverage remains **213/82/131**.
+
+## Disjoint literal continuous packed-net windows — 2026-10-24
+
+Multiple continuous assignments to disjoint constant bit/part-select windows
+of one packed wire now lower independently to time-zero blocking writes when
+all sources are pure integral literals. Overlapping windows and any dynamic
+peer remain loud because they require per-bit net resolution and live driver
+updates. `disjoint_literal_net_windows` supplies the differential row. The
+22,048-path census remains **4,806 clean / 17,176 partial / 66 include skips**
+with `AssignmentExpression:target` at **3,037 files**. Differential coverage
+moves **111/107/0/4 → 112/108/0/4**; grammar coverage remains **213/82/131**.

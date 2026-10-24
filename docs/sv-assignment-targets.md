@@ -125,6 +125,14 @@ multiple drivers, and aggregate targets remain on the scheduler-owned boundary.
 `constant_variable_driver` covers both the whole-vector and selected-window
 forms through the existing scalar and packed-target interpreter operations.
 
+## Disjoint literal continuous packed-net windows — 2026-10-24
+
+Multiple continuous assignments to disjoint constant windows of one packed
+wire are lowered independently to time-zero blocking writes when every source
+is a pure integral literal. An overlapping window or any dynamic peer remains
+loud; it needs per-bit net resolution and live driver updates. The
+`disjoint_literal_net_windows` witness covers the admitted disjoint form.
+
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 
 IEEE 1800-2023 §7.4.5 makes a write through a constant invalid index on a

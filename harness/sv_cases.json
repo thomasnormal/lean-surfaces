@@ -1000,6 +1000,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "disjoint_literal_net_windows",
+      "file": "Examples/system-verilog/disjoint_literal_net_windows/disjoint_literal_net_windows.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

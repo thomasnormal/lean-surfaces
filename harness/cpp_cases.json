@@ -4105,6 +4105,18 @@
     "rung": 3
   },
   {
+    "id": "statement.callable-frame-do-while",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableKernelDoWhileFrameWitness",
+    "cpp_source": "int frame_do_while(int value) { do { --value; } while (value); return value; } bool callable_witness() { return frame_do_while(3) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

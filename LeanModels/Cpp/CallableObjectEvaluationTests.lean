@@ -514,6 +514,9 @@ private def controlParameter : TypedCallableExpression := {
 private def controlStep : CallableStatement := .expression {
   expression := .increment "--" false (handle "0x10"), sourceType := intType, type := intType}
 
+def callableKernelDoWhileFrameWitness : Bool :=
+  kernelControl (.doWhile controlStep controlParameter)
+
 private theorem kernelControlExecution :
     (kernelControl (.doWhile controlStep controlParameter) &&
       kernelControl (.forLoop .skip controlParameter controlStep
@@ -524,5 +527,7 @@ private theorem kernelControlExecution :
       checkIncrement .short "++" false ⟨.signed 16, 32767⟩ ⟨.signed 16, -32768⟩) = true := rfl
 
 #print axioms kernelControlExecution
+
+#guard callableKernelDoWhileFrameWitness
 
 end LeanModels.Cpp.CallableObjectEvaluationTests

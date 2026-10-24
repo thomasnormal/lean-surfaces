@@ -146,4 +146,9 @@ def classSubobjectRepeatedBaseWitness : Bool :=
 
 #guard classSubobjectRepeatedBaseWitness
 
+def classSubobjectConstBaseWitness : Bool :=
+  observed (projection false true) == some (-9)
+
+#guard classSubobjectConstBaseWitness
+
 end LeanModels.Cpp.ClassSubobjectTests

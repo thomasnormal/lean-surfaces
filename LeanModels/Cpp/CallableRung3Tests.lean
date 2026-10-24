@@ -137,6 +137,21 @@ def callableCharacterLiteralWitness : Bool :=
   | .ok (.ok value) => value == signed 65
   | _ => false
 
+def constantExpressionFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := intType, parameters := [], variadic := false}
+  parameters := []
+  body := .block (.return_ {
+    expression := .integer 7
+    sourceType := intType
+    type := intType})
+}
+
+def callableConstantExpressionWitness : Bool :=
+  match evaluateCallable 16 .lp64 constantExpressionFunction [] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
 def castFunction : CallableFunction := {
   occurrence := default
   signature := {result := intType, parameters := [shortType], variadic := false}
@@ -463,6 +478,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableAlignOfWitness
 #guard callableBoolLiteralWitness
 #guard callableCharacterLiteralWitness
+#guard callableConstantExpressionWitness
 #guard callableCastWitness
 #guard callableNarrowCastWitness
 #guard callablePostfixWitness
@@ -500,6 +516,9 @@ theorem callable_bool_literal_witness : callableBoolLiteralWitness = true := by
   rfl
 
 theorem callable_character_literal_witness : callableCharacterLiteralWitness = true := by
+  rfl
+
+theorem callable_constant_expression_witness : callableConstantExpressionWitness = true := by
   rfl
 
 theorem callable_cast_witness : callableCastWitness = true := by
@@ -552,6 +571,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_align_of_witness
 #print axioms callable_bool_literal_witness
 #print axioms callable_character_literal_witness
+#print axioms callable_constant_expression_witness
 #print axioms callable_cast_witness
 #print axioms callable_narrow_cast_witness
 #print axioms callable_postfix_witness

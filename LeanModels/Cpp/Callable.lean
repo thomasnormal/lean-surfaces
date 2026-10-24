@@ -325,6 +325,30 @@ private def characterLiteral (raw : Raw) (sourceExpected typeExpected : Option C
     throw "callable: character literal type disagrees with expression evidence"
   pure {expression := .integer value, sourceType := type, type}
 
+private def constantExpression (raw : Raw) (sourceExpected typeExpected : Option CppTypeEvidence)
+    (witnessed : Option CppTypeEvidence) : Except String TypedCallableExpression := do
+  let children ← rawChildren raw
+  let [child] := children
+    | throw "callable: constant expression requires one integer literal child"
+  unless child.text "kind" == some "IntegerLiteral" do
+    throw "callable: constant expression child must be an integer literal"
+  let value ← evidenceText raw "value"
+  unless child.text "value" == some value do
+    throw "callable: constant expression value disagrees with its integer child"
+  let type ← match witnessed with
+    | some (.builtin .int) => pure (.builtin .int)
+    | some _ => throw "callable: constant expression requires exact int type"
+    | none => do
+        let type ← evidenceField raw "type"
+        unless type.text "qualType" == some "int" do
+          throw "callable: constant expression requires exact int type"
+        pure (.builtin .int)
+  let some value := value.toNat?
+    | throw "callable: constant expression requires a nonnegative integer value"
+  unless sourceExpected.all (· == type) && typeExpected.all (· == type) do
+    throw "callable: constant expression type disagrees with expression evidence"
+  pure {expression := .integer value, sourceType := type, type}
+
 partial def parseCallableExpressionTyped (profile : TargetProfile)
     (parameters : List CallableParameter)
     (expressionRows : List CppBinaryExpressionEvidence)
@@ -350,6 +374,7 @@ partial def parseCallableExpressionTyped (profile : TargetProfile)
         type := .builtin .boolean
       }
   | "CharacterLiteral" => characterLiteral raw sourceExpected typeExpected witnessed
+  | "ConstantExpr" => constantExpression raw sourceExpected typeExpected witnessed
   | "DeclRefExpr" =>
       let reference ← evidenceField raw "referencedDecl"
       let declaration ← rawId reference

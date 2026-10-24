@@ -2833,6 +2833,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-constant-expression",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableConstantExpressionWitness",
+    "cpp_source": "int constant_witness() { return 7; }",
+    "cpp_expression": "constant_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-c-style-cast",
     "kind": "expression",
     "corpus": "rung-3 witness",

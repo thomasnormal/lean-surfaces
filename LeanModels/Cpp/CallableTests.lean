@@ -1013,6 +1013,13 @@ private def characterLiteralRaw : Raw := object [
       expression.sourceType == .builtin .char && expression.type == .builtin .char
   | .error _ => false
 
+#guard match parseCallableExpressionTyped .lp64 [] []
+    (some [⟨⟨"0x64"⟩, "ConstantExpr", .builtin .int⟩])
+    (constantExprRaw "0x64" "7") none (some (.builtin .int)) with
+  | .ok expression => expression.expression == .integer 7 &&
+      expression.sourceType == .builtin .int && expression.type == .builtin .int
+  | .error _ => false
+
 private def cStyleCastRaw : Raw := object [
   ("id", text "0x70"), ("kind", text "CStyleCastExpr"),
   ("castKind", text "NoOp"),

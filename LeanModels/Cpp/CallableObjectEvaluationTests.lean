@@ -187,6 +187,8 @@ private def forInitializerFailureRetainsFrame : Bool :=
         | _ => false
   | .error _ => false
 
+def callableForInitializerFailureRetainsFrameWitness : Bool := forInitializerFailureRetainsFrame
+
 private def unsupportedIncrementLoud : Bool :=
   let expression : TypedCallableExpression := {
     expression := .increment "??" false (handle "0x10"),
@@ -387,6 +389,7 @@ def callableParserAutomaticLocalWitness : Bool := parserAdmitsAutomaticLocal
 #guard callableParserAutomaticLocalWitness
 #guard callableForBodyFailureRetainsFrameWitness
 #guard callableReturnFailureRetainsFrameWitness
+#guard callableForInitializerFailureRetainsFrameWitness
 
 theorem callable_local_declaration_witness : callableLocalDeclarationWitness = true := by
   rfl

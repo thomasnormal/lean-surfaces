@@ -6364,6 +6364,33 @@ def select_target(sm, lhs):
     return t, _target_shape_ok(t)
 
 
+def _invalid_associative_index_target(lhs):
+    """Whether an associative-array element selection violates §7.8.4/5."""
+    try:
+        if type(lhs).__name__ != "ElementSelectExpression":
+            return False
+        array_type = lhs.value.type.canonicalType
+        if type(array_type).__name__ != "AssociativeArrayType":
+            return False
+        index_type = array_type.indexType.canonicalType
+        selector = lhs.selector
+        selector_type = selector.type.canonicalType
+        index_kind = type(index_type).__name__
+        selector_kind = type(selector_type).__name__
+        if type(selector).__name__ == "ConversionExpression":
+            operand = getattr(selector, "operand", None)
+            operand_type = getattr(operand, "type", None)
+            operand_canonical = getattr(operand_type, "canonicalType",
+                                        operand_type)
+            selector_kind = type(operand_canonical).__name__
+        # Floating-point associative keys are forbidden, and a real/shortreal
+        # selector may not be implicitly converted to an integral key.
+        return (index_kind == "FloatingType"
+                or selector_kind == "FloatingType")
+    except Exception:
+        return False
+
+
 def legacy_blocking_target(sm, lhs, concat_leaf=False):
     expression_kind = type(lhs).__name__
     if expression_kind in ("ElementSelectExpression", "RangeSelectExpression"):
@@ -8425,6 +8452,13 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             return array_assignment
     if expr.op is not None:
         return _convert_compound_assignment(sm, expr, span_node)
+    if (_SYM is None and _invalid_associative_index_target(expr.left)
+            and not expr.isNonBlocking):
+        # §7.8.4/§7.8.5 reject floating associative keys and implicit
+        # real-to-integral key conversions at elaboration.  The rejected write
+        # has no runtime effect in the self-check tier.
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "invalid_associative_index_target": True}
     if (_SYM is None and _fixed_array_oob_select(sm, expr.left)
             and _case_source_expression_ok(expr.right)):
         # IEEE 1800 §7.4.5: an invalid unpacked-array index performs no

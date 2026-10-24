@@ -6498,3 +6498,19 @@ The fresh census moves **4,830 → 4,833 clean** and **17,152 → 17,149 partial
 (66 include skips); `AssignmentExpression:target` falls **3,034 → 3,031**.
 Differential coverage moves **134/130/0/4 → 135/131/0/4**; grammar coverage
 remains **214/83/131**.
+
+## Invalid floating associative-array indices — 2026-10-24
+
+IEEE 1800-2023 §§7.8.4-7.8.5 reject floating-point associative-array keys and
+implicit real-to-integral conversions when selecting an integral-keyed array.
+The extractor now recognizes both invalid blocking target forms and emits inert
+metadata, preserving the elaboration error without inventing associative-array
+storage or key equality. Valid integral-key selections and all dynamic or
+user-defined associative-array operations remain loud.
+`invalid_associative_index_target` supplies both rejected forms and the PASS
+transcript; extractor tests pin the floating-key and converted-selector cases.
+
+The fresh corpus run measures **4,833 → 4,837 clean** and **17,149 → 17,146
+partial** across **22,048 → 22,049 paths** (66 include skips).
+`AssignmentExpression:target` falls **3,031 → 3,029**. Differential coverage
+moves **135/131/0/4 → 136/132/0/4**; grammar coverage remains **214/83/131**.

@@ -58,6 +58,17 @@ class PackedAssignmentTargets(unittest.TestCase):
         reasons = [node.get("sv_kind") for node in nodes(design)]
         self.assertIn("AssignmentExpression:selected-effects", reasons)
 
+    def test_invalid_associative_floating_index_is_inert(self):
+        design = extract_source(
+            "module top; int values[int]; real r = 3.7; "
+            "initial begin values[r] = 10; $display(\"PASS\"); end endmodule")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("invalid_associative_index_target")
+                            for node in nodes(design)))
+
     def test_nonblocking_selected_target_keeps_window_geometry(self):
         target, = self.targets("value[0] <= 1'b1;")
         self.assertEqual(target["kind"], "SelectTarget")

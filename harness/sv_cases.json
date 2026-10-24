@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "invalid_associative_index_target",
+      "file": "Examples/system-verilog/invalid_associative_index_target/invalid_associative_index_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "multiple_variable_continuous_drivers",
       "file": "Examples/system-verilog/multiple_variable_continuous_drivers/multiple_variable_continuous_drivers.sv",
       "module": "top",

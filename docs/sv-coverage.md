@@ -10,10 +10,11 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 135 | 131 | 0 | 4 | sv-tests-2 declarations |
+| 136 | 132 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
+| `invalid_associative_index_target` | `Examples/system-verilog/invalid_associative_index_target/invalid_associative_index_target.sv` | match | **MATCH** | `ok` | MATCH |
 | `multiple_variable_continuous_drivers` | `Examples/system-verilog/multiple_variable_continuous_drivers/multiple_variable_continuous_drivers.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_continuous_target` | `Examples/system-verilog/dynamic_array_continuous_target/dynamic_array_continuous_target.sv` | match | **MATCH** | `ok` | MATCH |
 | `bitstoshortreal_literal_statement` | `Examples/system-verilog/bitstoshortreal_literal_statement/bitstoshortreal_literal_statement.sv` | match | **MATCH** | `ok` | MATCH |
@@ -381,15 +382,15 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22048 | 4833 | 17149 | 66 |
+| 22049 | 4837 | 17146 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 3031 |
+| `AssignmentExpression:target` | 3029 |
 | `ExpressionStatement:CallExpression` | 2985 |
 | `CallExpression` | 2973 |
 | `Hierarchy:ports` | 2397 |
-| `VariableSymbol:2state` | 2350 |
+| `VariableSymbol:2state` | 2349 |
 | `SubroutineSymbol:Subroutine` | 1634 |
 | `NamedValueExpression:2state` | 1484 |
 | `ConcurrentAssertionStatement` | 1359 |
@@ -397,7 +398,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 | `ClassType` | 1329 |
 | `Hierarchy:module-kind` | 1248 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1154 |
-| `MemberAccessExpression` | 1023 |
+| `MemberAccessExpression` | 1022 |
 | `ConversionExpression:width` | 782 |
 | `HierarchicalValueExpression` | 749 |
 

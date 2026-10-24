@@ -483,6 +483,11 @@ def callableSignedCharFrameDecrementWitness : Bool :=
 
 #guard callableSignedCharFrameDecrementWitness
 
+def callableSignedCharPostfixReturnWitness : Bool :=
+  checkIncrement .signedChar "++" true ⟨.signed 8, 126⟩ ⟨.signed 8, 126⟩
+
+#guard callableSignedCharPostfixReturnWitness
+
 private def unsignedShortFrameDecrement : Bool :=
   match CallableObjectFrame.start .lp64 (incrementFunction .unsignedShort "--" false)
       [⟨.unsigned 16, 0⟩] with

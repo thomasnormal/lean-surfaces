@@ -17,6 +17,14 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-86 — zero-argument builtin exception constructor
+
+The extractor's existing zero-argument raise-constructor lowering is now
+applied to the stale `exc_ancestors_lab` envelope. `raise BaseException()`
+therefore follows the admitted class-identity raise path and is caught by
+`except BaseException`; payload-bearing and other constructor forms remain
+loud.
+
 ## 2026-10-24-pycomplete-85 — percent formatting of ref-free containers
 
 Bare `%s` and `%r` conversions now render tuple, namedtuple, range, and

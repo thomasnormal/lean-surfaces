@@ -96,6 +96,8 @@ change is listed here under **Changed** or **Removed**.
 - Bare `%s` and `%r` formatting now renders ref-free tuple, namedtuple, range,
   and boundary-list operands with CPython's deterministic container spelling;
   heap references and mapping-key formatting remain loud.
+- Refreshed the exception ancestor example envelope so `raise BaseException()`
+  uses the admitted zero-argument class-identity path and matches CPython.
 
 ## [0.1.14] — 2026-10-21
 

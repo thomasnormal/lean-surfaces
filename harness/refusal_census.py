@@ -1015,7 +1015,6 @@ WHITELIST_CLASS = {
     "exc_ancestors_lab::os_ancestor": "exc.ancestor-class",
     "exc_ancestors_lab::environment_ancestor": "exc.ancestor-class",
     "exc_ancestors_lab::first_class_base": "firstclass.callable",
-    "exc_ancestors_lab::raise_base_instance": "exc.raise",
     "builtin_raise_lab::parameter_shadow": "exc.raise",
     "builtin_raise_lab::late_shadow": "exc.raise",
     "builtin_raise_lab::raised_instance": "exc.raise",

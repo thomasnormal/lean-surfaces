@@ -1010,7 +1010,7 @@
   {"file": "Examples/python/exc_ancestors_lab/exc_ancestors_lab.py", "function": "os_ancestor", "args": [[]], "expect": "unsupported", "note": "The unmeasured OSError family is not admitted by inferred ancestry."},
   {"file": "Examples/python/exc_ancestors_lab/exc_ancestors_lab.py", "function": "environment_ancestor", "args": [[]], "expect": "unsupported", "note": "EnvironmentError remains outside the measured handler inventory."},
   {"file": "Examples/python/exc_ancestors_lab/exc_ancestors_lab.py", "function": "first_class_base", "args": [[]], "expect": "unsupported", "note": "Builtin exception class values remain first-class objects outside this tier."},
-  {"file": "Examples/python/exc_ancestors_lab/exc_ancestors_lab.py", "function": "raise_base_instance", "args": [[]], "expect": "unsupported", "note": "Catching an admitted ancestor does not admit constructing or raising builtin exception objects."},
+  {"file": "Examples/python/exc_ancestors_lab/exc_ancestors_lab.py", "function": "raise_base_instance", "args": [[]], "expect": "match", "note": "The extractor lowers a zero-argument BaseException constructor to the admitted class-identity raise."},
   {"file": "Examples/python/exc_ancestors_lab/exc_ancestors_lab.py", "function": "raise_arithmetic_class", "args": [[]], "expect": "match", "note": "Bare builtin exception classes now raise without constructing a first-class value."},
   {"file": "Examples/python/exc_ancestors_lab/exc_ancestors_lab.py", "function": "loud_body", "args": [[]], "expect": "match"},
   {"file": "Examples/python/exc_ancestors_lab/exc_ancestors_namesake.py", "function": "base_user", "args": [[]], "expect": "match"},

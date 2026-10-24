@@ -5266,26 +5266,14 @@
                   "end_col_offset": 29
                 },
                 "exc": {
-                  "kind": "Call",
+                  "kind": "Name",
                   "span": {
                     "lineno": 259,
                     "col_offset": 14,
                     "end_lineno": 259,
-                    "end_col_offset": 29
+                    "end_col_offset": 27
                   },
-                  "func": {
-                    "kind": "Name",
-                    "span": {
-                      "lineno": 259,
-                      "col_offset": 14,
-                      "end_lineno": 259,
-                      "end_col_offset": 27
-                    },
-                    "id": "BaseException"
-                  },
-                  "args": [],
-                  "keywords": [],
-                  "call_unsupported": null
+                  "id": "BaseException"
                 }
               }
             ],

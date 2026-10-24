@@ -141,4 +141,9 @@ private theorem kernelFriendFunctions :
 #print axioms ClassReceiverProjection.invoke_memory
 #print axioms ClassReceiverProjection.invoke_of_check
 
+def classSubobjectRepeatedBaseWitness : Bool :=
+  observed (projection true) == some 8
+
+#guard classSubobjectRepeatedBaseWitness
+
 end LeanModels.Cpp.ClassSubobjectTests

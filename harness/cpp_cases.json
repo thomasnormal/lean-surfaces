@@ -3205,6 +3205,18 @@
     "rung": 7
   },
   {
+    "id": "expression.class-repeated-base-subobject",
+    "kind": "expression",
+    "corpus": "rung-7 witness",
+    "lean_module": "LeanModels.Cpp.ClassSubobjectTests",
+    "lean_namespace": "LeanModels.Cpp.ClassSubobjectTests",
+    "lean_expression": "classSubobjectRepeatedBaseWitness",
+    "cpp_source": "struct B { int value = 0; }; struct L : B {}; struct R : B {}; struct D : L, R {}; bool callable_witness() { D value; value.R::value = 8; return value.R::value == 8; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

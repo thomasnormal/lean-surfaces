@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.13] — 2026-10-24
+
+The self-check surface now has 130 differential rows: 126 matches, zero
+disagreements, and 4 recorded refusals. The grammar census has 214 pyslang
+syntax witnesses: 83 MATCH and 131 REFUSE. The 22,048-path corpus remains
+4,829 clean files, 17,153 partial files, and 66 include skips. This release
+adds metadata-only `$bits(real)` and `$bits(shortreal)` queries plus exact
+literal `$itor` nesting through `$rtoi`, `$realtobits`, and
+`$shortrealtobits`. Named, computed, dynamic, and effectful forms remain
+loud.
+
 ## [0.1.12] — 2026-10-24
 
 The self-check surface now has 126 differential rows: 122 matches, zero

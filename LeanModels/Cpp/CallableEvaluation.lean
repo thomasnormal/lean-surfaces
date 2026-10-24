@@ -1,4 +1,5 @@
 import LeanModels.Cpp.Callable
+import LeanModels.Cpp.ScalarArithmetic
 
 namespace LeanModels.Cpp
 
@@ -376,7 +377,12 @@ mutual
             let (rightResult, _) ← evaluateTyped fuel profile parameters arguments right
             match leftResult, rightResult with
             | .ok leftValue, .ok rightValue =>
-                let result := integralBinary operation leftValue rightValue
+                let some leftType := builtinIntegralType left.sourceType
+                  | throw (.unsupportedType left.sourceType)
+                let some rightType := builtinIntegralType right.sourceType
+                  | throw (.unsupportedType right.sourceType)
+                let result := integralBinaryUsual profile operation leftType rightType
+                  leftValue rightValue
                 match result with
                 | .ok value =>
                     let expected ← formatFor profile typed.type

@@ -2785,6 +2785,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-usual-arithmetic",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableMixedArithmeticWitness",
+    "cpp_source": "unsigned int mixed_witness(short left, unsigned int right) { return left + right; } bool callable_witness() { return mixed_witness(-1, 1) == 0u; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-direct-call",
     "kind": "expression",
     "corpus": "rung-3 witness",

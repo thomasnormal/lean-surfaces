@@ -1,4 +1,5 @@
 import LeanModels.Cpp.CallableFrame
+import LeanModels.Cpp.ScalarArithmetic
 
 namespace LeanModels.Cpp
 
@@ -248,7 +249,13 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
                     | .error reason => failure rightResult.frame reason
                     | .ok rightValue =>
                         let combined := match leftValue, rightValue with
-                          | .ok left, .ok right => integralBinary operation left right
+                          | .ok leftValue, .ok rightValue =>
+                              match builtinIntegralType left.sourceType,
+                                  builtinIntegralType right.sourceType with
+                              | some leftType, some rightType =>
+                                  integralBinaryUsual profile operation leftType rightType
+                                    leftValue rightValue
+                              | _, _ => .unsupported .unresolvedArithmeticConversions
                           | .invalid reason, _ | _, .invalid reason => .invalid reason
                           | .undefined reason, _ | _, .undefined reason => .undefined reason
                           | .unsupported reason, _ | _, .unsupported reason =>

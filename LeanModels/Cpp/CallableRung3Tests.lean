@@ -5,6 +5,8 @@ namespace LeanModels.Cpp.CallableRung3Tests
 open LeanModels.Cpp
 
 def intType : CppTypeEvidence := .builtin .int
+def shortType : CppTypeEvidence := .builtin .short
+def unsignedIntType : CppTypeEvidence := .builtin .unsignedInt
 def signed (value : Int) : IntegralValue := ⟨.signed 32, value⟩
 def parameter : FrontendHandle := {value := "0x10"}
 
@@ -71,6 +73,29 @@ def assignmentFunction : CallableFunction := {
 def callableAssignmentWitness : Bool :=
   match evaluateCallable 16 .lp64 assignmentFunction [signed 4] with
   | .ok (.ok value) => value == signed 7
+  | _ => false
+
+def mixedLeftParameter : FrontendHandle := {value := "0x30"}
+def mixedRightParameter : FrontendHandle := {value := "0x31"}
+
+def mixedArithmeticFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := unsignedIntType, parameters := [shortType, unsignedIntType], variadic := false}
+  parameters := [
+    {declaration := mixedLeftParameter, name := some "left", type := shortType},
+    {declaration := mixedRightParameter, name := some "right", type := unsignedIntType}]
+  body := .block (.return_ {
+    expression := .binary "+"
+      {expression := .parameter mixedLeftParameter, sourceType := shortType, type := unsignedIntType}
+      {expression := .parameter mixedRightParameter, sourceType := unsignedIntType, type := unsignedIntType},
+    sourceType := unsignedIntType
+    type := unsignedIntType})
+}
+
+def callableMixedArithmeticWitness : Bool :=
+  match evaluateCallable 16 .lp64 mixedArithmeticFunction
+      [⟨.signed 16, -1⟩, ⟨.unsigned 32, 1⟩] with
+  | .ok (.ok value) => value == ⟨.unsigned 32, 0⟩
   | _ => false
 
 def calleeParameter : FrontendHandle := {value := "0x20"}
@@ -166,6 +191,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callablePostfixWitness
 #guard callableCompoundAssignmentWitness
 #guard callableAssignmentWitness
+#guard callableMixedArithmeticWitness
 #guard callableCallWitness
 #guard callableConditionalWitness
 #guard callableLogicalWitness
@@ -181,6 +207,9 @@ theorem callable_compound_assignment_witness : callableCompoundAssignmentWitness
   rfl
 
 theorem callable_assignment_witness : callableAssignmentWitness = true := by
+  rfl
+
+theorem callable_mixed_arithmetic_witness : callableMixedArithmeticWitness = true := by
   rfl
 
 theorem callable_call_witness : callableCallWitness = true := by
@@ -199,6 +228,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_postfix_witness
 #print axioms callable_compound_assignment_witness
 #print axioms callable_assignment_witness
+#print axioms callable_mixed_arithmetic_witness
 #print axioms callable_call_witness
 #print axioms callable_conditional_witness
 #print axioms callable_logical_witness

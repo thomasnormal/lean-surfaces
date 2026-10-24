@@ -158,7 +158,11 @@ private def initializeSupplied (frame : IntegralObjectFrame)
 scope is imported. Every setup failure retains the initialized prefix. -/
 def startInStore (store : IntegralObjectStore) (function : CallableFunction)
     (arguments : List CallableArgument) : CallableStartOutcome CallableObjectFrame :=
-  let frame : IntegralObjectFrame := {store, scopes := []}
+  let frame : IntegralObjectFrame := {
+    store, scopes := [],
+    staticBindings := store.staticBindings.map fun binding => {
+      declaration := binding.declaration, object := binding.object,
+      type := binding.type, role := .staticLocal}}
   if !store.profile.valid then {frame, result := .error .invalidProfile}
   else if store.values.length != store.objects.objects.length then
     {frame, result := .error (.object (.object .incoherentValues))}

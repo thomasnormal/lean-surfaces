@@ -6,10 +6,11 @@ automatic parameter and local declarations, including the validated Clang
 `DeclStmt` fragment; it does not replace the existing value-only callable
 evaluator.
 
-`IntegralObjectFrame` owns one `IntegralObjectStore` and a stack of
-`FrameScope`s. A binding records the declaration occurrence handle, its
-`ObjectId`, structured access type, and whether it owns a parameter/local or
-borrows an existing object as a reference. Lookup
+`IntegralObjectFrame` owns one `IntegralObjectStore`, a stack of `FrameScope`s,
+and a persistent table for function-local static bindings. A binding records
+the declaration occurrence handle, its `ObjectId`, structured access type, and
+whether it owns a parameter/local or borrows an existing object as a reference.
+Lookup
 walks from the innermost scope outward, so declaration handles remain identity
 witnesses even when source spellings repeat. Every active scope shares one
 declaration-handle namespace: a handle cannot be bound again while its earlier
@@ -28,6 +29,11 @@ uninitialized and can be assigned without a read. Zero initialization uses the
 separate `zeroInitialize` boundary, which publishes a typed zero and also
 admits const-qualified integral locals. Const access and unsupported structured
 types continue to be rejected by `IntegralObjectStore`.
+
+Static local declarations use `.static_` storage and initialize once. The
+successful binding is retained outside the active scope; a later call reuses
+the same object and value, publishing only a fresh scope-local view. Scope exit
+therefore removes the view without ending the static object's lifetime.
 
 `FrameOutcome` always returns the mutated frame alongside its result. A failed
 initializer retains its storage-only binding and all earlier declarations; it
@@ -58,9 +64,10 @@ temporary is never treated as an ordinary automatic local. Mutable lvalue
 references to prvalues and non-integral referents remain loud.
 
 Exiting a scope ends owned bindings in reverse declaration order and removes
-only that scope's bindings. Ordinary non-owning reference bindings never end
-their referents; the temporary-reference role is the explicit exception because
-the reference extended that temporary's lifetime. Object IDs remain tombstones
+only that scope's bindings. Static-local views and ordinary non-owning reference
+bindings never end their referents; the temporary-reference role is the explicit
+exception because the reference extended that temporary's lifetime. Object IDs
+remain tombstones
 in the append-only store.
 `returnValue` evaluates the return expression before unwinding all scopes,
 then returns the value with the closed frame. Fuel exhaustion, undefined
@@ -82,5 +89,5 @@ cover parameter and sequential-local initialization, copy/direct/list/default
 initialization, nested lookup and shadowing, repeated loop-body allocation,
 self-initialization, default initialization followed by assignment, retained
 prefix state on division failure, reverse cleanup, return-before-cleanup, const
-writes, temporary reference materialization and scope cleanup, and loud
-missing/duplicate bindings.
+writes, temporary reference materialization and scope cleanup, static-local
+persistence across calls, and loud missing/duplicate bindings.

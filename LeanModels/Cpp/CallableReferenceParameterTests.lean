@@ -126,6 +126,34 @@ private def futureArgumentIdentityRefuses : Bool :=
   (future.result matches .error (.object (.object (.lifetime (.missing 2))))) &&
     future.frame.store == caller.store && future.frame.scopes.isEmpty
 
+private def staticLocalAcrossStarts : Bool :=
+  let f := function [intType] (.return_ (expression "0"))
+  let first := CallableObjectFrame.startInStore caller.store f [ref 0]
+  match first.result with
+  | .error _ => false
+  | .ok callable =>
+      let declared := callable.frame.declareStaticInitialized 8 (h "static") intType intType
+        (.literal (signed 3))
+      match declared.result with
+      | .error _ => false
+      | .ok object =>
+          let closed := declared.frame.leaveFrame
+          match closed.result with
+          | .error _ => false
+          | .ok _ =>
+              let second := CallableObjectFrame.startInStore closed.frame.store f [ref 0]
+              match second.result with
+              | .error _ => false
+              | .ok callable2 =>
+                  let reused := callable2.frame.declareStaticInitialized 8 (h "static")
+                    intType intType (.literal (signed 9))
+                  match reused.result with
+                  | .ok object2 =>
+                      object == object2 &&
+                        (reused.frame.read (h "static")).result matches .ok ⟨.signed 32, 3⟩ &&
+                        reused.frame.store.staticBindings.length == 1
+                  | .error _ => false
+
 #guard aliasing
 #guard callableReferenceParameterWitness
 #guard valueCopyAndIsolation
@@ -135,12 +163,14 @@ private def futureArgumentIdentityRefuses : Bool :=
 #guard unreadableValueAndActualConst
 #guard executionFailureRetainsMutation
 #guard futureArgumentIdentityRefuses
+#guard staticLocalAcrossStarts
 
 -- Kernel reduction controls for identity, ownership and state retention.
 private theorem kernelReferenceParameters :
     (aliasing && valueCopyAndIsolation && constAndLifetime &&
       uninitializedBinding && failureRetainsPrefix && unreadableValueAndActualConst &&
-      executionFailureRetainsMutation && futureArgumentIdentityRefuses) = true := rfl
+      executionFailureRetainsMutation && futureArgumentIdentityRefuses &&
+      staticLocalAcrossStarts) = true := rfl
 
 theorem callable_reference_parameter_witness : callableReferenceParameterWitness = true := by
   rfl

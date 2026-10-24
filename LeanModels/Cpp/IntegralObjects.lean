@@ -21,10 +21,17 @@ structure IntegralObjectRef where
   type : CppTypeEvidence
   deriving Repr, BEq, Inhabited
 
+structure StaticObjectBinding where
+  declaration : FrontendHandle
+  object : ObjectId
+  type : CppTypeEvidence
+  deriving Repr, BEq, Inhabited
+
 structure IntegralObjectStore where
   profile : TargetProfile
   objects : ObjectStore
   values : List (Option IntegralValue)
+  staticBindings : List StaticObjectBinding := []
   deriving Repr, BEq, Inhabited
 
 namespace IntegralObjectStore
@@ -104,7 +111,7 @@ private def validateAccess (store : IntegralObjectStore) (access : IntegralObjec
   pure object
 
 def empty (profile : TargetProfile) : Except IntegralObjectError IntegralObjectStore :=
-  if profile.valid then .ok {profile, objects := ObjectStore.empty, values := []}
+  if profile.valid then .ok {profile, objects := ObjectStore.empty, values := [], staticBindings := []}
   else .error .invalidProfile
 
 def allocate (store : IntegralObjectStore) (duration : StorageDuration)

@@ -2581,6 +2581,18 @@
     "rung": 1
   },
   {
+    "id": "object.static-local-frame",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_namespace": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_expression": "staticLocalLifecycle",
+    "cpp_source": "int static_local_witness() { static int value = 3; return value; } bool static_local_check() { return static_local_witness() == 3 && static_local_witness() == 3; }",
+    "cpp_expression": "static_local_check()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "object.storage-reuse",
     "kind": "lifetime",
     "corpus": "rung-1 witness",

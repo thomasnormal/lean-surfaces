@@ -348,6 +348,43 @@ def zeroInitializationLifecycle : Bool :=
             okValue (signed 0) (constDeclared.frame.read (handle "0x2"))
       | _, _ => false
 
+def staticLocalLifecycle : Bool :=
+  match opened with
+  | .error _ => false
+  | .ok frame =>
+      let first := frame.declareStaticInitialized 8 (handle "0x1") intType intType
+        (.literal (signed 3))
+      match first.result with
+      | .error _ => false
+      | .ok object =>
+          let exited := first.frame.exitScope
+          let entered := exited.frame.enterScope
+          let second := entered.frame.declareStaticInitialized 8 (handle "0x1") intType intType
+            (.literal (signed 99))
+          match second.result with
+          | .ok reused =>
+              let closed := second.frame.exitScope
+              object == reused &&
+                objectPhase? second.frame object == some .aliveInitialized &&
+                okValue (signed 3) (second.frame.read (handle "0x1")) &&
+                okUnit closed && objectPhase? closed.frame object == some .aliveInitialized &&
+                closed.frame.staticBindings.length == 1
+          | .error _ => false
+
+private def staticLocalStatement : Bool :=
+  match opened with
+  | .error _ => false
+  | .ok frame =>
+      let first := frame.execute 8 (.staticDeclare (handle "0x1") intType intType
+        (.literal (signed 4)))
+      let entered := first.frame.enterScope
+      let second := entered.frame.execute 8 (.staticDeclare (handle "0x1") intType intType
+        (.literal (signed 8)))
+      (first.result matches .ok none) && (second.result matches .ok none) &&
+        second.frame.staticBindings.length == 1 &&
+        second.frame.store.values == [some (signed 4)] &&
+        objectPhase? second.frame 0 == some .aliveInitialized
+
 private def temporaryReferenceStatement : Bool :=
   match opened with
   | .error _ => false
@@ -402,6 +439,8 @@ private def executeOutsideTransferLoud : Bool :=
 #guard executeOutsideTransferLoud
 #guard temporaryReferenceLifecycle
 #guard zeroInitializationLifecycle
+#guard staticLocalLifecycle
+#guard staticLocalStatement
 #guard temporaryReferenceStatement
 #guard temporaryReferenceRefusals
 

@@ -559,6 +559,9 @@ private def overflowRetainsParameter (operator : String) (isPostfix : Bool) (val
 def callableSignedOverflowFrameWitness : Bool :=
   overflowRetainsParameter "++" false 2147483647
 
+def callableSignedPostfixOverflowFrameWitness : Bool :=
+  overflowRetainsParameter "++" true 2147483647
+
 #guard postfixStore
 #guard callablePostfixStoreWitness
 #guard callableUnsignedFrameIncrementWitness
@@ -568,6 +571,7 @@ def callableSignedOverflowFrameWitness : Bool :=
 #guard callableUnsignedPostfixReturnWitness
 #guard callableUnsignedCompoundFrameWitness
 #guard callableSignedOverflowFrameWitness
+#guard callableSignedPostfixOverflowFrameWitness
 #guard overflowRetainsParameter "++" false 2147483647
 #guard overflowRetainsParameter "++" true 2147483647
 #guard overflowRetainsParameter "--" false (-2147483648)

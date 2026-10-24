@@ -4189,6 +4189,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-signed-postfix-overflow-retention",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableSignedPostfixOverflowFrameWitness",
+    "cpp_source": "int signed_postfix_overflow(int value) { return value++; } bool callable_witness() { return true; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "statement.callable-frame-do-while",
     "kind": "statement",
     "corpus": "rung-4 witness",

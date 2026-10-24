@@ -3889,6 +3889,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-continue-break",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_namespace": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_expression": "callableFrameContinueBreakWitness",
+    "cpp_source": "bool callable_witness() { int value = 0; while (true) { ++value; break; continue; } return value == 1; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

@@ -47,6 +47,6 @@ The grammar census uses one source witness per listed Clang AST node kind. The r
 | measurement | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---|---:|---:|---:|---:|---:|---:|
 | grammar witnesses | 24 | 0 | 0 | 24 | 0 | 0 |
-| differential calls | 355 | 345 | 0 | 0 | 0 | 10 |
+| differential calls | 356 | 346 | 0 | 0 | 0 | 10 |
 
-The differential rows include 48 compile-only translation witness, 43 rung-1 lifetime witnesses, 2 rung-2 scalar checks, 53 rung-3 expression checks, 21 rung-4 statement checks, 21 rung-7 member-expression checks, and 167 callable rows across the retained callable witness set; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.
+The differential rows include 48 compile-only translation witness, 43 rung-1 lifetime witnesses, 2 rung-2 scalar checks, 53 rung-3 expression checks, 22 rung-4 statement checks, 21 rung-7 member-expression checks, and 167 callable rows across the retained callable witness set; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls.

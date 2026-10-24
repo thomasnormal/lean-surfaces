@@ -119,6 +119,19 @@ def callableBoolLiteralWitness : Bool :=
   | .ok (.ok value) => value == integralBoolean true
   | _ => false
 
+def falseBoolLiteralFunction : CallableFunction := {
+  boolLiteralFunction with
+  body := .block (.return_ {
+    expression := .integer 0
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableFalseBoolLiteralWitness : Bool :=
+  match evaluateCallable 16 .lp64 falseBoolLiteralFunction [] with
+  | .ok (.ok value) => value == integralBoolean false
+  | _ => false
+
 def characterLiteralFunction : CallableFunction := {
   occurrence := default
   signature := {result := intType, parameters := [], variadic := false}
@@ -520,6 +533,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableSizeOfWitness
 #guard callableAlignOfWitness
 #guard callableBoolLiteralWitness
+#guard callableFalseBoolLiteralWitness
 #guard callableCharacterLiteralWitness
 #guard callableConstantExpressionWitness
 #guard callableUnsignedIntegerLiteralWitness
@@ -559,6 +573,9 @@ theorem callable_align_of_witness : callableAlignOfWitness = true := by
   rfl
 
 theorem callable_bool_literal_witness : callableBoolLiteralWitness = true := by
+  rfl
+
+theorem callable_false_bool_literal_witness : callableFalseBoolLiteralWitness = true := by
   rfl
 
 theorem callable_character_literal_witness : callableCharacterLiteralWitness = true := by
@@ -625,6 +642,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_size_of_witness
 #print axioms callable_align_of_witness
 #print axioms callable_bool_literal_witness
+#print axioms callable_false_bool_literal_witness
 #print axioms callable_character_literal_witness
 #print axioms callable_constant_expression_witness
 #print axioms callable_unsigned_integer_literal_witness

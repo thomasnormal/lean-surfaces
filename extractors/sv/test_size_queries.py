@@ -114,6 +114,40 @@ class SizeQueries(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
 
+    def test_single_literal_continuous_net_driver_is_time_zero_assignment(self):
+        design = lower(
+            'module top; wire y; assign y = 1\'b1; '
+            'initial $display("%0d", y); endmodule')
+        lowered = [node for node in nodes(design)
+                   if node.get("continuous_constant_lowered")]
+        self.assertEqual(len(lowered), 2)
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_multiple_literal_continuous_net_drivers_stay_loud(self):
+        design = lower(
+            'module top; wire y; assign y = 1\'b1; assign y = 1\'b0; '
+            'initial $display("%0d", y); endmodule')
+        self.assertFalse(any(node.get("continuous_constant_lowered")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("kind") == "Assign" for node in nodes(design)))
+
+    def test_dynamic_continuous_net_driver_stays_loud(self):
+        design = lower(
+            'module top; logic a; wire y; assign y = a; '
+            'initial $display("%0d", y); endmodule')
+        self.assertFalse(any(node.get("continuous_constant_lowered")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("kind") == "Assign" for node in nodes(design)))
+
+    def test_literal_continuous_variable_driver_stays_loud(self):
+        design = lower(
+            'module top; logic y; assign y = 1\'b1; '
+            'initial $display("%0d", y); endmodule')
+        self.assertFalse(any(node.get("continuous_constant_lowered")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("kind") == "Assign" for node in nodes(design)))
+
     def test_written_string_len_stays_loud(self):
         design = lower(
             'module top; string s; initial begin s = "x"; '

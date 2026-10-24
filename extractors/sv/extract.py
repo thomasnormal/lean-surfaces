@@ -8796,6 +8796,34 @@ def convert_continuous_assign(sm, m):
         if not ok:
             return unsupported(sm, m, "AssignmentExpression:target")
         value = convert_expr(sm, e.right)
+    if (_SYM is None and type(e.left).__name__ == "NamedValueExpression"
+            and getattr(getattr(e.left, "symbol", None), "kind", None)
+                is not None
+            and str(e.left.symbol.kind) == "SymbolKind.Net"
+            and value is not None and value.get("kind") == "Literal"
+            and _case_source_expression_ok(e.right)):
+        # A single whole-net literal driver has no future re-evaluation and no
+        # resolution choice.  At time zero it is exactly the existing flat
+        # state assignment.  Keep every other continuous form on the
+        # scheduler-owned boundary, including multiple drivers and selected
+        # targets.
+        name = getattr(e.left.symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        assignments = re.findall(
+            r"(?m)\bassign\s+" + re.escape(name) + r"\s*=", source)
+        if len(assignments) == 1 and target.get("kind") == "Ident":
+            return {
+                "kind": "Initial",
+                "span": node_span(sm, e),
+                "body": {
+                    "kind": "BlockingAssign",
+                    "span": node_span(sm, e),
+                    "target": target,
+                    "value": value,
+                    "continuous_constant_lowered": True,
+                },
+                "continuous_constant_lowered": True,
+            }
     if (_SYM is not None and target.get("kind") == "ConcatTarget"):
         if width_of(value) != target.get("width"):
             return unsupported(sm, m, "AssignmentExpression:target")

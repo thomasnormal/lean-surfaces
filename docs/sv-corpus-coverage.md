@@ -3673,3 +3673,18 @@ initializers, non-ASCII strings, and other methods remain loud. The
 The 22,048-path census moves **4,791 → 4,797 clean** and **17,191 → 17,185
 partial**; `CallExpression` falls **2,990 → 2,986**. Differential coverage
 moves **104/100/0/4 → 105/101/0/4**.
+
+## Single literal continuous net drivers — 2026-10-24
+
+A single whole-net continuous assignment with a pure integral literal RHS now
+lowers to the existing time-zero blocking assignment. This narrow case has no
+future RHS change, driver conflict, selected target, or scheduler-visible
+update; dynamic RHS expressions, variable or selected targets, and multiple
+drivers remain loud. The `constant_net_driver` fixture supplies the differential
+row and preserves the scheduler-owned boundary for all other continuous forms.
+
+The 22,048-path corpus census is unchanged because its target-only continuous
+driver witnesses require dynamic or multiple-driver behavior. Differential
+coverage moves **105/101/0/4 → 106/102/0/4**; grammar coverage moves
+**212/81/131 → 213/82/131** because the new fixture changes the retained
+syntax-kind witness.

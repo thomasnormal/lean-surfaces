@@ -6074,3 +6074,19 @@ The 22,048-path census moves **4,791 → 4,797 clean** and **17,191 → 17,185
 partial**; `CallExpression` falls **2,990 → 2,986**. Differential coverage
 moves **104/100/0/4 → 105/101/0/4**, while grammar coverage remains
 **212/81/131**.
+
+## Single literal continuous net drivers — 2026-10-24
+
+A single whole-net continuous assignment whose RHS is a pure integral literal
+now lowers to the existing time-zero blocking assignment. With no future RHS
+change, no second driver, and no selected target, this is the exact value seen
+by the initial-only self-check runner without adding a continuous-driver queue
+or resolution rule. Dynamic RHS expressions, variable targets, selected
+targets, and multiple drivers remain loud. `constant_net_driver` supplies the
+differential row and extractor boundary tests.
+
+The corpus census is unchanged by this focused witness: the current target-only
+continuous-driver files all require dynamic or multiple-driver behavior. The
+differential table moves **105/101/0/4 → 106/102/0/4**; grammar coverage moves
+**212/81/131 → 213/82/131** because the new fixture changes the retained
+syntax-kind witness.

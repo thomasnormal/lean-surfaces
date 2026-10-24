@@ -87,6 +87,20 @@ the source in process and writes no envelopes beside the corpus. The global
 4,030/43/3,987 counts come from the paired census artifact described in
 `docs/sv-corpus-coverage.md`.
 
+## Single literal continuous net drivers — 2026-10-24
+
+A single whole-net continuous assignment with a pure integral literal RHS is
+lowered to the existing time-zero blocking assignment. With no future RHS
+change, no second driver, and no selected target, this preserves the net value
+observed by the initial-only self-check runner without adding a driver queue or
+resolution rule. Dynamic RHS expressions, variable targets, selected targets,
+and multiple drivers remain loud and continue to require the scheduler-owned
+continuous-assignment path.
+
+`constant_net_driver` is the differential witness. The lowering is deliberately
+limited to one source `assign` for that net and an existing `Net` declaration;
+it does not generalize continuous assignment semantics.
+
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 
 IEEE 1800-2023 §7.4.5 makes a write through a constant invalid index on a

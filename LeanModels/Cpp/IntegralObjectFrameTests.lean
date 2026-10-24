@@ -51,6 +51,8 @@ private def sequentialLocals : Bool :=
       | .error _ => false
   | .error _ => false
 
+def callableSequentialLocalsWitness : Bool := sequentialLocals
+
 private def nestedShadow : Bool :=
   match opened with
   | .ok frame =>
@@ -660,6 +662,7 @@ def callableLocalReferenceWitness : Bool := aliasLifetimeAndConst && aliasUninit
 #guard callableDefaultThenAssignWitness
 #guard callableFreshLoopObjectWitness
 #guard callableNestedShadowWitness
+#guard callableSequentialLocalsWitness
 
 private theorem kernelReferenceBindings :
     (aliasLifetimeAndConst && aliasUninitializedAndEnded) = true := rfl

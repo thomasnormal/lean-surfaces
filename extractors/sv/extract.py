@@ -2177,12 +2177,15 @@ def _dynamic_array_allocation_assignment(sm, expr):
             allocation = getattr(allocation, "operand", None)
         if type(allocation).__name__ != "NewArrayExpression":
             return None
-        if _dynamic_array_constant_extent(symbol) is None:
-            return None
         if getattr(allocation, "initExpr", None) is not None:
             return None
         size = getattr(allocation, "sizeExpr", None)
         if type(size).__name__ != "IntegerLiteral" or getattr(size, "bad", False):
+            return None
+        if getattr(size, "value", None) == 0:
+            return {"kind": "Empty", "span": node_span(sm, expr),
+                    "empty_dynamic_array_allocation_noop": True}
+        if _dynamic_array_constant_extent(symbol) is None:
             return None
         return {"kind": "Empty", "span": node_span(sm, expr),
                 "dynamic_array_allocation_lowered": True}
@@ -5609,7 +5612,10 @@ def _zero_size_method(expression):
             if tail.startswith(suffix):
                 return True
             if canonical in ("QueueType", "DynamicArrayType"):
-                return re.match(r"=\s*\{\s*\}", tail) is not None
+                return (re.match(r"=\s*\{\s*\}", tail) is not None
+                        or (canonical == "DynamicArrayType" and
+                            re.match(r"=\s*new\s*\[\s*0\s*\]", tail)
+                            is not None))
             return re.match(r'=\s*""', tail) is not None
         return all(inert_occurrence(m) for m in occurrences[1:])
     except Exception:

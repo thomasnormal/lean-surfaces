@@ -5938,3 +5938,17 @@ forms, with extractor tests pinning the nonempty mutation boundary. The fresh
 22,046-file census moves **4,766 → 4,772 clean** and **17,214 → 17,208
 partial**; `CallExpression` falls **3,083 → 3,077**. Differential coverage
 moves **94/90/0/4 → 95/91/0/4**, and grammar coverage remains **211/80/131**.
+
+## Zero-size dynamic-array allocation queries — 2026-10-24
+
+A dynamic array assigned `new[0]` is empty by definition. The self-check
+extractor now erases that allocation and lowers its following `.size()` query
+to zero; positive allocations, initialized arrays, and later mutations remain
+loud. This reuses the existing no-storage boundary for empty arrays.
+
+The `zero_size_after_new_zero` fixture and differential row cover the admitted
+form, with extractor tests pinning the positive-allocation boundary. The fresh
+22,046-file census moves **4,772 → 4,775 clean** and **17,208 → 17,205
+partial**; `CallExpression` falls **3,077 → 3,074** and
+`AssignmentExpression:target` falls **3,049 → 3,046**. Differential coverage
+moves **95/91/0/4 → 96/92/0/4**, and grammar coverage remains **211/80/131**.

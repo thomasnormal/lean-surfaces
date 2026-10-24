@@ -711,6 +711,15 @@
       "expect": "match"
     },
     {
+      "name": "zero_size_after_new_zero",
+      "file": "Examples/system-verilog/zero_size_after_new_zero/zero_size_after_new_zero.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "opaque_mailbox_new_write",
       "file": "Examples/system-verilog/opaque_mailbox_new_write/opaque_mailbox_new_write.sv",
       "module": "top",

@@ -86,6 +86,19 @@ class SizeQueries(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
+    def test_zero_dynamic_allocation_keeps_size_zero(self):
+        design = lower(
+            'module top; int values[]; initial begin values = new[0]; '
+            '$display("%0d", values.size()); end endmodule')
+        self.assertTrue(any(node.get("zero_size_query") for node in nodes(design)))
+
+    def test_positive_dynamic_allocation_size_stays_loud(self):
+        design = lower(
+            'module top; int values[]; initial begin values = new[1]; '
+            '$display("%0d", values.size()); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

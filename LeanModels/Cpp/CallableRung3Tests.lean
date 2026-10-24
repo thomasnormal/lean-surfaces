@@ -331,6 +331,21 @@ def callableNotEqualWitness : Bool :=
   | .ok (.ok value) => value == integralBoolean true
   | _ => false
 
+def greaterThanFunction : CallableFunction := {
+  lessThanFunction with
+  body := .block (.return_ {
+    expression := .binary ">"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableGreaterThanWitness : Bool :=
+  match evaluateCallable 16 .lp64 greaterThanFunction [signed 6, signed 5] with
+  | .ok (.ok value) => value == integralBoolean true
+  | _ => false
+
 def sizeOfFunction : CallableFunction := {
   occurrence := default
   signature := {result := unsignedLongType, parameters := [], variadic := false}
@@ -803,6 +818,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableLessEqualWitness
 #guard callableEqualWitness
 #guard callableNotEqualWitness
+#guard callableGreaterThanWitness
 #guard callableSizeOfWitness
 #guard callableAlignOfWitness
 #guard callableBoolLiteralWitness
@@ -885,6 +901,9 @@ theorem callable_equal_witness : callableEqualWitness = true := by
   rfl
 
 theorem callable_not_equal_witness : callableNotEqualWitness = true := by
+  rfl
+
+theorem callable_greater_than_witness : callableGreaterThanWitness = true := by
   rfl
 
 theorem callable_size_of_witness : callableSizeOfWitness = true := by
@@ -976,6 +995,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_less_equal_witness
 #print axioms callable_equal_witness
 #print axioms callable_not_equal_witness
+#print axioms callable_greater_than_witness
 #print axioms callable_size_of_witness
 #print axioms callable_align_of_witness
 #print axioms callable_bool_literal_witness

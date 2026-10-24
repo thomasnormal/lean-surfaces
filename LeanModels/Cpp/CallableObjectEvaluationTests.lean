@@ -322,6 +322,10 @@ private def nestedBlockDropsLocal : Bool :=
 
 def callableNestedBlockWitness : Bool := nestedBlockDropsLocal
 
+def callableLoopLocalReentryWitness : Bool := loopLocalReentry
+
+#guard callableLoopLocalReentryWitness
+
 private def parserAdmitsAutomaticLocal : Bool :=
   let declaration := handle "0x11"
   let initializer := handle "0x12"

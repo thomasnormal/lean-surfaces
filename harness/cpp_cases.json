@@ -3697,6 +3697,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-loop-local-reentry",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLoopLocalReentryWitness",
+    "cpp_source": "int loop_local(int value) { while (value) { int local = 1; --value; } return value; } bool callable_witness() { return loop_local(3) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

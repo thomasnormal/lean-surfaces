@@ -107,6 +107,10 @@ change is listed here under **Changed** or **Removed**.
   uses the admitted zero-argument class-identity path and matches CPython.
 - Unused `except Class as name` bindings are now admitted by erasing the
   unobservable temporary; reads of the exception object remain loud.
+- `SystemExit`, `KeyboardInterrupt`, and `GeneratorExit` now have builtin
+  class-identity raises and are caught by `BaseException`; they remain outside
+  `Exception`, and uncaught process-exit behavior remains outside the function
+  boundary.
 
 ## [0.1.14] — 2026-10-21
 

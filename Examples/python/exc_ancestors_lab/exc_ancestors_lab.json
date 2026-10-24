@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/exc_ancestors_lab/exc_ancestors_lab.py",
-  "source_sha256": "999812954a273b69b1b633186f0d8341465d707f50bdc7d594a96d490cd7c6c7",
+  "source_sha256": "d72f2410b4c2be7e96cc35d41f10aa50f9c3cbb4eaa95fdb68a0a70b00662e71",
   "module": {
     "kind": "Module",
     "body": [
@@ -5429,6 +5429,290 @@
                   "value": {
                     "type": "int",
                     "repr": "33"
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 275,
+          "col_offset": 0,
+          "end_lineno": 288,
+          "end_col_offset": 23
+        },
+        "name": "terminal_not_exception",
+        "args": [
+          {
+            "arg": "kind",
+            "span": {
+              "lineno": 275,
+              "col_offset": 27,
+              "end_lineno": 275,
+              "end_col_offset": 31
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 278,
+              "col_offset": 4,
+              "end_lineno": 288,
+              "end_col_offset": 23
+            },
+            "body": [
+              {
+                "kind": "Try",
+                "span": {
+                  "lineno": 279,
+                  "col_offset": 8,
+                  "end_lineno": 286,
+                  "end_col_offset": 21
+                },
+                "body": [
+                  {
+                    "kind": "If",
+                    "span": {
+                      "lineno": 280,
+                      "col_offset": 12,
+                      "end_lineno": 281,
+                      "end_col_offset": 32
+                    },
+                    "test": {
+                      "kind": "Compare",
+                      "span": {
+                        "lineno": 280,
+                        "col_offset": 15,
+                        "end_lineno": 280,
+                        "end_col_offset": 24
+                      },
+                      "left": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 280,
+                          "col_offset": 15,
+                          "end_lineno": 280,
+                          "end_col_offset": 19
+                        },
+                        "id": "kind"
+                      },
+                      "ops": [
+                        "Eq"
+                      ],
+                      "comparators": [
+                        {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 280,
+                            "col_offset": 23,
+                            "end_lineno": 280,
+                            "end_col_offset": 24
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "0"
+                          }
+                        }
+                      ]
+                    },
+                    "body": [
+                      {
+                        "kind": "Raise",
+                        "span": {
+                          "lineno": 281,
+                          "col_offset": 16,
+                          "end_lineno": 281,
+                          "end_col_offset": 32
+                        },
+                        "exc": {
+                          "kind": "Name",
+                          "span": {
+                            "lineno": 281,
+                            "col_offset": 22,
+                            "end_lineno": 281,
+                            "end_col_offset": 32
+                          },
+                          "id": "SystemExit"
+                        }
+                      }
+                    ],
+                    "orelse": []
+                  },
+                  {
+                    "kind": "If",
+                    "span": {
+                      "lineno": 282,
+                      "col_offset": 12,
+                      "end_lineno": 283,
+                      "end_col_offset": 39
+                    },
+                    "test": {
+                      "kind": "Compare",
+                      "span": {
+                        "lineno": 282,
+                        "col_offset": 15,
+                        "end_lineno": 282,
+                        "end_col_offset": 24
+                      },
+                      "left": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 282,
+                          "col_offset": 15,
+                          "end_lineno": 282,
+                          "end_col_offset": 19
+                        },
+                        "id": "kind"
+                      },
+                      "ops": [
+                        "Eq"
+                      ],
+                      "comparators": [
+                        {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 282,
+                            "col_offset": 23,
+                            "end_lineno": 282,
+                            "end_col_offset": 24
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "1"
+                          }
+                        }
+                      ]
+                    },
+                    "body": [
+                      {
+                        "kind": "Raise",
+                        "span": {
+                          "lineno": 283,
+                          "col_offset": 16,
+                          "end_lineno": 283,
+                          "end_col_offset": 39
+                        },
+                        "exc": {
+                          "kind": "Name",
+                          "span": {
+                            "lineno": 283,
+                            "col_offset": 22,
+                            "end_lineno": 283,
+                            "end_col_offset": 39
+                          },
+                          "id": "KeyboardInterrupt"
+                        }
+                      }
+                    ],
+                    "orelse": []
+                  },
+                  {
+                    "kind": "Raise",
+                    "span": {
+                      "lineno": 284,
+                      "col_offset": 12,
+                      "end_lineno": 284,
+                      "end_col_offset": 31
+                    },
+                    "exc": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 284,
+                        "col_offset": 18,
+                        "end_lineno": 284,
+                        "end_col_offset": 31
+                      },
+                      "id": "GeneratorExit"
+                    }
+                  }
+                ],
+                "exc_name": "Exception",
+                "handler": [
+                  {
+                    "kind": "Return",
+                    "span": {
+                      "lineno": 286,
+                      "col_offset": 12,
+                      "end_lineno": 286,
+                      "end_col_offset": 21
+                    },
+                    "value": {
+                      "kind": "UnaryOp",
+                      "span": {
+                        "lineno": 286,
+                        "col_offset": 19,
+                        "end_lineno": 286,
+                        "end_col_offset": 21
+                      },
+                      "op": "USub",
+                      "operand": {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 286,
+                          "col_offset": 20,
+                          "end_lineno": 286,
+                          "end_col_offset": 21
+                        },
+                        "value": {
+                          "type": "int",
+                          "repr": "1"
+                        }
+                      }
+                    }
+                  }
+                ],
+                "try_unsupported": null
+              }
+            ],
+            "exc_name": "BaseException",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 288,
+                  "col_offset": 8,
+                  "end_lineno": 288,
+                  "end_col_offset": 23
+                },
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 288,
+                    "col_offset": 15,
+                    "end_lineno": 288,
+                    "end_col_offset": 23
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 288,
+                      "col_offset": 15,
+                      "end_lineno": 288,
+                      "end_col_offset": 19
+                    },
+                    "id": "kind"
+                  },
+                  "op": "Add",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 288,
+                      "col_offset": 22,
+                      "end_lineno": 288,
+                      "end_col_offset": 23
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
                   }
                 }
               }

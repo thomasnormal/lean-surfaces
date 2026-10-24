@@ -2549,9 +2549,11 @@ interpreter. A single named handler admits `BaseException`, `Exception`,
 `StopIteration`. `RuntimeError` also catches `RecursionError`;
 `ZeroDivisionError` catches both division-error constructors; `Exception`
 catches every represented Python exception, including admitted user classes
-and import errors. `BaseException` catches that same represented inventory;
-`SystemExit`, `KeyboardInterrupt`, and `GeneratorExit` cannot be raised in the
-tier, so their different ancestry is not erased. `ArithmeticError` catches both division-error
+and import errors. `BaseException` catches that same represented inventory,
+including the class identities `SystemExit`, `KeyboardInterrupt`, and
+`GeneratorExit`; those three remain outside `Exception`, matching CPython's
+direct-subclass ancestry. Uncaught process-exit behavior remains outside the
+function boundary. `ArithmeticError` catches both division-error
 constructors, while `LookupError` catches `IndexError` and `KeyError`. These
 pairs are measured against CPython 3.9.25, not inferred from exception names.
 The existing pinned import-error names remain separate,

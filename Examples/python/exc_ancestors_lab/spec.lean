@@ -63,9 +63,12 @@ set_option maxRecDepth 8192
 #py_check exc_ancestors_lab.raise_arithmetic_class() raises (.builtinException "ArithmeticError")
 #py_check exc_ancestors_lab.loud_body() = Float64.ofBits 0x3ff0000000000000
 #guard callFunction exc_ancestors_lab "base_runtime" #[] 4096 matches .unsupported _
-#guard callFunction exc_ancestors_lab "system_exit_loud" #[] 4096 matches .unsupported _
-#guard callFunction exc_ancestors_lab "keyboard_interrupt_loud" #[] 4096 matches .unsupported _
-#guard callFunction exc_ancestors_lab "generator_exit_loud" #[] 4096 matches .unsupported _
+#py_check exc_ancestors_lab.system_exit_loud() = 31
+#py_check exc_ancestors_lab.keyboard_interrupt_loud() = 32
+#py_check exc_ancestors_lab.generator_exit_loud() = 33
+#py_check exc_ancestors_lab.terminal_not_exception(0) = 1
+#py_check exc_ancestors_lab.terminal_not_exception(1) = 2
+#py_check exc_ancestors_lab.terminal_not_exception(2) = 3
 #guard callFunction exc_ancestors_lab "caught_arithmetic_identity" #[.int 7] 3 matches .timeout
 
 #guard match runScript exc_ancestors_script 4096 with

@@ -270,3 +270,19 @@ def loud_body():
         return float(1)
     except BaseException:
         return 33
+
+
+def terminal_not_exception(kind):
+    # SystemExit, KeyboardInterrupt, and GeneratorExit derive directly from
+    # BaseException, so an Exception handler must propagate to the outer arm.
+    try:
+        try:
+            if kind == 0:
+                raise SystemExit
+            if kind == 1:
+                raise KeyboardInterrupt
+            raise GeneratorExit
+        except Exception:
+            return -1
+    except BaseException:
+        return kind + 1

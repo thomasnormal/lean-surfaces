@@ -193,6 +193,13 @@ the bound exception object. The model erases the temporary binding, preserving
 the handler's retained state and CPython's observable control flow; reads of
 the exception value, including payload and attribute inspection, remain loud.
 
+## 2026-10-24-pycomplete-89 — builtin terminal exception identities
+
+`SystemExit`, `KeyboardInterrupt`, and `GeneratorExit` now use the builtin
+class-identity exception path and are caught by `BaseException`, while staying
+outside `Exception` as in CPython. Uncaught process-exit behavior remains
+outside the function boundary.
+
 ## 2026-10-23-pycomplete-65 — pinned decimal rendering budget
 
 The shared integer conversion budget is now pinned to CPython 3.9's default

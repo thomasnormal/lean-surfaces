@@ -737,7 +737,8 @@ def admittedBuiltinExc : List String :=
   ["BaseException", "Exception", "ArithmeticError", "LookupError",
    "TypeError", "NameError", "ZeroDivisionError", "OverflowError", "IndexError",
    "ValueError", "KeyError", "RuntimeError", "RecursionError",
-   "AttributeError", "AssertionError", "StopIteration"]
+   "AttributeError", "AssertionError", "StopIteration", "SystemExit",
+   "KeyboardInterrupt", "GeneratorExit"]
 
 /-- The measured one-string constructor surface for explicit `raise`.  These
   are exactly the builtin exception representations that retain a String
@@ -763,8 +764,10 @@ def refusedAncestorExc : List String :=
 /-- Does `except <cls>:` catch this error? The SUBSUMPTION relation, as an
 explicit list of pairs.
 
-    BaseException      catches every represented error, like Exception;
-                       SystemExit/KeyboardInterrupt/GeneratorExit stay loud
+    BaseException      catches every represented error;
+                       SystemExit/KeyboardInterrupt/GeneratorExit are
+                       represented as builtin identities but remain outside
+                       `Exception`, matching CPython's direct subclasses
     Exception          catches everything below, and every admitted user
                        exception class too (`class N(Exception): pass`)
     ArithmeticError    catches both division-error constructors
@@ -777,7 +780,9 @@ explicit list of pairs.
     everything else    exact, one name to one constructor -/
 def builtinExcCatches : String → PyErr → Bool
   | "BaseException",     _                   => true
-  | "Exception",         .builtinException raised => raised != "BaseException"
+  | "Exception",         .builtinException raised =>
+      raised != "BaseException" && raised != "SystemExit" &&
+      raised != "KeyboardInterrupt" && raised != "GeneratorExit"
   | "Exception",         _                   => true
   | "ArithmeticError",   .zeroDivisionError  => true
   | "ArithmeticError",   .zeroDivisionPow    => true

@@ -999,6 +999,18 @@ def _time_call(expression):
         return False
 
 
+def _stime_call(expression):
+    """A zero-argument `$stime` query in the time-zero self-check slice."""
+    try:
+        return (type(expression).__name__ == "CallExpression"
+                and not expression.bad and expression.isSystemCall
+                and expression.subroutineName == "$stime"
+                and len(expression.arguments) == 0
+                and expression.type.isIntegral)
+    except Exception:
+        return False
+
+
 def _realtime_call(expression):
     """A zero-argument `$realtime` query in the time-zero self-check slice."""
     try:
@@ -1013,6 +1025,18 @@ def _realtime_call(expression):
 def _convert_time_call(sm, expression):
     if not _time_call(expression):
         return unsupported(sm, expression, "CallExpression:$time")
+    return {
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": expression.type.bitWidth,
+        "bits": "0" * expression.type.bitWidth,
+        "time_zero": True,
+    }
+
+
+def _convert_stime_call(sm, expression):
+    if not _stime_call(expression):
+        return unsupported(sm, expression, "CallExpression:$stime")
     return {
         "kind": "Literal",
         "span": node_span(sm, expression),
@@ -5055,6 +5079,7 @@ def _convert_legacy_call(sm, expression):
             (_clog2_call, _convert_clog2),
             (_dimension_query_call, _convert_dimension_query),
             (_time_call, _convert_time_call),
+            (_stime_call, _convert_stime_call),
             (_signing_call, _convert_signing_call),
             (_bit_query_call, _convert_bit_query)):
         if recognizes(expression):

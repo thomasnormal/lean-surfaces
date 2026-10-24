@@ -5868,3 +5868,17 @@ form, with extractor tests pinning an incrementing operand. The fresh
 `AssignmentExpression:target` **3,103 → 3,049**; `CallExpression` is now the
 largest blocker at **3,100**. Differential coverage moves **89/85/0/4 →
 90/86/0/4**, and grammar coverage remains **211/80/131**.
+
+## Time-zero `$stime` queries — 2026-10-24
+
+The zero-argument `$stime` system function now lowers to a 32-bit zero literal
+in the time-zero self-check slice. Argumented queries remain loud, while the
+existing `$time` admission is unchanged; no clock or scheduler state is
+introduced.
+
+The `stime_query` fixture and differential row cover assignment and comparison
+of the query, with extractor tests pinning the argument boundary. The fresh
+22,046-file census moves **4,752 → 4,761 clean** and **17,228 → 17,219
+partial**; `CallExpression` falls **3,100 → 3,088** and remains the largest
+blocker. Differential coverage moves **90/86/0/4 → 91/87/0/4**, and grammar
+coverage remains **211/80/131**.

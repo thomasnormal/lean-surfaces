@@ -666,6 +666,15 @@
       "expect": "match"
     },
     {
+      "name": "stime_query",
+      "file": "Examples/system-verilog/stime_query/stime_query.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "opaque_mailbox_new_write",
       "file": "Examples/system-verilog/opaque_mailbox_new_write/opaque_mailbox_new_write.sv",
       "module": "top",

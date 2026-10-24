@@ -41,6 +41,20 @@ class TimeQueries(unittest.TestCase):
         self.assertIn("InvalidStatement",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_stime_is_zero_literal_at_time_zero(self):
+        design = extract_source(
+            "module top; initial $display(\"%0d\", $stime); endmodule")
+        times = [node for node in nodes(design)
+                 if node.get("kind") == "Literal" and node.get("time_zero")]
+        self.assertEqual([(node["width"], node["bits"]) for node in times],
+                         [(32, "0" * 32)])
+
+    def test_stime_arguments_stay_loud(self):
+        design = extract_source(
+            "module top; integer unit; initial $display(\"%0d\", $stime(unit)); endmodule")
+        self.assertIn("InvalidStatement",
+                      [node.get("sv_kind") for node in nodes(design)])
+
 
 if __name__ == "__main__":
     unittest.main()

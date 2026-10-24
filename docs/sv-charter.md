@@ -5704,3 +5704,16 @@ The fresh 22,046-file census moves **4,746 → 4,747 clean** and **17,234 →
 17,233 partial**; `AssignmentExpression:target` falls **3,313 → 3,219**.
 Differential coverage moves **77/73/0/4 → 78/74/0/4**, and grammar coverage
 moves **209/78/131 → 210/79/131**.
+
+## Opaque zero-key semaphore construction writes — 2026-10-24
+
+An exact `semaphore` handle assignment of the literal `new(0)` now erases as
+an opaque-storage write. A zero-key semaphore has no represented object state
+in the self-check tier, while nonzero constructors and all `get`, `put`, or
+other synchronization operations remain loud. The
+`opaque_semaphore_zero_write` fixture and differential row cover the admitted
+form; extractor tests pin the nonzero boundary.
+
+The fresh 22,046-file census keeps **4,747 clean / 17,233 partial** and lowers
+`AssignmentExpression:target` **3,219 → 3,193**. Differential coverage moves
+**78/74/0/4 → 79/75/0/4**, and grammar coverage remains **210/79/131**.

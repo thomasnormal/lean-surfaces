@@ -576,6 +576,15 @@
       "expect": "match"
     },
     {
+      "name": "opaque_semaphore_zero_write",
+      "file": "Examples/system-verilog/opaque_semaphore_zero_write/opaque_semaphore_zero_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "empty_function_value",
       "file": "Examples/system-verilog/empty_function_value/empty_function_value.sv",
       "module": "top",

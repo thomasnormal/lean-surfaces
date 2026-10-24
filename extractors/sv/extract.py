@@ -5396,14 +5396,8 @@ def _null_literal(expr):
     return type(node).__name__ == "NullLiteral"
 
 
-def _bare_new(expr):
-    """Whether a class construction spells exactly ``new()``.
-
-    Pyslang represents the empty constructor argument list as one implicit
-    zero integer argument.  Its missing syntax node distinguishes that form
-    from an explicit ``new(0)``, whose constructor semantics remain outside
-    the opaque-handle slice.
-    """
+def _new_integer_arg(expr, value, implicit):
+    """Whether a class construction has one literal integer constructor arg."""
     node = expr
     while type(node).__name__ == "ConversionExpression":
         node = getattr(node, "operand", None)
@@ -5422,9 +5416,19 @@ def _bare_new(expr):
         return False
     arg = args[0]
     return (type(arg).__name__ == "IntegerLiteral"
-            and getattr(arg, "value", None) == 0
-            and getattr(arg, "syntax", None) is None
+            and getattr(arg, "value", None) == value
+            and (getattr(arg, "syntax", None) is None) == implicit
             and not getattr(arg, "bad", False))
+
+
+def _bare_new(expr):
+    """Whether a class construction spells exactly ``new()``."""
+    return _new_integer_arg(expr, 0, True)
+
+
+def _explicit_new_zero(expr):
+    """Whether a class construction spells exactly ``new(0)``."""
+    return _new_integer_arg(expr, 0, False)
 
 
 def _compound_rhs(expr):
@@ -7326,6 +7330,18 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and _bare_new(expr.right)):
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "opaque_mailbox_new_write": True}
+    # A zero-key semaphore likewise has no represented object state.  Restrict
+    # this to the literal built-in constructor shape; nonzero key counts and
+    # every later synchronization operation remain loud.
+    if (_SYM is None and expr.op is None and expr.timingControl is None
+            and not expr.isNonBlocking
+            and type(expr.left).__name__ == "NamedValueExpression"
+            and type(getattr(expr.left.type, "canonicalType", None)).__name__
+            == "ClassType"
+            and getattr(expr.left.type.canonicalType, "name", None) == "semaphore"
+            and _explicit_new_zero(expr.right)):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "opaque_semaphore_zero_write": True}
     # Real and shortreal values have no representation in the flat
     # self-check state.  A pure literal blocking write consequently has no
     # modeled effect and can be erased.  Keep nonblocking writes, names,

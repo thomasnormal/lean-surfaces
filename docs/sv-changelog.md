@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.7] — 2026-10-24
+
+The self-check surface now has 99 differential rows: 95 matches, zero
+disagreements, and 4 recorded refusals. The grammar census remains at 211
+pyslang syntax witnesses: 80 MATCH and 131 REFUSE. The 22,046-file corpus
+measures 4,783 clean files, 17,197 partial files, and 66 include skips.
+This release adds zero-size queries after explicit empty writes and `new[0]`,
+literal-return zero-argument functions, inert monitor toggles without a
+registration, and stdout-directed `$fwrite` with its no-newline behavior.
+
 ## [0.1.6] — 2026-10-24
 
 The self-check surface now has 94 differential rows: 90 matches, zero

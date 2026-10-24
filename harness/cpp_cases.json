@@ -2797,6 +2797,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-unary-logical-not",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableUnaryLogicalNotWitness",
+    "cpp_source": "bool unary_logical_not(int value) { return !value; } bool callable_witness() { return unary_logical_not(0) && !unary_logical_not(3); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

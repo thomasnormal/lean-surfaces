@@ -4417,6 +4417,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-short-compound-mid",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableShortCompoundFrameWitness",
+    "cpp_source": "short frame_short_compound(short value) { value += 1; return value; } bool callable_witness() { return frame_short_compound(12) == 13; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-signed-overflow-retention",
     "kind": "expression",
     "corpus": "rung-3 witness",

@@ -43,6 +43,22 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Semaphore zero-key methods — 2026-10-24
+
+The self-check surface now admits `semaphore.put(0)` and `semaphore.get(0)`
+when the handle has a preceding constructor assignment. IEEE 1800-2023
+§15.3.2–15.3.3 defines both calls as state-free: `put(0)` returns no keys and
+`get(0)` acquires none and cannot block. Literal zero is required and an
+unproven or dynamic handle/count remains a loud call boundary. The
+`semaphore_zero_key_methods` fixture and differential row exercise both
+methods.
+
+The fresh 22,049-file census moves **4,840 → 4,841 clean** and **17,143 →
+17,142 partial**; `ExpressionStatement:CallExpression` falls **2,985 →
+2,984**. The differential matrix grows **139 → 140 rows** with the new row
+matching its declared `PASS` output and no disagreements. Grammar coverage is
+unchanged at **214 witnesses, 83 MATCH, and 131 REFUSE**.
+
 ## Shallow unpacked integral structs — 2026-10-22
 
 The self-check surface now admits an untagged unpacked struct when every direct

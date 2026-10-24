@@ -109,6 +109,33 @@ class ClassHandleDeclarations(unittest.TestCase):
         self.assertIn("AssignmentExpression:target",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_zero_key_semaphore_methods_are_inert_after_construction(self):
+        design = lower(
+            'module top; semaphore sem; initial begin '
+            'sem = new(0); sem.put(0); sem.get(0); $display("PASS"); '
+            'end endmodule')
+        zero_methods = [node for node in nodes(design)
+                        if node.get("semaphore_zero_method")]
+        self.assertEqual([node["semaphore_zero_method"] for node in zero_methods],
+                         ["put", "get"])
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_dynamic_semaphore_key_method_stays_loud(self):
+        design = lower(
+            'module top; semaphore sem; integer keys; initial begin '
+            'sem = new(0); sem.put(keys); end endmodule')
+        self.assertIn("ExpressionStatement:CallExpression",
+                      [node.get("sv_kind") for node in nodes(design)])
+
+    def test_uninitialized_semaphore_zero_method_stays_loud(self):
+        design = lower(
+            'module top; semaphore sem; initial begin '
+            'sem.put(0); end endmodule')
+        self.assertIn("ExpressionStatement:CallExpression",
+                      [node.get("sv_kind") for node in nodes(design)])
+
 
 if __name__ == "__main__":
     unittest.main()

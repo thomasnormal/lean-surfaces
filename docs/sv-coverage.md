@@ -10,10 +10,11 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 139 | 135 | 0 | 4 | sv-tests-2 declarations |
+| 140 | 136 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
+| `semaphore_zero_key_methods` | `Examples/system-verilog/semaphore_zero_key_methods/semaphore_zero_key_methods.sv` | match | **MATCH** | `ok` | MATCH |
 | `literal_semaphore_constructor` | `Examples/system-verilog/literal_semaphore_constructor/literal_semaphore_constructor.sv` | match | **MATCH** | `ok` | MATCH |
 | `invalid_string_replication_multiplier` | `Examples/system-verilog/invalid_string_replication_multiplier/invalid_string_replication_multiplier.sv` | match | **MATCH** | `ok` | MATCH |
 | `invalid_struct_replication_assignment` | `Examples/system-verilog/invalid_struct_replication_assignment/invalid_struct_replication_assignment.sv` | match | **MATCH** | `ok` | MATCH |
@@ -385,11 +386,11 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22049 | 4840 | 17143 | 66 |
+| 22049 | 4841 | 17142 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `ExpressionStatement:CallExpression` | 2985 |
+| `ExpressionStatement:CallExpression` | 2984 |
 | `AssignmentExpression:target` | 2980 |
 | `CallExpression` | 2973 |
 | `Hierarchy:ports` | 2397 |

@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "semaphore_zero_key_methods",
+      "file": "Examples/system-verilog/semaphore_zero_key_methods/semaphore_zero_key_methods.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "literal_semaphore_constructor",
       "file": "Examples/system-verilog/literal_semaphore_constructor/literal_semaphore_constructor.sv",
       "module": "top",

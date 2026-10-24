@@ -6109,6 +6109,46 @@ def _zero_size_method(expression):
         return False
 
 
+def _semaphore_zero_method(expression):
+    """Recognize the state-free semaphore ``get(0)``/``put(0)`` calls.
+
+    IEEE 1800-2023 §15.3.2–15.3.3 specifies that a zero key count neither
+    consumes nor returns keys, and ``get(0)`` cannot block.  The self-check
+    state does not represent semaphore handles, so this narrow rule only
+    erases a call whose receiver has a preceding ``= new(...)`` in the same
+    source and whose sole argument is the literal integral zero.  Any
+    dynamic count, unproven/null receiver, or other method remains loud.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or expression.isSystemCall
+                or expression.subroutineName not in ("get", "put")
+                or len(expression.arguments) != 1
+                or _literal_integral_value(expression.arguments[0]) != 0):
+            return False
+        receiver = getattr(expression, "thisClass", None)
+        if (receiver is None or type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "bad", False)):
+            return False
+        receiver_type = getattr(receiver, "type", None)
+        canonical = getattr(receiver_type, "canonicalType", None)
+        if (type(canonical).__name__ != "ClassType"
+                or getattr(canonical, "name", None) != "semaphore"):
+            return False
+        name = getattr(getattr(receiver, "symbol", None), "name", "")
+        if not name:
+            return False
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        # A source-level constructor assignment is the conservative nullness
+        # witness for this erased handle.  Without it a null method call would
+        # raise at run time, so type information alone is insufficient.
+        return re.search(r"(?<![A-Za-z0-9_$])" + re.escape(name)
+                         + r"\s*=\s*new\s*\(", source) is not None
+    except Exception:
+        return False
+
+
 def _literal_integral_value(expression):
     """Read a small literal integral expression without evaluating source code.
 
@@ -8683,6 +8723,11 @@ def _convert_syscall(sm, s, e):
     except Exception:
         return unsupported(sm, s, "ExpressionStatement:CallExpression")
     if not is_sys:
+        if _semaphore_zero_method(e):
+            # A zero-key semaphore method has no represented state effect;
+            # retain the call's sequencing position as an ordinary no-op.
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "semaphore_zero_method": name}
         # A zero-argument task/function with an actually empty body has no
         # state, timing, or diagnostic effect.  In statement position its
         # discarded result is unobservable, so erase this narrow call while

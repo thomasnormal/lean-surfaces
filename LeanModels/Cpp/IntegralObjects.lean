@@ -202,6 +202,14 @@ def endLifetime (store : IntegralObjectStore) (object : ObjectId) :
   let objects ← (store.objects.endLifetime object).mapError IntegralObjectError.lifetime
   pure {store with objects, values := store.values.modify object (fun _ => none)}
 
+/-- Extend a live temporary to the surrounding scope without allocating or
+    changing its stored value. -/
+def extendTemporary (store : IntegralObjectStore) (object : ObjectId) :
+    Except IntegralObjectError IntegralObjectStore := do
+  let _ ← store.metadata object
+  let objects ← (store.objects.extendTemporary object).mapError IntegralObjectError.lifetime
+  pure {store with objects}
+
 /-- Reuse an ended storage slot for a new integral object, retaining its
     storage identity and clearing the old value before initialization. -/
 def reuseEnded (store : IntegralObjectStore) (object : ObjectId)

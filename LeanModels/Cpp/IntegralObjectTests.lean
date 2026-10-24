@@ -200,4 +200,15 @@ private def aliasTrace : Except IntegralObjectError (List IntegralValue) := do
   store.reuseEnded object (.builtin .int) : Except IntegralObjectError IntegralObjectStore)
     matches .error (.lifetime .lifetimeNotEnded)
 
+#guard matchesValue (signed 7) (do
+  let (store, object) ← initialized (.builtin .int) .temporary
+  let store ← store.extendTemporary object
+  let access ← store.borrow object
+  store.read access)
+
+#guard (do
+  let (store, object) ← initialized
+  store.extendTemporary object : Except IntegralObjectError IntegralObjectStore)
+    matches .error (.lifetime .notTemporaryStorage)
+
 end LeanModels.Cpp.IntegralObjectTests

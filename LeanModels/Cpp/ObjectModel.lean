@@ -9,6 +9,7 @@ inductive StorageDuration where
   | thread
   | automatic
   | temporary
+  | extendedTemporary
   | dynamic
   deriving Repr, BEq, Inhabited
 
@@ -32,6 +33,7 @@ inductive ObjectError where
   | notDynamicStorage
   | notScopeStorage
   | notTemporaryStorage
+  | temporaryAlreadyExtended
   | lifetimeNotEnded
   deriving Repr, BEq, Inhabited
 
@@ -91,6 +93,28 @@ def declareTemporary (store : ObjectStore) (type : CppTypeEvidence) :
   | .ok live => (live, object)
   | .error _ => (reserved, object)
 
+/-- Extend a live materialized temporary to the surrounding lexical scope.
+    The storage identity is retained; only the destruction boundary changes. -/
+def extendTemporary (store : ObjectStore) (object : ObjectId) :
+    Except ObjectError ObjectStore :=
+  match store.object? object with
+  | none => .error (.missing object)
+  | some value =>
+      match value.duration, value.phase with
+      | .temporary, .storageOnly => .error .lifetimeNotStarted
+      | .temporary, .aliveUninitialized | .temporary, .aliveInitialized =>
+          update store object fun current => {current with duration := .extendedTemporary}
+      | .temporary, .ended => .error .lifetimeEnded
+      | .temporary, .released => .error .storageReleased
+      | .extendedTemporary, .storageOnly | .extendedTemporary, .aliveUninitialized |
+          .extendedTemporary, .aliveInitialized => .error .temporaryAlreadyExtended
+      | .extendedTemporary, .ended => .error .lifetimeEnded
+      | .extendedTemporary, .released => .error .storageReleased
+      | _, .storageOnly => .error .notTemporaryStorage
+      | _, .aliveUninitialized | _, .aliveInitialized => .error .notTemporaryStorage
+      | _, .ended => .error .notTemporaryStorage
+      | _, .released => .error .storageReleased
+
 def initializeObject (store : ObjectStore) (object : ObjectId) : Except ObjectError ObjectStore :=
   match store.object? object with
   | none => .error (.missing object)
@@ -123,7 +147,7 @@ def endScope (store : ObjectStore) : List ObjectId → Except ObjectError Object
       let store ← endScope store rest
       let some value := store.object? object
         | throw (.missing object)
-      unless value.duration == .automatic do
+      unless value.duration == .automatic || value.duration == .extendedTemporary do
         throw .notScopeStorage
       store.endLifetime object
 
@@ -173,6 +197,20 @@ def temporaryLifecycle : Bool :=
   match store.endFullExpression [temporary] with
   | .ok ended => ended.object? temporary |>.map (·.phase == .ended) |>.getD false
   | .error _ => false
+
+def extendedTemporaryLifecycle : Bool :=
+  let intType : CppTypeEvidence := .builtin .int
+  let (store, temporary) := declareTemporary empty intType
+  match store.extendTemporary temporary with
+  | .error _ => false
+  | .ok extended =>
+      (extended.endFullExpression [temporary] matches .error .notTemporaryStorage) &&
+      match extended.endScope [temporary] with
+      | .ok ended =>
+          match ended.object? temporary with
+          | some value => value.duration == .extendedTemporary && value.phase == .ended
+          | none => false
+      | .error _ => false
 
 def releaseStorage (store : ObjectStore) (object : ObjectId) : Except ObjectError ObjectStore :=
   match store.object? object with

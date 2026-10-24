@@ -22,8 +22,13 @@ structured `CppTypeEvidence`, and one of these phases:
 Temporary storage is a separate identity class. `declareTemporary` starts a
 materialized temporary for the current full-expression, and
 `endFullExpression` ends those temporaries in reverse construction order.
-Temporary IDs cannot be passed to lexical `endScope`, while automatic IDs
-cannot be ended by the full-expression boundary.
+Unextended temporary IDs cannot be passed to lexical `endScope`, while
+automatic IDs cannot be ended by the full-expression boundary.
+
+`extendTemporary` moves a live temporary to the surrounding scope's cleanup
+boundary. The object keeps its identity and value state, `endFullExpression`
+refuses it, and `endScope` ends it alongside automatic objects. Re-extending
+or extending a non-temporary is a loud error.
 
 `reuseEnded` is the explicit storage-reuse boundary. It accepts only an ended
 slot, keeps the same storage identity, replaces its type, clears the old value
@@ -43,9 +48,10 @@ released objects with distinct errors.
 
 `endScope` models the implicit lifetime boundary for a lexical scope. It takes
 object identities in declaration order, ends them in reverse order, and admits
-only automatic storage. Static objects remain alive across scope exits and
-dynamic objects require the explicit `endLifetime`/`releaseStorage` sequence;
-passing either to `endScope` is a loud `notScopeStorage` refusal.
+automatic or extended-temporary storage. Static objects remain alive across
+scope exits and dynamic objects require the explicit
+`endLifetime`/`releaseStorage` sequence; passing either to `endScope` is a
+loud `notScopeStorage` refusal.
 
 Invalid transitions are explicit `ObjectError` values rather than silent
 phase rewrites. The model therefore distinguishes an object whose lifetime
@@ -59,10 +65,10 @@ pointer arithmetic, subobject graph, constructors/destructors, exception
 unwinding, scope executor, or value store. `CppTypeEvidence` is retained as a
 witness; it is not converted into a layout or an executable value. Static,
 thread, automatic, and temporary storage are tracked and can be ended, while
-`endScope` supplies reverse-order automatic cleanup and `endFullExpression`
-supplies temporary cleanup. `reuseEnded` preserves an ended storage identity
-for a new lifetime. Only dynamic storage has an explicit release operation in
-this slice.
+`endScope` supplies reverse-order automatic and extended-temporary cleanup,
+while `endFullExpression` supplies ordinary temporary cleanup. `reuseEnded`
+preserves an ended storage identity for a new lifetime. Only dynamic storage
+has an explicit release operation in this slice.
 
 `LeanModels/Cpp/Translation.execute` still refuses every artifact. The next
 semantic slice must connect this store to a typed expression/statement model

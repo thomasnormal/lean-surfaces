@@ -26,6 +26,15 @@ def reuseLifecycleWitness : Bool :=
       | .error _ => false
   | .error _ => false
 
+def extendedTemporaryTwice : Bool :=
+  let (store, object) := ObjectStore.declareTemporary ObjectStore.empty intType
+  match store.extendTemporary object with
+  | .error _ => false
+  | .ok extended =>
+      match extended.extendTemporary object with
+      | .error .temporaryAlreadyExtended => true
+      | _ => false
+
 #guard automatic.2 == 0
 #guard (ObjectStore.readType automatic.1 automatic.2) matches .error .lifetimeNotStarted
 #guard (ObjectStore.beginLifetime automatic.1 automatic.2).isOk
@@ -92,6 +101,7 @@ def reuseLifecycleWitness : Bool :=
       (store.endScope [object]) matches .error .notScopeStorage
 
 #guard ObjectStore.temporaryLifecycle
+#guard ObjectStore.extendedTemporaryLifecycle
 
 #guard match ObjectStore.allocate ObjectStore.empty .automatic intType with
   | (store, object) =>
@@ -100,6 +110,12 @@ def reuseLifecycleWitness : Bool :=
 #guard match ObjectStore.allocate ObjectStore.empty .temporary intType with
   | (store, object) =>
       (store.endScope [object]) matches .error .notScopeStorage
+
+#guard match ObjectStore.allocate ObjectStore.empty .temporary intType with
+  | (store, object) =>
+      (store.extendTemporary object) matches .error .lifetimeNotStarted
+
+#guard extendedTemporaryTwice
 
 #guard match ObjectStore.declareAutomatic ObjectStore.empty intType with
   | (store, object) =>

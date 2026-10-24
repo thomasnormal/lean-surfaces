@@ -2533,6 +2533,18 @@
     "rung": 1
   },
   {
+    "id": "object.temporary-lifetime-extension",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.ObjectModel",
+    "lean_namespace": "LeanModels.Cpp.ObjectStore",
+    "lean_expression": "extendedTemporaryLifecycle",
+    "cpp_source": "struct TemporaryProbe { bool* alive; ~TemporaryProbe() { *alive = false; } }; bool extended_witness() { bool alive = true; { const TemporaryProbe& reference = TemporaryProbe{&alive}; if (!alive) return false; } return !alive; }",
+    "cpp_expression": "extended_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "object.storage-reuse",
     "kind": "lifetime",
     "corpus": "rung-1 witness",

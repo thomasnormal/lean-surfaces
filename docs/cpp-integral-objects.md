@@ -32,6 +32,8 @@ implicit-conversion engine: only the already-admitted builtin-integral source
 and destination pair is available.
 
 Ending lifetime discards the readable value but retains metadata as a tombstone.
+`extendTemporary` changes a live temporary's cleanup boundary without changing
+its identity or value, so the value remains readable until scope cleanup.
 Dynamic storage can then be released. `reuseEnded` is the explicit placement
 reuse boundary: it keeps an ended identity, clears its old value, replaces its
 integral type, and returns storage-only state for a new initialization.

@@ -43,10 +43,10 @@ change is listed here under **Changed** or **Removed**.
   priority.
 - `str.join()` now consumes admitted heap generators, preserving their lazy
   state and CPython's indexed element validation.
-- Monadic `itertools.count` now admits finite integer, Boolean, and binary64
-  start/step values through a value-carrying generator frame, preserving
-  CPython's first-value subtype and numeric addition on both interpreter
-  surfaces. NaN and infinity remain loud.
+- Monadic `itertools.count` now admits integer, Boolean, and binary64 start/step
+  values through a value-carrying generator frame, preserving CPython's
+  first-value subtype and numeric addition on both interpreter surfaces.
+  NaN payloads quiet on the first step and infinities remain stable.
 - String case methods now admit Latin-1 input characters, including CPython's
   `µ`, `ß` → `SS`, and `ÿ` → `Ÿ` mappings; characters outside Latin-1 remain
   loud until the full Unicode case tables are represented.

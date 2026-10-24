@@ -58,6 +58,18 @@ The `float_lab.divide` NaN rows, `indeterminate_division_still_loud`, and
 proofs for both operand positions, the invalid infinity case, and denominator
 priority.
 
+## 2026-10-24-pycomplete-95 — non-finite `itertools.count`
+
+`itertools.count` now admits binary64 NaN and infinity start/step values.
+Its first value is preserved exactly, and subsequent values use the shared
+float arithmetic so signaling NaNs quiet on the first addition while infinity
+remains stable. The finite integer, Boolean, and mixed stepping behavior is
+unchanged.
+
+The non-finite `count_head` rows and `count_nonfinite_script.py` now match on
+both interpreter surfaces; the refusal census no longer records the stale
+`iter.count-numeric-frame` boundary.
+
 ## 2026-10-24-pycomplete-86 — zero-argument builtin exception constructor
 
 The extractor's existing zero-argument raise-constructor lowering is now

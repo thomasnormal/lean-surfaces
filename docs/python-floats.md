@@ -131,12 +131,11 @@ tuple keys) also refuse. Existing float attributes remain loud rather than
 fabricating missing-attribute exceptions. Other float arithmetic must not fall
 into an integer-only `TypeError`.
 
-The monadic `itertools.count` frame now admits finite immediate integer,
-Boolean, and binary64 start/step values. It keeps the first value's CPython
-subtype (for example, `count(True, 2)` yields `True, 3, 5`) and advances with
-the shared numeric addition worker, so mixed integer/float stepping preserves
-binary64 rounding. NaN and infinite start/step values remain loud because
-their propagation needs an explicit floating-point oracle. The proof
+The monadic `itertools.count` frame now admits immediate integer, Boolean, and
+binary64 start/step values, including NaNs and infinities. It keeps the first
+value's CPython subtype (for example, `count(True, 2)` yields `True, 3, 5`) and
+advances with the shared numeric addition worker, so mixed integer/float
+stepping preserves binary64 rounding and NaN payload/sign propagation. The proof
 Both interpreter surfaces use the value-carrying frame for these finite rows;
 invalid nonnumeric arguments and excessive positional arity retain their
 faithful exceptions.

@@ -30,6 +30,12 @@ set_option exponentiation.threshold 2048
   Val.tuple #[.bool true, .int 3, .int 5]
 #py_check float_lab.count_prefix(false, 0) =
   Val.tuple #[.bool false, .int 0, .int 0]
+#py_check float_lab.count_head(Float64.ofBits 0x7ff8000000000000,
+  Float64.ofBits 0x3ff0000000000000) =
+  Float64.ofBits 0x7ff8000000000000
+#py_check float_lab.count_head(Float64.ofBits 0x7ff0000000000000,
+  Float64.ofBits 0x3ff0000000000000) =
+  Float64.ofBits 0x7ff0000000000000
 #py_check float_lab.count_many() raises
     .typeError "count() takes at most 2 arguments (3 given)"
 #py_check float_lab.addition() = Float64.ofBits 0x4008000000000000

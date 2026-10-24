@@ -6488,7 +6488,7 @@ def countArgs : List RVal → Option (Int × Int)
 def countNumber (value : RVal) : Bool :=
   match value with
   | .int _ | .bool _ => true
-  | .float number => !number.isNaN && !number.isInf
+  | .float _ => true
   | _ => false
 
 /- The monadic iterator admits the immediate numeric inventory. Its state is

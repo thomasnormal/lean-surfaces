@@ -129,6 +129,16 @@ theorem infinite_zero_caught :
     float_lab.infinite_zero_caught() ==> (19 : PyInt) := by
   exact ⟨32, rfl⟩
 
+theorem count_nan_head :
+    float_lab.count_head(Float64.ofBits 0x7ff8000000000000,
+      Float64.ofBits 0x3ff0000000000000) ==> Float64.ofBits 0x7ff8000000000000 := by
+  exact ⟨64, rfl⟩
+
+theorem count_infinity_head :
+    float_lab.count_head(Float64.ofBits 0x7ff0000000000000,
+      Float64.ofBits 0x3ff0000000000000) ==> Float64.ofBits 0x7ff0000000000000 := by
+  exact ⟨64, rfl⟩
+
 theorem division_nan_left :
     float_lab.divide(Float64.ofBits 0x7ff0000000000001,
       Float64.ofBits 0x3ff0000000000000) ==> Float64.ofBits 0x7ff8000000000001 := by
@@ -245,6 +255,8 @@ theorem floor_zero_caught :
 #print axioms infinite_denominator
 #print axioms infinite_augmented
 #print axioms infinite_zero_caught
+#print axioms count_nan_head
+#print axioms count_infinity_head
 #print axioms division_nan_left
 #print axioms division_nan_right
 #print axioms indeterminate_division

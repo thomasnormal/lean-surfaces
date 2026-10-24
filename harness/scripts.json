@@ -433,6 +433,11 @@
     "note": "The count-admission miss distinguishes excessive positional arity from nonnumeric arguments, with the exact exception message and retained stdout."
   },
   {
+    "file": "Examples/python/float_lab/count_nonfinite_script.py",
+    "expect": "match",
+    "note": "itertools.count preserves non-finite starts and advances through the shared NaN/infinity arithmetic."
+  },
+  {
     "file": "Examples/python/float_lab/arithmetic_script.py",
     "expect": "match",
     "note": "Binary64 addition/subtraction/multiplication, signed zeros, overflow/infinity, and module-level augmented assignments published to a function callee."

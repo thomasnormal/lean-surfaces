@@ -409,10 +409,14 @@ def render_rung_page(diff_rows, grammar_rows_value):
     translation_count = sum(1 for row in diff_rows if row["rung"] == 0)
     lifetime_count = sum(1 for row in diff_rows if row["rung"] == 1)
     scalar_count = sum(1 for row in diff_rows if row["kind"] == "scalar")
-    expression_count = sum(1 for row in diff_rows if row["kind"] == "expression")
+    expression_count = sum(1 for row in diff_rows
+                           if row["kind"] == "expression" and row["rung"] == 3)
+    member_expression_count = sum(1 for row in diff_rows
+                                  if row["kind"] == "expression" and row["rung"] == 7)
     statement_count = sum(1 for row in diff_rows if row["kind"] == "statement")
-    callable_count = len(diff_rows) - translation_count - lifetime_count - scalar_count - expression_count - statement_count
-    lines += ["", "The differential rows include %d compile-only translation witness, %d rung-1 lifetime witnesses, %d rung-2 scalar checks, %d rung-3 expression checks, %d rung-4 statement checks, and %d callable rows across the retained callable witness set; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls." % (translation_count, lifetime_count, scalar_count, expression_count, statement_count, callable_count), ""]
+    callable_count = (len(diff_rows) - translation_count - lifetime_count - scalar_count -
+                      expression_count - statement_count - member_expression_count)
+    lines += ["", "The differential rows include %d compile-only translation witness, %d rung-1 lifetime witnesses, %d rung-2 scalar checks, %d rung-3 expression checks, %d rung-4 statement checks, %d rung-7 member-expression checks, and %d callable rows across the retained callable witness set; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls." % (translation_count, lifetime_count, scalar_count, expression_count, statement_count, member_expression_count, callable_count), ""]
     return "\n".join(lines)
 
 

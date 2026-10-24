@@ -1115,4 +1115,9 @@ private def resolvedCanonicalHandle (rows : List DeclarationEvidenceRow) :
 #guard bindingResultError (rawCallWithResult methodHandle.value receiverHandle.value "read" "long") ==
   some .resultTypeMismatch
 
+def memberGetterWitness : Bool :=
+  observed (rawCall methodHandle.value receiverHandle.value "read") == some 7
+
+#guard memberGetterWitness
+
 end LeanModels.Cpp.MemberCallTests

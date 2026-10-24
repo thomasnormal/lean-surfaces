@@ -4990,6 +4990,28 @@ def _convert_selected_read(sm, expr, expression_kind):
 
 
 def _convert_legacy_call(sm, expression):
+    # An empty zero-argument function returns its type's default value.  The
+    # declaration has already been erased as metadata; materialize that
+    # default at an expression use (all-zero for 2-state, all-x for 4-state).
+    try:
+        subroutine = expression.subroutine
+        body = getattr(subroutine, "body", None)
+        body_list = (list(body.list)
+                     if type(body).__name__ == "StatementList" else None)
+        kind = str(getattr(subroutine, "subroutineKind", "")).split(".")[-1]
+        if (kind == "Function" and list(expression.arguments) == []
+                and list(getattr(subroutine, "arguments", [])) == []
+                and body_list == []):
+            width, two_state, reason = type_width_2s(expression.type)
+            if width is not None and reason is None:
+                return signed_metadata({
+                    "kind": "Literal", "span": node_span(sm, expression),
+                    "width": width,
+                    "bits": ("0" if two_state else "x") * width,
+                    "empty_function_default": True,
+                }, expression.type)
+    except Exception:
+        pass
     for recognizes, convert in (
             (_time_scale_call, _convert_time_scale_call),
             (_plusargs_call, _convert_plusargs_call),

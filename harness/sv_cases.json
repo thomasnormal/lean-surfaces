@@ -567,6 +567,15 @@
       "expect": "match"
     },
     {
+      "name": "empty_function_value",
+      "file": "Examples/system-verilog/empty_function_value/empty_function_value.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "generate_indexed_targets",
       "file": "Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv",
       "module": "top",

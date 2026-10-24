@@ -5663,3 +5663,16 @@ form, with extractor regressions for nonblocking writes and handle reads. The
 fresh 22,046-file census keeps **4,722 clean / 17,258 partial** and lowers
 `AssignmentExpression:target` **3,321 → 3,313**. Differential coverage moves
 **74/70/0/4 → 75/71/0/4**; grammar coverage remains **209/78/131**.
+
+## Empty function default values — 2026-10-24
+
+An empty zero-argument function call in expression position now yields the
+declared return type's standard default: all zero bits for a 2-state return and
+all X bits for a 4-state return. The empty declaration remains metadata only;
+formal arguments, nonempty bodies, and unsupported return types stay loud.
+
+The `empty_function_value` fixture and differential row cover both defaults,
+with extractor regressions checking their bit patterns. The fresh 22,046-file
+census moves **4,722 → 4,745 clean** and **17,258 → 17,235 partial**;
+`CallExpression` falls **3,283 → 3,100**. Differential coverage moves
+**75/71/0/4 → 76/72/0/4**; grammar coverage remains **209/78/131**.

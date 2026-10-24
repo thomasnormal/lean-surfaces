@@ -20,7 +20,7 @@
    ],
    [
     "CallExpression",
-    3283
+    3100
    ],
    [
     "ExpressionStatement:CallExpression",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4722,
-   "partial": 17258,
+   "clean": 4745,
+   "partial": 17235,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4063,
+    4086,
     18679
    ],
    "simulation elaboration": [
@@ -1347,9 +1347,9 @@
     "unlockable": 1
    },
    "chapter-13": {
-    "clean": 3,
+    "clean": 4,
     "error": 0,
-    "partial": 595,
+    "partial": 594,
     "skip_include": 0,
     "total": 598,
     "unlockable": 0
@@ -1531,9 +1531,9 @@
     "unlockable": 0
    },
    "chapter-35": {
-    "clean": 4,
+    "clean": 26,
     "error": 0,
-    "partial": 253,
+    "partial": 231,
     "skip_include": 0,
     "total": 257,
     "unlockable": 0

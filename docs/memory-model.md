@@ -3709,6 +3709,16 @@ printing; `harness/script_corpus.py` 24 matched / 4 loud, with
 `fnprint.py` and `init_effect_script.py` flipping from refusal to
 CPython-identical output.
 
+### Direct complex-literal printing (2026-10-24)
+
+The first complex-constant slice is deliberately observational. The grammar
+witness `print(1j)` is admitted after builtin resolution by rewriting its
+unsupported constant argument to the ordinary string `"1j"`, which is exactly
+CPython's `str(1j)`. The runtime has no complex value constructor, so all
+other complex spellings and uses remain loud; a shadowed `print` never reaches
+the rewrite. The `const.complex` row therefore measures a real output match
+without claiming arithmetic, comparison, container, or boundary semantics.
+
 ## List comprehensions (2026-08-13)
 
 `ListComp` was the top in-repo construct on the static ladder and shipped

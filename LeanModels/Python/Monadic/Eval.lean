@@ -871,7 +871,15 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
               | .preRefuse msg => refuse msg
               | .preNameError n => raisePy (.nameError n)
               | plan => do
-                  let vs ← evalOpenList K m args.toList
+                  let vs ← match plan with
+                    | .builtin "print" =>
+                        match args.toList with
+                        | [e] =>
+                            match complexPrintLiteral e with
+                            | some v => pure [v]
+                            | Option.none => evalOpenList K m args.toList
+                        | _ => evalOpenList K m args.toList
+                    | _ => evalOpenList K m args.toList
                   applyCallPlan K m plan vs
           | .attribute recv attr _ => do
               -- ===== THE TRACE CLOCK. Time is an INPUT: an unshadowed

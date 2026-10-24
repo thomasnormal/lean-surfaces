@@ -14,6 +14,9 @@ change is listed here under **Changed** or **Removed**.
 
 ### Changed
 
+- The grammar's complex-literal witness now matches for the exact direct
+  `print(1j)` observation.  The runtime keeps complex values themselves loud,
+  so non-print uses and other spellings remain outside the modeled value tier.
 - `try … except … else` now runs its `else` suite after a normal body exit.
   The extractor lowers the construct to the existing retained-state `try`
   node plus a fresh success flag and `if`; `finally`, multiple handlers,

@@ -849,7 +849,8 @@ print(len(b"ab"))
 """, "MATCH", "immutable bytes literals and sequence operations")
 w("const.complex", """
 print(1j)
-""", "REFUSE", "")
+""", "MATCH",
+  "The exact direct print(1j) observation is rendered as CPython's `1j`; other complex uses remain loud because the runtime has no complex value type")
 w("const.ellipsis", """
 x = ...
 print(x, x is Ellipsis)

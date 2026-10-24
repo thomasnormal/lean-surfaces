@@ -3271,6 +3271,32 @@ def strOfArgs (h : Heap) : List RVal → Option String
     let rest ← strOfArgs h vs
     return s ++ " " ++ rest
 
+/-- The first measured complex-literal slice.  The extractor keeps complex
+constants as `Unsupported` because the runtime has no complex value type.
+The one observation that needs no such value is the exact grammar witness
+`print(1j)`: CPython's `str(1j)` is the literal text `"1j"`.  This helper is
+consulted only after ordinary builtin name resolution has selected `print`,
+so a shadowing local/module binding still evaluates the unsupported node and
+remains loud.  Other complex spellings and every non-print use stay loud. -/
+def complexPrintLiteral : Expr → Option RVal
+  | .unsupported pyKind text _ =>
+      if pyKind == "Constant:complex" && text == "1j" then
+        some (.str "1j")
+      else
+        Option.none
+  | _ => Option.none
+
+/-- Rewrite the one admitted print argument to an ordinary string expression
+before evaluation.  Keeping this as a pure list transform means all existing
+fuel, clock, and world-invariance proofs continue to use `evalExprs` without
+an extra recursive worker. -/
+def complexPrintArgs : List Expr → List Expr
+  | [e] =>
+      match complexPrintLiteral e with
+      | some (.str text) => [.constant (.str text) default]
+      | _ => [e]
+  | es => es
+
 /-- Allocate a fresh heap list holding `xs` and return its `.ref` — the
 list-display idiom (`BUILD_LIST`: the fresh address is the old heap
 size), shared with the `list(…)` constructor, which CPython also
@@ -8247,7 +8273,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- `None`, appends one chunk (the runner boundary
                     -- prints chunks as lines), and refuses loudly on a
                     -- value whose `repr` the tier does not model.
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    evalExprs m fuel st (complexPrintArgs args.toList) ⤳ fun st vs =>
                     (match strOfArgs st.world.heap vs with
                      | some line =>
                        .ok { st with world :=

@@ -1218,7 +1218,7 @@ theorem fuelMono (fuel : Nat) :
                                 fun st _ => Run.le_refl _)
                             (Run.le_ite (Run.le_refl _)
                               (Run.le_ite
-                                (Run.le_bind (ihEs m st cargs.toList k hk)
+                                (Run.le_bind (ihEs m st (complexPrintArgs cargs.toList) k hk)
                                   fun st _ => Run.le_refl _)
                                 (Run.le_ite (Run.le_refl _) ?_))))
                           cases Env.lookup st.world.globals fname with

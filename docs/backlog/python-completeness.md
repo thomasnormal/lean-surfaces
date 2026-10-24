@@ -17,6 +17,26 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-105 — direct complex-literal printing
+
+The `const.complex` grammar witness now matches for the exact source shape
+`print(1j)`. The extractor's existing loud `Constant:complex` node is
+recognized only after builtin name resolution selects the ordinary `print`
+call, where CPython's `str(1j)` is the exact string `1j`. This keeps shadowed
+`print`, assignments, comparisons, arithmetic, containers, and every other
+complex spelling loud: no complex runtime or boundary value is fabricated.
+
+| Measurement | Result |
+|---|---|
+| Focused executable witness | `print(1j)` → `1j`, exit 0 |
+| Grammar census | 145 witnesses: 134 MATCH / 11 REFUSE, 0 drift |
+| Focused build | `lake build LeanModels.Python.Obs` passed |
+| Generated checks | coverage page and `git diff --check` pass |
+
+DECIDED: admit only the direct `print(1j)` observation; retain the complex
+value representation boundary until a complete complex runtime type and
+operator table can be specified.
+
 ## 2026-10-24-pycomplete-104 — alias-free boundary-list augmented repetition
 
 The measured boundary-list `*=` gap now has a small ingestion-safe slice.

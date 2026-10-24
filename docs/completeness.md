@@ -62,6 +62,11 @@ matches: `bool()` evaluates its positional and keyword values in source order,
 then raises CPython's `TypeError` because the builtin accepts no keyword
 arguments.
 
+**Extension (2026-10-24).** The `const.complex` grammar witness now matches
+for the exact `print(1j)` observation. The builtin-resolution path renders the
+same `1j` text as CPython without inventing a complex runtime value; other
+complex spellings and every non-print use remain loud.
+
 ## 2. The grammar census — 86 witnesses, 60 MATCH, 26 REFUSE *(as taken)*
 
 > **These counts are AS TAKEN and are not maintained here.** Every rung moves

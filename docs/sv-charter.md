@@ -6528,3 +6528,18 @@ The fresh 22,049-path census moves **4,837 → 4,838 clean** and **17,146 →
 17,145 partial** (66 include skips); `AssignmentExpression:target` falls
 **3,029 → 3,028**. Differential coverage moves **136/132/0/4 → 137/133/0/4**;
 grammar coverage remains **214/83/131**.
+
+## Invalid unknown string-replication multipliers — 2026-10-24
+
+IEEE 1800-2023 §6.16 requires a string-replication multiplier to be a known
+nonnegative integral value. A multiplier initialized to all `x`/`z` bits is an
+elaboration-invalid form; the extractor now recognizes that exact constant
+shape and emits inert metadata without adding string storage. Valid literal and
+dynamic string replication remains loud. `invalid_string_replication_multiplier`
+supplies the PASS fixture and the extractor test pins the unknown-multiplier
+boundary.
+
+The fresh 22,049-path census moves **4,838 → 4,839 clean** and **17,145 →
+17,144 partial** (66 include skips); `AssignmentExpression:target` falls
+**3,028 → 3,027**. Differential coverage moves **137/133/0/4 → 138/134/0/4**;
+grammar coverage remains **214/83/131**.

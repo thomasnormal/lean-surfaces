@@ -81,6 +81,17 @@ class PackedAssignmentTargets(unittest.TestCase):
         self.assertTrue(any(node.get("invalid_struct_replication_assignment")
                             for node in nodes(design)))
 
+    def test_unknown_string_replication_multiplier_is_inert(self):
+        design = extract_source(
+            "module top; initial begin string text; logic [3:0] count = 4'bxxxx; "
+            "text = {count{\"hi\"}}; $display(\"PASS\"); end endmodule")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("invalid_string_replication_multiplier")
+                            for node in nodes(design)))
+
     def test_nonblocking_selected_target_keeps_window_geometry(self):
         target, = self.targets("value[0] <= 1'b1;")
         self.assertEqual(target["kind"], "SelectTarget")

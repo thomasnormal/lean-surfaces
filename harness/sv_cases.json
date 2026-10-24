@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "invalid_string_replication_multiplier",
+      "file": "Examples/system-verilog/invalid_string_replication_multiplier/invalid_string_replication_multiplier.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "invalid_struct_replication_assignment",
       "file": "Examples/system-verilog/invalid_struct_replication_assignment/invalid_struct_replication_assignment.sv",
       "module": "top",

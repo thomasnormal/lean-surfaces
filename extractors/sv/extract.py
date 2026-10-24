@@ -6402,6 +6402,26 @@ def _invalid_struct_replication_assignment(expression):
         return False
 
 
+def _invalid_string_unknown_replication(expression):
+    """Whether a string replication multiplier is a known x/z value."""
+    try:
+        right = expression.right
+        if (type(right).__name__ != "ReplicationExpression"
+                or type(expression.left.type.canonicalType).__name__ != "StringType"):
+            return False
+        count = right.count
+        initializer = getattr(getattr(count, "symbol", None), "initializer", None)
+        if type(initializer).__name__ == "IntegerLiteral":
+            bits = str(initializer.value)
+            return any(bit in bits.lower() for bit in ("x", "z"))
+        if type(count).__name__ == "IntegerLiteral":
+            bits = str(count.value)
+            return any(bit in bits.lower() for bit in ("x", "z"))
+        return False
+    except Exception:
+        return False
+
+
 def legacy_blocking_target(sm, lhs, concat_leaf=False):
     expression_kind = type(lhs).__name__
     if expression_kind in ("ElementSelectExpression", "RangeSelectExpression"):
@@ -8470,6 +8490,12 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         # tier, so retain only inert metadata rather than aggregate storage.
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "invalid_struct_replication_assignment": True}
+    if (_SYM is None and _invalid_string_unknown_replication(expr)
+            and not expr.isNonBlocking):
+        # §6.16 requires a nonnegative, fully known integral multiplier for
+        # string replication; an x/z multiplier is an elaboration error.
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "invalid_string_replication_multiplier": True}
     if (_SYM is None and _invalid_associative_index_target(expr.left)
             and not expr.isNonBlocking):
         # §7.8.4/§7.8.5 reject floating associative keys and implicit

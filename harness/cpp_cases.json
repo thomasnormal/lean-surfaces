@@ -4153,6 +4153,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-unsigned-postfix-return",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableUnsignedPostfixReturnWitness",
+    "cpp_source": "#include <cstdint>\nuint32_t frame_unsigned_postfix_return(uint32_t value) { return value++; } bool callable_witness() { return frame_unsigned_postfix_return(UINT32_MAX) == UINT32_MAX; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-unsigned-compound-wrap",
     "kind": "expression",
     "corpus": "rung-3 witness",

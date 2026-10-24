@@ -521,6 +521,14 @@ private def unsignedPostfixDecrementStore : Bool :=
 
 def callableUnsignedPostfixDecrementStoreWitness : Bool := unsignedPostfixDecrementStore
 
+private def unsignedPostfixReturn : Bool :=
+  match evaluateCallableObject 16 .lp64
+      (incrementFunction .unsignedInt "++" true) [⟨.unsigned 32, 4294967295⟩] with
+  | .ok (.ok value) => value == ⟨.unsigned 32, 4294967295⟩
+  | _ => false
+
+def callableUnsignedPostfixReturnWitness : Bool := unsignedPostfixReturn
+
 private def unsignedCompoundFrame : Bool :=
   let base := incrementFunction .unsignedInt "++" false
   let function := {base with body := .block (.sequence
@@ -554,6 +562,7 @@ private def overflowRetainsParameter (operator : String) (isPostfix : Bool) (val
 #guard callableUnsignedPostfixStoreWitness
 #guard callableUnsignedFrameDecrementWitness
 #guard callableUnsignedPostfixDecrementStoreWitness
+#guard callableUnsignedPostfixReturnWitness
 #guard callableUnsignedCompoundFrameWitness
 #guard overflowRetainsParameter "++" false 2147483647
 #guard overflowRetainsParameter "++" true 2147483647

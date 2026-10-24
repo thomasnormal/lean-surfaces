@@ -163,6 +163,8 @@ private def returnFailureRetainsFrame : Bool :=
         | _ => false
   | .error _ => false
 
+def callableReturnFailureRetainsFrameWitness : Bool := returnFailureRetainsFrame
+
 private def forInitializerFailureRetainsFrame : Bool :=
   let one : TypedCallableExpression := {
     expression := .integer 1, sourceType := intType, type := intType}
@@ -384,6 +386,7 @@ def callableParserAutomaticLocalWitness : Bool := parserAdmitsAutomaticLocal
 #guard parserAdmitsAutomaticLocal
 #guard callableParserAutomaticLocalWitness
 #guard callableForBodyFailureRetainsFrameWitness
+#guard callableReturnFailureRetainsFrameWitness
 
 theorem callable_local_declaration_witness : callableLocalDeclarationWitness = true := by
   rfl

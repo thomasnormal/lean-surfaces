@@ -18,6 +18,9 @@ change is listed here under **Changed** or **Removed**.
   operation. The monadic interpreter deletes ordinary instance attributes
   in place and preserves CPython's `AttributeError` for missing and immediate
   receivers; the proof interpreter keeps the heap mutation loud.
+- Immediate float NaN equality now follows IEEE/CPython semantics (`nan ==
+  nan` is `False`, and `!=` is `True`) without requiring arithmetic payload
+  propagation; NaN ordering and hashing remain loud.
 
 - The fixed decimal parsing and rendering budget is now 4300 digits. `int`,
   `str`, `print`, f-strings, percent formatting, and nested container, range,

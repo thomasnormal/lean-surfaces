@@ -477,8 +477,10 @@ mutual
     | .int n, .bool b => .ok (n == (if b then (1 : Int) else 0))
     | .int n, .int m => .ok (n == m)
     | .float a, .float b =>
-        if a.isNaN || b.isNaN then
-          .unsupported "NaN equality requires object identity for container comparisons"
+        -- IEEE/CPython NaN equality is value-determined: every NaN compares
+        -- unequal, including with itself. Payload identity matters for
+        -- arithmetic propagation, but never for `==`/`!=`.
+        if a.isNaN || b.isNaN then .ok false
         else .ok (a.eqv b)
     | .float a, .int n => .ok (a.eqInt n)
     | .int n, .float a => .ok (a.eqInt n)

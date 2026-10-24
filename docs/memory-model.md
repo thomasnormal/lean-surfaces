@@ -160,6 +160,9 @@ cycle DETECTION, never by running out of fuel).
   `None` link stays out of tier (CPython caching is
   implementation-defined). Tuple `is` stays out of tier (documented
   omission, never wrong).
+* Immediate binary64 NaNs compare unequal to every float, including another
+  NaN with the same payload. `!=` is the negation of that result; ordering and
+  hash-key behavior remain separate loud boundaries.
 * Runtime `==` (dicts): (1) identical addresses → `True` immediately
   (CPython's identity shortcut — `d == d` holds for self-cyclic `d`);
   (2) distinct dict refs: compare sizes; (3) traverse the LEFT dict in
@@ -753,11 +756,11 @@ FRAMES (`enumSeq`/`enumList`/`countFrom`/`countFromVal`), not a second object ki
 snapshot — all immutable in tier; a heap list gets the live cursor), and
 `count` never exhausts, which is exactly sunfish's ray
 (`for j in count(i + d, d)`, ended by the consumer's `break`).
-Both interpreter surfaces use `countFromVal` for finite immediate integer,
-Boolean, and binary64 values and advance with numeric `+`; the frame preserves
-a Boolean first value where CPython does, while NaN and infinity propagation
-remain an explicit refusal. The legacy integer `countFrom` frame remains in
-the runtime vocabulary for existing pure-frame lemmas.
+Both interpreter surfaces use `countFromVal` for immediate integer, Boolean,
+and binary64 values and advance with numeric `+`; the frame preserves a
+Boolean first value where CPython does, while NaN and infinity starts/steps
+follow the shared binary64 arithmetic worker. The legacy integer `countFrom`
+frame remains in the runtime vocabulary for existing pure-frame lemmas.
 
 **Loud, deliberately** — never a fake answer: `send`/`throw`/`close` and
 every other generator method; a `yield` in EXPRESSION position (the

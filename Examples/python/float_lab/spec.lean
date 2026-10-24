@@ -16,6 +16,7 @@ set_option exponentiation.threshold 2048
 #py_check float_lab.signed_zero() = Val.float (Float64.ofBits 0x8000000000000000)
 #py_check float_lab.comparisons() =
     Val.tuple #[.bool true, .bool false, .bool true]
+#py_check float_lab.nan_equality_still_loud(Float64.ofBits 0x7ff8000000000000) = false
 #py_check float_lab.truthiness() =
     Val.tuple #[.bool false, .bool false, .bool true]
 #py_check float_lab.zero_division() raises .floatZeroDivisionError

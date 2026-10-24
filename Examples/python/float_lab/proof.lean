@@ -26,6 +26,10 @@ theorem addition :
     float_lab.addition() ==> Float64.ofBits 0x4008000000000000 := by
   exact ⟨32, rfl⟩
 
+theorem nan_equality :
+    float_lab.nan_equality_still_loud(Float64.ofBits 0x7ff8000000000000) ==> false := by
+  exact ⟨32, rfl⟩
+
 private theorem add_quarter :
     Float64.arithmetic .add (Float64.ofBits 0x3fe0000000000000)
       (Float64.ofBits 0x3fd0000000000000) = .ok (Float64.ofBits 0x3fe8000000000000) := rfl
@@ -50,7 +54,7 @@ theorem augmented :
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [float_lab, evalFloatArithmetic, floatNumber,
+  py_simp [float_lab, evalBinOpH, setLikeRefH, evalFloatArithmetic, floatNumber,
     addStep, subtractStep, multiplyStep, negateStep]
   rfl
 
@@ -68,7 +72,7 @@ theorem cancel (value : PyFloat) (finite : value.exponent ≠ 2047) :
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [float_lab, evalFloatArithmetic, floatNumber,
+  py_simp [float_lab, evalBinOpH, setLikeRefH, evalFloatArithmetic, floatNumber,
     Float64.arithmetic_sub_self, finite, notNaN, notInvalid]
 
 theorem constructor_identity (value : PyFloat) :
@@ -161,7 +165,7 @@ theorem floor_tenth :
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [float_lab, evalFloatDivmod, floatNumber, Float64.ofBits, floorStep]
+  py_simp [float_lab, evalBinOpH, setLikeRefH, evalFloatDivmod, floatNumber, Float64.ofBits, floorStep]
 
 theorem remainder_tenth :
     float_lab.remainder_tenth() ==> Float64.ofBits 0x3fb9999999999996 := by
@@ -171,7 +175,7 @@ theorem remainder_tenth :
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [float_lab, evalFloatDivmod, floatNumber, Float64.ofBits, floorStep]
+  py_simp [float_lab, evalBinOpH, setLikeRefH, evalFloatDivmod, floatNumber, Float64.ofBits, floorStep]
 
 theorem floor_infinite :
     float_lab.floor_infinite() ==> Float64.ofBits 0xbff0000000000000 := by
@@ -182,7 +186,7 @@ theorem floor_infinite :
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [float_lab, floatCastArgs, floatCastVal, evalFloatDivmod, floatNumber,
+  py_simp [float_lab, evalBinOpH, setLikeRefH, floatCastArgs, floatCastVal, evalFloatDivmod, floatNumber,
     Float64.ofBits, floorStep, parsed]
 
 theorem remainder_infinite :
@@ -194,7 +198,7 @@ theorem remainder_infinite :
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [float_lab, floatCastArgs, floatCastVal, evalFloatDivmod, floatNumber,
+  py_simp [float_lab, evalBinOpH, setLikeRefH, floatCastArgs, floatCastVal, evalFloatDivmod, floatNumber,
     Float64.ofBits, floorStep, parsed]
 
 theorem floor_nan_pair :
@@ -213,7 +217,7 @@ theorem floor_nan_pair :
   rw [callIn.eq_2]
   have nanStep : Float64.floorRemWithNaN ⟨0x7ff8000000000001⟩ ⟨0x3ff0000000000000⟩ =
       .ok (⟨0x7ff8000000000001⟩, ⟨0x7ff8000000000001⟩) := rfl
-  py_simp [float_lab, evalFloatDivmod, floatNumber, Float64.ofBits, nanStep]
+  py_simp [float_lab, evalBinOpH, setLikeRefH, evalFloatDivmod, floatNumber, Float64.ofBits, nanStep]
 
 private theorem remainder_nine_four :
     Float64.floorRem (Float64.ofBits 0x4022000000000000)
@@ -230,7 +234,7 @@ theorem floor_augmented :
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [float_lab, evalFloatDivmod, floatNumber, Float64.ofBits, floorStep, remainderStep]
+  py_simp [float_lab, evalBinOpH, setLikeRefH, evalFloatDivmod, floatNumber, Float64.ofBits, floorStep, remainderStep]
 
 theorem floor_zero_caught :
     float_lab.floor_zero_caught(2) ==> (23 : PyInt) := by
@@ -240,7 +244,7 @@ theorem floor_zero_caught :
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [float_lab, divmodArgs, evalFloatDivmod, floatNumber, negateStep, zeroStep]
+  py_simp [float_lab, evalBinOpH, setLikeRefH, divmodArgs, evalFloatDivmod, floatNumber, negateStep, zeroStep]
 
 #print axioms floor_tenth
 #print axioms remainder_tenth

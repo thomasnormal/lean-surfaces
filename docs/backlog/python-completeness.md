@@ -4440,3 +4440,22 @@ to CPython. `str_lab.join_generator` is now a concrete `#py_check` and a
 differential MATCH row. The trunk proof interpreter remains intentionally
 loud for generator state, so this extension is confined to the executable
 monadic surface.
+
+## 2026-10-24-pycomplete-99 — NaN equality
+
+Immediate binary64 NaN equality now matches CPython: every NaN compares
+unequal, including with itself, and `!=` is the corresponding negation. The
+comparison is independent of payload/sign, so it does not consume the
+separate arithmetic payload oracle. The `float_lab` concrete check and proof
+cover the canonical quiet NaN; NaN ordering and hash-key behavior remain
+loud.
+
+| Measurement | Result |
+|---|---|
+| Focused check | `nan_equality_still_loud(0x7ff8000000000000) = False` |
+| Full executable differential | 3,680 rows: 3,561 matched, 119 whitelisted, 0 failed |
+| Full proof differential | 3,680 rows: 3,451 matched, 229 refused, 0 failed |
+| Grammar census | 145 witnesses: 133 MATCH / 12 REFUSE, 0 drift |
+| Script census | 12 recorded loud rows in 8 classes, 0 drift |
+
+DECIDED: admit NaN `==`/`!=` only; retain NaN ordering and hashing boundaries.

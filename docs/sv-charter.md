@@ -6104,3 +6104,16 @@ The 22,048-path census moves **4,797 → 4,798 clean** and **17,185 → 17,184
 partial**; `AssignmentExpression:target` falls **3,046 → 3,045**. Differential
 coverage moves **106/102/0/4 → 107/103/0/4**; grammar coverage remains
 **213/82/131**.
+
+## Single literal continuous packed-bit drivers — 2026-10-24
+
+The continuous-driver rung now admits one constant packed bit or part-select
+with a pure integral literal RHS. Extraction lowers it to the existing
+selected blocking assignment at time zero, with no driver queue or resolution
+choice. Multiple drivers, dynamic RHS/selections, and aggregate or streaming
+targets remain loud. `constant_net_bit_driver` supplies the differential row.
+
+The 22,048-path census is unchanged at **4,798 clean / 17,184 partial / 66
+include skips** and `AssignmentExpression:target` remains **3,045 files**.
+Differential coverage moves **107/103/0/4 → 108/104/0/4**; grammar coverage
+remains **213/82/131**.

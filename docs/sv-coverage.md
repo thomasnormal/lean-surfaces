@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 107 | 103 | 0 | 4 | sv-tests-2 declarations |
+| 108 | 104 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -121,6 +121,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `literal_string_getc` | `Examples/system-verilog/literal_string_getc/literal_string_getc.sv` | match | **MATCH** | `ok` | MATCH |
 | `constant_net_driver` | `Examples/system-verilog/constant_net_driver/constant_net_driver.sv` | match | **MATCH** | `ok` | MATCH |
 | `typed_default_array_pattern` | `Examples/system-verilog/typed_default_array_pattern/typed_default_array_pattern.sv` | match | **MATCH** | `ok` | MATCH |
+| `constant_net_bit_driver` | `Examples/system-verilog/constant_net_bit_driver/constant_net_bit_driver.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -260,7 +261,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.NamedLabel` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedParamAssignment` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NamedType` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
-| `SyntaxKind.NetDeclaration` | `Examples/system-verilog/constant_net_driver/constant_net_driver.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.NetDeclaration` | `Examples/system-verilog/constant_net_bit_driver/constant_net_bit_driver.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NewArrayExpression` | `Examples/system-verilog/dynamic_array_cells/dynamic_array_cells.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NewClassExpression` | `Examples/system-verilog/opaque_mailbox_new_write/opaque_mailbox_new_write.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NonblockingAssignmentExpression` | `Examples/system-verilog/array_reductions/timing.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |

@@ -964,6 +964,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "constant_net_bit_driver",
+      "file": "Examples/system-verilog/constant_net_bit_driver/constant_net_bit_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

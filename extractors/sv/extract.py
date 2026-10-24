@@ -5603,6 +5603,28 @@ def _floating_literal(expr):
     return False
 
 
+def _integral_literal_source(expr):
+    """Whether an expression is syntactically a pure integral literal.
+
+    Elaboration can fold genvar and parameter references into ``Literal``
+    envelope nodes. Continuous-driver lowering must not mistake those
+    source-dependent values for a literal driver, because the source still
+    requires continuous evaluation.
+    """
+    node = expr
+    while type(node).__name__ == "ConversionExpression":
+        node = getattr(node, "operand", None)
+        if node is None:
+            return False
+    if type(node).__name__ in ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
+        return not getattr(node, "bad", False)
+    if type(node).__name__ == "UnaryExpression":
+        op = str(getattr(node, "op", "")).split(".")[-1]
+        return op in ("Plus", "Minus") and _integral_literal_source(
+            getattr(node, "operand", None))
+    return False
+
+
 _PURE_FLOATING_CALLS = {
     "$itor", "$bitstoreal", "$bitstoshortreal", "$sqrt", "$pow",
     "$floor", "$ceil", "$ln", "$log10", "$exp", "$sin", "$cos",
@@ -8866,22 +8888,35 @@ def convert_continuous_assign(sm, m):
         if not ok:
             return unsupported(sm, m, "AssignmentExpression:target")
         value = convert_expr(sm, e.right)
-    if (_SYM is None and type(e.left).__name__ == "NamedValueExpression"
-            and getattr(getattr(e.left, "symbol", None), "kind", None)
-                is not None
-            and str(e.left.symbol.kind) == "SymbolKind.Net"
+    left_symbol = getattr(e.left, "symbol", None)
+    if left_symbol is None:
+        left_symbol = getattr(getattr(e.left, "value", None), "symbol", None)
+    if (_SYM is None and type(e.left).__name__ in (
+            "NamedValueExpression", "ElementSelectExpression",
+            "RangeSelectExpression")
+            and getattr(left_symbol, "kind", None) is not None
+            and str(left_symbol.kind) == "SymbolKind.Net"
             and value is not None and value.get("kind") == "Literal"
-            and _case_source_expression_ok(e.right)):
-        # A single whole-net literal driver has no future re-evaluation and no
-        # resolution choice.  At time zero it is exactly the existing flat
-        # state assignment.  Keep every other continuous form on the
-        # scheduler-owned boundary, including multiple drivers and selected
-        # targets.
-        name = getattr(e.left.symbol, "name", "")
+            and _integral_literal_source(e.right)):
+        # A single whole-net or constant packed-window literal driver has no
+        # future re-evaluation and no resolution choice. At time zero it is
+        # exactly the existing flat state assignment. Keep every other
+        # continuous form on the scheduler-owned boundary, including multiple
+        # drivers and dynamic or aggregate targets.
+        name = getattr(left_symbol, "name", "")
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
-        assignments = re.findall(
-            r"(?m)\bassign\s+" + re.escape(name) + r"\s*=", source)
-        if len(assignments) == 1 and target.get("kind") == "Ident":
+        if target.get("kind") == "Ident":
+            driver_pattern = (r"(?m)\bassign\s+" + re.escape(name)
+                              + r"\s*=")
+        elif target.get("kind") == "SelectTarget":
+            driver_pattern = (r"(?m)\bassign\s+" + re.escape(name)
+                              + r"\s*\[")
+        else:
+            driver_pattern = None
+        assignments = (re.findall(driver_pattern, source)
+                       if driver_pattern is not None else [])
+        if len(assignments) == 1 and target.get("kind") in (
+                "Ident", "SelectTarget"):
             return {
                 "kind": "Initial",
                 "span": node_span(sm, e),

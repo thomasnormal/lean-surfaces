@@ -130,3 +130,15 @@ remain loud.
 `typed_default_array_pattern` is the differential witness. It covers both
 array cells and checks the enum field and the scalar field after the whole
 assignment.
+
+## Single literal continuous packed-bit drivers — 2026-10-24
+
+A single continuous assignment to one constant packed bit or part-select is
+lowered to the existing time-zero selected blocking assignment when its RHS is
+an integral literal. The net has no competing driver and the selected window
+is already represented by the flat state target. Dynamic RHS expressions,
+multiple drivers, dynamic selections, and aggregate/streaming targets remain
+on the scheduler-owned boundary.
+
+`constant_net_bit_driver` is the differential witness; the multiple-driver
+case remains covered by the refusal boundary.

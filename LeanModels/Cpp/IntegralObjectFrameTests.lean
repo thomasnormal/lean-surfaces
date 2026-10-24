@@ -467,6 +467,8 @@ private def dynamicLocalStatement : Bool :=
       (declared.result matches .ok none) && (released.result matches .ok none) &&
         (closed.result matches .ok ()) && objectPhase? closed.frame 0 == some .released
 
+def callableDynamicLocalStatementWitness : Bool := dynamicLocalStatement
+
 private def temporaryReferenceStatement : Bool :=
   match opened with
   | .error _ => false
@@ -666,6 +668,7 @@ def callableLocalReferenceWitness : Bool := aliasLifetimeAndConst && aliasUninit
 #guard callableNestedShadowWitness
 #guard callableSequentialLocalsWitness
 #guard callableTemporaryReferenceStatementWitness
+#guard callableDynamicLocalStatementWitness
 
 private theorem kernelReferenceBindings :
     (aliasLifetimeAndConst && aliasUninitializedAndEnded) = true := rfl

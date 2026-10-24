@@ -6408,3 +6408,18 @@ include skips**, with `CallExpression` unchanged at **2,973** and
 `ExpressionStatement:CallExpression` at **2,985** because the corpus has no
 literal nested conversion. Differential coverage moves **128/124/0/4 →
 129/125/0/4**; grammar coverage remains **214/83/131**.
+
+## Literal `$shortrealtobits($itor(...))` conversion — 2026-10-24
+
+`$shortrealtobits($itor(I))` now lowers to the exact 32-bit IEEE-754 single
+encoding when `I` is one direct finite integral literal. The existing implicit
+short-real conversion shell is retained; named or computed integer inputs and
+explicit casts remain loud. `shortrealtobits_itor_literal` supplies the
+differential witness, with extractor tests pinning the negative pattern and
+the dynamic-input refusal.
+
+The fresh 22,048-file census remains **4,829 clean / 17,153 partial / 66
+include skips**, with `CallExpression` unchanged at **2,973** and
+`ExpressionStatement:CallExpression` at **2,985** because the corpus has no
+literal nested conversion. Differential coverage moves **129/125/0/4 →
+130/126/0/4**; grammar coverage remains **214/83/131**.

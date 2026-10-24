@@ -5396,7 +5396,11 @@ def _convert_realtobits_literal(sm, expression):
 
 
 def _shortrealtobits_literal_call(expression):
-    """Whether ``$shortrealtobits`` has one implicit literal conversion."""
+    """Whether ``$shortrealtobits`` has one implicit literal conversion.
+
+    The implicit shell may wrap either a direct real literal or an exact
+    literal `$itor` result; all other real-producing expressions stay loud.
+    """
     try:
         if (_SYM is not None or type(expression).__name__ != "CallExpression"
                 or getattr(expression, "bad", False)
@@ -5417,7 +5421,12 @@ def _shortrealtobits_literal_call(expression):
             if op not in ("Plus", "Minus", "UnaryPlus", "UnaryMinus"):
                 return False
             node = getattr(node, "operand", None)
-        return (type(node).__name__ == "RealLiteral"
+        literal_operand = type(node).__name__ == "RealLiteral"
+        itor_operand = (type(node).__name__ == "CallExpression"
+                        and not getattr(node, "bad", False)
+                        and getattr(node, "isSystemCall", False)
+                        and getattr(node, "subroutineName", None) == "$itor")
+        return ((literal_operand or itor_operand)
                 and not getattr(node, "bad", False)
                 and getattr(expression.type, "bitWidth", None) == 32
                 and getattr(expression.type, "isIntegral", False)

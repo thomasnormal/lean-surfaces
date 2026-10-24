@@ -237,6 +237,23 @@ class EmptyFunctionCalls(unittest.TestCase):
         self.assertEqual(len(values), 1)
         self.assertEqual(values[0]["bits"], "11000000001000000000000000000000")
 
+    def test_shortrealtobits_literal_itor_conversion_is_exact(self):
+        design = lower(
+            'module top; initial if ($shortrealtobits($itor(-17)) === '
+            '32\'hc1880000) $display("PASS"); endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("shortrealtobits_literal")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(values[0]["bits"],
+                         "11000001100010000000000000000000")
+
+    def test_shortrealtobits_itor_dynamic_input_stays_loud(self):
+        design = lower(
+            'module top; integer value; initial if ($shortrealtobits($itor(value)) === 0) '
+            '$display("PASS"); endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
     def test_shortrealtobits_dynamic_explicit_and_overflow_stay_loud(self):
         dynamic = lower(
             'module top; real x; initial if ($shortrealtobits(x) === 0) '

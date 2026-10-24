@@ -25,6 +25,7 @@ the same path, while dynamic storage and explicit conversion shells remain
 loud. The
 matching `$shortrealtobits` slice accepts only its implicit conversion shell
 around a direct literal and lowers to the exact 32-bit IEEE-754 single pattern;
+the same shell around an exact literal `$itor` result is admitted, while
 explicit casts and overflow remain loud. Dynamic integral `$cast` has its own
 capture and copyback contract. `$rtoi($itor(I))` also lowers when `I` is one
 direct finite integral literal, because the integer-to-real conversion is exact;

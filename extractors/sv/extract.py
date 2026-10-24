@@ -138,6 +138,10 @@ SYSCALL_VCD = ("$dumpfile", "$dumpvars", "$dumpon", "$dumpoff",
 # evaluated arguments remain outside this slice: evaluating an argument can
 # itself have observable effects.
 SYSCALL_QUIET = ("$info", "$warning", "$error")
+# No concurrent-assertion state exists in the self-check interpreter.  Bare
+# assertion-control tasks therefore have no modeled effect; scoped or
+# argumented controls remain loud until assertion state is represented.
+SYSCALL_ASSERT_CTRL = ("$asserton", "$assertoff", "$assertkill")
 UNARY_OPS = {
     UnaryOperator.BitwiseNot: "~",
     UnaryOperator.LogicalNot: "!",
@@ -7556,6 +7560,14 @@ def _convert_syscall(sm, s, e):
                 return unsupported(sm, s, "ExpressionStatement:CallExpression")
             return {"kind": "Empty", "span": node_span(sm, s),
                     "pure_diagnostic": name}
+        if not args:
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "pure_diagnostic": name}
+    if is_sys and name in SYSCALL_ASSERT_CTRL:
+        try:
+            args = list(e.arguments)
+        except Exception:
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
         if not args:
             return {"kind": "Empty", "span": node_span(sm, s),
                     "pure_diagnostic": name}

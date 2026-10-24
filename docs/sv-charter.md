@@ -5676,3 +5676,16 @@ with extractor regressions checking their bit patterns. The fresh 22,046-file
 census moves **4,722 → 4,745 clean** and **17,258 → 17,235 partial**;
 `CallExpression` falls **3,283 → 3,100**. Differential coverage moves
 **75/71/0/4 → 76/72/0/4**; grammar coverage remains **209/78/131**.
+
+## Bare assertion-control tasks — 2026-10-24
+
+Bare `$asserton`, `$assertoff`, and `$assertkill` statement tasks now erase in
+the self-check tier. The tier has no concurrent-assertion state for these
+controls to change, so scoped and argumented forms remain loud rather than
+inventing assertion scheduling or state. The `assert_control` fixture and
+differential row cover all three admitted tasks and the argumented refusal.
+
+The fresh 22,046-file census moves **4,745 → 4,746 clean** and **17,235 →
+17,234 partial**; `ExpressionStatement:CallExpression` falls **3,040 →
+3,019**. Differential coverage moves **76/72/0/4 → 77/73/0/4** (rows/agree/
+disagree/recorded refusals), and grammar coverage remains **209/78/131**.

@@ -576,6 +576,15 @@
       "expect": "match"
     },
     {
+      "name": "assert_control",
+      "file": "Examples/system-verilog/assert_control/assert_control.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "generate_indexed_targets",
       "file": "Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv",
       "module": "top",

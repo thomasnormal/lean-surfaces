@@ -24,8 +24,10 @@ encoding; dynamic storage and explicit conversion shells remain loud. The
 matching `$shortrealtobits` slice accepts only its implicit conversion shell
 around a direct literal and lowers to the exact 32-bit IEEE-754 single pattern;
 explicit casts and overflow remain loud. Dynamic integral `$cast` has its own
-capture and copyback contract. These paths are not generic callable frames and
-do not make arbitrary calls live.
+capture and copyback contract. `$rtoi($itor(I))` also lowers when `I` is one
+direct finite integral literal, because the integer-to-real conversion is exact;
+a named or computed integer operand remains loud. These paths are not generic
+callable frames and do not make arbitrary calls live.
 
 ## Refusal boundary
 

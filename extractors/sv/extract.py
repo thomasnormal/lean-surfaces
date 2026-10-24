@@ -5272,6 +5272,23 @@ def _literal_real_decimal(expression):
             return value if value.is_finite() else None
         except (InvalidOperation, ValueError):
             return None
+    # `$itor` is exact for a literal integral operand.  Keep this nested
+    # conversion narrow: named values, computed expressions, and every other
+    # real-producing call still require an opaque real value and stay loud.
+    if (type(node).__name__ == "CallExpression"
+            and not getattr(node, "bad", False)
+            and getattr(node, "isSystemCall", False)
+            and getattr(node, "subroutineName", None) == "$itor"):
+        try:
+            arguments = list(node.arguments)
+            if (len(arguments) != 1
+                    or not getattr(arguments[0].type, "isIntegral", False)
+                    or type(node.type.canonicalType).__name__ != "FloatingType"):
+                return None
+            integer = _literal_integral_value(arguments[0])
+            return Decimal(integer) if integer is not None else None
+        except (AttributeError, TypeError, ValueError, InvalidOperation):
+            return None
     if type(node).__name__ == "UnaryExpression":
         op = str(getattr(node, "op", "")).split(".")[-1]
         if op not in ("Plus", "Minus", "UnaryPlus", "UnaryMinus"):

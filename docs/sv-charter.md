@@ -6377,3 +6377,19 @@ include skips**, with `CallExpression` unchanged at **2,973** and
 `ExpressionStatement:CallExpression` at **2,985** because the corpus has no
 file containing only this metadata gap. Differential coverage moves
 **126/122/0/4 → 127/123/0/4**; grammar coverage remains **214/83/131**.
+
+## Literal `$rtoi($itor(...))` conversion — 2026-10-24
+
+`$rtoi($itor(I))` now lowers to the signed 32-bit literal for one direct finite
+integral literal `I`. IEEE 1800-2023 defines `$itor` as an exact integer to
+real conversion, so the nested conversion can be folded without introducing
+real storage. Named and computed integer operands remain loud; the existing
+dynamic and range `$rtoi` boundaries are unchanged. `rtoi_itor_literal` is the
+differential witness, and extractor tests pin the exact negative value and the
+dynamic-input refusal.
+
+The fresh 22,048-file census remains **4,829 clean / 17,153 partial / 66
+include skips**, with `CallExpression` unchanged at **2,973** and
+`ExpressionStatement:CallExpression` at **2,985** because the corpus has no
+literal nested conversion. Differential coverage moves **127/123/0/4 →
+128/124/0/4**; grammar coverage remains **214/83/131**.

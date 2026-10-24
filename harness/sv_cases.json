@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "rtoi_itor_literal",
+      "file": "Examples/system-verilog/rtoi_itor_literal/rtoi_itor_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "floating_bits_query",
       "file": "Examples/system-verilog/floating_bits_query/floating_bits_query.sv",
       "module": "top",

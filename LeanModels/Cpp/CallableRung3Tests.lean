@@ -255,6 +255,21 @@ def callableShiftLeftWitness : Bool :=
   | .ok (.ok value) => value == signed 16
   | _ => false
 
+def shiftRightFunction : CallableFunction := {
+  bitwiseAndFunction with
+  body := .block (.return_ {
+    expression := .binary ">>"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableShiftRightWitness : Bool :=
+  match evaluateCallable 16 .lp64 shiftRightFunction [signed (-7), signed 1] with
+  | .ok (.ok value) => value == signed (-4)
+  | _ => false
+
 def sizeOfFunction : CallableFunction := {
   occurrence := default
   signature := {result := unsignedLongType, parameters := [], variadic := false}
@@ -722,6 +737,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableDivisionWitness
 #guard callableRemainderWitness
 #guard callableShiftLeftWitness
+#guard callableShiftRightWitness
 #guard callableSizeOfWitness
 #guard callableAlignOfWitness
 #guard callableBoolLiteralWitness
@@ -789,6 +805,9 @@ theorem callable_remainder_witness : callableRemainderWitness = true := by
   rfl
 
 theorem callable_shift_left_witness : callableShiftLeftWitness = true := by
+  rfl
+
+theorem callable_shift_right_witness : callableShiftRightWitness = true := by
   rfl
 
 theorem callable_size_of_witness : callableSizeOfWitness = true := by
@@ -875,6 +894,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_division_witness
 #print axioms callable_remainder_witness
 #print axioms callable_shift_left_witness
+#print axioms callable_shift_right_witness
 #print axioms callable_size_of_witness
 #print axioms callable_align_of_witness
 #print axioms callable_bool_literal_witness

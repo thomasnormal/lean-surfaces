@@ -1255,9 +1255,17 @@ so an unhashable probe raises the same faithful `TypeError`, empty
 set included — `set_lab.unhashable_probe` pins it), `len`, and
 truthiness. All three are order-blind by construction.
 
-**Loud, never guessed** — iteration (`for v in s`), `sorted(set)` /
-`max`/`min` over a set (refused although a sorted RESULT would be
-order-independent — deliberately deferred, recorded), every mutator
+**Key-view/set intersection** — the executable heap surface admits `&`
+between a `dict_keys` view and a set (in either order), or between two key
+views. It reads each collection through the existing key relation and pushes
+a fresh `Obj.pyset`; the retained hash order is therefore unobservable until
+an order-imposing consumer such as `sorted` runs. Union, difference,
+symmetric difference, item-view algebra, and values-view operations remain
+loud. The `BitAnd` expression is outside `Expr.heapFree` because this arm
+allocates.
+
+**Loud, never guessed** — iteration (`for v in s`), `max`/`min` over a set,
+every mutator
 (`add`/`remove`/`discard`/`pop` — `pop` removes an ARBITRARY element,
 the message says so), set operators and `==` between sets, a set
 crossing the public boundary (a list snapshot would invent an order),
@@ -1278,7 +1286,8 @@ from every admitted iterable including an infinite-free generator
 drain, bool/int dedup, tuple elements (the Position shape),
 membership both ways, `len`/truthiness on empty and nonempty,
 unhashable element AND probe `TypeError`s, and the loud frontier
-(`iter_is_loud`, `sorted_is_loud`) pinned as refusals.
+(`iter_is_loud`) pinned as a refusal; deterministic `sorted(set(...))` is
+covered by `sorted_set`.
 
 ## Exceptions (designed in bound() arc pass 2 — BUILT 2026-08-11, pass 4)
 
@@ -2058,7 +2067,8 @@ stores.
   statements retains the source dictionary address in an `Obj.dictView`, so
   later mutation is visible to length, truthiness, membership, and consuming
   iteration. Two `dict_keys` views over the same dictionary compare equal;
-  values-view equality, item-view set algebra, and cross-dictionary cases
+  key-view/set intersection (`&`) now allocates a fresh heap set, while
+  values-view equality, item-view set algebra, and the other set operators
   remain loud. `repr` renders the exact type-specific `dict_keys([...])`,
   `dict_values([...])`, or `dict_items([...])` form through the heap renderer;
   indexing raises
@@ -4547,7 +4557,7 @@ site moves.
 
 `bisect` flips on this alone (the census's one program-mode flip).
 `quopri`/`stat`/`opcode` become import-clean but still refuse on their
-other walls — `del`, `BitAnd`, bytes literals, all tail constructs
+other walls — `del`, bytes literals, all tail constructs
 already designed/staged — and land only as that tail lands. NOTHING
 else moves; no import+other file flips on this design. Honest total:
 +1 sweep file now, +3 more with the designed tail.
@@ -5356,8 +5366,8 @@ the descriptor protocol and are not a slice.
   lazily by `bound` stays the capstone.
 * **H5: sets — BUILT (bound() arc pass 1, §set semantics).** The
   order-blind honest subset (construction/dedup, membership, len,
-  truthiness); iteration order stayed OUT (refused loudly), so the
-  language-vs-CPython hash-order question never needed deciding.
+  truthiness, and `sorted`); iteration order stayed OUT (refused loudly), so
+  the language-vs-CPython hash-order question never needed deciding.
 
 ## H1 acceptance: minimum differential + proof regression set
 

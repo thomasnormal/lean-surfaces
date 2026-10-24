@@ -4,8 +4,9 @@ import LeanModels
 # set_lab — H7+ sets, the honest subset (checks-only example)
 
 Construction-from-iterable/set-comprehension + MEMBERSHIP (+ `len`, truthiness) — the
-`self.history` surface, order-blind by construction. Everything else is
-loud: iteration and `sorted(set)` (hash order, never guessed),
+`self.history` surface, order-blind by construction. Set sorting is admitted
+for deterministically ordered elements; iteration remains loud because its
+hash order is never guessed,
 `add`/`remove`/`pop`. Dedup rides the dict-KEY doctrine
 (`set([1, True])` has one element; an unhashable element is the
 faithful `TypeError`).
@@ -39,5 +40,4 @@ load_program set_lab from "Examples/python/set_lab/set_lab.json"
 
 #guard (match callFunction set_lab "iter_is_loud" #[.int 3] 10000 with
   | .unsupported _ => true | _ => false)
-#guard (match callFunction set_lab "sorted_is_loud" #[.int 2] 10000 with
-  | .unsupported _ => true | _ => false)
+#py_check set_lab.sorted_set(2) = (Val.list #[.int 1, .int 2, .int 3])

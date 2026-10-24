@@ -518,9 +518,10 @@ print(d.values() == d.values())
 w("dict.keys-set-algebra", """
 d = {2: 'b', 1: 'a'}
 print(sorted(d.keys() & {1, 9}))
-""", "REFUSE",
-  "keys/items are SET-LIKE (`&`, `|`, `-`, `^` answer a set); values are "
-  "NOT (`d.values() & {1}` is a TypeError). Two inventories, not one")
+""", "MATCH",
+  "key-view/set intersection allocates a fresh heap set; `sorted` makes "
+  "the set's hash iteration order unobservable. Other set algebra and "
+  "values-view operations remain outside the tier")
 w("del.dict-key", """
 d = {2: 'b', 1: 'a'}
 del d[2]
@@ -1029,7 +1030,6 @@ WHITELIST_CLASS = {
     "closure_lab::cell_escapes": "closure.admission",
     "closure_lab::gen_cell_after_call": "closure.admission",
     "set_lab::iter_is_loud": "set.order",
-    "set_lab::sorted_is_loud": "set.order",
     "seq_lab::band_set": "set.order",
     "seq_lab::str_repeat_loud": "op.Mult-repetition",
     "clock_lab::armed": "exc.handler",

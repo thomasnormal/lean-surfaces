@@ -1241,7 +1241,15 @@ def listRepeatUpdateM (a : Addr) (count : RVal) : SemF Unit := do
 /-- Stateful multiplication dispatch for heap-backed lists. All other
 operators retain the pure worker used by the trunk interpreter. -/
 def binOpHM (op : BinOp) (a b : RVal) : SemF RVal := do
-  if op == .mult then
+  if op == .bitAnd then
+    let h ← frameHeap
+    if setLikeRefH h a && setLikeRefH h b then
+      let (h', result) ← liftRes (evalBinOpH h op a b)
+      heapPut h'
+      pure result
+    else
+      binOpM op a b
+  else if op == .mult then
     let h ← frameHeap
     match a, b with
     | .ref addr, count =>

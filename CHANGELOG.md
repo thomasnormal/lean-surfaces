@@ -89,10 +89,11 @@ change is listed here under **Changed** or **Removed**.
   `TypeError` for its concrete view type instead of an internal refusal.
 - Escaped dictionary views now render their exact CPython type-specific
   `dict_keys([...])`, `dict_values([...])`, or `dict_items([...])` representation;
-  view set algebra and other unsupported protocols remain loud.
+  set algebra beyond the admitted key-view intersection and other unsupported
+  protocols remain loud.
 - Two escaped `dict_keys` views over the same dictionary now compare equal;
-  values-view equality, item-view set algebra, and cross-dictionary cases remain
-  loud.
+  key-view/set intersection now allocates a fresh set, while values-view
+  equality, item-view set algebra, and other set operators remain loud.
 - String repetition counts beyond the pinned CPython index-sized range now
   raise the exact `OverflowError`, including empty strings and nonpositive
   counts; positive materialization-budget refusals remain loud.

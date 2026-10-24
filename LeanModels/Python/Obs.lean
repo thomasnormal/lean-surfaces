@@ -2413,11 +2413,19 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             -- front of the analysable/NameError fork
             | none => exact .ite (.okF rfl _) (.ite .unsupported (.ite .exn .unsupported))
       | binOp l op r _ =>
-        simp only [Expr.heapFree, Bool.and_eq_true] at hfree
-        simp only [evalExpr]
-        exact .bind (ihE st l hfree.1) fun st₁ a h₁ =>
-          .bind ((ihE st₁ r hfree.2).mono (wtrans st st₁ h₁)) fun st₂ b h₂ =>
-            .liftResF h₂ _
+        cases hop : op == .bitAnd with
+        | true =>
+          cases op <;> try { change false = true at hop; cases hop }
+          simp only [Expr.heapFree, Bool.and_eq_true] at hfree
+          have hf := hfree.1.1
+          change false = true at hf
+          cases hf
+        | false =>
+          simp only [Expr.heapFree, Bool.and_eq_true] at hfree
+          simp only [evalExpr, hop]
+          exact .bind (ihE st l hfree.1.2) fun st₁ a h₁ =>
+            .bind ((ihE st₁ r hfree.2).mono (wtrans st st₁ h₁)) fun st₂ b h₂ =>
+              .liftResF h₂ _
       | unaryOp op operand _ =>
         simp only [Expr.heapFree] at hfree
         simp only [evalExpr]

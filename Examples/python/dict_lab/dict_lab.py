@@ -398,6 +398,13 @@ def view_keys_max(a):
     return max(d.keys())
 
 
+def view_keys_set_algebra():
+    # Key views are set-like.  The intersection itself is a fresh set; sorting
+    # it immediately makes the hash-table iteration order unobservable.
+    d = {2: "b", 1: "a"}
+    return tuple(sorted(d.keys() & {1, 9}))
+
+
 def view_escape_still_loud(a):
     # A view is a live heap object. Binding it preserves the dictionary address,
     # so a later insertion is visible when the view is consumed.

@@ -4691,8 +4691,12 @@ def sortedValH (h : Heap) (v : RVal) (desc : Bool := false) : Res (Heap × RVal)
         .unsupported "sorted() over a generator DRAINS it (a stateful read) — outside the tier (docs/memory-model.md §generator semantics)"
     | some (.cell _) => .unsupported cellInternal
     | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
-    | some (.pyset _) =>
-        .unsupported "sorted() over a set is outside the tier (CPython sorts it; the drain order is hash order — recorded, docs/memory-model.md)"
+    | some (.pyset xs) =>
+      (match (if desc then Option.none else asIntList xs.toList) with
+       | some ns =>
+          .ok (h.push (.list (((sortInts ns).map RVal.int).toArray)), .ref h.size)
+       | Option.none => do
+          return (h.push (.list (← sortByLt desc xs.toList).toArray), .ref h.size))
     | Option.none => .unsupported danglingMsg
   | v => do let r ← sortedVal v desc; return (h, r)
 
@@ -4906,6 +4910,59 @@ def setDedup (h : Heap) (fuel : Nat) (acc : List RVal) :
       if dup then setDedup h fuel acc vs
       else setDedup h fuel (acc ++ [v]) vs
     else keyRefusal h v
+
+/-! ### Set-like dictionary-key algebra
+
+Dictionary key views and sets share Python's set algebra.  The first admitted
+operation is `&`: both operands are already hashable collections, so their
+membership relation is the pure `keyEq` relation used by dictionary keys and
+set construction.  The result is a fresh set object; its retained order is
+not observable by the admitted set surface, and consumers such as `sorted`
+immediately impose their own order. -/
+
+def setLikeRefH (h : Heap) : RVal → Bool
+  | .ref a =>
+    match Heap.get? h a with
+    | some (.pyset _) => true
+    | some (.dictView _ .keys) => true
+    | _ => false
+  | _ => false
+
+def setLikeElemsH (h : Heap) : RVal → Res (List RVal)
+  | .ref a =>
+    match Heap.get? h a with
+    | some (.pyset xs) => .ok xs.toList
+    | some (.dictView da .keys) => do
+        let es ← dictViewEntries h da
+        return (dictKeys es).toList
+    | _ => .unsupported "set algebra requires a set or dictionary key view"
+  | _ => .unsupported "set algebra requires a set or dictionary key view"
+
+def setKeyMember (needle : RVal) : List RVal → Bool
+  | [] => false
+  | value :: rest => if keyEq value needle then true else setKeyMember needle rest
+
+def setIntersectionKeys (left right : List RVal) : List RVal :=
+  left.foldr (init := []) fun value acc =>
+    if setKeyMember value right then value :: acc else acc
+
+def evalBinOpH (h : Heap) (op : BinOp) (a b : RVal) : Res (Heap × RVal) :=
+  if op == .bitAnd && setLikeRefH h a && setLikeRefH h b then
+    let left := setLikeElemsH h a
+    let right := setLikeElemsH h b
+    match left, right with
+    | .ok xs, .ok ys =>
+      let h' := h.push (.pyset (setIntersectionKeys xs ys).toArray)
+      .ok (h', .ref h.size)
+    | .unsupported msg, _ | _, .unsupported msg => .unsupported msg
+    | .timeout, _ | _, .timeout => .timeout
+    | .exn e, _ | _, .exn e => .exn e
+  else
+    match evalBinOp op a b with
+    | .ok value => .ok (h, value)
+    | .exn e => .exn e
+    | .timeout => .timeout
+    | .unsupported msg => .unsupported msg
 
 /-- The names of an unpacking target's elements; `none` if any element is not
 a plain `Name` (nested or starred patterns are outside the v0 tier). -/
@@ -6732,7 +6789,11 @@ mutual
     -- case for it yet, so the honest answer to "PROVABLY preserves" is
     -- `false`. Conservative: it only shrinks the fragment.
     | .namedExpr .. => false
-    | .binOp l _ r _ => l.heapFree && r.heapFree
+    -- `&` also serves dictionary-key/set algebra and can allocate a fresh
+    -- set when both operands are heap references.  Evict it from the
+    -- world-preservation fragment conservatively; integer `&` still runs
+    -- normally, but its proof path is outside `worldInv`.
+    | .binOp l op r _ => op != .bitAnd && l.heapFree && r.heapFree
     | .unaryOp _ e _ => e.heapFree
     | .formattedValue value _ _ => value.heapFree
     | .formattedValueAscii value _ => value.heapFree
@@ -7335,7 +7396,11 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
     | .binOp l op r _ =>
         evalExpr m fuel st l ⤳ fun st a =>
         evalExpr m fuel st r ⤳ fun st b =>
-        Run.liftRes st (evalBinOp op a b)
+        if op == .bitAnd then
+          Run.liftRes st (evalBinOpH st.world.heap op a b) ⤳ fun st hr =>
+          .ok { st with world := { st.world with heap := hr.1 } } hr.2
+        else
+          Run.liftRes st (evalBinOp op a b)
     | .unaryOp op operand _ =>
         evalExpr m fuel st operand ⤳ fun st v =>
         Run.liftRes st (evalUnaryOpH st.world.heap op v)

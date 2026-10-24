@@ -404,9 +404,9 @@ private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args #[] O
     == .ok (.list #[.int 0, .bool true, .int 2])
 #guard evF (sortedC #[.list #[sL "b", sL "a"] sp])
     == .ok (.list #[.str "a", .str "b"])
--- Mixed int/str raises in CPython too, but the class match is a guess v0
--- does not make — refuse loudly instead:
-#guard isUnsupported (ev (sortedC #[.list #[iL 1, sL "a"] sp]))
+-- Mixed int/str raises CPython's faithful TypeError through the general
+-- ordering worker.
+#guard isTypeError (ev (sortedC #[.list #[iL 1, sL "a"] sp]))
 -- Builtin as a value, and `key=`/`reverse=` (keyword-only ⇒ the extractor
 -- ships `call_unsupported: "keywords"`, refused before argument evaluation):
 #guard isUnsupported (ev (nm "sorted"))

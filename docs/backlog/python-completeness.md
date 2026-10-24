@@ -17,6 +17,37 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-97 — dictionary key-view intersection
+
+Dictionary key views now support the measured set-like `&` operation with
+heap-backed sets and with other key views. The worker reads both operands
+through the existing dictionary-key equality relation, allocates a fresh
+`Obj.pyset`, and leaves the retained hash order unobservable. `sorted` now
+consumes heap sets, so the canonical witness
+`sorted({2: "b", 1: "a"}.keys() & {1, 9})` returns `[1]`; union, difference,
+symmetric difference, item-view algebra, values-view operations, and set
+iteration remain loud.
+
+The expression is conservatively outside `Expr.heapFree`, and the monadic
+worker threads the new heap through `binOpHM`; the existing fuel, world, and
+clock proof walkers remain generic over the operator. The dict and set
+acceptance examples, the executable differential case, and the grammar
+census now cover the live boundary; the proof interpreter retains its
+intentional refusal for dictionary-view allocation.
+
+| Measurement | Result |
+|---|---|
+| Focused runner | `tools/leanpy` prints `[1]` and exits 0 |
+| Full executable differential | 3,677 cases: 3,556 matched, 121 whitelisted, 0 failed |
+| Full proof differential | 3,677 cases: 3,450 matched, 227 refused, 0 failed |
+| Grammar census | 132 MATCH / 12 REFUSE; 0 drifts |
+| Script census | 12 loud rows; 0 drifts |
+| Generated/check gates | coverage page, JSON validation, and `git diff --check` passed |
+
+DECIDED: admit only key-view/set intersection and deterministic `sorted(set)`;
+retain the remaining hash-order-sensitive set and view protocols as loud
+boundaries.
+
 ## 2026-10-24-pycomplete-92 — binary float NaN arithmetic
 
 Binary `+`, `-`, and `*` now propagate NaN payloads and signs through the

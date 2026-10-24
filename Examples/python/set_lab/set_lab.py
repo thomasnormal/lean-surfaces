@@ -3,9 +3,10 @@
 `self.history` needs exactly: `set(iterable)` and set-comprehension
 construction and `in`
 membership on a frozen-after-build set (plus `len` and truthiness, which
-are order-blind like membership). EVERYTHING else about sets is loud —
-iteration, `add`/`remove`/`pop`, `==`, `sorted(set)` — because a set's
-iteration order is hash order in CPython and is never guessed.
+are order-blind like membership). Set sorting is admitted when the elements
+have a deterministic order; iteration, `add`/`remove`/`pop`, and `==` remain
+loud because a set's iteration order is hash order in CPython and is never
+guessed.
 Construction deduplicates by value equality under the dict-KEY doctrine
 (bool/int identity: `set([1, True])` has len 1).
 """
@@ -74,7 +75,7 @@ def iter_is_loud(a):
     return t
 
 
-def sorted_is_loud(a):
+def sorted_set(a):
     return sorted(set([3, 1, a]))
 
 

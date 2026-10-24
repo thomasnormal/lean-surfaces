@@ -2966,7 +2966,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               cases findClass m id with
               | none =>
                 refine .ite .exn ?_
-                by_cases hb : admittedBuiltinExc.contains id = true
+                by_cases hb : admittedBuiltinRaise.contains id = true
                 · rw [if_pos hb]
                   exact .exn
                 · rw [if_neg hb]

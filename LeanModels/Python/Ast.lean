@@ -738,6 +738,17 @@ def admittedBuiltinExc : List String :=
    "TypeError", "NameError", "ZeroDivisionError", "OverflowError", "IndexError",
    "ValueError", "KeyError", "RuntimeError", "RecursionError",
    "AttributeError", "AssertionError", "StopIteration", "SystemExit",
+   "KeyboardInterrupt", "GeneratorExit", "OSError", "EnvironmentError"]
+
+/-- Builtin identities that may be raised directly.  `OSError` and its alias
+are handler names only until an OS-producing operation supplies a faithful
+constructor; keeping this list separate prevents a handler admission from
+silently widening `raise OSError`. -/
+def admittedBuiltinRaise : List String :=
+  ["BaseException", "Exception", "ArithmeticError", "LookupError",
+   "TypeError", "NameError", "ZeroDivisionError", "OverflowError", "IndexError",
+   "ValueError", "KeyError", "RuntimeError", "RecursionError",
+   "AttributeError", "AssertionError", "StopIteration", "SystemExit",
    "KeyboardInterrupt", "GeneratorExit"]
 
 /-- The measured one-string constructor surface for explicit `raise`.  These
@@ -757,9 +768,9 @@ def builtinExcWithMessage (name msg : String) : Option PyErr :=
 /-- Ancestors CPython defines and this tier deliberately does NOT admit yet.
 Named so the refusal can say WHAT it would have caught rather than emitting
 the generic message — a frontier that names itself is one the next inch can
-price. OS errors are outside the represented exception inventory. -/
-def refusedAncestorExc : List String :=
-  ["OSError", "EnvironmentError"]
+price. OS-error aliases are admitted after measuring their non-match behavior;
+this list records only any future named ancestor boundary. -/
+def refusedAncestorExc : List String := []
 
 /-- Does `except <cls>:` catch this error? The SUBSUMPTION relation, as an
 explicit list of pairs.
@@ -834,6 +845,9 @@ def builtinExcCatches : String → PyErr → Bool
       raised == "LookupError" || raised == "IndexError" || raised == "KeyError"
   | "RuntimeError",       .builtinException raised =>
       raised == "RuntimeError" || raised == "RecursionError"
+  | "OSError",            .builtinException raised => raised == "OSError"
+  | "EnvironmentError",   .builtinException raised =>
+      raised == "OSError" || raised == "EnvironmentError"
   | name,                 .builtinException raised => name == raised
   | _,                   _                   => false
 

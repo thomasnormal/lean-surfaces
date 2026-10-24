@@ -200,6 +200,13 @@ class-identity exception path and are caught by `BaseException`, while staying
 outside `Exception` as in CPython. Uncaught process-exit behavior remains
 outside the function boundary.
 
+## 2026-10-24-pycomplete-90 — OS-error handler aliases
+
+`OSError` and its `EnvironmentError` alias are now admitted handler names.
+Because the tier has no OS-error-producing operation, represented errors such
+as `ZeroDivisionError` propagate through these handlers; direct OS raises and
+future OS effects must still provide their own measured representation.
+
 ## 2026-10-23-pycomplete-65 — pinned decimal rendering budget
 
 The shared integer conversion budget is now pinned to CPython 3.9's default

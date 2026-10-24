@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3676 | 3530 | 0 | 146 |
+| 3676 | 3532 | 0 | 144 |
 
-Of the 3530 rows the model decides, 3530 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 3532 rows the model decides, 3532 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,7 +20,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 3676 | 3425 | 0 | 251 |
+| 3676 | 3427 | 0 | 249 |
 
 ## Grammar
 
@@ -214,6 +214,6 @@ Also modelled: `count` (from `from itertools import count`).
 
 **Modelled constants:** `Ellipsis`, `False`, `None`, `True`. `Ellipsis` and `...` denote the same singleton; ordinary name shadowing still applies.
 
-**Exception classes `except` and bare `raise` can name (16):** `ArithmeticError`, `AssertionError`, `AttributeError`, `BaseException`, `Exception`, `IndexError`, `KeyError`, `LookupError`, `NameError`, `OverflowError`, `RecursionError`, `RuntimeError`, `StopIteration`, `TypeError`, `ValueError`, `ZeroDivisionError`. `ImportError` and `ModuleNotFoundError` additionally work as handler names, but their bare raises remain unfinished. Other builtin exception names refuse, including OS-error ancestors such as `OSError`; user classes `class E(Exception): pass` are admitted.
+**Exception classes `except` and bare `raise` can name (18):** `ArithmeticError`, `AssertionError`, `AttributeError`, `BaseException`, `EnvironmentError`, `Exception`, `IndexError`, `KeyError`, `LookupError`, `NameError`, `OSError`, `OverflowError`, `RecursionError`, `RuntimeError`, `StopIteration`, `TypeError`, `ValueError`, `ZeroDivisionError`. `ImportError` and `ModuleNotFoundError` additionally work as handler names, but their bare raises remain unfinished. Other builtin exception names refuse, including OS-error ancestors such as `OSError`; user classes `class E(Exception): pass` are admitted.
 
-**Other CPython builtin names (51)**, refused when used: `BlockingIOError`, `BrokenPipeError`, `BufferError`, `BytesWarning`, `ChildProcessError`, `ConnectionAbortedError`, `ConnectionError`, `ConnectionRefusedError`, `ConnectionResetError`, `DeprecationWarning`, `EOFError`, `EnvironmentError`, `FileExistsError`, `FileNotFoundError`, `FloatingPointError`, `FutureWarning`, `GeneratorExit`, `IOError`, `ImportError`, `ImportWarning`, `IndentationError`, `InterruptedError`, `IsADirectoryError`, `KeyboardInterrupt`, `MemoryError`, `ModuleNotFoundError`, `NotADirectoryError`, `NotImplemented`, `NotImplementedError`, `OSError`, `PendingDeprecationWarning`, `PermissionError`, `ProcessLookupError`, `ReferenceError`, `ResourceWarning`, `RuntimeWarning`, `StopAsyncIteration`, `SyntaxError`, `SyntaxWarning`, `SystemError`, `SystemExit`, `TabError`, `TimeoutError`, `UnboundLocalError`, `UnicodeDecodeError`, `UnicodeEncodeError`, `UnicodeError`, `UnicodeTranslateError`, `UnicodeWarning`, `UserWarning`, `Warning`.
+**Other CPython builtin names (49)**, refused when used: `BlockingIOError`, `BrokenPipeError`, `BufferError`, `BytesWarning`, `ChildProcessError`, `ConnectionAbortedError`, `ConnectionError`, `ConnectionRefusedError`, `ConnectionResetError`, `DeprecationWarning`, `EOFError`, `FileExistsError`, `FileNotFoundError`, `FloatingPointError`, `FutureWarning`, `GeneratorExit`, `IOError`, `ImportError`, `ImportWarning`, `IndentationError`, `InterruptedError`, `IsADirectoryError`, `KeyboardInterrupt`, `MemoryError`, `ModuleNotFoundError`, `NotADirectoryError`, `NotImplemented`, `NotImplementedError`, `PendingDeprecationWarning`, `PermissionError`, `ProcessLookupError`, `ReferenceError`, `ResourceWarning`, `RuntimeWarning`, `StopAsyncIteration`, `SyntaxError`, `SyntaxWarning`, `SystemError`, `SystemExit`, `TabError`, `TimeoutError`, `UnboundLocalError`, `UnicodeDecodeError`, `UnicodeEncodeError`, `UnicodeError`, `UnicodeTranslateError`, `UnicodeWarning`, `UserWarning`, `Warning`.

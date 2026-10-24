@@ -8878,7 +8878,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
               | Option.none =>
                 if (findNamedTuple m id).isSome then
                   .exn st (.typeError "exceptions must derive from BaseException")
-                else if admittedBuiltinExc.contains id then .exn st (.builtinException id)
+                else if admittedBuiltinRaise.contains id then .exn st (.builtinException id)
                 else
                   .unsupported s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)")
          | some _ =>

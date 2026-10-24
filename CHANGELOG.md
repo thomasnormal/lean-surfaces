@@ -111,6 +111,9 @@ change is listed here under **Changed** or **Removed**.
   class-identity raises and are caught by `BaseException`; they remain outside
   `Exception`, and uncaught process-exit behavior remains outside the function
   boundary.
+- `OSError` and its `EnvironmentError` alias are now admitted handler names;
+  represented non-OS errors propagate through them, while direct OS raises and
+  actual OS effects remain outside the tier.
 
 ## [0.1.14] — 2026-10-21
 

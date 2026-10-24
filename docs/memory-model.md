@@ -2573,9 +2573,8 @@ after the try or inside its body: those shapes otherwise caught the builtin
 class where CPython raises `UnboundLocalError` or a handler-matching `TypeError`.
 Existing local/global/definition shadow guards remain in force. Module try
 bodies that rebind their handler names also refuse, including compounds that
-can raise before publishing their bindings. Unmeasured OS-error ancestors
-(`OSError` and `EnvironmentError`), tuple/attribute patterns, observed `as`
-bindings,
+can raise before publishing their bindings. Tuple/attribute patterns,
+observed `as` bindings,
 multiple handlers, `else`, `finally`, and builtin exception objects as values
 remain loud.
 

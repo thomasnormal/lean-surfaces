@@ -56,8 +56,10 @@ set_option maxRecDepth 8192
 #guard callFunction exc_ancestors_lab "body_shadow" #[] 4096 matches .unsupported _
 #guard callFunction exc_ancestors_lab "body_shadow_nonmatch" #[] 4096 matches .unsupported _
 #guard callFunction exc_ancestors_lab "late_shadow" #[] 4096 matches .unsupported _
-#guard callFunction exc_ancestors_lab "os_ancestor" #[] 4096 matches .unsupported _
-#guard callFunction exc_ancestors_lab "environment_ancestor" #[] 4096 matches .unsupported _
+#guard callFunction exc_ancestors_lab "os_ancestor" #[] 4096
+  matches .exn .zeroDivisionError
+#guard callFunction exc_ancestors_lab "environment_ancestor" #[] 4096
+  matches .exn .zeroDivisionError
 #guard callFunction exc_ancestors_lab "first_class_base" #[] 4096 matches .unsupported _
 #py_check exc_ancestors_lab.raise_base_instance() = 34
 #py_check exc_ancestors_lab.raise_arithmetic_class() raises (.builtinException "ArithmeticError")

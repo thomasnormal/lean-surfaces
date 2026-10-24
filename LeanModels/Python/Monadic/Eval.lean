@@ -1509,7 +1509,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
               | Option.none =>
                   if (findNamedTuple m id).isSome then
                     raisePy (.typeError "exceptions must derive from BaseException")
-                  else if admittedBuiltinExc.contains id then
+                  else if admittedBuiltinRaise.contains id then
                     raisePy (.builtinException id)
                   else
                     refuse s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)"
@@ -1551,7 +1551,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
                       match builtinExcWithMessage id msg with
                       | some e => raisePy e
                       | none =>
-                          if admittedBuiltinExc.contains id then
+                          if admittedBuiltinRaise.contains id then
                             refuse s!"'raise {id}(…)': only the measured one-string builtin exception constructors are admitted — outside the tier (docs/memory-model.md §exceptions)"
                           else
                             refuse s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)"

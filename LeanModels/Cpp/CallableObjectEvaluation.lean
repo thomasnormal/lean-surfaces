@@ -233,6 +233,11 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
           match literalValue profile typed value with
           | none => success frame (.unsupported .unresolvedArithmeticConversions)
           | some value => success frame (convertTo profile typed.type value)
+      | .nullPtr => success frame (.unsupported .unresolvedArithmeticConversions)
+      | .nullComparison operator =>
+          if operator == "==" then success frame (.ok (integralBoolean true))
+          else if operator == "!=" then success frame (.ok (integralBoolean false))
+          else success frame (.unsupported .unresolvedArithmeticConversions)
       | .sizeOf operandType =>
           success frame (sizeOfValue profile typed operandType)
       | .alignOf operandType =>

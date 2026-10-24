@@ -314,6 +314,14 @@ mutual
     | fuel + 1 =>
         match typed.expression with
         | .integer value => (evaluateInteger profile typed value).map (fun result => (result, arguments))
+        | .nullPtr => .error (.unsupportedType typed.type)
+        | .nullComparison operator =>
+            if operator == "==" then
+              pure (.ok (integralBoolean true), arguments)
+            else if operator == "!=" then
+              pure (.ok (integralBoolean false), arguments)
+            else
+              .error (.unsupportedOperator operator)
         | .sizeOf operandType =>
             (evaluateSizeOf profile typed operandType).map (fun result => (result, arguments))
         | .alignOf operandType =>

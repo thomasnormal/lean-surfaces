@@ -1013,6 +1013,29 @@ private def characterLiteralRaw : Raw := object [
       expression.sourceType == .builtin .char && expression.type == .builtin .char
   | .error _ => false
 
+private def nullPointerLiteralRaw : Raw := object [
+  ("id", text "0x65"), ("kind", text "CXXNullPtrLiteralExpr"),
+  ("type", object [("qualType", text "std::nullptr_t")])]
+
+private def nullComparisonRaw : Raw := object [
+  ("id", text "0x66"), ("kind", text "BinaryOperator"), ("opcode", text "=="),
+  ("inner", .array [nullPointerLiteralRaw,
+    fields nullPointerLiteralRaw [("id", text "0x67")]])]
+
+private def nullComparisonEvidence : CppBinaryExpressionEvidence := {
+  ordinal := 0, occurrence := {value := "0x66"}, operator := "==", result := .builtin .boolean,
+  operands := [
+    {occurrence := {value := "0x65"}, kind := "CXXNullPtrLiteralExpr",
+      sourceType := .pointer .void, type := .pointer .void},
+    {occurrence := {value := "0x67"}, kind := "CXXNullPtrLiteralExpr",
+      sourceType := .pointer .void, type := .pointer .void}]}
+
+#guard match parseCallableExpressionTyped .lp64 [] [nullComparisonEvidence] none
+    nullComparisonRaw none (some (.builtin .boolean)) with
+  | .ok expression => expression.expression == .nullComparison "==" &&
+      expression.type == .builtin .boolean
+  | .error _ => false
+
 #guard match parseCallableExpressionTyped .lp64 [] []
     (some [⟨⟨"0x64"⟩, "ConstantExpr", .builtin .int⟩])
     (constantExprRaw "0x64" "7") none (some (.builtin .int)) with

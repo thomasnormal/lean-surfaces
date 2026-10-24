@@ -21,6 +21,8 @@ structure CallableSignature where
 mutual
   inductive CallableExpression where
     | integer (value : Nat)
+    | nullPtr
+    | nullComparison (operator : String)
     | parameter (declaration : FrontendHandle)
     | increment (operator : String) (isPostfix : Bool) (declaration : FrontendHandle)
     | sizeOf (type : CppTypeEvidence)
@@ -293,6 +295,20 @@ private def integerLiteral (raw : Raw) (sourceExpected typeExpected : Option Cpp
     throw "callable: integer literal type disagrees with expression evidence"
   pure {expression := .integer value, sourceType := type, type}
 
+private def nullPointerLiteral (raw : Raw) (sourceExpected typeExpected : Option CppTypeEvidence)
+    (witnessed : Option CppTypeEvidence) : Except String TypedCallableExpression := do
+  let nullPtrType : CppTypeEvidence := .pointer .void
+  match witnessed with
+  | some type => unless type == nullPtrType do
+      throw "callable: null pointer literal type disagrees with evidence"
+  | none =>
+      let type ← evidenceField raw "type"
+      unless type.text "qualType" == some "std::nullptr_t" do
+        throw "callable: null pointer literal requires std::nullptr_t evidence"
+  unless sourceExpected.all (· == nullPtrType) && typeExpected.all (· == nullPtrType) do
+    throw "callable: null pointer literal requires the null pointer type"
+  pure {expression := .nullPtr, sourceType := nullPtrType, type := nullPtrType}
+
 private def parseCallableBuiltinQualType (raw : Raw) : Except String CppTypeEvidence := do
   let name ← evidenceText raw "qualType"
   match name with
@@ -375,6 +391,7 @@ partial def parseCallableExpressionTyped (profile : TargetProfile)
       }
   | "CharacterLiteral" => characterLiteral raw sourceExpected typeExpected witnessed
   | "ConstantExpr" => constantExpression raw sourceExpected typeExpected witnessed
+  | "CXXNullPtrLiteralExpr" => nullPointerLiteral raw sourceExpected typeExpected witnessed
   | "DeclRefExpr" =>
       let reference ← evidenceField raw "referencedDecl"
       let declaration ← rawId reference
@@ -502,7 +519,14 @@ partial def parseCallableExpressionTyped (profile : TargetProfile)
         | throw "callable: binary body expression lacks typed evidence"
       let logical := row.operator == "&&" || row.operator == "||"
       let comma := row.operator == ","
-      if comma then
+      let nullPtrType : CppTypeEvidence := .pointer .void
+      let nullComparison := (row.operator == "==" || row.operator == "!=") &&
+        row.result == .builtin .boolean &&
+        row.operands.all (fun operand =>
+          operand.sourceType == nullPtrType && operand.type == nullPtrType)
+      if nullComparison then
+        pure ()
+      else if comma then
         validateCommaIntegralTyping row
       else if logical then
         unless row.result == .builtin .boolean do
@@ -532,7 +556,8 @@ partial def parseCallableExpressionTyped (profile : TargetProfile)
           unless logical || comma || (!left.expression.hasEffects && !right.expression.hasEffects) do
             throw "callable: side effects in unsequenced binary operands are outside the body profile"
           pure {
-            expression := if comma then .comma left right
+            expression := if nullComparison then .nullComparison row.operator
+              else if comma then .comma left right
               else if logical then .logical row.operator left right
               else .binary row.operator left right
             sourceType := sourceExpected.getD row.result

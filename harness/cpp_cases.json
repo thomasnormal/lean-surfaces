@@ -4225,6 +4225,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-unsigned-char-increment-wrap",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableUnsignedCharFrameIncrementWitness",
+    "cpp_source": "unsigned char frame_unsigned_char_increment(unsigned char value) { return ++value; } bool callable_witness() { return frame_unsigned_char_increment(255) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-unsigned-short-decrement-wrap",
     "kind": "expression",
     "corpus": "rung-3 witness",

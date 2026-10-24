@@ -210,6 +210,8 @@ private def returnClosesFrame : Bool :=
       | .error _ => false
   | .error _ => false
 
+def callableReturnClosesFrameWitness : Bool := returnClosesFrame
+
 private def duplicateAndMissingAreLoud : Bool :=
   match opened with
   | .ok frame =>
@@ -645,6 +647,7 @@ def callableLocalReferenceWitness : Bool := aliasLifetimeAndConst && aliasUninit
 #guard aliasLifetimeAndConst
 #guard aliasUninitializedAndEnded
 #guard callableLocalReferenceWitness
+#guard callableReturnClosesFrameWitness
 
 private theorem kernelReferenceBindings :
     (aliasLifetimeAndConst && aliasUninitializedAndEnded) = true := rfl

@@ -40,6 +40,11 @@ same persistence boundary for the current threaded store. Initialization occurs
 once per store, later calls reuse the object and value, and scope exit removes
 only the view. A separate thread scheduler is outside this bounded model.
 
+Dynamic integral declarations use `.dynamic` storage. Their binding remains
+available until an explicit `dynamicRelease` ends the lifetime and releases the
+storage; ordinary scope cleanup leaves an unreleased dynamic object live, so a
+caller cannot mistake scope exit for `delete`.
+
 `FrameOutcome` always returns the mutated frame alongside its result. A failed
 initializer retains its storage-only binding and all earlier declarations; it
 does not roll back a prefix or invent a value. Reads and assignments resolve
@@ -95,4 +100,5 @@ initialization, nested lookup and shadowing, repeated loop-body allocation,
 self-initialization, default initialization followed by assignment, retained
 prefix state on division failure, reverse cleanup, return-before-cleanup, const
 writes, temporary reference materialization and scope cleanup, static-local and
-thread-local persistence across calls, and loud missing/duplicate bindings.
+thread-local persistence across calls, explicit dynamic release, and loud
+missing/duplicate bindings.

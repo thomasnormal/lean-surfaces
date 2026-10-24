@@ -423,6 +423,38 @@ private def threadLocalStatement : Bool :=
         second.frame.store.values == [some (signed 6)] &&
         objectPhase? second.frame 0 == some .aliveInitialized
 
+def dynamicLocalLifecycle : Bool :=
+  match opened with
+  | .error _ => false
+  | .ok frame =>
+      let declared := frame.declareDynamicInitialized 8 (handle "0x1") intType intType
+        (.literal (signed 7))
+      match declared.result with
+      | .error _ => false
+      | .ok object =>
+          let before := declared.frame.read (handle "0x1")
+          let leaked := declared.frame.exitScope
+          let released := declared.frame.releaseDynamic (handle "0x1")
+          let closed := released.frame.exitScope
+          okValue (signed 7) before &&
+            (leaked.result matches .ok ()) &&
+            objectPhase? leaked.frame object == some .aliveInitialized &&
+            (released.result matches .ok ()) &&
+            (released.frame.read (handle "0x1")).result matches
+              .error (.object (.lifetime .storageReleased)) &&
+            okUnit closed && objectPhase? closed.frame object == some .released
+
+private def dynamicLocalStatement : Bool :=
+  match opened with
+  | .error _ => false
+  | .ok frame =>
+      let declared := frame.executeOpen 8 (.dynamicDeclare (handle "0x1") intType intType
+        (.literal (signed 8)))
+      let released := declared.frame.executeOpen 8 (.dynamicRelease (handle "0x1"))
+      let closed := released.frame.exitScope
+      (declared.result matches .ok none) && (released.result matches .ok none) &&
+        (closed.result matches .ok ()) && objectPhase? closed.frame 0 == some .released
+
 private def temporaryReferenceStatement : Bool :=
   match opened with
   | .error _ => false
@@ -481,6 +513,8 @@ private def executeOutsideTransferLoud : Bool :=
 #guard staticLocalStatement
 #guard threadLocalLifecycle
 #guard threadLocalStatement
+#guard dynamicLocalLifecycle
+#guard dynamicLocalStatement
 #guard temporaryReferenceStatement
 #guard temporaryReferenceRefusals
 

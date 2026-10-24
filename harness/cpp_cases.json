@@ -2644,12 +2644,12 @@
     "id": "object.dynamic-storage",
     "kind": "lifetime",
     "corpus": "rung-1 witness",
-    "lean_module": "LeanModels.Cpp.ObjectModelRung1Tests",
-    "lean_namespace": "LeanModels.Cpp.ObjectModelRung1Tests",
-    "lean_expression": "dynamicStorageLifecycle",
+    "lean_module": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_namespace": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_expression": "dynamicLocalLifecycle",
     "cpp_source": "bool dynamic_witness() { int* value = new int(static_cast<short>(7)); bool ok = *value == 7; delete value; return ok; }",
     "cpp_expression": "dynamic_witness()",
-    "expect": "refuse",
+    "expect": "match",
     "rung": 1
   },
   {

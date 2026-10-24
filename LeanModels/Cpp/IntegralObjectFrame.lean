@@ -9,6 +9,7 @@ inductive FrameBindingRole where
   | temporaryReference
   | staticLocal
   | threadLocal
+  | dynamicLocal
   deriving Repr, BEq, Inhabited
 
 structure FrameBinding where
@@ -81,6 +82,9 @@ inductive Statement where
       (expression : Expression)
   | threadDeclare (declaration : FrontendHandle) (type sourceType : CppTypeEvidence)
       (expression : Expression)
+  | dynamicDeclare (declaration : FrontendHandle) (type sourceType : CppTypeEvidence)
+      (expression : Expression)
+  | dynamicRelease (declaration : FrontendHandle)
   | assign (declaration : FrontendHandle) (sourceType : CppTypeEvidence)
       (expression : Expression)
   | block (body : Statement)
@@ -442,6 +446,17 @@ private def reserveThread (frame : IntegralObjectFrame) (declaration : FrontendH
         | .error reason => failure frame (.object reason)
         | .ok (store, object) => success {frame with store} object
 
+private def reserveDynamic (frame : IntegralObjectFrame) (declaration : FrontendHandle)
+    (type : CppTypeEvidence) : FrameOutcome ObjectId :=
+  if frame.bound declaration then
+    failure frame (.duplicateBinding declaration)
+  else match frame.scopes with
+    | [] => failure frame .noActiveScope
+    | _ =>
+        match frame.store.allocate .dynamic type with
+        | .error reason => failure frame (.object reason)
+        | .ok (store, object) => success {frame with store} object
+
 /-- Declare a function-local static integral object. The first successful
     declaration allocates and initializes static storage; later calls reuse the
     retained object and only publish a scope-local binding. -/
@@ -511,6 +526,50 @@ def declareThreadInitialized (fuel : Nat) (frame : IntegralObjectFrame)
               | .undefined reason => failure evaluated.frame (.undefined reason)
               | .unsupported reason => failure evaluated.frame (.unsupported reason)
 
+/-- Allocate and initialize a dynamic integral object owned by a frame binding.
+    The object remains live across scope cleanup until `releaseDynamic` is
+    called explicitly. -/
+def declareDynamicInitialized (fuel : Nat) (frame : IntegralObjectFrame)
+    (declaration : FrontendHandle) (type sourceType : CppTypeEvidence)
+    (expression : Expression) : FrameOutcome ObjectId :=
+  let reserved := reserveDynamic frame declaration type
+  match reserved.result with
+  | .error reason => failure reserved.frame reason
+  | .ok object =>
+      let evaluated := evaluate fuel reserved.frame expression
+      match evaluated.result with
+      | .error reason => failure evaluated.frame reason
+      | .ok result =>
+          match result with
+          | .ok value =>
+              match evaluated.frame.store.initializeConverted object sourceType value with
+              | .error reason => failure evaluated.frame (.object reason)
+              | .ok store =>
+                  let binding := {declaration, object, type, role := .dynamicLocal}
+                  let withStore := {evaluated.frame with store := store}
+                  addExistingBinding withStore binding
+          | .invalid reason => failure evaluated.frame (.invalid reason)
+          | .undefined reason => failure evaluated.frame (.undefined reason)
+          | .unsupported reason => failure evaluated.frame (.unsupported reason)
+
+def releaseDynamic (frame : IntegralObjectFrame) (declaration : FrontendHandle) :
+    FrameOutcome Unit :=
+  match frame.lookup declaration with
+  | .error reason => failure frame reason
+  | .ok binding =>
+      match frame.store.objects.object? binding.object with
+      | none => failure frame (.missingBinding declaration)
+      | some object =>
+          if object.duration != .dynamic then
+            failure frame (.unsupportedDuration object.duration)
+          else
+            match frame.store.endLifetime binding.object with
+            | .error reason => failure frame (.object reason)
+            | .ok ended =>
+                match ended.releaseStorage binding.object with
+                | .ok store => success {frame with store} ()
+                | .error reason => failure frame (.object reason)
+
 def assignValue (frame : IntegralObjectFrame) (declaration : FrontendHandle)
     (sourceType : CppTypeEvidence) (value : IntegralValue) : FrameOutcome Unit :=
   match frame.lookup declaration with
@@ -540,7 +599,7 @@ private def endBindings (frame : IntegralObjectFrame) : List FrameBinding →
   | [] => success frame ()
   | binding :: rest =>
       if binding.role == .reference || binding.role == .staticLocal ||
-          binding.role == .threadLocal then endBindings frame rest else
+          binding.role == .threadLocal || binding.role == .dynamicLocal then endBindings frame rest else
       match frame.store.endLifetime binding.object with
       | .error reason => failure frame (.object reason)
       | .ok store => endBindings {frame with store} rest
@@ -653,6 +712,16 @@ mutual
             match declared.result with
             | .ok _ => success declared.frame .normal
             | .error reason => failure declared.frame reason
+        | .dynamicDeclare declaration type sourceType expression =>
+            let declared := declareDynamicInitialized fuel frame declaration type sourceType expression
+            match declared.result with
+            | .ok _ => success declared.frame .normal
+            | .error reason => failure declared.frame reason
+        | .dynamicRelease declaration =>
+            let released := releaseDynamic frame declaration
+            match released.result with
+            | .ok _ => success released.frame .normal
+            | .error reason => failure released.frame reason
         | .assign declaration sourceType expression =>
             let assigned := assign fuel frame declaration sourceType expression
             match assigned.result with

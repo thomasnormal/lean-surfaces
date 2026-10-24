@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "itor_literal_statement",
+      "file": "Examples/system-verilog/itor_literal_statement/itor_literal_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "shortrealtobits_itor_literal",
       "file": "Examples/system-verilog/shortrealtobits_itor_literal/shortrealtobits_itor_literal.sv",
       "module": "top",

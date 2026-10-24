@@ -5318,6 +5318,22 @@ def _rtoi_literal_call(expression):
         return False
 
 
+def _itor_literal_call(expression):
+    """Whether discarded ``$itor`` has one direct finite integral literal."""
+    try:
+        if (_SYM is not None or type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "$itor"):
+            return False
+        arguments = list(expression.arguments)
+        return (len(arguments) == 1
+                and type(expression.type.canonicalType).__name__ == "FloatingType"
+                and _literal_integral_value(arguments[0]) is not None)
+    except Exception:
+        return False
+
+
 def _convert_rtoi_literal(sm, expression):
     if not _rtoi_literal_call(expression):
         return unsupported(sm, expression, "CallExpression:$rtoi")
@@ -8570,6 +8586,12 @@ def _convert_syscall(sm, s, e):
         if not args:
             return {"kind": "Empty", "span": node_span(sm, s),
                     "pure_diagnostic": name}
+    if is_sys and _itor_literal_call(e):
+        # `$itor` is a pure integer-to-real conversion. With its result
+        # discarded, a direct literal conversion has no modeled state effect;
+        # keep dynamic and computed operands on the ordinary loud boundary.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "itor_literal_statement": True}
     if is_sys and _rtoi_literal_call(e):
         # `$rtoi` is a pure conversion in statement position when its result
         # is discarded.  The value-position converter above is deliberately

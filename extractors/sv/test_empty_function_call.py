@@ -144,6 +144,24 @@ class EmptyFunctionCalls(unittest.TestCase):
                              "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
+    def test_itor_literal_statement_is_inert(self):
+        design = lower(
+            'module top; initial begin $itor(-17); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("itor_literal_statement")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_itor_dynamic_statement_stays_loud(self):
+        design = lower(
+            'module top; integer value; initial begin $itor(value); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
     def test_rtoi_literal_itor_conversion_is_exact(self):
         design = lower(
             'module top; initial if ($rtoi($itor(-17)) === -17) '

@@ -6423,3 +6423,17 @@ include skips**, with `CallExpression` unchanged at **2,973** and
 `ExpressionStatement:CallExpression` at **2,985** because the corpus has no
 literal nested conversion. Differential coverage moves **129/125/0/4 →
 130/126/0/4**; grammar coverage remains **214/83/131**.
+
+## Discarded literal `$itor` calls — 2026-10-24
+
+A discarded `$itor` call with one direct finite integral literal is now erased.
+The integer-to-real conversion is exact and has no modeled storage when its
+result is unused; named or computed operands remain loud. The
+`itor_literal_statement` witness supplies the differential evidence, with
+extractor tests pinning the inert literal form and the dynamic-input refusal.
+
+The fresh 22,048-file census remains **4,829 clean / 17,153 partial / 66
+include skips**, with `CallExpression` unchanged at **2,973** and
+`ExpressionStatement:CallExpression` at **2,985** because the corpus has no
+literal discarded conversion. Differential coverage moves **130/126/0/4 →
+131/127/0/4**; grammar coverage remains **214/83/131**.

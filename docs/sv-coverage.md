@@ -10,10 +10,11 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 130 | 126 | 0 | 4 | sv-tests-2 declarations |
+| 131 | 127 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
+| `itor_literal_statement` | `Examples/system-verilog/itor_literal_statement/itor_literal_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `shortrealtobits_itor_literal` | `Examples/system-verilog/shortrealtobits_itor_literal/shortrealtobits_itor_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `realtobits_itor_literal` | `Examples/system-verilog/realtobits_itor_literal/realtobits_itor_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `rtoi_itor_literal` | `Examples/system-verilog/rtoi_itor_literal/rtoi_itor_literal.sv` | match | **MATCH** | `ok` | MATCH |

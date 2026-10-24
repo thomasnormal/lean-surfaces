@@ -53,6 +53,10 @@ The same discarded-result rule applies to `$shortrealtobits` for a direct
 literal passed through its implicit single-precision conversion shell. Explicit
 casts, dynamic values, and overflow remain loud.
 
+A discarded `$itor` call with one direct finite integral literal is also erased:
+integer-to-real conversion is exact and its real result has no represented
+storage. Named and computed operands remain loud.
+
 The self-check executor runs these calls at time zero. The retained stepper
 delegates the same `SysCall` leaves to that executor after a delay or event
 wait, so no second call interpreter is introduced. The scheduler's existing

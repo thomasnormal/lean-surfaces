@@ -180,6 +180,21 @@ def callableBitwiseOrWitness : Bool :=
   | .ok (.ok value) => value == signed 255
   | _ => false
 
+def bitwiseXorFunction : CallableFunction := {
+  bitwiseAndFunction with
+  body := .block (.return_ {
+    expression := .binary "^"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableBitwiseXorWitness : Bool :=
+  match evaluateCallable 16 .lp64 bitwiseXorFunction [signed 240, signed 15] with
+  | .ok (.ok value) => value == signed 255
+  | _ => false
+
 def sizeOfFunction : CallableFunction := {
   occurrence := default
   signature := {result := unsignedLongType, parameters := [], variadic := false}
@@ -642,6 +657,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableUnaryPlusWitness
 #guard callableBitwiseAndWitness
 #guard callableBitwiseOrWitness
+#guard callableBitwiseXorWitness
 #guard callableSizeOfWitness
 #guard callableAlignOfWitness
 #guard callableBoolLiteralWitness
@@ -694,6 +710,9 @@ theorem callable_bitwise_and_witness : callableBitwiseAndWitness = true := by
   rfl
 
 theorem callable_bitwise_or_witness : callableBitwiseOrWitness = true := by
+  rfl
+
+theorem callable_bitwise_xor_witness : callableBitwiseXorWitness = true := by
   rfl
 
 theorem callable_size_of_witness : callableSizeOfWitness = true := by
@@ -775,6 +794,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_unary_plus_witness
 #print axioms callable_bitwise_and_witness
 #print axioms callable_bitwise_or_witness
+#print axioms callable_bitwise_xor_witness
 #print axioms callable_size_of_witness
 #print axioms callable_align_of_witness
 #print axioms callable_bool_literal_witness

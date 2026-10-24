@@ -2857,6 +2857,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-bitwise-xor",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableBitwiseXorWitness",
+    "cpp_source": "int bitwise_xor(int left, int right) { return left ^ right; } bool callable_witness() { return bitwise_xor(240, 15) == 255; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

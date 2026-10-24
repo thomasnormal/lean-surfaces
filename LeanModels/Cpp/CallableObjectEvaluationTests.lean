@@ -9,6 +9,8 @@ open IntegralObjectFrame
 private def handle (value : String) : FrontendHandle := {value}
 private def intType : CppTypeEvidence := .builtin .int
 private def signed (value : Int) : IntegralValue := ⟨.signed 32, value⟩
+private def unsignedLongType : CppTypeEvidence := .builtin .unsignedLong
+private def shortType : CppTypeEvidence := .builtin .short
 
 private def functionDeclaration : Declaration := {
   id := "0x2", kind := "FunctionDecl", path := [0], name := some "local_read",
@@ -31,6 +33,21 @@ private def functionWithLocal (initializer : Expression) : CallableFunction := {
       expression := .parameter (handle "0x11"),
       sourceType := intType, type := intType}))
 }
+
+private def alignOfObject : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := unsignedLongType, parameters := [], variadic := false}
+    parameters := []
+    body := .block (.return_ {
+      expression := .alignOf shortType
+      sourceType := unsignedLongType
+      type := unsignedLongType})}
+  match evaluateCallableObject 16 .lp64 function [] with
+  | .ok (.ok value) => value == ⟨.unsigned 64, 2⟩
+  | _ => false
+
+#guard alignOfObject
 
 private def automaticLiteral (declaration : String) (value : Int) : CallableStatement :=
   .automatic {

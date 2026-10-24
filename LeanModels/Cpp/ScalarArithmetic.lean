@@ -43,4 +43,10 @@ def integralSizeBytes (profile : TargetProfile) (type : CppIntType) :
   | .ok format => .ok ((format.width + 7) / 8)
   | .error reason => .error reason
 
+def integralAlignBytes (profile : TargetProfile) (type : CppIntType) :
+    Except TypeResolutionError Nat :=
+  match integralSizeBytes profile type with
+  | .ok bytes => .ok bytes
+  | .error reason => .error reason
+
 end LeanModels.Cpp

@@ -61,6 +61,10 @@ remain loud. The integral return-expression profile is:
   witnessed by the validated expression supplement and whose promotions agree
   with the explicit `TargetProfile`.
 
+The bounded unary type-trait subset evaluates both `sizeof` and `alignof` for
+builtin integral operands, with LP64 `unsigned long` results. Other traits,
+non-integral operands, and non-LP64 result types remain loud refusals.
+
 Direct `CallExpr` nodes are parsed only through
 `parseCallableDirectCallExpression`, which receives an explicit table of
 already-selected `CallableCallTarget` bodies. The callee is joined by its

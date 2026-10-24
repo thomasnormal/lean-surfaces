@@ -24,6 +24,7 @@ mutual
     | parameter (declaration : FrontendHandle)
     | increment (operator : String) (isPostfix : Bool) (declaration : FrontendHandle)
     | sizeOf (type : CppTypeEvidence)
+    | alignOf (type : CppTypeEvidence)
     | convert (operand : TypedCallableExpression)
     | unary (operator : String) (operand : TypedCallableExpression)
     | conditional (condition whenTrue whenFalse : TypedCallableExpression)
@@ -410,7 +411,7 @@ partial def parseCallableExpressionTyped (profile : TargetProfile)
       }
   | "UnaryExprOrTypeTraitExpr" =>
       let name ← evidenceText raw "name"
-      unless name == "sizeof" do
+      unless name == "sizeof" || name == "alignof" do
         throw s!"callable: unsupported unary expression trait {name}"
       let children ← rawChildren raw
       let operandType ← match children with
@@ -419,15 +420,19 @@ partial def parseCallableExpressionTyped (profile : TargetProfile)
               child none none
             pure operand.type
         | [] => parseCallableBuiltinQualType (← evidenceField raw "argType")
-        | _ => throw "callable: sizeof requires one expression or a type operand"
+            | _ => throw s!"callable: {name} requires one expression or a type operand"
       let .builtin _ := operandType
-        | throw "callable: sizeof requires a builtin integral operand"
+        | throw s!"callable: {name} requires a builtin integral operand"
       let resultType := typeExpected.getD (.builtin .unsignedLong)
       unless resultType == .builtin .unsignedLong do
-        throw "callable: sizeof result requires LP64 unsigned long size_t"
+        throw s!"callable: {name} result requires LP64 unsigned long size_t"
       unless sourceExpected.all (· == resultType) do
-        throw "callable: sizeof source type disagrees with result type"
-      pure {expression := .sizeOf operandType, sourceType := resultType, type := resultType}
+        throw s!"callable: {name} source type disagrees with result type"
+      let expression := if name == "sizeof" then
+          CallableExpression.sizeOf operandType
+        else
+          CallableExpression.alignOf operandType
+      pure {expression, sourceType := resultType, type := resultType}
   | "CStyleCastExpr" =>
       let castKind ← evidenceText raw "castKind"
       unless castKind == "NoOp" || castKind == "IntegralCast" do

@@ -113,6 +113,15 @@ private def sizeOfValue (profile : TargetProfile) (typed : TypedCallableExpressi
       | .error _ => .unsupported .unresolvedArithmeticConversions
   | _, _ => .unsupported .unresolvedArithmeticConversions
 
+private def alignOfValue (profile : TargetProfile) (typed : TypedCallableExpression)
+    (operandType : CppTypeEvidence) : IntegralResult IntegralValue :=
+  match builtinIntegralType operandType, formatFor profile typed.type with
+  | some integer, some format =>
+      match integralAlignBytes profile integer with
+      | .ok bytes => .ok {format, value := Int.ofNat bytes}
+      | .error _ => .unsupported .unresolvedArithmeticConversions
+  | _, _ => .unsupported .unresolvedArithmeticConversions
+
 private inductive Execution where
   | normal
   | returnedVoid
@@ -226,6 +235,8 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
           | some value => success frame (convertTo profile typed.type value)
       | .sizeOf operandType =>
           success frame (sizeOfValue profile typed operandType)
+      | .alignOf operandType =>
+          success frame (alignOfValue profile typed operandType)
       | .parameter declaration =>
           evalParameter (fuel + 1) profile frame typed declaration
       | .increment operator isPostfix declaration =>

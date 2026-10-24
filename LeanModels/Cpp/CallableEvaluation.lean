@@ -179,6 +179,17 @@ private def evaluateSizeOf (profile : TargetProfile) (typed : TypedCallableExpre
     | .error reason => throw (mapFormatError reason)
   pure (.ok {format, value := Int.ofNat bytes})
 
+private def evaluateAlignOf (profile : TargetProfile) (typed : TypedCallableExpression)
+    (operandType : CppTypeEvidence) :
+    Except CallableEvaluationError (IntegralResult IntegralValue) := do
+  let format ← formatFor profile typed.type
+  let some integer := builtinIntegralType operandType
+    | throw (.unsupportedType operandType)
+  let bytes ← match integralAlignBytes profile integer with
+    | .ok value => pure value
+    | .error reason => throw (mapFormatError reason)
+  pure (.ok {format, value := Int.ofNat bytes})
+
 private def evaluateParameter (profile : TargetProfile) (parameters : List CallableParameter)
     (arguments : List IntegralValue) (typed : TypedCallableExpression)
     (declaration : FrontendHandle) :
@@ -305,6 +316,8 @@ mutual
         | .integer value => (evaluateInteger profile typed value).map (fun result => (result, arguments))
         | .sizeOf operandType =>
             (evaluateSizeOf profile typed operandType).map (fun result => (result, arguments))
+        | .alignOf operandType =>
+            (evaluateAlignOf profile typed operandType).map (fun result => (result, arguments))
         | .parameter declaration =>
             (evaluateParameter profile parameters arguments typed declaration).map
               (fun result => (result, arguments))

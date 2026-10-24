@@ -2797,6 +2797,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-alignof",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableAlignOfWitness",
+    "cpp_source": "unsigned long alignof_short() { return alignof(short); } bool callable_witness() { return alignof_short() == 2ul; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-c-style-cast",
     "kind": "expression",
     "corpus": "rung-3 witness",

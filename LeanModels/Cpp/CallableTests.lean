@@ -981,6 +981,17 @@ private def sizeofTypeRaw : Raw := object [
   | .ok expression => expression.expression == .sizeOf (.builtin .int)
   | .error _ => false
 
+private def alignofTypeRaw : Raw := object [
+  ("id", text "0x61"), ("kind", text "UnaryExprOrTypeTraitExpr"),
+  ("name", text "alignof"),
+  ("argType", object [("qualType", text "short")])]
+
+#guard match parseCallableExpressionTyped .lp64 [] []
+    (some [⟨⟨"0x61"⟩, "UnaryExprOrTypeTraitExpr", .builtin .unsignedLong⟩])
+    alignofTypeRaw none (some (.builtin .unsignedLong)) with
+  | .ok expression => expression.expression == .alignOf (.builtin .short)
+  | .error _ => false
+
 private def cStyleCastRaw : Raw := object [
   ("id", text "0x70"), ("kind", text "CStyleCastExpr"),
   ("castKind", text "NoOp"),

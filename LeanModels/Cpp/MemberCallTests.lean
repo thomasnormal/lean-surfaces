@@ -1130,4 +1130,9 @@ def memberGetterDerivedWitness : Bool :=
 
 #guard memberGetterDerivedWitness
 
+def memberGetterCastWitness : Bool :=
+  observedCastNoOp == some 7
+
+#guard memberGetterCastWitness
+
 end LeanModels.Cpp.MemberCallTests

@@ -5689,3 +5689,18 @@ The fresh 22,046-file census moves **4,745 → 4,746 clean** and **17,235 →
 17,234 partial**; `ExpressionStatement:CallExpression` falls **3,040 →
 3,019**. Differential coverage moves **76/72/0/4 → 77/73/0/4** (rows/agree/
 disagree/recorded refusals), and grammar coverage remains **209/78/131**.
+
+## Opaque unbounded mailbox construction writes — 2026-10-24
+
+An exact bare `new()` assigned to a built-in `mailbox` handle now erases as an
+opaque-storage write. The flat self-check state has no mailbox object or handle
+slot, so this admits the declaration-plus-construction shape without
+fabricating an object. Explicit `new(0)`, bounded or otherwise argumented
+constructors, user classes, and every mailbox read or method call remain loud.
+The `opaque_mailbox_new_write` fixture and differential row cover the admitted
+form; extractor tests pin the explicit-zero boundary.
+
+The fresh 22,046-file census moves **4,746 → 4,747 clean** and **17,234 →
+17,233 partial**; `AssignmentExpression:target` falls **3,313 → 3,219**.
+Differential coverage moves **77/73/0/4 → 78/74/0/4**, and grammar coverage
+moves **209/78/131 → 210/79/131**.

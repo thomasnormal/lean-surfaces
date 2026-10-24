@@ -66,6 +66,22 @@ class ClassHandleDeclarations(unittest.TestCase):
         self.assertIn("AssignmentExpression:target",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_bare_mailbox_construction_write_is_opaque(self):
+        design = lower(
+            'module top; mailbox box; initial begin box = new(); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("opaque_mailbox_new_write")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_explicit_zero_constructor_argument_stays_loud(self):
+        design = lower(
+            'module top; mailbox box; initial begin box = new(0); end endmodule')
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
+
 
 if __name__ == "__main__":
     unittest.main()

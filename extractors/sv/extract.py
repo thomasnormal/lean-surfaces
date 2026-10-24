@@ -5396,6 +5396,37 @@ def _null_literal(expr):
     return type(node).__name__ == "NullLiteral"
 
 
+def _bare_new(expr):
+    """Whether a class construction spells exactly ``new()``.
+
+    Pyslang represents the empty constructor argument list as one implicit
+    zero integer argument.  Its missing syntax node distinguishes that form
+    from an explicit ``new(0)``, whose constructor semantics remain outside
+    the opaque-handle slice.
+    """
+    node = expr
+    while type(node).__name__ == "ConversionExpression":
+        node = getattr(node, "operand", None)
+        if node is None:
+            return False
+    if type(node).__name__ != "NewClassExpression" or getattr(node, "bad", False):
+        return False
+    call = getattr(node, "constructorCall", None)
+    if type(call).__name__ != "CallExpression":
+        return False
+    try:
+        args = list(call.arguments)
+    except Exception:
+        return False
+    if len(args) != 1:
+        return False
+    arg = args[0]
+    return (type(arg).__name__ == "IntegerLiteral"
+            and getattr(arg, "value", None) == 0
+            and getattr(arg, "syntax", None) is None
+            and not getattr(arg, "bad", False))
+
+
 def _compound_rhs(expr):
     """Peel pyslang's synthetic read-modify-write expression from a compound
     assignment. The frontend may wrap it in a conversion for unsized literals.
@@ -7282,6 +7313,19 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             == "ClassType" and _null_literal(expr.right)):
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "opaque_handle_null_write": True}
+    # An unbounded mailbox construction has no flat self-check state.  Erase
+    # only the exact built-in ``mailbox box = new()`` write: bounded and
+    # argumented constructors, user classes, and every later method/read stay
+    # loud rather than fabricating an object or constructor effect.
+    if (_SYM is None and expr.op is None and expr.timingControl is None
+            and not expr.isNonBlocking
+            and type(expr.left).__name__ == "NamedValueExpression"
+            and type(getattr(expr.left.type, "canonicalType", None)).__name__
+            == "ClassType"
+            and getattr(expr.left.type.canonicalType, "name", None) == "mailbox"
+            and _bare_new(expr.right)):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "opaque_mailbox_new_write": True}
     # Real and shortreal values have no representation in the flat
     # self-check state.  A pure literal blocking write consequently has no
     # modeled effect and can be erased.  Keep nonblocking writes, names,

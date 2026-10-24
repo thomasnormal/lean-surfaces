@@ -187,4 +187,17 @@ private def aliasTrace : Except IntegralObjectError (List IntegralValue) := do
   invalid.read access : Except IntegralObjectError IntegralValue) matches
     .error (.invalidValue .outOfRange)
 
+#guard (do
+  let (store, object) ← initialized
+  let access ← store.borrow object
+  let store ← store.endLifetime object
+  let store ← store.reuseEnded object (.builtin .int)
+  let store ← store.initializeConverted object (.builtin .short) ⟨.signed 16, 19⟩
+  store.read access : Except IntegralObjectError IntegralValue) matches .ok ⟨.signed 32, 19⟩
+
+#guard (do
+  let (store, object) ← initialized
+  store.reuseEnded object (.builtin .int) : Except IntegralObjectError IntegralObjectStore)
+    matches .error (.lifetime .lifetimeNotEnded)
+
 end LeanModels.Cpp.IntegralObjectTests

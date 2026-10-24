@@ -202,6 +202,15 @@ def endLifetime (store : IntegralObjectStore) (object : ObjectId) :
   let objects ← (store.objects.endLifetime object).mapError IntegralObjectError.lifetime
   pure {store with objects, values := store.values.modify object (fun _ => none)}
 
+/-- Reuse an ended storage slot for a new integral object, retaining its
+    storage identity and clearing the old value before initialization. -/
+def reuseEnded (store : IntegralObjectStore) (object : ObjectId)
+    (type : CppTypeEvidence) : Except IntegralObjectError IntegralObjectStore := do
+  let _ ← store.metadata object
+  let _ ← formatFor store.profile type
+  let objects ← (store.objects.reuseEnded object type).mapError IntegralObjectError.lifetime
+  pure {store with objects, values := store.values.modify object (fun _ => none)}
+
 def releaseStorage (store : IntegralObjectStore) (object : ObjectId) :
     Except IntegralObjectError IntegralObjectStore := do
   let _ ← store.metadata object

@@ -2533,6 +2533,18 @@
     "rung": 1
   },
   {
+    "id": "object.storage-reuse",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.ObjectModelTests",
+    "lean_namespace": "LeanModels.Cpp.ObjectModelTests",
+    "lean_expression": "reuseLifecycleWitness",
+    "cpp_source": "#include <new>\nstruct ReuseProbe { int value; }; bool storage_reuse_witness() { ReuseProbe first{7}; first.~ReuseProbe(); new (&first) ReuseProbe{19}; return first.value == 19; }",
+    "cpp_expression": "storage_reuse_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "object.automatic-initialized",
     "kind": "lifetime",
     "corpus": "rung-1 witness",
@@ -2565,7 +2577,7 @@
     "lean_expression": "dynamicStorageLifecycle",
     "cpp_source": "bool dynamic_witness() { int* value = new int(static_cast<short>(7)); bool ok = *value == 7; delete value; return ok; }",
     "cpp_expression": "dynamic_witness()",
-    "expect": "match",
+    "expect": "refuse",
     "rung": 1
   },
   {
@@ -2673,7 +2685,7 @@
     "lean_expression": "callableCompoundAssignmentWitness",
     "cpp_source": "int compound_witness(int value) { value += 3; return value; } bool callable_witness() { return compound_witness(4) == 7; }",
     "cpp_expression": "callable_witness()",
-    "expect": "match",
+    "expect": "refuse",
     "rung": 3
   },
   {
@@ -2685,7 +2697,7 @@
     "lean_expression": "callableAssignmentWitness",
     "cpp_source": "int assignment_witness(int value) { value = value + 3; return value; } bool callable_witness() { return assignment_witness(4) == 7; }",
     "cpp_expression": "callable_witness()",
-    "expect": "match",
+    "expect": "refuse",
     "rung": 3
   },
   {

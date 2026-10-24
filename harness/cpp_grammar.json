@@ -17,7 +17,7 @@
   {"id": "CXXRecordDecl", "rung": 7, "source": "struct S { int x; };"},
   {"id": "FieldDecl", "rung": 7, "source": "struct S { int x; };"},
   {"id": "CXXMethodDecl", "rung": 7, "source": "struct S { int f() const { return 0; } };"},
-  {"id": "CXXConstructExpr", "rung": 7, "source": "struct S { S() {} }; int f() { return (S(), 0); }"},
+  {"id": "CXXConstructExpr", "rung": 7, "source": "struct S { S() {} }; int f() { S object; return 0; }"},
   {"id": "CXXBaseSpecifier", "rung": 7, "source": "struct B {}; struct D : B {};"},
   {"id": "CXXTryStmt", "rung": 10, "source": "int f() { try { return 0; } catch (...) { return 1; } }"},
   {"id": "CXXThrowExpr", "rung": 10, "source": "void f() { throw 1; }"},

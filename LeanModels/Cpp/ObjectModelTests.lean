@@ -12,6 +12,20 @@ def automatic : ObjectStore × ObjectId :=
 def dynamic : ObjectStore × ObjectId :=
   ObjectStore.allocate ObjectStore.empty .dynamic intType
 
+def reuseLifecycleWitness : Bool :=
+  let (store, object) := ObjectStore.declareAutomatic ObjectStore.empty intType
+  match store.endLifetime object with
+  | .ok ended =>
+      match ended.reuseEnded object (.builtin .short) with
+      | .ok reused =>
+          match reused.object? object with
+          | some value =>
+              value.duration == .automatic && value.type == .builtin .short &&
+              value.phase == .storageOnly
+          | none => false
+      | .error _ => false
+  | .error _ => false
+
 #guard automatic.2 == 0
 #guard (ObjectStore.readType automatic.1 automatic.2) matches .error .lifetimeNotStarted
 #guard (ObjectStore.beginLifetime automatic.1 automatic.2).isOk
@@ -86,5 +100,25 @@ def dynamic : ObjectStore × ObjectId :=
 #guard match ObjectStore.allocate ObjectStore.empty .temporary intType with
   | (store, object) =>
       (store.endScope [object]) matches .error .notScopeStorage
+
+#guard match ObjectStore.declareAutomatic ObjectStore.empty intType with
+  | (store, object) =>
+      match store.endLifetime object with
+      | .ok ended =>
+          match ended.reuseEnded object (.builtin .short) with
+          | .ok reused =>
+              match reused.object? object with
+              | some value =>
+                  value.duration == .automatic && value.type == .builtin .short &&
+                    value.phase == .storageOnly
+              | none => false
+          | .error _ => false
+      | .error _ => false
+
+#guard match ObjectStore.declareAutomatic ObjectStore.empty intType with
+  | (store, object) =>
+      (store.reuseEnded object intType) matches .error .lifetimeNotEnded
+
+#guard reuseLifecycleWitness
 
 end LeanModels.Cpp.ObjectModelTests

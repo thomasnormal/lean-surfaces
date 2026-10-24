@@ -32,14 +32,17 @@ implicit-conversion engine: only the already-admitted builtin-integral source
 and destination pair is available.
 
 Ending lifetime discards the readable value but retains metadata as a tombstone.
-Dynamic storage can then be released. Expired accesses refuse on every use;
-allocation appends a fresh identity rather than reusing the tombstone.
+Dynamic storage can then be released. `reuseEnded` is the explicit placement
+reuse boundary: it keeps an ended identity, clears its old value, replaces its
+integral type, and returns storage-only state for a new initialization.
+Allocation still appends a fresh identity; no operation silently reuses a
+tombstone.
 
 ## Boundary
 
 Builtin integral objects and const qualification are admitted. Volatile access,
 records, enums, pointers, reference objects, arrays, byte layout/alignment,
-storage reuse, casts, initialization-expression evaluation, constructors,
+implicit storage reuse, casts, initialization-expression evaluation, constructors,
 destructors, scope cleanup and exception unwinding remain outside this layer.
 References here are checked semantic accesses, not a C++ pointer representation
 or a frontend reference-binding judgment. All failures are model-domain errors,

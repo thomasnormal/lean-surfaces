@@ -46,7 +46,7 @@ PINNED_CLANG = "21.1.8"
 
 RUNG_STATUS = [
     (0, "§5, §6.2–6.6", "executable", "Bounded TranslationUnitDecl, NamespaceDecl, FunctionDecl, ParmVarDecl, CXXRecordDecl, FieldDecl, CXXMethodDecl, EnumConstantDecl, AccessSpecDecl, CXXConstructorDecl, CXXDestructorDecl, CXXConversionDecl, FriendDecl, FriendTemplateDecl, TemplateTypeParmDecl, NonTypeTemplateParmDecl, TemplateTemplateParmDecl, TemplateParamObjectDecl, ImplicitConceptSpecializationDecl, RequiresExpr, TypeRequirement, SimpleRequirement, CompoundRequirement, NestedRequirement, UsingEnumDecl, ClassTemplateDecl, FunctionTemplateDecl, VarTemplateDecl, TypeAliasTemplateDecl, ClassTemplateSpecializationDecl, VarTemplateSpecializationDecl, ClassTemplatePartialSpecializationDecl, VarTemplatePartialSpecializationDecl, ConceptDecl, CXXDeductionGuideDecl, UsingShadowDecl, ConstructorUsingShadowDecl, UsingPackDecl, UnresolvedUsingTypenameDecl, UnresolvedUsingValueDecl, BindingDecl, DecompositionDecl, IndirectFieldDecl, ClassScopeFunctionSpecializationDecl, VarDecl, EnumDecl, TypedefDecl, TypeAliasDecl, NamespaceAliasDecl, UsingDirectiveDecl, UsingDecl, LinkageSpecDecl and StaticAssertDecl metadata occurrences are admitted; declaration and body execution remains refused."),
-    (1, "§6.7, §6.9", "executable", "Static, thread, automatic, and dynamic storage reservation, integral initialization, reverse-order automatic scope and full-expression temporary cleanup, lifetime end, and dynamic release execute; LifetimeExtendedTemporaryDecl, MaterializeTemporaryExpr, CXXBindTemporaryExpr, ExprWithCleanups, CXXTemporaryObjectExpr, CXXNewExpr, CXXDeleteExpr, CXXDefaultInitExpr, CXXScalarValueInitExpr, InitListExpr, CXXParenListInitExpr, CXXStdInitializerListExpr, DesignatedInitExpr, ImplicitValueInitExpr, ImplicitCastExpr and ParenExpr metadata are admitted, while temporary materialization and unsupported storage remain loud."),
+    (1, "§6.7, §6.9", "executable", "Static, thread, automatic, and dynamic storage reservation, integral initialization, reverse-order automatic scope and full-expression temporary cleanup, lifetime end, explicit reuse of ended storage, and dynamic release execute; LifetimeExtendedTemporaryDecl, MaterializeTemporaryExpr, CXXBindTemporaryExpr, ExprWithCleanups, CXXTemporaryObjectExpr, CXXNewExpr, CXXDeleteExpr, CXXDefaultInitExpr, CXXScalarValueInitExpr, InitListExpr, CXXParenListInitExpr, CXXStdInitializerListExpr, DesignatedInitExpr, ImplicitValueInitExpr, ImplicitCastExpr and ParenExpr metadata are admitted, while temporary materialization and unsupported storage remain loud."),
     (2, "§6.8", "executable", "LP64 scalar/integral values and conversions execute definitionally; ConstantExpr, CXXBoolLiteralExpr, CXXNullPtrLiteralExpr, CharacterLiteral, FloatingLiteral, StringLiteral and IntegerLiteral metadata are admitted while floating/string execution and general constant evaluation remain bounded."),
     (3, "§7", "executable", "Bounded integral expressions and selected callable bodies execute; DeclRefExpr, CXXThisExpr, UnaryOperator, BinaryOperator, CXXRewrittenBinaryOperator, CXXNoexceptExpr, CXXTypeidExpr, CXXFoldExpr, CXXCoawaitExpr, CStyleCastExpr, UnaryExprOrTypeTraitExpr, VAArgExpr, CXXDependentScopeMemberExpr, CXXDefaultArgExpr, CXXUnresolvedConstructExpr, UnresolvedLookupExpr, CXXPseudoDestructorExpr, CXXUnresolvedMemberExpr, CXXDependentScopeDeclRefExpr, CXXInheritedCtorInitExpr, ConditionalOperator, CallExpr, CompoundAssignOperator, LambdaExpr and ArraySubscriptExpr, OpenACCAsteriskSizeExpr and HLSLOutArgExpr metadata are admitted while general overloads do not."),
     (4, "§8", "executable", "Selected callable blocks, branches, loops, switch and transfers execute; CompoundStmt, ReturnStmt, IfStmt, WhileStmt, DoStmt, ForStmt, CXXForRangeStmt, SwitchStmt, CaseStmt, DefaultStmt, DeclStmt, BreakStmt, ContinueStmt, NullStmt, GotoStmt, IndirectGotoStmt, CapturedStmt, OMPAssumeDirective, OMPErrorDirective, OpenACCComputeConstruct, OpenACCLoopConstruct, OpenACCCombinedConstruct, OpenACCDataConstruct, OpenACCEnterDataConstruct, OpenACCExitDataConstruct, OpenACCHostDataConstruct, OpenACCWaitConstruct, OpenACCInitConstruct, OpenACCShutdownConstruct, OpenACCSetConstruct, OpenACCUpdateConstruct, OpenACCAtomicConstruct, OpenACCCacheConstruct, OMPMetadirective, OMPTileDirective, OMPStripeDirective, OMPUnrollDirective, OMPReverseDirective, OMPInterchangeDirective, OMPDepobjDirective, OMPScanDirective, OMPParallelDirective, OMPSimdDirective, OMPForDirective, OMPForSimdDirective, OMPSectionsDirective, OMPSectionDirective, OMPSingleDirective, OMPMasterDirective, OMPCriticalDirective, OMPTaskDirective, OMPTaskloopDirective, OMPTaskloopSimdDirective, OMPTeamsDirective, OMPCancellationPointDirective, OMPCancelDirective, OMPScopeDirective, OMPMaskedTaskLoopDirective, OMPMaskedTaskLoopSimdDirective, OMPParallelMaskedTaskLoopDirective, OMPParallelMaskedTaskLoopSimdDirective, OMPTeamsDistributeDirective, OMPTeamsDistributeSimdDirective, OMPTeamsDistributeParallelForDirective, OMPTeamsDistributeParallelForSimdDirective, OMPTargetDirective, OMPTargetDataDirective, OMPTargetEnterDataDirective, OMPTargetExitDataDirective, OMPTargetParallelDirective, OMPTargetParallelForDirective, OMPTargetParallelForSimdDirective, OMPTargetSimdDirective, OMPTargetTeamsDirective, OMPTargetTeamsDistributeDirective, OMPTargetTeamsDistributeParallelForDirective, OMPTargetTeamsDistributeParallelForSimdDirective, OMPTargetTeamsDistributeSimdDirective, OMPInteropDirective, OMPDispatchDirective, OMPMaskedDirective, OMPParallelMaskedDirective, OMPGenericLoopDirective, OMPTeamsGenericLoopDirective, OMPTargetTeamsGenericLoopDirective, OMPParallelGenericLoopDirective, OMPTargetParallelGenericLoopDirective, OMPTargetUpdateDirective, OMPDistributeDirective, OMPDistributeParallelForDirective, OMPDistributeParallelForSimdDirective, OMPDistributeSimdDirective, OMPParallelForDirective, OMPParallelForSimdDirective, OMPParallelSectionsDirective, OMPParallelMasterDirective, OMPOrderedDirective, OMPAtomicDirective, OMPFlushDirective, OMPBarrierDirective, OMPTaskwaitDirective, OMPTaskgroupDirective, OMPMasterTaskloopDirective, OMPMasterTaskloopSimdDirective, OMPParallelMasterTaskloopDirective, OMPParallelMasterTaskloopSimdDirective, OMPTaskyieldDirective, LabelStmt, LabelDecl, CoroutineBodyStmt, CoreturnStmt and AttributedStmt metadata are admitted."),
@@ -105,6 +105,11 @@ def capped(command, cwd=ROOT, timeout=180):
     if prlimit:
         command = [prlimit, "--as=" + ADDRESS_CAP, "--"] + list(command)
     return run(command, cwd=cwd, timeout=timeout)
+
+
+def stable_diagnostic(text, directory):
+    """Remove per-run temporary-directory names from recorded tool output."""
+    return text.replace(str(directory) + os.sep, "")
 
 
 def load_json(path):
@@ -198,7 +203,7 @@ def native_rows(cases, clang):
                 if check.returncode == 0:
                     result[row["id"]] = ("NATIVE", "ok")
                 else:
-                    result[row["id"]] = ("ORACLE", "translation compile failed: %s" % (check.stdout + check.stderr)[-1200:])
+                    result[row["id"]] = ("ORACLE", "translation compile failed: %s" % stable_diagnostic((check.stdout + check.stderr)[-1200:], directory))
     if checks:
         with tempfile.TemporaryDirectory(prefix="cpp-diff-check-") as directory:
             for row in checks:
@@ -209,7 +214,7 @@ def native_rows(cases, clang):
                 binary = pathlib.Path(directory) / "caller"
                 check = run([clang, "-std=c++23", "-pedantic-errors", str(wrapper), "-o", str(binary)], timeout=60)
                 if check.returncode != 0:
-                    result[row["id"]] = ("ORACLE", "check witness compile failed: %s" % (check.stdout + check.stderr)[-1200:])
+                    result[row["id"]] = ("ORACLE", "check witness compile failed: %s" % stable_diagnostic((check.stdout + check.stderr)[-1200:], directory))
                     continue
                 try:
                     execute = run([str(binary)], timeout=30)
@@ -245,7 +250,7 @@ def native_rows(cases, clang):
         compile_result = run([clang, "-std=c++23", "-pedantic-errors", "-I", str(root),
                               str(wrapper), str(implementation), "-o", str(binary)], timeout=180)
         if compile_result.returncode != 0:
-            reason = "native compile failed: %s" % (compile_result.stdout + compile_result.stderr)[-1200:]
+            reason = "native compile failed: %s" % stable_diagnostic((compile_result.stdout + compile_result.stderr)[-1200:], directory)
             result.update({row["id"]: ("ORACLE", reason) for row in callable_cases})
             return result
         try:
@@ -254,7 +259,7 @@ def native_rows(cases, clang):
             result.update({row["id"]: ("TIMEOUT", "native caller exceeded 30 seconds") for row in callable_cases})
             return result
         if execute.returncode != 0:
-            reason = "native caller failed: %s" % (execute.stdout + execute.stderr)[-1200:]
+            reason = "native caller failed: %s" % stable_diagnostic((execute.stdout + execute.stderr)[-1200:], directory)
             result.update({row["id"]: ("ORACLE", reason) for row in callable_cases})
             return result
         outputs = execute.stdout.splitlines()
@@ -276,8 +281,11 @@ def differential(cases, model, native):
             verdict = native_status
             detail = native_value
         elif native_status == "NATIVE":
-            if row.get("expect") != "match":
-                verdict, detail = "DIVERGE", "native call completed for a recorded refusal"
+            if row.get("expect") == "refuse":
+                if model_value == "refuse":
+                    verdict, detail = "REFUSE", "recorded refusal; native witness compiles"
+                else:
+                    verdict, detail = "DIVERGE", "model answered a recorded refusal"
             elif row.get("kind") in ("translation", "lifetime", "scalar", "expression", "statement") and model_value == native_value:
                 verdict, detail = "MATCH", "Lean admission and Clang compilation agree"
             elif row.get("kind", "callable") == "callable" and model_value == "ok " + native_value:
@@ -294,6 +302,10 @@ def differential(cases, model, native):
 
 def raw_has_kind(value, kind):
     if isinstance(value, dict):
+        # Clang's JSON AST stores base-specifier nodes as entries in the
+        # record's `bases` metadata array without a `kind` field.
+        if kind == "CXXBaseSpecifier" and isinstance(value.get("bases"), list) and value["bases"]:
+            return True
         if value.get("kind") == kind:
             return True
         return any(raw_has_kind(child, kind) for child in value.values())

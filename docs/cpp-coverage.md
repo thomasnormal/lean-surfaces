@@ -8,277 +8,278 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 265 | 0 | 0 | 0 | 0 | 265 |
+| 266 | 253 | 0 | 3 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
 | case | rung | Lean | native | verdict | detail |
 |---|---:|---|---|---|---|
-| `translation.empty-root` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.namespace-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.function-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.parameter-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.record-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.base-specifier` | 7 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.field-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.method-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.enum-constant-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.access-specification` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.constructor-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.destructor-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.conversion-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.friend-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.template-type-parameter` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.non-type-template-parameter` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.template-template-parameter` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.class-template-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.function-template-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.variable-template-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.type-alias-template-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.class-template-specialization-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.variable-template-specialization-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.class-template-partial-specialization-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.variable-template-partial-specialization-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.concept-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.deduction-guide-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.using-shadow-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.constructor-using-shadow-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.using-pack-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.unresolved-using-typename-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.unresolved-using-value-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.binding-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.decomposition-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.indirect-field-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.class-scope-function-specialization-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.friend-template-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.template-param-object-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.implicit-concept-specialization-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.requires-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.type-requirement` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.simple-requirement` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.compound-requirement` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.nested-requirement` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.using-enum-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.lifetime-extended-temporary-declaration` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.materialize-temporary-expression` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.bind-temporary-expression` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.expression-with-cleanups` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.temporary-object-expression` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-construct-expression` | 7 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.new-expression` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.delete-expression` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.default-init-expression` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.scalar-value-init-expression` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.initializer-list-expression` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.paren-list-init-expression` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.implicit-value-init-expression` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.implicit-cast-expression` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.parenthesized-expression` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.constant-expression` | 2 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.static-cast-expression` | 2 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.const-cast-expression` | 2 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.reinterpret-cast-expression` | 2 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.dynamic-cast-expression` | 7 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.bool-literal-expression` | 2 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.nullptr-literal-expression` | 2 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.character-literal-expression` | 2 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.floating-literal-expression` | 2 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.string-literal-expression` | 2 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.integer-literal-expression` | 2 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.declaration-reference-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.this-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.unary-operator-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.binary-operator-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-rewritten-binary-operator-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-noexcept-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-typeid-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-fold-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-coawait-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.c-style-cast-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.unary-expression-or-type-trait-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.va-arg-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-dependent-scope-member-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-default-argument-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-unresolved-construct-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.unresolved-lookup-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-pseudo-destructor-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-unresolved-member-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-dependent-scope-decl-ref-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-inherited-constructor-init-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-std-initializer-list-expression` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.coroutine-body-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.attributed-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.designated-initializer-expression` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.coreturn-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.indirect-goto-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.captured-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-assume-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-error-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.openacc-compute-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.openacc-loop-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.openacc-combined-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.openacc-data-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.openacc-enter-data-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.openacc-exit-data-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.openacc-host-data-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.openacc-wait-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.openacc-init-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.openacc-shutdown-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.openacc-set-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.openacc-update-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.openacc-atomic-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.openacc-cache-construct` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.openacc-asterisk-size-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.hlsl-out-arg-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-metadirective` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-tile-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-stripe-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-unroll-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-reverse-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-interchange-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-depobj-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-scan-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-parallel-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-for-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-for-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-sections-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-section-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-single-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-master-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-critical-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-task-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-taskloop-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-taskloop-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-teams-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-cancellation-point-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-cancel-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-scope-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-masked-task-loop-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-masked-task-loop-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-parallel-masked-task-loop-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-parallel-masked-task-loop-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-teams-distribute-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-teams-distribute-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-teams-distribute-parallel-for-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-teams-distribute-parallel-for-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-data-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-enter-data-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-exit-data-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-parallel-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-parallel-for-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-parallel-for-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-teams-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-teams-distribute-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-teams-distribute-parallel-for-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-teams-distribute-parallel-for-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-teams-distribute-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-interop-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-dispatch-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-masked-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-parallel-masked-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-generic-loop-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-teams-generic-loop-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-teams-generic-loop-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-parallel-generic-loop-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-parallel-generic-loop-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-target-update-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-distribute-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-distribute-parallel-for-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-distribute-parallel-for-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-distribute-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-parallel-for-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-parallel-for-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-parallel-sections-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-parallel-master-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-ordered-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-atomic-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-flush-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-barrier-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-taskwait-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-taskgroup-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-master-taskloop-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-master-taskloop-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-parallel-master-taskloop-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-parallel-master-taskloop-simd-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.omp-taskyield-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.conditional-operator-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.call-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.compound-assignment-operator` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.lambda-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.array-subscript-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.member-expression` | 7 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-member-call-expression` | 7 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-operator-call-expression` | 8 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.compound-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.return-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.if-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.while-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.do-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.for-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.range-for-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.switch-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.declaration-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.case-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.default-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.break-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.continue-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.null-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.goto-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.label-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.label-declaration` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-try-statement` | 10 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-catch-statement` | 10 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.cxx-throw-expression` | 10 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.variable-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.enum-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.typedef-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.type-alias-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.namespace-alias-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.using-directive-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.using-declaration` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.linkage-specification` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `translation.static-assertion` | 0 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `object.automatic-lifetime` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `object.scope-exit` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `object.full-expression-temporary` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `object.automatic-initialized` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `object.automatic-assignment` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `object.dynamic-storage` | 1 | `refuse` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `object.static-storage` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `object.thread-storage` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `object.default-initialization` | 1 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `scalar.integral-conversion` | 2 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `expression.integral-operators` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `expression.unary-and-shifts` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `expression.callable-prefix-increment` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `expression.callable-postfix-comma` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `expression.callable-compound-assignment` | 3 | `refuse` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `expression.callable-assignment` | 3 | `refuse` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `expression.callable-direct-call` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `statement.callable-switch` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `statement.callable-if` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `statement.callable-while` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `statement.callable-do-while` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `statement.callable-for` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `statement.callable-break` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `statement.callable-continue` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `statement.callable-null` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `statement.callable-void-return` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `statement.callable-goto-label` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `statement.callable-local-declaration` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `statement.callable-nested-block` | 4 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `declaration.callable-reference-parameter` | 5 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `declaration.callable-local-reference` | 5 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `expression.callable-conditional` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `expression.callable-logical-short-circuit` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `expression.callable-logical-or` | 3 | `ok` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `tinyxml2.IsUTF8Continuation.negative` | 2 | `ok 1` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `tinyxml2.IsUTF8Continuation.minimum` | 2 | `ok 1` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `tinyxml2.IsUTF8Continuation.nonnegative` | 2 | `ok 0` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
-| `tinyxml2.IsUTF8Continuation.zero` | 2 | `ok 0` | `ORACLE` | **ORACLE** | pinned Clang/LLVM 21.1.8 is unavailable |
+| `translation.empty-root` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.namespace-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.function-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.parameter-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.record-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.base-specifier` | 7 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.field-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.method-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.enum-constant-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.access-specification` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.constructor-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.destructor-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.conversion-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.friend-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.template-type-parameter` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.non-type-template-parameter` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.template-template-parameter` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.class-template-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.function-template-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.variable-template-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.type-alias-template-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.class-template-specialization-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.variable-template-specialization-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.class-template-partial-specialization-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.variable-template-partial-specialization-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.concept-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.deduction-guide-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.using-shadow-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.constructor-using-shadow-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.using-pack-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.unresolved-using-typename-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.unresolved-using-value-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.binding-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.decomposition-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.indirect-field-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.class-scope-function-specialization-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.friend-template-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.template-param-object-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.implicit-concept-specialization-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.requires-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.type-requirement` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.simple-requirement` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.compound-requirement` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.nested-requirement` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.using-enum-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.lifetime-extended-temporary-declaration` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.materialize-temporary-expression` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.bind-temporary-expression` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.expression-with-cleanups` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.temporary-object-expression` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-construct-expression` | 7 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.new-expression` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.delete-expression` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.default-init-expression` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.scalar-value-init-expression` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.initializer-list-expression` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.paren-list-init-expression` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.implicit-value-init-expression` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.implicit-cast-expression` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.parenthesized-expression` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.constant-expression` | 2 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.static-cast-expression` | 2 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.const-cast-expression` | 2 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.reinterpret-cast-expression` | 2 | `ok` | `ORACLE` | **ORACLE** | translation compile failed: translation.reinterpret-cast-expression.cpp:1:28: error: reinterpret_cast from 'int' to 'long' is not allowed     1 \| long f(int value) { return reinterpret_cast<long>(value); }       \|                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 1 error generated.  |
+| `translation.dynamic-cast-expression` | 7 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.bool-literal-expression` | 2 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.nullptr-literal-expression` | 2 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.character-literal-expression` | 2 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.floating-literal-expression` | 2 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.string-literal-expression` | 2 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.integer-literal-expression` | 2 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.declaration-reference-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.this-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.unary-operator-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.binary-operator-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-rewritten-binary-operator-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-noexcept-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-typeid-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-fold-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-coawait-expression` | 3 | `ok` | `ORACLE` | **ORACLE** | translation compile failed: translation.cxx-coawait-expression.cpp:1:65: error: std::coroutine_traits type was not found; include <coroutine> before defining a coroutine     1 \| struct Task { bool await_ready(); }; bool f(Task task) { return co_await task; }       \|                                                                 ^ 1 error generated.  |
+| `translation.c-style-cast-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.unary-expression-or-type-trait-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.va-arg-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-dependent-scope-member-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-default-argument-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-unresolved-construct-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.unresolved-lookup-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-pseudo-destructor-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-unresolved-member-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-dependent-scope-decl-ref-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-inherited-constructor-init-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-std-initializer-list-expression` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.coroutine-body-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | translation compile failed: translation.coroutine-body-statement.cpp:1:53: error: std::coroutine_traits type was not found; include <coroutine> before defining a coroutine     1 \| struct Task { struct promise_type {}; }; Task f() { co_return; }       \|                                                     ^ 1 error generated.  |
+| `translation.attributed-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.designated-initializer-expression` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.coreturn-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | translation compile failed: translation.coreturn-statement.cpp:1:74: error: std::coroutine_traits type was not found; include <coroutine> before defining a coroutine     1 \| struct Task { struct promise_type { void return_void(); }; }; Task f() { co_return; }       \|                                                                          ^ 1 error generated.  |
+| `translation.indirect-goto-statement` | 4 | `ok` | `ORACLE` | **ORACLE** | translation compile failed: translation.indirect-goto-statement.cpp:1:29: error: use of GNU indirect-goto extension [-Werror,-Wgnu-label-as-value]     1 \| void f(void* target) { goto *target; }       \|                             ^ translation.indirect-goto-statement.cpp:1:24: error: indirect goto in function with no address-of-label expressions     1 \| void f(void* target) { goto *target; }       \|                        ^ 2 errors generated.  |
+| `translation.captured-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-assume-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-error-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.openacc-compute-construct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.openacc-loop-construct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.openacc-combined-construct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.openacc-data-construct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.openacc-enter-data-construct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.openacc-exit-data-construct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.openacc-host-data-construct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.openacc-wait-construct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.openacc-init-construct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.openacc-shutdown-construct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.openacc-set-construct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.openacc-update-construct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.openacc-atomic-construct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.openacc-cache-construct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.openacc-asterisk-size-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.hlsl-out-arg-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-metadirective` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-tile-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-stripe-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-unroll-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-reverse-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-interchange-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-depobj-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-scan-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-parallel-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-for-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-for-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-sections-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-section-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-single-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-master-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-critical-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-task-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-taskloop-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-taskloop-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-teams-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-cancellation-point-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-cancel-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-scope-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-masked-task-loop-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-masked-task-loop-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-parallel-masked-task-loop-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-parallel-masked-task-loop-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-teams-distribute-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-teams-distribute-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-teams-distribute-parallel-for-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-teams-distribute-parallel-for-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-data-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-enter-data-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-exit-data-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-parallel-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-parallel-for-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-parallel-for-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-teams-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-teams-distribute-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-teams-distribute-parallel-for-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-teams-distribute-parallel-for-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-teams-distribute-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-interop-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-dispatch-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-masked-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-parallel-masked-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-generic-loop-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-teams-generic-loop-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-teams-generic-loop-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-parallel-generic-loop-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-parallel-generic-loop-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-target-update-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-distribute-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-distribute-parallel-for-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-distribute-parallel-for-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-distribute-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-parallel-for-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-parallel-for-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-parallel-sections-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-parallel-master-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-ordered-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-atomic-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-flush-directive` | 4 | `ok` | `ORACLE` | **ORACLE** | translation compile failed: translation.omp-flush-directive.cpp:3:8: error: expected ';' after expression     3 \| (value)       \|        ^       \|        ; translation.omp-flush-directive.cpp:3:2: warning: expression result unused [-Wunused-value]     3 \| (value)       \|  ^~~~~ 1 warning and 1 error generated.  |
+| `translation.omp-barrier-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-taskwait-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-taskgroup-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-master-taskloop-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-master-taskloop-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-parallel-master-taskloop-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-parallel-master-taskloop-simd-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.omp-taskyield-directive` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.conditional-operator-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.call-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.compound-assignment-operator` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.lambda-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.array-subscript-expression` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.member-expression` | 7 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-member-call-expression` | 7 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-operator-call-expression` | 8 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.compound-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.return-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.if-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.while-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.do-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.for-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.range-for-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.switch-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.declaration-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.case-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.default-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.break-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.continue-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.null-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.goto-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.label-statement` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.label-declaration` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-try-statement` | 10 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-catch-statement` | 10 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.cxx-throw-expression` | 10 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.variable-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.enum-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.typedef-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.type-alias-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.namespace-alias-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.using-directive-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.using-declaration` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.linkage-specification` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `translation.static-assertion` | 0 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `object.automatic-lifetime` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `object.scope-exit` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `object.full-expression-temporary` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `object.storage-reuse` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `object.automatic-initialized` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `object.automatic-assignment` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `object.dynamic-storage` | 1 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
+| `object.static-storage` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `object.thread-storage` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `object.default-initialization` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `scalar.integral-conversion` | 2 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `expression.integral-operators` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `expression.unary-and-shifts` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `expression.callable-prefix-increment` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `expression.callable-postfix-comma` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `expression.callable-compound-assignment` | 3 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
+| `expression.callable-assignment` | 3 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
+| `expression.callable-direct-call` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-switch` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-if` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-while` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-do-while` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-for` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-break` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-continue` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-null` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-void-return` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-goto-label` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-local-declaration` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-nested-block` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `declaration.callable-reference-parameter` | 5 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `declaration.callable-local-reference` | 5 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `expression.callable-conditional` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `expression.callable-logical-short-circuit` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `expression.callable-logical-or` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `tinyxml2.IsUTF8Continuation.negative` | 2 | `ok 1` | `ORACLE` | **ORACLE** | set LEANCPP_TINYXML2_DIR for the unchanged source |
+| `tinyxml2.IsUTF8Continuation.minimum` | 2 | `ok 1` | `ORACLE` | **ORACLE** | set LEANCPP_TINYXML2_DIR for the unchanged source |
+| `tinyxml2.IsUTF8Continuation.nonnegative` | 2 | `ok 0` | `ORACLE` | **ORACLE** | set LEANCPP_TINYXML2_DIR for the unchanged source |
+| `tinyxml2.IsUTF8Continuation.zero` | 2 | `ok 0` | `ORACLE` | **ORACLE** | set LEANCPP_TINYXML2_DIR for the unchanged source |
 
 ## Grammar census
 
@@ -286,30 +287,30 @@ One witness per listed Clang AST node kind, mapped to the charter rung. `fronten
 
 | node kind | rung | frontend | verdict | detail |
 |---|---:|---|---|---|
-| `TranslationUnitDecl` | 0 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `NamespaceDecl` | 0 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `FunctionDecl` | 0 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `ParmVarDecl` | 5 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `CompoundStmt` | 4 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `ReturnStmt` | 4 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `IntegerLiteral` | 2 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `BinaryOperator` | 3 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `UnaryOperator` | 3 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `IfStmt` | 4 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `WhileStmt` | 4 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `ForStmt` | 4 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `DeclStmt` | 5 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `VarDecl` | 5 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `CallExpr` | 3 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `CXXRecordDecl` | 7 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `FieldDecl` | 7 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `CXXMethodDecl` | 7 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `CXXConstructExpr` | 7 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `CXXBaseSpecifier` | 7 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `CXXTryStmt` | 10 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `CXXThrowExpr` | 10 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `LambdaExpr` | 3 | ORACLE | **ORACLE** | pinned Clang is unavailable |
-| `ClassTemplateDecl` | 9 | ORACLE | **ORACLE** | pinned Clang is unavailable |
+| `TranslationUnitDecl` | 0 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `NamespaceDecl` | 0 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `FunctionDecl` | 0 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `ParmVarDecl` | 5 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `CompoundStmt` | 4 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `ReturnStmt` | 4 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `IntegerLiteral` | 2 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `BinaryOperator` | 3 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `UnaryOperator` | 3 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `IfStmt` | 4 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `WhileStmt` | 4 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `ForStmt` | 4 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `DeclStmt` | 5 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `VarDecl` | 5 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `CallExpr` | 3 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `CXXRecordDecl` | 7 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `FieldDecl` | 7 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `CXXMethodDecl` | 7 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `CXXConstructExpr` | 7 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `CXXBaseSpecifier` | 7 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `CXXTryStmt` | 10 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `CXXThrowExpr` | 10 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `LambdaExpr` | 3 | MATCH | **REFUSE** | translation execution is intentionally refused |
+| `ClassTemplateDecl` | 9 | MATCH | **REFUSE** | translation execution is intentionally refused |
 
 ## Rung and corpus status
 

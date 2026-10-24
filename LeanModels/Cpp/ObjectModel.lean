@@ -32,6 +32,7 @@ inductive ObjectError where
   | notDynamicStorage
   | notScopeStorage
   | notTemporaryStorage
+  | lifetimeNotEnded
   deriving Repr, BEq, Inhabited
 
 structure CppObject where
@@ -138,6 +139,21 @@ def endFullExpression (store : ObjectStore) : List ObjectId → Except ObjectErr
       unless value.duration == .temporary do
         throw .notTemporaryStorage
       store.endLifetime object
+
+/-- Reuse an ended storage slot for a new object. The storage identity is
+    preserved, while the type is replaced and the new lifetime remains
+    storage-only until initialization. -/
+def reuseEnded (store : ObjectStore) (object : ObjectId)
+    (type : CppTypeEvidence) : Except ObjectError ObjectStore :=
+  match store.object? object with
+  | none => .error (.missing object)
+  | some value =>
+      match value.phase with
+      | .ended => .ok {objects := store.objects.modify object fun current =>
+          {current with type, phase := .storageOnly}}
+      | .storageOnly => .error .lifetimeNotStarted
+      | .aliveUninitialized | .aliveInitialized => .error .lifetimeNotEnded
+      | .released => .error .storageReleased
 
 def scopeExitLifecycle : Bool :=
   let intType : CppTypeEvidence := .builtin .int

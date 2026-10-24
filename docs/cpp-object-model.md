@@ -25,6 +25,12 @@ materialized temporary for the current full-expression, and
 Temporary IDs cannot be passed to lexical `endScope`, while automatic IDs
 cannot be ended by the full-expression boundary.
 
+`reuseEnded` is the explicit storage-reuse boundary. It accepts only an ended
+slot, keeps the same storage identity, replaces its type, clears the old value
+at the integral layer, and returns storage-only state for the new
+initialization. Live, never-started, and released slots refuse rather
+than silently changing lifetime state.
+
 `allocate` creates storage, while `declareAutomatic` is the rung-1 declaration
 boundary that reserves automatic storage and starts the lifetime, leaving the
 object `aliveUninitialized` until a separate initialization operation.
@@ -54,8 +60,9 @@ unwinding, scope executor, or value store. `CppTypeEvidence` is retained as a
 witness; it is not converted into a layout or an executable value. Static,
 thread, automatic, and temporary storage are tracked and can be ended, while
 `endScope` supplies reverse-order automatic cleanup and `endFullExpression`
-supplies temporary cleanup. Only dynamic storage has an explicit release
-operation in this slice.
+supplies temporary cleanup. `reuseEnded` preserves an ended storage identity
+for a new lifetime. Only dynamic storage has an explicit release operation in
+this slice.
 
 `LeanModels/Cpp/Translation.execute` still refuses every artifact. The next
 semantic slice must connect this store to a typed expression/statement model

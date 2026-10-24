@@ -270,6 +270,34 @@ def callableCallWitness : Bool :=
   | .ok (.ok value) => value == signed 7
   | _ => false
 
+def convertingCalleeParameter : FrontendHandle := {value := "0x21"}
+
+def convertingCallee : CallableCallee := {
+  signature := {result := unsignedIntType, parameters := [unsignedIntType], variadic := false}
+  parameters := [{declaration := convertingCalleeParameter, name := some "value", type := unsignedIntType}]
+  body := .block (.return_ {
+    expression := .parameter convertingCalleeParameter
+    sourceType := unsignedIntType, type := unsignedIntType})
+}
+
+def callConversionFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := unsignedIntType, parameters := [shortType], variadic := false}
+  parameters := [{declaration := narrowParameter, name := some "value", type := shortType}]
+  body := .block (.return_ {
+    expression := .call convertingCallee [{
+      expression := .parameter narrowParameter
+      sourceType := shortType
+      type := shortType}]
+    sourceType := unsignedIntType
+    type := unsignedIntType})
+}
+
+def callableCallConversionWitness : Bool :=
+  match evaluateCallable 32 .lp64 callConversionFunction [⟨.signed 16, -1⟩] with
+  | .ok (.ok value) => value == ⟨.unsigned 32, 4294967295⟩
+  | _ => false
+
 def conditionalFunction : CallableFunction := {
   incrementFunction with
   body := .block (.return_ {
@@ -345,6 +373,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableMixedComparisonWitness
 #guard callableMixedShiftWitness
 #guard callableCallWitness
+#guard callableCallConversionWitness
 #guard callableConditionalWitness
 #guard callableLogicalWitness
 #guard callableLogicalOrWitness
@@ -391,6 +420,9 @@ theorem callable_mixed_shift_witness : callableMixedShiftWitness = true := by
 theorem callable_call_witness : callableCallWitness = true := by
   rfl
 
+theorem callable_call_conversion_witness : callableCallConversionWitness = true := by
+  rfl
+
 theorem callable_conditional_witness : callableConditionalWitness = true := by
   rfl
 
@@ -414,6 +446,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_mixed_comparison_witness
 #print axioms callable_mixed_shift_witness
 #print axioms callable_call_witness
+#print axioms callable_call_conversion_witness
 #print axioms callable_conditional_witness
 #print axioms callable_logical_witness
 #print axioms callable_logical_or_witness

@@ -2905,6 +2905,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-direct-call-conversion",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableCallConversionWitness",
+    "cpp_source": "unsigned int conversion_helper(unsigned int value) { return value; } unsigned int callable_witness(short value) { return conversion_helper(value); }",
+    "cpp_expression": "callable_witness(-1) == 4294967295u",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "statement.callable-switch",
     "kind": "statement",
     "corpus": "rung-4 witness",

@@ -61,6 +61,14 @@ remain loud. The integral return-expression profile is:
   witnessed by the validated expression supplement and whose promotions agree
   with the explicit `TargetProfile`.
 
+Direct `CallExpr` nodes are parsed only through
+`parseCallableDirectCallExpression`, which receives an explicit table of
+already-selected `CallableCallTarget` bodies. The callee is joined by its
+declaration handle, argument expressions are parsed in source order, and the
+selected non-variadic builtin-integral result must agree with the call's
+structured type. Name lookup, overload selection, variadic calls and an
+unlisted callee remain loud refusals.
+
 Conditions additionally retain Clang's `IntegralToBoolean` wrapper and evaluate
 its builtin boolean result as the condition value.
 

@@ -75,6 +75,11 @@ structure CallableSwitchClause where
     parameters : List CallableParameter
     body : CallableStatement
     deriving Repr, BEq, Inhabited
+
+structure CallableCallTarget where
+  declaration : FrontendHandle
+  callee : CallableCallee
+  deriving Repr, BEq, Inhabited
 end
 
 /- A forward goto resumes at the target label and then continues with the
@@ -539,6 +544,54 @@ def parseCallableExpression (profile : TargetProfile) (parameters : List Callabl
     (expressionRows : List CppBinaryExpressionEvidence) (raw : Raw)
     (sourceExpected typeExpected : Option CppTypeEvidence) : Except String TypedCallableExpression :=
   parseCallableExpressionTyped profile parameters expressionRows none raw sourceExpected typeExpected
+
+private partial def callableCalleeReference (raw : Raw) : Except String FrontendHandle := do
+  let kind ← evidenceText raw "kind"
+  if kind == "DeclRefExpr" then
+    referencedDeclaration raw
+  else if kind == "ImplicitCastExpr" || kind == "ParenExpr" then
+    let children ← rawChildren raw
+    let [child] := children
+      | throw "callable: direct call callee wrapper must have one child"
+    callableCalleeReference child
+  else
+    throw s!"callable: unsupported direct call callee {kind}"
+
+/-- Parse a direct call after overload resolution has selected an explicit callee.
+    The target table is an ingestion boundary: a call never invents a body or
+    resolves a name by spelling. -/
+def parseCallableDirectCallExpression (profile : TargetProfile)
+    (parameters : List CallableParameter)
+    (expressionRows : List CppBinaryExpressionEvidence)
+    (expressionTypes : Option (List CppExpressionTypeEvidence))
+    (targets : List CallableCallTarget) (raw : Raw)
+    (typeExpected : Option CppTypeEvidence) : Except String TypedCallableExpression := do
+  unless raw.text "kind" == some "CallExpr" do
+    throw "callable: direct call parser requires a CallExpr"
+  let witnessed ← expressionTypes.mapM (fun rows => expressionTypeFor rows raw)
+  if let some type := witnessed then
+    unless typeExpected.all (· == type) do
+      throw "callable: call expression type disagrees with expected type"
+  let children ← rawChildren raw
+  let calleeRaw :: argumentRaws := children
+    | throw "callable: direct call requires a callee"
+  let declaration ← callableCalleeReference calleeRaw
+  let some target := targets.find? (fun target => target.declaration == declaration)
+    | throw "callable: direct call target is not in the selected target table"
+  unless !target.callee.signature.variadic do
+    throw "callable: variadic direct calls are outside the body profile"
+  let .builtin _ := target.callee.signature.result
+    | throw "callable: direct call result is outside the integral profile"
+  unless target.callee.parameters.length == argumentRaws.length do
+    throw "callable: direct call argument count disagrees with selected callee"
+  let arguments ← argumentRaws.mapM (fun argument =>
+    parseCallableExpressionTyped profile parameters expressionRows expressionTypes argument none none)
+  unless arguments.all (fun argument => callableBuiltin argument.type) do
+    throw "callable: direct call arguments require builtin integral values"
+  let resultType := typeExpected.getD target.callee.signature.result
+  unless resultType == target.callee.signature.result do
+    throw "callable: direct call result disagrees with selected callee"
+  pure {expression := .call target.callee arguments, sourceType := resultType, type := resultType}
 
 mutual
   private partial def parseCallableSequence (profile : TargetProfile)

@@ -317,6 +317,35 @@ def callableCallConversionWitness : Bool :=
   | .ok (.ok value) => value == ⟨.unsigned 32, 4294967295⟩
   | _ => false
 
+def parsedCallRaw : Raw := .object [
+  ("id", .string "0x90"), ("kind", .string "CallExpr"),
+  ("inner", .array [
+    .object [("id", .string "0x91"), ("kind", .string "DeclRefExpr"),
+      ("referencedDecl", .object [("id", .string "0x20"),
+        ("kind", .string "FunctionDecl"), ("name", .string "add_three")])],
+    .object [("id", .string "0x92"), ("kind", .string "DeclRefExpr"),
+      ("referencedDecl", .object [("id", .string "0x10"),
+        ("kind", .string "ParmVarDecl"), ("name", .string "value")])]])]
+
+def parsedCallExpression : Except String TypedCallableExpression :=
+  parseCallableDirectCallExpression .lp64 [
+    {declaration := parameter, name := some "value", type := intType}]
+    [] none [{declaration := calleeParameter, callee := addThreeCallee}]
+    parsedCallRaw (some intType)
+
+def callableParsedCallWitness : Bool :=
+  match parsedCallExpression with
+  | .ok expression =>
+      let function : CallableFunction := {
+        occurrence := default
+        signature := {result := intType, parameters := [intType], variadic := false}
+        parameters := [{declaration := parameter, name := some "value", type := intType}]
+        body := .block (.return_ expression)}
+      match evaluateCallable 32 .lp64 function [signed 4] with
+      | .ok (.ok value) => value == signed 7
+      | _ => false
+  | .error _ => false
+
 def conditionalFunction : CallableFunction := {
   incrementFunction with
   body := .block (.return_ {

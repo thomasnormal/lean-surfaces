@@ -1007,4 +1007,32 @@ private def cStyleNoOpMismatchRaw : Raw := object [
 #guard (parseCallableExpressionTyped .lp64 [narrowParameter] [] none
   cStyleNoOpMismatchRaw none (some intType)) matches .error _
 
+private def directCallParameter : FrontendHandle := {value := "0x20"}
+
+private def directCallCallee : CallableCallee := {
+  signature := {result := intType, parameters := [intType], variadic := false}
+  parameters := [{declaration := directCallParameter, name := some "value", type := intType}]
+  body := .block (.return_ {
+    expression := .parameter directCallParameter
+    sourceType := intType, type := intType})
+}
+
+private def directCallRaw : Raw := object [
+  ("id", text "0x90"), ("kind", text "CallExpr"),
+  ("inner", .array [
+    declRefNode "0x91" "0x20" "helper",
+    declRefNode "0x92" "0x10" "value"])]
+
+#guard match parseCallableDirectCallExpression .lp64 [narrowParameter] [] none
+    [{declaration := directCallParameter, callee := directCallCallee}]
+    directCallRaw (some intType) with
+  | .ok expression => expression.type == intType &&
+      match expression.expression with
+      | .call callee arguments => callee == directCallCallee && arguments.length == 1
+      | _ => false
+  | .error _ => false
+
+#guard (parseCallableDirectCallExpression .lp64 [narrowParameter] [] none []
+  directCallRaw (some intType)) matches .error _
+
 end LeanModels.Cpp.CallableTests

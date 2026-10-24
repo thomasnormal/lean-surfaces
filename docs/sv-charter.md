@@ -5820,3 +5820,18 @@ with extractor tests pinning the nonblocking boundary.
 The fresh 22,046-file census keeps **4,747 clean / 17,233 partial** and lowers
 `AssignmentExpression:target` **3,139 → 3,133**. Differential coverage moves
 **86/82/0/4 → 87/83/0/4**, and grammar coverage remains **211/80/131**.
+
+## Direct `process::self()` writes to opaque process handles — 2026-10-24
+
+A blocking assignment of `process::self()` to a named process handle now
+erases through the opaque-handle boundary. Nonblocking or timed forms,
+process status and method reads, and other process operations remain outside
+this write admission; the tier does not invent process identity or scheduling
+state.
+
+The `opaque_process_self_write` fixture and differential row cover the
+admitted form, with extractor tests pinning the nonblocking boundary. The
+fresh 22,046-file census moves **4,747 → 4,750 clean** and **17,233 → 17,230
+partial**; `AssignmentExpression:target` falls **3,133 → 3,106**.
+Differential coverage moves **87/83/0/4 → 88/84/0/4**, and grammar coverage
+remains **211/80/131**.

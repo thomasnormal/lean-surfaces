@@ -61,6 +61,23 @@ class ChandleWrites(unittest.TestCase):
         self.assertTrue(any(node.get("opaque_handle_null_write")
                             for node in nodes(design)))
 
+    def test_process_self_write_is_inert(self):
+        design = lower(
+            'module top; process handle; initial begin handle = process::self(); '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("opaque_process_self_write")
+                            for node in nodes(design)))
+
+    def test_nonblocking_process_self_write_stays_loud(self):
+        design = lower(
+            'module top; process handle; initial begin handle = process::self(); '
+            'handle <= process::self(); end endmodule')
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

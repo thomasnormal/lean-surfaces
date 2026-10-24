@@ -7379,6 +7379,22 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and _null_literal(expr.right)):
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "opaque_handle_null_write": True}
+    # ``process::self()`` returns an opaque process handle.  The flat
+    # self-check state has no process object slot, so erase only this direct
+    # blocking write; status/method reads and every other process operation
+    # stay outside this admission rather than inventing process identity or
+    # scheduling.
+    if (_SYM is None and expr.op is None and expr.timingControl is None
+            and not expr.isNonBlocking
+            and type(expr.left).__name__ == "NamedValueExpression"
+            and type(getattr(expr.left.type, "canonicalType", None)).__name__
+            == "ClassType"
+            and getattr(expr.left.type.canonicalType, "name", None) == "process"
+            and type(expr.right).__name__ == "CallExpression"
+            and getattr(expr.right, "subroutineName", None) == "self"
+            and not getattr(expr.right, "arguments", [])):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "opaque_process_self_write": True}
     # An unbounded mailbox construction has no flat self-check state.  Erase
     # only the exact built-in ``mailbox box = new()`` write: bounded and
     # argumented constructors, user classes, and every later method/read stay

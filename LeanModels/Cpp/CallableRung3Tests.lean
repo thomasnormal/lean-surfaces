@@ -146,6 +146,25 @@ def callableUnaryPlusWitness : Bool :=
   | .ok (.ok value) => value == signed (-7)
   | _ => false
 
+def bitwiseAndFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := intType, parameters := [intType, intType], variadic := false}
+  parameters := [
+    {declaration := parameter, name := some "left", type := intType},
+    {declaration := {value := "0x11"}, name := some "right", type := intType}]
+  body := .block (.return_ {
+    expression := .binary "&"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableBitwiseAndWitness : Bool :=
+  match evaluateCallable 16 .lp64 bitwiseAndFunction [signed 240, signed 15] with
+  | .ok (.ok value) => value == signed 0
+  | _ => false
+
 def sizeOfFunction : CallableFunction := {
   occurrence := default
   signature := {result := unsignedLongType, parameters := [], variadic := false}
@@ -606,6 +625,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableUnaryLogicalNotWitness
 #guard callableNoexceptWitness
 #guard callableUnaryPlusWitness
+#guard callableBitwiseAndWitness
 #guard callableSizeOfWitness
 #guard callableAlignOfWitness
 #guard callableBoolLiteralWitness
@@ -652,6 +672,9 @@ theorem callable_noexcept_witness : callableNoexceptWitness = true := by
   rfl
 
 theorem callable_unary_plus_witness : callableUnaryPlusWitness = true := by
+  rfl
+
+theorem callable_bitwise_and_witness : callableBitwiseAndWitness = true := by
   rfl
 
 theorem callable_size_of_witness : callableSizeOfWitness = true := by
@@ -731,6 +754,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_unary_logical_not_witness
 #print axioms callable_noexcept_witness
 #print axioms callable_unary_plus_witness
+#print axioms callable_bitwise_and_witness
 #print axioms callable_size_of_witness
 #print axioms callable_align_of_witness
 #print axioms callable_bool_literal_witness

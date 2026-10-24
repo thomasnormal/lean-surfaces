@@ -13,6 +13,12 @@ private theorem tripled_ab : strRepeat "ab" 3 = .ok (.str "ababab") := by
 private theorem tripled_ab_length : lenVal (.str "ababab") = .ok (.int 6) := by
   rfl
 
+private theorem mult_ne_bitAnd : (BinOp.mult == BinOp.bitAnd) = false := by
+  decide
+
+private theorem add_ne_bitAnd : (BinOp.add == BinOp.bitAnd) = false := by
+  decide
+
 private theorem strRepeat_of_bounds (text : String) (count : Int)
     (countBound : count.natAbs ≤ 1048576)
     (outputBound : text.length * count.toNat ≤ 1048576) :
@@ -35,7 +41,7 @@ theorem repeat_right_total (text : PyStr) (count : PyInt)
     (outputBound : text.length * count.toNat ≤ 1048576) :
     string_repeat.repeat_right(text, count) ==>
       String.ofList ((List.replicate count.toNat text.toList).flatten) := by
-  py_prove [string_repeat, sequenceMult, sequenceRepeat,
+  py_prove [string_repeat, lowerLenRepeatPairs, sequenceMult, sequenceMultLength, lenMultBuiltinName, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd,
     strRepeat_of_bounds text count countBound outputBound]
 
 theorem repeat_left_total (text : PyStr) (count : PyInt)
@@ -43,7 +49,7 @@ theorem repeat_left_total (text : PyStr) (count : PyInt)
     (outputBound : text.length * count.toNat ≤ 1048576) :
     string_repeat.repeat_left(count, text) ==>
       String.ofList ((List.replicate count.toNat text.toList).flatten) := by
-  py_prove [string_repeat, sequenceMult, sequenceRepeat,
+  py_prove [string_repeat, lowerLenRepeatPairs, sequenceMult, sequenceMultLength, lenMultBuiltinName, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd,
     strRepeat_of_bounds text count countBound outputBound]
 
 theorem decorated_total (text : PyStr) (count : PyInt)
@@ -51,13 +57,13 @@ theorem decorated_total (text : PyStr) (count : PyInt)
     (outputBound : text.length * count.toNat ≤ 1048576) :
     string_repeat.decorated(text, count) ==>
       ("[" ++ String.ofList ((List.replicate count.toNat text.toList).flatten) ++ "]") := by
-  py_prove [string_repeat, sequenceMult, sequenceRepeat,
+  py_prove [string_repeat, lowerLenRepeatPairs, sequenceMult, sequenceMultLength, lenMultBuiltinName, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd,
     strRepeat_of_bounds text count countBound outputBound]
 
 theorem width_offset_total (offset : PyInt) :
     string_repeat.width_offset(offset) ==> 6 + offset := by
-  py_prove [string_repeat, sequenceMult, sequenceRepeat, tripled_ab,
+  py_prove [string_repeat, lowerLenRepeatPairs, sequenceMult, sequenceMultLength, seqIndexBudget, lenMultBuiltinName, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd, tripled_ab,
     tripled_ab_length]
-  rfl
+  decide
 
 end Examples.python.string_repeat.proof

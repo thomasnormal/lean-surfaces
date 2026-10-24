@@ -795,6 +795,58 @@ def sequenceMult (left right : RVal) : Res RVal :=
       else
         .exn (.typeError s!"unsupported operand type(s) for *: '{left.typeName}' and '{right.typeName}'")
 
+/-- Fast length for a value-sequence multiplication nested directly under
+`len`.  CPython computes the resulting length without materializing the
+sequence, so this path deliberately does not apply `seqBudget`; it keeps the
+index-sized count conversion and the ordinary sequence `TypeError`s from
+`sequenceRepeat`.  `none` means that the heap-aware multiplication path must
+run (for example, a heap-backed list). -/
+def sequenceMultLength (left right : RVal) : Option (Res RVal) :=
+  let repeatSeq (sequence count : RVal) : Res RVal :=
+    match sequence, count with
+    | .ref _, _ | _, .ref _ =>
+        .unsupported "sequence repetition with a heap object is outside the tier (docs/memory-model.md §string repetition)"
+    | .str text, _ =>
+        match asInt count with
+        | some number =>
+            if number.natAbs > seqIndexBudget then
+              .exn (.overflowError "cannot fit 'int' into an index-sized integer")
+            else if number ≤ 0 || text.isEmpty then
+              .ok (.int 0)
+            else
+              .ok (.int (text.length * number.toNat))
+        | Option.none =>
+            .exn (.typeError s!"can't multiply sequence by non-int of type '{typeNamePrefix count.typeName 200}'")
+    | .bytes values, _ =>
+        match asInt count with
+        | some number =>
+            if number.natAbs > seqIndexBudget then
+              .unsupported "sequence repetition count does not fit CPython's index-sized integer"
+            else if number ≤ 0 || values.isEmpty then
+              .ok (.int 0)
+            else
+              .ok (.int (values.size * number.toNat))
+        | Option.none =>
+            .exn (.typeError s!"can't multiply sequence by non-int of type '{typeNamePrefix count.typeName 200}'")
+    | .tuple values, _ | .ntuple _ _ values, _ =>
+        match asInt count with
+        | some number =>
+            if number.natAbs > seqIndexBudget then
+              .exn (.overflowError "cannot fit 'int' into an index-sized integer")
+            else if number ≤ 0 || values.isEmpty then
+              .ok (.int 0)
+            else
+              .ok (.int (values.size * number.toNat))
+        | Option.none =>
+            .exn (.typeError s!"can't multiply sequence by non-int of type '{typeNamePrefix count.typeName 200}'")
+    | _, _ =>
+        .unsupported "repetition of this sequence is outside the tier"
+  match left, right with
+  | .ref _, _ | _, .ref _ => Option.none
+  | .str _, _ | .bytes _, _ | .tuple _, _ | .ntuple _ _ _, _ => some (repeatSeq left right)
+  | _, .str _ | _, .bytes _ | _, .tuple _ | _, .ntuple _ _ _ => some (repeatSeq right left)
+  | _, _ => Option.none
+
 /-- `a &&& ~m` over `Nat`. `Nat.ldiff` does not exist in v4.33.0-rc1, and
 none is needed: every bit of `a` either is or is not in `m`, so removing
 the ones that are IS the difference. Never underflows (the grid instrument
@@ -2850,14 +2902,14 @@ interpreter was run as the runner). Kept separate from `isPyBuiltinName`,
 which stays the pinned CPython `dir(builtins)`. -/
 def isLoweredBuiltinName (id : String) : Bool :=
   id == dictDelBuiltinName || id == attrDelBuiltinName || id == "<dictkeys>" || id == "<dictvalues>" ||
-  id == "<dictitems>"
+  id == "<dictitems>" || id == lenMultBuiltinName
 
 /-- The refusal a name-resolution arm owes an UNMODELLED CPython builtin
 (see `isPyBuiltinName`) — the message names the construct, never a
 fabricated `NameError`. -/
 def unmodelledBuiltinMsg (id : String) : String :=
   if isLoweredBuiltinName id then
-    s!"'{id}' (a dict view or `del d[k]`, lowered at ingestion) is not modelled by the proof interpreter — outside its tier"
+    s!"'{id}' (a synthetic ingestion builtin) is not modelled by the proof interpreter — outside its tier"
   else
   s!"builtin '{id}' exists in CPython but is not modelled — outside the tier (a NameError here would be a wrong answer for a name CPython binds)"
 
@@ -6863,6 +6915,10 @@ mutual
       kwargs.isEmpty && (id != "sorted") && (id != "next") && (id != "enumerate")
         && (id != "count") && (id != "any") && (id != "all") && (id != "set")
         && (id != "print") && (id != "list") && (id != "dict") && (id != "iter")
+        -- `<lenmult>` may fall back to heap-backed multiplication, which
+        -- allocates; keep it outside the conditional world-preservation
+        -- fragment even when its immediate fast path is pure.
+        && (id != lenMultBuiltinName)
         && Expr.heapFreeList args.toList
     | .call (.attribute recv attr _) args kwargs _ _ =>
       kwargs.isEmpty && heapFreeAttr attr && recv.heapFree
@@ -7614,6 +7670,23 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                   else
                     .exn st (.typeError (ntArityErrorMsg nt.fields vs.length))
                 | Option.none =>
+                  if fname == lenMultBuiltinName then
+                    -- Ingestion lowers `len(sequence * count)` to this
+                    -- synthetic call so the pure proof interpreter can
+                    -- answer the length without constructing an over-budget
+                    -- sequence.  Heap-backed operands still use the ordinary
+                    -- stateful multiplication path, exactly as the runner.
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    match vs with
+                    | [left, right] =>
+                      match sequenceMultLength left right with
+                      | some result => Run.liftRes st result
+                      | Option.none =>
+                        Run.liftRes st (evalBinOpH st.world.heap .mult left right) ⤳ fun st hr =>
+                        Run.liftRes { st with world := { st.world with heap := hr.1 } }
+                          (lenValH hr.1 hr.2)
+                    | _ => .exn st (.typeError s!"internal: {lenMultBuiltinName} expects two arguments")
+                  else
                   if fname == "len" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     match vs with

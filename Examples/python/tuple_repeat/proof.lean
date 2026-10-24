@@ -20,9 +20,9 @@ theorem repeat_right_length_total (count : PyInt)
     omega
   by_cases nonpositive : count ≤ 0
   · have zeroCount : count.toNat = 0 := Int.toNat_eq_zero.mpr nonpositive
-    py_prove [tuple_repeat, sequenceMult, sequenceRepeat, tupleRepeat,
+    py_prove [tuple_repeat, lowerLenRepeatPairs, sequenceMult, sequenceMultLength, lenMultBuiltinName, sequenceRepeat, tupleRepeat,
       indexBound, nonpositive, zeroCount]
-  · py_prove [tuple_repeat, sequenceMult, sequenceRepeat, tupleRepeat, seqBudget,
+  · py_prove [tuple_repeat, lowerLenRepeatPairs, sequenceMult, sequenceMultLength, lenMultBuiltinName, sequenceRepeat, tupleRepeat, seqBudget,
       indexBound, nonpositive, countBound, outputBound, repeatedTuple_size]
 
 theorem repeat_empty_length_total (count : PyInt)
@@ -31,7 +31,7 @@ theorem repeat_empty_length_total (count : PyInt)
   have indexBound : ¬count.natAbs > seqIndexBudget := by
     simp only [seqIndexBudget]
     omega
-  py_prove [tuple_repeat, sequenceMult, sequenceRepeat, tupleRepeat, seqBudget,
+  py_prove [tuple_repeat, lowerLenRepeatPairs, sequenceMult, sequenceMultLength, lenMultBuiltinName, sequenceRepeat, tupleRepeat, seqBudget,
     indexBound, countBound, repeatedTuple_size]
 
 #print axioms repeat_right_length_total

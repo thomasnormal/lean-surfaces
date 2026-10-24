@@ -111,6 +111,11 @@ change is listed here under **Changed** or **Removed**.
 - String repetition counts beyond the pinned CPython index-sized range now
   raise the exact `OverflowError`, including empty strings and nonpositive
   counts; positive materialization-budget refusals remain loud.
+- Length-only `len(sequence * count)` repetition now computes the CPython
+  length for strings, bytes, tuples, and namedtuples without materializing an
+  over-budget result. Direct expressions and the admitted temporary-assignment
+  forms preserve index overflow, nonpositive and empty short-circuits, and
+  faithful sequence `TypeError`s.
 - Admitted user exception classes now preserve one positional string argument,
   matching CPython's uncaught `Stop: message` output; non-string and
   multi-argument constructors remain loud.

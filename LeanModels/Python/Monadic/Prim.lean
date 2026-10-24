@@ -137,6 +137,19 @@ def withExitOnFlow (eval : Expr → SemF RVal) (exitExpr : Expr)
 def lenM (v : RVal) : SemF RVal := do
   liftRes (lenValH (← frameHeap) v)
 
+/-- `len(sequence * count)` can answer from immediate operands without
+materializing an over-budget repeated value. Heap-backed operands use the
+ordinary stateful multiplication worker, preserving list allocation and
+error ordering. -/
+def lenMultM (a b : RVal) : SemF RVal := do
+  match sequenceMultLength a b with
+  | some result => liftRes result
+  | Option.none =>
+      let h ← frameHeap
+      let (h', product) ← liftRes (evalBinOpH h .mult a b)
+      heapPut h'
+      liftRes (lenValH h' product)
+
 /-- Store `env[target] := v` through the trunk's own target walker. -/
 def assignM (target : Expr) (v : RVal) : SemF Unit := do
   let st ← get

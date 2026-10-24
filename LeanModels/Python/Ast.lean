@@ -1011,6 +1011,12 @@ The attribute name is an ingestion-time constant, so the synthetic call cannot
 be confused with a user expression or a shadowable Python builtin. -/
 def attrDelBuiltinName : String := "<attrdel>"
 
+/-- `len(sequence * count)` lowers to this synthetic builtin so the two
+operands are ordinary call arguments. Keeping the rewrite in ingestion lets
+the structural evaluator recurse into each operand without a non-structural
+look through the call's argument array. -/
+def lenMultBuiltinName : String := "<lenmult>"
+
 /-- §PEP 289: the synthesized genexp function's name PREFIX, and its implicit
 first parameter. Ingestion mints the names (`Json.lean`) and the EVALUATOR has
 to recognise them, because PEP 289 gives a genexp a creation-time rule that an

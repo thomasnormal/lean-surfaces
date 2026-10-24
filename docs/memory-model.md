@@ -484,6 +484,15 @@ short-circuit to an empty tuple. Positive results that exceed `seqBudget`
 remain loud rather than guessing `MemoryError`. The positive-result bounds are
 fuel-independent.
 
+When the result is consumed immediately by `len`, ingestion lowers the direct
+expression, or the adjacent `result = sequence * count; return len(result)`
+and immutable `*=` shape, to the synthetic `<lenmult>` call. Its worker reads
+the same operand and count protocol but returns `len` directly, so a positive
+tuple result may exceed `seqBudget` without allocating. Index-sized overflow,
+nonpositive counts, empty tuples, and non-integer sequence errors keep the
+ordinary repetition order and messages. Heap-backed list repetition is not
+part of this length-only shortcut.
+
 Admitted non-positive counts produce an empty tuple. Positive counts retain
 the structural `List.replicate`/`flatten`/`toArray` implementation, with no
 cache or special-case fast path. Namedtuple repetition yields a PLAIN tuple,
@@ -520,6 +529,13 @@ strings and non-positive counts short-circuit to the empty string. Larger
 positive counts/output refuse, never guessing `MemoryError`. These
 bounds do not depend on interpreter fuel. Lone surrogates remain outside
 Lean's `Char` boundary.
+
+The direct `len(sequence * count)` form and its adjacent temporary-assignment
+forms use the synthetic `<lenmult>` worker. It preserves the ordinary
+sequence protocol and index-sized overflow, while returning the code-point
+length before the materialization budget is consulted. Thus a positive string
+whose repeated output exceeds `seqBudget` is still admitted when only its
+length is requested; ordinary repetition retains the materialization bound.
 
 `sequenceMult` preserves the left sequence's multiplication protocol before
 trying the right sequence: `"ab" * (1,)` names `tuple` in its non-integer

@@ -45,6 +45,31 @@ DECIDED: admit the single-handler `try … else` shape through ingestion
 lowering; retain `finally` and the other unrepresented handler protocols as
 loud boundaries.
 
+## 2026-10-24-pycomplete-102 — length-only sequence repetition
+
+`len(sequence * count)` now returns CPython's length for strings, bytes,
+tuples, and namedtuples without materializing a result that exceeds the
+`seqBudget` bound. Ingestion lowers both direct expressions and the admitted
+temporary `result = sequence * count; return len(result)` (including immutable
+`*=`) to `<lenmult>`, which preserves left-to-right operand evaluation,
+index-sized count overflow, nonpositive and empty short-circuits, and the
+ordinary non-integer sequence errors. Heap-backed list repetition continues to
+use its stateful allocation path.
+
+The proof surface has the same pure length worker and symbolic tuple/string
+proofs; the synthetic operation is conservatively outside `Expr.heapFree`
+because its fallback can still reach heap-backed repetition. Thirteen
+differential rows moved from recorded refusals to MATCH, with no new
+divergences.
+
+| Measurement | Result |
+|---|---|
+| Focused Lean proofs | `string_repeat.proof` and `tuple_repeat.proof` build |
+| Full executable differential | 3,682 rows: 3,579 matched, 103 whitelisted, 0 failed |
+| Full proof differential | 3,682 rows: 3,469 matched, 213 refused, 0 failed |
+| Grammar census | 145 witnesses: 133 MATCH / 12 REFUSE, 0 drift |
+| Generated checks | coverage page, backlog index, JSON validation, and `git diff --check` passed |
+
 ## 2026-10-24-pycomplete-97 — dictionary key-view intersection
 
 Dictionary key views now support the measured set-like `&` operation with

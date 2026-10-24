@@ -217,6 +217,10 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
       -- §del: `del o.attr` lowers to `<attrdel>(o, "attr")` under the same
       -- synthetic-name discipline as item deletion.
       else if fname == attrDelBuiltinName then .builtin fname
+      -- `len(sequence * count)` is lowered by Json.lean so both operands
+      -- remain structural call arguments (the evaluator cannot recurse
+      -- through a pattern extracted from an argument array).
+      else if fname == lenMultBuiltinName then .builtin fname
       else if isBuiltinName fname then .builtin fname
       else if isModuleDunder fname then
         .preRefuse s!"module attribute '{fname}' is bound by the import machinery, not by a statement — outside the G1 tier"
@@ -293,6 +297,10 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     match vs with
     | [v] => lenM v
     | _ => raisePy (.typeError s!"len() takes exactly one argument ({vs.length} given)")
+  else if fname == lenMultBuiltinName then
+    match vs with
+    | [left, right] => lenMultM left right
+    | _ => raisePy (.typeError s!"internal: {lenMultBuiltinName} expects two arguments")
   else if fname == "abs" then
     match vs with
     | [v] => liftRes (absVal v)

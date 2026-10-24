@@ -1280,6 +1280,19 @@ mutual
         let drainOk := match f with
           | .name d _ => drainingBuiltins.contains d
           | _ => false
+        -- A direct `len(sequence * count)` is compiled by CPython as a
+        -- multiplication followed by a length query, but the tier's fixed
+        -- materialization budget would make that shape refuse unnecessarily.
+        -- Lower the two operands into a synthetic call so the structural
+        -- evaluator can recurse into them before the length-only worker runs.
+        match f, args.toList, kwargs.isEmpty, cu with
+        | .name "len" _, [(.binOp left .mult right _)], true, Option.none =>
+            if !ctx.params.contains "len" && !ctx.assigned.contains "len"
+                && !ctx.outer.contains "len" then
+              return .call (.name lenMultBuiltinName sp)
+                #[← lowerExpr ctx left, ← lowerExpr ctx right] #[] Option.none sp
+            else pure ()
+        | _, _, _, _ => pure ()
         -- §3c-i-b: a dict VIEW in CONSUMING-ARGUMENT position becomes a
         -- synthetic builtin over the receiver — `list(d.keys())` ⇢
         -- `list(<dictkeys>(d))`. The rewrite fires ONLY here, so
@@ -1368,6 +1381,43 @@ mutual
       StateM (Nat × Array FunctionDefn) (Array Expr) :=
     es.mapM (lowerExpr ctx)
 end
+
+/-- Fuse the local temporary shape used by the repetition acceptance examples:
+`result = sequence * count; return len(result)` (and its immutable `*=` form)
+becomes the same length-only synthetic call as a direct `len(sequence * count)`.
+The assignment is immediately consumed by the return, so removing it preserves
+left-to-right operand evaluation while avoiding a needless over-budget
+materialization. -/
+def lowerLenRepeatPairs (ctx : LowerCtx) : Array Stmt → Array Stmt
+  | ss =>
+      let rec go : List Stmt → List Stmt
+        | .assign #[.name target targetSp] (.binOp left .mult right binSp) assignSp ::
+              .ret (some (.call (.name "len" lenSp) #[.name used usedSp]
+                #[] Option.none rsp)) retSp :: rest =>
+            if target == used && !ctx.params.contains "len"
+                && !ctx.assigned.contains "len" && !ctx.outer.contains "len" then
+              .ret (some (.call (.name lenMultBuiltinName rsp) #[left, right]
+                #[] Option.none rsp)) rsp :: go rest
+            else
+              .assign #[.name target targetSp] (.binOp left .mult right binSp) assignSp
+                :: .ret (some (.call (.name "len" lenSp) #[.name used usedSp]
+                  #[] Option.none rsp)) retSp :: go rest
+        | .assign #[.name target targetSp] initial assignSp ::
+              .augAssign (.name used usedSp) .mult count augSp ::
+              .ret (some (.call (.name "len" lenSp) #[.name returned returnedSp]
+                #[] Option.none rsp)) retSp :: rest =>
+            if target == used && used == returned && !ctx.params.contains "len"
+                && !ctx.assigned.contains "len" && !ctx.outer.contains "len" then
+              .ret (some (.call (.name lenMultBuiltinName rsp) #[initial, count]
+                #[] Option.none rsp)) rsp :: go rest
+            else
+              .assign #[.name target targetSp] initial assignSp
+                :: .augAssign (.name used usedSp) .mult count augSp
+                :: .ret (some (.call (.name "len" lenSp) #[.name returned returnedSp]
+                  #[] Option.none rsp)) retSp :: go rest
+        | s :: rest => s :: go rest
+        | [] => []
+      (go ss.toList).toArray
 
 mutual
   /-- Rewrite every lowerable genexp in the statement. -/
@@ -1464,7 +1514,9 @@ mutual
   /-- Elementwise `lowerStmt`. -/
   private partial def lowerStmts (ctx : LowerCtx) (ss : Array Stmt) :
       StateM (Nat × Array FunctionDefn) (Array Stmt) :=
-    ss.mapM (lowerStmt ctx)
+    do
+      let lowered ← ss.mapM (lowerStmt ctx)
+      return lowerLenRepeatPairs ctx lowered
 end
 
 /-- Lower every genexp in the module: function bodies first, then the

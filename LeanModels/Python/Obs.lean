@@ -919,7 +919,8 @@ theorem fuelMono (fuel : Nat) :
                         -- len → sorted → max → min → any/all → set → abs →
                         -- int → sum → tuple → list → dict → range →
                         -- enumerate → count → next → ord → chr → hex → format → tail
-                        refine Run.le_ite (hb _)                             -- len
+                        refine Run.le_ite ?_                                  -- len(sequence * count)
+                            (Run.le_ite (hb _)                                  -- len
                             (Run.le_ite ?_                                     -- sorted
                              (Run.le_ite ?_                                    -- max
                               (Run.le_ite ?_                                   -- min
@@ -944,7 +945,20 @@ theorem fuelMono (fuel : Nat) :
                                              (Run.le_ite (hb _)                 -- chr
                                              (Run.le_ite (hb _)                 -- hex
                                               (Run.le_ite (hb _)                -- format
-                                              ?_))))))))))))))))))))))))
+                                              ?_)))))))))))))))))))))))))
+                        -- `<lenmult>` evaluates its operands once and then
+                        -- chooses a fuel-independent length/result worker.
+                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                          cases vs with
+                          | nil => exact Run.le_refl _
+                          | cons left rest =>
+                            cases rest with
+                            | nil => exact Run.le_refl _
+                            | cons right rest' =>
+                              cases rest' with
+                              | nil =>
+                                cases sequenceMultLength left right <;> exact Run.le_refl _
+                              | cons _ _ => exact Run.le_refl _
                         -- sorted
                         · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                           cases vs with
@@ -2538,11 +2552,15 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             -- §iter added a TWELFTH exclusion (`iter` ALLOCATES a key cursor);
             -- it is discarded here because this interpreter has no `iter` arm,
             -- so the chain below has no branch for it to rewrite away.
-            obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨hkw, hns⟩, hnn⟩, hne⟩, hnc⟩, hna⟩, hnl⟩, hnset⟩, hnpr⟩, hnlst⟩, hndct⟩, _⟩, hflE⟩ := hfree
+            obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨hkw, hns⟩, hnn⟩, hne⟩, hnc⟩, hna⟩, hnl⟩, hnset⟩, hnpr⟩, hnlst⟩, hndct⟩, _⟩, hlm⟩, hflE⟩ := hfree
             have hs : (fname == "sorted") = false := by
               cases hbe : fname == "sorted"
               · rfl
               · rw [bne, hbe] at hns; simp at hns
+            have hlmx : (fname == lenMultBuiltinName) = false := by
+              cases hbe : fname == lenMultBuiltinName
+              · rfl
+              · rw [bne, hbe] at hlm; simp at hlm
             -- H4: `next` STEPS a generator and `enumerate`/`count`
             -- ALLOCATE an iterator object; H6 adds `any`/`all` (an
             -- unguarded short-circuit drain) — the fragment excludes all
@@ -2632,7 +2650,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 -- branch reduces away; the def/namedtuple collision guard
                 -- stays an undecided (walked) ite, and namedtuple
                 -- CONSTRUCTION is a pure value — world-preserving
-                simp only [hs, hnx, hex, hcx, hay, hal, hsetx, hprx, hlstx, hdctx,
+                simp only [hlmx, hs, hnx, hex, hcx, hay, hal, hsetx, hprx, hlstx, hdctx,
                   findClass_heapFree hm fname,
                   Option.isSome_none, Bool.false_or, Bool.false_eq_true, if_false]
                 refine .ite (.ite .unsupported (.bind hargs fun st₁ vs h₁ => ?_)) ?_

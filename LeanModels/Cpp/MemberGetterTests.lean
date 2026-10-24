@@ -72,4 +72,10 @@ private theorem kernelGetters :
 #print axioms IntegralMemberGetter.invoke_memory
 #print axioms IntegralMemberGetter.invoke_of_read
 
+def memberGetterBooleanConversionWitness : Bool :=
+  ({getter with conversions := [.boolean], result := .boolean}).invoke (snapshot (-9)) ==
+    .ok ((snapshot (-9)).memory, ⟨.boolean, 1⟩)
+
+#guard memberGetterBooleanConversionWitness
+
 end LeanModels.Cpp.MemberGetterTests

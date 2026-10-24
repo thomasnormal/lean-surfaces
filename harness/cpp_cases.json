@@ -3169,6 +3169,18 @@
     "rung": 7
   },
   {
+    "id": "expression.member-getter-bool-conversion-call",
+    "kind": "expression",
+    "corpus": "rung-7 witness",
+    "lean_module": "LeanModels.Cpp.MemberGetterTests",
+    "lean_namespace": "LeanModels.Cpp.MemberGetterTests",
+    "lean_expression": "memberGetterBooleanConversionWitness",
+    "cpp_source": "struct Owner { int value = -9; bool read() const { return value; } }; bool callable_witness() { Owner owner; return owner.read(); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

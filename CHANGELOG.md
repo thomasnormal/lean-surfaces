@@ -37,6 +37,10 @@ change is listed here under **Changed** or **Removed**.
 - Heap-backed `list * int` and `int * list` now allocate fresh repeated lists
   on the monadic interpreter, with CPython's index-size and materialization
   bounds; the value-side proof interpreter keeps this stateful shape loud.
+- Boundary `Val.list` snapshots now support ordinary `list * int` and
+  `int * list` in the pure value interpreter, including length-only
+  observation without materializing an over-budget result; heap-list aliasing
+  and augmented repetition remain stateful.
 - Heap-backed list `*=` now updates the existing list address in place on the
   monadic interpreter, so aliases observe the repeated contents; the proof
   interpreter keeps this stateful mutation loud.

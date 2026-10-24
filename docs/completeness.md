@@ -403,7 +403,8 @@ shipped sunfish's padding line
 (`(0,) * 20 + pst[k] + (0,) * 20` over `table[i*8 : i*8+8]`) runs
 through exactly those. Empty and non-positive tuple/string repetitions now
 short-circuit after index-sized count conversion; positive nonempty results
-still use the fixed materialization budget, and list repetition remains loud.
+still use the fixed materialization budget. Heap-list repetition remains a
+stateful monadic path, while boundary-list repetition is pure.
 
 The list-slice price was small because the allocation shape was already
 paid for: `list(iterable)` left `Expr.heapFree`, added one `worldInv`

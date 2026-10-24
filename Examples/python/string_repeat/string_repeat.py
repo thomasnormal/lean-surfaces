@@ -30,6 +30,17 @@ def repeat_aug_live_list(count):
     return (xs is ys, ys)
 
 
+def repeat_boundary_list(values, count):
+    # A boundary list is an immutable snapshot inside the isolated value
+    # surface; multiplication returns a fresh list without exposing heap
+    # aliasing to the caller.
+    return values * count
+
+
+def repeat_boundary_list_length(values, count):
+    return len(values * count)
+
+
 def repeat_right_length(text, count):
     result = text * count
     return len(result)

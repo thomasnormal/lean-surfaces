@@ -262,6 +262,13 @@ cycle DETECTION, never by running out of fuel).
   remains loud because its boundary list representation cannot express this
   heap mutation.
 
+  Boundary `Val.list` snapshots now also support ordinary `list * int` and
+  `int * list` through the pure `listValueRepeat` worker. The result is a
+  fresh snapshot, so this path does not claim heap aliasing or make `*=` live
+  for a boundary list. The same immutable snapshot is accepted by the
+  length-only repetition worker; heap-backed lists continue through the
+  stateful allocation path.
+
 ## Class semantics (H3 inventory — BUILT, 2026-08-08)
 
 * **Representation**: `ClassDef` is structured end to end (extractor →
@@ -491,15 +498,16 @@ the same operand and count protocol but returns `len` directly, so a positive
 tuple result may exceed `seqBudget` without allocating. Index-sized overflow,
 nonpositive counts, empty tuples, and non-integer sequence errors keep the
 ordinary repetition order and messages. Heap-backed list repetition is not
-part of this length-only shortcut.
+part of this length-only shortcut; a boundary `Val.list` uses the pure
+snapshot path described in the list section above.
 
 Admitted non-positive counts produce an empty tuple. Positive counts retain
 the structural `List.replicate`/`flatten`/`toArray` implementation, with no
 cache or special-case fast path. Namedtuple repetition yields a PLAIN tuple,
 and elements that refer to heap objects retain their original references:
 repetition is shallow, not a copy of the referents. Existing operand evaluation
-and sequence-protocol precedence are unchanged; list repetition and custom
-`__index__` protocols remain loud. No recursion point, heap-free predicate,
+and sequence-protocol precedence are unchanged; heap-list repetition and
+custom `__index__` protocols remain loud. No recursion point, heap-free predicate,
 or public judgment changes.
 
 `Examples/python/tuple_repeat` proves symbolic lengths for a two-element tuple
@@ -3314,10 +3322,11 @@ each construct differential, refusals loud):
   Tuple/namedtuple and value-list slices use immediate values in the proof
   interpreter; heap-list slices allocate a fresh `Obj.list` in the runner and
   freeze to a `Val.list` snapshot at the boundary.
-* **sequence repetition** `tuple * int` / `int * tuple` (bool coerces;
-  admitted `n ≤ 0` → empty). Original-count magnitude and output size are
-  bounded independently; see the current tuple repetition section. Lists
-  remain loud; strings use the current string repetition tier.
+* **sequence repetition** `tuple * int` / `int * tuple` and ordinary boundary
+  `list * int` / `int * list` (bool coerces; admitted `n ≤ 0` → empty).
+  Original-count magnitude and output size are bounded independently; see the
+  current tuple repetition section. Heap-backed lists still use their
+  stateful allocation/mutation paths; strings use the current string tier.
 * **`sum(iterable[, start])`**: the element fold IS `evalBinOp .add`
   (so int and tuple sums are exactly Python's `+`, mixed types its
   faithful `TypeError`); a str or bytes `start` is CPython's special

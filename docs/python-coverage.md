@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3682 | 3579 | 0 | 103 |
+| 3689 | 3586 | 0 | 103 |
 
-Of the 3579 rows the model decides, 3579 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 3586 rows the model decides, 3586 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,7 +20,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 3682 | 3469 | 0 | 213 |
+| 3689 | 3476 | 0 | 213 |
 
 ## Grammar
 
@@ -173,7 +173,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 |---|---|---|
 | `Add` | MATCH |  |
 | `Sub` | MATCH |  |
-| `Mult` | MATCH | int only; str/list repetition refuses |
+| `Mult` | MATCH | scalar and immutable/boundary sequence repetition; heap-list aliasing is stateful |
 | `Div` | MATCH | true division rounds directly to binary64 |
 | `FloorDiv` | MATCH | Int.fdiv |
 | `Mod` | MATCH | Int.fmod; bare `%` string formatting is a second tier |

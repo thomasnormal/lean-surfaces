@@ -858,7 +858,8 @@ print(x, x is Ellipsis)
 # --- operator (13) ---------------------------------------------------------
 w("op.Add", "print(1 + 2)\n", "MATCH", "")
 w("op.Sub", "print(3 - 1)\n", "MATCH", "")
-w("op.Mult", "print(2 * 3)\n", "MATCH", "int only; str/list repetition refuses")
+w("op.Mult", "print(2 * 3)\n", "MATCH",
+  "scalar and immutable/boundary sequence repetition; heap-list aliasing is stateful")
 w("op.Div", "print(6 / 2)\n", "MATCH", "true division rounds directly to binary64")
 w("op.FloorDiv", "print(7 // 2)\n", "MATCH", "Int.fdiv")
 w("op.Mod", "print(7 % 2)\n", "MATCH", "Int.fmod; bare `%` string formatting is a second tier")

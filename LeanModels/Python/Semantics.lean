@@ -63,7 +63,7 @@ The v0 discipline is unchanged:
 
 Tier-boundary decisions refining DESIGN.md (Python supports these, the
 tier does not — so they are `unsupported`, never a fake `TypeError`):
-list repetition (`[1] * 2`), `%` string formatting, `str` unpacking
+heap-list repetition (`[1] * 2`), `%` string formatting, `str` unpacking
 (`a, b = "xy"`), nested/starred unpacking targets, `break`/`continue`
 escaping a function body, negative `**` exponents (incl. `0 ** -1`),
 referencing a function (or a builtin — `len`/`sorted`) as a value, calling a
@@ -734,6 +734,21 @@ def tupleRepeat (xs : Array RVal) (count : Int) : Res RVal :=
   else
     .unsupported "tuple repetition beyond seqBudget is outside the tier (count magnitude or output element count; docs/memory-model.md §tuple repetition)"
 
+/-- Repeat a boundary list snapshot. A `Val.list` argument is represented as
+`.listV` by the public wrapper, so this path is immutable from the caller's
+point of view: multiplication allocates a fresh list in Python, but no alias
+to that fresh result can escape the isolated call except through its returned
+snapshot. Heap-backed lists still use the stateful monadic worker. -/
+def listValueRepeat (xs : Array RVal) (count : Int) : Res RVal :=
+  if count.natAbs > seqIndexBudget then
+    .exn (.overflowError "cannot fit 'int' into an index-sized integer")
+  else if count ≤ 0 || xs.isEmpty then
+    .ok (.listV #[])
+  else if count.natAbs ≤ seqBudget ∧ xs.size * count.toNat ≤ seqBudget then
+    .ok (.listV ((List.replicate count.toNat xs.toList).flatten.toArray))
+  else
+    .unsupported "list repetition beyond seqBudget is outside the tier (count magnitude or output element count; docs/memory-model.md §list repetition)"
+
 def bytesRepeat (xs : Array UInt8) (count : Int) : Res RVal :=
   if count.natAbs > seqIndexBudget then
     .unsupported "sequence repetition count does not fit CPython's index-sized integer"
@@ -769,6 +784,7 @@ def sequenceRepeat (sequence count : RVal) : Res RVal :=
           match sequence with
           | .str text => strRepeat text number
           | .bytes values => bytesRepeat values number
+          | .listV values => listValueRepeat values number
           | .tuple values | .ntuple _ _ values => tupleRepeat values number
           | _ => .unsupported "repetition of this sequence is outside the tier"
       | Option.none =>
@@ -781,13 +797,9 @@ def sequenceMult (left right : RVal) : Res RVal :=
   | .ref _, _ | _, .ref _ =>
       .unsupported "sequence multiplication with a heap object is outside the tier (docs/memory-model.md §string repetition)"
   | .str _, _ | .bytes _, _ | .tuple _, _ | .ntuple _ _ _, _ => sequenceRepeat left right
-  | .listV _, _ =>
-      if (asInt right).isSome then
-        .unsupported
-          s!"sequence repetition ('list' * '{right.typeName}') is outside the v0 tier"
-      else
-        .exn (.typeError s!"can't multiply sequence by non-int of type '{right.typeName}'")
-  | _, .str _ | _, .bytes _ | _, .tuple _ | _, .ntuple _ _ _ => sequenceRepeat right left
+  | .listV _, _ => sequenceRepeat left right
+  | _, .str _ | _, .bytes _ | _, .listV _ | _, .tuple _ | _, .ntuple _ _ _ =>
+      sequenceRepeat right left
   | _, _ =>
       if (left.isSeq && (asInt right).isSome) || ((asInt left).isSome && right.isSeq) then
         .unsupported
@@ -828,7 +840,7 @@ def sequenceMultLength (left right : RVal) : Option (Res RVal) :=
               .ok (.int (values.size * number.toNat))
         | Option.none =>
             .exn (.typeError s!"can't multiply sequence by non-int of type '{typeNamePrefix count.typeName 200}'")
-    | .tuple values, _ | .ntuple _ _ values, _ =>
+    | .listV values, _ | .tuple values, _ | .ntuple _ _ values, _ =>
         match asInt count with
         | some number =>
             if number.natAbs > seqIndexBudget then
@@ -843,8 +855,10 @@ def sequenceMultLength (left right : RVal) : Option (Res RVal) :=
         .unsupported "repetition of this sequence is outside the tier"
   match left, right with
   | .ref _, _ | _, .ref _ => Option.none
-  | .str _, _ | .bytes _, _ | .tuple _, _ | .ntuple _ _ _, _ => some (repeatSeq left right)
-  | _, .str _ | _, .bytes _ | _, .tuple _ | _, .ntuple _ _ _ => some (repeatSeq right left)
+  | .str _, _ | .bytes _, _ | .listV _, _ | .tuple _, _ | .ntuple _ _ _, _ =>
+      some (repeatSeq left right)
+  | _, .str _ | _, .bytes _ | _, .listV _ | _, .tuple _ | _, .ntuple _ _ _ =>
+      some (repeatSeq right left)
   | _, _ => Option.none
 
 /-- `a &&& ~m` over `Nat`. `Nat.ldiff` does not exist in v4.33.0-rc1, and

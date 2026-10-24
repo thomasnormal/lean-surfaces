@@ -17,6 +17,31 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-103 — boundary-list repetition
+
+The pure value surface now admits ordinary `list * int` and `int * list` for
+boundary `Val.list` snapshots. `listValueRepeat` preserves CPython's
+index-sized overflow, nonpositive and empty short-circuits, non-integral
+`TypeError`s, and the fixed materialization bound. The direct `len(list *
+count)` shape uses the same length-only worker, so a large positive result can
+be observed without constructing it. Heap-backed lists still use the monadic
+allocation path, and augmented assignment keeps its alias-sensitive heap
+boundary.
+
+The acceptance battery adds both operand orders and the large length-only case
+to `string_repeat`; the existing heap-list `*=` witness remains the stateful
+distinction.
+
+| Measurement | Result |
+|---|---|
+| Focused Lean build | `Examples.python.string_repeat.spec` passes |
+| Focused executable differential | 3 rows: 3 MATCH / 0 failed |
+| Focused proof differential | 3 rows: 3 MATCH / 0 refused / 0 failed |
+| Full executable differential | 3,689 rows: 3,586 matched, 103 whitelisted, 0 failed |
+| Full proof differential | 3,689 rows: 3,476 matched, 213 refused, 0 failed |
+| Extractor tests | 125 passed |
+| Generated checks | coverage page, backlog index, JSON validation, and `git diff --check` passed |
+
 ## 2026-10-24-pycomplete-101 — `try … else`
 
 `try … except … else` now runs its `else` suite after the protected body

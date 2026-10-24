@@ -3949,6 +3949,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-for-body-failure-retains-frame",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableForBodyFailureRetainsFrameWitness",
+    "cpp_source": "bool callable_witness() { int value = 5; bool failed = false; try { for (int i = 0; i < 1; ++i) { throw 1; } } catch (...) { failed = true; } return failed && value == 5; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

@@ -2857,6 +2857,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-nullptr-inequality",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableNullPointerInequalityWitness",
+    "cpp_source": "bool null_pointer_inequality_witness() { return nullptr != nullptr; }",
+    "cpp_expression": "!null_pointer_inequality_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-c-style-cast",
     "kind": "expression",
     "corpus": "rung-3 witness",

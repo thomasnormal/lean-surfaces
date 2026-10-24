@@ -1030,9 +1030,20 @@ private def nullComparisonEvidence : CppBinaryExpressionEvidence := {
     {occurrence := {value := "0x67"}, kind := "CXXNullPtrLiteralExpr",
       sourceType := .pointer .void, type := .pointer .void}]}
 
+private def nullInequalityRaw : Raw := fields nullComparisonRaw [("opcode", text "!=")]
+
+private def nullInequalityEvidence : CppBinaryExpressionEvidence :=
+  {nullComparisonEvidence with operator := "!="}
+
 #guard match parseCallableExpressionTyped .lp64 [] [nullComparisonEvidence] none
     nullComparisonRaw none (some (.builtin .boolean)) with
   | .ok expression => expression.expression == .nullComparison "==" &&
+      expression.type == .builtin .boolean
+  | .error _ => false
+
+#guard match parseCallableExpressionTyped .lp64 [] [nullInequalityEvidence] none
+    nullInequalityRaw none (some (.builtin .boolean)) with
+  | .ok expression => expression.expression == .nullComparison "!=" &&
       expression.type == .builtin .boolean
   | .error _ => false
 

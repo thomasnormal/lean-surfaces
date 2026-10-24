@@ -167,6 +167,19 @@ def callableNullPointerWitness : Bool :=
   | .ok (.ok value) => value == integralBoolean true
   | _ => false
 
+def nullPointerInequalityFunction : CallableFunction := {
+  nullPointerComparisonFunction with
+  body := .block (.return_ {
+    expression := .nullComparison "!="
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableNullPointerInequalityWitness : Bool :=
+  match evaluateCallable 16 .lp64 nullPointerInequalityFunction [] with
+  | .ok (.ok value) => value == integralBoolean false
+  | _ => false
+
 def castFunction : CallableFunction := {
   occurrence := default
   signature := {result := intType, parameters := [shortType], variadic := false}
@@ -495,6 +508,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableCharacterLiteralWitness
 #guard callableConstantExpressionWitness
 #guard callableNullPointerWitness
+#guard callableNullPointerInequalityWitness
 #guard callableCastWitness
 #guard callableNarrowCastWitness
 #guard callablePostfixWitness
@@ -538,6 +552,9 @@ theorem callable_constant_expression_witness : callableConstantExpressionWitness
   rfl
 
 theorem callable_null_pointer_witness : callableNullPointerWitness = true := by
+  rfl
+
+theorem callable_null_pointer_inequality_witness : callableNullPointerInequalityWitness = true := by
   rfl
 
 theorem callable_cast_witness : callableCastWitness = true := by
@@ -592,6 +609,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_character_literal_witness
 #print axioms callable_constant_expression_witness
 #print axioms callable_null_pointer_witness
+#print axioms callable_null_pointer_inequality_witness
 #print axioms callable_cast_witness
 #print axioms callable_narrow_cast_witness
 #print axioms callable_postfix_witness

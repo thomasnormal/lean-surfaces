@@ -1140,4 +1140,9 @@ def enumSetterWitness : Bool :=
 
 #guard enumSetterWitness
 
+def enumGetterWitness : Bool :=
+  enumCallObserved == some 7
+
+#guard enumGetterWitness
+
 end LeanModels.Cpp.MemberCallTests

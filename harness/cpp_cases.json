@@ -2761,6 +2761,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-narrow-decrement",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableNarrowDecrementWitness",
+    "cpp_source": "unsigned short narrow_decrement(unsigned short value) { return --value; } bool callable_witness() { return narrow_decrement(0u) == 65535u; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-postfix-comma",
     "kind": "expression",
     "corpus": "rung-3 witness",

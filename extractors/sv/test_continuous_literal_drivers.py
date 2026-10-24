@@ -108,6 +108,24 @@ class ContinuousLiteralDrivers(unittest.TestCase):
                          {"conflict": "x", "agree": "1",
                           "z_only": "z", "unknown": "x"})
 
+    def test_literal_tri_driver_uses_flat_net_path(self):
+        design = extract_source(
+            "module top; tri bus; assign bus = 1'b1; endmodule")
+        module = design["modules"][0]
+        self.assertEqual(module["decls"][0]["kind"], "Net")
+        self.assertEqual(module["decls"][0]["name"], "bus")
+        self.assertEqual([process["kind"] for process in module["processes"]],
+                         ["Initial"])
+        self.assertTrue(module["processes"][0].get("continuous_constant_lowered"))
+
+    def test_dynamic_tri_driver_stays_loud(self):
+        design = extract_source(
+            "module top; tri bus; logic source; assign bus = source; endmodule")
+        self.assertEqual(design["modules"][0]["decls"][0]["kind"],
+                         "Unsupported")
+        self.assertEqual(design["modules"][0]["decls"][0]["sv_kind"],
+                         "NetSymbol:Tri")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -209,3 +209,16 @@ drivers, selected windows, strengths, and future source changes remain loud.
 `static_net_resolution` is the differential witness. The folded path is
 restricted to declared nets, so a variable with multiple continuous drivers
 continues to refuse rather than being treated as a resolved wire.
+
+## Literal continuous `tri` drivers — 2026-10-24
+
+A scalar or packed `tri` with a complete set of pure integral literal
+continuous drivers uses the same time-zero four-state value as a `wire`.
+The declaration remains a net and literal drivers still pass through the
+existing per-bit `z`/equal/conflict/`x` resolution. Dynamic or effectful
+drivers, strengths, delayed assignments, and future source changes stay loud;
+the declaration is rejected unless every driver is in the literal subset.
+
+`constant_tri_driver` is the differential witness. This admits a fixed net
+value without manufacturing a live driver queue or treating `tri` as a
+procedural variable.

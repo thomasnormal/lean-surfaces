@@ -6190,3 +6190,15 @@ supplies the conflict and unchanged-bit witness. The corpus census remains
 **4,806 clean / 17,176 partial / 66 include skips**, with
 `AssignmentExpression:target` at **3,037 files**; differential coverage moves
 **112/108/0/4 → 113/109/0/4**.
+
+## Literal continuous `tri` drivers — 2026-10-24
+
+A scalar or packed `tri` with only pure integral literal continuous drivers
+now uses the same fixed four-state result as a literal `wire`. The declaration
+remains a net and the existing per-bit resolution handles `z`, equal values,
+conflicts, and `x`; dynamic, effectful, strength, delayed, and future-update
+forms remain loud. `constant_tri_driver` supplies the differential evidence.
+
+The census remains **4,810 clean / 17,172 partial / 66 include skips** with
+`AssignmentExpression:target` at **3,037 files**. Differential coverage moves
+**114/110/0/4 → 115/111/0/4**; grammar coverage remains **213/82/131**.

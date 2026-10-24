@@ -9487,10 +9487,51 @@ def convert_fixed_array_vars(sm, m):
         return None
 
 
+def _net_has_only_literal_continuous_drivers(m):
+    """Recognize a ``tri`` net whose complete driver set is literal-only.
+
+    A fixed literal driver has no future reevaluation, so ``tri`` and ``wire``
+    have the same four-state value in the flat self-check world.  Keep the
+    declaration loud unless every continuous assignment targeting this net is
+    in that closed subset; this prevents a dynamic tri driver from slipping
+    through merely because the declaration itself is otherwise representable.
+    """
+    try:
+        instance = m.parentScope.containingInstance
+        found = False
+        valid = True
+
+        def inspect(node):
+            nonlocal found, valid
+            if type(node).__name__ != "ContinuousAssignSymbol":
+                return
+            assignment = getattr(node, "assignment", None)
+            if assignment is None:
+                return
+            left = getattr(assignment, "left", None)
+            symbol = getattr(left, "symbol", None)
+            if symbol is None:
+                symbol = getattr(getattr(left, "value", None), "symbol", None)
+            if symbol is not m:
+                return
+            found = True
+            valid = (valid and assignment.op is None
+                     and assignment.timingControl is None
+                     and not assignment.isNonBlocking
+                     and _integral_literal_source(assignment.right))
+
+        instance.visit(inspect)
+        return found and valid
+    except Exception:
+        return False
+
+
 def convert_net(sm, m):
     nk = str(m.netType.netKind).split(".")[-1]
-    if nk != "Wire":
+    if nk not in ("Wire", "Tri"):
         return unsupported(sm, m, "NetSymbol:" + nk)
+    if nk == "Tri" and not _net_has_only_literal_continuous_drivers(m):
+        return unsupported(sm, m, "NetSymbol:Tri")
     if getattr(m, "delay", None) is not None:
         return unsupported(sm, m, "NetSymbol:delay")
     # A one-dimensional fixed-unpacked wire array can use the same flat

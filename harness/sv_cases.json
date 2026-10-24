@@ -1027,6 +1027,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "constant_tri_driver",
+      "file": "Examples/system-verilog/constant_tri_driver/constant_tri_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

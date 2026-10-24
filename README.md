@@ -110,12 +110,12 @@ and [rung status](docs/cpp-rung-status.md) pages.
 
 ## SystemVerilog tier status
 
-The SystemVerilog tier prerelease is **v0.1.2 (2026-10-23)**. Tag
-`sv-v0.1.2` identifies the release commit on `master`; see the
+The SystemVerilog tier prerelease is **v0.1.3 (2026-10-24)**. Tag
+`sv-v0.1.3` identifies the release commit on `master`; see the
 [SV changelog](docs/sv-changelog.md) and [measured SV coverage](docs/sv-coverage.md).
-The self-check surface has 71 differential rows (67 matches and 4 recorded
-refusals), 206 grammar witnesses (75 MATCH and 131 REFUSE), and a
-22,046-file corpus measurement of 4,689 clean files, 17,291 partial files,
+The self-check surface has 76 differential rows (72 matches and 4 recorded
+refusals), 209 grammar witnesses (78 MATCH and 131 REFUSE), and a
+22,046-file corpus measurement of 4,745 clean files, 17,235 partial files,
 and 66 include skips.
 
 ## Quickstart (Python tier)

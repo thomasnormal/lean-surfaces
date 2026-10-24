@@ -5757,3 +5757,16 @@ The 22,046-file census is unchanged at **4,747 clean / 17,233 partial** and
 `AssignmentExpression:target` remains **3,153**; this syntax family is absent
 from the remaining blocker records. Differential coverage moves
 **81/77/0/4 → 82/78/0/4**, and grammar coverage remains **210/79/131**.
+
+## Empty queue literal writes — 2026-10-24
+
+A blocking assignment of the empty queue literal to a named queue now erases
+through the flat self-check boundary, which has no queue object state. Nonempty
+queue literals, nonblocking or timed forms, and queue reads or methods remain
+loud. The `empty_queue_write` fixture and differential row cover the admitted
+form, with extractor tests pinning nonempty and nonblocking boundaries.
+
+The fresh 22,046-file census keeps **4,747 clean / 17,233 partial** and lowers
+`AssignmentExpression:target` **3,153 → 3,145**. Differential coverage moves
+**82/78/0/4 → 83/79/0/4**, and grammar coverage moves
+**210/79/131 → 211/80/131** with the empty-queue witness.

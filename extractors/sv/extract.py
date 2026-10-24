@@ -5442,6 +5442,21 @@ def _string_literal_write(expr):
                                   for operand in operands)
 
 
+def _empty_queue_literal(expr):
+    """Whether *expr* is the zero-item queue literal ``{}``."""
+    node = expr
+    while type(node).__name__ == "ConversionExpression":
+        node = getattr(node, "operand", None)
+        if node is None:
+            return False
+    if type(node).__name__ != "ConcatenationExpression":
+        return False
+    try:
+        return len(list(node.operands)) == 0
+    except Exception:
+        return False
+
+
 def _new_integer_arg(expr, value, implicit):
     """Whether a class construction has one literal integer constructor arg."""
     node = expr
@@ -7443,6 +7458,15 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and _string_literal_write(expr.right)):
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "string_literal_replication_write_noop": True}
+    # An empty queue literal likewise carries no state in the flat self-check
+    # store. Keep nonempty queue construction and all queue observations loud.
+    if (_SYM is None and expr.op is None and expr.timingControl is None
+            and not expr.isNonBlocking
+            and type(expr.left).__name__ == "NamedValueExpression"
+            and type(expr.left.type.canonicalType).__name__ == "QueueType"
+            and _empty_queue_literal(expr.right)):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "empty_queue_write_noop": True}
     if expr.timingControl is not None:
         return _convert_intra_assignment(sm, expr)
     scan = _convert_scan_assignment(sm, expr)

@@ -567,6 +567,15 @@
       "expect": "match"
     },
     {
+      "name": "empty_queue_write",
+      "file": "Examples/system-verilog/empty_queue_write/empty_queue_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "empty_subroutine_call",
       "file": "Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv",
       "module": "top",

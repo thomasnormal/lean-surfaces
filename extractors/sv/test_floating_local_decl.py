@@ -55,6 +55,22 @@ class FloatingLocalDeclarations(unittest.TestCase):
         self.assertIn("AssignmentExpression:target",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_time_zero_realtime_write_is_inert(self):
+        design = lower(
+            'module top; real value; initial begin value = $realtime; '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("realtime_write_noop")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_nonblocking_realtime_write_stays_loud(self):
+        design = lower(
+            'module top; real value; initial begin value <= $realtime; end endmodule')
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
+
 
 if __name__ == "__main__":
     unittest.main()

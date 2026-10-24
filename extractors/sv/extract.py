@@ -999,6 +999,17 @@ def _time_call(expression):
         return False
 
 
+def _realtime_call(expression):
+    """A zero-argument `$realtime` query in the time-zero self-check slice."""
+    try:
+        return (type(expression).__name__ == "CallExpression"
+                and not expression.bad and expression.isSystemCall
+                and expression.subroutineName == "$realtime"
+                and len(expression.arguments) == 0)
+    except Exception:
+        return False
+
+
 def _convert_time_call(sm, expression):
     if not _time_call(expression):
         return unsupported(sm, expression, "CallExpression:$time")
@@ -7354,6 +7365,16 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and _floating_literal(expr.right)):
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "floating_literal_write_noop": True}
+    # `$realtime` is fixed at zero in the self-check time-zero slice, while
+    # real storage remains opaque.  Erase only this blocking write; integer
+    # targets, timed/nonblocking forms, and real reads stay loud.
+    if (_SYM is None and expr.op is None and expr.timingControl is None
+            and not expr.isNonBlocking
+            and type(getattr(expr.left.type, "canonicalType", None)).__name__
+            == "FloatingType"
+            and _realtime_call(expr.right)):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "realtime_write_noop": True}
     # An opaque string has no flat-state slot. A pure literal write has no
     # effect of its own, so it can be erased; later string reads still lower
     # to their existing loud boundary. Nonliteral writes remain unsupported.

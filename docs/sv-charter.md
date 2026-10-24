@@ -5717,3 +5717,16 @@ form; extractor tests pin the nonzero boundary.
 The fresh 22,046-file census keeps **4,747 clean / 17,233 partial** and lowers
 `AssignmentExpression:target` **3,219 → 3,193**. Differential coverage moves
 **78/74/0/4 → 79/75/0/4**, and grammar coverage remains **210/79/131**.
+
+## Time-zero `$realtime` writes to opaque real storage — 2026-10-24
+
+A blocking assignment of the zero-argument `$realtime` query to real or
+shortreal storage now erases in the time-zero self-check slice. The query has
+no modeled state effect and floating storage is already opaque; integer
+targets, nonblocking or timed writes, and later real reads remain loud. The
+`realtime_write` fixture and differential row cover the admitted form, with
+extractor tests pinning the nonblocking boundary.
+
+The fresh 22,046-file census keeps **4,747 clean / 17,233 partial** and lowers
+`AssignmentExpression:target` **3,193 → 3,155**. Differential coverage moves
+**79/75/0/4 → 80/76/0/4**, and grammar coverage remains **210/79/131**.

@@ -540,6 +540,15 @@
       "expect": "match"
     },
     {
+      "name": "realtime_write",
+      "file": "Examples/system-verilog/realtime_write/realtime_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "empty_subroutine_call",
       "file": "Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv",
       "module": "top",

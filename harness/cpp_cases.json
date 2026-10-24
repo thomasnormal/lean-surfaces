@@ -3217,6 +3217,18 @@
     "rung": 7
   },
   {
+    "id": "expression.class-private-base-access",
+    "kind": "expression",
+    "corpus": "rung-7 witness",
+    "lean_module": "LeanModels.Cpp.ClassBaseViewTests",
+    "lean_namespace": "LeanModels.Cpp.ClassBaseViewTests",
+    "lean_expression": "classBasePrivateAccessWitness",
+    "cpp_source": "struct L {}; struct D : private L { static bool probe(D* value) { L* base = static_cast<L*>(value); return base != nullptr; } }; bool callable_witness() { D value; return D::probe(&value); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

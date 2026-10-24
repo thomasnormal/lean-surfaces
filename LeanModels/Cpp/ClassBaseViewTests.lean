@@ -308,4 +308,11 @@ def classBaseStaticCastWitness : Bool :=
 
 #guard classBaseStaticCastWitness
 
+def classBasePrivateAccessWitness : Bool :=
+  observed (contextualOn {hierarchy with classes :=
+    (hierarchy.classes.modify 0 (fun shape =>
+      {shape with bases := [b "L" "private", b "R"]}))} [] [0] "D") == some 1
+
+#guard classBasePrivateAccessWitness
+
 end LeanModels.Cpp.ClassBaseViewTests

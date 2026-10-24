@@ -3145,6 +3145,18 @@
     "rung": 7
   },
   {
+    "id": "expression.member-getter-lvalue-cast-call",
+    "kind": "expression",
+    "corpus": "rung-7 witness",
+    "lean_module": "LeanModels.Cpp.MemberCallTests",
+    "lean_namespace": "LeanModels.Cpp.MemberCallTests",
+    "lean_expression": "memberGetterLValueCastWitness",
+    "cpp_source": "struct Owner { int read() const { return 7; } }; bool callable_witness() { Owner owner; Owner* pointer = &owner; return pointer->read() == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

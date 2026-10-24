@@ -6,6 +6,7 @@ open LeanModels.Cpp
 
 def intType : CppTypeEvidence := .builtin .int
 def shortType : CppTypeEvidence := .builtin .short
+def unsignedShortType : CppTypeEvidence := .builtin .unsignedShort
 def unsignedIntType : CppTypeEvidence := .builtin .unsignedInt
 def signed (value : Int) : IntegralValue := ⟨.signed 32, value⟩
 def parameter : FrontendHandle := {value := "0x10"}
@@ -23,6 +24,23 @@ def incrementFunction : CallableFunction := {
 def callableIncrementWitness : Bool :=
   match evaluateCallable 16 .lp64 incrementFunction [signed 4] with
   | .ok (.ok value) => value == signed 5
+  | _ => false
+
+def narrowParameter : FrontendHandle := {value := "0x11"}
+
+def narrowIncrementFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := unsignedShortType, parameters := [unsignedShortType], variadic := false}
+  parameters := [{declaration := narrowParameter, name := some "value", type := unsignedShortType}]
+  body := .block (.return_ {
+    expression := .increment "++" false narrowParameter
+    sourceType := unsignedShortType
+    type := unsignedShortType})
+}
+
+def callableNarrowIncrementWitness : Bool :=
+  match evaluateCallable 16 .lp64 narrowIncrementFunction [⟨.unsigned 16, 65535⟩] with
+  | .ok (.ok value) => value == ⟨.unsigned 16, 0⟩
   | _ => false
 
 def postfixFunction : CallableFunction := {
@@ -251,6 +269,7 @@ def callableLogicalOrWitness : Bool :=
   | _, _ => false
 
 #guard callableIncrementWitness
+#guard callableNarrowIncrementWitness
 #guard callablePostfixWitness
 #guard callableCompoundAssignmentWitness
 #guard callableAssignmentWitness
@@ -264,6 +283,9 @@ def callableLogicalOrWitness : Bool :=
 #guard callableLogicalOrWitness
 
 theorem callable_increment_witness : callableIncrementWitness = true := by
+  rfl
+
+theorem callable_narrow_increment_witness : callableNarrowIncrementWitness = true := by
   rfl
 
 theorem callable_postfix_witness : callablePostfixWitness = true := by
@@ -300,6 +322,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
   rfl
 
 #print axioms callable_increment_witness
+#print axioms callable_narrow_increment_witness
 #print axioms callable_postfix_witness
 #print axioms callable_compound_assignment_witness
 #print axioms callable_assignment_witness

@@ -265,6 +265,8 @@ private def unsupportedUnaryLoud : Bool :=
   | .ok (.unsupported .unresolvedArithmeticConversions) => true
   | _ => false
 
+def callableUnaryRefusal : Bool := !unsupportedUnaryLoud
+
 private def unsupportedBinaryLoud : Bool :=
   let missing : TypedCallableExpression := {
     expression := .parameter (handle "0x99"), sourceType := intType, type := intType}
@@ -394,6 +396,7 @@ def callableParserAutomaticLocalWitness : Bool := parserAdmitsAutomaticLocal
 #guard !callableIncrementRefusal
 #guard !callableLogicalRefusal
 #guard !callableCompoundRefusal
+#guard !callableUnaryRefusal
 #guard unsupportedIncrementPrecedesRead
 #guard unsupportedLogicalLoud
 #guard unsupportedCompoundLoud

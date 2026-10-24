@@ -4057,6 +4057,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-unknown-unary-refusal",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableUnaryRefusal",
+    "cpp_source": "int unary_operator(int value) { return -value; } bool callable_witness() { return unary_operator(7) == -7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "refuse",
+    "rung": 3
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

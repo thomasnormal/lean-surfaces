@@ -3115,7 +3115,7 @@
     "lean_module": "LeanModels.Cpp.MemberCallTests",
     "lean_namespace": "LeanModels.Cpp.MemberCallTests",
     "lean_expression": "enumSetterWitness",
-    "cpp_source": "enum XMLError { ok = 0, failed = 9 }; struct Owner { XMLError value = ok; void set(XMLError error) { value = error; } }; bool callable_witness() { Owner owner; owner.set(failed); return owner.value == failed; }",
+    "cpp_source": "enum XMLError { ok = 0, failed = 9 }; struct Owner { XMLError value = ok; void set(XMLError error) { value = error; } }; bool callable_witness() { Owner owner; Owner* pointer = &owner; pointer->set(failed); return owner.value == failed; }",
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 7
@@ -3127,7 +3127,7 @@
     "lean_module": "LeanModels.Cpp.MemberCallTests",
     "lean_namespace": "LeanModels.Cpp.MemberCallTests",
     "lean_expression": "enumGetterWitness",
-    "cpp_source": "enum XMLError { ok = 0, failed = 7 }; struct Owner { XMLError value = failed; XMLError read() const { return value; } }; bool callable_witness() { Owner owner; return owner.read() == failed; }",
+    "cpp_source": "enum XMLError { ok = 0, failed = 7 }; struct Owner { XMLError value = failed; XMLError read() const { return value; } }; bool callable_witness() { Owner owner; Owner* pointer = &owner; return pointer->read() == failed; }",
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 7
@@ -3139,7 +3139,7 @@
     "lean_module": "LeanModels.Cpp.MemberCallTests",
     "lean_namespace": "LeanModels.Cpp.MemberCallTests",
     "lean_expression": "memberGetterCanonicalWitness",
-    "cpp_source": "struct Owner { int read() const; }; int Owner::read() const { return 7; } bool callable_witness() { Owner owner; return owner.read() == 7; }",
+    "cpp_source": "struct Owner { int read() const; }; int Owner::read() const { return 7; } bool callable_witness() { Owner owner; Owner* pointer = &owner; return pointer->read() == 7; }",
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 7

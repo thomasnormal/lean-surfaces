@@ -800,12 +800,21 @@ def _fixed_bits_query_width(expression):
             return None
         argument = expression.arguments[0]
         if (argument.bad or not argument.type.isFixedSize
-                or not argument.type.isBitstreamType()
                 or expression.type.bitWidth != 32
                 or not expression.type.isSigned
                 or not _bits_argument_source_ok(argument)):
             return None
-        return argument.type.bitstreamWidth
+        if (argument.type.isBitstreamType()):
+            return argument.type.bitstreamWidth
+        # IEEE 1800 §6.24.3 defines real and shortreal as fixed-size types
+        # for `$bits(type)` even though their runtime values are opaque to the
+        # flat self-check store. A DataTypeExpression is type inspection only;
+        # a named real value remains outside this metadata-only slice.
+        if (type(argument).__name__ == "DataTypeExpression"
+                and type(argument.type.canonicalType).__name__ == "FloatingType"
+                and argument.type.bitWidth in (32, 64)):
+            return argument.type.bitWidth
+        return None
     except Exception:
         return None
 

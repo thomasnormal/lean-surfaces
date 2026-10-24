@@ -181,13 +181,19 @@ class FixedBitQueries(unittest.TestCase):
             with self.subTest(declaration=declaration):
                 self.assert_query_refused(query_source("$bits(" + expression + ")", declaration))
 
-    def test_string_and_real_queries_stay_loud(self):
-        sources = [query_source("$bits(value)", "string value; "),
-                   query_source("$bits(value)", "real value; "),
-                   query_source("$bits(real)"), query_source("$bits(shortreal)")]
-        for source in sources:
+    def test_string_and_real_queries(self):
+        for source in (query_source("$bits(value)", "string value; "),
+                       query_source("$bits(value)", "real value; ")):
             with self.subTest(source=source):
                 self.assert_query_refused(source)
+        for source, width in ((query_source("$bits(real)"), 64),
+                              (query_source("$bits(shortreal)"), 32)):
+            with self.subTest(source=source):
+                self.assert_fixed_queries(source, [width])
+
+    def test_floating_type_query_does_not_admit_runtime_value(self):
+        source = query_source("$bits(value)", "real value; ")
+        self.assert_query_refused(source)
 
     def test_unpacked_union_query_stays_loud(self):
         source = ("module top; initial begin "

@@ -6362,3 +6362,18 @@ The fresh 22,048-file census moves **4,828 → 4,829 clean** and **17,154 →
 `ExpressionStatement:CallExpression` unchanged at **2,985**. Differential
 coverage moves **125/121/0/4 → 126/122/0/4**; grammar coverage remains
 **214/83/131**.
+
+## Floating type `$bits` queries — 2026-10-24
+
+`$bits(real)` and `$bits(shortreal)` now lower to signed 32-bit literals from
+fixed type metadata, yielding 64 and 32 respectively. The operand is a
+`DataTypeExpression`, so no runtime real value is evaluated; named real and
+shortreal variables, dynamic types, and other value queries remain loud.
+`floating_bits_query` supplies the differential witness and the existing bit
+query tests pin the runtime-value refusal.
+
+The fresh 22,048-file census remains **4,829 clean / 17,153 partial / 66
+include skips**, with `CallExpression` unchanged at **2,973** and
+`ExpressionStatement:CallExpression` at **2,985** because the corpus has no
+file containing only this metadata gap. Differential coverage moves
+**126/122/0/4 → 127/123/0/4**; grammar coverage remains **214/83/131**.

@@ -10,10 +10,11 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 126 | 122 | 0 | 4 | sv-tests-2 declarations |
+| 127 | 123 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
+| `floating_bits_query` | `Examples/system-verilog/floating_bits_query/floating_bits_query.sv` | match | **MATCH** | `ok` | MATCH |
 | `shortrealtobits_literal` | `Examples/system-verilog/shortrealtobits_literal/shortrealtobits_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `realtobits_literal` | `Examples/system-verilog/realtobits_literal/realtobits_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `rtoi_literal` | `Examples/system-verilog/rtoi_literal/rtoi_literal.sv` | match | **MATCH** | `ok` | MATCH |
@@ -310,14 +311,14 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.RangeDimensionSpecifier` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.RangeList` | `Examples/system-verilog/case_inside/array_widening.sv` | **REFUSE** | `unsupported` unsupported statement 'CaseStatement:pattern' |
 | `SyntaxKind.RealLiteralExpression` | `Examples/system-verilog/floating_literal_write/floating_literal_write.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.RealType` | `Examples/system-verilog/floating_literal_write/floating_literal_write.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.RealType` | `Examples/system-verilog/floating_bits_query/floating_bits_query.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RepeatedEventControl` | `Examples/system-verilog/intra_assignment/counts.sv` | **REFUSE** | `unsupported` @(event): the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.ReplicatedAssignmentPattern` | `Examples/system-verilog/assignment_patterns/replicated.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ReturnStatement` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
 | `SyntaxKind.RootScope` | `Examples/system-verilog/printtimescale_scope/printtimescale_scope.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ScopedName` | `Examples/system-verilog/array_reductions/automatic.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.SequentialBlockStatement` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
-| `SyntaxKind.ShortRealType` | `Examples/system-verilog/literal_real_decl/literal_real_decl.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ShortRealType` | `Examples/system-verilog/floating_bits_query/floating_bits_query.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.SignalEventExpression` | `Examples/system-verilog/always/events.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.SimpleAssignmentPattern` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.SimplePropertyExpr` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |

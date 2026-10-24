@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "floating_bits_query",
+      "file": "Examples/system-verilog/floating_bits_query/floating_bits_query.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "shortrealtobits_literal",
       "file": "Examples/system-verilog/shortrealtobits_literal/shortrealtobits_literal.sv",
       "module": "top",

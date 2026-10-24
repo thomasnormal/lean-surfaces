@@ -330,4 +330,9 @@ def classBaseFriendAccessWitness : Bool :=
 
 #guard classBaseFriendAccessWitness
 
+def classBaseNamedPathWitness : Bool :=
+  observedResolved (rawBaseCastNamed "D *" "L *" "L") "D" "L" (view [] [9]) == some 1
+
+#guard classBaseNamedPathWitness
+
 end LeanModels.Cpp.ClassBaseViewTests

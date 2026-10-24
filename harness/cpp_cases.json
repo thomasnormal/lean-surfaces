@@ -3277,6 +3277,18 @@
     "rung": 7
   },
   {
+    "id": "expression.class-named-base-path",
+    "kind": "expression",
+    "corpus": "rung-7 witness",
+    "lean_module": "LeanModels.Cpp.ClassBaseViewTests",
+    "lean_namespace": "LeanModels.Cpp.ClassBaseViewTests",
+    "lean_expression": "classBaseNamedPathWitness",
+    "cpp_source": "struct B {}; struct L : B {}; struct D : L {}; bool callable_witness() { D value; L* base = static_cast<L*>(&value); return base != nullptr; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

@@ -5,6 +5,21 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.50] — 2026-10-24
+
+### Added
+
+- Rung-7 protected and friend-mediated base access, const repeated-base
+  reads, and mutable-member reads through const base subobjects.
+
+### Measured
+
+- The checked-in corpus now contains **334 differential rows**: **324 MATCH**,
+  **0 DIVERGE**, **0 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.49] — 2026-10-24
 
 ### Added

@@ -625,6 +625,18 @@ def callableKernelForFrameWitness : Bool :=
       {label := some 2, body := .skip},
       {label := none, body := .break_}]))
 
+def callableFuelExhaustionWitness : Bool :=
+  let callable : CallableFunction := {
+    functionWithLocal (.literal (signed 0)) with
+      body := .block (.return_ {
+        expression := .parameter (handle "0x10"),
+        sourceType := intType, type := intType})}
+  match CallableObjectFrame.start .lp64 callable [signed 7] with
+  | .error _ => false
+  | .ok started =>
+      (evaluateCallableObjectInFrame 0 started).result matches
+        .error (.frameError .fuelExhausted)
+
 private theorem kernelControlExecution :
     (kernelControl (.doWhile controlStep controlParameter) &&
       kernelControl (.forLoop .skip controlParameter controlStep
@@ -638,5 +650,6 @@ private theorem kernelControlExecution :
 
 #guard callableKernelDoWhileFrameWitness
 #guard callableKernelForFrameWitness
+#guard callableFuelExhaustionWitness
 
 end LeanModels.Cpp.CallableObjectEvaluationTests

@@ -29,6 +29,7 @@ inductive ObjectError where
   | storageReleased
   | dynamicStorageLive
   | notDynamicStorage
+  | notScopeStorage
   deriving Repr, BEq, Inhabited
 
 structure CppObject where
@@ -100,6 +101,31 @@ def endLifetime (store : ObjectStore) (object : ObjectId) : Except ObjectError O
           {current with phase := .ended}
       | .ended => .error .lifetimeEnded
       | .released => .error .storageReleased
+
+/-- End objects owned by a lexical scope in reverse declaration order.
+    Automatic objects are destroyed at scope exit; static and dynamic storage
+    require their own explicitly modelled boundaries. -/
+def endScope (store : ObjectStore) : List ObjectId → Except ObjectError ObjectStore
+  | [] => .ok store
+  | object :: rest => do
+      let store ← endScope store rest
+      let some value := store.object? object
+        | throw (.missing object)
+      unless value.duration == .automatic do
+        throw .notScopeStorage
+      store.endLifetime object
+
+def scopeExitLifecycle : Bool :=
+  let intType : CppTypeEvidence := .builtin .int
+  let (store, first) := declareAutomatic empty intType
+  let (store, second) := declareAutomatic store intType
+  match store.endScope [first, second] with
+  | .ok ended =>
+      match ended.object? first, ended.object? second with
+      | some firstObject, some secondObject =>
+          firstObject.phase == .ended && secondObject.phase == .ended
+      | _, _ => false
+  | .error _ => false
 
 def releaseStorage (store : ObjectStore) (object : ObjectId) : Except ObjectError ObjectStore :=
   match store.object? object with

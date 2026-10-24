@@ -29,6 +29,12 @@ object `aliveUninitialized` until a separate initialization operation.
 object and refuses missing, not-yet-live, live-but-uninitialized, ended, or
 released objects with distinct errors.
 
+`endScope` models the implicit lifetime boundary for a lexical scope. It takes
+object identities in declaration order, ends them in reverse order, and admits
+only automatic storage. Static objects remain alive across scope exits and
+dynamic objects require the explicit `endLifetime`/`releaseStorage` sequence;
+passing either to `endScope` is a loud `notScopeStorage` refusal.
+
 Invalid transitions are explicit `ObjectError` values rather than silent
 phase rewrites. The model therefore distinguishes an object whose lifetime
 never started from one whose lifetime ended, and distinguishes live dynamic
@@ -40,8 +46,9 @@ This slice is deliberately representation-only. It has no bytes, addresses,
 pointer arithmetic, subobject graph, constructors/destructors, exception
 unwinding, scope executor, or value store. `CppTypeEvidence` is retained as a
 witness; it is not converted into a layout or an executable value. Static,
-thread, and automatic storage are tracked and can be ended, but only dynamic
-storage has an explicit release operation in this slice.
+thread, and automatic storage are tracked and can be ended, while `endScope`
+supplies reverse-order automatic cleanup. Only dynamic storage has an explicit
+release operation in this slice.
 
 `LeanModels/Cpp/Translation.execute` still refuses every artifact. The next
 semantic slice must connect this store to a typed expression/statement model
@@ -77,6 +84,8 @@ destruction are outside this bounded object store.
 ## Validation
 
 `LeanModels/Cpp/ObjectModelTests.lean` uses kernel guards for the complete
-happy path, uninitialized and ended reads, repeated starts, live dynamic
-release, released reads, missing IDs, and non-dynamic release. These are state
-transition checks only; no differential runtime result is claimed.
+happy path, uninitialized and ended reads, repeated starts, reverse-order scope
+cleanup, live dynamic release, released reads, missing IDs, and non-dynamic
+release. These are state transition checks only; the scope-exit row in the
+differential harness compares the corresponding destructor observation with
+Clang's unchanged source.

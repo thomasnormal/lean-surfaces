@@ -2509,6 +2509,18 @@
     "rung": 1
   },
   {
+    "id": "object.scope-exit",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.ObjectModel",
+    "lean_namespace": "LeanModels.Cpp.ObjectStore",
+    "lean_expression": "scopeExitLifecycle",
+    "cpp_source": "struct ScopeProbe { bool* alive; ~ScopeProbe() { *alive = false; } }; bool scope_exit_witness() { bool alive = true; { ScopeProbe probe{&alive}; } return !alive; }",
+    "cpp_expression": "scope_exit_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "object.automatic-initialized",
     "kind": "lifetime",
     "corpus": "rung-1 witness",

@@ -69,4 +69,12 @@ def dynamic : ObjectStore × ObjectId :=
           | .error _ => false
       | .error _ => false
 
+#guard match ObjectStore.allocate ObjectStore.empty .dynamic intType with
+  | (store, object) =>
+      (store.endScope [object]) matches .error .notScopeStorage
+
+#guard match ObjectStore.allocate ObjectStore.empty .static_ intType with
+  | (store, object) =>
+      (store.endScope [object]) matches .error .notScopeStorage
+
 end LeanModels.Cpp.ObjectModelTests

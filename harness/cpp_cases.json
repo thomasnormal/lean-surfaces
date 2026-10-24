@@ -2821,6 +2821,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-character-literal",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableCharacterLiteralWitness",
+    "cpp_source": "int character_witness() { return 'A'; }",
+    "cpp_expression": "character_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-c-style-cast",
     "kind": "expression",
     "corpus": "rung-3 witness",

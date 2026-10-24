@@ -1002,6 +1002,17 @@ private def boolLiteralRaw : Raw := object [
       expression.type == .builtin .boolean
   | .error _ => false
 
+private def characterLiteralRaw : Raw := object [
+  ("id", text "0x63"), ("kind", text "CharacterLiteral"), ("value", .number "65"),
+  ("type", object [("qualType", text "char")])]
+
+#guard match parseCallableExpressionTyped .lp64 [] []
+    (some [⟨⟨"0x63"⟩, "CharacterLiteral", .builtin .char⟩])
+    characterLiteralRaw none (some (.builtin .char)) with
+  | .ok expression => expression.expression == .integer 65 &&
+      expression.sourceType == .builtin .char && expression.type == .builtin .char
+  | .error _ => false
+
 private def cStyleCastRaw : Raw := object [
   ("id", text "0x70"), ("kind", text "CStyleCastExpr"),
   ("castKind", text "NoOp"),

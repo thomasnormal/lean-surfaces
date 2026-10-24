@@ -310,6 +310,21 @@ private def parseCallableBuiltinQualType (raw : Raw) : Except String CppTypeEvid
   | "unsigned long long" | "unsigned long long int" => pure (.builtin .unsignedLongLong)
   | _ => throw s!"callable: unsupported sizeof type {name}"
 
+private def characterLiteral (raw : Raw) (sourceExpected typeExpected : Option CppTypeEvidence)
+    (witnessed : Option CppTypeEvidence) : Except String TypedCallableExpression := do
+  let value ← evidenceNat raw "value"
+  let type ← match witnessed with
+    | some (.builtin .char) => pure (.builtin .char)
+    | some _ => throw "callable: character literal requires plain char type"
+    | none => do
+        let type ← evidenceField raw "type"
+        unless type.text "qualType" == some "char" do
+          throw "callable: character literal requires plain char type"
+        pure (.builtin .char)
+  unless sourceExpected.all (· == type) && typeExpected.all (· == type) do
+    throw "callable: character literal type disagrees with expression evidence"
+  pure {expression := .integer value, sourceType := type, type}
+
 partial def parseCallableExpressionTyped (profile : TargetProfile)
     (parameters : List CallableParameter)
     (expressionRows : List CppBinaryExpressionEvidence)
@@ -334,6 +349,7 @@ partial def parseCallableExpressionTyped (profile : TargetProfile)
         sourceType := .builtin .boolean
         type := .builtin .boolean
       }
+  | "CharacterLiteral" => characterLiteral raw sourceExpected typeExpected witnessed
   | "DeclRefExpr" =>
       let reference ← evidenceField raw "referencedDecl"
       let declaration ← rawId reference

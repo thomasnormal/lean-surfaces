@@ -3757,6 +3757,18 @@
     "rung": 5
   },
   {
+    "id": "declaration.callable-const-reference",
+    "kind": "statement",
+    "corpus": "rung-5 witness",
+    "lean_module": "LeanModels.Cpp.CallableReferenceParameterTests",
+    "lean_namespace": "LeanModels.Cpp.CallableReferenceParameterTests",
+    "lean_expression": "callableConstReferenceWitness",
+    "cpp_source": "int read_const(const int& value) { return value; } bool callable_witness() { return read_const(2) == 2; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 5
+  },
+  {
     "id": "declaration.callable-local-reference",
     "kind": "statement",
     "corpus": "rung-5 witness",

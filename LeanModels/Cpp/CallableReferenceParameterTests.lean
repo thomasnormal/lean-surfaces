@@ -78,6 +78,10 @@ private def constAndLifetime : Bool :=
     (stale.result matches .error (.object (.object (.lifetime .lifetimeEnded)))) &&
     stale.frame.store == ended && (temporary.result matches .error (.argumentTypeMismatch _))
 
+def callableConstReferenceWitness : Bool := constAndLifetime
+
+#guard callableConstReferenceWitness
+
 private def uninitializedBinding : Bool :=
   let empty := (IntegralObjectFrame.empty .lp64).toOption.getD default
   let uninitialized := empty.enterScope.frame.declareLocalDefault (h "caller") intType

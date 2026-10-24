@@ -8955,6 +8955,37 @@ def convert_continuous_assign(sm, m):
     left_symbol = getattr(e.left, "symbol", None)
     if left_symbol is None:
         left_symbol = getattr(getattr(e.left, "value", None), "symbol", None)
+    # A fixed-unpacked variable cell has already been expanded into the flat
+    # self-check storage by ``_fixed_array_cell``.  When its continuous source
+    # is a literal, the assignment has no future reevaluation and needs no
+    # driver resolution: one time-zero blocking write is the exact value seen
+    # by the initial-only runner.  Keep net arrays and every dynamic or
+    # multiply-driven cell on the scheduler-owned continuous boundary.
+    if (_SYM is None and type(e.left).__name__ == "ElementSelectExpression"
+            and getattr(left_symbol, "kind", None) is not None
+            and str(left_symbol.kind) == "SymbolKind.Variable"
+            and target.get("kind") == "Ident"
+            and value is not None and value.get("kind") == "Literal"
+            and _integral_literal_source(e.right)):
+        cell = _fixed_array_cell(sm, e.left)
+        if cell is not None:
+            cell_name = target.get("name", "")
+            source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+            assignments = re.findall(
+                r"(?m)\bassign\s+" + re.escape(cell_name) + r"\s*=", source)
+            if len(assignments) == 1:
+                return {
+                    "kind": "Initial",
+                    "span": node_span(sm, e),
+                    "body": {
+                        "kind": "BlockingAssign",
+                        "span": node_span(sm, e),
+                        "target": target,
+                        "value": value,
+                        "continuous_array_cell_lowered": True,
+                    },
+                    "continuous_array_cell_lowered": True,
+                }
     if (_SYM is None and type(e.left).__name__ in (
             "NamedValueExpression", "ElementSelectExpression",
             "RangeSelectExpression")

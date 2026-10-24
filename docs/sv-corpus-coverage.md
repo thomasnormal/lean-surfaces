@@ -3726,3 +3726,15 @@ The 22,048-path census moves **4,798 → 4,806 clean** and **17,184 → 17,176
 partial**; `AssignmentExpression:target` falls **3,045 → 3,037**. Differential
 coverage moves **108/104/0/4 → 109/105/0/4**; grammar coverage remains
 **213/82/131**.
+
+## Literal continuous fixed-array variable cells — 2026-10-24
+
+A pure integral literal continuous assignment to one constant cell of a
+one-dimensional fixed-unpacked variable now lowers to the existing time-zero
+blocking write for that expanded scalar cell. The source cell must occur once;
+net arrays, dynamic or effectful indices, nonliteral sources, and multiple
+drivers remain loud. `constant_array_cell_driver` supplies the differential
+row and reuses the ordinary fixed-cell storage and interpreter path. The
+22,048-path census is unchanged because its fixed-array continuous rows use
+net-array types or dynamic drivers. Differential coverage moves
+**109/105/0/4 → 110/106/0/4**; grammar coverage remains **213/82/131**.

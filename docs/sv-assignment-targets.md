@@ -101,6 +101,19 @@ continuous-assignment path.
 limited to one source `assign` for that net and an existing `Net` declaration;
 it does not generalize continuous assignment semantics.
 
+## Literal continuous fixed-array variable cells — 2026-10-24
+
+A pure integral literal assigned continuously to one constant cell of a
+one-dimensional fixed-unpacked variable is lowered to the existing time-zero
+blocking write for that expanded cell. The source is required to name that
+cell exactly once, so the lowering has no future reevaluation or driver
+resolution. Net arrays, dynamic or effectful indices, nonliteral sources, and
+multiple drivers remain loud.
+
+`constant_array_cell_driver` is the differential witness. It reuses the
+ordinary scalar-cell representation and interpreter path; no aggregate store
+or continuous-driver queue is added.
+
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 
 IEEE 1800-2023 §7.4.5 makes a write through a constant invalid index on a

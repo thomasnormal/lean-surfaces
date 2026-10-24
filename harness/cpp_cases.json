@@ -3085,6 +3085,18 @@
     "rung": 7
   },
   {
+    "id": "expression.member-getter-derived-call",
+    "kind": "expression",
+    "corpus": "rung-7 witness",
+    "lean_module": "LeanModels.Cpp.MemberCallTests",
+    "lean_namespace": "LeanModels.Cpp.MemberCallTests",
+    "lean_expression": "memberGetterDerivedWitness",
+    "cpp_source": "struct Owner { int read() const { return 7; } }; struct Derived : Owner {}; bool callable_witness() { Derived derived; Owner* pointer = &derived; return pointer->read() == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

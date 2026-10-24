@@ -1125,4 +1125,9 @@ def memberGetterDotWitness : Bool :=
 
 #guard memberGetterDotWitness
 
+def memberGetterDerivedWitness : Bool :=
+  observed (rawCallDerived methodHandle.value receiverHandle.value "read") == some 7
+
+#guard memberGetterDerivedWitness
+
 end LeanModels.Cpp.MemberCallTests

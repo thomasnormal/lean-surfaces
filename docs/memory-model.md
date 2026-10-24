@@ -3710,9 +3710,11 @@ corpus 25 matched / 4 loud; 998 differential cases, 0 failed.
 without allocating or mutating the heap; unlike `str`, it quotes and escapes
 a bare string as well as strings nested in containers. The inventory, active-path
 cycle rule, fixed depth budget, and decimal magnitude budget are exactly those
-of container printing below. Non-ASCII strings, sets, default instance/closure/
-generator identity strings, custom `__repr__` protocols, and first-class builtin
-values remain loud, as do keyword calls. No object address or hash order is guessed.
+of container printing below. Printable Unicode uses CPython 3.9's Unicode 13.0
+table; controls, separators, and unassigned/private code points use exact
+`\\uNNNN`/`\\UNNNNNNNN` escapes. Sets, default instance/closure/generator
+identity strings, custom `__repr__` protocols, and first-class builtin values
+remain loud, as do keyword calls. No object address or hash order is guessed.
 
 Arguments run left-to-right before rendering or the measured exact-arity
 `TypeError`, including all argument effects and an argument error that precedes
@@ -3773,11 +3775,11 @@ in §decimal integer rendering. An over-budget integer makes the rendering
 refuse; it never invents the process-dependent decimal conversion exception.
 
 LOUD, never a plausible-looking line: a SET (its `repr` is hash order,
-which the order doctrine forbids guessing), an instance/closure/generator
-(identity lives in the address), and a string outside the admitted Latin-1
-printability table. `print("héllo")` and `print(["héllo"])` are both exact;
-Unicode outside Latin-1 remains loud. Pinned by `print_set.py` and
-`print_nonascii.py`.
+which the order doctrine forbids guessing), and an instance/closure/generator
+(identity lives in the address). Printable Unicode strings, including
+`λ😀`, render directly; non-printable code points use CPython's exact Unicode
+escapes. `print("héllo")`, `print(["héllo"])`, and the Unicode rows in
+`print_nonascii.py` are pinned against CPython 3.9.
 
 Nothing in the proof layer moved: `print` already left `Expr.heapFree`
 when it became a builtin, and `reprVal` is a pure function of the heap,
@@ -3882,7 +3884,10 @@ byte-identically to CPython 3.9.19 (verified both ways, exit 1). The
 non-ASCII refusal is real only INSIDE a container, where `reprVal` must
 decide escaping. `assert_lab.msg_nonascii` is therefore a `match` row,
 not an `unsupported` one. The two-level rule was reused correctly; the
-sketch had simply mis-stated WHICH level a bare message argument hits.
+sketch had simply mis-stated WHICH level a bare message argument hits. Since
+2026-10-24, the nested `reprVal` path also carries CPython 3.9's Unicode 13.0
+printability table, so printable Unicode and exact `\\u`/`\\U` escapes are
+admitted inside containers as well.
 
 ### Proof-layer position: inside the fragment
 
@@ -4993,12 +4998,12 @@ flag, width, precision, length modifier, or mapping key. Per conversion:
   values use their deterministic value-only `repr` spelling, as CPython's
   `str()` does for these containers.
 * `%r` is the same for scalars, except a str goes through the shipped `reprStr`
-  (quote choice, `\\`/quote/`\n`/`\r`/`\t`/`\xNN` escapes, and printable Latin-1 direct characters; characters
-  outside Latin-1 remain loud) — because `repr` and `str` COINCIDE on int/bool/None. So a
-  strings outside the admitted Latin-1 table refuse under `%r` exactly as
-  they refuse inside `print([…])`, and prints raw under `%s` exactly as `print` does: one
-  rendering boundary, not two. Ref-free containers use their ordinary `repr`
-  for both conversions.
+  (quote choice, `\\`/quote/`\n`/`\r`/`\t`/`\xNN` escapes, printable Unicode
+  direct characters, and exact `\uNNNN`/`\UNNNNNNNN` escapes for non-printable
+  code points) — because `repr` and `str` COINCIDE on int/bool/None. So a
+  Unicode string follows the same renderer inside `%r` and `print([…])`, and
+  prints raw under `%s` exactly as `print` does: one rendering boundary, not
+  two. Ref-free containers use their ordinary `repr` for both conversions.
 * `%a` uses ASCII-escaped `repr`: non-ASCII characters render as `\\xNN`,
   `\\uNNNN`, or `\\UNNNNNNNN`, while scalar non-str values retain their
   ordinary representation.

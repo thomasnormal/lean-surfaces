@@ -173,9 +173,9 @@ and it was that file's SOLE wall. Every row here is differential
 #py_check str_lab.fmt_pct(42) = "42% done"
 #py_check str_lab.fmt_noargs() = "abc"
 #py_check str_lab.fmt_nonascii_s() = "héllo"
-#py_check str_lab.fmt_nonascii_r() = "'héllo'"
+#py_check str_lab.fmt_nonascii_r() = "'λ😀'"
 #py_check str_lab.fmt_latin1_controls() = "'\\x80\\xa0\\xad'"
-#guard callFunction str_lab "fmt_unicode_r" #[] 4096 matches .unsupported _
+#py_check str_lab.fmt_unicode_r() = "'λ'"
 
 /-! The two arity `TypeError`s and the `%d` type error, verbatim (the
 type name is UNQUOTED here — CPython's own wording, measured), plus the
@@ -194,7 +194,8 @@ what follows. -/
   (.typeError "%d format: a number is required, not str")
 
 /-! The loud frontier: the minilanguage, valid conversion characters not
-yet modelled, a nested heap operand, a non-ASCII `%r`, and a mapping RHS. -/
+yet modelled, a nested heap operand, and a mapping RHS. Unicode `%r` is
+handled by the shared Unicode 13.0 repr table. -/
 
 #py_check str_lab.fmt_width(3) = "    3"
 #py_check str_lab.fmt_width(-3) = "   -3"
@@ -279,7 +280,6 @@ yet modelled, a nested heap operand, a non-ASCII `%r`, and a mapping RHS. -/
   .ok (.str "range(0, 3)")
 #guard strFormat "%s" (.tuple #[.ntuple "Move" #["i", "j"] #[.int 1, .int 2]]) ==
   .ok (.str "Move(i=1, j=2)")
-#guard callFunction str_lab "fmt_nonascii_r" #[] 4096 matches .unsupported _
 #guard callFunction str_lab "fmt_mapping" #[] 4096 matches .unsupported _
 
 /-! ### The MAPPING right operand (docs/memory-model.md §`%`-formatting

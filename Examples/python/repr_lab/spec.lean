@@ -44,6 +44,11 @@ set_option exponentiation.threshold 4300
 #py_check repr_shadow.captured_generator() = (Val.tuple #[.int 12, .int 13])
 
 #py_check repr_lab.of("é") = "'é'"
+#py_check repr_lab.of("٣") = "'٣'"
+#py_check repr_lab.of("λ😀") = "'λ😀'"
+#py_check repr_lab.of("\u200b") = "'\\u200b'"
+#py_check repr_lab.of("\u2028") = "'\\u2028'"
+#py_check repr_lab.of("\ue000") = "'\\ue000'"
 #py_check repr_lab.keyword() raises
   .typeError "repr() takes no keyword arguments"
 #guard callFunction repr_lab "first_class" #[] 4096 matches .unsupported _

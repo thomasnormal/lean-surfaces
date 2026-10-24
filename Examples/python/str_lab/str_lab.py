@@ -224,8 +224,8 @@ def fmt_nonascii_s():
 
 
 def fmt_nonascii_r():
-    # Latin-1 printable characters use CPython's direct repr spelling.
-    return "%r" % ("héllo",)
+    # Unicode printable characters use CPython's direct repr spelling.
+    return "%r" % ("λ😀",)
 
 
 def fmt_latin1_controls():
@@ -234,7 +234,7 @@ def fmt_latin1_controls():
 
 
 def fmt_unicode_r():
-    # Unicode outside the admitted Latin-1 printability table stays loud.
+    # Unicode printability and escaping follow CPython's Unicode 13.0 repr table.
     return "%r" % ("λ",)
 
 

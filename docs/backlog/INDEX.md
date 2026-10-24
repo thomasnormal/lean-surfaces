@@ -21,6 +21,7 @@ and every existing `§Lnn` reference still resolves there.
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-10-24-pycomplete-87` |  | Unicode string repr rendering | python-completeness |
 | `2026-10-24-pycomplete-86` |  | zero-argument builtin exception constructor | python-completeness |
 | `2026-10-24-pycomplete-85` |  | percent formatting of ref-free containers | python-completeness |
 | `2026-10-24-pycomplete-84` |  | decimal rendering limit error | python-completeness |
@@ -43,7 +44,6 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-10-23-pycomplete-67` |  | scalar attribute errors become faithful | python-completeness |
 | `2026-10-23-pycomplete-66` |  | heap-list augmented repetition | python-completeness |
 | `2026-10-23-pycomplete-65` |  | pinned decimal rendering budget | python-completeness |
-| `2026-10-23-pycomplete-64` |  | Latin-1 string repr rendering | python-completeness |
 | `2026-10-23-pycomplete-63` |  | Latin-1 string case mapping | python-completeness |
 | `2026-10-23-pycomplete-62` |  | finite numeric `itertools.count` | python-completeness |
 | `2026-10-23-pycomplete-61` |  | canonical textual NaN construction | python-completeness |

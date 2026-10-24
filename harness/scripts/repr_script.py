@@ -9,9 +9,9 @@ the `[...]` a self-referential list prints are each a place to be subtly
 wrong, so every line here is compared against the pinned CPython.
 
 What stays LOUD is what cannot be rendered exactly: a set (hash order),
-an instance/closure/generator (identity), and a non-ASCII string, whose
-printability is a Unicode table this model never guesses
-(`print_set.py`, `print_nonascii.py`).
+an instance/closure/generator (identity), and structures beyond the fixed
+depth budget. Printable Unicode strings and exact escapes use the same table
+as `print_nonascii.py`.
 """
 
 from collections import namedtuple

@@ -46,7 +46,14 @@ change is listed here under **Changed** or **Removed**.
 - String case methods now admit Latin-1 input characters, including CPython's
   `µ`, `ß` → `SS`, and `ÿ` → `Ÿ` mappings; characters outside Latin-1 remain
   loud until the full Unicode case tables are represented.
-- String `repr` now renders printable Latin-1 characters directly, with exact `\xNN` escapes for C1 controls, NBSP, and soft hyphen; Unicode above Latin-1 remains loud.
+- String `repr` renders printable Latin-1 characters directly, with exact
+  `\xNN` escapes for C1 controls, NBSP, and soft hyphen; the Unicode table
+  extension below covers code points above Latin-1.
+- String `repr` now follows CPython 3.9's Unicode 13.0 printability table:
+  printable code points such as `λ` and `😀` render directly, while controls,
+  separators, unassigned, and private-use code points use exact `\\uNNNN` or
+  `\\UNNNNNNNN` escapes. `%r`, f-string repr conversion, and nested container
+  rendering share this table.
 - `dict()` now accepts pair sequences from immediate and heap-backed lists,
   tuples, bytes, strings, and namedtuples, preserving CPython's ordered
   length, hashability, and duplicate-key checks.

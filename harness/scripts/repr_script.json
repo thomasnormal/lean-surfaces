@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "harness/scripts/repr_script.py",
-  "source_sha256": "639c515299bc4f3b1e09376ee99a6d8b211348e5ff6951328ce1412abcb61590",
+  "source_sha256": "1118feffd17f755ffbba504f76b957d7a3e0d2628a57c5005905f7d7dadf7785",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "leanpy corpus: PRINTING CONTAINERS \u2014 CPython's two-level render rule.\n\n`print` applies `str()` to its arguments and `repr()` to everything\nINSIDE a container, which is why `print(\"a\")` has no quotes and\n`print([\"a\"])` does. Loud until 2026-08-13 (\"repr subtleties\"), which is\na fair description: the quote CPython picks, its escape set, the\none-element tuple's trailing comma, a namedtuple's `field=value` form and\nthe `[...]` a self-referential list prints are each a place to be subtly\nwrong, so every line here is compared against the pinned CPython.\n\nWhat stays LOUD is what cannot be rendered exactly: a set (hash order),\nan instance/closure/generator (identity), and a non-ASCII string, whose\nprintability is a Unicode table this model never guesses\n(`print_set.py`, `print_nonascii.py`).\n"
+            "value": "leanpy corpus: PRINTING CONTAINERS \u2014 CPython's two-level render rule.\n\n`print` applies `str()` to its arguments and `repr()` to everything\nINSIDE a container, which is why `print(\"a\")` has no quotes and\n`print([\"a\"])` does. Loud until 2026-08-13 (\"repr subtleties\"), which is\na fair description: the quote CPython picks, its escape set, the\none-element tuple's trailing comma, a namedtuple's `field=value` form and\nthe `[...]` a self-referential list prints are each a place to be subtly\nwrong, so every line here is compared against the pinned CPython.\n\nWhat stays LOUD is what cannot be rendered exactly: a set (hash order),\nan instance/closure/generator (identity), and structures beyond the fixed\ndepth budget. Printable Unicode strings and exact escapes use the same table\nas `print_nonascii.py`.\n"
           }
         }
       },

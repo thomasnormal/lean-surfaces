@@ -1120,4 +1120,9 @@ def memberGetterWitness : Bool :=
 
 #guard memberGetterWitness
 
+def memberGetterDotWitness : Bool :=
+  observedDot == some 7
+
+#guard memberGetterDotWitness
+
 end LeanModels.Cpp.MemberCallTests

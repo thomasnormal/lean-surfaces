@@ -6591,3 +6591,20 @@ The fresh 22,049-path census moves **4,839 → 4,840 clean** and **17,144 →
 **3,028 → 2,980**, moving `ExpressionStatement:CallExpression` to the leading
 blocker at **2,985**. Differential coverage moves **138/134/0/4 → 139/135/0/4**;
 grammar coverage remains **214/83/131**.
+
+## Dynamic-to-fixed size-mismatch assignments — 2026-10-24
+
+IEEE 1800-2023 §7.6 requires a run-time error, with no copy, when a sampled
+dynamic array is assigned to a fixed-size unpacked array of a different
+length. The flat self-check state has no diagnostic stream or aggregate store,
+so this exact blocking form lowers to an immediate `$finish`, preserving the
+observable halt and preventing later statements from running. Equal-size
+copies, nonblocking/timed assignments, effectful sources, and all other
+dynamic-array operations remain loud. `dynamic_fixed_size_mismatch` supplies
+the `BEFORE` transcript and the extractor tests pin the mismatch and equal-size
+boundaries.
+
+The 22,049-path census moves **4,841 → 4,842 clean** and **17,142 → 17,141
+partial** (66 include skips); `AssignmentExpression:target` falls **2,980 →
+2,979**. Differential coverage moves **141/137/0/4 → 142/138/0/4**; grammar
+coverage remains **214/83/131**.

@@ -3881,3 +3881,18 @@ this shape: **4,816 clean / 17,166 partial / 66 include skips** and
 `AssignmentExpression:target` at **3,035 files** are unchanged. Differential
 coverage moves **121/117/0/4 → 122/118/0/4**; grammar coverage remains
 **214/83/131**.
+
+## Dynamic-to-fixed size-mismatch assignments — 2026-10-24
+
+IEEE 1800-2023 §7.6 requires a run-time error, with no copy, when a sampled
+dynamic array is assigned to a fixed-size unpacked array of a different
+length. The exact blocking form now lowers to an immediate `$finish` in the
+self-check surface, preserving the observable halt without fabricating a
+diagnostic channel or aggregate storage. Equal-size copies, nonblocking/timed
+forms, effectful sources, and other dynamic-array operations remain loud.
+`dynamic_fixed_size_mismatch` supplies the `BEFORE` transcript.
+
+The fresh chapter-scoped census moves **4,841 → 4,842 clean** and **17,142 →
+17,141 partial** (66 include skips); `AssignmentExpression:target` falls
+**2,980 → 2,979**. Differential coverage moves **141/137/0/4 → 142/138/0/4**;
+grammar coverage remains **214/83/131**.

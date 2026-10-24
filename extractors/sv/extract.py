@@ -2251,6 +2251,59 @@ def _dynamic_array_allocation_assignment(sm, expr):
         return None
 
 
+def _dynamic_fixed_size_mismatch(sm, expression):
+    """Recognize the IEEE 7.6 dynamic-to-fixed size mismatch.
+
+    Assigning a sampled dynamic array to a fixed-size unpacked array with a
+    different element count is a run-time error and performs no copy.  The
+    self-check surface has no diagnostic channel or aggregate store, so the
+    caller represents this exact blocking form by an immediate ``$finish``.
+    Keep equal-size copies on the existing cell-by-cell lowering and reject
+    dynamic/side-effecting, nonblocking, and timed forms here.
+    """
+    try:
+        if (type(expression).__name__ != "AssignmentExpression"
+                or expression.op is not None
+                or expression.timingControl is not None
+                or expression.isNonBlocking):
+            return None
+        lhs = expression.left
+        rhs = expression.right
+        lhs_shape = _fixed_array_shape(lhs)
+        rhs_shape = _fixed_array_shape(rhs)
+        if lhs_shape is None or rhs_shape is None:
+            return None
+        lhs_type = getattr(lhs.type, "canonicalType", lhs.type)
+        rhs_source = rhs
+        while type(rhs_source).__name__ == "ConversionExpression":
+            rhs_source = getattr(rhs_source, "operand", None)
+            if rhs_source is None:
+                return None
+        rhs_type = getattr(rhs_source.type, "canonicalType", rhs_source.type)
+        if (type(lhs_type).__name__ != "FixedSizeUnpackedArrayType"
+                or type(rhs_type).__name__ != "DynamicArrayType"):
+            return None
+        lhs_name, lhs_width, _lhs_two, lhs_left, lhs_right = lhs_shape
+        rhs_name, rhs_width, _rhs_two, rhs_left, rhs_right = rhs_shape
+        lhs_count = abs(lhs_left - lhs_right) + 1
+        rhs_count = abs(rhs_left - rhs_right) + 1
+        if (lhs_count == rhs_count or lhs_width != rhs_width
+                or lhs_name == rhs_name):
+            return None
+        # A sampled dynamic array is a plain variable in the admitted shape;
+        # other source expressions could carry evaluation effects that the
+        # immediate-halt abstraction must not erase.
+        if type(rhs_source).__name__ != "NamedValueExpression":
+            return None
+        if str(getattr(rhs_source.symbol, "kind", "")) != "SymbolKind.Variable":
+            return None
+        return {"kind": "SysCall", "span": node_span(sm, expression),
+                "name": "$finish", "format": None, "args": [],
+                "arg_signed": [], "dynamic_fixed_size_mismatch": True}
+    except Exception:
+        return None
+
+
 def _fixed_array_indexed_slice_info(sm, expression):
     """Describe a runtime indexed slice over a one-dimensional fixed array.
 
@@ -8580,6 +8633,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         dynamic_allocation = _dynamic_array_allocation_assignment(sm, expr)
         if dynamic_allocation is not None:
             return dynamic_allocation
+        dynamic_fixed_mismatch = _dynamic_fixed_size_mismatch(sm, expr)
+        if dynamic_fixed_mismatch is not None:
+            return dynamic_fixed_mismatch
         struct_pattern = _unpacked_struct_pattern_assignment(sm, expr)
         if struct_pattern is not None:
             return struct_pattern

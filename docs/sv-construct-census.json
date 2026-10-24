@@ -20,7 +20,7 @@
    ],
    [
     "AssignmentExpression:target",
-    2980
+    2979
    ],
    [
     "CallExpression",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4841,
-   "partial": 17142,
+   "clean": 4842,
+   "partial": 17141,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1026,7 +1026,7 @@
     15
    ],
    "runtime_diagnostic": [
-    1,
+    2,
     22
    ],
    "runtime_error": [
@@ -1603,9 +1603,9 @@
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 186,
+    "clean": 187,
     "error": 0,
-    "partial": 610,
+    "partial": 609,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

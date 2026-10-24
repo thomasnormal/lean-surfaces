@@ -62,7 +62,7 @@ class DynamicArrayDeclarations(unittest.TestCase):
                             node.get("name") == "dynamic_values[2]"
                             for node in nodes(design)))
 
-    def test_dynamic_to_fixed_size_mismatch_stays_loud(self):
+    def test_dynamic_to_fixed_size_mismatch_is_runtime_halt(self):
         design = lower(
             """module top;
                int fixed_values[2];
@@ -71,9 +71,45 @@ class DynamicArrayDeclarations(unittest.TestCase):
                  fixed_values = dynamic_values;
                end
                endmodule""")
-        self.assertTrue(any(node.get("kind") == "Unsupported" and
-                            node.get("sv_kind") == "AssignmentExpression:target"
+        self.assertTrue(any(node.get("dynamic_fixed_size_mismatch")
+                            and node.get("kind") == "SysCall"
+                            and node.get("name") == "$finish"
                             for node in nodes(design)))
+
+    def test_dynamic_to_fixed_size_mismatch_halts_without_copy(self):
+        design = lower(
+            """module top;
+               int fixed_values[2];
+               int dynamic_values[] = new[3];
+               initial begin
+                 fixed_values = dynamic_values;
+                 $display("UNREACHED");
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("dynamic_fixed_size_mismatch")
+                            and node.get("kind") == "SysCall"
+                            and node.get("name") == "$finish"
+                            for node in nodes(design)))
+
+    def test_dynamic_to_fixed_equal_size_stays_live(self):
+        design = lower(
+            """module top;
+               int fixed_values[2];
+               int dynamic_values[] = new[2];
+               initial begin
+                 fixed_values = dynamic_values;
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("dynamic_fixed_size_mismatch")
+                             for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
 
     def test_procedural_constant_allocation_and_cells_are_live(self):
         design = lower(

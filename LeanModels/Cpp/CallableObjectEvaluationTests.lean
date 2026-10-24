@@ -494,6 +494,18 @@ private def unsignedPostfixStore : Bool :=
 
 def callableUnsignedPostfixStoreWitness : Bool := unsignedPostfixStore
 
+private def unsignedFrameDecrement : Bool :=
+  match CallableObjectFrame.start .lp64 (incrementFunction .unsignedInt "--" false)
+      [⟨.unsigned 32, 0⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 16 started
+      match outcome.result with
+      | .ok (.ok value) => value == ⟨.unsigned 32, 4294967295⟩
+      | _ => false
+
+def callableUnsignedFrameDecrementWitness : Bool := unsignedFrameDecrement
+
 -- No native oracle execution is run for signed overflow. The failed arithmetic
 -- leaves the live parameter unchanged in both prefix and postfix cases.
 private def overflowRetainsParameter (operator : String) (isPostfix : Bool) (value : Int) : Bool :=
@@ -508,6 +520,7 @@ private def overflowRetainsParameter (operator : String) (isPostfix : Bool) (val
 #guard callablePostfixStoreWitness
 #guard callableUnsignedFrameIncrementWitness
 #guard callableUnsignedPostfixStoreWitness
+#guard callableUnsignedFrameDecrementWitness
 #guard overflowRetainsParameter "++" false 2147483647
 #guard overflowRetainsParameter "++" true 2147483647
 #guard overflowRetainsParameter "--" false (-2147483648)

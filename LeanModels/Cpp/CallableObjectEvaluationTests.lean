@@ -1060,6 +1060,26 @@ def callableUnsignedShortCompoundBitXorFrameWitness : Bool :=
 
 #guard callableUnsignedShortCompoundBitXorFrameWitness
 
+private def signedCharCompoundBitAndFrame : Bool :=
+  let base := incrementFunction .signedChar "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign "&=" (handle "0x10")
+      {expression := .integer 3, sourceType := .builtin .signedChar,
+        type := .builtin .signedChar})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .signedChar, type := .builtin .signedChar}))}
+  match CallableObjectFrame.start .lp64 function [⟨.signed 8, 13⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.signed 8, 1⟩)
+
+def callableSignedCharCompoundBitAndFrameWitness : Bool :=
+  signedCharCompoundBitAndFrame
+
+#guard callableSignedCharCompoundBitAndFrameWitness
+
 -- No native oracle execution is run for signed overflow. The failed arithmetic
 -- leaves the live parameter unchanged in both prefix and postfix cases.
 private def overflowRetainsParameter (operator : String) (isPostfix : Bool) (value : Int) : Bool :=

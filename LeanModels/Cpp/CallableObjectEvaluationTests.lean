@@ -200,6 +200,8 @@ private def unsupportedIncrementLoud : Bool :=
   | .error (.unsupportedOperator "??") => true
   | _ => false
 
+def callableIncrementRefusal : Bool := !unsupportedIncrementLoud
+
 private def unsupportedIncrementPrecedesRead : Bool :=
   let expression : TypedCallableExpression := {
     expression := .increment "??" false (handle "0x99"),
@@ -385,6 +387,7 @@ def callableParserAutomaticLocalWitness : Bool := parserAdmitsAutomaticLocal
 #guard returnFailureRetainsFrame
 #guard forInitializerFailureRetainsFrame
 #guard unsupportedIncrementLoud
+#guard !callableIncrementRefusal
 #guard unsupportedIncrementPrecedesRead
 #guard unsupportedLogicalLoud
 #guard unsupportedCompoundLoud

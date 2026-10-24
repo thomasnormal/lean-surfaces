@@ -4021,6 +4021,18 @@
     "rung": 5
   },
   {
+    "id": "declaration.callable-increment-refusal",
+    "kind": "statement",
+    "corpus": "rung-5 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableIncrementRefusal",
+    "cpp_source": "int unsupported_increment(int value) { return ++value; } bool callable_witness() { return unsupported_increment(7) == 8; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "refuse",
+    "rung": 5
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

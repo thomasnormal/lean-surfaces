@@ -5,6 +5,21 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.63] — 2026-10-24
+
+### Added
+
+- Added signed-char and unsigned-char callable frame increment/decrement wrap
+  and postfix-return witnesses across the 8-bit integral boundary.
+
+### Measured
+
+- The checked-in corpus now contains **400 differential rows**: **383 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.62] — 2026-10-24
 
 ### Added

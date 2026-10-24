@@ -6006,3 +6006,15 @@ and preserves every unselected cell. The 22,046-file corpus remains **4,783
 clean / 17,197 partial / 66 include skips** because its indexed `with` cases
 use dynamic arrays. Differential coverage moves **99/95/0/4 → 100/96/0/4**;
 grammar coverage remains **211 witnesses, 80 MATCH, and 131 REFUSE**.
+
+## Discarded zero-argument literal-return calls — 2026-10-24
+
+A statement-position call to a zero-argument user function whose complete body
+is one integral literal `return` now erases the discarded result. Calls with
+arguments, named-value reads, operators, nested calls, or multi-statement
+bodies remain loud; no callable frame or state model is introduced. The
+`literal_function_statement` fixture and differential row cover the admitted
+shape. The 22,046-file corpus remains **4,783 clean / 17,197 partial / 66
+include skips** with unchanged blocker counts. Differential coverage moves
+**100/96/0/4 → 101/97/0/4**; grammar coverage remains **211 witnesses, 80
+MATCH, and 131 REFUSE**.

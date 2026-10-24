@@ -65,6 +65,24 @@ class EmptyFunctionCalls(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
+    def test_literal_return_statement_is_erased(self):
+        design = lower(
+            'module top; function bit [3:0] seven(); return 4\'d7; endfunction '
+            'initial seven(); endmodule')
+        self.assertTrue(any(node.get("literal_function_statement") == "seven"
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_literal_return_statement_with_argument_stays_loud(self):
+        design = lower(
+            'module top; function bit [3:0] seven(input bit x); '
+            'return 4\'d7; endfunction initial seven(1\'b0); endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,131 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/literal_function_statement/literal_function_statement.sv",
+  "source_sha256": "d833669cce378167447426038db615dd2003b737ea371b17a8d0dabe84360dae",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 19,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 12,
+              "col": 3,
+              "end_line": 18,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 12,
+                "col": 11,
+                "end_line": 18,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 13
+                  },
+                  "literal_function_statement": "seven"
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 24
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 14,
+                      "col": 9,
+                      "end_line": 14,
+                      "end_col": 24
+                    },
+                    "width": 1,
+                    "op": "==",
+                    "left": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 14,
+                        "col": 9,
+                        "end_line": 14,
+                        "end_col": 16
+                      },
+                      "width": 4,
+                      "bits": "0111",
+                      "literal_function_return": true
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 14,
+                        "col": 20,
+                        "end_line": 14,
+                        "end_col": 24
+                      },
+                      "width": 4,
+                      "bits": "0111"
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 15,
+                      "col": 7,
+                      "end_line": 15,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 17,
+                      "col": 7,
+                      "end_line": 17,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

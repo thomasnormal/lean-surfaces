@@ -24,6 +24,12 @@ parallel signedness metadata. A bare output call is an empty write or line.
 The ordinary `$cast` statement has its own dynamic-cast lowering and therefore
 does not rely on the generic call-statement admission.
 
+A zero-argument user function whose complete body is one integral literal
+`return` is also admitted in statement position by erasing the discarded
+result. The literal-only body has no storage, timing, diagnostic, or argument
+effects. User calls with arguments, reads, operators, nested calls, or any
+other body remain loud until callable frames are represented.
+
 The self-check executor runs these calls at time zero. The retained stepper
 delegates the same `SysCall` leaves to that executor after a delay or event
 wait, so no second call interpreter is introduced. The scheduler's existing

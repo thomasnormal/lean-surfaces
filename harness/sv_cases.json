@@ -857,6 +857,15 @@
       "expect": "match"
     },
     {
+      "name": "literal_function_statement",
+      "file": "Examples/system-verilog/literal_function_statement/literal_function_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "monitor_controls",
       "file": "Examples/system-verilog/monitor_controls/monitor_controls.sv",
       "module": "top",

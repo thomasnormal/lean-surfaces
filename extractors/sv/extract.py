@@ -7996,6 +7996,15 @@ def _convert_syscall(sm, s, e):
                 and body_list == [] and kind in ("Task", "Function")):
             return {"kind": "Empty", "span": node_span(sm, s),
                     "empty_subroutine_call": name}
+        # A zero-argument function whose complete body is one integral literal
+        # return is equally effect-free when the result is discarded.  Reuse
+        # the expression-position recognizer so statement and value calls
+        # share exactly the same narrow literal boundary.
+        if (_SYM is None and subroutine is not None and args == []
+                and formal_args == [] and kind == "Function"
+                and _literal_function_symbol(subroutine)):
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "literal_function_statement": name}
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

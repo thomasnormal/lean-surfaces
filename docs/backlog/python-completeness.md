@@ -17,6 +17,13 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-81 — string repetition index overflow
+
+String repetition counts beyond the pinned CPython index-sized range now raise
+the exact `OverflowError`, including empty strings and nonpositive counts.
+Positive in-range results that exceed the tier's materialization budget remain
+loud.
+
 ## 2026-10-24-pycomplete-80 — same-dictionary key-view equality
 
 Two escaped `dict_keys` views over the same dictionary now compare equal,

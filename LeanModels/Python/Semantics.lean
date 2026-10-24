@@ -743,7 +743,7 @@ results. Empty strings and nonpositive counts short-circuit exactly as CPython
 does, without constructing or budgeting the requested magnitude. -/
 def strRepeat (text : String) (count : Int) : Res RVal :=
   if count.natAbs > seqIndexBudget then
-    .unsupported "sequence repetition count does not fit CPython's index-sized integer"
+    .exn (.overflowError "cannot fit 'int' into an index-sized integer")
   else if count ≤ 0 || text.isEmpty then
     .ok (.str "")
   else if count.natAbs ≤ seqBudget ∧ text.length * count.toNat ≤ seqBudget then

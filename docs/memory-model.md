@@ -509,10 +509,10 @@ kernel-reducible without caches or special-case fast paths.
 
 Admission bounds BOTH the original signed count's magnitude and the result's
 code-point length by the fixed `seqBudget` (1,048,576) for positive, nonempty
-results. Counts must first fit the pinned 64-bit CPython `Py_ssize_t`; once
-that index-sized conversion succeeds, empty strings and non-positive counts
-short-circuit to the empty string. Larger positive counts/output refuse,
-never guessing a host word size, `OverflowError`, or `MemoryError`. These
+results. Counts beyond the pinned 64-bit CPython `Py_ssize_t` now raise the
+faithful index-sized `OverflowError`; once that conversion succeeds, empty
+strings and non-positive counts short-circuit to the empty string. Larger
+positive counts/output refuse, never guessing `MemoryError`. These
 bounds do not depend on interpreter fuel. Lone surrogates remain outside
 Lean's `Char` boundary.
 

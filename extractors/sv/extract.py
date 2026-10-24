@@ -6318,6 +6318,26 @@ def _explicit_new_zero(expr):
     return _new_integer_arg(expr, 0, False)
 
 
+def _semaphore_new_nonnegative_literal(expr):
+    """Whether ``new(N)`` constructs a semaphore with a known N >= 0."""
+    try:
+        node = expr
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return False
+        if type(node).__name__ != "NewClassExpression" or getattr(node, "bad", False):
+            return False
+        call = getattr(node, "constructorCall", None)
+        args = list(getattr(call, "arguments", []))
+        if len(args) != 1:
+            return False
+        value = _literal_integral_value(args[0])
+        return value is not None and value >= 0
+    except Exception:
+        return False
+
+
 def _compound_rhs(expr):
     """Peel pyslang's synthetic read-modify-write expression from a compound
     assignment. The frontend may wrap it in a conversion for unsized literals.
@@ -8331,6 +8351,15 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and _explicit_new_zero(expr.right)):
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "opaque_semaphore_zero_write": True}
+    if (_SYM is None and expr.op is None and expr.timingControl is None
+            and not expr.isNonBlocking
+            and type(expr.left).__name__ == "NamedValueExpression"
+            and type(getattr(expr.left.type, "canonicalType", None)).__name__
+            == "ClassType"
+            and getattr(expr.left.type.canonicalType, "name", None) == "semaphore"
+            and _semaphore_new_nonnegative_literal(expr.right)):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "opaque_semaphore_literal_new_write": True}
     # Real and shortreal values have no representation in the flat
     # self-check state.  A pure literal blocking write consequently has no
     # modeled effect and can be erased.  Keep nonblocking writes, names,

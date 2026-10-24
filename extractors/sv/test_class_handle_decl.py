@@ -92,9 +92,20 @@ class ClassHandleDeclarations(unittest.TestCase):
                              "AssignmentExpression:target"
                              for node in nodes(design)))
 
-    def test_nonzero_semaphore_constructor_stays_loud(self):
+    def test_literal_semaphore_constructor_is_opaque(self):
         design = lower(
-            'module top; semaphore sem; initial begin sem = new(1); end endmodule')
+            'module top; semaphore sem; initial begin sem = new(1); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("opaque_semaphore_literal_new_write")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_dynamic_semaphore_constructor_stays_loud(self):
+        design = lower(
+            'module top; semaphore sem; integer keys; '
+            'initial begin sem = new(keys); end endmodule')
         self.assertIn("AssignmentExpression:target",
                       [node.get("sv_kind") for node in nodes(design)])
 

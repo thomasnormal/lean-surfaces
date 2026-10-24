@@ -10,10 +10,11 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 138 | 134 | 0 | 4 | sv-tests-2 declarations |
+| 139 | 135 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
+| `literal_semaphore_constructor` | `Examples/system-verilog/literal_semaphore_constructor/literal_semaphore_constructor.sv` | match | **MATCH** | `ok` | MATCH |
 | `invalid_string_replication_multiplier` | `Examples/system-verilog/invalid_string_replication_multiplier/invalid_string_replication_multiplier.sv` | match | **MATCH** | `ok` | MATCH |
 | `invalid_struct_replication_assignment` | `Examples/system-verilog/invalid_struct_replication_assignment/invalid_struct_replication_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `invalid_associative_index_target` | `Examples/system-verilog/invalid_associative_index_target/invalid_associative_index_target.sv` | match | **MATCH** | `ok` | MATCH |
@@ -294,7 +295,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.NamedType` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NetDeclaration` | `Examples/system-verilog/constant_net_array_cell_driver/constant_net_array_cell_driver.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NewArrayExpression` | `Examples/system-verilog/dynamic_array_cells/dynamic_array_cells.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.NewClassExpression` | `Examples/system-verilog/opaque_mailbox_new_write/opaque_mailbox_new_write.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.NewClassExpression` | `Examples/system-verilog/literal_semaphore_constructor/literal_semaphore_constructor.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NonblockingAssignmentExpression` | `Examples/system-verilog/array_reductions/timing.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NullLiteralExpression` | `Examples/system-verilog/opaque_chandle_null_write/opaque_chandle_null_write.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.OrAssignmentExpression` | `Examples/system-verilog/compound_assignments/partial_members.sv` | **REFUSE** | `unsupported` AssignmentExpression:compound-partial-range |
@@ -384,12 +385,12 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22049 | 4839 | 17144 | 66 |
+| 22049 | 4840 | 17143 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 3027 |
 | `ExpressionStatement:CallExpression` | 2985 |
+| `AssignmentExpression:target` | 2980 |
 | `CallExpression` | 2973 |
 | `Hierarchy:ports` | 2397 |
 | `VariableSymbol:2state` | 2349 |

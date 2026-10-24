@@ -6543,3 +6543,19 @@ The fresh 22,049-path census moves **4,838 → 4,839 clean** and **17,145 →
 17,144 partial** (66 include skips); `AssignmentExpression:target` falls
 **3,028 → 3,027**. Differential coverage moves **137/133/0/4 → 138/134/0/4**;
 grammar coverage remains **214/83/131**.
+
+## Literal semaphore constructors — 2026-10-24
+
+The opaque class-handle boundary now admits `semaphore = new(N)` when `N` is
+a known nonnegative integral literal. The constructor's key store has no
+representation in the self-check state, and later semaphore operations remain
+loud, so the write can be erased without fabricating synchronization state.
+Dynamic, negative, computed, and method-using forms remain loud.
+`literal_semaphore_constructor` supplies the PASS fixture; extractor tests pin
+the literal and dynamic constructor boundaries.
+
+The fresh 22,049-path census moves **4,839 → 4,840 clean** and **17,144 →
+17,143 partial** (66 include skips). `AssignmentExpression:target` falls
+**3,028 → 2,980**, moving `ExpressionStatement:CallExpression` to the leading
+blocker at **2,985**. Differential coverage moves **138/134/0/4 → 139/135/0/4**;
+grammar coverage remains **214/83/131**.

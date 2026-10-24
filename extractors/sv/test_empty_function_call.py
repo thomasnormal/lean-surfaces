@@ -193,6 +193,42 @@ class EmptyFunctionCalls(unittest.TestCase):
                              "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
+    def test_shortrealtobits_literal_uses_single_bits(self):
+        design = lower(
+            'module top; initial if ($shortrealtobits(-2.5) === '
+            '32\'hc0200000) $display("PASS"); endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("shortrealtobits_literal")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(values[0]["bits"], "11000000001000000000000000000000")
+
+    def test_shortrealtobits_dynamic_explicit_and_overflow_stay_loud(self):
+        dynamic = lower(
+            'module top; real x; initial if ($shortrealtobits(x) === 0) '
+            '$display("PASS"); endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(dynamic)))
+        explicit = lower(
+            'module top; initial if ($shortrealtobits(shortreal\'(1.0)) === 0) '
+            '$display("PASS"); endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(explicit)))
+        overflow = lower(
+            'module top; initial if ($shortrealtobits(1.0e400) === 0) '
+            '$display("PASS"); endmodule')
+        self.assertTrue(any(node.get("sv_kind", "").startswith("CallExpression")
+                            for node in nodes(overflow)))
+
+    def test_shortrealtobits_literal_statement_is_inert(self):
+        design = lower(
+            'module top; initial begin $shortrealtobits(1.0); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("shortrealtobits_literal_statement")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

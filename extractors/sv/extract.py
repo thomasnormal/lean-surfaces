@@ -5360,6 +5360,58 @@ def _convert_realtobits_literal(sm, expression):
     }
 
 
+def _shortrealtobits_literal_call(expression):
+    """Whether ``$shortrealtobits`` has one implicit literal conversion."""
+    try:
+        if (_SYM is not None or type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "$shortrealtobits"):
+            return False
+        arguments = list(expression.arguments)
+        if len(arguments) != 1:
+            return False
+        argument = arguments[0]
+        if (type(argument).__name__ != "ConversionExpression"
+                or str(getattr(argument, "conversionKind", "")).split(".")[-1]
+                != "Implicit"):
+            return False
+        node = getattr(argument, "operand", None)
+        if type(node).__name__ == "UnaryExpression":
+            op = str(getattr(node, "op", "")).split(".")[-1]
+            if op not in ("Plus", "Minus", "UnaryPlus", "UnaryMinus"):
+                return False
+            node = getattr(node, "operand", None)
+        return (type(node).__name__ == "RealLiteral"
+                and not getattr(node, "bad", False)
+                and getattr(expression.type, "bitWidth", None) == 32
+                and getattr(expression.type, "isIntegral", False)
+                and not getattr(expression.type, "isSigned", True)
+                and _literal_real_decimal(argument) is not None)
+    except Exception:
+        return False
+
+
+def _convert_shortrealtobits_literal(sm, expression):
+    if not _shortrealtobits_literal_call(expression):
+        return unsupported(sm, expression, "CallExpression:$shortrealtobits")
+    value = _literal_real_decimal(expression.arguments[0])
+    try:
+        real_value = float(value)
+        if not math.isfinite(real_value):
+            return unsupported(sm, expression, "CallExpression:$shortrealtobits:range")
+        encoded = struct.unpack(">I", struct.pack(">f", real_value))[0]
+    except (OverflowError, ValueError, struct.error):
+        return unsupported(sm, expression, "CallExpression:$shortrealtobits:range")
+    return {
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": 32,
+        "bits": format(encoded, "032b"),
+        "shortrealtobits_literal": True,
+    }
+
+
 def _convert_legacy_call(sm, expression):
     # An empty zero-argument function returns its type's default value.  The
     # declaration has already been erased as metadata; materialize that
@@ -5416,6 +5468,7 @@ def _convert_legacy_call(sm, expression):
             (_zero_size_method, _convert_zero_size_method),
             (_rtoi_literal_call, _convert_rtoi_literal),
             (_realtobits_literal_call, _convert_realtobits_literal),
+            (_shortrealtobits_literal_call, _convert_shortrealtobits_literal),
             (_time_call, _convert_time_call),
             (_stime_call, _convert_stime_call),
             (_signing_call, _convert_signing_call),
@@ -8482,6 +8535,9 @@ def _convert_syscall(sm, s, e):
     if is_sys and _realtobits_literal_call(e):
         return {"kind": "Empty", "span": node_span(sm, s),
                 "realtobits_literal_statement": True}
+    if is_sys and _shortrealtobits_literal_call(e):
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "shortrealtobits_literal_statement": True}
     if is_sys and name in SYSCALL_ASSERT_CTRL:
         try:
             args = list(e.arguments)

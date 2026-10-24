@@ -6346,3 +6346,19 @@ The fresh 22,048-file census moves **4,823 → 4,828 clean** and **17,159 →
 `ExpressionStatement:CallExpression` unchanged at **2,985**. Differential
 coverage moves **124/120/0/4 → 125/121/0/4**; grammar coverage remains
 **214/83/131**.
+
+## Literal `$shortrealtobits` conversions — 2026-10-24
+
+`$shortrealtobits` with a direct finite real literal through its implicit
+single-precision conversion shell now lowers to the existing 32-bit literal
+containing the IEEE-754 single pattern. A discarded statement call is inert.
+Dynamic values, explicit conversion shells, overflow, and other short-real
+forms remain loud. `shortrealtobits_literal` supplies the value and discarded
+result paths; extractor tests pin the exact negative pattern and the dynamic,
+explicit-cast, and overflow boundaries.
+
+The fresh 22,048-file census moves **4,828 → 4,829 clean** and **17,154 →
+17,153 partial**; `CallExpression` falls **2,975 → 2,973**, with
+`ExpressionStatement:CallExpression` unchanged at **2,985**. Differential
+coverage moves **125/121/0/4 → 126/122/0/4**; grammar coverage remains
+**214/83/131**.

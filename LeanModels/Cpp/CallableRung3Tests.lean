@@ -104,6 +104,21 @@ def callableAlignOfWitness : Bool :=
   | .ok (.ok value) => value == ⟨.unsigned 64, 2⟩
   | _ => false
 
+def boolLiteralFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := .builtin .boolean, parameters := [], variadic := false}
+  parameters := []
+  body := .block (.return_ {
+    expression := .integer 1
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableBoolLiteralWitness : Bool :=
+  match evaluateCallable 16 .lp64 boolLiteralFunction [] with
+  | .ok (.ok value) => value == integralBoolean true
+  | _ => false
+
 def castFunction : CallableFunction := {
   occurrence := default
   signature := {result := intType, parameters := [shortType], variadic := false}
@@ -428,6 +443,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableUnaryNarrowWitness
 #guard callableSizeOfWitness
 #guard callableAlignOfWitness
+#guard callableBoolLiteralWitness
 #guard callableCastWitness
 #guard callableNarrowCastWitness
 #guard callablePostfixWitness
@@ -459,6 +475,9 @@ theorem callable_size_of_witness : callableSizeOfWitness = true := by
   rfl
 
 theorem callable_align_of_witness : callableAlignOfWitness = true := by
+  rfl
+
+theorem callable_bool_literal_witness : callableBoolLiteralWitness = true := by
   rfl
 
 theorem callable_cast_witness : callableCastWitness = true := by
@@ -509,6 +528,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_unary_narrow_witness
 #print axioms callable_size_of_witness
 #print axioms callable_align_of_witness
+#print axioms callable_bool_literal_witness
 #print axioms callable_cast_witness
 #print axioms callable_narrow_cast_witness
 #print axioms callable_postfix_witness

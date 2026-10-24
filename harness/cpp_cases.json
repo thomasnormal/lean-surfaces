@@ -2809,6 +2809,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-bool-literal",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableBoolLiteralWitness",
+    "cpp_source": "bool bool_witness() { return true; } bool callable_witness() { return bool_witness(); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-c-style-cast",
     "kind": "expression",
     "corpus": "rung-3 witness",

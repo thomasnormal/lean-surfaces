@@ -992,6 +992,16 @@ private def alignofTypeRaw : Raw := object [
   | .ok expression => expression.expression == .alignOf (.builtin .short)
   | .error _ => false
 
+private def boolLiteralRaw : Raw := object [
+  ("id", text "0x62"), ("kind", text "CXXBoolLiteralExpr"), ("value", .bool true)]
+
+#guard match parseCallableExpressionTyped .lp64 [] []
+    (some [⟨⟨"0x62"⟩, "CXXBoolLiteralExpr", .builtin .boolean⟩])
+    boolLiteralRaw none (some (.builtin .boolean)) with
+  | .ok expression => expression.expression == .integer 1 &&
+      expression.type == .builtin .boolean
+  | .error _ => false
+
 private def cStyleCastRaw : Raw := object [
   ("id", text "0x70"), ("kind", text "CStyleCastExpr"),
   ("castKind", text "NoOp"),

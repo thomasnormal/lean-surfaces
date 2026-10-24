@@ -616,7 +616,8 @@ def evaluateCallableObjectInStore (fuel : Nat) (store : IntegralObjectStore)
     (function : CallableFunction) (arguments : List CallableArgument) :
     Outcome (IntegralResult IntegralValue) :=
   if function.signature.result == .void then
-    failure {store, scopes := [], staticBindings := []} .voidResultRequiresResultAPI
+    failure {store, scopes := [], staticBindings := [], threadBindings := []}
+      .voidResultRequiresResultAPI
   else
     let started := CallableObjectFrame.startInStore store function arguments
     match started.result with

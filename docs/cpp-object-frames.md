@@ -7,7 +7,7 @@ automatic parameter and local declarations, including the validated Clang
 evaluator.
 
 `IntegralObjectFrame` owns one `IntegralObjectStore`, a stack of `FrameScope`s,
-and a persistent table for function-local static bindings. A binding records
+and persistent tables for function-local static and thread-local bindings. A binding records
 the declaration occurrence handle, its `ObjectId`, structured access type, and
 whether it owns a parameter/local or borrows an existing object as a reference.
 Lookup
@@ -34,6 +34,11 @@ Static local declarations use `.static_` storage and initialize once. The
 successful binding is retained outside the active scope; a later call reuses
 the same object and value, publishing only a fresh scope-local view. Scope exit
 therefore removes the view without ending the static object's lifetime.
+
+Function-local `thread_local` declarations use `.thread` storage and follow the
+same persistence boundary for the current threaded store. Initialization occurs
+once per store, later calls reuse the object and value, and scope exit removes
+only the view. A separate thread scheduler is outside this bounded model.
 
 `FrameOutcome` always returns the mutated frame alongside its result. A failed
 initializer retains its storage-only binding and all earlier declarations; it
@@ -64,8 +69,8 @@ temporary is never treated as an ordinary automatic local. Mutable lvalue
 references to prvalues and non-integral referents remain loud.
 
 Exiting a scope ends owned bindings in reverse declaration order and removes
-only that scope's bindings. Static-local views and ordinary non-owning reference
-bindings never end their referents; the temporary-reference role is the explicit
+only that scope's bindings. Static-local and thread-local views and ordinary
+non-owning reference bindings never end their referents; the temporary-reference role is the explicit
 exception because the reference extended that temporary's lifetime. Object IDs
 remain tombstones
 in the append-only store.
@@ -89,5 +94,5 @@ cover parameter and sequential-local initialization, copy/direct/list/default
 initialization, nested lookup and shadowing, repeated loop-body allocation,
 self-initialization, default initialization followed by assignment, retained
 prefix state on division failure, reverse cleanup, return-before-cleanup, const
-writes, temporary reference materialization and scope cleanup, static-local
-persistence across calls, and loud missing/duplicate bindings.
+writes, temporary reference materialization and scope cleanup, static-local and
+thread-local persistence across calls, and loud missing/duplicate bindings.

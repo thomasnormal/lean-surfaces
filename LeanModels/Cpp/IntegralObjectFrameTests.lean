@@ -385,6 +385,44 @@ private def staticLocalStatement : Bool :=
         second.frame.store.values == [some (signed 4)] &&
         objectPhase? second.frame 0 == some .aliveInitialized
 
+def threadLocalLifecycle : Bool :=
+  match opened with
+  | .error _ => false
+  | .ok frame =>
+      let first := frame.declareThreadInitialized 8 (handle "0x1") intType intType
+        (.literal (signed 5))
+      match first.result with
+      | .error _ => false
+      | .ok object =>
+          let exited := first.frame.exitScope
+          let entered := exited.frame.enterScope
+          let second := entered.frame.declareThreadInitialized 8 (handle "0x1") intType intType
+            (.literal (signed 77))
+          match second.result with
+          | .ok reused =>
+              let closed := second.frame.exitScope
+              object == reused &&
+                objectPhase? second.frame object == some .aliveInitialized &&
+                okValue (signed 5) (second.frame.read (handle "0x1")) &&
+                okUnit closed && objectPhase? closed.frame object == some .aliveInitialized &&
+                closed.frame.threadBindings.length == 1 &&
+                closed.frame.store.threadBindings.length == 1
+          | .error _ => false
+
+private def threadLocalStatement : Bool :=
+  match opened with
+  | .error _ => false
+  | .ok frame =>
+      let first := frame.execute 8 (.threadDeclare (handle "0x1") intType intType
+        (.literal (signed 6)))
+      let entered := first.frame.enterScope
+      let second := entered.frame.execute 8 (.threadDeclare (handle "0x1") intType intType
+        (.literal (signed 9)))
+      (first.result matches .ok none) && (second.result matches .ok none) &&
+        second.frame.threadBindings.length == 1 &&
+        second.frame.store.values == [some (signed 6)] &&
+        objectPhase? second.frame 0 == some .aliveInitialized
+
 private def temporaryReferenceStatement : Bool :=
   match opened with
   | .error _ => false
@@ -441,6 +479,8 @@ private def executeOutsideTransferLoud : Bool :=
 #guard zeroInitializationLifecycle
 #guard staticLocalLifecycle
 #guard staticLocalStatement
+#guard threadLocalLifecycle
+#guard threadLocalStatement
 #guard temporaryReferenceStatement
 #guard temporaryReferenceRefusals
 

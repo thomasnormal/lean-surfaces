@@ -162,7 +162,10 @@ def startInStore (store : IntegralObjectStore) (function : CallableFunction)
     store, scopes := [],
     staticBindings := store.staticBindings.map fun binding => {
       declaration := binding.declaration, object := binding.object,
-      type := binding.type, role := .staticLocal}}
+      type := binding.type, role := .staticLocal},
+    threadBindings := store.threadBindings.map fun binding => {
+      declaration := binding.declaration, object := binding.object,
+      type := binding.type, role := .threadLocal}}
   if !store.profile.valid then {frame, result := .error .invalidProfile}
   else if store.values.length != store.objects.objects.length then
     {frame, result := .error (.object (.object .incoherentValues))}

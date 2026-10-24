@@ -154,6 +154,34 @@ private def staticLocalAcrossStarts : Bool :=
                         reused.frame.store.staticBindings.length == 1
                   | .error _ => false
 
+private def threadLocalAcrossStarts : Bool :=
+  let f := function [intType] (.return_ (expression "0"))
+  let first := CallableObjectFrame.startInStore caller.store f [ref 0]
+  match first.result with
+  | .error _ => false
+  | .ok callable =>
+      let declared := callable.frame.declareThreadInitialized 8 (h "thread") intType intType
+        (.literal (signed 5))
+      match declared.result with
+      | .error _ => false
+      | .ok object =>
+          let closed := declared.frame.leaveFrame
+          match closed.result with
+          | .error _ => false
+          | .ok _ =>
+              let second := CallableObjectFrame.startInStore closed.frame.store f [ref 0]
+              match second.result with
+              | .error _ => false
+              | .ok callable2 =>
+                  let reused := callable2.frame.declareThreadInitialized 8 (h "thread")
+                    intType intType (.literal (signed 11))
+                  match reused.result with
+                  | .ok object2 =>
+                      object == object2 &&
+                        (reused.frame.read (h "thread")).result matches .ok ⟨.signed 32, 5⟩ &&
+                        reused.frame.store.threadBindings.length == 1
+                  | .error _ => false
+
 #guard aliasing
 #guard callableReferenceParameterWitness
 #guard valueCopyAndIsolation
@@ -164,13 +192,14 @@ private def staticLocalAcrossStarts : Bool :=
 #guard executionFailureRetainsMutation
 #guard futureArgumentIdentityRefuses
 #guard staticLocalAcrossStarts
+#guard threadLocalAcrossStarts
 
 -- Kernel reduction controls for identity, ownership and state retention.
 private theorem kernelReferenceParameters :
     (aliasing && valueCopyAndIsolation && constAndLifetime &&
       uninitializedBinding && failureRetainsPrefix && unreadableValueAndActualConst &&
       executionFailureRetainsMutation && futureArgumentIdentityRefuses &&
-      staticLocalAcrossStarts) = true := rfl
+      staticLocalAcrossStarts && threadLocalAcrossStarts) = true := rfl
 
 theorem callable_reference_parameter_witness : callableReferenceParameterWitness = true := by
   rfl

@@ -8,6 +8,7 @@ inductive FrameBindingRole where
   | reference
   | temporaryReference
   | staticLocal
+  | threadLocal
   deriving Repr, BEq, Inhabited
 
 structure FrameBinding where
@@ -27,6 +28,9 @@ structure IntegralObjectFrame where
   scopes : List FrameScope
   /-- Function-local static declarations survive scope exit and later calls. -/
   staticBindings : List FrameBinding
+  /-- Function-local thread-local declarations survive scope exit and later calls
+      within this thread. -/
+  threadBindings : List FrameBinding
   deriving Repr, BEq, Inhabited
 
 inductive FrameError where
@@ -75,6 +79,8 @@ inductive Statement where
       (expression : Expression)
   | staticDeclare (declaration : FrontendHandle) (type sourceType : CppTypeEvidence)
       (expression : Expression)
+  | threadDeclare (declaration : FrontendHandle) (type sourceType : CppTypeEvidence)
+      (expression : Expression)
   | assign (declaration : FrontendHandle) (sourceType : CppTypeEvidence)
       (expression : Expression)
   | block (body : Statement)
@@ -97,7 +103,7 @@ private inductive Execution where
 
 def empty (profile : TargetProfile) : Except FrameError IntegralObjectFrame :=
   match IntegralObjectStore.empty profile with
-  | .ok store => .ok {store, scopes := [], staticBindings := []}
+  | .ok store => .ok {store, scopes := [], staticBindings := [], threadBindings := []}
   | .error .invalidProfile => .error .invalidProfile
   | .error reason => .error (.object reason)
 
@@ -125,6 +131,10 @@ private def staticBinding? (bindings : List FrameBinding)
     (declaration : FrontendHandle) : Option FrameBinding :=
   bindings.find? (fun binding => binding.declaration == declaration)
 
+private def threadBinding? (bindings : List FrameBinding)
+    (declaration : FrontendHandle) : Option FrameBinding :=
+  bindings.find? (fun binding => binding.declaration == declaration)
+
 def lookup (frame : IntegralObjectFrame) (declaration : FrontendHandle) :
     Except FrameError FrameBinding :=
   match binding? frame.scopes declaration with
@@ -132,11 +142,15 @@ def lookup (frame : IntegralObjectFrame) (declaration : FrontendHandle) :
   | none =>
       match staticBinding? frame.staticBindings declaration with
       | some binding => .ok binding
-      | none => .error (.missingBinding declaration)
+      | none =>
+          match threadBinding? frame.threadBindings declaration with
+          | some binding => .ok binding
+          | none => .error (.missingBinding declaration)
 
 def bound (frame : IntegralObjectFrame) (declaration : FrontendHandle) : Bool :=
   (binding? frame.scopes declaration).isSome ||
-    (staticBinding? frame.staticBindings declaration).isSome
+    (staticBinding? frame.staticBindings declaration).isSome ||
+    (threadBinding? frame.threadBindings declaration).isSome
 
 private def addBinding (frame : IntegralObjectFrame) (binding : FrameBinding) :
     FrameOutcome ObjectId :=
@@ -417,6 +431,17 @@ private def reserveStatic (frame : IntegralObjectFrame) (declaration : FrontendH
         | .error reason => failure frame (.object reason)
         | .ok (store, object) => success {frame with store} object
 
+private def reserveThread (frame : IntegralObjectFrame) (declaration : FrontendHandle)
+    (type : CppTypeEvidence) : FrameOutcome ObjectId :=
+  if frame.bound declaration then
+    failure frame (.duplicateBinding declaration)
+  else match frame.scopes with
+    | [] => failure frame .noActiveScope
+    | _ =>
+        match frame.store.allocate .thread type with
+        | .error reason => failure frame (.object reason)
+        | .ok (store, object) => success {frame with store} object
+
 /-- Declare a function-local static integral object. The first successful
     declaration allocates and initializes static storage; later calls reuse the
     retained object and only publish a scope-local binding. -/
@@ -451,6 +476,41 @@ def declareStaticInitialized (fuel : Nat) (frame : IntegralObjectFrame)
               | .undefined reason => failure evaluated.frame (.undefined reason)
               | .unsupported reason => failure evaluated.frame (.unsupported reason)
 
+/-- Declare a function-local thread-local integral object. The first successful
+    declaration allocates and initializes storage for this thread; later calls
+    in the same threaded store reuse the retained object and only publish a
+    scope-local view. -/
+def declareThreadInitialized (fuel : Nat) (frame : IntegralObjectFrame)
+    (declaration : FrontendHandle) (type sourceType : CppTypeEvidence)
+    (expression : Expression) : FrameOutcome ObjectId :=
+  match threadBinding? frame.threadBindings declaration with
+  | some binding => addExistingBinding frame {binding with role := .threadLocal}
+  | none =>
+      let reserved := reserveThread frame declaration type
+      match reserved.result with
+      | .error reason => failure reserved.frame reason
+      | .ok object =>
+          let evaluated := evaluate fuel reserved.frame expression
+          match evaluated.result with
+          | .error reason => failure evaluated.frame reason
+          | .ok result =>
+              match result with
+              | .ok value =>
+                  match evaluated.frame.store.initializeConverted object sourceType value with
+                  | .error reason => failure evaluated.frame (.object reason)
+                  | .ok store =>
+                      let binding := {declaration, object, type, role := .threadLocal}
+                      let persisted : ThreadObjectBinding := {declaration, object, type}
+                      let store := {store with threadBindings :=
+                        persisted :: store.threadBindings}
+                      let withStore := {evaluated.frame with store := store}
+                      let withThread := {withStore with
+                        threadBindings := binding :: evaluated.frame.threadBindings}
+                      addExistingBinding withThread binding
+              | .invalid reason => failure evaluated.frame (.invalid reason)
+              | .undefined reason => failure evaluated.frame (.undefined reason)
+              | .unsupported reason => failure evaluated.frame (.unsupported reason)
+
 def assignValue (frame : IntegralObjectFrame) (declaration : FrontendHandle)
     (sourceType : CppTypeEvidence) (value : IntegralValue) : FrameOutcome Unit :=
   match frame.lookup declaration with
@@ -479,7 +539,8 @@ private def endBindings (frame : IntegralObjectFrame) : List FrameBinding →
     FrameOutcome Unit
   | [] => success frame ()
   | binding :: rest =>
-      if binding.role == .reference || binding.role == .staticLocal then endBindings frame rest else
+      if binding.role == .reference || binding.role == .staticLocal ||
+          binding.role == .threadLocal then endBindings frame rest else
       match frame.store.endLifetime binding.object with
       | .error reason => failure frame (.object reason)
       | .ok store => endBindings {frame with store} rest
@@ -494,17 +555,18 @@ def exitScope (frame : IntegralObjectFrame) : FrameOutcome Unit :=
       | .ok _ => success {ended.frame with scopes := rest} ()
 
 /-- Keep the remaining stack explicit so cleanup is structural even when the store changes. -/
-private def leaveScopes (store : IntegralObjectStore) (staticBindings : List FrameBinding) :
+private def leaveScopes (store : IntegralObjectStore) (staticBindings threadBindings : List FrameBinding) :
     List FrameScope → FrameOutcome Unit
-  | [] => success {store, scopes := [], staticBindings} ()
+  | [] => success {store, scopes := [], staticBindings, threadBindings} ()
   | scope :: rest =>
-      let ended := endBindings {store, scopes := scope :: rest, staticBindings} scope.bindings
+      let ended := endBindings {store, scopes := scope :: rest, staticBindings, threadBindings}
+        scope.bindings
       match ended.result with
       | .error reason => failure ended.frame reason
-      | .ok _ => leaveScopes ended.frame.store staticBindings rest
+      | .ok _ => leaveScopes ended.frame.store staticBindings threadBindings rest
 
 def leaveFrame (frame : IntegralObjectFrame) : FrameOutcome Unit :=
-  leaveScopes frame.store frame.staticBindings frame.scopes
+  leaveScopes frame.store frame.staticBindings frame.threadBindings frame.scopes
 
 def returnValue (fuel : Nat) (frame : IntegralObjectFrame)
     (expression : Expression) : FrameOutcome IntegralValue :=
@@ -583,6 +645,11 @@ mutual
             | .error reason => failure bound.frame reason
         | .staticDeclare declaration type sourceType expression =>
             let declared := declareStaticInitialized fuel frame declaration type sourceType expression
+            match declared.result with
+            | .ok _ => success declared.frame .normal
+            | .error reason => failure declared.frame reason
+        | .threadDeclare declaration type sourceType expression =>
+            let declared := declareThreadInitialized fuel frame declaration type sourceType expression
             match declared.result with
             | .ok _ => success declared.frame .normal
             | .error reason => failure declared.frame reason

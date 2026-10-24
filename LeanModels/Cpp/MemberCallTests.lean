@@ -1155,4 +1155,9 @@ def memberGetterLValueCastWitness : Bool :=
 
 #guard memberGetterLValueCastWitness
 
+def memberGetterStringHandleWitness : Bool :=
+  observedString == some 7
+
+#guard memberGetterStringHandleWitness
+
 end LeanModels.Cpp.MemberCallTests

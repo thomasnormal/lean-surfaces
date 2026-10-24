@@ -4153,6 +4153,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-unsigned-compound-wrap",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableUnsignedCompoundFrameWitness",
+    "cpp_source": "#include <cstdint>\nuint32_t frame_unsigned_compound(uint32_t value) { value += 1; return value; } bool callable_witness() { return frame_unsigned_compound(UINT32_MAX) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "statement.callable-frame-do-while",
     "kind": "statement",
     "corpus": "rung-4 witness",

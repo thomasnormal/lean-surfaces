@@ -67,6 +67,9 @@ change is listed here under **Changed** or **Removed**.
   comparisons remain loud.
 - F-string `!a` fields now use the shared ASCII renderer on both interpreter
   surfaces; non-empty format specifications and custom protocols remain loud.
+- Non-simple annotated assignment targets now evaluate their annotation and
+  perform the ordinary attribute or subscript store in CPython order; class
+  annotations and observed value-less declarations remain loud.
 
 ## [0.1.14] — 2026-10-21
 

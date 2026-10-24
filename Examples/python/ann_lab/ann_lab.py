@@ -118,8 +118,8 @@ def ann_novalue_shadows_global(n):
 
 
 def ann_attr_target(n):
-    # LOUD: a non-simple target (`simple == 0`) gets no `__annotations__`
-    # entry but its annotation IS still evaluated
+    # A non-simple target (`simple == 0`) gets no `__annotations__` entry but
+    # its annotation is still evaluated before the ordinary store.
     d = {}
     d["k"]: int = n
     return d["k"]

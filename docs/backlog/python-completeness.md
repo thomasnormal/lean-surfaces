@@ -17,6 +17,15 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-76 — non-simple annotated targets
+
+Annotated assignments with `simple == 0` targets now lower to the annotation
+evaluation followed by the existing assignment path. This preserves CPython's
+order and correctly omits the `__annotations__` table entry for attribute and
+subscript targets. The acceptance row `ann_lab.ann_attr_target` moved to
+MATCH; class annotations, explicit annotation-table bindings, and observed
+value-less declarations remain loud.
+
 ## 2026-10-23-pycomplete-55 — integer modular `pow`
 
 The next measured frontier after the decimal-rendering budget was the

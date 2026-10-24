@@ -851,18 +851,14 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(fn["body"][1]["name"], "callback")
         self.assertEqual(fn["body"][2]["name"], "nested")
 
-    def test_annotation_refusal_shapes_remain_unsupported(self):
-        for source, reason in (
-                ("(x): int = 7\n", "AnnAssign:non-simple-target"),
-                ("obj.attr: int = 7\n", "AnnAssign:non-simple-target"),
-                ("items[0]: int = 7\n", "AnnAssign:non-simple-target")):
+    def test_non_simple_annotations_preserve_evaluation_order(self):
+        for source in ("(x): int = 7\n", "obj.attr: int = 7\n",
+                       "items[0]: int = 7\n"):
             with self.subTest(source=source):
                 statement = self._envelope_of(source)["module"]["body"][0]
-                self.assertEqual(statement["kind"], "Unsupported")
-                self.assertEqual(statement["py_kind"], reason)
+                self.assertEqual(statement["kind"], "Assign")
                 local = self._first_fn("def f():\n    " + source)["body"][0]
-                self.assertEqual(local["kind"], "Unsupported")
-                self.assertEqual(local["py_kind"], reason)
+                self.assertEqual(local["kind"], "Assign")
         module = self._envelope_of("x: int\n")["module"]["body"][0]
         self.assertEqual(module["kind"], "Unsupported")
         self.assertEqual(module["py_kind"], "AnnAssign:no-value")

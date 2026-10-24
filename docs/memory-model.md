@@ -2135,16 +2135,16 @@ division by zero, all identical, because none of them runs.
   that binding; `ann_lab.ann_novalue_shadows_global` keeps the silent-wrong-
   answer case loud.
 * **`simple == 0` targets** (`(x)`, `c.a`, `d[k]`) get no
-  `__annotations__` entry but still evaluate the annotation, so they are
-  their own refusal.
+  `__annotations__` entry but still evaluate the annotation. They lower to
+  the annotation expression followed by the ordinary assignment, preserving
+  that order without adding an annotation-table store.
 
 **Function-scope lowering.** One extractor clause, no interpreter change, no
 proof-layer change, no new AST node: a function-body `AnnAssign` with
 `simple == 1` and a value converts to the `Assign` node it already is; an
 unobserved value-less declaration becomes `Pass`. The original refusal
-`py_kind` split three ways — `AnnAssign:module-scope`,
-`AnnAssign:no-value`, `AnnAssign:non-simple-target` — remains useful for the
-observed value-less and nonsimple boundaries.
+`py_kind` split remains useful for the observed value-less and module-scope
+boundaries; non-simple targets now use the structured assignment path.
 
 The one mechanical piece is a `func_scope` flag threaded through
 `convert_stmt` beside the existing `module_scope`, set only by the
@@ -2182,8 +2182,8 @@ heap dictionary and its aliases receive the same insertion in CPython order.
 Other explicit bindings remain `AnnAssign:annotations-bound` and loud;
 rebinding the table to `None`, deleting it, or constructing it through a
 separate alias changes the target or exception behavior and is not guessed.
-Future-annotations imports, class annotations, observed value-less
-annotations, and nonsimple targets stay loud.
+Future-annotations imports, class annotations, and observed value-less
+annotations stay loud.
 
 Dynamic annotations are now lowered to the same two statements as literal
 annotations when the implicit table is unobservable: store the value first,

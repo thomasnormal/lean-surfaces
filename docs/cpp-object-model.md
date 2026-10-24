@@ -19,6 +19,12 @@ structured `CppTypeEvidence`, and one of these phases:
 - `ended`: the lifetime has ended but storage is retained as a tombstone; or
 - `released`: dynamic storage has been released.
 
+Temporary storage is a separate identity class. `declareTemporary` starts a
+materialized temporary for the current full-expression, and
+`endFullExpression` ends those temporaries in reverse construction order.
+Temporary IDs cannot be passed to lexical `endScope`, while automatic IDs
+cannot be ended by the full-expression boundary.
+
 `allocate` creates storage, while `declareAutomatic` is the rung-1 declaration
 boundary that reserves automatic storage and starts the lifetime, leaving the
 object `aliveUninitialized` until a separate initialization operation.
@@ -46,9 +52,10 @@ This slice is deliberately representation-only. It has no bytes, addresses,
 pointer arithmetic, subobject graph, constructors/destructors, exception
 unwinding, scope executor, or value store. `CppTypeEvidence` is retained as a
 witness; it is not converted into a layout or an executable value. Static,
-thread, and automatic storage are tracked and can be ended, while `endScope`
-supplies reverse-order automatic cleanup. Only dynamic storage has an explicit
-release operation in this slice.
+thread, automatic, and temporary storage are tracked and can be ended, while
+`endScope` supplies reverse-order automatic cleanup and `endFullExpression`
+supplies temporary cleanup. Only dynamic storage has an explicit release
+operation in this slice.
 
 `LeanModels/Cpp/Translation.execute` still refuses every artifact. The next
 semantic slice must connect this store to a typed expression/statement model
@@ -85,7 +92,8 @@ destruction are outside this bounded object store.
 
 `LeanModels/Cpp/ObjectModelTests.lean` uses kernel guards for the complete
 happy path, uninitialized and ended reads, repeated starts, reverse-order scope
-cleanup, live dynamic release, released reads, missing IDs, and non-dynamic
-release. These are state transition checks only; the scope-exit row in the
+and full-expression cleanup, live dynamic release, released reads, missing IDs,
+and non-dynamic release. These are state transition checks only; the scope-exit
+and temporary rows in the
 differential harness compares the corresponding destructor observation with
 Clang's unchanged source.

@@ -8,6 +8,7 @@ inductive StorageDuration where
   | static_
   | thread
   | automatic
+  | temporary
   | dynamic
   deriving Repr, BEq, Inhabited
 
@@ -30,6 +31,7 @@ inductive ObjectError where
   | dynamicStorageLive
   | notDynamicStorage
   | notScopeStorage
+  | notTemporaryStorage
   deriving Repr, BEq, Inhabited
 
 structure CppObject where
@@ -79,6 +81,15 @@ def declareAutomatic (store : ObjectStore) (type : CppTypeEvidence) :
   | .ok live => (live, object)
   | .error _ => (reserved, object)
 
+/-- A materialized temporary starts its lifetime for the current
+    full-expression. Its destruction is driven by `endFullExpression`. -/
+def declareTemporary (store : ObjectStore) (type : CppTypeEvidence) :
+    ObjectStore × ObjectId :=
+  let (reserved, object) := store.allocate .temporary type
+  match reserved.beginLifetime object with
+  | .ok live => (live, object)
+  | .error _ => (reserved, object)
+
 def initializeObject (store : ObjectStore) (object : ObjectId) : Except ObjectError ObjectStore :=
   match store.object? object with
   | none => .error (.missing object)
@@ -115,6 +126,19 @@ def endScope (store : ObjectStore) : List ObjectId → Except ObjectError Object
         throw .notScopeStorage
       store.endLifetime object
 
+/-- End temporaries at the end of a full-expression, in reverse construction
+    order. Automatic, static, and dynamic objects are not full-expression
+    temporaries and refuse this boundary. -/
+def endFullExpression (store : ObjectStore) : List ObjectId → Except ObjectError ObjectStore
+  | [] => .ok store
+  | object :: rest => do
+      let store ← endFullExpression store rest
+      let some value := store.object? object
+        | throw (.missing object)
+      unless value.duration == .temporary do
+        throw .notTemporaryStorage
+      store.endLifetime object
+
 def scopeExitLifecycle : Bool :=
   let intType : CppTypeEvidence := .builtin .int
   let (store, first) := declareAutomatic empty intType
@@ -125,6 +149,13 @@ def scopeExitLifecycle : Bool :=
       | some firstObject, some secondObject =>
           firstObject.phase == .ended && secondObject.phase == .ended
       | _, _ => false
+  | .error _ => false
+
+def temporaryLifecycle : Bool :=
+  let intType : CppTypeEvidence := .builtin .int
+  let (store, temporary) := declareTemporary empty intType
+  match store.endFullExpression [temporary] with
+  | .ok ended => ended.object? temporary |>.map (·.phase == .ended) |>.getD false
   | .error _ => false
 
 def releaseStorage (store : ObjectStore) (object : ObjectId) : Except ObjectError ObjectStore :=

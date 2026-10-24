@@ -2521,6 +2521,18 @@
     "rung": 1
   },
   {
+    "id": "object.full-expression-temporary",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.ObjectModel",
+    "lean_namespace": "LeanModels.Cpp.ObjectStore",
+    "lean_expression": "temporaryLifecycle",
+    "cpp_source": "struct TemporaryProbe { bool* alive; ~TemporaryProbe() { *alive = false; } }; bool temporary_witness() { bool alive = true; TemporaryProbe{&alive}; return !alive; }",
+    "cpp_expression": "temporary_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "object.automatic-initialized",
     "kind": "lifetime",
     "corpus": "rung-1 witness",

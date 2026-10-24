@@ -4069,6 +4069,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-unknown-binary-refusal",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableBinaryRefusal",
+    "cpp_source": "int binary_operator(int value) { return value + 1; } bool callable_witness() { return binary_operator(7) == 8; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "refuse",
+    "rung": 3
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

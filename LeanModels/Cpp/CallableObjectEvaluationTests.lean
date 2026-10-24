@@ -282,6 +282,8 @@ private def unsupportedBinaryLoud : Bool :=
   | .ok (.unsupported .unresolvedArithmeticConversions) => true
   | _ => false
 
+def callableBinaryRefusal : Bool := !unsupportedBinaryLoud
+
 private def switchScopeClosesOnFailure : Bool :=
   let one : TypedCallableExpression := {
     expression := .integer 1, sourceType := intType, type := intType}
@@ -397,6 +399,7 @@ def callableParserAutomaticLocalWitness : Bool := parserAdmitsAutomaticLocal
 #guard !callableLogicalRefusal
 #guard !callableCompoundRefusal
 #guard !callableUnaryRefusal
+#guard !callableBinaryRefusal
 #guard unsupportedIncrementPrecedesRead
 #guard unsupportedLogicalLoud
 #guard unsupportedCompoundLoud

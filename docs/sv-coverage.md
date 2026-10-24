@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 84 | 80 | 0 | 4 | sv-tests-2 declarations |
+| 85 | 81 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -81,6 +81,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `empty_subroutine_call` | `Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_handle_decl` | `Examples/system-verilog/opaque_handle_decl/opaque_handle_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_handle_null_write` | `Examples/system-verilog/opaque_handle_null_write/opaque_handle_null_write.sv` | match | **MATCH** | `ok` | MATCH |
+| `opaque_chandle_null_write` | `Examples/system-verilog/opaque_chandle_null_write/opaque_chandle_null_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_mailbox_new_write` | `Examples/system-verilog/opaque_mailbox_new_write/opaque_mailbox_new_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_semaphore_zero_write` | `Examples/system-verilog/opaque_semaphore_zero_write/opaque_semaphore_zero_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_function_value` | `Examples/system-verilog/empty_function_value/empty_function_value.sv` | match | **MATCH** | `ok` | MATCH |
@@ -240,7 +241,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.NewArrayExpression` | `Examples/system-verilog/dynamic_array_cells/dynamic_array_cells.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NewClassExpression` | `Examples/system-verilog/opaque_mailbox_new_write/opaque_mailbox_new_write.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NonblockingAssignmentExpression` | `Examples/system-verilog/array_reductions/timing.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
-| `SyntaxKind.NullLiteralExpression` | `Examples/system-verilog/opaque_handle_null_write/opaque_handle_null_write.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.NullLiteralExpression` | `Examples/system-verilog/opaque_chandle_null_write/opaque_chandle_null_write.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.OrAssignmentExpression` | `Examples/system-verilog/compound_assignments/partial_members.sv` | **REFUSE** | `unsupported` AssignmentExpression:compound-partial-range |
 | `SyntaxKind.OrderedArgument` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.OrderedPortConnection` | `Examples/system-verilog/module_hierarchy/ports.sv` | **REFUSE** | `unsupported` non-initial process 'Hierarchy:ports' (self-check tier runs initial-only designs) |
@@ -331,7 +332,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 3144 |
+| `AssignmentExpression:target` | 3139 |
 | `CallExpression` | 3100 |
 | `ExpressionStatement:CallExpression` | 3019 |
 | `Hierarchy:ports` | 2397 |

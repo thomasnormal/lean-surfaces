@@ -7375,7 +7375,7 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and not expr.isNonBlocking
             and type(expr.left).__name__ == "NamedValueExpression"
             and type(getattr(expr.left.type, "canonicalType", None)).__name__
-            == "ClassType" and _null_literal(expr.right)):
+            in ("ClassType", "CHandleType") and _null_literal(expr.right)):
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "opaque_handle_null_write": True}
     # An unbounded mailbox construction has no flat self-check state.  Erase

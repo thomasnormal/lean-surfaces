@@ -5,6 +5,21 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.57] — 2026-10-24
+
+### Added
+
+- Recorded rung-5 by-value callable refusal and rung-3 loud refusals for
+  unknown increment, logical, compound-assignment, and unary operators.
+
+### Measured
+
+- The checked-in corpus now contains **370 differential rows**: **355 MATCH**,
+  **0 DIVERGE**, **5 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.56] — 2026-10-24
 
 ### Added

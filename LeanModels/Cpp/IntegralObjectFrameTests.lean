@@ -476,6 +476,8 @@ private def temporaryReferenceStatement : Bool :=
       (result.result matches .ok none) && result.frame.scopeDepth == 0 &&
         objectPhase? result.frame 0 == some .ended
 
+def callableTemporaryReferenceStatementWitness : Bool := temporaryReferenceStatement
+
 private def temporaryReferenceRefusals : Bool :=
   match opened with
   | .error _ => false
@@ -663,6 +665,7 @@ def callableLocalReferenceWitness : Bool := aliasLifetimeAndConst && aliasUninit
 #guard callableFreshLoopObjectWitness
 #guard callableNestedShadowWitness
 #guard callableSequentialLocalsWitness
+#guard callableTemporaryReferenceStatementWitness
 
 private theorem kernelReferenceBindings :
     (aliasLifetimeAndConst && aliasUninitializedAndEnded) = true := rfl

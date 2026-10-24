@@ -71,6 +71,8 @@ private def nestedShadow : Bool :=
       | .error _ => false
   | .error _ => false
 
+def callableNestedShadowWitness : Bool := nestedShadow
+
 private def freshLoopObjects : Bool :=
   match opened with
   | .ok frame =>
@@ -657,6 +659,7 @@ def callableLocalReferenceWitness : Bool := aliasLifetimeAndConst && aliasUninit
 #guard callableReverseCleanupWitness
 #guard callableDefaultThenAssignWitness
 #guard callableFreshLoopObjectWitness
+#guard callableNestedShadowWitness
 
 private theorem kernelReferenceBindings :
     (aliasLifetimeAndConst && aliasUninitializedAndEnded) = true := rfl

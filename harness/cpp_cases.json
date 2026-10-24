@@ -2665,6 +2665,18 @@
     "rung": 1
   },
   {
+    "id": "object.callable-nested-shadow",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_namespace": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_expression": "callableNestedShadowWitness",
+    "cpp_source": "bool callable_witness() { int value = 7; { int value = 9; if (value != 9) return false; } return value == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "object.storage-reuse",
     "kind": "lifetime",
     "corpus": "rung-1 witness",

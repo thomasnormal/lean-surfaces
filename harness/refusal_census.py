@@ -939,7 +939,6 @@ WHITELIST_CLASS = {
     "dict_lab::ret_tuple_with_dict": "boundary.heap-value",
     "dict_lab::int_is": "op.Is-immediates",
     "cls_lab::weird_eq": "class.dunder-protocol",
-    "cls_lab::sub_inherits": "class.inheritance",
     "cls_lab::class_as_value": "firstclass.callable",
     "with_lab::multiple_items": "with.multiple-items",
     "with_lab::explicit_init": "with.explicit-constructor",

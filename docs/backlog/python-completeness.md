@@ -17,6 +17,29 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-108 — simple same-module class inheritance
+
+The class tier now admits one plain-name base whose class definition ends
+earlier in the same module. `ClassDefn.base` records the link after ingestion
+checks source order and the base's own ordinary class admission. Attribute
+dispatch and construction resolve inherited methods and `__init__` through the
+single link, while inherited dunders remain part of the default-protocol guard.
+Multiple, dynamic, forward, external, namedtuple, and exception bases stay
+loud because their creation and MRO behavior is outside this slice.
+
+The `cls_lab.sub_inherits` witness now constructs `Sub(Cell)` and calls the
+inherited initializer and method.
+
+| Measurement | Result |
+|---|---|
+| Extractor tests | 126 passed |
+| Grammar census | 145 witnesses: 136 MATCH / 9 REFUSE, 0 drift |
+| Differential suite | 3,691 rows: 3,591 matched, 100 whitelisted, 0 failed |
+| Focused Lean sources | `Ast`, `Json`, `Semantics`, `Obs`, `Monadic.Eval`, and `leanmodels-run` built |
+
+DECIDED: admit only a single earlier same-module base; retain loud failure for
+all other inheritance shapes until class creation and MRO semantics are modeled.
+
 ## 2026-10-24-pycomplete-105 — direct complex-literal printing
 
 The `const.complex` grammar witness now matches for the exact source shape

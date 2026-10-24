@@ -7,6 +7,9 @@
   preserved by the script runner.
 - Direct scalar `nonlocal` declarations now update and reread shared closure
   cells; unsupported compound scope forms remain loud.
+- The class tier now admits a single plain-name base from an earlier
+  same-module class, resolving inherited methods and `__init__`; unresolved,
+  forward, multiple, dynamic, and external bases remain loud.
 
 All notable changes to the **Python tier** of this repository (the extractor,
 the Lean semantics under `LeanModels/Python/`, its proof surface, and its
@@ -937,7 +940,7 @@ change is listed here under **Changed** or **Removed**.
   `py_corollary`, `py_lift`, `py_threshold`, `py_simp`.
 - **Semantic tier.** Arbitrary-precision ints, bools, strs, `None`, tuples,
   heap lists and dicts with aliasing, sets (order-free subset), classes
-  without inheritance, namedtuples, generators and generator expressions,
+  with the narrow same-module single-base slice, namedtuples, generators and generator expressions,
   list comprehensions, nested defs and lambdas (snapshot captures),
   `try`/`except`/`raise` over a fixed set of builtin exceptions and
   user `Exception` subclasses, `%`-formatting, `print`, and a trace clock for

@@ -290,8 +290,8 @@ cycle DETECTION, never by running out of fuel).
   shadowed earlier class is unconstructible. A name bound by both `def`
   and `class` is loud (the split representation loses source order).
 * **The dunder guard** (the tier's soundness principle): a class
-  defining any dunder beyond `__init__`, with bases (inheritance —
-  loudly unsupported), keywords/metaclass, decorators, or class-level
+  defining any dunder beyond `__init__`, with unsupported bases (multiple,
+  dynamic, forward, or external), keywords/metaclass, decorators, or class-level
   statements (class attributes) is REPRESENTED but UNINSTANTIABLE
   (loud). Therefore every instance that exists has DEFAULT object
   protocol, which makes the following faithful by construction:
@@ -306,6 +306,10 @@ cycle DETECTION, never by running out of fuel).
   `TypeError`; an `__init__`-less class called with arguments likewise
   (`C() takes no arguments`). Allocation happens after argument
   evaluation (identity-free observations cannot tell).
+  A class may have one plain-name base from an earlier same-module class.
+  The base's methods and `__init__` are resolved through that single link;
+  unresolved, forward, multiple, dynamic, and unsupported-base forms remain
+  loud. Inherited dunders keep the default-protocol guard sound.
 * **Attributes** (mutable self): reads resolve the instance attribute
   table first, then the class's methods (a bound-method VALUE is loud —
   methods are called, not passed), then the faithful `AttributeError`
@@ -5358,8 +5362,8 @@ The focused Lean builds, class example, script probes, differential harness,
 and Python gates pass for this landing. The tracked effect envelope is
 regenerated with CPython 3.9.25 metadata and the current source hash. The
 stdlib census and broad survey remain measurements of the larger class and
-import frontiers; this landing is the T1 executable-body slice, not inheritance,
-class attributes, decorators, or metaclass support.
+import frontiers; this landing adds only the narrow same-module single-base
+slice, while class attributes, decorators, and metaclass support remain outside.
 
 ### Priced extensions, in the order the census ranks them
 

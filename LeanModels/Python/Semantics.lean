@@ -5365,6 +5365,29 @@ loudly (`danglingMsg` style). -/
 def getClass? (m : Module) (i : ClassId) : Option ClassDefn :=
   classAt m.classes.toList i
 
+/-- Resolve a method through the narrow single-base inheritance chain.  The
+chain is bounded by the class-table size so malformed hand-built modules
+cannot loop; ingested modules additionally reject unresolved/forward bases. -/
+def classMethodQnameFuel (m : Module) : Nat → ClassId → String → Option String
+  | 0, _, _ => Option.none
+  | fuel + 1, ci, attr =>
+    match getClass? m ci with
+    | Option.none => Option.none
+    | some c =>
+      if c.methods.toList.contains attr then
+        some (c.name ++ "." ++ attr)
+      else
+        match c.base with
+        | Option.none => Option.none
+        | some b =>
+          match findClass m b with
+          | some (bi, _) => classMethodQnameFuel m fuel bi attr
+          | Option.none => Option.none
+
+def classMethodQname (m : Module) (ci : ClassId) (attr : String) : Option String :=
+  classMethodQnameFuel m m.classes.size ci attr
+
+
 /-- Whether an instance attribute store is permitted by the class's
 `__slots__` declaration.  A class without a recognized declaration keeps
 the ordinary instance dictionary.  `__dict__` explicitly restores that
@@ -5499,6 +5522,26 @@ the faithful `TypeError`/`AttributeError` arms below correct. -/
 def hasExtraDunder (c : ClassDefn) : Bool :=
   c.methods.toList.any fun n => dunderShaped n && n != "__init__"
 
+/-- The default-protocol guard includes inherited dunders.  A subclass of a
+class defining `__eq__`, for example, is not an identity-only instance even
+when the subclass body has no dunder of its own. -/
+def classHasExtraDunderFuel (m : Module) : Nat → ClassId → Bool
+  | 0, _ => true
+  | fuel + 1, ci =>
+    match getClass? m ci with
+    | Option.none => true
+    | some c =>
+      if hasExtraDunder c then true
+      else match c.base with
+        | Option.none => false
+        | some b =>
+          match findClass m b with
+          | some (bi, _) => classHasExtraDunderFuel m fuel bi
+          | Option.none => true
+
+def classHasExtraDunder (m : Module) (ci : ClassId) : Bool :=
+  classHasExtraDunderFuel m m.classes.size ci
+
 def hasContextProtocol (c : ClassDefn) : Bool :=
   c.methods.toList.contains "__enter__"
     && c.methods.toList.contains "__exit__"
@@ -5544,8 +5587,8 @@ def attrReadPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
      | Option.none =>
        match getClass? m ci with
        | Option.none => .dangling
-       | some c =>
-         if c.methods.toList.contains attr then .boundMethod else .missing)
+       | some _ =>
+         if (classMethodQname m ci attr).isSome then .boundMethod else .missing)
   | some _ =>
     .refuse "attribute access on a dict/list/generator value is outside the tier (their methods are called, not referenced; docs/memory-model.md)"
   | Option.none => .dangling
@@ -5606,10 +5649,10 @@ def attrCallPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
      | Option.none =>
        match getClass? m ci with
        | Option.none => .dangling
-       | some c =>
-         if c.methods.toList.contains attr then
-           .instMethod (c.name ++ "." ++ attr)
-         else .attrMissing)
+       | some _ =>
+         match classMethodQname m ci attr with
+         | some qname => .instMethod qname
+         | Option.none => .attrMissing)
   | some (.dict _ _) =>
     if attr == "get" then .dictGet
     else if attr == "clear" then .dictClear
@@ -7729,7 +7772,12 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                   -- (one on the immutable self is loud, never wrong).
                   if !c.ok then
                     .unsupported s!"class '{fname}' uses unsupported features besides its namedtuple base — instantiation is outside the tier"
-                  else if hasExtraDunder c then
+                  else if (if c.methods.toList.contains "__enter__"
+                              && c.methods.toList.contains "__exit__"
+                           then c.methods.toList.any fun n =>
+                             dunderShaped n && n != "__init__"
+                               && n != "__enter__" && n != "__exit__"
+                           else classHasExtraDunder m ci) then
                     .unsupported s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
                   else if (findFunction m (fname ++ ".__init__")).isSome then
                     .unsupported s!"'__init__' on the namedtuple subclass '{fname}' (immutable self) is outside the tier"
@@ -7742,23 +7790,29 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                 | Option.none =>
                   if !c.ok then
                     .unsupported s!"class '{fname}' uses unsupported features (bases/metaclass/decorators/class-level statements) — instantiation is outside the H3 tier"
-                  else if hasExtraDunder c then
+                  else if (if c.methods.toList.contains "__enter__"
+                              && c.methods.toList.contains "__exit__"
+                           then c.methods.toList.any fun n =>
+                             dunderShaped n && n != "__init__"
+                               && n != "__enter__" && n != "__exit__"
+                           else classHasExtraDunder m ci) then
                     .unsupported s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
                   else
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     let a := st.world.heap.size
                     let st' := { st with world :=
                       { st.world with heap := st.world.heap.push (.instance ci #[]) } }
-                    if (findFunction m (fname ++ ".__init__")).isSome then
+                    match classMethodQname m ci "__init__" with
+                    | some initName =>
                       Run.withLocals st'.locals
-                        (callIn m fuel st'.world (fname ++ ".__init__")
+                        (callIn m fuel st'.world initName
                           ((RVal.ref a :: vs).toArray)) ⤳ fun st'' r =>
                       match r with
                       | .none => .ok st'' (.ref a)
                       | r =>
                         -- CPython checks __init__'s result: non-None raises
                         .exn st'' (.typeError s!"__init__() should return None, not '{r.typeName}'")
-                    else
+                    | Option.none =>
                       match vs with
                       | [] => .ok st' (.ref a)
                       | _ => .exn st (.typeError s!"{fname}() takes no arguments")

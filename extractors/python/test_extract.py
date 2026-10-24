@@ -1035,8 +1035,15 @@ class ClassDefTests(unittest.TestCase):
         self.assertIsNone(body[0]["class_unsupported"])
 
     def test_bases_flag_class_unsupported(self):
-        body = self._module_body("class C(D):\n    pass\n")
+        body = self._module_body("class C(D, E):\n    pass\n")
         self.assertIn("bases", body[0]["class_unsupported"])
+
+    def test_simple_base_is_structured(self):
+        body = self._module_body(
+            "class Base:\n    pass\nclass C(Base):\n    pass\n")
+        self.assertIsNone(body[1]["class_unsupported"])
+        self.assertEqual(body[1]["base"], "Base")
+        self.assertFalse(body[1]["creation_effects"])
 
     def test_metaclass_and_decorators_flag(self):
         body = self._module_body("class C(metaclass=type):\n    pass\n")

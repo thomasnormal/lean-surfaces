@@ -1710,6 +1710,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                     # construction rules.
                     slot_names = None
         namedtuple_base = None
+        simple_base = None
         exception_base = False
         if node.bases:
             # A SINGLE base that is a plain `namedtuple(...)` call is the
@@ -1736,6 +1737,11 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                                 and isinstance(s.value, ast.Constant))
                             for s in node.body)):
                 exception_base = True
+            elif (len(node.bases) == 1 and isinstance(b, ast.Name)):
+                # Narrow inheritance slice: a plain same-module class name.
+                # Ingestion checks source order and the base's own admission;
+                # unknown/builtin/forward bases remain loud there.
+                simple_base = b.id
             else:
                 reasons.append("bases (inheritance)")
         if node.keywords:
@@ -1774,7 +1780,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # property/setter/classmethod/staticmethod, which happen to have
         # no creation-time effect -- lucky, not sound.
         creation_effects = bool(node.keywords) or bool(node.decorator_list)
-        if node.bases and namedtuple_base is None and not exception_base:
+        if node.bases and namedtuple_base is None and simple_base is None and not exception_base:
             creation_effects = True
         for s in node.body:
             if isinstance(s, ast.FunctionDef):
@@ -1807,6 +1813,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             out["slots"] = slot_names
         if namedtuple_base is not None:
             out["namedtuple_base"] = namedtuple_base
+        if simple_base is not None:
+            out["base"] = simple_base
         if exception_base:
             out["exception_base"] = True
         if _has_global(node):

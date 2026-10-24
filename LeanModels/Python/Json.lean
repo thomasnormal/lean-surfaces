@@ -955,6 +955,7 @@ def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) 
     let name ← (← getField j "name").getStr?
     let span ← parseSpan (← getField j "span")
     let classUnsupported ← getOptStrField j "class_unsupported"
+    let base ← getOptStrField j "base"
     let hasGlobal := match j.getObjVal? "has_global" with
       | .ok (.bool b) => b
       | _ => false
@@ -1007,7 +1008,7 @@ def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) 
       let k ← (← getField stmtJson "kind").getStr?
       if k == "FunctionDef" then pure (methodCreationPure stmtJson)
       else pure (classBodyStmtPure (← parseStmt stmtJson))
-    return ({ name, ok := classUnsupported.isNone, methods, slots, hasGlobal, ntBase,
+    return ({ name, ok := classUnsupported.isNone, methods, base, slots, hasGlobal, ntBase,
               isExc, creationPure := noCreationEffects && bodyPure, span,
               body := classBody,
               creationExecutable := classCreationExecutableShape classUnsupported
@@ -1787,6 +1788,20 @@ def parseModule (j : Json) : Except String Module :=
         functions := functions.push (← parseFunctionDefn stmtJson)
       else if k == "ClassDef" then
         let (c, fns) ← parseClassDefn stmtJson
+        -- A simple base is evaluated at the class statement.  Admit only a
+        -- same-module class already bound by an earlier class statement and
+        -- only when that base is itself in the ordinary instantiation slice.
+        -- The extractor records the plain name; this source-order check keeps
+        -- `class Sub(Base)` above `class Base` faithful (NameError) without
+        -- introducing an ordered module-item representation.
+        let c := match c.base with
+          | some b =>
+            match classes.findRev? (fun prior => prior.name == b) with
+            | some prior =>
+              if prior.ok && prior.ntBase.isNone && !prior.isExc then c
+              else { c with ok := false, creationPure := false }
+            | Option.none => { c with ok := false, creationPure := false }
+          | Option.none => c
         let classStmt := .unsupported "ClassDef" c.name c.span
         classes := classes.push c
         functions := functions ++ fns
@@ -1820,6 +1835,16 @@ def parseModule (j : Json) : Except String Module :=
       else classes'.map fun c =>
         if c.isExc then
           { c with isExc := false, ok := false, creationPure := false } else c
+    -- A name-only base would become ambiguous if the module later rebinds the
+    -- base class.  Keep the admitted slice conservative rather than silently
+    -- dispatching through the wrong MRO; an ordered ClassId field is the
+    -- recorded extension for that broader case.
+    let classes' := classes'.map fun c =>
+      match c.base with
+      | some b =>
+        if (classes'.toList.filter (fun d => d.name == b)).length == 1 then c
+        else { c with ok := false, creationPure := false }
+      | none => c
     -- H4: lower generator EXPRESSIONS last, so the capture test sees the
     -- final module-level binding set (the namedtuple pass turns
     -- recognized assigns into `pass`, but their bound names stay outer

@@ -473,8 +473,10 @@ identifier can never contain `.`, so qualified names collide with nothing
 and plain-name resolution never sees them) — method calls then reuse
 `callIn`/`CallsIn` verbatim, with `self` as an ordinary first argument.
 `methods` records the plain method names (dispatch/guard checks);
-`ok = false` iff the class uses features outside the instantiation tier
-(bases — inheritance is loudly unsupported — keywords/metaclass,
+`base` records the one simple same-module base admitted by the narrow
+inheritance slice; `ok = false` iff the class uses features outside the
+instantiation tier (multiple/dynamic bases — inheritance beyond the simple
+same-module shape — keywords/metaclass,
 decorators, or unsupported class-level statements): the class is still
 REPRESENTED, but instantiating it refuses loudly. Creation-time effects
 are tracked separately by `creationPure`/`creationExecutable` below.
@@ -489,6 +491,10 @@ structure ClassDefn where
   name : String
   ok : Bool
   methods : Array String
+  /-- The single plain-name base admitted by the inheritance slice.  The
+  ingester validates that it names an earlier supported class; unresolved,
+  forward, multiple, and dynamic bases remain loud through `ok := false`. -/
+  base : Option String := Option.none
   /-- Recognized `__slots__` storage names.  `none` means the ordinary
   instance dictionary is available; `some xs` means an instance may store
   only the named slots (unless `__dict__` is explicitly present).  The

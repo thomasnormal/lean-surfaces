@@ -1046,8 +1046,8 @@
           "end_col_offset": 8
         },
         "name": "Sub",
-        "class_unsupported": "bases (inheritance)",
-        "creation_effects": true,
+        "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "Pass",
@@ -1058,7 +1058,8 @@
               "end_col_offset": 8
             }
           }
-        ]
+        ],
+        "base": "Cell"
       },
       {
         "kind": "FunctionDef",

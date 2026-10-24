@@ -227,8 +227,9 @@ index cursor against the LIVE object (CPython `listiterator`), so there is
 no invalidation to count. Instances (H3) carry their `ClassId` and their
 attribute table (`__dict__` insertion order preserved, like dict entries);
 mutable self IS this object — `self.x = v` updates `attrs` in place.
-Instances exist only for DEFAULT-PROTOCOL classes (no bases, no dunder
-methods beyond `__init__` — instantiation guards this loudly), so default
+Instances exist only for DEFAULT-PROTOCOL classes (a single admitted base may
+be present; unsupported bases and dunder methods beyond `__init__` are guarded
+loudly), so default
 object semantics (identity `==`, truthy, unhashability-free attr access)
 are faithful wherever an instance can appear. -/
 inductive Obj where

@@ -187,7 +187,8 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
             -- `__init__` run.
             if !c.ok then
               .preRefuse s!"class '{fname}' uses unsupported features besides its namedtuple base — instantiation is outside the tier"
-            else if hasContextExtraDunderM c then
+            else if (if hasContextProtocolM c then hasContextExtraDunderM c
+                     else classHasExtraDunder m ci) then
               .preRefuse s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
             else if (findFunction m (fname ++ ".__init__")).isSome then
               .preRefuse s!"'__init__' on the namedtuple subclass '{fname}' (immutable self) is outside the tier"
@@ -195,9 +196,10 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
           | Option.none =>
             if !c.ok then
               .preRefuse s!"class '{fname}' uses unsupported features (bases/metaclass/decorators/class-level statements) — instantiation is outside the H3 tier"
-            else if hasContextExtraDunderM c then
+            else if (if hasContextProtocolM c then hasContextExtraDunderM c
+                     else classHasExtraDunder m ci) then
               .preRefuse s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
-            else .instantiate ci fname (findFunction m (fname ++ ".__init__")).isSome
+            else .instantiate ci fname (classMethodQname m ci "__init__").isSome
       | Option.none =>
       match findNamedTuple m fname with
       | some nt => .ntMake nt.tname nt.fields
@@ -644,7 +646,8 @@ def applyCallPlan (K : Kont) (m : Module) : CallPlan → List RVal → SemF RVal
   | .instantiate ci cname hasInit, vs =>
       if hasInit then do
         let a ← heapPush (.instance ci #[])
-        let r ← inFrame (K.call (cname ++ ".__init__") ((RVal.ref a :: vs).toArray))
+        let initName := (classMethodQname m ci "__init__").getD (cname ++ ".__init__")
+        let r ← inFrame (K.call initName ((RVal.ref a :: vs).toArray))
         match r with
         | .none => pure (.ref a)
         -- CPython checks `__init__`'s result: non-None raises.

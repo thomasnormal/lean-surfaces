@@ -20,7 +20,7 @@ IN PLACE, visible through every alias; a user method named like a
 builtin method (`Cell.get`) dispatches through the CLASS, never the
 dict/list method tier; default-object protocol is faithful BECAUSE the
 dunder guard makes classes with extra dunders uninstantiable (`Weird`);
-inheritance is loudly out of tier (`Sub(Cell)`); a missing attribute is
+simple same-module inheritance (`Sub(Cell)`) reuses the base methods; a missing attribute is
 the faithful `AttributeError` raised BEFORE arguments evaluate. No
 `proof.lean`: checks-only, like `dict_lab`/`list_lab` — the stateful
 `CallsIn` theorems about a sunfish-shaped `Searcher` moved to the sunfish
@@ -83,8 +83,7 @@ guard means no `__len__`/`__getitem__`/`__iter__` can exist) -/
 /-! ### the loud frontier: extra dunders, inheritance, and class-as-value -/
 
 #guard callFunction cls_lab "weird_eq" #[.int 1] 4096 matches .unsupported _
-#guard callFunction cls_lab "sub_inherits" #[.int 1] 4096
-  matches .unsupported _
+#py_check cls_lab.sub_inherits(1) = 1
 #guard callFunction cls_lab "class_as_value" #[] 4096 matches .unsupported _
 #guard callFunction cls_lab "attr_on_int" #[.int 1] 4096
   matches .exn .attributeError

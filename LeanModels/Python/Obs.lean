@@ -899,11 +899,13 @@ theorem fuelMono (fuel : Nat) :
                       | none =>
                         refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)
                         refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                        refine Run.le_ite ?_ (Run.le_refl _)
-                        refine Run.le_bind (Run.le_withLocals
-                          (ihCall m _ (fname ++ ".__init__") ((RVal.ref st.world.heap.size :: vs).toArray) k hk))
-                          fun st'' r => ?_
-                        cases r <;> exact Run.le_refl _
+                        cases classMethodQname m ci "__init__" with
+                        | some initName =>
+                          refine Run.le_bind (Run.le_withLocals
+                            (ihCall m _ initName ((RVal.ref st.world.heap.size :: vs).toArray) k hk))
+                            fun st'' r => ?_
+                          cases r <;> exact Run.le_refl _
+                        | none => exact Run.le_refl _
                     | none =>
                       -- namedtuple construction binds the arguments, then a
                       -- fuel-independent value/arity fork; the builtin chain

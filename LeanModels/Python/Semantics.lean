@@ -3548,6 +3548,9 @@ mutual
             if xs.size == ys.size then
               heapEqList h fuel ((x, y) :: active) xs.toList ys.toList
             else .ok false
+          | some (.dictView da .keys), some (.dictView db .keys) =>
+              if da == db then .ok true
+              else .unsupported "dictionary view set comparison is outside the tier"
           | some (.dictView _ .values), some (.dictView _ .values) => .ok false
           | some (.dictView ..), some _ | some _, some (.dictView ..) =>
               .unsupported "dictionary view set comparison is outside the tier"

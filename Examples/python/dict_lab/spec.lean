@@ -116,6 +116,9 @@ is depth-first left to right on both the store and the read path. -/
 
 #guard callFunction dict_lab "int_is" #[.int 1, .int 1] 4096 matches .unsupported _
 #guard callFunction dict_lab "iter_dict" #[] 4096 matches .unsupported _
+#py_check dict_lab.view_eq_still_loud(7) = true
+#guard heapEq #[.dict #[(.int 1, .int 7)] 0, .dictView 0 .keys,
+    .dictView 0 .keys] 8 [] (.ref 1) (.ref 2) == .ok true
 #guard heapIndex #[.dict #[(.int 1, .int 7)] 0, .dictView 0 .keys] 1 (.ref 1) ==
   .exn (.typeError "'dict_keys' object is not subscriptable")
 #guard reprVal #[.dict #[(.int 1, .int 7)] 0, .dictView 0 .keys]

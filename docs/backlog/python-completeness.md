@@ -17,6 +17,12 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-80 — same-dictionary key-view equality
+
+Two escaped `dict_keys` views over the same dictionary now compare equal,
+matching CPython's set-like key-view equality for the measured shape. Values
+views, item-view set algebra, and cross-dictionary cases remain loud.
+
 ## 2026-10-24-pycomplete-79 — dictionary-view rendering
 
 Escaped `dict_keys`, `dict_values`, and `dict_items` views now render with

@@ -160,6 +160,8 @@ private def defaultThenAssign : Bool :=
       | .error _ => false
   | .error _ => false
 
+def callableDefaultThenAssignWitness : Bool := defaultThenAssign
+
 private def prefixRetainedAfterInitializerFailure : Bool :=
   match opened with
   | .ok frame =>
@@ -651,6 +653,7 @@ def callableLocalReferenceWitness : Bool := aliasLifetimeAndConst && aliasUninit
 #guard callableLocalReferenceWitness
 #guard callableReturnClosesFrameWitness
 #guard callableReverseCleanupWitness
+#guard callableDefaultThenAssignWitness
 
 private theorem kernelReferenceBindings :
     (aliasLifetimeAndConst && aliasUninitializedAndEnded) = true := rfl

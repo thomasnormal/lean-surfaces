@@ -20,7 +20,9 @@ to the signed 32-bit literal obtained by truncating toward zero; the same
 conversion is inert when its result is discarded as a statement. Dynamic real
 reads, out-of-range results, and other argument shapes remain loud. A direct
 finite real literal passed to `$realtobits` lowers to its exact 64-bit IEEE-754
-encoding; dynamic storage and explicit conversion shells remain loud. The
+encoding; an exact `$itor` conversion of one integral literal is admitted by
+the same path, while dynamic storage and explicit conversion shells remain
+loud. The
 matching `$shortrealtobits` slice accepts only its implicit conversion shell
 around a direct literal and lowers to the exact 32-bit IEEE-754 single pattern;
 explicit casts and overflow remain loud. Dynamic integral `$cast` has its own

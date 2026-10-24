@@ -5337,7 +5337,11 @@ def _convert_rtoi_literal(sm, expression):
 
 
 def _realtobits_literal_call(expression):
-    """Whether ``$realtobits`` has a direct finite real literal operand."""
+    """Whether ``$realtobits`` has a direct finite literal real operand.
+
+    A literal `$itor` conversion is exact, so it joins the direct real-literal
+    form without introducing a real storage boundary.
+    """
     try:
         if (_SYM is not None or type(expression).__name__ != "CallExpression"
                 or getattr(expression, "bad", False)
@@ -5356,7 +5360,12 @@ def _realtobits_literal_call(expression):
             node = getattr(node, "operand", None)
         # Do not strip a conversion shell here: shortreal or an explicit real
         # cast changes the source value before the IEEE-754 bit conversion.
-        return (type(node).__name__ == "RealLiteral"
+        literal_operand = type(node).__name__ == "RealLiteral"
+        itor_operand = (type(node).__name__ == "CallExpression"
+                        and not getattr(node, "bad", False)
+                        and getattr(node, "isSystemCall", False)
+                        and getattr(node, "subroutineName", None) == "$itor")
+        return ((literal_operand or itor_operand)
                 and not getattr(node, "bad", False)
                 and getattr(expression.type, "bitWidth", None) == 64
                 and getattr(expression.type, "isIntegral", False)

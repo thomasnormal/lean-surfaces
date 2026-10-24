@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.5] — 2026-10-24
+
+The self-check surface now has 89 differential rows: 85 matches, zero
+disagreements, and 4 recorded refusals. The grammar census remains at 211
+pyslang syntax witnesses: 80 MATCH and 131 REFUSE. The 22,046-file corpus
+measures 4,752 clean files, 17,228 partial files, and 66 include skips. This
+release adds opaque `process::self()` writes and direct null writes for opaque
+handles, plus post-incremented fixed-array index writes with the required
+write-before-update ordering.
+
 ## [0.1.4] — 2026-10-24
 
 The self-check surface now has 84 differential rows: 80 matches, zero

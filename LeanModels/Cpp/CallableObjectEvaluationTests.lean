@@ -442,7 +442,11 @@ private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : 
   (evaluateCallableObject 16 .lp64 function [argument]).toOption == some (.ok expected) &&
     (evaluateCallable 16 .lp64 function [argument]).toOption == some (.ok expected)
 
+def callableShortFrameIncrementWitness : Bool :=
+  checkIncrement .short "++" false ⟨.signed 16, 32767⟩ ⟨.signed 16, -32768⟩
+
 #guard checkIncrement .short "++" false ⟨.signed 16, 32767⟩ ⟨.signed 16, -32768⟩
+#guard callableShortFrameIncrementWitness
 #guard checkIncrement .short "++" true ⟨.signed 16, 32767⟩ ⟨.signed 16, 32767⟩
 #guard checkIncrement .short "--" false ⟨.signed 16, -32768⟩ ⟨.signed 16, 32767⟩
 #guard checkIncrement .short "--" true ⟨.signed 16, -32768⟩ ⟨.signed 16, -32768⟩

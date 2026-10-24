@@ -4093,6 +4093,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-discarded-postfix-store",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callablePostfixStoreWitness",
+    "cpp_source": "void discard_postfix(short& value) { value++; } bool callable_witness() { short value = 3; discard_postfix(value); return value == 4; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

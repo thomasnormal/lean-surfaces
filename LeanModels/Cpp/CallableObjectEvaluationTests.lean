@@ -465,6 +465,8 @@ private def postfixStore : Bool :=
       (outcome.result matches .error .missingReturn) &&
         (outcome.frame.read (handle "0x10")).result.toOption == some ⟨.signed 16, -32768⟩
 
+def callablePostfixStoreWitness : Bool := postfixStore
+
 -- No native oracle execution is run for signed overflow. The failed arithmetic
 -- leaves the live parameter unchanged in both prefix and postfix cases.
 private def overflowRetainsParameter (operator : String) (isPostfix : Bool) (value : Int) : Bool :=
@@ -476,6 +478,7 @@ private def overflowRetainsParameter (operator : String) (isPostfix : Bool) (val
         (outcome.frame.read (handle "0x10")).result.toOption == some (signed value)
 
 #guard postfixStore
+#guard callablePostfixStoreWitness
 #guard overflowRetainsParameter "++" false 2147483647
 #guard overflowRetainsParameter "++" true 2147483647
 #guard overflowRetainsParameter "--" false (-2147483648)

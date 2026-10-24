@@ -213,6 +213,8 @@ private def unsupportedIncrementPrecedesRead : Bool :=
   | .error (.unsupportedOperator "??") => true
   | _ => false
 
+def callableIncrementPrecedesReadRefusal : Bool := !unsupportedIncrementPrecedesRead
+
 private def unsupportedLogicalLoud : Bool :=
   let one : TypedCallableExpression := {
     expression := .integer 1, sourceType := intType, type := intType}
@@ -400,6 +402,7 @@ def callableParserAutomaticLocalWitness : Bool := parserAdmitsAutomaticLocal
 #guard !callableCompoundRefusal
 #guard !callableUnaryRefusal
 #guard !callableBinaryRefusal
+#guard !callableIncrementPrecedesReadRefusal
 #guard unsupportedIncrementPrecedesRead
 #guard unsupportedLogicalLoud
 #guard unsupportedCompoundLoud

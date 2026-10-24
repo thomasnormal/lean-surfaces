@@ -4081,6 +4081,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-increment-refusal-precedes-read",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableIncrementPrecedesReadRefusal",
+    "cpp_source": "int increment_precedence(int value) { return ++value; } bool callable_witness() { return increment_precedence(7) == 8; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "refuse",
+    "rung": 3
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

@@ -5,6 +5,26 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.40] — 2026-10-24
+
+### Added
+
+- Bounded callable `sizeof` and `alignof` for builtin integral operands on the
+  LP64 profile, with pure and object-backed evaluation and loud type/trait
+  boundaries.
+- Typed integral `CStyleCastExpr` admission, including narrowing conversions
+  and a `NoOp` type-preservation check.
+- Selected direct-call parsing through explicit declaration-handle target
+  tables, plus callable argument conversion coverage.
+
+### Measured
+
+- The checked-in corpus now contains **286 differential rows**: **276 MATCH**,
+  **0 DIVERGE**, **0 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.39] — 2026-10-23
 
 ### Added

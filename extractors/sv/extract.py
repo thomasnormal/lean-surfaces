@@ -27,6 +27,7 @@ Requires python3.12 + pyslang 11.x.
 """
 
 import argparse
+from decimal import Decimal, InvalidOperation, ROUND_DOWN
 import hashlib
 import json
 import os
@@ -5238,6 +5239,75 @@ def _literal_function_call(expression):
         return False
 
 
+def _literal_real_decimal(expression):
+    """Read a source-real literal without going through binary ``float``.
+
+    ``$rtoi`` truncates toward zero. Keeping the decimal spelling until the
+    conversion avoids turning a source value such as ``123.9`` into a host
+    floating-point approximation, and keeps the admission limited to literal
+    operands rather than pretending that real storage is modeled.
+    """
+    node = expression
+    while type(node).__name__ == "ConversionExpression":
+        node = getattr(node, "operand", None)
+        if node is None:
+            return None
+    if type(node).__name__ in ("RealLiteral", "ShortRealLiteral"):
+        if getattr(node, "bad", False):
+            return None
+        try:
+            source = str(getattr(node, "syntax", "")).replace("_", "")
+            value = Decimal(source)
+            return value if value.is_finite() else None
+        except (InvalidOperation, ValueError):
+            return None
+    if type(node).__name__ == "UnaryExpression":
+        op = str(getattr(node, "op", "")).split(".")[-1]
+        if op not in ("Plus", "Minus", "UnaryPlus", "UnaryMinus"):
+            return None
+        value = _literal_real_decimal(getattr(node, "operand", None))
+        if value is None:
+            return None
+        return -value if op in ("Minus", "UnaryMinus") else value
+    return None
+
+
+def _rtoi_literal_call(expression):
+    """Whether ``$rtoi`` has one finite literal real in value position."""
+    try:
+        if (_SYM is not None or type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "$rtoi"):
+            return False
+        arguments = list(expression.arguments)
+        if len(arguments) != 1:
+            return False
+        value = _literal_real_decimal(arguments[0])
+        return (value is not None and getattr(expression.type, "isIntegral", False)
+                and getattr(expression.type, "bitWidth", None) == 32)
+    except Exception:
+        return False
+
+
+def _convert_rtoi_literal(sm, expression):
+    if not _rtoi_literal_call(expression):
+        return unsupported(sm, expression, "CallExpression:$rtoi")
+    value = _literal_real_decimal(expression.arguments[0])
+    truncated = int(value.to_integral_value(rounding=ROUND_DOWN))
+    width = expression.type.bitWidth
+    if truncated < -(1 << (width - 1)) or truncated >= (1 << (width - 1)):
+        return unsupported(sm, expression, "CallExpression:$rtoi:range")
+    bits = format(truncated & ((1 << width) - 1), f"0{width}b")
+    return signed_metadata({
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": width,
+        "bits": bits,
+        "rtoi_literal": True,
+    }, expression.type)
+
+
 def _convert_legacy_call(sm, expression):
     # An empty zero-argument function returns its type's default value.  The
     # declaration has already been erased as metadata; materialize that
@@ -5292,6 +5362,7 @@ def _convert_legacy_call(sm, expression):
             (_string_literal_getc_method, _convert_string_literal_getc),
             (_string_literal_len_method, _convert_string_literal_len_method),
             (_zero_size_method, _convert_zero_size_method),
+            (_rtoi_literal_call, _convert_rtoi_literal),
             (_time_call, _convert_time_call),
             (_stime_call, _convert_stime_call),
             (_signing_call, _convert_signing_call),
@@ -8349,6 +8420,12 @@ def _convert_syscall(sm, s, e):
         if not args:
             return {"kind": "Empty", "span": node_span(sm, s),
                     "pure_diagnostic": name}
+    if is_sys and _rtoi_literal_call(e):
+        # `$rtoi` is a pure conversion in statement position when its result
+        # is discarded.  The value-position converter above is deliberately
+        # reused so the literal/range boundary cannot drift between forms.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "rtoi_literal_statement": True}
     if is_sys and name in SYSCALL_ASSERT_CTRL:
         try:
             args = list(e.arguments)

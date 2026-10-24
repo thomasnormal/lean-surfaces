@@ -13,9 +13,12 @@ Fixed `$bits`, `$high`, `$left`, `$right`, `$low`, `$increment`, `$size`,
 metadata. Pure `$clog2` constants fold to the existing signed 32-bit literal;
 runtime integral `$clog2` uses the shared expression evaluator. A zero-argument
 `$time` in the time-zero self-check slice is the existing 64-bit zero literal
-with time-zero provenance. Dynamic integral `$cast` has its own capture and
-copyback contract. These paths are not generic callable frames and do not make
-arbitrary calls live.
+with time-zero provenance. A `$rtoi` with one finite real literal now lowers
+to the signed 32-bit literal obtained by truncating toward zero; the same
+conversion is inert when its result is discarded as a statement. Dynamic real
+reads, out-of-range results, and other argument shapes remain loud. Dynamic
+integral `$cast` has its own capture and copyback contract. These paths are not
+generic callable frames and do not make arbitrary calls live.
 
 ## Refusal boundary
 
@@ -64,11 +67,13 @@ in those 212 files. The largest heads are:
 | member method call | 11 | 10 |
 
 The remaining 77 instances are a long tail of other distributions, sampled
-queries, time/real conversions, file/system/coverage calls, and methods. No
-call-only head is an independent admission for the current evaluator: every
-head needs a random oracle, scheduler history, time/unit state, external
-effect, unsupported value type, or callable frame. Existing metadata-query,
-`$clog2`, `$time`, and cast tests remain the acceptance boundary.
+queries, time/real conversions, file/system/coverage calls, and methods. The
+literal `$rtoi` slice is now admitted: six corpus files that use one finite
+literal conversion become clean, while dynamic and out-of-range calls remain
+in the residual refusal set. Every remaining call-only head needs a random
+oracle, scheduler history, time/unit state, external effect, unsupported value
+type, or callable frame. Existing metadata-query, `$clog2`, `$time`, cast, and
+literal-`$rtoi` fixtures pin the accepted boundary.
 
 Reproduce the call-only table with
 `python3.9 extractors/sv/call_expr_reprice.py --corpus <corpus>/tests`; the

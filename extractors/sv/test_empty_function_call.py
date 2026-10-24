@@ -121,6 +121,41 @@ class EmptyFunctionCalls(unittest.TestCase):
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))
 
+    def test_rtoi_literal_truncates_toward_zero(self):
+        design = lower(
+            'module top; initial begin integer i; '
+            'i = $rtoi(-2.7); '
+            'if ($rtoi(123.9) === 123 && $rtoi(-2.7) === -2) '
+            '$display("PASS"); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("rtoi_literal")]
+        self.assertEqual(len(values), 3)
+        self.assertEqual(values[0]["bits"], "1" * 31 + "0")
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_rtoi_literal_statement_is_inert(self):
+        design = lower(
+            'module top; initial begin $rtoi(0.5); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("rtoi_literal_statement")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_rtoi_dynamic_and_out_of_range_stay_loud(self):
+        dynamic = lower(
+            'module top; real x; initial if ($rtoi(x) === 0) '
+            '$display("PASS"); endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(dynamic)))
+        out_of_range = lower(
+            'module top; initial if ($rtoi(2147483648.0) === 0) '
+            '$display("PASS"); endmodule')
+        self.assertTrue(any(node.get("sv_kind", "").startswith("CallExpression")
+                            for node in nodes(out_of_range)))
+
 
 if __name__ == "__main__":
     unittest.main()

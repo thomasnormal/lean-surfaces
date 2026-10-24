@@ -40,6 +40,11 @@ likewise erased. They change only assertion reporting controls, and the
 self-check state has no assertion control register. Dynamic or hierarchical
 arguments remain loud.
 
+A `$rtoi` statement with one finite real or short-real literal is also erased:
+its signed 32-bit conversion result is discarded, so the pure operation has no
+observable effect. Dynamic real reads, out-of-range literals, and other
+argument shapes remain loud and use the expression-call boundary.
+
 The self-check executor runs these calls at time zero. The retained stepper
 delegates the same `SysCall` leaves to that executor after a delay or event
 wait, so no second call interpreter is introduced. The scheduler's existing

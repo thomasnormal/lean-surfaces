@@ -6315,3 +6315,19 @@ the residual `AssignmentExpression:target` blocker remains **3,035 files**
 because this exact shape is absent from the corpus snapshot. Differential
 coverage moves **121/117/0/4 → 122/118/0/4**; grammar coverage remains
 **214/83/131**.
+
+## Literal `$rtoi` conversions — 2026-10-24
+
+`$rtoi` with one finite real or short-real literal now lowers to the existing
+signed 32-bit literal after IEEE 1800-2023 §20.5 truncation toward zero. The
+same pure conversion is inert in statement position when its result is
+discarded. Decimal spelling is converted without host floating-point rounding;
+dynamic real reads and out-of-range results remain loud. `rtoi_literal` supplies
+the value and discarded-result paths, while extractor tests pin the dynamic and
+range boundaries.
+
+The fresh 22,048-file census moves **4,817 → 4,823 clean** and **17,165 →
+17,159 partial**; `CallExpression` falls **2,986 → 2,980**, with
+`ExpressionStatement:CallExpression` unchanged at **2,985**. Differential
+coverage moves **123/119/0/4 → 124/120/0/4**; grammar coverage remains
+**214/83/131**.

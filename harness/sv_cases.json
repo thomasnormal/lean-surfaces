@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "rtoi_literal",
+      "file": "Examples/system-verilog/rtoi_literal/rtoi_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "literal_function_argument",
       "file": "Examples/system-verilog/literal_function_argument/literal_function_argument.sv",
       "module": "top",

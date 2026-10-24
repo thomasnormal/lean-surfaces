@@ -296,6 +296,8 @@ private def switchScopeClosesOnFailure : Bool :=
         | _ => false
   | .error _ => false
 
+def callableSwitchScopeFailureWitness : Bool := switchScopeClosesOnFailure
+
 private def readsParameter : Bool :=
   match evaluateCallableObject 32 .lp64 (functionWithLocal (.read (handle "0x10"))) [signed 7] with
   | .ok (.ok value) => value == signed 7
@@ -390,6 +392,7 @@ def callableParserAutomaticLocalWitness : Bool := parserAdmitsAutomaticLocal
 #guard callableForBodyFailureRetainsFrameWitness
 #guard callableReturnFailureRetainsFrameWitness
 #guard callableForInitializerFailureRetainsFrameWitness
+#guard callableSwitchScopeFailureWitness
 
 theorem callable_local_declaration_witness : callableLocalDeclarationWitness = true := by
   rfl

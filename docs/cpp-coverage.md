@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 363 | 353 | 0 | 0 | 0 | 10 |
+| 364 | 354 | 0 | 0 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -365,6 +365,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `statement.callable-for-body-failure-retains-frame` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-return-failure-retains-frame` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-for-initializer-failure-retains-frame` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-switch-scope-failure` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `declaration.callable-reference-parameter` | 5 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `declaration.callable-value-parameter-isolation` | 5 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `declaration.callable-const-reference` | 5 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |

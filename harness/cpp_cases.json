@@ -3985,6 +3985,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-switch-scope-failure",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableSwitchScopeFailureWitness",
+    "cpp_source": "bool callable_witness() { int value = 5; bool failed = false; try { switch (1) { case 1: throw 1; default: break; } } catch (...) { failed = true; } return failed && value == 5; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

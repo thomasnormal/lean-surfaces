@@ -38,6 +38,24 @@ private def aliasTrace : Except IntegralObjectError (List IntegralValue) := do
   let untouched ← store.read distinct
   pure [before, after, untouched]
 
+def materializedTemporaryLifecycle : Bool :=
+  match IntegralObjectStore.empty .lp64 with
+  | .error _ => false
+  | .ok store =>
+      match store.materializeTemporary (.builtin .int) (.builtin .short)
+          ⟨.signed 16, 7⟩ with
+      | .error _ => false
+      | .ok (store, object) =>
+          match store.borrow object with
+          | .error _ => false
+          | .ok access =>
+              match store.extendTemporary object, store.read access with
+              | .ok extended, .ok value =>
+                  value == signed 7 &&
+                    ((extended.objects.object? object).map
+                      (·.duration == .extendedTemporary)).getD false
+              | _, _ => false
+
 #guard match aliasTrace with
   | .ok values => values == [signed 7, signed (-5), signed 7]
   | .error _ => false
@@ -205,6 +223,8 @@ private def aliasTrace : Except IntegralObjectError (List IntegralValue) := do
   let store ← store.extendTemporary object
   let access ← store.borrow object
   store.read access)
+
+#guard materializedTemporaryLifecycle
 
 #guard (do
   let (store, object) ← initialized

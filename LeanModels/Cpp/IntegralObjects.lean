@@ -129,6 +129,15 @@ def initializeConverted (store : IntegralObjectStore) (object : ObjectId)
   let converted ← convertValue store.profile sourceType entry.type value
   initializeValue store object converted
 
+/-- Materialize an already-evaluated integral prvalue as a temporary object.
+    The returned identity remains temporary until a caller extends it. -/
+def materializeTemporary (store : IntegralObjectStore)
+    (type sourceType : CppTypeEvidence) (value : IntegralValue) :
+    Except IntegralObjectError (IntegralObjectStore × ObjectId) := do
+  let (reserved, object) ← store.allocate .temporary type
+  let initialized ← reserved.initializeConverted object sourceType value
+  pure (initialized, object)
+
 /-- Rung-1 initialized automatic declaration: storage, lifetime start, source
     conversion, and value initialization are one typed declaration boundary. -/
 def declareAutomaticInitialized (store : IntegralObjectStore)

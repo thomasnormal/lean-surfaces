@@ -2545,6 +2545,18 @@
     "rung": 1
   },
   {
+    "id": "object.materialized-integral-temporary",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.IntegralObjectTests",
+    "lean_namespace": "LeanModels.Cpp.IntegralObjectTests",
+    "lean_expression": "materializedTemporaryLifecycle",
+    "cpp_source": "bool materialized_witness() { const int& reference = static_cast<short>(7); return reference == 7; }",
+    "cpp_expression": "materialized_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "object.storage-reuse",
     "kind": "lifetime",
     "corpus": "rung-1 witness",

@@ -20,8 +20,10 @@ structured `CppTypeEvidence`, and one of these phases:
 - `released`: dynamic storage has been released.
 
 Temporary storage is a separate identity class. `declareTemporary` starts a
-materialized temporary for the current full-expression, and
-`endFullExpression` ends those temporaries in reverse construction order.
+materialized temporary for the current full-expression; the integral value
+layer's `materializeTemporary` combines that reservation with checked value
+initialization. `endFullExpression` then ends those temporaries in reverse
+construction order.
 Unextended temporary IDs cannot be passed to lexical `endScope`, while
 automatic IDs cannot be ended by the full-expression boundary.
 

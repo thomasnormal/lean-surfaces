@@ -31,6 +31,10 @@ publish the converted destination value. This is not overload resolution or an
 implicit-conversion engine: only the already-admitted builtin-integral source
 and destination pair is available.
 
+`materializeTemporary` applies that same checked conversion while allocating a
+temporary object. The caller can then extend its lifetime and retain a typed
+borrow through scope cleanup.
+
 Ending lifetime discards the readable value but retains metadata as a tombstone.
 `extendTemporary` changes a live temporary's cleanup boundary without changing
 its identity or value, so the value remains readable until scope cleanup.

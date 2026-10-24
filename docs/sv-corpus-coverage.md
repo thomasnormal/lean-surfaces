@@ -3713,3 +3713,16 @@ The 22,048-path census is unchanged at **4,798 clean / 17,184 partial / 66
 include skips** with `AssignmentExpression:target` at **3,045 files**.
 Differential coverage moves **107/103/0/4 → 108/104/0/4**; grammar coverage
 remains **213/82/131**.
+
+## Static literal wire-driver resolution — 2026-10-24
+
+Multiple whole-net continuous drivers on a declared wire now resolve at time
+zero when every source is an integral literal. The implementation applies the
+IEEE per-bit table (`z` yields, equal values remain, conflicts and `x` produce
+`x`) and emits one flat assignment. Dynamic/variable drivers, selected windows,
+strengths, and future changes remain loud.
+
+The 22,048-path census moves **4,798 → 4,806 clean** and **17,184 → 17,176
+partial**; `AssignmentExpression:target` falls **3,045 → 3,037**. Differential
+coverage moves **108/104/0/4 → 109/105/0/4**; grammar coverage remains
+**213/82/131**.

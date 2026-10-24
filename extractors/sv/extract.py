@@ -8822,8 +8822,72 @@ def _symbolic_target_windows(target):
     return None
 
 
-def _reject_overlapping_symbolic_drivers(processes):
-    """Make statically overlapping constant continuous drivers loud."""
+def _resolve_literal_driver_bits(values):
+    """Resolve fixed literal wire drivers one bit at a time (§28.12)."""
+    if not values or any(not isinstance(value, str) for value in values):
+        return None
+    width = len(values[0])
+    if width <= 0 or any(len(value) != width for value in values):
+        return None
+    result = []
+    for bits in zip(*values):
+        active = [bit for bit in bits if bit != "z"]
+        if not active:
+            result.append("z")
+        elif any(bit == "x" for bit in active):
+            result.append("x")
+        elif all(bit == active[0] for bit in active):
+            result.append(active[0])
+        else:
+            result.append("x")
+    return "".join(result)
+
+
+def _reject_overlapping_symbolic_drivers(processes, resolvable_nets=None):
+    """Resolve fixed literal legacy net drivers; reject other overlaps."""
+    if _SYM is None and resolvable_nets:
+        groups = {}
+        for index, process in enumerate(processes):
+            if (process.get("kind") != "Assign"
+                    or not process.get("continuous_literal_source")
+                    or process.get("target", {}).get("kind") != "Ident"):
+                continue
+            target = process["target"].get("name")
+            if target in resolvable_nets:
+                groups.setdefault(target, []).append(index)
+        for target, indices in groups.items():
+            if len(indices) < 2:
+                continue
+            values = [processes[index]["value"].get("bits") for index in indices]
+            resolved = _resolve_literal_driver_bits(values)
+            if resolved is None:
+                continue
+            first = indices[0]
+            process = processes[first]
+            literal = dict(processes[first]["value"])
+            literal["bits"] = resolved
+            processes[first] = {
+                "kind": "Initial",
+                "span": process.get("span"),
+                "body": {
+                    "kind": "BlockingAssign",
+                    "span": process.get("span"),
+                    "target": dict(process["target"]),
+                    "value": literal,
+                    "continuous_static_resolution": True,
+                },
+                "continuous_static_resolution": True,
+            }
+            for index in indices[1:]:
+                # Keep the process list in the self-check vocabulary while
+                # removing the already-folded driver from execution.
+                processes[index] = {
+                    "kind": "Initial",
+                    "span": processes[index].get("span"),
+                    "body": {"kind": "Empty",
+                             "span": processes[index].get("span")},
+                    "continuous_static_resolution": True,
+                }
     windows = []
     for index, process in enumerate(processes):
         if process.get("kind") != "Assign":
@@ -8944,12 +9008,16 @@ def convert_continuous_assign(sm, m):
             value = squash2_wrap(value, e.left.type.bitWidth)
     except Exception:
         pass
-    return {
+    result = {
         "kind": "Assign",
         "span": node_span(sm, e),
         "target": target,
         "value": value,
     }
+    if (_SYM is None and target.get("kind") == "Ident"
+            and _integral_literal_source(e.right)):
+        result["continuous_literal_source"] = True
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -9644,8 +9712,13 @@ def convert_module(sm, inst):
     others.extend(_static_initialization_barriers(sm, decls, ports))
 
     # Constant continuous windows are storage-only in the legacy runner too;
-    # reject static overlap before it could be mistaken for net resolution.
-    _reject_overlapping_symbolic_drivers(processes)
+    # fold only the explicitly resolvable literal wire groups before retaining
+    # the loud overlap boundary for every other continuous form.
+    resolvable_nets = {
+        declaration.get("name") for declaration in decls
+        if declaration.get("kind") == "Net"
+    }
+    _reject_overlapping_symbolic_drivers(processes, resolvable_nets)
 
     module = {
         "kind": "Module",

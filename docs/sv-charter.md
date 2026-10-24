@@ -6117,3 +6117,17 @@ The 22,048-path census is unchanged at **4,798 clean / 17,184 partial / 66
 include skips** and `AssignmentExpression:target` remains **3,045 files**.
 Differential coverage moves **107/103/0/4 → 108/104/0/4**; grammar coverage
 remains **213/82/131**.
+
+## Static literal wire-driver resolution — 2026-10-24
+
+The continuous-driver rung now resolves multiple whole-net literal drivers on
+declared wires at time zero, per bit, using the IEEE `z`/equal/conflict/`x`
+table. The result is lowered to one flat assignment; no live driver queue or
+strength model is introduced. Dynamic or variable drivers, selected windows,
+and future source changes remain loud. `static_net_resolution` supplies the
+differential row.
+
+The 22,048-path census moves **4,798 → 4,806 clean** and **17,184 → 17,176
+partial**; `AssignmentExpression:target` falls **3,045 → 3,037**. Differential
+coverage moves **108/104/0/4 → 109/105/0/4**; grammar coverage remains
+**213/82/131**.

@@ -973,6 +973,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "static_net_resolution",
+      "file": "Examples/system-verilog/static_net_resolution/static_net_resolution.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

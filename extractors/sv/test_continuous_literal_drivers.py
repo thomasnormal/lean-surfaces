@@ -35,6 +35,26 @@ class ContinuousLiteralDrivers(unittest.TestCase):
         self.assertEqual([process["kind"] for process in processes],
                          ["Assign", "Assign"])
 
+    def test_multiple_literal_wire_drivers_resolve_at_time_zero(self):
+        design = extract_source(
+            "module top; wire conflict, agree, z_only, unknown; "
+            "assign conflict = 1'b0; assign conflict = 1'b1; "
+            "assign agree = 1'b1; assign agree = 1'b1; "
+            "assign z_only = 1'bz; assign z_only = 1'bz; "
+            "assign unknown = 1'bx; assign unknown = 1'b0; endmodule")
+        initial = [process for process in design["modules"][0]["processes"]
+                   if process.get("continuous_static_resolution")]
+        self.assertEqual(len(initial), 8)
+        values = {
+            process["body"]["target"]["name"]:
+            process["body"]["value"]["bits"]
+            for process in initial
+            if process["body"]["kind"] == "BlockingAssign"
+        }
+        self.assertEqual(values,
+                         {"conflict": "x", "agree": "1",
+                          "z_only": "z", "unknown": "x"})
+
 
 if __name__ == "__main__":
     unittest.main()

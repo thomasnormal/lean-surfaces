@@ -124,13 +124,17 @@ class SizeQueries(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
                              for node in nodes(design)))
 
-    def test_multiple_literal_continuous_net_drivers_stay_loud(self):
+    def test_multiple_literal_continuous_net_drivers_resolve(self):
         design = lower(
             'module top; wire y; assign y = 1\'b1; assign y = 1\'b0; '
             'initial $display("%0d", y); endmodule')
         self.assertFalse(any(node.get("continuous_constant_lowered")
                              for node in nodes(design)))
-        self.assertTrue(any(node.get("kind") == "Assign" for node in nodes(design)))
+        resolved = [node for node in nodes(design)
+                    if node.get("continuous_static_resolution")
+                    and node.get("body", {}).get("kind") == "BlockingAssign"]
+        self.assertEqual(len(resolved), 1)
+        self.assertEqual(resolved[0]["body"]["value"]["bits"], "x")
 
     def test_dynamic_continuous_net_driver_stays_loud(self):
         design = lower(

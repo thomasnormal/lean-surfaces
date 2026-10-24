@@ -142,3 +142,16 @@ on the scheduler-owned boundary.
 
 `constant_net_bit_driver` is the differential witness; the multiple-driver
 case remains covered by the refusal boundary.
+
+## Static literal wire-driver resolution — 2026-10-24
+
+Multiple continuous drivers on one wire are resolved at time zero when every
+driver is a whole-net integral literal. Resolution is performed per bit using
+the IEEE table: `z` yields to an active driver, equal active values remain,
+conflicting values become `x`, and an `x` driver keeps the result unknown. The
+resolved value is lowered to one flat assignment. Dynamic drivers, variable
+drivers, selected windows, strengths, and future source changes remain loud.
+
+`static_net_resolution` is the differential witness. The folded path is
+restricted to declared nets, so a variable with multiple continuous drivers
+continues to refuse rather than being treated as a resolved wire.

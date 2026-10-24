@@ -5605,3 +5605,18 @@ partial**; `ExpressionStatement:CallExpression` falls **3,451 → 3,419** and
 `AssignmentExpression:target` becomes the leading blocker at 3,441.
 Differential coverage moves **70/66/0/4 → 71/67/0/4** and grammar coverage
 remains **206/75/131**.
+
+## Pure real and shortreal literal writes — 2026-10-24
+
+Blocking assignments of a signed or unsigned real/shortreal literal now erase
+through the opaque floating-storage boundary. Unary plus/minus and the
+frontend's literal conversion shell are included; nonblocking, timed,
+computed, named, and read-dependent writes remain loud because the tier has no
+floating state representation.
+
+The `floating_literal_write` fixture and differential row cover the admitted
+form, with extractor regressions for literal and nonliteral RHS values. The
+fresh 22,046-file census moves **4,689 → 4,705 clean** and **17,291 → 17,275
+partial**; `AssignmentExpression:target` falls **3,441 → 3,321**. Differential
+coverage moves **71/67/0/4 → 72/68/0/4** and grammar coverage moves
+**206/75/131 → 207/76/131**.

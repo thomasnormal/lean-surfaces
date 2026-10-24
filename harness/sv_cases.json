@@ -531,6 +531,15 @@
       "expect": "match"
     },
     {
+      "name": "floating_literal_write",
+      "file": "Examples/system-verilog/floating_literal_write/floating_literal_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "generate_indexed_targets",
       "file": "Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv",
       "module": "top",

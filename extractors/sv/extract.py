@@ -5319,6 +5319,30 @@ def ident_target(sm, lhs):
     return t, (t is not None and t.get("kind") == "Ident")
 
 
+def _floating_literal(expr):
+    """Return whether *expr* is a side-effect-free real literal.
+
+    Floating storage is intentionally opaque in the self-check state.  A
+    blocking write of a literal therefore has no modeled state to update and
+    can be erased, while names, calls, and arithmetic remain loud at their
+    existing expression boundaries.  Keep the small unary/conversion shells
+    that pyslang puts around signed and context-converted literals.
+    """
+    node = expr
+    while type(node).__name__ == "ConversionExpression":
+        node = getattr(node, "operand", None)
+        if node is None:
+            return False
+    if type(node).__name__ == "RealLiteral":
+        return not getattr(node, "bad", False)
+    if type(node).__name__ == "UnaryExpression":
+        op = str(getattr(node, "op", "")).split(".")[-1]
+        if op not in ("Plus", "Minus"):
+            return False
+        return _floating_literal(getattr(node, "operand", None))
+    return False
+
+
 def _compound_rhs(expr):
     """Peel pyslang's synthetic read-modify-write expression from a compound
     assignment. The frontend may wrap it in a conversion for unsized literals.
@@ -7194,6 +7218,18 @@ def _convert_assignment_expr(sm, expr, span_node=None):
     if type(expr).__name__ != "AssignmentExpression":
         return unsupported(sm, span_node or expr,
                            "AssignmentExpression:" + type(expr).__name__)
+    # Real and shortreal values have no representation in the flat
+    # self-check state.  A pure literal blocking write consequently has no
+    # modeled effect and can be erased.  Keep nonblocking writes, names,
+    # calls, arithmetic, and all reads loud: those can affect scheduling or
+    # observations outside this opaque-storage slice.
+    if (_SYM is None and expr.op is None and expr.timingControl is None
+            and not expr.isNonBlocking
+            and type(getattr(expr.left.type, "canonicalType", None)).__name__
+            == "FloatingType"
+            and _floating_literal(expr.right)):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "floating_literal_write_noop": True}
     # An opaque string has no flat-state slot. A pure literal write has no
     # effect of its own, so it can be erased; later string reads still lower
     # to their existing loud boundary. Nonliteral writes remain unsupported.

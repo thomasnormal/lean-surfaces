@@ -39,6 +39,22 @@ class FloatingLocalDeclarations(unittest.TestCase):
         self.assertIn("VariableSymbol:2state",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_literal_blocking_write_is_inert(self):
+        design = lower(
+            'module top; real value; initial begin value = -3.5; '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("floating_literal_write_noop")
+                            for node in nodes(design)))
+
+    def test_nonliteral_write_stays_loud(self):
+        design = lower(
+            'module top; real value; real source; '
+            'initial begin value = source; end endmodule')
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
+
 
 if __name__ == "__main__":
     unittest.main()

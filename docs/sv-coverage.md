@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 71 | 67 | 0 | 4 | sv-tests-2 declarations |
+| 72 | 68 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -72,6 +72,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `fixed_array_struct_pattern` | `Examples/system-verilog/fixed_array_struct_pattern/fixed_array_struct_pattern.sv` | match | **MATCH** | `ok` | MATCH |
 | `generate_constant_targets` | `Examples/system-verilog/generate_constant_targets/generate_constant_targets.sv` | match | **MATCH** | `ok` | MATCH |
 | `floating_local_decl` | `Examples/system-verilog/floating_local_decl/floating_local_decl.sv` | match | **MATCH** | `ok` | MATCH |
+| `floating_literal_write` | `Examples/system-verilog/floating_literal_write/floating_literal_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `generate_indexed_targets` | `Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv` | match | **MATCH** | `ok` | MATCH |
 | `oob_struct_read` | `Examples/system-verilog/oob_struct_read/oob_struct_read.sv` | match | **MATCH** | `ok` | MATCH |
 | `streaming_struct_source` | `Examples/system-verilog/streaming_struct_source/streaming_struct_source.sv` | match | **MATCH** | `ok` | MATCH |
@@ -92,7 +93,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 206 | 75 | 131 | pyslang SyntaxKind |
+| 207 | 76 | 131 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -250,7 +251,8 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.QueueDimensionSpecifier` | `Examples/system-verilog/queue_decl/queue_decl.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RangeDimensionSpecifier` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.RangeList` | `Examples/system-verilog/case_inside/array_widening.sv` | **REFUSE** | `unsupported` unsupported statement 'CaseStatement:pattern' |
-| `SyntaxKind.RealType` | `Examples/system-verilog/floating_local_decl/floating_local_decl.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.RealLiteralExpression` | `Examples/system-verilog/floating_literal_write/floating_literal_write.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.RealType` | `Examples/system-verilog/floating_literal_write/floating_literal_write.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RepeatedEventControl` | `Examples/system-verilog/intra_assignment/counts.sv` | **REFUSE** | `unsupported` @(event): the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.ReplicatedAssignmentPattern` | `Examples/system-verilog/assignment_patterns/replicated.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ReturnStatement` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
@@ -309,13 +311,13 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22046 | 4689 | 17291 | 66 |
+| 22046 | 4705 | 17275 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 3441 |
 | `ExpressionStatement:CallExpression` | 3419 |
 | `VariableSymbol:2state` | 3383 |
+| `AssignmentExpression:target` | 3321 |
 | `CallExpression` | 3283 |
 | `Hierarchy:ports` | 2397 |
 | `SubroutineSymbol:Subroutine` | 1715 |

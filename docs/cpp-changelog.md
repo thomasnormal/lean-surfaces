@@ -5,6 +5,22 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.54] — 2026-10-24
+
+### Added
+
+- Rung-1 statement-level temporary-reference, dynamic-local, static-local,
+  and thread-local execution witnesses, plus a rung-4 frame-`for` scope
+  witness.
+
+### Measured
+
+- The checked-in corpus now contains **355 differential rows**: **345 MATCH**,
+  **0 DIVERGE**, **0 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.53] — 2026-10-24
 
 ### Added

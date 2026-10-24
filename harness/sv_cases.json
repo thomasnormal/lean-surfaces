@@ -991,6 +991,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "constant_variable_driver",
+      "file": "Examples/system-verilog/constant_variable_driver/constant_variable_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

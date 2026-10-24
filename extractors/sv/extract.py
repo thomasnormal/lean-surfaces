@@ -8990,7 +8990,7 @@ def convert_continuous_assign(sm, m):
             "NamedValueExpression", "ElementSelectExpression",
             "RangeSelectExpression")
             and getattr(left_symbol, "kind", None) is not None
-            and str(left_symbol.kind) == "SymbolKind.Net"
+            and str(left_symbol.kind) in ("SymbolKind.Net", "SymbolKind.Variable")
             and value is not None and value.get("kind") == "Literal"
             and _integral_literal_source(e.right)):
         # A single whole-net or constant packed-window literal driver has no

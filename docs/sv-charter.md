@@ -6143,3 +6143,14 @@ drivers stay on the continuous-driver boundary. The
 reuses the ordinary cell storage and interpreter path. The corpus census is
 unchanged because its fixed-array continuous rows either use net-array types or
 dynamic drivers; differential coverage moves **109/105/0/4 → 110/106/0/4**.
+
+## Literal continuous packed-variable drivers — 2026-10-24
+
+A pure integral literal continuous assignment to one whole packed variable or
+one constant packed bit/part-select now lowers to the existing time-zero
+blocking write. The source target must occur once; dynamic or effectful
+sources/selections and multiple drivers remain loud because they need a live
+continuous-driver path. `constant_variable_driver` covers both target forms.
+The corpus census remains **4,806 clean / 17,176 partial / 66 include skips**
+with `AssignmentExpression:target` at **3,037 files**; differential coverage
+moves **110/106/0/4 → 111/107/0/4**.

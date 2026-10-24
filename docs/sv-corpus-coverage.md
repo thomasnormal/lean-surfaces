@@ -3738,3 +3738,15 @@ row and reuses the ordinary fixed-cell storage and interpreter path. The
 22,048-path census is unchanged because its fixed-array continuous rows use
 net-array types or dynamic drivers. Differential coverage moves
 **109/105/0/4 → 110/106/0/4**; grammar coverage remains **213/82/131**.
+
+## Literal continuous packed-variable drivers — 2026-10-24
+
+A pure integral literal continuous assignment to one whole packed variable or
+one constant packed bit/part-select now lowers to the existing time-zero
+blocking write. The source target must occur once; dynamic or effectful
+sources/selections and multiple drivers remain loud. `constant_variable_driver`
+supplies both target forms through the existing scalar and packed-target
+interpreter operations. The 22,048-path census remains **4,806 clean / 17,176
+partial / 66 include skips**, with `AssignmentExpression:target` at **3,037
+files**. Differential coverage moves **110/106/0/4 → 111/107/0/4**; grammar
+coverage remains **213/82/131**.

@@ -114,6 +114,17 @@ multiple drivers remain loud.
 ordinary scalar-cell representation and interpreter path; no aggregate store
 or continuous-driver queue is added.
 
+## Literal continuous packed-variable drivers — 2026-10-24
+
+A pure integral literal assigned continuously to one whole packed variable or
+one constant bit/part-select of a packed variable is lowered to the existing
+time-zero blocking write. The source target must occur once, so the result has
+no future reevaluation or driver conflict. Dynamic sources and selections,
+multiple drivers, and aggregate targets remain on the scheduler-owned boundary.
+
+`constant_variable_driver` covers both the whole-vector and selected-window
+forms through the existing scalar and packed-target interpreter operations.
+
 ## Constant out-of-bounds fixed-array writes — 2026-10-22
 
 IEEE 1800-2023 §7.4.5 makes a write through a constant invalid index on a

@@ -144,13 +144,14 @@ class SizeQueries(unittest.TestCase):
                              for node in nodes(design)))
         self.assertTrue(any(node.get("kind") == "Assign" for node in nodes(design)))
 
-    def test_literal_continuous_variable_driver_stays_loud(self):
+    def test_literal_continuous_variable_driver_lowers(self):
         design = lower(
             'module top; logic y; assign y = 1\'b1; '
             'initial $display("%0d", y); endmodule')
-        self.assertFalse(any(node.get("continuous_constant_lowered")
-                             for node in nodes(design)))
-        self.assertTrue(any(node.get("kind") == "Assign" for node in nodes(design)))
+        lowered = [node for node in nodes(design)
+                   if node.get("continuous_constant_lowered")]
+        self.assertEqual(len(lowered), 2)
+        self.assertEqual(lowered[0]["body"]["target"]["name"], "y")
 
     def test_written_string_len_stays_loud(self):
         design = lower(

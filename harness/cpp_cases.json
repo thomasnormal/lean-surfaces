@@ -2821,6 +2821,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-unary-plus",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableUnaryPlusWitness",
+    "cpp_source": "int unary_plus(int value) { return +value; } bool callable_witness() { return unary_plus(-7) == -7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

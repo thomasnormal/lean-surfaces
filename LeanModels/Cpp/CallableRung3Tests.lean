@@ -130,6 +130,22 @@ def callableNoexceptWitness : Bool :=
   | .ok (.ok value) => value == integralBoolean true
   | _ => false
 
+def unaryPlusFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := intType, parameters := [intType], variadic := false}
+  parameters := [{declaration := parameter, name := some "value", type := intType}]
+  body := .block (.return_ {
+    expression := .unary "+"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableUnaryPlusWitness : Bool :=
+  match evaluateCallable 16 .lp64 unaryPlusFunction [signed (-7)] with
+  | .ok (.ok value) => value == signed (-7)
+  | _ => false
+
 def sizeOfFunction : CallableFunction := {
   occurrence := default
   signature := {result := unsignedLongType, parameters := [], variadic := false}
@@ -589,6 +605,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableUnaryComplementWitness
 #guard callableUnaryLogicalNotWitness
 #guard callableNoexceptWitness
+#guard callableUnaryPlusWitness
 #guard callableSizeOfWitness
 #guard callableAlignOfWitness
 #guard callableBoolLiteralWitness
@@ -632,6 +649,9 @@ theorem callable_unary_logical_not_witness : callableUnaryLogicalNotWitness = tr
   rfl
 
 theorem callable_noexcept_witness : callableNoexceptWitness = true := by
+  rfl
+
+theorem callable_unary_plus_witness : callableUnaryPlusWitness = true := by
   rfl
 
 theorem callable_size_of_witness : callableSizeOfWitness = true := by
@@ -710,6 +730,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_unary_complement_witness
 #print axioms callable_unary_logical_not_witness
 #print axioms callable_noexcept_witness
+#print axioms callable_unary_plus_witness
 #print axioms callable_size_of_witness
 #print axioms callable_align_of_witness
 #print axioms callable_bool_literal_witness

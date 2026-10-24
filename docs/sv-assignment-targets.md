@@ -209,6 +209,19 @@ dynamic or nested targets remain loud.
 `streaming_left_slice_target` is the source-bound witness for the named
 `byte` form.
 
+## Shallow unpacked-union member targets — 2026-10-24
+
+An untagged unpacked union whose members are equal-width integral vectors now
+uses one ordinary flat vector cell. Direct member reads and blocking writes
+through any member therefore preserve the union's required aliasing. Tagged
+unions, unequal-width or mixed-state members, nested aggregates, whole-union
+assignments, and nonblocking/timed forms remain loud until their aggregate
+state and scheduling rules are represented.
+
+`unpacked_union_member` is the source-bound witness. The lowering reuses the
+existing `Ident` target and value paths; it adds no aggregate store or second
+scheduler.
+
 ## Single literal continuous packed-bit drivers — 2026-10-24
 
 A single continuous assignment to one constant packed bit or part-select is

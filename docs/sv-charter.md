@@ -6721,3 +6721,17 @@ the source chunks are reversed exactly once. Unsized streams, mixed widths,
 with `AssignmentExpression:target` at **2,978**; differential coverage moves
 **148/144/0/4 → 149/145/0/4**, with grammar coverage unchanged at
 **214/83/131**.
+
+## Shallow unpacked-union member targets — 2026-10-24
+
+The legacy self-check surface now represents an untagged unpacked union with
+one flat vector cell when every direct member is an equal-width integral value
+of the same state kind. Member reads and blocking writes through any member
+therefore preserve the union aliasing rule without an aggregate store. Tagged,
+unequal-width, mixed-state, nested, whole-union, nonblocking, and timed forms
+remain loud. `unpacked_union_member` supplies the differential witness.
+
+The fresh **22,049-path** census moves **4,852 → 4,853 clean** and **17,131 →
+17,130 partial** (66 include skips); `AssignmentExpression:target` falls
+**2,978 → 2,977**. Differential coverage moves **149/145/0/4 → 150/146/0/4**;
+grammar coverage remains **214/83/131**.

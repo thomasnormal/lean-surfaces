@@ -223,6 +223,11 @@ is a time-0 assignment (the M0 examples use exactly this); a **Net** initializer
 is per LRM an implicit *continuous assign* driver — no M0 example uses one, and
 the ingester may treat a `Net` with non-null `init` as it treats `Assign`.
 
+An admitted shallow unpacked union uses the same `Var` shape with optional
+`unpacked_union_cell: true`. Equal-width integral members all resolve to that
+one `name`, preserving their aliasing; unequal-width, mixed-state, tagged, and
+nested union declarations remain `Unsupported`.
+
 ## Processes (`processes` list entries)
 
 | kind | key order / fields |

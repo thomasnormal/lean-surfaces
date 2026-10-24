@@ -388,7 +388,9 @@ def is_integral_type_alias(symbol):
         return False
     try:
         _, _, reason = type_width_2s(symbol.declaredType.type)
-        return reason is None or _fixed_query_dimensions(symbol.declaredType.type) is not None
+        return (reason is None
+                or _fixed_query_dimensions(symbol.declaredType.type) is not None
+                or _unpacked_union_shape(symbol.declaredType.type) is not None)
     except Exception:
         return False
 
@@ -615,6 +617,67 @@ def is_flat_unpacked_struct_alias(symbol):
         return integral_tree(aggregate, set())
     except Exception:
         return False
+
+
+def _unpacked_union_shape(type_or_declared):
+    """Return the shared width/state of a shallow integral unpacked union.
+
+    The legacy state has no aggregate object slot, but an untagged union whose
+    members are all the same-width integral vector can alias one ordinary
+    vector exactly: every member read/write names the same cell.  Restrict the
+    helper to equal widths and equal four-state kind so no padding or dynamic
+    aggregate semantics are guessed.
+    """
+    try:
+        aggregate = getattr(type_or_declared, "canonicalType", type_or_declared)
+        if type(aggregate).__name__ != "UnpackedUnionType":
+            return None
+        if getattr(aggregate, "isTagged", False):
+            return None
+        fields = list(aggregate)
+        if not fields:
+            return None
+        widths = []
+        state = None
+        for field in fields:
+            leaf = field.type.canonicalType
+            if type(leaf).__name__ in (
+                    "FixedSizeUnpackedArrayType", "DynamicArrayType",
+                    "QueueType", "AssociativeArrayType", "UnpackedStructType",
+                    "UnpackedUnionType"):
+                return None
+            width, two_state, reason = type_width_2s(field.type)
+            if width is None or reason is not None:
+                return None
+            widths.append(width)
+            current_state = bool(two_state)
+            if state is None:
+                state = current_state
+            elif state != current_state:
+                return None
+        if len(set(widths)) != 1:
+            return None
+        return widths[0], bool(state)
+    except Exception:
+        return None
+
+
+def _unpacked_union_decls(sm, symbol):
+    """Flatten an admitted shallow unpacked union into one aliased vector."""
+    try:
+        shape = _unpacked_union_shape(symbol.type)
+        if shape is None or getattr(symbol, "initializer", None) is not None:
+            return None
+        width, two_state = shape
+        init = ({"kind": "Literal", "span": None, "width": width,
+                 "bits": "0" * width} if two_state else None)
+        return signed_metadata({
+            "kind": "Var", "span": sym_span(sm, symbol),
+            "name": _storage_name(symbol), "width": width, "init": init,
+            "unpacked_union_cell": True,
+        }, symbol.type)
+    except Exception:
+        return None
 def is_bound_enum_member(symbol):
     """An admitted enum's transparent member introduces no runtime binding."""
     if str(symbol.kind) != "SymbolKind.TransparentMember":
@@ -1447,7 +1510,20 @@ def _unpacked_struct_member(sm, expression):
         if path is None:
             return None
         base_name, aggregate = path
-        if type(aggregate).__name__ != "UnpackedStructType":
+        aggregate_kind = type(aggregate).__name__
+        if aggregate_kind == "UnpackedUnionType":
+            shape = _unpacked_union_shape(aggregate)
+            if shape is None:
+                return None
+            width, two_state = shape
+            member = expression.member
+            member_width, member_two_state, reason = type_width_2s(member.type)
+            if (member_width != width or reason is not None
+                    or bool(member_two_state) != bool(two_state)):
+                return None
+            return {"name": base_name, "width": width,
+                    "two_state": two_state}
+        if aggregate_kind != "UnpackedStructType":
             return None
         member = expression.member
         width, two_state, reason = type_width_2s(member.type)
@@ -9020,6 +9096,14 @@ def _convert_local_decl(sm, stmt):
     if _SYM is None and is_inert_2state_associative_array_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None:
+        union_decl = _unpacked_union_decls(sm, symbol)
+        if union_decl is not None:
+            return {"kind": "LocalDecl", "span": union_decl["span"],
+                    "name": union_decl["name"],
+                    "width": union_decl["width"],
+                    "two_state": union_decl.get("two_state", False),
+                    "init": union_decl.get("init"),
+                    "automatic_union": True}
         cells = convert_fixed_array_vars(sm, symbol)
         if cells is not None:
             lifetime = str(symbol.lifetime).split(".")[-1]
@@ -10465,6 +10549,9 @@ def convert_var(sm, m):
     struct_decls = _unpacked_struct_decls(sm, m)
     if struct_decls is not None:
         return struct_decls
+    union_decls = _unpacked_union_decls(sm, m)
+    if union_decls is not None:
+        return union_decls
     array_decls = convert_fixed_array_vars(sm, m)
     if array_decls is not None:
         return array_decls

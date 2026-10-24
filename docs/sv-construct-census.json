@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    2978
+    2977
    ],
    [
     "ExpressionStatement:CallExpression",
@@ -32,7 +32,7 @@
    ],
    [
     "VariableSymbol:2state",
-    2349
+    2345
    ],
    [
     "SubroutineSymbol:Subroutine",
@@ -64,7 +64,7 @@
    ],
    [
     "MemberAccessExpression",
-    1022
+    1019
    ],
    [
     "ConversionExpression:width",
@@ -171,12 +171,12 @@
     147
    ],
    [
-    "TypeAliasType:TypeAlias",
+    "Package:invalid-compilation",
     146
    ],
    [
-    "Package:invalid-compilation",
-    146
+    "TypeAliasType:TypeAlias",
+    145
    ],
    [
     "TimedStatement:CycleDelayControl",
@@ -224,7 +224,7 @@
    ],
    [
     "TypeAliasType",
-    74
+    73
    ],
    [
     "VariableSymbol",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4852,
-   "partial": 17131,
+   "clean": 4853,
+   "partial": 17130,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4174,
+    4175,
     18682
    ],
    "simulation elaboration": [
@@ -1231,14 +1231,14 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 584,
-    "clean": 456,
-    "partial": 586,
+    "blocked_by_more": 583,
+    "clean": 457,
+    "partial": 585,
     "simulation_tests": 1042,
     "top_residual_blockers": [
      [
       "VariableSymbol:2state",
-      182
+      179
      ],
      [
       "NamedValueExpression:2state",
@@ -1258,7 +1258,7 @@
      ],
      [
       "AssignmentExpression:target",
-      142
+      141
      ],
      [
       "ConversionExpression:width",
@@ -1266,7 +1266,7 @@
      ],
      [
       "TypeAliasType:TypeAlias",
-      84
+      83
      ],
      [
       "InstanceSymbol:Instance",
@@ -1282,7 +1282,7 @@
      ],
      [
       "TransparentMemberSymbol:TransparentMember",
-      45
+      44
      ],
      [
       "SubroutineSymbol:Subroutine",
@@ -1290,7 +1290,7 @@
      ],
      [
       "MemberAccessExpression",
-      33
+      30
      ],
      [
       "NullLiteral",
@@ -1595,9 +1595,9 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 473,
+    "clean": 474,
     "error": 0,
-    "partial": 713,
+    "partial": 712,
     "skip_include": 0,
     "total": 1186,
     "unlockable": 3

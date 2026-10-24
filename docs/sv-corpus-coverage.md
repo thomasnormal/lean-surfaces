@@ -3998,3 +3998,16 @@ The fresh **22,049-path** census remains **4,852 clean / 17,131 partial** (66
 include skips) with `AssignmentExpression:target` at **2,978**. Differential
 coverage moves **148/144/0/4 → 149/145/0/4**; grammar coverage remains
 **214/83/131**.
+
+## Shallow unpacked-union member targets — 2026-10-24
+
+Equal-width integral members of an untagged unpacked union now alias one flat
+vector cell, so direct member reads and blocking writes use the existing
+assignment target and expression paths. Tagged, unequal-width, mixed-state,
+nested, whole-union, and scheduled forms remain loud. `unpacked_union_member`
+is the differential witness.
+
+The fresh **22,049-path** census moves **4,852 → 4,853 clean** and
+**17,131 → 17,130 partial** (66 include skips); `AssignmentExpression:target`
+falls **2,978 → 2,977**. Differential coverage moves **149/145/0/4 →
+150/146/0/4**; grammar coverage remains **214/83/131**.

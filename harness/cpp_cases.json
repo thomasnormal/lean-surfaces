@@ -3301,6 +3301,18 @@
     "rung": 7
   },
   {
+    "id": "expression.record-member-alias-lifetime",
+    "kind": "expression",
+    "corpus": "rung-7 witness",
+    "lean_module": "LeanModels.Cpp.RecordAliasTests",
+    "lean_namespace": "LeanModels.Cpp.RecordAliasTests",
+    "lean_expression": "recordAliasLifetimeWitness",
+    "cpp_source": "struct Box { int left; const int fixed; mutable int cache; }; bool callable_witness() { Box* first = new Box{1, 2, 3}; Box* second = new Box{1, 2, 3}; int* alias = &first->left; *alias = 7; bool result = first->left == 7 && second->left == 1; delete first; delete second; return result; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

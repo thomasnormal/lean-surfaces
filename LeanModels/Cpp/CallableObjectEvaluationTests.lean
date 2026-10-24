@@ -245,6 +245,8 @@ private def unsupportedCompoundLoud : Bool :=
   | .error (.unsupportedOperator "??") => true
   | _ => false
 
+def callableCompoundRefusal : Bool := !unsupportedCompoundLoud
+
 private def unsupportedUnaryLoud : Bool :=
   let one : TypedCallableExpression := {
     expression := .integer 1, sourceType := intType, type := intType}
@@ -391,6 +393,7 @@ def callableParserAutomaticLocalWitness : Bool := parserAdmitsAutomaticLocal
 #guard unsupportedIncrementLoud
 #guard !callableIncrementRefusal
 #guard !callableLogicalRefusal
+#guard !callableCompoundRefusal
 #guard unsupportedIncrementPrecedesRead
 #guard unsupportedLogicalLoud
 #guard unsupportedCompoundLoud

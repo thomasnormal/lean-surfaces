@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 368 | 355 | 0 | 3 | 0 | 10 |
+| 369 | 355 | 0 | 4 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -370,6 +370,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `declaration.callable-value-only-refusal` | 5 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `declaration.callable-increment-refusal` | 5 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `expression.callable-unknown-logical-refusal` | 3 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
+| `expression.callable-unknown-compound-refusal` | 3 | `refuse` | `NATIVE` | **REFUSE** | recorded refusal; native witness compiles |
 | `declaration.callable-reference-parameter` | 5 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `declaration.callable-value-parameter-isolation` | 5 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `declaration.callable-const-reference` | 5 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |

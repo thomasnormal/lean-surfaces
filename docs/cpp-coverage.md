@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 395 | 378 | 0 | 7 | 0 | 10 |
+| 396 | 379 | 0 | 7 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -383,6 +383,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `expression.callable-frame-unsigned-short-increment-wrap` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-unsigned-short-postfix-decrement` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-signed-char-increment-wrap` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `expression.callable-frame-signed-char-decrement-wrap` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-unsigned-short-decrement-wrap` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-unsigned-postfix-store` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-unsigned-decrement` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |

@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 148 | 144 | 0 | 4 | sv-tests-2 declarations |
+| 149 | 145 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -90,6 +90,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `streaming_nested_fixed_array` | `Examples/system-verilog/streaming_nested_fixed_array/streaming_nested_fixed_array.sv` | match | **MATCH** | `ok` | MATCH |
 | `streaming_left_target` | `Examples/system-verilog/streaming_left_target/streaming_left_target.sv` | match | **MATCH** | `ok` | MATCH |
 | `streaming_slice_target` | `Examples/system-verilog/streaming_slice_target/streaming_slice_target.sv` | match | **MATCH** | `ok` | MATCH |
+| `streaming_left_slice_target` | `Examples/system-verilog/streaming_left_slice_target/streaming_left_slice_target.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_indexed_slice` | `Examples/system-verilog/fixed_array_indexed_slice/fixed_array_indexed_slice.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_bitstream_cast` | `Examples/system-verilog/fixed_array_bitstream_cast/fixed_array_bitstream_cast.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_struct_pattern` | `Examples/system-verilog/fixed_array_struct_pattern/fixed_array_struct_pattern.sv` | match | **MATCH** | `ok` | MATCH |

@@ -297,6 +297,22 @@ class PackedAssignmentTargets(unittest.TestCase):
         self.assertEqual([int(part["index"]["bits"], 2)
                           for part in statement["value"]["parts"]], [0, 8, 16, 24])
 
+    def test_left_streaming_named_byte_slice_reverses_source_order(self):
+        design = extract_source(
+            "module top; bit [31:0] source; bit [7:0] a, b, c, d; "
+            "initial {<<byte {a, b, c, d}} = source; endmodule")
+        statement, = [node for node in nodes(design)
+                      if node.get("kind") == "BlockingAssign"
+                      and node.get("target", {}).get("kind") == "ConcatTarget"]
+        self.assertEqual([part["name"] for part in statement["target"]["parts"]],
+                         ["a", "b", "c", "d"])
+        self.assertEqual([int(part["index"]["bits"], 2)
+                          for part in statement["value"]["parts"]],
+                         [0, 8, 16, 24])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+
     def test_left_streaming_unsized_target_stays_loud(self):
         design = extract_source(
             "module top; bit [31:0] source; bit [7:0] le[4]; "

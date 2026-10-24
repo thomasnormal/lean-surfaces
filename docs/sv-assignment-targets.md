@@ -198,6 +198,17 @@ non-integral or effectful form remain loud.
 `streaming_slice_target` is the source-bound witness for the `byte` spelling;
 the extractor tests also pin numeric slices and the mixed-width refusal.
 
+## Named-type left-streaming targets — 2026-10-24
+
+The same fixed-width rule applies to left-streaming targets when the slice is a
+built-in integral type. `byte` and the other admitted named widths resolve to
+their positive bit count before the existing low-chunk-first lowering reverses
+the source chunks. Unsized streams, mixed-width leaves, `with` clauses, and
+dynamic or nested targets remain loud.
+
+`streaming_left_slice_target` is the source-bound witness for the named
+`byte` form.
+
 ## Single literal continuous packed-bit drivers — 2026-10-24
 
 A single continuous assignment to one constant packed bit or part-select is

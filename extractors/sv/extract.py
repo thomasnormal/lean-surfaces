@@ -7199,8 +7199,8 @@ def _streaming_left_target_assignment(sm, expr, symbolic=False):
             return None
         if getattr(syntax, "sliceSize", None) is None:
             return None
-        slice_size = getattr(lhs, "sliceSize", None)
-        if not isinstance(slice_size, int) or slice_size <= 0:
+        slice_size = _streaming_slice_size(lhs)
+        if slice_size is None:
             return None
         parts = []
         leaf_two_state = []

@@ -6707,3 +6707,17 @@ census remains **4,852 clean / 17,131 partial / 66 include skips** and lowers
 `AssignmentExpression:target` **2,979 → 2,978**; differential coverage moves
 **147/143/0/4 → 148/144/0/4**, with grammar coverage unchanged at
 **214/83/131**.
+
+## Named-type left-streaming targets — 2026-10-24
+
+The target tier now resolves a positive built-in integral type such as `byte`
+as the slice of a left-streaming unpack. Equal-width scalar or flattened
+fixed-cell leaves reuse the existing low-chunk-first `ConcatTarget` write, so
+the source chunks are reversed exactly once. Unsized streams, mixed widths,
+`with` clauses, and dynamic or nested targets remain loud.
+
+`streaming_left_slice_target` is the differential witness. The fresh
+22,049-path census remains **4,852 clean / 17,131 partial / 66 include skips**
+with `AssignmentExpression:target` at **2,978**; differential coverage moves
+**148/144/0/4 → 149/145/0/4**, with grammar coverage unchanged at
+**214/83/131**.

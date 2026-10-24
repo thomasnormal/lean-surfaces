@@ -3984,3 +3984,17 @@ include skips); `AssignmentExpression:target` falls **2,979 → 2,978** as the
 new lowering removes one target wall in the chapter snapshot. Differential
 coverage moves **147/143/0/4 → 148/144/0/4**; grammar coverage remains
 **214/83/131**.
+
+## Named-type left-streaming targets — 2026-10-24
+
+IEEE 1800-2023 §11.4.14.3 also permits a left-streaming target to spell its
+positive slice as a built-in integral type. The extractor resolves the named
+width and reuses the existing low-chunk-first `ConcatTarget` lowering for
+equal-width scalar or fixed-cell leaves. Unsized streams, mixed-width leaves,
+`with` clauses, and dynamic or nested targets remain loud.
+`streaming_left_slice_target` supplies the `PASS` differential witness.
+
+The fresh **22,049-path** census remains **4,852 clean / 17,131 partial** (66
+include skips) with `AssignmentExpression:target` at **2,978**. Differential
+coverage moves **148/144/0/4 → 149/145/0/4**; grammar coverage remains
+**214/83/131**.

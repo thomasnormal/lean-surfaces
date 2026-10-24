@@ -6608,3 +6608,19 @@ The 22,049-path census moves **4,841 → 4,842 clean** and **17,142 → 17,141
 partial** (66 include skips); `AssignmentExpression:target` falls **2,980 →
 2,979**. Differential coverage moves **141/137/0/4 → 142/138/0/4**; grammar
 coverage remains **214/83/131**.
+
+## Literal `$sformat` writes to packed integrals — 2026-10-24
+
+IEEE 1800-2023 §§5.9 and 21.3.3 assign a plain literal `$sformat` result to
+the output integral in packed-byte order: right aligned, left padded, or
+truncated. The self-check surface now lowers exactly that two-argument form to
+an ordinary blocking assignment. Conversion markers, dynamic arguments,
+selected or effectful targets, and string-output or other formatting calls
+remain loud. `sformat_literal_integral` supplies the `PASS` transcript and
+extractor tests pin the literal, dynamic-format, and selected-target
+boundaries.
+
+The 22,049-path census moves **4,842 → 4,843 clean** and **17,141 → 17,140
+partial** (66 include skips); `ExpressionStatement:CallExpression` falls
+**2,984 → 2,983**. Differential coverage moves **142/138/0/4 → 143/139/0/4**;
+grammar coverage remains **214/83/131**.

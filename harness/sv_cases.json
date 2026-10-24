@@ -1279,6 +1279,15 @@
         "BEFORE"
       ],
       "expect": "match"
+    },
+    {
+      "name": "sformat_literal_integral",
+      "file": "Examples/system-verilog/sformat_literal_integral/sformat_literal_integral.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

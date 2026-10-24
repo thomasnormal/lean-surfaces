@@ -8839,6 +8839,65 @@ def _convert_local_decl(sm, stmt):
     return declaration
 
 
+def _sformat_literal_assignment(sm, expression):
+    """Lower ``$sformat`` of a plain literal into an integral assignment.
+
+    IEEE 1800-2023 §21.3.3 applies the string-literal assignment rule (§5.9):
+    the bytes are right aligned in the packed destination, with left padding
+    or truncation.  Restrict this to a direct integral target and one literal
+    format with no conversion markers; dynamic formats, arguments, selected
+    effects, and string destinations remain on the call boundary.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or not expression.isSystemCall
+                or expression.subroutineName != "$sformat"
+                or getattr(expression, "timingControl", None) is not None):
+            return None
+        arguments = list(expression.arguments)
+        if len(arguments) != 2:
+            return None
+        output, format_expr = arguments
+        if (type(output).__name__ != "AssignmentExpression"
+                or output.op is not None
+                or output.timingControl is not None
+                or output.isNonBlocking
+                or type(format_expr).__name__ != "StringLiteral"
+                or getattr(format_expr, "bad", False)
+                or "%" in format_expr.value
+                or _contains_disputed_string_escape(format_expr)):
+            return None
+        target_expr = output.left
+        if (not getattr(target_expr.type, "isIntegral", False)
+                or type(target_expr.type.canonicalType).__name__ in (
+                    "StringType", "FloatingType")):
+            return None
+        width, two_state, reason = type_width_2s(target_expr.type)
+        if width is None or reason is not None or width == 0 or width % 8:
+            return None
+        target, admitted = legacy_blocking_target(sm, target_expr)
+        if not admitted or target.get("kind") != "Ident":
+            return None
+        try:
+            data = format_expr.value.encode("latin-1")
+        except (UnicodeEncodeError, Exception):
+            return None
+        source_bits = "".join(format(byte, "08b") for byte in data)
+        if len(source_bits) > width:
+            source_bits = source_bits[-width:]
+        value = {"kind": "Literal", "span": node_span(sm, format_expr),
+                 "width": width,
+                 "bits": source_bits.rjust(width, "0"),
+                 "sformat_literal": True}
+        if two_state:
+            value = squash2_wrap(value, width)
+        return {"kind": "BlockingAssign", "span": node_span(sm, expression),
+                "target": target, "value": value,
+                "sformat_literal_assignment": True}
+    except Exception:
+        return None
+
+
 def _convert_syscall(sm, s, e):
     """`$display`/`$write`/`$finish`/`$stop` in statement position ->
     `SysCall` node (self-check tier §f). `$display`/`$write` require the
@@ -8848,6 +8907,10 @@ def _convert_syscall(sm, s, e):
     negative signed values — the envelope carries no sign). `$finish`/
     `$stop` arguments (verbosity levels) are ignored. Any other call stays
     `Unsupported` (statement tag `ExpressionStatement:CallExpression`)."""
+    if _SYM is None and e.isSystemCall and e.subroutineName == "$sformat":
+        literal_assignment = _sformat_literal_assignment(sm, e)
+        if literal_assignment is not None:
+            return literal_assignment
     if _SYM is None and _dynamic_cast_call(e):
         value = _convert_dynamic_cast(sm, e)
         if value.get("kind") == "Unsupported":

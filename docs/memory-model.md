@@ -4983,19 +4983,22 @@ Measured rows, all differential:
   argument would fabricate `not enough arguments` for a program CPython
   runs, so the arm is REQUIRED, not optional.
 
-### The tier: bare conversions on the SCALAR inventory
+### The tier: bare conversions on scalars and ref-free containers
 
 Admitted conversions are `%s`, `%r`, `%a`, `%c`, `%d`, `%i`, `%u`, `%x`, `%o`, `%%` and nothing else — no
 flag, width, precision, length modifier, or mapping key. Per conversion:
 
-* `%s` is `strOfVal` VERBATIM (str raw; int/bool/None their
-  digits/`True`/`False`/`None`).
-* `%r` is the same, except a str goes through the shipped `reprStr`
+* `%s` is `strOfVal` VERBATIM for scalars (str raw; int/bool/None their
+  digits/`True`/`False`/`None`). Tuple, namedtuple, range, and boundary list
+  values use their deterministic value-only `repr` spelling, as CPython's
+  `str()` does for these containers.
+* `%r` is the same for scalars, except a str goes through the shipped `reprStr`
   (quote choice, `\\`/quote/`\n`/`\r`/`\t`/`\xNN` escapes, and printable Latin-1 direct characters; characters
   outside Latin-1 remain loud) — because `repr` and `str` COINCIDE on int/bool/None. So a
   strings outside the admitted Latin-1 table refuse under `%r` exactly as
   they refuse inside `print([…])`, and prints raw under `%s` exactly as `print` does: one
-  rendering boundary, not two.
+  rendering boundary, not two. Ref-free containers use their ordinary `repr`
+  for both conversions.
 * `%a` uses ASCII-escaped `repr`: non-ASCII characters render as `\\xNN`,
   `\\uNNNN`, or `\\UNNNNNNNN`, while scalar non-str values retain their
   ordinary representation.
@@ -5013,11 +5016,10 @@ flag, width, precision, length modifier, or mapping key. Per conversion:
   integer-required `TypeError`. Its digit count uses the same fixed budget.
   All integer conversions share `intDecimal`/`intHex`'s 4300-digit magnitude
   budget (§decimal integer rendering); larger integers refuse loudly.
-* A CONTAINER argument (tuple/namedtuple/list/range) under `%s`/`%r` is
-  LOUD: its `repr` is `reprVal`'s heap-recursive walk and this operator
-  is a pure function of two values that cannot see the heap. A `.ref`
-  nested inside a tuple argument is LOUD for the same reason and NEVER
-  a `TypeError` built from `RVal.typeName`'s `"object"` placeholder (the
+* Tuple, namedtuple, range, and boundary-list arguments under `%s`/`%r` use
+  the pure value-only renderer. A `.ref` nested inside one of those values is
+  still LOUD because its `repr` requires the heap, and NEVER becomes a
+  `TypeError` built from `RVal.typeName`'s `"object"` placeholder (the
   recorded rule: the placeholder is never part of a decided outcome). A
   `.ref` in operand position never reaches the arm at all —
   `evalBinOp`'s heap-operand refusal already fires, which is why the
@@ -5087,10 +5089,10 @@ plus the `arith.mod` row the baseline found it on):
 `'abc' % None`, `'abc' % True`, `'abc' % (7,)` → the leftover TypeError
 still; `'%d %d' % [1,2]` → `TypeError: %d format: a number is required,
 not list` (the FIRST conversion, before the second one's arity);
-`'%d %d' % 1` → `not enough arguments`. And the loud pair: `'%s' % [1]`
-is `'[1]'` under CPython and refuses here, because a container's `repr`
-is the heap walk this operator cannot see — the tier's pre-existing
-container rule, unchanged.
+`'%d %d' % 1` → `not enough arguments`. `'%s' % [1]` is `'[1]'` under
+CPython and now matches when the list arrives as a ref-free boundary
+snapshot; a list created on the heap still refuses because its `repr` needs
+the heap this pure operator cannot see.
 
 ### Mechanism: one operator arm, and a verbatim MOVE
 
@@ -5098,7 +5100,8 @@ container rule, unchanged.
 `strFormatWalk` (the single pass, `List Char → List RVal → Bool →
 String → Res String` since the mapping fix above, structural),
 `strFormatMappingRhs` (`ctx.dict`), `strFormatConv` (one conversion on one
-argument), `strFormatStr`/`strFormatRepr` (the scalar renderers, defined
+argument), `strFormatStr`/`strFormatRepr` (the scalar and ref-free-container
+renderers, defined
 THROUGH `strOfVal`/`reprStr` so there is one source of truth for
 rendering). Simp doctrine as always: the dispatcher `strFormat` joins
 `py_simp`/`interpUnfolds`, the workers stay OUT (the `strSlice`/

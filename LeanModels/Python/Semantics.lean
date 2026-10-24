@@ -861,6 +861,94 @@ def decimalOverflowImmediate : RVal → Bool
   | .int value => (intDecimal value).isNone
   | _ => false
 
+/-! `%s` and `%r` can render the ref-free container values that arrive at a
+function through the public boundary. They cannot use the heap-backed
+`reprVal` below, so this is a small value-only twin. Keeping it here also
+keeps `evalBinOp`'s pure `%` arm pure; heap references continue to refuse at
+the operator boundary. -/
+def strFormatReprFuel : Nat := 256
+
+def strFormatCommaJoin : List String → String
+  | [] => ""
+  | [s] => s
+  | s :: ss => s ++ ", " ++ strFormatCommaJoin ss
+
+def strFormatZipNames : List String → List String → List String
+  | n :: ns, p :: ps => (n ++ "=" ++ p) :: strFormatZipNames ns ps
+  | _, _ => []
+
+mutual
+  def strFormatImmediateReprOverflow (fuel : Nat) : RVal → Bool
+    | .int value => (intDecimal value).isNone
+    | .tuple xs | .listV xs | .ntuple _ _ xs =>
+      match fuel with
+      | 0 => false
+      | fuel + 1 => strFormatImmediateReprOverflowList fuel xs.toList
+    | .rangeV lo hi step =>
+      match fuel with
+      | 0 => false
+      | fuel + 1 =>
+        strFormatImmediateReprOverflow fuel lo.toRVal ||
+          strFormatImmediateReprOverflow fuel hi.toRVal ||
+          strFormatImmediateReprOverflow fuel step.toRVal
+    | _ => false
+
+  def strFormatImmediateReprOverflowList (fuel : Nat) : List RVal → Bool
+    | [] => false
+    | v :: vs =>
+      strFormatImmediateReprOverflow fuel v ||
+        strFormatImmediateReprOverflowList fuel vs
+end
+
+mutual
+  def strFormatImmediateRepr (fuel : Nat) : RVal → Option String
+    | .int value => intDecimal value
+    | .float value => value.repr
+    | .bool b => some (if b then "True" else "False")
+    | .none => some "None"
+    | .ellipsis => some "Ellipsis"
+    | .str text => reprStr text
+    | .bytes _ => Option.none
+    | .tuple xs =>
+      match fuel with
+      | 0 => Option.none
+      | fuel + 1 => do
+        let parts ← strFormatImmediateReprs fuel xs.toList
+        if parts.length == 1 then
+          return "(" ++ parts.foldl (· ++ ·) "" ++ ",)"
+        else return "(" ++ strFormatCommaJoin parts ++ ")"
+    | .ntuple tname fields xs =>
+      match fuel with
+      | 0 => Option.none
+      | fuel + 1 => do
+        let parts ← strFormatImmediateReprs fuel xs.toList
+        return tname ++ "(" ++ strFormatCommaJoin (strFormatZipNames fields.toList parts) ++ ")"
+    | .listV xs =>
+      match fuel with
+      | 0 => Option.none
+      | fuel + 1 => do
+        let parts ← strFormatImmediateReprs fuel xs.toList
+        return "[" ++ strFormatCommaJoin parts ++ "]"
+    | .rangeV lo hi step =>
+      match fuel with
+      | 0 => Option.none
+      | fuel + 1 => do
+        let start ← strFormatImmediateRepr fuel lo.toRVal
+        let stop ← strFormatImmediateRepr fuel hi.toRVal
+        if step.toInt == 1 then return "range(" ++ start ++ ", " ++ stop ++ ")"
+        else
+          let stride ← strFormatImmediateRepr fuel step.toRVal
+          return "range(" ++ start ++ ", " ++ stop ++ ", " ++ stride ++ ")"
+    | .ref _ => Option.none
+
+  def strFormatImmediateReprs (fuel : Nat) : List RVal → Option (List String)
+    | [] => some []
+    | v :: vs => do
+      let text ← strFormatImmediateRepr fuel v
+      let rest ← strFormatImmediateReprs fuel vs
+      return text :: rest
+end
+
 /-- Lowercase hexadecimal rendering for the bounded `%x` conversion. -/
 def intHex (value : Int) : Option String :=
   if value.natAbs < 16 ^ intDigitBudget then
@@ -1020,16 +1108,21 @@ def asciiStr (s : String) : String :=
 
 `str % args` is CPython's `unicode_mod`: ONE left-to-right pass over the
 format string. This operator is a pure function of two VALUES and cannot
-see the heap, so the admitted arguments are exactly the scalars whose
-rendering is heap-independent — everything else refuses loudly rather
-than guessing a `repr` the heap holds. -/
+see the heap, so it admits scalars and ref-free containers whose rendering is
+heap-independent; heap references still refuse loudly rather than guessing a
+`repr` the heap holds. -/
 
-/-- `%s` of an argument: `strOfVal` verbatim (a str raw; int/bool/None
-their digits/`True`/`False`/`None`). `none` = outside the inventory. -/
+/-- `%s` of an argument: `strOfVal` verbatim for scalars; ref-free tuple,
+namedtuple, range, and boundary-list values use their value-only `repr`.
+`none` = outside the inventory. -/
 def strFormatStr (v : RVal) : Option String :=
-  match strOfVal v with
-  | .ok (.str s) => some s
-  | _ => Option.none
+  match v with
+  | .tuple _ | .ntuple _ _ _ | .listV _ | .rangeV _ _ _ =>
+      strFormatImmediateRepr strFormatReprFuel v
+  | _ =>
+      match strOfVal v with
+      | .ok (.str s) => some s
+      | _ => Option.none
 
 /-- `%r` of an argument. Only a str differs from `%s` — CPython's `repr`
 and `str` COINCIDE on int/bool/None — and its quoting/escaping IS the
@@ -1038,6 +1131,8 @@ def strFormatRepr (v : RVal) : Option String :=
   match v with
   | .str s => reprStr s
   | .bytes values => some (bytesRepr values)
+  | .tuple _ | .ntuple _ _ _ | .listV _ | .rangeV _ _ _ =>
+      strFormatImmediateRepr strFormatReprFuel v
   | v => strFormatStr v
 
 /-- `%c` accepts an integer code point or a one-character string. -/
@@ -1100,7 +1195,8 @@ def strFormatConv (c : Char) (v : RVal) : Res String :=
           | some text => .ok text
           | Option.none => .unsupported "'%o' integer rendering beyond intDigitBudget is outside the tier (docs/memory-model.md §decimal integer rendering)"
       | Option.none => .exn (.typeError s!"%o format: an integer is required, not {v.typeName}")
-    else if (c == 'r' || c == 's') && decimalOverflowImmediate v then
+    else if (c == 'r' || c == 's') &&
+        strFormatImmediateReprOverflow strFormatReprFuel v then
       .exn decimalLimitError
     else
       match (if c == 'r' then strFormatRepr v else strFormatStr v) with

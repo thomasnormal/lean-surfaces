@@ -17,6 +17,12 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-85 — percent formatting of ref-free containers
+
+Bare `%s` and `%r` conversions now render tuple, namedtuple, range, and
+boundary-list operands through a pure value-only renderer. Heap references and
+mapping-key formatting remain loud because they require heap lookup.
+
 ## 2026-10-24-pycomplete-84 — decimal rendering limit error
 
 Integer decimal rendering beyond the pinned 4300-digit CPython limit now

@@ -93,6 +93,9 @@ change is listed here under **Changed** or **Removed**.
 - Integer decimal rendering beyond the pinned 4300-digit limit now raises
   CPython's exact `ValueError` and message across scalar, format, f-string,
   container, and script rendering paths.
+- Bare `%s` and `%r` formatting now renders ref-free tuple, namedtuple, range,
+  and boundary-list operands with CPython's deterministic container spelling;
+  heap references and mapping-key formatting remain loud.
 
 ## [0.1.14] — 2026-10-21
 

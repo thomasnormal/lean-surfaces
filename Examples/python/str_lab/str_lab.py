@@ -260,8 +260,8 @@ def fmt_trailing(n):
 
 
 def fmt_container():
-    # a container argument's repr is the heap-recursive walk; this
-    # operator cannot see the heap, so it refuses instead of guessing
+    # tuple values are ref-free at the boundary and use their deterministic
+    # repr spelling for both %s and %r
     return "%s" % ((1, 2),)
 
 
@@ -286,8 +286,7 @@ def fmt_bare_leftover(v):
 
 def fmt_seq_arg(v):
     # the mapping is still the ONE positional argument (arglen == -1), so
-    # %s consumes it -- and a container's repr is the heap walk this
-    # operator cannot see, so the tier refuses where CPython prints '[1]'
+    # %s consumes it; boundary list snapshots have a pure value-only repr
     return "%s" % v
 
 

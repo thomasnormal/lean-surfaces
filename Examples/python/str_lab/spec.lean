@@ -194,7 +194,7 @@ what follows. -/
   (.typeError "%d format: a number is required, not str")
 
 /-! The loud frontier: the minilanguage, valid conversion characters not
-yet modelled, a container argument, a non-ASCII `%r`, and a mapping RHS. -/
+yet modelled, a nested heap operand, a non-ASCII `%r`, and a mapping RHS. -/
 
 #py_check str_lab.fmt_width(3) = "    3"
 #py_check str_lab.fmt_width(-3) = "   -3"
@@ -272,7 +272,13 @@ yet modelled, a container argument, a non-ASCII `%r`, and a mapping RHS. -/
 #py_check str_lab.fmt_bad(3) raises
   (.valueError "unsupported format character 'q' (0x71) at index 1")
 #py_check str_lab.fmt_trailing(3) raises (.valueError "incomplete format")
-#guard callFunction str_lab "fmt_container" #[] 4096 matches .unsupported _
+#py_check str_lab.fmt_container() = "(1, 2)"
+#py_check str_lab.fmt_seq_arg([1]) = "[1]"
+#py_check str_lab.fmt_seq_arg(([] : List Int)) = "[]"
+#guard strFormat "%s" (.tuple #[.rangeV (.int 0) (.int 3) (.int 1)]) ==
+  .ok (.str "range(0, 3)")
+#guard strFormat "%s" (.tuple #[.ntuple "Move" #["i", "j"] #[.int 1, .int 2]]) ==
+  .ok (.str "Move(i=1, j=2)")
 #guard callFunction str_lab "fmt_nonascii_r" #[] 4096 matches .unsupported _
 #guard callFunction str_lab "fmt_mapping" #[] 4096 matches .unsupported _
 
@@ -305,10 +311,8 @@ faithful type error raised at the FIRST conversion. -/
 #py_check str_lab.fmt_dec_seq(1) raises
   (.typeError "not enough arguments for format string")
 
-/-! Loud, and the declared gaps: `%s` of a container is the heap walk
-this operator cannot see (CPython prints `'[1]'`), and a dict RHS is
-`'abc'` under CPython but never reaches the arm at all —
-`evalBinOp`'s heap-operand refusal fires first. -/
+/-! Loud, and the declared gaps: a nested heap reference still needs the
+heap-backed renderer, and a dict RHS is `'abc'` under CPython but never
+reaches the arm at all — `evalBinOp`'s heap-operand refusal fires first. -/
 
-#guard callFunction str_lab "fmt_seq_arg" #[.list #[.int 1]] 4096 matches .unsupported _
 #guard callFunction str_lab "fmt_dict_leftover" #[] 4096 matches .unsupported _

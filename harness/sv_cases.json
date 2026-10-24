@@ -1360,6 +1360,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "unpacked_union_equality",
+      "file": "Examples/system-verilog/unpacked_union_equality/unpacked_union_equality.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

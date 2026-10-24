@@ -234,6 +234,17 @@ timed forms remain loud until their aggregate and publication rules exist.
 ordinary `Ident` value and blocking-assignment paths and introduces no union
 object or second scheduler.
 
+## Shallow unpacked-union whole-value comparisons — 2026-10-24
+
+Whole values of the admitted shallow untagged unpacked-union shape now read
+from their shared vector cell for `==`, `!=`, `===`, and `!==`. This preserves
+the value and case-equality rules while keeping union arithmetic and other
+aggregate operations loud. Scheduled reads and unsupported union shapes remain
+outside the flat-cell representation.
+
+`unpacked_union_equality` is the source-bound witness; it compares values
+written through alternate members without adding aggregate storage.
+
 ## Single literal continuous packed-bit drivers — 2026-10-24
 
 A single continuous assignment to one constant packed bit or part-select is

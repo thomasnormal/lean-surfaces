@@ -6749,3 +6749,16 @@ The fresh **22,049-path** census moves **4,853 → 4,855 clean** and
 **17,130 → 17,128 partial** (66 include skips); `AssignmentExpression:target`
 falls **2,977 → 2,975**. Differential coverage moves **150/146/0/4 →
 151/147/0/4**; grammar coverage remains **214/83/131**.
+
+## Shallow unpacked-union whole-value comparisons — 2026-10-24
+
+Whole values of the admitted shallow untagged unpacked-union shape now read
+from their shared flat cell for `==`, `!=`, `===`, and `!==`. This preserves
+logical and case equality through alternate member writes while keeping union
+arithmetic and other aggregate operations loud. `unpacked_union_equality`
+supplies the differential witness.
+
+The fresh **22,049-path** census remains **4,855 clean / 17,128 partial**
+(66 include skips), with `AssignmentExpression:target` at **2,975**.
+Differential coverage moves **151/147/0/4 → 152/148/0/4**; grammar coverage
+remains **214/83/131**.

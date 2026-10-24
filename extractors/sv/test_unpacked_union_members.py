@@ -59,6 +59,26 @@ class UnpackedUnionMembers(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_whole_values_support_case_equality(self):
+        design = extract_source(
+            "module top; typedef union { logic [7:0] a; logic [7:0] b; } u_t; "
+            "u_t left; u_t right; initial begin left.a = 8'hA5; right.b = 8'hA5; "
+            "if (left === right) $display(\"PASS\"); end endmodule")
+        comparisons = [node for node in nodes(design)
+                       if node.get("kind") == "Binary" and node.get("op") == "==="]
+        self.assertEqual(len(comparisons), 1)
+        self.assertEqual(comparisons[0]["left"]["name"], "left")
+        self.assertEqual(comparisons[0]["right"]["name"], "right")
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
+    def test_whole_union_arithmetic_stays_loud(self):
+        design = extract_source(
+            "module top; typedef union { logic [7:0] a; logic [7:0] b; } u_t; "
+            "u_t left; u_t right; initial begin if (left + right == 0) "
+            "$display(\"PASS\"); else $display(\"FAIL\"); end endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            for node in nodes(design)))
+
     def test_local_union_uses_flat_cell(self):
         design = extract_source(
             "module top; initial begin typedef union { bit [3:0] a; bit [3:0] b; } u_t; "

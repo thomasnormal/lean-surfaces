@@ -823,6 +823,10 @@ x; overshifts zero-fill, except signed `>>>`, which sign-fills.
 `==`/`!=` are *logical* equality. `===`/`!==` are *case* equality: they
 compare every four-state bit exactly and always produce a definite one-bit
 result. The width invariants hold
+
+Whole values of an admitted shallow untagged unpacked union are emitted as
+`Ident` expressions naming their shared vector cell for these equality forms;
+union arithmetic remains unsupported.
 whenever the children are supported nodes — the extractor enforces them and
 demotes violators to `Unsupported`; if a child is itself `Unsupported` its
 width is unknown and the parent keeps its structure (the interpreter goes

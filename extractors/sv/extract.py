@@ -4393,6 +4393,16 @@ def _convert_named_value_expr(sm, e):
     iterator = _SYM is None and skind == "Iterator"
     if skind not in ("Variable", "Net") and not iterator:
         return unsupported(sm, e, "NamedValueExpression:" + skind)
+    if _SYM is None and skind in ("Variable", "Net"):
+        union_shape = _unpacked_union_shape(e.type)
+        if union_shape is not None:
+            width, _two_state = union_shape
+            return signed_metadata({
+                "kind": "Ident",
+                "span": node_span(sm, e),
+                "width": width,
+                "name": _storage_name(sym),
+            }, e.type)
     width, _two, reason = type_width_2s(e.type)
     if width is None and _SYM is not None:
         enum_width = _sym_enum_width(e.type)
@@ -4583,6 +4593,10 @@ def _convert_binary_expr(sm, e):
             }
     if sym is None:
         return unsupported(sm, e, "BinaryExpression:" + str(e.op).split(".")[-1])
+    if (_SYM is None and sym not in ("==", "!=", "===", "!==")
+            and (_unpacked_union_shape(getattr(e.left, "type", None)) is not None
+                 or _unpacked_union_shape(getattr(e.right, "type", None)) is not None)):
+        return unsupported(sm, e, "BinaryExpression:unpacked-union")
     if _SYM is None and sym in ("==", "!=", "===", "!=="):
         array_compare = _fixed_array_compare_expr(sm, e, sym)
         if array_compare is not None:
@@ -8802,6 +8816,16 @@ def _convert_assignment_expr(sm, expr, span_node=None):
     if type(expr).__name__ != "AssignmentExpression":
         return unsupported(sm, span_node or expr,
                            "AssignmentExpression:" + type(expr).__name__)
+    if _SYM is None and (expr.isNonBlocking or expr.timingControl is not None):
+        lhs_type = getattr(expr.left, "type", None)
+        union_lhs = _unpacked_union_shape(lhs_type) is not None
+        if type(expr.left).__name__ == "MemberAccessExpression":
+            union_lhs = union_lhs or (
+                _unpacked_union_shape(getattr(expr.left.value, "type", None))
+                is not None)
+        if union_lhs:
+            return unsupported(sm, span_node or expr,
+                               "AssignmentExpression:target")
     whole_union = _unpacked_union_whole_copy(sm, expr)
     if whole_union is not None:
         return whole_union

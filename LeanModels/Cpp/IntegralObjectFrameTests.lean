@@ -272,6 +272,8 @@ private def executeReturnCleans : Bool :=
         objectPhase? result.frame 0 == some .ended
   | .error _ => false
 
+def callableFrameReturnCleanupWitness : Bool := executeReturnCleans
+
 private def executeBlockScopes : Bool :=
   match opened with
   | .ok frame =>
@@ -684,6 +686,7 @@ def callableLocalReferenceWitness : Bool := aliasLifetimeAndConst && aliasUninit
 #guard callableFrameForScopeWitness
 #guard callableFrameContinueBreakWitness
 #guard callableFrameBlockScopeWitness
+#guard callableFrameReturnCleanupWitness
 
 private theorem kernelReferenceBindings :
     (aliasLifetimeAndConst && aliasUninitializedAndEnded) = true := rfl

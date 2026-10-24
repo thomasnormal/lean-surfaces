@@ -3913,6 +3913,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-return-cleanup",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_namespace": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_expression": "callableFrameReturnCleanupWitness",
+    "cpp_source": "int frame_return_local() { int local = 13; return local; } bool callable_witness() { return frame_return_local() == 13; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

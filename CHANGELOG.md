@@ -5,6 +5,8 @@
 - Python `global` declarations now support direct scalar reads, assignments, and
   augmented assignments across function frames, with module-global publication
   preserved by the script runner.
+- Direct scalar `nonlocal` declarations now update and reread shared closure
+  cells; unsupported compound scope forms remain loud.
 
 All notable changes to the **Python tier** of this repository (the extractor,
 the Lean semantics under `LeanModels/Python/`, its proof surface, and its

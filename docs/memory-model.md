@@ -965,8 +965,8 @@ parameter of the enclosing function, CPython's symtable rule — is:
   diverge, and re-creating the closure per iteration is exactly where
   cell-vs-snapshot becomes observable).
 
-`nonlocal` in the nested body, a def nested deeper than one level, and
-any violation above keep today's loud `Stmt.unsupported` — the
+unsupported compound `nonlocal` targets, a def nested deeper than one level,
+and any violation above keep today's loud `Stmt.unsupported` — the
 extractor records the precise reason, and a differential row pins the
 refusal (never a snapshot translation that CPython's cells would
 falsify). Under the restriction, snapshot and cell agree even for a
@@ -1174,19 +1174,17 @@ exactly. Three LOUD refusals draw the boundary:
   precede the FIRST call of the nested name. A generator reads its cells
   at RESUME and the tier reads them at the CALL, so a rebinding between
   two resumes would be read late (`closure_lab.gen_cell_after_call`);
-* `nonlocal` (a cell WRITE from the closure) and a scope nested deeper
-  than one level keep the refusals they already had.
+* a scope nested deeper than one level keeps its refusal. Direct scalar
+  `nonlocal` declarations are now admitted: the closure carries the cell
+  directory, reads consult the cell slot, and assignments update that shared
+  slot. Compound targets and unsupported scope forms remain loud.
 
-**What the slot's CONTENT is for, stated honestly.** Under the escape
-admission the defining frame is the authority, so writing the live value
-back into the slot at each call would be an observationally invisible
-copy, and the tier does not do it. What the slot buys is the cell's
-IDENTITY — one per frame, shared by every closure the frame creates,
-reused by a `def` in a loop — which a snapshot cannot express. Relaxing
-the escape admission is where the content starts to matter, and where
-the write (plus its `Res.mapOk` blindness lemma next to
-`heapAttrStore_swapAt`) has to be paid for. Relaxing the generator
-admission is a refresh at the four frame-level resume sites.
+**What the slot's CONTENT is for.** The slot carries the shared value for
+direct scalar `nonlocal` writes. `cellsFor` keeps both the ordinary name and
+the cell directory entry, so the same slot is visible to the defining frame
+and every admitted nested closure. Relaxing the escape admission is still
+outside the tier; it would require a separate refresh proof at escaped-call
+sites.
 
 **The capture census was over-approximating, and CPython said so.**
 `_assigned_names` did not count the WALRUS as a binding, so `moves()`'s

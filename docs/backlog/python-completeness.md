@@ -56,6 +56,25 @@ DECIDED: admit direct scalar global scope effects on the Monadic/script
 surface; retain loud refusal for compound global targets and unsupported scope
 forms.
 
+## 2026-10-24-pycomplete-107 — direct scalar `nonlocal` declarations
+
+Nested functions may now declare a scalar `nonlocal` name and update the
+shared closure cell. Extraction treats those names as cell captures,
+`cellsFor` preserves the cell directory alongside the ordinary binding, and
+the Monadic evaluator reads and writes the heap cell so both frames observe
+the same value. Compound targets and deeper unsupported scopes remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused write witness | CPython and leanpy both print `2` |
+| Focused read witness | CPython and leanpy both print `4` |
+| Augmented write witness | CPython and leanpy both print `9` |
+| Closed-function differential | 3691 cases: 0 failed, 101 whitelisted, 3590 matched |
+| Grammar census | 145 witnesses: 136 MATCH / 9 REFUSE, 0 drift |
+
+DECIDED: admit direct scalar nonlocal cell reads, assignments, and augmented
+assignments; retain loud refusal for compound targets and deeper scope forms.
+
 ## 2026-10-24-pycomplete-104 — alias-free boundary-list augmented repetition
 
 The measured boundary-list `*=` gap now has a small ingestion-safe slice.

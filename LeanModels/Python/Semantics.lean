@@ -4874,12 +4874,15 @@ can spell:
 * the enclosing frame keeps its ordinary plain binding of `x` (so every
   existing read, write and lemma about frames is untouched) AND a
   DIRECTORY entry `"<cell>x" ↦ .ref a`, created by the `def`;
-* the closure's captured env carries the DIRECTORY entry instead of a
-  value, so what the `def` stored is a location, not a reading;
+* the closure's captured env carries both the ordinary binding and the
+  DIRECTORY entry, so the `def` stores a location alongside its current
+  value;
 * `cellsFor` resolves those entries at the CALL, from the live locals of
   the frame that is calling — which the tier admits only when that IS
-  the defining frame — and hands the body plain bindings. That is the
-  late binding, and the whole difference from snapshot-at-def.
+  the defining frame — and hands the body the ordinary binding plus the
+  live cell directory. `envGet` follows the directory for reads and
+  assignments update the slot, which is the late binding and the whole
+  difference from snapshot-at-def.
 
 The extractor decides which captures are cells and admits only the
 fragment these three rules model exactly — a closure whose name never
@@ -4897,6 +4900,14 @@ def isCellKey (k : String) : Bool := "<cell>".isPrefixOf k
 
 /-- The Python name a cell key names (identity on non-cell keys). -/
 def cellName (k : String) : String := (k.toList.drop 6).asString
+
+def cellStore (h : Heap) (a : Addr) (v : RVal) : Res Heap :=
+  match Heap.get? h a with
+  | some (.cell _) =>
+      match Heap.update h a (.cell (some v)) with
+      | some h' => .ok h'
+      | none => .unsupported danglingMsg
+  | _ => .unsupported cellInternal
 
 /-- Allocate (or REUSE) this frame's cells for a `def`'s late-bound
 captures. Reuse is what makes a `def` in a LOOP correct: one frame, one
@@ -4930,14 +4941,11 @@ a name the frame does not bind — never assigned, or `del`eted — is left
 OUT of the callee env, so the body's read is CPython's free-variable
 `NameError` through the existing arm.
 
-The slot's stored CONTENT is deliberately never read: under the escape
-admission the frame is the authority, so writing it back at each call
-would be an observationally invisible copy. What the slot buys is the
-cell's IDENTITY — one per frame, shared by every closure the frame
-creates and reused by a `def` inside a loop — which is what a snapshot
-could not express. Relaxing the escape admission is where the content
-starts to matter, and where the write (plus its `Res.mapOk` blindness
-lemma) has to be paid for. -/
+The slot's stored CONTENT is the shared value for direct scalar
+`nonlocal` reads and writes. Under the escape admission the defining
+frame remains the authority for resolving the directory, so escaped
+closures still refuse. Relaxing that admission is where a separate
+refresh proof at escaped-call sites would be needed. -/
 def cellsFor (h : Heap) (env : Env) : REnv → Res REnv
   | [] => .ok []
   | (k, v) :: rest =>
@@ -4947,7 +4955,9 @@ def cellsFor (h : Heap) (env : Env) : REnv → Res REnv
         match Heap.get? h a with
         | some (.cell _) =>
           match Env.lookup env (cellName k) with
-          | some x => (cellsFor h env rest) >>= fun cs => .ok ((cellName k, x) :: cs)
+          | some x =>
+              (cellsFor h env rest) >>= fun cs =>
+                .ok ((cellName k, x) :: (k, v) :: cs)
           | Option.none =>
             if (Env.lookup env k).isSome then cellsFor h env rest
             else .unsupported s!"closure cell '{cellName k}' is not visible from the calling frame — a closure with a LATE-BOUND capture called outside the frame that defined it is outside the tier (docs/memory-model.md §nested defs and closures)"
@@ -6381,6 +6391,10 @@ The declaration has no runtime action; its names are the compile-time scope
 fact consumed by the call frame. -/
 def globalNamesText (text : String) : List String :=
   ((String.ofList (text.toList.drop 6)).splitOn ",").map String.trim
+    |>.filter (· != "")
+
+def nonlocalNamesText (text : String) : List String :=
+  ((String.ofList (text.toList.drop 8)).splitOn ",").map String.trim
     |>.filter (· != "")
 
 def globalNamesBody (body : Array Stmt) : List String :=

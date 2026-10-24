@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3691 | 3589 | 0 | 102 |
+| 3691 | 3590 | 0 | 101 |
 
-Of the 3589 rows the model decides, 3589 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 3590 rows the model decides, 3590 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -26,7 +26,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-145 witnesses: 135 MATCH, 10 REFUSE.
+145 witnesses: 136 MATCH, 9 REFUSE.
 
 ### `stmt`
 
@@ -57,7 +57,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `Import` | REFUSE | unsupported statement 'Import' |
 | `ImportFrom` | REFUSE | unsupported statement 'ImportFrom' |
 | `Global` | MATCH | direct scalar global declarations read and write the shared module globals |
-| `Nonlocal` | REFUSE | unsupported statement 'NestedDef' |
+| `Nonlocal` | MATCH | direct nonlocal scalar reads and writes use shared closure cells |
 | `Expr` | MATCH |  |
 | `Pass` | MATCH |  |
 | `Break` | MATCH |  |

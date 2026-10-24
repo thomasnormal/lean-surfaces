@@ -82,10 +82,11 @@ does not leak into the proof layer. -/
     ⦃fun _ => ⌜False⌝⦄ (exhausted : PyM σ α) ⦃Q⦄ := by
   simp [Triple.iff, exhausted]
 
-@[spec] theorem envGet_spec (id : String) (st0 : FrameState) :
+@[spec] theorem envGet_spec (id : String) (st0 : FrameState)
+    (hcell : Env.lookup st0.locals (cellKey id) = none) :
     ⦃fun st => ⌜st = st0⌝⦄ envGet id
     ⦃⇓ r => fun st => ⌜r = Env.lookup st0.locals id ∧ st = st0⌝⦄ := by
-  mvcgen [envGet]; all_goals grind
+  mvcgen [envGet]; all_goals subst_vars <;> simp_all [hcell] <;> grind
 
 @[spec] theorem envSet_spec (id : String) (v : RVal) (st0 : FrameState) :
     ⦃fun st => ⌜st = st0⌝⦄ envSet id v
@@ -224,10 +225,11 @@ no-op `mvcgen?`. -/
 
 @[spec] theorem evalOpen_name_local (K : Kont) (M : Module) (id : String)
     (sp : Span) (v : RVal) (st0 : FrameState)
-    (h : Env.lookup st0.locals id = some v) :
+    (h : Env.lookup st0.locals id = some v)
+    (hcell : Env.lookup st0.locals (cellKey id) = none) :
     ⦃fun st => ⌜st = st0⌝⦄ evalOpen K M (.name id sp)
     ⦃⇓ r => fun st => ⌜r = v ∧ st = st0⌝⦄ := by
-  mvcgen [evalOpen]; all_goals simp_all [h]
+  mvcgen [evalOpen]; all_goals simp_all [h, hcell]
 
 @[spec] theorem evalOpen_const (K : Kont) (M : Module) (c : Const) (sp : Span)
     (st0 : FrameState) :
@@ -256,7 +258,10 @@ theorem assign_binop_M (K : Kont) (M : Module) (w : World) (e : REnv)
     (a b : Int) (sp : Span)
     (hx : Env.lookup e "x" = some (.int a))
     (hy : Env.lookup e "y" = some (.int b))
-    (hz : Env.lookup e (globalMarker "z") = none) :
+    (hz : Env.lookup e (globalMarker "z") = none)
+    (hcx : Env.lookup e (cellKey "x") = none)
+    (hcy : Env.lookup e (cellKey "y") = none)
+    (hcz : Env.lookup e (cellKey "z") = none) :
     ⦃fun st => ⌜st = ⟨w, e⟩⌝⦄
       execOpen K M (.assign #[.name "z" sp]
         (.binOp (.name "x" sp) .add (.name "y" sp) sp) sp)
@@ -269,7 +274,7 @@ theorem assign_binop_M (K : Kont) (M : Module) (w : World) (e : REnv)
   -- `grind` wired into `mvcgen_trivial_extensible` (Core/Outcome.lean §0) the
   -- closing script is gone entirely. The four `have`s above are still load-bearing:
   -- they are the computed-shape residues `grind` is given, not decoration.
-  mvcgen [execOpen, evalOpen, binOpHM, globalAssignM, envSet] <;> simp_all [globalAssignM, globalDeclared, envSet, hz]
+  mvcgen [execOpen, evalOpen, binOpHM, globalAssignM, envSet] <;> simp_all [globalAssignM, globalDeclared, envSet, hz, hcx, hcy, hcz]
 
 /-- **The gate that closes the pilot's fidelity gap.** `row = pst[p]`, where the
 receiver resolves through the STATIC GLOBALS FOLD — the arm the shallow twin did
@@ -284,7 +289,10 @@ theorem subscript_global_M (K : Kont) (M : Module) (w : World) (e : REnv)
     (hp : Env.lookup e "p" = some (.str pc))
     (hd : Heap.get? w.heap pa = some (.dict es sv))
     (hrow : dictFind es.toList (.str pc) = some (.tuple xs))
-    (hrowGlobal : globalDeclared e "row" = false) :
+    (hrowGlobal : globalDeclared e "row" = false)
+    (hcp : Env.lookup e (cellKey "p") = none)
+    (hcpst : Env.lookup e (cellKey "pst") = none)
+    (hcrow : Env.lookup e (cellKey "row") = none) :
     ⦃fun st => ⌜st = ⟨w, e⟩⌝⦄
       execOpen K M (.assign #[.name "row" sp]
         (.subscript (.name "pst" sp) (.name "p" sp) sp) sp)
@@ -293,7 +301,7 @@ theorem subscript_global_M (K : Kont) (M : Module) (w : World) (e : REnv)
     simp [indexValH, heapIndex, hd, hrow, hashableKey]
   have hassign : assignToH w.heap e (.name "row" sp) (.tuple xs)
       = .ok (Env.set e "row" (.tuple xs)) := by simp [assignToH, assignTo]
-  mvcgen [execOpen, evalOpen, globalAssignM, envSet] <;> simp_all [checkBytesIndex, globalAssignM, globalDeclared, envSet, hrowGlobal]
+  mvcgen [execOpen, evalOpen, globalAssignM, envSet] <;> simp_all [checkBytesIndex, globalAssignM, globalDeclared, envSet, hrowGlobal, hcp, hcpst, hcrow]
 
 #print axioms refuse_spec
 #print axioms envGet_spec

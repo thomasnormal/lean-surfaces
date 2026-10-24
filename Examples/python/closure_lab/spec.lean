@@ -29,7 +29,8 @@ The claims worth naming:
   expose it** — the cell is read from the DEFINING frame at the call, so
   an ESCAPING closure (`cell_escapes`) refuses; a generator reads cells
   at RESUME while the tier reads at the CALL, so a rebinding at or after
-  the first call (`gen_cell_after_call`) refuses. `nonlocal`, a def
+  the first call (`gen_cell_after_call`) refuses. Unsupported compound
+  `nonlocal` targets, a def
   inside a loop, and a call before the def (CPython's UnboundLocalError)
   refuse as before.
 
@@ -78,8 +79,7 @@ load_program closure_lab from "Examples/python/closure_lab/closure_lab.json"
   | .unsupported _ => true | _ => false)
 #guard (match callFunction closure_lab "gen_cell_after_call" #[.int 1] 10000 with
   | .unsupported _ => true | _ => false)
-#guard (match callFunction closure_lab "uses_nonlocal" #[.int 4] 10000 with
-  | .unsupported _ => true | _ => false)
+#py_check closure_lab.uses_nonlocal(4) = 5
 #guard (match callFunction closure_lab "def_in_loop" #[.int 3] 10000 with
   | .unsupported _ => true | _ => false)
 #guard (match callFunction closure_lab "early_call" #[.int 1] 10000 with

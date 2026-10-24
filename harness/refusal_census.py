@@ -290,7 +290,7 @@ def outer():
     inner()
     return c
 print(outer())
-""", "REFUSE", "closure cells are read-at-call, never written back")
+""", "MATCH", "direct nonlocal scalar reads and writes use shared closure cells")
 w("stmt.Expr", """
 print(1)
 """, "MATCH", "")
@@ -1023,7 +1023,6 @@ WHITELIST_CLASS = {
     "exc_lab::raise_shadowed": "exc.raise",
     "exc_lab::exc_as_value": "firstclass.callable",
     "exc_lab::drive_yield_under_try": "exc.handler",
-    "closure_lab::uses_nonlocal": "stmt.Nonlocal",
     "closure_lab::def_in_loop": "closure.admission",
     "closure_lab::early_call": "closure.admission",
     "closure_lab::rec_nested_name": "closure.admission",

@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.19"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/closure_lab/closure_lab.py",
-  "source_sha256": "79cd04d2afdc4906eb192d014c8857e1f649a57c5a4e94703e176c5a7e82052b",
+  "source_sha256": "0dfa764fba5a766a1cb70e3c015c4af378e077b8bbca791db0b9628801b51b8e",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "closure_lab \u2014 H7 nested defs and closures: the acceptance battery.\n\nThe snapshot tier (docs/memory-model.md \u00a7nested defs and closures):\na nested def captures enclosing locals AT DEF TIME, admitted exactly\nwhen no capture is rebound after the def \u2014 where snapshot and CPython's\ncell are observationally equal, generator bodies (which read captures\nat RESUME time) included. Everything else refuses LOUDLY at extraction:\nrebinding after the def, `nonlocal`, a def inside a loop, a call of the\nnested name before its def (CPython's UnboundLocalError \u2014 a module\nfallthrough would silently call the wrong function). CPython is the\noracle for every row.\n"
+            "value": "closure_lab \u2014 H7 nested defs and closures: the acceptance battery.\n\nThe snapshot tier (docs/memory-model.md \u00a7nested defs and closures):\na nested def captures enclosing locals AT DEF TIME, admitted exactly\nwhen no capture is rebound after the def \u2014 where snapshot and CPython's\ncell are observationally equal, generator bodies (which read captures\nat RESUME time) included. Everything else refuses LOUDLY at extraction:\nrebinding after the def, unsupported compound `nonlocal` targets, a def inside a loop, a call of the\nnested name before its def (CPython's UnboundLocalError \u2014 a module\nfallthrough would silently call the wrong function). CPython is the\noracle for every row.\n"
           }
         }
       },
@@ -4167,8 +4167,10 @@
                 }
               }
             ],
-            "captures": [],
-            "closure_unsupported": "nonlocal (cell writes)"
+            "captures": [
+              "<cell>c"
+            ],
+            "closure_unsupported": null
           },
           {
             "kind": "Expr",

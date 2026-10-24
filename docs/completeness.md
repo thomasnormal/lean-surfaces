@@ -438,9 +438,10 @@ allocating.
 * **`with` / context managers** — rides rung 4 and the dunder guard.
 * **`SetComp` / `DictComp`** — ride rung 3 and the `dict(<pairs>)`
   hashability question.
-* **`nonlocal` and cell WRITES** — already priced in §L14 ("the write
-  plus a `Res.mapOk` blindness lemma beside `heapAttrStore_swapAt`");
-  nothing shipped needs it.
+* **`nonlocal` and cell WRITES** — direct scalar declarations now use the
+  existing shared `Obj.cell` slots. The extractor admits the declaration,
+  the Monadic evaluator updates the slot, and later reads observe the write;
+  compound targets remain loud.
 * **`import`** — measured worthless for the stdlib in §the import
   ceiling (0 of 154 refusers have a pure-Python closure). It stays low
   for stdlib and is the only door for third-party pure-Python packages.
@@ -466,7 +467,7 @@ the extractor, a second table). The `del` pair and the `yield from` row
 are not trades; they are the cheapest correctness inches on this list
 and each is one census clause.
 
-`nonlocal`, by contrast, is refused BY DESIGN and the design holds for
-arbitrary Python: the closure tier reads cells at the CALL from the
-defining frame, so a write-back has no place to land. It is a rung
-(above), not an over-refusal.
+`nonlocal` now has a measured direct-scalar slice. The closure tier keeps the
+cell directory in the frame and updates the shared heap slot, so a later read
+in the defining or nested frame sees the write. Unsupported compound scope
+forms remain a rung above this slice.

@@ -1259,11 +1259,13 @@ def _closure_analysis(nd, enclosing, nd_name=None):
                     ast.ClassDef)):
             reasons.append("a scope nested inside the nested def")
             break
-    if any(isinstance(n, ast.Nonlocal) for n in ast.walk(nd)):
-        reasons.append("nonlocal (cell writes)")
+    nonlocal_names = {
+        name for n in _walk_scope(nd) if isinstance(n, ast.Nonlocal)
+        for name in n.names
+    }
     nested_locals = {p.arg for p in list(nd.args.posonlyargs) + list(nd.args.args)}
     if isinstance(nd, ast.FunctionDef):
-        nested_locals |= _assigned_names(nd)
+        nested_locals |= _assigned_names(nd) - nonlocal_names
     nested_locals |= _comprehension_targets(nd)
     enclosing_params = {p.arg for p in list(enclosing.args.posonlyargs)
                         + list(enclosing.args.args)}
@@ -1277,8 +1279,13 @@ def _closure_analysis(nd, enclosing, nd_name=None):
     for n in _walk_scope(nd):
         if isinstance(n, ast.Name) and n.id not in nested_locals:
             free.add(n.id)
+    free |= nonlocal_names
     out, cells = [], []
     for c in sorted(free & enclosing_locals):
+        if c in nonlocal_names:
+            cells.append(c)
+            out.append(CELL_PREFIX + c)
+            continue
         linenos = _binding_linenos(enclosing, c)
         if c in def_bindings:
             linenos = linenos + [def_bindings[c]]

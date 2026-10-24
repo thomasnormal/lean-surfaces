@@ -31,7 +31,13 @@ namespace LeanModels.Python.Monadic
 
 /-- Read this frame's locals. -/
 def envGet (id : String) : SemF (Option RVal) := do
-  let st ← get; pure (Env.lookup st.locals id)
+  let st ← get
+  match Env.lookup st.locals (cellKey id) with
+  | some (.ref a) =>
+      match Heap.get? st.world.heap a with
+      | some (.cell value) => pure value
+      | _ => refuse cellInternal
+  | _ => pure (Env.lookup st.locals id)
 
 /-- Bind a name in this frame's locals. -/
 def envSet (id : String) (v : RVal) : SemF Unit :=
@@ -163,15 +169,12 @@ def globalAssignM (id : String) (v : RVal) : SemF Unit := do
         world := { st.world with globals := Env.set st.world.globals id v }
         locals := Env.set st.locals id v }
   else
-    envSet id v
-
-def globalEnvSetM (id : String) (v : RVal) : SemF Unit := do
-  let st ← get
-  if globalDeclared st.locals id then
-    modify fun st =>
-      { st with world := { st.world with globals := Env.set st.world.globals id v } }
-  else
-    envSet id v
+    match Env.lookup st.locals (cellKey id) with
+    | some (.ref a) =>
+        let h' ← liftRes (cellStore st.world.heap a v)
+        modify fun st =>
+          { st with world := { st.world with heap := h' }, locals := Env.set st.locals id v }
+    | _ => envSet id v
 
 def assignTargetM (target : Option Expr) (v : RVal) : SemF Unit :=
   match target with

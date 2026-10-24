@@ -455,13 +455,14 @@ class ExtractorTests(unittest.TestCase):
         self.assertIsNone(nd["closure_unsupported"])
         self.assertEqual(nd["captures"], ["<cell>a"])
 
-    def test_nested_def_nonlocal_refuses(self):
+    def test_nested_def_nonlocal_cell_is_admitted(self):
         fn = self._first_fn(
             "def outer(a):\n    c = 0\n    def f():\n"
             "        nonlocal c\n        c = c + 1\n    f()\n    return c\n")
         nd = fn["body"][1]
         self.assertEqual(nd["kind"], "NestedDef")
-        self.assertIn("nonlocal", nd["closure_unsupported"])
+        self.assertIsNone(nd["closure_unsupported"])
+        self.assertEqual(nd["captures"], ["<cell>c"])
 
     def test_nested_def_inside_loop_stays_plain_functiondef(self):
         # not a DIRECT child of the body: plain FunctionDef, which

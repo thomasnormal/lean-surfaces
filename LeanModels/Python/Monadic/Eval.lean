@@ -1406,7 +1406,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
           | some old => do
               let v ← evalOpen K m value
               let r ← binOpM op old v
-              globalEnvSetM id r
+              globalAssignM id r
               pure .next
       | .attribute recvE attr _ => do
           -- CPython order: receiver, attribute LOAD (an AttributeError fires
@@ -1519,6 +1519,12 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
       | _, _ => refuse "multiple context-manager items are outside the tier"
   | .unsupported pyKind text _ =>
       if pyKind == "Global" then execGlobal text
+      else if pyKind == "Nonlocal" then do
+        let st ← get
+        if (nonlocalNamesText text).all (fun id => (Env.lookup st.locals (cellKey id)).isSome) then
+          pure .next
+        else
+          refuse "unsupported statement 'Nonlocal'"
       else refuse s!"unsupported statement '{pyKind}'"
   | .yieldStmt _ _ =>
       refuse "'yield' outside a generator body (the def is not marked `is_generator`) — outside the tier"

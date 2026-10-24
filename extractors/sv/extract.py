@@ -6391,6 +6391,17 @@ def _invalid_associative_index_target(lhs):
         return False
 
 
+def _invalid_struct_replication_assignment(expression):
+    """Whether a structure assignment pattern illegally uses replication."""
+    try:
+        if type(expression.right).__name__ != "ReplicatedAssignmentPatternExpression":
+            return False
+        target_type = expression.left.type.canonicalType
+        return type(target_type).__name__ in ("UnpackedStructType", "PackedStructType")
+    except Exception:
+        return False
+
+
 def legacy_blocking_target(sm, lhs, concat_leaf=False):
     expression_kind = type(lhs).__name__
     if expression_kind in ("ElementSelectExpression", "RangeSelectExpression"):
@@ -8452,6 +8463,13 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             return array_assignment
     if expr.op is not None:
         return _convert_compound_assignment(sm, expr, span_node)
+    if (_SYM is None and _invalid_struct_replication_assignment(expr)
+            and not expr.isNonBlocking):
+        # §5.10 forbids replication in a structure assignment pattern.  The
+        # elaboration-invalid write has no runtime effect in the self-check
+        # tier, so retain only inert metadata rather than aggregate storage.
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "invalid_struct_replication_assignment": True}
     if (_SYM is None and _invalid_associative_index_target(expr.left)
             and not expr.isNonBlocking):
         # §7.8.4/§7.8.5 reject floating associative keys and implicit

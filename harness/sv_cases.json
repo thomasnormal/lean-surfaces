@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "invalid_struct_replication_assignment",
+      "file": "Examples/system-verilog/invalid_struct_replication_assignment/invalid_struct_replication_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "invalid_associative_index_target",
       "file": "Examples/system-verilog/invalid_associative_index_target/invalid_associative_index_target.sv",
       "module": "top",

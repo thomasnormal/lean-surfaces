@@ -6514,3 +6514,17 @@ The fresh corpus run measures **4,833 → 4,837 clean** and **17,149 → 17,146
 partial** across **22,048 → 22,049 paths** (66 include skips).
 `AssignmentExpression:target` falls **3,031 → 3,029**. Differential coverage
 moves **135/131/0/4 → 136/132/0/4**; grammar coverage remains **214/83/131**.
+
+## Invalid structure assignment-pattern replication — 2026-10-24
+
+IEEE 1800-2023 §5.10 forbids replication inside a structure assignment pattern.
+The extractor now recognizes this elaboration-invalid blocking write and emits
+inert metadata, so no aggregate structure store is fabricated. Valid structure
+patterns, aggregate copies, and other replication forms remain on their existing
+boundaries. `invalid_struct_replication_assignment` supplies the PASS fixture
+and extractor tests pin the rejected replicated pattern.
+
+The fresh 22,049-path census moves **4,837 → 4,838 clean** and **17,146 →
+17,145 partial** (66 include skips); `AssignmentExpression:target` falls
+**3,029 → 3,028**. Differential coverage moves **136/132/0/4 → 137/133/0/4**;
+grammar coverage remains **214/83/131**.

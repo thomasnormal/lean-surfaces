@@ -565,6 +565,9 @@ def callableSignedPostfixOverflowFrameWitness : Bool :=
 def callableSignedDecrementOverflowFrameWitness : Bool :=
   overflowRetainsParameter "--" false (-2147483648)
 
+def callableSignedPostfixDecrementOverflowFrameWitness : Bool :=
+  overflowRetainsParameter "--" true (-2147483648)
+
 #guard postfixStore
 #guard callablePostfixStoreWitness
 #guard callableUnsignedFrameIncrementWitness
@@ -576,6 +579,7 @@ def callableSignedDecrementOverflowFrameWitness : Bool :=
 #guard callableSignedOverflowFrameWitness
 #guard callableSignedPostfixOverflowFrameWitness
 #guard callableSignedDecrementOverflowFrameWitness
+#guard callableSignedPostfixDecrementOverflowFrameWitness
 #guard overflowRetainsParameter "++" false 2147483647
 #guard overflowRetainsParameter "++" true 2147483647
 #guard overflowRetainsParameter "--" false (-2147483648)

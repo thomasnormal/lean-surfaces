@@ -391,6 +391,20 @@ def callableSubtractionWitness : Bool :=
   | .ok (.ok value) => value == signed 5
   | _ => false
 
+def unaryMinusFunction : CallableFunction := {
+  unaryPlusFunction with
+  body := .block (.return_ {
+    expression := .unary "-"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableUnaryMinusWitness : Bool :=
+  match evaluateCallable 16 .lp64 unaryMinusFunction [signed (-7)] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
 def sizeOfFunction : CallableFunction := {
   occurrence := default
   signature := {result := unsignedLongType, parameters := [], variadic := false}
@@ -867,6 +881,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableGreaterEqualWitness
 #guard callableAdditionWitness
 #guard callableSubtractionWitness
+#guard callableUnaryMinusWitness
 #guard callableSizeOfWitness
 #guard callableAlignOfWitness
 #guard callableBoolLiteralWitness
@@ -963,6 +978,9 @@ theorem callable_addition_witness : callableAdditionWitness = true := by
 theorem callable_subtraction_witness : callableSubtractionWitness = true := by
   rfl
 
+theorem callable_unary_minus_witness : callableUnaryMinusWitness = true := by
+  rfl
+
 theorem callable_size_of_witness : callableSizeOfWitness = true := by
   rfl
 
@@ -1056,6 +1074,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_greater_equal_witness
 #print axioms callable_addition_witness
 #print axioms callable_subtraction_witness
+#print axioms callable_unary_minus_witness
 #print axioms callable_size_of_witness
 #print axioms callable_align_of_witness
 #print axioms callable_bool_literal_witness

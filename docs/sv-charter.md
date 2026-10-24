@@ -6046,3 +6046,16 @@ partial**, with `ExpressionStatement:CallExpression` falling **3,019 → 3,017**
 and 66 include skips. Differential coverage moves **101/97/0/4 →
 102/98/0/4**; grammar coverage remains **211 witnesses, 80 MATCH, and 131
 REFUSE**.
+
+## Literal string length queries — 2026-10-24
+
+The self-check extractor now lowers `.len()` on an unchanged pure string
+literal to its exact integral character count. The string itself remains
+opaque: writes, dynamic initializers, non-ASCII contents, and other string
+methods remain loud. The `literal_string_len` fixture and extractor tests cover
+nonempty and empty literals plus the write-before-query boundary.
+
+The 22,048-path census moves **4,784 → 4,791 clean** and **17,198 → 17,191
+partial**; `CallExpression` falls **2,997 → 2,990**. Differential coverage
+moves **103/99/0/4 → 104/100/0/4**, while grammar coverage remains
+**212/81/131**.

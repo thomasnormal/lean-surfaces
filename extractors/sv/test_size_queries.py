@@ -59,6 +59,24 @@ class SizeQueries(unittest.TestCase):
         self.assertTrue(any(node.get("zero_string_length_query")
                             for node in nodes(design)))
 
+    def test_literal_string_len_is_exact(self):
+        design = lower(
+            'module top; initial begin string s = "hello"; '
+            '$display("%0d", s.len()); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("string_literal_length_query")]
+        self.assertEqual([(node["width"], node["bits"]) for node in values],
+                         [(32, format(5, "032b"))])
+
+    def test_literal_string_write_before_len_stays_loud(self):
+        design = lower(
+            'module top; string s = "hello"; initial begin s = "x"; '
+            '$display("%0d", s.len()); end endmodule')
+        self.assertFalse(any(node.get("string_literal_length_query")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
     def test_written_string_len_stays_loud(self):
         design = lower(
             'module top; string s; initial begin s = "x"; '

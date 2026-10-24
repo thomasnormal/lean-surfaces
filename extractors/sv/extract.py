@@ -5167,6 +5167,7 @@ def _convert_legacy_call(sm, expression):
             (_enum_method_call, _convert_enum_method),
             (_clog2_call, _convert_clog2),
             (_dimension_query_call, _convert_dimension_query),
+            (_string_literal_len_method, _convert_string_literal_len_method),
             (_zero_size_method, _convert_zero_size_method),
             (_time_call, _convert_time_call),
             (_stime_call, _convert_stime_call),
@@ -5688,6 +5689,67 @@ def _zero_size_method(expression):
         return all(inert_occurrence(m) for m in occurrences[1:])
     except Exception:
         return False
+
+
+def _string_literal_len_method(expression):
+    """Recognize ``len`` on a string whose value is a pure literal.
+
+    The flat state has no string slot, but the length of an unchanged literal
+    is a scalar fact that can be lowered exactly.  Keep this separate from
+    the zero-length rule: nonempty literal contents are not otherwise exposed
+    by the self-check state, and every write or other string operation stays
+    loud.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "len"):
+            return False
+        arguments = list(expression.arguments)
+        if len(arguments) != 1 or type(arguments[0]).__name__ != "NamedValueExpression":
+            return False
+        receiver = arguments[0]
+        if type(receiver.type.canonicalType).__name__ != "StringType":
+            return False
+        initializer = getattr(receiver.symbol, "initializer", None)
+        while type(initializer).__name__ == "ConversionExpression":
+            initializer = getattr(initializer, "operand", None)
+        if (type(initializer).__name__ != "StringLiteral"
+                or getattr(initializer, "bad", False)):
+            return False
+        value = getattr(initializer, "value", None)
+        if not isinstance(value, str) or any(ord(char) == 0 or ord(char) > 127
+                                             for char in value):
+            return False
+        name = getattr(receiver.symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        occurrences = list(re.finditer(r"(?<![A-Za-z0-9_$])" + re.escape(name)
+                                       + r"(?![A-Za-z0-9_$])", source))
+        if not occurrences:
+            return False
+        def inert_occurrence(match):
+            tail = source[match.end():].lstrip()
+            return tail.startswith(".len")
+        return all(inert_occurrence(match) for match in occurrences[1:])
+    except Exception:
+        return False
+
+
+def _convert_string_literal_len_method(sm, expression):
+    if not _string_literal_len_method(expression):
+        return unsupported(sm, expression, "CallExpression:string-len")
+    initializer = expression.arguments[0].symbol.initializer
+    while type(initializer).__name__ == "ConversionExpression":
+        initializer = initializer.operand
+    return {
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": expression.type.bitWidth,
+        "bits": format(len(initializer.value) & ((1 << expression.type.bitWidth) - 1),
+                        f"0{expression.type.bitWidth}b"),
+        "string_literal_length_query": True,
+    }
 
 
 def _convert_zero_size_method(sm, expression):

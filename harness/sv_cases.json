@@ -928,6 +928,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "literal_string_len",
+      "file": "Examples/system-verilog/literal_string_len/literal_string_len.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

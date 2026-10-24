@@ -74,6 +74,15 @@ The current 22,048-path rerun keeps **4,784 clean** and moves **17,196 →
 falls **2,376 → 2,351**. The `literal_real_decl` fixture supplies the
 differential evidence.
 
+## Literal string length queries — 2026-10-24
+
+An unchanged pure string literal now exposes its exact `.len()` as an integral
+literal while the string remains opaque. Writes, dynamic initializers,
+non-ASCII contents, and other string methods remain loud. The 22,048-path
+rerun moves **4,784 → 4,791 clean** and **17,198 → 17,191 partial**;
+`CallExpression` falls **2,997 → 2,990**. The `literal_string_len` fixture
+supplies the differential evidence.
+
 Literal-only severity-task arguments now join the existing pure `$info` and
 `$warning` slice: a literal format and literal values are erased, while
 identifier or call arguments remain loud. The fresh rerun moves clean files

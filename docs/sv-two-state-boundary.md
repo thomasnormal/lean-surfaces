@@ -113,6 +113,12 @@ declaration is omitted just like an uninitialized floating declaration;
 effectful initializers and every floating-point read or operation remain
 unsupported. `literal_real_decl` covers positive and negative real literals.
 
+An unchanged pure string literal also exposes its exact `.len()` as an
+integral scalar. The extractor lowers that query to a literal while retaining
+the opaque string boundary; writes, dynamic initializers, non-ASCII contents,
+and every other string method remain unsupported. `literal_string_len` covers
+both a nonempty and an empty literal.
+
 The public representation has no aggregate heap, queue, object, string, real,
 handle, or event scheduler. The symbolic `PDecl`/`PType` representation also
 does not carry a two-state bit, and symbolic `Squash2` is intentionally loud.

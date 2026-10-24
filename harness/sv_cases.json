@@ -558,6 +558,15 @@
       "expect": "match"
     },
     {
+      "name": "string_replication_write",
+      "file": "Examples/system-verilog/string_replication_write/string_replication_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "empty_subroutine_call",
       "file": "Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv",
       "module": "top",

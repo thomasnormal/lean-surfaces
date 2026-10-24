@@ -5421,6 +5421,17 @@ def _string_literal_write(expr):
             return False
     if type(node).__name__ == "StringLiteral":
         return not getattr(node, "bad", False)
+    if type(node).__name__ == "ReplicationExpression":
+        count = getattr(node, "count", None)
+        while type(count).__name__ == "ConversionExpression":
+            count = getattr(count, "operand", None)
+            if count is None:
+                return False
+        if (type(count).__name__ != "IntegerLiteral"
+                or getattr(count, "bad", False)
+                or getattr(count, "value", -1) < 0):
+            return False
+        return _string_literal_write(getattr(node, "concat", None))
     if type(node).__name__ != "ConcatenationExpression":
         return False
     try:
@@ -7423,6 +7434,15 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and _string_literal_write(expr.right)):
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "string_literal_concat_write_noop": True}
+    if (_SYM is None and expr.op is None and expr.timingControl is None
+            and not expr.isNonBlocking
+            and type(expr.left).__name__ == "NamedValueExpression"
+            and type(expr.left.type.canonicalType).__name__ == "StringType"
+            and type(expr.right).__name__ == "ConversionExpression"
+            and type(getattr(expr.right, "operand", None)).__name__ == "ReplicationExpression"
+            and _string_literal_write(expr.right)):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "string_literal_replication_write_noop": True}
     if expr.timingControl is not None:
         return _convert_intra_assignment(sm, expr)
     scan = _convert_scan_assignment(sm, expr)

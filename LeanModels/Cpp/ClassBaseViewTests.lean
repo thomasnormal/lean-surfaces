@@ -303,4 +303,9 @@ private theorem kernelCastSyntax :
 #print axioms ClassBaseView.convert_memory
 #print axioms ClassBaseCast.execute_memory
 
+def classBaseStaticCastWitness : Bool :=
+  observedAdmittedCast (rawBaseCast "D *" "L *") == some 1
+
+#guard classBaseStaticCastWitness
+
 end LeanModels.Cpp.ClassBaseViewTests

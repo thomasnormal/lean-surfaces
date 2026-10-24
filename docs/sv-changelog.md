@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.14] — 2026-10-24
+
+The self-check surface now has 135 differential rows: 131 matches, zero
+disagreements, and 4 recorded refusals. The grammar census has 214 pyslang
+syntax witnesses: 83 MATCH and 131 REFUSE. The 22,048-path corpus measures
+4,833 clean files, 17,149 partial files, and 66 include skips. This release
+adds discarded literal `$itor`, `$bitstoreal`, and `$bitstoshortreal` calls,
+plus inert handling for the standard-invalid dynamic-array continuous target
+and multiple continuous assignments to one variable. Dynamic, effectful, and
+stateful forms remain loud.
+
 ## [0.1.13] — 2026-10-24
 
 The self-check surface now has 130 differential rows: 126 matches, zero

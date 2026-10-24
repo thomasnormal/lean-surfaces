@@ -74,6 +74,22 @@ def callableUnaryNarrowWitness : Bool :=
   | .ok (.ok value) => value == signed 32768
   | _ => false
 
+def unaryComplementFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := intType, parameters := [intType], variadic := false}
+  parameters := [{declaration := parameter, name := some "value", type := intType}]
+  body := .block (.return_ {
+    expression := .unary "~"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableUnaryComplementWitness : Bool :=
+  match evaluateCallable 16 .lp64 unaryComplementFunction [signed (-1)] with
+  | .ok (.ok value) => value == signed 0
+  | _ => false
+
 def sizeOfFunction : CallableFunction := {
   occurrence := default
   signature := {result := unsignedLongType, parameters := [], variadic := false}
@@ -530,6 +546,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableNarrowIncrementWitness
 #guard callableNarrowDecrementWitness
 #guard callableUnaryNarrowWitness
+#guard callableUnaryComplementWitness
 #guard callableSizeOfWitness
 #guard callableAlignOfWitness
 #guard callableBoolLiteralWitness
@@ -564,6 +581,9 @@ theorem callable_narrow_decrement_witness : callableNarrowDecrementWitness = tru
   rfl
 
 theorem callable_unary_narrow_witness : callableUnaryNarrowWitness = true := by
+  rfl
+
+theorem callable_unary_complement_witness : callableUnaryComplementWitness = true := by
   rfl
 
 theorem callable_size_of_witness : callableSizeOfWitness = true := by
@@ -639,6 +659,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_narrow_increment_witness
 #print axioms callable_narrow_decrement_witness
 #print axioms callable_unary_narrow_witness
+#print axioms callable_unary_complement_witness
 #print axioms callable_size_of_witness
 #print axioms callable_align_of_witness
 #print axioms callable_bool_literal_witness

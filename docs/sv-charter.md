@@ -6282,3 +6282,18 @@ The fresh 22,048-path census moves **4,810 → 4,816 clean** and
 **17,172 → 17,166 partial**; `VariableSymbol:2state` falls **2,351 → 2,350**.
 Differential coverage moves **120/116/0/4 → 121/117/0/4**; grammar coverage
 remains **214/83/131**.
+
+## Constant out-of-bounds writes to fixed-size dynamic arrays — 2026-10-24
+
+After a single constant `new[N]` allocation of an integral 2-state dynamic
+array, a constant out-of-range element write now lowers to `Empty`. IEEE
+1800-2023 §7.4.5 specifies that the invalid write performs no update; the
+existing flat-cell expansion already represents every in-range element. Dynamic
+indices, resizes, aggregate values, unsupported leaves, and reads remain loud.
+`dynamic_array_oob_write` supplies the differential witness.
+
+The corpus census remains **4,816 clean / 17,166 partial / 66 include skips**;
+the residual `AssignmentExpression:target` blocker remains **3,035 files**
+because this exact shape is absent from the corpus snapshot. Differential
+coverage moves **121/117/0/4 → 122/118/0/4**; grammar coverage remains
+**214/83/131**.

@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "dynamic_array_oob_write",
+      "file": "Examples/system-verilog/dynamic_array_oob_write/dynamic_array_oob_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "empty_queue_declaration",
       "file": "Examples/system-verilog/empty_queue_decl/empty_queue_decl.sv",
       "module": "top",

@@ -1309,7 +1309,14 @@ def _fixed_array_leaf_select(sm, expression):
 
 
 def _fixed_array_oob_select(sm, expression):
-    """Recognize a fully constant out-of-bounds fixed-array selection."""
+    """Recognize a fully constant out-of-bounds array selection.
+
+    A dynamic array is admitted here only after its one constant ``new[N]``
+    allocation has been sampled by ``_dynamic_array_constant_extent``.  SV
+    specifies that a constant out-of-range element write has no effect; the
+    flat cell store can therefore erase that write without inventing a dynamic
+    array object.  Resizes, dynamic indices, and unsupported leaves stay loud.
+    """
     try:
         selectors = []
         current = expression
@@ -1323,9 +1330,16 @@ def _fixed_array_oob_select(sm, expression):
             return False
         if str(current.symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net"):
             return False
-        shape = _fixed_array_dimensions(current.type, max_cells=None)
-        if shape is None:
-            return False
+        if type(current.type.canonicalType).__name__ == "DynamicArrayType":
+            count = _dynamic_array_constant_extent(current.symbol)
+            if count is None:
+                return False
+            shape = ([(0, count - 1)],
+                     current.type.canonicalType.elementType)
+        else:
+            shape = _fixed_array_dimensions(current.type, max_cells=None)
+            if shape is None:
+                return False
         dimensions, leaf_type = shape
         if len(selectors) != len(dimensions):
             return False

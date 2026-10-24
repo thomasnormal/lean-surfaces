@@ -517,6 +517,16 @@ class UnpackedArrayAssignments(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_dynamic_array_constant_oob_write_is_noop(self):
+        design = extract_source(
+            "module top; bit values[]; initial begin values = new[2]; "
+            "values[4] = 1'b1; $display(\"PASS\"); end endmodule")
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("kind") == "Empty" and
+                            node.get("oob_write_noop")
+                            for node in nodes(design)))
+
     def test_subarray_self_copy_stays_loud(self):
         design = extract_source(
             "module top; int value [0:1][0:2]; "

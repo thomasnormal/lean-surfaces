@@ -3869,3 +3869,15 @@ fresh chapter-scoped census moves **4,810 → 4,816 clean** and **17,172 →
 17,166 partial** (66 include skips); `VariableSymbol:2state` falls **2,351 →
 2,350**. Differential coverage moves **120/116/0/4 → 121/117/0/4**, and
 grammar coverage remains **214/83/131**.
+
+## Constant out-of-bounds writes to fixed-size dynamic arrays — 2026-10-24
+
+The extractor now lowers a constant out-of-range write after one constant
+`new[N]` allocation of an integral 2-state dynamic array to a no-op. The
+dynamic-array cells are already flat, and IEEE 1800-2023 §7.4.5 specifies that
+the invalid write performs no update. Dynamic indices, resizes, aggregate or
+effectful values, and reads remain loud. The corpus has no exact instance of
+this shape: **4,816 clean / 17,166 partial / 66 include skips** and
+`AssignmentExpression:target` at **3,035 files** are unchanged. Differential
+coverage moves **121/117/0/4 → 122/118/0/4**; grammar coverage remains
+**214/83/131**.

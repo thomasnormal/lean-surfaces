@@ -262,3 +262,16 @@ sources and aggregate targets remain loud.
 
 `constant_strength_select_driver` is the differential witness; the focused
 tests pin both the selected target and the multiple-driver refusal.
+
+## Constant out-of-bounds writes to fixed-size dynamic arrays — 2026-10-24
+
+An integral 2-state dynamic array with one constant `new[N]` allocation may
+erase a constant out-of-range element write. The array has already been
+expanded into flat cells, and IEEE 1800-2023 §7.4.5 makes the invalid write a
+no-op. Dynamic indices, resizes, aggregate or effectful values, and reads stay
+loud; no dynamic-array object or scheduler state is introduced.
+
+`dynamic_array_oob_write` is the differential witness. The 22,048-path corpus
+has no exact instance of this shape, so its census remains **4,816 clean /
+17,166 partial / 66 include skips** with `AssignmentExpression:target` at
+**3,035 files**; differential coverage moves **121/117/0/4 → 122/118/0/4**.

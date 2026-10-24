@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 99 | 95 | 0 | 4 | sv-tests-2 declarations |
+| 100 | 96 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -101,6 +101,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `oob_struct_read` | `Examples/system-verilog/oob_struct_read/oob_struct_read.sv` | match | **MATCH** | `ok` | MATCH |
 | `streaming_struct_source` | `Examples/system-verilog/streaming_struct_source/streaming_struct_source.sv` | match | **MATCH** | `ok` | MATCH |
 | `streaming_with_range` | `Examples/system-verilog/streaming_with_range/streaming_with_range.sv` | match | **MATCH** | `ok` | MATCH |
+| `streaming_indexed_with_range` | `Examples/system-verilog/streaming_indexed_with_range/streaming_indexed_with_range.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_fixed_array_copy` | `Examples/system-verilog/dynamic_fixed_array_copy/dynamic_fixed_array_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `strobe_dynamic` | `Examples/system-verilog/strobe_dynamic/strobe_dynamic.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_cells` | `Examples/system-verilog/dynamic_array_cells/dynamic_array_cells.sv` | match | **MATCH** | `ok` | MATCH |
@@ -295,7 +296,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.SimpleSequenceExpr` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.StandardCaseItem` | `Examples/system-verilog/case_inside/array_widening.sv` | **REFUSE** | `unsupported` unsupported statement 'CaseStatement:pattern' |
 | `SyntaxKind.StreamExpression` | `Examples/system-verilog/sem2/fixed_array_stream_continuous/fixed_array_stream_continuous.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
-| `SyntaxKind.StreamExpressionWithRange` | `Examples/system-verilog/streaming_with_range/streaming_with_range.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.StreamExpressionWithRange` | `Examples/system-verilog/streaming_indexed_with_range/streaming_indexed_with_range.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.StreamingConcatenationExpression` | `Examples/system-verilog/sem2/fixed_array_stream_continuous/fixed_array_stream_continuous.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.StringLiteralExpression` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.StringType` | `Examples/system-verilog/do_while_string_literal/do_while_string_literal.sv` | **MATCH** | `ok`  |

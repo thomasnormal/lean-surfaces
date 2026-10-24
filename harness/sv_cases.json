@@ -792,6 +792,16 @@
       "expect": "match"
     },
     {
+      "name": "streaming_indexed_with_range",
+      "file": "Examples/system-verilog/streaming_indexed_with_range/streaming_indexed_with_range.sv",
+      "module": "top",
+      "oracle": [
+        "PLUS 255 255 1 2 3 255 255 255",
+        "MINUS 255 255 255 255 1 2 3 255"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "dynamic_fixed_array_copy",
       "file": "Examples/system-verilog/dynamic_fixed_array_copy/dynamic_fixed_array_copy.sv",
       "module": "top",

@@ -5993,3 +5993,16 @@ newline behavior, with extractor tests pinning nonstandard descriptors. The
 22,046-file census remains **4,783 clean / 17,197 partial** with unchanged
 blocker counts. Differential coverage moves **98/94/0/4 → 99/95/0/4**, and
 grammar coverage remains **211/80/131**.
+
+## Constant-indexed right-streaming `with` targets — 2026-10-24
+
+An unsized right-streaming assignment with a constant indexed `with [base +:
+width]` or `[base -: width]` range now expands the corresponding cells of an
+ascending fixed unpacked integral array. The indexed-down form starts at
+`base-width+1`, matching the array's forward stream order; bounds, dynamic
+expressions, descending declarations, partial arrays, and aggregate operands
+remain loud. The `streaming_indexed_with_range` fixture checks both directions
+and preserves every unselected cell. The 22,046-file corpus remains **4,783
+clean / 17,197 partial / 66 include skips** because its indexed `with` cases
+use dynamic arrays. Differential coverage moves **99/95/0/4 → 100/96/0/4**;
+grammar coverage remains **211 witnesses, 80 MATCH, and 131 REFUSE**.

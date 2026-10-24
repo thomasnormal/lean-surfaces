@@ -216,6 +216,40 @@ class PackedAssignmentTargets(unittest.TestCase):
                              and node.get("sv_kind") == "AssignmentExpression:target"
                              for node in nodes(design)))
 
+    def test_right_streaming_indexed_with_range_selects_array_cells(self):
+        design = extract_source(
+            "module top; bit [95:0] source; bit [31:0] arr[8]; "
+            "initial {>> {arr with [2 +: 3]}} = source; endmodule")
+        statement, = [node for node in nodes(design)
+                      if node.get("kind") == "BlockingAssign"
+                      and node.get("target", {}).get("kind") == "ConcatTarget"]
+        self.assertEqual([part["name"] for part in statement["target"]["parts"]],
+                         ["arr[2]", "arr[3]", "arr[4]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_right_streaming_indexed_down_with_range_preserves_direction(self):
+        design = extract_source(
+            "module top; bit [95:0] source; bit [31:0] arr[8]; "
+            "initial {>> {arr with [6 -: 3]}} = source; endmodule")
+        statement, = [node for node in nodes(design)
+                      if node.get("kind") == "BlockingAssign"
+                      and node.get("target", {}).get("kind") == "ConcatTarget"]
+        self.assertEqual([part["name"] for part in statement["target"]["parts"]],
+                         ["arr[4]", "arr[5]", "arr[6]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_right_streaming_indexed_with_range_out_of_bounds_stays_loud(self):
+        design = extract_source(
+            "module top; bit [95:0] source; bit [31:0] arr[8]; "
+            "initial {>> {arr with [6 +: 3]}} = source; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
     def test_left_streaming_fixed_chunks_reverse_source_order(self):
         design = extract_source(
             "module top; bit [31:0] source; bit [7:0] le[4]; "

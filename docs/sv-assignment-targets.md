@@ -41,7 +41,8 @@ the public tier does not have:
 * nested, unpacked, tagged, class, interface, or hierarchical members outside
   the direct packed-window case;
 * dynamic or effectful select bounds and streaming forms with a direction or
-  slice size outside the admitted subset; and
+  slice size outside the admitted subset (constant indexed `with` ranges over
+  ascending fixed cells are admitted); and
 * legacy continuous assignments whose target needs a continuous-driver,
   update-region, or net-resolution rule.
 

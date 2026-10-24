@@ -6032,24 +6032,50 @@ def _streaming_struct_source(sm, operand):
 
 
 def _fixed_array_stream_targets_with(sm, operand, with_expr, symbolic=False):
-    """Expand a constant simple ``with`` range of a fixed unpacked array."""
+    """Expand a constant ``with`` range of a fixed unpacked array.
+
+    Both the ordinary ``[left:right]`` spelling and the indexed part-range
+    spellings ``[base +: width]``/``[base -: width]`` are statically bounded
+    here.  The resulting list is the source-order list of selected cells; the
+    surrounding streaming lowering still samples one RHS and leaves every
+    unselected cell untouched.  Dynamic bounds and partial aggregate paths
+    remain outside the flat cell representation.
+    """
     try:
         if type(with_expr).__name__ != "RangeSelectExpression":
             return None
-        if str(with_expr.selectionKind).split(".")[-1] != "Simple":
+        selection = str(with_expr.selectionKind).split(".")[-1]
+        if selection not in ("Simple", "IndexedUp", "IndexedDown"):
             return None
-        left = _constant_dimension_selector(with_expr.left)
-        right = _constant_dimension_selector(with_expr.right)
-        if left is None or right is None:
+        base = _constant_dimension_selector(with_expr.left)
+        extent = _constant_dimension_selector(with_expr.right)
+        if base is None or extent is None:
             return None
         shape = _fixed_array_shape(operand)
         if shape is None:
             return None
         _name, _width, _two_state, array_left, array_right = shape
-        lo, hi = min(array_left, array_right), max(array_left, array_right)
-        if (left < lo or left > hi or right < lo or right > hi
-                or left > right):
+        # Keep the cell order identical to the dynamic-array streaming
+        # contract.  A descending fixed dimension has a separate declaration
+        # order and remains loud until that ordering is represented explicitly.
+        if array_left > array_right:
             return None
+        lo, hi = min(array_left, array_right), max(array_left, array_right)
+        if selection == "Simple":
+            if (base < lo or base > hi or extent < lo or extent > hi
+                    or base > extent):
+                return None
+            selected_positions = list(range(base, extent + 1))
+        else:
+            if extent <= 0:
+                return None
+            if selection == "IndexedUp":
+                selected_positions = list(range(base, base + extent))
+            else:
+                selected_positions = list(range(base - extent + 1, base + 1))
+            if any(position < lo or position > hi
+                   for position in selected_positions):
+                return None
         targets = _fixed_array_stream_targets(sm, operand, symbolic)
         if targets is None:
             return None
@@ -6059,8 +6085,7 @@ def _fixed_array_stream_targets_with(sm, operand, with_expr, symbolic=False):
         if len(positions) != len(targets):
             return None
         by_position.update(zip(positions, targets))
-        selected = [by_position[position] for position in range(left, right + 1)]
-        return selected
+        return [by_position[position] for position in selected_positions]
     except Exception:
         return None
 

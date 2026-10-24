@@ -385,6 +385,13 @@ partial def parseStmt (j : Json) : Except String Stmt := do
         let key ← parseExpr (← getField j "key")
         return .exprStmt
           (.call (.name dictDelBuiltinName span) #[recv, key] #[] Option.none span) span
+    | "DeleteAttribute" =>
+        -- §del: `del o.attr` ⇢ `<attrdel>(o, "attr")` as an `exprStmt`.
+        let recv ← parseExpr (← getField j "recv")
+        let attr ← (← getField j "attr").getStr?
+        return .exprStmt
+          (.call (.name attrDelBuiltinName span)
+            #[recv, .constant (.str attr) span] #[] Option.none span) span
     | "Try" =>
         -- exceptions tier: the v0 single-handler fields plus the
         -- `callUnsupported`-style reason (structured-but-loud).

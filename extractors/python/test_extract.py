@@ -1392,13 +1392,18 @@ class DeleteTests(unittest.TestCase):
         self.assertEqual(fn["body"][0]["kind"], "DeleteSubscript")
         self.assertEqual(fn["body"][0]["recv"]["kind"], "Name")
 
-    def test_slice_attribute_and_mixed_del_stay_unsupported(self):
+    def test_slice_and_mixed_del_stay_unsupported(self):
         for src in ("def f(xs):\n    del xs[1:]\n    return 0\n",
-                    "def f(o):\n    del o.attr\n    return 0\n",
                     "def f(d, e):\n    del d['k'], e['k']\n    return 0\n"):
             fn = self._first_fn(src)
             self.assertEqual(fn["body"][0]["kind"], "Unsupported", src)
             self.assertEqual(fn["body"][0]["py_kind"], "Delete", src)
+
+    def test_single_attribute_del_is_structured(self):
+        fn = self._first_fn("def f(o):\n    del o.attr\n    return 0\n")
+        self.assertEqual(fn["body"][0]["kind"], "DeleteAttribute")
+        self.assertEqual(fn["body"][0]["recv"]["kind"], "Name")
+        self.assertEqual(fn["body"][0]["attr"], "attr")
 
     def test_module_scope_del_is_structured(self):
         # the REVISED clause 3: module scope structures; the runtime

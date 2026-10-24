@@ -4617,7 +4617,13 @@ exact and the statement needs no `Stmt` constructor. That admission is
 SYNTACTIC: `del o[k]` lowers for ANY receiver and the receiver's TYPE is
 decided in the evaluator's arm, which handles dict and heap-list receivers.
 `del o.attr`, `del xs[i:j]` and multi-target
-deletes mixing shapes stay `Unsupported` at extraction (clause 4).
+deletes mixing shapes stay `Unsupported` at extraction (clause 4). A single
+attribute target lowers to the unspellable `<attrdel>(receiver, "attr")`
+synthetic call. The monadic evaluator deletes an existing attribute from an
+admitted instance in place (aliases observe the removal), raises the faithful
+`AttributeError` for a missing attribute or immediate/builtin receiver, and
+keeps function-object and other unsupported protocols loud. The proof
+interpreter remains loud for this heap mutation.
 
 **Surface.** One constructor `Stmt.delStmt (names : Array String) sp`;
 `Env.remove` (structural recursion beside `lookup`/`set`) and the pure

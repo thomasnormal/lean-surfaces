@@ -214,6 +214,9 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
       -- §del: `del d[k]` lowers to `<dictdel>(d, k)`. Same discipline as the
       -- view names above: checked BEFORE `isBuiltinName` and kept out of it.
       else if fname == dictDelBuiltinName then .builtin fname
+      -- §del: `del o.attr` lowers to `<attrdel>(o, "attr")` under the same
+      -- synthetic-name discipline as item deletion.
+      else if fname == attrDelBuiltinName then .builtin fname
       else if isBuiltinName fname then .builtin fname
       else if isModuleDunder fname then
         .preRefuse s!"module attribute '{fname}' is bound by the import machinery, not by a statement — outside the G1 tier"
@@ -586,6 +589,19 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
             pure .none
         | Option.none => refuse delRecvMsg
     | _ => refuse delRecvMsg
+  else if fname == attrDelBuiltinName then
+    -- §del: attribute deletion is admitted for ordinary instances only;
+    -- unsupported receiver protocols remain loud rather than guessed.
+    match vs with
+    | [r, .str attr] =>
+        match r with
+        | .ref a => do
+            let h ← frameHeap
+            let h' ← liftRes (heapAttrDeleteClass m h a attr)
+            heapPut h'
+            pure .none
+        | _ => raisePy .attributeError
+    | _ => refuse attrDelRecvMsg
   else match dictViewBuiltinKind fname with
     -- §3c-i-b: the view's element sequence. Only ingestion emits this name,
     -- and only in consuming-argument position, so the snapshot cannot outlive

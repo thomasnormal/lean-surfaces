@@ -10,9 +10,9 @@ What the Lean model of Python runs, measured. Everything outside the modelled ti
 
 | rows | agree with CPython | disagree | recorded refusals |
 |---:|---:|---:|---:|
-| 3677 | 3556 | 0 | 121 |
+| 3680 | 3560 | 0 | 120 |
 
-Of the 3556 rows the model decides, 3556 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
+Of the 3560 rows the model decides, 3560 agree with CPython (100.0%). A *recorded refusal* is a row kept in the suite to pin a known gap: the model must refuse it, and the suite fails if it ever answers instead.
 
 ### What the theorems can see
 
@@ -20,13 +20,13 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 | rows | agree with CPython | disagree | refused |
 |---:|---:|---:|---:|
-| 3677 | 3450 | 0 | 227 |
+| 3680 | 3450 | 0 | 230 |
 
 ## Grammar
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-144 witnesses: 132 MATCH, 12 REFUSE.
+145 witnesses: 133 MATCH, 12 REFUSE.
 
 ### `stmt`
 
@@ -155,6 +155,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `dict-reinsert-order` | MATCH | deletion does NOT hold the slot: reinsertion APPENDS, so the entries array stays exactly the insertion sequen… |
 | `dict-churn` | REFUSE | the dict's KEY SET changed during iteration without changing its size — CPython's answer depends on its entri… |
 | `non-dict-receiver` | MATCH | H2 heap-list item deletion through the shared `<dictdel>` ingestion rewrite |
+| `attribute` | MATCH | instance attribute deletion through the `<attrdel>` ingestion rewrite |
 | `dict-next-iter` | MATCH | THE FLAGSHIP LINE (sunfish.py:541 `del self.tp_score[next(iter(self.tp_score))]`), whole. Inch (1) landed the… |
 
 ### `const`

@@ -15,8 +15,10 @@ analysis).
 Runtime refusals (the census cannot see boundness): `del` of a
 module-global NAME (CPython localises it and raises UnboundLocalError),
 `del` of a never-bound name, double `del` -- all LOUD, never a guessed
-exception class. Shape refusals (clause 4): `del d[k]` and `del o.attr`
-are measured second tables and stay Unsupported at extraction.
+exception class. Attribute deletion follows the measured single-target
+admission alongside item deletion: `del o.attr` is lowered at ingestion and
+mutates an admitted instance; unsupported receivers and missing attributes
+keep their loud or faithful boundaries.
 
 MODULE-scope `del` is the script surface's arm and is pinned by the
 script corpus rows (del_global_script / del_never_script /
@@ -27,6 +29,12 @@ on the closed-function surface a top-level `del` refuses at module init
 """
 
 gnum = 7
+
+
+class Box:
+    def __init__(self):
+        self.attr = 7
+        self.keep = 9
 
 
 def keep(n):
@@ -120,6 +128,25 @@ def del_sub():
 
 
 def del_attr(o):
-    # shape refusal (clause 4): attribute target stays Unsupported
+    # scalar receivers raise CPython's faithful AttributeError
     del o.attr
+    return 0
+
+
+def del_attr_present():
+    b = Box()
+    del b.attr
+    return b.keep
+
+
+def del_attr_alias():
+    b = Box()
+    c = b
+    del c.attr
+    return b.keep
+
+
+def del_attr_missing():
+    b = Box()
+    del b.nope
     return 0

@@ -48,6 +48,26 @@ DECIDED: admit only key-view/set intersection and deterministic `sorted(set)`;
 retain the remaining hash-order-sensitive set and view protocols as loud
 boundaries.
 
+## 2026-10-24-pycomplete-98 — attribute deletion
+
+The measured single-target `del o.attr` shape now follows the existing
+synthetic-call route used by `del o[k]`: extraction emits `DeleteAttribute`,
+ingestion lowers it to `<attrdel>(receiver, "attr")`, and the monadic
+interpreter removes an existing attribute from an admitted instance in place.
+Alias reads observe the deletion's heap mutation; missing attributes and
+immediate/builtin receivers reproduce CPython's `AttributeError`, while
+function-object and other unsupported protocols remain loud. The proof
+interpreter deliberately keeps this stateful operation loud.
+
+The `del_lab` battery covers scalar failure, successful instance deletion,
+alias visibility, and missing attributes. The attribute grammar witness and
+extractor test pin the new admission; slices and mixed-target deletes remain
+unsupported.
+
+DECIDED: admit only ordinary instance attribute deletion; retain slots,
+function-object, and other protocol-specific deletion behavior at their
+existing loud boundaries.
+
 ## 2026-10-24-pycomplete-92 — binary float NaN arithmetic
 
 Binary `+`, `-`, and `*` now propagate NaN payloads and signs through the

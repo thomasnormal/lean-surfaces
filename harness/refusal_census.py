@@ -560,6 +560,15 @@ del xs[0]
 print(xs)
 """, "MATCH",
   "H2 heap-list item deletion through the shared `<dictdel>` ingestion rewrite")
+w("del.attribute", """
+class Box:
+    def __init__(self):
+        self.x = 1
+        self.keep = 2
+b = Box()
+del b.x
+print(b.keep)
+""", "MATCH", "instance attribute deletion through the `<attrdel>` ingestion rewrite")
 w("dict.enumerate", """
 d = {2: 'b', 1: 'a'}
 for i, k in enumerate(d):
@@ -1056,7 +1065,6 @@ WHITELIST_CLASS = {
     "del_lab::double_del": "del.name-set-census",
     # `del_lab::del_sub` LEFT this table with §del: clause 4 admits a single
     # subscript target and ingestion rewrites it, so the row is now `match`.
-    "del_lab::del_attr": "del.non-name-target",
     # §del: the same-size KEY-SET CHURN regime, REACHABLE for the first time
     # because deletion landed (2026-08-23-pycomplete-15 measured it: some
     # shapes raise CPython's second RuntimeError, some complete silently, and

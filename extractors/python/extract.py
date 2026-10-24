@@ -1921,15 +1921,22 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # and the receiver's TYPE is decided in the evaluator's arm, which
         # refuses a non-dict there. A SLICE target (`del xs[1:]`) is excluded --
         # it deletes a RANGE, a different operation on a different receiver.
-        # `del o.attr` and multi-target deletes mixing shapes stay Unsupported:
-        # the partial-effect semantics of a mixed `del` are a second table
-        # nobody has measured.
         if len(node.targets) == 1 and isinstance(node.targets[0], ast.Subscript):
             t = node.targets[0]
             if not isinstance(t.slice, ast.Slice):
                 return {"kind": "DeleteSubscript", "span": span(node),
                         "recv": convert_expr(t.value),
                         "key": convert_expr(t.slice)}
+        # A single attribute target follows the same synthetic-call route.
+        # The receiver is evaluated once; the evaluator owns the
+        # instance-vs-builtin boundary for the carried attribute name.
+        if len(node.targets) == 1 and isinstance(node.targets[0], ast.Attribute):
+            t = node.targets[0]
+            return {"kind": "DeleteAttribute", "span": span(node),
+                    "recv": convert_expr(t.value), "attr": t.attr}
+        # Slices and multi-target deletes mixing shapes stay Unsupported: the
+        # partial-effect semantics of a mixed `del` are a second table nobody
+        # has measured.
         return unsupported(node)
     if isinstance(node, ast.Raise):
         # Exceptions tier (docs/memory-model.md paragraph "exceptions"):

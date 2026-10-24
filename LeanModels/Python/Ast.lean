@@ -1006,6 +1006,11 @@ kept OUT of it, and — the property that licenses it — it can never appear in
 EXPRESSION position, because ingestion emits it only from a `Delete` node. -/
 def dictDelBuiltinName : String := "<dictdel>"
 
+/-- §del: `del o.attr` lowers to `<attrdel>(o, "attr")` under an `exprStmt`.
+The attribute name is an ingestion-time constant, so the synthetic call cannot
+be confused with a user expression or a shadowable Python builtin. -/
+def attrDelBuiltinName : String := "<attrdel>"
+
 /-- §PEP 289: the synthesized genexp function's name PREFIX, and its implicit
 first parameter. Ingestion mints the names (`Json.lean`) and the EVALUATOR has
 to recognise them, because PEP 289 gives a genexp a creation-time rule that an

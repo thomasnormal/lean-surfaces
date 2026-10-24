@@ -2848,7 +2848,7 @@ here is a wrong answer (measured 2026-09-24: 25 rows of `harness/cases.json`
 interpreter was run as the runner). Kept separate from `isPyBuiltinName`,
 which stays the pinned CPython `dir(builtins)`. -/
 def isLoweredBuiltinName (id : String) : Bool :=
-  id == dictDelBuiltinName || id == "<dictkeys>" || id == "<dictvalues>" ||
+  id == dictDelBuiltinName || id == attrDelBuiltinName || id == "<dictkeys>" || id == "<dictvalues>" ||
   id == "<dictitems>"
 
 /-- The refusal a name-resolution arm owes an UNMODELLED CPython builtin
@@ -3670,6 +3670,13 @@ been measured. `dict_lab::del_nondict_still_loud` is the witness. -/
 def delRecvMsg : String :=
   "'del o[k]' on a non-dict receiver is outside the tier (dict item deletion only; docs/memory-model.md §the del statement)"
 
+/-- §del: `del o.attr` on a non-instance receiver.  Builtins have no mutable
+instance dictionary in this tier; closure attributes are left loud because
+CPython permits user-assigned function attributes and a fabricated
+`AttributeError` would be wrong. -/
+def attrDelRecvMsg : String :=
+  "'del o.attr' on a non-instance receiver is outside the tier (instance attribute deletion only; docs/memory-model.md §the del statement)"
+
 /-- The loud report for a dangling address (unreachable from WF worlds). -/
 def danglingMsg : String :=
   "internal: dangling heap address (heap well-formedness violation — report this)"
@@ -4286,6 +4293,29 @@ def heapAttrStore (h : Heap) (a : Addr) (attr : String) (v : RVal) : Res Heap :=
   | some (.closure ..) =>
       .unsupported "attribute stores on a function object are outside the tier (CPython allows them; a fake AttributeError would be wrong)"
   | some (.pyset _) => .exn .attributeError  -- sets have no writable attributes
+  | Option.none => .unsupported danglingMsg
+
+/-- `del o.attr` on a heap object.  Only ordinary instances carry mutable
+attribute dictionaries in the admitted class tier; deleting an absent
+attribute is the faithful `AttributeError`, while unsupported receiver
+protocols remain loud. -/
+def heapAttrDelete (h : Heap) (a : Addr) (attr : String) : Res Heap :=
+  match Heap.get? h a with
+  | some (.instance ci attrs) =>
+    match Env.lookup attrs.toList attr with
+    | some _ =>
+      match Heap.update h a (.instance ci (Env.remove attrs.toList attr).toArray) with
+      | some h' => .ok h'
+      | Option.none => .unsupported danglingMsg
+    | Option.none => .exn .attributeError
+  | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
+  | some (.dict _ _) => .exn .attributeError
+  | some (.list _) => .exn .attributeError
+  | some (.generator ..) => .exn .attributeError
+  | some (.cell _) => .unsupported cellInternal
+  | some (.closure ..) =>
+      .unsupported "attribute deletion on a function object is outside the tier (CPython allows it; a fake AttributeError would be wrong)"
+  | some (.pyset _) => .exn .attributeError
   | Option.none => .unsupported danglingMsg
 
 /-- Truthiness including heap objects: `bool(d)`/`bool(lst)` is
@@ -5258,6 +5288,17 @@ def heapAttrStoreClass (m : Module) (h : Heap) (a : Addr) (attr : String)
     else
       .exn .attributeError
   | _ => heapAttrStore h a attr v
+
+/-- Module-aware instance attribute deletion.  A recognized `__slots__`
+declaration permits deletion only for declared slots (or `__dict__`). -/
+def heapAttrDeleteClass (m : Module) (h : Heap) (a : Addr) (attr : String) : Res Heap :=
+  match Heap.get? h a with
+  | some (.instance ci _) =>
+    if classSlotAllowsAttr m ci attr then
+      heapAttrDelete h a attr
+    else
+      .exn .attributeError
+  | _ => heapAttrDelete h a attr
 
 /-- Tuple-target attribute stores with the class-storage check threaded
 through the same left-to-right heap path as `unpackStoreH`.  The original

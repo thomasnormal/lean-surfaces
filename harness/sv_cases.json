@@ -937,6 +937,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "literal_string_getc",
+      "file": "Examples/system-verilog/literal_string_getc/literal_string_getc.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

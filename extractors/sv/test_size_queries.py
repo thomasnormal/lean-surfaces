@@ -77,6 +77,43 @@ class SizeQueries(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
+    def test_literal_string_getc_returns_ascii_and_zero_bounds(self):
+        design = lower(
+            'module top; string s = "abc"; initial begin '
+            '$display("%0d %0d %0d", s.getc(0), s.getc(10), s.getc(-1)); '
+            'end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("string_literal_getc_query")]
+        self.assertEqual([(node["width"], node["bits"]) for node in values], [
+            (8, "01100001"), (8, "00000000"), (8, "00000000")])
+
+    def test_dynamic_string_getc_index_stays_loud(self):
+        design = lower(
+            'module top; string s = "abc"; int i = 0; '
+            'initial $display("%0d", s.getc(i)); endmodule')
+        self.assertFalse(any(node.get("string_literal_getc_query")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_written_string_getc_stays_loud(self):
+        design = lower(
+            'module top; string s = "abc"; initial begin s = "x"; '
+            '$display("%0d", s.getc(0)); end endmodule')
+        self.assertFalse(any(node.get("string_literal_getc_query")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_non_ascii_string_getc_stays_loud(self):
+        design = lower(
+            'module top; string s = "é"; '
+            'initial $display("%0d", s.getc(0)); endmodule')
+        self.assertFalse(any(node.get("string_literal_getc_query")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
     def test_written_string_len_stays_loud(self):
         design = lower(
             'module top; string s; initial begin s = "x"; '

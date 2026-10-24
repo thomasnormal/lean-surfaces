@@ -6059,3 +6059,18 @@ The 22,048-path census moves **4,784 → 4,791 clean** and **17,198 → 17,191
 partial**; `CallExpression` falls **2,997 → 2,990**. Differential coverage
 moves **103/99/0/4 → 104/100/0/4**, while grammar coverage remains
 **212/81/131**.
+
+## Literal string `getc` queries — 2026-10-24
+
+An unchanged pure ASCII string literal now exposes its exact `.getc(index)` byte
+as an integral scalar. Negative and out-of-range indices lower to the standard's
+zero byte; in-range indices lower to the corresponding ASCII value. Writes,
+dynamic indices, dynamic or non-ASCII strings, and other string methods remain
+loud because the self-check state has no mutable string storage. The
+`literal_string_getc` fixture and extractor tests cover the byte and zero-bound
+cases plus the dynamic, write, and encoding boundaries.
+
+The 22,048-path census moves **4,791 → 4,797 clean** and **17,191 → 17,185
+partial**; `CallExpression` falls **2,990 → 2,986**. Differential coverage
+moves **104/100/0/4 → 105/101/0/4**, while grammar coverage remains
+**212/81/131**.

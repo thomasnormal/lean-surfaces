@@ -5167,6 +5167,7 @@ def _convert_legacy_call(sm, expression):
             (_enum_method_call, _convert_enum_method),
             (_clog2_call, _convert_clog2),
             (_dimension_query_call, _convert_dimension_query),
+            (_string_literal_getc_method, _convert_string_literal_getc),
             (_string_literal_len_method, _convert_string_literal_len_method),
             (_zero_size_method, _convert_zero_size_method),
             (_time_call, _convert_time_call),
@@ -5689,6 +5690,106 @@ def _zero_size_method(expression):
         return all(inert_occurrence(m) for m in occurrences[1:])
     except Exception:
         return False
+
+
+def _literal_integral_value(expression):
+    """Read a small literal integral expression without evaluating source code.
+
+    ``getc`` only needs a scalar index.  Keep this deliberately narrower than
+    the general constant folder: integer literals, their implicit conversions,
+    and unary plus/minus are the complete admitted surface.  X/Z bits and
+    every named or computed expression remain outside the self-check state.
+    """
+    node = expression
+    while type(node).__name__ == "ConversionExpression":
+        node = getattr(node, "operand", None)
+        if node is None:
+            return None
+    if type(node).__name__ in ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
+        try:
+            sv = node.value
+            bits = svint_bits(sv)
+            if not bits or any(bit not in "01" for bit in bits):
+                return None
+            value = int(bits, 2)
+            if node.type.isSigned and bits[0] == "1":
+                value -= 1 << len(bits)
+            return value
+        except Exception:
+            return None
+    if type(node).__name__ == "UnaryExpression":
+        op = str(getattr(node, "op", "")).split(".")[-1]
+        if op not in ("Plus", "Minus", "UnaryPlus", "UnaryMinus"):
+            return None
+        value = _literal_integral_value(getattr(node, "operand", None))
+        if value is None:
+            return None
+        return -value if op in ("Minus", "UnaryMinus") else value
+    return None
+
+
+def _string_literal_getc_method(expression):
+    """Recognize ``getc`` on an unchanged pure ASCII string literal.
+
+    SystemVerilog returns a zero byte for a negative or out-of-range index.
+    The flat self-check state has no string storage, so this admits only the
+    scalar fact available from the declaration and rejects every write,
+    dynamic index, non-ASCII literal, or other observation of the receiver.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "getc"):
+            return False
+        arguments = list(expression.arguments)
+        if len(arguments) != 2 or type(arguments[0]).__name__ != "NamedValueExpression":
+            return False
+        receiver = arguments[0]
+        if type(receiver.type.canonicalType).__name__ != "StringType":
+            return False
+        initializer = getattr(receiver.symbol, "initializer", None)
+        while type(initializer).__name__ == "ConversionExpression":
+            initializer = getattr(initializer, "operand", None)
+        if (type(initializer).__name__ != "StringLiteral"
+                or getattr(initializer, "bad", False)):
+            return False
+        value = getattr(initializer, "value", None)
+        if (not isinstance(value, str)
+                or any(ord(char) == 0 or ord(char) > 127 for char in value)):
+            return False
+        if _literal_integral_value(arguments[1]) is None:
+            return False
+        name = getattr(receiver.symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        occurrences = list(re.finditer(r"(?<![A-Za-z0-9_$])" + re.escape(name)
+                                       + r"(?![A-Za-z0-9_$])", source))
+        if not occurrences:
+            return False
+        return all(source[m.end():].lstrip().startswith(".getc")
+                   for m in occurrences[1:])
+    except Exception:
+        return False
+
+
+def _convert_string_literal_getc(sm, expression):
+    if not _string_literal_getc_method(expression):
+        return unsupported(sm, expression, "CallExpression:string-getc")
+    receiver = expression.arguments[0]
+    initializer = receiver.symbol.initializer
+    while type(initializer).__name__ == "ConversionExpression":
+        initializer = initializer.operand
+    index = _literal_integral_value(expression.arguments[1])
+    value = initializer.value
+    byte = ord(value[index]) if 0 <= index < len(value) else 0
+    width = expression.type.bitWidth
+    return signed_metadata({
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": width,
+        "bits": format(byte & ((1 << width) - 1), f"0{width}b"),
+        "string_literal_getc_query": True,
+    }, expression.type)
 
 
 def _string_literal_len_method(expression):
@@ -7134,6 +7235,8 @@ def _case_skip_call_purity(node, packed_members):
             for argument in node.arguments)
     if _SYM is None and _array_reduction_call(node):
         return _array_reduction_source_ok(node)
+    if _SYM is None and _string_literal_getc_method(node):
+        return True
     if type(node).__name__ == "CallExpression" and _enum_method_call(node):
         return _SYM is None and all(
             _case_source_expression_ok(argument, packed_members=True)

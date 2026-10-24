@@ -3661,3 +3661,15 @@ concatenation, formatting, and nonliteral initializers remain loud. The
 Pure literal assignments to opaque strings are erased when they have no state
 effect. Nonliteral writes and string reads remain loud. The
 `do_while_string_literal` fixture supplies differential evidence.
+
+## Literal string `getc` queries — 2026-10-24
+
+The self-check extractor now lowers `.getc(index)` on an unchanged pure ASCII
+literal string. It returns the literal byte for an in-range integral index and
+zero for negative or out-of-range indices. Dynamic indices, writes, dynamic
+initializers, non-ASCII strings, and other methods remain loud. The
+`literal_string_getc` fixture supplies the differential row.
+
+The 22,048-path census moves **4,791 → 4,797 clean** and **17,191 → 17,185
+partial**; `CallExpression` falls **2,990 → 2,986**. Differential coverage
+moves **104/100/0/4 → 105/101/0/4**.

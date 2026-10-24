@@ -119,6 +119,13 @@ the opaque string boundary; writes, dynamic initializers, non-ASCII contents,
 and every other string method remain unsupported. `literal_string_len` covers
 both a nonempty and an empty literal.
 
+An unchanged pure ASCII string literal also exposes `.getc(index)` as an
+integral byte fact. The extractor lowers an in-range literal index to its ASCII
+byte and follows IEEE's zero result for negative or out-of-range indices.
+Dynamic indices, writes, dynamic initializers, non-ASCII strings, and other
+string methods remain unsupported because no mutable string representation is
+present in the self-check state. `literal_string_getc` exercises these bounds.
+
 The public representation has no aggregate heap, queue, object, string, real,
 handle, or event scheduler. The symbolic `PDecl`/`PType` representation also
 does not carry a two-state bit, and symbolic `Squash2` is intentionally loud.

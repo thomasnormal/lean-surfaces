@@ -24,7 +24,7 @@
    ],
    [
     "CallExpression",
-    2990
+    2986
    ],
    [
     "Hierarchy:ports",
@@ -156,7 +156,7 @@
    ],
    [
     "StaticLocal:initializer",
-    173
+    171
    ],
    [
     "TimedStatement:DelayControl:expression",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4791,
-   "partial": 17191,
+   "clean": 4797,
+   "partial": 17185,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4126,
+    4132,
     18681
    ],
    "simulation elaboration": [
@@ -1231,14 +1231,14 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 593,
-    "clean": 447,
-    "partial": 595,
+    "blocked_by_more": 590,
+    "clean": 450,
+    "partial": 592,
     "simulation_tests": 1042,
     "top_residual_blockers": [
      [
       "VariableSymbol:2state",
-      183
+      182
      ],
      [
       "NamedValueExpression:2state",
@@ -1246,7 +1246,7 @@
      ],
      [
       "CallExpression",
-      163
+      160
      ],
      [
       "TimedStatement:DelayControl",
@@ -1254,7 +1254,7 @@
      ],
      [
       "VariableDeclStatement:2state",
-      149
+      146
      ],
      [
       "AssignmentExpression:target",
@@ -1262,7 +1262,7 @@
      ],
      [
       "ConversionExpression:width",
-      135
+      133
      ],
      [
       "TypeAliasType:TypeAlias",
@@ -1587,17 +1587,17 @@
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 397,
+    "clean": 400,
     "error": 0,
-    "partial": 221,
+    "partial": 218,
     "skip_include": 0,
     "total": 618,
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 461,
+    "clean": 464,
     "error": 0,
-    "partial": 725,
+    "partial": 722,
     "skip_include": 0,
     "total": 1186,
     "unlockable": 4

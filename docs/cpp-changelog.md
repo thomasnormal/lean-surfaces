@@ -5,6 +5,21 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.44] — 2026-10-24
+
+### Added
+
+- Callable integral `<=`, `==`, `!=`, `>` and `>=` comparison coverage for the
+  bounded expression evaluator.
+
+### Measured
+
+- The checked-in corpus now contains **311 differential rows**: **301 MATCH**,
+  **0 DIVERGE**, **0 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.43] — 2026-10-24
 
 ### Added

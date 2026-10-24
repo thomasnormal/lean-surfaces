@@ -87,7 +87,7 @@ See [the measured coverage](docs/python-coverage.md) and
 
 ## C++ tier status
 
-The C++ tier prerelease is **v0.1.43 (2026-10-24)**. Tag `cpp-v0.1.43` identifies
+The C++ tier prerelease is **v0.1.44 (2026-10-24)**. Tag `cpp-v0.1.44` identifies
 the release commit on `master`; see the [C++ changelog](docs/cpp-changelog.md).
 The bounded surface admits translation roots and exact-path namespace,
 function, parameter, record, field, variable, enum, typedef, type-alias,
@@ -100,13 +100,13 @@ cleanup metadata, dynamic allocation and release metadata, initialization and
 conversion wrapper metadata, and static, thread,
 automatic, and dynamic storage lifetimes;
 rung 3 also
-executes selected integral callable expressions, bounded `sizeof`/`alignof`,
+executes selected integral callable expressions, including bounded comparisons,
+bounded `sizeof`/`alignof`,
 integral casts, direct calls, `noexcept`, and rung-4 control statements,
 void returns, forward labels, bounded local scopes, and a local-reference
-alias witness. Its checked-in differential corpus has 306 rows and its grammar census has 24
-witnesses; this
-host reports every native result as an explicit ORACLE because pinned
-Clang/LLVM 21.1.8 is unavailable. See the [C++ coverage](docs/cpp-coverage.md)
+alias witness. Its checked-in differential corpus has 311 rows and its grammar census has 24
+witnesses, with 301 MATCH, 0 DIVERGE/REFUSE/TIMEOUT, and 10 ORACLE results in
+the current host run. See the [C++ coverage](docs/cpp-coverage.md)
 and [rung status](docs/cpp-rung-status.md) pages.
 
 ## SystemVerilog tier status

@@ -3013,6 +3013,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-subtraction",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableSubtractionWitness",
+    "cpp_source": "int subtraction(int left, int right) { return left - right; } bool callable_witness() { return subtraction(9, 4) == 5; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

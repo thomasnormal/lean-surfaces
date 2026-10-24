@@ -376,6 +376,21 @@ def callableAdditionWitness : Bool :=
   | .ok (.ok value) => value == signed 12
   | _ => false
 
+def subtractionFunction : CallableFunction := {
+  lessThanFunction with
+  body := .block (.return_ {
+    expression := .binary "-"
+      {expression := .parameter parameter, sourceType := intType, type := intType}
+      {expression := .parameter {value := "0x11"}, sourceType := intType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableSubtractionWitness : Bool :=
+  match evaluateCallable 16 .lp64 subtractionFunction [signed 9, signed 4] with
+  | .ok (.ok value) => value == signed 5
+  | _ => false
+
 def sizeOfFunction : CallableFunction := {
   occurrence := default
   signature := {result := unsignedLongType, parameters := [], variadic := false}
@@ -851,6 +866,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableGreaterThanWitness
 #guard callableGreaterEqualWitness
 #guard callableAdditionWitness
+#guard callableSubtractionWitness
 #guard callableSizeOfWitness
 #guard callableAlignOfWitness
 #guard callableBoolLiteralWitness
@@ -942,6 +958,9 @@ theorem callable_greater_equal_witness : callableGreaterEqualWitness = true := b
   rfl
 
 theorem callable_addition_witness : callableAdditionWitness = true := by
+  rfl
+
+theorem callable_subtraction_witness : callableSubtractionWitness = true := by
   rfl
 
 theorem callable_size_of_witness : callableSizeOfWitness = true := by
@@ -1036,6 +1055,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_greater_than_witness
 #print axioms callable_greater_equal_witness
 #print axioms callable_addition_witness
+#print axioms callable_subtraction_witness
 #print axioms callable_size_of_witness
 #print axioms callable_align_of_witness
 #print axioms callable_bool_literal_witness

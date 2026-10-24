@@ -2051,9 +2051,11 @@ stores.
   monadic surface: `k = d.keys()` (and the values/items variants) held across
   statements retains the source dictionary address in an `Obj.dictView`, so
   later mutation is visible to length, truthiness, membership, and consuming
-  iteration. View set algebra, equality, rendering, and `reversed` remain
-  loud; indexing raises CPython's exact type-specific `TypeError`; the
-  acceptance battery keeps the measured boundaries,
+  iteration. View set algebra, equality, and `reversed` remain loud; `repr`
+  renders the exact type-specific `dict_keys([...])`, `dict_values([...])`, or
+  `dict_items([...])` form through the heap renderer; indexing raises
+  CPython's exact type-specific `TypeError`; the acceptance battery keeps the
+  measured boundaries,
   including the identity result for `d.values() == d.values()`.
   `enumerate(d.items())` and `dict(d.items())` are still out here too.
 * **3d — `DictComp`**, which rides 3a.

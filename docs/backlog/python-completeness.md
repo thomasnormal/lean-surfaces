@@ -17,6 +17,13 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-79 — dictionary-view rendering
+
+Escaped `dict_keys`, `dict_values`, and `dict_items` views now render with
+CPython's exact type-specific `repr`, including their live element contents and
+the existing active-path and depth safeguards. View set algebra and other
+unmodeled protocols remain loud.
+
 ## 2026-10-24-pycomplete-78 — dictionary-view subscript errors
 
 Subscripting an escaped `dict_keys`, `dict_values`, or `dict_items` view now

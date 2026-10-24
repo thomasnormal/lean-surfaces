@@ -2141,6 +2141,22 @@ mutual
           else do
             let parts ← reprEntries h fuel (a :: active) entries.toList
             return "{" ++ commaJoin parts ++ "}"
+        | some (.dictView da kind) =>
+          let name := match kind with
+            | .keys => "dict_keys"
+            | .values => "dict_values"
+            | .items => "dict_items"
+          if active.contains a then some (name ++ "([...])")
+          else do
+            let es ← match Heap.get? h da with
+              | some (.dict es _) => some es
+              | _ => Option.none
+            let elems := match kind with
+              | .keys => es.map Prod.fst
+              | .values => es.map Prod.snd
+              | .items => es.map (fun kv : RVal × RVal => .tuple #[kv.1, kv.2])
+            let parts ← reprVals h fuel (a :: active) elems.toList
+            return name ++ "([" ++ commaJoin parts ++ "])"
         | _ => Option.none
 
   /-- Elementwise `reprVal`. -/

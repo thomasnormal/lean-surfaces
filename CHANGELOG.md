@@ -75,6 +75,9 @@ change is listed here under **Changed** or **Removed**.
   stateful and hash-order iterables remain loud.
 - Subscripting an escaped dictionary view now raises CPython's exact
   `TypeError` for its concrete view type instead of an internal refusal.
+- Escaped dictionary views now render their exact CPython type-specific
+  `dict_keys([...])`, `dict_values([...])`, or `dict_items([...])` representation;
+  view set algebra and other unsupported protocols remain loud.
 
 ## [0.1.14] — 2026-10-21
 

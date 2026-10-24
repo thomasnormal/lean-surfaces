@@ -118,6 +118,12 @@ is depth-first left to right on both the store and the read path. -/
 #guard callFunction dict_lab "iter_dict" #[] 4096 matches .unsupported _
 #guard heapIndex #[.dict #[(.int 1, .int 7)] 0, .dictView 0 .keys] 1 (.ref 1) ==
   .exn (.typeError "'dict_keys' object is not subscriptable")
+#guard reprVal #[.dict #[(.int 1, .int 7)] 0, .dictView 0 .keys]
+  reprFuel [] (.ref 1) == some "dict_keys([1])"
+#guard reprVal #[.dict #[(.int 1, .int 7)] 0, .dictView 0 .values]
+  reprFuel [] (.ref 1) == some "dict_values([7])"
+#guard reprVal #[.dict #[(.int 1, .int 7)] 0, .dictView 0 .items]
+  reprFuel [] (.ref 1) == some "dict_items([(1, 7)])"
 
 /-! ### 14: fuel exhaustion is `.timeout` — never a semantic answer — and
 cycle detection is fuel-INDEPENDENT (`RecursionError` at tiny fuel too) -/

@@ -1054,6 +1054,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "constant_strength_select_driver",
+      "file": "Examples/system-verilog/constant_strength_select_driver/constant_strength_select_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -250,3 +250,15 @@ remain loud.
 `constant_tri_strength_driver` is the differential witness; the extractor
 tests keep multiple strengthened `tri` drivers on the declaration refusal
 boundary.
+
+## Single strengthened packed-select drivers — 2026-10-24
+
+A single explicitly strengthened packed bit or constant part-select with a
+pure integral literal source now lowers to the existing selected time-zero
+write. Multiple strengthened selected drivers remain continuous assignments,
+including disjoint windows, because the selected-driver lowering does not yet
+carry strength metadata through its resolution checks. Dynamic or effectful
+sources and aggregate targets remain loud.
+
+`constant_strength_select_driver` is the differential witness; the focused
+tests pin both the selected target and the multiple-driver refusal.

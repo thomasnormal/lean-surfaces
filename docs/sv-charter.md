@@ -6230,3 +6230,17 @@ The census remains **4,810 clean / 17,172 partial / 66 include skips**, with
 `AssignmentExpression:target` unchanged at **3,036 files**. Differential
 coverage moves **116/112/0/4 → 117/113/0/4**; grammar coverage remains
 **214/83/131**.
+
+## Single strengthened packed-select drivers — 2026-10-24
+
+A single explicitly strengthened packed bit or constant part-select with a
+pure integral literal source now lowers to the existing selected time-zero
+write. Multiple strengthened selected drivers, dynamic/effectful sources, and
+aggregate targets remain loud because the selected-driver path does not yet
+carry strength metadata through resolution. `constant_strength_select_driver`
+supplies the differential witness.
+
+The census remains **4,810 clean / 17,172 partial / 66 include skips**, with
+`AssignmentExpression:target` unchanged at **3,036 files**. Differential
+coverage moves **117/113/0/4 → 118/114/0/4**; grammar coverage remains
+**214/83/131**.

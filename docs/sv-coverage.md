@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 117 | 113 | 0 | 4 | sv-tests-2 declarations |
+| 118 | 114 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -131,6 +131,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `constant_tri_driver` | `Examples/system-verilog/constant_tri_driver/constant_tri_driver.sv` | match | **MATCH** | `ok` | MATCH |
 | `constant_strength_driver` | `Examples/system-verilog/constant_strength_driver/constant_strength_driver.sv` | match | **MATCH** | `ok` | MATCH |
 | `constant_tri_strength_driver` | `Examples/system-verilog/constant_tri_strength_driver/constant_tri_strength_driver.sv` | match | **MATCH** | `ok` | MATCH |
+| `constant_strength_select_driver` | `Examples/system-verilog/constant_strength_select_driver/constant_strength_select_driver.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 

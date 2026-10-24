@@ -170,6 +170,24 @@ class ContinuousLiteralDrivers(unittest.TestCase):
                             and node.get("sv_kind") == "NetSymbol:Tri"
                             for node in nodes(design)))
 
+    def test_single_strength_packed_select_lowers(self):
+        design = extract_source(
+            "module top; wire [3:0] bus; "
+            "assign (strong1, strong0) bus[2] = 1'b1; endmodule")
+        process = design["modules"][0]["processes"][0]
+        self.assertEqual(process["kind"], "Initial")
+        self.assertEqual(process["body"]["target"]["kind"], "SelectTarget")
+        self.assertTrue(process.get("continuous_strength"))
+
+    def test_multiple_strength_packed_select_drivers_stay_loud(self):
+        design = extract_source(
+            "module top; wire [3:0] bus; "
+            "assign (strong1, strong0) bus[2] = 1'b1; "
+            "assign (pull1, pull0) bus[2] = 1'b0; endmodule")
+        process = design["modules"][0]["processes"][0]
+        self.assertEqual(process["kind"], "Assign")
+        self.assertTrue(process.get("continuous_strength"))
+
 
 if __name__ == "__main__":
     unittest.main()

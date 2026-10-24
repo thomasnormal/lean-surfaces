@@ -8856,6 +8856,7 @@ def _lower_disjoint_literal_select_drivers(processes):
     for index, process in enumerate(processes):
         if (process.get("kind") != "Assign"
                 or not process.get("continuous_literal_source")
+                or process.get("continuous_strength")
                 or process.get("target", {}).get("kind") != "SelectTarget"):
             continue
         target = process["target"]
@@ -8910,6 +8911,7 @@ def _resolve_literal_select_drivers(processes, resolvable_nets):
     for index, process in enumerate(processes):
         if (process.get("kind") != "Assign"
                 or not process.get("continuous_literal_source")
+                or process.get("continuous_strength")
                 or process.get("target", {}).get("kind") != "SelectTarget"):
             continue
         target = process["target"]
@@ -9138,7 +9140,7 @@ def convert_continuous_assign(sm, m):
     # A single explicitly strengthened whole-net literal is value-equivalent
     # to the ordinary flat driver. Selected strength forms are kept loud until
     # the target representation carries per-window strength metadata.
-    if explicit_strength and target.get("kind") != "Ident":
+    if explicit_strength and target.get("kind") not in ("Ident", "SelectTarget"):
         return unsupported(sm, m, "AssignmentExpression:target")
     # A fixed-unpacked variable cell has already been expanded into the flat
     # self-check storage by ``_fixed_array_cell``.  When its continuous source

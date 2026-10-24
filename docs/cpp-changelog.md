@@ -5,6 +5,23 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.41] — 2026-10-24
+
+### Added
+
+- Callable boolean, character, constant, unsigned-integer and null-pointer
+  comparison coverage, plus integral unary complement and logical negation.
+- Bounded callable `CXXNoexceptExpr` parsing and evaluation for side-effect-free
+  builtin-integral operands, with exact boolean evidence and loud boundaries.
+
+### Measured
+
+- The checked-in corpus now contains **296 differential rows**: **286 MATCH**,
+  **0 DIVERGE**, **0 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.40] — 2026-10-24
 
 ### Added

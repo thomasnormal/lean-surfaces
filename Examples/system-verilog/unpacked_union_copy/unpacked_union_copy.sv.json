@@ -1,0 +1,237 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/unpacked_union_copy/unpacked_union_copy.sv",
+  "source_sha256": "1cc9bc8c6669e15121ed3b264b1aa0af043e8518a2bc0870ca09afe9f8265ae5",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 16,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 6,
+              "col": 11,
+              "end_line": 6,
+              "end_col": 17
+            },
+            "name": "source",
+            "width": 8,
+            "init": null,
+            "unpacked_union_cell": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 7,
+              "col": 11,
+              "end_line": 7,
+              "end_col": 15
+            },
+            "name": "copy",
+            "width": 8,
+            "init": null,
+            "unpacked_union_cell": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 9,
+              "col": 3,
+              "end_line": 15,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 9,
+                "col": 11,
+                "end_line": 15,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 22
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 10,
+                      "col": 5,
+                      "end_line": 10,
+                      "end_col": 13
+                    },
+                    "width": 8,
+                    "name": "source"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 10,
+                      "col": 16,
+                      "end_line": 10,
+                      "end_col": 21
+                    },
+                    "width": 8,
+                    "bits": "10100101"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 18
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 5,
+                      "end_line": 11,
+                      "end_col": 9
+                    },
+                    "width": 8,
+                    "name": "copy"
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 12,
+                      "end_line": 11,
+                      "end_col": 18
+                    },
+                    "width": 8,
+                    "name": "source"
+                  },
+                  "unpacked_union_whole_copy_lowered": true
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 46
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 12,
+                      "col": 9,
+                      "end_line": 12,
+                      "end_col": 25
+                    },
+                    "width": 1,
+                    "op": "===",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 9,
+                        "end_line": 12,
+                        "end_col": 15
+                      },
+                      "width": 8,
+                      "name": "copy"
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 12,
+                        "col": 20,
+                        "end_line": 12,
+                        "end_col": 25
+                      },
+                      "width": 8,
+                      "bits": "10100101"
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 12,
+                      "col": 27,
+                      "end_line": 12,
+                      "end_col": 44
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 13,
+                      "col": 10,
+                      "end_line": 13,
+                      "end_col": 46
+                    },
+                    "name": "$display",
+                    "format": "FAIL: copy.b=%h",
+                    "args": [
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 13,
+                          "col": 38,
+                          "end_line": 13,
+                          "end_col": 44
+                        },
+                        "width": 8,
+                        "name": "copy"
+                      }
+                    ],
+                    "arg_signed": [
+                      false
+                    ]
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

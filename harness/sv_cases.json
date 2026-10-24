@@ -1351,6 +1351,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "unpacked_union_copy",
+      "file": "Examples/system-verilog/unpacked_union_copy/unpacked_union_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

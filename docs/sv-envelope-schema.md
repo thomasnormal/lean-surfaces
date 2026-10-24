@@ -228,6 +228,11 @@ An admitted shallow unpacked union uses the same `Var` shape with optional
 one `name`, preserving their aliasing; unequal-width, mixed-state, tagged, and
 nested union declarations remain `Unsupported`.
 
+A blocking whole-copy between two admitted union values is emitted as the
+ordinary `BlockingAssign` shape with `unpacked_union_whole_copy_lowered: true`;
+its `Ident` target and value name the two shared vector cells. Nonblocking,
+timed, mixed-shape, and member-to-whole copies remain unsupported.
+
 ## Processes (`processes` list entries)
 
 | kind | key order / fields |

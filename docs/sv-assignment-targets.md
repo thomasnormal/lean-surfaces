@@ -222,6 +222,18 @@ state and scheduling rules are represented.
 existing `Ident` target and value paths; it adds no aggregate store or second
 scheduler.
 
+## Shallow unpacked-union whole copies — 2026-10-24
+
+A blocking assignment between two equal-width integral values of the admitted
+shallow untagged unpacked-union shape now copies their shared flat vector cells
+directly. The copy preserves aliasing when the destination is read through any
+member. Tagged, mixed-width, initialized, member-to-whole, nonblocking, and
+timed forms remain loud until their aggregate and publication rules exist.
+
+`unpacked_union_copy` is the source-bound witness. The lowering reuses the
+ordinary `Ident` value and blocking-assignment paths and introduces no union
+object or second scheduler.
+
 ## Single literal continuous packed-bit drivers — 2026-10-24
 
 A single continuous assignment to one constant packed bit or part-select is

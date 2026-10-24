@@ -678,6 +678,46 @@ def _unpacked_union_decls(sm, symbol):
         }, symbol.type)
     except Exception:
         return None
+
+
+def _unpacked_union_whole_copy(sm, expression):
+    """Lower a blocking whole-copy between shallow unpacked unions.
+
+    An admitted union declaration is already one flat vector cell, so a
+    whole-value assignment can copy that cell directly.  Keep the operation
+    blocking and require equal width/state shape; scheduled or aggregate
+    forms still need their own publication and storage rules.
+    """
+    try:
+        if (type(expression).__name__ != "AssignmentExpression"
+                or expression.op is not None
+                or expression.timingControl is not None
+                or expression.isNonBlocking):
+            return None
+        left = expression.left
+        right = expression.right
+        if (not _storage_expression(left) or not _storage_expression(right)
+                or str(left.symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net")
+                or str(right.symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net")):
+            return None
+        left_shape = _unpacked_union_shape(left.type)
+        right_shape = _unpacked_union_shape(right.type)
+        if left_shape is None or left_shape != right_shape:
+            return None
+        width, two_state = left_shape
+        target = {"kind": "Ident", "span": node_span(sm, left),
+                  "width": width, "name": _storage_name(left.symbol)}
+        value = {"kind": "Ident", "span": node_span(sm, right),
+                 "width": width, "name": _storage_name(right.symbol)}
+        if two_state:
+            value = squash2_wrap(value, width)
+        return {"kind": "BlockingAssign", "span": node_span(sm, expression),
+                "target": target, "value": value,
+                "unpacked_union_whole_copy_lowered": True}
+    except Exception:
+        return None
+
+
 def is_bound_enum_member(symbol):
     """An admitted enum's transparent member introduces no runtime binding."""
     if str(symbol.kind) != "SymbolKind.TransparentMember":
@@ -8762,6 +8802,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
     if type(expr).__name__ != "AssignmentExpression":
         return unsupported(sm, span_node or expr,
                            "AssignmentExpression:" + type(expr).__name__)
+    whole_union = _unpacked_union_whole_copy(sm, expr)
+    if whole_union is not None:
+        return whole_union
     # A direct class-handle null write only updates opaque storage.  Restrict
     # this to a named variable: member receivers and selected targets can
     # have observable evaluation or aliasing effects.  Construction and all

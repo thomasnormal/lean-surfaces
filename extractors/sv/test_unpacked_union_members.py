@@ -39,6 +39,26 @@ class UnpackedUnionMembers(unittest.TestCase):
         self.assertEqual(assigns[0]["value"]["bits"], "10100101")
         self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
 
+    def test_whole_copy_reuses_the_aliased_cell(self):
+        design = extract_source(
+            "module top; typedef union { logic [7:0] a; logic [7:0] b; } u_t; "
+            "u_t source; u_t copy; initial begin source.a = 8'hA5; copy = source; "
+            "if (copy.b === 8'hA5) $display(\"PASS\"); end endmodule")
+        copies = [node for node in nodes(design)
+                  if node.get("unpacked_union_whole_copy_lowered")]
+        self.assertEqual(len(copies), 1)
+        self.assertEqual(copies[0]["target"]["name"], "copy")
+        self.assertEqual(copies[0]["value"]["name"], "source")
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
+    def test_nonblocking_whole_copy_stays_loud(self):
+        design = extract_source(
+            "module top; typedef union { logic [7:0] a; logic [7:0] b; } u_t; "
+            "u_t source; u_t copy; initial copy <= source; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
     def test_local_union_uses_flat_cell(self):
         design = extract_source(
             "module top; initial begin typedef union { bit [3:0] a; bit [3:0] b; } u_t; "

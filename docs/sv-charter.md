@@ -6735,3 +6735,17 @@ The fresh **22,049-path** census moves **4,852 → 4,853 clean** and **17,131 �
 17,130 partial** (66 include skips); `AssignmentExpression:target` falls
 **2,978 → 2,977**. Differential coverage moves **149/145/0/4 → 150/146/0/4**;
 grammar coverage remains **214/83/131**.
+
+## Shallow unpacked-union whole copies — 2026-10-24
+
+Blocking whole-value assignments between equal-width integral members of the
+admitted shallow untagged unpacked-union shape now copy the one shared flat
+vector cell. Reads through either destination member therefore preserve the
+union aliasing rule. Tagged, mixed-width, initialized, member-to-whole,
+nonblocking, and timed forms remain loud. `unpacked_union_copy` supplies the
+differential witness.
+
+The fresh **22,049-path** census moves **4,853 → 4,855 clean** and
+**17,130 → 17,128 partial** (66 include skips); `AssignmentExpression:target`
+falls **2,977 → 2,975**. Differential coverage moves **150/146/0/4 →
+151/147/0/4**; grammar coverage remains **214/83/131**.

@@ -7375,7 +7375,7 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and not expr.isNonBlocking
             and type(expr.left).__name__ == "NamedValueExpression"
             and type(getattr(expr.left.type, "canonicalType", None)).__name__
-            in ("ClassType", "CHandleType", "VirtualInterfaceType")
+            in ("ClassType", "CHandleType", "VirtualInterfaceType", "EventType")
             and _null_literal(expr.right)):
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "opaque_handle_null_write": True}

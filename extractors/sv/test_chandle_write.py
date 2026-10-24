@@ -52,6 +52,15 @@ class ChandleWrites(unittest.TestCase):
         self.assertTrue(any(node.get("opaque_handle_null_write")
                             for node in nodes(design)))
 
+    def test_event_null_write_is_inert(self):
+        design = lower(
+            'module top; event handle; initial begin handle = null; '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("opaque_handle_null_write")
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

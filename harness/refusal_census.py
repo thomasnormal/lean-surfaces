@@ -931,7 +931,6 @@ WHITELIST_CLASS = {
     "float_lab::keys_still_loud": "float.hashing",
     "float_lab::nested_keys_still_loud": "float.hashing",
     "float_lab::attribute_still_loud": "float.attributes",
-    "float_lab::nan_sort_still_loud": "float.nan-ordering",
     "rsa_inverse::inverse": "exc.raise",
     "bench_bisect::bisect_left": "exc.raise",
     "dict_lab::ret_dict": "boundary.heap-value",

@@ -595,20 +595,19 @@ mutual
     | .int n, .bool b => .ok (n < (if b then (1 : Int) else 0))
     | .int n, .int m => .ok (n < m)
     | .float left, .float right =>
-        if left.isNaN || right.isNaN then .unsupported "ordering NaNs in containers is outside the tier"
-        else .ok (left.lt right)
+        -- CPython's binary64 comparison is unordered when either operand is
+        -- NaN: `<` simply returns False.  The stable sort consumes this same
+        -- relation, so NaNs retain their input position without a fabricated
+        -- total-order key.
+        if left.isNaN || right.isNaN then .ok false else .ok (left.lt right)
     | .float left, .int right =>
-        if left.isNaN then .unsupported "ordering NaNs in containers is outside the tier"
-        else .ok (left.ltInt right)
+        if left.isNaN then .ok false else .ok (left.ltInt right)
     | .int left, .float right =>
-        if right.isNaN then .unsupported "ordering NaNs in containers is outside the tier"
-        else .ok (Float64.intLt left right)
+        if right.isNaN then .ok false else .ok (Float64.intLt left right)
     | .float left, .bool right =>
-        if left.isNaN then .unsupported "ordering NaNs in containers is outside the tier"
-        else .ok (left.ltInt (if right then 1 else 0))
+        if left.isNaN then .ok false else .ok (left.ltInt (if right then 1 else 0))
     | .bool left, .float right =>
-        if right.isNaN then .unsupported "ordering NaNs in containers is outside the tier"
-        else .ok (Float64.intLt (if left then 1 else 0) right)
+        if right.isNaN then .ok false else .ok (Float64.intLt (if left then 1 else 0) right)
     | .str s, .str t => .ok (strCmp .lt s t)
     | .str _, .int _ => .exn (.typeError "'<' not supported between instances of 'str' and 'int'")
     | .str _, .bool _ => .exn (.typeError "'<' not supported between instances of 'str' and 'bool'")

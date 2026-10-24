@@ -1140,7 +1140,7 @@
   {"file": "Examples/python/float_lab/float_lab.py", "function": "nested_keys_still_loud", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/float_lab/float_lab.py", "function": "attribute_still_loud", "args": [[]], "expect": "match"},
   {"file": "Examples/python/float_lab/float_lab.py", "function": "nan_equality_still_loud", "args": [[{"t": "float", "bits": "9221120237041090560"}]], "expect": "match"},
-  {"file": "Examples/python/float_lab/float_lab.py", "function": "nan_sort_still_loud", "args": [[{"t": "float", "bits": "9221120237041090560"}]], "expect": "unsupported"},
+  {"file": "Examples/python/float_lab/float_lab.py", "function": "nan_sort_still_loud", "args": [[{"t": "float", "bits": "9221120237041090560"}]], "expect": "match"},
   {"file": "Examples/python/float_lab/float_lab.py","function": "count_head","args": [[{"t": "float","bits": "9221120237041090560"},1],[{"t": "float","bits": "9218868437227405312"},1]],"expect": "match","note": "Non-finite start values retain their payload/sign and advance through the shared float arithmetic."},
   {"file": "Examples/python/float_lab/float_lab.py","function": "count_head","args": [[3,2],[true,1],[false,true],["x",1],[null,1],[1.5,"x"],[[1.0],1],[1.5,1],[1,0.5],[1.5,0],[1.5,true],[true,0.5],[true,2],[false,0]],"expect": "match"},
   {"file": "Examples/python/float_lab/float_lab.py","function": "count_prefix","args": [[1.5,1],[1,0.5],[1.5,0],[1.5,true],[true,0.5],[true,2],[false,0]],"expect": "match","note": "Numeric itertools.count preserves the first value's bool/int subtype and then applies the shared numeric addition."},

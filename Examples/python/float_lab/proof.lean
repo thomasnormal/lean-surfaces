@@ -30,6 +30,13 @@ theorem nan_equality :
     float_lab.nan_equality_still_loud(Float64.ofBits 0x7ff8000000000000) ==> false := by
   exact ⟨32, rfl⟩
 
+theorem nan_sort :
+    float_lab.nan_sort_still_loud(Float64.ofBits 0x7ff8000000000000) ==>
+      Val.list #[.float (Float64.ofBits 0x4000000000000000),
+        .float (Float64.ofBits 0x7ff8000000000000),
+        .float (Float64.ofBits 0x3ff0000000000000)] := by
+  exact ⟨64, rfl⟩
+
 private theorem add_quarter :
     Float64.arithmetic .add (Float64.ofBits 0x3fe0000000000000)
       (Float64.ofBits 0x3fd0000000000000) = .ok (Float64.ofBits 0x3fe8000000000000) := rfl

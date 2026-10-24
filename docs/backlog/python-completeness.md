@@ -4459,3 +4459,21 @@ loud.
 | Script census | 12 recorded loud rows in 8 classes, 0 drift |
 
 DECIDED: admit NaN `==`/`!=` only; retain NaN ordering and hashing boundaries.
+
+## 2026-10-24-pycomplete-100 — NaN ordering
+
+Strict float ordering now follows CPython for binary64 NaNs: `<` returns
+`False` whenever either operand is NaN. The stable insertion sort consumes the
+same relation, so NaNs retain their input position without a fabricated total
+order. Hash-key behavior remains loud.
+
+| Measurement | Result |
+|---|---|
+| Focused check | `nan_sort_still_loud(0x7ff8000000000000)` returns `[2.0, nan, 1.0]` |
+| Full executable differential | 3,680 rows: 3,562 matched, 118 whitelisted, 0 failed |
+| Full proof differential | 3,680 rows: 3,452 matched, 228 refused, 0 failed |
+| Grammar census | 145 witnesses: 133 MATCH / 12 REFUSE, 0 drift |
+| Script census | 12 recorded loud rows in 8 classes, 0 drift |
+
+DECIDED: admit unordered NaN comparisons and sorting; retain NaN hashing as a
+separate boundary.

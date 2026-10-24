@@ -162,7 +162,9 @@ cycle DETECTION, never by running out of fuel).
   omission, never wrong).
 * Immediate binary64 NaNs compare unequal to every float, including another
   NaN with the same payload. `!=` is the negation of that result; ordering and
-  hash-key behavior remain separate loud boundaries.
+  hash-key behavior remain separate loud boundaries. Strict `<` comparisons
+  with a NaN return `False`, so stable sorting preserves the NaN's input
+  position rather than imposing a fabricated total order.
 * Runtime `==` (dicts): (1) identical addresses → `True` immediately
   (CPython's identity shortcut — `d == d` holds for self-cyclic `d`);
   (2) distinct dict refs: compare sizes; (3) traverse the LEFT dict in

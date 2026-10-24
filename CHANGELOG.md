@@ -21,6 +21,8 @@ change is listed here under **Changed** or **Removed**.
 - Immediate float NaN equality now follows IEEE/CPython semantics (`nan ==
   nan` is `False`, and `!=` is `True`) without requiring arithmetic payload
   propagation; NaN ordering and hashing remain loud.
+- Float ordering now follows CPython's unordered NaN comparisons: `<` returns
+  `False` when either operand is NaN, and stable sorting keeps the input order.
 
 - The fixed decimal parsing and rendering budget is now 4300 digits. `int`,
   `str`, `print`, f-strings, percent formatting, and nested container, range,

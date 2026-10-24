@@ -45,6 +45,16 @@ set_option exponentiation.threshold 2048
 #py_check float_lab.multiply(Float64.ofBits 0x7ff0000000000001,
   Float64.ofBits 0x3ff0000000000000) =
   Float64.ofBits 0x7ff8000000000001
+#py_check float_lab.floor_pair(Float64.ofBits 0x7ff8000000000001,
+  Float64.ofBits 0x3ff0000000000000) =
+  Val.tuple #[
+    .float (Float64.ofBits 0x7ff8000000000001),
+    .float (Float64.ofBits 0x7ff8000000000001),
+    .tuple #[
+      .float (Float64.ofBits 0x7ff8000000000001),
+      .float (Float64.ofBits 0x7ff8000000000001)
+    ]
+  ]
 #py_check float_lab.augmented() = Float64.ofBits 0xbff4000000000000
 #py_check float_lab.mixed_rounding() = Float64.ofBits 0x4340000000000000
 #py_check float_lab.cancel(Float64.ofBits 0xbff0000000000000) = Float64.ofBits 0

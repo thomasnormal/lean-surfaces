@@ -131,9 +131,9 @@ theorem infinite_zero_caught :
 
 theorem floor_tenth :
     float_lab.floor_tenth() ==> Float64.ofBits 0x4022000000000000 := by
-  have floorStep : Float64.floorRem ⟨0x3ff0000000000000⟩ ⟨0x3fb999999999999a⟩ =
+  have floorStep : Float64.floorRemWithNaN ⟨0x3ff0000000000000⟩ ⟨0x3fb999999999999a⟩ =
       .ok (⟨0x4022000000000000⟩, ⟨0x3fb9999999999996⟩) :=
-    Float64.Tests.floor_remainder_tenth
+    rfl
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
@@ -141,9 +141,9 @@ theorem floor_tenth :
 
 theorem remainder_tenth :
     float_lab.remainder_tenth() ==> Float64.ofBits 0x3fb9999999999996 := by
-  have floorStep : Float64.floorRem ⟨0x3ff0000000000000⟩ ⟨0x3fb999999999999a⟩ =
+  have floorStep : Float64.floorRemWithNaN ⟨0x3ff0000000000000⟩ ⟨0x3fb999999999999a⟩ =
       .ok (⟨0x4022000000000000⟩, ⟨0x3fb9999999999996⟩) :=
-    Float64.Tests.floor_remainder_tenth
+    rfl
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
@@ -151,9 +151,9 @@ theorem remainder_tenth :
 
 theorem floor_infinite :
     float_lab.floor_infinite() ==> Float64.ofBits 0xbff0000000000000 := by
-  have floorStep : Float64.floorRem ⟨0x4014000000000000⟩ ⟨0xfff0000000000000⟩ =
+  have floorStep : Float64.floorRemWithNaN ⟨0x4014000000000000⟩ ⟨0xfff0000000000000⟩ =
       .ok (⟨0xbff0000000000000⟩, ⟨0xfff0000000000000⟩) :=
-    Float64.Tests.floor_remainder_opposite_infinity
+    rfl
   have parsed : Float64.fromText "-inf" = .ok (Float64.ofBits 0xfff0000000000000) := rfl
   refine ⟨32, ?_⟩
   unfold callFunction
@@ -163,15 +163,33 @@ theorem floor_infinite :
 
 theorem remainder_infinite :
     float_lab.remainder_infinite() ==> Float64.ofBits 0xfff0000000000000 := by
-  have floorStep : Float64.floorRem ⟨0x4014000000000000⟩ ⟨0xfff0000000000000⟩ =
+  have floorStep : Float64.floorRemWithNaN ⟨0x4014000000000000⟩ ⟨0xfff0000000000000⟩ =
       .ok (⟨0xbff0000000000000⟩, ⟨0xfff0000000000000⟩) :=
-    Float64.Tests.floor_remainder_opposite_infinity
+    rfl
   have parsed : Float64.fromText "-inf" = .ok (Float64.ofBits 0xfff0000000000000) := rfl
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
   py_simp [float_lab, floatCastArgs, floatCastVal, evalFloatDivmod, floatNumber,
     Float64.ofBits, floorStep, parsed]
+
+theorem floor_nan_pair :
+    float_lab.floor_pair(Float64.ofBits 0x7ff8000000000001,
+      Float64.ofBits 0x3ff0000000000000) ==>
+      Val.tuple #[
+        .float (Float64.ofBits 0x7ff8000000000001),
+        .float (Float64.ofBits 0x7ff8000000000001),
+        .tuple #[
+          .float (Float64.ofBits 0x7ff8000000000001),
+          .float (Float64.ofBits 0x7ff8000000000001)
+        ]
+      ] := by
+  refine ⟨64, ?_⟩
+  unfold callFunction
+  rw [callIn.eq_2]
+  have nanStep : Float64.floorRemWithNaN ⟨0x7ff8000000000001⟩ ⟨0x3ff0000000000000⟩ =
+      .ok (⟨0x7ff8000000000001⟩, ⟨0x7ff8000000000001⟩) := rfl
+  py_simp [float_lab, evalFloatDivmod, floatNumber, Float64.ofBits, nanStep]
 
 private theorem remainder_nine_four :
     Float64.floorRem (Float64.ofBits 0x4022000000000000)
@@ -180,11 +198,11 @@ private theorem remainder_nine_four :
 
 theorem floor_augmented :
     float_lab.floor_augmented() ==> Float64.ofBits 0x3ff0000000000000 := by
-  have floorStep : Float64.floorRem ⟨0x3ff0000000000000⟩ ⟨0x3fb999999999999a⟩ =
+  have floorStep : Float64.floorRemWithNaN ⟨0x3ff0000000000000⟩ ⟨0x3fb999999999999a⟩ =
       .ok (⟨0x4022000000000000⟩, ⟨0x3fb9999999999996⟩) :=
-    Float64.Tests.floor_remainder_tenth
-  have remainderStep : Float64.floorRem ⟨0x4022000000000000⟩ ⟨0x4010000000000000⟩ =
-      .ok (⟨0x4000000000000000⟩, ⟨0x3ff0000000000000⟩) := remainder_nine_four
+    rfl
+  have remainderStep : Float64.floorRemWithNaN ⟨0x4022000000000000⟩ ⟨0x4010000000000000⟩ =
+      .ok (⟨0x4000000000000000⟩, ⟨0x3ff0000000000000⟩) := by rfl
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
@@ -193,7 +211,7 @@ theorem floor_augmented :
 theorem floor_zero_caught :
     float_lab.floor_zero_caught(2) ==> (23 : PyInt) := by
   have negateStep : (⟨0⟩ : Float64).neg = ⟨0x8000000000000000⟩ := rfl
-  have zeroStep : Float64.floorRem ⟨0x3ff0000000000000⟩ ⟨0x8000000000000000⟩ =
+  have zeroStep : Float64.floorRemWithNaN ⟨0x3ff0000000000000⟩ ⟨0x8000000000000000⟩ =
       .error .zeroDivision := rfl
   refine ⟨32, ?_⟩
   unfold callFunction
@@ -204,6 +222,7 @@ theorem floor_zero_caught :
 #print axioms remainder_tenth
 #print axioms floor_infinite
 #print axioms remainder_infinite
+#print axioms floor_nan_pair
 #print axioms floor_augmented
 #print axioms floor_zero_caught
 #print axioms remainder_nine_four

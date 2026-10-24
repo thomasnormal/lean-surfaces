@@ -51,10 +51,13 @@ converted to binary64 first, including their conversion overflow; consequently
 `OverflowError` rather than returning zero. Cancellation returns positive
 zero, except that the IEEE same-sign zero rules preserve negative zero in
 `-0.0 + -0.0` and `-0.0 - 0.0`. Multiplication preserves the sign XOR through
-zero and underflow. Float overflow produces signed infinity. Nonindeterminate
-infinity operations are admitted, while NaN inputs and indeterminate infinity
-operations refuse rather than invent a platform-dependent payload/sign word.
-That refusal records unfinished oracle/model work, not a scope exclusion.
+zero and underflow. Float overflow produces signed infinity. Nonindeterminate infinity operations are admitted. For binary `+`, `-`, and
+`*`, NaN inputs are quieted in place, preserving the payload and sign; when
+both operands are NaN, the left operand wins. Invalid `inf - inf`, opposite-sign
+`inf + inf`, and `inf * 0` use CPython 3.9's pinned canonical negative quiet-NaN
+word. True division retains its explicit NaN-payload refusal; floor division,
+remainder, and `divmod` use the same quieting rule, with zero-denominator
+errors taking priority.
 
 Float ordering and mixed float/integer comparison use the exact decoded value.
 They do not round the integer: 9007199254740992.0 is strictly less than
@@ -94,10 +97,11 @@ sign. Finite operands can produce an infinite quotient without an exception.
 
 A finite numerator with an infinite divisor has a determined result, including
 the opposite-sign correction to quotient -1.0 and an infinite remainder.
-Infinite numerators and NaN-result cases remain explicit unresolved payload
-work. Zero-divisor exceptions come first after mixed conversion, and `//`, `%`
-and `divmod` preserve their distinct CPython messages and common exception
-class, including `ArithmeticError`/`ZeroDivisionError` handlers. The source
+An infinite numerator produces the pinned canonical negative quiet NaN. NaN
+operands are quieted in place, with the left operand winning when both are NaN;
+zero-divisor exceptions come first after mixed conversion. `//`, `%` and
+`divmod` preserve their distinct CPython messages and common exception class,
+including `ArithmeticError`/`ZeroDivisionError` handlers. The source
 oracle is CPython 3.9's float operation sequence, with differential checks
 against the actual pinned interpreter; this is not an exact-rational shortcut.
 
@@ -152,9 +156,9 @@ equality of finite floats with equal integers and signed zeros. These cases
 remain in scope; refusing an unresolved case is not an exclusion or a reason
 to weaken an existing theorem.
 
-Broader float arithmetic outside `+`, `-`, and `*`, remaining constructor
-protocols, formatting specifications, methods, hashing and identity remain
-language-coverage work. Undefined or
+Broader float arithmetic outside `+`, `-`, `*`, `//`, `%`, and `divmod`,
+remaining constructor protocols, formatting specifications, methods, hashing
+and identity remain language-coverage work. Undefined or
 platform-dependent numerical details require an explicit model/oracle
 parameter when they cannot be decided from the admitted state.
 

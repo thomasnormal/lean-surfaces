@@ -476,7 +476,8 @@
   },
   {
     "file": "Examples/python/float_lab/nan_floor_script.py",
-    "expect": "unsupported"
+    "expect": "match",
+    "note": "The pinned CPython 3.9 canonical negative quiet-NaN word is rendered as nan for an infinite left operand."
   },
   {
     "file": "Examples/python/float_lab/nan_arithmetic_script.py",

@@ -2070,7 +2070,7 @@ def evalFloatArithmetic (operator : Float64.ArithmeticOp) (left right : RVal) : 
 def evalFloatDivmod (zeroError : PyErr) (left right : RVal) : Res (Float64 × Float64) := do
   let leftNumber ← floatNumber left
   let rightNumber ← floatNumber right
-  match Float64.floorRem leftNumber rightNumber with
+  match Float64.floorRemWithNaN leftNumber rightNumber with
   | .ok pair => return pair
   | .error .zeroDivision => .exn zeroError
   | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")

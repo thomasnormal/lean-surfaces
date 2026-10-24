@@ -32,6 +32,19 @@ guards for payload preservation, left-operand selection, and each invalid
 infinity combination. Mixed integer conversion overflow still wins before NaN
 classification, and finite cancellation remains proved symbolically.
 
+## 2026-10-24-pycomplete-93 — float NaN floor/mod/divmod
+
+Float floor division, modulo, and `divmod` now propagate NaN payloads and
+signs. Zero denominators retain CPython's distinct `ZeroDivisionError` messages
+and win before NaN classification; otherwise the left NaN wins, then the right
+NaN, and each result is quieted in place. An infinite left operand with a
+non-NaN divisor uses the pinned canonical negative quiet-NaN word.
+
+The `float_lab.floor_pair` rows and `nan_floor_script.py` now match, with
+direct Float64 guards for both operand positions and the invalid-infinity case,
+and a kernel proof covering the three returned values. True division remains
+the separate unresolved NaN-payload boundary.
+
 ## 2026-10-24-pycomplete-86 — zero-argument builtin exception constructor
 
 The extractor's existing zero-argument raise-constructor lowering is now

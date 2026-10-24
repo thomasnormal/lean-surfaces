@@ -38,8 +38,9 @@ change is listed here under **Changed** or **Removed**.
   preserving CPython's quiet-NaN word and explicit sign bit. Payload spellings
   remain loud; ordinary binary `+`, `-`, and `*` now quiet NaN inputs while
   preserving their payload/sign, and use the pinned canonical negative quiet
-  NaN for invalid infinity combinations. Division and floor/mod/divmod NaN
-  payloads remain loud.
+  NaN for invalid infinity combinations. Float floor division, modulo, and
+  `divmod` apply the same propagation and zero-denominator priority; true
+  division NaN payloads remain loud.
 - `str.join()` now consumes admitted heap generators, preserving their lazy
   state and CPython's indexed element validation.
 - Monadic `itertools.count` now admits finite integer, Boolean, and binary64

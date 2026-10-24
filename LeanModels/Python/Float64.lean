@@ -429,6 +429,24 @@ def floorRem (left right : Float64) : Except FloatDivisionError (Float64 × Floa
       else pure integral
   return (floored, remainder)
 
+/-! CPython 3.9's NaN behavior for floor division, remainder, and `divmod`.
+The zero-denominator check precedes NaN classification; otherwise the first
+NaN operand wins and is quieted in place. An infinite left operand with finite
+or infinite non-NaN divisor uses the pinned canonical negative quiet NaN. -/
+def floorRemWithNaN (left right : Float64) :
+    Except FloatDivisionError (Float64 × Float64) :=
+  if right.isZero then .error .zeroDivision
+  else if left.isNaN then
+    let value := quietNaN left
+    .ok (value, value)
+  else if right.isNaN then
+    let value := quietNaN right
+    .ok (value, value)
+  else if left.isInf then
+    let value := ofBits 0xfff8000000000000
+    .ok (value, value)
+  else floorRem left right
+
 def floorRemIntFloat (left : Int) (right : Float64) :
     Except FloatDivisionError (Float64 × Float64) :=
   match fromInt left with

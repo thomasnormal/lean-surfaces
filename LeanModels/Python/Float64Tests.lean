@@ -45,11 +45,26 @@ theorem floor_remainder_conversion_priority :
     floorRemFloatInt (ofBits 0x7ff8000000000000) (10 ^ 400) =
       .error .conversionOverflow := rfl
 
+theorem floor_remainder_quiets_left_nan :
+    floorRemWithNaN (ofBits 0x7ff0000000000001) (ofBits 0x3ff0000000000000) =
+      .ok (ofBits 0x7ff8000000000001, ofBits 0x7ff8000000000001) := rfl
+
+theorem floor_remainder_quiets_right_nan :
+    floorRemWithNaN (ofBits 0x3ff0000000000000) (ofBits 0xfff0000000000001) =
+      .ok (ofBits 0xfff8000000000001, ofBits 0xfff8000000000001) := rfl
+
+theorem floor_remainder_invalid_infinity_is_canonical_nan :
+    floorRemWithNaN (ofBits 0x7ff0000000000000) (ofBits 0x3ff0000000000000) =
+      .ok (ofBits 0xfff8000000000000, ofBits 0xfff8000000000000) := rfl
+
 #print axioms floor_remainder_tenth
 #print axioms floor_remainder_negative_zero
 #print axioms floor_remainder_opposite_infinity
 #print axioms floor_remainder_nan_zero_priority
 #print axioms floor_remainder_conversion_priority
+#print axioms floor_remainder_quiets_left_nan
+#print axioms floor_remainder_quiets_right_nan
+#print axioms floor_remainder_invalid_infinity_is_canonical_nan
 
 theorem signed_zeros_equal : (ofBits 0).eqv (ofBits 0x8000000000000000) = true := rfl
 

@@ -4561,6 +4561,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-unsigned-short-compound-modulo-mid",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableUnsignedShortCompoundModuloFrameWitness",
+    "cpp_source": "unsigned short frame_unsigned_short_compound_modulo(unsigned short value) { value %= 5; return value; } bool callable_witness() { return frame_unsigned_short_compound_modulo(13) == 3; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-signed-overflow-retention",
     "kind": "expression",
     "corpus": "rung-3 witness",

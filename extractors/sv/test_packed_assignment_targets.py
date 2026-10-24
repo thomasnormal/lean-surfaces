@@ -316,6 +316,30 @@ class PackedAssignmentTargets(unittest.TestCase):
         self.assertEqual(value["width"], 8)
         self.assertEqual(int(value["index"]["bits"], 2), 4)
 
+    def test_right_streaming_explicit_numeric_slice_unpacks_equal_leaves(self):
+        design = extract_source(
+            "module top; bit [31:0] source; bit [7:0] a, b, c, d; "
+            "initial {>>8 {a, b, c, d}} = source; endmodule")
+        statement, = [node for node in nodes(design)
+                      if node.get("kind") == "BlockingAssign"
+                      and node.get("target", {}).get("kind") == "ConcatTarget"]
+        self.assertEqual(statement["target"]["width"], 32)
+        self.assertEqual([part["name"] for part in statement["target"]["parts"]],
+                         ["a", "b", "c", "d"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_right_streaming_named_byte_slice_unpacks_equal_leaves(self):
+        design = extract_source(
+            "module top; bit [31:0] source; bit [7:0] a, b, c, d; "
+            "initial {>>byte {a, b, c, d}} = source; endmodule")
+        self.assertTrue(any(node.get("kind") == "ConcatTarget"
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+
     def test_right_streaming_unpack_uses_packed_member_window(self):
         design = extract_source(
             "module top; logic [3:0] source; logic [1:0] out; "

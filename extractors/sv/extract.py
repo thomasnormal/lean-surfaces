@@ -6959,6 +6959,39 @@ def _streaming_has_slice_size(lhs):
         return True
 
 
+def _streaming_slice_size(lhs):
+    """Resolve an explicit streaming slice size, including named types.
+
+    Slang exposes a numeric slice directly for ``{>>8{...}}`` but leaves a
+    named integral type such as ``byte`` at zero on the elaborated node.  The
+    syntax kind still carries the standard type width; keep this resolver
+    deliberately limited to the fixed built-in integral spellings used by
+    the target lowering.
+    """
+    try:
+        value = getattr(lhs, "sliceSize", None)
+        if isinstance(value, int) and value > 0:
+            return value
+        syntax = getattr(lhs, "syntax", None)
+        token = getattr(syntax, "sliceSize", None)
+        kind = str(getattr(token, "kind", "")).split(".")[-1]
+        if kind == "IntegerLiteralExpression":
+            text = getattr(getattr(token, "literal", None), "valueText", None)
+            if text is not None and str(text).isdigit():
+                value = int(text)
+                return value if value > 0 else None
+        return {
+            "ByteType": 8,
+            "ShortIntType": 16,
+            "IntType": 32,
+            "IntegerType": 32,
+            "LongIntType": 64,
+            "TimeType": 64,
+        }.get(kind)
+    except Exception:
+        return None
+
+
 def _streaming_source_window(value, width, symbolic):
     """Unpack the leading bits of a wider source (IEEE 1800 §11.4.14.3)."""
     source_width = width_of(value)
@@ -7285,9 +7318,11 @@ def _streaming_target_assignment(sm, expr):
         operator = str(getattr(token, "kind", "")).split(".")[-1]
         if operator == "LeftShift":
             return _streaming_left_target_assignment(sm, expr, False)
-        if _streaming_has_slice_size(lhs):
-            return None
         if operator != "RightShift":
+            return None
+        explicit_slice = _streaming_has_slice_size(lhs)
+        slice_size = _streaming_slice_size(lhs) if explicit_slice else None
+        if explicit_slice and slice_size is None:
             return None
         parts = []
         total_width = 0
@@ -7296,6 +7331,8 @@ def _streaming_target_assignment(sm, expr):
             if operand is None:
                 return None
             with_expr = getattr(stream, "withExpr", None)
+            if explicit_slice and with_expr is not None:
+                return None
             array_targets = (_fixed_array_stream_targets_with(
                 sm, operand, with_expr, False) if with_expr is not None else
                 _fixed_array_stream_targets(sm, operand, False))
@@ -7316,8 +7353,12 @@ def _streaming_target_assignment(sm, expr):
             width = width_of(target)
             if width is None or width <= 0:
                 return None
+            if explicit_slice and width != slice_size:
+                return None
             parts.append(target)
             total_width += width
+        if explicit_slice and (not parts or total_width % slice_size != 0):
+            return None
         if not parts:
             return None
         value = _convert_streaming_source(sm, expr.right)
@@ -7372,9 +7413,11 @@ def _symbolic_streaming_target_assignment(sm, expr):
         operator = str(getattr(token, "kind", "")).split(".")[-1]
         if operator == "LeftShift":
             return _streaming_left_target_assignment(sm, expr, True)
-        if _streaming_has_slice_size(lhs):
-            return None
         if operator != "RightShift":
+            return None
+        explicit_slice = _streaming_has_slice_size(lhs)
+        slice_size = _streaming_slice_size(lhs) if explicit_slice else None
+        if explicit_slice and slice_size is None:
             return None
         parts = []
         total_width = 0
@@ -7410,12 +7453,16 @@ def _symbolic_streaming_target_assignment(sm, expr):
             width = width_of(target)
             if width is None or width <= 0:
                 return None
+            if explicit_slice and width != slice_size:
+                return None
             try:
                 leaf_two_state.append(not operand.type.isFourState)
             except Exception:
                 return None
             parts.append(target)
             total_width += width
+        if explicit_slice and (not parts or total_width % slice_size != 0):
+            return None
         if not parts:
             return None
         value = convert_expr(sm, expr.right)

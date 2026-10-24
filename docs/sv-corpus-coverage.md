@@ -3968,3 +3968,19 @@ The fresh **22,049-path** census moves **4,846 → 4,852 clean** and **17,137 �
 falls **2,980 → 2,974**, making `AssignmentExpression:target` the leading
 blocker at **2,979**. Differential coverage moves **146/142/0/4 → 147/143/0/4**;
 grammar coverage remains **214/83/131**.
+
+## Explicit-slice right-streaming targets — 2026-10-24
+
+IEEE 1800-2023 §11.4.14.3 permits a right-streaming concatenation with an
+explicit integral slice type or size to unpack one sampled vector into equal
+width scalar or fixed-cell targets. The extractor resolves numeric slices and
+the built-in `byte`/`shortint`/`int`/`longint` spellings, then reuses the
+existing `ConcatTarget` write path. `with` clauses, mixed-width leaves,
+dynamic or nested targets, and non-integral slice types remain loud.
+`streaming_slice_target` supplies the `PASS` differential witness.
+
+The fresh **22,049-path** census remains **4,852 clean / 17,131 partial** (66
+include skips); `AssignmentExpression:target` falls **2,979 → 2,978** as the
+new lowering removes one target wall in the chapter snapshot. Differential
+coverage moves **147/143/0/4 → 148/144/0/4**; grammar coverage remains
+**214/83/131**.

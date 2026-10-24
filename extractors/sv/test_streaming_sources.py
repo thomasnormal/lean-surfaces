@@ -59,6 +59,17 @@ class StreamingSources(unittest.TestCase):
                 self.assertEqual(statement["value"]["kind"], "Concat")
                 self.assertEqual(statement["value"]["parts"][-1]["bits"], "0000")
 
+    def test_symbolic_explicit_right_slice_target_keeps_equal_windows(self):
+        envelope = symbolic.SymbolicContinuousSelects().extract(
+            "module top(input logic [31:0] source, "
+            "output logic [7:0] a, b, c, d); "
+            "assign {>>byte {a, b, c, d}} = source; endmodule")
+        process, = envelope["design"]["modules"][0]["processes"]
+        self.assertEqual(process["target"]["kind"], "ConcatTarget")
+        self.assertEqual(process["target"]["width"], 32)
+        self.assertEqual([part["name"] for part in process["target"]["parts"]],
+                         ["a", "b", "c", "d"])
+
     def test_symbolic_parameter_widths_stay_loud(self):
         envelope = symbolic.SymbolicContinuousSelects().extract(
             "module top #(parameter W=4) (input logic [W-1:0] source, "

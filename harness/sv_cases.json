@@ -684,6 +684,15 @@
       "expect": "match"
     },
     {
+      "name": "streaming_slice_target",
+      "file": "Examples/system-verilog/streaming_slice_target/streaming_slice_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "fixed_array_indexed_slice",
       "file": "Examples/system-verilog/fixed_array_indexed_slice/fixed_array_indexed_slice.sv",
       "module": "top",

@@ -185,6 +185,19 @@ remain loud.
 array cells and checks the enum field and the scalar field after the whole
 assignment.
 
+## Explicit-slice right-streaming targets — 2026-10-24
+
+Right-streaming unpack targets may carry a positive explicit integral slice
+size, including the built-in `byte`, `shortint`, `int`, `integer`, `longint`,
+and `time` type spellings. The admitted lowering requires every direct scalar
+or flattened fixed-array leaf to have exactly that width and samples one
+integral RHS into the existing `ConcatTarget` representation. Streaming
+`with` clauses, mixed-width leaves, nested or dynamic targets, and any
+non-integral or effectful form remain loud.
+
+`streaming_slice_target` is the source-bound witness for the `byte` spelling;
+the extractor tests also pin numeric slices and the mixed-width refusal.
+
 ## Single literal continuous packed-bit drivers — 2026-10-24
 
 A single continuous assignment to one constant packed bit or part-select is

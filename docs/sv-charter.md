@@ -6692,3 +6692,18 @@ The fresh **22,049-path** census moves **4,846 → 4,852 clean** and **17,137 �
 falls **2,980 → 2,974**, while `AssignmentExpression:target` is the new
 leading blocker at **2,979**. Differential coverage moves **146/142/0/4 →
 147/143/0/4**; grammar coverage remains **214/83/131**.
+
+## Explicit-slice right-streaming targets — 2026-10-24
+
+The target tier now admits IEEE 1800-2023 §11.4.14.3 right-streaming unpack
+with a positive explicit slice size or a fixed built-in integral slice type.
+Numeric sizes and `byte`/`shortint`/`int`/`integer`/`longint`/`time` are resolved
+at extraction, and direct equal-width scalar or flattened fixed-array leaves
+reuse the existing sampled `ConcatTarget` write. Mixed widths, `with` clauses,
+nested or dynamic targets, and other non-integral forms remain loud.
+
+`streaming_slice_target` is the differential witness. The fresh 22,049-path
+census remains **4,852 clean / 17,131 partial / 66 include skips** and lowers
+`AssignmentExpression:target` **2,979 → 2,978**; differential coverage moves
+**147/143/0/4 → 148/144/0/4**, with grammar coverage unchanged at
+**214/83/131**.

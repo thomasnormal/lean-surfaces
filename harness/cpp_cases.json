@@ -3037,6 +3037,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-prefix-decrement",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableDecrementWitness",
+    "cpp_source": "int decrement(int value) { return --value; } bool callable_witness() { return decrement(4) == 3; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

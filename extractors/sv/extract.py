@@ -142,6 +142,10 @@ SYSCALL_QUIET = ("$info", "$warning", "$error")
 # assertion-control tasks therefore have no modeled effect; scoped or
 # argumented controls remain loud until assertion state is represented.
 SYSCALL_ASSERT_CTRL = ("$asserton", "$assertoff", "$assertkill")
+# Monitor toggles only affect an active `$monitor` registration.  The
+# self-check state has no monitor stream, so no-argument toggles are inert when
+# the design contains no registration; registered monitors stay loud.
+SYSCALL_MONITOR_CTRL = ("$monitoron", "$monitoroff")
 UNARY_OPS = {
     UnaryOperator.BitwiseNot: "~",
     UnaryOperator.LogicalNot: "!",
@@ -7993,6 +7997,18 @@ def _convert_syscall(sm, s, e):
         if not args:
             return {"kind": "Empty", "span": node_span(sm, s),
                     "pure_diagnostic": name}
+    if is_sys and name in SYSCALL_MONITOR_CTRL:
+        try:
+            args = list(e.arguments)
+        except Exception:
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        if args:
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        if re.search(r"\$monitor\s*\(", source):
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "pure_diagnostic": name}
     if is_sys and name == SYSCALL_SDF:
         try:
             args = list(e.arguments)

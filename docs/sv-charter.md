@@ -5967,3 +5967,16 @@ fresh 22,046-file census moves **4,775 → 4,783 clean** and **17,205 → 17,197
 partial**; `CallExpression` falls **3,074 → 2,997** and
 `SubroutineSymbol:Subroutine` falls **1,665 → 1,636**. Differential coverage
 moves **96/92/0/4 → 97/93/0/4**, and grammar coverage remains **211/80/131**.
+
+## Inert monitor toggles without registrations — 2026-10-24
+
+No-argument `$monitoron` and `$monitoroff` calls now lower to inert diagnostic
+nodes when the design contains no `$monitor` registration. Argumented controls
+and any design that registers a monitor remain loud because monitor output and
+its enable state are outside the self-check state.
+
+The `monitor_controls` fixture and differential row cover both semicolon and
+parenthesized no-argument spellings, with extractor tests pinning registration
+and argument boundaries. The 22,046-file census remains **4,783 clean / 17,197
+partial**; its blocker counts are unchanged. Differential coverage moves
+**97/93/0/4 → 98/94/0/4**, and grammar coverage remains **211/80/131**.

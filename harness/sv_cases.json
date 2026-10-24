@@ -847,6 +847,15 @@
       "expect": "match"
     },
     {
+      "name": "monitor_controls",
+      "file": "Examples/system-verilog/monitor_controls/monitor_controls.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "delay_refusal",
       "file": "Examples/system-verilog/delay/delay.sv",
       "module": "delay",

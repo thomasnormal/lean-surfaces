@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 97 | 93 | 0 | 4 | sv-tests-2 declarations |
+| 98 | 94 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -107,6 +107,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `time_scale_query` | `Examples/system-verilog/time_scale_query/time_scale_query.sv` | match | **MATCH** | `ok` | MATCH |
 | `sdf_annotate` | `Examples/system-verilog/sdf_annotate/sdf_annotate.sv` | match | **MATCH** | `ok` | MATCH |
 | `literal_function_return` | `Examples/system-verilog/literal_function_return/literal_function_return.sv` | match | **MATCH** | `ok` | MATCH |
+| `monitor_controls` | `Examples/system-verilog/monitor_controls/monitor_controls.sv` | match | **MATCH** | `ok` | MATCH |
 | `delay_refusal` | `Examples/system-verilog/delay/delay.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `event_refusal` | `Examples/system-verilog/event/event.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `always_refusal` | `Examples/system-verilog/always/events.sv` | refuse | **MATCH** | `unsupported` | REFUSE |

@@ -1145,4 +1145,9 @@ def enumGetterWitness : Bool :=
 
 #guard enumGetterWitness
 
+def memberGetterCanonicalWitness : Bool :=
+  observedCanonical == some 7
+
+#guard memberGetterCanonicalWitness
+
 end LeanModels.Cpp.MemberCallTests

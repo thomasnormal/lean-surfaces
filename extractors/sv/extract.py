@@ -5570,18 +5570,19 @@ def _empty_queue_literal(expr):
 
 
 def _zero_size_method(expression):
-    """Recognize ``q.size()`` on an untouched empty aggregate.
+    """Recognize a zero-valued ``size``/``len`` query on inert storage.
 
     The flat self-check state has no queue or dynamic-array object. An
-    uninitialized aggregate is nevertheless defined to have size zero. Every
-    later source occurrence of the receiver must be this same read-only
-    method; pushes, assignments, and other observations stay loud.
+    uninitialized aggregates and strings are nevertheless defined to have
+    zero size. Every later source occurrence of the receiver must be this
+    same read-only method; pushes, assignments, and other observations stay
+    loud.
     """
     try:
         if (type(expression).__name__ != "CallExpression"
                 or getattr(expression, "bad", False)
                 or not expression.isSystemCall
-                or expression.subroutineName != "size"):
+                or expression.subroutineName not in ("size", "len")):
             return False
         arguments = list(expression.arguments)
         if len(arguments) != 1 or type(arguments[0]).__name__ != "NamedValueExpression":
@@ -5589,7 +5590,10 @@ def _zero_size_method(expression):
         receiver = arguments[0]
         symbol = receiver.symbol
         canonical = type(receiver.type.canonicalType).__name__
-        if canonical not in ("QueueType", "DynamicArrayType"):
+        method = expression.subroutineName
+        valid = ((canonical in ("QueueType", "DynamicArrayType") and method == "size")
+                 or (canonical == "StringType" and method == "len"))
+        if not valid:
             return False
         if getattr(symbol, "initializer", None) is not None:
             return False
@@ -5599,7 +5603,8 @@ def _zero_size_method(expression):
                                        + r"(?![A-Za-z0-9_$])", source))
         if not occurrences:
             return False
-        return all(source[m.end():].lstrip().startswith(".size")
+        suffix = "." + method
+        return all(source[m.end():].lstrip().startswith(suffix)
                    for m in occurrences[1:])
     except Exception:
         return False
@@ -5613,7 +5618,8 @@ def _convert_zero_size_method(sm, expression):
         "span": node_span(sm, expression),
         "width": expression.type.bitWidth,
         "bits": "0" * expression.type.bitWidth,
-        "zero_size_query": True,
+        ("zero_size_query" if expression.subroutineName == "size"
+         else "zero_string_length_query"): True,
     }
 
 

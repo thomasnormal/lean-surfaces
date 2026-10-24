@@ -5911,3 +5911,16 @@ and extractor tests pin the mutation and initializer boundaries. The fresh
 22,046-file census moves **4,762 → 4,766 clean** and **17,218 → 17,214
 partial**; `CallExpression` falls **3,087 → 3,083**. Differential coverage
 moves **92/88/0/4 → 93/89/0/4**, and grammar coverage remains **211/80/131**.
+
+## Zero-length queries on inert strings — 2026-10-24
+
+An uninitialized `string` has length zero, so its `.len()` query now lowers to
+a 32-bit zero literal when every receiver occurrence is that same read-only
+query. String writes, initializers, and other methods remain loud because the
+self-check state does not model string contents.
+
+The `zero_string_len` fixture and differential row cover the admitted query,
+with extractor tests pinning the written-string boundary. The fresh 22,046-file
+census remains **4,766 clean / 17,214 partial** and `CallExpression` remains
+**3,083**; this slice changes the differential table **93/89/0/4 → 94/90/0/4**
+while grammar coverage remains **211/80/131**.

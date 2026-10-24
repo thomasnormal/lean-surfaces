@@ -447,6 +447,20 @@ def callableShortFrameIncrementWitness : Bool :=
 
 #guard checkIncrement .short "++" false ⟨.signed 16, 32767⟩ ⟨.signed 16, -32768⟩
 #guard callableShortFrameIncrementWitness
+
+private def unsignedShortFrameDecrement : Bool :=
+  match CallableObjectFrame.start .lp64 (incrementFunction .unsignedShort "--" false)
+      [⟨.unsigned 16, 0⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 16 started
+      match outcome.result with
+      | .ok (.ok value) => value == ⟨.unsigned 16, 65535⟩
+      | _ => false
+
+def callableUnsignedShortFrameDecrementWitness : Bool := unsignedShortFrameDecrement
+
+#guard callableUnsignedShortFrameDecrementWitness
 #guard checkIncrement .short "++" true ⟨.signed 16, 32767⟩ ⟨.signed 16, 32767⟩
 #guard checkIncrement .short "--" false ⟨.signed 16, -32768⟩ ⟨.signed 16, 32767⟩
 #guard checkIncrement .short "--" true ⟨.signed 16, -32768⟩ ⟨.signed 16, -32768⟩

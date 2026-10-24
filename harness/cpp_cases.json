@@ -3937,6 +3937,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-parser-automatic-local",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableParserAutomaticLocalWitness",
+    "cpp_source": "bool callable_witness() { int value = 7; return value == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

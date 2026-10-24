@@ -358,6 +358,8 @@ private def parserAdmitsAutomaticLocal : Bool :=
         scope.any (fun current => current.declaration == declaration)
   | _ => false
 
+def callableParserAutomaticLocalWitness : Bool := parserAdmitsAutomaticLocal
+
 #guard readsParameter
 #guard valueOnlyRemainsLoud
 #guard selfInitializerRetainsFrame
@@ -378,6 +380,7 @@ private def parserAdmitsAutomaticLocal : Bool :=
 #guard unsupportedBinaryLoud
 #guard switchScopeClosesOnFailure
 #guard parserAdmitsAutomaticLocal
+#guard callableParserAutomaticLocalWitness
 
 theorem callable_local_declaration_witness : callableLocalDeclarationWitness = true := by
   rfl

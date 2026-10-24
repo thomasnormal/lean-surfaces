@@ -92,6 +92,8 @@ private def freshLoopObjects : Bool :=
       | .error _ => false
   | .error _ => false
 
+def callableFreshLoopObjectWitness : Bool := freshLoopObjects
+
 private def reentrySameDeclarationFresh : Bool :=
   match opened with
   | .ok frame =>
@@ -654,6 +656,7 @@ def callableLocalReferenceWitness : Bool := aliasLifetimeAndConst && aliasUninit
 #guard callableReturnClosesFrameWitness
 #guard callableReverseCleanupWitness
 #guard callableDefaultThenAssignWitness
+#guard callableFreshLoopObjectWitness
 
 private theorem kernelReferenceBindings :
     (aliasLifetimeAndConst && aliasUninitializedAndEnded) = true := rfl

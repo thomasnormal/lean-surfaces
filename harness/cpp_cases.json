@@ -2653,6 +2653,18 @@
     "rung": 1
   },
   {
+    "id": "object.callable-fresh-loop-object",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_namespace": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_expression": "callableFreshLoopObjectWitness",
+    "cpp_source": "struct LoopProbe { int* destroyed; ~LoopProbe() { ++*destroyed; } }; bool callable_witness() { int destroyed = 0; for (int i = 0; i < 2; ++i) { LoopProbe probe{&destroyed}; } return destroyed == 2; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "object.storage-reuse",
     "kind": "lifetime",
     "corpus": "rung-1 witness",

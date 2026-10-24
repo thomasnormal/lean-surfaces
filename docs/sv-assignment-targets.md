@@ -116,3 +116,17 @@ the self-check interpreter. The two corresponding corpus witnesses are
 `chapter-7/7.4.5--array-oob-write-noop-v3.sv` and
 `chapter-7/7.4.5--oob-write-is-no-op.sv`. No aggregate storage or scheduler
 rule is introduced.
+
+## Type-keyed enum defaults in packed-struct array targets — 2026-10-24
+
+A whole fixed unpacked array of packed-struct elements may use the existing
+cell expansion when its assignment pattern supplies one enum type key and a
+literal scalar default. The frontend's nested pattern inventory is normalized
+to the enum value and scalar field literal before the ordinary per-cell
+blocking assignments are emitted. Dynamic or effectful keys/defaults,
+non-integral fields, aliases, and aggregate shapes outside the fixed cells
+remain loud.
+
+`typed_default_array_pattern` is the differential witness. It covers both
+array cells and checks the enum field and the scalar field after the whole
+assignment.

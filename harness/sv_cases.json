@@ -955,6 +955,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "typed_default_array_pattern",
+      "file": "Examples/system-verilog/typed_default_array_pattern/typed_default_array_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

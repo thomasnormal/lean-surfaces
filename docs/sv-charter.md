@@ -6090,3 +6090,17 @@ continuous-driver files all require dynamic or multiple-driver behavior. The
 differential table moves **105/101/0/4 → 106/102/0/4**; grammar coverage moves
 **212/81/131 → 213/82/131** because the new fixture changes the retained
 syntax-kind witness.
+
+## Type-keyed enum defaults in packed-struct array targets — 2026-10-24
+
+The fixed-array assignment-pattern rung now admits a narrow packed-struct
+case: a whole fixed unpacked array may use one enum type key and a literal
+scalar default. Extraction normalizes pyslang's nested pattern inventory to
+literal field values and lowers the write through the existing flat cell
+representation. Dynamic/effectful keys or defaults and unsupported aggregate
+shapes remain loud. `typed_default_array_pattern` is the differential witness.
+
+The 22,048-path census moves **4,797 → 4,798 clean** and **17,185 → 17,184
+partial**; `AssignmentExpression:target` falls **3,046 → 3,045**. Differential
+coverage moves **106/102/0/4 → 107/103/0/4**; grammar coverage remains
+**213/82/131**.

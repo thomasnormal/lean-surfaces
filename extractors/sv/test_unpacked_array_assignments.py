@@ -52,6 +52,22 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_enum_type_key_and_scalar_default_pack_struct_cells(self):
+        design = extract_source(
+            "module top; typedef enum int {IDLE = 1, BUSY = 2} state_t; "
+            "typedef struct packed { state_t state; int raw; } item_t; "
+            "item_t items[0:1]; initial begin "
+            "items = '{default: '{state_t: BUSY, default: 7}}; "
+            "if (items[0].state == BUSY && items[0].raw == 7 && "
+            "items[1].state == BUSY && items[1].raw == 7) "
+            "$display(\"PASS\"); end endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual([a["target"]["name"] for a in assigns],
+                         ["items[0]", "items[1]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_replicated_pattern_writes_all_cells(self):
         design = extract_source(
             "module top; logic [7:0] value [0:2]; "

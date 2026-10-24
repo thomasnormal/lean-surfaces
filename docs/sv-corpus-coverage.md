@@ -3688,3 +3688,16 @@ driver witnesses require dynamic or multiple-driver behavior. Differential
 coverage moves **105/101/0/4 → 106/102/0/4**; grammar coverage moves
 **212/81/131 → 213/82/131** because the new fixture changes the retained
 syntax-kind witness.
+
+## Type-keyed enum defaults in packed-struct array targets — 2026-10-24
+
+A whole fixed unpacked array of packed-struct elements now accepts one enum
+type key together with a literal scalar default. The nested pattern is lowered
+to the existing flat vector cells; dynamic or effectful keys/defaults and
+other aggregate targets remain loud. The `typed_default_array_pattern` fixture
+is the differential witness.
+
+The 22,048-path census moves **4,797 → 4,798 clean** and **17,185 → 17,184
+partial**; `AssignmentExpression:target` falls **3,046 → 3,045**. Differential
+coverage moves **106/102/0/4 → 107/103/0/4**; grammar coverage remains
+**213/82/131**.

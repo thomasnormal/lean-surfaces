@@ -4726,11 +4726,81 @@ def _convert_packed_pattern(sm, expression):
     shape = expression.type.canonicalType
     kind = type(shape).__name__
     if reason is not None or kind not in (
-            "PredefinedIntegerType", "PackedArrayType", "PackedStructType"):
+            "PredefinedIntegerType", "EnumType", "PackedArrayType",
+            "PackedStructType"):
         return unsupported(sm, expression, "AssignmentPattern:integral-shape")
     if kind == "PackedStructType":
         expected = [member.type.bitWidth for member in shape
                     if str(member.kind) == "SymbolKind.Field"]
+    elif (kind == "EnumType"
+          and type(expression).__name__ == "StructuredAssignmentPatternExpression"):
+        # A type-keyed enum pattern is a scalar value, even though pyslang
+        # exposes its default inventory as one bit per element.  Preserve the
+        # enum key's declared value and require the remaining default arm to
+        # be a pure literal.  This is the narrow form used when a packed
+        # struct assignment pattern supplies ``state_t: BUSY``; arbitrary
+        # enum patterns and effectful defaults remain outside the flat tier.
+        setters = list(getattr(expression, "typeSetters", []))
+        if (len(setters) != 1 or getattr(expression, "indexSetters", [])
+                or getattr(expression, "memberSetters", [])):
+            return unsupported(sm, expression, "AssignmentPattern:enum-key")
+        setter = setters[0]
+        try:
+            if setter.type.canonicalType is not shape:
+                return unsupported(sm, expression, "AssignmentPattern:enum-key")
+            enum_expr = setter.expr
+            symbol = enum_expr.symbol
+            if (type(enum_expr).__name__ != "NamedValueExpression"
+                    or str(symbol.kind) != "SymbolKind.EnumValue"):
+                return unsupported(sm, expression, "AssignmentPattern:enum-key")
+            default = getattr(expression, "defaultSetter", None)
+            if (default is None or getattr(default, "bad", False)
+                    or type(default).__name__ not in
+                    ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral")
+                    or not _case_source_expression_ok(default)):
+                return unsupported(sm, expression, "AssignmentPattern:enum-default")
+            value = symbol.value
+            if hasattr(value, "value"):
+                value = value.value
+            if hasattr(value, "bitWidth"):
+                bits = svint_bits(value)
+            else:
+                bits = format(int(value) & ((1 << width) - 1), f"0{width}b")
+            return {
+                "kind": "Literal", "span": node_span(sm, expression),
+                "width": width, "bits": bits,
+                "assignment_pattern_enum_key": True,
+            }
+        except Exception:
+            return unsupported(sm, expression, "AssignmentPattern:enum-key")
+    elif (kind == "PredefinedIntegerType"
+          and type(expression).__name__ == "StructuredAssignmentPatternExpression"
+          and all(type(getattr(setter.type, "canonicalType", None)).__name__
+                  == "EnumType"
+                  for setter in getattr(expression, "typeSetters", []))
+          and not getattr(expression, "indexSetters", [])
+          and not getattr(expression, "memberSetters", [])):
+        # Within a packed-struct field, a literal default denotes the whole
+        # scalar field.  Slang exposes the field's bit inventory, but the
+        # assignment-pattern rule applies the default to that field value.
+        default = getattr(expression, "defaultSetter", None)
+        if (default is None or getattr(default, "bad", False)
+                or type(default).__name__ not in
+                ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral")
+                or not _case_source_expression_ok(default)):
+            return unsupported(sm, expression, "AssignmentPattern:scalar-default")
+        try:
+            value = default.value
+            if hasattr(value, "value"):
+                value = value.value
+            return {
+                "kind": "Literal", "span": node_span(sm, expression),
+                "width": width,
+                "bits": format(int(value) & ((1 << width) - 1), f"0{width}b"),
+                "assignment_pattern_scalar_default": True,
+            }
+        except Exception:
+            return unsupported(sm, expression, "AssignmentPattern:scalar-default")
     elif kind == "PackedArrayType":
         count = abs(int(shape.range.left) - int(shape.range.right)) + 1
         if count > 1024:

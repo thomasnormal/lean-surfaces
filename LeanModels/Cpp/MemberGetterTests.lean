@@ -78,4 +78,10 @@ def memberGetterBooleanConversionWitness : Bool :=
 
 #guard memberGetterBooleanConversionWitness
 
+def memberGetterUnsignedCharConversionWitness : Bool :=
+  ({getter with conversions := [.unsignedChar, .int]}).invoke (snapshot (-1)) ==
+    .ok ((snapshot (-1)).memory, ⟨.signed 32, 255⟩)
+
+#guard memberGetterUnsignedCharConversionWitness
+
 end LeanModels.Cpp.MemberGetterTests

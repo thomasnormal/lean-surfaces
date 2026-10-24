@@ -3181,6 +3181,18 @@
     "rung": 7
   },
   {
+    "id": "expression.member-getter-unsigned-char-conversion-call",
+    "kind": "expression",
+    "corpus": "rung-7 witness",
+    "lean_module": "LeanModels.Cpp.MemberGetterTests",
+    "lean_namespace": "LeanModels.Cpp.MemberGetterTests",
+    "lean_expression": "memberGetterUnsignedCharConversionWitness",
+    "cpp_source": "struct Owner { int value = -1; int read() const { return static_cast<int>(static_cast<unsigned char>(value)); } }; bool callable_witness() { Owner owner; return owner.read() == 255; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

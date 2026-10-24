@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 145 | 141 | 0 | 4 | sv-tests-2 declarations |
+| 146 | 142 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -159,6 +159,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `dynamic_fixed_size_mismatch` | `Examples/system-verilog/dynamic_fixed_size_mismatch/dynamic_fixed_size_mismatch.sv` | match | **MATCH** | `ok` | MATCH |
 | `sformat_literal_integral` | `Examples/system-verilog/sformat_literal_integral/sformat_literal_integral.sv` | match | **MATCH** | `ok` | MATCH |
 | `sformat_constant_selected` | `Examples/system-verilog/sformat_constant_selected/sformat_constant_selected.sv` | match | **MATCH** | `ok` | MATCH |
+| `array_reverse` | `Examples/system-verilog/array_reverse/array_reverse.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -226,7 +227,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.DoWhileStatement` | `Examples/system-verilog/do_while_string_literal/do_while_string_literal.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DriveStrength` | `Examples/system-verilog/constant_strength_driver/constant_strength_driver.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ElementSelect` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
-| `SyntaxKind.ElseClause` | `Examples/system-verilog/clog2/clog2.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ElseClause` | `Examples/system-verilog/array_reverse/array_reverse.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EmptyIdentifierName` | `Examples/system-verilog/foreach/values.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EmptyQueueExpression` | `Examples/system-verilog/empty_dynamic_array_write/empty_dynamic_array_write.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EmptyStatement` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
@@ -277,7 +278,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.LessThanExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LetDeclaration` | `Examples/system-verilog/let_expressions/binding.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicType` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
-| `SyntaxKind.LogicalAndExpression` | `Examples/system-verilog/clog2/clog2.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.LogicalAndExpression` | `Examples/system-verilog/array_reverse/array_reverse.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalImplicationExpression` | `Examples/system-verilog/implication/implication.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.LogicalLeftShiftAssignmentExpression` | `Examples/system-verilog/compound_assignments/partial_windows.sv` | **REFUSE** | `unsupported` AssignmentExpression:compound-partial-range |
 | `SyntaxKind.LogicalOrExpression` | `Examples/system-verilog/division/context_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
@@ -391,15 +392,15 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22048 | 4843 | 17139 | 66 |
+| 22049 | 4846 | 17137 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `ExpressionStatement:CallExpression` | 2981 |
+| `ExpressionStatement:CallExpression` | 2980 |
 | `AssignmentExpression:target` | 2979 |
 | `CallExpression` | 2973 |
 | `Hierarchy:ports` | 2397 |
-| `VariableSymbol:2state` | 2350 |
+| `VariableSymbol:2state` | 2349 |
 | `SubroutineSymbol:Subroutine` | 1634 |
 | `NamedValueExpression:2state` | 1484 |
 | `ConcurrentAssertionStatement` | 1359 |
@@ -407,7 +408,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 | `ClassType` | 1329 |
 | `Hierarchy:module-kind` | 1248 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1154 |
-| `MemberAccessExpression` | 1023 |
+| `MemberAccessExpression` | 1022 |
 | `ConversionExpression:width` | 782 |
 | `HierarchicalValueExpression` | 749 |
 

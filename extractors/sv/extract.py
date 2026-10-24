@@ -6280,6 +6280,101 @@ def _semaphore_zero_method(expression):
         return False
 
 
+def _fixed_array_reverse_method(sm, expression):
+    """Lower ``reverse()`` on a one-dimensional literal fixed array.
+
+    Fixed unpacked array leaves already have independent slots in the flat
+    self-check state.  A complete scalar declaration initializer therefore
+    supplies every value needed to reverse the cells without adding an
+    aggregate object.  Receiver uses are restricted to constant element reads
+    after the call; later writes, dynamic selects, and other methods remain
+    on the ordinary call boundary.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "reverse"
+                or len(expression.arguments) != 1):
+            return None
+        receiver = expression.arguments[0]
+        if type(receiver).__name__ != "NamedValueExpression":
+            return None
+        symbol = getattr(receiver, "symbol", None)
+        if symbol is None:
+            return None
+        shape = _fixed_array_dimensions(receiver.type, max_cells=128)
+        if shape is None:
+            return None
+        dimensions, leaf_type = shape
+        if len(dimensions) != 1:
+            return None
+        left, right = dimensions[0]
+        count = abs(right - left) + 1
+        width, two_state, reason = type_width_2s(leaf_type)
+        if width is None or reason is not None or count <= 0:
+            return None
+        values = _fixed_array_initializer_values(
+            sm, getattr(symbol, "initializer", None), symbol.name, width, count)
+        if values is None or any(value is None for value in values):
+            return None
+        # Keep this method slice source-pure: a named or computed initializer
+        # would require sampling the array at run time before the mutation.
+        def contains_ident(node):
+            if isinstance(node, dict):
+                return node.get("kind") == "Ident" or any(
+                    contains_ident(value) for value in node.values())
+            if isinstance(node, list):
+                return any(contains_ident(value) for value in node)
+            return False
+        if any(contains_ident(value) for value in values):
+            return None
+
+        # The flat store can expose constant cells, but it cannot preserve an
+        # arbitrary array receiver.  Permit only the reverse call itself and
+        # constant element reads; reject every other receiver use.
+        instance = symbol.parentScope.containingInstance
+        valid = True
+
+        def inspect(node):
+            nonlocal valid
+            kind = type(node).__name__
+            if kind == "ElementSelectExpression":
+                value = getattr(node, "value", None)
+                if (type(value).__name__ == "NamedValueExpression"
+                        and getattr(value, "symbol", None) is symbol):
+                    if _constant_dimension_selector(getattr(node, "selector", None)) is None:
+                        valid = False
+                    return VisitAction.Skip
+            if kind == "NamedValueExpression" and getattr(node, "symbol", None) is symbol:
+                if node is not receiver:
+                    valid = False
+
+        instance.visit(inspect)
+        if not valid:
+            return None
+
+        positions = list(range(left, right + (1 if right >= left else -1),
+                               1 if right >= left else -1))
+        reversed_values = list(reversed(values))
+        statements = []
+        for position, value in zip(positions, reversed_values):
+            if two_state:
+                value = squash2_wrap(value, width)
+            statements.append({
+                "kind": "BlockingAssign",
+                "span": node_span(sm, expression),
+                "target": {"kind": "Ident", "span": node_span(sm, receiver),
+                           "width": width,
+                           "name": f"{symbol.name}[{position}]"},
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expression),
+                "stmts": statements, "fixed_array_reverse_lowered": True}
+    except Exception:
+        return None
+
+
 def _literal_integral_value(expression):
     """Read a small literal integral expression without evaluating source code.
 
@@ -9066,6 +9161,10 @@ def _convert_syscall(sm, s, e):
         constant_assignment = _constant_formatted_integral_assignment(sm, e)
         if constant_assignment is not None:
             return constant_assignment
+    if _SYM is None and e.isSystemCall and e.subroutineName == "reverse":
+        reversed_array = _fixed_array_reverse_method(sm, e)
+        if reversed_array is not None:
+            return reversed_array
     if _SYM is None and e.isSystemCall and e.subroutineName == "$sformat":
         literal_assignment = _sformat_literal_assignment(sm, e)
         if literal_assignment is not None:

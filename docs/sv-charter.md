@@ -6658,3 +6658,20 @@ The fresh 22,048-path census remains **4,843 clean / 17,139 partial** (66
 include skips); `ExpressionStatement:CallExpression` falls **2,982 → 2,981**.
 Differential coverage moves **144/140/0/4 → 145/141/0/4**; grammar coverage
 remains **214/83/131**.
+
+## Literal fixed-array `reverse()` — 2026-10-24
+
+IEEE 1800-2023 §7.12.2 reverses the elements of an unpacked array in place.
+The self-check surface already stores fixed unpacked integral leaves as
+independent cells, so the extractor now lowers `reverse()` on a one-dimensional
+fixed array with a complete scalar literal initializer to cell writes in
+reverse order. Dynamic arrays, queues, multidimensional arrays, nonliteral
+initializers, and other receiver uses remain loud. `array_reverse` supplies
+the `PASS` transcript; extractor tests pin the dynamic and nonliteral refusal
+boundaries.
+
+The fresh **22,049-path** census measures **4,846 clean / 17,137 partial** (66
+include skips); the committed 22,048-path snapshot is superseded by the
+corpus update, while `ExpressionStatement:CallExpression` falls **2,981 →
+2,980**. Differential coverage moves **145/141/0/4 → 146/142/0/4**; grammar
+coverage remains **214/83/131**.

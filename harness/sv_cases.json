@@ -1306,6 +1306,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "array_reverse",
+      "file": "Examples/system-verilog/array_reverse/array_reverse.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

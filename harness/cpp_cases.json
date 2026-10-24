@@ -2713,6 +2713,18 @@
     "rung": 1
   },
   {
+    "id": "object.callable-static-local-statement",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_namespace": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_expression": "callableStaticLocalStatementWitness",
+    "cpp_source": "int callable_static() { static int value = 4; return value; } bool callable_witness() { return callable_static() == 4 && callable_static() == 4; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "object.storage-reuse",
     "kind": "lifetime",
     "corpus": "rung-1 witness",

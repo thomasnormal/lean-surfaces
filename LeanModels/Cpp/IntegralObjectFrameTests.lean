@@ -397,6 +397,8 @@ private def staticLocalStatement : Bool :=
         second.frame.store.values == [some (signed 4)] &&
         objectPhase? second.frame 0 == some .aliveInitialized
 
+def callableStaticLocalStatementWitness : Bool := staticLocalStatement
+
 def threadLocalLifecycle : Bool :=
   match opened with
   | .error _ => false
@@ -669,6 +671,7 @@ def callableLocalReferenceWitness : Bool := aliasLifetimeAndConst && aliasUninit
 #guard callableSequentialLocalsWitness
 #guard callableTemporaryReferenceStatementWitness
 #guard callableDynamicLocalStatementWitness
+#guard callableStaticLocalStatementWitness
 
 private theorem kernelReferenceBindings :
     (aliasLifetimeAndConst && aliasUninitializedAndEnded) = true := rfl

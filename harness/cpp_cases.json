@@ -4129,6 +4129,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-short-decrement-wrap",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableShortFrameDecrementWitness",
+    "cpp_source": "short frame_short_decrement(short value) { return --value; } bool callable_witness() { return frame_short_decrement(-32768) == 32767; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-unsigned-short-decrement-wrap",
     "kind": "expression",
     "corpus": "rung-3 witness",

@@ -1043,7 +1043,9 @@ class ClassDefTests(unittest.TestCase):
             "class Base:\n    pass\nclass C(Base):\n    pass\n")
         self.assertIsNone(body[1]["class_unsupported"])
         self.assertEqual(body[1]["base"], "Base")
-        self.assertFalse(body[1]["creation_effects"])
+        # The extractor has no module-order context; ingestion clears this
+        # effect once it proves the base is an earlier admitted class.
+        self.assertTrue(body[1]["creation_effects"])
 
     def test_metaclass_and_decorators_flag(self):
         body = self._module_body("class C(metaclass=type):\n    pass\n")

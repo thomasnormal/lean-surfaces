@@ -17,6 +17,25 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-109 — class census inheritance control
+
+The class census now follows ingestion's source-order rule for the new
+inheritance slice. The extractor records every base expression as a creation
+effect because it has no module context; the census and ingestion clear that
+effect only for a single plain-name base whose earlier same-module class is
+admitted. The controls now cover object, external exception, forward, and
+same-module bases without treating the last one as a creation wall.
+
+| Measurement | Result |
+|---|---|
+| Extractor tests | 126 passed |
+| Class census controls | 20 fixtures + graphlib/opcode/bisect: 0 failures |
+| Lean validation | `LeanModels.Python.Json` built |
+| Generated checks | envelope regenerated and `git diff --check` passed |
+
+DECIDED: keep creation-effect provenance conservative in raw envelopes and
+make the context-sensitive admission explicit in ingestion and census tools.
+
 ## 2026-10-24-pycomplete-108 — simple same-module class inheritance
 
 The class tier now admits one plain-name base whose class definition ends

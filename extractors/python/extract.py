@@ -1780,7 +1780,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # property/setter/classmethod/staticmethod, which happen to have
         # no creation-time effect -- lucky, not sound.
         creation_effects = bool(node.keywords) or bool(node.decorator_list)
-        if node.bases and namedtuple_base is None and simple_base is None and not exception_base:
+        if node.bases and namedtuple_base is None and not exception_base:
             creation_effects = True
         for s in node.body:
             if isinstance(s, ast.FunctionDef):

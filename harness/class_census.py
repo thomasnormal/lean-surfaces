@@ -252,7 +252,8 @@ def class_row(node, class_names, import_names, truth, recognized=None,
 
     ``recognized`` is the extractor's own structural recognition of the base
     (``"exc"`` for the exact `class N(Exception): pass` shape, ``"nt"`` for a
-    plain `namedtuple(...)` base, ``None`` otherwise) — it is what makes the
+    plain `namedtuple(...)` base, ``"base"`` for an earlier same-module plain
+    base, ``None`` otherwise) — it is what makes the
     ground-truth cross-check exact instead of exempting a whole feature.
     """
     feats, kinds = _body_features(node)
@@ -297,6 +298,8 @@ def unexplained(c):
         ex.add("base:exception")
     if c.get("recognized") == "nt":
         ex.add("base:namedtuple-call")
+    if c.get("recognized") == "base":
+        ex.add("base:same-module-class")
     # A literal __slots__ declaration is represented in the class table and
     # changes instance storage without executing an observable class-body
     # effect.  It is therefore a priced semantic demand, but not a creation
@@ -328,8 +331,18 @@ def _import_names(tree):
 
 def _module_envelope(tree):
     """The extractor's own module dict — GROUND TRUTH, built in memory."""
-    return {"kind": "Module",
-            "body": [extract.convert_stmt(s, module_scope=True) for s in tree.body]}
+    body = [extract.convert_stmt(s, module_scope=True) for s in tree.body]
+    prior = set()
+    for d in body:
+        if d.get("kind") == "ClassDef":
+            base = d.get("base")
+            if (base is not None and base in prior
+                    and d.get("class_unsupported") is None):
+                # Ingestion proves this name-only base at the class statement;
+                # its evaluation is then creation-pure.
+                d["creation_effects"] = False
+            prior.add(d.get("name"))
+    return {"kind": "Module", "body": body}
 
 
 def _walls_of(env_module):
@@ -377,7 +390,15 @@ def file_row(path, name):
     for d in env["body"]:
         if d.get("kind") == "ClassDef":
             rec = ("nt" if d.get("namedtuple_base") is not None
-                   else "exc" if d.get("exception_base") else None)
+                   else "exc" if d.get("exception_base") else
+                   "base" if any(c.name == d["name"]
+                                  and c.lineno == d["span"]["lineno"]
+                                  and len(c.bases) == 1
+                                  and isinstance(c.bases[0], ast.Name)
+                                  and any(p.name == c.bases[0].id
+                                          and p.lineno < c.lineno for p in top)
+                                  for c in top)
+                   else None)
             truth[(d["name"], d["span"]["lineno"])] = (
                 bool(d.get("creation_effects")), rec, "slots" in d)
 
@@ -526,7 +547,7 @@ FIXTURES = [
     ("__slots__", "class C:\n    __slots__ = ()\n", ["body:slots"], False),
     ("object base", "class C(object):\n    pass\n", ["base:object"], True),
     ("same-module base",
-     "class A:\n    pass\nclass B(A):\n    pass\n", ["base:same-module-class"], True),
+     "class A:\n    pass\nclass B(A):\n    pass\n", ["base:same-module-class"], False),
     ("Exception base", "class E(Exception):\n    pass\n", ["base:exception"], False),
     ("ValueError base", "class E(ValueError):\n    pass\n", ["base:exception"], True),
     ("multiple bases",
@@ -564,12 +585,17 @@ def controls(verbose=True):
         names = set(s.name for s in top)
         imports = _import_names(tree)
         env = _module_envelope(tree)
+        node = top[-1]
         truth = [(bool(d.get("creation_effects")),
                   "nt" if d.get("namedtuple_base") is not None
-                  else "exc" if d.get("exception_base") else None,
+                  else "exc" if d.get("exception_base") else
+                  "base" if len(node.bases) == 1
+                  and isinstance(node.bases[0], ast.Name)
+                  and any(p.name == node.bases[0].id and p.lineno < node.lineno
+                          for p in top)
+                  else None,
                   "slots" in d)
                  for d in env["body"] if d.get("kind") == "ClassDef"]
-        node = top[-1]
         got = class_row(node, names, imports, truth[-1][0], truth[-1][1],
                        truth[-1][2])
         ok = (got["demands"] == sorted(want)

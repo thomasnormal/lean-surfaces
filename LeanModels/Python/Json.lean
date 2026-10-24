@@ -1798,7 +1798,8 @@ def parseModule (j : Json) : Except String Module :=
           | some b =>
             match classes.findRev? (fun prior => prior.name == b) with
             | some prior =>
-              if prior.ok && prior.ntBase.isNone && !prior.isExc then c
+              if prior.ok && prior.ntBase.isNone && !prior.isExc then
+                { c with creationPure := c.creationExecutable }
               else { c with ok := false, creationPure := false }
             | Option.none => { c with ok := false, creationPure := false }
           | Option.none => c

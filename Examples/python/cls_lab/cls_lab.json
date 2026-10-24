@@ -1047,7 +1047,7 @@
         },
         "name": "Sub",
         "class_unsupported": null,
-        "creation_effects": false,
+        "creation_effects": true,
         "body": [
           {
             "kind": "Pass",

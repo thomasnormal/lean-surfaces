@@ -9529,9 +9529,11 @@ def _net_has_only_literal_continuous_drivers(m):
         instance = m.parentScope.containingInstance
         found = False
         valid = True
+        strength_drivers = 0
+        driver_count = 0
 
         def inspect(node):
-            nonlocal found, valid
+            nonlocal found, valid, strength_drivers, driver_count
             if type(node).__name__ != "ContinuousAssignSymbol":
                 return
             assignment = getattr(node, "assignment", None)
@@ -9544,14 +9546,22 @@ def _net_has_only_literal_continuous_drivers(m):
             if symbol is not m:
                 return
             found = True
+            driver_count += 1
+            explicit_strength = _continuous_assignment_has_strength(node)
+            if explicit_strength:
+                strength_drivers += 1
             valid = (valid and assignment.op is None
                      and assignment.timingControl is None
                      and not assignment.isNonBlocking
-                     and not _continuous_assignment_has_strength(node)
+                     and (not explicit_strength or driver_count == 1)
                      and _integral_literal_source(assignment.right))
 
         instance.visit(inspect)
-        return found and valid
+        # A single strengthened literal has the same fixed value as its
+        # ordinary four-state driver. Any additional driver would require
+        # per-driver strength resolution, so retain the loud tri boundary.
+        return (found and valid and
+                (strength_drivers == 0 or driver_count == 1))
     except Exception:
         return False
 

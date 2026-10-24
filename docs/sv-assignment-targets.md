@@ -230,9 +230,23 @@ such as `(strong1, strong0)`, is admitted when its RHS is a pure integral
 literal. The fixed value lowers through the existing time-zero path; the
 strength metadata is retained in the extracted process for diagnostics.
 Strength-bearing selected targets, multiple strength drivers, dynamic or
-effectful sources, and `tri` declarations remain loud because the current
-flat representation does not model per-driver strength resolution.
+effectful sources, and strengthened `tri` declarations with multiple or mixed
+drivers remain loud because the current flat representation does not model
+per-driver strength resolution.
 
 `constant_strength_driver` is the differential witness. Multiple strengthened
 drivers remain ordinary continuous assignments and therefore preserve the
 existing refusal boundary.
+
+## Single strengthened `tri` literal drivers — 2026-10-24
+
+A `tri` with one explicitly strengthened whole-net driver and a pure integral
+literal source now uses the same fixed four-state value as an ordinary single
+driver. Since there is no competing driver, strength never affects the
+resolved value and no per-driver state is needed. Selected targets, multiple
+or mixed-strength drivers, dynamic/effectful sources, and delayed assignments
+remain loud.
+
+`constant_tri_strength_driver` is the differential witness; the extractor
+tests keep multiple strengthened `tri` drivers on the declaration refusal
+boundary.

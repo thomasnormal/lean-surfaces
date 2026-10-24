@@ -3803,11 +3803,24 @@ The census remains **4,810 clean / 17,172 partial / 66 include skips** with
 A single whole-net continuous driver with an explicit strength pair and a
 pure integral literal source now lowers to the existing time-zero assignment.
 Selected strength targets, multiple strength drivers, dynamic or effectful
-sources, and strengthened `tri` declarations remain loud pending per-driver
-strength representation. `constant_strength_driver` supplies the differential
-evidence.
+sources, and multiple or mixed-strength `tri` drivers remain loud pending
+per-driver strength representation. `constant_strength_driver` supplies the
+differential evidence.
 
 The corpus census remains **4,810 clean / 17,172 partial / 66 include skips**;
 `AssignmentExpression:target` moves **3,037 → 3,036**. Differential coverage
 moves **115/111/0/4 → 116/112/0/4**; grammar coverage moves
 **213/82/131 → 214/83/131**.
+
+## Single strengthened `tri` literal drivers — 2026-10-24
+
+A `tri` with one explicitly strengthened whole-net driver and a pure integral
+literal source now uses the existing fixed time-zero assignment. With no
+competing driver, strength cannot affect the resolved value and no per-driver
+state is needed. Selected targets, multiple or mixed-strength drivers,
+dynamic/effectful sources, and delayed assignments remain loud.
+`constant_tri_strength_driver` supplies the differential evidence.
+
+The corpus census remains **4,810 clean / 17,172 partial / 66 include skips**;
+`AssignmentExpression:target` remains **3,036 files**. Differential coverage
+moves **116/112/0/4 → 117/113/0/4**; grammar coverage remains **214/83/131**.

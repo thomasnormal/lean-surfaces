@@ -5636,3 +5636,17 @@ The fresh 22,046-file census moves **4,705 → 4,721 clean** and **17,275 →
 3,040**, and `SubroutineSymbol:Subroutine` falls **1,715 → 1,665**.
 Differential coverage moves **72/68/0/4 → 73/69/0/4**; grammar coverage moves
 **207/76/131 → 209/78/131**.
+
+## Opaque uninitialized class-handle declarations — 2026-10-24
+
+Uninitialized class-handle declarations, including built-in handles such as
+`mailbox`, now disappear as declaration metadata in both module and procedural
+scopes. The default null handle has no flat self-check slot; construction,
+assignments, reads, and method calls remain loud and no object model is added.
+
+The `opaque_handle_decl` fixture and differential row cover module and local
+declarations, with extractor regressions for initialized and read handles. The
+fresh 22,046-file census moves **4,721 → 4,722 clean** and **17,259 → 17,258
+partial**; `VariableSymbol:2state` falls **3,383 → 2,376**. Differential
+coverage moves **73/69/0/4 → 74/70/0/4**; grammar coverage remains
+**209/78/131**.

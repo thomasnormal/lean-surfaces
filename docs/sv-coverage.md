@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 73 | 69 | 0 | 4 | sv-tests-2 declarations |
+| 74 | 70 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -74,6 +74,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `floating_local_decl` | `Examples/system-verilog/floating_local_decl/floating_local_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `floating_literal_write` | `Examples/system-verilog/floating_literal_write/floating_literal_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_subroutine_call` | `Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv` | match | **MATCH** | `ok` | MATCH |
+| `opaque_handle_decl` | `Examples/system-verilog/opaque_handle_decl/opaque_handle_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `generate_indexed_targets` | `Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv` | match | **MATCH** | `ok` | MATCH |
 | `oob_struct_read` | `Examples/system-verilog/oob_struct_read/oob_struct_read.sv` | match | **MATCH** | `ok` | MATCH |
 | `streaming_struct_source` | `Examples/system-verilog/streaming_struct_source/streaming_struct_source.sv` | match | **MATCH** | `ok` | MATCH |
@@ -314,15 +315,15 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22046 | 4721 | 17259 | 66 |
+| 22046 | 4722 | 17258 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `VariableSymbol:2state` | 3383 |
 | `AssignmentExpression:target` | 3321 |
 | `CallExpression` | 3283 |
 | `ExpressionStatement:CallExpression` | 3040 |
 | `Hierarchy:ports` | 2397 |
+| `VariableSymbol:2state` | 2376 |
 | `SubroutineSymbol:Subroutine` | 1665 |
 | `NamedValueExpression:2state` | 1484 |
 | `ConcurrentAssertionStatement` | 1359 |

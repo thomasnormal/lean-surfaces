@@ -15,10 +15,6 @@
  "summary": {
   "blocker_files": [
    [
-    "VariableSymbol:2state",
-    3383
-   ],
-   [
     "AssignmentExpression:target",
     3321
    ],
@@ -33,6 +29,10 @@
    [
     "Hierarchy:ports",
     2397
+   ],
+   [
+    "VariableSymbol:2state",
+    2376
    ],
    [
     "SubroutineSymbol:Subroutine",
@@ -139,12 +139,12 @@
     267
    ],
    [
-    "StaticLocal:invalid-compilation",
+    "BlockStatement:JoinNone",
     225
    ],
    [
-    "BlockStatement:JoinNone",
-    225
+    "StaticLocal:invalid-compilation",
+    220
    ],
    [
     "Always:invalid-compilation",
@@ -387,10 +387,6 @@
     28
    ],
    [
-    "VariableDeclStatement:2state",
-    28
-   ],
-   [
     "NetSymbol:delay",
     27
    ],
@@ -504,6 +500,10 @@
    ],
    [
     "PatternCaseStatement",
+    13
+   ],
+   [
+    "VariableDeclStatement:2state",
     13
    ],
    [
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4721,
-   "partial": 17259,
+   "clean": 4722,
+   "partial": 17258,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1002,7 +1002,7 @@
     25
    ],
    "compile_error": [
-    117,
+    118,
     1750
    ],
    "compile_fail": [
@@ -1072,7 +1072,7 @@
      ],
      [
       "VariableSymbol:2state",
-      65
+      62
      ],
      [
       "CallExpression",
@@ -1238,7 +1238,7 @@
     "top_residual_blockers": [
      [
       "VariableSymbol:2state",
-      200
+      183
      ],
      [
       "CallExpression",
@@ -1611,9 +1611,9 @@
     "unlockable": 0
    },
    "chapter-8": {
-    "clean": 0,
+    "clean": 1,
     "error": 0,
-    "partial": 842,
+    "partial": 841,
     "skip_include": 1,
     "total": 843,
     "unlockable": 0

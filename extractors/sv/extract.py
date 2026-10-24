@@ -431,6 +431,23 @@ def is_chandle_decl(symbol):
         return False
 
 
+def is_inert_class_handle_decl(symbol):
+    """Whether an uninitialized class handle is declaration-only metadata.
+
+    A class handle starts as null, but the flat self-check state has no object
+    or handle slot.  The declaration itself has no observable effect; reads,
+    writes, construction, and method calls continue through their existing
+    loud boundaries.
+    """
+    if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
+        return False
+    try:
+        return (type(symbol.type.canonicalType).__name__ == "ClassType"
+                and getattr(symbol, "initializer", None) is None)
+    except Exception:
+        return False
+
+
 def is_module_virtual_interface_null_decl(symbol):
     """Whether a module virtual-interface variable is initialized to null."""
     if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
@@ -7391,6 +7408,8 @@ def _convert_local_decl(sm, stmt):
         if getattr(symbol, "initializer", None) is not None:
             return unsupported(sm, stmt, "VariableDeclStatement:chandle-initializer")
         return {"kind": "Empty", "span": node_span(sm, stmt)}
+    if _SYM is None and is_inert_class_handle_decl(symbol):
+        return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None and is_string_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None and is_inert_2state_floating_decl(symbol):
@@ -8116,6 +8135,8 @@ def convert_var(sm, m):
         return {"kind": "Empty", "span": sym_span(sm, m)}
     if _SYM is None and is_inert_2state_associative_array_decl(m):
         return {"kind": "Empty", "span": sym_span(sm, m)}
+    if _SYM is None and is_inert_class_handle_decl(m):
+        return {"kind": "Empty", "span": sym_span(sm, m)}
     w, two, reason = type_width_2s(m.type)
     if w is None:
         if reason == "type" and not getattr(m.type, "isFourState", True):
@@ -8405,7 +8426,8 @@ def _convert_static_procedural_storage(sm, members):
         if str(symbol.lifetime) != "VariableLifetime.Static":
             continue
         if (is_chandle_decl(symbol) or is_string_decl(symbol)
-                or is_inert_2state_floating_decl(symbol)):
+                or is_inert_2state_floating_decl(symbol)
+                or is_inert_class_handle_decl(symbol)):
             continue
         converted = convert_var(sm, symbol)
         values = converted if isinstance(converted, list) else [converted]
@@ -8677,6 +8699,7 @@ def convert_module(sm, inst):
                 if k == "Variable":
                     if (is_module_event_decl(m) or is_module_floating_decl(m)
                             or is_chandle_decl(m)
+                            or is_inert_class_handle_decl(m)
                             or is_module_virtual_interface_null_decl(m)
                             or is_string_decl(m)
                             or is_inert_2state_queue_decl(m)

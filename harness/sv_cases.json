@@ -549,6 +549,15 @@
       "expect": "match"
     },
     {
+      "name": "opaque_handle_decl",
+      "file": "Examples/system-verilog/opaque_handle_decl/opaque_handle_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "generate_indexed_targets",
       "file": "Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv",
       "module": "top",

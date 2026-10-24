@@ -3925,6 +3925,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-failure-retains-scope",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_namespace": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_expression": "callableFrameFailureRetainsScopeWitness",
+    "cpp_source": "bool callable_witness() { int value = 5; bool failed = false; try { throw 1; } catch (...) { failed = true; } return failed && value == 5; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

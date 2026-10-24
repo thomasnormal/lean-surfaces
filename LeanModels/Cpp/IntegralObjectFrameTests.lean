@@ -333,6 +333,8 @@ private def executeFailureRetainsScope : Bool :=
       | _ => false) && result.frame.scopeDepth == 2 && result.frame.bound (handle "0x1")
   | .error _ => false
 
+def callableFrameFailureRetainsScopeWitness : Bool := executeFailureRetainsScope
+
 def temporaryReferenceLifecycle : Bool :=
   match opened with
   | .error _ => false
@@ -687,6 +689,7 @@ def callableLocalReferenceWitness : Bool := aliasLifetimeAndConst && aliasUninit
 #guard callableFrameContinueBreakWitness
 #guard callableFrameBlockScopeWitness
 #guard callableFrameReturnCleanupWitness
+#guard callableFrameFailureRetainsScopeWitness
 
 private theorem kernelReferenceBindings :
     (aliasLifetimeAndConst && aliasUninitializedAndEnded) = true := rfl

@@ -4249,6 +4249,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-unsigned-char-postfix-return",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableUnsignedCharPostfixReturnWitness",
+    "cpp_source": "unsigned char frame_unsigned_char_postfix_return(unsigned char value) { return value++; } bool callable_witness() { return frame_unsigned_char_postfix_return(255) == 255; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-unsigned-short-decrement-wrap",
     "kind": "expression",
     "corpus": "rung-3 witness",

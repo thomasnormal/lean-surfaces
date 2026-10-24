@@ -5897,3 +5897,17 @@ the direct real-valued refusal. The fresh 22,046-file census moves **4,761 →
 4,762 clean** and **17,219 → 17,218 partial**; `CallExpression` falls **3,088
 → 3,087**. Differential coverage moves **91/87/0/4 → 92/88/0/4**, and grammar
 coverage remains **211/80/131**.
+
+## Zero-size queue and dynamic-array queries — 2026-10-24
+
+An uninitialized queue or dynamic array has size zero. The self-check extractor
+now lowers its `.size()` query to a 32-bit zero literal when the receiver has no
+initializer and every source occurrence is the same read-only size query. This
+keeps aggregate storage, pushes, assignments, and other methods outside the
+tier; initialized or mutated receivers remain loud.
+
+The `zero_size_query` fixture and differential row cover both aggregate kinds,
+and extractor tests pin the mutation and initializer boundaries. The fresh
+22,046-file census moves **4,762 → 4,766 clean** and **17,218 → 17,214
+partial**; `CallExpression` falls **3,087 → 3,083**. Differential coverage
+moves **92/88/0/4 → 93/89/0/4**, and grammar coverage remains **211/80/131**.

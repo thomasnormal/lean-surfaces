@@ -5096,6 +5096,7 @@ def _convert_legacy_call(sm, expression):
             (_enum_method_call, _convert_enum_method),
             (_clog2_call, _convert_clog2),
             (_dimension_query_call, _convert_dimension_query),
+            (_zero_size_method, _convert_zero_size_method),
             (_time_call, _convert_time_call),
             (_stime_call, _convert_stime_call),
             (_signing_call, _convert_signing_call),
@@ -5566,6 +5567,54 @@ def _empty_queue_literal(expr):
         return len(list(node.operands)) == 0
     except Exception:
         return False
+
+
+def _zero_size_method(expression):
+    """Recognize ``q.size()`` on an untouched empty aggregate.
+
+    The flat self-check state has no queue or dynamic-array object. An
+    uninitialized aggregate is nevertheless defined to have size zero. Every
+    later source occurrence of the receiver must be this same read-only
+    method; pushes, assignments, and other observations stay loud.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "size"):
+            return False
+        arguments = list(expression.arguments)
+        if len(arguments) != 1 or type(arguments[0]).__name__ != "NamedValueExpression":
+            return False
+        receiver = arguments[0]
+        symbol = receiver.symbol
+        canonical = type(receiver.type.canonicalType).__name__
+        if canonical not in ("QueueType", "DynamicArrayType"):
+            return False
+        if getattr(symbol, "initializer", None) is not None:
+            return False
+        name = getattr(symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        occurrences = list(re.finditer(r"(?<![A-Za-z0-9_$])" + re.escape(name)
+                                       + r"(?![A-Za-z0-9_$])", source))
+        if not occurrences:
+            return False
+        return all(source[m.end():].lstrip().startswith(".size")
+                   for m in occurrences[1:])
+    except Exception:
+        return False
+
+
+def _convert_zero_size_method(sm, expression):
+    if not _zero_size_method(expression):
+        return unsupported(sm, expression, "CallExpression:size")
+    return {
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": expression.type.bitWidth,
+        "bits": "0" * expression.type.bitWidth,
+        "zero_size_query": True,
+    }
 
 
 def _new_integer_arg(expr, value, implicit):

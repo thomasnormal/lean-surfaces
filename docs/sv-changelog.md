@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.9] — 2026-10-24
+
+The self-check surface now has 109 differential rows: 105 matches, zero
+disagreements, and 4 recorded refusals. The grammar census has 213 pyslang
+syntax witnesses: 82 MATCH and 131 REFUSE. The 22,048-path corpus measures
+4,806 clean files, 17,176 partial files, and 66 include skips. This release
+adds literal whole-net and selected packed continuous drivers, typed enum
+defaults in packed-struct array patterns, and time-zero resolution for static
+literal wire-driver sets. Dynamic, variable, selected-resolution, timed, and
+effectful forms remain loud.
+
 ## [0.1.8] — 2026-10-24
 
 The self-check surface now has 104 differential rows: 100 matches, zero

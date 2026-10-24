@@ -5924,3 +5924,17 @@ with extractor tests pinning the written-string boundary. The fresh 22,046-file
 census remains **4,766 clean / 17,214 partial** and `CallExpression` remains
 **3,083**; this slice changes the differential table **93/89/0/4 → 94/90/0/4**
 while grammar coverage remains **211/80/131**.
+
+## Zero-size queries after explicit empty writes — 2026-10-24
+
+Explicit writes of `{}` to an inert queue or dynamic array, and `""` to an
+inert string, now preserve the corresponding zero `.size()` or `.len()` result.
+The source-use guard still rejects any later push, nonempty write, initializer,
+or other aggregate/string observation, so this extends the empty-state rule
+without introducing storage.
+
+The `zero_size_after_empty_write` fixture and differential row cover all three
+forms, with extractor tests pinning the nonempty mutation boundary. The fresh
+22,046-file census moves **4,766 → 4,772 clean** and **17,214 → 17,208
+partial**; `CallExpression` falls **3,083 → 3,077**. Differential coverage
+moves **94/90/0/4 → 95/91/0/4**, and grammar coverage remains **211/80/131**.

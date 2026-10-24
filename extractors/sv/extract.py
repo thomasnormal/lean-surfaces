@@ -5604,8 +5604,14 @@ def _zero_size_method(expression):
         if not occurrences:
             return False
         suffix = "." + method
-        return all(source[m.end():].lstrip().startswith(suffix)
-                   for m in occurrences[1:])
+        def inert_occurrence(match):
+            tail = source[match.end():].lstrip()
+            if tail.startswith(suffix):
+                return True
+            if canonical in ("QueueType", "DynamicArrayType"):
+                return re.match(r"=\s*\{\s*\}", tail) is not None
+            return re.match(r'=\s*""', tail) is not None
+        return all(inert_occurrence(m) for m in occurrences[1:])
     except Exception:
         return False
 

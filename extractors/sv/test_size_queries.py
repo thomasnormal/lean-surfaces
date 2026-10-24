@@ -66,6 +66,26 @@ class SizeQueries(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
+    def test_empty_queue_write_keeps_size_zero(self):
+        design = lower(
+            'module top; int q[$]; initial begin q = {}; '
+            '$display("%0d", q.size()); end endmodule')
+        self.assertTrue(any(node.get("zero_size_query") for node in nodes(design)))
+
+    def test_empty_string_write_keeps_len_zero(self):
+        design = lower(
+            'module top; string s; initial begin s = ""; '
+            '$display("%0d", s.len()); end endmodule')
+        self.assertTrue(any(node.get("zero_string_length_query")
+                            for node in nodes(design)))
+
+    def test_nonempty_write_before_query_stays_loud(self):
+        design = lower(
+            'module top; int q[$]; initial begin q = {}; q.push_back(1); '
+            '$display("%0d", q.size()); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

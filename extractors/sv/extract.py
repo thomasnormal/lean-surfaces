@@ -418,18 +418,33 @@ def is_module_floating_decl(symbol):
 
 
 def is_inert_2state_floating_decl(symbol):
-    """Whether an uninitialized procedural real declaration is inert.
+    """Whether a procedural real declaration is inert.
 
     Real and shortreal storage has no representation in the self-check
-    state. An uninitialized local has no observable effect by itself; reads
-    remain loud at their expression boundary, and initializers are retained.
+    state. An uninitialized local, or one initialized by a pure real literal,
+    has no observable effect by itself; reads remain loud at their expression
+    boundary and effectful initializers remain represented as refusals.
     """
     if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
         return False
     try:
-        return (symbol.parentScope.isProceduralContext
-                and type(symbol.type.canonicalType).__name__ == "FloatingType"
-                and getattr(symbol, "initializer", None) is None)
+        if (not symbol.parentScope.isProceduralContext
+                or type(symbol.type.canonicalType).__name__ != "FloatingType"):
+            return False
+        initializer = getattr(symbol, "initializer", None)
+        if initializer is None:
+            return True
+        if type(initializer).__name__ in ("RealLiteral", "ShortRealLiteral"):
+            return True
+        if type(initializer).__name__ == "ConversionExpression":
+            return (type(getattr(initializer, "operand", None)).__name__
+                    in ("RealLiteral", "ShortRealLiteral"))
+        if type(initializer).__name__ == "UnaryExpression":
+            op = str(getattr(initializer, "op", "")).split(".")[-1]
+            return (op in ("Plus", "Minus", "UnaryPlus", "UnaryMinus")
+                    and type(getattr(initializer, "operand", None)).__name__
+                    in ("RealLiteral", "ShortRealLiteral"))
+        return False
     except Exception:
         return False
 

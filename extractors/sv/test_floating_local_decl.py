@@ -33,9 +33,15 @@ class FloatingLocalDeclarations(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "VariableSymbol:2state"
                              for node in nodes(design)))
 
-    def test_initialized_real_stays_loud(self):
+    def test_literal_initialized_real_is_inert(self):
         design = lower(
             'module top; initial begin real value = 1.0; $display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "VariableSymbol:2state"
+                             for node in nodes(design)))
+
+    def test_effectful_initialized_real_stays_loud(self):
+        design = lower(
+            'module top; initial begin real value = $realtime; $display("PASS"); end endmodule')
         self.assertIn("VariableSymbol:2state",
                       [node.get("sv_kind") for node in nodes(design)])
 

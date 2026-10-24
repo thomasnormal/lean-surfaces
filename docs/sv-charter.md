@@ -5981,6 +5981,22 @@ and argument boundaries. The 22,046-file census remains **4,783 clean / 17,197
 partial**; its blocker counts are unchanged. Differential coverage moves
 **97/93/0/4 → 98/94/0/4**, and grammar coverage remains **211/80/131**.
 
+## Literal-initialized procedural floating declarations — 2026-10-24
+
+Procedural `real` and `shortreal` declarations initialized by a pure numeric
+literal now lower to inert metadata. The flat self-check state has no floating
+slot, and a literal initializer has no effect beyond creating that unavailable
+value; reads, effectful initializers, writes, arithmetic, and formatting remain
+loud. The `literal_real_decl` fixture and differential row cover signed real
+and shortreal literals, while extractor tests retain the dynamic initializer
+boundary.
+
+The current 22,048-path census keeps **4,784 clean** and moves **17,196 →
+17,198 partial** because this corpus snapshot contains two additional paths;
+`VariableSymbol:2state` falls **2,376 → 2,351**. Differential coverage moves
+**102/98/0/4 → 103/99/0/4**, and grammar coverage moves **211/80/131 →
+212/81/131**.
+
 ## Standard-output `$fwrite` — 2026-10-24
 
 `$fwrite` to the predefined standard-output descriptor now lowers to the

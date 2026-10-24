@@ -107,6 +107,12 @@ value from the flat state; nonliteral initializers and all string reads or
 writes remain unsupported. `string_literal_decl` exercises module and local
 forms.
 
+Procedural `real` and `shortreal` declarations may likewise carry a pure
+literal initializer when the value is not represented in the flat state. The
+declaration is omitted just like an uninitialized floating declaration;
+effectful initializers and every floating-point read or operation remain
+unsupported. `literal_real_decl` covers positive and negative real literals.
+
 The public representation has no aggregate heap, queue, object, string, real,
 handle, or event scheduler. The symbolic `PDecl`/`PType` representation also
 does not carry a two-state bit, and symbolic `Squash2` is intentionally loud.

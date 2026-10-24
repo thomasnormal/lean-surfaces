@@ -919,6 +919,15 @@
       "module": "top",
       "oracle": "refuse",
       "expect": "refuse"
+    },
+    {
+      "name": "literal_real_decl",
+      "file": "Examples/system-verilog/literal_real_decl/literal_real_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

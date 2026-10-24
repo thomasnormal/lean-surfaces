@@ -64,6 +64,16 @@ files **4,505 → 4,506** and partial files **17,464 → 17,463** while
 **37 rows, 33 matches, 0 disagreements, and 4 recorded refusals**; grammar
 coverage remains **200 witnesses, 68 MATCH, and 132 REFUSE**.
 
+## Literal-initialized procedural floating declarations — 2026-10-24
+
+Pure numeric initializers on procedural `real` and `shortreal` declarations
+are omitted from the flat self-check state, just like an uninitialized floating
+declaration. Effectful initializers and all floating-point uses remain loud.
+The current 22,048-path rerun keeps **4,784 clean** and moves **17,196 →
+17,198 partial** with two additional corpus paths; `VariableSymbol:2state`
+falls **2,376 → 2,351**. The `literal_real_decl` fixture supplies the
+differential evidence.
+
 Literal-only severity-task arguments now join the existing pure `$info` and
 `$warning` slice: a literal format and literal values are erased, while
 identifier or call arguments remain loud. The fresh rerun moves clean files

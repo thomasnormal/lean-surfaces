@@ -20,6 +20,11 @@ sole-tag examples include
 dynamic and queue arrays, events, real and string variables, handles, and
 other declaration forms with no common bit-vector meaning.
 
+An empty initializer on a 2-state queue (`{}` or `'{}'`) is also declaration
+only: it is omitted from the flat state because no queue object is represented.
+Nonempty or effectful queue initializers, reads, writes, and methods remain
+unsupported.
+
 Bounded fixed-size unpacked arrays with two or more dimensions are now an
 explicit exception. Ingestion expands the finite Cartesian product into
 independent vector cells, preserving ordinary two-state zero startup and

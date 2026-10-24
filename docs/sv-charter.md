@@ -6268,3 +6268,17 @@ the two-argument differential witness.
 The census remains **4,810 clean / 17,172 partial / 66 include skips** with
 unchanged blocker counts. Differential coverage moves **119/115/0/4 →
 120/116/0/4**; grammar coverage remains **214/83/131**.
+
+## Empty 2-state queue initializers — 2026-10-24
+
+An empty queue initializer (`{}` or `'{}'`) on a 2-state queue now lowers to
+inert declaration metadata. The flat self-check state has no queue object, and
+an empty declaration contributes no observable value until a queue operation
+uses it. Nonempty or effectful initializers, reads, writes, methods, and all
+4-state queues remain loud. `empty_queue_decl` supplies the two initializer
+forms and the differential witness.
+
+The fresh 22,048-path census moves **4,810 → 4,816 clean** and
+**17,172 → 17,166 partial**; `VariableSymbol:2state` falls **2,351 → 2,350**.
+Differential coverage moves **120/116/0/4 → 121/117/0/4**; grammar coverage
+remains **214/83/131**.

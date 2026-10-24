@@ -519,19 +519,29 @@ def is_string_decl(symbol):
 
 
 def is_inert_2state_queue_decl(symbol):
-    """Whether an uninitialized 2-state queue is only declaration metadata.
+    """Whether a 2-state queue declaration is only metadata.
 
     Queue reads, writes, methods, and aggregate values remain outside the
-    self-check state.  An uninitialized queue declaration therefore has no
-    observable effect in a design whose uses are still loud; an initializer
-    is retained as a boundary because it creates a value that could matter.
+    self-check state.  An uninitialized queue, or one initialized by the
+    empty queue pattern/concatenation, therefore has no represented value;
+    nonempty and effectful initializers remain a boundary because they create
+    a value that could matter.
     """
     if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
         return False
     try:
-        return (not symbol.type.isFourState
-                and type(symbol.type.canonicalType).__name__ == "QueueType"
-                and getattr(symbol, "initializer", None) is None)
+        if (symbol.type.isFourState
+                or type(symbol.type.canonicalType).__name__ != "QueueType"):
+            return False
+        initializer = getattr(symbol, "initializer", None)
+        if initializer is None:
+            return True
+        kind = type(initializer).__name__
+        if kind == "ConcatenationExpression":
+            return not list(getattr(initializer, "operands", ()))
+        if kind == "SimpleAssignmentPatternExpression":
+            return not list(getattr(initializer, "elements", ()))
+        return False
     except Exception:
         return False
 

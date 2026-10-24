@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "empty_queue_declaration",
+      "file": "Examples/system-verilog/empty_queue_decl/empty_queue_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "increment",
       "file": "Examples/system-verilog/increment/incdec.sv",
       "module": "top",

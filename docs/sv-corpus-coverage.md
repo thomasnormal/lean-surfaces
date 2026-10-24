@@ -3858,3 +3858,14 @@ self-check state. Dynamic or hierarchical arguments remain loud.
 The corpus census remains **4,810 clean / 17,172 partial / 66 include skips**
 with unchanged blocker counts. Differential coverage moves **119/115/0/4 →
 120/116/0/4**; grammar coverage remains **214/83/131**.
+
+## Empty 2-state queue initializers — 2026-10-24
+
+An empty queue initializer (`{}` or `'{}'`) on a 2-state queue is now omitted as
+inert declaration metadata. Nonempty or effectful initializers and queue
+operations remain loud because the flat self-check state has no queue object.
+The `empty_queue_decl` fixture covers both empty initializer spellings. The
+fresh chapter-scoped census moves **4,810 → 4,816 clean** and **17,172 →
+17,166 partial** (66 include skips); `VariableSymbol:2state` falls **2,351 →
+2,350**. Differential coverage moves **120/116/0/4 → 121/117/0/4**, and
+grammar coverage remains **214/83/131**.

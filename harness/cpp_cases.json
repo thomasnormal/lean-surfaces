@@ -2769,7 +2769,7 @@
     "lean_expression": "callableCompoundAssignmentWitness",
     "cpp_source": "int compound_witness(int value) { value += 3; return value; } bool callable_witness() { return compound_witness(4) == 7; }",
     "cpp_expression": "callable_witness()",
-    "expect": "refuse",
+    "expect": "match",
     "rung": 3
   },
   {
@@ -2781,7 +2781,7 @@
     "lean_expression": "callableAssignmentWitness",
     "cpp_source": "int assignment_witness(int value) { value = value + 3; return value; } bool callable_witness() { return assignment_witness(4) == 7; }",
     "cpp_expression": "callable_witness()",
-    "expect": "refuse",
+    "expect": "match",
     "rung": 3
   },
   {

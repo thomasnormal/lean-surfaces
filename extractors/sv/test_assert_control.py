@@ -41,6 +41,19 @@ class AssertionControlTasks(unittest.TestCase):
         self.assertIn("ExpressionStatement:CallExpression",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_literal_assertcontrol_is_inert(self):
+        design = lower(
+            'module top; initial begin $assertcontrol(1); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_dynamic_assertcontrol_stays_loud(self):
+        design = lower(
+            'module top; int control; initial $assertcontrol(control); endmodule')
+        self.assertIn("ExpressionStatement:CallExpression",
+                      [node.get("sv_kind") for node in nodes(design)])
+
 
 if __name__ == "__main__":
     unittest.main()

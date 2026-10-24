@@ -144,7 +144,7 @@ SYSCALL_QUIET = ("$info", "$warning", "$error")
 # No concurrent-assertion state exists in the self-check interpreter.  Bare
 # assertion-control tasks therefore have no modeled effect; scoped or
 # argumented controls remain loud until assertion state is represented.
-SYSCALL_ASSERT_CTRL = ("$asserton", "$assertoff", "$assertkill")
+SYSCALL_ASSERT_CTRL = ("$asserton", "$assertoff", "$assertkill", "$assertcontrol")
 # Monitor toggles only affect an active `$monitor` registration.  The
 # self-check state has no monitor stream, so no-argument toggles are inert when
 # the design contains no registration; registered monitors stay loud.
@@ -8304,6 +8304,16 @@ def _convert_syscall(sm, s, e):
         except Exception:
             return unsupported(sm, s, "ExpressionStatement:CallExpression")
         if not args:
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "pure_diagnostic": name}
+        # `$assertcontrol` changes only assertion reporting state. The
+        # self-check tier carries no assertion-control register, so its
+        # one-literal control form is inert; dynamic and extended forms stay
+        # loud until that state is represented.
+        if (name == "$assertcontrol" and len(args) == 1
+                and type(args[0]).__name__ in ("IntegerLiteral",
+                                               "UnbasedUnsizedIntegerLiteral")
+                and not getattr(args[0], "bad", False)):
             return {"kind": "Empty", "span": node_span(sm, s),
                     "pure_diagnostic": name}
     if is_sys and name in SYSCALL_MONITOR_CTRL:

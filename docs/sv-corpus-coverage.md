@@ -3836,3 +3836,14 @@ aggregate targets remain loud pending strength-aware selected-driver state.
 The corpus census remains **4,810 clean / 17,172 partial / 66 include skips**;
 `AssignmentExpression:target` remains **3,036 files**. Differential coverage
 moves **117/113/0/4 → 118/114/0/4**; grammar coverage remains **214/83/131**.
+
+## Literal `$assertcontrol` calls — 2026-10-24
+
+A one-argument `$assertcontrol` call with an integral literal now lowers to an
+inert statement because assertion reporting controls are outside the
+self-check state. Dynamic, multi-argument, and assertion-observable forms
+remain loud. `assertcontrol_literal` supplies the differential evidence.
+
+The corpus census remains **4,810 clean / 17,172 partial / 66 include skips**
+with unchanged blocker counts. Differential coverage moves **118/114/0/4 →
+119/115/0/4**; grammar coverage remains **214/83/131**.

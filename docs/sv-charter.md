@@ -6244,3 +6244,15 @@ The census remains **4,810 clean / 17,172 partial / 66 include skips**, with
 `AssignmentExpression:target` unchanged at **3,036 files**. Differential
 coverage moves **117/113/0/4 → 118/114/0/4**; grammar coverage remains
 **214/83/131**.
+
+## Literal `$assertcontrol` calls — 2026-10-24
+
+A one-argument `$assertcontrol` call with an integral literal now lowers to an
+inert statement. Assertion reporting controls are not represented in the
+self-check state, so the call has no modeled value, output, or halt effect.
+Dynamic, multi-argument, and assertion-observable forms remain loud.
+`assertcontrol_literal` supplies the differential witness.
+
+The census remains **4,810 clean / 17,172 partial / 66 include skips** with
+unchanged blocker counts. Differential coverage moves **118/114/0/4 →
+119/115/0/4**; grammar coverage remains **214/83/131**.

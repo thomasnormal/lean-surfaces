@@ -107,7 +107,8 @@ form — deliberate). Every deviation from the v0 shape is loud. -/
 #guard callFunction exc_lab "bare_except" #[.int 1] 4096 matches .unsupported _
 #guard callFunction exc_lab "multi_handler" #[.int 1] 4096 matches .unsupported _
 #guard callFunction exc_lab "tuple_handler" #[.int 1] 4096 matches .unsupported _
-#guard callFunction exc_lab "raise_args" #[.int 1] 4096 matches .unsupported _
+#guard callFunction exc_lab "raise_args" #[.int 1] 4096
+  matches .exn (.userMessage _ "Stop" "with a message")
 #guard callFunction exc_lab "raise_bare" #[.int 1] 4096 matches .unsupported _
 #guard callFunction exc_lab "raise_value" #[.int 1] 4096 matches .unsupported _
 #guard callFunction exc_lab "raise_from" #[.int 1] 4096 matches .unsupported _

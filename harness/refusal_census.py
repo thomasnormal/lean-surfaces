@@ -1057,7 +1057,6 @@ WHITELIST_CLASS = {
     # the boundary falsifiable -- an ancestor the tier refuses BY NAME rather
     # than deriving a catch set it has never enumerated.
     "exc_lab::except_ancestor_still_loud": "exc.ancestor-class",
-    "exc_lab::raise_args": "exc.raise",
     "exc_lab::raise_bare": "exc.raise",
     "exc_lab::raise_value": "exc.raise",
     "exc_lab::raise_from": "exc.raise",

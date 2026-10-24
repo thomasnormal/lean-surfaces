@@ -747,7 +747,7 @@ mutual
                  | .ok st' flow => .ok st' flow
                  | .exn st' e =>
                    (match e with
-                    | .user cid _ =>
+                    | .user cid _ | .userMessage cid _ _ =>
                       if cid == ci then execScriptStmts m fuel st' handler.toList
                       else .exn st' e
                     | e => .exn st' e)

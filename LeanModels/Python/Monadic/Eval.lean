@@ -1526,7 +1526,21 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
                 || (Env.lookup st.world.globals id).isSome
                 || (findFunction m id).isSome then
               refuse s!"'raise {id}': the name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
-            else if (findClass m id).isSome || (findNamedTuple m id).isSome then
+            else if (findClass m id).isSome then
+              match findClass m id with
+              | some (ci, c) =>
+                  if c.isExc then
+                    match args.toList with
+                    | [arg] => do
+                        let v ← evalOpen K m arg
+                        match v with
+                        | .str msg => raisePy (.userMessage ci c.name msg)
+                        | _ => refuse s!"'raise {id}(…)': the measured constructor form requires one string argument — outside the tier (docs/memory-model.md §exceptions)"
+                    | _ => refuse s!"'raise {id}(…)': the measured constructor form requires exactly one positional string argument — outside the tier (docs/memory-model.md §exceptions)"
+                  else
+                    refuse s!"'raise {id}(…)': only an admitted exception class (`class N(Exception): pass`) can be raised — outside the tier (docs/memory-model.md §exceptions)"
+              | none => refuse s!"'raise {id}(…)': user exception and namedtuple constructors with payloads are outside the tier (docs/memory-model.md §exceptions)"
+            else if (findNamedTuple m id).isSome then
               refuse s!"'raise {id}(…)': user exception and namedtuple constructors with payloads are outside the tier (docs/memory-model.md §exceptions)"
             else
               match args.toList with
@@ -1625,7 +1639,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
               else
                 tryCatch (execOpenList K m body.toList) (fun e =>
                   match e with
-                  | .user cid _ =>
+                  | .user cid _ | .userMessage cid _ _ =>
                       if cid == ci then execOpenList K m handler.toList else raisePy e
                   | e => raisePy e)
   | .importFrom mod _ _ _ =>

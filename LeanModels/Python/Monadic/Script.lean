@@ -344,7 +344,7 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
               else
                 tryCatch (S.stmts body.toList) (fun e =>
                   match e with
-                  | .user cid _ => if cid == ci then S.stmts handler.toList else raisePy e
+                  | .user cid _ | .userMessage cid _ _ => if cid == ci then S.stmts handler.toList else raisePy e
                   | e => raisePy e)
   | .withStmt items body withUnsupported sp =>
       scriptWithAt S K m items body withUnsupported sp

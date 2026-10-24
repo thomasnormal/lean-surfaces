@@ -516,9 +516,9 @@ structure ClassDefn where
   module census proving `Exception` unshadowed — Json.lean); demoted to
   the ordinary loud state (`isExc := false`, `ok := false`) by any
   deviation. Such a class is an exception NAME, not an instantiable
-  object: `raise N` maps to `.exn (.user cid name)`; calling `N(…)`
-  refuses loudly (the value-position refusals are what keep the
-  payload-free representation exact). -/
+  object: `raise N` maps to `.exn (.user cid name)`; the measured one-string
+  `raise N("message")` form maps to `userMessage`; other value-position
+  constructors remain loud. -/
   isExc : Bool := false
   /-- Is CREATING this class observationally free? CPython executes a
   class body — and evaluates its bases — at the `class` statement. The
@@ -715,6 +715,8 @@ inductive PyErr where
   (args/attrs/`as`-bindings all refuse loudly), which is what makes the
   class-identity representation observationally exact. -/
   | user (cid : Nat) (name : String)
+  /-- A measured one-string payload on an admitted user exception. -/
+  | userMessage (cid : Nat) (name : String) (msg : String)
   /-- A bare raise of an admitted builtin exception class.  The class name is
   retained, but the instance carries no arguments or attributes in this tier. -/
   | builtinException (name : String)

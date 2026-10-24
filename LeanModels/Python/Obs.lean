@@ -1395,6 +1395,9 @@ theorem fuelMono (fuel : Nat) :
                   case user cid nm =>
                     exact Run.le_ite (ihSs m st' handler.toList k hk)
                       (Run.le_refl _)
+                  case userMessage cid nm msg =>
+                    exact Run.le_ite (ihSs m st' handler.toList k hk)
+                      (Run.le_refl _)
                 | timeout => exact Run.le_refl _
                 | unsupported msg => exact Run.le_refl _
         | withStmt items body tu _ =>

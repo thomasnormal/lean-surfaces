@@ -3275,6 +3275,9 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                   | user cid cname =>
                       exact PBF.ite (fun _ => ihSs m st' handler.toList hslot')
                         (fun _ => PBF.exn hslot' _)
+                  | userMessage cid cname msg =>
+                      exact PBF.ite (fun _ => ihSs m st' handler.toList hslot')
+                        (fun _ => PBF.exn hslot' _)
                   | _ => exact PBF.exn hslot' _
               | timeout => exact PBF.timeout
               | unsupported msg => exact PBF.unsupported

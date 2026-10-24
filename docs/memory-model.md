@@ -1319,14 +1319,17 @@ the leanpy boundary already renders a class line per `PyErr` kind. What
 does NOT exist: user exception classes, `raise`, `try`/`except`, and
 exception INSTANCES as values.
 
-**Representation: class-identity exceptions, no payload.**
-`PyErr.user (cid : ClassId)` — a raised user exception IS its class
-identity. The admitted class shape is recognized at ingestion, like
+**Representation: class-identity exceptions, with one measured string payload.**
+`PyErr.user (cid : ClassId)` — a bare raised user exception IS its class
+identity; `PyErr.userMessage` adds the measured string payload. The admitted
+class shape is recognized at ingestion, like
 namedtuples: `class N(Exception): pass` EXACTLY (single base literally
 named `Exception`, body `pass`/docstring only, no methods) — the
 `Stop` shape. Such a class is an exception NAME, not an instantiable
-object: `N()` as a value, attributes, and user-class `raise N(args…)` with
-arguments remain loud. The measured builtin payload form admits exactly one
+object: `N()` as a value and attributes remain loud. The measured user-class
+payload form admits exactly one positional string and preserves it in the
+exception message; other user-class argument forms remain loud. The measured
+builtin payload form admits exactly one
 positional string for `TypeError`, `ValueError`, `RuntimeError`,
 `OverflowError`, and `AssertionError`; the resulting `PyErr` retains that
 message, so the boundary can agree with CPython's uncaught-exception text.
@@ -1411,7 +1414,7 @@ resume-into-handler path while leaving `time.time()` exactly where it
 is: deferred, awaiting its own recorded abstraction decision. The
 zero-argument constructor spelling is pinned by
 `builtin_raise_lab.raised_instance`; `exc_lab` now pins the one-string
-builtin payload form. User-class payloads, non-string and multi-argument
+builtin and user-class payload forms. Non-string and multi-argument user-class
 constructors remain the next exception-value boundary.
 
 **Explicitly NOT decided here:** the `time.time()` abstraction,
@@ -1443,8 +1446,8 @@ forced, each recorded with its reason:**
   generality (bare `raise`, `raise <expr>`, `raise … from …` all parse);
   ingestion lowers a direct zero-argument NAME constructor to `raise N`,
   and EVALUATION admits that shape plus bare `raise N` where `N` names an
-  admitted exception class. Payload-bearing constructors and everything
-  else remain the loud refusals of the design.
+  admitted exception class. The measured one-string payload forms are admitted;
+  everything else remains the loud refusal of the design.
 * **`Stmt.tryStmt body excName handler tryUnsupported`** carries the
   v0 single-handler shape plus the `callUnsupported`-style reason
   field: the extractor fills `try_unsupported` for every out-of-v0

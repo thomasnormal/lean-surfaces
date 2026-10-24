@@ -17,6 +17,13 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-82 — user exception string payloads
+
+An admitted `class Stop(Exception): pass` may now be raised with one
+positional string argument, preserving CPython's exception message on both
+runner boundaries. Non-string, keyword, and multi-argument user constructors
+remain loud.
+
 ## 2026-10-24-pycomplete-81 — string repetition index overflow
 
 String repetition counts beyond the pinned CPython index-sized range now raise

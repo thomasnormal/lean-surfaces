@@ -1379,6 +1379,8 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
             cases e <;> try exact .exn h2 _
             case user cid nm =>
               exact .ite (ihSs m s2 handler.toList h2) (.exn h2 _)
+            case userMessage cid nm msg =>
+              exact .ite (ihSs m s2 handler.toList h2) (.exn h2 _)
           | timeout =>
             simp only [hto hrun]
             exact .timeout

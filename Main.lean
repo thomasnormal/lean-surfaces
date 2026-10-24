@@ -159,6 +159,7 @@ def errName : PyErr → String
   | .importError _ => "ModuleNotFoundError"
   -- exceptions tier: CPython's `type(e).__name__` — the carried class name
   | .user _ name => name
+  | .userMessage _ name _ => name
   | .builtinException name => name
 
 /-- The MESSAGE a `PyErr` carries, when it carries one (2026-08-13).
@@ -216,6 +217,7 @@ def errMessage : PyErr → Option String
   | .attributeError => Option.none
   -- a user exception raised bare (`raise Stop`) prints its class alone
   | .user _ _ => some ""
+  | .userMessage _ _ msg => some msg
   | .builtinException _ => some ""
 
 /-- JSON string literal with proper escaping (delegates to `Lean.Json`). -/

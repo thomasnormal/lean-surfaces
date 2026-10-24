@@ -2629,6 +2629,18 @@
     "rung": 1
   },
   {
+    "id": "object.callable-reverse-scope-cleanup",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_namespace": "LeanModels.Cpp.IntegralObjectFrameTests",
+    "lean_expression": "callableReverseCleanupWitness",
+    "cpp_source": "struct CleanupProbe { int* log; int* cursor; int id; ~CleanupProbe() { log[(*cursor)++] = id; } }; bool callable_witness() { int log[2] = {0, 0}; int cursor = 0; { CleanupProbe first{log, &cursor, 1}; CleanupProbe second{log, &cursor, 2}; } return log[0] == 2 && log[1] == 1; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "object.storage-reuse",
     "kind": "lifetime",
     "corpus": "rung-1 witness",

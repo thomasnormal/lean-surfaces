@@ -195,6 +195,8 @@ private def reverseCleanup : Bool :=
       | _, _ => false
   | .error _ => false
 
+def callableReverseCleanupWitness : Bool := reverseCleanup
+
 private def returnClosesFrame : Bool :=
   match opened with
   | .ok frame =>
@@ -648,6 +650,7 @@ def callableLocalReferenceWitness : Bool := aliasLifetimeAndConst && aliasUninit
 #guard aliasUninitializedAndEnded
 #guard callableLocalReferenceWitness
 #guard callableReturnClosesFrameWitness
+#guard callableReverseCleanupWitness
 
 private theorem kernelReferenceBindings :
     (aliasLifetimeAndConst && aliasUninitializedAndEnded) = true := rfl

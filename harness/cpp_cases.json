@@ -2773,6 +2773,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-unary-narrow",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableUnaryNarrowWitness",
+    "cpp_source": "int unary_narrow(short value) { return -value; } bool callable_witness() { return unary_narrow(-32768) == 32768; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-postfix-comma",
     "kind": "expression",
     "corpus": "rung-3 witness",

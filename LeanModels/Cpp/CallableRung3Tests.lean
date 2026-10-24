@@ -56,6 +56,22 @@ def callableNarrowDecrementWitness : Bool :=
   | .ok (.ok value) => value == ⟨.unsigned 16, 65535⟩
   | _ => false
 
+def unaryNarrowFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := intType, parameters := [shortType], variadic := false}
+  parameters := [{declaration := narrowParameter, name := some "value", type := shortType}]
+  body := .block (.return_ {
+    expression := .unary "-"
+      {expression := .parameter narrowParameter, sourceType := shortType, type := intType}
+    sourceType := intType
+    type := intType})
+}
+
+def callableUnaryNarrowWitness : Bool :=
+  match evaluateCallable 16 .lp64 unaryNarrowFunction [⟨.signed 16, -32768⟩] with
+  | .ok (.ok value) => value == signed 32768
+  | _ => false
+
 def postfixFunction : CallableFunction := {
   incrementFunction with
   body := .block (.return_ {
@@ -284,6 +300,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableIncrementWitness
 #guard callableNarrowIncrementWitness
 #guard callableNarrowDecrementWitness
+#guard callableUnaryNarrowWitness
 #guard callablePostfixWitness
 #guard callableCompoundAssignmentWitness
 #guard callableAssignmentWitness
@@ -303,6 +320,9 @@ theorem callable_narrow_increment_witness : callableNarrowIncrementWitness = tru
   rfl
 
 theorem callable_narrow_decrement_witness : callableNarrowDecrementWitness = true := by
+  rfl
+
+theorem callable_unary_narrow_witness : callableUnaryNarrowWitness = true := by
   rfl
 
 theorem callable_postfix_witness : callablePostfixWitness = true := by
@@ -341,6 +361,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_increment_witness
 #print axioms callable_narrow_increment_witness
 #print axioms callable_narrow_decrement_witness
+#print axioms callable_unary_narrow_witness
 #print axioms callable_postfix_witness
 #print axioms callable_compound_assignment_witness
 #print axioms callable_assignment_witness

@@ -1073,7 +1073,6 @@ WHITELIST_CLASS = {
     "set_lab::sorted_is_loud": "set.order",
     "seq_lab::band_set": "set.order",
     "seq_lab::str_repeat_loud": "op.Mult-repetition",
-    "seq_lab::shl": "op.LShift-budget",
     "clock_lab::armed": "exc.handler",
     "clock_lab::read_clock": "clock.underrun",
     "star_lab::star_call": "starred.position",

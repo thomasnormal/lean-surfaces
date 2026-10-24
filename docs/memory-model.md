@@ -1660,10 +1660,11 @@ test anywhere anymore) and `live |= move is not None and score >
   (`True << 2 == 4`, an int) — CPython's bool-is-int. Non-int operands
   keep the faithful TypeError arm.
 - **The count is BUDGETED (2026-08-15).** `shiftBudget = 1048576`, so
-  the widest result is about a million bits; beyond it the arm refuses
-  loudly (`unsupported`), fixed and therefore fuel-independent, exactly
-  as `seqBudget` guards `rangeVals`/`tupleRepeat`. It is its own
-  constant because it bounds a different resource. This closes a
+  the widest ordinary result is about a million bits; beyond it the arm
+  refuses loudly (`unsupported`), fixed and therefore fuel-independent, while
+  counts at the conservative `shiftOverflowBudget` guard raise CPython's exact
+  `OverflowError` before the impossible allocation. It is its own constant
+  because it bounds a different resource. This closes a
   recorded live defect in shipped `<<`: the arm was `x * 2^n` with no
   bound on `n`, and measured on this toolchain `1 << (10^30)` neither
   computed nor refused — it died `INTERNAL PANIC: Nat.pow exponent is

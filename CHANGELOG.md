@@ -87,6 +87,9 @@ change is listed here under **Changed** or **Removed**.
 - Admitted user exception classes now preserve one positional string argument,
   matching CPython's uncaught `Stop: message` output; non-string and
   multi-argument constructors remain loud.
+- Integer left-shift counts at the conservative measured overflow guard now
+  raise CPython's exact `OverflowError: too many digits in integer`; ordinary
+  counts beyond the fixed materialization budget remain loud.
 
 ## [0.1.14] — 2026-10-21
 

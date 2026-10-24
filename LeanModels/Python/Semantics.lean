@@ -180,6 +180,11 @@ CPython performs happily (`1 << 10^9` is a real 125 MB integer there): a
 declared tier gap, never a claim that CPython raises. -/
 def shiftBudget : Nat := 1048576
 
+/-- A conservative count at which CPython 3.9 reports `OverflowError: too many
+integer digits` before attempting an impossible left-shift allocation. Counts
+between `shiftBudget` and this guard remain loud tier refusals. -/
+def shiftOverflowBudget : Nat := 100000000000000000000
+
 /-- The largest negative integer exponent whose reciprocal power is built as
 an exact integer ratio before binary64 rounding. Larger exponents remain loud
 rather than forcing an unbounded kernel `Int.pow`. -/
@@ -1302,7 +1307,10 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
     | .lshift =>
         if y < 0 then .exn (.valueError "negative shift count")
         else if y.toNat > shiftBudget then
-          .unsupported "a left shift beyond shiftBudget is outside the tier (docs/memory-model.md §left shift and bitwise or)"
+          if y.toNat >= shiftOverflowBudget then
+            .exn (.overflowError "too many digits in integer")
+          else
+            .unsupported "a left shift beyond shiftBudget is outside the tier (docs/memory-model.md §left shift and bitwise or)"
         else .ok (.int (x * (2 : Int) ^ y.toNat))
     -- `>>` is `<<`'s mirror and is CPython's ARITHMETIC shift: it rounds
     -- toward -inf, which is exactly `Int.fdiv` by `2^n` (`-5 >> 1 == -3`).

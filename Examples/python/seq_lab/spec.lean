@@ -148,7 +148,10 @@ which is neither an answer nor a refusal. -/
         | .unsupported _ => true | _ => false)
 #guard (match callFunction seq_lab "shl"
           #[.int 1, .int 1000000000000000000000000000000] 4096 with
-        | .unsupported _ => true | _ => false)
+        | .exn (.overflowError "too many digits in integer") => true | _ => false)
+#guard (match callFunction seq_lab "shl"
+          #[.int 1, .int shiftOverflowBudget] 4096 with
+        | .exn (.overflowError "too many digits in integer") => true | _ => false)
 #py_check seq_lab.bor_neg(-1) = -1
 #py_check seq_lab.bor_neg(-5) = -1
 #py_check seq_lab.bor_neg(3) = 7

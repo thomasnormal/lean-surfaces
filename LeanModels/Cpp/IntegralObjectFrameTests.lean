@@ -303,6 +303,8 @@ private def executeForScope : Bool :=
         result.frame.scopeDepth == 0 && objectPhase? result.frame 0 == some .ended
   | .error _ => false
 
+def callableFrameForScopeWitness : Bool := executeForScope
+
 private def executeContinueAndBreak : Bool :=
   match opened with
   | .ok frame =>
@@ -675,6 +677,7 @@ def callableLocalReferenceWitness : Bool := aliasLifetimeAndConst && aliasUninit
 #guard callableDynamicLocalStatementWitness
 #guard callableStaticLocalStatementWitness
 #guard callableThreadLocalStatementWitness
+#guard callableFrameForScopeWitness
 
 private theorem kernelReferenceBindings :
     (aliasLifetimeAndConst && aliasUninitializedAndEnded) = true := rfl

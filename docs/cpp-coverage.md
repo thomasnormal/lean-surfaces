@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 354 | 344 | 0 | 0 | 0 | 10 |
+| 355 | 345 | 0 | 0 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -356,6 +356,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `statement.callable-nested-block` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-loop-local-reentry` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-return-closes-frame` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-frame-for-scope` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `declaration.callable-reference-parameter` | 5 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `declaration.callable-value-parameter-isolation` | 5 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `declaration.callable-const-reference` | 5 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |

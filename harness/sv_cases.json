@@ -540,6 +540,15 @@
       "expect": "match"
     },
     {
+      "name": "empty_subroutine_call",
+      "file": "Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "generate_indexed_targets",
       "file": "Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv",
       "module": "top",

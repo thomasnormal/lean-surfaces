@@ -5620,3 +5620,19 @@ fresh 22,046-file census moves **4,689 → 4,705 clean** and **17,291 → 17,275
 partial**; `AssignmentExpression:target` falls **3,441 → 3,321**. Differential
 coverage moves **71/67/0/4 → 72/68/0/4** and grammar coverage moves
 **206/75/131 → 207/76/131**.
+
+## Empty zero-argument subroutine calls — 2026-10-24
+
+Calls to a task or void function whose declaration has no formals and an
+actually empty statement list now erase in statement position. Their
+declarations are metadata only, and the call has no state, timing, or output
+effect. Any formal argument, defaulted signature, nonempty body, or other
+subroutine behavior remains loud.
+
+The `empty_subroutine_call` fixture and differential row cover both an empty
+task and an empty function; focused extractor tests pin the loud boundaries.
+The fresh 22,046-file census moves **4,705 → 4,721 clean** and **17,275 →
+17,259 partial**; `ExpressionStatement:CallExpression` falls **3,419 →
+3,040**, and `SubroutineSymbol:Subroutine` falls **1,715 → 1,665**.
+Differential coverage moves **72/68/0/4 → 73/69/0/4**; grammar coverage moves
+**207/76/131 → 209/78/131**.

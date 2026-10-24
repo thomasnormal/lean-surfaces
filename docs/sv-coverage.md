@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 72 | 68 | 0 | 4 | sv-tests-2 declarations |
+| 73 | 69 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -73,6 +73,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `generate_constant_targets` | `Examples/system-verilog/generate_constant_targets/generate_constant_targets.sv` | match | **MATCH** | `ok` | MATCH |
 | `floating_local_decl` | `Examples/system-verilog/floating_local_decl/floating_local_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `floating_literal_write` | `Examples/system-verilog/floating_literal_write/floating_literal_write.sv` | match | **MATCH** | `ok` | MATCH |
+| `empty_subroutine_call` | `Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv` | match | **MATCH** | `ok` | MATCH |
 | `generate_indexed_targets` | `Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv` | match | **MATCH** | `ok` | MATCH |
 | `oob_struct_read` | `Examples/system-verilog/oob_struct_read/oob_struct_read.sv` | match | **MATCH** | `ok` | MATCH |
 | `streaming_struct_source` | `Examples/system-verilog/streaming_struct_source/streaming_struct_source.sv` | match | **MATCH** | `ok` | MATCH |
@@ -93,7 +94,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 207 | 76 | 131 | pyslang SyntaxKind |
+| 209 | 78 | 131 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -276,6 +277,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.SubtractAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.SubtractExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.SystemName` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
+| `SyntaxKind.TaskDeclaration` | `Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.TimeType` | `Examples/system-verilog/fixed_array_struct_pattern/fixed_array_struct_pattern.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.TimeUnitsDeclaration` | `Examples/system-verilog/intra_assignment/capture.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.TimingControlExpression` | `Examples/system-verilog/elaborated_generate/captures.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
@@ -300,6 +302,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.VariableDimension` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.VariablePortHeader` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.VirtualInterfaceType` | `Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.VoidType` | `Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.WildcardEqualityExpression` | `Examples/system-verilog/wildcard_equality/values.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.WildcardInequalityExpression` | `Examples/system-verilog/wildcard_equality/values.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.WildcardLiteralExpression` | `Examples/system-verilog/inside/inside.sv` | **MATCH** | `ok`  |
@@ -311,16 +314,16 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22046 | 4705 | 17275 | 66 |
+| 22046 | 4721 | 17259 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `ExpressionStatement:CallExpression` | 3419 |
 | `VariableSymbol:2state` | 3383 |
 | `AssignmentExpression:target` | 3321 |
 | `CallExpression` | 3283 |
+| `ExpressionStatement:CallExpression` | 3040 |
 | `Hierarchy:ports` | 2397 |
-| `SubroutineSymbol:Subroutine` | 1715 |
+| `SubroutineSymbol:Subroutine` | 1665 |
 | `NamedValueExpression:2state` | 1484 |
 | `ConcurrentAssertionStatement` | 1359 |
 | `InvalidStatement` | 1329 |

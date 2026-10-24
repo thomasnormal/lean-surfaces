@@ -7458,6 +7458,25 @@ def _convert_syscall(sm, s, e):
         is_sys = bool(e.isSystemCall)
     except Exception:
         return unsupported(sm, s, "ExpressionStatement:CallExpression")
+    if not is_sys:
+        # A zero-argument task/function with an actually empty body has no
+        # state, timing, or diagnostic effect.  In statement position its
+        # discarded result is unobservable, so erase this narrow call while
+        # leaving every nonempty/defaulted/argumented subroutine loud.
+        subroutine = getattr(e, "subroutine", None)
+        try:
+            args = list(e.arguments)
+            body = getattr(subroutine, "body", None)
+            body_list = (list(body.list)
+                         if type(body).__name__ == "StatementList" else None)
+            formal_args = list(getattr(subroutine, "arguments", []))
+            kind = str(getattr(subroutine, "subroutineKind", "")).split(".")[-1]
+        except Exception:
+            args, body_list, formal_args, kind = None, None, None, None
+        if (subroutine is not None and args == [] and formal_args == []
+                and body_list == [] and kind in ("Task", "Function")):
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "empty_subroutine_call": name}
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)
@@ -8683,6 +8702,22 @@ def convert_module(sm, inst):
                 # Scope artifact for statement-level begin/end blocks; its
                 # contents appear inside the owning process body.
                 continue
+            elif k == "Subroutine":
+                # Empty zero-argument subroutines are metadata only.  Calls
+                # in statement position are erased by _convert_syscall;
+                # signatures with formals or any body statement remain loud.
+                body = getattr(m, "body", None)
+                formal_args = list(getattr(m, "arguments", []))
+                body_list = (list(body.list)
+                             if type(body).__name__ == "StatementList" else None)
+                if formal_args == [] and body_list == []:
+                    # The declaration has no runtime node at all; keeping an
+                    # Empty in Module.others would make the self-check runner
+                    # classify it as a non-initial process.
+                    continue
+                else:
+                    others.append(unsupported(sm, m,
+                                              type(m).__name__ + ":" + k))
             elif _declaration_only(m) or k == "Genvar":
                 continue
             elif k == "Parameter":

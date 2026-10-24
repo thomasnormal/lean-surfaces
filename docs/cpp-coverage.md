@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 320 | 310 | 0 | 0 | 0 | 10 |
+| 321 | 311 | 0 | 0 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -292,6 +292,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `expression.member-getter-dot-call` | 7 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.member-getter-derived-call` | 7 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.member-getter-cast-call` | 7 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `expression.member-enum-setter-call` | 7 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-sizeof` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-alignof` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-bool-literal` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |

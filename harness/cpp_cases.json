@@ -3109,6 +3109,18 @@
     "rung": 7
   },
   {
+    "id": "expression.member-enum-setter-call",
+    "kind": "expression",
+    "corpus": "rung-7 witness",
+    "lean_module": "LeanModels.Cpp.MemberCallTests",
+    "lean_namespace": "LeanModels.Cpp.MemberCallTests",
+    "lean_expression": "enumSetterWitness",
+    "cpp_source": "enum XMLError { ok = 0, failed = 9 }; struct Owner { XMLError value = ok; void set(XMLError error) { value = error; } }; bool callable_witness() { Owner owner; owner.set(failed); return owner.value == failed; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

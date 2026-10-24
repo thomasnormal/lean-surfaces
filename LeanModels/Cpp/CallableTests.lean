@@ -981,4 +981,22 @@ private def sizeofTypeRaw : Raw := object [
   | .ok expression => expression.expression == .sizeOf (.builtin .int)
   | .error _ => false
 
+private def cStyleCastRaw : Raw := object [
+  ("id", text "0x70"), ("kind", text "CStyleCastExpr"),
+  ("castKind", text "NoOp"),
+  ("inner", .array [implicitCastKind "0x71" "IntegralCast"
+    (implicitCast "0x72" (declRefNode "0x73" "0x10" "value"))])]
+
+private def cStyleCastTypes : List CppExpressionTypeEvidence := [
+  ⟨⟨"0x70"⟩, "CStyleCastExpr", .builtin .int⟩,
+  ⟨⟨"0x71"⟩, "ImplicitCastExpr", .builtin .int⟩,
+  ⟨⟨"0x72"⟩, "ImplicitCastExpr", .builtin .short⟩,
+  ⟨⟨"0x73"⟩, "DeclRefExpr", .builtin .short⟩]
+
+#guard match parseCallableExpressionTyped .lp64 [narrowParameter] []
+    (some cStyleCastTypes) cStyleCastRaw none (some intType) with
+  | .ok expression => expression.type == intType &&
+      match expression.expression with | .convert _ => true | _ => false
+  | .error _ => false
+
 end LeanModels.Cpp.CallableTests

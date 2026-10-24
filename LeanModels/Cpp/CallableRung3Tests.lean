@@ -88,6 +88,24 @@ def callableSizeOfWitness : Bool :=
   | .ok (.ok value) => value == ⟨.unsigned 64, 2⟩
   | _ => false
 
+def castFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := intType, parameters := [shortType], variadic := false}
+  parameters := [{declaration := narrowParameter, name := some "value", type := shortType}]
+  body := .block (.return_ {
+    expression := .convert {
+      expression := .parameter narrowParameter
+      sourceType := shortType
+      type := shortType}
+    sourceType := shortType
+    type := intType})
+}
+
+def callableCastWitness : Bool :=
+  match evaluateCallable 16 .lp64 castFunction [⟨.signed 16, -7⟩] with
+  | .ok (.ok value) => value == signed (-7)
+  | _ => false
+
 def postfixFunction : CallableFunction := {
   incrementFunction with
   body := .block (.return_ {
@@ -318,6 +336,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableNarrowDecrementWitness
 #guard callableUnaryNarrowWitness
 #guard callableSizeOfWitness
+#guard callableCastWitness
 #guard callablePostfixWitness
 #guard callableCompoundAssignmentWitness
 #guard callableAssignmentWitness
@@ -343,6 +362,9 @@ theorem callable_unary_narrow_witness : callableUnaryNarrowWitness = true := by
   rfl
 
 theorem callable_size_of_witness : callableSizeOfWitness = true := by
+  rfl
+
+theorem callable_cast_witness : callableCastWitness = true := by
   rfl
 
 theorem callable_postfix_witness : callablePostfixWitness = true := by
@@ -383,6 +405,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_narrow_decrement_witness
 #print axioms callable_unary_narrow_witness
 #print axioms callable_size_of_witness
+#print axioms callable_cast_witness
 #print axioms callable_postfix_witness
 #print axioms callable_compound_assignment_witness
 #print axioms callable_assignment_witness

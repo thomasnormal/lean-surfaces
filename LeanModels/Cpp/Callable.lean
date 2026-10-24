@@ -234,6 +234,11 @@ private def integralRValueType : CppTypeEvidence → Option CppTypeEvidence
   | .qualified _ false base => integralRValueType base
   | _ => none
 
+private def callableIntegralType? : CppTypeEvidence → Option CppIntType
+  | .builtin type => some type
+  | .qualified _ false base => callableIntegralType? base
+  | _ => none
+
 private def validateCommaIntegralTyping (row : CppBinaryExpressionEvidence) : Except String Unit := do
   let some left := row.operands[0]?
     | throw "callable: comma expression lacks a left operand"
@@ -418,6 +423,25 @@ partial def parseCallableExpressionTyped (profile : TargetProfile)
       unless sourceExpected.all (· == resultType) do
         throw "callable: sizeof source type disagrees with result type"
       pure {expression := .sizeOf operandType, sourceType := resultType, type := resultType}
+  | "CStyleCastExpr" =>
+      let castKind ← evidenceText raw "castKind"
+      unless castKind == "NoOp" || castKind == "IntegralCast" do
+        throw s!"callable: unsupported C-style cast {castKind}"
+      let children ← rawChildren raw
+      let [child] := children
+        | throw "callable: C-style cast must have one child"
+      let operand ← parseCallableExpressionTyped profile parameters expressionRows expressionTypes
+        child none none
+      let some sourceType := callableIntegralType? operand.type
+        | throw "callable: C-style cast requires a builtin integral source"
+      let destination := typeExpected.getD operand.type
+      let some destinationType := callableIntegralType? destination
+        | throw "callable: C-style cast requires a builtin integral destination"
+      unless sourceExpected.all (· == destination) do
+        throw "callable: C-style cast source type disagrees with destination"
+      let sourceEvidence : CppTypeEvidence := .builtin sourceType
+      let destinationEvidence : CppTypeEvidence := .builtin destinationType
+      pure {expression := .convert operand, sourceType := sourceEvidence, type := destinationEvidence}
   | "BinaryOperator" =>
       let occurrence ← rawId raw
       let some row := expressionRows.find? (fun row => row.occurrence == occurrence)

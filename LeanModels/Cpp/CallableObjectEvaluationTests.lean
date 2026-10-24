@@ -448,6 +448,11 @@ def callableShortFrameIncrementWitness : Bool :=
 #guard checkIncrement .short "++" false ⟨.signed 16, 32767⟩ ⟨.signed 16, -32768⟩
 #guard callableShortFrameIncrementWitness
 
+def callableShortFrameIncrementMidWitness : Bool :=
+  checkIncrement .short "++" false ⟨.signed 16, 12⟩ ⟨.signed 16, 13⟩
+
+#guard callableShortFrameIncrementMidWitness
+
 def callableShortFrameDecrementWitness : Bool :=
   checkIncrement .short "--" false ⟨.signed 16, -32768⟩ ⟨.signed 16, 32767⟩
 

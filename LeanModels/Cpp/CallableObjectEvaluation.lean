@@ -376,7 +376,14 @@ mutual
                             match read.result with
                             | .error reason => frameFailure read.frame reason
                             | .ok (.ok current) =>
-                                let combined := integralBinary operation current rightValue
+                                let combined := match builtinIntegralType binding.type,
+                                    builtinIntegralType expression.sourceType with
+                                  | some leftType, some rightType =>
+                                      mapIntegralResult
+                                        (integralBinaryUsual profile operation leftType rightType
+                                          current rightValue)
+                                        (fun value => convertTo profile binding.type value)
+                                  | _, _ => .unsupported .unresolvedArithmeticConversions
                                 match combined with
                                 | .ok value =>
                                     let assigned := read.frame.assignValue declaration binding.type value

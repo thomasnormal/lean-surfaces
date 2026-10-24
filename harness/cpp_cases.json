@@ -2797,6 +2797,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-mixed-compound",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableMixedCompoundWitness",
+    "cpp_source": "short mixed_compound(short left, unsigned int right) { left += right; return left; } bool callable_witness() { return mixed_compound(-1, 1) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-direct-call",
     "kind": "expression",
     "corpus": "rung-3 witness",

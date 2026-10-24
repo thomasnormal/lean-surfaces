@@ -454,12 +454,25 @@ mutual
           let (result, afterExpression) ← evaluateTyped fuel profile parameters arguments expression
           match result with
           | .ok rightValue =>
+              let some parameter := parameters.find? (fun parameter =>
+                parameter.declaration == declaration)
+                | throw (.missingParameter declaration)
               let current ← parameterValue parameters afterExpression declaration
-              match integralBinary operation current rightValue with
+              let some leftType := builtinIntegralType parameter.type
+                | throw (.unsupportedType parameter.type)
+              let some rightType := builtinIntegralType expression.sourceType
+                | throw (.unsupportedType expression.sourceType)
+              let combined := integralBinaryUsual profile operation leftType rightType
+                current rightValue
+              match combined with
               | .ok value =>
-                  match assignParameter profile parameters afterExpression declaration value with
-                  | .ok updated => pure (.normal updated)
-                  | .error error => throw error
+                  let stored ← convertTo profile parameter.type value
+                  match stored with
+                  | .ok value =>
+                      match assignParameter profile parameters afterExpression declaration value with
+                      | .ok updated => pure (.normal updated)
+                      | .error error => throw error
+                  | result => pure (.failed result afterExpression)
               | result => pure (.failed result afterExpression)
           | result => pure (.failed result afterExpression)
       | .returnVoid => throw (.unsupportedType .void)

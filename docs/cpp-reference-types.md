@@ -43,11 +43,13 @@ ends only the owned object.
 Admission requires structured reference/referent types, variable evidence,
 typed initializer subexpressions, an exact in-scope declaration handle and
 Clang's lvalue category. Parentheses and qualification-only `NoOp` wrappers
-retain identity. Rvalue references, temporary materialization/lifetime
-extension, reference results, bit-fields, subobjects, conversions
-to a different integral type, volatile referents and constexpr references
-remain explicit boundaries until their rules are represented. This local
-binding rule does not widen the independent exact type/category checker above.
+retain identity. The bounded frame now also admits const lvalue and rvalue
+references bound to integral prvalues: it materializes the converted temporary
+and extends it to the active scope. Reference results, bit-fields, subobjects,
+conversions to a different integral type outside that checked boundary,
+volatile referents and constexpr references remain explicit boundaries.
+Mutable lvalue references to prvalues remain refused. This local binding rule
+does not widen the independent exact type/category checker above.
 
 ## Reference parameters in a shared object store
 

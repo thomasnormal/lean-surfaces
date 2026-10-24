@@ -313,6 +313,47 @@ private def executeFailureRetainsScope : Bool :=
       | _ => false) && result.frame.scopeDepth == 2 && result.frame.bound (handle "0x1")
   | .error _ => false
 
+def temporaryReferenceLifecycle : Bool :=
+  match opened with
+  | .error _ => false
+  | .ok frame =>
+      let bound := frame.bindTemporaryReference 8 (handle "0x1")
+        (.lvalueReference (.qualified true false intType)) (.builtin .short)
+        (.literal ⟨.signed 16, 9⟩)
+      match bound.result with
+      | .error _ => false
+      | .ok object =>
+          let read := bound.frame.read (handle "0x1")
+          let write := bound.frame.assignValue (handle "0x1") intType (signed 10)
+          let exited := bound.frame.exitScope
+          objectPhase? bound.frame object == some .aliveInitialized &&
+            okValue (signed 9) read &&
+            (write.result matches .error (.object .constWrite)) &&
+            okUnit exited && objectPhase? exited.frame object == some .ended &&
+            (exited.frame.read (handle "0x1")).result matches
+              .error (.missingBinding _)
+private def temporaryReferenceStatement : Bool :=
+  match opened with
+  | .error _ => false
+  | .ok frame =>
+      let result := frame.execute 12 (.temporaryReference (handle "0x1")
+        (.rvalueReference intType) (.builtin .short) (.literal ⟨.signed 16, 11⟩))
+      (result.result matches .ok none) && result.frame.scopeDepth == 0 &&
+        objectPhase? result.frame 0 == some .ended
+
+private def temporaryReferenceRefusals : Bool :=
+  match opened with
+  | .error _ => false
+  | .ok frame =>
+      let mutable := frame.bindTemporaryReference 4 (handle "0x1")
+        (.lvalueReference intType) intType (.literal (signed 1))
+      let first := frame.bindTemporaryReference 4 (handle "0x1")
+        (.rvalueReference intType) intType (.literal (signed 2))
+      let duplicate := first.frame.bindTemporaryReference 4 (handle "0x1")
+        (.rvalueReference intType) intType (.literal (signed 3))
+      (mutable.result matches .error (.temporaryReferenceUnsupported _)) &&
+        (first.result matches .ok _) &&
+        (duplicate.result matches .error (.duplicateBinding _))
 private def executeOutsideTransferLoud : Bool :=
   match opened with
   | .ok frame =>
@@ -343,6 +384,9 @@ private def executeOutsideTransferLoud : Bool :=
 #guard executeContinueAndBreak
 #guard executeFailureRetainsScope
 #guard executeOutsideTransferLoud
+#guard temporaryReferenceLifecycle
+#guard temporaryReferenceStatement
+#guard temporaryReferenceRefusals
 
 #guard match IntegralObjectFrame.empty .lp64 with
   | .ok frame => okUnit frame.enterScope

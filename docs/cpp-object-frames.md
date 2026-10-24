@@ -47,9 +47,20 @@ possibly const-qualified access view. Binding performs no read or allocation.
 and failure. Reads and assignments use the binding's view, preserving const
 access through alias chains.
 
+Prvalue reference binding is admitted for integral temporaries in the bounded
+frame. A const lvalue reference or an rvalue reference evaluates its source,
+materializes a checked temporary object, and extends that object's cleanup to
+the active lexical scope. The reference binding retains the temporary's object
+identity, so reads observe the converted value and const lvalue views reject
+writes. Scope exit ends the extended temporary and removes the binding; the
+temporary is never treated as an ordinary automatic local. Mutable lvalue
+references to prvalues and non-integral referents remain loud.
+
 Exiting a scope ends owned bindings in reverse declaration order and removes
-only that scope's bindings. Non-owning reference bindings never end their
-referents. Object IDs remain tombstones in the append-only store.
+only that scope's bindings. Ordinary non-owning reference bindings never end
+their referents; the temporary-reference role is the explicit exception because
+the reference extended that temporary's lifetime. Object IDs remain tombstones
+in the append-only store.
 `returnValue` evaluates the return expression before unwinding all scopes,
 then returns the value with the closed frame. Fuel exhaustion, undefined
 integral operations, missing declarations and lifetime errors retain the
@@ -70,4 +81,5 @@ cover parameter and sequential-local initialization, copy/direct/list/default
 initialization, nested lookup and shadowing, repeated loop-body allocation,
 self-initialization, default initialization followed by assignment, retained
 prefix state on division failure, reverse cleanup, return-before-cleanup, const
-writes, and loud missing/duplicate bindings.
+writes, temporary reference materialization and scope cleanup, and loud
+missing/duplicate bindings.

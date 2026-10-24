@@ -6,6 +6,7 @@ inductive FrameBindingRole where
   | parameter
   | local
   | reference
+  | temporaryReference
   deriving Repr, BEq, Inhabited
 
 structure FrameBinding where
@@ -37,6 +38,7 @@ inductive FrameError where
   | invalid (reason : InvalidIntegral)
   | undefined (reason : IntegralUB)
   | unsupported (reason : IntegralUnsupported)
+  | temporaryReferenceUnsupported (type : CppTypeEvidence)
   | breakOutsideLoop
   | continueOutsideLoop
   deriving Repr, BEq, Inhabited
@@ -66,6 +68,8 @@ inductive Statement where
   | zeroDeclare (declaration : FrontendHandle) (type : CppTypeEvidence)
   | reference (declaration : FrontendHandle) (type : CppTypeEvidence)
       (target : FrontendHandle)
+  | temporaryReference (declaration : FrontendHandle) (type sourceType : CppTypeEvidence)
+      (expression : Expression)
   | assign (declaration : FrontendHandle) (sourceType : CppTypeEvidence)
       (expression : Expression)
   | block (body : Statement)
@@ -297,6 +301,47 @@ theorem bindLocalReference_store (frame : IntegralObjectFrame)
           simpa only [bindLocalReference, h, hb] using addBinding_store frame {
             declaration, object := access.object, type := access.type, role := .reference }
 
+private def temporaryReferent? : CppTypeEvidence → Option CppTypeEvidence
+  | .lvalueReference (.qualified true false base) => some (.qualified true false base)
+  | .rvalueReference referent => some referent
+  | _ => none
+
+private def temporaryBindingReady (frame : IntegralObjectFrame)
+    (declaration : FrontendHandle) : Except FrameError Unit := do
+  if frame.bound declaration then throw (.duplicateBinding declaration)
+  if frame.scopes.isEmpty then throw .noActiveScope
+
+/-- Bind a local reference to an integral prvalue. The prvalue gets its own
+    temporary identity, whose lifetime is extended to the active scope. The
+    binding is non-owning with respect to lookup, but scope cleanup owns the
+    extended temporary's lifetime. -/
+def bindTemporaryReference (fuel : Nat) (frame : IntegralObjectFrame)
+    (declaration : FrontendHandle) (type sourceType : CppTypeEvidence)
+    (expression : Expression) : FrameOutcome ObjectId :=
+  match temporaryReferent? type with
+  | none => failure frame (.temporaryReferenceUnsupported type)
+  | some referent =>
+      match temporaryBindingReady frame declaration with
+      | .error reason => failure frame reason
+      | .ok _ =>
+          let evaluated := evaluate fuel frame expression
+          match evaluated.result with
+          | .error reason => failure evaluated.frame reason
+          | .ok result =>
+              match result with
+              | .invalid reason => failure evaluated.frame (.invalid reason)
+              | .undefined reason => failure evaluated.frame (.undefined reason)
+              | .unsupported reason => failure evaluated.frame (.unsupported reason)
+              | .ok value =>
+                  match evaluated.frame.store.materializeTemporary referent sourceType value with
+                  | .error reason => failure evaluated.frame (.object reason)
+                  | .ok (store, object) =>
+                      match store.extendTemporary object with
+                      | .error reason => failure {evaluated.frame with store} (.object reason)
+                      | .ok store =>
+                          addBinding {evaluated.frame with store} {
+                            declaration, object, type := referent, role := .temporaryReference }
+
 def declareLocalInitialized (fuel : Nat) (frame : IntegralObjectFrame)
     (declaration : FrontendHandle) (type : CppTypeEvidence)
     (sourceType : CppTypeEvidence) (expression : Expression) : FrameOutcome ObjectId :=
@@ -452,6 +497,11 @@ mutual
             | .error reason => failure declared.frame reason
         | .reference declaration type target =>
             let bound := bindLocalReference frame declaration type target
+            match bound.result with
+            | .ok _ => success bound.frame .normal
+            | .error reason => failure bound.frame reason
+        | .temporaryReference declaration type sourceType expression =>
+            let bound := bindTemporaryReference fuel frame declaration type sourceType expression
             match bound.result with
             | .ok _ => success bound.frame .normal
             | .error reason => failure bound.frame reason

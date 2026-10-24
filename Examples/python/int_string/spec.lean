@@ -61,7 +61,8 @@ set_option maxRecDepth 8192
 #py_check int_string.parse_decimal("１２") = 12
 #py_check int_string.parse_decimal(" 1") = 1
 #py_check int_string.parse_decimal("1 ") = 1
-#guard callFunction int_string "parse_decimal" #[.str "é"] 4096 matches .unsupported _
+#py_check int_string.parse_decimal("é") raises
+  (.valueError "invalid literal for int() with base 10: 'é'")
 #py_check int_string.explicit_base("٣", 16) = 3
 #py_check int_string.explicit_base(" 1", 0) = 1
 #py_check int_string.explicit_base((#[255] : PyBytes), 16) raises

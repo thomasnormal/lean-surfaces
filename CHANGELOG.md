@@ -30,7 +30,8 @@ change is listed here under **Changed** or **Removed**.
   raise CPython's faithful `AttributeError` instead of stopping at the
   heap-receiver boundary; admitted scalar methods remain unchanged.
 - `int(str)` now admits CPython's Unicode decimal digits and whitespace through
-  the shared float-text normalization table; unrelated Unicode remains loud.
+  the shared float-text normalization table; malformed non-decimal Unicode
+  now raises CPython's exact `ValueError` instead of a tier refusal.
 - `float(bytes)` now accepts ASCII decimal bytes through the shared float-text
   parser and preserves CPython's bytes-rendered conversion errors; non-ASCII
   bytes and NaN payload spellings remain loud.

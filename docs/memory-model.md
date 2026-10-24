@@ -2736,7 +2736,10 @@ on that setting and on validation order, so the model refuses rather than guesse
 whitespace do not consume the digit budget; whitespace length is not
 bounded. Unicode decimal digits and Unicode whitespace use the same
 normalization as the float-text parser; unrelated non-decimal Unicode
-characters remain loud.
+characters are malformed input: when the shared `reprStr` renderer can
+represent them, CPython's exact `ValueError` is returned with that rendering;
+values the renderer cannot represent remain loud rather than guessing an
+error payload.
 `decimalDigitsAux` specializes the structural radix walker described below.
 No interpreter recursion point, heap-free predicate, or public judgment changes.
 

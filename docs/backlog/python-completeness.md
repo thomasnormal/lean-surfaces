@@ -70,6 +70,13 @@ The non-finite `count_head` rows and `count_nonfinite_script.py` now match on
 both interpreter surfaces; the refusal census no longer records the stale
 `iter.count-numeric-frame` boundary.
 
+## 2026-10-24-pycomplete-96 — malformed Unicode `int(str)`
+
+Malformed non-decimal Unicode text such as `int("é")` now follows the
+existing repr-rendered `ValueError` worker, matching CPython's exact class and
+message. Unicode decimal digits and whitespace keep their normalization path;
+the fixed 4300-digit budget and unrenderable-character loud boundary remain.
+
 ## 2026-10-24-pycomplete-86 — zero-argument builtin exception constructor
 
 The extractor's existing zero-argument raise-constructor lowering is now

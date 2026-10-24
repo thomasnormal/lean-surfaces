@@ -2574,13 +2574,12 @@ def intDigitCount (characters : List Char) (base : Nat) : Nat :=
 including base-zero prefixes, underscore grouping, and CPython's Unicode
 decimal digits and whitespace. The shared float-text normalizer maps the
 Unicode decimal and whitespace inventory to the ASCII grammar; other
-non-ASCII characters still refuse loudly. Invalid input raises CPython's
-repr-rendered, 200-character-truncated `ValueError`. -/
+non-ASCII characters remain malformed input and take CPython's exact
+repr-rendered `ValueError` path. Invalid input is rendered with the same
+200-character truncation used by CPython. -/
 def intOfStr (text : String) (base : Nat := 10) : Res RVal :=
   let characters := text.toList.map Float64.normalizeDecimalChar
-  if !characters.all (fun character => character.toNat < 128) then
-    .unsupported "int() of this str contains non-decimal Unicode characters outside the tier (docs/memory-model.md §the cast tier)"
-  else if intDigitCount characters base > intDigitBudget then
+  if intDigitCount characters base > intDigitBudget then
     .unsupported "int() of this str exceeds the tier's 4300-digit budget (CPython's configured conversion limit is not guessed; docs/memory-model.md §the cast tier)"
   else
     match radixInt characters base with

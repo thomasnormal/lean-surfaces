@@ -1021,7 +1021,6 @@ WHITELIST_CLASS = {
     "gen_lab::drain_unbound": "genexp.lowering-admission",
     "gen_lab::yf_leak_drive": "genexp.lowering-admission",
     "exc_lab::time_live": "clock.underrun",
-    "exc_lab::as_binding": "exc.handler",
     "exc_lab::finally_clause": "exc.finally",
     "exc_lab::else_clause": "exc.handler",
     "exc_lab::bare_except": "exc.handler",

@@ -186,6 +186,13 @@ nested tuple/list/dict/namedtuple rendering. The focused differential battery
 promotes scalar, container, and script rows, including the `λ😀` and zero-width
 format-character cases.
 
+## 2026-10-24-pycomplete-88 — unused exception bindings
+
+An `except Class as name` binding is now admitted when the handler never reads
+the bound exception object. The model erases the temporary binding, preserving
+the handler's retained state and CPython's observable control flow; reads of
+the exception value, including payload and attribute inspection, remain loud.
+
 ## 2026-10-23-pycomplete-65 — pinned decimal rendering budget
 
 The shared integer conversion budget is now pinned to CPython 3.9's default

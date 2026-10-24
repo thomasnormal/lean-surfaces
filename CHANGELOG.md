@@ -105,6 +105,8 @@ change is listed here under **Changed** or **Removed**.
   heap references and mapping-key formatting remain loud.
 - Refreshed the exception ancestor example envelope so `raise BaseException()`
   uses the admitted zero-argument class-identity path and matches CPython.
+- Unused `except Class as name` bindings are now admitted by erasing the
+  unobservable temporary; reads of the exception object remain loud.
 
 ## [0.1.14] — 2026-10-21
 

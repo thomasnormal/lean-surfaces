@@ -1348,9 +1348,10 @@ representation by any deviation from the exact shape.
 
 **`try`/`except`: structure and semantics.** `Stmt.tryStmt body
 handlers orelse finalbody` structured by the extractor; the v0 tier
-admits EXACTLY one handler, naming one admitted exception class, with
-NO `as` binding, empty `orelse`, empty `finalbody` — everything else
-(multiple/bare handlers, tuple patterns, `as e`, `else`, `finally`)
+admits EXACTLY one handler, naming one admitted exception class. An unused
+`as e` binding is erased safely; observing the bound exception object remains
+outside the tier. `orelse` and `finalbody` must be empty — everything else
+(multiple/bare handlers, tuple patterns, observed `as e`, `else`, `finally`)
 stays structured-but-loud. Evaluation composes on the existing `Run`:
 run the body; `.ok` skips the handler; `.exn (.user cid)` with cid
 matching the handler's class runs the handler FROM THE RETAINED STATE
@@ -2571,7 +2572,8 @@ class where CPython raises `UnboundLocalError` or a handler-matching `TypeError`
 Existing local/global/definition shadow guards remain in force. Module try
 bodies that rebind their handler names also refuse, including compounds that
 can raise before publishing their bindings. Unmeasured OS-error ancestors
-(`OSError` and `EnvironmentError`), tuple/attribute patterns, `as` bindings,
+(`OSError` and `EnvironmentError`), tuple/attribute patterns, observed `as`
+bindings,
 multiple handlers, `else`, `finally`, and builtin exception objects as values
 remain loud.
 

@@ -1418,6 +1418,21 @@ def _ann_name_used(enclosing, name):
     return visitor.used
 
 
+def _except_name_used(enclosing, name):
+    """Whether an ``except ... as name`` binding is observed.
+
+    The exception object itself is outside the tier, but CPython still
+    permits an unused binding.  When no load of the bound name occurs, the
+    model can erase the temporary binding: the handler's control flow and
+    retained state are unchanged, and the mandatory post-handler deletion is
+    unobservable.  Any load remains loud rather than fabricating an exception
+    value (or its ``args``/attributes).
+    """
+    return any(isinstance(n, ast.Name) and n.id == name
+               and isinstance(n.ctx, ast.Load)
+               for n in ast.walk(enclosing))
+
+
 def convert_ann_assign(node, module_scope=False, func_scope=False,
                        enclosing=None):
     if node.simple and node.value is not None:
@@ -1961,7 +1976,9 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             else:
                 reasons.append("non-name handler class "
                                "(tuple pattern / attribute)")
-            if h.name is not None:
+            if (h.name is not None
+                    and not (func_scope and enclosing is not None
+                             and not _except_name_used(enclosing, h.name))):
                 reasons.append("'as' binding")
             handler_body = convert_stmt_list(h.body, module_scope=module_scope,
                                              func_scope=func_scope)

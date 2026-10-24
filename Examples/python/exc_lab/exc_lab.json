@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/exc_lab/exc_lab.py",
-  "source_sha256": "60ac043960936dc617a3e36b30a6dfccf39ebae786de3e6d1515b0a5772c3992",
+  "source_sha256": "909d7525b68d94332d4a1f734cff7af735a7f10d4a045080c350876b7b617702",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "exc_lab -- the exceptions acceptance set (docs/memory-model.md\nparagraph \"exceptions\", BUILT pass 4).\n\nThe admitted surface, each row differential against CPython:\n`class N(Exception): pass` as a raisable class NAME (class identity, no\npayload), `raise N`, and the v0 single-handler `try`/`except N:` on the\nretained-state covenant -- mutations up to the raise stay visible in the\nhandler, a non-matching class propagates (out of nested tries and out of\nthe whole call), a raise UNWINDS nested calls, and an exception\npropagating through a generator RESUME closes the generator (the\ngen_lab status pin's differential twin, observable now that a handler\ncan survive the raise).\n\nThe deadline capstone is the shape sunfish's Stop serves, with the wall\nclock replaced by a node counter: MiniSearcher.walk raises Stop from a\nresumed generator frame when its budget passes, and the driver's\ntry/except catches it mid-iteration -- raise-through-resume-into-handler\nend to end.\n\nThe refusal battery (whitelisted rows + raw #guards in spec.lean) pins\nthe loud frontier: `as` bindings, `finally`, `else`, bare except,\nmultiple handlers, tuple patterns, unmeasured builtin ancestors,\nraise with arguments, bare raise, value raise, raise-from,\nshadowed names, exception classes as values, and yield-under-try.\n\nThe WALL-CLOCK battery (docs/memory-model.md \"Wall-clock time\", as\nAMENDED by pass 6's trace clock): `time_dead` proves the shipped\nguard's short-circuit keeps the clock dead (deadline None,\ndifferential MATCH -- nothing is popped), `time_live` proves the\nmoment a deadline makes the clock live, evaluation under this\nharness's EMPTY trace refuses loudly (the underrun -- pass 6 moved\nthe refusal from the poisoned binding to the trace pop; the full\nlive-clock battery is `clock_lab`).\n"
+            "value": "exc_lab -- the exceptions acceptance set (docs/memory-model.md\nparagraph \"exceptions\", BUILT pass 4).\n\nThe admitted surface, each row differential against CPython:\n`class N(Exception): pass` as a raisable class NAME (class identity, no\npayload), `raise N`, and the v0 single-handler `try`/`except N:` on the\nretained-state covenant -- mutations up to the raise stay visible in the\nhandler, a non-matching class propagates (out of nested tries and out of\nthe whole call), a raise UNWINDS nested calls, and an exception\npropagating through a generator RESUME closes the generator (the\ngen_lab status pin's differential twin, observable now that a handler\ncan survive the raise).\n\nThe deadline capstone is the shape sunfish's Stop serves, with the wall\nclock replaced by a node counter: MiniSearcher.walk raises Stop from a\nresumed generator frame when its budget passes, and the driver's\ntry/except catches it mid-iteration -- raise-through-resume-into-handler\nend to end.\n\nThe refusal battery (whitelisted rows + raw #guards in spec.lean) pins\nthe loud frontier: observed `as` bindings, `finally`, `else`, bare except,\nmultiple handlers, tuple patterns, unmeasured builtin ancestors,\nraise with arguments, bare raise, value raise, raise-from,\nshadowed names, exception classes as values, and yield-under-try.\n\nThe WALL-CLOCK battery (docs/memory-model.md \"Wall-clock time\", as\nAMENDED by pass 6's trace clock): `time_dead` proves the shipped\nguard's short-circuit keeps the clock dead (deadline None,\ndifferential MATCH -- nothing is popped), `time_live` proves the\nmoment a deadline makes the clock live, evaluation under this\nharness's EMPTY trace refuses loudly (the underrun -- pass 6 moved\nthe refusal from the poisoned binding to the trace pop; the full\nlive-clock battery is `clock_lab`).\n"
           }
         }
       },
@@ -4631,7 +4631,7 @@
                 }
               }
             ],
-            "try_unsupported": "'as' binding"
+            "try_unsupported": null
           }
         ]
       },

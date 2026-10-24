@@ -3769,6 +3769,18 @@
     "rung": 5
   },
   {
+    "id": "declaration.callable-uninitialized-reference-binding",
+    "kind": "statement",
+    "corpus": "rung-5 witness",
+    "lean_module": "LeanModels.Cpp.CallableReferenceParameterTests",
+    "lean_namespace": "LeanModels.Cpp.CallableReferenceParameterTests",
+    "lean_expression": "callableUninitializedBindingWitness",
+    "cpp_source": "int write_ref(int& value) { value = 7; return value; } bool callable_witness() { int value; return write_ref(value) == 7 && value == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 5
+  },
+  {
     "id": "declaration.callable-local-reference",
     "kind": "statement",
     "corpus": "rung-5 witness",

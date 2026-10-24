@@ -92,6 +92,8 @@ private def uninitializedBinding : Bool :=
     result.frame.store.values == [some (signed 7)] &&
     result.frame.store.objects.objects.map (·.phase) == [.aliveInitialized]
 
+def callableUninitializedBindingWitness : Bool := uninitializedBinding
+
 private def failureRetainsPrefix : Bool :=
   let f := function [intType, .lvalueReference intType] (.return_ (literal 0))
   let result := CallableObjectFrame.startInStore caller.store f
@@ -195,6 +197,7 @@ private def threadLocalAcrossStarts : Bool :=
 #guard valueCopyAndIsolation
 #guard constAndLifetime
 #guard uninitializedBinding
+#guard callableUninitializedBindingWitness
 #guard failureRetainsPrefix
 #guard unreadableValueAndActualConst
 #guard executionFailureRetainsMutation

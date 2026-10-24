@@ -3952,3 +3952,19 @@ include skips). Relative to the committed 22,048-path snapshot, the external
 corpus gained one path; the call-statement wall falls **2,981 → 2,980**.
 Differential coverage moves **145/141/0/4 → 146/142/0/4**; grammar coverage
 remains **214/83/131**.
+
+## Queue initialization status results — 2026-10-24
+
+IEEE 1800-2023 §20.15.6 defines scalar status results for queue initialization.
+With no other queue task in the source, a four-argument `$q_initialize` with
+literal type and capacity now lowers to a blocking status write: valid FIFO or
+LIFO creation reports 0, an unsupported type reports 4, and a nonpositive
+capacity reports 5. Queue storage, duplicate IDs, and all subsequent queue
+operations remain loud. The `q_initialize_status` fixture supplies the `PASS`
+transcript and extractor tests pin the status and refusal boundaries.
+
+The fresh **22,049-path** census moves **4,846 → 4,852 clean** and **17,137 →
+17,131 partial** (66 include skips); `ExpressionStatement:CallExpression`
+falls **2,980 → 2,974**, making `AssignmentExpression:target` the leading
+blocker at **2,979**. Differential coverage moves **146/142/0/4 → 147/143/0/4**;
+grammar coverage remains **214/83/131**.

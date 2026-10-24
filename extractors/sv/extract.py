@@ -6280,6 +6280,81 @@ def _semaphore_zero_method(expression):
         return False
 
 
+def _q_initialize_status_call(sm, expression):
+    """Lower a state-free ``$q_initialize`` status result.
+
+    The queue model is outside the flat self-check state, but IEEE 1800-2023
+    §20.15.6 defines the scalar status for a few argument errors.  A sole
+    queue task with a literal type/capacity can therefore publish that status
+    directly to its output lvalue.  Any file that also performs another queue
+    operation remains on the ordinary loud boundary.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "$q_initialize"
+                or len(expression.arguments) != 4):
+            return None
+        qid, qtype, max_length, output = expression.arguments
+        if (type(output).__name__ != "AssignmentExpression"
+                or output.op is not None
+                or output.timingControl is not None
+                or type(output.right).__name__ != "EmptyArgumentExpression"):
+            return None
+        if not all(_case_source_expression_ok(argument)
+                   for argument in (qid, qtype, max_length)):
+            return None
+        qtype_value = _literal_integral_value(qtype)
+        max_value = _literal_integral_value(max_length)
+        if qtype_value is None or max_value is None:
+            return None
+        if qtype_value in (1, 2) and max_value > 0:
+            status_value = 0
+        elif qtype_value not in (1, 2):
+            status_value = 4
+        else:
+            status_value = 5
+
+        # Do not erase a status write in a file that relies on an unmodelled
+        # queue object or a later operation.  Count semantic calls, not source
+        # text, so comments and descriptions cannot affect the admission.
+        receiver_scope = getattr(getattr(output.left, "symbol", None),
+                                 "parentScope", None)
+        instance = getattr(receiver_scope, "containingInstance", None)
+        if instance is None:
+            return None
+        queue_calls = []
+
+        def inspect(node):
+            if (type(node).__name__ == "CallExpression"
+                    and getattr(node, "isSystemCall", False)
+                    and str(getattr(node, "subroutineName", "")).startswith("$q_")):
+                queue_calls.append(node)
+
+        instance.visit(inspect)
+        if len(queue_calls) != 1 or queue_calls[0] is not expression:
+            return None
+
+        target, admitted = legacy_blocking_target(sm, output.left, True)
+        if not admitted:
+            return None
+        width, two_state, reason = type_width_2s(output.left.type)
+        if width is None or reason is not None:
+            return None
+        bits = format(status_value & ((1 << width) - 1), f"0{width}b")
+        value = {"kind": "Literal", "span": node_span(sm, output.left),
+                 "width": width, "bits": bits,
+                 "q_initialize_status": status_value}
+        if two_state:
+            value = squash2_wrap(value, width)
+        return {"kind": "BlockingAssign", "span": node_span(sm, expression),
+                "target": target, "value": value,
+                "q_initialize_status_lowered": status_value}
+    except Exception:
+        return None
+
+
 def _fixed_array_reverse_method(sm, expression):
     """Lower ``reverse()`` on a one-dimensional literal fixed array.
 
@@ -9161,6 +9236,10 @@ def _convert_syscall(sm, s, e):
         constant_assignment = _constant_formatted_integral_assignment(sm, e)
         if constant_assignment is not None:
             return constant_assignment
+    if _SYM is None and e.isSystemCall and e.subroutineName == "$q_initialize":
+        status_assignment = _q_initialize_status_call(sm, e)
+        if status_assignment is not None:
+            return status_assignment
     if _SYM is None and e.isSystemCall and e.subroutineName == "reverse":
         reversed_array = _fixed_array_reverse_method(sm, e)
         if reversed_array is not None:

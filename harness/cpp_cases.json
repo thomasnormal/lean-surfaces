@@ -4117,6 +4117,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-for-switch",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableKernelForFrameWitness",
+    "cpp_source": "int frame_for_switch(int value) { for (; value; --value) { switch (value) { case 3: continue; case 2: break; default: break; } } return value; } bool callable_witness() { return frame_for_switch(3) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

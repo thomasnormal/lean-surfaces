@@ -517,6 +517,13 @@ private def controlStep : CallableStatement := .expression {
 def callableKernelDoWhileFrameWitness : Bool :=
   kernelControl (.doWhile controlStep controlParameter)
 
+def callableKernelForFrameWitness : Bool :=
+  kernelControl (.forLoop .skip controlParameter controlStep
+    (.switch_ controlParameter [
+      {label := some 3, body := .continue_},
+      {label := some 2, body := .skip},
+      {label := none, body := .break_}]))
+
 private theorem kernelControlExecution :
     (kernelControl (.doWhile controlStep controlParameter) &&
       kernelControl (.forLoop .skip controlParameter controlStep
@@ -529,5 +536,6 @@ private theorem kernelControlExecution :
 #print axioms kernelControlExecution
 
 #guard callableKernelDoWhileFrameWitness
+#guard callableKernelForFrameWitness
 
 end LeanModels.Cpp.CallableObjectEvaluationTests

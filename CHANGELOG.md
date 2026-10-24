@@ -41,6 +41,10 @@ change is listed here under **Changed** or **Removed**.
   `int * list` in the pure value interpreter, including length-only
   observation without materializing an over-budget result; heap-list aliasing
   and augmented repetition remain stateful.
+- The alias-free parameter shape `x *= count; return x` now lowers at
+  ingestion to the same pure repetition path for boundary lists. Alias-bearing
+  and control-flow augmented mutations remain loud until the H2 heap boundary
+  flip.
 - Heap-backed list `*=` now updates the existing list address in place on the
   monadic interpreter, so aliases observe the repeated contents; the proof
   interpreter keeps this stateful mutation loud.

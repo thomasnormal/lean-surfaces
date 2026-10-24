@@ -466,6 +466,19 @@ partial def parseStmt (j : Json) : Except String Stmt := do
         return .unsupported "ClassDef" name span
     | other => throw s!"unknown statement kind {other.quote}"
 
+private def lowerBoundaryAugRepeat (params : Array Param) (body : Array Stmt) : Array Stmt :=
+  match body.toList with
+  | [.augAssign (.name id targetSpan) .mult count augSpan,
+      .ret (some (.name resultId resultSpan)) retSpan] =>
+      if resultId == id && params.toList.any (fun p => p.arg == id) then
+        let target := .name id targetSpan
+        let repeated := .binOp target .mult count augSpan
+        #[.assign #[target] repeated augSpan,
+          .ret (some (.name resultId resultSpan)) retSpan]
+      else
+        body
+  | _ => body
+
 /-- Parse a module-level `FunctionDef` node into a `FunctionDefn`.
 `argsOk` is `true` iff `args_unsupported` is `null` (or absent); `localsOk`
 likewise from `locals_unsupported` (absent in older envelopes ⇒ `true`). -/
@@ -483,6 +496,22 @@ def parseFunctionDefn (j : Json) : Except String FunctionDefn :=
       | .ok (.bool b) => b
       | _ => false
     let body ← (← (← getField j "body").getArr?).mapM parseStmt
+    -- A public `Val.list` is still represented by the transitional
+    -- value-side `RVal.listV` until the H2 boundary flip.  That form cannot
+    -- model an alias-visible in-place `*=`, so the general augmented-list
+    -- arm stays loud.  The small immutable shape
+    --
+    --     x *= count
+    --     return x
+    --
+    -- is nevertheless exact: `x` is a parameter, no other binding or alias
+    -- can observe the old list, and the returned boundary snapshot only
+    -- observes the repeated contents.  Lower it to the ordinary pure
+    -- assignment/binop path, whose sequence repetition worker already has
+    -- the complete count/error/budget behavior.  Alias-bearing and
+    -- control-flow shapes remain represented as `AugAssign` and therefore
+    -- refuse loudly until the heap-threading boundary is wired.
+    let body := lowerBoundaryAugRepeat params body
     return { name, params, argsOk := argsUnsupported.isNone,
              localsOk := localsUnsupported.isNone, hasGlobal, isGenerator,
              body, span }

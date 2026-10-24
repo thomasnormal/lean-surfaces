@@ -17,6 +17,30 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-104 — alias-free boundary-list augmented repetition
+
+The measured boundary-list `*=` gap now has a small ingestion-safe slice.
+When a function consists of a parameter augmented by `count` and immediately
+returns that same parameter (`x *= count; return x`), ingestion lowers the
+statement to `x = x * count`. The existing pure `listValueRepeat` worker then
+preserves CPython's count conversion, overflow, nonpositive short-circuit,
+materialization bound, and non-integral `TypeError` for `Val.list` arguments.
+The shape has no second binding or control-flow path that could observe the
+old list, so the lowering does not erase an alias. Alias-bearing and other
+augmented list mutations remain loud until the H2 heap-threading boundary is
+wired.
+
+The `string_repeat.repeat_aug` battery now covers boundary-list positive,
+nonpositive, and non-integral counts on both interpreter surfaces; the existing
+heap-list alias witness remains unchanged.
+
+| Measurement | Result |
+|---|---|
+| Focused Lean build | `Examples.python.string_repeat.spec` passes |
+| Focused executable differential | 62 MATCH / 0 failed |
+| Focused proof differential | 62 MATCH / 0 refused / 0 failed |
+| Generated/docs checks | `docs_check.py`, coverage freshness, backlog index freshness, JSON validation, and `git diff --check` pass |
+
 ## 2026-10-24-pycomplete-103 — boundary-list repetition
 
 The pure value surface now admits ordinary `list * int` and `int * list` for

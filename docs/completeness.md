@@ -405,6 +405,9 @@ through exactly those. Empty and non-positive tuple/string repetitions now
 short-circuit after index-sized count conversion; positive nonempty results
 still use the fixed materialization budget. Heap-list repetition remains a
 stateful monadic path, while boundary-list repetition is pure.
+The alias-free parameter form `x *= count; return x` now lowers to that pure
+boundary path; alias-bearing augmented list mutations remain loud pending the
+H2 boundary flip.
 
 The list-slice price was small because the allocation shape was already
 paid for: `list(iterable)` left `Expr.heapFree`, added one `worldInv`

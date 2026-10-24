@@ -55,14 +55,17 @@ set_option maxRecDepth 8192
   (.typeError "can't multiply sequence by non-int of type 'tuple'")
 #py_check string_repeat.repeat_left((Val.list #[.int 1]), (Val.tuple #[.int 1])) raises
   (.typeError "can't multiply sequence by non-int of type 'tuple'")
+#py_check string_repeat.repeat_aug((Val.list #[.int 1, .int 2]), 3) =
+  (Val.list #[.int 1, .int 2, .int 1, .int 2, .int 1, .int 2])
+#py_check string_repeat.repeat_aug((Val.list #[.int 1, .int 2]), -2) =
+  (Val.list #[])
+#py_check string_repeat.repeat_aug((Val.list #[.int 1]), (Val.tuple #[.int 1])) raises
+  (.typeError "can't multiply sequence by non-int of type 'tuple'")
 #py_check string_repeat.repeat_boundary_list((Val.list #[.int 1, .int 2]), 3) =
   (Val.list #[.int 1, .int 2, .int 1, .int 2, .int 1, .int 2])
 #py_check string_repeat.repeat_boundary_list(3, (Val.list #[.int 1, .int 2])) =
   (Val.list #[.int 1, .int 2, .int 1, .int 2, .int 1, .int 2])
 #py_check string_repeat.repeat_boundary_list_length((Val.list #[.int 1, .int 2]), 1048577) = 2097154
-#guard callFunction string_repeat "repeat_aug"
-  #[.list #[.int 1], .tuple #[.int 1]] 4096 matches .unsupported _
-
 #guard callFunction string_repeat "repeat_right" #[.str "ab", .int 1048577] 4096
   matches .unsupported _
 #guard callFunction string_repeat "repeat_right" #[.str "ab", .int 1048576] 4096

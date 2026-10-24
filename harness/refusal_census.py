@@ -960,7 +960,6 @@ WHITELIST_CLASS = {
     "int_string::parse_decimal": "builtin.int-of-str",
     "int_string::explicit_base": "builtin.int-of-str",
     "string_repeat::repeat_live_list": "op.Mult-repetition",
-    "string_repeat::repeat_aug": "op.Mult-repetition",
     "tuple_repeat::repeat_empty_length": "op.Mult-repetition",
     "tuple_repeat::repeat_right": "op.Mult-repetition",
     "tuple_repeat::repeat_left": "op.Mult-repetition",

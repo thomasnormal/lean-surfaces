@@ -264,10 +264,14 @@ cycle DETECTION, never by running out of fuel).
 
   Boundary `Val.list` snapshots now also support ordinary `list * int` and
   `int * list` through the pure `listValueRepeat` worker. The result is a
-  fresh snapshot, so this path does not claim heap aliasing or make `*=` live
-  for a boundary list. The same immutable snapshot is accepted by the
+  fresh snapshot, so this path does not claim heap aliasing or make general
+  boundary-list `*=` live. The same immutable snapshot is accepted by the
   length-only repetition worker; heap-backed lists continue through the
-  stateful allocation path.
+  stateful allocation path. In the narrow alias-free parameter shape
+  `x *= count; return x`, ingestion lowers the augmented statement to the
+  pure assignment/binop form, so a boundary list returns the repeated
+  snapshot. Other augmented list mutations stay loud until the H2 boundary
+  flip can preserve in-place aliases.
 
 ## Class semantics (H3 inventory — BUILT, 2026-08-08)
 

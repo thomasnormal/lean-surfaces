@@ -2617,6 +2617,18 @@
     "rung": 1
   },
   {
+    "id": "object.callable-thread-local-persistence",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.CallableReferenceParameterTests",
+    "lean_namespace": "LeanModels.Cpp.CallableReferenceParameterTests",
+    "lean_expression": "callableThreadLocalPersistenceWitness",
+    "cpp_source": "int callable_thread_local() { thread_local int value = 5; return value; } bool callable_witness() { return callable_thread_local() == 5 && callable_thread_local() == 5; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "object.storage-reuse",
     "kind": "lifetime",
     "corpus": "rung-1 witness",

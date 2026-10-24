@@ -194,6 +194,8 @@ private def threadLocalAcrossStarts : Bool :=
                         reused.frame.store.threadBindings.length == 1
                   | .error _ => false
 
+def callableThreadLocalPersistenceWitness : Bool := threadLocalAcrossStarts
+
 #guard aliasing
 #guard callableReferenceParameterWitness
 #guard valueCopyAndIsolation
@@ -207,6 +209,7 @@ private def threadLocalAcrossStarts : Bool :=
 #guard staticLocalAcrossStarts
 #guard callableStaticLocalPersistenceWitness
 #guard threadLocalAcrossStarts
+#guard callableThreadLocalPersistenceWitness
 
 -- Kernel reduction controls for identity, ownership and state retention.
 private theorem kernelReferenceParameters :

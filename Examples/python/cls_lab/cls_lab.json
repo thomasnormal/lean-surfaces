@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/cls_lab/cls_lab.py",
-  "source_sha256": "32d69965f2e9b06b8181d2a045fec9de19b9a5685ee3d1f1091f5b7a14cddb9c",
+  "source_sha256": "bd200e80a5ff549e696197949811f9a80391992743c6560d2a8dbc6c9c816fdc",
   "module": {
     "kind": "Module",
     "body": [
@@ -5849,7 +5849,7 @@
           "lineno": 237,
           "col_offset": 0,
           "end_lineno": 241,
-          "end_col_offset": 12
+          "end_col_offset": 20
         },
         "name": "aug_attr_list",
         "args": [
@@ -5966,20 +5966,50 @@
               "lineno": 241,
               "col_offset": 4,
               "end_lineno": 241,
-              "end_col_offset": 12
+              "end_col_offset": 20
             },
             "value": {
-              "kind": "Constant",
+              "kind": "Call",
               "span": {
                 "lineno": 241,
                 "col_offset": 11,
                 "end_lineno": 241,
-                "end_col_offset": 12
+                "end_col_offset": 20
               },
-              "value": {
-                "type": "int",
-                "repr": "0"
-              }
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 241,
+                  "col_offset": 11,
+                  "end_lineno": 241,
+                  "end_col_offset": 14
+                },
+                "id": "len"
+              },
+              "args": [
+                {
+                  "kind": "Attribute",
+                  "span": {
+                    "lineno": 241,
+                    "col_offset": 15,
+                    "end_lineno": 241,
+                    "end_col_offset": 19
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 241,
+                      "col_offset": 15,
+                      "end_lineno": 241,
+                      "end_col_offset": 16
+                    },
+                    "id": "c"
+                  },
+                  "attr": "xs"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
             }
           }
         ]

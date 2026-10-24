@@ -1576,13 +1576,13 @@ remaining gaps against the shipped file: THREE constructs.
 
 1. **Attribute augmented assignment** (`self.nodes += 1`). CPython
    order: receiver, attribute LOAD (an `AttributeError` fires before
-   the value evaluates), value, binop, attribute STORE. In tier for
-   IMMEDIATE old values only — a heap-valued attribute's `+=` is
-   in-place mutation through an alias and a boundary-list value would
-   silently rebind: both refuse loudly (the name-target discipline,
-   verbatim). The read rides `attrReadResult`, the store
-   `heapAttrStore`. `Stmt.heapFree` goes `false` for attribute targets
-   (the store mutates); subscript/other targets keep their loud arms.
+   the value evaluates), value, binop, attribute STORE. Immediate old values
+   still use the existing store path. A heap-list-valued attribute now admits
+   `+=` for deterministic value sequences (list/tuple/string/bytes/range):
+   the receiver address is extended in place, so aliases observe the same
+   list. Stateful iterators and hash-order containers remain loud. The read
+   rides `attrReadResult`; `Stmt.heapFree` stays `false` for attribute targets
+   because the list mutation changes the heap.
 
 2. **Tuple targets with ATTRIBUTE elements**
    (`self.tp_score, self.tp_move, self.history = {}, {}, set()`).

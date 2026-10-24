@@ -235,10 +235,10 @@ def aug_attr_missing(k):
 
 
 def aug_attr_list(k):
-    # a list-valued attribute's += mutates in place -- loud, never wrong
+    # a list-valued attribute's += mutates in place, preserving the alias
     c = Counter()
     c.xs += [k]
-    return 0
+    return len(c.xs)
 
 
 def unpack_attrs(k):

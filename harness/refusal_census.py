@@ -946,7 +946,6 @@ WHITELIST_CLASS = {
     "with_lab::explicit_init": "with.explicit-constructor",
     "with_lab::argument_sensitive_suppression": "with.exception-arguments",
     "with_lab::extra_dunder": "with.extra-dunder",
-    "cls_lab::aug_attr_list": "augassign.container-attr",
     "cls_lab::unpack_subscript_elem": "assign.non-name-target",
     "cls_lab::chain_attr_first": "assign.non-name-target",
     "str_lab::cast_int": "builtin.int-of-str",

@@ -156,8 +156,9 @@ the language does. Test the model against reality *before* proving.
 declining: "this construct is outside my supported tier." The alternative to
 declining is guessing, and a guess is a silently wrong semantics that proofs
 then faithfully verify. Concrete case ([DESIGN.md](DESIGN.md)): CPython's
-`list += x` mutates in place, observably through aliases; v0's value
-semantics cannot reproduce that, so a list-valued `+=` is `unsupported` —
+`list += x` mutates in place, observably through aliases; the heap-backed
+attribute path now preserves that address for deterministic iterable values,
+while stateful and hash-order iterables remain `unsupported` —
 not "approximately supported" with rebind semantics that would be wrong in
 exactly the aliasing cases someone eventually cares about.
 

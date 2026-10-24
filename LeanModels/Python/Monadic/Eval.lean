@@ -1365,8 +1365,12 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
               match old with
               | .listV _ =>
                   refuse "augmented assignment to a list-valued attribute ('+=' mutates in place, visible through aliases) is outside the tier"
-              | .ref _ =>
-                  refuse "augmented assignment to a heap-valued attribute is outside the tier (docs/memory-model.md §bound() end-to-end)"
+              | .ref a2 =>
+                  do
+                    let v ← evalOpen K m value
+                    let h' ← liftRes (heapListAugAssign (← frameHeap) a2 op v)
+                    heapPut h'
+                    pure .next
               | old => do
                   let v ← evalOpen K m value
                   let res ← binOpM op old v

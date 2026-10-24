@@ -1544,12 +1544,14 @@ theorem fuelMono (fuel : Nat) :
             cases r <;> try exact Run.le_refl _
             case ref a =>
               refine Run.le_bind (Run.le_refl _) fun st old => ?_
-              cases old <;>
-                first
-                | exact Run.le_refl _
-                | exact Run.le_bind (ihE m st value k hk) fun st v =>
-                    Run.le_bind (Run.le_refl _) fun st res =>
-                      Run.le_bind (Run.le_refl _) fun st h' => Run.le_refl _
+              cases old <;> try exact Run.le_refl _
+              case ref a2 =>
+                exact Run.le_bind (ihE m st value k hk) fun st v =>
+                  Run.le_bind (Run.le_refl _) fun st h' => Run.le_refl _
+              all_goals
+                exact Run.le_bind (ihE m st value k hk) fun st v =>
+                  Run.le_bind (Run.le_refl _) fun st res =>
+                    Run.le_bind (Run.le_refl _) fun st h' => Run.le_refl _
         | whileLoop test body orelse _ =>
           simp only [execStmt]
           exact ihW m st test body.toList orelse.toList k hk

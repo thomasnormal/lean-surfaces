@@ -59,9 +59,9 @@ Supported (interpreter must implement faithfully):
   call-`unsupported`), `Return` (bare `return`
   and fall-off-end yield `Val.none`), `Assign` (single target: `Name` or a
   `Tuple`/`List` of `Name`s — tuple unpacking; arity mismatch → `ValueError`),
-  `AugAssign` (target `Name` only; a **list**-valued target is `unsupported` —
-  CPython `list += x` mutates in place, observable through aliases, which value
-  semantics cannot reproduce; immutable-valued targets rebind faithfully),
+  `AugAssign` (name targets rebind immutable values; a heap-list-valued
+  attribute target admits deterministic list/tuple/string/bytes/range extension
+  in place, while stateful and hash-order iterables remain loud),
   `While` (with `orelse`: runs on normal exit,
   skipped on `break`), `If`/elif/else, `Expr` (evaluate, discard), `Pass`, `Break`,
   `Continue`.

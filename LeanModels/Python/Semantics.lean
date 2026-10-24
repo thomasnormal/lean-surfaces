@@ -3317,6 +3317,54 @@ def heapInsert (h : Heap) (a : Addr) (i : Int) (v : RVal) : Res Heap :=
   | some (.pyset _) => .exn .attributeError    -- sets have .add, not .insert
   | Option.none => .unsupported danglingMsg
 
+/-! `list += iterable` keeps the receiver's address and extends it in place.
+The augmented-assignment arm uses this worker for heap-backed list
+attributes.  The value-side list/tuple/string inventory is deterministic;
+stateful heap iterators and hash-order containers stay loud rather than
+silently choosing an iteration protocol. -/
+def heapListExtendValues (h : Heap) : RVal → Res (List RVal)
+  | .listV xs => .ok xs.toList
+  | .tuple xs => .ok xs.toList
+  | .ntuple _ _ xs => .ok xs.toList
+  | .str s => .ok (strCharVals s)
+  | .bytes xs => .ok (bytesIntVals xs)
+  | .rangeV lo hi step => rangeVals lo.toInt hi.toInt step.toInt
+  | .ref b =>
+      match Heap.get? h b with
+      | some (.list xs) => .ok xs.toList
+      | some (.dict ..) =>
+          .unsupported "augmented list assignment from a heap dict is outside the tier (dict iteration is live)"
+      | some (.dictView ..) =>
+          .unsupported "augmented list assignment from a dictionary view is outside the tier"
+      | some (.generator ..) =>
+          .unsupported "augmented list assignment from a generator is outside the tier (the iterator is stateful)"
+      | some (.pyset _) =>
+          .unsupported "augmented list assignment from a set is outside the tier (iteration is hash order)"
+      | some (.instance ..) =>
+          .exn (.typeError "'object' object is not iterable")
+      | some (.cell _) => .unsupported cellInternal
+      | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
+      | none => .unsupported danglingMsg
+  | v => .exn (.typeError s!"'{RVal.typeNameH h v}' object is not iterable")
+
+def heapListExtend (h : Heap) (a : Addr) (v : RVal) : Res Heap :=
+  match Heap.get? h a with
+  | some (.list xs) =>
+      match heapListExtendValues h v with
+      | .ok ys =>
+          match Heap.update h a (.list (xs.toList ++ ys).toArray) with
+          | some h' => .ok h'
+          | none => .unsupported danglingMsg
+      | .exn e => .exn e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg
+  | some _ => .unsupported "augmented repetition receiver is not a list"
+  | none => .unsupported danglingMsg
+
+def heapListAugAssign (h : Heap) (a : Addr) (op : BinOp) (v : RVal) : Res Heap :=
+  if op == .add then heapListExtend h a v
+  else .unsupported "augmented assignment to a heap-valued attribute is outside the tier (docs/memory-model.md §bound() end-to-end)"
+
 /-- `o.attr = v` on a heap object (H3: mutable self — the attribute
 store). Instances update their attribute table in place (`Env.set`
 semantics: replace-in-place or append — CPython `__dict__` insertion
@@ -7831,8 +7879,10 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
            (match old with
             | .listV _ =>
                 .unsupported "augmented assignment to a list-valued attribute ('+=' mutates in place, visible through aliases) is outside the tier"
-            | .ref _ =>
-                .unsupported "augmented assignment to a heap-valued attribute is outside the tier (docs/memory-model.md §bound() end-to-end)"
+            | .ref a2 =>
+                evalExpr m fuel st value ⤳ fun st v =>
+                Run.liftRes st (heapListAugAssign st.world.heap a2 op v) ⤳ fun st h' =>
+                .ok { st with world := { st.world with heap := h' } } .next
             | old =>
                 evalExpr m fuel st value ⤳ fun st v =>
                 Run.liftRes st (evalBinOp op old v) ⤳ fun st res =>

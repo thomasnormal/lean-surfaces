@@ -145,7 +145,8 @@ subscript element inside a tuple target. -/
 #py_check cls_lab.unpack_arity(1) raises
   (.valueError "not enough values to unpack (expected 2, got 1)")
 
-#guard callFunction cls_lab "aug_attr_list" #[.int 1] 4096 matches .unsupported _
+#py_check cls_lab.aug_attr_list(1) = 1
+#py_check cls_lab.aug_attr_list(0) = 1
 #guard callFunction cls_lab "unpack_subscript_elem" #[.int 1] 4096 matches .unsupported _
 
 /-! ### pass 5: CHAINED assignment, split at ingestion

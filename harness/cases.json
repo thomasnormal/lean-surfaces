@@ -247,7 +247,7 @@
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "bad_second", "args": [[0], [2], [-1]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "aug_attr", "args": [[3], [0]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "aug_attr_missing", "args": [[1]], "expect": "match"},
-  {"file": "Examples/python/cls_lab/cls_lab.py", "function": "aug_attr_list", "args": [[1]], "expect": "unsupported"},
+  {"file": "Examples/python/cls_lab/cls_lab.py", "function": "aug_attr_list", "args": [[1], [0]], "expect": "match", "note": "list-valued attribute += extends the same heap list in place"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "unpack_attrs", "args": [[7], [0]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "unpack_attrs_mixed", "args": [[4]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "unpack_attrs_swap", "args": [[9]], "expect": "match"},

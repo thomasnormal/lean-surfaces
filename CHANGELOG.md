@@ -70,6 +70,9 @@ change is listed here under **Changed** or **Removed**.
 - Non-simple annotated assignment targets now evaluate their annotation and
   perform the ordinary attribute or subscript store in CPython order; class
   annotations and observed value-less declarations remain loud.
+- Heap-list-valued attribute `+=` now extends the existing list address in
+  place for deterministic list, tuple, string, bytes, and range operands;
+  stateful and hash-order iterables remain loud.
 
 ## [0.1.14] — 2026-10-21
 

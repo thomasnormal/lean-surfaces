@@ -17,6 +17,14 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-77 — heap-list attribute augmented assignment
+
+Heap-list-valued attribute `+=` now evaluates the right-hand side and extends
+the receiver's existing heap address in place. Deterministic list, tuple,
+string, bytes, and range operands are admitted; stateful iterators and
+hash-order containers remain loud. `cls_lab.aug_attr_list` observes the
+in-place length and matches CPython on both interpreter surfaces.
+
 ## 2026-10-24-pycomplete-76 — non-simple annotated targets
 
 Annotated assignments with `simple == 0` targets now lower to the annotation

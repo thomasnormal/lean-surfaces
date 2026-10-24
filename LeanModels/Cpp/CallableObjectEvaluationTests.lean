@@ -89,6 +89,10 @@ private def localIncrement : Bool :=
   | .ok (.ok value) => value == signed 5
   | _ => false
 
+def callableLocalIncrementWitness : Bool := localIncrement
+
+#guard callableLocalIncrementWitness
+
 private def loopLocalReentryFunction : CallableFunction :=
   {functionWithLocal (.literal (signed 0)) with
     body := .block (.sequence

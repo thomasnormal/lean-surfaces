@@ -3685,6 +3685,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-local-increment",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalIncrementWitness",
+    "cpp_source": "int local_increment(int value) { int local = 4; return ++local; } bool callable_witness() { return local_increment(7) == 5; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-nested-block",
     "kind": "statement",
     "corpus": "rung-4 witness",

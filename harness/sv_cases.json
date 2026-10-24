@@ -1018,6 +1018,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "constant_net_array_cell_driver",
+      "file": "Examples/system-verilog/constant_net_array_cell_driver/constant_net_array_cell_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

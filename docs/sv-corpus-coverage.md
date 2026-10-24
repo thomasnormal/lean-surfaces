@@ -3739,6 +3739,19 @@ row and reuses the ordinary fixed-cell storage and interpreter path. The
 net-array types or dynamic drivers. Differential coverage moves
 **109/105/0/4 → 110/106/0/4**; grammar coverage remains **213/82/131**.
 
+## Literal continuous fixed-array net cells — 2026-10-24
+
+A one-dimensional fixed-unpacked `wire` array with one pure integral literal
+driver per constant cell is flattened into independent `Net` cells. The
+existing time-zero assignment and four-state literal-driver resolution are
+reused; whole-array, dynamic, multidimensional, non-integral, and effectful
+forms remain loud. `constant_net_array_cell_driver` supplies the differential
+witness.
+
+The census moves **4,806 → 4,810 clean** and **17,176 → 17,172 partial**;
+`AssignmentExpression:target` remains **3,037**. Differential coverage moves
+**113/109/0/4 → 114/110/0/4**; grammar coverage remains **213/82/131**.
+
 ## Literal continuous packed-variable drivers — 2026-10-24
 
 A pure integral literal continuous assignment to one whole packed variable or

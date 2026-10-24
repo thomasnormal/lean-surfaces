@@ -407,10 +407,6 @@
     25
    ],
    [
-    "NetSymbol:type",
-    24
-   ],
-   [
     "NetSymbol:Tri0",
     22
    ],
@@ -577,6 +573,10 @@
    [
     "ArbitrarySymbolExpression",
     10
+   ],
+   [
+    "NetSymbol:type",
+    9
    ],
    [
     "AssignmentExpression:selected-effects",
@@ -976,13 +976,13 @@
    ]
   ],
   "by_status": {
-   "clean": 4806,
-   "partial": 17176,
+   "clean": 4810,
+   "partial": 17172,
    "skip_include": 66
   },
   "clean_by_type": {
    "(none)": [
-    465,
+    467,
     1388
    ],
    "compilation": [
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4141,
+    4143,
     18681
    ],
    "simulation elaboration": [
@@ -1231,9 +1231,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 585,
-    "clean": 455,
-    "partial": 587,
+    "blocked_by_more": 584,
+    "clean": 456,
+    "partial": 586,
     "simulation_tests": 1042,
     "top_residual_blockers": [
      [
@@ -1254,7 +1254,7 @@
      ],
      [
       "TimedStatement:DelayControl",
-      144
+      143
      ],
      [
       "AssignmentExpression:target",
@@ -1459,9 +1459,9 @@
     "unlockable": 0
    },
    "chapter-27": {
-    "clean": 191,
+    "clean": 192,
     "error": 0,
-    "partial": 163,
+    "partial": 162,
     "skip_include": 0,
     "total": 354,
     "unlockable": 0
@@ -1547,9 +1547,9 @@
     "unlockable": 0
    },
    "chapter-37": {
-    "clean": 149,
+    "clean": 151,
     "error": 0,
-    "partial": 268,
+    "partial": 266,
     "skip_include": 0,
     "total": 417,
     "unlockable": 0
@@ -1595,9 +1595,9 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 469,
+    "clean": 470,
     "error": 0,
-    "partial": 717,
+    "partial": 716,
     "skip_include": 0,
     "total": 1186,
     "unlockable": 4

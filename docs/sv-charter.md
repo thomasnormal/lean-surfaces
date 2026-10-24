@@ -6144,6 +6144,20 @@ reuses the ordinary cell storage and interpreter path. The corpus census is
 unchanged because its fixed-array continuous rows either use net-array types or
 dynamic drivers; differential coverage moves **109/105/0/4 → 110/106/0/4**.
 
+## Literal continuous fixed-array net cells — 2026-10-24
+
+A one-dimensional fixed-unpacked `wire` array with one pure integral literal
+driver per constant cell now lowers to independent flat `Net` cells. The
+existing time-zero write and literal net-resolution paths are reused; whole,
+dynamic, multidimensional, non-integral, and effectful forms remain loud.
+`constant_net_array_cell_driver` supplies the differential evidence.
+
+The 22,048-path census moves **4,806 → 4,810 clean** and **17,176 → 17,172
+partial**; `AssignmentExpression:target` remains **3,037** because the
+remaining target-only rows use dynamic or aggregate shapes. Differential
+coverage moves **113/109/0/4 → 114/110/0/4**; grammar coverage remains
+**213/82/131**.
+
 ## Literal continuous packed-variable drivers — 2026-10-24
 
 A pure integral literal continuous assignment to one whole packed variable or

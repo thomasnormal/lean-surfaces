@@ -62,6 +62,20 @@ class ContinuousLiteralDrivers(unittest.TestCase):
             [process["body"]["target"]["name"] for process in processes],
             ["cells[0]", "cells[1]"])
 
+    def test_literal_fixed_array_net_cells_lower_to_time_zero_writes(self):
+        design = extract_source(
+            "module top; wire [3:0] cells [0:1]; "
+            "assign cells[0] = 4'ha; assign cells[1] = 4'h5; endmodule")
+        module = design["modules"][0]
+        self.assertEqual(
+            [(decl["kind"], decl["name"]) for decl in module["decls"]],
+            [("Net", "cells[0]"), ("Net", "cells[1]")])
+        processes = module["processes"]
+        self.assertEqual([process["kind"] for process in processes],
+                         ["Initial", "Initial"])
+        self.assertTrue(all(process.get("continuous_array_cell_lowered")
+                             for process in processes))
+
     def test_literal_packed_variable_drivers_lower_to_time_zero_writes(self):
         design = extract_source(
             "module top; logic [3:0] whole, window; "

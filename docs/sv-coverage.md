@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 113 | 109 | 0 | 4 | sv-tests-2 declarations |
+| 114 | 110 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -127,6 +127,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `constant_variable_driver` | `Examples/system-verilog/constant_variable_driver/constant_variable_driver.sv` | match | **MATCH** | `ok` | MATCH |
 | `disjoint_literal_net_windows` | `Examples/system-verilog/disjoint_literal_net_windows/disjoint_literal_net_windows.sv` | match | **MATCH** | `ok` | MATCH |
 | `overlapping_literal_net_windows` | `Examples/system-verilog/overlapping_literal_net_windows/overlapping_literal_net_windows.sv` | match | **MATCH** | `ok` | MATCH |
+| `constant_net_array_cell_driver` | `Examples/system-verilog/constant_net_array_cell_driver/constant_net_array_cell_driver.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -266,7 +267,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.NamedLabel` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedParamAssignment` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NamedType` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
-| `SyntaxKind.NetDeclaration` | `Examples/system-verilog/constant_net_bit_driver/constant_net_bit_driver.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.NetDeclaration` | `Examples/system-verilog/constant_net_array_cell_driver/constant_net_array_cell_driver.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NewArrayExpression` | `Examples/system-verilog/dynamic_array_cells/dynamic_array_cells.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NewClassExpression` | `Examples/system-verilog/opaque_mailbox_new_write/opaque_mailbox_new_write.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NonblockingAssignmentExpression` | `Examples/system-verilog/array_reductions/timing.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
@@ -358,7 +359,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22048 | 4806 | 17176 | 66 |
+| 22048 | 4810 | 17172 | 66 |
 
 | blocker kind | files |
 |---|---:|

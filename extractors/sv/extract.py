@@ -9124,7 +9124,7 @@ def convert_continuous_assign(sm, m):
     # multiply-driven cell on the scheduler-owned continuous boundary.
     if (_SYM is None and type(e.left).__name__ == "ElementSelectExpression"
             and getattr(left_symbol, "kind", None) is not None
-            and str(left_symbol.kind) == "SymbolKind.Variable"
+            and str(left_symbol.kind) in ("SymbolKind.Variable", "SymbolKind.Net")
             and target.get("kind") == "Ident"
             and value is not None and value.get("kind") == "Literal"
             and _integral_literal_source(e.right)):
@@ -9493,6 +9493,30 @@ def convert_net(sm, m):
         return unsupported(sm, m, "NetSymbol:" + nk)
     if getattr(m, "delay", None) is not None:
         return unsupported(sm, m, "NetSymbol:delay")
+    # A one-dimensional fixed-unpacked wire array can use the same flat
+    # storage as a variable array when each cell is addressed directly.  The
+    # cells remain ``Net`` declarations, so the existing literal-driver
+    # folding still resolves multiple constant drivers per cell.  Whole,
+    # dynamic, multidimensional, and non-integral array uses stay loud at the
+    # expression/target boundary.
+    array_type = getattr(m.type, "canonicalType", None)
+    if type(array_type).__name__ == "FixedSizeUnpackedArrayType":
+        element_type = array_type.elementType
+        if type(element_type.canonicalType).__name__ != "FixedSizeUnpackedArrayType":
+            width, reason = type_width(element_type)
+            if width is not None and reason is None:
+                left, right = int(array_type.range.left), int(array_type.range.right)
+                if abs(left - right) + 1 <= 1024:
+                    base = _array_storage_name(m)
+                    return [signed_metadata({
+                        "kind": "Net",
+                        "span": sym_span(sm, m),
+                        "name": f"{base}[{position}]",
+                        "width": width,
+                        "init": None,
+                    }, element_type) for position in range(
+                        left, right + (1 if right >= left else -1),
+                        1 if right >= left else -1)]
     w, reason = type_width(m.type)
     if w is None:
         return unsupported(sm, m, "NetSymbol:" + reason)
@@ -9850,7 +9874,11 @@ def convert_module(sm, inst):
                         else:
                             decls.append(declaration)
                 else:
-                    decls.append(convert_net(sm, m))
+                    converted = convert_net(sm, m)
+                    if isinstance(converted, list):
+                        decls.extend(converted)
+                    else:
+                        decls.append(converted)
             elif k == "ProceduralBlock":
                 processes.append(convert_procedural_block(sm, m))
             elif k == "ContinuousAssign":

@@ -114,6 +114,19 @@ multiple drivers remain loud.
 ordinary scalar-cell representation and interpreter path; no aggregate store
 or continuous-driver queue is added.
 
+## Literal continuous fixed-array net cells — 2026-10-24
+
+A one-dimensional fixed-unpacked `wire` array with one pure integral literal
+driver per constant cell is flattened to independent `Net` cells. The existing
+time-zero assignment and per-cell literal-driver resolution then apply without
+introducing an aggregate net store. Whole-array, dynamic or multidimensional
+uses, non-integral leaves, and future or effectful drivers remain loud.
+
+`constant_net_array_cell_driver` is the differential witness. Multiple literal
+drivers to the same flattened cell still use the existing four-state net
+resolution; the declaration remains a `Net`, rather than being treated as a
+procedural variable.
+
 ## Literal continuous packed-variable drivers — 2026-10-24
 
 A pure integral literal assigned continuously to one whole packed variable or

@@ -3049,6 +3049,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-postfix-decrement",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callablePostfixDecrementWitness",
+    "cpp_source": "int postfix_decrement(int value) { return value--; } bool callable_witness() { return postfix_decrement(4) == 4; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

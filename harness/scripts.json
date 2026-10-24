@@ -355,8 +355,8 @@
   },
   {
     "file": "harness/scripts/decimal_render_limit_script.py",
-    "expect": "unsupported",
-    "note": "Conservative configurable CPython digit-limit boundary: this 4301-digit rendering succeeds at the pinned oracle's default limit 4300 but is beyond the model's fixed 4300-digit budget. The model refuses loudly rather than inventing a host-dependent answer."
+    "expect": "match",
+    "note": "Both sides raise CPython's exact ValueError at the pinned 4300-digit decimal conversion limit."
   },
   {
     "file": "harness/scripts/range_bool_script.py",

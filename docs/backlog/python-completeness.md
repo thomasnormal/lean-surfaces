@@ -17,6 +17,14 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-84 — decimal rendering limit error
+
+Integer decimal rendering beyond the pinned 4300-digit CPython limit now
+raises the exact `ValueError` and message instead of becoming a loud tier
+refusal. The error propagates through scalar, percent-format, f-string,
+container, range, namedtuple, and script rendering; the fixed bound remains
+unchanged.
+
 ## 2026-10-24-pycomplete-83 — huge left-shift overflow
 
 Left-shift counts at the conservative measured overflow guard now raise

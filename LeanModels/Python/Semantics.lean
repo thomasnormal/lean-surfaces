@@ -852,6 +852,15 @@ symbolic simplification so unrelated branches do not expand the digit bound. -/
 @[irreducible] def intDecimal (value : Int) : Option String :=
   if value.natAbs < 10 ^ intDigitBudget then some (toString value) else Option.none
 
+/-- CPython's default decimal conversion error at the pinned 4300-digit limit. -/
+def decimalLimitError : PyErr :=
+  .valueError "Exceeds the limit (4300) for integer string conversion; use sys.set_int_max_str_digits() to increase the limit"
+
+/-- Whether an immediate value is an over-budget decimal integer. -/
+def decimalOverflowImmediate : RVal → Bool
+  | .int value => (intDecimal value).isNone
+  | _ => false
+
 /-- Lowercase hexadecimal rendering for the bounded `%x` conversion. -/
 def intHex (value : Int) : Option String :=
   if value.natAbs < 16 ^ intDigitBudget then
@@ -933,7 +942,7 @@ def strOfVal : RVal → Res RVal
   | .int value =>
     match intDecimal value with
     | some text => .ok (.str text)
-    | Option.none => .unsupported "integer decimal rendering beyond intDigitBudget is outside the tier (CPython's configurable digit limit; docs/memory-model.md §decimal integer rendering)"
+    | Option.none => .exn decimalLimitError
   | .float value =>
     match value.repr with
     | some text => .ok (.str text)
@@ -1072,7 +1081,7 @@ def strFormatConv (c : Char) (v : RVal) : Res String :=
       | some value =>
         match intDecimal value with
         | some text => .ok text
-        | Option.none => .unsupported s!"'%{c}' integer decimal rendering beyond intDigitBudget is outside the tier (CPython's configurable digit limit; docs/memory-model.md §decimal integer rendering)"
+        | Option.none => .exn decimalLimitError
       -- CPython leaves this type name UNQUOTED (measured against 3.9)
       | Option.none =>
         if v.hasFloat then .unsupported s!"'%{c}' of a non-finite float is outside the tier"
@@ -1091,6 +1100,8 @@ def strFormatConv (c : Char) (v : RVal) : Res String :=
           | some text => .ok text
           | Option.none => .unsupported "'%o' integer rendering beyond intDigitBudget is outside the tier (docs/memory-model.md §decimal integer rendering)"
       | Option.none => .exn (.typeError s!"%o format: an integer is required, not {v.typeName}")
+    else if (c == 'r' || c == 's') && decimalOverflowImmediate v then
+      .exn decimalLimitError
     else
       match (if c == 'r' then strFormatRepr v else strFormatStr v) with
       | some s => .ok s
@@ -2089,6 +2100,62 @@ refusal must not depend on the caller's fuel). Cycles are caught by the
 active-path list instead, faithfully. -/
 def reprFuel : Nat := 256
 
+/-! Decimal-limit detection follows the same bounded active-path traversal as
+`reprVal`, but keeps the renderer's existing `Option` interface intact. This
+lets a nested integer raise CPython's ValueError instead of being conflated with
+an unrelated loud rendering boundary. -/
+mutual
+  def decimalOverflowValH (h : Heap) (fuel : Nat) (active : List Addr) : RVal → Bool
+    | .int value => decimalOverflowImmediate (.int value)
+    | .tuple xs =>
+      match fuel with
+      | 0 => false
+      | fuel + 1 => decimalOverflowValsH h fuel active xs.toList
+    | .ntuple _ _ xs =>
+      match fuel with
+      | 0 => false
+      | fuel + 1 => decimalOverflowValsH h fuel active xs.toList
+    | .listV xs =>
+      match fuel with
+      | 0 => false
+      | fuel + 1 => decimalOverflowValsH h fuel active xs.toList
+    | .rangeV lo hi step =>
+      decimalOverflowImmediate lo.toRVal ||
+        decimalOverflowImmediate hi.toRVal || decimalOverflowImmediate step.toRVal
+    | .ref a =>
+      match fuel with
+      | 0 => false
+      | fuel + 1 =>
+        if active.contains a then false
+        else
+          match Heap.get? h a with
+          | some (.list xs) => decimalOverflowValsH h fuel (a :: active) xs.toList
+          | some (.dict entries _) => decimalOverflowEntriesH h fuel (a :: active) entries.toList
+          | some (.dictView da kind) =>
+            match Heap.get? h da with
+            | some (.dict entries _) =>
+              let elems := match kind with
+                | .keys => entries.map Prod.fst
+                | .values => entries.map Prod.snd
+                | .items => entries.map (fun kv : RVal × RVal => .tuple #[kv.1, kv.2])
+              decimalOverflowValsH h fuel (a :: active) elems.toList
+            | _ => false
+          | _ => false
+    | _ => false
+
+  def decimalOverflowValsH (h : Heap) (fuel : Nat) (active : List Addr) :
+      List RVal → Bool
+    | [] => false
+    | v :: vs => decimalOverflowValH h fuel active v || decimalOverflowValsH h fuel active vs
+
+  def decimalOverflowEntriesH (h : Heap) (fuel : Nat) (active : List Addr) :
+      List (RVal × RVal) → Bool
+    | [] => false
+    | (k, v) :: rest =>
+      decimalOverflowValH h fuel active k || decimalOverflowValH h fuel active v ||
+        decimalOverflowEntriesH h fuel active rest
+end
+
 /-- Render a retained range field through the canonical scalar renderer. -/
 def rangeBoundRepr (bound : RangeBound) : Option String :=
   match strOfVal bound.toRVal with
@@ -2265,10 +2332,13 @@ mutual
 end
 
 def asciiValH (h : Heap) (v : RVal) : Res RVal :=
-  match asciiReprValH h reprFuel [] v with
-  | some text => .ok (.str text)
-  | Option.none =>
-    .unsupported s!"ascii() of '{v.typeName}' is outside the tier (its rendering refuses; docs/memory-model.md §the cast tier)"
+  if decimalOverflowValH h reprFuel [] v then
+    .exn decimalLimitError
+  else
+    match asciiReprValH h reprFuel [] v with
+    | some text => .ok (.str text)
+    | Option.none =>
+      .unsupported s!"ascii() of '{v.typeName}' is outside the tier (its rendering refuses; docs/memory-model.md §the cast tier)"
 
 /-- CPython `str()` of a value as `print` sees it: a str prints RAW,
 everything else through `repr`. -/
@@ -2288,16 +2358,22 @@ def strOfValH (h : Heap) (v : RVal) : Res RVal :=
   match v with
   | .int _ | .bool _ | .str _ | .none => strOfVal v
   | v =>
-    match printOne h v with
-    | some s => .ok (.str s)
-    | Option.none => .unsupported s!"str() of '{v.typeName}' is outside the tier (its rendering refuses; docs/memory-model.md §rendering)"
+    if decimalOverflowValH h reprFuel [] v then
+      .exn decimalLimitError
+    else
+      match printOne h v with
+      | some s => .ok (.str s)
+      | Option.none => .unsupported s!"str() of '{v.typeName}' is outside the tier (its rendering refuses; docs/memory-model.md §rendering)"
 
 def reprArgs (h : Heap) (vs : List RVal) : Res RVal :=
   match vs with
   | [v] =>
-    match reprVal h reprFuel [] v with
-    | some text => .ok (.str text)
-    | Option.none => .unsupported s!"repr() of '{v.typeName}' is outside the tier (its rendering refuses; docs/memory-model.md §rendering)"
+    if decimalOverflowValH h reprFuel [] v then
+      .exn decimalLimitError
+    else
+      match reprVal h reprFuel [] v with
+      | some text => .ok (.str text)
+      | Option.none => .unsupported s!"repr() of '{v.typeName}' is outside the tier (its rendering refuses; docs/memory-model.md §rendering)"
   | vs => .exn (.typeError s!"repr() takes exactly one argument ({vs.length} given)")
 
 def formatValueH (heap : Heap) (value : RVal) (reprConversion : Bool) : Res RVal :=
@@ -2312,7 +2388,7 @@ def formatSpecH (value : RVal) (spec : String) : Res RVal :=
     | .int n =>
         match intDecimal n with
         | some text => .ok (.str text)
-        | Option.none => .unsupported "integer decimal rendering beyond intDigitBudget is outside the tier (CPython's configurable digit limit; docs/memory-model.md §decimal integer rendering)"
+        | Option.none => .exn decimalLimitError
     | .bool b => .ok (.str (if b then "1" else "0"))
     | _ => .unsupported "format() with this value/specification is outside the tier (only bare d for int/bool is modeled)"
   else

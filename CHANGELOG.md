@@ -90,6 +90,9 @@ change is listed here under **Changed** or **Removed**.
 - Integer left-shift counts at the conservative measured overflow guard now
   raise CPython's exact `OverflowError: too many digits in integer`; ordinary
   counts beyond the fixed materialization budget remain loud.
+- Integer decimal rendering beyond the pinned 4300-digit limit now raises
+  CPython's exact `ValueError` and message across scalar, format, f-string,
+  container, and script rendering paths.
 
 ## [0.1.14] — 2026-10-21
 

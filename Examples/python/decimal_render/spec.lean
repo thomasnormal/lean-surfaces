@@ -38,6 +38,8 @@ set_option exponentiation.threshold 4300
 #guard intDecimal (-((10 : Int) ^ 4300)) matches none
 #guard intDecimal ((10 : Int) ^ 4301) matches none
 #guard intDecimal (-((10 : Int) ^ 4301)) matches none
+#guard callFunction decimal_render "scalar_str" #[.int ((10 : Int) ^ 4301)] 4096 ==
+  .exn (.valueError "Exceeds the limit (4300) for integer string conversion; use sys.set_int_max_str_digits() to increase the limit")
 
 theorem scalar_str_total (value : PyInt)
     (valueBound : value.natAbs < 10 ^ 4300) :

@@ -2775,10 +2775,11 @@ The helper remains kernel-reducible but is opaque to symbolic simplification:
 unrelated interpreter branches must not expand the large closed power while
 walking symbolic programs. A rendering proof unfolds it explicitly when it
 has the magnitude bound.
-Larger magnitudes refuse, never a guessed `ValueError`: the pinned CPython
-3.9 oracle normally permits 4,300 digits, while a process may choose a lower
-or disabled limit. The model uses its fixed 4300-digit budget and does not
-consult host configuration.
+Larger magnitudes now raise CPython's exact
+`ValueError: Exceeds the limit (4300) for integer string conversion; use
+sys.set_int_max_str_digits() to increase the limit`. The model uses its fixed
+4300-digit budget and does not consult host configuration; `intDecimal` remains
+an internal option so proofs can state the successful bounded branch directly.
 
 All integer-producing rendering paths use this admission: `strOfVal` for
 scalar `str`, `%s`, and `%r`; `%d` after its existing bool-to-int coercion;
@@ -2791,10 +2792,10 @@ removed, and no allocation, recursion point, heap-free predicate, or public
 judgment changes. The `decimal_render` artifact supplies a symbolic scalar
 theorem under the magnitude bound and differential boundary rows.
 
-Refusals expose no retained world or stdout at the public runner boundary:
-over-budget scripts do not claim CPython's partial output or exception class.
-Separate admitted-effects fixtures pin left-to-right evaluation and the
-first faithful operand exception.
+The decimal-limit `ValueError` crosses the public runner boundary with its
+class and message, including when the oversized integer is nested in a
+container or f-string. Separate admitted-effects fixtures pin left-to-right
+evaluation and the first faithful operand exception.
 
 The decimal-budget audit also found a separate, pre-existing range-constructor
 bug: CPython 3.9 retains Boolean start/stop fields in a range's rendering, while

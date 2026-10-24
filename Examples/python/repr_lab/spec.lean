@@ -52,7 +52,8 @@ set_option exponentiation.threshold 4300
 #guard callFunction repr_lab "set_value" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "closure" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "generator" #[] 4096 matches .unsupported _
-#guard callFunction repr_lab "large_length" #[.int 4301] 4096 matches .unsupported _
+#guard callFunction repr_lab "large_length" #[.int 4301] 4096 ==
+  .exn (.valueError "Exceeds the limit (4300) for integer string conversion; use sys.set_int_max_str_digits() to increase the limit")
 #guard callFunction repr_lab "deep" #[.int 65] 4096 matches .ok _
 #guard callFunction repr_lab "deep" #[.int 80] 4096 matches .ok _
 #guard callFunction repr_lab "deep" #[.int 129] 4096 matches .ok _

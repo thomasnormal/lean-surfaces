@@ -3733,6 +3733,18 @@
     "rung": 5
   },
   {
+    "id": "declaration.callable-value-parameter-isolation",
+    "kind": "statement",
+    "corpus": "rung-5 witness",
+    "lean_module": "LeanModels.Cpp.CallableReferenceParameterTests",
+    "lean_namespace": "LeanModels.Cpp.CallableReferenceParameterTests",
+    "lean_expression": "callableValueParameterIsolationWitness",
+    "cpp_source": "int copy_isolation(int& first, int second) { first = 7; return second; } bool callable_witness() { int value = 2; return copy_isolation(value, value) == 2 && value == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 5
+  },
+  {
     "id": "declaration.callable-local-reference",
     "kind": "statement",
     "corpus": "rung-5 witness",

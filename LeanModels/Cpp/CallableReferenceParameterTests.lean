@@ -58,6 +58,10 @@ private def valueCopyAndIsolation : Bool :=
       [.aliveInitialized, .aliveInitialized, .ended] && result.frame.scopes.isEmpty &&
     !started.frame.bound (h "caller") && started.frame.store.objects.objects.length == 3
 
+def callableValueParameterIsolationWitness : Bool := valueCopyAndIsolation
+
+#guard callableValueParameterIsolationWitness
+
 private def constAndLifetime : Bool :=
   let mutable := function [.lvalueReference intType] (.return_ (expression "0"))
   let constant := function [.lvalueReference (.qualified true false intType)]

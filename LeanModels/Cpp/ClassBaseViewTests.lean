@@ -322,4 +322,12 @@ def classBaseProtectedAccessWitness : Bool :=
 
 #guard classBaseProtectedAccessWitness
 
+def classBaseFriendAccessWitness : Bool :=
+  observed (contextualOn {hierarchy with classes :=
+    (hierarchy.classes.modify 0 (fun shape =>
+      {shape with bases := [b "L" "private", b "R"], friends := [h "F"]}))}
+    [] [0] "F") == some 1
+
+#guard classBaseFriendAccessWitness
+
 end LeanModels.Cpp.ClassBaseViewTests

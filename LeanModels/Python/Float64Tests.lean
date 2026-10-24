@@ -212,6 +212,30 @@ theorem mixed_arithmetic_converts_before_nan :
     arithmeticIntFloat .add (10 ^ 400) (ofBits 0x7ff8000000000001) =
       .error .conversionOverflow := rfl
 
+theorem arithmetic_quiets_left_nan :
+    arithmeticWithNaN .add (ofBits 0x7ff0000000000001) (ofBits 0x3ff0000000000000) =
+      .ok (ofBits 0x7ff8000000000001) := rfl
+
+theorem arithmetic_quiets_right_nan :
+    arithmeticWithNaN .sub (ofBits 0x3ff0000000000000) (ofBits 0xfff0000000000001) =
+      .ok (ofBits 0xfff8000000000001) := rfl
+
+theorem arithmetic_nan_left_wins :
+    arithmeticWithNaN .mult (ofBits 0x7ff8000000000001) (ofBits 0x7ff8000000000002) =
+      .ok (ofBits 0x7ff8000000000001) := rfl
+
+theorem arithmetic_invalid_infinity_subtraction_is_canonical_nan :
+    arithmeticWithNaN .sub (ofBits 0x7ff0000000000000) (ofBits 0x7ff0000000000000) =
+      .ok (ofBits 0xfff8000000000000) := rfl
+
+theorem arithmetic_invalid_infinity_addition_is_canonical_nan :
+    arithmeticWithNaN .add (ofBits 0x7ff0000000000000) (ofBits 0xfff0000000000000) =
+      .ok (ofBits 0xfff8000000000000) := rfl
+
+theorem arithmetic_invalid_infinity_zero_product_is_canonical_nan :
+    arithmeticWithNaN .mult (ofBits 0x7ff0000000000000) (ofBits 0) =
+      .ok (ofBits 0xfff8000000000000) := rfl
+
 #print axioms addition_tenths
 #print axioms negative_zero_sum
 #print axioms subtraction_cancels_to_positive_zero
@@ -223,6 +247,12 @@ theorem mixed_arithmetic_converts_before_nan :
 #print axioms multiplication_overflows_to_infinity
 #print axioms indeterminate_infinity_requires_nan_oracle
 #print axioms mixed_arithmetic_converts_before_nan
+#print axioms arithmetic_quiets_left_nan
+#print axioms arithmetic_quiets_right_nan
+#print axioms arithmetic_nan_left_wins
+#print axioms arithmetic_invalid_infinity_subtraction_is_canonical_nan
+#print axioms arithmetic_invalid_infinity_addition_is_canonical_nan
+#print axioms arithmetic_invalid_infinity_zero_product_is_canonical_nan
 #print axioms arithmetic_sub_self
 
 theorem text_tenth : fromText "0.1" = .ok (ofBits 0x3fb999999999999a) := rfl

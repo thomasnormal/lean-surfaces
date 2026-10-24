@@ -2042,14 +2042,30 @@ def floatIsInteger (value : Float64) : Bool :=
   else if exponent >= 1075 then true
   else value.fraction % 2 ^ (1075 - exponent) == 0
 
+def floatArithmeticInvalid (operator : Float64.ArithmeticOp)
+    (left right : Float64) : Bool :=
+  match operator with
+  | .add => left.isInf && right.isInf && left.sign != right.sign
+  | .sub => left.isInf && right.isInf && left.sign == right.sign
+  | .mult => (left.isInf && right.isZero) || (right.isInf && left.isZero)
+
 def evalFloatArithmetic (operator : Float64.ArithmeticOp) (left right : RVal) : Res RVal := do
   let leftNumber ← floatNumber left
   let rightNumber ← floatNumber right
-  match Float64.arithmetic operator leftNumber rightNumber with
-  | .ok value => return .float value
-  | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
-  | .error .nanPayload =>
-    .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
+  if leftNumber.isNaN || rightNumber.isNaN then
+    match Float64.arithmeticWithNaN operator leftNumber rightNumber with
+    | .ok value => return .float value
+    | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
+    | .error .nanPayload =>
+      .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
+  else if floatArithmeticInvalid operator leftNumber rightNumber then
+    .ok (.float (Float64.ofBits 0xfff8000000000000))
+  else
+    match Float64.arithmetic operator leftNumber rightNumber with
+    | .ok value => return .float value
+    | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
+    | .error .nanPayload =>
+      .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
 
 def evalFloatDivmod (zeroError : PyErr) (left right : RVal) : Res (Float64 × Float64) := do
   let leftNumber ← floatNumber left

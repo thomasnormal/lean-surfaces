@@ -17,6 +17,21 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-92 — binary float NaN arithmetic
+
+Binary `+`, `-`, and `*` now propagate NaN payloads and signs through the
+kernel-reducible float model. An input NaN is quieted by setting its quiet bit;
+when both operands are NaN, CPython's left-to-right result keeps the left
+operand. Invalid `inf - inf`, opposite-sign `inf + inf`, and `inf * 0` return
+the pinned CPython 3.9 canonical negative quiet-NaN word. Division and
+floor/mod/divmod NaN results remain loud because their payload behavior is a
+separate boundary.
+
+The `float_lab` arithmetic rows and script now match, with direct Float64
+guards for payload preservation, left-operand selection, and each invalid
+infinity combination. Mixed integer conversion overflow still wins before NaN
+classification, and finite cancellation remains proved symbolically.
+
 ## 2026-10-24-pycomplete-86 — zero-argument builtin exception constructor
 
 The extractor's existing zero-argument raise-constructor lowering is now

@@ -303,6 +303,25 @@ def arithmetic (operator : ArithmeticOp) (left right : Float64) : Except Arithme
   | .sub => addSub true left right
   | .mult => multiply left right
 
+/-- CPython 3.9's pinned binary64 NaN propagation: an input NaN is quieted
+in place and the left operand wins when both operands are NaN. Invalid
+infinite/zero combinations use the canonical negative quiet-NaN word
+observed on the same platform. The existing `arithmetic` worker keeps its
+`nanPayload` marker for callers that still require an explicit oracle. -/
+def quietNaN (value : Float64) : Float64 :=
+  ofBits (value.bits.toNat ||| 2 ^ 51)
+
+def arithmeticWithNaN (operator : ArithmeticOp) (left right : Float64) :
+    Except ArithmeticError Float64 :=
+  if left.isNaN then .ok (quietNaN left)
+  else if right.isNaN then .ok (quietNaN right)
+  else
+    match arithmetic operator left right with
+    | .ok value => .ok value
+    | .error .nanPayload => .ok (ofBits 0xfff8000000000000)
+    | .error .conversionOverflow => .error .conversionOverflow
+
+
 theorem arithmetic_sub_self (value : Float64) (finite : value.exponent ≠ 2047) :
     arithmetic .sub value value = .ok (ofBits 0) := by
   have denominatorPositive : 0 < value.magnitudeRatio.2 := by

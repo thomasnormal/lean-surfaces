@@ -480,8 +480,8 @@
   },
   {
     "file": "Examples/python/float_lab/nan_arithmetic_script.py",
-    "expect": "unsupported",
-    "note": "An indeterminate infinity difference requires a NaN payload/sign oracle; never invent a platform-specific word."
+    "expect": "match",
+    "note": "The pinned CPython 3.9 binary64 model emits its canonical negative quiet-NaN word for the invalid infinity difference."
   },
   {
     "file": "harness/scripts/bytes_script.py",

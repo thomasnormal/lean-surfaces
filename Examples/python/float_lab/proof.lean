@@ -60,10 +60,16 @@ theorem mixed_rounding :
 
 theorem cancel (value : PyFloat) (finite : value.exponent ≠ 2047) :
     float_lab.cancel(value) ==> Float64.ofBits 0 := by
+  have notNaN : value.isNaN = false := by
+    simp [Float64.isNaN, finite]
+  have notInvalid :
+      floatArithmeticInvalid .sub value value = false := by
+    simp [floatArithmeticInvalid, Float64.isInf, finite]
   refine ⟨32, ?_⟩
   unfold callFunction
   rw [callIn.eq_2]
-  py_simp [float_lab, evalFloatArithmetic, floatNumber, Float64.arithmetic_sub_self, finite]
+  py_simp [float_lab, evalFloatArithmetic, floatNumber,
+    Float64.arithmetic_sub_self, finite, notNaN, notInvalid]
 
 theorem constructor_identity (value : PyFloat) :
     float_lab.constructor(value) ==> value := by

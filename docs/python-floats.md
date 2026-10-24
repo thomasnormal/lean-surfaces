@@ -5,8 +5,8 @@ multiplication, `float(...)` and integer/bool, float and mixed true division con
 to the same kernel-reducible binary64 core on both interpreter surfaces.
 The `float_lab` real extracted artifact has kernel proofs, differential rows
 and script transcripts. This is not complete float-language support:
-remaining operators, constructor protocols, NaN payload propagation,
-hashing and identity are still language-coverage work.
+remaining operators, constructor protocols, NaN behavior outside ordinary
+arithmetic, hashing and identity are still language-coverage work.
 
 ## Representation and specification
 
@@ -152,8 +152,9 @@ equality of finite floats with equal integers and signed zeros. These cases
 remain in scope; refusing an unresolved case is not an exclusion or a reason
 to weaken an existing theorem.
 
-Broader float arithmetic, remaining constructor protocols, formatting specifications, methods,
-hashing and identity remain language-coverage work. Undefined or
+Broader float arithmetic outside `+`, `-`, and `*`, remaining constructor
+protocols, formatting specifications, methods, hashing and identity remain
+language-coverage work. Undefined or
 platform-dependent numerical details require an explicit model/oracle
 parameter when they cannot be decided from the admitted state.
 

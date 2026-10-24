@@ -242,6 +242,7 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
           success frame (sizeOfValue profile typed operandType)
       | .alignOf operandType =>
           success frame (alignOfValue profile typed operandType)
+      | .noexceptExpr _ => success frame (.ok (integralBoolean true))
       | .parameter declaration =>
           evalParameter (fuel + 1) profile frame typed declaration
       | .increment operator isPostfix declaration =>

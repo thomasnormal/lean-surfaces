@@ -108,6 +108,28 @@ def callableUnaryLogicalNotWitness : Bool :=
       zero == integralBoolean true && nonzero == integralBoolean false
   | _, _ => false
 
+def noexceptOperand : TypedCallableExpression := {
+  expression := .binary "+"
+    {expression := .integer 1, sourceType := intType, type := intType}
+    {expression := .integer 2, sourceType := intType, type := intType}
+  sourceType := intType
+  type := intType}
+
+def noexceptFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := .builtin .boolean, parameters := [], variadic := false}
+  parameters := []
+  body := .block (.return_ {
+    expression := .noexceptExpr noexceptOperand
+    sourceType := .builtin .boolean
+    type := .builtin .boolean})
+}
+
+def callableNoexceptWitness : Bool :=
+  match evaluateCallable 16 .lp64 noexceptFunction [] with
+  | .ok (.ok value) => value == integralBoolean true
+  | _ => false
+
 def sizeOfFunction : CallableFunction := {
   occurrence := default
   signature := {result := unsignedLongType, parameters := [], variadic := false}
@@ -566,6 +588,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableUnaryNarrowWitness
 #guard callableUnaryComplementWitness
 #guard callableUnaryLogicalNotWitness
+#guard callableNoexceptWitness
 #guard callableSizeOfWitness
 #guard callableAlignOfWitness
 #guard callableBoolLiteralWitness
@@ -606,6 +629,9 @@ theorem callable_unary_complement_witness : callableUnaryComplementWitness = tru
   rfl
 
 theorem callable_unary_logical_not_witness : callableUnaryLogicalNotWitness = true := by
+  rfl
+
+theorem callable_noexcept_witness : callableNoexceptWitness = true := by
   rfl
 
 theorem callable_size_of_witness : callableSizeOfWitness = true := by
@@ -683,6 +709,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_unary_narrow_witness
 #print axioms callable_unary_complement_witness
 #print axioms callable_unary_logical_not_witness
+#print axioms callable_noexcept_witness
 #print axioms callable_size_of_witness
 #print axioms callable_align_of_witness
 #print axioms callable_bool_literal_witness

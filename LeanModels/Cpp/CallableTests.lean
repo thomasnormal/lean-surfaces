@@ -1045,6 +1045,18 @@ private def nullInequalityRaw : Raw := fields nullComparisonRaw [("opcode", text
 private def nullInequalityEvidence : CppBinaryExpressionEvidence :=
   {nullComparisonEvidence with operator := "!="}
 
+private def noexceptRaw : Raw := object [
+  ("id", text "0x70"), ("kind", text "CXXNoexceptExpr"),
+  ("type", object [("qualType", text "bool")]),
+  ("inner", .array [integerLiteralRaw "0x71" "1"])]
+
+#guard match parseCallableExpressionTyped .lp64 [] [] none
+    noexceptRaw none (some (.builtin .boolean)) with
+  | .ok expression =>
+      expression.expression matches .noexceptExpr _ &&
+        expression.sourceType == .builtin .boolean && expression.type == .builtin .boolean
+  | .error _ => false
+
 #guard match parseCallableExpressionTyped .lp64 [] [nullComparisonEvidence] none
     nullComparisonRaw none (some (.builtin .boolean)) with
   | .ok expression => expression.expression == .nullComparison "==" &&

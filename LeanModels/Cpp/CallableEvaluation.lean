@@ -326,6 +326,7 @@ mutual
             (evaluateSizeOf profile typed operandType).map (fun result => (result, arguments))
         | .alignOf operandType =>
             (evaluateAlignOf profile typed operandType).map (fun result => (result, arguments))
+        | .noexceptExpr _ => pure (.ok (integralBoolean true), arguments)
         | .parameter declaration =>
             (evaluateParameter profile parameters arguments typed declaration).map
               (fun result => (result, arguments))

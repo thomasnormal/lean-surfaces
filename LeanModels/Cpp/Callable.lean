@@ -27,6 +27,7 @@ mutual
     | increment (operator : String) (isPostfix : Bool) (declaration : FrontendHandle)
     | sizeOf (type : CppTypeEvidence)
     | alignOf (type : CppTypeEvidence)
+    | noexceptExpr (operand : TypedCallableExpression)
     | convert (operand : TypedCallableExpression)
     | unary (operator : String) (operand : TypedCallableExpression)
     | conditional (condition whenTrue whenFalse : TypedCallableExpression)
@@ -491,6 +492,20 @@ partial def parseCallableExpressionTyped (profile : TargetProfile)
         else
           CallableExpression.alignOf operandType
       pure {expression, sourceType := resultType, type := resultType}
+  | "CXXNoexceptExpr" =>
+      let children ← rawChildren raw
+      let [child] := children
+        | throw "callable: noexcept expression requires one operand"
+      let operand ← parseCallableExpressionTyped profile parameters expressionRows expressionTypes
+        child none none
+      unless !operand.expression.hasEffects do
+        throw "callable: noexcept operand with effects is outside the body profile"
+      unless callableBuiltin operand.type do
+        throw "callable: noexcept operand requires a builtin integral expression"
+      let booleanType := .builtin .boolean
+      unless sourceExpected.all (· == booleanType) && typeExpected.all (· == booleanType) do
+        throw "callable: noexcept result requires builtin bool evidence"
+      pure {expression := .noexceptExpr operand, sourceType := booleanType, type := booleanType}
   | "CStyleCastExpr" =>
       let castKind ← evidenceText raw "castKind"
       unless castKind == "NoOp" || castKind == "IntegralCast" do

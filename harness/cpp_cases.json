@@ -2701,6 +2701,18 @@
     "rung": 2
   },
   {
+    "id": "scalar.usual-arithmetic-conversion",
+    "kind": "scalar",
+    "corpus": "rung-2 witness",
+    "lean_module": "LeanModels.Cpp.ScalarRung2Tests",
+    "lean_namespace": "LeanModels.Cpp.ScalarRung2Tests",
+    "lean_expression": "scalarUsualArithmeticWitness",
+    "cpp_source": "bool scalar_usual_witness() { short left = -1; unsigned int right = 1; auto result = left + right; return result == 0u; }",
+    "cpp_expression": "scalar_usual_witness()",
+    "expect": "match",
+    "rung": 2
+  },
+  {
     "id": "expression.integral-operators",
     "kind": "expression",
     "corpus": "rung-3 witness",

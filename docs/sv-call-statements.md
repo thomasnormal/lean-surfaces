@@ -45,6 +45,10 @@ its signed 32-bit conversion result is discarded, so the pure operation has no
 observable effect. Dynamic real reads, out-of-range literals, and other
 argument shapes remain loud and use the expression-call boundary.
 
+A discarded `$realtobits` call with one direct finite real literal is likewise
+erased. The value-position form carries the exact IEEE-754 bit pattern; dynamic
+storage and explicit conversion shells remain loud.
+
 The self-check executor runs these calls at time zero. The retained stepper
 delegates the same `SysCall` leaves to that executor after a delay or event
 wait, so no second call interpreter is introduced. The scheduler's existing

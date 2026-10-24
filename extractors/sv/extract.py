@@ -30,8 +30,10 @@ import argparse
 from decimal import Decimal, InvalidOperation, ROUND_DOWN
 import hashlib
 import json
+import math
 import os
 import re
+import struct
 import sys
 
 import pyslang
@@ -5308,6 +5310,56 @@ def _convert_rtoi_literal(sm, expression):
     }, expression.type)
 
 
+def _realtobits_literal_call(expression):
+    """Whether ``$realtobits`` has a direct finite real literal operand."""
+    try:
+        if (_SYM is not None or type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "$realtobits"):
+            return False
+        arguments = list(expression.arguments)
+        if len(arguments) != 1:
+            return False
+        argument = arguments[0]
+        node = argument
+        if type(node).__name__ == "UnaryExpression":
+            op = str(getattr(node, "op", "")).split(".")[-1]
+            if op not in ("Plus", "Minus", "UnaryPlus", "UnaryMinus"):
+                return False
+            node = getattr(node, "operand", None)
+        # Do not strip a conversion shell here: shortreal or an explicit real
+        # cast changes the source value before the IEEE-754 bit conversion.
+        return (type(node).__name__ == "RealLiteral"
+                and not getattr(node, "bad", False)
+                and getattr(expression.type, "bitWidth", None) == 64
+                and getattr(expression.type, "isIntegral", False)
+                and not getattr(expression.type, "isSigned", True)
+                and _literal_real_decimal(argument) is not None)
+    except Exception:
+        return False
+
+
+def _convert_realtobits_literal(sm, expression):
+    if not _realtobits_literal_call(expression):
+        return unsupported(sm, expression, "CallExpression:$realtobits")
+    value = _literal_real_decimal(expression.arguments[0])
+    try:
+        real_value = float(value)
+        if not math.isfinite(real_value):
+            return unsupported(sm, expression, "CallExpression:$realtobits:range")
+        encoded = struct.unpack(">Q", struct.pack(">d", real_value))[0]
+    except (OverflowError, ValueError, struct.error):
+        return unsupported(sm, expression, "CallExpression:$realtobits:range")
+    return {
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": 64,
+        "bits": format(encoded, "064b"),
+        "realtobits_literal": True,
+    }
+
+
 def _convert_legacy_call(sm, expression):
     # An empty zero-argument function returns its type's default value.  The
     # declaration has already been erased as metadata; materialize that
@@ -5363,6 +5415,7 @@ def _convert_legacy_call(sm, expression):
             (_string_literal_len_method, _convert_string_literal_len_method),
             (_zero_size_method, _convert_zero_size_method),
             (_rtoi_literal_call, _convert_rtoi_literal),
+            (_realtobits_literal_call, _convert_realtobits_literal),
             (_time_call, _convert_time_call),
             (_stime_call, _convert_stime_call),
             (_signing_call, _convert_signing_call),
@@ -8426,6 +8479,9 @@ def _convert_syscall(sm, s, e):
         # reused so the literal/range boundary cannot drift between forms.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "rtoi_literal_statement": True}
+    if is_sys and _realtobits_literal_call(e):
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "realtobits_literal_statement": True}
     if is_sys and name in SYSCALL_ASSERT_CTRL:
         try:
             args = list(e.arguments)

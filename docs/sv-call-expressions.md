@@ -16,7 +16,9 @@ runtime integral `$clog2` uses the shared expression evaluator. A zero-argument
 with time-zero provenance. A `$rtoi` with one finite real literal now lowers
 to the signed 32-bit literal obtained by truncating toward zero; the same
 conversion is inert when its result is discarded as a statement. Dynamic real
-reads, out-of-range results, and other argument shapes remain loud. Dynamic
+reads, out-of-range results, and other argument shapes remain loud. A direct
+finite real literal passed to `$realtobits` lowers to its exact 64-bit IEEE-754
+encoding; dynamic storage and explicit conversion shells remain loud. Dynamic
 integral `$cast` has its own capture and copyback contract. These paths are not
 generic callable frames and do not make arbitrary calls live.
 
@@ -32,7 +34,7 @@ The residual expression calls need state or effects absent from that surface:
   random oracle;
 * `$stime`, `$realtime`, `$timeunit`, and `$timeprecision` need an elapsed-time
   and unit environment beyond the time-zero `$time` rule;
-* real conversions, string formatting, file/system/coverage calls, and
+* other real conversions, string formatting, file/system/coverage calls, and
   enum/array methods require unsupported value types or external state; and
 * user functions, scope calls, and receiver methods need callable frames,
   hierarchy, or object/aggregate storage.
@@ -72,8 +74,8 @@ literal `$rtoi` slice is now admitted: six corpus files that use one finite
 literal conversion become clean, while dynamic and out-of-range calls remain
 in the residual refusal set. Every remaining call-only head needs a random
 oracle, scheduler history, time/unit state, external effect, unsupported value
-type, or callable frame. Existing metadata-query, `$clog2`, `$time`, cast, and
-literal-`$rtoi` fixtures pin the accepted boundary.
+type, or callable frame. Existing metadata-query, `$clog2`, `$time`, cast,
+literal-`$rtoi`, and literal-`$realtobits` fixtures pin the accepted boundary.
 
 Reproduce the call-only table with
 `python3.9 extractors/sv/call_expr_reprice.py --corpus <corpus>/tests`; the

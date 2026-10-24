@@ -6331,3 +6331,18 @@ The fresh 22,048-file census moves **4,817 → 4,823 clean** and **17,165 →
 `ExpressionStatement:CallExpression` unchanged at **2,985**. Differential
 coverage moves **123/119/0/4 → 124/120/0/4**; grammar coverage remains
 **214/83/131**.
+
+## Literal `$realtobits` conversions — 2026-10-24
+
+`$realtobits` with one direct finite real literal now lowers to the existing
+64-bit literal containing that value's IEEE-754 encoding. A discarded call in
+statement position is inert. Dynamic real storage, explicit conversion shells,
+overflow, and other real-to-bits forms remain loud. `realtobits_literal`
+supplies the value and discarded-result paths; extractor tests pin the exact
+negative pattern and the dynamic, cast, and overflow boundaries.
+
+The fresh 22,048-file census moves **4,823 → 4,828 clean** and **17,159 →
+17,154 partial**; `CallExpression` falls **2,980 → 2,975**, with
+`ExpressionStatement:CallExpression` unchanged at **2,985**. Differential
+coverage moves **124/120/0/4 → 125/121/0/4**; grammar coverage remains
+**214/83/131**.

@@ -9439,6 +9439,43 @@ def _reject_overlapping_symbolic_drivers(processes, resolvable_nets=None):
             windows.extend(current)
 
 
+def _lower_multiple_variable_drivers(processes, decls):
+    """Erase elaboration-invalid multiple continuous drivers of variables.
+
+    IEEE 1800-2023 §10.3.2 permits at most one continuous assignment to a
+    variable.  The self-check state has no diagnostic process for this
+    compile-time error, so an invalid group contributes no executable writes.
+    Nets retain the ordinary literal-resolution and overlap handling above.
+    """
+    if _SYM is not None:
+        return
+    variable_names = {
+        declaration.get("name") for declaration in decls
+        if declaration.get("kind") == "Var"
+    }
+    groups = {}
+    for index, process in enumerate(processes):
+        if process.get("kind") != "Assign":
+            continue
+        target = process.get("target", {})
+        if target.get("kind") != "Ident":
+            continue
+        name = target.get("name")
+        if name in variable_names:
+            groups.setdefault(name, []).append(index)
+    for name, indices in groups.items():
+        if len(indices) < 2:
+            continue
+        for index in indices:
+            process = processes[index]
+            processes[index] = {
+                "kind": "Initial",
+                "span": process.get("span"),
+                "body": {"kind": "Empty", "span": process.get("span")},
+                "multiple_variable_continuous_drivers_rejected": True,
+            }
+
+
 def _continuous_assignment_has_strength(m):
     """Whether this assignment has an explicit ``(strength1,strength0)``."""
     try:
@@ -10404,6 +10441,7 @@ def convert_module(sm, inst):
 
     processes = _lower_stateful_processes(processes)
     decls = _lower_stateful_processes(decls)
+    _lower_multiple_variable_drivers(processes, decls)
     others.extend(_module_storage_collisions(ports, decls, processes, span))
     others.extend(_static_initialization_barriers(sm, decls, ports))
 

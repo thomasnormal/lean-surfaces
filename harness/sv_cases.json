@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "multiple_variable_continuous_drivers",
+      "file": "Examples/system-verilog/multiple_variable_continuous_drivers/multiple_variable_continuous_drivers.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "dynamic_array_continuous_target",
       "file": "Examples/system-verilog/dynamic_array_continuous_target/dynamic_array_continuous_target.sv",
       "module": "top",

@@ -202,6 +202,21 @@ class ContinuousLiteralDrivers(unittest.TestCase):
         self.assertEqual(len(rejected), 1)
         self.assertEqual(rejected[0]["body"]["kind"], "Empty")
 
+    def test_multiple_variable_continuous_drivers_are_rejected_inertly(self):
+        design = extract_source(
+            'module top; logic a, b, value; assign value = a; '
+            'assign value = b; initial $display("PASS"); endmodule')
+        module = design["modules"][0]
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+        rejected = [process for process in module["processes"]
+                    if process.get("multiple_variable_continuous_drivers_rejected")]
+        self.assertEqual(len(rejected), 2)
+        self.assertTrue(all(process["body"]["kind"] == "Empty"
+                            for process in rejected))
+
 
 if __name__ == "__main__":
     unittest.main()

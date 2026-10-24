@@ -6482,3 +6482,19 @@ partial** (66 include skips); `AssignmentExpression:target` falls **3,035 →
 3,034 files** because this compile-error target is now erased in the snapshot.
 Differential coverage moves **133/129/0/4 → 134/130/0/4**;
 grammar coverage remains **214/83/131**.
+
+## Multiple continuous assignments to variables — 2026-10-24
+
+IEEE 1800-2023 §10.3.2 permits at most one continuous assignment driver for a
+variable. The extractor now recognizes a group of whole-variable continuous
+assignments as an elaboration error and emits inert processes for the invalid
+group. This preserves the compile-time rule without inventing variable-driver
+resolution or a scheduler path. Nets keep their existing literal-resolution
+rules; selected, dynamic, procedural, and single-driver variable forms retain
+their existing boundaries. `multiple_variable_continuous_drivers` supplies the
+PASS fixture and differential row, and extractor tests pin the rejected group.
+
+The fresh census moves **4,830 → 4,833 clean** and **17,152 → 17,149 partial**
+(66 include skips); `AssignmentExpression:target` falls **3,034 → 3,031**.
+Differential coverage moves **134/130/0/4 → 135/131/0/4**; grammar coverage
+remains **214/83/131**.

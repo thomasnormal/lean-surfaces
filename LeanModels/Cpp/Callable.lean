@@ -441,6 +441,9 @@ partial def parseCallableExpressionTyped (profile : TargetProfile)
         throw "callable: C-style cast source type disagrees with destination"
       let sourceEvidence : CppTypeEvidence := .builtin sourceType
       let destinationEvidence : CppTypeEvidence := .builtin destinationType
+      if castKind == "NoOp" then
+        unless operand.type == destination do
+          throw "callable: NoOp C-style cast changes integral type"
       pure {expression := .convert operand, sourceType := sourceEvidence, type := destinationEvidence}
   | "BinaryOperator" =>
       let occurrence ← rawId raw

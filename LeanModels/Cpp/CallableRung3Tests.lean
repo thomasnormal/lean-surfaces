@@ -6,6 +6,7 @@ open LeanModels.Cpp
 
 def intType : CppTypeEvidence := .builtin .int
 def shortType : CppTypeEvidence := .builtin .short
+def unsignedCharType : CppTypeEvidence := .builtin .unsignedChar
 def unsignedShortType : CppTypeEvidence := .builtin .unsignedShort
 def unsignedIntType : CppTypeEvidence := .builtin .unsignedInt
 def unsignedLongType : CppTypeEvidence := .builtin .unsignedLong
@@ -104,6 +105,24 @@ def castFunction : CallableFunction := {
 def callableCastWitness : Bool :=
   match evaluateCallable 16 .lp64 castFunction [⟨.signed 16, -7⟩] with
   | .ok (.ok value) => value == signed (-7)
+  | _ => false
+
+def narrowCastFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := unsignedCharType, parameters := [shortType], variadic := false}
+  parameters := [{declaration := narrowParameter, name := some "value", type := shortType}]
+  body := .block (.return_ {
+    expression := .convert {
+      expression := .parameter narrowParameter
+      sourceType := shortType
+      type := shortType}
+    sourceType := shortType
+    type := unsignedCharType})
+}
+
+def callableNarrowCastWitness : Bool :=
+  match evaluateCallable 16 .lp64 narrowCastFunction [⟨.signed 16, -7⟩] with
+  | .ok (.ok value) => value == ⟨.unsigned 8, 249⟩
   | _ => false
 
 def postfixFunction : CallableFunction := {
@@ -365,6 +384,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableUnaryNarrowWitness
 #guard callableSizeOfWitness
 #guard callableCastWitness
+#guard callableNarrowCastWitness
 #guard callablePostfixWitness
 #guard callableCompoundAssignmentWitness
 #guard callableAssignmentWitness
@@ -394,6 +414,9 @@ theorem callable_size_of_witness : callableSizeOfWitness = true := by
   rfl
 
 theorem callable_cast_witness : callableCastWitness = true := by
+  rfl
+
+theorem callable_narrow_cast_witness : callableNarrowCastWitness = true := by
   rfl
 
 theorem callable_postfix_witness : callablePostfixWitness = true := by
@@ -438,6 +461,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_unary_narrow_witness
 #print axioms callable_size_of_witness
 #print axioms callable_cast_witness
+#print axioms callable_narrow_cast_witness
 #print axioms callable_postfix_witness
 #print axioms callable_compound_assignment_witness
 #print axioms callable_assignment_witness

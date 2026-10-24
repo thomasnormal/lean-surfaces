@@ -2809,6 +2809,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-narrow-c-style-cast",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableNarrowCastWitness",
+    "cpp_source": "unsigned char cast_witness(short value) { return (unsigned char)value; } bool callable_witness() { return cast_witness(-7) == 249; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-postfix-comma",
     "kind": "expression",
     "corpus": "rung-3 witness",

@@ -999,4 +999,12 @@ private def cStyleCastTypes : List CppExpressionTypeEvidence := [
       match expression.expression with | .convert _ => true | _ => false
   | .error _ => false
 
+private def cStyleNoOpMismatchRaw : Raw := object [
+  ("id", text "0x80"), ("kind", text "CStyleCastExpr"),
+  ("castKind", text "NoOp"),
+  ("inner", .array [declRefNode "0x81" "0x10" "value"])]
+
+#guard (parseCallableExpressionTyped .lp64 [narrowParameter] [] none
+  cStyleNoOpMismatchRaw none (some intType)) matches .error _
+
 end LeanModels.Cpp.CallableTests

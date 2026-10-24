@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 89 | 85 | 0 | 4 | sv-tests-2 declarations |
+| 90 | 86 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -86,6 +86,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `opaque_event_null_write` | `Examples/system-verilog/opaque_event_null_write/opaque_event_null_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_process_self_write` | `Examples/system-verilog/opaque_process_self_write/opaque_process_self_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `postincrement_array_target` | `Examples/system-verilog/postincrement_array_target/postincrement_array_target.sv` | match | **MATCH** | `ok` | MATCH |
+| `floating_math_write` | `Examples/system-verilog/floating_math_write/floating_math_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_mailbox_new_write` | `Examples/system-verilog/opaque_mailbox_new_write/opaque_mailbox_new_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_semaphore_zero_write` | `Examples/system-verilog/opaque_semaphore_zero_write/opaque_semaphore_zero_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_function_value` | `Examples/system-verilog/empty_function_value/empty_function_value.sv` | match | **MATCH** | `ok` | MATCH |
@@ -336,8 +337,8 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 3103 |
 | `CallExpression` | 3100 |
+| `AssignmentExpression:target` | 3049 |
 | `ExpressionStatement:CallExpression` | 3019 |
 | `Hierarchy:ports` | 2397 |
 | `VariableSymbol:2state` | 2376 |

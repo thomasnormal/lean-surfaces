@@ -5416,6 +5416,55 @@ def _floating_literal(expr):
     return False
 
 
+_PURE_FLOATING_CALLS = {
+    "$itor", "$bitstoreal", "$bitstoshortreal", "$sqrt", "$pow",
+    "$floor", "$ceil", "$ln", "$log10", "$exp", "$sin", "$cos",
+    "$tan", "$asin", "$acos", "$atan", "$atan2", "$hypot", "$sinh",
+    "$cosh", "$tanh", "$asinh", "$acosh", "$atanh",
+}
+
+
+def _floating_pure_call(expr):
+    """Whether a real-valued system call has no operand side effects.
+
+    Real storage is opaque in the legacy state, so a pure mathematical result
+    can be discarded at a blocking write.  Keep the check structural and
+    conservative: only the listed IEEE math/conversion calls are admitted,
+    and every argument must contain literals, reads, conversions, and pure
+    operators only.
+    """
+    try:
+        if (type(expr).__name__ != "CallExpression" or getattr(expr, "bad", False)
+                or not expr.isSystemCall
+                or expr.subroutineName not in _PURE_FLOATING_CALLS):
+            return False
+        pure = True
+
+        def inspect(node):
+            nonlocal pure
+            kind = type(node).__name__
+            if kind == "CallExpression":
+                pure = pure and _floating_pure_call(node)
+                return VisitAction.Skip
+            if kind == "UnaryExpression":
+                op = str(getattr(node, "op", None)).split(".")[-1]
+                pure = pure and op not in (
+                    "Preincrement", "Postincrement", "Predecrement",
+                    "Postdecrement")
+            elif kind not in (
+                    "RealLiteral", "IntegerLiteral", "UnbasedUnsizedIntegerLiteral",
+                    "TimeLiteral", "NamedValueExpression", "ConversionExpression",
+                    "UnaryExpression", "BinaryExpression", "ConditionalExpression",
+                    "ConcatenationExpression", "MinTypMaxExpression"):
+                pure = False
+
+        for argument in expr.arguments:
+            argument.visit(inspect)
+        return pure
+    except Exception:
+        return False
+
+
 def _null_literal(expr):
     """Whether pyslang's conversion shell contains the null literal."""
     node = expr
@@ -7451,6 +7500,17 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and _floating_literal(expr.right)):
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "floating_literal_write_noop": True}
+    # The same opaque boundary applies to a side-effect-free IEEE math or
+    # real-conversion system call.  Keep named storage only; selectors and
+    # effectful arguments retain their ordinary target boundary.
+    if (_SYM is None and expr.op is None and expr.timingControl is None
+            and not expr.isNonBlocking
+            and type(expr.left).__name__ == "NamedValueExpression"
+            and type(getattr(expr.left.type, "canonicalType", None)).__name__
+            == "FloatingType"
+            and _floating_pure_call(expr.right)):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "floating_pure_call_write_noop": True}
     # `$realtime` is fixed at zero in the self-check time-zero slice, while
     # real storage remains opaque.  Erase only this blocking write; integer
     # targets, timed/nonblocking forms, and real reads stay loud.

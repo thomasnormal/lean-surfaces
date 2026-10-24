@@ -5851,3 +5851,20 @@ the conditional cell write. The fresh 22,046-file census moves **4,750 →
 4,752 clean** and **17,230 → 17,228 partial**; `AssignmentExpression:target`
 falls **3,106 → 3,103**. Differential coverage moves **88/84/0/4 →
 89/85/0/4**, and grammar coverage remains **211/80/131**.
+
+## Pure real system-function writes — 2026-10-24
+
+Blocking writes of side-effect-free IEEE real math and conversion calls to a
+named `real` or `shortreal` now erase through the opaque floating-storage
+boundary. The admitted calls include the standard arithmetic, transcendental,
+rounding, and real-conversion system functions; every argument is checked for
+literal/read-only/pure-operator structure. Nonblocking or timed writes,
+effectful operands, and subsequent real observations remain outside this
+admission.
+
+The `floating_math_write` fixture and differential row cover the admitted
+form, with extractor tests pinning an incrementing operand. The fresh
+22,046-file census keeps **4,752 clean / 17,228 partial** and lowers
+`AssignmentExpression:target` **3,103 → 3,049**; `CallExpression` is now the
+largest blocker at **3,100**. Differential coverage moves **89/85/0/4 →
+90/86/0/4**, and grammar coverage remains **211/80/131**.

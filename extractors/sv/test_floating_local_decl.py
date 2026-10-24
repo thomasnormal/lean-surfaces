@@ -55,6 +55,22 @@ class FloatingLocalDeclarations(unittest.TestCase):
         self.assertIn("AssignmentExpression:target",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_pure_math_call_write_is_inert(self):
+        design = lower(
+            'module top; real value; initial begin value = $sqrt(16.0); '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("floating_pure_call_write_noop")
+                            for node in nodes(design)))
+
+    def test_effectful_math_operand_stays_loud(self):
+        design = lower(
+            'module top; real value; int index; initial begin '
+            'value = $sqrt(index++); end endmodule')
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
+
     def test_time_zero_realtime_write_is_inert(self):
         design = lower(
             'module top; real value; initial begin value = $realtime; '

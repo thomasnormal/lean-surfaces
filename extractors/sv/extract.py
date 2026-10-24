@@ -9019,6 +9019,9 @@ def _reject_overlapping_symbolic_drivers(processes, resolvable_nets=None):
         for target, indices in groups.items():
             if len(indices) < 2:
                 continue
+            if any(processes[index].get("continuous_strength")
+                   for index in indices):
+                continue
             values = [processes[index]["value"].get("bits") for index in indices]
             resolved = _resolve_literal_driver_bits(values)
             if resolved is None:
@@ -9051,7 +9054,8 @@ def _reject_overlapping_symbolic_drivers(processes, resolvable_nets=None):
                 }
     windows = []
     for index, process in enumerate(processes):
-        if process.get("kind") != "Assign":
+        if (process.get("kind") != "Assign"
+                or process.get("continuous_strength")):
             continue
         current = _symbolic_target_windows(process.get("target"))
         if current is None:
@@ -9072,10 +9076,25 @@ def _reject_overlapping_symbolic_drivers(processes, resolvable_nets=None):
             windows.extend(current)
 
 
+def _continuous_assignment_has_strength(m):
+    """Whether this assignment has an explicit ``(strength1,strength0)``."""
+    try:
+        if not _SOURCE_BYTES:
+            return False
+        start = m.syntax.sourceRange.start.offset
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace")
+        prefix = source[max(0, start - 256):start]
+        marker = prefix.rfind("assign")
+        return marker >= 0 and re.match(r"\s*\(", prefix[marker + len("assign"):]) is not None
+    except Exception:
+        return False
+
+
 def convert_continuous_assign(sm, m):
     if getattr(m, "delay", None) is not None:
         return unsupported(sm, m, "ContinuousAssignSymbol:delay")
     e = m.assignment
+    explicit_strength = _continuous_assignment_has_strength(m)
     if type(e).__name__ != "AssignmentExpression":
         return unsupported(sm, m, "ContinuousAssignSymbol:" + type(e).__name__)
     if e.op is not None or e.timingControl is not None or e.isNonBlocking:
@@ -9116,6 +9135,11 @@ def convert_continuous_assign(sm, m):
     left_symbol = getattr(e.left, "symbol", None)
     if left_symbol is None:
         left_symbol = getattr(getattr(e.left, "value", None), "symbol", None)
+    # A single explicitly strengthened whole-net literal is value-equivalent
+    # to the ordinary flat driver. Selected strength forms are kept loud until
+    # the target representation carries per-window strength metadata.
+    if explicit_strength and target.get("kind") != "Ident":
+        return unsupported(sm, m, "AssignmentExpression:target")
     # A fixed-unpacked variable cell has already been expanded into the flat
     # self-check storage by ``_fixed_array_cell``.  When its continuous source
     # is a literal, the assignment has no future reevaluation and needs no
@@ -9133,7 +9157,8 @@ def convert_continuous_assign(sm, m):
             cell_name = target.get("name", "")
             source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
             assignments = re.findall(
-                r"(?m)\bassign\s+" + re.escape(cell_name) + r"\s*=", source)
+                r"(?m)\bassign\s+(?:\([^)]*\)\s*)?" +
+                re.escape(cell_name) + r"\s*=", source)
             if len(assignments) == 1:
                 return {
                     "kind": "Initial",
@@ -9146,6 +9171,7 @@ def convert_continuous_assign(sm, m):
                         "continuous_array_cell_lowered": True,
                     },
                     "continuous_array_cell_lowered": True,
+                    "continuous_strength": explicit_strength,
                 }
     if (_SYM is None and type(e.left).__name__ in (
             "NamedValueExpression", "ElementSelectExpression",
@@ -9162,10 +9188,10 @@ def convert_continuous_assign(sm, m):
         name = getattr(left_symbol, "name", "")
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
         if target.get("kind") == "Ident":
-            driver_pattern = (r"(?m)\bassign\s+" + re.escape(name)
+            driver_pattern = (r"(?m)\bassign\s+(?:\([^)]*\)\s*)?" + re.escape(name)
                               + r"\s*=")
         elif target.get("kind") == "SelectTarget":
-            driver_pattern = (r"(?m)\bassign\s+" + re.escape(name)
+            driver_pattern = (r"(?m)\bassign\s+(?:\([^)]*\)\s*)?" + re.escape(name)
                               + r"\s*\[")
         else:
             driver_pattern = None
@@ -9182,8 +9208,10 @@ def convert_continuous_assign(sm, m):
                     "target": target,
                     "value": value,
                     "continuous_constant_lowered": True,
+                    "continuous_strength": explicit_strength,
                 },
                 "continuous_constant_lowered": True,
+                "continuous_strength": explicit_strength,
             }
     if (_SYM is not None and target.get("kind") == "ConcatTarget"):
         if width_of(value) != target.get("width"):
@@ -9209,6 +9237,7 @@ def convert_continuous_assign(sm, m):
     if (_SYM is None and target.get("kind") in ("Ident", "SelectTarget")
             and _integral_literal_source(e.right)):
         result["continuous_literal_source"] = True
+        result["continuous_strength"] = explicit_strength
     return result
 
 
@@ -9518,6 +9547,7 @@ def _net_has_only_literal_continuous_drivers(m):
             valid = (valid and assignment.op is None
                      and assignment.timingControl is None
                      and not assignment.isNonBlocking
+                     and not _continuous_assignment_has_strength(node)
                      and _integral_literal_source(assignment.right))
 
         instance.visit(inspect)

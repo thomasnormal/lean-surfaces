@@ -6202,3 +6202,17 @@ forms remain loud. `constant_tri_driver` supplies the differential evidence.
 The census remains **4,810 clean / 17,172 partial / 66 include skips** with
 `AssignmentExpression:target` at **3,037 files**. Differential coverage moves
 **114/110/0/4 → 115/111/0/4**; grammar coverage remains **213/82/131**.
+
+## Explicit-strength literal continuous drivers — 2026-10-24
+
+A single whole-net continuous driver with an explicit `(strength1, strength0)`
+pair now lowers when its source is a pure integral literal. The fixed value
+uses the existing time-zero assignment path; selected targets, multiple
+strength drivers, dynamic or effectful sources, and `tri` strength forms stay
+loud until per-driver strength state is represented. `constant_strength_driver`
+supplies the differential witness.
+
+The census remains **4,810 clean / 17,172 partial / 66 include skips**, while
+`AssignmentExpression:target` falls **3,037 → 3,036**. Differential coverage
+moves **115/111/0/4 → 116/112/0/4**; grammar coverage moves
+**213/82/131 → 214/83/131**.

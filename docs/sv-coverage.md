@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 115 | 111 | 0 | 4 | sv-tests-2 declarations |
+| 116 | 112 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -129,6 +129,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `overlapping_literal_net_windows` | `Examples/system-verilog/overlapping_literal_net_windows/overlapping_literal_net_windows.sv` | match | **MATCH** | `ok` | MATCH |
 | `constant_net_array_cell_driver` | `Examples/system-verilog/constant_net_array_cell_driver/constant_net_array_cell_driver.sv` | match | **MATCH** | `ok` | MATCH |
 | `constant_tri_driver` | `Examples/system-verilog/constant_tri_driver/constant_tri_driver.sv` | match | **MATCH** | `ok` | MATCH |
+| `constant_strength_driver` | `Examples/system-verilog/constant_strength_driver/constant_strength_driver.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -136,7 +137,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 213 | 82 | 131 | pyslang SyntaxKind |
+| 214 | 83 | 131 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -194,6 +195,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.DivideAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DivideExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.DoWhileStatement` | `Examples/system-verilog/do_while_string_literal/do_while_string_literal.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.DriveStrength` | `Examples/system-verilog/constant_strength_driver/constant_strength_driver.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ElementSelect` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ElseClause` | `Examples/system-verilog/clog2/clog2.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EmptyIdentifierName` | `Examples/system-verilog/foreach/values.sv` | **MATCH** | `ok`  |
@@ -364,7 +366,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 3037 |
+| `AssignmentExpression:target` | 3036 |
 | `ExpressionStatement:CallExpression` | 3017 |
 | `CallExpression` | 2986 |
 | `Hierarchy:ports` | 2397 |

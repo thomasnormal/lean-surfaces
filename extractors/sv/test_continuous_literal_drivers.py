@@ -126,6 +126,23 @@ class ContinuousLiteralDrivers(unittest.TestCase):
         self.assertEqual(design["modules"][0]["decls"][0]["sv_kind"],
                          "NetSymbol:Tri")
 
+    def test_single_strength_literal_driver_lowers(self):
+        design = extract_source(
+            "module top; wire bus; "
+            "assign (strong1, strong0) bus = 1'b1; endmodule")
+        processes = design["modules"][0]["processes"]
+        self.assertEqual(processes[0]["kind"], "Initial")
+        self.assertTrue(processes[0].get("continuous_strength"))
+
+    def test_multiple_strength_literal_drivers_stay_loud(self):
+        design = extract_source(
+            "module top; wire bus; "
+            "assign (strong1, strong0) bus = 1'b1; "
+            "assign (pull1, pull0) bus = 1'b0; endmodule")
+        process = design["modules"][0]["processes"][0]
+        self.assertEqual(process["kind"], "Assign")
+        self.assertTrue(process.get("continuous_strength"))
+
 
 if __name__ == "__main__":
     unittest.main()

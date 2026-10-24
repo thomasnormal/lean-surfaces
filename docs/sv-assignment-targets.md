@@ -222,3 +222,17 @@ the declaration is rejected unless every driver is in the literal subset.
 `constant_tri_driver` is the differential witness. This admits a fixed net
 value without manufacturing a live driver queue or treating `tri` as a
 procedural variable.
+
+## Explicit-strength literal continuous drivers — 2026-10-24
+
+A single whole-net continuous driver written with an explicit strength pair,
+such as `(strong1, strong0)`, is admitted when its RHS is a pure integral
+literal. The fixed value lowers through the existing time-zero path; the
+strength metadata is retained in the extracted process for diagnostics.
+Strength-bearing selected targets, multiple strength drivers, dynamic or
+effectful sources, and `tri` declarations remain loud because the current
+flat representation does not model per-driver strength resolution.
+
+`constant_strength_driver` is the differential witness. Multiple strengthened
+drivers remain ordinary continuous assignments and therefore preserve the
+existing refusal boundary.

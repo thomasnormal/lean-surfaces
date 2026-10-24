@@ -5882,3 +5882,18 @@ of the query, with extractor tests pinning the argument boundary. The fresh
 partial**; `CallExpression` falls **3,100 → 3,088** and remains the largest
 blocker. Differential coverage moves **90/86/0/4 → 91/87/0/4**, and grammar
 coverage remains **211/80/131**.
+
+## Integral conversions of time-zero `$realtime` — 2026-10-24
+
+When a zero-argument `$realtime` query is elaborated in an integral conversion
+context, the self-check extractor lowers it to a zero literal carrying the
+existing `time_zero` provenance. This is the exact value at time zero; direct
+real-valued uses, argumented queries, and conversions outside the integral
+surface remain loud, so no real storage or elapsed-time state is fabricated.
+
+The `realtime_integral_query` fixture and differential row cover the admitted
+assignment and comparison. Extractor tests pin both the zero-width result and
+the direct real-valued refusal. The fresh 22,046-file census moves **4,761 →
+4,762 clean** and **17,219 → 17,218 partial**; `CallExpression` falls **3,088
+→ 3,087**. Differential coverage moves **91/87/0/4 → 92/88/0/4**, and grammar
+coverage remains **211/80/131**.

@@ -55,6 +55,22 @@ class TimeQueries(unittest.TestCase):
         self.assertIn("InvalidStatement",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_realtime_to_integral_is_zero_literal_at_time_zero(self):
+        design = extract_source(
+            "module top; integer now; initial now = $realtime; endmodule")
+        values = [node for node in nodes(design)
+                  if node.get("kind") == "Literal" and
+                  node.get("realtime_conversion")]
+        self.assertEqual([(node["width"], node["bits"], node["time_zero"])
+                          for node in values],
+                         [(32, "0" * 32, True)])
+
+    def test_realtime_direct_value_stays_loud(self):
+        design = extract_source(
+            "module top; initial $display(\"%f\", $realtime); endmodule")
+        self.assertIn("CallExpression",
+                      [node.get("sv_kind") for node in nodes(design)])
+
 
 if __name__ == "__main__":
     unittest.main()

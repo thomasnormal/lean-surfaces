@@ -3872,6 +3872,24 @@ def _convert_expr(sm, e):
 
 def _convert_conversion_expr(sm, e):
     """Lower elaborated resizing after context signedness has propagated."""
+    # The self-check executor has no elapsed-time state, so a real-valued
+    # `$realtime` query is exactly zero at the only point this surface runs.
+    # Keep the real value itself opaque, but admit the standard conversion
+    # boundary when the surrounding context requests an integral result.
+    # This is deliberately before the ordinary width machinery: a real source
+    # has no integral ``bitWidth`` for that machinery to inspect.
+    if (_SYM is None and _realtime_call(getattr(e, "operand", None))
+            and getattr(e.type, "isIntegral", False)):
+        width, _, reason = type_width_2s(e.type)
+        if width is not None and reason is None and width > 0:
+            return {
+                "kind": "Literal",
+                "span": node_span(sm, e),
+                "width": width,
+                "bits": "0" * width,
+                "time_zero": True,
+                "realtime_conversion": True,
+            }
     kind = e.conversionKind
     if kind == ConversionKind.StreamingConcat:
         return _convert_streaming_pack(sm, e)

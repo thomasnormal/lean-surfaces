@@ -65,6 +65,34 @@ class EmptyFunctionCalls(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
+    def test_literal_return_accepts_integral_literal_input(self):
+        design = lower(
+            'module top; function bit [3:0] seven(input bit selector); '
+            'return 4\'d7; endfunction initial begin '
+            'if (seven(1\'b0) == 4\'d7) $display("PASS"); endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("literal_function_return")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(values[0]["bits"], "0111")
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_literal_return_rejects_dynamic_input(self):
+        design = lower(
+            'module top; bit selector; function bit [3:0] seven(input bit x); '
+            'return 4\'d7; endfunction initial begin '
+            'if (seven(selector) == 4\'d7) $display("PASS"); endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
+    def test_literal_return_rejects_output_formal(self):
+        design = lower(
+            'module top; bit result; function bit [3:0] seven(output bit out); '
+            'return 4\'d7; endfunction initial begin '
+            'if (seven(result) == 4\'d7) $display("PASS"); endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
     def test_literal_return_statement_is_erased(self):
         design = lower(
             'module top; function bit [3:0] seven(); return 4\'d7; endfunction '
@@ -75,10 +103,20 @@ class EmptyFunctionCalls(unittest.TestCase):
                              "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
-    def test_literal_return_statement_with_argument_stays_loud(self):
+    def test_literal_return_statement_accepts_literal_input(self):
         design = lower(
             'module top; function bit [3:0] seven(input bit x); '
             'return 4\'d7; endfunction initial seven(1\'b0); endmodule')
+        self.assertTrue(any(node.get("literal_function_statement") == "seven"
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_literal_return_statement_with_argument_stays_loud(self):
+        design = lower(
+            'module top; bit x; function bit [3:0] seven(input bit x); '
+            'return 4\'d7; endfunction initial seven(x); endmodule')
         self.assertTrue(any(node.get("sv_kind") ==
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))

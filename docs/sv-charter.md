@@ -5968,6 +5968,24 @@ partial**; `CallExpression` falls **3,074 → 2,997** and
 `SubroutineSymbol:Subroutine` falls **1,665 → 1,636**. Differential coverage
 moves **96/92/0/4 → 97/93/0/4**, and grammar coverage remains **211/80/131**.
 
+## Literal-input literal-return function calls — 2026-10-24
+
+A function whose complete body returns one integral literal may now be called
+with integral literal input arguments. Input formals are metadata only, so the
+call lowers to the already-sized return literal and the existing self-check
+interpreter evaluates it without creating a callable frame. Output, inout, and
+reference formals, dynamic or effectful arguments, named-value reads, nested
+calls, operators, and multi-statement bodies remain loud because they can
+observe or update caller state.
+
+The `literal_function_argument` fixture and differential row cover the value
+path, while focused extractor tests also pin discarded results and the dynamic
+and copy-out boundaries. The current 22,048-path census moves **4,816 → 4,817
+clean** and **17,166 → 17,165 partial / 66 include skips**;
+`SubroutineSymbol:Subroutine` falls **1,636 → 1,634** while the leading call
+blockers remain unchanged. Differential coverage moves **122/118/0/4 →
+123/119/0/4**; the grammar census remains **214/83/131**.
+
 ## Inert monitor toggles without registrations — 2026-10-24
 
 No-argument `$monitoron` and `$monitoroff` calls now lower to inert diagnostic

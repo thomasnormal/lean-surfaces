@@ -5199,15 +5199,41 @@ def _literal_function_return(expression):
 
 
 def _literal_function_symbol(subroutine):
-    """Whether a function declaration is erased after literal call lowering."""
+    """Whether a function declaration is erased after literal call lowering.
+
+    Input formals are harmless metadata when the complete body returns a
+    literal.  Output, inout, and reference formals are retained because a
+    call can observe their copy-in/copy-out or aliasing effects even when the
+    return expression itself is constant.
+    """
     try:
         if (str(getattr(subroutine, "subroutineKind", "")).split(".")[-1]
-                != "Function" or list(getattr(subroutine, "arguments", []))):
+                != "Function"):
+            return False
+        if any(str(getattr(argument, "direction", "")).split(".")[-1] != "In"
+               for argument in getattr(subroutine, "arguments", [])):
             return False
         body = getattr(subroutine, "body", None)
         returned = (getattr(body, "expr", None)
                     if type(body).__name__ == "ReturnStatement" else None)
         return returned is not None and _literal_function_return(returned)
+    except Exception:
+        return False
+
+
+def _literal_function_call(expression):
+    """Whether a literal-return function call has only inert literal inputs."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or getattr(expression, "isSystemCall", False)):
+            return False
+        subroutine = getattr(expression, "subroutine", None)
+        formals = list(getattr(subroutine, "arguments", []))
+        actuals = list(getattr(expression, "arguments", []))
+        if not _literal_function_symbol(subroutine) or len(formals) != len(actuals):
+            return False
+        return all(_literal_function_return(argument) for argument in actuals)
     except Exception:
         return False
 
@@ -5222,8 +5248,9 @@ def _convert_legacy_call(sm, expression):
         body_list = (list(body.list)
                      if type(body).__name__ == "StatementList" else None)
         kind = str(getattr(subroutine, "subroutineKind", "")).split(".")[-1]
+        formal_args = list(getattr(subroutine, "arguments", []))
         no_args = (kind == "Function" and list(expression.arguments) == []
-                   and list(getattr(subroutine, "arguments", [])) == [])
+                   and formal_args == [])
         if no_args and body_list == []:
             width, two_state, reason = type_width_2s(expression.type)
             if width is not None and reason is None:
@@ -5240,7 +5267,8 @@ def _convert_legacy_call(sm, expression):
         # deliberately narrower than general constant-function evaluation:
         # names, operators, nested calls, and multi-statement bodies remain
         # ordinary unsupported calls rather than silently erasing effects.
-        if no_args and type(body).__name__ == "ReturnStatement":
+        if (_literal_function_call(expression)
+                and type(body).__name__ == "ReturnStatement"):
             returned = getattr(body, "expr", None)
             if (returned is not None and _literal_function_return(returned)
                     and _case_source_expression_ok(returned)):
@@ -8297,9 +8325,8 @@ def _convert_syscall(sm, s, e):
         # return is equally effect-free when the result is discarded.  Reuse
         # the expression-position recognizer so statement and value calls
         # share exactly the same narrow literal boundary.
-        if (_SYM is None and subroutine is not None and args == []
-                and formal_args == [] and kind == "Function"
-                and _literal_function_symbol(subroutine)):
+        if (_SYM is None and subroutine is not None and kind == "Function"
+                and _literal_function_call(e)):
             return {"kind": "Empty", "span": node_span(sm, s),
                     "literal_function_statement": name}
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
@@ -10003,15 +10030,16 @@ def convert_module(sm, inst):
                 # contents appear inside the owning process body.
                 continue
             elif k == "Subroutine":
-                # Empty zero-argument subroutines are metadata only.  Calls
-                # in statement position are erased by _convert_syscall;
-                # signatures with formals or any body statement remain loud.
+                # Empty subroutines and pure literal-return functions are
+                # metadata only.  Calls in statement position are erased by
+                # _convert_syscall; effectful signatures and bodies remain
+                # loud.
                 body = getattr(m, "body", None)
                 formal_args = list(getattr(m, "arguments", []))
                 body_list = (list(body.list)
                              if type(body).__name__ == "StatementList" else None)
-                if formal_args == [] and (body_list == [] or
-                                           _literal_function_symbol(m)):
+                if (formal_args == [] and body_list == []) or \
+                        _literal_function_symbol(m):
                     # The declaration has no runtime node at all; keeping an
                     # Empty in Module.others would make the self-check runner
                     # classify it as a non-initial process.

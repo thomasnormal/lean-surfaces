@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "literal_function_argument",
+      "file": "Examples/system-verilog/literal_function_argument/literal_function_argument.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "dynamic_array_oob_write",
       "file": "Examples/system-verilog/dynamic_array_oob_write/dynamic_array_oob_write.sv",
       "module": "top",

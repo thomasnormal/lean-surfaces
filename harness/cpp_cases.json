@@ -4009,6 +4009,18 @@
     "rung": 4
   },
   {
+    "id": "declaration.callable-value-only-refusal",
+    "kind": "statement",
+    "corpus": "rung-5 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableValueOnlyRefusal",
+    "cpp_source": "int value_only(int value) { return value; } bool callable_witness() { return value_only(7) == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "refuse",
+    "rung": 5
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

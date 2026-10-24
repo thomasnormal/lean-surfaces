@@ -310,6 +310,8 @@ private def valueOnlyRemainsLoud : Bool :=
   | .error .unsupportedDeclaration => true
   | _ => false
 
+def callableValueOnlyRefusal : Bool := !valueOnlyRemainsLoud
+
 private def selfInitializerRetainsFrame : Bool :=
   match CallableObjectFrame.start .lp64
       (functionWithLocal (.read (handle "0x11"))) [signed 7] with
@@ -396,6 +398,7 @@ def callableParserAutomaticLocalWitness : Bool := parserAdmitsAutomaticLocal
 #guard callableForInitializerFailureRetainsFrameWitness
 #guard callableSwitchScopeFailureWitness
 #guard callableReadsParameterWitness
+#guard !callableValueOnlyRefusal
 
 theorem callable_local_declaration_witness : callableLocalDeclarationWitness = true := by
   rfl

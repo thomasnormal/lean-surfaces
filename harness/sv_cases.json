@@ -549,6 +549,15 @@
       "expect": "match"
     },
     {
+      "name": "string_concat_write",
+      "file": "Examples/system-verilog/string_concat_write/string_concat_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "empty_subroutine_call",
       "file": "Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv",
       "module": "top",

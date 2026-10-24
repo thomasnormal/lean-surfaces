@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 80 | 76 | 0 | 4 | sv-tests-2 declarations |
+| 81 | 77 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -74,6 +74,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `floating_local_decl` | `Examples/system-verilog/floating_local_decl/floating_local_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `floating_literal_write` | `Examples/system-verilog/floating_literal_write/floating_literal_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `realtime_write` | `Examples/system-verilog/realtime_write/realtime_write.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_concat_write` | `Examples/system-verilog/string_concat_write/string_concat_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_subroutine_call` | `Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_handle_decl` | `Examples/system-verilog/opaque_handle_decl/opaque_handle_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_handle_null_write` | `Examples/system-verilog/opaque_handle_null_write/opaque_handle_null_write.sv` | match | **MATCH** | `ok` | MATCH |
@@ -326,7 +327,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 3155 |
+| `AssignmentExpression:target` | 3153 |
 | `CallExpression` | 3100 |
 | `ExpressionStatement:CallExpression` | 3019 |
 | `Hierarchy:ports` | 2397 |

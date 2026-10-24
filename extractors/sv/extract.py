@@ -5407,6 +5407,30 @@ def _null_literal(expr):
     return type(node).__name__ == "NullLiteral"
 
 
+def _string_literal_write(expr):
+    """Whether *expr* is a pure literal string or literal-only concatenation.
+
+    A string has no flat self-check slot.  A RHS made solely from string
+    literals therefore cannot observe or change modeled state; calls,
+    variables, and replications remain outside this erased slice.
+    """
+    node = expr
+    while type(node).__name__ == "ConversionExpression":
+        node = getattr(node, "operand", None)
+        if node is None:
+            return False
+    if type(node).__name__ == "StringLiteral":
+        return not getattr(node, "bad", False)
+    if type(node).__name__ != "ConcatenationExpression":
+        return False
+    try:
+        operands = list(node.operands)
+    except Exception:
+        return False
+    return bool(operands) and all(_string_literal_write(operand)
+                                  for operand in operands)
+
+
 def _new_integer_arg(expr, value, implicit):
     """Whether a class construction has one literal integer constructor arg."""
     node = expr
@@ -7387,6 +7411,18 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and not getattr(expr.right.operand, "bad", False)):
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "string_literal_write_noop": True}
+    # The same opaque boundary is safe for a literal-only concatenation, but
+    # preserve the ordinary timing and publication boundaries for this new
+    # shape. Dynamic operands and replication remain loud.
+    if (_SYM is None and expr.op is None and expr.timingControl is None
+            and not expr.isNonBlocking
+            and type(expr.left).__name__ == "NamedValueExpression"
+            and type(expr.left.type.canonicalType).__name__ == "StringType"
+            and type(expr.right).__name__ == "ConversionExpression"
+            and type(getattr(expr.right, "operand", None)).__name__ == "ConcatenationExpression"
+            and _string_literal_write(expr.right)):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "string_literal_concat_write_noop": True}
     if expr.timingControl is not None:
         return _convert_intra_assignment(sm, expr)
     scan = _convert_scan_assignment(sm, expr)

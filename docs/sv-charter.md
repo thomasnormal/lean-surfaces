@@ -5730,3 +5730,16 @@ extractor tests pinning the nonblocking boundary.
 The fresh 22,046-file census keeps **4,747 clean / 17,233 partial** and lowers
 `AssignmentExpression:target` **3,193 → 3,155**. Differential coverage moves
 **79/75/0/4 → 80/76/0/4**, and grammar coverage remains **210/79/131**.
+
+## Literal-only string concatenation writes — 2026-10-24
+
+A blocking assignment of a concatenation made entirely from string literals
+to a named `string` variable now erases through the existing opaque string
+storage boundary. Dynamic operands, replication, nonblocking or timed forms,
+and later string reads remain loud because the tier carries no string state.
+The `string_concat_write` fixture and differential row cover the admitted form,
+with extractor tests pinning the dynamic and nonblocking boundaries.
+
+The fresh 22,046-file census keeps **4,747 clean / 17,233 partial** and lowers
+`AssignmentExpression:target` **3,155 → 3,153**. Differential coverage moves
+**80/76/0/4 → 81/77/0/4**, and grammar coverage remains **210/79/131**.

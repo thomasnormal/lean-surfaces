@@ -1,5 +1,14 @@
 # SystemVerilog tier changelog
 
+## [0.1.15] — 2026-10-24
+
+The self-check surface now has 140 differential rows: 136 matches, zero
+disagreements, and 4 recorded refusals. The grammar census remains at 214
+pyslang syntax witnesses: 83 MATCH and 131 REFUSE. The 22,049-path corpus
+measures 4,841 clean files, 17,142 partial files, and 66 include skips. This
+release admits literal-zero semaphore `get` and `put` calls after a proven
+constructor assignment; dynamic and stateful semaphore methods remain loud.
+
 ## [0.1.14] — 2026-10-24
 
 The self-check surface now has 135 differential rows: 131 matches, zero

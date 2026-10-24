@@ -2821,6 +2821,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-mixed-shift",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableMixedShiftWitness",
+    "cpp_source": "int mixed_shift(short left, unsigned int right) { return left >> right; } bool callable_witness() { return mixed_shift(-1, 1) == -1; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-direct-call",
     "kind": "expression",
     "corpus": "rung-3 witness",

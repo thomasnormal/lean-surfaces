@@ -151,4 +151,9 @@ def classSubobjectConstBaseWitness : Bool :=
 
 #guard classSubobjectConstBaseWitness
 
+def classSubobjectMutableConstWitness : Bool :=
+  observed (projection false true true) (getter true) == some (-9)
+
+#guard classSubobjectMutableConstWitness
+
 end LeanModels.Cpp.ClassSubobjectTests

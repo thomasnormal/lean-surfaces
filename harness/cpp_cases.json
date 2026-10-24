@@ -3265,6 +3265,18 @@
     "rung": 7
   },
   {
+    "id": "expression.class-mutable-const-base",
+    "kind": "expression",
+    "corpus": "rung-7 witness",
+    "lean_module": "LeanModels.Cpp.ClassSubobjectTests",
+    "lean_namespace": "LeanModels.Cpp.ClassSubobjectTests",
+    "lean_expression": "classSubobjectMutableConstWitness",
+    "cpp_source": "struct B { mutable int value = -9; }; struct L : B {}; struct R : B {}; struct D : L, R {}; bool callable_witness() { const D value{}; return static_cast<const L&>(value).value == -9; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 7
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

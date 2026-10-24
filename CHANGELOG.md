@@ -73,6 +73,8 @@ change is listed here under **Changed** or **Removed**.
 - Heap-list-valued attribute `+=` now extends the existing list address in
   place for deterministic list, tuple, string, bytes, and range operands;
   stateful and hash-order iterables remain loud.
+- Subscripting an escaped dictionary view now raises CPython's exact
+  `TypeError` for its concrete view type instead of an internal refusal.
 
 ## [0.1.14] — 2026-10-21
 

@@ -17,6 +17,13 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-78 — dictionary-view subscript errors
+
+Subscripting an escaped `dict_keys`, `dict_values`, or `dict_items` view now
+raises CPython's exact type-specific `TypeError` instead of an internal loud
+refusal. View indexing remains unsupported as a value operation; the modeled
+surface is the faithful non-subscriptable error.
+
 ## 2026-10-24-pycomplete-77 — heap-list attribute augmented assignment
 
 Heap-list-valued attribute `+=` now evaluates the right-hand side and extends

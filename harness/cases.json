@@ -593,7 +593,7 @@
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "view_items_live", "args": [[7]], "expect": "match"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "view_items_unhashable", "args": [[]], "expect": "match"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "view_eq_still_loud", "args": [[7]], "expect": "unsupported", "note": "view equality remains outside the tier, including identity and set-like key/item equality"},
-  {"file": "Examples/python/dict_lab/dict_lab.py", "function": "view_index_still_loud", "args": [[7]], "expect": "unsupported", "note": "dictionary views are not subscriptable"},
+  {"file": "Examples/python/dict_lab/dict_lab.py", "function": "view_index_still_loud", "args": [[7]], "expect": "match", "note": "dictionary views are not subscriptable; the model preserves CPython's TypeError"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "view_repr_still_loud", "args": [[7]], "expect": "unsupported", "note": "view rendering is outside the exact repr inventory"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "enum_dict_index", "args": [[7], [0]], "expect": "match"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "enum_dict_start", "args": [[7], [0]], "expect": "match"},

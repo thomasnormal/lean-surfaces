@@ -3124,7 +3124,8 @@ def heapIndex (h : Heap) (a : Addr) (k : RVal) : Res RVal :=
       .exn (.typeError s!"list indices must be integers, not {RVal.typeNameH h k}")
   -- H3: no `__getitem__` can exist (dunder guard), so the default
   -- protocol's refusal is the faithful outcome.
-  | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
+  | some (.dictView ..) =>
+    .exn (.typeError s!"'{RVal.typeNameH h (.ref a)}' object is not subscriptable")
   | some (.instance _ _) => .exn (.typeError "'object' object is not subscriptable")
   | some (.generator ..) => .exn (.typeError "'generator' object is not subscriptable")
   | some (.cell _) => .unsupported cellInternal

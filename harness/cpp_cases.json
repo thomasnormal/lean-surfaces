@@ -2965,6 +2965,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-not-equal",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableNotEqualWitness",
+    "cpp_source": "bool not_equal(int left, int right) { return left != right; } bool callable_witness() { return not_equal(5, 6); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-sizeof",
     "kind": "expression",
     "corpus": "rung-3 witness",

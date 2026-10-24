@@ -228,6 +228,8 @@ private def unsupportedLogicalLoud : Bool :=
   | .ok (.unsupported .unresolvedArithmeticConversions) => true
   | _ => false
 
+def callableLogicalRefusal : Bool := !unsupportedLogicalLoud
+
 private def unsupportedCompoundLoud : Bool :=
   let one : TypedCallableExpression := {
     expression := .integer 1, sourceType := intType, type := intType}
@@ -388,6 +390,7 @@ def callableParserAutomaticLocalWitness : Bool := parserAdmitsAutomaticLocal
 #guard forInitializerFailureRetainsFrame
 #guard unsupportedIncrementLoud
 #guard !callableIncrementRefusal
+#guard !callableLogicalRefusal
 #guard unsupportedIncrementPrecedesRead
 #guard unsupportedLogicalLoud
 #guard unsupportedCompoundLoud

@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 74 | 70 | 0 | 4 | sv-tests-2 declarations |
+| 75 | 71 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -75,6 +75,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `floating_literal_write` | `Examples/system-verilog/floating_literal_write/floating_literal_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_subroutine_call` | `Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_handle_decl` | `Examples/system-verilog/opaque_handle_decl/opaque_handle_decl.sv` | match | **MATCH** | `ok` | MATCH |
+| `opaque_handle_null_write` | `Examples/system-verilog/opaque_handle_null_write/opaque_handle_null_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `generate_indexed_targets` | `Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv` | match | **MATCH** | `ok` | MATCH |
 | `oob_struct_read` | `Examples/system-verilog/oob_struct_read/oob_struct_read.sv` | match | **MATCH** | `ok` | MATCH |
 | `streaming_struct_source` | `Examples/system-verilog/streaming_struct_source/streaming_struct_source.sv` | match | **MATCH** | `ok` | MATCH |
@@ -228,7 +229,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.NamedType` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NewArrayExpression` | `Examples/system-verilog/dynamic_array_cells/dynamic_array_cells.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NonblockingAssignmentExpression` | `Examples/system-verilog/array_reductions/timing.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
-| `SyntaxKind.NullLiteralExpression` | `Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.NullLiteralExpression` | `Examples/system-verilog/opaque_handle_null_write/opaque_handle_null_write.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.OrAssignmentExpression` | `Examples/system-verilog/compound_assignments/partial_members.sv` | **REFUSE** | `unsupported` AssignmentExpression:compound-partial-range |
 | `SyntaxKind.OrderedArgument` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.OrderedPortConnection` | `Examples/system-verilog/module_hierarchy/ports.sv` | **REFUSE** | `unsupported` non-initial process 'Hierarchy:ports' (self-check tier runs initial-only designs) |
@@ -319,7 +320,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 3321 |
+| `AssignmentExpression:target` | 3313 |
 | `CallExpression` | 3283 |
 | `ExpressionStatement:CallExpression` | 3040 |
 | `Hierarchy:ports` | 2397 |

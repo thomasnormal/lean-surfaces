@@ -5650,3 +5650,16 @@ fresh 22,046-file census moves **4,721 → 4,722 clean** and **17,259 → 17,258
 partial**; `VariableSymbol:2state` falls **3,383 → 2,376**. Differential
 coverage moves **73/69/0/4 → 74/70/0/4**; grammar coverage remains
 **209/78/131**.
+
+## Direct null writes to opaque class handles — 2026-10-24
+
+A blocking assignment of the literal `null` to a named class-handle variable
+now erases through the opaque-storage boundary. Member receivers, selected
+targets, nonblocking or timed assignments, construction, and all other handle
+operations remain loud; no object or alias state is introduced.
+
+The `opaque_handle_null_write` fixture and differential row cover the admitted
+form, with extractor regressions for nonblocking writes and handle reads. The
+fresh 22,046-file census keeps **4,722 clean / 17,258 partial** and lowers
+`AssignmentExpression:target` **3,321 → 3,313**. Differential coverage moves
+**74/70/0/4 → 75/71/0/4**; grammar coverage remains **209/78/131**.

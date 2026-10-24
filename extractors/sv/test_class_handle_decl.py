@@ -50,6 +50,22 @@ class ClassHandleDeclarations(unittest.TestCase):
         self.assertIn("NamedValueExpression:2state",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_direct_null_write_is_inert(self):
+        design = lower(
+            'module top; mailbox box; initial begin box = null; '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("opaque_handle_null_write")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_nonblocking_null_write_stays_loud(self):
+        design = lower(
+            'module top; mailbox box; initial begin box <= null; end endmodule')
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
+
 
 if __name__ == "__main__":
     unittest.main()

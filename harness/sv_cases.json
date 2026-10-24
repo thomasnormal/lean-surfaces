@@ -558,6 +558,15 @@
       "expect": "match"
     },
     {
+      "name": "opaque_handle_null_write",
+      "file": "Examples/system-verilog/opaque_handle_null_write/opaque_handle_null_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "generate_indexed_targets",
       "file": "Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv",
       "module": "top",

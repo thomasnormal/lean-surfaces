@@ -5360,6 +5360,16 @@ def _floating_literal(expr):
     return False
 
 
+def _null_literal(expr):
+    """Whether pyslang's conversion shell contains the null literal."""
+    node = expr
+    while type(node).__name__ == "ConversionExpression":
+        node = getattr(node, "operand", None)
+        if node is None:
+            return False
+    return type(node).__name__ == "NullLiteral"
+
+
 def _compound_rhs(expr):
     """Peel pyslang's synthetic read-modify-write expression from a compound
     assignment. The frontend may wrap it in a conversion for unsized literals.
@@ -7235,6 +7245,17 @@ def _convert_assignment_expr(sm, expr, span_node=None):
     if type(expr).__name__ != "AssignmentExpression":
         return unsupported(sm, span_node or expr,
                            "AssignmentExpression:" + type(expr).__name__)
+    # A direct class-handle null write only updates opaque storage.  Restrict
+    # this to a named variable: member receivers and selected targets can
+    # have observable evaluation or aliasing effects.  Construction and all
+    # nonblocking/timed forms remain outside the erased slice.
+    if (_SYM is None and expr.op is None and expr.timingControl is None
+            and not expr.isNonBlocking
+            and type(expr.left).__name__ == "NamedValueExpression"
+            and type(getattr(expr.left.type, "canonicalType", None)).__name__
+            == "ClassType" and _null_literal(expr.right)):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "opaque_handle_null_write": True}
     # Real and shortreal values have no representation in the flat
     # self-check state.  A pure literal blocking write consequently has no
     # modeled effect and can be erased.  Keep nonblocking writes, names,

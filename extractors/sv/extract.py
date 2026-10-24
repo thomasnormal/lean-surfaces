@@ -122,6 +122,7 @@ SYSCALL_FATAL = "$fatal"
 # filename, or the explicit empty-config form.  Calls carrying a nonempty
 # config or other optional arguments stay loud until the timing model exists.
 SYSCALL_SDF = "$sdf_annotate"
+SYSCALL_TIMEFORMAT = "$timeformat"
 # `$printtimescale` reports scope metadata without changing modeled state.  The
 # no-argument form is therefore safe to erase in the self-check tier; explicit
 # scope arguments remain loud because hierarchy/time-scale semantics are not
@@ -8071,6 +8072,36 @@ def _convert_syscall(sm, s, e):
                 and args[2].value == ""
             )
         if filename_only or empty_config:
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "pure_diagnostic": name}
+    if is_sys and name == SYSCALL_TIMEFORMAT:
+        try:
+            args = list(e.arguments)
+        except Exception:
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
+        # `$timeformat` only affects later `%t` rendering.  The self-check
+        # surface has no time-format renderer, so a call with four literal
+        # arguments is inert when this source has no `%t` consumer.  Keep any
+        # dynamic argument or possible consumer loud rather than dropping a
+        # setting that could change observable output.
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        suffix_literal = (
+            len(args) == 4 and
+            (type(args[2]).__name__ == "StringLiteral"
+             or (type(args[2]).__name__ == "ConversionExpression"
+                 and type(getattr(args[2], "operand", None)).__name__ ==
+                 "StringLiteral"))
+        )
+        literal_shape = (
+            len(args) == 4
+            and type(args[0]).__name__ in ("IntegerLiteral", "UnaryExpression")
+            and type(args[1]).__name__ == "IntegerLiteral"
+            and suffix_literal
+            and type(args[3]).__name__ == "IntegerLiteral"
+            and not getattr(args[0], "bad", False)
+            and not any(getattr(arg, "bad", False) for arg in args[1:])
+        )
+        if literal_shape and not re.search(r"%t", source):
             return {"kind": "Empty", "span": node_span(sm, s),
                     "pure_diagnostic": name}
     if is_sys and name == SYSCALL_STROBE:

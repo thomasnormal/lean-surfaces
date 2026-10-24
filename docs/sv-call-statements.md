@@ -30,6 +30,11 @@ result. The literal-only body has no storage, timing, diagnostic, or argument
 effects. User calls with arguments, reads, operators, nested calls, or any
 other body remain loud until callable frames are represented.
 
+Literal `$timeformat` calls with no `%t` consumer in the source are erased as
+inert configuration. The self-check surface has no time-format renderer, so
+the setting cannot affect an observable result in that restricted shape;
+dynamic arguments and sources that use `%t` remain loud.
+
 The self-check executor runs these calls at time zero. The retained stepper
 delegates the same `SysCall` leaves to that executor after a delay or event
 wait, so no second call interpreter is introduced. The scheduler's existing

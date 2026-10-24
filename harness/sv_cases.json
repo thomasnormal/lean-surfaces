@@ -884,6 +884,15 @@
       "expect": "match"
     },
     {
+      "name": "timeformat_inert",
+      "file": "Examples/system-verilog/timeformat_inert/timeformat_inert.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "delay_refusal",
       "file": "Examples/system-verilog/delay/delay.sv",
       "module": "delay",

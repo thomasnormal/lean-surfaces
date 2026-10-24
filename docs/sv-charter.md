@@ -6018,3 +6018,15 @@ shape. The 22,046-file corpus remains **4,783 clean / 17,197 partial / 66
 include skips** with unchanged blocker counts. Differential coverage moves
 **100/96/0/4 → 101/97/0/4**; grammar coverage remains **211 witnesses, 80
 MATCH, and 131 REFUSE**.
+
+## Inert literal `$timeformat` calls — 2026-10-24
+
+Literal `$timeformat` calls with no `%t` consumer now erase as inert
+configuration in the self-check surface, which has no time-format renderer.
+Dynamic arguments and any source containing a `%t` consumer remain loud. The
+`timeformat_inert` fixture and differential row cover the restricted call. The
+22,046-file corpus moves **4,783 → 4,784 clean** and **17,197 → 17,196
+partial**, with `ExpressionStatement:CallExpression` falling **3,019 → 3,017**
+and 66 include skips. Differential coverage moves **101/97/0/4 →
+102/98/0/4**; grammar coverage remains **211 witnesses, 80 MATCH, and 131
+REFUSE**.

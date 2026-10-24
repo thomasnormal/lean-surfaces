@@ -1054,6 +1054,17 @@ private def nullInequalityEvidence : CppBinaryExpressionEvidence :=
       expression.sourceType == .builtin .int && expression.type == .builtin .int
   | .error _ => false
 
+private def unsignedIntegerLiteralRaw : Raw := object [
+  ("id", text "0x68"), ("kind", text "IntegerLiteral"), ("value", text "7"),
+  ("type", object [("qualType", text "unsigned int")])]
+
+#guard match parseCallableExpressionTyped .lp64 [] []
+    (some [⟨⟨"0x68"⟩, "IntegerLiteral", .builtin .unsignedInt⟩])
+    unsignedIntegerLiteralRaw none (some (.builtin .unsignedInt)) with
+  | .ok expression => expression.expression == .integer 7 &&
+      expression.sourceType == .builtin .unsignedInt && expression.type == .builtin .unsignedInt
+  | .error _ => false
+
 private def cStyleCastRaw : Raw := object [
   ("id", text "0x70"), ("kind", text "CStyleCastExpr"),
   ("castKind", text "NoOp"),

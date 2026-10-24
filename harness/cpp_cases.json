@@ -2845,6 +2845,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-unsigned-integer-literal",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableUnsignedIntegerLiteralWitness",
+    "cpp_source": "unsigned int unsigned_integer_witness() { return 7u; }",
+    "cpp_expression": "unsigned_integer_witness() == 7u",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-nullptr-comparison",
     "kind": "expression",
     "corpus": "rung-3 witness",

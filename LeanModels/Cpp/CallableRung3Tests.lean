@@ -152,6 +152,21 @@ def callableConstantExpressionWitness : Bool :=
   | .ok (.ok value) => value == signed 7
   | _ => false
 
+def unsignedIntegerLiteralFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := unsignedIntType, parameters := [], variadic := false}
+  parameters := []
+  body := .block (.return_ {
+    expression := .integer 7
+    sourceType := unsignedIntType
+    type := unsignedIntType})
+}
+
+def callableUnsignedIntegerLiteralWitness : Bool :=
+  match evaluateCallable 16 .lp64 unsignedIntegerLiteralFunction [] with
+  | .ok (.ok value) => value == ⟨.unsigned 32, 7⟩
+  | _ => false
+
 def nullPointerComparisonFunction : CallableFunction := {
   occurrence := default
   signature := {result := .builtin .boolean, parameters := [], variadic := false}
@@ -507,6 +522,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableBoolLiteralWitness
 #guard callableCharacterLiteralWitness
 #guard callableConstantExpressionWitness
+#guard callableUnsignedIntegerLiteralWitness
 #guard callableNullPointerWitness
 #guard callableNullPointerInequalityWitness
 #guard callableCastWitness
@@ -549,6 +565,9 @@ theorem callable_character_literal_witness : callableCharacterLiteralWitness = t
   rfl
 
 theorem callable_constant_expression_witness : callableConstantExpressionWitness = true := by
+  rfl
+
+theorem callable_unsigned_integer_literal_witness : callableUnsignedIntegerLiteralWitness = true := by
   rfl
 
 theorem callable_null_pointer_witness : callableNullPointerWitness = true := by
@@ -608,6 +627,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_bool_literal_witness
 #print axioms callable_character_literal_witness
 #print axioms callable_constant_expression_witness
+#print axioms callable_unsigned_integer_literal_witness
 #print axioms callable_null_pointer_witness
 #print axioms callable_null_pointer_inequality_witness
 #print axioms callable_cast_witness

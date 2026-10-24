@@ -5795,3 +5795,16 @@ form, with extractor tests pinning the nonblocking boundary.
 The fresh 22,046-file census keeps **4,747 clean / 17,233 partial** and lowers
 `AssignmentExpression:target` **3,144 → 3,139**. Differential coverage moves
 **84/80/0/4 → 85/81/0/4**, and grammar coverage remains **211/80/131**.
+
+## Direct null writes to opaque virtual interfaces — 2026-10-24
+
+A blocking assignment of `null` to a named virtual-interface handle now erases
+through the opaque-handle boundary. Selected targets, nonblocking or timed
+forms, and virtual-interface reads, comparisons, and calls remain loud. The
+`opaque_virtual_interface_null_write` fixture and differential row cover the
+admitted form, with extractor tests pinning the null-write boundary.
+
+The 22,046-file census remains **4,747 clean / 17,233 partial** with
+`AssignmentExpression:target` at **3,139**; no remaining corpus record has
+this isolated target shape. Differential coverage moves **85/81/0/4 →
+86/82/0/4**, and grammar coverage remains **211/80/131**.

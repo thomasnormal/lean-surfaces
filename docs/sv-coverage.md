@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 85 | 81 | 0 | 4 | sv-tests-2 declarations |
+| 86 | 82 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -82,6 +82,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `opaque_handle_decl` | `Examples/system-verilog/opaque_handle_decl/opaque_handle_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_handle_null_write` | `Examples/system-verilog/opaque_handle_null_write/opaque_handle_null_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_chandle_null_write` | `Examples/system-verilog/opaque_chandle_null_write/opaque_chandle_null_write.sv` | match | **MATCH** | `ok` | MATCH |
+| `opaque_virtual_interface_null_write` | `Examples/system-verilog/opaque_virtual_interface_null_write/opaque_virtual_interface_null_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_mailbox_new_write` | `Examples/system-verilog/opaque_mailbox_new_write/opaque_mailbox_new_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_semaphore_zero_write` | `Examples/system-verilog/opaque_semaphore_zero_write/opaque_semaphore_zero_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_function_value` | `Examples/system-verilog/empty_function_value/empty_function_value.sv` | match | **MATCH** | `ok` | MATCH |
@@ -208,8 +209,8 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.IntegerLiteralExpression` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.IntegerType` | `Examples/system-verilog/assignment_patterns/keys.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.IntegerVectorExpression` | `Examples/system-verilog/always/tails.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
-| `SyntaxKind.InterfaceDeclaration` | `Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.InterfaceHeader` | `Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.InterfaceDeclaration` | `Examples/system-verilog/opaque_virtual_interface_null_write/opaque_virtual_interface_null_write.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.InterfaceHeader` | `Examples/system-verilog/opaque_virtual_interface_null_write/opaque_virtual_interface_null_write.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.InvocationExpression` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.JumpStatement` | `Examples/system-verilog/foreach/values.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LessThanEqualExpression` | `Examples/system-verilog/runtime_clog2/boundaries.sv` | **MATCH** | `ok`  |
@@ -315,7 +316,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ValueRangeExpression` | `Examples/system-verilog/case_inside/contexts.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.VariableDimension` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.VariablePortHeader` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
-| `SyntaxKind.VirtualInterfaceType` | `Examples/system-verilog/virtual_interface_decl/virtual_interface_decl.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.VirtualInterfaceType` | `Examples/system-verilog/opaque_virtual_interface_null_write/opaque_virtual_interface_null_write.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.VoidType` | `Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.WildcardEqualityExpression` | `Examples/system-verilog/wildcard_equality/values.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.WildcardInequalityExpression` | `Examples/system-verilog/wildcard_equality/values.sv` | **MATCH** | `ok`  |

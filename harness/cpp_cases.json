@@ -4261,6 +4261,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-self-initializer-failure",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableSelfInitializerFailureWitness",
+    "cpp_source": "bool self_initializer_failure() { int value = 1; return value == 1; } bool callable_witness() { return self_initializer_failure(); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "declaration.callable-reference-parameter",
     "kind": "statement",
     "corpus": "rung-5 witness",

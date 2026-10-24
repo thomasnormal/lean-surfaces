@@ -335,6 +335,8 @@ private def selfInitializerRetainsFrame : Bool :=
         | _ => false
   | .error _ => false
 
+def callableSelfInitializerFailureWitness : Bool := selfInitializerRetainsFrame
+
 private def nestedBlockDropsLocal : Bool :=
   let callable : CallableFunction := {
     functionWithLocal (.literal (signed 3)) with
@@ -651,5 +653,6 @@ private theorem kernelControlExecution :
 #guard callableKernelDoWhileFrameWitness
 #guard callableKernelForFrameWitness
 #guard callableFuelExhaustionWitness
+#guard callableSelfInitializerFailureWitness
 
 end LeanModels.Cpp.CallableObjectEvaluationTests

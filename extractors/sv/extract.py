@@ -8310,10 +8310,8 @@ def _convert_syscall(sm, s, e):
         # self-check tier carries no assertion-control register, so its
         # one-literal control form is inert; dynamic and extended forms stay
         # loud until that state is represented.
-        if (name == "$assertcontrol" and len(args) == 1
-                and type(args[0]).__name__ in ("IntegerLiteral",
-                                               "UnbasedUnsizedIntegerLiteral")
-                and not getattr(args[0], "bad", False)):
+        if (name == "$assertcontrol" and all(
+                _integral_literal_source(argument) for argument in args)):
             return {"kind": "Empty", "span": node_span(sm, s),
                     "pure_diagnostic": name}
     if is_sys and name in SYSCALL_MONITOR_CTRL:

@@ -1072,6 +1072,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "assertcontrol_literal_args",
+      "file": "Examples/system-verilog/assertcontrol_literal_args/assertcontrol_literal_args.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -35,9 +35,10 @@ inert configuration. The self-check surface has no time-format renderer, so
 the setting cannot affect an observable result in that restricted shape;
 dynamic arguments and sources that use `%t` remain loud.
 
-Literal one-argument `$assertcontrol` calls are likewise erased. They change
-only assertion reporting controls, and the self-check state has no assertion
-control register. Dynamic or multi-argument forms remain loud.
+Literal `$assertcontrol` calls with one or more integral literal arguments are
+likewise erased. They change only assertion reporting controls, and the
+self-check state has no assertion control register. Dynamic or hierarchical
+arguments remain loud.
 
 The self-check executor runs these calls at time zero. The retained stepper
 delegates the same `SysCall` leaves to that executor after a delay or event

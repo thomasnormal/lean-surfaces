@@ -129,6 +129,20 @@ theorem infinite_zero_caught :
     float_lab.infinite_zero_caught() ==> (19 : PyInt) := by
   exact ⟨32, rfl⟩
 
+theorem division_nan_left :
+    float_lab.divide(Float64.ofBits 0x7ff0000000000001,
+      Float64.ofBits 0x3ff0000000000000) ==> Float64.ofBits 0x7ff8000000000001 := by
+  exact ⟨32, rfl⟩
+
+theorem division_nan_right :
+    float_lab.divide(Float64.ofBits 0x3ff0000000000000,
+      Float64.ofBits 0xfff0000000000001) ==> Float64.ofBits 0xfff8000000000001 := by
+  exact ⟨32, rfl⟩
+
+theorem indeterminate_division :
+    float_lab.indeterminate_division_still_loud() ==> Float64.ofBits 0xfff8000000000000 := by
+  exact ⟨32, rfl⟩
+
 theorem floor_tenth :
     float_lab.floor_tenth() ==> Float64.ofBits 0x4022000000000000 := by
   have floorStep : Float64.floorRemWithNaN ⟨0x3ff0000000000000⟩ ⟨0x3fb999999999999a⟩ =
@@ -231,6 +245,9 @@ theorem floor_zero_caught :
 #print axioms infinite_denominator
 #print axioms infinite_augmented
 #print axioms infinite_zero_caught
+#print axioms division_nan_left
+#print axioms division_nan_right
+#print axioms indeterminate_division
 #print axioms constructor_identity
 #print axioms constructor_zero
 #print axioms constructor_tenth

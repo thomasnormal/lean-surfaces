@@ -468,7 +468,8 @@
   },
   {
     "file": "Examples/python/float_lab/nan_division_script.py",
-    "expect": "unsupported"
+    "expect": "match",
+    "note": "The pinned CPython 3.9 canonical negative quiet-NaN word is rendered as nan for inf / -inf."
   },
   {
     "file": "Examples/python/float_lab/floor_script.py",

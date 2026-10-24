@@ -102,6 +102,12 @@ set_option exponentiation.threshold 2048
     .overflowError "int too large to convert to float"
 #py_check float_lab.divide(Float64.ofBits 0x7ff0000000000001, false) raises
     .floatZeroDivisionError
+#py_check float_lab.divide(Float64.ofBits 0x7ff0000000000001,
+  Float64.ofBits 0x3ff0000000000000) = Float64.ofBits 0x7ff8000000000001
+#py_check float_lab.divide(Float64.ofBits 0x3ff0000000000000,
+  Float64.ofBits 0xfff0000000000001) = Float64.ofBits 0xfff8000000000001
+#py_check float_lab.divide(Float64.ofBits 0x7ff0000000000000,
+  Float64.ofBits 0xfff0000000000000) = Float64.ofBits 0xfff8000000000000
 
 theorem tenth :
     float_lab.tenth() ==> Float64.ofBits 0x3fb999999999999a := by proofs

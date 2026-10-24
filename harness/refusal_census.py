@@ -919,8 +919,6 @@ WHITELIST_CLASS = {
     "bytes_lab::numeric_float_still_loud": "bytes.numeric-parsing",
     "float_lab::count_head": "iter.count-numeric-frame",
     "float_lab::constructor_heap": "float.constructor-protocols",
-    "float_lab::divide": "float.nan-payload",
-    "float_lab::indeterminate_division_still_loud": "float.nan-payload",
     "float_lab::keys_still_loud": "float.hashing",
     "float_lab::nested_keys_still_loud": "float.hashing",
     "float_lab::attribute_still_loud": "float.attributes",

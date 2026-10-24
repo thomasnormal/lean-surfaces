@@ -37,12 +37,13 @@ numerator produce signed infinity; a finite numerator and infinite denominator
 produce signed zero. Both signs use the operands' sign XOR, including signed
 zero and subnormal inputs. A zero denominator raises `ZeroDivisionError` even
 when the numerator is infinite or NaN. Mixed integer conversion still happens
-first, including overflow with an infinite or NaN operand. NaN inputs and
-infinity divided by infinity return an unresolved NaN-payload marker, after
-these exception checks. The adapter must refuse that marker loudly, never
-invent a Python exception or a portable NaN word. The legacy
-`Float64.divideFinite` helper name is retained; its shared dispatch now also
-admits the determined infinity cases without a second interpreter path.
+first, including overflow with an infinite or NaN operand. NaN inputs are
+quieted in place, preserving payload and sign, with the left operand winning
+when both are NaN. Infinity divided by infinity uses CPython 3.9's pinned
+canonical negative quiet-NaN word, after the zero-denominator and
+mixed-conversion checks. The legacy `Float64.divideFinite` helper name is
+retained; the NaN-aware wrapper shares its determined infinity cases without a
+second interpreter path.
 
 Addition, subtraction and multiplication compute with exact rational operands
 and round once to nearest-even binary64. Mixed integer/Boolean operands are
@@ -55,9 +56,8 @@ zero and underflow. Float overflow produces signed infinity. Nonindeterminate in
 `*`, NaN inputs are quieted in place, preserving the payload and sign; when
 both operands are NaN, the left operand wins. Invalid `inf - inf`, opposite-sign
 `inf + inf`, and `inf * 0` use CPython 3.9's pinned canonical negative quiet-NaN
-word. True division retains its explicit NaN-payload refusal; floor division,
-remainder, and `divmod` use the same quieting rule, with zero-denominator
-errors taking priority.
+word. True division, floor division, remainder, and `divmod` use the same
+quieting rule, with zero-denominator errors taking priority.
 
 Float ordering and mixed float/integer comparison use the exact decoded value.
 They do not round the integer: 9007199254740992.0 is strictly less than

@@ -124,6 +124,22 @@ theorem mixed_division_converts_before_nan :
     divideFloatInt (ofBits 0x7ff8000000000000) (10 ^ 400) =
       .error .conversionOverflow := rfl
 
+theorem division_quiets_left_nan :
+    divideFiniteWithNaN (ofBits 0x7ff0000000000001) (ofBits 0x3ff0000000000000) =
+      .ok (ofBits 0x7ff8000000000001) := rfl
+
+theorem division_quiets_right_nan :
+    divideFiniteWithNaN (ofBits 0x3ff0000000000000) (ofBits 0xfff0000000000001) =
+      .ok (ofBits 0xfff8000000000001) := rfl
+
+theorem division_invalid_infinity_is_canonical_nan :
+    divideFiniteWithNaN (ofBits 0x7ff0000000000000) (ofBits 0xfff0000000000000) =
+      .ok (ofBits 0xfff8000000000000) := rfl
+
+theorem division_nan_zero_priority :
+    divideFiniteWithNaN (ofBits 0x7ff0000000000001) (ofBits 0x8000000000000000) =
+      .error .zeroDivision := rfl
+
 #print axioms infinity_division_negative
 #print axioms negative_infinity_division_subnormal
 #print axioms infinity_denominator_negative_zero
@@ -133,6 +149,10 @@ theorem mixed_division_converts_before_nan :
 #print axioms signaling_nan_division_unresolved
 #print axioms mixed_division_converts_before_infinity
 #print axioms mixed_division_converts_before_nan
+#print axioms division_quiets_left_nan
+#print axioms division_quiets_right_nan
+#print axioms division_invalid_infinity_is_canonical_nan
+#print axioms division_nan_zero_priority
 
 theorem equal_large_integer :
     (ofBits 0x4340000000000000).eqInt 9007199254740992 = true := rfl

@@ -370,15 +370,36 @@ def divideFinite (left right : Float64) : Except FloatDivisionError Float64 :=
       | none => .error .zeroDivision
       | some value => .ok value
 
+/-! CPython 3.9's pinned binary64 NaN propagation for true division. The
+zero-denominator check remains first; otherwise the first NaN operand wins and
+is quieted in place. The indeterminate `inf / inf` case uses the canonical
+negative quiet NaN word observed on the pinned interpreter. -/
+def divideFiniteWithNaN (left right : Float64) : Except FloatDivisionError Float64 :=
+  if right.isZero then .error .zeroDivision
+  else if left.isNaN then .ok (quietNaN left)
+  else if right.isNaN then .ok (quietNaN right)
+  else if left.isInf && right.isInf then .ok (ofBits 0xfff8000000000000)
+  else divideFinite left right
+
 def divideIntFloat (left : Int) (right : Float64) : Except FloatDivisionError Float64 :=
   match fromInt left with
   | none => .error .conversionOverflow
   | some value => divideFinite value right
 
+def divideIntFloatWithNaN (left : Int) (right : Float64) : Except FloatDivisionError Float64 :=
+  match fromInt left with
+  | none => .error .conversionOverflow
+  | some value => divideFiniteWithNaN value right
+
 def divideFloatInt (left : Float64) (right : Int) : Except FloatDivisionError Float64 :=
   match fromInt right with
   | none => .error .conversionOverflow
   | some value => divideFinite left value
+
+def divideFloatIntWithNaN (left : Float64) (right : Int) : Except FloatDivisionError Float64 :=
+  match fromInt right with
+  | none => .error .conversionOverflow
+  | some value => divideFiniteWithNaN left value
 
 private def divisionArithmetic (operator : ArithmeticOp) (left right : Float64) :
     Except FloatDivisionError Float64 :=

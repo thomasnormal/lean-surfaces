@@ -45,6 +45,19 @@ direct Float64 guards for both operand positions and the invalid-infinity case,
 and a kernel proof covering the three returned values. True division remains
 the separate unresolved NaN-payload boundary.
 
+## 2026-10-24-pycomplete-94 — float NaN true division
+
+Float true division now propagates NaN payloads and signs. Zero denominators
+and mixed integer conversion overflow retain their CPython ordering; otherwise
+the left NaN wins, the right NaN is used when needed, and each is quieted in
+place. The indeterminate `inf / inf` case uses the pinned canonical negative
+quiet-NaN word.
+
+The `float_lab.divide` NaN rows, `indeterminate_division_still_loud`, and
+`nan_division_script.py` now match, with direct Float64 guards and kernel
+proofs for both operand positions, the invalid infinity case, and denominator
+priority.
+
 ## 2026-10-24-pycomplete-86 — zero-argument builtin exception constructor
 
 The extractor's existing zero-argument raise-constructor lowering is now

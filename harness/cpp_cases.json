@@ -4525,6 +4525,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-signed-char-compound-multiply-mid",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableSignedCharCompoundMultiplyFrameWitness",
+    "cpp_source": "signed char frame_signed_char_compound_multiply(signed char value) { value *= 4; return value; } bool callable_witness() { return frame_signed_char_compound_multiply(3) == 12; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-signed-overflow-retention",
     "kind": "expression",
     "corpus": "rung-3 witness",

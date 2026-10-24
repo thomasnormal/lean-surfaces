@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 342 | 332 | 0 | 0 | 0 | 10 |
+| 343 | 333 | 0 | 0 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -249,6 +249,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `object.temporary-reference-binding` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `object.zero-initialization` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `object.static-local-frame` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `object.callable-static-local-persistence` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `object.thread-local-frame` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `object.storage-reuse` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `object.automatic-initialized` | 1 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |

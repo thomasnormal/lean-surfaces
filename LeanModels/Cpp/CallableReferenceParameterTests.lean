@@ -164,6 +164,8 @@ private def staticLocalAcrossStarts : Bool :=
                         reused.frame.store.staticBindings.length == 1
                   | .error _ => false
 
+def callableStaticLocalPersistenceWitness : Bool := staticLocalAcrossStarts
+
 private def threadLocalAcrossStarts : Bool :=
   let f := function [intType] (.return_ (expression "0"))
   let first := CallableObjectFrame.startInStore caller.store f [ref 0]
@@ -203,6 +205,7 @@ private def threadLocalAcrossStarts : Bool :=
 #guard executionFailureRetainsMutation
 #guard futureArgumentIdentityRefuses
 #guard staticLocalAcrossStarts
+#guard callableStaticLocalPersistenceWitness
 #guard threadLocalAcrossStarts
 
 -- Kernel reduction controls for identity, ownership and state retention.

@@ -2593,6 +2593,18 @@
     "rung": 1
   },
   {
+    "id": "object.callable-static-local-persistence",
+    "kind": "lifetime",
+    "corpus": "rung-1 witness",
+    "lean_module": "LeanModels.Cpp.CallableReferenceParameterTests",
+    "lean_namespace": "LeanModels.Cpp.CallableReferenceParameterTests",
+    "lean_expression": "callableStaticLocalPersistenceWitness",
+    "cpp_source": "int callable_static_local() { static int value = 3; return value; } bool callable_witness() { return callable_static_local() == 3 && callable_static_local() == 3; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 1
+  },
+  {
     "id": "object.thread-local-frame",
     "kind": "lifetime",
     "corpus": "rung-1 witness",

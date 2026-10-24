@@ -1,0 +1,731 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/postincrement_array_target/postincrement_array_target.sv",
+  "source_sha256": "4ae3a0168dccd23bfc4099e120fc2ddd7c1e4f320e0ed51f79aa850e98f80153",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 14,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 7,
+              "end_line": 3,
+              "end_col": 15
+            },
+            "name": "order[0]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 7,
+              "end_line": 3,
+              "end_col": 15
+            },
+            "name": "order[1]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 7,
+              "end_line": 4,
+              "end_col": 10
+            },
+            "name": "idx",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 5,
+              "col": 3,
+              "end_line": 13,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 5,
+                "col": 11,
+                "end_line": 13,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 6,
+                    "col": 5,
+                    "end_line": 6,
+                    "end_col": 21
+                  },
+                  "stmts": [
+                    {
+                      "kind": "If",
+                      "span": {
+                        "line": 6,
+                        "col": 5,
+                        "end_line": 6,
+                        "end_col": 21
+                      },
+                      "cond": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 6,
+                          "col": 11,
+                          "end_line": 6,
+                          "end_col": 14
+                        },
+                        "width": 1,
+                        "op": "===",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 6,
+                            "col": 11,
+                            "end_line": 6,
+                            "end_col": 14
+                          },
+                          "width": 32,
+                          "name": "idx",
+                          "signed": true
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 6,
+                            "col": 11,
+                            "end_line": 6,
+                            "end_col": 14
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000000"
+                        }
+                      },
+                      "then": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 6,
+                          "col": 5,
+                          "end_line": 6,
+                          "end_col": 21
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 6,
+                            "col": 5,
+                            "end_line": 6,
+                            "end_col": 17
+                          },
+                          "width": 32,
+                          "name": "order[0]"
+                        },
+                        "value": {
+                          "kind": "Squash2",
+                          "span": null,
+                          "width": 32,
+                          "operand": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 6,
+                              "col": 20,
+                              "end_line": 6,
+                              "end_col": 21
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000001"
+                          }
+                        }
+                      },
+                      "else": {
+                        "kind": "If",
+                        "span": {
+                          "line": 6,
+                          "col": 5,
+                          "end_line": 6,
+                          "end_col": 21
+                        },
+                        "cond": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 6,
+                            "col": 11,
+                            "end_line": 6,
+                            "end_col": 14
+                          },
+                          "width": 1,
+                          "op": "===",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 6,
+                              "col": 11,
+                              "end_line": 6,
+                              "end_col": 14
+                            },
+                            "width": 32,
+                            "name": "idx",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 6,
+                              "col": 11,
+                              "end_line": 6,
+                              "end_col": 14
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000001"
+                          }
+                        },
+                        "then": {
+                          "kind": "BlockingAssign",
+                          "span": {
+                            "line": 6,
+                            "col": 5,
+                            "end_line": 6,
+                            "end_col": 21
+                          },
+                          "target": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 6,
+                              "col": 5,
+                              "end_line": 6,
+                              "end_col": 17
+                            },
+                            "width": 32,
+                            "name": "order[1]"
+                          },
+                          "value": {
+                            "kind": "Squash2",
+                            "span": null,
+                            "width": 32,
+                            "operand": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 6,
+                                "col": 20,
+                                "end_line": 6,
+                                "end_col": 21
+                              },
+                              "width": 32,
+                              "bits": "00000000000000000000000000000001"
+                            }
+                          }
+                        },
+                        "else": null
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 6,
+                        "col": 11,
+                        "end_line": 6,
+                        "end_col": 16
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 6,
+                          "col": 11,
+                          "end_line": 6,
+                          "end_col": 14
+                        },
+                        "width": 32,
+                        "name": "idx",
+                        "signed": true
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 6,
+                            "col": 11,
+                            "end_line": 6,
+                            "end_col": 16
+                          },
+                          "width": 32,
+                          "op": "+",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 6,
+                              "col": 11,
+                              "end_line": 6,
+                              "end_col": 14
+                            },
+                            "width": 32,
+                            "name": "idx",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": null,
+                            "width": 32,
+                            "bits": "00000000000000000000000000000001"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "postindexed_array_write_lowered": true
+                },
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 21
+                  },
+                  "stmts": [
+                    {
+                      "kind": "If",
+                      "span": {
+                        "line": 7,
+                        "col": 5,
+                        "end_line": 7,
+                        "end_col": 21
+                      },
+                      "cond": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 7,
+                          "col": 11,
+                          "end_line": 7,
+                          "end_col": 14
+                        },
+                        "width": 1,
+                        "op": "===",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 7,
+                            "col": 11,
+                            "end_line": 7,
+                            "end_col": 14
+                          },
+                          "width": 32,
+                          "name": "idx",
+                          "signed": true
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 7,
+                            "col": 11,
+                            "end_line": 7,
+                            "end_col": 14
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000000"
+                        }
+                      },
+                      "then": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 7,
+                          "col": 5,
+                          "end_line": 7,
+                          "end_col": 21
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 7,
+                            "col": 5,
+                            "end_line": 7,
+                            "end_col": 17
+                          },
+                          "width": 32,
+                          "name": "order[0]"
+                        },
+                        "value": {
+                          "kind": "Squash2",
+                          "span": null,
+                          "width": 32,
+                          "operand": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 7,
+                              "col": 20,
+                              "end_line": 7,
+                              "end_col": 21
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000010"
+                          }
+                        }
+                      },
+                      "else": {
+                        "kind": "If",
+                        "span": {
+                          "line": 7,
+                          "col": 5,
+                          "end_line": 7,
+                          "end_col": 21
+                        },
+                        "cond": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 7,
+                            "col": 11,
+                            "end_line": 7,
+                            "end_col": 14
+                          },
+                          "width": 1,
+                          "op": "===",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 7,
+                              "col": 11,
+                              "end_line": 7,
+                              "end_col": 14
+                            },
+                            "width": 32,
+                            "name": "idx",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 7,
+                              "col": 11,
+                              "end_line": 7,
+                              "end_col": 14
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000001"
+                          }
+                        },
+                        "then": {
+                          "kind": "BlockingAssign",
+                          "span": {
+                            "line": 7,
+                            "col": 5,
+                            "end_line": 7,
+                            "end_col": 21
+                          },
+                          "target": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 7,
+                              "col": 5,
+                              "end_line": 7,
+                              "end_col": 17
+                            },
+                            "width": 32,
+                            "name": "order[1]"
+                          },
+                          "value": {
+                            "kind": "Squash2",
+                            "span": null,
+                            "width": 32,
+                            "operand": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 7,
+                                "col": 20,
+                                "end_line": 7,
+                                "end_col": 21
+                              },
+                              "width": 32,
+                              "bits": "00000000000000000000000000000010"
+                            }
+                          }
+                        },
+                        "else": null
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 7,
+                        "col": 11,
+                        "end_line": 7,
+                        "end_col": 16
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 7,
+                          "col": 11,
+                          "end_line": 7,
+                          "end_col": 14
+                        },
+                        "width": 32,
+                        "name": "idx",
+                        "signed": true
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 7,
+                            "col": 11,
+                            "end_line": 7,
+                            "end_col": 16
+                          },
+                          "width": 32,
+                          "op": "+",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 7,
+                              "col": 11,
+                              "end_line": 7,
+                              "end_col": 14
+                            },
+                            "width": 32,
+                            "name": "idx",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": null,
+                            "width": 32,
+                            "bits": "00000000000000000000000000000001"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "postindexed_array_write_lowered": true
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 24
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 8,
+                      "col": 9,
+                      "end_line": 8,
+                      "end_col": 51
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 8,
+                        "col": 9,
+                        "end_line": 8,
+                        "end_col": 39
+                      },
+                      "width": 1,
+                      "op": "&&",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 8,
+                          "col": 9,
+                          "end_line": 8,
+                          "end_col": 22
+                        },
+                        "width": 1,
+                        "op": "==",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 8,
+                            "col": 9,
+                            "end_line": 8,
+                            "end_col": 17
+                          },
+                          "width": 32,
+                          "name": "order[0]",
+                          "signed": true
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 8,
+                            "col": 21,
+                            "end_line": 8,
+                            "end_col": 22
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000001"
+                        }
+                      },
+                      "right": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 8,
+                          "col": 26,
+                          "end_line": 8,
+                          "end_col": 39
+                        },
+                        "width": 1,
+                        "op": "==",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 8,
+                            "col": 26,
+                            "end_line": 8,
+                            "end_col": 34
+                          },
+                          "width": 32,
+                          "name": "order[1]",
+                          "signed": true
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 8,
+                            "col": 38,
+                            "end_line": 8,
+                            "end_col": 39
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000010"
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 8,
+                        "col": 43,
+                        "end_line": 8,
+                        "end_col": 51
+                      },
+                      "width": 1,
+                      "op": "==",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 8,
+                          "col": 43,
+                          "end_line": 8,
+                          "end_col": 46
+                        },
+                        "width": 32,
+                        "name": "idx",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 50,
+                          "end_line": 8,
+                          "end_col": 51
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000010"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 9,
+                      "col": 7,
+                      "end_line": 9,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 11,
+                      "col": 7,
+                      "end_line": 11,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -123,6 +123,19 @@ class UnpackedArrayAssignments(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_postincrement_index_updates_after_write(self):
+        design = extract_source(
+            "module top; logic [7:0] value [0:1]; int index; "
+            "initial begin value[index++] = 8'h12; end endmodule")
+        blocks = [node for node in nodes(design)
+                  if node.get("kind") == "Block"
+                  and node.get("postindexed_array_write_lowered")]
+        self.assertEqual(len(blocks), 1)
+        self.assertEqual(blocks[0]["stmts"][-1]["target"]["name"], "index")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+
     def test_whole_array_copy_reuses_cells(self):
         design = extract_source(
             "module top; logic [7:0] source [0:1]; logic [7:0] value [0:1]; "

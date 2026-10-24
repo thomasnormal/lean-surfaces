@@ -5835,3 +5835,19 @@ fresh 22,046-file census moves **4,747 → 4,750 clean** and **17,233 → 17,230
 partial**; `AssignmentExpression:target` falls **3,133 → 3,106**.
 Differential coverage moves **87/83/0/4 → 88/84/0/4**, and grammar coverage
 remains **211/80/131**.
+
+## Post-incremented fixed-array index writes — 2026-10-24
+
+Assignments through a one-dimensional fixed-array index of the form
+`array[index++] = value` now lower to a bounded cell choice followed by the
+post-increment update. The old index is sampled for the write, and the update
+is retained even when the index is outside the represented cells. Pre-
+increment, dynamic storage, and effectful selectors outside this exact form
+remain loud.
+
+The `postincrement_array_target` fixture and differential row cover the
+admitted order, with extractor tests checking that the index update follows
+the conditional cell write. The fresh 22,046-file census moves **4,750 →
+4,752 clean** and **17,230 → 17,228 partial**; `AssignmentExpression:target`
+falls **3,106 → 3,103**. Differential coverage moves **88/84/0/4 →
+89/85/0/4**, and grammar coverage remains **211/80/131**.

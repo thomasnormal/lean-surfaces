@@ -2057,6 +2057,21 @@ def _fixed_array_dynamic_assignment(sm, expr):
         index = lhs.selector
         if _constant_dimension_selector(index) is not None:
             return None
+        # A post-increment/decrement selector has a pure index value and a
+        # separate lvalue update.  Preserve the source order by selecting the
+        # old index, then committing the update after the conditional write.
+        # Pre-increment remains outside this narrow lowering because its
+        # update must occur before the selector is sampled.
+        index_update = None
+        if type(index).__name__ == "UnaryExpression":
+            index_op = str(getattr(index, "op", None)).split(".")[-1]
+            if index_op not in ("Postincrement", "Postdecrement"):
+                return None
+            index_update = _convert_incdec(sm, index, "AssignmentExpression:index")
+            if (index_update is None
+                    or index_update.get("kind") == "Unsupported"):
+                return None
+            index = index.operand
         index_width, _index_two, index_reason = type_width_2s(index.type)
         if (index_width is None or index_reason is not None
                 or not _case_source_expression_ok(index)
@@ -2108,6 +2123,10 @@ def _fixed_array_dynamic_assignment(sm, expr):
                 "then": branch,
                 "else": result,
             }
+        if index_update is not None:
+            return {"kind": "Block", "span": node_span(sm, expr),
+                    "stmts": [result, index_update],
+                    "postindexed_array_write_lowered": True}
         return result
     except Exception:
         return None

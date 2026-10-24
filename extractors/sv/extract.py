@@ -5352,6 +5352,24 @@ def _bitstoreal_literal_call(expression):
         return False
 
 
+def _bitstoshortreal_literal_call(expression):
+    """Whether discarded ``$bitstoshortreal`` has one known 32-bit literal."""
+    try:
+        if (_SYM is not None or type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "$bitstoshortreal"):
+            return False
+        arguments = list(expression.arguments)
+        return (len(arguments) == 1
+                and type(expression.type.canonicalType).__name__ == "FloatingType"
+                and getattr(arguments[0].type, "isIntegral", False)
+                and getattr(arguments[0].type, "bitWidth", None) == 32
+                and _literal_integral_value(arguments[0]) is not None)
+    except Exception:
+        return False
+
+
 def _convert_rtoi_literal(sm, expression):
     if not _rtoi_literal_call(expression):
         return unsupported(sm, expression, "CallExpression:$rtoi")
@@ -8616,6 +8634,11 @@ def _convert_syscall(sm, s, e):
         # effect; dynamic or unknown patterns remain loud.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "bitstoreal_literal_statement": True}
+    if is_sys and _bitstoshortreal_literal_call(e):
+        # `$bitstoshortreal` is the single-precision counterpart: a known
+        # literal pattern with a discarded result has no modeled state effect.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "bitstoshortreal_literal_statement": True}
     if is_sys and _rtoi_literal_call(e):
         # `$rtoi` is a pure conversion in statement position when its result
         # is discarded.  The value-position converter above is deliberately

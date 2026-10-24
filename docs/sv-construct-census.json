@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22049,
+  "corpus_files": 22048,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "ExpressionStatement:CallExpression",
-    2983
+    2982
    ],
    [
     "AssignmentExpression:target",
@@ -32,7 +32,7 @@
    ],
    [
     "VariableSymbol:2state",
-    2349
+    2350
    ],
    [
     "SubroutineSymbol:Subroutine",
@@ -64,7 +64,7 @@
    ],
    [
     "MemberAccessExpression",
-    1022
+    1023
    ],
    [
     "ConversionExpression:width",
@@ -76,7 +76,7 @@
    ],
    [
     "CovergroupType:CovergroupType",
-    725
+    726
    ],
    [
     "RealLiteral",
@@ -976,7 +976,7 @@
    ]
   ],
   "by_status": {
-   "clean": 4843,
+   "clean": 4842,
    "partial": 17140,
    "skip_include": 66
   },
@@ -1038,8 +1038,8 @@
     52
    ],
    "simulation": [
-    4165,
-    18682
+    4164,
+    18681
    ],
    "simulation elaboration": [
     2,
@@ -1397,15 +1397,15 @@
    "chapter-19": {
     "clean": 0,
     "error": 0,
-    "partial": 767,
+    "partial": 768,
     "skip_include": 0,
-    "total": 767,
+    "total": 768,
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 292,
+    "clean": 293,
     "error": 0,
-    "partial": 533,
+    "partial": 532,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0
@@ -1531,11 +1531,11 @@
     "unlockable": 0
    },
    "chapter-35": {
-    "clean": 32,
+    "clean": 30,
     "error": 0,
     "partial": 227,
     "skip_include": 0,
-    "total": 259,
+    "total": 257,
     "unlockable": 0
    },
    "chapter-36": {

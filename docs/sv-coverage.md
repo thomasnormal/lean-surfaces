@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 143 | 139 | 0 | 4 | sv-tests-2 declarations |
+| 144 | 140 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -74,6 +74,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `strobe_literal` | `Examples/system-verilog/strobe_literal/strobe_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `fdisplay_stdout` | `Examples/system-verilog/fdisplay_stdout/fdisplay_stdout.sv` | match | **MATCH** | `ok` | MATCH |
 | `severity_dynamic` | `Examples/system-verilog/severity_dynamic/severity_dynamic.sv` | match | **MATCH** | `ok` | MATCH |
+| `severity_opaque_args` | `Examples/system-verilog/severity_opaque_args/severity_opaque_args.sv` | match | **MATCH** | `ok` | MATCH |
 | `exit_declaration` | `Examples/system-verilog/exit_decl/exit_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `vcd_setup` | `Examples/system-verilog/vcd_setup/vcd_setup.sv` | match | **MATCH** | `ok` | MATCH |
 | `vcd_control` | `Examples/system-verilog/vcd_control/vcd_control.sv` | match | **MATCH** | `ok` | MATCH |
@@ -389,15 +390,15 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22049 | 4843 | 17140 | 66 |
+| 22048 | 4842 | 17140 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `ExpressionStatement:CallExpression` | 2983 |
+| `ExpressionStatement:CallExpression` | 2982 |
 | `AssignmentExpression:target` | 2979 |
 | `CallExpression` | 2973 |
 | `Hierarchy:ports` | 2397 |
-| `VariableSymbol:2state` | 2349 |
+| `VariableSymbol:2state` | 2350 |
 | `SubroutineSymbol:Subroutine` | 1634 |
 | `NamedValueExpression:2state` | 1484 |
 | `ConcurrentAssertionStatement` | 1359 |
@@ -405,7 +406,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 | `ClassType` | 1329 |
 | `Hierarchy:module-kind` | 1248 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1154 |
-| `MemberAccessExpression` | 1022 |
+| `MemberAccessExpression` | 1023 |
 | `ConversionExpression:width` | 782 |
 | `HierarchicalValueExpression` | 749 |
 

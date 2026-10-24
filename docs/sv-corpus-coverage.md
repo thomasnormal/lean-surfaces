@@ -3909,3 +3909,17 @@ The fresh chapter-scoped census moves **4,842 → 4,843 clean** and **17,141 →
 17,140 partial** (66 include skips); `ExpressionStatement:CallExpression`
 falls **2,984 → 2,983**. Differential coverage moves **142/138/0/4 →
 143/139/0/4**; grammar coverage remains **214/83/131**.
+
+## Source-pure real and time arguments in severity tasks — 2026-10-24
+
+The quiet severity tasks now erase literal-format calls whose arguments are
+source-pure integral reads, literal strings, real/shortreal reads or literals,
+or zero-time `$time` / `$realtime` queries. The diagnostic stream and floating
+storage remain outside the self-check state; function calls, mutable or
+unsupported values, and nonliteral formats stay loud. `severity_opaque_args`
+supplies the `PASS` transcript and the real/time argument witness.
+
+The fresh chapter-scoped census moves **4,841 → 4,842 clean** and **17,141 →
+17,140 partial** (66 include skips); `ExpressionStatement:CallExpression`
+falls **2,983 → 2,982**. Differential coverage moves **143/139/0/4 →
+144/140/0/4**; grammar coverage remains **214/83/131**.

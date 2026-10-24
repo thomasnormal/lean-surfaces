@@ -8898,6 +8898,52 @@ def _sformat_literal_assignment(sm, expression):
         return None
 
 
+def _severity_floating_source_ok(expression):
+    """Recognize a side-effect-free real/time argument for a quiet task.
+
+    Real values are intentionally opaque in the self-check state, so they
+    cannot be converted to an ``SExpr`` for the diagnostic renderer.  A
+    quiet severity task may still erase such an argument when its source is
+    only a literal, a unary sign around a literal, a named real read, or a
+    zero-time query.
+    """
+    node = expression
+    while type(node).__name__ == "ConversionExpression":
+        node = getattr(node, "operand", None)
+        if node is None:
+            return False
+    kind = type(node).__name__
+    if kind in ("RealLiteral", "ShortRealLiteral"):
+        return not getattr(node, "bad", False)
+    if kind == "NamedValueExpression":
+        try:
+            return (not getattr(node, "bad", False)
+                    and type(node.type.canonicalType).__name__ == "FloatingType")
+        except Exception:
+            return False
+    if kind == "UnaryExpression":
+        op = str(getattr(node, "op", "")).split(".")[-1]
+        return op in ("Plus", "Minus", "UnaryPlus", "UnaryMinus") and \
+            _severity_floating_source_ok(getattr(node, "operand", None))
+    if kind == "CallExpression":
+        return _realtime_call(node)
+    return False
+
+
+def _severity_argument_source_ok(expression):
+    """Whether a quiet-task argument has no source-level side effects."""
+    if _severity_floating_source_ok(expression):
+        return True
+    if type(expression).__name__ == "StringLiteral":
+        return not getattr(expression, "bad", False)
+    try:
+        width, _two_state, reason = type_width_2s(expression.type)
+        return (expression.type.isIntegral and width is not None
+                and reason is None and _case_source_expression_ok(expression))
+    except Exception:
+        return False
+
+
 def _convert_syscall(sm, s, e):
     """`$display`/`$write`/`$finish`/`$stop` in statement position ->
     `SysCall` node (self-check tier §f). `$display`/`$write` require the
@@ -9210,6 +9256,15 @@ def _convert_syscall(sm, s, e):
             converted = [convert_expr(sm, arg) for arg in args[1:]]
             if any(node is None or node.get("kind") == "Unsupported"
                    for node in converted):
+                # Real/shortreal values have no self-check representation, but
+                # a source-pure diagnostic argument is still evaluated by
+                # IEEE severity tasks.  Since the diagnostic stream is outside
+                # the observable state, erase the whole call only after the
+                # source-level purity walk proves every argument harmless.
+                if all(_severity_argument_source_ok(arg) for arg in args[1:]):
+                    return {"kind": "Empty", "span": node_span(sm, s),
+                            "severity_task": name,
+                            "opaque_arguments": True}
                 return unsupported(sm, s, "ExpressionStatement:CallExpression")
             signed = []
             for arg in args[1:]:

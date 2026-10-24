@@ -6624,3 +6624,20 @@ The 22,049-path census moves **4,842 → 4,843 clean** and **17,141 → 17,140
 partial** (66 include skips); `ExpressionStatement:CallExpression` falls
 **2,984 → 2,983**. Differential coverage moves **142/138/0/4 → 143/139/0/4**;
 grammar coverage remains **214/83/131**.
+
+## Source-pure real and time arguments in severity tasks — 2026-10-24
+
+IEEE 1800-2023 §20.10 permits `$info`, `$warning`, and `$error` to use the
+same display-style argument list as `$display`. The self-check state has no
+severity diagnostic stream and no floating storage, so these tasks now erase a
+literal format call when every argument is source-pure: integral reads,
+literal strings, real/shortreal reads or literals, and zero-time `$time` /
+`$realtime` queries. Calls through functions, mutable or unsupported values,
+and nonliteral formats remain loud. `severity_opaque_args` supplies the
+real/time differential witness; extractor tests pin the string-variable and
+effectful-real boundaries.
+
+The fresh 22,048-path census moves **4,841 → 4,842 clean** and **17,141 →
+17,140 partial** (66 include skips); `ExpressionStatement:CallExpression`
+falls **2,983 → 2,982**. Differential coverage moves **143/139/0/4 →
+144/140/0/4**; grammar coverage remains **214/83/131**.

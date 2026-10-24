@@ -44,6 +44,24 @@ class QuietSeverityTasks(unittest.TestCase):
                              "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
+    def test_opaque_real_and_time_arguments_are_erased_when_source_pure(self):
+        design = lower(
+            'module top; real r; initial begin '
+            '$info("r=%f t=%0t", r, $time); '
+            '$warning("literal=%f", 3.14); '
+            '$error("rt=%f", $realtime); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_effectful_real_argument_stays_loud(self):
+        design = lower(
+            'module top; int x; function real f(); x++; return 1.0; '
+            'endfunction initial $warning("r=%f", f()); endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
     def test_effectful_argument_stays_loud(self):
         design = lower(
             'module top; function int f(); return 1; endfunction '

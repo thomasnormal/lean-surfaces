@@ -546,6 +546,15 @@
       "expect": "match"
     },
     {
+      "name": "severity_opaque_args",
+      "file": "Examples/system-verilog/severity_opaque_args/severity_opaque_args.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "exit_declaration",
       "file": "Examples/system-verilog/exit_decl/exit_decl.sv",
       "module": "top",

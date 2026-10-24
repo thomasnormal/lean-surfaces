@@ -8898,6 +8898,115 @@ def _sformat_literal_assignment(sm, expression):
         return None
 
 
+def _format_literal_integral_text(format_text, arguments):
+    """Render the small constant format slice used by packed writes."""
+    specs = {
+        "%b": ("b", 1), "%0b": ("b", 1),
+        "%o": ("o", 1), "%0o": ("o", 1),
+        "%h": ("h", 1), "%0h": ("h", 1),
+        "%d": ("d", 1), "%0d": ("d", 1),
+        "%s": ("s", 1),
+    }
+    if format_text == "%s:%0d":
+        pieces = ("s", "d")
+    else:
+        spec = specs.get(format_text)
+        if spec is None:
+            return None
+        pieces = (spec[0],)
+    if len(arguments) != len(pieces):
+        return None
+    rendered = []
+    for kind, argument in zip(pieces, arguments):
+        node = argument
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return None
+        if kind == "s":
+            if type(node).__name__ != "StringLiteral" or getattr(node, "bad", False):
+                return None
+            rendered.append(node.value)
+            continue
+        if type(node).__name__ not in ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
+            return None
+        if getattr(node, "bad", False):
+            return None
+        if kind == "b":
+            rendered.append(svint_bits(node.value))
+        elif kind == "o":
+            value = _literal_integral_value(node)
+            if value is None or value < 0:
+                return None
+            rendered.append(format(value, "o"))
+        elif kind == "h":
+            value = _literal_integral_value(node)
+            if value is None or value < 0:
+                return None
+            rendered.append(format(value, "x"))
+        else:
+            value = _literal_integral_value(node)
+            if value is None:
+                return None
+            rendered.append(str(value))
+    text = "".join(rendered)
+    try:
+        text.encode("latin-1")
+    except (UnicodeEncodeError, Exception):
+        return None
+    return text
+
+
+def _constant_formatted_integral_assignment(sm, expression):
+    """Lower constant `$sformat`/`$swrite` output to a packed assignment."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or not expression.isSystemCall
+                or expression.subroutineName not in ("$sformat", "$swrite")
+                or getattr(expression, "timingControl", None) is not None):
+            return None
+        arguments = list(expression.arguments)
+        if len(arguments) < 3:
+            return None
+        output = arguments[0]
+        format_expr = arguments[1]
+        if (type(output).__name__ != "AssignmentExpression"
+                or output.op is not None
+                or output.timingControl is not None
+                or output.isNonBlocking
+                or type(format_expr).__name__ != "StringLiteral"
+                or getattr(format_expr, "bad", False)
+                or _contains_disputed_string_escape(format_expr)):
+            return None
+        target_expr = output.left
+        if (not getattr(target_expr.type, "isIntegral", False)
+                or type(target_expr.type.canonicalType).__name__ == "StringType"):
+            return None
+        width, two_state, reason = type_width_2s(target_expr.type)
+        if width is None or reason is not None or width == 0 or width % 8:
+            return None
+        target, admitted = legacy_blocking_target(sm, target_expr)
+        if not admitted or target.get("kind") not in ("Ident", "SelectTarget"):
+            return None
+        text = _format_literal_integral_text(format_expr.value, arguments[2:])
+        if text is None:
+            return None
+        data = text.encode("latin-1")
+        source_bits = "".join(format(byte, "08b") for byte in data)
+        if len(source_bits) > width:
+            source_bits = source_bits[-width:]
+        value = {"kind": "Literal", "span": node_span(sm, format_expr),
+                 "width": width, "bits": source_bits.rjust(width, "0"),
+                 "constant_format_assignment": True}
+        if two_state:
+            value = squash2_wrap(value, width)
+        return {"kind": "BlockingAssign", "span": node_span(sm, expression),
+                "target": target, "value": value,
+                "constant_format_integral_assignment": True}
+    except Exception:
+        return None
+
+
 def _severity_floating_source_ok(expression):
     """Recognize a side-effect-free real/time argument for a quiet task.
 
@@ -8953,6 +9062,10 @@ def _convert_syscall(sm, s, e):
     negative signed values — the envelope carries no sign). `$finish`/
     `$stop` arguments (verbosity levels) are ignored. Any other call stays
     `Unsupported` (statement tag `ExpressionStatement:CallExpression`)."""
+    if _SYM is None and e.isSystemCall and e.subroutineName in ("$sformat", "$swrite"):
+        constant_assignment = _constant_formatted_integral_assignment(sm, e)
+        if constant_assignment is not None:
+            return constant_assignment
     if _SYM is None and e.isSystemCall and e.subroutineName == "$sformat":
         literal_assignment = _sformat_literal_assignment(sm, e)
         if literal_assignment is not None:

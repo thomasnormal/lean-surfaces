@@ -6641,3 +6641,20 @@ The fresh 22,048-path census moves **4,841 → 4,842 clean** and **17,141 →
 17,140 partial** (66 include skips); `ExpressionStatement:CallExpression`
 falls **2,983 → 2,982**. Differential coverage moves **143/139/0/4 →
 144/140/0/4**; grammar coverage remains **214/83/131**.
+
+## Constant formatted writes to packed selections — 2026-10-24
+
+IEEE 1800-2023 §21.3.3 permits `$sformat` and `$swrite` to write formatted
+text through an output variable. The self-check slice now admits the narrow
+constant form for an integral packed variable or fixed packed selection:
+literal format, literal integral or string arguments, and right-aligned
+byte-to-bit conversion through the existing blocking-assignment machinery.
+Dynamic arguments, unsupported format directives, string storage, aggregate
+targets, and effectful or timed writes remain loud. The
+`sformat_constant_selected` fixture and extractor tests cover `%b`, `%s:%0d`,
+and `$swrite` on a selected target.
+
+The fresh 22,048-path census remains **4,843 clean / 17,139 partial** (66
+include skips); `ExpressionStatement:CallExpression` falls **2,982 → 2,981**.
+Differential coverage moves **144/140/0/4 → 145/141/0/4**; grammar coverage
+remains **214/83/131**.

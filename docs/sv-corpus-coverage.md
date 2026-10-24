@@ -3923,3 +3923,16 @@ The fresh chapter-scoped census moves **4,841 → 4,842 clean** and **17,141 →
 17,140 partial** (66 include skips); `ExpressionStatement:CallExpression`
 falls **2,983 → 2,982**. Differential coverage moves **143/139/0/4 →
 144/140/0/4**; grammar coverage remains **214/83/131**.
+
+## Constant formatted writes to packed selections — 2026-10-24
+
+The exact constant `$sformat`/`$swrite` form now lowers to a blocking write
+for integral packed variables and fixed packed selections. Literal formats and
+literal integral/string arguments are rendered into the existing byte-aligned
+bit vector; dynamic, unsupported, string-storage, aggregate, and effectful
+forms stay loud. `sformat_constant_selected` supplies the `PASS` transcript.
+
+The fresh chapter-scoped census remains **4,843 clean / 17,139 partial** (66
+include skips); `ExpressionStatement:CallExpression` falls **2,982 → 2,981**.
+Differential coverage moves **144/140/0/4 → 145/141/0/4**; grammar coverage
+remains **214/83/131**.

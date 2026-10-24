@@ -1297,6 +1297,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "sformat_constant_selected",
+      "file": "Examples/system-verilog/sformat_constant_selected/sformat_constant_selected.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

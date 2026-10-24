@@ -70,6 +70,42 @@ class SformatLiteral(unittest.TestCase):
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))
 
+    def test_constant_formatted_selected_writes_lower(self):
+        design = lower(
+            '''module top;
+               logic [47:0] packet;
+               initial begin
+                 $sformat(packet[39:8], "%b", 4'b10xz);
+                 $sformat(packet[39:8], "%s:%0d", "Q", 2);
+                 $swrite(packet[39:8], "%0d", 5);
+               end
+               endmodule''')
+        lowered = [node for node in nodes(design)
+                   if node.get("constant_format_integral_assignment")]
+        self.assertEqual(len(lowered), 3)
+        self.assertTrue(all(node["target"]["kind"] == "SelectTarget"
+                            for node in lowered))
+        self.assertEqual(lowered[0]["value"]["bits"],
+                         "00110001001100000111100001111010")
+        self.assertEqual(lowered[1]["value"]["bits"],
+                         "00000000000000000101000100110010")
+        self.assertEqual(lowered[2]["value"]["bits"],
+                         "00000000000000000000000000110101")
+
+    def test_dynamic_or_unadmitted_formatted_write_stays_loud(self):
+        design = lower(
+            '''module top;
+               logic [31:0] value;
+               int source;
+               initial begin
+                 $swrite(value, "%0d", source);
+                 $swrite(value, "%f", 1.0);
+               end
+               endmodule''')
+        self.assertGreaterEqual(
+            [node.get("sv_kind") for node in nodes(design)].count(
+                "ExpressionStatement:CallExpression"), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

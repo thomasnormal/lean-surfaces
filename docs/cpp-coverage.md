@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 406 | 389 | 0 | 7 | 0 | 10 |
+| 407 | 390 | 0 | 7 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -400,6 +400,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `expression.callable-frame-unsigned-postfix-decrement-store` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-unsigned-postfix-return` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-unsigned-compound-wrap` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `expression.callable-frame-unsigned-short-compound-wrap` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-signed-overflow-retention` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-signed-postfix-overflow-retention` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-signed-decrement-overflow-retention` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |

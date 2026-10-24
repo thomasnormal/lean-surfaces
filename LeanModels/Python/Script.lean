@@ -516,7 +516,12 @@ Modeled builtins are retained as live globals and only fall back to their
 builtin implementation when no module binding exists. -/
 def publishScriptGlobals (m : Module) (st : FrameState) : Option FrameState :=
   if st.locals.all (fun p => initBindable m p.1) then
-    some { st with world := { st.world with globals := st.locals } }
+    let names := m.functions.toList.flatMap (fun f => globalNamesBody f.body)
+    let locals := names.foldl (fun env id =>
+      match Env.lookup st.world.globals id with
+      | some v => Env.set env id v
+      | none => env) st.locals
+    some { st with locals := locals, world := { st.world with globals := locals } }
   else Option.none
 
 /-! ### The mid-statement coherence guard -/

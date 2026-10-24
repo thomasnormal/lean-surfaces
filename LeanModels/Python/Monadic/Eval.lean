@@ -799,7 +799,10 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
       -- H7+ §the walrus operator: evaluate, BIND in the running frame, answer
       -- the same value.
       let r ← evalOpen K m v
-      envSet id r
+      if globalDeclared (← get).locals id then
+        modify fun st => { st with world := { st.world with globals := Env.set st.world.globals id r } }
+      else
+        envSet id r
       pure r
   | .name id _ => do
       -- Resolution order (LOAD-BEARING): local env → module globals (G1) →
@@ -1310,6 +1313,13 @@ def binOpHM (op : BinOp) (a b : RVal) : SemF RVal := do
 
 end
 
+def execGlobal (text : String) : SemF RFlow := do
+  let st ← get
+  if (globalNamesText text).any (globalDeclared st.locals) then
+    pure .next
+  else
+    refuse "unsupported statement 'Global'"
+
 /-! ## §2 THE FUEL-FREE STATEMENT HALF — structural on `Stmt` -/
 
 mutual
@@ -1359,7 +1369,9 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
             pure .next
       | [t] => do
           let v ← evalOpen K m value
-          assignM t v
+          match t with
+          | .name id _ => globalAssignM id v
+          | _ => assignM t v
           pure .next
       | _ => refuse "chained assignment (multiple targets) is outside the v0 tier"
   | .unpackAssign before star after value _ => do
@@ -1375,7 +1387,9 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
       match target with
       | .name id _ => do
           -- CPython order: the target is LOADED before the value is evaluated.
-          match ← envGet id with
+          let st ← get
+          let env := if globalDeclared st.locals id then st.world.globals else st.locals
+          match Env.lookup env id with
           | Option.none => raisePy (.nameError id)
           | some (.ref a) =>
               if op == .mult then
@@ -1392,7 +1406,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
           | some old => do
               let v ← evalOpen K m value
               let r ← binOpM op old v
-              envSet id r
+              globalEnvSetM id r
               pure .next
       | .attribute recvE attr _ => do
           -- CPython order: receiver, attribute LOAD (an AttributeError fires
@@ -1503,7 +1517,9 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
           | _ =>
               refuse "with context must be a direct class constructor call"
       | _, _ => refuse "multiple context-manager items are outside the tier"
-  | .unsupported pyKind _ _ => refuse s!"unsupported statement '{pyKind}'"
+  | .unsupported pyKind text _ =>
+      if pyKind == "Global" then execGlobal text
+      else refuse s!"unsupported statement '{pyKind}'"
   | .yieldStmt _ _ =>
       refuse "'yield' outside a generator body (the def is not marked `is_generator`) — outside the tier"
   | .yieldFromStmt .. =>
@@ -2125,12 +2141,13 @@ def callInM (K : Kont) (m : Module) (fname : String) (args : Array RVal) : SemW 
       -- `def` with a `yield` — gets `[.block body]` unchanged, because for
       -- those CPython has run no code and called no `iter()` either.
       let w ← get
-      let env := mkCallEnv f.params args
+      let env := globalCallEnv w f.params args f.body f.hasGlobal
       let g : Obj := .generator fname env (genInitCont w.heap fname env f.body.toList) .created
       set { w with heap := w.heap.push g }
       pure (.ref w.heap.size)
     else do
-      let flow ← inWorld (mkCallEnv f.params args) (execOpenList K m f.body.toList)
+      let w ← get
+      let flow ← inWorld (globalCallEnv w f.params args f.body f.hasGlobal) (execOpenList K m f.body.toList)
       match flow with
       | .ret v => pure v
       | .next  => pure .none

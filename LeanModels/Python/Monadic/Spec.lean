@@ -34,6 +34,7 @@ import Std.Tactic.Do
 open Std.Do LeanModels LeanModels.Python
 set_option mvcgen.warning false
 set_option linter.unusedSimpArgs false
+set_option maxHeartbeats 1000000
 
 namespace LeanModels.Python.Monadic
 
@@ -254,7 +255,8 @@ arms, and the `envGet` / `binOpM` / `assignM` triples. -/
 theorem assign_binop_M (K : Kont) (M : Module) (w : World) (e : REnv)
     (a b : Int) (sp : Span)
     (hx : Env.lookup e "x" = some (.int a))
-    (hy : Env.lookup e "y" = some (.int b)) :
+    (hy : Env.lookup e "y" = some (.int b))
+    (hz : Env.lookup e (globalMarker "z") = none) :
     ⦃fun st => ⌜st = ⟨w, e⟩⌝⦄
       execOpen K M (.assign #[.name "z" sp]
         (.binOp (.name "x" sp) .add (.name "y" sp) sp) sp)
@@ -267,7 +269,7 @@ theorem assign_binop_M (K : Kont) (M : Module) (w : World) (e : REnv)
   -- `grind` wired into `mvcgen_trivial_extensible` (Core/Outcome.lean §0) the
   -- closing script is gone entirely. The four `have`s above are still load-bearing:
   -- they are the computed-shape residues `grind` is given, not decoration.
-  mvcgen [execOpen, evalOpen, binOpHM]
+  mvcgen [execOpen, evalOpen, binOpHM, globalAssignM, envSet] <;> simp_all [globalAssignM, globalDeclared, envSet, hz]
 
 /-- **The gate that closes the pilot's fidelity gap.** `row = pst[p]`, where the
 receiver resolves through the STATIC GLOBALS FOLD — the arm the shallow twin did
@@ -281,7 +283,8 @@ theorem subscript_global_M (K : Kont) (M : Module) (w : World) (e : REnv)
     (hgp : lookupG (moduleGlobals M).1 "pst" = some (some (.ref pa)))
     (hp : Env.lookup e "p" = some (.str pc))
     (hd : Heap.get? w.heap pa = some (.dict es sv))
-    (hrow : dictFind es.toList (.str pc) = some (.tuple xs)) :
+    (hrow : dictFind es.toList (.str pc) = some (.tuple xs))
+    (hrowGlobal : globalDeclared e "row" = false) :
     ⦃fun st => ⌜st = ⟨w, e⟩⌝⦄
       execOpen K M (.assign #[.name "row" sp]
         (.subscript (.name "pst" sp) (.name "p" sp) sp) sp)
@@ -290,7 +293,7 @@ theorem subscript_global_M (K : Kont) (M : Module) (w : World) (e : REnv)
     simp [indexValH, heapIndex, hd, hrow, hashableKey]
   have hassign : assignToH w.heap e (.name "row" sp) (.tuple xs)
       = .ok (Env.set e "row" (.tuple xs)) := by simp [assignToH, assignTo]
-  mvcgen [execOpen, evalOpen] <;> simp_all [checkBytesIndex]
+  mvcgen [execOpen, evalOpen, globalAssignM, envSet] <;> simp_all [checkBytesIndex, globalAssignM, globalDeclared, envSet, hrowGlobal]
 
 #print axioms refuse_spec
 #print axioms envGet_spec

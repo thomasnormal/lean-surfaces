@@ -155,6 +155,24 @@ def assignM (target : Expr) (v : RVal) : SemF Unit := do
   let st ← get
   envPut (← liftRes (assignToH st.world.heap st.locals target v))
 
+def globalAssignM (id : String) (v : RVal) : SemF Unit := do
+  let st ← get
+  if globalDeclared st.locals id then
+    modify fun st =>
+      { st with
+        world := { st.world with globals := Env.set st.world.globals id v }
+        locals := Env.set st.locals id v }
+  else
+    envSet id v
+
+def globalEnvSetM (id : String) (v : RVal) : SemF Unit := do
+  let st ← get
+  if globalDeclared st.locals id then
+    modify fun st =>
+      { st with world := { st.world with globals := Env.set st.world.globals id v } }
+  else
+    envSet id v
+
 def assignTargetM (target : Option Expr) (v : RVal) : SemF Unit :=
   match target with
   | some target => assignM target v

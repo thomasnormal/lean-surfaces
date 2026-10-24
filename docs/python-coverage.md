@@ -26,7 +26,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 
 `harness/refusal_census.py --grammar`: one small witness program per production of CPython 3.9's `ast` grammar, plus edge rows. MATCH means the model ran the witness and agreed with CPython; it does not mean every use of the construct is in tier (`2 * 3` runs, `[1] * 3` refuses). REFUSE shows the model's refusal message.
 
-145 witnesses: 134 MATCH, 11 REFUSE.
+145 witnesses: 135 MATCH, 10 REFUSE.
 
 ### `stmt`
 
@@ -56,7 +56,7 @@ The rows above run through the runner's interpreter (`LeanModels/Python/Monadic/
 | `Assert` | MATCH | assertion failure uses the admitted builtin exception hierarchy |
 | `Import` | REFUSE | unsupported statement 'Import' |
 | `ImportFrom` | REFUSE | unsupported statement 'ImportFrom' |
-| `Global` | REFUSE | unsupported statement 'Global' |
+| `Global` | MATCH | direct scalar global declarations read and write the shared module globals |
 | `Nonlocal` | REFUSE | unsupported statement 'NestedDef' |
 | `Expr` | MATCH |  |
 | `Pass` | MATCH |  |

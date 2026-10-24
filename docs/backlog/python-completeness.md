@@ -37,6 +37,25 @@ DECIDED: admit only the direct `print(1j)` observation; retain the complex
 value representation boundary until a complete complex runtime type and
 operator table can be specified.
 
+## 2026-10-24-pycomplete-106 — direct scalar `global` declarations
+
+Function bodies may now declare a scalar module global and then read, assign,
+or augment it. The call frame carries declaration markers and the current
+global values; writes thread through `World.globals`, and script publication
+reflects them in the module frame. Compound targets and heap-valued global
+operations remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused executable witness | `g = 1; global g; g = 2; g += 3` → `5` |
+| Focused read witness | function global read → `7` |
+| Regression witness | ordinary local binding still prints `2` then `7` |
+| Grammar census row | `stmt.Global` MATCH |
+
+DECIDED: admit direct scalar global scope effects on the Monadic/script
+surface; retain loud refusal for compound global targets and unsupported scope
+forms.
+
 ## 2026-10-24-pycomplete-104 — alias-free boundary-list augmented repetition
 
 The measured boundary-list `*=` gap now has a small ingestion-safe slice.

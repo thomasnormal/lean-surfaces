@@ -350,7 +350,12 @@ cycle DETECTION, never by running out of fuel).
   `cls_effect_script.py` pins the executable class-body match). The closed FUNCTION surface
   is untouched: it makes no claim about module stdout, and the one
   class-body effect that could reach a call's result — a class-level
-  `global` — is already tracked by `ClassDefn.hasGlobal`.
+  `global` — is already tracked by `ClassDefn.hasGlobal`. Direct scalar
+  declarations are executable in the Monadic/script surface: call frames carry
+  declaration markers and current values from `World.globals`; assignments and
+  augmented assignments update the shared globals, and the script publisher
+  carries those updates back into the module frame. Compound targets and other
+  scope forms remain loud until their frame-aware walkers are added.
 * **THE THIRD DOOR — a DECORATED METHOD (2026-08-14, found by
   `harness/class_census.py`, BUILT — normative).** The flag above shut two
   doors, a class-body statement and a base expression. It left a third

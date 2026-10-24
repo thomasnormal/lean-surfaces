@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Python `global` declarations now support direct scalar reads, assignments, and
+  augmented assignments across function frames, with module-global publication
+  preserved by the script runner.
+
 All notable changes to the **Python tier** of this repository (the extractor,
 the Lean semantics under `LeanModels/Python/`, its proof surface, and its
 tools). The other tiers (SystemVerilog, C++, RISC-V) are versioned separately

@@ -6366,6 +6366,59 @@ def mkCallEnv (params : Array Param) (args : Array RVal) : Env :=
   (params.toList.map Param.arg).zip args.toList
     ++ defaultBindings (params.toList.drop args.size)
 
+/-- A reserved environment key marks a name declared `global` in the current
+frame.  Python identifiers cannot contain `<`, so the marker cannot collide
+with source bindings.  Keeping the declaration in the ordinary environment
+avoids changing `FrameState` (and the proof-facing call signatures) while
+letting every expression and target consult the same lexical fact. -/
+def globalMarker (id : String) : String := "<global>" ++ id
+
+def globalDeclared (locals : Env) (id : String) : Bool :=
+  (Env.lookup locals (globalMarker id)).isSome
+
+/-- Extract names from the extractor's retained `Unsupported Global` text.
+The declaration has no runtime action; its names are the compile-time scope
+fact consumed by the call frame. -/
+def globalNamesText (text : String) : List String :=
+  ((String.ofList (text.toList.drop 6)).splitOn ",").map String.trim
+    |>.filter (· != "")
+
+def globalNamesBody (body : Array Stmt) : List String :=
+  (body.toList.filterMap fun s => match s with
+    | .unsupported "Global" text _ => some (globalNamesText text)
+    | _ => none).flatten
+
+def globalMarkedEnv (body : Array Stmt) : Env :=
+  (globalNamesBody body).map (fun id => (globalMarker id, RVal.none))
+
+def mkCallEnvGlobals (params : Array Param) (args : Array RVal)
+    (body : Array Stmt) (hasGlobal : Bool) : Env :=
+  if hasGlobal then globalMarkedEnv body ++ mkCallEnv params args
+  else mkCallEnv params args
+
+def globalCallEnv (w : World) (params : Array Param) (args : Array RVal)
+    (body : Array Stmt) (hasGlobal : Bool) : Env :=
+  if hasGlobal then
+    let names := globalNamesBody body
+    let values := names.filterMap fun id =>
+      match Env.lookup w.globals id with
+      | some v => some (id, v)
+      | none => none
+    globalMarkedEnv body ++ values ++ mkCallEnv params args
+  else mkCallEnv params args
+
+/-- The first global slice admits only direct statements.  A global name in a
+loop/compound target, unpack, or attribute needs a frame-aware target walker;
+that shape stays loud until it has one, while direct scalar reads/writes are
+fully stateful. -/
+def globalSimpleBody : Array Stmt → Bool :=
+  (·.toList.all fun s => match s with
+    | .unsupported "Global" _ _ => true
+    | .assign #[.name _ _] _ _ => true
+    | .augAssign (.name _ _) _ _ _ => true
+    | .ret .. | .exprStmt .. | .pass _ => true
+    | _ => false)
+
 /-- First keyword name bound twice, if any. CPython rejects a repeated
 literal keyword (`f(a=1, a=2)`) at COMPILE time, so ingestion never ships
 one — the guard keeps hand-built modules loud, never guessing an error

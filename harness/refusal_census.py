@@ -280,7 +280,7 @@ def f():
     g = 2
 f()
 print(g)
-""", "REFUSE", "no write path from a frame to module globals")
+""", "MATCH", "direct scalar global declarations read and write the shared module globals")
 w("stmt.Nonlocal", """
 def outer():
     c = 1

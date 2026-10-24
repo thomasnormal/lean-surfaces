@@ -111,7 +111,9 @@ ORDER_CMP_SYMS = ("<", "<=", ">", ">=")
 # System tasks of the self-check tier (statement position only).
 SYSCALL_FMT = ("$display", "$write")
 SYSCALL_STROBE = "$strobe"
-SYSCALL_FILE_FMT = "$fdisplay"
+# File-format tasks are admitted only for the predefined stdout descriptor;
+# `$fwrite` maps to the existing no-newline `$write` node.
+SYSCALL_FILE_FMT = ("$fdisplay", "$fwrite")
 SYSCALL_CTRL = ("$finish", "$stop")
 SYSCALL_FATAL = "$fatal"
 # `$sdf_annotate` changes simulator timing data, which is outside the
@@ -8063,7 +8065,7 @@ def _convert_syscall(sm, s, e):
         return {"kind": "SysCall", "span": node_span(sm, s),
                 "name": name, "format": first.value, "args": converted,
                 "arg_signed": signed}
-    if is_sys and name == SYSCALL_FILE_FMT:
+    if is_sys and name in SYSCALL_FILE_FMT:
         try:
             args = list(e.arguments)
         except Exception:
@@ -8092,7 +8094,8 @@ def _convert_syscall(sm, s, e):
             except Exception:
                 signed.append(True)
         return {"kind": "SysCall", "span": node_span(sm, s),
-                "name": "$display", "format": first.value,
+                "name": "$display" if name == "$fdisplay" else "$write",
+                "format": first.value,
                 "args": converted, "arg_signed": signed,
                 "stdout_file_descriptor": fd_value}
     if is_sys and name in SYSCALL_VCD:

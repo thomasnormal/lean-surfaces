@@ -856,6 +856,15 @@
       "expect": "match"
     },
     {
+      "name": "fwrite_stdout",
+      "file": "Examples/system-verilog/fwrite_stdout/fwrite_stdout.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "delay_refusal",
       "file": "Examples/system-verilog/delay/delay.sv",
       "module": "delay",

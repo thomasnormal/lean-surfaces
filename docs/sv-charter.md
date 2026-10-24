@@ -5980,3 +5980,16 @@ parenthesized no-argument spellings, with extractor tests pinning registration
 and argument boundaries. The 22,046-file census remains **4,783 clean / 17,197
 partial**; its blocker counts are unchanged. Differential coverage moves
 **97/93/0/4 → 98/94/0/4**, and grammar coverage remains **211/80/131**.
+
+## Standard-output `$fwrite` — 2026-10-24
+
+`$fwrite` to the predefined standard-output descriptor now lowers to the
+existing no-newline `$write` node. Literal formats and the existing pure
+expression arguments are retained; other descriptors and dynamic formats stay
+loud because external file state is not represented.
+
+The `fwrite_stdout` fixture and differential row cover the descriptor and
+newline behavior, with extractor tests pinning nonstandard descriptors. The
+22,046-file census remains **4,783 clean / 17,197 partial** with unchanged
+blocker counts. Differential coverage moves **98/94/0/4 → 99/95/0/4**, and
+grammar coverage remains **211/80/131**.

@@ -54,7 +54,7 @@ set_option maxRecDepth 8192
 #guard callFunction exc_handlers_lab "else_clause" #[] 4096 matches .unsupported _
 #guard callFunction exc_handlers_lab "finally_clause" #[] 4096 matches .unsupported _
 #guard callFunction exc_handlers_lab "multiple_handlers" #[] 4096 matches .unsupported _
-#guard callFunction exc_handlers_lab "bare_handler" #[] 4096 matches .unsupported _
+#py_check exc_handlers_lab.bare_handler() = 22
 #guard callFunction exc_handlers_lab "exception_value" #[] 4096 matches .unsupported _
 #py_check exc_handlers_lab.loud_body() = Float64.ofBits 0x3ff0000000000000
 #guard callFunction exc_handlers_lab "caught_type_identity" #[.int 7] 3 matches .timeout

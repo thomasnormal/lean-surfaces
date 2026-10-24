@@ -9007,7 +9007,13 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
        | some reason =>
          .unsupported s!"try/except uses unsupported features ({reason}) — outside the tier (docs/memory-model.md §exceptions)"
        | Option.none =>
-         if (Env.lookup st.locals excName).isSome
+         if excName.isEmpty then
+           match execStmts m fuel st body.toList with
+           | .ok st' flow => .ok st' flow
+           | .exn st' _ => execStmts m fuel st' handler.toList
+           | .timeout => .timeout
+           | .unsupported msg => .unsupported msg
+         else if (Env.lookup st.locals excName).isSome
              || (lookupG (moduleGlobals m).1 excName).isSome
              || (Env.lookup st.world.globals excName).isSome
              || (findFunction m excName).isSome then

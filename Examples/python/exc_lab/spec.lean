@@ -92,6 +92,8 @@ live-clock battery is `clock_lab`). -/
 #py_check exc_lab.time_dead(5) = 10
 #py_check exc_lab.time_dead(0) = 0
 #py_check exc_lab.as_binding(7) = 7
+#py_check exc_lab.bare_except(1) = 1
+#py_check exc_lab.bare_except(0) = -1
 #py_check exc_lab.except_exception(1) = 1
 #py_check exc_lab.except_builtin(1) = 1
 #py_check exc_lab.except_builtin(0) = -1
@@ -105,7 +107,7 @@ form — deliberate). Every deviation from the v0 shape is loud. -/
 #guard callFunction exc_lab "as_binding" #[.int 7] 4096 matches .ok (.int 7)
 #guard callFunction exc_lab "finally_clause" #[.int 1] 4096 matches .unsupported _
 #guard callFunction exc_lab "else_clause" #[.int 1] 4096 matches .unsupported _
-#guard callFunction exc_lab "bare_except" #[.int 1] 4096 matches .unsupported _
+#guard callFunction exc_lab "bare_except" #[.int 0] 4096 matches .ok (.int (-1))
 #guard callFunction exc_lab "multi_handler" #[.int 1] 4096 matches .unsupported _
 #guard callFunction exc_lab "tuple_handler" #[.int 1] 4096 matches .unsupported _
 #guard callFunction exc_lab "raise_args" #[.int 1] 4096

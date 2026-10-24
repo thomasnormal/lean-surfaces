@@ -18,7 +18,7 @@ try/except catches it mid-iteration -- raise-through-resume-into-handler
 end to end.
 
 The refusal battery (whitelisted rows + raw #guards in spec.lean) pins
-the loud frontier: observed `as` bindings, `finally`, `else`, bare except,
+the loud frontier: observed `as` bindings, `finally`, and `else`,
 multiple handlers, tuple patterns, unmeasured builtin ancestors,
 raise with arguments, bare raise, value raise, raise-from,
 shadowed names, exception classes as values, and yield-under-try.

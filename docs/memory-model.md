@@ -1348,13 +1348,14 @@ representation by any deviation from the exact shape.
 
 **`try`/`except`: structure and semantics.** `Stmt.tryStmt body
 handlers orelse finalbody` structured by the extractor; the v0 tier
-admits EXACTLY one handler, naming one admitted exception class. An unused
-`as e` binding is erased safely; observing the bound exception object remains
-outside the tier. `orelse` and `finalbody` must be empty — everything else
-(multiple/bare handlers, tuple patterns, observed `as e`, `else`, `finally`)
-stays structured-but-loud. Evaluation composes on the existing `Run`:
-run the body; `.ok` skips the handler; `.exn (.user cid)` with cid
-matching the handler's class runs the handler FROM THE RETAINED STATE
+admits EXACTLY one handler, either naming one admitted exception class or
+using a bare `except:`. An unused `as e` binding is erased safely; observing
+the bound exception object remains outside the tier. `orelse` and `finalbody`
+must be empty — everything else (multiple handlers, tuple patterns, observed
+`as e`, `else`, `finally`) stays structured-but-loud. Evaluation composes on
+the existing `Run`: run the body; `.ok` skips the handler; a bare handler
+catches every represented `.exn`; `.exn (.user cid)` with cid
+matching a named handler's class runs the handler FROM THE RETAINED STATE
 (no rollback — CPython); any other `.exn` propagates. Matching is
 IDENTITY on `ClassId`: with bases beyond `Exception` refused there is
 no hierarchy to walk. `except Exception:` is REFUSED in v0 (it would
@@ -1403,8 +1404,8 @@ ordinary `execStmt`-arm cases, no appended conjuncts.
 raise-catch roundtrip; mutations-before-raise visible in the handler
 (the state-retention covenant observable); non-matching class
 propagates; an exception crossing a generator resume closes the
-generator (the `next()`-after-exn row); the refusal battery (`as`,
-`finally`, `else`, args on raise, `raise` bare, `except Exception`,
+generator (the `next()`-after-exn row); the refusal battery (observed `as`,
+`finally`, `else`, args on raise, `raise` bare,
 value raise, yield-under-try). Corpus script with a top-level
 try/except once the shell learns the statement. THEN the sunfish
 shapes: `Stop` recognized on the shipped file's census, and a
@@ -1450,9 +1451,9 @@ forced, each recorded with its reason:**
   admitted exception class. The measured one-string payload forms are admitted;
   everything else remains the loud refusal of the design.
 * **`Stmt.tryStmt body excName handler tryUnsupported`** carries the
-  v0 single-handler shape plus the `callUnsupported`-style reason
+  single-handler shape plus the `callUnsupported`-style reason
   field: the extractor fills `try_unsupported` for every out-of-v0
-  feature (multiple/bare handlers, tuple pattern, `as`, `else`,
+  feature (multiple handlers, tuple pattern, observed `as`, `else`,
   `finally`, a non-name handler class expression) and execution refuses
   with that reason — structured-but-loud, one channel.
 * **The handler class resolves STATICALLY-FIRST**: `except N:` refuses

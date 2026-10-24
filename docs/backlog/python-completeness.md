@@ -207,6 +207,12 @@ Because the tier has no OS-error-producing operation, represented errors such
 as `ZeroDivisionError` propagate through these handlers; direct OS raises and
 future OS effects must still provide their own measured representation.
 
+## 2026-10-24-pycomplete-91 — bare exception handlers
+
+A single bare `except:` now catches every represented exception from the
+retained frame state. Multiple handlers, tuple patterns, and observed `as`
+bindings remain outside the tier.
+
 ## 2026-10-23-pycomplete-65 — pinned decimal rendering budget
 
 The shared integer conversion budget is now pinned to CPython 3.9's default

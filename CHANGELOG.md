@@ -114,6 +114,8 @@ change is listed here under **Changed** or **Removed**.
 - `OSError` and its `EnvironmentError` alias are now admitted handler names;
   represented non-OS errors propagate through them, while direct OS raises and
   actual OS effects remain outside the tier.
+- A single bare `except:` now catches every represented exception; multiple
+  handlers, tuple patterns, and observed exception bindings remain loud.
 
 ## [0.1.14] — 2026-10-21
 

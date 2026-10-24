@@ -995,7 +995,6 @@ WHITELIST_CLASS = {
     "exc_handlers_lab::else_clause": "exc.handler",
     "exc_handlers_lab::finally_clause": "exc.finally",
     "exc_handlers_lab::multiple_handlers": "exc.handler",
-    "exc_handlers_lab::bare_handler": "exc.handler",
     "exc_handlers_lab::exception_value": "firstclass.callable",
     "exc_ancestors_lab::parameter_shadow": "exc.handler",
     "exc_ancestors_lab::body_shadow": "exc.handler",
@@ -1018,7 +1017,6 @@ WHITELIST_CLASS = {
     "exc_lab::time_live": "clock.underrun",
     "exc_lab::finally_clause": "exc.finally",
     "exc_lab::else_clause": "exc.handler",
-    "exc_lab::bare_except": "exc.handler",
     "exc_lab::multi_handler": "exc.handler",
     "exc_lab::tuple_handler": "exc.handler",
     # §except-builtin: the FRONTIER. `except_builtin`/`except_exception` LEFT

@@ -214,9 +214,9 @@ inductive Stmt where
   evaluated ONLY on the failing path — CPython's laziness, which is
   observable whenever the message expression has an effect. -/
   | assertStmt (test : Expr) (msg : Option Expr) (span : Span)
-  /-- `try`/`except` (schema `Try`, the exceptions tier): the v0 shape —
-  ONE handler naming ONE class, no `as` binding, no `else`, no
-  `finally` — carried structurally (`excName` the handler's class name,
+  /-- `try`/`except` (schema `Try`, the exceptions tier): one handler,
+  either naming ONE class or bare, with unused `as` bindings erased and no
+  `else`/`finally` — carried structurally (`excName` the handler's class name,
   `handler` its body). Everything outside the shape rides the
   `callUnsupported` pattern: the extractor fills `tryUnsupported` with
   the reason and EXECUTION refuses with it (structured-but-loud; the

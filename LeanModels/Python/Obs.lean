@@ -1350,56 +1350,67 @@ theorem fuelMono (fuel : Nat) :
             -- shadow guard, handler-class resolution, isExc — all
             -- fuel-independent; then the body run (IH), the match on its
             -- retained outcome, and the handler run (IH again)
-            refine Run.le_ite (Run.le_refl _) ?_
-            cases findClass m excName with
-            | none =>
-              refine Run.le_ite ?_ ?_
-              · exact Run.le_bindE (ihSs m st body.toList k hk)
-                  (fun _ _ => Run.le_refl _) (fun _ _ => Run.le_refl _)
-              -- Pass 0 (§import forms): the pinned import-error table
-              -- branch — the class branch's body/handler IH shape, with
-              -- no cid ite (every `.importError` matches either name)
-              · refine Run.le_ite ?_ ?_
-                · rcases ihSs m st body.toList k hk with h | h
-                  · rw [h]; exact Or.inl rfl
-                  · rw [h]
-                    cases execStmts m k st body.toList with
-                    | ok st' flow => exact Run.le_refl _
-                    | exn st' e =>
-                      cases e <;> try exact Run.le_refl _
-                      case importError mod =>
-                        exact ihSs m st' handler.toList k hk
-                    | timeout => exact Run.le_refl _
-                    | unsupported msg => exact Run.le_refl _
-                · refine Run.le_ite ?_ (Run.le_refl _)
-                  rcases ihSs m st body.toList k hk with h | h
-                  · rw [h]; exact Or.inl rfl
-                  · rw [h]
-                    cases execStmts m k st body.toList with
-                    | ok st' flow => exact Run.le_refl _
-                    | exn st' e =>
-                      exact Run.le_ite (ihSs m st' handler.toList k hk)
-                        (Run.le_refl _)
-                    | timeout => exact Run.le_refl _
-                    | unsupported msg => exact Run.le_refl _
-            | some p =>
-              obtain ⟨ci, c⟩ := p
-              refine Run.le_ite (Run.le_refl _) ?_
+            by_cases hempty : excName.isEmpty
+            · simp [hempty]
               rcases ihSs m st body.toList k hk with h | h
               · rw [h]; exact Or.inl rfl
               · rw [h]
                 cases execStmts m k st body.toList with
                 | ok st' flow => exact Run.le_refl _
-                | exn st' e =>
-                  cases e <;> try exact Run.le_refl _
-                  case user cid nm =>
-                    exact Run.le_ite (ihSs m st' handler.toList k hk)
-                      (Run.le_refl _)
-                  case userMessage cid nm msg =>
-                    exact Run.le_ite (ihSs m st' handler.toList k hk)
-                      (Run.le_refl _)
+                | exn st' e => exact ihSs m st' handler.toList k hk
                 | timeout => exact Run.le_refl _
                 | unsupported msg => exact Run.le_refl _
+            · simp [hempty]
+              refine Run.le_ite (Run.le_refl _) ?_
+              cases findClass m excName with
+              | none =>
+                refine Run.le_ite ?_ ?_
+                · exact Run.le_bindE (ihSs m st body.toList k hk)
+                    (fun _ _ => Run.le_refl _) (fun _ _ => Run.le_refl _)
+                -- Pass 0 (§import forms): the pinned import-error table
+                -- branch — the class branch's body/handler IH shape, with
+                -- no cid ite (every `.importError` matches either name)
+                · refine Run.le_ite ?_ ?_
+                  · rcases ihSs m st body.toList k hk with h | h
+                    · rw [h]; exact Or.inl rfl
+                    · rw [h]
+                      cases execStmts m k st body.toList with
+                      | ok st' flow => exact Run.le_refl _
+                      | exn st' e =>
+                        cases e <;> try exact Run.le_refl _
+                        case importError mod =>
+                          exact ihSs m st' handler.toList k hk
+                      | timeout => exact Run.le_refl _
+                      | unsupported msg => exact Run.le_refl _
+                  · refine Run.le_ite ?_ (Run.le_refl _)
+                    rcases ihSs m st body.toList k hk with h | h
+                    · rw [h]; exact Or.inl rfl
+                    · rw [h]
+                      cases execStmts m k st body.toList with
+                      | ok st' flow => exact Run.le_refl _
+                      | exn st' e =>
+                        exact Run.le_ite (ihSs m st' handler.toList k hk)
+                          (Run.le_refl _)
+                      | timeout => exact Run.le_refl _
+                      | unsupported msg => exact Run.le_refl _
+              | some p =>
+                obtain ⟨ci, c⟩ := p
+                refine Run.le_ite (Run.le_refl _) ?_
+                rcases ihSs m st body.toList k hk with h | h
+                · rw [h]; exact Or.inl rfl
+                · rw [h]
+                  cases execStmts m k st body.toList with
+                  | ok st' flow => exact Run.le_refl _
+                  | exn st' e =>
+                    cases e <;> try exact Run.le_refl _
+                    case user cid nm =>
+                      exact Run.le_ite (ihSs m st' handler.toList k hk)
+                        (Run.le_refl _)
+                    case userMessage cid nm msg =>
+                      exact Run.le_ite (ihSs m st' handler.toList k hk)
+                        (Run.le_refl _)
+                  | timeout => exact Run.le_refl _
+                  | unsupported msg => exact Run.le_refl _
         | withStmt items body tu _ =>
           simp only [execStmt]
           cases tu with

@@ -1970,7 +1970,11 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         else:
             h = node.handlers[0]
             if h.type is None:
-                reasons.append("bare 'except:'")
+                # A bare handler catches every represented Python exception.
+                # `exc_name == ""` is the structured marker consumed by both
+                # interpreters; unsupported control shells still refuse via
+                # the other reasons below.
+                pass
             elif isinstance(h.type, ast.Name):
                 exc_name = h.type.id
             else:

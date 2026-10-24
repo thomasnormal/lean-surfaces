@@ -1600,7 +1600,10 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
           refuse s!"try/except uses unsupported features ({reason}) — outside the tier (docs/memory-model.md §exceptions)"
       | Option.none => do
         let st ← get
-        if (Env.lookup st.locals excName).isSome
+        if excName.isEmpty then
+          tryCatch (execOpenList K m body.toList) (fun _ =>
+            execOpenList K m handler.toList)
+        else if (Env.lookup st.locals excName).isSome
             || (lookupG (moduleGlobals m).1 excName).isSome
             || (Env.lookup st.world.globals excName).isSome
             || (findFunction m excName).isSome then

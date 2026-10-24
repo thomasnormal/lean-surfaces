@@ -28,7 +28,7 @@ The claims worth naming, each falsifying a cheaper design:
   replaced by the node counter, exactly as the design records).
 
 The refusal battery below (raw `#guard`s + whitelisted rows) pins the
-loud frontier — every deviation from the v0 shape refuses with a
+loud frontier — every deviation from the retained shape refuses with a
 reason, never a guess. No `proof.lean`: checks-only, like `gen_lab`.
 -/
 
@@ -98,15 +98,18 @@ live-clock battery is `clock_lab`). -/
 #py_check exc_lab.except_builtin(1) = 1
 #py_check exc_lab.except_builtin(0) = -1
 #py_check exc_lab.except_ancestor_still_loud(0) = -1
+#py_check exc_lab.else_clause(1) = 2
+#py_check exc_lab.else_skips_on_exception(2) = 5
+#py_check exc_lab.else_skips_on_exception(0) = 7
 #guard callFunction exc_lab "time_live" #[.int 5] 4096
   matches .unsupported "clock trace underrun: time.time() has no next reading (the trace is an INPUT — docs/memory-model.md §the trace clock)"
 
 /-! ### the refusal battery (raw `#guard`: `unsupported` has no surface
-form — deliberate). Every deviation from the v0 shape is loud. -/
+form — deliberate). Every remaining deviation from the retained shape is
+loud. -/
 
 #guard callFunction exc_lab "as_binding" #[.int 7] 4096 matches .ok (.int 7)
 #guard callFunction exc_lab "finally_clause" #[.int 1] 4096 matches .unsupported _
-#guard callFunction exc_lab "else_clause" #[.int 1] 4096 matches .unsupported _
 #guard callFunction exc_lab "bare_except" #[.int 0] 4096 matches .ok (.int (-1))
 #guard callFunction exc_lab "multi_handler" #[.int 1] 4096 matches .unsupported _
 #guard callFunction exc_lab "tuple_handler" #[.int 1] 4096 matches .unsupported _

@@ -17,6 +17,34 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-101 — `try … else`
+
+`try … except … else` now runs its `else` suite after the protected body
+completes normally. The extractor lowers the shape to a fresh success flag,
+the existing retained-state `try` node with a final flag assignment, and an
+ordinary `if`; returns, breaks, continues, unmatched exceptions, and handled
+exceptions therefore skip the `else` suite exactly as CPython does. The flag
+name is deterministic and fresh across the source envelope, while `finally`,
+multiple handlers, tuple patterns, and observed exception bindings remain
+loud.
+
+The two existing acceptance rows (`exc_lab.else_clause` and
+`exc_handlers_lab.else_clause`) now match on the executable and proof
+surfaces, with extractor coverage for the lowering and no interpreter changes.
+
+| Measurement | Result |
+|---|---|
+| Extractor tests | 125 passed |
+| Full executable differential | 3,680 rows: 3,564 matched, 116 whitelisted, 0 failed |
+| Full proof differential | 3,680 rows: 3,454 matched, 226 refused, 0 failed |
+| Grammar census | 145 witnesses: 133 MATCH / 12 REFUSE, 0 drift |
+| Whitelist census | 116 rows in 33 classes; 0 drift |
+| Generated checks | coverage page, docs, JSON validation, and `git diff --check` passed |
+
+DECIDED: admit the single-handler `try … else` shape through ingestion
+lowering; retain `finally` and the other unrepresented handler protocols as
+loud boundaries.
+
 ## 2026-10-24-pycomplete-97 — dictionary key-view intersection
 
 Dictionary key views now support the measured set-like `&` operation with

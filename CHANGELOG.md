@@ -14,6 +14,10 @@ change is listed here under **Changed** or **Removed**.
 
 ### Changed
 
+- `try … except … else` now runs its `else` suite after a normal body exit.
+  The extractor lowers the construct to the existing retained-state `try`
+  node plus a fresh success flag and `if`; `finally`, multiple handlers,
+  tuple patterns, and observed exception bindings remain loud.
 - Single-target `del o.attr` now lowers through the synthetic `<attrdel>`
   operation. The monadic interpreter deletes ordinary instance attributes
   in place and preserves CPython's `AttributeError` for missing and immediate

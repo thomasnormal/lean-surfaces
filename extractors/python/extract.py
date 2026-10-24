@@ -107,6 +107,10 @@ _MODULE_SHADOWS_DISPLAY = False     # starred displays: `[*a]` -> `list(tuple(a)
 _MODULE_ANNOTATIONS_BOUND = False
 _MODULE_ANNOTATION_TABLE = None
 _MODULE_SAFE_ANNOTATIONS = set()
+# Names synthesized by an ingestion lowering must not collide with a name
+# written by the source.  ``process_file`` refreshes this per envelope; the
+# fallback keeps direct unit-test calls deterministic as well.
+_SYNTHETIC_NAMES = set()
 
 DISPLAY_LOWERING_NAMES = ("list", "tuple", "set", "dict")
 MODULE_SAFE_ANNOTATION_NAMES = (
@@ -140,6 +144,24 @@ def binds_any_name(tree, names):
             if any(x in names for x in n.names):
                 return True
     return False
+
+
+def _try_else_marker(node):
+    """Return a fresh local name for the lowered ``try … else`` flag.
+
+    The marker is an implementation detail of the envelope.  It is still a
+    real assignment, so it must not shadow a source name in the enclosing
+    scope; choose a deterministic span-based spelling and suffix it if the
+    source already uses that spelling.
+    """
+    base = "__leanpy_try_else_%d_%d" % (node.lineno, node.col_offset)
+    name = base
+    suffix = 0
+    while name in _SYNTHETIC_NAMES:
+        suffix += 1
+        name = base + "_" + str(suffix)
+    _SYNTHETIC_NAMES.add(name)
+    return name
 
 
 def annotation_table_alias(tree):
@@ -1963,8 +1985,11 @@ def convert_stmt(node, enclosing=None, module_scope=False,
 
     if isinstance(node, ast.Try):
         # Exceptions tier: the v0 single-handler shape is carried
-        # structurally (exc_name + handler body); every out-of-v0 feature
-        # fills try_unsupported (the call_unsupported pattern), and
+        # structurally (exc_name + handler body).  ``else`` is lowered below
+        # to a success flag plus an ordinary ``if``; this keeps the AST
+        # constructor stable while preserving the distinction between a
+        # normal body exit and a handled exception.  Other out-of-v0
+        # features fill try_unsupported (the call_unsupported pattern), and
         # execution refuses with the reason -- structured-but-loud. The
         # body/handler are carried best-effort either way so the Lean-side
         # censuses (binds/refs/yield/def walkers) stay exact.
@@ -1993,8 +2018,6 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                 reasons.append("'as' binding")
             handler_body = convert_stmt_list(h.body, module_scope=module_scope,
                                              func_scope=func_scope)
-        if node.orelse:
-            reasons.append("'else' clause")
         if node.finalbody:
             reasons.append("'finally' clause")
         if module_scope and exc_name:
@@ -2013,16 +2036,58 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         guard = (module_scope and len(node.handlers) == 1
                  and isinstance(node.handlers[0].type, ast.Name)
                  and node.handlers[0].type.id == "ImportError")
-        return {
+        body = convert_stmt_list(node.body, module_scope=module_scope,
+                                 func_scope=func_scope,
+                                 import_guard=guard)
+        handler = handler_body
+        if not node.orelse:
+            return {
+                "kind": "Try",
+                "span": span(node),
+                "body": body,
+                "exc_name": exc_name,
+                "handler": handler,
+                "try_unsupported": ", ".join(reasons) if reasons else None,
+            }
+
+        # CPython runs the ``else`` suite only after the try body completes
+        # normally.  A synthetic flag is assigned at the end of the body;
+        # returns, breaks, continues, unmatched exceptions, and handled
+        # exceptions therefore bypass the trailing ``if`` exactly as they do
+        # in Python.  The marker is fresh in the whole source envelope and
+        # cannot be observed by source code in this tier.
+        marker = _try_else_marker(node)
+        marker_span = span(node)
+        name_node = {"kind": "Name", "span": marker_span, "id": marker}
+        false_node = {"kind": "Constant", "span": marker_span,
+                      "value": {"type": "bool", "value": False}}
+        true_node = {"kind": "Constant", "span": marker_span,
+                     "value": {"type": "bool", "value": True}}
+        body.append({"kind": "Assign", "span": marker_span,
+                     "targets": [name_node], "value": true_node})
+        try_node = {
             "kind": "Try",
             "span": span(node),
-            "body": convert_stmt_list(node.body, module_scope=module_scope,
-                                       func_scope=func_scope,
-                                       import_guard=guard),
+            "body": body,
             "exc_name": exc_name,
-            "handler": handler_body,
+            "handler": handler,
             "try_unsupported": ", ".join(reasons) if reasons else None,
         }
+        if_node = {
+            "kind": "If",
+            "span": marker_span,
+            "test": name_node,
+            "body": convert_stmt_list(node.orelse,
+                                       module_scope=module_scope,
+                                       func_scope=func_scope),
+            "orelse": [],
+        }
+        return [
+            {"kind": "Assign", "span": marker_span,
+             "targets": [name_node], "value": false_node},
+            try_node,
+            if_node,
+        ]
 
     if isinstance(node, ast.Expr) and isinstance(node.value, ast.YieldFrom):
         # pass 5: `yield from e` in STATEMENT position -- structured
@@ -2327,6 +2392,16 @@ def process_file(source_path, companion_dir, out=None):
     global _MODULE_SHADOWS_DISPLAY, _MODULE_ANNOTATIONS_BOUND
     global _MODULE_ANNOTATION_TABLE
     global _MODULE_SAFE_ANNOTATIONS
+    global _SYNTHETIC_NAMES
+    _SYNTHETIC_NAMES = set()
+    for item in ast.walk(tree):
+        if isinstance(item, ast.Name):
+            _SYNTHETIC_NAMES.add(item.id)
+        elif isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef,
+                                ast.ClassDef)):
+            _SYNTHETIC_NAMES.add(item.name)
+        elif isinstance(item, ast.arg):
+            _SYNTHETIC_NAMES.add(item.arg)
     _MODULE_SHADOWS_DISPLAY = binds_any_name(tree, DISPLAY_LOWERING_NAMES)
     _MODULE_ANNOTATIONS_BOUND = binds_any_name(tree, ("__annotations__",))
     _MODULE_ANNOTATION_TABLE = annotation_table_alias(tree)

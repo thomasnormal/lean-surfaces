@@ -18,7 +18,7 @@ try/except catches it mid-iteration -- raise-through-resume-into-handler
 end to end.
 
 The refusal battery (whitelisted rows + raw #guards in spec.lean) pins
-the loud frontier: observed `as` bindings, `finally`, and `else`,
+the loud frontier: observed `as` bindings and `finally`,
 multiple handlers, tuple patterns, unmeasured builtin ancestors,
 raise with arguments, bare raise, value raise, raise-from,
 shadowed names, exception classes as values, and yield-under-try.
@@ -252,6 +252,15 @@ def else_clause(n):
         return 0
     else:
         return n
+
+
+def else_skips_on_exception(n):
+    try:
+        return 10 // n
+    except ZeroDivisionError:
+        return 7
+    else:
+        return 99
 
 
 def bare_except(n):

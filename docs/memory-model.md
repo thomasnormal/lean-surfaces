@@ -1361,16 +1361,18 @@ recognized class kind (plain / ntBase / exc), demoted to today's loud
 representation by any deviation from the exact shape.
 
 **`try`/`except`: structure and semantics.** `Stmt.tryStmt body
-handlers orelse finalbody` structured by the extractor; the v0 tier
+handlers orelse finalbody` is structured by the extractor; the v0 tier
 admits EXACTLY one handler, either naming one admitted exception class or
 using a bare `except:`. An unused `as e` binding is erased safely; observing
-the bound exception object remains outside the tier. `orelse` and `finalbody`
-must be empty — everything else (multiple handlers, tuple patterns, observed
-`as e`, `else`, `finally`) stays structured-but-loud. Evaluation composes on
-the existing `Run`: run the body; `.ok` skips the handler; a bare handler
-catches every represented `.exn`; `.exn (.user cid)` with cid
-matching a named handler's class runs the handler FROM THE RETAINED STATE
-(no rollback — CPython); any other `.exn` propagates. Matching is
+the bound exception object remains outside the tier. `else` is lowered at
+ingestion to a success flag, the existing `try` node, and an ordinary `if`,
+so the suite runs only after a normal body exit; `finally` remains loud.
+Everything else (multiple handlers, tuple patterns, observed `as e`, and
+`finally`) stays structured-but-loud. Evaluation composes on the existing
+`Run`: run the body; `.ok` skips the handler; a bare handler catches every
+represented `.exn`; `.exn (.user cid)` with cid matching a named handler's
+class runs the handler FROM THE RETAINED STATE (no rollback — CPython); any
+other `.exn` propagates. Matching is
 IDENTITY on `ClassId`: with bases beyond `Exception` refused there is
 no hierarchy to walk. `except Exception:` is REFUSED in v0 (it would
 catch builtin `PyErr`s and change every faithfulness story); matching
@@ -1419,7 +1421,7 @@ raise-catch roundtrip; mutations-before-raise visible in the handler
 (the state-retention covenant observable); non-matching class
 propagates; an exception crossing a generator resume closes the
 generator (the `next()`-after-exn row); the refusal battery (observed `as`,
-`finally`, `else`, args on raise, `raise` bare,
+`finally`, args on raise, `raise` bare,
 value raise, yield-under-try). Corpus script with a top-level
 try/except once the shell learns the statement. THEN the sunfish
 shapes: `Stop` recognized on the shipped file's census, and a
@@ -1466,10 +1468,12 @@ forced, each recorded with its reason:**
   everything else remains the loud refusal of the design.
 * **`Stmt.tryStmt body excName handler tryUnsupported`** carries the
   single-handler shape plus the `callUnsupported`-style reason
-  field: the extractor fills `try_unsupported` for every out-of-v0
-  feature (multiple handlers, tuple pattern, observed `as`, `else`,
+  field: the extractor fills `try_unsupported` for every remaining
+  out-of-v0 feature (multiple handlers, tuple pattern, observed `as`,
   `finally`, a non-name handler class expression) and execution refuses
-  with that reason — structured-but-loud, one channel.
+  with that reason — structured-but-loud, one channel. A `try … else`
+  suite is lowered at ingestion to a success flag and an ordinary `if`,
+  so it keeps the same constructor and runs only after normal completion.
 * **The handler class resolves STATICALLY-FIRST**: `except N:` refuses
   loudly (never runs the body) unless `N` is an admitted exception
   class of the module. CPython evaluates the handler expression only
@@ -2591,8 +2595,8 @@ Existing local/global/definition shadow guards remain in force. Module try
 bodies that rebind their handler names also refuse, including compounds that
 can raise before publishing their bindings. Tuple/attribute patterns,
 observed `as` bindings,
-multiple handlers, `else`, `finally`, and builtin exception objects as values
-remain loud.
+multiple handlers, `finally`, and builtin exception objects as values remain
+loud; `else` is admitted through the ingestion lowering described above.
 
 `exc_handlers_lab` pins the matching and refusal boundaries in the kernel and
 against CPython 3.9. Its module fixture also pins global publication through a

@@ -662,6 +662,24 @@ class ExtractorTests(unittest.TestCase):
         )["module"]["body"][0]
         self.assertIsNone(stmt["try_unsupported"])
 
+    def test_try_else_lowers_to_success_flag(self):
+        env = self._envelope_of(
+            "def f(n):\n"
+            "    try:\n"
+            "        value = n\n"
+            "    except TypeError:\n"
+            "        return 0\n"
+            "    else:\n"
+            "        return value + 1\n")
+        body = env["module"]["body"][0]["body"]
+        self.assertEqual([s["kind"] for s in body], ["Assign", "Try", "If"])
+        self.assertIsNone(body[1]["try_unsupported"])
+        marker = body[0]["targets"][0]["id"]
+        self.assertTrue(marker.startswith("__leanpy_try_else_"))
+        self.assertEqual(body[1]["body"][-1]["targets"][0]["id"], marker)
+        self.assertEqual(body[2]["test"]["id"], marker)
+        self.assertEqual(body[2]["body"][0]["kind"], "Return")
+
 
     # -- For statements and module constants (sunfish ladder steps 1-2) ----
 

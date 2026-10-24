@@ -992,7 +992,6 @@ WHITELIST_CLASS = {
     "exc_handlers_lab::body_shadowed_nonmatching": "exc.handler",
     "exc_handlers_lab::late_shadowed_handler": "exc.handler",
     "exc_handlers_lab::nested_def_handler": "exc.handler",
-    "exc_handlers_lab::else_clause": "exc.handler",
     "exc_handlers_lab::finally_clause": "exc.finally",
     "exc_handlers_lab::multiple_handlers": "exc.handler",
     "exc_handlers_lab::exception_value": "firstclass.callable",
@@ -1016,7 +1015,6 @@ WHITELIST_CLASS = {
     "gen_lab::yf_leak_drive": "genexp.lowering-admission",
     "exc_lab::time_live": "clock.underrun",
     "exc_lab::finally_clause": "exc.finally",
-    "exc_lab::else_clause": "exc.handler",
     "exc_lab::multi_handler": "exc.handler",
     "exc_lab::tuple_handler": "exc.handler",
     # §except-builtin: the FRONTIER. `except_builtin`/`except_exception` LEFT

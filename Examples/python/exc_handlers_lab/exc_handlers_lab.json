@@ -4701,6 +4701,40 @@
         "locals_unsupported": null,
         "body": [
           {
+            "kind": "Assign",
+            "span": {
+              "lineno": 279,
+              "col_offset": 4,
+              "end_lineno": 284,
+              "end_col_offset": 20
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 279,
+                  "col_offset": 4,
+                  "end_lineno": 284,
+                  "end_col_offset": 20
+                },
+                "id": "__leanpy_try_else_279_4"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 279,
+                "col_offset": 4,
+                "end_lineno": 284,
+                "end_col_offset": 20
+              },
+              "value": {
+                "type": "bool",
+                "value": false
+              }
+            }
+          },
+          {
             "kind": "Try",
             "span": {
               "lineno": 279,
@@ -4742,6 +4776,40 @@
                     "repr": "1"
                   }
                 }
+              },
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 279,
+                  "col_offset": 4,
+                  "end_lineno": 284,
+                  "end_col_offset": 20
+                },
+                "targets": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 279,
+                      "col_offset": 4,
+                      "end_lineno": 284,
+                      "end_col_offset": 20
+                    },
+                    "id": "__leanpy_try_else_279_4"
+                  }
+                ],
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 279,
+                    "col_offset": 4,
+                    "end_lineno": 284,
+                    "end_col_offset": 20
+                  },
+                  "value": {
+                    "type": "bool",
+                    "value": true
+                  }
+                }
               }
             ],
             "exc_name": "TypeError",
@@ -4769,7 +4837,48 @@
                 }
               }
             ],
-            "try_unsupported": "'else' clause"
+            "try_unsupported": null
+          },
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 279,
+              "col_offset": 4,
+              "end_lineno": 284,
+              "end_col_offset": 20
+            },
+            "test": {
+              "kind": "Name",
+              "span": {
+                "lineno": 279,
+                "col_offset": 4,
+                "end_lineno": 284,
+                "end_col_offset": 20
+              },
+              "id": "__leanpy_try_else_279_4"
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 284,
+                  "col_offset": 8,
+                  "end_lineno": 284,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 284,
+                    "col_offset": 15,
+                    "end_lineno": 284,
+                    "end_col_offset": 20
+                  },
+                  "id": "value"
+                }
+              }
+            ],
+            "orelse": []
           }
         ]
       },
@@ -5039,7 +5148,7 @@
                 }
               }
             ],
-            "try_unsupported": "bare 'except:'"
+            "try_unsupported": null
           }
         ]
       },

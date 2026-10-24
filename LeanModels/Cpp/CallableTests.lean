@@ -952,4 +952,33 @@ private def narrowParameter : CallableParameter :=
   (declRefNode "0x44" "0x10" "value") (some (.builtin .short))
   (some intType)) matches .error _
 
+private def sizeofExpressionRaw : Raw := object [
+  ("id", text "0x50"), ("kind", text "UnaryExprOrTypeTraitExpr"),
+  ("name", text "sizeof"),
+  ("inner", .array [object [
+    ("id", text "0x51"), ("kind", text "ParenExpr"),
+    ("inner", .array [declRefNode "0x52" "0x10" "value"])]] )]
+
+private def sizeofExpressionTypes : List CppExpressionTypeEvidence := [
+  ⟨⟨"0x50"⟩, "UnaryExprOrTypeTraitExpr", .builtin .unsignedLong⟩,
+  ⟨⟨"0x51"⟩, "ParenExpr", .builtin .short⟩,
+  ⟨⟨"0x52"⟩, "DeclRefExpr", .builtin .short⟩]
+
+#guard match parseCallableExpressionTyped .lp64 [narrowParameter] []
+    (some sizeofExpressionTypes) sizeofExpressionRaw none
+    (some (.builtin .unsignedLong)) with
+  | .ok expression => expression.expression == .sizeOf (.builtin .short)
+  | .error _ => false
+
+private def sizeofTypeRaw : Raw := object [
+  ("id", text "0x60"), ("kind", text "UnaryExprOrTypeTraitExpr"),
+  ("name", text "sizeof"),
+  ("argType", object [("qualType", text "int")])]
+
+#guard match parseCallableExpressionTyped .lp64 [] []
+    (some [⟨⟨"0x60"⟩, "UnaryExprOrTypeTraitExpr", .builtin .unsignedLong⟩])
+    sizeofTypeRaw none (some (.builtin .unsignedLong)) with
+  | .ok expression => expression.expression == .sizeOf (.builtin .int)
+  | .error _ => false
+
 end LeanModels.Cpp.CallableTests

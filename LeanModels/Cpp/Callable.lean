@@ -23,6 +23,7 @@ mutual
     | integer (value : Nat)
     | parameter (declaration : FrontendHandle)
     | increment (operator : String) (isPostfix : Bool) (declaration : FrontendHandle)
+    | sizeOf (type : CppTypeEvidence)
     | convert (operand : TypedCallableExpression)
     | unary (operator : String) (operand : TypedCallableExpression)
     | conditional (condition whenTrue whenFalse : TypedCallableExpression)
@@ -281,6 +282,23 @@ private def integerLiteral (raw : Raw) (sourceExpected typeExpected : Option Cpp
     throw "callable: integer literal type disagrees with expression evidence"
   pure {expression := .integer value, sourceType := type, type}
 
+private def parseCallableBuiltinQualType (raw : Raw) : Except String CppTypeEvidence := do
+  let name ← evidenceText raw "qualType"
+  match name with
+  | "bool" => pure (.builtin .boolean)
+  | "char" => pure (.builtin .char)
+  | "signed char" => pure (.builtin .signedChar)
+  | "unsigned char" => pure (.builtin .unsignedChar)
+  | "short" | "short int" => pure (.builtin .short)
+  | "unsigned short" | "unsigned short int" => pure (.builtin .unsignedShort)
+  | "int" => pure (.builtin .int)
+  | "unsigned" | "unsigned int" => pure (.builtin .unsignedInt)
+  | "long" | "long int" => pure (.builtin .long)
+  | "unsigned long" | "unsigned long int" => pure (.builtin .unsignedLong)
+  | "long long" | "long long int" => pure (.builtin .longLong)
+  | "unsigned long long" | "unsigned long long int" => pure (.builtin .unsignedLongLong)
+  | _ => throw s!"callable: unsupported sizeof type {name}"
+
 partial def parseCallableExpressionTyped (profile : TargetProfile)
     (parameters : List CallableParameter)
     (expressionRows : List CppBinaryExpressionEvidence)
@@ -380,6 +398,26 @@ partial def parseCallableExpressionTyped (profile : TargetProfile)
         sourceType := sourceExpected.getD whenTrue.type
         type := whenTrue.type
       }
+  | "UnaryExprOrTypeTraitExpr" =>
+      let name ← evidenceText raw "name"
+      unless name == "sizeof" do
+        throw s!"callable: unsupported unary expression trait {name}"
+      let children ← rawChildren raw
+      let operandType ← match children with
+        | [child] =>
+            let operand ← parseCallableExpressionTyped profile parameters expressionRows expressionTypes
+              child none none
+            pure operand.type
+        | [] => parseCallableBuiltinQualType (← evidenceField raw "argType")
+        | _ => throw "callable: sizeof requires one expression or a type operand"
+      let .builtin _ := operandType
+        | throw "callable: sizeof requires a builtin integral operand"
+      let resultType := typeExpected.getD (.builtin .unsignedLong)
+      unless resultType == .builtin .unsignedLong do
+        throw "callable: sizeof result requires LP64 unsigned long size_t"
+      unless sourceExpected.all (· == resultType) do
+        throw "callable: sizeof source type disagrees with result type"
+      pure {expression := .sizeOf operandType, sourceType := resultType, type := resultType}
   | "BinaryOperator" =>
       let occurrence ← rawId raw
       let some row := expressionRows.find? (fun row => row.occurrence == occurrence)

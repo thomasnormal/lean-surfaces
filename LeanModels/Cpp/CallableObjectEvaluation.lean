@@ -104,6 +104,15 @@ private def literalValue (profile : TargetProfile) (typed : TypedCallableExpress
   (formatFor profile typed.sourceType).map fun format =>
     {format, value := Int.ofNat value}
 
+private def sizeOfValue (profile : TargetProfile) (typed : TypedCallableExpression)
+    (operandType : CppTypeEvidence) : IntegralResult IntegralValue :=
+  match builtinIntegralType operandType, formatFor profile typed.type with
+  | some integer, some format =>
+      match integralSizeBytes profile integer with
+      | .ok bytes => .ok {format, value := Int.ofNat bytes}
+      | .error _ => .unsupported .unresolvedArithmeticConversions
+  | _, _ => .unsupported .unresolvedArithmeticConversions
+
 private inductive Execution where
   | normal
   | returnedVoid
@@ -215,6 +224,8 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
           match literalValue profile typed value with
           | none => success frame (.unsupported .unresolvedArithmeticConversions)
           | some value => success frame (convertTo profile typed.type value)
+      | .sizeOf operandType =>
+          success frame (sizeOfValue profile typed operandType)
       | .parameter declaration =>
           evalParameter (fuel + 1) profile frame typed declaration
       | .increment operator isPostfix declaration =>

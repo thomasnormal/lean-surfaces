@@ -8,6 +8,7 @@ def intType : CppTypeEvidence := .builtin .int
 def shortType : CppTypeEvidence := .builtin .short
 def unsignedShortType : CppTypeEvidence := .builtin .unsignedShort
 def unsignedIntType : CppTypeEvidence := .builtin .unsignedInt
+def unsignedLongType : CppTypeEvidence := .builtin .unsignedLong
 def signed (value : Int) : IntegralValue := ⟨.signed 32, value⟩
 def parameter : FrontendHandle := {value := "0x10"}
 
@@ -70,6 +71,21 @@ def unaryNarrowFunction : CallableFunction := {
 def callableUnaryNarrowWitness : Bool :=
   match evaluateCallable 16 .lp64 unaryNarrowFunction [⟨.signed 16, -32768⟩] with
   | .ok (.ok value) => value == signed 32768
+  | _ => false
+
+def sizeOfFunction : CallableFunction := {
+  occurrence := default
+  signature := {result := unsignedLongType, parameters := [], variadic := false}
+  parameters := []
+  body := .block (.return_ {
+    expression := .sizeOf shortType
+    sourceType := unsignedLongType
+    type := unsignedLongType})
+}
+
+def callableSizeOfWitness : Bool :=
+  match evaluateCallable 16 .lp64 sizeOfFunction [] with
+  | .ok (.ok value) => value == ⟨.unsigned 64, 2⟩
   | _ => false
 
 def postfixFunction : CallableFunction := {
@@ -301,6 +317,7 @@ def callableLogicalOrWitness : Bool :=
 #guard callableNarrowIncrementWitness
 #guard callableNarrowDecrementWitness
 #guard callableUnaryNarrowWitness
+#guard callableSizeOfWitness
 #guard callablePostfixWitness
 #guard callableCompoundAssignmentWitness
 #guard callableAssignmentWitness
@@ -323,6 +340,9 @@ theorem callable_narrow_decrement_witness : callableNarrowDecrementWitness = tru
   rfl
 
 theorem callable_unary_narrow_witness : callableUnaryNarrowWitness = true := by
+  rfl
+
+theorem callable_size_of_witness : callableSizeOfWitness = true := by
   rfl
 
 theorem callable_postfix_witness : callablePostfixWitness = true := by
@@ -362,6 +382,7 @@ theorem callable_logical_or_witness : callableLogicalOrWitness = true := by
 #print axioms callable_narrow_increment_witness
 #print axioms callable_narrow_decrement_witness
 #print axioms callable_unary_narrow_witness
+#print axioms callable_size_of_witness
 #print axioms callable_postfix_witness
 #print axioms callable_compound_assignment_witness
 #print axioms callable_assignment_witness

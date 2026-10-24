@@ -2785,6 +2785,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-sizeof",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_namespace": "LeanModels.Cpp.CallableRung3Tests",
+    "lean_expression": "callableSizeOfWitness",
+    "cpp_source": "unsigned long sizeof_short() { return sizeof(short); } bool callable_witness() { return sizeof_short() == 2ul; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-postfix-comma",
     "kind": "expression",
     "corpus": "rung-3 witness",

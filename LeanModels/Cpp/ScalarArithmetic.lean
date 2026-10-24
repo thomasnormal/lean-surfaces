@@ -37,4 +37,10 @@ def integralBinaryUsual (profile : TargetProfile) (operation : IntegralBinary)
           mapIntegralResult (integralConvert format right) fun right =>
             integralBinary operation left right
 
+def integralSizeBytes (profile : TargetProfile) (type : CppIntType) :
+    Except TypeResolutionError Nat :=
+  match profile.format type with
+  | .ok format => .ok ((format.width + 7) / 8)
+  | .error reason => .error reason
+
 end LeanModels.Cpp

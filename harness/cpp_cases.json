@@ -4141,6 +4141,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-unsigned-postfix-decrement-store",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableUnsignedPostfixDecrementStoreWitness",
+    "cpp_source": "#include <cstdint>\nvoid frame_unsigned_postfix_decrement(uint32_t& value) { value--; } bool callable_witness() { uint32_t value = 0; frame_unsigned_postfix_decrement(value); return value == UINT32_MAX; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "statement.callable-frame-do-while",
     "kind": "statement",
     "corpus": "rung-4 witness",

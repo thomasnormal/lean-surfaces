@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "bitstoreal_literal_statement",
+      "file": "Examples/system-verilog/bitstoreal_literal_statement/bitstoreal_literal_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "itor_literal_statement",
       "file": "Examples/system-verilog/itor_literal_statement/itor_literal_statement.sv",
       "module": "top",

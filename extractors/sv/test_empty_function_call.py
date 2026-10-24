@@ -162,6 +162,24 @@ class EmptyFunctionCalls(unittest.TestCase):
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))
 
+    def test_bitstoreal_literal_statement_is_inert(self):
+        design = lower(
+            'module top; initial begin $bitstoreal(64\'h3ff8_0000_0000_0000); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("bitstoreal_literal_statement")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_bitstoreal_dynamic_statement_stays_loud(self):
+        design = lower(
+            'module top; logic [63:0] bits; initial begin $bitstoreal(bits); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
     def test_rtoi_literal_itor_conversion_is_exact(self):
         design = lower(
             'module top; initial if ($rtoi($itor(-17)) === -17) '

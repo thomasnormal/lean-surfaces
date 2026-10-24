@@ -6437,3 +6437,17 @@ include skips**, with `CallExpression` unchanged at **2,973** and
 `ExpressionStatement:CallExpression` at **2,985** because the corpus has no
 literal discarded conversion. Differential coverage moves **130/126/0/4 →
 131/127/0/4**; grammar coverage remains **214/83/131**.
+
+## Discarded literal `$bitstoreal` calls — 2026-10-24
+
+A discarded `$bitstoreal` call with one known 64-bit integral literal is now
+erased because the conversion produces only an unrepresented real value.
+Unknown and dynamic bit patterns remain loud. `bitstoreal_literal_statement`
+supplies the differential witness, with extractor tests pinning the inert
+literal form and dynamic-input refusal.
+
+The fresh 22,048-file census remains **4,829 clean / 17,153 partial / 66
+include skips**, with `CallExpression` unchanged at **2,973** and
+`ExpressionStatement:CallExpression` at **2,985** because the corpus has no
+literal discarded conversion. Differential coverage moves **131/127/0/4 →
+132/128/0/4**; grammar coverage remains **214/83/131**.

@@ -5,6 +5,21 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.95] — 2026-10-25
+
+### Added
+
+- Added object-frame witnesses for nested-block shadowing, assignment,
+  compound assignment, prefix increment, and postfix increment of outer locals.
+
+### Measured
+
+- The checked-in corpus now contains **578 differential rows**: **561 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.94] — 2026-10-25
 
 ### Added

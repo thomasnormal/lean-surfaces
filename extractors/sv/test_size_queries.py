@@ -331,14 +331,38 @@ class SizeQueries(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
 
-    def test_written_string_getc_stays_loud(self):
+    def test_written_string_getc_uses_latest_literal_assignment(self):
         design = lower(
-            'module top; string s = "abc"; initial begin s = "x"; '
+            'module top; string s; initial begin s = "abc"; '
+            '$display("%0d %0d %0d", s.getc(0), s.getc(3), s.getc(-1)); '
+            's = "x"; $display("%0d", s.getc(0)); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("string_literal_getc_query")]
+        self.assertEqual([node["bits"] for node in values], [
+            "01100001", "00000000", "00000000", "01111000"])
+
+    def test_dynamic_string_assignment_getc_stays_loud(self):
+        design = lower(
+            'module top; string s; string other; initial begin s = other; '
             '$display("%0d", s.getc(0)); end endmodule')
         self.assertFalse(any(node.get("string_literal_getc_query")
                              for node in nodes(design)))
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
+
+    def test_string_getc_rejects_non_ascii_alias_and_other_method(self):
+        for source in (
+                'module top; string s; initial begin s = "é"; '
+                '$display("%0d", s.getc(0)); end endmodule',
+                'module top; string s; string other; initial begin s = "abc"; '
+                'other = s; $display("%0d", s.getc(0)); end endmodule',
+                'module top; string s; initial begin s = "abc"; s.len(); '
+                '$display("%0d", s.getc(0)); end endmodule'):
+            design = lower(source)
+            self.assertFalse(any(node.get("string_literal_getc_query")
+                                 for node in nodes(design)))
+            self.assertTrue(any(node.get("kind") == "Unsupported"
+                                for node in nodes(design)))
 
     def test_non_ascii_string_getc_stays_loud(self):
         design = lower(

@@ -4263,3 +4263,20 @@ The fresh 22,053-path census moves **4,979 → 4,990 clean** and **17,007 →
 falls **2,942 → 2,926**; `AssignmentExpression:target` is now the leading
 blocker at **2,940**. Differential coverage moves **187/182/0/5 → 188/183/0/5**,
 and grammar coverage remains **214/86/128**.
+
+## String `getc()` after a literal assignment — 2026-10-25
+
+`string.getc(index)` now replays a direct blocking ASCII literal assignment
+before the query and selects the latest assigned value. Negative and
+out-of-range indices return the IEEE-mandated zero byte; dynamic strings,
+aliases, non-ASCII writes, nonliteral indices, and other string operations
+remain loud. The `string_getc_assignment` fixture supplies the differential
+row and Lean receipt, while extractor regressions cover the latest-value and
+dynamic-write boundaries.
+
+On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
+**5,024 → 5,031** and partial files **16,962 → 16,955** (67 include skips).
+`CallExpression` falls **2,866 → 2,859** while `AssignmentExpression:target`
+remains **2,937** and `ExpressionStatement:CallExpression` remains **2,911**.
+Differential coverage grows **201/196/0/5 → 202/197/0/5** with no
+disagreements; grammar coverage remains **216/89/127**.

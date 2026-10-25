@@ -1234,6 +1234,15 @@
       "expect": "match"
     },
     {
+      "name": "string_getc_assignment",
+      "file": "Examples/system-verilog/string_getc_assignment/string_getc_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "constant_net_driver",
       "file": "Examples/system-verilog/constant_net_driver/constant_net_driver.sv",
       "module": "top",

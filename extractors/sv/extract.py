@@ -9329,12 +9329,14 @@ def _stdout_descriptor_variable(sm, expression):
 
 
 def _string_literal_getc_method(expression):
-    """Recognize ``getc`` on an unchanged pure ASCII string literal.
+    """Recognize ``getc`` on a source-pure ASCII string literal.
 
     SystemVerilog returns a zero byte for a negative or out-of-range index.
     The flat self-check state has no string storage, so this admits only the
-    scalar fact available from the declaration and rejects every write,
-    dynamic index, non-ASCII literal, or other observation of the receiver.
+    scalar fact available from a declaration or a direct blocking literal
+    assignment.  ``_string_literal_source_value`` performs the source-order
+    history check and selects the latest assignment before the query; dynamic
+    writes, aliases, non-ASCII literals, and other observations remain loud.
     """
     try:
         if (type(expression).__name__ != "CallExpression"
@@ -9345,29 +9347,9 @@ def _string_literal_getc_method(expression):
         arguments = list(expression.arguments)
         if len(arguments) != 2 or type(arguments[0]).__name__ != "NamedValueExpression":
             return False
-        receiver = arguments[0]
-        if type(receiver.type.canonicalType).__name__ != "StringType":
-            return False
-        initializer = getattr(receiver.symbol, "initializer", None)
-        while type(initializer).__name__ == "ConversionExpression":
-            initializer = getattr(initializer, "operand", None)
-        if (type(initializer).__name__ != "StringLiteral"
-                or getattr(initializer, "bad", False)):
-            return False
-        value = getattr(initializer, "value", None)
-        if (not isinstance(value, str)
-                or any(ord(char) == 0 or ord(char) > 127 for char in value)):
-            return False
         if _literal_integral_value(arguments[1]) is None:
             return False
-        name = getattr(receiver.symbol, "name", "")
-        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
-        occurrences = list(re.finditer(r"(?<![A-Za-z0-9_$])" + re.escape(name)
-                                       + r"(?![A-Za-z0-9_$])", source))
-        if not occurrences:
-            return False
-        return all(source[m.end():].lstrip().startswith(".getc")
-                   for m in occurrences[1:])
+        return _string_literal_source_value(expression, "getc") is not None
     except Exception:
         return False
 
@@ -9375,12 +9357,10 @@ def _string_literal_getc_method(expression):
 def _convert_string_literal_getc(sm, expression):
     if not _string_literal_getc_method(expression):
         return unsupported(sm, expression, "CallExpression:string-getc")
-    receiver = expression.arguments[0]
-    initializer = receiver.symbol.initializer
-    while type(initializer).__name__ == "ConversionExpression":
-        initializer = initializer.operand
+    value = _string_literal_source_value(expression, "getc")
+    if value is None:
+        return unsupported(sm, expression, "CallExpression:string-getc")
     index = _literal_integral_value(expression.arguments[1])
-    value = initializer.value
     byte = ord(value[index]) if 0 <= index < len(value) else 0
     width = expression.type.bitWidth
     return signed_metadata({

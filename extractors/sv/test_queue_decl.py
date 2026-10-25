@@ -58,6 +58,16 @@ class QueueDeclarations(unittest.TestCase):
         self.assertIn("VariableSymbol:type",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_module_mailbox_new_initializer_is_metadata(self):
+        design = lower(
+            'module top; mailbox mbx = new(); int value, result; '
+            'initial begin mbx.put(7); result = mbx.try_get(value); '
+            'if (result > 0 && value == 7) $display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "VariableSymbol:2state"
+                             for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

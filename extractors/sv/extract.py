@@ -541,16 +541,11 @@ def is_inert_class_handle_decl(symbol):
         initializer = getattr(symbol, "initializer", None)
         if getattr(canonical, "name", None) != "mailbox":
             return initializer is None
-        # Module-scope construction is not a source-ordered local mailbox
-        # snapshot; preserve the existing loud boundary for that form.
-        if (initializer is not None
-                and not getattr(symbol.parentScope, "isProceduralContext", False)):
-            return False
         # A mailbox handle has no flat storage.  The uninitialized form and
-        # the direct ``mailbox#(T) mbx = new()`` form are both declaration
-        # metadata; the source-ordered mailbox recognizers account for the
-        # subsequent put/get/num calls.  Other initialized class handles stay
-        # on the ordinary loud boundary.
+        # direct ``mailbox#(T) mbx = new()`` form are both declaration
+        # metadata at either scope; the source-ordered mailbox recognizers
+        # account for subsequent put/get/num calls. Other initialized class
+        # handles stay on the ordinary loud boundary.
         if initializer is None:
             return True
         if type(initializer).__name__ != "NewClassExpression":

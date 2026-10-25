@@ -1835,6 +1835,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "mailbox_module_init",
+      "file": "Examples/system-verilog/mailbox_module_init/mailbox_module_init.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

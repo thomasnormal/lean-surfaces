@@ -149,3 +149,11 @@ The same inert treatment applies to a procedural pure string-literal write:
 the assignment is lowered to `Empty` because the opaque string has no flat state
 slot. Nonliteral writes and all subsequent string operations remain unsupported;
 `do_while_string_literal` covers the write alongside an admitted loop.
+
+## Module-scope unbounded mailbox initializers — 2026-10-25
+
+An unbounded module-scope mailbox initializer written as `mailbox mbx = new()`
+is declaration metadata: the handle has no flat storage, and the existing
+source-ordered mailbox recognizers account for later literal FIFO operations.
+Bounded or aliased handles, dynamic messages, and unsupported mailbox methods
+remain loud. `mailbox_module_init` is the differential and Lean fixture.

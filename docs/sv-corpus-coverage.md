@@ -4314,3 +4314,18 @@ On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
 `ExpressionStatement:CallExpression` remains **2,911**. Differential coverage
 grows **203/198/0/5 → 204/199/0/5** with no disagreements; grammar coverage
 remains **216/89/127**.
+
+## Module-scope unbounded mailbox initializers — 2026-10-25
+
+An unbounded `mailbox mbx = new()` declaration at module scope is retained as
+metadata and then consumed by the existing literal FIFO operation lowering.
+Bounded constructors, aliases, dynamic messages, blocking or scheduled calls,
+and other initialized class handles remain loud. The `mailbox_module_init`
+fixture supplies the self-check and Lean receipt.
+
+On the refreshed **22,054-path** sv-tests-2 snapshot, clean files move
+**5,058 → 5,059** and partial files remain **16,928** (67 include skips).
+`VariableSymbol:2state` falls **2,313 → 2,302** while
+`AssignmentExpression:target` is **2,937**. Differential coverage grows
+**204/199/0/5 → 205/200/0/5** with no disagreements; grammar coverage remains
+**216/89/127**.

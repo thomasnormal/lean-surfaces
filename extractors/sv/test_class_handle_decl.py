@@ -36,12 +36,12 @@ class ClassHandleDeclarations(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "VariableDeclStatement:2state"
                              for node in nodes(design)))
 
-    def test_initialized_handle_stays_loud(self):
+    def test_module_initialized_mailbox_is_metadata(self):
         design = lower(
             'module top; mailbox box = new(); '
             'initial $display("PASS"); endmodule')
-        self.assertIn("VariableSymbol:2state",
-                      [node.get("sv_kind") for node in nodes(design)])
+        self.assertFalse(any(node.get("sv_kind") == "VariableSymbol:2state"
+                             for node in nodes(design)))
 
     def test_class_handle_read_stays_loud(self):
         design = lower(

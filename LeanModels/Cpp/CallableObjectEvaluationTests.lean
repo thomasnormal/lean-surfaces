@@ -942,6 +942,23 @@ def callableNoexceptFrameWitness : Bool := noexceptFrame
 
 #guard callableNoexceptFrameWitness
 
+private def boolLiteralFrame : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .builtin .boolean, parameters := [], variadic := false}
+    parameters := []
+    body := .block (.return_ {
+      expression := .integer 1
+      sourceType := .builtin .boolean
+      type := .builtin .boolean})}
+  match evaluateCallableObject 32 .lp64 function [] with
+  | .ok (.ok value) => value == ⟨.boolean, 1⟩
+  | _ => false
+
+def callableBoolLiteralFrameWitness : Bool := boolLiteralFrame
+
+#guard callableBoolLiteralFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

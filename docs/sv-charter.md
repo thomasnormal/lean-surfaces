@@ -7454,3 +7454,20 @@ On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
 remains **2,937** and `ExpressionStatement:CallExpression` remains **2,911**.
 Differential coverage grows **195/190/0/5 → 196/191/0/5** with no
 disagreements; grammar coverage remains **216/89/127**.
+
+## Empty queue `pop_front()` / `pop_back()` defaults — 2026-10-25
+
+The self-check surface now evaluates a direct zero-argument `pop_front()` or
+`pop_back()` on an uninitialized or empty-literal queue to the element type's
+default value. Because the queue is empty, the operation leaves no represented
+state and the existing `.size()` query remains exactly zero. Nonempty queues,
+pushes, aliases, dynamic arguments, aggregate shapes outside the scalar
+inventory, and discarded statement calls remain loud. `queue_empty_pop` covers
+both directions and the extractor tests pin the masking and refusal boundary.
+
+On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
+**5,010 → 5,013** and partial files **16,976 → 16,973** (67 include skips).
+`CallExpression` falls **2,886 → 2,877** while `AssignmentExpression:target`
+remains **2,937** and `ExpressionStatement:CallExpression` remains **2,911**.
+Differential coverage grows **196/191/0/5 → 197/192/0/5** with no
+disagreements; grammar coverage remains **216/89/127**.

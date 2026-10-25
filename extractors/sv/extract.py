@@ -6628,6 +6628,7 @@ def _convert_legacy_call(sm, expression):
             (lambda e: _mailbox_literal_sequence(e) is not None
                        and e.subroutineName == "num",
              _convert_mailbox_literal_num),
+            (_queue_empty_pop_method, _convert_queue_empty_pop),
             (_zero_size_method, _convert_zero_size_method),
             (_rtoi_literal_call, _convert_rtoi_literal),
             (_realtobits_literal_call, _convert_realtobits_literal),
@@ -7237,16 +7238,20 @@ def _zero_size_method(expression):
             return False
         name = getattr(symbol, "name", "")
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        code_source = _sv_code_source(source)
         occurrences = list(re.finditer(r"(?<![A-Za-z0-9_$])" + re.escape(name)
-                                       + r"(?![A-Za-z0-9_$])", source))
+                                      + r"(?![A-Za-z0-9_$])", code_source))
         if not occurrences:
             return False
         suffix = "." + method
         def inert_occurrence(match):
-            tail = source[match.end():].lstrip()
+            tail = code_source[match.end():].lstrip()
             if tail.startswith(suffix):
                 return True
             if canonical in ("QueueType", "DynamicArrayType"):
+                if canonical == "QueueType" and re.match(
+                        r"\.(?:pop_front|pop_back)\s*\(\s*\)", tail):
+                    return True
                 return (re.match(r"=\s*\{\s*\}", tail) is not None
                         or (canonical == "DynamicArrayType" and
                             re.match(r"=\s*new\s*\[\s*0\s*\]", tail)
@@ -7255,6 +7260,71 @@ def _zero_size_method(expression):
         return all(inert_occurrence(m) for m in occurrences[1:])
     except Exception:
         return False
+
+
+def _queue_empty_pop_method(expression):
+    """Recognize a zero-argument pop on a source-pure empty queue.
+
+    IEEE 1800-2023 §7.10.2.4–7.10.2.5 returns the element type's default
+    when ``pop_front``/``pop_back`` is applied to an empty queue, and leaves
+    that queue empty.  The self-check state has no queue object, so admit only
+    an uninitialized or empty-literal queue whose later source uses are the
+    corresponding empty pop and/or ``size()`` queries.  Any push, alias, or
+    nonempty/dynamic operation remains loud.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName not in ("pop_front", "pop_back")
+                or len(expression.arguments) != 1):
+            return False
+        receiver = expression.arguments[0]
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "bad", False)):
+            return False
+        canonical = type(receiver.type.canonicalType).__name__
+        if canonical != "QueueType":
+            return False
+        symbol = getattr(receiver, "symbol", None)
+        initializer = getattr(symbol, "initializer", None)
+        if initializer is not None and not _empty_queue_literal(initializer):
+            return False
+        width, two_state, reason = type_width_2s(expression.type)
+        if width is None or reason is not None:
+            return False
+        name = getattr(symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        if not name or not source:
+            return False
+        code_source = _sv_code_source(source)
+        occurrences = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"(?![A-Za-z0-9_$])", code_source))
+        if not occurrences:
+            return False
+        for occurrence in occurrences[1:]:
+            tail = code_source[occurrence.end():].lstrip()
+            if re.match(r"\.(?:pop_front|pop_back|size)\s*\(\s*\)", tail):
+                continue
+            return False
+        return True
+    except Exception:
+        return False
+
+
+def _convert_queue_empty_pop(sm, expression):
+    if not _queue_empty_pop_method(expression):
+        return unsupported(sm, expression, "CallExpression:queue-empty-pop")
+    width, two_state, reason = type_width_2s(expression.type)
+    if width is None or reason is not None:
+        return unsupported(sm, expression, "CallExpression:queue-empty-pop-type")
+    return signed_metadata({
+        "kind": "Literal", "span": node_span(sm, expression),
+        "width": width,
+        "bits": ("0" if two_state else "x") * width,
+        "queue_empty_pop": expression.subroutineName,
+    }, expression.type)
 
 
 def _dynamic_array_literal_size_method(expression):

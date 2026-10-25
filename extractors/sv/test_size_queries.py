@@ -54,6 +54,41 @@ class SizeQueries(unittest.TestCase):
         self.assertEqual([(node["width"], node["bits"]) for node in values],
                          [(32, "0" * 32)])
 
+    def test_empty_queue_pop_front_returns_default_and_keeps_size(self):
+        design = lower(
+            'module top; initial begin int q[$]; int result; '
+            '// q.pop_back() in prose is not a second operation.\n'
+            'result = q.pop_front(); '
+            'if (result === 0 && q.size() === 0) '
+            '$display("PASS q.pop_front() result"); end endmodule')
+        pops = [node for node in nodes(design)
+                if node.get("queue_empty_pop")]
+        sizes = [node for node in nodes(design)
+                 if node.get("zero_size_query")]
+        self.assertEqual([(node["queue_empty_pop"], node["bits"]) for node in pops],
+                         [("pop_front", "0" * 32)])
+        self.assertEqual(len(sizes), 1)
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_empty_queue_pop_back_returns_default(self):
+        design = lower(
+            'module top; int q[$]; int result; initial begin '
+            'result = q.pop_back(); $display("%0d", result); end endmodule')
+        pops = [node for node in nodes(design)
+                if node.get("queue_empty_pop")]
+        self.assertEqual([(node["queue_empty_pop"], node["bits"]) for node in pops],
+                         [("pop_back", "0" * 32)])
+
+    def test_nonempty_queue_pop_stays_loud(self):
+        design = lower(
+            'module top; int q[$] = {1}; int result; initial begin '
+            'result = q.pop_front(); end endmodule')
+        self.assertFalse(any(node.get("queue_empty_pop")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
     def test_uninitialized_dynamic_array_size_is_zero(self):
         design = lower(
             'module top; int values[]; initial $display("%0d", values.size()); endmodule')

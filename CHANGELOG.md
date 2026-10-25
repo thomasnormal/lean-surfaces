@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Decimal `int(str)` conversion now returns CPython's pinned 4300-digit `ValueError` instead of a tier refusal; malformed inputs within the budget retain their exact literal errors.
 - Python `global` declarations now support direct scalar reads, assignments, and
   augmented assignments across function frames, with module-global publication
   preserved by the script runner.

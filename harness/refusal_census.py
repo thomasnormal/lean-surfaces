@@ -955,7 +955,6 @@ WHITELIST_CLASS = {
     "str_lab::fmt_mapping": "format.percent-heap-operand",
     "str_lab::fmt_dict_leftover": "format.percent-heap-operand",
     "float_lab::constructor": "float.text-nan-or-unicode-repr",
-    "int_string::parse_decimal": "builtin.int-of-str",
     "int_string::explicit_base": "builtin.int-of-str",
     "string_repeat::repeat_live_list": "op.Mult-repetition",
     "tuple_repeat::repeat_empty_length": "op.Mult-repetition",

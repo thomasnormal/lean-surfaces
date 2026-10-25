@@ -2858,6 +2858,11 @@ ASCII alphanumeric characters in the original input to 4300, including the
 prefix; this is a conservative resource bound, also for power-of-two bases
 that CPython exempts from its configurable conversion limit. Other Unicode
 input and heap conversion protocols remain unfinished and loud.
+
+**2026-10-25 decimal-limit error:** decimal `int(str)` now returns the exact
+CPython `ValueError` for inputs exceeding the fixed 4300-digit budget, using
+the same `decimalLimitError` as integer rendering. Inputs that remain within
+the budget keep the existing successful parse or exact malformed-literal error.
 The frame, clock-erasure and payload-blindness proofs use their pure-worker
 rules. `Examples/python/int_string` adds kernel checks and a symbolic offset
 theorem for a real keyword-base call; the differential suite also checks

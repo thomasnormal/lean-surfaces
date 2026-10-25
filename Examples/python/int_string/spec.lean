@@ -15,6 +15,8 @@ set_option maxRecDepth 8192
 #py_check int_string.signed_adjustment(2049) = 1
 #guard callFunction int_string "parse_decimal"
   #[.str (String.ofList (List.replicate 640 '0'))] 4096 matches .ok (.int 0)
+#guard callFunction int_string "parse_decimal"
+  #[.str (String.ofList (List.replicate 4301 '0'))] 4096 matches .exn decimalLimitError
 
 #py_check int_string.parse_decimal("") raises
   (.valueError "invalid literal for int() with base 10: ''")
@@ -106,8 +108,6 @@ set_option maxRecDepth 8192
 #py_check int_string.conversion_effects() = (Val.list #[.int 1, .int 2])
 #py_check int_string.keyword_value_error() raises .zeroDivisionError
 #py_check int_string.arity_value_error() raises .zeroDivisionError
-#guard callFunction int_string "parse_decimal"
-  #[.str (String.ofList (List.replicate 4301 '0'))] 4096 matches .unsupported _
 
 theorem grouped_offset_total (offset : PyInt) :
     int_string.grouped_offset(offset) ==> 1024 + offset := by proofs

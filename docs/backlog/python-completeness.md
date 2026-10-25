@@ -5100,3 +5100,24 @@ bodies remain loud.
 DECIDED: admit tuples of plain admitted exception names through the existing
 retained-state handler path; retain loud failure for dynamic, shadowed, and
 multi-suite handler forms.
+
+## 2026-10-25-pycomplete-127 — admit the decimal `int(str)` limit error
+
+The decimal `int(str)` parser now returns CPython's pinned 4300-digit
+`ValueError` when the normalized input exceeds the fixed conversion budget,
+matching the existing rendering boundary. The error is preserved through the
+ordinary builtin call and the proof interpreter; malformed inputs within the
+budget retain their exact `invalid literal` errors, while bytes and other
+unpriced conversion paths remain unchanged.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 53 `int_string.parse_decimal` cases: 0 failed, 53 matched in both interpreters |
+| Boundary witness | 4301 decimal zeroes raise `decimalLimitError` / CPython `ValueError` |
+| Example proof | `lake build Examples.python.int_string.spec` passed |
+| Refusal census | 88 rows, 0 drifts; `int_string.parse_decimal` removed from the `builtin.int-of-str` whitelist |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit the pinned decimal conversion-limit exception for `int(str)`;
+retain loud failure for unpriced conversion boundaries and host-configurable
+limits.

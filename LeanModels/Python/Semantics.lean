@@ -2662,7 +2662,7 @@ repr-rendered `ValueError` path. Invalid input is rendered with the same
 def intOfStr (text : String) (base : Nat := 10) : Res RVal :=
   let characters := text.toList.map Float64.normalizeDecimalChar
   if intDigitCount characters base > intDigitBudget then
-    .unsupported "int() of this str exceeds the tier's 4300-digit budget (CPython's configured conversion limit is not guessed; docs/memory-model.md §the cast tier)"
+    .exn decimalLimitError
   else
     match radixInt characters base with
     | some value => .ok (.int value)

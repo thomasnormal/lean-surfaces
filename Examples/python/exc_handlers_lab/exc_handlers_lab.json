@@ -3627,7 +3627,7 @@
                 }
               }
             ],
-            "exc_name": "",
+            "exc_name": "TypeError|ZeroDivisionError",
             "handler": [
               {
                 "kind": "Return",
@@ -3652,7 +3652,7 @@
                 }
               }
             ],
-            "try_unsupported": "non-name handler class (tuple pattern / attribute)"
+            "try_unsupported": null
           }
         ]
       },

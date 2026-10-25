@@ -41,7 +41,7 @@ set_option maxRecDepth 8192
 #py_check exc_handlers_lab.nested_handler_raises() = 12
 
 #guard callFunction exc_handlers_lab "handler_binding" #[] 4096 matches .unsupported _
-#guard callFunction exc_handlers_lab "tuple_handler" #[] 4096 matches .unsupported _
+#py_check exc_handlers_lab.tuple_handler() = 13
 #guard callFunction exc_handlers_lab "shadowed_handler" #[.int 5] 4096 matches .unsupported _
 #guard callFunction exc_handlers_lab "local_shadowed_handler" #[] 4096 matches .unsupported _
 #guard callFunction exc_handlers_lab "body_shadowed_handler" #[] 4096 matches .unsupported _

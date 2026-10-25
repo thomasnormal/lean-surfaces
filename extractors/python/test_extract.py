@@ -681,6 +681,14 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(body[2]["test"]["id"], marker)
         self.assertEqual(body[2]["body"][0]["kind"], "Return")
 
+    def test_tuple_exception_handler_names_are_structured(self):
+        stmt = self._envelope_of(
+            "try:\n    1 // 0\n"
+            "except (TypeError, ZeroDivisionError):\n    pass\n"
+        )["module"]["body"][0]
+        self.assertEqual(stmt["exc_name"], "TypeError|ZeroDivisionError")
+        self.assertIsNone(stmt["try_unsupported"])
+
     def test_noop_finally_lowers_to_body(self):
         env = self._envelope_of(
             "def f(n):\n"

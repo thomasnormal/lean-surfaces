@@ -2259,6 +2259,13 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                 pass
             elif isinstance(h.type, ast.Name):
                 exc_name = h.type.id
+            elif (isinstance(h.type, ast.Tuple) and len(h.type.elts) >= 2
+                  and all(isinstance(elt, ast.Name) for elt in h.type.elts)):
+                # A tuple of plain exception names has the same class-only
+                # matching semantics as the existing single-handler node.
+                # Encode the ordered names in the stable string field so the
+                # AST schema and both interpreters retain one handler body.
+                exc_name = "|".join(elt.id for elt in h.type.elts)
             else:
                 reasons.append("non-name handler class "
                                "(tuple pattern / attribute)")
@@ -2272,8 +2279,12 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             reasons.append("'finally' clause")
         if module_scope and exc_name:
             body_scope = ast.Module(body=node.body, type_ignores=[])
-            if exc_name in _scope_binding_names(body_scope):
-                reasons.append("handler name rebound in try body: " + exc_name)
+            handler_names = exc_name.split("|")
+            rebound = [name for name in handler_names
+                        if name in _scope_binding_names(body_scope)]
+            if rebound:
+                reasons.append("handler name rebound in try body: "
+                               + ", ".join(rebound))
         # Pass 0 (docs/memory-model.md paragraph "Import forms
         # (Pass 0)"): a top-level try whose single handler is literally
         # `except ImportError:` puts its DIRECT body statements in

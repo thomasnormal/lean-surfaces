@@ -7658,6 +7658,49 @@ def importErrorHandlerMatch : String → Bool
   | "ImportError" | "ModuleNotFoundError" => true
   | _ => false
 
+/- The extractor encodes a tuple of plain exception names in the existing
+`excName` field, separated by `|` (Python identifiers cannot contain that
+character). Keep the tuple admission and matching logic shared by the
+function and script interpreters. -/
+/- `String.splitOn` is implemented through an irreducible runtime helper, so
+the kernel cannot reduce it on the literal handler names in loaded ASTs.
+The extractor's encoding uses exactly one-character `|` separators; a small
+structural scanner keeps the same behavior while remaining reducible for
+proofs. -/
+def excHandlerNamesAux : List Char → List Char → List String
+  | [], rev => [String.ofList rev.reverse]
+  | '|' :: rest, rev => String.ofList rev.reverse :: excHandlerNamesAux rest []
+  | c :: rest, rev => excHandlerNamesAux rest (c :: rev)
+
+def excHandlerNames (encoded : String) : List String :=
+  excHandlerNamesAux encoded.toList []
+
+def excHandlerTuple (encoded : String) : Bool :=
+  (excHandlerNames encoded).length > 1
+
+def excHandlerAdmitted (m : Module) (name : String) : Bool :=
+  if (findNamedTuple m name).isSome then false
+  else
+    match findClass m name with
+    | some (_, c) => c.isExc
+    | none =>
+      importErrorHandlerMatch name || admittedBuiltinExc.contains name
+
+def excHandlerMatches (m : Module) (name : String) (e : PyErr) : Bool :=
+  match findClass m name with
+  | some (ci, c) =>
+      if !c.isExc then false
+      else
+        match e with
+        | .user cid _ | .userMessage cid _ _ => cid == ci
+        | _ => false
+  | none =>
+      if importErrorHandlerMatch name then
+        match e with | .importError _ => true | _ => false
+      else if admittedBuiltinExc.contains name then
+        builtinExcCatches name e || userExcCatches m name e
+      else false
+
 /-! ## The interpreter (mutual block, normative signatures)
 
 Every function matches fuel first (`0 => .timeout`) and passes the
@@ -9516,6 +9559,25 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
            | .exn st' _ => execStmts m fuel st' handler.toList
            | .timeout => .timeout
            | .unsupported msg => .unsupported msg
+         else if excHandlerTuple excName then
+           let names := excHandlerNames excName
+           if names.any (fun name =>
+               (Env.lookup st.locals name).isSome
+                 || (lookupG (moduleGlobals m).1 name).isSome
+                 || (Env.lookup st.world.globals name).isSome
+                 || (findFunction m name).isSome) then
+             .unsupported s!"'except {excName}:': a tuple handler name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
+           else if names.any (fun name => !excHandlerAdmitted m name) then
+             .unsupported s!"'except {excName}:': every tuple handler name must be an admitted exception class — outside the tier (docs/memory-model.md §exceptions)"
+           else
+             match execStmts m fuel st body.toList with
+             | .ok st' flow => .ok st' flow
+             | .exn st' e =>
+                 if names.any (fun name => excHandlerMatches m name e) then
+                   execStmts m fuel st' handler.toList
+                 else .exn st' e
+             | .timeout => .timeout
+             | .unsupported msg => .unsupported msg
          else if (Env.lookup st.locals excName).isSome
              || (lookupG (moduleGlobals m).1 excName).isSome
              || (Env.lookup st.world.globals excName).isSome

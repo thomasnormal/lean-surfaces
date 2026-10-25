@@ -5075,3 +5075,28 @@ retain that boundary.
 DECIDED: admit finite float keys and their tuple/set consumers; retain loud
 failure for non-finite float keys until immediate-value identity semantics are
 priced separately.
+
+## 2026-10-25-pycomplete-126 — admit tuple exception handlers
+
+The exception tier previously retained only one plain handler name. The
+extractor now recognizes a tuple of plain names and stores its ordered members
+in the existing handler field; a reducible scanner keeps the representation
+kernel-computable. Both interpreters validate every member against the same
+shadowing and admission rules as a single handler, then match the first member
+whose builtin or admitted user-class table catches the retained exception.
+Dynamic exception expressions, shadowed tuple names, and multiple handler
+bodies remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `exc_lab.tuple_handler(1)` → 1 and `exc_handlers_lab.tuple_handler()` → 13; 2/2 MATCH in both interpreters |
+| Full executable differential | 3,694 cases: 0 failed, 88 whitelisted-unsupported, 3,606 matched |
+| Full proof differential | 3,694 cases: 0 failed, 194 refused, 3,500 matched |
+| Refusal census | 88 rows, 0 drifts; both tuple-handler rows removed |
+| Extractor tests | 134/134 passed |
+| Proof/example build | `Examples.python.exc_handlers_lab.proof` and `spec` pass |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit tuples of plain admitted exception names through the existing
+retained-state handler path; retain loud failure for dynamic, shadowed, and
+multi-suite handler forms.

@@ -216,7 +216,7 @@ inductive Stmt where
   observable whenever the message expression has an effect. -/
   | assertStmt (test : Expr) (msg : Option Expr) (span : Span)
   /-- `try`/`except` (schema `Try`, the exceptions tier): one handler,
-  either naming ONE class or bare, with unused `as` bindings erased and no
+  either naming ONE class, a tuple of plain class names, or bare, with unused `as` bindings erased and no
   `else`/`finally` — carried structurally (`excName` the handler's class name,
   `handler` its body). Everything outside the shape rides the
   `callUnsupported` pattern: the extractor fills `tryUnsupported` with

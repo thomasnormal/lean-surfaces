@@ -15,6 +15,9 @@
 - Direct subclasses of the measured builtin exception names now preserve their
   class identity through `raise` and explicit handler matching; shadowed,
   dynamic, and unmeasured exception bases remain loud.
+- Plain tuples of admitted exception names now share one retained-state handler
+  body; dynamic exception expressions, shadowed tuple names, and multiple
+  handler suites remain loud.
 - Function-local value-less annotations now install a static-local marker and
   raise CPython's exact `UnboundLocalError` class and message on an observed
   read, including declarations in skipped branches; harmless no-read forms
@@ -42,6 +45,10 @@ change is listed here under **Changed** or **Removed**.
   The extractor lowers the construct to the existing retained-state `try`
   node plus a fresh success flag and `if`; `finally`, multiple handlers,
   tuple patterns, and observed exception bindings remain loud.
+- `except (A, B, …)` now admits tuples of plain, admitted exception names and
+  matches each member against the existing builtin and user-class tables.
+  Dynamic expressions, shadowed names, and multiple handler suites remain
+  loud.
 - Single-target `del o.attr` now lowers through the synthetic `<attrdel>`
   operation. The monadic interpreter deletes ordinary instance attributes
   in place and preserves CPython's `AttributeError` for missing and immediate

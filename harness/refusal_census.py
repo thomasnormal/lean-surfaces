@@ -976,7 +976,6 @@ WHITELIST_CLASS = {
     "repr_lab::generator": "render.identity",
     "repr_lab::deep": "render.depth-limit",
     "exc_handlers_lab::handler_binding": "exc.handler",
-    "exc_handlers_lab::tuple_handler": "exc.handler",
     "exc_handlers_lab::shadowed_handler": "exc.handler",
     "exc_handlers_lab::local_shadowed_handler": "exc.handler",
     "exc_handlers_lab::body_shadowed_handler": "exc.handler",
@@ -1006,7 +1005,6 @@ WHITELIST_CLASS = {
     "gen_lab::yf_leak_drive": "genexp.lowering-admission",
     "exc_lab::time_live": "clock.underrun",
     "exc_lab::multi_handler": "exc.handler",
-    "exc_lab::tuple_handler": "exc.handler",
     # §except-builtin: the FRONTIER. `except_builtin`/`except_exception` LEFT
     # this table when builtin classes became matchable; this row is what keeps
     # the boundary falsifiable -- an ancestor the tier refuses BY NAME rather

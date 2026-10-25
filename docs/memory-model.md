@@ -1426,7 +1426,9 @@ the bound exception object remains outside the tier. `else` is lowered at
 ingestion to a success flag, the existing `try` node, and an ordinary `if`,
 so the suite runs only after a normal body exit; a `finally: pass` suite is
 lowered away because it is observationally a no-op, while effectful
-`finally` suites remain loud.
+`finally` suites remain loud. A tuple of plain admitted exception names is
+matched left to right against the same retained-state handler body; dynamic
+exception expressions and multiple handler bodies remain loud.
 Everything else (multiple handlers, tuple patterns, observed `as e`, and
 effectful `finally`) stays structured-but-loud. Evaluation composes on the existing
 `Run`: run the body; `.ok` skips the handler; a bare handler catches every

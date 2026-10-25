@@ -3629,13 +3629,39 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                 exact ihSs m st' handler.toList hslot'
             | timeout => exact PBF.timeout
             | unsupported msg => exact PBF.unsupported
-          · refine PBF.ite (c :=
-                ((Env.lookup (st.swapAt pa o).locals excName).isSome ||
-                  (lookupG (moduleGlobals m).1 excName).isSome ||
-                  (Env.lookup (st.swapAt pa o).world.globals excName).isSome ||
-                  (findFunction m excName).isSome) = true)
-              (fun _ => PBF.unsupported) (fun _ => ?_)
-            cases findClass m excName with
+          · refine PBF.ite (c := excHandlerTuple excName = true)
+              (fun _ => ?_) (fun _ => ?_)
+            · let names := excHandlerNames excName
+              refine PBF.ite (c := names.any (fun name =>
+                  (Env.lookup (st.swapAt pa o).locals name).isSome
+                    || (lookupG (moduleGlobals m).1 name).isSome
+                    || (Env.lookup (st.swapAt pa o).world.globals name).isSome
+                    || (findFunction m name).isSome) = true)
+                (fun _ => PBF.unsupported) (fun _ => ?_)
+              refine PBF.ite (c := names.any (fun name =>
+                  !excHandlerAdmitted m name) = true)
+                (fun _ => PBF.unsupported) (fun _ => ?_)
+              cases hrun : execStmts m fuel st body.toList with
+              | ok st' flow =>
+                  obtain ⟨hslot', hy⟩ := (ihSs m st body.toList hslot).1 st' flow hrun
+                  rw [hy]
+                  exact PBF.ok hslot' _
+              | exn st' e =>
+                  obtain ⟨hslot', hy⟩ := (ihSs m st body.toList hslot).2 st' e hrun
+                  rw [hy]
+                  simp only [Run.bindE]
+                  refine PBF.ite (c := names.any (fun name => excHandlerMatches m name e) = true)
+                    (fun _ => ihSs m st' handler.toList hslot')
+                    (fun _ => PBF.exn hslot' _)
+              | timeout => exact PBF.timeout
+              | unsupported msg => exact PBF.unsupported
+            · refine PBF.ite (c :=
+                  ((Env.lookup (st.swapAt pa o).locals excName).isSome ||
+                    (lookupG (moduleGlobals m).1 excName).isSome ||
+                    (Env.lookup (st.swapAt pa o).world.globals excName).isSome ||
+                    (findFunction m excName).isSome) = true)
+                (fun _ => PBF.unsupported) (fun _ => ?_)
+              cases findClass m excName with
           | none =>
               refine PBF.ite (c := (findNamedTuple m excName).isSome = true)
                 (fun _ => ?_) (fun _ => ?_)

@@ -309,6 +309,21 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
         let st ← get
         if excName.isEmpty then
           tryCatch (S.stmts body.toList) (fun _ => S.stmts handler.toList)
+        else if excHandlerTuple excName then
+          let names := excHandlerNames excName
+          if names.any (fun name =>
+              (Env.lookup st.locals name).isSome
+                || (lookupG (moduleGlobals m).1 name).isSome
+                || (Env.lookup st.world.globals name).isSome
+                || (findFunction m name).isSome) then
+            refuse s!"'except {excName}:': a tuple handler name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
+          else if names.any (fun name => !excHandlerAdmitted m name) then
+            refuse s!"'except {excName}:': every tuple handler name must be an admitted exception class — outside the tier (docs/memory-model.md §exceptions)"
+          else
+            tryCatch (S.stmts body.toList) (fun e =>
+              if names.any (fun name => excHandlerMatches m name e) then
+                S.stmts handler.toList
+              else raisePy e)
         else if (Env.lookup st.locals excName).isSome
             || (lookupG (moduleGlobals m).1 excName).isSome
             || (Env.lookup st.world.globals excName).isSome

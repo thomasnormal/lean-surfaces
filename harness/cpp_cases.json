@@ -6097,6 +6097,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-binary-greater-than",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableBinaryGreaterThanFrameWitness",
+    "cpp_source": "bool binary_greater_than_frame_witness(int value) { return value > 5; } bool callable_witness() { return binary_greater_than_frame_witness(6); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

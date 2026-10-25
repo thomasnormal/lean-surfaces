@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.21] — 2026-10-25
+
+The self-check surface now has 165 differential rows: 161 matches, zero
+disagreements, and 4 recorded refusals. The grammar census remains at 214
+pyslang syntax witnesses: 83 MATCH and 131 REFUSE. The 22,050-path corpus
+measures 4,912 clean files, 17,072 partial files, and 66 include skips. This
+release admits exact literal dynamic-array `size()` queries, four-state-aware
+literal string `atobin()`/`atooct()`/`atohex()` conversions, and default-zero
+literal semaphore `try_get` sequences. Dynamic, aliased, invalid, and other
+stateful forms remain loud.
+
 ## [0.1.20] — 2026-10-25
 
 The self-check surface now has 161 differential rows: 157 matches, zero

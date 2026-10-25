@@ -6469,6 +6469,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-while-continue",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableWhileContinueStatementFrameWitness",
+    "cpp_source": "int while_continue_statement_frame_witness(int value) { while (value < 3) { value += 1; continue; } return value; } bool callable_witness() { return while_continue_statement_frame_witness(0) == 3; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

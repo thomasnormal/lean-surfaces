@@ -1017,27 +1017,159 @@ def _assigned_names(fn):
 
 
 def _del_read_names(fn):
-    """`del`'d names the body also READS (docs/memory-model.md paragraph
-    "the del statement", census clause 2): deliberately a NAME-SET
-    intersection, never a liveness analysis -- after the removal a read
-    would fall through to module globals where CPython raises
-    UnboundLocalError, silently wrong, so any read of a deleted name
-    refuses the whole function. The stated over-refusal
-    (``x = n; del x; x = 99; return x`` refuses although CPython accepts)
-    is recorded in the design. Reads in nested scopes count too -- the
-    conservative direction (their capture snapshots are separately
-    guarded by `_binding_linenos`, which sees the del as a binding)."""
-    deleted = set()
-    for node in _walk_scope(fn):
-        if isinstance(node, ast.Delete):
-            for t in node.targets:
-                if isinstance(t, ast.Name):
-                    deleted.add(t.id)
-    if not deleted:
+    """Names that can be read while definitely deleted.
+
+    A name deleted in one path is only unsafe until a later binding on that
+    same path.  The old implementation used a whole-function name-set
+    intersection, which rejected ``x = 1; del x; x = 2; return x`` and the
+    same shape inside a loop.  This small flow analysis tracks the set of
+    names that *may* be deleted at each point.  Branches and loops join with
+    a union, so a read remains loud whenever any path can reach it after a
+    delete.  Nested function/class scopes are skipped, matching
+    ``_walk_scope`` and the existing closure census.
+
+    The analysis is deliberately conservative for expression effects: every
+    load in an expression is checked before that statement's stores are
+    applied.  Unsupported statement forms fall back to the old whole-scope
+    intersection rather than silently admitting an unanalysed path.
+    """
+    deleted_any = {t.id for node in _walk_scope(fn)
+                   if isinstance(node, ast.Delete)
+                   for t in node.targets if isinstance(t, ast.Name)}
+    if not deleted_any:
         return []
-    reads = {n.id for n in ast.walk(fn)
-             if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
-    return sorted(deleted & reads)
+
+    bad = set()
+    uncertain = [False]
+
+    def loads(node, deleted):
+        for n in ast.walk(node):
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef,
+                              ast.Lambda, ast.ClassDef)):
+                continue
+            if (isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)
+                    and n.id in deleted):
+                bad.add(n.id)
+
+    def target_loads(target, deleted):
+        loads(target, deleted)
+
+    def bound(target):
+        return set(_target_bound_names(target))
+
+    def scan_block(stmts, incoming):
+        state = set(incoming)
+        for stmt in stmts:
+            state = scan_stmt(stmt, state)
+        return state
+
+    def scan_stmt(stmt, incoming):
+        state = set(incoming)
+        if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef,
+                             ast.Lambda, ast.ClassDef)):
+            return state
+        if isinstance(stmt, ast.Assign):
+            loads(stmt.value, state)
+            for target in stmt.targets:
+                target_loads(target, state)
+                state -= bound(target)
+            return state
+        if isinstance(stmt, ast.AnnAssign):
+            if stmt.value is not None:
+                loads(stmt.value, state)
+            target_loads(stmt.target, state)
+            state -= bound(stmt.target)
+            return state
+        if isinstance(stmt, ast.AugAssign):
+            target_loads(stmt.target, state)
+            loads(stmt.value, state)
+            state -= bound(stmt.target)
+            return state
+        if isinstance(stmt, ast.NamedExpr):
+            loads(stmt.value, state)
+            state -= bound(stmt.target)
+            return state
+        if isinstance(stmt, ast.Delete):
+            for target in stmt.targets:
+                target_loads(target, state)
+                state |= bound(target)
+            return state
+        if isinstance(stmt, ast.For):
+            loads(stmt.iter, state)
+            target_loads(stmt.target, state)
+            loop_state = set(state) - bound(stmt.target)
+            body_state = scan_block(stmt.body, loop_state)
+            else_state = scan_block(stmt.orelse, state | body_state)
+            return state | body_state | else_state
+        if isinstance(stmt, (ast.If, ast.While)):
+            loads(stmt.test, state)
+            body_state = scan_block(stmt.body, state)
+            else_state = scan_block(stmt.orelse, state)
+            return body_state | else_state
+        if isinstance(stmt, (ast.With, ast.AsyncWith)):
+            for item in stmt.items:
+                loads(item.context_expr, state)
+                if item.optional_vars is not None:
+                    target_loads(item.optional_vars, state)
+                    state -= bound(item.optional_vars)
+            return scan_block(stmt.body, state)
+        if isinstance(stmt, ast.Try):
+            body_state = scan_block(stmt.body, state)
+            # An exception can leave the body before its last store, so a
+            # handler must see both the incoming and the normally-completed
+            # deleted states.
+            handler_in = state | body_state
+            handler_states = []
+            for handler in stmt.handlers:
+                # The handler class expression is resolved only after the
+                # try body raises, so a preceding del is observable here.
+                if handler.type is not None:
+                    loads(handler.type, handler_in)
+                handler_state = set(handler_in)
+                if handler.name is not None:
+                    handler_state.discard(handler.name)
+                handler_states.append(scan_block(handler.body,
+                                                 handler_state))
+            joined = body_state
+            for handler_state in handler_states:
+                joined |= handler_state
+            joined = scan_block(stmt.orelse, joined)
+            return scan_block(stmt.finalbody, joined)
+        if isinstance(stmt, (ast.Return, ast.Raise, ast.Assert,
+                             ast.Expr)):
+            if isinstance(stmt, ast.Return):
+                if stmt.value is not None:
+                    loads(stmt.value, state)
+            elif isinstance(stmt, ast.Raise):
+                if stmt.exc is not None:
+                    loads(stmt.exc, state)
+                if stmt.cause is not None:
+                    loads(stmt.cause, state)
+            elif isinstance(stmt, ast.Assert):
+                loads(stmt.test, state)
+                if stmt.msg is not None:
+                    loads(stmt.msg, state)
+            else:
+                loads(stmt.value, state)
+            return state
+        if isinstance(stmt, (ast.Import, ast.ImportFrom)):
+            for alias in stmt.names:
+                state.discard((alias.asname or alias.name).split(".")[0])
+            return state
+        if isinstance(stmt, (ast.Break, ast.Continue, ast.Pass)):
+            return state
+        # Keep the old refusal discipline for any AST shape this walker does
+        # not know yet.  The extractor may still carry it as structured data,
+        # but this census must never claim that a deleted read is safe.
+        uncertain[0] = True
+        return state
+
+    scan_block(list(fn.body), set())
+    if uncertain[0]:
+        reads = {n.id for n in _walk_scope(fn)
+                 if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
+        return sorted(deleted_any & reads)
+    return sorted(bad)
 
 
 def _shadowed_calls(fn):

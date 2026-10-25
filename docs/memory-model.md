@@ -4725,13 +4725,14 @@ block and outside all three inductions.
 (`_assigned_names` gains `ast.Delete`, repairing its recorded
 disagreement with `_binding_linenos` — which also makes a deleted
 capture a REBIND for the H7 snapshot admission, and a deleted callee a
-`_shadowed_calls` hit, both for free). Clause 2: any Load of a del'd
-name anywhere in the body refuses the function through
-`locals_unsupported` — the channel's third instance; the stated
-over-refusals (`rebind_after`, `loop_del` — programs CPython accepts)
-are pinned in `del_lab`. The runtime arm's miss case is therefore only
-ever `del` of a never-bound name (`del g`/`del nope`/double-del): loud,
-never a fabricated `UnboundLocalError`.
+`_shadowed_calls` hit, both for free). Clause 2: a load reachable while
+the name may still be deleted refuses the function through
+`locals_unsupported`. The extractor now carries a small flow census:
+straight-line stores and loop-body stores clear the deleted state, while
+branch joins remain conservative. Thus `rebind_after` and `loop_del` agree
+with CPython, while `read_after` remains loud. The runtime arm's miss case
+is therefore only ever `del` of a never-bound name (`del g`/`del nope`/double-
+del): loud, never a fabricated `UnboundLocalError`.
 
 **Module scope (the reconciled arm, script surface only).** By §the
 publish the frame's locals ARE the module globals and the one pipeline

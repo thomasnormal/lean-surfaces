@@ -1382,9 +1382,10 @@ class ImportFromTests(unittest.TestCase):
 class DeleteTests(unittest.TestCase):
     """The del statement (docs/memory-model.md paragraph "the del
     statement" + docs/backlog.md paragraph "del RECONCILED"): bare-name
-    targets structure at BOTH scopes; census clause 2 refuses any read
-    of a del'd name; non-name targets keep the Unsupported fallthrough;
-    a del counts as a binding for the closure rebound-after-def rule."""
+    targets structure at BOTH scopes; census clause 2 refuses reads reachable
+    while a name may still be deleted; non-name targets keep the Unsupported
+    fallthrough; a del counts as a binding for the closure rebound-after-def
+    rule."""
 
     def _module_body(self, source):
         import ast
@@ -1419,11 +1420,37 @@ class DeleteTests(unittest.TestCase):
         self.assertIn("del'd", fn["locals_unsupported"])
         self.assertIn("x", fn["locals_unsupported"])
 
-    def test_rebind_after_del_refuses_the_stated_overrefusal(self):
-        # CPython accepts this; the census refuses it (recorded price:
-        # the read at `return x` intersects the del'd name set).
+    def test_rebind_after_del_is_in_tier(self):
+        # A definite rebinding clears the deleted state before the read.
         fn = self._first_fn(
             "def f(n):\n    x = n\n    del x\n    x = 99\n    return x\n")
+        self.assertIsNone(fn["locals_unsupported"])
+
+    def test_loop_rebind_after_del_is_in_tier(self):
+        fn = self._first_fn(
+            "def f(n):\n    total = 0\n    for i in range(n):\n"
+            "        x = i\n        del x\n        x = i * 2\n"
+            "        total = total + x\n    return total\n")
+        self.assertIsNone(fn["locals_unsupported"])
+
+    def test_branch_read_after_del_stays_loud(self):
+        fn = self._first_fn(
+            "def f(n):\n    x = n\n    if n > 0:\n        del x\n"
+            "    return x\n")
+        self.assertIn("del'd", fn["locals_unsupported"])
+
+    def test_loop_read_before_rebind_stays_loud(self):
+        fn = self._first_fn(
+            "def f(n):\n    total = 0\n    for i in range(n):\n"
+            "        x = i\n        del x\n        total = total + x\n"
+            "    return total\n")
+        self.assertIn("del'd", fn["locals_unsupported"])
+
+    def test_handler_can_observe_pre_rebind_exception_path(self):
+        fn = self._first_fn(
+            "def f():\n    x = 1\n    del x\n    try:\n"
+            "        x = 1 // 0\n    except ZeroDivisionError:\n"
+            "        return x\n")
         self.assertIn("del'd", fn["locals_unsupported"])
 
     def test_conditional_del_without_read_is_in_tier(self):

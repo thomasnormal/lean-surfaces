@@ -1042,8 +1042,6 @@ WHITELIST_CLASS = {
     "fstring_repr::instance": "render.identity",
     "alias_lab::read_alias": "firstclass.callable",
     "del_lab::read_after": "del.name-set-census",
-    "del_lab::rebind_after": "del.name-set-census",
-    "del_lab::loop_del": "del.name-set-census",
     "del_lab::del_global": "del.name-set-census",
     "del_lab::del_never": "del.name-set-census",
     "del_lab::double_del": "del.name-set-census",

@@ -5,12 +5,11 @@ with the one pipeline").
 FUNCTION scope is the recorded slice: `del` of a bound local is a pure
 locals rewrite (`Env.remove` -- no World field moves), the effect is
 PARTIAL left to right, and the read-after-del hazard is closed by the
-extractor CENSUS (clause 2: any Load of a del'd name refuses the whole
-function), never by a fabricated UnboundLocalError. The stated
-over-refusals are pinned here so their cost stays visible:
-`rebind_after` and `loop_del` are programs CPython ACCEPTS that the
-census refuses (name-set intersection, deliberately not a liveness
-analysis).
+extractor CENSUS (clause 2: a load reachable while the name may still be
+deleted refuses the whole function), never by a fabricated UnboundLocalError.
+The census tracks straight-line rebinding and loop-body rebinding, so
+`rebind_after` and `loop_del` agree with CPython while a true read-after-del
+still stays loud.
 
 Runtime refusals (the census cannot see boundness): `del` of a
 module-global NAME (CPython localises it and raises UnboundLocalError),

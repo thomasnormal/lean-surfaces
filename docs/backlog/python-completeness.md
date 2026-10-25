@@ -5003,3 +5003,29 @@ DECIDED: admit literal one-string payloads on the closed proof surface and keep
 non-literal, keyword, starred, multi-argument, and unmodelled exception
 constructors loud until their evaluation and proof obligations are measured.
 Move to the next remaining synchronous wall.
+
+## 2026-10-25-pycomplete-123 — make `del` rebinding path-aware
+
+The closed `del` runtime already handled a later local rebinding correctly,
+but the extractor's static census used a whole-function name-set intersection:
+any load of a name that appeared in a `del` was refused. That over-approximated
+CPython for `rebind_after` and for the loop-body pattern in `loop_del`.
+
+The census now tracks names that may be deleted through the supported statement
+shapes. A store clears the name on that path; branches and loops join with a
+union, so a read remains loud whenever one path can still reach it after the
+delete. The true `read_after` case and runtime partial-delete cases remain
+loud. The generated `del_lab` envelope and differential expectations now make
+the two repaired rows executable.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 4/4 rows agree: `read_after` and `double_del` remain loud; `rebind_after` and `loop_del` match |
+| Full executable differential | 3,693 cases: 0 failed, 93 whitelisted-unsupported, 3,600 matched |
+| Full proof differential | 3,693 cases: 0 failed, 199 refused, 3,494 matched |
+| Refusal census | 93 rows, 0 drifts; `del.name-set-census` reduced from 6 to 4 |
+| Formatting | `git diff --check` passed |
+
+DECIDED: keep the `del` census conservative at control-flow joins while
+admitting definite straight-line and loop-body rebinding. Move to the next
+remaining synchronous wall.

@@ -728,6 +728,29 @@ private def stmtBinds : Stmt → Option (List String) := stmtBindsWith false
 @[inherit_doc stmtBindsWith]
 private def aliasStmtBinds : Stmt → Option (List String) := stmtBindsWith true
 
+/- The active-exception payload is deliberately not part of `FrameState` yet.
+   Admit the one bare re-raise shape whose payload is statically known anyway:
+   a handler for `N` whose whole protected body is the class-identity raise
+   `raise N`.  In that shape CPython can only enter the handler with `N`, so
+   lowering its direct bare `raise` to `raise N` preserves the existing
+   retained-state path.  Broad handlers, tuple handlers, nested control flow,
+   and every other re-raise remain structured and loud. -/
+private def plainHandlerName (name : String) : Bool :=
+  !name.isEmpty && !(name.toList.any (· == '|'))
+
+private def exactBareReraiseSource (body : Array Stmt) (handler : String) : Bool :=
+  if !plainHandlerName handler then false
+  else
+    match body.toList with
+    | [.raiseStmt (some (.name raised _)) none _] => raised == handler
+    | _ => false
+
+private def lowerDirectBareReraise (body : Array Stmt) (handler : String) : Array Stmt :=
+  match body.toList with
+  | [.raiseStmt none none sp] =>
+      #[.raiseStmt (some (.name handler sp)) none sp]
+  | _ => body
+
 mutual
   /-- Every `Name` occurring in the expression (the reference scan). -/
   private partial def exprRefs : Expr → List String
@@ -1530,7 +1553,13 @@ mutual
         return .assertStmt (← lowerExpr ctx t) (← m.mapM (lowerExpr ctx)) sp
     | .delStmt ns sp => return .delStmt ns sp
     | .tryStmt b en hnd tu sp =>
-        return .tryStmt (← lowerStmts ctx b) en (← lowerStmts ctx hnd) tu sp
+        let b' ← lowerStmts ctx b
+        let h' ← lowerStmts ctx hnd
+        let h' :=
+          if tu.isNone && exactBareReraiseSource b' en then
+            lowerDirectBareReraise h' en
+          else h'
+        return .tryStmt b' en h' tu sp
     | .withStmt items body tu sp =>
         let items ← items.mapM fun item => do
           pure { context := ← lowerExpr ctx item.context,

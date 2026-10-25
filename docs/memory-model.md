@@ -1382,8 +1382,8 @@ are discarded with the callee frame; the caller's threaded state at a
 propagated `.exn` is the state at the raise). Builtin raises are
 faithful throughout the tier, `==>!`/`Raises` is a stated judgment, and
 the leanpy boundary already renders a class line per `PyErr` kind. What
-does NOT exist: user exception classes, `raise`, `try`/`except`, and
-exception INSTANCES as values.
+does NOT exist: exception INSTANCES as values and general dynamic
+raise/re-raise payloads.
 
 **Representation: class-identity exceptions, with one measured string payload.**
 `PyErr.user (cid : ClassId)` — a bare raised user exception IS its class
@@ -1407,7 +1407,10 @@ their fuel and proof obligations are priced separately. The monadic runner
 keeps the wider evaluated-string form.
 Other builtin constructors, keyword or multiple arguments, and non-string
 payloads remain loud. `raise <expr>` of anything but an admitted class name,
-dynamic exception causes, and the bare re-raise `raise` all refuse loudly.
+dynamic exception causes, and general bare re-raises refuse loudly. The exact
+direct shape `try: raise N; except N: raise` is lowered to `raise N`, because
+the handler's active class identity is statically known; broad handlers,
+tuple handlers, and nested re-raises remain loud.
 The exact `raise N from None` shape lowers to `raise N`: exception causes are
 not observable in this tier, while a dynamic cause remains structured and loud.
 A direct zero-argument
@@ -1536,7 +1539,8 @@ unshadowed-name rule and reports zero ground-truth violations.
   generality (bare `raise`, `raise <expr>`, `raise … from …` all parse);
   ingestion lowers a direct zero-argument NAME constructor to `raise N`,
   and EVALUATION admits that shape plus bare `raise N` where `N` names an
-  admitted exception class. The measured one-string payload forms are admitted;
+  admitted exception class. The exact direct handler re-raise lowers to that
+  same class-identity shape. The measured one-string payload forms are admitted;
   everything else remains the loud refusal of the design.
 * **`Stmt.tryStmt body excName handler tryUnsupported`** carries the
   single-handler shape plus the `callUnsupported`-style reason

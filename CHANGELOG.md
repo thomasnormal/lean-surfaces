@@ -55,6 +55,8 @@ change is listed here under **Changed** or **Removed**.
   loud.
 - `raise N from None` now lowers to `raise N`; the tier keeps dynamic exception
   causes loud because it does not model exception-cause payloads.
+- A direct `try: raise N; except N: raise` now re-raises the statically known
+  class identity; broad and dynamic bare re-raises remain loud.
 - Single-target `del o.attr` now lowers through the synthetic `<attrdel>`
   operation. The monadic interpreter deletes ordinary instance attributes
   in place and preserves CPython's `AttributeError` for missing and immediate

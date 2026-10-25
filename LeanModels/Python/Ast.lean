@@ -204,9 +204,11 @@ inductive Stmt where
   optional, any expressions); EVALUATION admits exactly `raise N` where
   `N` names an admitted exception class (`class N(Exception): pass` or a
   measured direct builtin ancestor,
-  `ClassDefn.isExc`) — bare `raise`, `raise <expr>`, and `raise N(args…)`
-  refuse loudly there. A literal `None` cause is lowered to the same
-  class-identity path as `raise N`; dynamic causes remain loud. -/
+  `ClassDefn.isExc`) — general bare `raise`, `raise <expr>`, and `raise N(args…)`
+  refuse loudly there. The one direct `try: raise N; except N: raise` shape
+  is lowered at ingestion to `raise N`, where the active class identity is
+  statically known; broader re-raises remain loud. A literal `None` cause is
+  lowered to the same class-identity path as `raise N`; dynamic causes remain loud. -/
   | raiseStmt (exc : Option Expr) (cause : Option Expr) (span : Span)
   /-- `assert test` / `assert test, msg` (schema `Assert`, the tail batch
   — docs/memory-model.md §the assert statement). CPython compiles this to

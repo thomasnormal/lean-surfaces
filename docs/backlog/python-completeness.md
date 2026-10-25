@@ -5156,3 +5156,22 @@ refused so an arbitrarily recursive renderer is never introduced.
 
 DECIDED: spend a larger fixed rendering budget for ordinary nested containers;
 keep the budget caller-independent and retain loud refusal beyond 512 levels.
+
+## 2026-10-25-pycomplete-130 — admit the direct class-identity re-raise
+
+The exceptions tier now lowers the exact shape `try: raise N; except N:
+raise` when the protected body is only the matching class-identity raise.
+The handler can therefore re-raise the known `N` without adding an active
+exception payload to `FrameState`; retained state and the existing class
+matching path remain unchanged. Broad handlers, tuple handlers, nested
+control-flow re-raises, and dynamic active-exception values remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `exc_lab.raise_bare(1)` matches in both interpreters as `Stop` |
+| Refusal census | 83 rows, 0 drifts; the direct `exc.raise` witness is removed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the statically known direct class-identity re-raise;
+retain the general active-exception payload boundary until it is represented
+in the frame state and proved.

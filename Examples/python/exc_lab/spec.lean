@@ -115,7 +115,8 @@ loud. -/
 #py_check exc_lab.tuple_handler(1) = 1
 #guard callFunction exc_lab "raise_args" #[.int 1] 4096
   matches .exn (.userMessage _ "Stop" "with a message")
-#guard callFunction exc_lab "raise_bare" #[.int 1] 4096 matches .unsupported _
+#guard callFunction exc_lab "raise_bare" #[.int 1] 4096
+  matches .exn (.user _ "Stop")
 #guard callFunction exc_lab "raise_value" #[.int 1] 4096 matches .unsupported _
 #py_check exc_lab.raise_from(1) raises (.user _ "Stop")
 #guard callFunction exc_lab "raise_shadowed" #[.int 1] 4096 matches .unsupported _

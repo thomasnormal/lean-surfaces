@@ -20,7 +20,7 @@ end to end.
 The refusal battery (whitelisted rows + raw #guards in spec.lean) pins
 the loud frontier: observed `as` bindings and `finally`,
 multiple handlers, tuple patterns, unmeasured builtin ancestors,
-raise with arguments, bare raise, value raise, raise-from,
+raise with arguments, general bare re-raise, value raise, raise-from,
 shadowed names, exception classes as values, and yield-under-try.
 
 The WALL-CLOCK battery (docs/memory-model.md "Wall-clock time", as

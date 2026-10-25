@@ -153,6 +153,25 @@ class SizeQueries(unittest.TestCase):
         self.assertFalse(any(node.get("associative_empty_endpoint")
                              for node in nodes(design)))
 
+    def test_mailbox_type_mismatch_try_get_returns_negative(self):
+        design = lower(
+            'module top; mailbox box; string message; int result; initial begin '
+            'box = new(); box.put(42); result = box.try_get(message); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("mailbox_type_mismatch_try_get")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(values[0]["bits"], "1" * 32)
+
+    def test_mailbox_type_mismatch_alias_stays_loud(self):
+        design = lower(
+            'module top; mailbox box, alias_box; string message; int result; initial begin '
+            'box = new(); alias_box = box; box.put(42); '
+            'result = alias_box.try_get(message); end endmodule')
+        self.assertFalse(any(node.get("mailbox_type_mismatch_try_get")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
     def test_uninitialized_dynamic_array_size_is_zero(self):
         design = lower(
             'module top; int values[]; initial $display("%0d", values.size()); endmodule')

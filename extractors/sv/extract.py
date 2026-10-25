@@ -6606,6 +6606,9 @@ def _convert_legacy_call(sm, expression):
     mailbox_state = _convert_mailbox_literal_state_call(sm, expression)
     if mailbox_state is not None:
         return mailbox_state
+    mailbox_mismatch = _convert_mailbox_type_mismatch_try_get(sm, expression)
+    if mailbox_mismatch is not None:
+        return mailbox_mismatch
     for recognizes, convert in (
             (_time_scale_call, _convert_time_scale_call),
             (_plusargs_call, _convert_plusargs_call),
@@ -7878,6 +7881,98 @@ def _convert_mailbox_empty_try_method(sm, expression):
         "kind": "Literal", "span": node_span(sm, expression),
         "width": width, "bits": "0" * width,
         "mailbox_empty_try": expression.subroutineName,
+    }, expression.type)
+
+
+def _mailbox_type_mismatch_try_get(expression):
+    """Recognize the negative result of an untyped mailbox type mismatch.
+
+    IEEE 1800-2023 §15.4.6 specifies a negative return when the destination
+    type is not equivalent to the queued message type.  This narrow lowering
+    models the source-pure ``new(); put(literal); try_get(named)`` shape.  It
+    does not publish a destination value and therefore leaves the flat state
+    unchanged; all other mailbox activity remains on the FIFO boundary.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or expression.isSystemCall
+                or expression.subroutineName != "try_get"
+                or len(expression.arguments) != 1):
+            return False
+        receiver = getattr(expression, "thisClass", None)
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "bad", False)):
+            return False
+        canonical = getattr(getattr(receiver, "type", None), "canonicalType", None)
+        if (type(canonical).__name__ != "ClassType"
+                or getattr(canonical, "name", None) != "mailbox"
+                or getattr(canonical, "arrayElementType", None) is not None):
+            return False
+        target = expression.arguments[0]
+        if (type(target).__name__ != "NamedValueExpression"
+                or getattr(target, "bad", False)):
+            return False
+        width, _two_state, reason = type_width_2s(expression.type)
+        if (width != 32 or reason is not None
+                or not getattr(expression.type, "isIntegral", False)
+                or not getattr(expression.type, "isSigned", False)):
+            return False
+        name = getattr(getattr(receiver, "symbol", None), "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        if not name or not source:
+            return False
+        code_source = _sv_code_source(source)
+        constructor = re.search(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"\s*=\s*new\s*\(\s*\)", code_source)
+        if constructor is None:
+            return False
+        position = getattr(getattr(getattr(expression, "sourceRange", None),
+                                  "start", None), "offset", None)
+        if position is None or position < constructor.end():
+            return False
+        # The frontend's call graph gives the exact message and target types;
+        # require one literal put before this call and no other method shape.
+        instance = getattr(getattr(getattr(receiver, "symbol", None),
+                                   "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return False
+        calls = []
+        def inspect(node):
+            if type(node).__name__ != "CallExpression":
+                return
+            call_receiver = getattr(node, "thisClass", None)
+            if (type(call_receiver).__name__ == "NamedValueExpression"
+                    and getattr(call_receiver, "symbol", None)
+                    is getattr(receiver, "symbol", None)):
+                offset = getattr(getattr(getattr(node, "sourceRange", None),
+                                         "start", None), "offset", None)
+                if offset is not None and offset >= constructor.end():
+                    calls.append((offset, node))
+        instance.visit(inspect)
+        calls.sort(key=lambda item: item[0])
+        if len(calls) != 2 or calls[-1][1] is not expression:
+            return False
+        put = calls[0][1]
+        if (put.subroutineName != "put" or len(put.arguments) != 1
+                or not _integral_literal_source(put.arguments[0])
+                or not _case_source_expression_ok(put.arguments[0])):
+            return False
+        message = put.arguments[0]
+        return not message.type.isEquivalent(target.type)
+    except Exception:
+        return False
+
+
+def _convert_mailbox_type_mismatch_try_get(sm, expression):
+    if not _mailbox_type_mismatch_try_get(expression):
+        return None
+    return signed_metadata({
+        "kind": "Literal", "span": node_span(sm, expression),
+        "width": 32, "bits": "1" * 32,
+        "mailbox_type_mismatch_try_get": True,
     }, expression.type)
 
 

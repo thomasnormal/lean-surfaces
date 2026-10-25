@@ -7505,3 +7505,21 @@ On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
 remains **2,937** and `ExpressionStatement:CallExpression` remains **2,911**.
 Differential coverage grows **198/193/0/5 → 199/194/0/5** with no
 disagreements; grammar coverage remains **216/89/127**.
+
+## Untyped mailbox type-mismatch `try_get()` — 2026-10-25
+
+An untyped mailbox with one literal message now lowers
+`try_get(destination)` to the signed 32-bit negative result required by IEEE
+1800-2023 §15.4.6 when the destination type is not equivalent to the queued
+message type. The message is not consumed and no destination value is
+published in the flat state. Typed mailboxes, aliases, dynamic messages,
+multiple or reordered operations, and equivalent destination types remain
+loud. The `mailbox_type_mismatch` fixture supplies the differential witness
+and Lean receipt.
+
+On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
+**5,019 → 5,020** and partial files **16,967 → 16,966** (67 include skips).
+`CallExpression` falls **2,871 → 2,870** while `AssignmentExpression:target`
+remains **2,937** and `ExpressionStatement:CallExpression` remains **2,911**.
+Differential coverage grows **199/194/0/5 → 200/195/0/5** with no
+disagreements; grammar coverage remains **216/89/127**.

@@ -1709,6 +1709,31 @@ def callableLocalComputedInitializationStatementFrameWitness : Bool :=
 
 #guard callableLocalComputedInitializationStatementFrameWitness
 
+private def localChainedInitializationStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let secondInitializer : Expression :=
+    .binary .add (.read (handle "0x11")) (.literal (signed 4))
+  let function := {base with body := .block (.sequence
+    (.automatic {
+      statement := .declare (handle "0x11") intType intType (.literal (signed 3))
+      declarations := [handle "0x11"]})
+    (.sequence
+      (.automatic {
+        statement := .declare (handle "0x12") intType intType secondInitializer
+        declarations := [handle "0x12"]})
+      (.return_ {
+        expression := .parameter (handle "0x12")
+        sourceType := intType
+        type := intType})))}
+  match evaluateCallableObject 64 .lp64 function [signed 7] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
+def callableLocalChainedInitializationStatementFrameWitness : Bool :=
+  localChainedInitializationStatementFrame
+
+#guard callableLocalChainedInitializationStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

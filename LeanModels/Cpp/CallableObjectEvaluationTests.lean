@@ -1010,6 +1010,23 @@ def callableIntegerLiteralFrameWitness : Bool := integerLiteralFrame
 
 #guard callableIntegerLiteralFrameWitness
 
+private def unsignedIntegerLiteralFrame : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .builtin .unsignedInt, parameters := [], variadic := false}
+    parameters := []
+    body := .block (.return_ {
+      expression := .integer 7
+      sourceType := .builtin .unsignedInt
+      type := .builtin .unsignedInt})}
+  match evaluateCallableObject 32 .lp64 function [] with
+  | .ok (.ok value) => value == ⟨.unsigned 32, 7⟩
+  | _ => false
+
+def callableUnsignedIntegerLiteralFrameWitness : Bool := unsignedIntegerLiteralFrame
+
+#guard callableUnsignedIntegerLiteralFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

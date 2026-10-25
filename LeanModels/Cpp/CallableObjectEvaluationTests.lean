@@ -1257,6 +1257,22 @@ def callableCompoundAssignStatementFrameWitness : Bool := compoundAssignStatemen
 
 #guard callableCompoundAssignStatementFrameWitness
 
+private def blockScopeStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let function := {base with body := .block (.sequence
+    (.block (automaticLiteral "0x11" 3))
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 32 .lp64 function [signed 7] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
+def callableBlockScopeStatementFrameWitness : Bool := blockScopeStatementFrame
+
+#guard callableBlockScopeStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

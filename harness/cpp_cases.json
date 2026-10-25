@@ -6361,6 +6361,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-block-scope-direct",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableBlockScopeStatementFrameWitness",
+    "cpp_source": "int block_scope_statement_frame_witness(int value) { { int local = 3; } return value; } bool callable_witness() { return block_scope_statement_frame_witness(7) == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

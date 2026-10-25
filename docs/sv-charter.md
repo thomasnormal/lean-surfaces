@@ -7691,3 +7691,18 @@ and partial files **16,923 → 16,921** (67 include skips). `CallExpression` fal
 `ExpressionStatement:CallExpression` remains **2,909**. Differential coverage
 grows **208/203/0/5 → 209/204/0/5** with no disagreements; grammar coverage
 remains **217/90/127**.
+
+## Enum `.name()` string values — 2026-10-25
+
+The self-check tier now lowers `enum.name()` to an exact declaration-spelling
+string value selected from the enum's declaration-order members. A value that
+does not match a declared member returns the standard empty string. The
+`enum_name_method` fixture exercises the rendered name; string comparisons,
+dynamic string storage, and symbolic-mode enum calls remain loud.
+
+On the refreshed **22,054-path** census, clean files move **5,067 → 5,077**
+and partial files **16,920 → 16,910** (67 include skips). `CallExpression` falls
+**2,827 → 2,799** while `AssignmentExpression:target` remains **2,937** and
+`ExpressionStatement:CallExpression` remains **2,909**. Differential coverage
+grows **210/205/0/5 → 211/206/0/5** with no disagreements; grammar coverage
+remains **217/90/127**.

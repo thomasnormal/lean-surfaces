@@ -41,6 +41,20 @@ The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
 matched all 200 fixed-seed sample classifications.
 
+## Enum `.name()` values — 2026-10-25
+
+Enum `.name()` calls now lower to exact declaration-spelling string values in
+the self-check embedding. The lookup is source-pure and returns the standard
+empty string for a value outside the declaration; dynamic string operations and
+array methods remain loud. The `enum_name_method` fixture covers both the
+integral branch and the rendered name.
+
+The refreshed **22,054-path** census moves **5,067 → 5,077 clean** and
+**16,920 → 16,910 partial** (67 include skips); `CallExpression` falls
+**2,827 → 2,799**. Differential coverage grows **210/205/0/5 → 211/206/0/5**
+with no disagreements, and grammar coverage remains **217 witnesses, 90 MATCH,
+and 127 REFUSE**.
+
 ## Discarded empty queue pops — 2026-10-25
 
 Statement-position `void'(q.pop_front())` and `void'(q.pop_back())` now lower

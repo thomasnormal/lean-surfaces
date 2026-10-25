@@ -214,6 +214,9 @@ inductive SExpr where
   | compoundRead (width : Nat) (descending indexSigned : Bool) (value index : SExpr)
   | bitQuery (query : BitQuery) (operand : SExpr) (controls : Array SExpr)
   | clog2 (operand : SExpr)
+  /-- A declaration-order enum `.name()` result. The selected string keeps
+  its exact byte width, so `%s` does not inherit padding from another member. -/
+  | enumName (subject : SExpr) (cases : Array (LVec × String)) (default : String)
 deriving Repr, BEq, Inhabited
 
 /-- Collapse-aware constructors: keep pure-M0 subtrees as single `.m0`
@@ -233,6 +236,9 @@ def SExpr.mkTernary : SExpr → SExpr → SExpr → SExpr
 def SExpr.mkConcat (parts : Array SExpr) : SExpr :=
   let m0s := parts.filterMap fun p => match p with | .m0 e => some e | _ => none
   if m0s.size == parts.size then .m0 (.concat m0s) else .concat parts
+
+private def asciiVec (text : String) : LVec :=
+  LVec.concatMany (text.toList.toArray.map fun c => LVec.ofNat 8 c.toNat)
 
 /-! ## Self-check statements -/
 
@@ -573,6 +579,11 @@ def evalSExpr (fuel : Nat) (st : SvState) (e : SExpr) : Res LVec :=
         return evalBitQuery query value selected
     | .clog2 operand => do
         evalClog2 (← evalSExpr fuel st operand)
+    | .enumName subject cases default => do
+        let value ← evalSExpr fuel st subject
+        let text := (cases.toList.find? (fun entry =>
+          LVec.eqCase value entry.1 == .l1)).map (·.2) |>.getD default
+        return asciiVec text
     | .ternary c t f => do
         let cv ← evalSExpr fuel st c
         let tv ← evalSExpr fuel st t
@@ -1195,6 +1206,17 @@ partial def parseSExpr (j : Json) : Except String SExpr := do
         .error "invalid bit-vector query control arity"
       else
         return .bitQuery query (← parseSExpr (← getF j "operand")) controls
+  | "EnumName" =>
+      let cases ← (← getArrF j "cases").mapM fun item => do
+        let valueJson ← getF item "value"
+        let width ← getNatF valueJson "width"
+        let bits ← getStrF valueJson "bits"
+        let value ← match LVec.ofBinLit? width bits with
+          | some value => pure value
+          | none => throw s!"EnumName: bad bits string {bits.quote}"
+        return (value, ← getStrF item "name")
+      return .enumName (← parseSExpr (← getF j "subject")) cases
+        (← getStrF j "default")
   | "SelectRead" =>
       return .selectRead (← getNatF j "width")
         (← getBoolF j "descending") (← getBoolF j "index_signed")

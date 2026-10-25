@@ -1228,6 +1228,36 @@ def _convert_enum_method(sm, expression):
     method = expression.subroutineName
     enum_type = receiver.type.canonicalType
     members = _enum_members(enum_type)
+    if method == "name":
+        if len(arguments) != 1 or not members:
+            return unsupported(sm, expression, "EnumMethod:signature")
+        subject = convert_expr(sm, receiver)
+        if subject is None or not _case_expression_ok(subject):
+            return unsupported(sm, expression, "EnumMethod:operand")
+        cases = []
+        for member in members:
+            value = member.value.value
+            width, _, reason = type_width_2s(receiver.type)
+            if (reason is not None or type(value).__name__ != "SVInt"
+                    or value.bitWidth != width):
+                return unsupported(sm, expression, "EnumMethod:member-type")
+            cases.append({
+                "value": {
+                    "kind": "Literal",
+                    "span": node_span(sm, expression),
+                    "width": width,
+                    "bits": svint_bits(value),
+                },
+                "name": member.name,
+            })
+        return {
+            "kind": "EnumName",
+            "span": node_span(sm, expression),
+            "subject": subject,
+            "cases": cases,
+            "default": "",
+            "enum_name_lowered": True,
+        }
     width, _, reason = type_width_2s(receiver.type)
     expected = (32, True) if method == "num" else (width, bool(receiver.type.isSigned))
     if (reason is not None or not members
@@ -6742,7 +6772,7 @@ def _convert_legacy_call(sm, expression):
             (_dynamic_cast_call, _convert_dynamic_cast),
             (_isunbounded_call, _convert_isunbounded),
             (_array_reduction_call, _convert_array_reduction),
-            (_enum_method_call, _convert_enum_method),
+            (lambda e: _enum_method_call(e, include_name=True), _convert_enum_method),
             (_clog2_call, _convert_clog2),
             (_dimension_query_call, _convert_dimension_query),
             (_empty_dynamic_bits_query, _convert_empty_dynamic_bits_query),
@@ -11741,7 +11771,8 @@ def _case_skip_call_purity(node, packed_members):
         return _array_reduction_source_ok(node)
     if _SYM is None and _string_literal_getc_method(node):
         return True
-    if type(node).__name__ == "CallExpression" and _enum_method_call(node):
+    if (type(node).__name__ == "CallExpression"
+            and _enum_method_call(node, include_name=True)):
         return _SYM is None and all(
             _case_source_expression_ok(argument, packed_members=True)
             for argument in node.arguments)

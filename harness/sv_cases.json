@@ -1889,6 +1889,17 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "enum_name_method",
+      "file": "Examples/system-verilog/enum_name_method/enum_name_method.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "name=BLUE",
+        "unknown=''"
+      ],
+      "expect": "match"
     }
   ]
 }

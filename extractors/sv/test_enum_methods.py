@@ -98,6 +98,16 @@ class EnumNumericMethods(unittest.TestCase):
         self.assertFalse(methods(design))
         self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
 
+    def test_name_in_display_is_a_string_value(self):
+        design = lower(
+            "module top; " + DECL
+            + ' initial $display("%s", value.name()); endmodule')
+        names = [n for n in nodes(design) if n.get("enum_name_lowered")]
+        self.assertEqual(len(names), 1)
+        self.assertEqual(names[0]["kind"], "EnumName")
+        self.assertEqual([case["name"] for case in names[0]["cases"]], ["A", "B", "C"])
+        self.assertEqual(names[0]["default"], "")
+
     def test_frontend_error_is_a_design_barrier(self):
         design = lower(source("value.first()", DECL + " int bad=missing;"), require_valid=False)
         self.assertTrue(any(n.get("sv_kind") == "EnumMethod:invalid-compilation" for n in nodes(design)))

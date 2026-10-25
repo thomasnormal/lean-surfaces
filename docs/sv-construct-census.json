@@ -24,7 +24,7 @@
    ],
    [
     "CallExpression",
-    2827
+    2799
    ],
    [
     "Hierarchy:ports",
@@ -980,8 +980,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5067,
-   "partial": 16920,
+   "clean": 5077,
+   "partial": 16910,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1042,7 +1042,7 @@
     52
    ],
    "simulation": [
-    4379,
+    4389,
     18685
    ],
    "simulation elaboration": [
@@ -1235,9 +1235,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 553,
-    "clean": 488,
-    "partial": 555,
+    "blocked_by_more": 543,
+    "clean": 498,
+    "partial": 545,
     "simulation_tests": 1043,
     "top_residual_blockers": [
      [
@@ -1258,7 +1258,7 @@
      ],
      [
       "VariableDeclStatement:2state",
-      130
+      128
      ],
      [
       "ConversionExpression:width",
@@ -1266,11 +1266,11 @@
      ],
      [
       "CallExpression",
-      124
+      96
      ],
      [
       "TypeAliasType:TypeAlias",
-      83
+      73
      ],
      [
       "InstanceSymbol:Instance",
@@ -1285,12 +1285,12 @@
       47
      ],
      [
-      "TransparentMemberSymbol:TransparentMember",
-      44
-     ],
-     [
       "SubroutineSymbol:Subroutine",
       37
+     ],
+     [
+      "TransparentMemberSymbol:TransparentMember",
+      34
      ],
      [
       "MemberAccessExpression",
@@ -1599,9 +1599,9 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 505,
+    "clean": 515,
     "error": 0,
-    "partial": 682,
+    "partial": 672,
     "skip_include": 0,
     "total": 1187,
     "unlockable": 3

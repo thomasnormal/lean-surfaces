@@ -38,6 +38,9 @@ string macro whose AST value is a literal; dynamic assignments and other string
 methods remain loud. Built-in dynamic-array `.size` accepts the IEEE 5.13
 omission of empty parentheses when one constant `new[N]` allocation is already
 sampled; later resizes and other array operations remain loud.
+Enum `.name()` is also admitted as an exact declaration-spelling string value;
+unknown enum values return the standard empty string. Enum traversal remains
+integral, while string comparisons and dynamic string storage remain loud.
 
 ## Refusal boundary
 
@@ -52,7 +55,7 @@ The residual expression calls need state or effects absent from that surface:
 * `$stime`, `$realtime`, `$timeunit`, and `$timeprecision` need an elapsed-time
   and unit environment beyond the time-zero `$time` rule;
 * other real conversions, string formatting, file/system/coverage calls, and
-  enum/array methods require unsupported value types or external state; and
+  array methods require unsupported value types or external state; and
 * user functions, scope calls, and receiver methods need callable frames,
   hierarchy, or object/aggregate storage.
 

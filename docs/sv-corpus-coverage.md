@@ -4059,3 +4059,17 @@ The fresh **22,049-path** census remains **4,855 clean / 17,128 partial**
 (66 include skips), with `AssignmentExpression:target` at **2,975**.
 Differential coverage moves **153/149/0/4 → 154/150/0/4**; grammar coverage
 remains **214/83/131**.
+
+## Shallow unpacked-union case subjects — 2026-10-25
+
+An ordinary `case` subject may now read a direct equal-width integral member of
+the admitted shallow untagged unpacked-union shape. The subject reuses the
+shared flat cell and the existing case lowering, so a write through one member
+selects a matching item named through another. Tagged, unequal-width, nested,
+effectful, and scheduled subjects remain loud. The
+`unpacked_union_case_member` fixture supplies the differential witness.
+
+The fresh **22,049-path** census remains **4,855 clean / 17,128 partial** (66
+include skips), with `AssignmentExpression:target` at **2,975**. Differential
+coverage moves **154/150/0/4 → 155/151/0/4**; grammar coverage remains
+**214/83/131**.

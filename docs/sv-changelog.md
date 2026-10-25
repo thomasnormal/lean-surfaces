@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.18] — 2026-10-25
+
+The self-check surface now has 155 differential rows: 151 matches, zero
+disagreements, and 4 recorded refusals. The grammar census remains at 214
+pyslang syntax witnesses: 83 MATCH and 131 REFUSE. The 22,049-path corpus
+measures 4,855 clean files, 17,128 partial files, and 66 include skips. This
+release extends shallow untagged unpacked-union support with whole-value copies,
+equality, conditional selection, compound member updates, and ordinary `case`
+subjects, all through the shared flat-cell representation. Tagged, mixed-width,
+nested, scheduled, and other aggregate forms remain loud.
+
 ## [0.1.17] — 2026-10-24
 
 The self-check surface now has 150 differential rows: 146 matches, zero

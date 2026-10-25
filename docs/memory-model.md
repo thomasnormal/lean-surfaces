@@ -1407,7 +1407,10 @@ their fuel and proof obligations are priced separately. The monadic runner
 keeps the wider evaluated-string form.
 Other builtin constructors, keyword or multiple arguments, and non-string
 payloads remain loud. `raise <expr>` of anything but an admitted class name,
-`raise … from`, and the bare re-raise `raise` all refuse loudly. A direct zero-argument
+dynamic exception causes, and the bare re-raise `raise` all refuse loudly.
+The exact `raise N from None` shape lowers to `raise N`: exception causes are
+not observable in this tier, while a dynamic cause remains structured and loud.
+A direct zero-argument
 constructor in raise position (`raise N()`) is lowered at ingestion to
 the same class-identity path as `raise N`; it carries no inspectable
 instance payload. `raise N` maps to

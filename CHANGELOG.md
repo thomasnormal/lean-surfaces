@@ -19,6 +19,8 @@
 - Plain tuples of admitted exception names now share one retained-state handler
   body; dynamic exception expressions, shadowed tuple names, and multiple
   handler suites remain loud.
+- `raise N from None` now lowers to the existing class-identity raise because
+  exception causes are not observable in the tier; dynamic causes remain loud.
 - Function-local value-less annotations now install a static-local marker and
   raise CPython's exact `UnboundLocalError` class and message on an observed
   read, including declarations in skipped branches; harmless no-read forms
@@ -50,6 +52,8 @@ change is listed here under **Changed** or **Removed**.
   matches each member against the existing builtin and user-class tables.
   Dynamic expressions, shadowed names, and multiple handler suites remain
   loud.
+- `raise N from None` now lowers to `raise N`; the tier keeps dynamic exception
+  causes loud because it does not model exception-cause payloads.
 - Single-target `del o.attr` now lowers through the synthetic `<attrdel>`
   operation. The monadic interpreter deletes ordinary instance attributes
   in place and preserves CPython's `AttributeError` for missing and immediate

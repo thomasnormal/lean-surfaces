@@ -9359,7 +9359,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
       -- shadow refuses (CPython would raise the shadow's value).
       (match cause with
        | some _ =>
-         .unsupported "'raise … from …' (exception chaining) is outside the tier (docs/memory-model.md §exceptions)"
+         .unsupported "dynamic 'raise … from …' (exception chaining) is outside the tier (docs/memory-model.md §exceptions)"
        | Option.none =>
          match exc with
          | Option.none =>

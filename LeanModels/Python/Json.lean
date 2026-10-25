@@ -1517,7 +1517,15 @@ mutual
         let t : Expr := .name (yieldFromName n) sp
         return .forStmt t v #[.yieldStmt t sp] #[] sp)
     | .raiseStmt exc cause sp =>
-        return .raiseStmt (← exc.mapM (lowerExpr ctx)) (← cause.mapM (lowerExpr ctx)) sp
+        let cause' ← cause.mapM (lowerExpr ctx)
+        -- `raise N from None` suppresses chaining, but the tier has no
+        -- observable exception-cause payload.  Lower this exact literal
+        -- cause to the existing class-identity raise path; dynamic causes
+        -- remain structured so evaluation can refuse them loudly.
+        let cause' := match cause' with
+          | some (.constant .none _) => Option.none
+          | other => other
+        return .raiseStmt (← exc.mapM (lowerExpr ctx)) cause' sp
     | .assertStmt t m sp =>
         return .assertStmt (← lowerExpr ctx t) (← m.mapM (lowerExpr ctx)) sp
     | .delStmt ns sp => return .delStmt ns sp

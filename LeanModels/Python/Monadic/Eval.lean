@@ -1567,7 +1567,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
       -- shadow's value.
       match cause with
       | some _ =>
-          refuse "'raise … from …' (exception chaining) is outside the tier (docs/memory-model.md §exceptions)"
+          refuse "dynamic 'raise … from …' (exception chaining) is outside the tier (docs/memory-model.md §exceptions)"
       | Option.none =>
         match exc with
         | Option.none =>

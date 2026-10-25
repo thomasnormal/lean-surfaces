@@ -168,7 +168,8 @@ each for 17 more.
   import …` — a user-defined exception class IS admitted today. What is
   left is BUILTIN handler classes, `as` bindings, `else`, bare `except`,
   tuple handlers, `raise <expression>`, `raise C(args)`, bare re-raise,
-  `raise … from …` and `finally`. AGENTS.md still describes exceptions as
+  dynamic `raise … from …` and `finally`; literal `raise N from None` is now
+  lowered to the admitted class-identity raise. AGENTS.md still describes exceptions as
   deferred wholesale; that is stale.
 * **Nine classes are BOUNDARY, not language.** `boundary.*` (7 rows) and
   `firstclass.callable` (4) refuse because `Val` — the observation type
@@ -390,7 +391,7 @@ builtin-ancestor subclass slice are admitted today.
 
 What is left includes exception values and general MROs. `PyErr` is a closed
 enum, so `raise
-C(args)`, `as e`, bare re-raise and `raise … from …` all need an exception
+C(args)`, `as e`, bare re-raise and dynamic `raise … from …` all need an exception
 value and a broader subclass relation for handler matching. The direct
 builtin-ancestor table is explicit and finite; general MROs remain loud.
 `else` and

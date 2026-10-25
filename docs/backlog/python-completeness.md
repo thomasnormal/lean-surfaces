@@ -5121,3 +5121,22 @@ unpriced conversion paths remain unchanged.
 DECIDED: admit the pinned decimal conversion-limit exception for `int(str)`;
 retain loud failure for unpriced conversion boundaries and host-configurable
 limits.
+
+## 2026-10-25-pycomplete-128 — admit `raise N from None`
+
+The exceptions tier carries class identity and an optional measured message,
+but no observable `__cause__` payload. A literal `None` cause therefore has
+the same behavior as an ordinary class-identity raise on this surface. Ingest
+now lowers exactly `raise N from None` to `raise N`; expression-valued causes
+remain structured and loud, preserving evaluation and chaining boundaries.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `exc_lab.raise_from(1)` and `builtin_raise_lab.chained()` match in both interpreters |
+| Lean build | `lake build LeanModels.Python.Json` and `lake build leanmodels-run` pass |
+| Refusal census | `exc_lab.raise_from` removed from `exc.raise`; the remaining dynamic/bare raise rows stay loud |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only literal-`None` exception chaining through ingestion
+lowering; retain loud failure for dynamic causes and bare re-raise until their
+context payload semantics are separately priced.

@@ -4801,6 +4801,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-unsigned-char-compound-shift-left-mid",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableUnsignedCharCompoundShiftLeftFrameWitness",
+    "cpp_source": "unsigned char frame_unsigned_char_compound_shift_left(unsigned char value) { value <<= 1; return value; } bool callable_witness() { return frame_unsigned_char_compound_shift_left(12) == 24; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-signed-overflow-retention",
     "kind": "expression",
     "corpus": "rung-3 witness",

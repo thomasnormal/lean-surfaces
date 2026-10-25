@@ -5245,6 +5245,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-long-long-compound-shift-right-mid",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLongLongCompoundShiftRightFrameWitness",
+    "cpp_source": "long long frame_long_long_compound_shift_right(long long value) { value >>= 1; return value; } bool callable_witness() { return frame_long_long_compound_shift_right(12) == 6; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-int-compound-bitand-mid",
     "kind": "expression",
     "corpus": "rung-3 witness",

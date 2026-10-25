@@ -2040,6 +2040,26 @@ def callableLongLongCompoundShiftLeftFrameWitness : Bool :=
 
 #guard callableLongLongCompoundShiftLeftFrameWitness
 
+private def longLongCompoundShiftRightFrame : Bool :=
+  let base := incrementFunction .longLong "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign ">>=" (handle "0x10")
+      {expression := .integer 1, sourceType := .builtin .longLong,
+        type := .builtin .longLong})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .longLong, type := .builtin .longLong}))}
+  match CallableObjectFrame.start .lp64 function [⟨.signed 64, 12⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.signed 64, 6⟩)
+
+def callableLongLongCompoundShiftRightFrameWitness : Bool :=
+  longLongCompoundShiftRightFrame
+
+#guard callableLongLongCompoundShiftRightFrameWitness
+
 private def intCompoundBitAndFrame : Bool :=
   let base := incrementFunction .int "++" false
   let function := {base with body := .block (.sequence

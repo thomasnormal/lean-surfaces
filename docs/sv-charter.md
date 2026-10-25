@@ -7233,3 +7233,20 @@ partial files **17,020 → 17,017** (66 include skips); `AssignmentExpression:ta
 falls **2,949 → 2,944**, and `VariableSymbol:2state` falls **2,328 → 2,325**.
 Differential coverage grows **183/178/0/5 → 184/179/0/5** with no
 disagreements, and grammar coverage remains **214/83/131**.
+
+## Finite literal array ordering — 2026-10-25
+
+Blocking `sort()` and `rsort()` calls now lower for finite one-dimensional
+integral arrays whose cells are available as a complete literal initializer or
+as one sampled blocking literal write per cell. The extractor orders signed
+literal cells, including unary-negative forms, and emits flat-cell writes for
+the sorted result. Aliases, unknown or effectful values, duplicate writes,
+whole-array uses, with clauses, and unsupported array shapes remain loud.
+The `array_ordering_literals` fixture and Lean receipt cover ascending and
+descending two-state and four-state cells, while extractor tests pin the
+dynamic sampling and refusal edges.
+
+On the refreshed 22,053-path snapshot, clean files move **4,967 → 4,970** and
+partial files **17,017 → 17,016** (67 include skips); the leading
+`AssignmentExpression:target` blocker is **2,945**. Differential coverage grows **184/179/0/5 → 185/180/0/5**
+with no disagreements, and grammar coverage grows **214/83/131 → 214/85/129**.

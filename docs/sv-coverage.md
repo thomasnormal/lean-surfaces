@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 184 | 179 | 0 | 5 | sv-tests-2 declarations |
+| 185 | 180 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -198,6 +198,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `dynamic_array_self_resize` | `Examples/system-verilog/dynamic_array_self_resize/dynamic_array_self_resize.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_new_pattern` | `Examples/system-verilog/dynamic_array_new_pattern/dynamic_array_new_pattern.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_fixed_subarrays` | `Examples/system-verilog/dynamic_array_fixed_subarrays/dynamic_array_fixed_subarrays.sv` | match | **MATCH** | `ok` | MATCH |
+| `array_ordering_literals` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -205,7 +206,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 214 | 83 | 131 | pyslang SyntaxKind |
+| 214 | 85 | 129 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -251,7 +252,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ConditionalPattern` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ConditionalPredicate` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ConditionalStatement` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
-| `SyntaxKind.ConstructorName` | `Examples/system-verilog/dynamic_array_cells/dynamic_array_cells.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ConstructorName` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ContinuousAssign` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.DataDeclaration` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.Declarator` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
@@ -265,7 +266,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.DoWhileStatement` | `Examples/system-verilog/do_while_string_literal/do_while_string_literal.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DriveStrength` | `Examples/system-verilog/constant_strength_driver/constant_strength_driver.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ElementSelect` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
-| `SyntaxKind.ElseClause` | `Examples/system-verilog/array_reverse/array_reverse.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ElseClause` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EmptyIdentifierName` | `Examples/system-verilog/foreach/values.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EmptyQueueExpression` | `Examples/system-verilog/empty_dynamic_array_write/empty_dynamic_array_write.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EmptyStatement` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
@@ -316,7 +317,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.LessThanExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LetDeclaration` | `Examples/system-verilog/let_expressions/binding.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicType` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
-| `SyntaxKind.LogicalAndExpression` | `Examples/system-verilog/array_reverse/array_reverse.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.LogicalAndExpression` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalImplicationExpression` | `Examples/system-verilog/implication/implication.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.LogicalLeftShiftAssignmentExpression` | `Examples/system-verilog/compound_assignments/partial_windows.sv` | **REFUSE** | `unsupported` AssignmentExpression:compound-partial-range |
 | `SyntaxKind.LogicalOrExpression` | `Examples/system-verilog/division/context_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
@@ -339,7 +340,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.NamedParamAssignment` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NamedType` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NetDeclaration` | `Examples/system-verilog/constant_net_array_cell_driver/constant_net_array_cell_driver.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.NewArrayExpression` | `Examples/system-verilog/dynamic_array_cells/dynamic_array_cells.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.NewArrayExpression` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NewClassExpression` | `Examples/system-verilog/literal_semaphore_constructor/literal_semaphore_constructor.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NonblockingAssignmentExpression` | `Examples/system-verilog/array_reductions/timing.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NullLiteralExpression` | `Examples/system-verilog/event_triggered_false/event_triggered_false.sv` | **MATCH** | `ok`  |
@@ -373,7 +374,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ReplicatedAssignmentPattern` | `Examples/system-verilog/assignment_patterns/replicated.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ReturnStatement` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
 | `SyntaxKind.RootScope` | `Examples/system-verilog/printtimescale_scope/printtimescale_scope.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ScopedName` | `Examples/system-verilog/array_reductions/automatic.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
+| `SyntaxKind.ScopedName` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.SequentialBlockStatement` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ShortRealType` | `Examples/system-verilog/floating_bits_query/floating_bits_query.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.SignalEventExpression` | `Examples/system-verilog/always/events.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
@@ -407,7 +408,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.UnaryBitwiseXnorExpression` | `Examples/system-verilog/reductions/reductions.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.UnaryBitwiseXorExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.UnaryLogicalNotExpression` | `Examples/system-verilog/division/context_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
-| `SyntaxKind.UnaryMinusExpression` | `Examples/system-verilog/array_reductions/automatic.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
+| `SyntaxKind.UnaryMinusExpression` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryPlusExpression` | `Examples/system-verilog/unary_plus/arithmetic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryPredecrementExpression` | `Examples/system-verilog/increment/incdec.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryPreincrementExpression` | `Examples/system-verilog/dynamic_cast/source_effect.sv` | **REFUSE** | `unsupported` unsupported expression 'DynamicCast:type-or-effects' |
@@ -430,13 +431,13 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22050 | 4967 | 17017 | 66 |
+| 22053 | 4970 | 17016 | 67 |
 
 | blocker kind | files |
 |---|---:|
-| `ExpressionStatement:CallExpression` | 2945 |
-| `AssignmentExpression:target` | 2944 |
-| `CallExpression` | 2904 |
+| `AssignmentExpression:target` | 2945 |
+| `ExpressionStatement:CallExpression` | 2942 |
+| `CallExpression` | 2906 |
 | `Hierarchy:ports` | 2398 |
 | `VariableSymbol:2state` | 2325 |
 | `SubroutineSymbol:Subroutine` | 1634 |

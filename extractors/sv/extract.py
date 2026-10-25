@@ -7645,6 +7645,209 @@ def _fixed_array_reverse_method(sm, expression):
         return None
 
 
+def _literal_array_order_key(value, width, signed):
+    """Return the integral ordering key for a fully known lowered value."""
+    node = value
+    while isinstance(node, dict) and node.get("kind") == "Squash2":
+        node = node.get("operand")
+    if isinstance(node, dict) and node.get("kind") == "Unary":
+        if node.get("op") not in ("+", "-"):
+            return None
+        inner = _literal_array_order_key(node.get("operand"), width, signed)
+        if inner is None:
+            return None
+        return -inner if node.get("op") == "-" else inner
+    if (not isinstance(node, dict) or node.get("kind") != "Literal"
+            or node.get("width") != width):
+        return None
+    bits = node.get("bits")
+    if (not isinstance(bits, str) or len(bits) != width
+            or any(bit not in "01" for bit in bits)):
+        return None
+    result = int(bits, 2)
+    if signed and bits[0] == "1":
+        result -= 1 << width
+    return result
+
+
+def _fixed_array_ordering_method(sm, expression):
+    """Lower ``sort()``/``rsort()`` for a finite literal integral array.
+
+    The flat state can represent the resulting order exactly when every cell
+    value is known before the method call.  Fixed arrays use their complete
+    literal initializer; sampled dynamic arrays use one blocking literal write
+    per cell after a constant ``new[N]`` allocation.  Whole-array aliases,
+    with-clauses, unknown values, and any other receiver use remain loud.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName not in ("sort", "rsort")
+                or len(expression.arguments) != 1):
+            return None
+        receiver = expression.arguments[0]
+        if type(receiver).__name__ != "NamedValueExpression":
+            return None
+        symbol = getattr(receiver, "symbol", None)
+        if symbol is None:
+            return None
+        array_type = getattr(receiver.type, "canonicalType", receiver.type)
+        kind = type(array_type).__name__
+        if kind == "FixedSizeUnpackedArrayType":
+            shape = _fixed_array_dimensions(array_type, max_cells=128)
+            if shape is None:
+                return None
+            dimensions, leaf_type = shape
+            if len(dimensions) != 1:
+                return None
+            left, right = dimensions[0]
+            count = abs(right - left) + 1
+            dynamic = False
+        elif kind == "DynamicArrayType":
+            count = _dynamic_array_constant_extent(symbol)
+            if count is None or count <= 0 or count > 128:
+                return None
+            left, right = 0, count - 1
+            leaf_type = array_type.elementType
+            dynamic = True
+        else:
+            return None
+        width, two_state, reason = type_width_2s(leaf_type)
+        if width is None or reason is not None or count <= 0:
+            return None
+
+        # No whole-array read, alias, or second ordering operation may observe
+        # the opaque aggregate. Constant element reads remain valid after the
+        # lowered cell writes; the allocation itself is the only whole-array
+        # expression admitted for a dynamic receiver.
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None or not source:
+            return None
+        call_start = getattr(getattr(expression, "sourceRange", None),
+                             "start", None)
+        call_start = getattr(call_start, "offset", None)
+        if call_start is None:
+            return None
+        valid = True
+
+        def inspect_uses(node):
+            nonlocal valid
+            node_kind = type(node).__name__
+            if node_kind == "ElementSelectExpression":
+                value = getattr(node, "value", None)
+                if (type(value).__name__ == "NamedValueExpression"
+                        and getattr(value, "symbol", None) is symbol):
+                    if _constant_dimension_selector(getattr(node, "selector", None)) is None:
+                        valid = False
+                    return VisitAction.Skip
+            if node_kind != "NamedValueExpression" or getattr(node, "symbol", None) is not symbol:
+                return
+            if node is receiver:
+                return
+            end = getattr(getattr(node, "sourceRange", None), "end", None)
+            end = getattr(end, "offset", None)
+            suffix = source[end:].lstrip() if end is not None else ""
+            # A sampled dynamic allocation is the one whole-array write that
+            # creates the flat cells. Declarations have no such expression.
+            if dynamic and re.match(r"(?:=\s*)?new\s*\[", suffix):
+                return
+            valid = False
+
+        instance.visit(inspect_uses)
+        if not valid:
+            return None
+
+        values = None
+        initializer = getattr(symbol, "initializer", None)
+        if initializer is not None:
+            values = _fixed_array_initializer_values(
+                sm, initializer, _array_storage_name(symbol), width, count)
+        if values is None and not dynamic:
+            return None
+
+        if values is None:
+            # Dynamic arrays without a declaration initializer are admitted
+            # only when every cell has exactly one preceding literal write.
+            assignments = {}
+
+            def inspect_assignments(node):
+                if type(node).__name__ != "AssignmentExpression":
+                    return
+                start = getattr(getattr(node, "sourceRange", None), "start", None)
+                start = getattr(start, "offset", None)
+                if start is None or start >= call_start:
+                    return
+                lhs = getattr(node, "left", None)
+                if type(lhs).__name__ != "ElementSelectExpression":
+                    return
+                base = getattr(lhs, "value", None)
+                if (type(base).__name__ != "NamedValueExpression"
+                        or getattr(base, "symbol", None) is not symbol):
+                    return
+                position = _constant_dimension_selector(getattr(lhs, "selector", None))
+                if position is None or position < 0 or position >= count:
+                    return
+                if (node.op is not None or node.isNonBlocking
+                        or node.timingControl is not None):
+                    assignments[position] = None
+                    return
+                if not _case_source_expression_ok(node.right, packed_members=True):
+                    assignments[position] = None
+                    return
+                value = convert_expr(sm, node.right)
+                if (value is None or value.get("kind") == "Unsupported"
+                        or width_of(value) != width
+                        or not _case_expression_ok(value)):
+                    assignments[position] = None
+                    return
+                # Duplicate writes make source-order execution observable;
+                # require one assignment per cell in this static slice.
+                if position in assignments:
+                    assignments[position] = None
+                else:
+                    assignments[position] = value
+
+            instance.visit(inspect_assignments)
+            if (set(assignments) != set(range(count))
+                    or any(value is None for value in assignments.values())):
+                return None
+            values = [assignments[position] for position in range(count)]
+
+        if (values is None or len(values) != count
+                or any(value is None for value in values)):
+            return None
+        keyed = []
+        for value in values:
+            key = _literal_array_order_key(value, width, bool(leaf_type.isSigned))
+            if key is None:
+                return None
+            keyed.append((key, value))
+        ordered = [value for _key, value in sorted(
+            keyed, key=lambda item: item[0],
+            reverse=expression.subroutineName == "rsort")]
+        step = 1 if right >= left else -1
+        statements = []
+        for position, value in zip(range(left, right + step, step), ordered):
+            if two_state:
+                value = squash2_wrap(value, width)
+            statements.append({
+                "kind": "BlockingAssign",
+                "span": node_span(sm, expression),
+                "target": {"kind": "Ident", "span": node_span(sm, receiver),
+                           "width": width,
+                           "name": f"{_array_storage_name(symbol)}[{position}]"},
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expression),
+                "stmts": statements,
+                "fixed_array_ordering_lowered": expression.subroutineName}
+    except Exception:
+        return None
+
+
 def _literal_integral_value(expression):
     """Read a small literal integral expression without evaluating source code.
 
@@ -11345,6 +11548,10 @@ def _convert_syscall(sm, s, e):
         reversed_array = _fixed_array_reverse_method(sm, e)
         if reversed_array is not None:
             return reversed_array
+    if _SYM is None and e.isSystemCall and e.subroutineName in ("sort", "rsort"):
+        ordered_array = _fixed_array_ordering_method(sm, e)
+        if ordered_array is not None:
+            return ordered_array
     if _SYM is None and e.isSystemCall and e.subroutineName == "$sformat":
         literal_assignment = _sformat_literal_assignment(sm, e)
         if literal_assignment is not None:

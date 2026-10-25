@@ -69,6 +69,51 @@ class ArrayReverse(unittest.TestCase):
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))
 
+    def test_literal_dynamic_array_sort_and_rsort_lower_to_cell_writes(self):
+        design = lower(
+            """module top;
+               int ascending[];
+               int descending[];
+               initial begin
+                 ascending = new[4];
+                 descending = new[4];
+                 ascending[0] = 4; ascending[1] = 1;
+                 ascending[2] = 3; ascending[3] = 2;
+                 descending[0] = 4; descending[1] = 1;
+                 descending[2] = 3; descending[3] = 2;
+                 ascending.sort();
+                 descending.rsort();
+               end
+               endmodule""")
+        lowered = [node for node in nodes(design)
+                   if node.get("fixed_array_ordering_lowered")]
+        self.assertEqual([node["fixed_array_ordering_lowered"] for node in lowered],
+                         ["sort", "rsort"])
+        self.assertEqual(
+            [[write["value"]["operand"]["bits"] for write in node["stmts"]]
+             for node in lowered],
+            [[format(value, "032b") for value in (1, 2, 3, 4)],
+             [format(value, "032b") for value in (4, 3, 2, 1)]])
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_dynamic_array_sort_with_unknown_cell_stays_loud(self):
+        design = lower(
+            """module top;
+               int values[];
+               int source;
+               initial begin
+                 values = new[2];
+                 values[0] = source;
+                 values[1] = 2;
+                 values.sort();
+               end
+               endmodule""")
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,1288 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv",
+  "source_sha256": "96735e47aa5b4f68e40f64684007179b7cd5ead0971e2de4be36092eae77a050",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 8,
+          "col": 1,
+          "end_line": 34,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 7,
+              "end_line": 9,
+              "end_col": 18
+            },
+            "name": "ascending[0]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 7,
+              "end_line": 9,
+              "end_col": 18
+            },
+            "name": "ascending[1]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 7,
+              "end_line": 9,
+              "end_col": 18
+            },
+            "name": "ascending[2]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 7,
+              "end_line": 9,
+              "end_col": 18
+            },
+            "name": "ascending[3]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 10,
+              "col": 7,
+              "end_line": 10,
+              "end_col": 19
+            },
+            "name": "descending[0]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 10,
+              "col": 7,
+              "end_line": 10,
+              "end_col": 19
+            },
+            "name": "descending[1]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 10,
+              "col": 7,
+              "end_line": 10,
+              "end_col": 19
+            },
+            "name": "descending[2]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 10,
+              "col": 7,
+              "end_line": 10,
+              "end_col": 19
+            },
+            "name": "descending[3]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 12,
+              "col": 3,
+              "end_line": 33,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 12,
+                "col": 11,
+                "end_line": 33,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 23
+                  },
+                  "dynamic_array_allocation_lowered": true
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 24
+                  },
+                  "dynamic_array_allocation_lowered": true
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 22
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 15,
+                      "col": 5,
+                      "end_line": 15,
+                      "end_col": 17
+                    },
+                    "width": 32,
+                    "name": "ascending[0]"
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 15,
+                        "col": 20,
+                        "end_line": 15,
+                        "end_col": 21
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000101"
+                    }
+                  },
+                  "dynamic_array_cell_lowered": true
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 16,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 23
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 16,
+                      "col": 5,
+                      "end_line": 16,
+                      "end_col": 17
+                    },
+                    "width": 32,
+                    "name": "ascending[1]"
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Unary",
+                      "span": {
+                        "line": 16,
+                        "col": 20,
+                        "end_line": 16,
+                        "end_col": 22
+                      },
+                      "width": 32,
+                      "op": "-",
+                      "operand": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 16,
+                          "col": 21,
+                          "end_line": 16,
+                          "end_col": 22
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000010"
+                      }
+                    }
+                  },
+                  "dynamic_array_cell_lowered": true
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 22
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 17,
+                      "col": 5,
+                      "end_line": 17,
+                      "end_col": 17
+                    },
+                    "width": 32,
+                    "name": "ascending[2]"
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 17,
+                        "col": 20,
+                        "end_line": 17,
+                        "end_col": 21
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000011"
+                    }
+                  },
+                  "dynamic_array_cell_lowered": true
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 18,
+                    "col": 5,
+                    "end_line": 18,
+                    "end_col": 22
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 18,
+                      "col": 5,
+                      "end_line": 18,
+                      "end_col": 17
+                    },
+                    "width": 32,
+                    "name": "ascending[3]"
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 18,
+                        "col": 20,
+                        "end_line": 18,
+                        "end_col": 21
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000001"
+                    }
+                  },
+                  "dynamic_array_cell_lowered": true
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 19,
+                    "col": 5,
+                    "end_line": 19,
+                    "end_col": 23
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 19,
+                      "col": 5,
+                      "end_line": 19,
+                      "end_col": 18
+                    },
+                    "width": 32,
+                    "name": "descending[0]"
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 19,
+                        "col": 21,
+                        "end_line": 19,
+                        "end_col": 22
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000101"
+                    }
+                  },
+                  "dynamic_array_cell_lowered": true
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 20,
+                    "col": 5,
+                    "end_line": 20,
+                    "end_col": 24
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 20,
+                      "col": 5,
+                      "end_line": 20,
+                      "end_col": 18
+                    },
+                    "width": 32,
+                    "name": "descending[1]"
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Unary",
+                      "span": {
+                        "line": 20,
+                        "col": 21,
+                        "end_line": 20,
+                        "end_col": 23
+                      },
+                      "width": 32,
+                      "op": "-",
+                      "operand": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 20,
+                          "col": 22,
+                          "end_line": 20,
+                          "end_col": 23
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000010"
+                      }
+                    }
+                  },
+                  "dynamic_array_cell_lowered": true
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 21,
+                    "col": 5,
+                    "end_line": 21,
+                    "end_col": 23
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 21,
+                      "col": 5,
+                      "end_line": 21,
+                      "end_col": 18
+                    },
+                    "width": 32,
+                    "name": "descending[2]"
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 21,
+                        "col": 21,
+                        "end_line": 21,
+                        "end_col": 22
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000011"
+                    }
+                  },
+                  "dynamic_array_cell_lowered": true
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 22,
+                    "col": 5,
+                    "end_line": 22,
+                    "end_col": 23
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 22,
+                      "col": 5,
+                      "end_line": 22,
+                      "end_col": 18
+                    },
+                    "width": 32,
+                    "name": "descending[3]"
+                  },
+                  "value": {
+                    "kind": "Squash2",
+                    "span": null,
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 22,
+                        "col": 21,
+                        "end_line": 22,
+                        "end_col": 22
+                      },
+                      "width": 32,
+                      "bits": "00000000000000000000000000000001"
+                    }
+                  },
+                  "dynamic_array_cell_lowered": true
+                },
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 23,
+                    "col": 5,
+                    "end_line": 23,
+                    "end_col": 21
+                  },
+                  "stmts": [
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 23,
+                        "col": 5,
+                        "end_line": 23,
+                        "end_col": 21
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 23,
+                          "col": 5,
+                          "end_line": 23,
+                          "end_col": 14
+                        },
+                        "width": 32,
+                        "name": "ascending[0]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Unary",
+                          "span": {
+                            "line": 16,
+                            "col": 20,
+                            "end_line": 16,
+                            "end_col": 22
+                          },
+                          "width": 32,
+                          "op": "-",
+                          "operand": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 16,
+                              "col": 21,
+                              "end_line": 16,
+                              "end_col": 22
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000010"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 23,
+                        "col": 5,
+                        "end_line": 23,
+                        "end_col": 21
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 23,
+                          "col": 5,
+                          "end_line": 23,
+                          "end_col": 14
+                        },
+                        "width": 32,
+                        "name": "ascending[1]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 18,
+                            "col": 20,
+                            "end_line": 18,
+                            "end_col": 21
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000001"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 23,
+                        "col": 5,
+                        "end_line": 23,
+                        "end_col": 21
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 23,
+                          "col": 5,
+                          "end_line": 23,
+                          "end_col": 14
+                        },
+                        "width": 32,
+                        "name": "ascending[2]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 17,
+                            "col": 20,
+                            "end_line": 17,
+                            "end_col": 21
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000011"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 23,
+                        "col": 5,
+                        "end_line": 23,
+                        "end_col": 21
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 23,
+                          "col": 5,
+                          "end_line": 23,
+                          "end_col": 14
+                        },
+                        "width": 32,
+                        "name": "ascending[3]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 15,
+                            "col": 20,
+                            "end_line": 15,
+                            "end_col": 21
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000101"
+                        }
+                      }
+                    }
+                  ],
+                  "fixed_array_ordering_lowered": "sort"
+                },
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 24,
+                    "col": 5,
+                    "end_line": 24,
+                    "end_col": 23
+                  },
+                  "stmts": [
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 24,
+                        "col": 5,
+                        "end_line": 24,
+                        "end_col": 23
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 24,
+                          "col": 5,
+                          "end_line": 24,
+                          "end_col": 15
+                        },
+                        "width": 32,
+                        "name": "descending[0]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 19,
+                            "col": 21,
+                            "end_line": 19,
+                            "end_col": 22
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000101"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 24,
+                        "col": 5,
+                        "end_line": 24,
+                        "end_col": 23
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 24,
+                          "col": 5,
+                          "end_line": 24,
+                          "end_col": 15
+                        },
+                        "width": 32,
+                        "name": "descending[1]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 21,
+                            "col": 21,
+                            "end_line": 21,
+                            "end_col": 22
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000011"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 24,
+                        "col": 5,
+                        "end_line": 24,
+                        "end_col": 23
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 24,
+                          "col": 5,
+                          "end_line": 24,
+                          "end_col": 15
+                        },
+                        "width": 32,
+                        "name": "descending[2]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 22,
+                            "col": 21,
+                            "end_line": 22,
+                            "end_col": 22
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000001"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 24,
+                        "col": 5,
+                        "end_line": 24,
+                        "end_col": 23
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 24,
+                          "col": 5,
+                          "end_line": 24,
+                          "end_col": 15
+                        },
+                        "width": 32,
+                        "name": "descending[3]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Unary",
+                          "span": {
+                            "line": 20,
+                            "col": 21,
+                            "end_line": 20,
+                            "end_col": 23
+                          },
+                          "width": 32,
+                          "op": "-",
+                          "operand": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 20,
+                              "col": 22,
+                              "end_line": 20,
+                              "end_col": 23
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000010"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "fixed_array_ordering_lowered": "rsort"
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 25,
+                    "col": 5,
+                    "end_line": 31,
+                    "end_col": 24
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 25,
+                      "col": 9,
+                      "end_line": 28,
+                      "end_col": 50
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 25,
+                        "col": 9,
+                        "end_line": 28,
+                        "end_col": 27
+                      },
+                      "width": 1,
+                      "op": "&&",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 25,
+                          "col": 9,
+                          "end_line": 27,
+                          "end_col": 49
+                        },
+                        "width": 1,
+                        "op": "&&",
+                        "left": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 25,
+                            "col": 9,
+                            "end_line": 27,
+                            "end_col": 27
+                          },
+                          "width": 1,
+                          "op": "&&",
+                          "left": {
+                            "kind": "Binary",
+                            "span": {
+                              "line": 25,
+                              "col": 9,
+                              "end_line": 26,
+                              "end_col": 47
+                            },
+                            "width": 1,
+                            "op": "&&",
+                            "left": {
+                              "kind": "Binary",
+                              "span": {
+                                "line": 25,
+                                "col": 9,
+                                "end_line": 26,
+                                "end_col": 26
+                              },
+                              "width": 1,
+                              "op": "&&",
+                              "left": {
+                                "kind": "Binary",
+                                "span": {
+                                  "line": 25,
+                                  "col": 9,
+                                  "end_line": 25,
+                                  "end_col": 48
+                                },
+                                "width": 1,
+                                "op": "&&",
+                                "left": {
+                                  "kind": "Binary",
+                                  "span": {
+                                    "line": 25,
+                                    "col": 9,
+                                    "end_line": 25,
+                                    "end_col": 27
+                                  },
+                                  "width": 1,
+                                  "op": "==",
+                                  "left": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 25,
+                                      "col": 9,
+                                      "end_line": 25,
+                                      "end_col": 21
+                                    },
+                                    "width": 32,
+                                    "name": "ascending[0]",
+                                    "signed": true
+                                  },
+                                  "right": {
+                                    "kind": "Unary",
+                                    "span": {
+                                      "line": 25,
+                                      "col": 25,
+                                      "end_line": 25,
+                                      "end_col": 27
+                                    },
+                                    "width": 32,
+                                    "op": "-",
+                                    "operand": {
+                                      "kind": "Literal",
+                                      "span": {
+                                        "line": 25,
+                                        "col": 26,
+                                        "end_line": 25,
+                                        "end_col": 27
+                                      },
+                                      "width": 32,
+                                      "bits": "00000000000000000000000000000010"
+                                    }
+                                  }
+                                },
+                                "right": {
+                                  "kind": "Binary",
+                                  "span": {
+                                    "line": 25,
+                                    "col": 31,
+                                    "end_line": 25,
+                                    "end_col": 48
+                                  },
+                                  "width": 1,
+                                  "op": "==",
+                                  "left": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 25,
+                                      "col": 31,
+                                      "end_line": 25,
+                                      "end_col": 43
+                                    },
+                                    "width": 32,
+                                    "name": "ascending[1]",
+                                    "signed": true
+                                  },
+                                  "right": {
+                                    "kind": "Literal",
+                                    "span": {
+                                      "line": 25,
+                                      "col": 47,
+                                      "end_line": 25,
+                                      "end_col": 48
+                                    },
+                                    "width": 32,
+                                    "bits": "00000000000000000000000000000001"
+                                  }
+                                }
+                              },
+                              "right": {
+                                "kind": "Binary",
+                                "span": {
+                                  "line": 26,
+                                  "col": 9,
+                                  "end_line": 26,
+                                  "end_col": 26
+                                },
+                                "width": 1,
+                                "op": "==",
+                                "left": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 26,
+                                    "col": 9,
+                                    "end_line": 26,
+                                    "end_col": 21
+                                  },
+                                  "width": 32,
+                                  "name": "ascending[2]",
+                                  "signed": true
+                                },
+                                "right": {
+                                  "kind": "Literal",
+                                  "span": {
+                                    "line": 26,
+                                    "col": 25,
+                                    "end_line": 26,
+                                    "end_col": 26
+                                  },
+                                  "width": 32,
+                                  "bits": "00000000000000000000000000000011"
+                                }
+                              }
+                            },
+                            "right": {
+                              "kind": "Binary",
+                              "span": {
+                                "line": 26,
+                                "col": 30,
+                                "end_line": 26,
+                                "end_col": 47
+                              },
+                              "width": 1,
+                              "op": "==",
+                              "left": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 26,
+                                  "col": 30,
+                                  "end_line": 26,
+                                  "end_col": 42
+                                },
+                                "width": 32,
+                                "name": "ascending[3]",
+                                "signed": true
+                              },
+                              "right": {
+                                "kind": "Literal",
+                                "span": {
+                                  "line": 26,
+                                  "col": 46,
+                                  "end_line": 26,
+                                  "end_col": 47
+                                },
+                                "width": 32,
+                                "bits": "00000000000000000000000000000101"
+                              }
+                            }
+                          },
+                          "right": {
+                            "kind": "Binary",
+                            "span": {
+                              "line": 27,
+                              "col": 9,
+                              "end_line": 27,
+                              "end_col": 27
+                            },
+                            "width": 1,
+                            "op": "==",
+                            "left": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 27,
+                                "col": 9,
+                                "end_line": 27,
+                                "end_col": 22
+                              },
+                              "width": 32,
+                              "name": "descending[0]",
+                              "signed": true
+                            },
+                            "right": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 27,
+                                "col": 26,
+                                "end_line": 27,
+                                "end_col": 27
+                              },
+                              "width": 32,
+                              "bits": "00000000000000000000000000000101"
+                            }
+                          }
+                        },
+                        "right": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 27,
+                            "col": 31,
+                            "end_line": 27,
+                            "end_col": 49
+                          },
+                          "width": 1,
+                          "op": "==",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 27,
+                              "col": 31,
+                              "end_line": 27,
+                              "end_col": 44
+                            },
+                            "width": 32,
+                            "name": "descending[1]",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 27,
+                              "col": 48,
+                              "end_line": 27,
+                              "end_col": 49
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000011"
+                          }
+                        }
+                      },
+                      "right": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 28,
+                          "col": 9,
+                          "end_line": 28,
+                          "end_col": 27
+                        },
+                        "width": 1,
+                        "op": "==",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 28,
+                            "col": 9,
+                            "end_line": 28,
+                            "end_col": 22
+                          },
+                          "width": 32,
+                          "name": "descending[2]",
+                          "signed": true
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 28,
+                            "col": 26,
+                            "end_line": 28,
+                            "end_col": 27
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000001"
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 28,
+                        "col": 31,
+                        "end_line": 28,
+                        "end_col": 50
+                      },
+                      "width": 1,
+                      "op": "==",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 28,
+                          "col": 31,
+                          "end_line": 28,
+                          "end_col": 44
+                        },
+                        "width": 32,
+                        "name": "descending[3]",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Unary",
+                        "span": {
+                          "line": 28,
+                          "col": 48,
+                          "end_line": 28,
+                          "end_col": 50
+                        },
+                        "width": 32,
+                        "op": "-",
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 28,
+                            "col": 49,
+                            "end_line": 28,
+                            "end_col": 50
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000010"
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 29,
+                      "col": 7,
+                      "end_line": 29,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 31,
+                      "col": 7,
+                      "end_line": 31,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 32,
+                    "col": 5,
+                    "end_line": 32,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

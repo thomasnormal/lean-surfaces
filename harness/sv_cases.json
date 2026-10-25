@@ -1655,6 +1655,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "array_ordering_literals",
+      "file": "Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

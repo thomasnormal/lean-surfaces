@@ -7423,3 +7423,19 @@ On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
 `CallExpression` falls **2,902 → 2,888**; `AssignmentExpression:target` remains
 **2,937**. Differential coverage grows **193/188/0/5 → 194/189/0/5** with no
 disagreements; grammar coverage grows **216/88/128 → 216/89/127**.
+
+## Empty queue literal initializer `.size()` — 2026-10-25
+
+An integral queue initialized by the empty queue literal now answers `.size()`
+with the exact zero value, alongside the existing uninitialized queue and
+empty-write cases. Nonempty initializers, later queue mutations, aliases, and
+other queue observations remain loud because the flat self-check state carries
+no queue object. `queue_empty_init` supplies the differential witness, while
+the size-query regressions cover both procedural and module-scope declarations.
+
+On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
+**5,008 → 5,009** and partial files **16,978 → 16,977** (67 include skips).
+`CallExpression` falls **2,888 → 2,887**; `ExpressionStatement:CallExpression`
+remains **2,911** and `AssignmentExpression:target` remains **2,937**.
+Differential coverage grows **194/189/0/5 → 195/190/0/5** with no
+disagreements; grammar coverage remains **216/89/127**.

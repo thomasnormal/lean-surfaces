@@ -1738,6 +1738,15 @@
       "expect": "match"
     },
     {
+      "name": "queue_empty_init",
+      "file": "Examples/system-verilog/queue_empty_init/queue_empty_init.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "semaphore_negative_try_get",
       "file": "Examples/system-verilog/semaphore_negative_try_get/semaphore_negative_try_get.sv",
       "module": "top",

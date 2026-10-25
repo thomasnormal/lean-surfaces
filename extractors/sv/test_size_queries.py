@@ -35,6 +35,25 @@ class SizeQueries(unittest.TestCase):
         self.assertEqual([(node["width"], node["bits"]) for node in values],
                          [(32, "0" * 32)])
 
+    def test_empty_queue_literal_initializer_size_is_zero(self):
+        design = lower(
+            'module top; int q[$] = {}; initial $display("%0d", q.size()); endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("zero_size_query")]
+        self.assertEqual([(node["width"], node["bits"]) for node in values],
+                         [(32, "0" * 32)])
+
+    def test_procedural_empty_queue_initializer_size_is_zero(self):
+        design = lower(
+            'module top; initial begin int q[$] = {}; '
+            '$display("%0d", q.size()); end endmodule')
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        values = [node for node in nodes(design)
+                  if node.get("zero_size_query")]
+        self.assertEqual([(node["width"], node["bits"]) for node in values],
+                         [(32, "0" * 32)])
+
     def test_uninitialized_dynamic_array_size_is_zero(self):
         design = lower(
             'module top; int values[]; initial $display("%0d", values.size()); endmodule')

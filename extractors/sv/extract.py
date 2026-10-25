@@ -7168,7 +7168,10 @@ def _zero_size_method(expression):
                  or (canonical == "StringType" and method == "len"))
         if not valid:
             return False
-        if getattr(symbol, "initializer", None) is not None:
+        initializer = getattr(symbol, "initializer", None)
+        if (initializer is not None
+                and not (canonical == "QueueType"
+                         and _empty_queue_literal(initializer))):
             return False
         name = getattr(symbol, "name", "")
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""

@@ -1939,8 +1939,9 @@ def _fixed_array_shape(source):
             # its declaration samples a constant new[N] allocation.  The
             # allocation is then a fixed, zero-based window for this narrow
             # surface; later resize/assignment remains outside the model.
-            if source.type.isFourState:
-                return None
+            # Four-state elements use the same flat cells, retaining their
+            # x startup value; two-state elements keep their existing squash
+            # rule.
             count = _dynamic_array_constant_extent(source.symbol)
             if count is None:
                 return None
@@ -12240,9 +12241,9 @@ def convert_fixed_array_vars(sm, m):
             # Keep the dynamic allocation itself out of the flat state, but
             # materialize its sampled constant extent as ordinary cells. An
             # uninitialized or later-resized dynamic array has no fixed shape
-            # that this representation could soundly provide.
-            if m.type.isFourState:
-                return None
+            # that this representation could soundly provide. Four-state
+            # arrays are equally representable: their cells start at x,
+            # while the existing two-state branch below still starts at 0.
             count = _dynamic_array_constant_extent(m)
             if count is None:
                 return None

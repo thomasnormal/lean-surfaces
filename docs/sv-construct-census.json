@@ -243,12 +243,12 @@
     61
    ],
    [
-    "VariableSymbol:type",
-    60
-   ],
-   [
     "TypeAlias:invalid-compilation",
     59
+   ],
+   [
+    "VariableSymbol:type",
+    57
    ],
    [
     "NetSymbol:Supply1",
@@ -968,8 +968,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4865,
-   "partial": 16448,
+   "clean": 4867,
+   "partial": 16446,
    "skip_include": 29
   },
   "clean_by_type": {
@@ -1030,7 +1030,7 @@
     52
    ],
    "simulation": [
-    4187,
+    4189,
     18003
    ],
    "simulation elaboration": [
@@ -1315,9 +1315,9 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 298,
+    "clean": 299,
     "error": 0,
-    "partial": 332,
+    "partial": 331,
     "skip_include": 0,
     "total": 630,
     "unlockable": 0
@@ -1395,9 +1395,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 296,
+    "clean": 297,
     "error": 0,
-    "partial": 486,
+    "partial": 485,
     "skip_include": 0,
     "total": 782,
     "unlockable": 0

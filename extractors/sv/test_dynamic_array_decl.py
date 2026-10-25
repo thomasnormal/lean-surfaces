@@ -39,11 +39,32 @@ class DynamicArrayDeclarations(unittest.TestCase):
         self.assertIn("VariableSymbol:2state",
                       [node.get("sv_kind") for node in nodes(design)])
 
-    def test_4state_dynamic_array_stays_loud(self):
+    def test_4state_dynamic_array_without_allocation_stays_loud(self):
         design = lower(
             'module top; logic values[]; initial $finish; endmodule')
         self.assertIn("VariableSymbol:type",
                       [node.get("sv_kind") for node in nodes(design)])
+
+    def test_4state_dynamic_array_constant_allocation_is_live(self):
+        design = lower(
+            """module top;
+               logic values[];
+               int index;
+               initial begin
+                 values = new[3];
+                 index = 2;
+                 values[index] = 1'b1;
+                 if (values[0] === 1'bx && values[index] === 1'b1)
+                   $display("PASS");
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        decls = [node for node in nodes(design) if node.get("kind") == "Var"]
+        values = [node for node in decls if node.get("name", "").startswith("values[")]
+        self.assertEqual([node["name"] for node in values],
+                         ["values[0]", "values[1]", "values[2]"])
+        self.assertTrue(all(node.get("init") is None for node in values))
 
     def test_constant_new_dynamic_array_flattens_for_fixed_copy(self):
         design = lower(
@@ -166,15 +187,19 @@ class DynamicArrayDeclarations(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
-    def test_four_state_struct_dynamic_array_stays_loud(self):
+    def test_four_state_struct_dynamic_array_constant_allocation_is_live(self):
         design = lower(
             """module top;
                typedef struct { logic value; bit ready; } item_t;
                item_t items[];
-               initial items = new[2];
+               initial begin
+                 items = new[2];
+                 if (items[0].value === 1'bx && items[0].ready === 1'b0)
+                   $display("PASS");
+               end
                endmodule""")
-        self.assertTrue(any(node.get("sv_kind") == "VariableSymbol:type"
-                            for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
 
 
 if __name__ == "__main__":

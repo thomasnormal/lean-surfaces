@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 178 | 173 | 0 | 5 | sv-tests-2 declarations |
+| 179 | 174 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -68,6 +68,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `severity_tasks` | `Examples/system-verilog/severity_tasks/severity_tasks.sv` | match | **MATCH** | `ok` | MATCH |
 | `queue_declaration` | `Examples/system-verilog/queue_decl/queue_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_declaration` | `Examples/system-verilog/dynamic_array_decl/dynamic_array_decl.sv` | match | **MATCH** | `ok` | MATCH |
+| `dynamic_array_four_state` | `Examples/system-verilog/dynamic_array_four_state/dynamic_array_four_state.sv` | match | **MATCH** | `ok` | MATCH |
 | `severity_task_literals` | `Examples/system-verilog/severity_task_literals/severity_task_literals.sv` | match | **MATCH** | `ok` | MATCH |
 | `error_task` | `Examples/system-verilog/error_task/error_task.sv` | match | **MATCH** | `ok` | MATCH |
 | `fatal_task` | `Examples/system-verilog/fatal_task/fatal_task.sv` | match | **MATCH** | `ok` | MATCH |
@@ -424,7 +425,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 21342 | 4865 | 16448 | 29 |
+| 21342 | 4867 | 16446 | 29 |
 
 | blocker kind | files |
 |---|---:|

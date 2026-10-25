@@ -6609,6 +6609,7 @@ partial** (66 include skips); `AssignmentExpression:target` falls **2,980 →
 2,979**. Differential coverage moves **141/137/0/4 → 142/138/0/4**; grammar
 coverage remains **214/83/131**.
 
+
 ## Literal `$sformat` writes to packed integrals — 2026-10-24
 
 IEEE 1800-2023 §§5.9 and 21.3.3 assign a plain literal `$sformat` result to
@@ -7118,3 +7119,22 @@ partial files **16,449 → 16,448** (29 include skips). The leading
 `AssignmentExpression:target` blocker falls **2,793 → 2,792**. Differential
 coverage grows **177/172/0/5 → 178/173/0/5** with no disagreements, and grammar
 coverage remains **214/83/131**.
+
+## Finite four-state dynamic-array cells — 2026-10-25
+
+Finite dynamic arrays of four-state scalar or supported untagged integral
+struct elements now use the existing flat-cell representation after one
+constant `new[N]` allocation. Cells retain their four-state x defaults, while
+constant and runtime-indexed reads and writes use the same bounded lowering as
+the two-state dynamic-array path. Unallocated, resized, aliased, tagged,
+union, nested-array, and other aggregate forms remain loud; no dynamic heap or
+second scheduler is introduced. `dynamic_array_four_state` supplies the
+differential fixture and Lean receipt, and the declaration tests cover both
+scalar indexing and struct-field defaults.
+
+On the paired 21,342-path snapshot, clean files move **4,865 → 4,867** and
+partial files **16,448 → 16,446** (29 include skips). The leading
+`AssignmentExpression:target` blocker remains **2,792**; the residual
+`VariableSymbol:type` wall falls **60 → 57**. Differential coverage grows
+**178/173/0/5 → 179/174/0/5** with no disagreements, and grammar coverage
+remains **214/83/131**.

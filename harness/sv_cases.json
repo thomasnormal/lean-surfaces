@@ -488,6 +488,15 @@
       "expect": "match"
     },
     {
+      "name": "dynamic_array_four_state",
+      "file": "Examples/system-verilog/dynamic_array_four_state/dynamic_array_four_state.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "severity_task_literals",
       "file": "Examples/system-verilog/severity_task_literals/severity_task_literals.sv",
       "module": "top",

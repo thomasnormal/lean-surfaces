@@ -1560,6 +1560,26 @@ def callableUnsignedIntCompoundDivideFrameWitness : Bool :=
 
 #guard callableUnsignedIntCompoundDivideFrameWitness
 
+private def unsignedIntCompoundModuloFrame : Bool :=
+  let base := incrementFunction .unsignedInt "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign "%=" (handle "0x10")
+      {expression := .integer 5, sourceType := .builtin .unsignedInt,
+        type := .builtin .unsignedInt})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .unsignedInt, type := .builtin .unsignedInt}))}
+  match CallableObjectFrame.start .lp64 function [⟨.unsigned 32, 13⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.unsigned 32, 3⟩)
+
+def callableUnsignedIntCompoundModuloFrameWitness : Bool :=
+  unsignedIntCompoundModuloFrame
+
+#guard callableUnsignedIntCompoundModuloFrameWitness
+
 private def intCompoundBitAndFrame : Bool :=
   let base := incrementFunction .int "++" false
   let function := {base with body := .block (.sequence

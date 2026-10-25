@@ -135,6 +135,31 @@ class ClassHandleDeclarations(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
 
+    def test_empty_mailbox_num_returns_zero_after_construction(self):
+        design = lower(
+            'module top; mailbox box; int result; initial begin '
+            'box = new(); result = box.num(); '
+            'if (result === 0) $display("PASS"); else $display("FAIL"); '
+            'end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("mailbox_empty_num")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(values[0]["bits"], "0" * 32)
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_mailbox_num_after_put_stays_loud(self):
+        design = lower(
+            'module top; mailbox box; int result; initial begin '
+            'box = new(); box.put(1); result = box.num(); end endmodule')
+        self.assertIn("CallExpression", [node.get("sv_kind") for node in nodes(design)])
+
+    def test_mailbox_num_before_construction_stays_loud(self):
+        design = lower(
+            'module top; mailbox box; int result; initial begin '
+            'result = box.num(); box = new(); end endmodule')
+        self.assertIn("CallExpression", [node.get("sv_kind") for node in nodes(design)])
+
     def test_dynamic_semaphore_key_method_stays_loud(self):
         design = lower(
             'module top; semaphore sem; integer keys; initial begin '

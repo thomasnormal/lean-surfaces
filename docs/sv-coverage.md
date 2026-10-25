@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 186 | 181 | 0 | 5 | sv-tests-2 declarations |
+| 187 | 182 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -170,6 +170,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `sformat_literal_integral` | `Examples/system-verilog/sformat_literal_integral/sformat_literal_integral.sv` | match | **MATCH** | `ok` | MATCH |
 | `sformat_constant_selected` | `Examples/system-verilog/sformat_constant_selected/sformat_constant_selected.sv` | match | **MATCH** | `ok` | MATCH |
 | `array_reverse` | `Examples/system-verilog/array_reverse/array_reverse.sv` | match | **MATCH** | `ok` | MATCH |
+| `array_reverse_procedural` | `Examples/system-verilog/array_reverse_procedural/array_reverse_procedural.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_initialize_status` | `Examples/system-verilog/q_initialize_status/q_initialize_status.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_union_member` | `Examples/system-verilog/unpacked_union_member/unpacked_union_member.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_union_copy` | `Examples/system-verilog/unpacked_union_copy/unpacked_union_copy.sv` | match | **MATCH** | `ok` | MATCH |

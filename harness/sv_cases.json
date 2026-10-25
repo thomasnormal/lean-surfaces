@@ -1405,6 +1405,15 @@
       "expect": "match"
     },
     {
+      "name": "array_reverse_procedural",
+      "file": "Examples/system-verilog/array_reverse_procedural/array_reverse_procedural.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "q_initialize_status",
       "file": "Examples/system-verilog/q_initialize_status/q_initialize_status.sv",
       "module": "top",

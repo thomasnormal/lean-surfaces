@@ -7267,3 +7267,24 @@ On the refreshed 22,053-path snapshot, clean files move **4,970 → 4,979** and
 partial files **17,016 → 17,007** (67 include skips); `AssignmentExpression:target`
 falls **2,945 → 2,940**. Differential coverage grows **185/180/0/5 → 186/181/0/5**
 with no disagreements, and grammar coverage grows **214/85/129 → 214/86/128**.
+
+## Procedural fixed-array `reverse()` — 2026-10-25
+
+A one-dimensional fixed unpacked integral array can now be reversed after a
+complete blocking assignment-pattern initialization, after a copy from another
+finite fixed array, and repeatedly in one linear process. The extractor replays
+those source-ordered flat-cell writes and earlier reversals, preserving
+four-state payloads and independent copies. Branches, loops, direct element
+writes, dynamic or multidimensional arrays, nonliteral aggregate values, and
+other array methods remain loud because the flat representation cannot sample
+their runtime aggregate state soundly. The
+`array_reverse_procedural` fixture and Lean receipt cover the procedural
+pattern/copy/repeated-call path; extractor tests pin the branch and nonliteral
+refusals.
+
+On the fresh 22,053-path sv-tests-2 snapshot, clean files remain **4,979 →
+4,979** and partial files **17,007 → 17,007** (67 include skips). The leading
+`ExpressionStatement:CallExpression` blocker remains **2,942** because the
+principal corpus witness also contains unsupported `sort()` calls. Differential
+coverage grows **186/181/0/5 → 187/182/0/5** with no disagreements, and grammar
+coverage remains **214/86/128**.

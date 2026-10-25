@@ -7670,14 +7670,15 @@ def _q_initialize_status_call(sm, expression):
 
 
 def _fixed_array_reverse_method(sm, expression):
-    """Lower ``reverse()`` on a one-dimensional literal fixed array.
+    """Lower ``reverse()`` on a one-dimensional fixed array.
 
-    Fixed unpacked array leaves already have independent slots in the flat
-    self-check state.  A complete scalar declaration initializer therefore
-    supplies every value needed to reverse the cells without adding an
-    aggregate object.  Receiver uses are restricted to constant element reads
-    after the call; later writes, dynamic selects, and other methods remain
-    on the ordinary call boundary.
+    The flat self-check state stores each leaf independently.  Besides a
+    complete declaration initializer, a source-ordered literal pattern write
+    and a copy from another such array can therefore provide the aggregate
+    snapshot needed by ``reverse()``.  Earlier reversals are replayed in source
+    order, so a second call sees the first mutation.  Every other aggregate
+    operation remains loud; in particular, no branch or loop is treated as a
+    static assignment sequence.
     """
     try:
         if (type(expression).__name__ != "CallExpression"
@@ -7703,12 +7704,33 @@ def _fixed_array_reverse_method(sm, expression):
         width, two_state, reason = type_width_2s(leaf_type)
         if width is None or reason is not None or count <= 0:
             return None
-        values = _fixed_array_initializer_values(
-            sm, getattr(symbol, "initializer", None), symbol.name, width, count)
-        if values is None or any(value is None for value in values):
+        root = _array_storage_name(symbol)
+        positions = list(range(left, right + (1 if right >= left else -1),
+                               1 if right >= left else -1))
+        instance = symbol.parentScope.containingInstance
+        if instance is None:
             return None
-        # Keep this method slice source-pure: a named or computed initializer
-        # would require sampling the array at run time before the mutation.
+
+        def source_offset(node):
+            return getattr(getattr(getattr(node, "sourceRange", None),
+                                   "start", None), "offset", None)
+
+        def array_root(expression_node):
+            shape = _fixed_array_assignment_shape(expression_node)
+            if shape is not None:
+                return shape[0]
+            current = expression_node
+            while type(current).__name__ == "ElementSelectExpression":
+                current = getattr(current, "value", None)
+            if (_storage_expression(current)
+                    and type(current.type.canonicalType).__name__ ==
+                    "FixedSizeUnpackedArrayType"):
+                try:
+                    return _array_storage_name(current.symbol)
+                except Exception:
+                    return None
+            return None
+
         def contains_ident(node):
             if isinstance(node, dict):
                 return node.get("kind") == "Ident" or any(
@@ -7716,35 +7738,223 @@ def _fixed_array_reverse_method(sm, expression):
             if isinstance(node, list):
                 return any(contains_ident(value) for value in node)
             return False
-        if any(contains_ident(value) for value in values):
-            return None
 
-        # The flat store can expose constant cells, but it cannot preserve an
-        # arbitrary array receiver.  Permit only the reverse call itself and
-        # constant element reads; reject every other receiver use.
-        instance = symbol.parentScope.containingInstance
+        operations = []
+        control_ranges = []
+        root_symbols = {root: symbol}
         valid = True
 
         def inspect(node):
             nonlocal valid
             kind = type(node).__name__
+            offset = source_offset(node)
+            if offset is None:
+                return
+            if any(token in kind for token in (
+                    "Conditional", "Case", "For", "While", "Repeat",
+                    "Foreach", "Forever", "Wait", "Fork")):
+                end = getattr(getattr(getattr(node, "sourceRange", None),
+                                      "end", None), "offset", None)
+                if end is not None:
+                    control_ranges.append((offset, end))
+            if kind == "AssignmentExpression":
+                lhs_node = getattr(node, "left", None)
+                lhs_root = array_root(lhs_node)
+                if lhs_root is not None:
+                    lhs_symbol = getattr(lhs_node, "symbol", None)
+                    if lhs_symbol is not None:
+                        root_symbols.setdefault(lhs_root, lhs_symbol)
+                    lowered = (_fixed_array_pattern_assignment(sm, node)
+                               or _fixed_array_copy_assignment(sm, node))
+                    rhs_node = getattr(node, "right", None)
+                    rhs_root = array_root(rhs_node)
+                    rhs_symbol = getattr(rhs_node, "symbol", None)
+                    while (rhs_symbol is None
+                           and type(rhs_node).__name__ == "ConversionExpression"):
+                        rhs_node = getattr(rhs_node, "operand", None)
+                        rhs_symbol = getattr(rhs_node, "symbol", None)
+                    if rhs_root is not None and rhs_symbol is not None:
+                        root_symbols.setdefault(rhs_root, rhs_symbol)
+                    operations.append({
+                        "kind": "assign" if lowered is not None else "invalid",
+                        "offset": offset,
+                        "lhs": lhs_root,
+                        "rhs": rhs_root,
+                        "lowered": lowered,
+                    })
+                    # Whole-array assignments are inspected as one unit; the
+                    # child NamedValueExpressions are not aggregate uses.
+                    if lowered is not None:
+                        return VisitAction.Skip
+            elif kind == "CallExpression":
+                name = str(getattr(node, "subroutineName", ""))
+                arguments = getattr(node, "arguments", [])
+                if (len(arguments) == 1
+                        and type(arguments[0]).__name__ == "NamedValueExpression"):
+                    call_root = array_root(arguments[0])
+                    if call_root is not None:
+                        root_symbols.setdefault(call_root,
+                                                 getattr(arguments[0], "symbol", None))
+                        if name in ("reverse", "sort", "rsort"):
+                            operations.append({
+                                "kind": ("reverse" if name == "reverse"
+                                         else "other-call"),
+                                "offset": offset,
+                                "lhs": call_root,
+                                "rhs": None,
+                                "lowered": None,
+                            })
+                            # The receiver itself is handled by the operation
+                            # walk; do not count it as a whole-array use.
+                            return VisitAction.Skip
             if kind == "ElementSelectExpression":
                 value = getattr(node, "value", None)
                 if (type(value).__name__ == "NamedValueExpression"
                         and getattr(value, "symbol", None) is symbol):
-                    if _constant_dimension_selector(getattr(node, "selector", None)) is None:
+                    if _constant_dimension_selector(
+                            getattr(node, "selector", None)) is None:
                         valid = False
                     return VisitAction.Skip
-            if kind == "NamedValueExpression" and getattr(node, "symbol", None) is symbol:
-                if node is not receiver:
+            if kind in ("NamedValueExpression", "HierarchicalValueExpression"):
+                if (getattr(node, "symbol", None) is symbol
+                        and node is not receiver):
                     valid = False
 
         instance.visit(inspect)
         if not valid:
             return None
 
-        positions = list(range(left, right + (1 if right >= left else -1),
-                               1 if right >= left else -1))
+        current_offset = source_offset(expression)
+        if current_offset is None:
+            return None
+        control_ranges = list(set(control_ranges))
+        if any(start < current_offset < end for start, end in control_ranges):
+            return None
+        operations.sort(key=lambda operation: operation["offset"])
+        before = [operation for operation in operations
+                  if operation["offset"] < current_offset]
+
+        # Follow only whole-array copies that feed the receiver.  This keeps
+        # unrelated arrays (including an independently sorted sibling) out of
+        # the state proof while still requiring every source cell of a copy to
+        # be known.
+        needed = {root}
+        changed = True
+        while changed:
+            changed = False
+            for operation in before:
+                if (operation["kind"] == "assign"
+                        and operation["lhs"] in needed
+                        and operation["rhs"] is not None
+                        and operation["rhs"] not in needed):
+                    needed.add(operation["rhs"])
+                    changed = True
+        if any(operation["kind"] in ("invalid", "other-call") and (
+                operation["lhs"] in needed or operation["rhs"] in needed)
+                for operation in operations):
+            return None
+        if any(any(start < operation["offset"] < end
+                   for start, end in control_ranges)
+               and (operation["lhs"] in needed or operation["rhs"] in needed)
+               for operation in before):
+            return None
+
+        array_positions = {}
+
+        def state_for(name):
+            array_symbol = root_symbols.get(name)
+            if array_symbol is None:
+                return None
+            array_shape = _fixed_array_dimensions(array_symbol.type, max_cells=128)
+            if array_shape is None or len(array_shape[0]) != 1:
+                return None
+            array_dimensions, array_leaf = array_shape
+            array_left, array_right = array_dimensions[0]
+            own_positions = list(range(
+                array_left,
+                array_right + (1 if array_right >= array_left else -1),
+                1 if array_right >= array_left else -1))
+            if len(own_positions) != count:
+                return None
+            array_width, _array_two, array_reason = type_width_2s(array_leaf)
+            if array_width != width or array_reason is not None:
+                return None
+            array_positions[name] = own_positions
+            array_values = _fixed_array_initializer_values(
+                sm, getattr(array_symbol, "initializer", None), name,
+                array_width, len(own_positions))
+            if array_values is None or any(contains_ident(value)
+                                           for value in array_values):
+                return None
+            return {position: value for position, value
+                    in zip(own_positions, array_values)}
+
+        states = {name: state_for(name) for name in needed}
+        if any(state is None for state in states.values()):
+            return None
+
+        def cell_position(name, array_name):
+            prefix = array_name + "["
+            if (not isinstance(name, str) or not name.startswith(prefix)
+                    or not name.endswith("]")):
+                return None
+            try:
+                position = int(name[len(prefix):-1])
+            except (TypeError, ValueError):
+                return None
+            return position if position in array_positions.get(array_name, ()) else None
+
+        def resolve_value(value, source_states):
+            if isinstance(value, dict):
+                if value.get("kind") == "Ident":
+                    name = value.get("name")
+                    for source_name, source_state in source_states.items():
+                        position = cell_position(name, source_name)
+                        if position is not None:
+                            return source_state.get(position)
+                    return None
+                return {key: resolve_value(child, source_states)
+                        for key, child in value.items()}
+            if isinstance(value, list):
+                return [resolve_value(child, source_states) for child in value]
+            return value
+
+        for operation in before:
+            if operation["lhs"] not in needed:
+                continue
+            name = operation["lhs"]
+            if operation["kind"] == "reverse":
+                current = states[name]
+                order = array_positions[name]
+                if any(current.get(position) is None for position in order):
+                    return None
+                states[name] = {
+                    position: value for position, value in zip(
+                        order, reversed([current[position] for position in order]))}
+                continue
+            if operation["kind"] != "assign":
+                return None
+            lowered = operation["lowered"]
+            if lowered is None:
+                return None
+            source_states = {source: states[source] for source in needed
+                             if states.get(source) is not None}
+            pending = {}
+            for statement in lowered.get("stmts", []):
+                target_name = statement.get("target", {}).get("name")
+                position = cell_position(target_name, name)
+                value = resolve_value(statement.get("value"), source_states)
+                if position is None or value is None or contains_ident(value):
+                    return None
+                pending[position] = value
+            if set(pending) != set(array_positions[name]):
+                return None
+            states[name] = pending
+
+        values = [states[root][position] for position in positions]
+        if any(value is None for value in values):
+            return None
+
         reversed_values = list(reversed(values))
         statements = []
         for position, value in zip(positions, reversed_values):

@@ -4230,3 +4230,21 @@ The fresh 22,050-path census moves 4,917 → 4,921 clean and 17,067 → 17,063
 partial (66 include skips); `CallExpression` falls 2,951 → 2,947. The
 differential table moves 166/162/0/4 → 167/163/0/4, with grammar coverage
 unchanged at 214/83/131.
+
+## Procedural fixed-array `reverse()` — 2026-10-25
+
+A one-dimensional fixed unpacked integral array now admits `reverse()` after a
+complete blocking assignment-pattern initialization, a copy from another finite
+fixed array, and repeated calls in one linear process. The extractor replays
+source-ordered cell writes and prior reversals while preserving four-state
+values and independent copies. Branches, loops, direct element writes,
+dynamic or multidimensional arrays, nonliteral aggregate values, and other
+array methods remain loud. The `array_reverse_procedural` fixture supplies the
+`PASS` differential row and Lean receipt; extractor tests cover the refusal
+boundaries.
+
+The fresh 22,053-path census remains **4,979 clean / 17,007 partial** (67
+include skips), with `ExpressionStatement:CallExpression` at **2,942**. The
+corpus clean count is unchanged because the main external witness still has
+unsupported `sort()` calls; differential coverage moves **186/181/0/5 →
+187/182/0/5**, and grammar coverage remains **214/86/128**.

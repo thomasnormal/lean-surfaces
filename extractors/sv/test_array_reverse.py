@@ -69,6 +69,58 @@ class ArrayReverse(unittest.TestCase):
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))
 
+    def test_procedural_pattern_copy_and_repeated_reverse_lower(self):
+        design = lower(
+            """module top;
+               logic [7:0] source[3];
+               logic [7:0] values[3];
+               logic [7:0] sibling[3];
+               initial begin
+                 source = '{8'h10, 8'h20, 8'h30};
+                 values = source;
+                 sibling = source;
+                 values.reverse();
+                 values.reverse();
+               end
+               endmodule""")
+        lowered = [node for node in nodes(design)
+                   if node.get("fixed_array_reverse_lowered")]
+        self.assertEqual(len(lowered), 2)
+        self.assertEqual(
+            [[write["value"].get("bits") for write in node["stmts"]]
+             for node in lowered],
+            [["00110000", "00100000", "00010000"],
+             ["00010000", "00100000", "00110000"]])
+
+    def test_branching_procedural_reverse_stays_loud(self):
+        design = lower(
+            """module top;
+               int values[2];
+               initial begin
+                 values = '{1, 2};
+                 if (1) values.reverse();
+               end
+               endmodule""")
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
+    def test_procedural_four_state_pattern_preserves_xz(self):
+        design = lower(
+            """module top;
+               logic [7:0] values[3];
+               initial begin
+                 values = '{8'b10xz01zx, 8'bz001x110, 8'b01zx10xz};
+                 values.reverse();
+               end
+               endmodule""")
+        lowered = [node for node in nodes(design)
+                   if node.get("fixed_array_reverse_lowered")]
+        self.assertEqual(len(lowered), 1)
+        self.assertEqual(
+            [write["value"].get("bits") for write in lowered[0]["stmts"]],
+            ["01zx10xz", "z001x110", "10xz01zx"])
+
     def test_literal_dynamic_array_sort_and_rsort_lower_to_cell_writes(self):
         design = lower(
             """module top;

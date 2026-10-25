@@ -4861,6 +4861,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-int-compound-bitor-mid",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableIntCompoundBitOrFrameWitness",
+    "cpp_source": "int frame_int_compound_bitor(int value) { value |= 3; return value; } bool callable_witness() { return frame_int_compound_bitor(12) == 15; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-signed-overflow-retention",
     "kind": "expression",
     "corpus": "rung-3 witness",

@@ -1909,6 +1909,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "packed_array_multidim",
+      "file": "Examples/system-verilog/packed_array_multidim/packed_array_multidim.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -7724,3 +7724,20 @@ and partial files **16,910 → 16,904** (67 include skips). The leading
 `ExpressionStatement:CallExpression` moves **2,909 → 2,910**. Differential
 coverage grows **211/206/0/5 → 212/207/0/5** with no disagreements; grammar
 coverage remains **217/90/127**.
+
+## Nested multidimensional packed-array elements — 2026-10-25
+
+Nested packed arrays now lower as contiguous integral vectors for constant
+element reads and writes. Both canonical descending ranges and upward ranges
+normalize their declared labels to the flat bit offset, and packed enum leaves
+retain their packed element width. Dynamic selection of an element wider than
+one bit remains loud because its stride cannot be represented by the current
+dynamic select node. The `packed_array_multidim` fixture, generated envelope,
+Lean receipt, and extractor regressions cover these cases.
+
+On the refreshed **22,055-path** census, clean files move **5,084 → 5,126**
+and partial files **16,904 → 16,862** (67 include skips). The leading
+`AssignmentExpression:target` blocker falls **2,937 → 2,908**, while
+`ExpressionStatement:CallExpression` remains **2,910**. Differential coverage
+grows **212/207/0/5 → 213/208/0/5** with no disagreements; grammar coverage
+remains **217/90/127**.

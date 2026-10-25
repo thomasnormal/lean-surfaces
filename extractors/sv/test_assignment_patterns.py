@@ -104,9 +104,10 @@ class AssignmentPatterns(unittest.TestCase):
         d = lower("module top; logic[3:0]x; logic v; initial x='{default:v++};endmodule")
         self.assertIn('AssignmentPattern:effects', walls(d))
 
-    def test_unpacked_results_and_existing_multidimensional_storage_stay_loud(self):
+    def test_packed_multidimensional_storage_is_flat_and_unpacked_results_remain_admitted(self):
         d = lower("module top; logic[1:0][3:0]x='{4'ha,4'h5};endmodule")
-        self.assertIn('VariableSymbol:range', walls(d))
+        self.assertFalse(walls(d))
+        self.assertEqual(literals(patterns(d)[0]), ['1010', '0101'])
         d = lower("module top; typedef struct{int a;int b;}T;T x='{1,2};endmodule")
         self.assertFalse(walls(d))
 

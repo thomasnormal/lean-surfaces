@@ -424,15 +424,13 @@ def type_width_2s(t):
             w = ct.bitWidth
             elem = ct.elementType.canonicalType
             # Packed dimensions form one contiguous integral vector.  Walk
-            # through every packed layer before checking the scalar leaf for
-            # two-state declarations; the LVec state already preserves the
-            # complete bit ordering. Four-state multidimensional ranges keep
-            # their existing explicit range boundary.
-            if t.isFourState and type(elem).__name__ == "PackedArrayType":
-                return None, None, "range"
+            # through every packed layer before checking the integral leaf;
+            # the LVec state preserves the complete bit ordering, including
+            # nested packed arrays and packed enum/struct leaves.
             while type(elem).__name__ == "PackedArrayType":
                 elem = elem.elementType.canonicalType
-            if type(elem).__name__ == "ScalarType":
+            if type(elem).__name__ in ("ScalarType", "EnumType",
+                                       "PackedStructType", "PackedUnionType"):
                 return w, (not t.isFourState), None
             return None, None, "range"
         if cname in ("PackedStructType", "PackedUnionType"):
@@ -6179,7 +6177,14 @@ def _canonical_packed_select_source(source_type):
         ct = source_type.canonicalType
         if type(ct).__name__ != "PackedArrayType":
             return True
-        return int(ct.range.left) == ct.bitWidth - 1 and int(ct.range.right) == 0
+        # A packed element wider than one bit needs its slice offset scaled by
+        # the element width even when the outer range is the canonical
+        # `[N-1:0]` spelling.  Returning false routes that shape through the
+        # constant-label normalizer below.
+        element = ct.elementType.canonicalType
+        return (type(element).__name__ == "ScalarType"
+                and int(ct.range.left) == ct.bitWidth - 1
+                and int(ct.range.right) == 0)
     except Exception:
         return False
 
@@ -6231,6 +6236,8 @@ def _packed_element_index(sm, source_type, index):
     if not _case_expression_ok(value):
         return None
     ct = source_type.canonicalType
+    if int(ct.elementType.canonicalType.bitWidth) != 1:
+        return None
     wide = width + 2
     value = {"kind": "SignedResize",
              "span": node_span(sm, index), "width": wide, "operand": value}

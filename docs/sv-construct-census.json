@@ -15,16 +15,16 @@
  "summary": {
   "blocker_files": [
    [
-    "AssignmentExpression:target",
-    2937
-   ],
-   [
     "ExpressionStatement:CallExpression",
     2910
    ],
    [
+    "AssignmentExpression:target",
+    2908
+   ],
+   [
     "CallExpression",
-    2799
+    2801
    ],
    [
     "Hierarchy:ports",
@@ -64,7 +64,7 @@
    ],
    [
     "MemberAccessExpression",
-    1020
+    1019
    ],
    [
     "ConversionExpression:width",
@@ -72,7 +72,7 @@
    ],
    [
     "HierarchicalValueExpression",
-    749
+    750
    ],
    [
     "CovergroupType:CovergroupType",
@@ -96,7 +96,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    539
+    516
    ],
    [
     "ClassType:ClassType",
@@ -156,7 +156,7 @@
    ],
    [
     "StaticLocal:initializer",
-    171
+    170
    ],
    [
     "TimedStatement:DelayControl:expression",
@@ -183,12 +183,12 @@
     145
    ],
    [
-    "ForeachLoopStatement:array",
-    126
-   ],
-   [
     "SubroutineSymbol",
     124
+   ],
+   [
+    "ForeachLoopStatement:array",
+    123
    ],
    [
     "ProceduralAssignStatement",
@@ -208,7 +208,7 @@
    ],
    [
     "Parameter:integral-value",
-    94
+    93
    ],
    [
     "ProceduralBlockSymbol:Final",
@@ -245,10 +245,6 @@
    [
     "NamedValueExpression:ClassProperty",
     65
-   ],
-   [
-    "VariableSymbol:type",
-    62
    ],
    [
     "TypeAlias:invalid-compilation",
@@ -303,6 +299,10 @@
     48
    ],
    [
+    "VariableSymbol:type",
+    48
+   ],
+   [
     "CallExpression:dimension:argument",
     48
    ],
@@ -321,10 +321,6 @@
    [
     "Package:ClassType",
     45
-   ],
-   [
-    "VariableSymbol:range",
-    41
    ],
    [
     "Package:initializer",
@@ -349,10 +345,6 @@
    [
     "TimedStatement:EventListControl",
     38
-   ],
-   [
-    "ConversionExpression:Explicit",
-    37
    ],
    [
     "BlockStatement:JoinAny",
@@ -380,6 +372,10 @@
    ],
    [
     "NetType",
+    34
+   ],
+   [
+    "ConversionExpression:Explicit",
     34
    ],
    [
@@ -425,10 +421,6 @@
    [
     "CaseStatement:subject",
     19
-   ],
-   [
-    "NamedValueExpression:range",
-    18
    ],
    [
     "TypeParameterSymbol:TypeParameter",
@@ -671,10 +663,6 @@
     5
    ],
    [
-    "AssignmentPattern:integral-shape",
-    5
-   ],
-   [
     "BinaryExpression:LogicalImplication:source",
     5
    ],
@@ -903,10 +891,6 @@
     1
    ],
    [
-    "BitQuery:argument-type",
-    1
-   ],
-   [
     "Scanf:output-target",
     1
    ],
@@ -973,20 +957,16 @@
    [
     "NetSymbol",
     1
-   ],
-   [
-    "VariableDeclStatement:range",
-    1
    ]
   ],
   "by_status": {
-   "clean": 5084,
-   "partial": 16904,
+   "clean": 5126,
+   "partial": 16862,
    "skip_include": 67
   },
   "clean_by_type": {
    "(none)": [
-    479,
+    482,
     1390
    ],
    "compilation": [
@@ -1042,7 +1022,7 @@
     52
    ],
    "simulation": [
-    4396,
+    4435,
     18686
    ],
    "simulation elaboration": [
@@ -1057,9 +1037,9 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 218,
-    "clean": 764,
-    "partial": 227,
+    "blocked_by_more": 216,
+    "clean": 766,
+    "partial": 225,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
@@ -1072,7 +1052,7 @@
      ],
      [
       "AssignmentExpression:target",
-      73
+      71
      ],
      [
       "VariableSymbol:2state",
@@ -1100,7 +1080,7 @@
      ],
      [
       "ElementSelectExpression:source-type",
-      13
+      11
      ],
      [
       "TimedStatement:DelayControl",
@@ -1235,9 +1215,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 543,
-    "clean": 498,
-    "partial": 545,
+    "blocked_by_more": 532,
+    "clean": 509,
+    "partial": 534,
     "simulation_tests": 1043,
     "top_residual_blockers": [
      [
@@ -1253,10 +1233,6 @@
       144
      ],
      [
-      "AssignmentExpression:target",
-      136
-     ],
-     [
       "VariableDeclStatement:2state",
       128
      ],
@@ -1265,12 +1241,16 @@
       128
      ],
      [
+      "AssignmentExpression:target",
+      125
+     ],
+     [
       "CallExpression",
       96
      ],
      [
       "TypeAliasType:TypeAlias",
-      73
+      67
      ],
      [
       "InstanceSymbol:Instance",
@@ -1282,7 +1262,7 @@
      ],
      [
       "ElementSelectExpression:source-type",
-      47
+      44
      ],
      [
       "SubroutineSymbol:Subroutine",
@@ -1305,12 +1285,12 @@
       21
      ],
      [
-      "ConversionExpression:Explicit",
+      "ClassType",
       17
      ],
      [
-      "ClassType",
-      17
+      "ConversionExpression:Explicit",
+      16
      ],
      [
       "SubroutineSymbol",
@@ -1327,17 +1307,17 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 305,
+    "clean": 312,
     "error": 0,
-    "partial": 353,
+    "partial": 346,
     "skip_include": 0,
     "total": 658,
     "unlockable": 0
    },
    "chapter-11": {
-    "clean": 768,
+    "clean": 770,
     "error": 0,
-    "partial": 266,
+    "partial": 264,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 9
@@ -1407,9 +1387,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 306,
+    "clean": 316,
     "error": 0,
-    "partial": 519,
+    "partial": 509,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0
@@ -1455,9 +1435,9 @@
     "unlockable": 0
    },
    "chapter-26": {
-    "clean": 177,
+    "clean": 179,
     "error": 0,
-    "partial": 388,
+    "partial": 386,
     "skip_include": 0,
     "total": 565,
     "unlockable": 0
@@ -1551,9 +1531,9 @@
     "unlockable": 0
    },
    "chapter-37": {
-    "clean": 152,
+    "clean": 155,
     "error": 0,
-    "partial": 266,
+    "partial": 263,
     "skip_include": 0,
     "total": 418,
     "unlockable": 0
@@ -1599,17 +1579,17 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 515,
+    "clean": 526,
     "error": 0,
-    "partial": 672,
+    "partial": 661,
     "skip_include": 0,
     "total": 1187,
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 241,
+    "clean": 248,
     "error": 0,
-    "partial": 555,
+    "partial": 548,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

@@ -7250,3 +7250,20 @@ On the refreshed 22,053-path snapshot, clean files move **4,967 → 4,970** and
 partial files **17,017 → 17,016** (67 include skips); the leading
 `AssignmentExpression:target` blocker is **2,945**. Differential coverage grows **184/179/0/5 → 185/180/0/5**
 with no disagreements, and grammar coverage grows **214/83/131 → 214/85/129**.
+
+## Finite literal string-key associative arrays — 2026-10-25
+
+Associative arrays with a finite set of literal ASCII string keys now lower to
+one flat scalar cell per observed key. Blocking writes and reads preserve
+source order, empty keys, two-state defaults, and four-state values through the
+existing assignment and expression nodes. Whole-array uses, dynamic or
+non-ASCII keys, nonintegral elements, methods, and other associative index
+types remain loud.
+The `assoc_string_cells` fixture and Lean receipt cover static procedural cells,
+including an empty key and four-state data, while extractor tests pin dynamic
+and whole-array refusal edges.
+
+On the refreshed 22,053-path snapshot, clean files move **4,970 → 4,979** and
+partial files **17,016 → 17,007** (67 include skips); `AssignmentExpression:target`
+falls **2,945 → 2,940**. Differential coverage grows **185/180/0/5 → 186/181/0/5**
+with no disagreements, and grammar coverage grows **214/85/129 → 214/86/128**.

@@ -15,12 +15,12 @@
  "summary": {
   "blocker_files": [
    [
-    "AssignmentExpression:target",
-    2945
-   ],
-   [
     "ExpressionStatement:CallExpression",
     2942
+   ],
+   [
+    "AssignmentExpression:target",
+    2940
    ],
    [
     "CallExpression",
@@ -92,7 +92,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    558
+    549
    ],
    [
     "CheckerInstanceSymbol:CheckerInstance",
@@ -239,16 +239,16 @@
     67
    ],
    [
-    "VariableSymbol:type",
-    67
-   ],
-   [
     "WaitStatement",
     65
    ],
    [
     "NamedValueExpression:ClassProperty",
     65
+   ],
+   [
+    "VariableSymbol:type",
+    62
    ],
    [
     "TypeAlias:invalid-compilation",
@@ -631,10 +631,6 @@
     7
    ],
    [
-    "AssignmentExpression:compound-target",
-    6
-   ],
-   [
     "BinaryExpression:Divide-type",
     6
    ],
@@ -669,6 +665,10 @@
    [
     "WildcardImportSymbol:WildcardImport",
     6
+   ],
+   [
+    "AssignmentExpression:compound-target",
+    5
    ],
    [
     "AssignmentPattern:integral-shape",
@@ -980,8 +980,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4970,
-   "partial": 17016,
+   "clean": 4979,
+   "partial": 17007,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1042,7 +1042,7 @@
     52
    ],
    "simulation": [
-    4292,
+    4301,
     18685
    ],
    "simulation elaboration": [
@@ -1327,9 +1327,9 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 304,
+    "clean": 305,
     "error": 0,
-    "partial": 354,
+    "partial": 353,
     "skip_include": 0,
     "total": 658,
     "unlockable": 0
@@ -1607,9 +1607,9 @@
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 211,
+    "clean": 219,
     "error": 0,
-    "partial": 585,
+    "partial": 577,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

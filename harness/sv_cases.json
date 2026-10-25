@@ -1664,6 +1664,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "assoc_string_cells",
+      "file": "Examples/system-verilog/assoc_string_cells/assoc_string_cells.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

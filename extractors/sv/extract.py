@@ -1323,6 +1323,7 @@ _ELAB_PARAMETERS = set()
 _ELAB_HIER_VALUES = set()
 _ELAB_CURRENT_SCOPE = ""
 _ARRAY_REDUCTION_VALUES = {}
+_ASSOC_CELLS = {}
 
 
 def _storage_name(symbol):
@@ -1351,6 +1352,116 @@ def _array_storage_name(symbol):
         location = symbol.location
         return f"$local_array:{location.offset}:{symbol.name}"
     return _storage_name(symbol)
+
+
+def _assoc_string_key(expression):
+    """Return a small literal string associative-array key, else ``None``."""
+    node = expression
+    while type(node).__name__ == "ConversionExpression":
+        node = getattr(node, "operand", None)
+        if node is None:
+            return None
+    if (type(node).__name__ != "StringLiteral" or getattr(node, "bad", False)
+            or any(ord(char) > 127 for char in getattr(node, "value", ""))):
+        return None
+    return node.value
+
+
+def _finite_string_assoc_cells(sm, symbol):
+    """Collect a finite, literal-key string associative array.
+
+    The self-check state has no associative-array object.  A source that only
+    selects a finite set of literal string keys can use one ordinary scalar
+    cell per key without changing the value or statement schemas.  Any whole
+    array, dynamic-key, method, or non-integral-element use rejects the whole
+    declaration so the fallback remains loud.
+    """
+    try:
+        if (str(getattr(symbol, "kind", "")) != "SymbolKind.Variable"
+                or type(symbol.type.canonicalType).__name__ != "AssociativeArrayType"):
+            return None
+        array_type = symbol.type.canonicalType
+        index_type = array_type.indexType.canonicalType
+        if type(index_type).__name__ != "StringType":
+            return None
+        element_type = array_type.elementType
+        width, two_state, reason = type_width_2s(element_type)
+        if width is None or reason is not None or width <= 0:
+            return None
+        instance = symbol.parentScope.containingInstance
+        if instance is None:
+            return None
+        keys = {}
+        named_count = 0
+        selected_count = 0
+        invalid = False
+
+        def inspect(node):
+            nonlocal named_count, selected_count, invalid
+            kind = type(node).__name__
+            if kind == "ElementSelectExpression":
+                value = getattr(node, "value", None)
+                if getattr(value, "symbol", None) is symbol:
+                    selected_count += 1
+                    key = _assoc_string_key(getattr(node, "selector", None))
+                    if key is None:
+                        invalid = True
+                    else:
+                        keys.setdefault(key, None)
+            elif kind in ("NamedValueExpression", "HierarchicalValueExpression"):
+                if getattr(node, "symbol", None) is symbol:
+                    named_count += 1
+
+        instance.visit(inspect)
+        if invalid or not keys or named_count != selected_count:
+            return None
+        base = _array_storage_name(symbol)
+        cells = {}
+        for key in keys:
+            encoded = key.encode("ascii").hex()
+            cells[key] = {
+                "name": f"{base}[string:{encoded}]",
+                "width": width,
+                "two_state": two_state,
+            }
+        _ASSOC_CELLS[symbol] = cells
+        return cells
+    except Exception:
+        return None
+
+
+def _finite_string_assoc_decls(sm, symbol):
+    cells = _ASSOC_CELLS.get(symbol)
+    if cells is None:
+        cells = _finite_string_assoc_cells(sm, symbol)
+    if cells is None:
+        return None
+    width = next(iter(cells.values()))["width"]
+    two_state = next(iter(cells.values()))["two_state"]
+    return [signed_metadata({
+        "kind": "Var", "span": sym_span(sm, symbol),
+        "name": cell["name"], "width": width,
+        "init": ({"kind": "Literal", "span": None, "width": width,
+                   "bits": "0" * width} if two_state else None),
+    }, symbol.type.elementType) for cell in cells.values()]
+
+
+def _finite_string_assoc_cell(sm, expression):
+    if _SYM is not None or type(expression).__name__ != "ElementSelectExpression":
+        return None
+    value = getattr(expression, "value", None)
+    symbol = getattr(value, "symbol", None)
+    if symbol is None:
+        return None
+    cells = _ASSOC_CELLS.get(symbol)
+    if cells is None:
+        cells = _finite_string_assoc_cells(sm, symbol)
+    if cells is None:
+        return None
+    key = _assoc_string_key(getattr(expression, "selector", None))
+    if key not in cells:
+        return None
+    return cells[key]
 
 
 def _fixed_array_dimensions(array_type, max_cells=1024):
@@ -5814,6 +5925,14 @@ def _legacy_member_select_window(sm, expression, expression_kind, result_kind):
 
 def _convert_selected_read(sm, expr, expression_kind):
     if expression_kind == "ElementSelectExpression":
+        assoc_cell = _finite_string_assoc_cell(sm, expr)
+        if assoc_cell is not None:
+            return {
+                "kind": "Ident",
+                "span": node_span(sm, expr),
+                "width": assoc_cell["width"],
+                "name": assoc_cell["name"],
+            }
         cell = _fixed_array_cell(sm, expr)
         if cell is not None:
             name, width, _two_state = cell
@@ -8667,6 +8786,18 @@ def _invalid_string_unknown_replication(expression):
 
 def legacy_blocking_target(sm, lhs, concat_leaf=False):
     expression_kind = type(lhs).__name__
+    if expression_kind == "ElementSelectExpression":
+        assoc_cell = _finite_string_assoc_cell(sm, lhs)
+        if assoc_cell is not None:
+            target = {
+                "kind": "Ident",
+                "span": node_span(sm, lhs),
+                "width": assoc_cell["width"],
+                "name": assoc_cell["name"],
+            }
+            if concat_leaf:
+                target["two_state"] = assoc_cell["two_state"]
+            return target, True
     if expression_kind in ("ElementSelectExpression", "RangeSelectExpression"):
         packed_array_window = _fixed_array_packed_window(
             sm, lhs, "SelectTarget")
@@ -11266,6 +11397,20 @@ def _convert_local_decl(sm, stmt):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None and is_inert_2state_dynamic_array_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
+    if _SYM is None:
+        assoc_decls = _finite_string_assoc_decls(sm, symbol)
+        if assoc_decls is not None:
+            lifetime = str(symbol.lifetime).split(".")[-1]
+            if lifetime == "Automatic":
+                return {"kind": "Block", "span": node_span(sm, stmt), "stmts": [
+                    {"kind": "LocalDecl", "span": cell["span"],
+                     "name": cell["name"], "width": cell["width"],
+                     "two_state": cell.get("two_state", False),
+                     "init": cell.get("init")}
+                    for cell in assoc_decls]}
+            if lifetime == "Static":
+                return {"kind": "Empty", "span": node_span(sm, stmt)}
+            return unsupported(sm, stmt, "VariableDeclStatement:array-lifetime")
     if _SYM is None and is_inert_2state_associative_array_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None:
@@ -12775,6 +12920,9 @@ def convert_var(sm, m):
     union_decls = _unpacked_union_decls(sm, m)
     if union_decls is not None:
         return union_decls
+    assoc_decls = _finite_string_assoc_decls(sm, m)
+    if assoc_decls is not None:
+        return assoc_decls
     array_decls = convert_fixed_array_vars(sm, m)
     if array_decls is not None:
         return array_decls
@@ -13943,11 +14091,14 @@ def convert_design(sm, comp):
     # (escaped identifiers themselves may contain :: or punctuation).
     global _PACKAGE_BINDINGS, _PACKAGE_SCOPES, _MIN_TYP_MAX
     global _ELAB_BINDINGS, _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE
+    global _ASSOC_CELLS
     previous = (_PACKAGE_BINDINGS, _PACKAGE_SCOPES, _ELAB_BINDINGS,
-                _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE, _MIN_TYP_MAX)
+                _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE,
+                _MIN_TYP_MAX, _ASSOC_CELLS)
     _MIN_TYP_MAX = {MinTypMax.Min: "min", MinTypMax.Typ: "typ", MinTypMax.Max: "max"}[
         comp.options.minTypMax]
     _ELAB_BINDINGS, _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE = {}, set(), set(), ""
+    _ASSOC_CELLS = {}
     packages = [member for unit in comp.getCompilationUnits() for member in unit
                 if str(member.kind) == "SymbolKind.Package"]
     _PACKAGE_SCOPES = set(packages)
@@ -13959,7 +14110,8 @@ def convert_design(sm, comp):
         return _convert_design(sm, comp, packages)
     finally:
         (_PACKAGE_BINDINGS, _PACKAGE_SCOPES, _ELAB_BINDINGS,
-         _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE, _MIN_TYP_MAX) = previous
+         _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE,
+         _MIN_TYP_MAX, _ASSOC_CELLS) = previous
 
 
 def _selected_compilation_barriers(sm, comp):

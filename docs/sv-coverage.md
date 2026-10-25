@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 166 | 162 | 0 | 4 | sv-tests-2 declarations |
+| 167 | 163 | 0 | 4 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -180,6 +180,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `string_radix_literal` | `Examples/system-verilog/string_radix_literal/string_radix_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `semaphore_default_try_get` | `Examples/system-verilog/semaphore_default_try_get/semaphore_default_try_get.sv` | match | **MATCH** | `ok` | MATCH |
 | `mailbox_empty_try` | `Examples/system-verilog/mailbox_empty_try/mailbox_empty_try.sv` | match | **MATCH** | `ok` | MATCH |
+| `event_triggered_false` | `Examples/system-verilog/event_triggered_false/event_triggered_false.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -324,7 +325,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.NewArrayExpression` | `Examples/system-verilog/dynamic_array_cells/dynamic_array_cells.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NewClassExpression` | `Examples/system-verilog/literal_semaphore_constructor/literal_semaphore_constructor.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NonblockingAssignmentExpression` | `Examples/system-verilog/array_reductions/timing.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
-| `SyntaxKind.NullLiteralExpression` | `Examples/system-verilog/opaque_chandle_null_write/opaque_chandle_null_write.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.NullLiteralExpression` | `Examples/system-verilog/event_triggered_false/event_triggered_false.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.OrAssignmentExpression` | `Examples/system-verilog/compound_assignments/partial_members.sv` | **REFUSE** | `unsupported` AssignmentExpression:compound-partial-range |
 | `SyntaxKind.OrderedArgument` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.OrderedPortConnection` | `Examples/system-verilog/module_hierarchy/ports.sv` | **REFUSE** | `unsupported` non-initial process 'Hierarchy:ports' (self-check tier runs initial-only designs) |
@@ -412,13 +413,13 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22050 | 4917 | 17067 | 66 |
+| 22050 | 4921 | 17063 | 66 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2975 |
 | `ExpressionStatement:CallExpression` | 2973 |
-| `CallExpression` | 2951 |
+| `CallExpression` | 2947 |
 | `Hierarchy:ports` | 2398 |
 | `VariableSymbol:2state` | 2331 |
 | `SubroutineSymbol:Subroutine` | 1634 |

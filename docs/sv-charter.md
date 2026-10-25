@@ -6956,3 +6956,17 @@ partial (66 include skips). `CallExpression` falls 2,956 → 2,951 while
 `AssignmentExpression:target` remains 2,975 and
 `ExpressionStatement:CallExpression` remains 2,973. Differential coverage
 moves 165/161/0/4 → 166/162/0/4; grammar coverage remains 214/83/131.
+## Untriggered and null event status — 2026-10-25
+
+An event's `triggered()` query now lowers to exact one-bit zero when the
+source contains no trigger and the event is either uninitialized or explicitly
+reclaimed with `null`. Event triggers, waits, other event methods, aliases, and
+dynamic event state remain loud because scheduling state is outside this flat
+self-check representation. `event_triggered_false` supplies the fixture and
+proof receipt.
+
+The 22,050-path census moves 4,917 → 4,921 clean and 17,067 → 17,063
+partial (66 include skips). `CallExpression` falls 2,951 → 2,947 while
+`AssignmentExpression:target` remains 2,975 and
+`ExpressionStatement:CallExpression` remains 2,973. Differential coverage
+moves 166/162/0/4 → 167/163/0/4; grammar coverage remains 214/83/131.

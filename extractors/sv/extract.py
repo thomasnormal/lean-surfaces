@@ -5785,6 +5785,7 @@ def _convert_legacy_call(sm, expression):
             (_semaphore_literal_try_get, _convert_semaphore_literal_try_get),
             (_dynamic_array_literal_size_method, _convert_dynamic_array_literal_size),
             (_mailbox_empty_try_method, _convert_mailbox_empty_try_method),
+            (_event_triggered_false, _convert_event_triggered_false),
             (_mailbox_empty_num_method, _convert_mailbox_empty_num),
             (lambda e: _mailbox_literal_sequence(e) is not None
                        and e.subroutineName == "num",
@@ -6795,6 +6796,50 @@ def _convert_mailbox_empty_try_method(sm, expression):
         "width": width, "bits": "0" * width,
         "mailbox_empty_try": expression.subroutineName,
     }, expression.type)
+
+
+def _event_triggered_false(expression):
+    """Recognize ``event.triggered()`` before any trigger in this flat tier."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "triggered"
+                or len(expression.arguments) != 1):
+            return False
+        receiver = expression.arguments[0]
+        if type(receiver).__name__ != "NamedValueExpression":
+            return False
+        if type(getattr(receiver.type, "canonicalType", None)).__name__ != "EventType":
+            return False
+        symbol = getattr(receiver, "symbol", None)
+        name = getattr(symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        if symbol is None or not name or not source:
+            return False
+        occurrences = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"(?![A-Za-z0-9_$])", source))
+        if not occurrences:
+            return False
+        for occurrence in occurrences[1:]:
+            tail = source[occurrence.end():].lstrip()
+            if tail.startswith(".triggered") or re.match(r"=\s*null\b", tail):
+                continue
+            return False
+        return True
+    except Exception:
+        return False
+
+
+def _convert_event_triggered_false(sm, expression):
+    if not _event_triggered_false(expression):
+        return unsupported(sm, expression, "CallExpression:event-triggered")
+    width = getattr(expression.type, "bitWidth", None)
+    if width != 1:
+        return unsupported(sm, expression, "CallExpression:event-triggered-width")
+    return {"kind": "Literal", "span": node_span(sm, expression),
+            "width": 1, "bits": "0", "event_triggered_false": True}
 
 
 def _mailbox_literal_sequence(expression):

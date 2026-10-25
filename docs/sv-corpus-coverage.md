@@ -4218,3 +4218,15 @@ The fresh 22,050-path census moves 4,912 → 4,917 clean and 17,072 → 17,067
 partial (66 include skips); `CallExpression` falls 2,956 → 2,951. The
 differential table moves 165/161/0/4 → 166/162/0/4, with grammar coverage
 unchanged at 214/83/131.
+## Untriggered and null event status — 2026-10-25
+
+The self-check tier admits `event.triggered()` as exact one-bit zero for an
+uninitialized event or an event explicitly assigned `null`, provided no event
+trigger or other event operation occurs. Triggering, waiting, aliases, and
+dynamic event state remain loud. The `event_triggered_false` fixture exercises
+both cases.
+
+The fresh 22,050-path census moves 4,917 → 4,921 clean and 17,067 → 17,063
+partial (66 include skips); `CallExpression` falls 2,951 → 2,947. The
+differential table moves 166/162/0/4 → 167/163/0/4, with grammar coverage
+unchanged at 214/83/131.

@@ -211,6 +211,24 @@ class ClassHandleDeclarations(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
 
+    def test_untriggered_and_null_events_report_triggered_false(self):
+        design = lower(
+            'module top; event a; event b; int first, second; initial begin '
+            'b = null; first = a.triggered(); second = b.triggered(); '
+            'if (first === 0 && second === 0) $display("PASS"); '
+            'else $display("FAIL"); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("event_triggered_false")]
+        self.assertEqual(len(values), 2)
+        self.assertTrue(all(node["bits"] == "0" for node in values))
+
+    def test_triggered_event_stays_loud(self):
+        design = lower(
+            'module top; event e; int result; initial begin -> e; '
+            'result = e.triggered(); end endmodule')
+        self.assertTrue(any(str(node.get("sv_kind", "")).startswith("CallExpression")
+                            for node in nodes(design)))
+
     def test_mailbox_num_after_literal_put_is_exact(self):
         design = lower(
             'module top; mailbox box; int result; initial begin '

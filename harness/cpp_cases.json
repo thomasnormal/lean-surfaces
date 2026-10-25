@@ -6241,6 +6241,18 @@
     "rung": 3
   },
   {
+    "id": "statement.callable-frame-conditional",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableConditionalStatementFrameWitness",
+    "cpp_source": "int conditional_statement_frame_witness(int value) { if (value) return 7; else return 3; } bool callable_witness() { return conditional_statement_frame_witness(1) == 7 && conditional_statement_frame_witness(0) == 3; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

@@ -1027,6 +1027,30 @@ def callableUnsignedIntegerLiteralFrameWitness : Bool := unsignedIntegerLiteralF
 
 #guard callableUnsignedIntegerLiteralFrameWitness
 
+private def conditionalStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .parameter (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let whenTrue : CallableStatement := .return_ {
+    expression := .integer 7
+    sourceType := intType
+    type := intType}
+  let whenFalse : CallableStatement := .return_ {
+    expression := .integer 3
+    sourceType := intType
+    type := intType}
+  let function := {base with body := .block (.conditional condition whenTrue whenFalse)}
+  match evaluateCallableObject 32 .lp64 function [signed 1],
+      evaluateCallableObject 32 .lp64 function [signed 0] with
+  | .ok (.ok one), .ok (.ok zero) => one == signed 7 && zero == signed 3
+  | _, _ => false
+
+def callableConditionalStatementFrameWitness : Bool := conditionalStatementFrame
+
+#guard callableConditionalStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

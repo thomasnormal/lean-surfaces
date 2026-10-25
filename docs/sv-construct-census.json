@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "CallExpression",
-    2994
+    2982
    ],
    [
     "AssignmentExpression:target",
@@ -24,7 +24,7 @@
    ],
    [
     "ExpressionStatement:CallExpression",
-    2974
+    2973
    ],
    [
     "Hierarchy:ports",
@@ -32,7 +32,7 @@
    ],
    [
     "VariableSymbol:2state",
-    2345
+    2331
    ],
    [
     "SubroutineSymbol:Subroutine",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4888,
-   "partial": 17096,
+   "clean": 4901,
+   "partial": 17083,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4210,
+    4223,
     18683
    ],
    "simulation elaboration": [
@@ -1363,9 +1363,9 @@
     "unlockable": 0
    },
    "chapter-15": {
-    "clean": 4,
+    "clean": 17,
     "error": 0,
-    "partial": 546,
+    "partial": 533,
     "skip_include": 0,
     "total": 550,
     "unlockable": 0

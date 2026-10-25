@@ -4154,3 +4154,19 @@ The 22,050-path census moves **4,875 → 4,888 clean** and **17,109 → 17,096
 partial** (66 include skips); `CallExpression` falls **3,007 → 2,994** while
 `AssignmentExpression:target` remains **2,975**. Differential coverage moves
 **160/156/0/4 → 161/157/0/4**; grammar coverage remains **214/83/131**.
+## Literal semaphore `try_get` state sequences — 2026-10-25
+
+IEEE 1800-2023 §15.3.4 makes `try_get` nonblocking: a literal request no
+larger than the available count consumes those keys and returns a positive
+integer; an excessive request returns zero and leaves the count unchanged.
+The self-check tier represents the positive result as `1` and tracks the
+remaining count only for a direct literal semaphore constructor followed by
+literal `try_get` calls. Dynamic, negative, aliased, reassigned, and mixed
+semaphore operations remain loud. The `semaphore_literal_try_get` fixture
+and differential row exercise the admitted sequence.
+
+The fresh 22,050-path census moves 4,888 → 4,901 clean and 17,096 → 17,083
+partial (66 include skips); `CallExpression` falls 2,994 → 2,982 and
+`ExpressionStatement:CallExpression` falls 2,974 → 2,973. The differential
+table moves 161/157/0/4 → 162/158/0/4, with grammar coverage unchanged at
+214/83/131.

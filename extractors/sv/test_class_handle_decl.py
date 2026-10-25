@@ -135,6 +135,42 @@ class ClassHandleDeclarations(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
 
+    def test_literal_semaphore_try_get_tracks_remaining_keys(self):
+        design = lower(
+            'module top; semaphore sem; int first, second, failed; '
+            'initial begin sem = new(3); first = sem.try_get(2); '
+            'second = sem.try_get(1); failed = sem.try_get(1); '
+            'if (first > 0 && second > 0 && failed == 0) $display("PASS"); '
+            'else $display("FAIL"); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("semaphore_literal_try_get")]
+        self.assertEqual([node["semaphore_available"] for node in values], [3, 1, 0])
+        self.assertEqual([node["semaphore_request"] for node in values], [2, 1, 1])
+        self.assertEqual([node["bits"] for node in values],
+                         ["0" * 31 + "1", "0" * 31 + "1", "0" * 32])
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_literal_semaphore_try_get_default_is_one(self):
+        design = lower(
+            'module top; semaphore sem = new(1); int result; '
+            'initial begin result = sem.try_get(); '
+            'if (result > 0 && sem.try_get(1) == 0) $display("PASS"); '
+            'else $display("FAIL"); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("semaphore_literal_try_get")]
+        self.assertEqual(len(values), 2)
+        self.assertEqual([node["semaphore_request"] for node in values], [1, 1])
+        self.assertEqual([node["bits"] for node in values],
+                         ["0" * 31 + "1", "0" * 32])
+
+    def test_dynamic_or_mixed_semaphore_try_get_stays_loud(self):
+        design = lower(
+            'module top; semaphore sem; int keys, result; initial begin '
+            'sem = new(2); result = sem.try_get(keys); sem.put(1); end endmodule')
+        self.assertIn("CallExpression",
+                      [node.get("sv_kind") for node in nodes(design)])
+
     def test_empty_mailbox_num_returns_zero_after_construction(self):
         design = lower(
             'module top; mailbox box; int result; initial begin '

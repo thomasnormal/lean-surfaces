@@ -6883,3 +6883,19 @@ The 22,050-path census moves **4,875 → 4,888 clean** and **17,109 → 17,096
 partial** (66 include skips); `CallExpression` falls **3,007 → 2,994** while
 `AssignmentExpression:target` remains **2,975**. Differential coverage moves
 **160/156/0/4 → 161/157/0/4**; grammar coverage remains **214/83/131**.
+## Literal semaphore `try_get` state sequences — 2026-10-25
+
+The self-check surface now evaluates source-ordered `try_get` calls on a
+direct semaphore constructed with a nonnegative literal key count. Each call
+uses a literal count (including the standard default of one), returns scalar
+`1` on success and `0` when insufficient keys remain, and subtracts keys only
+on success. Aliases, reassignment, negative or dynamic counts, and other
+semaphore methods remain loud because the flat state does not represent a
+semaphore object. `semaphore_literal_try_get` is the executable fixture and
+proof receipt.
+
+The 22,050-path census moves 4,888 → 4,901 clean and 17,096 → 17,083
+partial (66 include skips). `CallExpression` falls 2,994 → 2,982 and
+`ExpressionStatement:CallExpression` falls 2,974 → 2,973; the next blocker
+`AssignmentExpression:target` remains 2,975. Differential coverage moves
+161/157/0/4 → 162/158/0/4; grammar coverage remains 214/83/131.

@@ -479,6 +479,25 @@ def is_inert_class_handle_decl(symbol):
         return False
 
 
+def is_literal_semaphore_decl(symbol):
+    """Whether a semaphore declaration has one literal constructor value.
+
+    The self-check state has no semaphore object slot.  A direct literal
+    constructor is nevertheless useful to the narrow ``try_get`` lowering
+    below, which tracks the available count from the source-ordered calls.
+    Other initialized class handles remain on the ordinary loud boundary.
+    """
+    if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
+        return False
+    try:
+        return (type(symbol.type.canonicalType).__name__ == "ClassType"
+                and getattr(symbol.type.canonicalType, "name", None) == "semaphore"
+                and _semaphore_new_nonnegative_literal(
+                    getattr(symbol, "initializer", None)))
+    except Exception:
+        return False
+
+
 def is_module_virtual_interface_null_decl(symbol):
     """Whether a module virtual-interface variable is initialized to null."""
     if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
@@ -5762,6 +5781,7 @@ def _convert_legacy_call(sm, expression):
             (_string_literal_atoi_method, _convert_string_literal_atoi),
             (_string_literal_len_method, _convert_string_literal_len_method),
             (_semaphore_zero_try_get, _convert_semaphore_zero_try_get),
+            (_semaphore_literal_try_get, _convert_semaphore_literal_try_get),
             (_mailbox_empty_num_method, _convert_mailbox_empty_num),
             (lambda e: _mailbox_literal_sequence(e) is not None
                        and e.subroutineName == "num",
@@ -6452,6 +6472,175 @@ def _convert_semaphore_zero_try_get(sm, expression):
 def _semaphore_zero_try_get(expression):
     return (_semaphore_zero_method(expression)
             and expression.subroutineName == "try_get")
+
+
+def _semaphore_literal_try_get_state(expression):
+    """Return the source-ordered state of a literal semaphore ``try_get``.
+
+    This is intentionally a small, object-free slice of IEEE 1800-2023
+    §15.3.4.  A handle must have exactly one direct ``new(N)`` constructor,
+    every use of it must be a literal ``try_get`` (the frontend supplies the
+    default argument as literal one), and no other named use or alias may
+    occur.  The returned ``available`` count is the value immediately before
+    this call; ``request`` is the literal key count and ``success`` records
+    whether the call consumes it.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or expression.isSystemCall
+                or expression.subroutineName != "try_get"):
+            return None
+        receiver = getattr(expression, "thisClass", None)
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "bad", False)):
+            return None
+        symbol = getattr(receiver, "symbol", None)
+        canonical = getattr(getattr(receiver, "type", None), "canonicalType", None)
+        if (symbol is None or type(canonical).__name__ != "ClassType"
+                or getattr(canonical, "name", None) != "semaphore"):
+            return None
+        arguments = list(getattr(expression, "arguments", []))
+        if len(arguments) != 1:
+            return None
+        request = _literal_integral_value(arguments[0])
+        if request is None or request < 0:
+            return None
+
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        if not source or not getattr(symbol, "name", ""):
+            return None
+        name = re.escape(symbol.name)
+        current_start = getattr(getattr(getattr(expression, "sourceRange", None),
+                                        "start", None), "offset", None)
+        if current_start is None:
+            return None
+        # Prove the source-text constructor with the bound frontend tree
+        # first.  The text scan below supplies the compact source ordering,
+        # while this AST check prevents a comment or string mentioning
+        # ``sem = new(N)`` from becoming an object witness.
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return None
+        constructor_nodes = []
+
+        def find_constructor(node):
+            if type(node).__name__ == "AssignmentExpression":
+                left = getattr(node, "left", None)
+                if (getattr(left, "symbol", None) is symbol
+                        and type(left).__name__ == "NamedValueExpression"
+                        and getattr(node, "op", None) is None
+                        and getattr(node, "timingControl", None) is None
+                        and not getattr(node, "isNonBlocking", False)
+                        and _semaphore_new_nonnegative_literal(getattr(node, "right", None))):
+                    constructor_nodes.append(node)
+
+        instance.visit(find_constructor)
+        initializer = getattr(symbol, "initializer", None)
+        if _semaphore_new_nonnegative_literal(initializer):
+            constructor_nodes.append(initializer)
+        if len(constructor_nodes) != 1:
+            return None
+
+        constructor_re = re.compile(
+            r"(?<![A-Za-z0-9_$])" + name
+            + r"\s*=\s*new\s*\(\s*([+-]?\d+)\s*\)")
+        constructors = list(constructor_re.finditer(source))
+        if len(constructors) != 1:
+            return None
+        constructor = constructors[0]
+        initial = int(constructor.group(1), 10)
+        if initial < 0 or constructor.start() >= current_start:
+            return None
+        constructor_value = constructor_nodes[0]
+        if type(constructor_value).__name__ == "AssignmentExpression":
+            constructor_value = getattr(constructor_value, "right", None)
+        call = getattr(constructor_value, "constructorCall", None)
+        constructor_args = list(getattr(call, "arguments", []))
+        proven_initial = (_literal_integral_value(constructor_args[0])
+                          if len(constructor_args) == 1 else None)
+        if proven_initial != initial:
+            return None
+        method_re = re.compile(
+            r"(?<![A-Za-z0-9_$])" + name
+            + r"\s*\.\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*\(")
+        methods = list(method_re.finditer(source))
+        if not methods:
+            return None
+        values_by_start = {}
+        for method in methods:
+            if method.start() <= constructor.end():
+                continue
+            if method.group(1) != "try_get":
+                return None
+        # Any post-construction bare occurrence must be one of the admitted
+        # method receivers. This rejects aliases and ordinary reads.
+        for occurrence in re.finditer(r"(?<![A-Za-z0-9_$])" + name
+                                      + r"(?![A-Za-z0-9_$])", source):
+            if occurrence.start() <= constructor.end():
+                continue
+            if not any(method.start() == occurrence.start() for method in methods):
+                return None
+        current_methods = [method for method in methods
+                           if method.start() == current_start]
+        if not current_methods:
+            # pyslang's source range begins at the call, while the regex begins
+            # at the receiver; accept the unique method containing that range.
+            current_methods = [method for method in methods
+                               if method.start() <= current_start < method.end()]
+        if len(current_methods) != 1:
+            return None
+        current_method_start = current_methods[0].start()
+        prior = [method for method in methods
+                 if constructor.end() < method.start() < current_method_start]
+        for method in methods:
+            text = source[method.end():]
+            close = text.find(")")
+            if close < 0:
+                return None
+            arg_text = text[:close].strip()
+            if not arg_text:
+                value = 1
+            elif re.fullmatch(r"[+-]?\d+", arg_text):
+                value = int(arg_text, 10)
+            else:
+                return None
+            if value < 0:
+                return None
+            values_by_start[method.start()] = value
+        available = initial
+        for method in sorted(prior, key=lambda item: item.start()):
+            value = values_by_start[method.start()]
+            if value <= available:
+                available -= value
+        return {"available": available, "request": request,
+                "success": request <= available}
+    except Exception:
+        return None
+
+
+def _semaphore_literal_try_get(expression):
+    return _semaphore_literal_try_get_state(expression) is not None
+
+
+def _convert_semaphore_literal_try_get(sm, expression):
+    state = _semaphore_literal_try_get_state(expression)
+    if state is None:
+        return unsupported(sm, expression, "CallExpression:semaphore-try-get")
+    width = getattr(expression.type, "bitWidth", None)
+    if width is None or width <= 0:
+        return unsupported(sm, expression, "CallExpression:semaphore-try-get-width")
+    result = 1 if state["success"] else 0
+    return signed_metadata({
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": width,
+        "bits": ("0" * (width - 1)) + str(result),
+        "semaphore_literal_try_get": True,
+        "semaphore_available": state["available"],
+        "semaphore_request": state["request"],
+    }, expression.type)
 
 
 def _mailbox_empty_num_method(expression):
@@ -9606,6 +9795,9 @@ def _convert_local_decl(sm, stmt):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None and is_inert_class_handle_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
+    if _SYM is None and is_literal_semaphore_decl(symbol):
+        return {"kind": "Empty", "span": node_span(sm, stmt),
+                "opaque_semaphore_literal_new_write": True}
     if _SYM is None and is_string_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None and is_inert_2state_floating_decl(symbol):
@@ -9917,6 +10109,11 @@ def _convert_syscall(sm, s, e):
             # retain the call's sequencing position as an ordinary no-op.
             return {"kind": "Empty", "span": node_span(sm, s),
                     "semaphore_zero_method": name}
+        if _semaphore_literal_try_get(e):
+            # The result is discarded, but the source-ordered recognizer
+            # accounts for this successful acquisition in later calls.
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "semaphore_literal_try_get": True}
         mailbox_sequence = _mailbox_literal_sequence(e)
         if mailbox_sequence is not None:
             if name == "put":
@@ -11095,6 +11292,9 @@ def convert_var(sm, m):
         return {"kind": "Empty", "span": sym_span(sm, m)}
     if _SYM is None and is_inert_class_handle_decl(m):
         return {"kind": "Empty", "span": sym_span(sm, m)}
+    if _SYM is None and is_literal_semaphore_decl(m):
+        return {"kind": "Empty", "span": sym_span(sm, m),
+                "opaque_semaphore_literal_new_write": True}
     w, two, reason = type_width_2s(m.type)
     if w is None:
         if reason == "type" and not getattr(m.type, "isFourState", True):
@@ -11461,7 +11661,8 @@ def _convert_static_procedural_storage(sm, members):
             continue
         if (is_chandle_decl(symbol) or is_string_decl(symbol)
                 or is_inert_2state_floating_decl(symbol)
-                or is_inert_class_handle_decl(symbol)):
+                or is_inert_class_handle_decl(symbol)
+                or is_literal_semaphore_decl(symbol)):
             continue
         converted = convert_var(sm, symbol)
         values = converted if isinstance(converted, list) else [converted]
@@ -11734,6 +11935,7 @@ def convert_module(sm, inst):
                     if (is_module_event_decl(m) or is_module_floating_decl(m)
                             or is_chandle_decl(m)
                             or is_inert_class_handle_decl(m)
+                            or is_literal_semaphore_decl(m)
                             or is_module_virtual_interface_null_decl(m)
                             or is_string_decl(m)
                             or is_inert_2state_queue_decl(m)

@@ -1920,13 +1920,25 @@ def _dynamic_array_constant_extent(symbol):
             # copy as a sampled extent.
             if getattr(symbol, "initializer", None) is not None:
                 return None
-            if type(initializer).__name__ != "NamedValueExpression":
+            source_expression = initializer
+            while type(source_expression).__name__ == "ConversionExpression":
+                source_expression = getattr(source_expression, "operand", None)
+                if source_expression is None:
+                    return None
+            if type(source_expression).__name__ != "NamedValueExpression":
                 return None
-            source = getattr(initializer, "symbol", None)
-            if (source is None or source is symbol
-                    or type(source.type.canonicalType).__name__ != "DynamicArrayType"):
+            source = getattr(source_expression, "symbol", None)
+            if source is None or source is symbol:
                 return None
-            if _dynamic_array_constant_extent(source) is None:
+            source_type = type(source.type.canonicalType).__name__
+            if source_type == "DynamicArrayType":
+                if _dynamic_array_constant_extent(source) is None:
+                    return None
+            elif source_type == "FixedSizeUnpackedArrayType":
+                source_shape = _fixed_array_shape(source_expression)
+                if source_shape is None:
+                    return None
+            else:
                 return None
             source_element = source.type.canonicalType.elementType
             destination_element = symbol.type.canonicalType.elementType
@@ -2495,11 +2507,18 @@ def _dynamic_array_resize_copy_assignment(sm, expr):
         if type(allocation).__name__ != "NewArrayExpression":
             return None
         initializer = getattr(allocation, "initExpr", None)
-        if type(initializer).__name__ != "NamedValueExpression":
+        source_expression = initializer
+        while type(source_expression).__name__ == "ConversionExpression":
+            source_expression = getattr(source_expression, "operand", None)
+            if source_expression is None:
+                return None
+        if type(source_expression).__name__ != "NamedValueExpression":
             return None
-        source = getattr(initializer, "symbol", None)
-        if (source is None or source is destination
-                or type(source.type.canonicalType).__name__ != "DynamicArrayType"):
+        source = getattr(source_expression, "symbol", None)
+        if source is None or source is destination:
+            return None
+        source_type = type(source.type.canonicalType).__name__
+        if source_type not in ("DynamicArrayType", "FixedSizeUnpackedArrayType"):
             return None
         size = getattr(allocation, "sizeExpr", None)
         if type(size).__name__ != "IntegerLiteral" or getattr(size, "bad", False):
@@ -2507,20 +2526,24 @@ def _dynamic_array_resize_copy_assignment(sm, expr):
         destination_count = int(getattr(size, "value", -1))
         if destination_count <= 0 or destination_count > 1024:
             return None
-        source_count = _dynamic_array_constant_extent(source)
-        if source_count is None:
+        source_shape = _fixed_array_shape(source_expression)
+        if source_shape is None:
             return None
+        source_base, source_width, source_two, source_left, source_right = source_shape
+        source_positions = list(range(
+            source_left, source_right + (1 if source_right >= source_left else -1),
+            1 if source_right >= source_left else -1))
+        source_count = len(source_positions)
         destination_element = destination.type.canonicalType.elementType
         source_element = source.type.canonicalType.elementType
         destination_width, destination_two, destination_reason = type_width_2s(
             destination_element)
-        source_width, _source_two, source_reason = type_width_2s(source_element)
+        source_width_check, _source_two, source_reason = type_width_2s(source_element)
         if (destination_width is None or source_width is None
                 or destination_reason is not None or source_reason is not None
-                or destination_width != source_width):
+                or destination_width != source_width_check):
             return None
         destination_base = _array_storage_name(destination)
-        source_base = _array_storage_name(source)
         span = node_span(sm, expr)
         statements = []
         for position in range(destination_count):
@@ -2528,7 +2551,7 @@ def _dynamic_array_resize_copy_assignment(sm, expr):
                 value = {
                     "kind": "Ident", "span": node_span(sm, initializer),
                     "width": source_width,
-                    "name": f"{source_base}[{position}]",
+                    "name": f"{source_base}[{source_positions[position]}]",
                 }
                 if destination_two and source_element.isFourState:
                     value = squash2_wrap(value, destination_width)

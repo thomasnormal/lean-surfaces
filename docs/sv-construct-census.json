@@ -16,11 +16,11 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    2792
+    2784
    ],
    [
     "CallExpression",
-    2782
+    2775
    ],
    [
     "ExpressionStatement:CallExpression",
@@ -87,12 +87,12 @@
     563
    ],
    [
-    "ElementSelectExpression:source-type",
-    558
-   ],
-   [
     "ClockingBlockSymbol:ClockingBlock",
     553
+   ],
+   [
+    "ElementSelectExpression:source-type",
+    550
    ],
    [
     "CheckerInstanceSymbol:CheckerInstance",
@@ -968,8 +968,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4867,
-   "partial": 16446,
+   "clean": 4875,
+   "partial": 16438,
    "skip_include": 29
   },
   "clean_by_type": {
@@ -1030,7 +1030,7 @@
     52
    ],
    "simulation": [
-    4189,
+    4197,
     18003
    ],
    "simulation elaboration": [
@@ -1595,9 +1595,9 @@
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 181,
+    "clean": 189,
     "error": 0,
-    "partial": 590,
+    "partial": 582,
     "skip_include": 0,
     "total": 771,
     "unlockable": 0

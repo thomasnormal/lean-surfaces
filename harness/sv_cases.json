@@ -1619,6 +1619,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "dynamic_array_resize_fixed_source",
+      "file": "Examples/system-verilog/dynamic_array_resize_fixed_source/dynamic_array_resize_fixed_source.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

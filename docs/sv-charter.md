@@ -7157,3 +7157,23 @@ The paired 21,342-path census remains **4,867 clean → 4,867 clean** and
 `AssignmentExpression:target` blocker remains **2,792**. Differential coverage
 moves **179/174/0/5 → 180/175/0/5** with no disagreements, and grammar
 coverage remains **214/83/131**.
+
+## Finite dynamic-array copies from fixed sources — 2026-10-25
+
+A blocking `dst = new[N](fixed_source)` now lowers for a distinct finite
+one-dimensional fixed source and scalar integral destination with equal element
+width. Source cells are copied in declared range order, and a larger destination
+receives its two-state zero or four-state x default in the
+remaining cells; a smaller destination truncates after its final cell.
+Conversion-wrapped source expressions are accepted only when they resolve to
+that same fixed storage. Dynamic sizes, self-aliasing, queues, nested or
+aggregate elements, width mismatches, declaration-time copies, and scheduled
+forms remain loud. `dynamic_array_resize_fixed_source` supplies the differential
+fixture and Lean receipt, while extractor tests retain the aggregate and
+initializer boundaries.
+
+The paired 21,342-path census moves **4,867 clean → 4,875 clean** and
+**16,446 partial → 16,438 partial** (29 include skips);
+`AssignmentExpression:target` falls **2,792 → 2,784**. Differential coverage
+moves **180/175/0/5 → 181/176/0/5** with no disagreements, and grammar coverage
+remains **214/83/131**.

@@ -153,6 +153,8 @@ class DynamicArrayDeclarations(unittest.TestCase):
                int result[];
                logic four_source[];
                logic four_result[];
+               int fixed_source[3] = '{8, 9, 10};
+               int fixed_result[];
                initial begin
                  source = new[2];
                  source[0] = 11;
@@ -165,7 +167,12 @@ class DynamicArrayDeclarations(unittest.TestCase):
                      four_source[0] = 1'b1;
                      four_result = new[2](four_source);
                      if (four_result[0] === 1'b1 && four_result[1] === 1'bx)
-                       $display("PASS");
+                       begin
+                         fixed_result = new[4](fixed_source);
+                         if (fixed_result[0] == 8 && fixed_result[1] == 9 &&
+                             fixed_result[2] == 10 && fixed_result[3] == 0)
+                           $display("PASS");
+                       end
                    end
                end
                endmodule""")
@@ -173,7 +180,7 @@ class DynamicArrayDeclarations(unittest.TestCase):
                              for node in nodes(design)))
         copies = [node for node in nodes(design)
                   if node.get("dynamic_array_resize_copy_lowered")]
-        self.assertEqual(len(copies), 2)
+        self.assertEqual(len(copies), 3)
         result_copy = next(copy for copy in copies
                            if copy["stmts"][0]["target"]["name"].endswith("result[0]"))
         statements = result_copy["stmts"]
@@ -184,6 +191,12 @@ class DynamicArrayDeclarations(unittest.TestCase):
         four_copy = next(copy for copy in copies
                          if copy["stmts"][0]["target"]["name"].endswith("four_result[0]"))
         self.assertEqual(four_copy["stmts"][1]["value"]["bits"], "x")
+        fixed_copy = next(copy for copy in copies
+                          if copy["stmts"][0]["target"]["name"].endswith("fixed_result[0]"))
+        self.assertEqual([stmt["value"].get("name", "").split(":")[-1]
+                          for stmt in fixed_copy["stmts"][:3]],
+                         ["fixed_source[0]", "fixed_source[1]", "fixed_source[2]"])
+        self.assertEqual(fixed_copy["stmts"][3]["value"]["bits"], "0" * 32)
 
     def test_declaration_time_dynamic_array_copy_stays_loud(self):
         design = lower(

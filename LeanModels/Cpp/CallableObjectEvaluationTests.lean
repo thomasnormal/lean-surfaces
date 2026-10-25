@@ -2021,6 +2021,35 @@ def callableLocalConditionalInitializationFalseStatementFrameWitness : Bool :=
 
 #guard callableLocalConditionalInitializationFalseStatementFrameWitness
 
+private def localWhileInitializationStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .binary ">"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 0, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let body := .block (.sequence
+    (automaticLiteral "0x11" 5)
+    (.compoundAssign "-=" (handle "0x10") {
+      expression := .integer 1
+      sourceType := intType
+      type := intType}))
+  let function := {base with body := .block (.sequence
+    (.whileLoop condition body)
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 128 .lp64 function [signed 2] with
+  | .ok (.ok value) => value == signed 0
+  | _ => false
+
+def callableLocalWhileInitializationStatementFrameWitness : Bool :=
+  localWhileInitializationStatementFrame
+
+#guard callableLocalWhileInitializationStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

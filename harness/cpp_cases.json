@@ -6733,6 +6733,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-while-initialization-direct",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalWhileInitializationStatementFrameWitness",
+    "cpp_source": "int local_while_initialization_statement_frame_witness(int value) { while (value > 0) { int local = 5; value -= 1; } return value; } bool callable_witness() { return local_while_initialization_statement_frame_witness(2) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

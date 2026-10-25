@@ -2140,6 +2140,26 @@ def callableUnsignedLongCompoundMultiplyFrameWitness : Bool :=
 
 #guard callableUnsignedLongCompoundMultiplyFrameWitness
 
+private def unsignedLongCompoundDivideFrame : Bool :=
+  let base := incrementFunction .unsignedLong "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign "/=" (handle "0x10")
+      {expression := .integer 3, sourceType := .builtin .unsignedLong,
+        type := .builtin .unsignedLong})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .unsignedLong, type := .builtin .unsignedLong}))}
+  match CallableObjectFrame.start .lp64 function [⟨.unsigned 64, 12⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.unsigned 64, 4⟩)
+
+def callableUnsignedLongCompoundDivideFrameWitness : Bool :=
+  unsignedLongCompoundDivideFrame
+
+#guard callableUnsignedLongCompoundDivideFrameWitness
+
 private def longLongCompoundAddFrame : Bool :=
   let base := incrementFunction .longLong "++" false
   let function := {base with body := .block (.sequence

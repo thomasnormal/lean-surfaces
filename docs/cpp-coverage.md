@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 494 | 477 | 0 | 7 | 0 | 10 |
+| 495 | 478 | 0 | 7 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -475,6 +475,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `expression.callable-frame-unsigned-long-compound-add-mid` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-unsigned-long-compound-subtract-mid` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-unsigned-long-compound-multiply-mid` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `expression.callable-frame-unsigned-long-compound-divide-mid` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-long-long-compound-add-mid` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-long-long-compound-subtract-mid` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-long-long-compound-multiply-mid` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |

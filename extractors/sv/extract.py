@@ -1382,6 +1382,30 @@ def _fixed_array_dimensions(array_type, max_cells=1024):
         return None
 
 
+def _dynamic_array_element_shape(element_type):
+    """Return nested fixed dimensions and an integral leaf for one element.
+
+    A dynamic outer dimension can be represented by the same flat cells as a
+    fixed unpacked array when every inner dimension is finite and the final
+    leaf is scalar or packed integral.  Dynamic/queue/associative inner
+    dimensions and aggregate leaves remain outside that representation.
+    """
+    try:
+        nested = _fixed_array_dimensions(element_type, max_cells=1024)
+        if nested is not None:
+            dimensions, leaf_type = nested
+            width, two_state, reason = type_width_2s(leaf_type)
+            if width is None or reason is not None:
+                return None
+            return dimensions, leaf_type, width, two_state
+        width, two_state, reason = type_width_2s(element_type)
+        if width is None or reason is not None:
+            return None
+        return [], element_type, width, two_state
+    except Exception:
+        return None
+
+
 def _fixed_array_selection_prefix(expression):
     """Return ``(flat-name, selected-leaf-type)`` for constant cells.
 
@@ -1407,7 +1431,16 @@ def _fixed_array_selection_prefix(expression):
             count = _dynamic_array_constant_extent(current.symbol)
             if count is None:
                 return None
-            shape = ([(0, count - 1)], current.type.canonicalType.elementType)
+            inner = _dynamic_array_element_shape(
+                current.type.canonicalType.elementType)
+            if inner is None:
+                element_type = current.type.canonicalType.elementType
+                if type(element_type.canonicalType).__name__ != "UnpackedStructType":
+                    return None
+                shape = ([(0, count - 1)], element_type)
+            else:
+                inner_dimensions, leaf_type, _width, _two_state = inner
+                shape = ([(0, count - 1)] + inner_dimensions, leaf_type)
         else:
             shape = _fixed_array_dimensions(current.type, max_cells=None)
         if shape is None:
@@ -1468,8 +1501,16 @@ def _fixed_array_oob_select(sm, expression):
             count = _dynamic_array_constant_extent(current.symbol)
             if count is None:
                 return False
-            shape = ([(0, count - 1)],
-                     current.type.canonicalType.elementType)
+            inner = _dynamic_array_element_shape(
+                current.type.canonicalType.elementType)
+            if inner is None:
+                element_type = current.type.canonicalType.elementType
+                if type(element_type.canonicalType).__name__ != "UnpackedStructType":
+                    return False
+                shape = ([(0, count - 1)], element_type)
+            else:
+                inner_dimensions, leaf_type, _width, _two_state = inner
+                shape = ([(0, count - 1)] + inner_dimensions, leaf_type)
         else:
             shape = _fixed_array_dimensions(current.type, max_cells=None)
             if shape is None:
@@ -1959,8 +2000,7 @@ def _dynamic_array_constant_extent(symbol):
                 if count <= 0 or count > 1024 or len(elements) != count:
                     return None
                 element_type = symbol.type.canonicalType.elementType
-                width, _two_state, reason = type_width_2s(element_type)
-                if width is None or reason is not None:
+                if _dynamic_array_element_shape(element_type) is None:
                     return None
                 if any(not _case_source_expression_ok(element,
                                                       packed_members=True)
@@ -12588,6 +12628,30 @@ def convert_fixed_array_vars(sm, m):
                 return None
             element_type = array_type.elementType
             element_leaf = element_type.canonicalType
+            nested_shape = _fixed_array_dimensions(element_type, max_cells=1024)
+            if nested_shape is not None:
+                if getattr(m, "initializer", None) is not None:
+                    return None
+                inner_dimensions, leaf_type = nested_shape
+                width, two, reason = type_width_2s(leaf_type)
+                if width is None or reason is not None:
+                    return None
+                positions = [(position,)
+                             for position in range(count)]
+                for left, right in inner_dimensions:
+                    step = 1 if right >= left else -1
+                    positions = [prefix + (position,)
+                                 for prefix in positions
+                                 for position in range(left, right + step, step)]
+                base = _array_storage_name(m)
+                return [signed_metadata({
+                    "kind": "Var", "span": sym_span(sm, m),
+                    "name": base + "".join(f"[{position}]" for position in indexes),
+                    "width": width,
+                    "init": ({"kind": "Literal", "span": None,
+                              "width": width, "bits": "0" * width}
+                             if two else None),
+                }, leaf_type) for indexes in positions]
             if type(element_leaf).__name__ == "UnpackedStructType":
                 # A struct element is represented by one cell per integral
                 # field. ``new[N]`` creates N default-valued elements, so

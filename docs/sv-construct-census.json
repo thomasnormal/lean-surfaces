@@ -15,12 +15,12 @@
  "summary": {
   "blocker_files": [
    [
-    "AssignmentExpression:target",
-    2948
-   ],
-   [
     "ExpressionStatement:CallExpression",
     2945
+   ],
+   [
+    "AssignmentExpression:target",
+    2944
    ],
    [
     "CallExpression",
@@ -32,7 +32,7 @@
    ],
    [
     "VariableSymbol:2state",
-    2328
+    2325
    ],
    [
     "SubroutineSymbol:Subroutine",
@@ -92,7 +92,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    561
+    558
    ],
    [
     "CheckerInstanceSymbol:CheckerInstance",
@@ -235,11 +235,11 @@
     72
    ],
    [
-    "VariableSymbol:type",
-    68
+    "NetSymbol:Tri",
+    67
    ],
    [
-    "NetSymbol:Tri",
+    "VariableSymbol:type",
     67
    ],
    [
@@ -980,8 +980,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4964,
-   "partial": 17020,
+   "clean": 4967,
+   "partial": 17017,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1042,7 +1042,7 @@
     52
    ],
    "simulation": [
-    4286,
+    4289,
     18683
    ],
    "simulation elaboration": [
@@ -1607,9 +1607,9 @@
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 205,
+    "clean": 208,
     "error": 0,
-    "partial": 591,
+    "partial": 588,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

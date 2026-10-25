@@ -280,6 +280,39 @@ class DynamicArrayDeclarations(unittest.TestCase):
                                 "AssignmentExpression:target"
                                 for node in nodes(design)), initializer)
 
+    def test_dynamic_outer_array_flattens_fixed_integral_subarrays(self):
+        design = lower(
+            """module top;
+               bit [3:0] rows[][2];
+               int cube[][2][3];
+               initial begin
+                 rows = new[3];
+                 cube = new[2];
+                 rows[2][1] = 4'ha;
+                 cube[1][0][2] = 42;
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        names = [node["name"] for node in nodes(design)
+                 if node.get("kind") == "Var"]
+        self.assertIn("rows[2][1]", names)
+        self.assertIn("cube[1][0][2]", names)
+        self.assertEqual(len([name for name in names if name.startswith("rows[")]), 6)
+        self.assertEqual(len([name for name in names if name.startswith("cube[")]), 12)
+
+    def test_dynamic_outer_array_with_dynamic_inner_dimension_stays_loud(self):
+        design = lower(
+            """module top;
+               int values[][];
+               initial begin
+                 values = new[2];
+                 values[0] = new[3];
+               end
+               endmodule""")
+        self.assertTrue(any(node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
     def test_struct_elements_receive_type_defaults(self):
         design = lower(
             """module top;

@@ -7214,3 +7214,22 @@ On the refreshed 22,050-path sv-tests-2 snapshot, clean files remain
 `AssignmentExpression:target` falls **2,949 → 2,948**. Differential coverage grows
 **182/177/0/5 → 183/178/0/5** with no disagreements, and grammar coverage
 remains **214/83/131**.
+
+## Dynamic arrays with fixed integral subarrays — 2026-10-25
+
+A finite dynamic outer array whose elements are one or more fixed unpacked
+dimensions of scalar or packed integral values now lowers through the existing
+flat-cell representation. A literal `new[N]` samples the outer extent and
+materializes every finite inner position in declared order, preserving
+two-state zero initialization and ordinary constant-index reads and writes.
+Dynamic inner dimensions, aggregate or nonintegral leaves, initializers on the
+nested shape, and whole-array operations remain loud because the state has no
+general nested dynamic-array object.
+The `dynamic_array_fixed_subarrays` fixture exercises one- and two-level inner
+dimensions, with extractor regressions pinning the dynamic-inner refusal.
+
+On the same 22,050-path snapshot, clean files move **4,964 → 4,967** and
+partial files **17,020 → 17,017** (66 include skips); `AssignmentExpression:target`
+falls **2,949 → 2,944**, and `VariableSymbol:2state` falls **2,328 → 2,325**.
+Differential coverage grows **183/178/0/5 → 184/179/0/5** with no
+disagreements, and grammar coverage remains **214/83/131**.

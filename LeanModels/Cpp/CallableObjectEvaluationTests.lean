@@ -1237,6 +1237,26 @@ def callableDoWhileStatementFrameWitness : Bool := doWhileStatementFrame
 
 #guard callableDoWhileStatementFrameWitness
 
+private def compoundAssignStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let amount : TypedCallableExpression := {
+    expression := .integer 2
+    sourceType := intType
+    type := intType}
+  let function := {base with body := .block (.sequence
+    (.compoundAssign "+=" (handle "0x10") amount)
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 32 .lp64 function [signed 5] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
+def callableCompoundAssignStatementFrameWitness : Bool := compoundAssignStatementFrame
+
+#guard callableCompoundAssignStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

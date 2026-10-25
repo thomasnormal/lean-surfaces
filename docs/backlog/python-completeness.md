@@ -4889,3 +4889,32 @@ slice. The `star_script` and `unpack_script` harness programs match CPython
 DECIDED: retain the landed display and flat-target forms and keep starred call
 arguments loud until a callable-argument expansion shape has a sole measured
 payoff; move to the remaining statement walls next.
+
+## 2026-10-25-pycomplete-118 — price async scheduling before syntax work
+
+The remaining async grammar is a scheduler boundary, not an isolated AST
+case. The current survey sees 9 `AsyncFunctionDef` nodes in two vendored
+files, alongside `AsyncFor`, `AsyncWith`, `Await`, and async generator forms;
+both files already refuse on class creation/import and neither has an
+async-only payoff. The in-tier generator rows are synchronous and already
+covered by the H4 stepper. The ordinary remaining statement walls in the
+survey (flat starred targets, value-less annotations, list comprehensions,
+`del`, and synchronous `yield`) are either landed or deliberately covered by
+existing loud boundaries.
+
+| Measurement | Result |
+|---|---|
+| Async nodes | 9 `AsyncFunctionDef` nodes in 2 files; no async-only refusal |
+| In-repo async rows | 0; all async nodes are in vendored grammar tests |
+| Existing synchronous generator coverage | `gen_lab` matches and its `yield` boundary is proven |
+| Formatting | `git diff --check` passed |
+
+An async implementation needs a coroutine object, await protocol, task/event
+loop scheduling, cancellation, and an explicit environment model. Choosing
+those effects is a semantic and oracle decision that cannot be inferred from
+the current synchronous frame machine.
+
+DECIDED: do not silently exclude async, and do not invent scheduler behavior;
+keep the async constructs loud until an explicit coroutine/event-loop model is
+chosen. Continue with any remaining synchronous statement wall that has a
+measured sole payoff.

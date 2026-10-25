@@ -6145,6 +6145,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-integral-cast",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableIntegralCastFrameWitness",
+    "cpp_source": "int integral_cast_frame_witness(short value) { return (int)value; } bool callable_witness() { return integral_cast_frame_witness(-7) == -7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

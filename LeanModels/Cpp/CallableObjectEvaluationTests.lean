@@ -883,6 +883,25 @@ def callableAlignOfFrameWitness : Bool := alignOfFrame
 
 #guard callableAlignOfFrameWitness
 
+private def integralCastFrame : Bool :=
+  let base := incrementFunction .short "++" false
+  let function := {base with
+    signature := {result := intType, parameters := [.builtin .short], variadic := false}
+    body := .block (.return_ {
+      expression := .convert {
+        expression := .parameter (handle "0x10")
+        sourceType := .builtin .short
+        type := .builtin .short}
+      sourceType := .builtin .short
+      type := intType})}
+  match evaluateCallableObject 32 .lp64 function [⟨.signed 16, -7⟩] with
+  | .ok (.ok value) => value == signed (-7)
+  | _ => false
+
+def callableIntegralCastFrameWitness : Bool := integralCastFrame
+
+#guard callableIntegralCastFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

@@ -560,6 +560,10 @@ structure Module where
   topLevel : Array Stmt
   classes : Array ClassDefn := #[]
   namedtuples : Array NamedTupleDefn := #[]
+  /-- Names introduced by the module-level def-aliasing pass. Aliases are
+  static call-table entries until a later ordinary module assignment shadows
+  them; direct definitions remain non-rebindable. -/
+  aliases : Array String := #[]
 deriving Repr, Inhabited, BEq
 -- No DecidableEq: `Stmt`/`FunctionDefn` have none (nested arrays).
 

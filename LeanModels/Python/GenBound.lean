@@ -533,7 +533,7 @@ over the ingested program. -/
 
 namespace GenBoundSmokeTest
 
-private def m0 : Module := ⟨#[], #[], #[], #[]⟩
+private def m0 : Module := ⟨#[], #[], #[], #[], #[]⟩
 private def sp0 : Span := ⟨0, 0, 0, 0⟩
 private def w0 : World := ⟨#[.list #[.int 7, .int 8]], [], [], []⟩
 private def tgt : Expr := .name "x" sp0

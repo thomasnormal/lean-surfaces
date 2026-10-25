@@ -1,7 +1,6 @@
-"""Rebind after alias: CPython runs this (prints 7); the census rejects
-the candidate (alias name bound twice), the surviving plain assign keeps
-the loud function-as-value refusal — the decided REFUSE semantics of
-docs/memory-model.md's aliasing section, loud, never wrong."""
+"""Rebind after alias: the alias is a static call entry and the later
+ordinary assignment shadows it in the live module frame, so both CPython
+and leanpy print 7."""
 
 
 def f(x):

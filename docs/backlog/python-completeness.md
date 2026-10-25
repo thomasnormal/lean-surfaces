@@ -4918,3 +4918,25 @@ DECIDED: do not silently exclude async, and do not invent scheduler behavior;
 keep the async constructs loud until an explicit coroutine/event-loop model is
 chosen. Continue with any remaining synchronous statement wall that has a
 measured sole payoff.
+
+## 2026-10-25-pycomplete-119 — admit ordinary shadowing after a def alias
+
+The module-level def-aliasing census now records admitted alias names
+separately from direct definitions. An ordinary later assignment may shadow
+an alias in the live module frame; static function dispatch remains available
+only until that shadow is published. Direct definition names and a second
+function-valued assignment remain loud, preserving the source-order boundary
+without introducing runtime function objects. `alias_rebound.py` therefore
+matches CPython's `7`, while `alias_before_def.py` and the existing alias
+battery retain their previous outcomes.
+
+| Measurement | Result |
+|---|---|
+| Focused alias differential | 4/4 rows agree (rebound, happy path, forward refusal, bisect shape) |
+| Script corpus | 131 matched / 11 loud / 0 failed (142 rows; +1 match) |
+| Python package build | `lake build LeanModels.Python` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: allow one later ordinary shadow of an admitted module-level alias;
+keep function-valued re-aliases, direct-definition rebinding, and first-class
+callable reads loud. Move to the next remaining synchronous wall.

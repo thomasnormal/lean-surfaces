@@ -217,8 +217,8 @@
   },
   {
     "file": "harness/scripts/alias_rebound.py",
-    "expect": "unsupported",
-    "note": "CPython prints 7; the alias census REFUSES rebind-after-alias (decided semantics, docs/memory-model.md def aliasing)"
+    "expect": "match",
+    "note": "an ordinary later assignment shadows the admitted alias"
   },
   {
     "file": "harness/scripts/alias_bisect_shape.py",

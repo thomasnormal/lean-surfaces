@@ -10033,7 +10033,7 @@ names. Modeled builtins remain ordinary module globals: CPython lets a module
 rebind them, and name/callee resolution consults the live module frame before
 falling back to the builtin arm. -/
 def initBindable (m : Module) (n : String) : Bool :=
-  (findFunction m n).isNone
+  ((findFunction m n).isNone || m.aliases.contains n)
     && (findClass m n).isNone && (findNamedTuple m n).isNone
 
 /-- Flush an executed statement's locals into the live accumulator

@@ -1711,28 +1711,39 @@ admitted assign (a def target rebound anywhere would make the copy
 stale — CPython aliases the newer value); the alias name must be a
 plain non-dunder non-keyword identifier, no builtin (either table — the
 call arms and the genexp lowering key builtins by name), no
-def/class/namedtuple name, and bound by exactly its own statement. -/
+def/class/namedtuple name, and have no prior binding. One later ordinary
+assignment may shadow the alias; a second function-valued assignment to the
+same alias name remains loud because the static call table would lose the
+source-order transition. -/
 private def recognizeDefAliases (functions : Array FunctionDefn)
     (classes : Array ClassDefn) (namedtuples : Array NamedTupleDefn)
-    (topLevel : Array Stmt) : Array FunctionDefn × Array Stmt :=
+    (topLevel : Array Stmt) : Array FunctionDefn × Array Stmt × Array String :=
   let isCand : Stmt → Bool := fun s =>
     match s with
     | .assign tgts (.name _ _) _ =>
       (match tgts.toList with | [.name _ _] => true | _ => false)
     | _ => false
-  if !topLevel.any isCand then (functions, topLevel) else
+  if !topLevel.any isCand then (functions, topLevel, #[]) else
   match topLevel.toList.mapM aliasStmtBinds with
-  | Option.none => (functions, topLevel)
+  | Option.none => (functions, topLevel, #[])
   | some bindss =>
     if functions.any (·.hasGlobal) || classes.any (·.hasGlobal) then
-      (functions, topLevel)
+      (functions, topLevel, #[])
     else
       let bound := bindss.flatten
       let defNames := functions.toList.map FunctionDefn.name
       let cNames := classes.toList.map ClassDefn.name
       let ntNames := namedtuples.toList.map NamedTupleDefn.name
-      let step := fun (acc : Array FunctionDefn × List String × Array Stmt) (s : Stmt) =>
-        let (funcs, admitted, out) := acc
+      let aliasForms := topLevel.toList.filterMap fun s =>
+        match s with
+        | .assign tgts (.name t _) _ =>
+          match tgts.toList with
+          | [.name a _] => some (a, t)
+          | _ => Option.none
+        | _ => Option.none
+      let step := fun (acc : Array FunctionDefn × List String × Array Stmt × List String)
+          (s : Stmt) =>
+        let (funcs, admitted, out, seen) := acc
         match s with
         | .assign tgts (.name t _) sp =>
           (match tgts.toList with
@@ -1757,18 +1768,30 @@ private def recognizeDefAliases (functions : Array FunctionDefn)
                && !isBuiltinName a && !isPyBuiltinName a
                && !defNames.contains a && !cNames.contains a
                && !ntNames.contains a
-               && (bound.filter (· == a)).length == 1
+               -- A later ordinary assignment may shadow an alias. The
+               -- static function entry remains sound because script-scope
+               -- lookup consults live globals first. A prior binding or a
+               -- second function-valued assignment would make the table
+               -- stale, so those candidates stay loud.
+               && !seen.contains a
+               && (aliasForms.filter (·.1 == a)).length == 1
              if ok then
                match funcs.findRev? (fun f => f.name == t) with
                | some f =>
                  (funcs.push { f with name := a, span := sp },
-                  a :: admitted, out.push (.pass sp))
-               | Option.none => (funcs, admitted, out.push s)
-             else (funcs, admitted, out.push s)
-           | _ => (funcs, admitted, out.push s))
-        | _ => (funcs, admitted, out.push s)
-      let (funcs, _, out) := topLevel.foldl step (functions, [], #[])
-      (funcs, out)
+                  a :: admitted, out.push (.pass sp),
+                  seen ++ (aliasStmtBinds s).getD [])
+               | Option.none => (funcs, admitted, out.push s,
+                    seen ++ (aliasStmtBinds s).getD [])
+             else (funcs, admitted, out.push s,
+                    seen ++ (aliasStmtBinds s).getD [])
+           | _ => (funcs, admitted, out.push s,
+                    seen ++ (aliasStmtBinds s).getD []))
+        | _ => (funcs, admitted, out.push s,
+                  seen ++ (aliasStmtBinds s).getD [])
+      let (funcs, admitted, out, _) :=
+        topLevel.foldl step (functions, [], #[], [])
+      (funcs, out, admitted.toArray)
 
 /-- Parse the `module` payload, splitting top-level `FunctionDef`s into
 `Module.functions`, `ClassDef`s into `Module.classes` (methods flattened
@@ -1883,7 +1906,7 @@ def parseModule (j : Json) : Except String Module :=
     -- module-level def aliasing, LAST (docs/memory-model.md §module-level
     -- def aliasing): the censuses above see the original assigns, and the
     -- alias copies share the just-synthesized `<genexpr@n>` helpers.
-    let (functions'', topLevel''') :=
+    let (functions'', topLevel''', aliases) :=
       recognizeDefAliases functions' classes' namedtuples topLevel''
     -- del RECONCILED, after the alias pass (alias entries ARE functions
     -- entries, so `del bisect` of an admitted alias is covered by the
@@ -1891,7 +1914,7 @@ def parseModule (j : Json) : Except String Module :=
     let topLevel'''' :=
       rewriteTrailingDefDels functions'' classes' namedtuples topLevel'''
     return { functions := functions'', topLevel := topLevel'''',
-             classes := classes', namedtuples }
+             classes := classes', namedtuples, aliases }
 
 def parseLeanBlock (j : Json) : Except String LeanBlock :=
   withCtx "lean_blocks" do

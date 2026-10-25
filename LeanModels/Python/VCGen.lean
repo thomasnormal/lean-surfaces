@@ -2001,7 +2001,7 @@ repo, over the ingested lab module. -/
 
 namespace GenSmokeTest
 
-private def m0 : Module := ⟨#[], #[], #[], #[]⟩
+private def m0 : Module := ⟨#[], #[], #[], #[], #[]⟩
 private def st0 : FrameState := ⟨⟨#[], [], [], []⟩, []⟩
 
 /-- An `enumerate` over a two-element snapshot yields both pairs and stops

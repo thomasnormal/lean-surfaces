@@ -890,7 +890,7 @@ private abbrev wLoop : Stmt :=
         (.binOp (.name "x" wSp) .sub (.constant (.int 1) wSp) wSp) wSp]
     #[] wSp
 
-#guard execStmt ⟨#[], #[], #[], #[]⟩ 64 ⟨⟨#[], [], [], []⟩, [("x", .int 5)]⟩ wLoop
+#guard execStmt ⟨#[], #[], #[], #[], #[]⟩ 64 ⟨⟨#[], [], [], []⟩, [("x", .int 5)]⟩ wLoop
   == .ok ⟨⟨#[], [], [], []⟩, [("x", .int 0)]⟩ .next
 
 /-- The countdown terminates at `x = 0` — while rule only, any module,

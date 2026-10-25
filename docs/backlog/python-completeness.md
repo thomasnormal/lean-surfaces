@@ -17,6 +17,26 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-24-pycomplete-110 — built-in `object` class base
+
+The class tier now admits `class C(object)` as the default-protocol class it
+is semantically equivalent to. Ingestion clears the raw base marker only for
+the built-in name, preserving conservative creation-effect provenance in the
+envelope while allowing the script to execute. External, dynamic, and other
+built-in-type bases remain loud.
+
+The class census controls now treat both `object` and an earlier same-module
+base as creation-pure admissions.
+
+| Measurement | Result |
+|---|---|
+| Extractor tests | 127 passed |
+| Class census controls | 20 fixtures + graphlib/opcode/bisect: 0 failures |
+| Focused acceptance | `cls_lab.object_base_truthy` matches CPython |
+
+DECIDED: admit only the built-in `object` base; retain loud failure for all
+other external and dynamic bases.
+
 ## 2026-10-24-pycomplete-109 — class census inheritance control
 
 The class census now follows ingestion's source-order rule for the new

@@ -310,6 +310,9 @@ cycle DETECTION, never by running out of fuel).
   The base's methods and `__init__` are resolved through that single link;
   unresolved, forward, multiple, dynamic, and unsupported-base forms remain
   loud. Inherited dunders keep the default-protocol guard sound.
+  The built-in `object` base is also admitted as an explicit spelling of the
+  default class; its raw envelope marker is cleared only after ingestion proves
+  that exact name.
 * **Attributes** (mutable self): reads resolve the instance attribute
   table first, then the class's methods (a bound-method VALUE is loud —
   methods are called, not passed), then the faithful `AttributeError`

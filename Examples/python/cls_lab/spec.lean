@@ -84,6 +84,7 @@ guard means no `__len__`/`__getitem__`/`__iter__` can exist) -/
 
 #guard callFunction cls_lab "weird_eq" #[.int 1] 4096 matches .unsupported _
 #py_check cls_lab.sub_inherits(1) = 1
+#py_check cls_lab.object_base_truthy() = true
 #guard callFunction cls_lab "class_as_value" #[] 4096 matches .unsupported _
 #guard callFunction cls_lab "attr_on_int" #[.int 1] 4096
   matches .exn .attributeError

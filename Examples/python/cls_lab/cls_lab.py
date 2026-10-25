@@ -53,6 +53,10 @@ class Sub(Cell):
     pass
 
 
+class ObjectSub(object):
+    pass
+
+
 def make_get(a):
     c = Cell(a)
     return c.get()
@@ -162,6 +166,10 @@ def weird_eq(a):
 def sub_inherits(a):
     s = Sub(a)
     return s.get()
+
+
+def object_base_truthy():
+    return bool(ObjectSub())
 
 
 def class_as_value():

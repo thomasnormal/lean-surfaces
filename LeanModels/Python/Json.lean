@@ -1796,12 +1796,14 @@ def parseModule (j : Json) : Except String Module :=
         -- introducing an ordered module-item representation.
         let c := match c.base with
           | some b =>
-            match classes.findRev? (fun prior => prior.name == b) with
-            | some prior =>
-              if prior.ok && prior.ntBase.isNone && !prior.isExc then
-                { c with creationPure := c.creationExecutable }
-              else { c with ok := false, creationPure := false }
-            | Option.none => { c with ok := false, creationPure := false }
+            if b == "object" then
+              { c with base := Option.none, creationPure := c.creationExecutable }
+            else match classes.findRev? (fun prior => prior.name == b) with
+              | some prior =>
+                if prior.ok && prior.ntBase.isNone && !prior.isExc then
+                  { c with creationPure := c.creationExecutable }
+                else { c with ok := false, creationPure := false }
+              | Option.none => { c with ok := false, creationPure := false }
           | Option.none => c
         let classStmt := .unsupported "ClassDef" c.name c.span
         classes := classes.push c

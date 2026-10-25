@@ -137,6 +137,7 @@
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "attr_on_int", "args": [[1]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "weird_eq", "args": [[1]], "expect": "unsupported"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "sub_inherits", "args": [[1]], "expect": "match"},
+  {"file": "Examples/python/cls_lab/cls_lab.py", "function": "object_base_truthy", "args": [[]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "class_as_value", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "slot_read", "args": [[7], [0], [-3]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "slot_store", "args": [[7], [0], [-3]], "expect": "match"},

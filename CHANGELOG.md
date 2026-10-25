@@ -10,6 +10,8 @@
 - The class tier now admits a single plain-name base from an earlier
   same-module class, resolving inherited methods and `__init__`; unresolved,
   forward, multiple, dynamic, and external bases remain loud.
+- Explicit `class C(object)` now uses the existing default-protocol instance
+  semantics; other external and dynamic bases remain loud.
 
 All notable changes to the **Python tier** of this repository (the extractor,
 the Lean semantics under `LeanModels/Python/`, its proof surface, and its

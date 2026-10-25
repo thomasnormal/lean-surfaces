@@ -300,6 +300,8 @@ def unexplained(c):
         ex.add("base:namedtuple-call")
     if c.get("recognized") == "base":
         ex.add("base:same-module-class")
+    if c.get("recognized") == "object":
+        ex.add("base:object")
     # A literal __slots__ declaration is represented in the class table and
     # changes instance storage without executing an observable class-body
     # effect.  It is therefore a priced semantic demand, but not a creation
@@ -336,7 +338,7 @@ def _module_envelope(tree):
     for d in body:
         if d.get("kind") == "ClassDef":
             base = d.get("base")
-            if (base is not None and base in prior
+            if ((base == "object" or (base is not None and base in prior))
                     and d.get("class_unsupported") is None):
                 # Ingestion proves this name-only base at the class statement;
                 # its evaluation is then creation-pure.
@@ -391,6 +393,12 @@ def file_row(path, name):
         if d.get("kind") == "ClassDef":
             rec = ("nt" if d.get("namedtuple_base") is not None
                    else "exc" if d.get("exception_base") else
+                   "object" if any(c.name == d["name"]
+                                    and c.lineno == d["span"]["lineno"]
+                                    and len(c.bases) == 1
+                                    and isinstance(c.bases[0], ast.Name)
+                                    and c.bases[0].id == "object"
+                                    for c in top) else
                    "base" if any(c.name == d["name"]
                                   and c.lineno == d["span"]["lineno"]
                                   and len(c.bases) == 1
@@ -545,7 +553,7 @@ FIXTURES = [
     ("computed attribute", "class C:\n    x = f()\n", ["body:assign-call"], True),
     ("name attribute", "class C:\n    x = y\n", ["body:assign-name"], True),
     ("__slots__", "class C:\n    __slots__ = ()\n", ["body:slots"], False),
-    ("object base", "class C(object):\n    pass\n", ["base:object"], True),
+    ("object base", "class C(object):\n    pass\n", ["base:object"], False),
     ("same-module base",
      "class A:\n    pass\nclass B(A):\n    pass\n", ["base:same-module-class"], False),
     ("Exception base", "class E(Exception):\n    pass\n", ["base:exception"], False),
@@ -589,6 +597,9 @@ def controls(verbose=True):
         truth = [(bool(d.get("creation_effects")),
                   "nt" if d.get("namedtuple_base") is not None
                   else "exc" if d.get("exception_base") else
+                  "object" if len(node.bases) == 1
+                  and isinstance(node.bases[0], ast.Name)
+                  and node.bases[0].id == "object" else
                   "base" if len(node.bases) == 1
                   and isinstance(node.bases[0], ast.Name)
                   and any(p.name == node.bases[0].id and p.lineno < node.lineno

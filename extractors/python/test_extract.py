@@ -1047,6 +1047,11 @@ class ClassDefTests(unittest.TestCase):
         # effect once it proves the base is an earlier admitted class.
         self.assertTrue(body[1]["creation_effects"])
 
+    def test_object_base_is_structured_and_conservative(self):
+        c = self._module_body("class C(object):\n    pass\n")[0]
+        self.assertEqual(c["base"], "object")
+        self.assertTrue(c["creation_effects"])
+
     def test_metaclass_and_decorators_flag(self):
         body = self._module_body("class C(metaclass=type):\n    pass\n")
         self.assertIn("metaclass", body[0]["class_unsupported"])

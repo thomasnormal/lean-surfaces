@@ -32,7 +32,7 @@
    ],
    [
     "VariableSymbol:2state",
-    2325
+    2313
    ],
    [
     "SubroutineSymbol:Subroutine",
@@ -143,12 +143,12 @@
     226
    ],
    [
-    "StaticLocal:invalid-compilation",
-    219
-   ],
-   [
     "Always:invalid-compilation",
     218
+   ],
+   [
+    "StaticLocal:invalid-compilation",
+    215
    ],
    [
     "Package:Subroutine",
@@ -980,8 +980,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4992,
-   "partial": 16994,
+   "clean": 4993,
+   "partial": 16993,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1042,7 +1042,7 @@
     52
    ],
    "simulation": [
-    4314,
+    4315,
     18685
    ],
    "simulation elaboration": [
@@ -1455,9 +1455,9 @@
     "unlockable": 0
    },
    "chapter-26": {
-    "clean": 173,
+    "clean": 174,
     "error": 0,
-    "partial": 392,
+    "partial": 391,
     "skip_include": 0,
     "total": 565,
     "unlockable": 0

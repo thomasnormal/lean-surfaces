@@ -1700,6 +1700,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "mailbox_typed_fifo",
+      "file": "Examples/system-verilog/mailbox_typed_fifo/mailbox_typed_fifo.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -473,8 +473,40 @@ def is_inert_class_handle_decl(symbol):
     if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
         return False
     try:
-        return (type(symbol.type.canonicalType).__name__ == "ClassType"
-                and getattr(symbol, "initializer", None) is None)
+        canonical = symbol.type.canonicalType
+        if type(canonical).__name__ != "ClassType":
+            return False
+        initializer = getattr(symbol, "initializer", None)
+        if getattr(canonical, "name", None) != "mailbox":
+            return initializer is None
+        # Module-scope construction is not a source-ordered local mailbox
+        # snapshot; preserve the existing loud boundary for that form.
+        if (initializer is not None
+                and not getattr(symbol.parentScope, "isProceduralContext", False)):
+            return False
+        # A mailbox handle has no flat storage.  The uninitialized form and
+        # the direct ``mailbox#(T) mbx = new()`` form are both declaration
+        # metadata; the source-ordered mailbox recognizers account for the
+        # subsequent put/get/num calls.  Other initialized class handles stay
+        # on the ordinary loud boundary.
+        if initializer is None:
+            return True
+        if type(initializer).__name__ != "NewClassExpression":
+            return False
+        # pyslang supplies the mailbox's implicit default size as a synthetic
+        # constructor argument, so the AST argument count cannot distinguish
+        # ``new()`` from an explicit bounded constructor.  Use only the
+        # initializer's source spelling for this declaration-only shortcut.
+        if not _SOURCE_BYTES:
+            return False
+        start = getattr(getattr(initializer, "sourceRange", None), "start", None)
+        end = getattr(getattr(initializer, "sourceRange", None), "end", None)
+        start = getattr(start, "offset", None)
+        end = getattr(end, "offset", None)
+        if start is None or end is None:
+            return False
+        spelling = _SOURCE_BYTES[start:end].decode("utf-8", errors="replace")
+        return bool(re.fullmatch(r"\s*new\s*\(\s*\)\s*", spelling))
     except Exception:
         return False
 

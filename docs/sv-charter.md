@@ -7324,3 +7324,26 @@ call-statement blocker falls **2,942 → 2,926**, leaving
 `AssignmentExpression:target` at **2,940** as the new leader. Differential
 coverage grows **187/182/0/5 → 188/183/0/5** with no disagreements, and grammar
 coverage remains **214/86/128**.
+
+## Typed mailbox FIFO declarations — 2026-10-25
+
+A procedural `mailbox#(T) mbx = new()` declaration now uses the existing
+source-ordered scalar mailbox FIFO lowering when `T` is an admitted integral
+message type. pyslang supplies an implicit default-size constructor argument,
+so the extractor checks the source spelling and admits only the unbounded
+`new()` form; bounded constructors and other initialized class handles remain
+loud. `mailbox_typed_fifo` supplies the differential row and Lean receipt,
+covering two matching `int` messages and the exact `num()` count.
+
+On the refreshed 22,053-path snapshot, clean files move **4,992 → 4,993** and
+partial files **16,994 → 16,993** (67 include skips). The leading
+`AssignmentExpression:target` blocker remains **2,937**, while
+`VariableSymbol:2state` falls **2,325 → 2,313** because the admitted typed
+mailbox declaration shape occurs in 12 files. Differential coverage grows
+**189/184/0/5 → 190/185/0/5** with no disagreements; grammar coverage grows
+**214/86/128 → 216/88/128**.
+
+DECIDED: the ten remaining sole `AssignmentExpression:target` files are live
+continuous-driver, net-resolution, or whole-array cases. They require the
+scheduler-owned driver state or aggregate storage and remain loud; the next
+sound family is the leading `ExpressionStatement:CallExpression` blocker.

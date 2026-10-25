@@ -2080,6 +2080,35 @@ def callableLocalWhileInitializationStatementFrameWitness : Bool :=
 
 #guard callableLocalWhileInitializationStatementFrameWitness
 
+private def localWhileZeroInitializationStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .binary ">"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 1, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let body := .block (.sequence
+    (automaticLiteral "0x11" 5)
+    (.compoundAssign "-=" (handle "0x10") {
+      expression := .integer 1
+      sourceType := intType
+      type := intType}))
+  let function := {base with body := .block (.sequence
+    (.whileLoop condition body)
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 128 .lp64 function [signed 1] with
+  | .ok (.ok value) => value == signed 1
+  | _ => false
+
+def callableLocalWhileZeroInitializationStatementFrameWitness : Bool :=
+  localWhileZeroInitializationStatementFrame
+
+#guard callableLocalWhileZeroInitializationStatementFrameWitness
+
 private def localForInitializationStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let initializer : CallableStatement := .assign (handle "0x10") {

@@ -1680,6 +1680,26 @@ def callableUnsignedIntCompoundShiftRightFrameWitness : Bool :=
 
 #guard callableUnsignedIntCompoundShiftRightFrameWitness
 
+private def unsignedLongLongCompoundAddFrame : Bool :=
+  let base := incrementFunction .unsignedLongLong "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign "+=" (handle "0x10")
+      {expression := .integer 3, sourceType := .builtin .unsignedLongLong,
+        type := .builtin .unsignedLongLong})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .unsignedLongLong, type := .builtin .unsignedLongLong}))}
+  match CallableObjectFrame.start .lp64 function [⟨.unsigned 64, 12⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.unsigned 64, 15⟩)
+
+def callableUnsignedLongLongCompoundAddFrameWitness : Bool :=
+  unsignedLongLongCompoundAddFrame
+
+#guard callableUnsignedLongLongCompoundAddFrameWitness
+
 private def intCompoundBitAndFrame : Bool :=
   let base := incrementFunction .int "++" false
   let function := {base with body := .block (.sequence

@@ -40,7 +40,8 @@ def query_source(expression, declarations=""):
 
 
 def query_nodes(design):
-    return [node for node in nodes(design) if node.get("fixed_bits_query")]
+    return [node for node in nodes(design)
+            if node.get("fixed_bits_query") or node.get("empty_dynamic_bits_query")]
 
 
 class FixedBitQueries(unittest.TestCase):
@@ -175,15 +176,16 @@ class FixedBitQueries(unittest.TestCase):
                 self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
 
     def test_dynamic_size_queries_stay_loud(self):
-        declarations = {"int values[]; ": "values", "int values[$]; ": "values",
-                        "int values[int]; ": "values"}
-        for declaration, expression in declarations.items():
+        self.assert_fixed_queries(query_source("$bits(values)", "int values[]; "), [0])
+        for declaration in ("int values[$]; ", "int values[int]; "):
             with self.subTest(declaration=declaration):
-                self.assert_query_refused(query_source("$bits(" + expression + ")", declaration))
+                self.assert_query_refused(query_source("$bits(values)", declaration))
 
     def test_string_and_real_queries(self):
-        for source in (query_source("$bits(value)", "string value; "),
-                       query_source("$bits(value)", "real value; ")):
+        for source in (query_source("$bits(value)", "string value; "),):
+            with self.subTest(source=source):
+                self.assert_fixed_queries(source, [0])
+        for source in (query_source("$bits(value)", "real value; "),):
             with self.subTest(source=source):
                 self.assert_query_refused(source)
         for source, width in ((query_source("$bits(real)"), 64),

@@ -7523,3 +7523,20 @@ On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
 remains **2,937** and `ExpressionStatement:CallExpression` remains **2,911**.
 Differential coverage grows **199/194/0/5 → 200/195/0/5** with no
 disagreements; grammar coverage remains **216/89/127**.
+
+## Empty dynamic-array and string `$bits` queries — 2026-10-25
+
+`$bits` now returns the exact signed 32-bit zero for an unallocated dynamic
+array and for an empty string variable. The source scan allows only further
+queries of the same empty value; allocated arrays, queue and associative
+arrays, nonempty or written strings, real values, and type or expression forms
+remain loud. The `empty_dynamic_bits` fixture supplies the differential
+witness and Lean receipt, while the bit-query regressions pin the new dynamic
+boundary.
+
+On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
+**5,020 → 5,024** and partial files **16,966 → 16,962** (67 include skips).
+`CallExpression` falls **2,870 → 2,866** while `AssignmentExpression:target`
+remains **2,937** and `ExpressionStatement:CallExpression` remains **2,911**.
+Differential coverage grows **200/195/0/5 → 201/196/0/5** with no
+disagreements; grammar coverage remains **216/89/127**.

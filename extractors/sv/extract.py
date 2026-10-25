@@ -1046,6 +1046,68 @@ def _convert_fixed_bits_query(sm, expression):
     }
 
 
+def _empty_dynamic_bits_query(expression):
+    """Recognize ``$bits`` of an empty dynamic array or string variable."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "$bits"
+                or len(expression.arguments) != 1):
+            return False
+        argument = expression.arguments[0]
+        if (type(argument).__name__ != "NamedValueExpression"
+                or getattr(argument, "bad", False)):
+            return False
+        canonical = type(argument.type.canonicalType).__name__
+        if canonical not in ("DynamicArrayType", "StringType"):
+            return False
+        width, _two_state, reason = type_width_2s(expression.type)
+        if (width != 32 or reason is not None
+                or not expression.type.isIntegral or not expression.type.isSigned):
+            return False
+        symbol = getattr(argument, "symbol", None)
+        name = getattr(symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        if symbol is None or not name or not source:
+            return False
+        initializer = getattr(symbol, "initializer", None)
+        if canonical == "DynamicArrayType":
+            if initializer is not None:
+                return False
+        elif initializer is not None:
+            while type(initializer).__name__ == "ConversionExpression":
+                initializer = getattr(initializer, "operand", None)
+            if (type(initializer).__name__ != "StringLiteral"
+                    or getattr(initializer, "value", None) != ""):
+                return False
+        code_source = _sv_code_source(source)
+        occurrences = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"(?![A-Za-z0-9_$])", code_source))
+        if not occurrences:
+            return False
+        for occurrence in occurrences[1:]:
+            prefix = code_source[:occurrence.start()].rstrip()
+            suffix = code_source[occurrence.end():].lstrip()
+            if not (re.search(r"\$bits\s*\(\s*$", prefix)
+                    and suffix.startswith(")")):
+                return False
+        return True
+    except Exception:
+        return False
+
+
+def _convert_empty_dynamic_bits_query(sm, expression):
+    if not _empty_dynamic_bits_query(expression):
+        return unsupported(sm, expression, "CallExpression:bits-empty-dynamic")
+    return signed_metadata({
+        "kind": "Literal", "span": node_span(sm, expression),
+        "width": 32, "bits": "0" * 32,
+        "empty_dynamic_bits_query": True,
+    }, expression.type)
+
+
 BIT_QUERY_CALLS = ("$countbits", "$countones", "$onehot", "$onehot0", "$isunknown")
 SIGNING_CALLS = ("$signed", "$unsigned")
 ENUM_NUMERIC_METHODS = ("first", "last", "next", "prev", "num")
@@ -6617,6 +6679,7 @@ def _convert_legacy_call(sm, expression):
             (_enum_method_call, _convert_enum_method),
             (_clog2_call, _convert_clog2),
             (_dimension_query_call, _convert_dimension_query),
+            (_empty_dynamic_bits_query, _convert_empty_dynamic_bits_query),
             (_string_literal_getc_method, _convert_string_literal_getc),
             (_string_literal_compare_method, _convert_string_literal_compare),
             (_string_literal_atoi_method, _convert_string_literal_atoi),

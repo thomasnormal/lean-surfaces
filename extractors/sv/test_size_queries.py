@@ -172,6 +172,23 @@ class SizeQueries(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
+    def test_empty_dynamic_bits_returns_zero(self):
+        design = lower(
+            'module top; int dyn[]; string text = ""; int result; initial begin '
+            'result = $bits(dyn); if (result === 0 && $bits(text) === 0) '
+            '$display("PASS"); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("empty_dynamic_bits_query")]
+        self.assertEqual(len(values), 2)
+        self.assertTrue(all(node["bits"] == "0" * 32 for node in values))
+
+    def test_allocated_dynamic_bits_stays_loud(self):
+        design = lower(
+            'module top; int dyn[]; int result; initial begin '
+            'dyn = new[2]; result = $bits(dyn); end endmodule')
+        self.assertFalse(any(node.get("empty_dynamic_bits_query")
+                             for node in nodes(design)))
+
     def test_uninitialized_dynamic_array_size_is_zero(self):
         design = lower(
             'module top; int values[]; initial $display("%0d", values.size()); endmodule')

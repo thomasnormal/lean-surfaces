@@ -1792,6 +1792,15 @@
       "expect": "match"
     },
     {
+      "name": "empty_dynamic_bits",
+      "file": "Examples/system-verilog/empty_dynamic_bits/empty_dynamic_bits.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "semaphore_negative_try_get",
       "file": "Examples/system-verilog/semaphore_negative_try_get/semaphore_negative_try_get.sv",
       "module": "top",

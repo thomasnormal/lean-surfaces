@@ -1287,6 +1287,31 @@ def callableVoidReturnStatementFrameWitness : Bool := voidReturnStatementFrame
 
 #guard callableVoidReturnStatementFrameWitness
 
+private def conditionalNoElseStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .parameter (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let replacement : TypedCallableExpression := {
+    expression := .integer 9
+    sourceType := intType
+    type := intType}
+  let function := {base with body := .block (.sequence
+    (.conditional condition (.assign (handle "0x10") replacement) .skip)
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 32 .lp64 function [signed 1],
+      evaluateCallableObject 32 .lp64 function [signed 0] with
+  | .ok (.ok one), .ok (.ok zero) => one == signed 9 && zero == signed 0
+  | _, _ => false
+
+def callableConditionalNoElseStatementFrameWitness : Bool := conditionalNoElseStatementFrame
+
+#guard callableConditionalNoElseStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

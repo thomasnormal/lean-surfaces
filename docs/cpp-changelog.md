@@ -5,6 +5,22 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.96] — 2026-10-25
+
+### Added
+
+- Added object-frame witnesses for nested prefix and postfix decrement, nested
+  computed and plain local initialization, and conditional-block local
+  initialization.
+
+### Measured
+
+- The checked-in corpus now contains **583 differential rows**: **566 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.95] — 2026-10-25
 
 ### Added

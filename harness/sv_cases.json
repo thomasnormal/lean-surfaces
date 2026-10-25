@@ -1709,6 +1709,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "mailbox_variable_fifo",
+      "file": "Examples/system-verilog/mailbox_variable_fifo/mailbox_variable_fifo.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -7347,3 +7347,21 @@ DECIDED: the ten remaining sole `AssignmentExpression:target` files are live
 continuous-driver, net-resolution, or whole-array cases. They require the
 scheduler-owned driver state or aggregate storage and remain loud; the next
 sound family is the leading `ExpressionStatement:CallExpression` blocker.
+
+## Mailbox FIFO puts from pure scalar variables — 2026-10-25
+
+The scalar mailbox snapshot now replays a direct integral variable message
+when that variable has a source-ordered pure literal write before the `put()`.
+This covers the §15.4.3 singular-expression rule without adding mailbox
+storage: the snapshot substitutes the latest literal value, then existing FIFO
+`get()` and `num()` lowering applies. Aliases, control-dependent or repeated
+writes, nonliteral values, aggregate or handle messages, and other mailbox
+methods remain loud. `mailbox_variable_fifo` supplies the differential row and
+Lean receipt.
+
+On the refreshed 22,053-path snapshot, clean files move **4,993 → 4,994** and
+partial files **16,993 → 16,992** (67 include skips). The leading
+`AssignmentExpression:target` blocker remains **2,937**; the
+`ExpressionStatement:CallExpression` blocker falls **2,926 → 2,925**.
+Differential coverage grows **190/185/0/5 → 191/186/0/5** with no
+disagreements; grammar coverage remains **216/88/128**.

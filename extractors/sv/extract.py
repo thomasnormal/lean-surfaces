@@ -7781,6 +7781,7 @@ def _mailbox_literal_get_state(sm, expression):
         if instance is None:
             return None
         calls = []
+        scalar_writes = []
         control_ranges = []
 
         def inspect(node):
@@ -7795,6 +7796,40 @@ def _mailbox_literal_get_state(sm, expression):
                 if start is not None and end is not None:
                     control_ranges.append((start, end))
             if type(node).__name__ != "CallExpression":
+                if type(node).__name__ == "VariableDeclStatement":
+                    declared = getattr(node, "symbol", None)
+                    initializer = getattr(declared, "initializer", None)
+                    if declared is not None and initializer is not None:
+                        offset = getattr(getattr(getattr(initializer,
+                                                    "sourceRange", None),
+                                                "start", None),
+                                         "offset", None)
+                        value = None
+                        if (_integral_literal_source(initializer)
+                                and _case_source_expression_ok(initializer)):
+                            value = convert_expr(sm, initializer)
+                            if (value is None or value.get("kind") == "Unsupported"
+                                    or not _case_expression_ok(value)):
+                                value = None
+                        if offset is not None:
+                            scalar_writes.append((offset, declared, value))
+                elif type(node).__name__ == "AssignmentExpression":
+                    left = getattr(node, "left", None)
+                    declared = getattr(left, "symbol", None)
+                    offset = getattr(getattr(getattr(node, "sourceRange", None),
+                                             "start", None), "offset", None)
+                    value = None
+                    right = getattr(node, "right", None)
+                    if (declared is not None and offset is not None
+                            and not getattr(node, "isNonBlocking", False)
+                            and _integral_literal_source(right)
+                            and _case_source_expression_ok(right)):
+                        value = convert_expr(sm, right)
+                        if (value is None or value.get("kind") == "Unsupported"
+                                or not _case_expression_ok(value)):
+                            value = None
+                    if declared is not None and offset is not None:
+                        scalar_writes.append((offset, declared, value))
                 return
             receiver_node = getattr(node, "thisClass", None)
             if (type(receiver_node).__name__ == "NamedValueExpression"
@@ -7810,30 +7845,49 @@ def _mailbox_literal_get_state(sm, expression):
         if any(any(start < offset < end for start, end in control_ranges)
                for offset, _ in calls):
             return None
+        scalar_writes.sort(key=lambda item: item[0])
+        if any(any(start < write_offset < end
+                   for write_offset, _symbol, _value in scalar_writes)
+               for start, end in control_ranges):
+            return None
         if not any(node is expression for _, node in calls):
             return None
         if any(getattr(node, "subroutineName", "") not in ("put", "get", "num")
                for _, node in calls):
             return None
 
-        def literal_message(node):
+        def literal_message(node, offset):
             if not _case_source_expression_ok(node):
                 return None
-            named = False
+            named = []
 
             def inspect_value(value):
-                nonlocal named
                 if type(value).__name__ in ("NamedValueExpression",
                                             "HierarchicalValueExpression"):
-                    named = True
+                    named.append(value)
 
             _visit_selected_expression(node, inspect_value)
-            if named:
-                return None
             width, _two_state, reason = type_width_2s(node.type)
             if width is None or reason is not None:
                 return None
-            value = convert_expr(sm, node)
+            if named:
+                # The variable-message extension is deliberately one direct
+                # scalar name.  Replay its latest pure-literal write from the
+                # linear source order; aliases, aggregates and expressions
+                # combining names remain outside the snapshot.
+                if (len(named) != 1
+                        or type(node).__name__ != "NamedValueExpression"
+                        or type(named[0]).__name__ != "NamedValueExpression"):
+                    return None
+                target = getattr(named[0], "symbol", None)
+                writes = [value for write_offset, symbol_value, value
+                          in scalar_writes
+                          if symbol_value is target and write_offset < offset]
+                if not writes or writes[-1] is None:
+                    return None
+                value = writes[-1]
+            else:
+                value = convert_expr(sm, node)
             if (value is None or value.get("kind") == "Unsupported"
                     or width_of(value) != width or not _case_expression_ok(value)):
                 return None
@@ -7851,7 +7905,7 @@ def _mailbox_literal_get_state(sm, expression):
             if method == "put":
                 if len(arguments) != 1:
                     return None
-                message = literal_message(arguments[0])
+                message = literal_message(arguments[0], _)
                 if message is None:
                     return None
                 queue.append(message)
@@ -7876,7 +7930,7 @@ def _mailbox_literal_get_state(sm, expression):
         if method == "put":
             if len(expression.arguments) != 1:
                 return None
-            message = literal_message(expression.arguments[0])
+            message = literal_message(expression.arguments[0], position)
             if message is None:
                 return None
             return {"method": method, "value": message[0],

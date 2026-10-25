@@ -7471,3 +7471,19 @@ On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
 remains **2,937** and `ExpressionStatement:CallExpression` remains **2,911**.
 Differential coverage grows **196/191/0/5 → 197/192/0/5** with no
 disagreements; grammar coverage remains **216/89/127**.
+
+## Empty associative-array `num()` / `size()` — 2026-10-25
+
+An untouched 2-state associative array now answers both `num()` and `size()`
+with the exact zero count. The source scan allows only those zero-argument
+queries after the declaration, so keyed writes, aliases, dynamic activity,
+four-state arrays, and other methods remain loud. `assoc_empty_num` supplies
+the differential witness and the extractor regressions pin comment masking and
+the write refusal.
+
+On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
+**5,013 → 5,015** and partial files **16,973 → 16,971** (67 include skips).
+`CallExpression` falls **2,877 → 2,875** while `AssignmentExpression:target`
+remains **2,937** and `ExpressionStatement:CallExpression` remains **2,911**.
+Differential coverage grows **197/192/0/5 → 198/193/0/5** with no
+disagreements; grammar coverage remains **216/89/127**.

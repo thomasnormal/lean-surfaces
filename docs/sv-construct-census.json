@@ -24,7 +24,7 @@
    ],
    [
     "CallExpression",
-    2877
+    2875
    ],
    [
     "Hierarchy:ports",
@@ -980,8 +980,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5013,
-   "partial": 16973,
+   "clean": 5015,
+   "partial": 16971,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1042,7 +1042,7 @@
     52
    ],
    "simulation": [
-    4335,
+    4337,
     18685
    ],
    "simulation elaboration": [
@@ -1607,9 +1607,9 @@
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 225,
+    "clean": 227,
     "error": 0,
-    "partial": 571,
+    "partial": 569,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

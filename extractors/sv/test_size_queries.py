@@ -89,6 +89,30 @@ class SizeQueries(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
+    def test_empty_associative_num_and_size_are_zero(self):
+        design = lower(
+            'module top; int values[string]; initial begin '
+            '// values.num() in a comment is not a second query.\n'
+            'if (values.num() === 0 && values.size() === 0) '
+            '$display("PASS values.size()"); end endmodule')
+        queries = [node for node in nodes(design)
+                   if node.get("associative_empty_query")]
+        self.assertEqual([node["associative_empty_query"] for node in queries],
+                         ["num", "size"])
+        self.assertTrue(all(node["bits"] == "0" * 32 for node in queries))
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_associative_write_before_num_stays_loud(self):
+        design = lower(
+            'module top; int values[string]; initial begin '
+            'values["key"] = 1; if (values.num() === 1) $display("PASS"); '
+            'end endmodule')
+        self.assertFalse(any(node.get("associative_empty_query")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
     def test_uninitialized_dynamic_array_size_is_zero(self):
         design = lower(
             'module top; int values[]; initial $display("%0d", values.size()); endmodule')

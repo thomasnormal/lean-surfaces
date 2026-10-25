@@ -1,0 +1,181 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/assoc_empty_num/assoc_empty_num.sv",
+  "source_sha256": "b04e79d87b902696fb9f891a56ba14b1f8b28d400126a6301aa5cd65b4cf02fd",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 11,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 4,
+              "col": 3,
+              "end_line": 10,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 4,
+                "col": 11,
+                "end_line": 10,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 5,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 55
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 5,
+                      "col": 9,
+                      "end_line": 5,
+                      "end_col": 50
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 5,
+                        "col": 9,
+                        "end_line": 5,
+                        "end_col": 27
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 5,
+                          "col": 9,
+                          "end_line": 5,
+                          "end_col": 21
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000",
+                        "associative_empty_query": "num",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 5,
+                          "col": 26,
+                          "end_line": 5,
+                          "end_col": 27
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000"
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 5,
+                        "col": 31,
+                        "end_line": 5,
+                        "end_col": 50
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 5,
+                          "col": 31,
+                          "end_line": 5,
+                          "end_col": 44
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000",
+                        "associative_empty_query": "size",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 5,
+                          "col": 49,
+                          "end_line": 5,
+                          "end_col": 50
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 6,
+                      "col": 7,
+                      "end_line": 6,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 8,
+                      "col": 7,
+                      "end_line": 8,
+                      "end_col": 55
+                    },
+                    "name": "$display",
+                    "format": "FAIL: empty associative array count",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

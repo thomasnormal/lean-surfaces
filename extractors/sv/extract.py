@@ -6629,6 +6629,7 @@ def _convert_legacy_call(sm, expression):
                        and e.subroutineName == "num",
              _convert_mailbox_literal_num),
             (_queue_empty_pop_method, _convert_queue_empty_pop),
+            (_associative_empty_query, _convert_associative_empty_query),
             (_zero_size_method, _convert_zero_size_method),
             (_rtoi_literal_call, _convert_rtoi_literal),
             (_realtobits_literal_call, _convert_realtobits_literal),
@@ -7324,6 +7325,60 @@ def _convert_queue_empty_pop(sm, expression):
         "width": width,
         "bits": ("0" if two_state else "x") * width,
         "queue_empty_pop": expression.subroutineName,
+    }, expression.type)
+
+
+def _associative_empty_query(expression):
+    """Recognize ``num()``/``size()`` on an untouched 2-state assoc array."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName not in ("num", "size")
+                or len(expression.arguments) != 1):
+            return False
+        receiver = expression.arguments[0]
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "bad", False)
+                or receiver.type.isFourState
+                or type(receiver.type.canonicalType).__name__ != "AssociativeArrayType"):
+            return False
+        symbol = getattr(receiver, "symbol", None)
+        if getattr(symbol, "initializer", None) is not None:
+            return False
+        width, _two_state, reason = type_width_2s(expression.type)
+        if width is None or reason is not None:
+            return False
+        name = getattr(symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        if not name or not source:
+            return False
+        code_source = _sv_code_source(source)
+        occurrences = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"(?![A-Za-z0-9_$])", code_source))
+        if not occurrences:
+            return False
+        for occurrence in occurrences[1:]:
+            tail = code_source[occurrence.end():].lstrip()
+            if re.match(r"\.(?:num|size)\s*\(\s*\)", tail):
+                continue
+            return False
+        return True
+    except Exception:
+        return False
+
+
+def _convert_associative_empty_query(sm, expression):
+    if not _associative_empty_query(expression):
+        return unsupported(sm, expression, "CallExpression:associative-empty-query")
+    width, _two_state, reason = type_width_2s(expression.type)
+    if width is None or reason is not None:
+        return unsupported(sm, expression, "CallExpression:associative-empty-query-type")
+    return signed_metadata({
+        "kind": "Literal", "span": node_span(sm, expression),
+        "width": width, "bits": "0" * width,
+        "associative_empty_query": expression.subroutineName,
     }, expression.type)
 
 

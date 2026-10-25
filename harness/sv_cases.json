@@ -1765,6 +1765,15 @@
       "expect": "match"
     },
     {
+      "name": "assoc_empty_num",
+      "file": "Examples/system-verilog/assoc_empty_num/assoc_empty_num.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "semaphore_negative_try_get",
       "file": "Examples/system-verilog/semaphore_negative_try_get/semaphore_negative_try_get.sv",
       "module": "top",

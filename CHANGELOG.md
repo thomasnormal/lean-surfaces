@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Decimal `int(str)` conversion now returns CPython's pinned 4300-digit `ValueError` instead of a tier refusal; malformed inputs within the budget retain their exact literal errors.
+- Container `repr` and `ascii` rendering now use a fixed 512-level depth budget; deeper structures remain loud independently of caller fuel.
 - Python `global` declarations now support direct scalar reads, assignments, and
   augmented assignments across function frames, with module-global publication
   preserved by the script runner.
@@ -127,7 +128,7 @@ change is listed here under **Changed** or **Removed**.
 - `time.time(...)` now evaluates positional arguments and raises CPython's
   exact arity `TypeError` without consuming the trace; the zero-argument
   trace-clock call remains the admitted form.
-- Container `repr` and `ascii` rendering now use a fixed 256-level depth
+- Container `repr` and `ascii` rendering now use a fixed 512-level depth
   budget; deeper structures remain loud independently of caller fuel.
 - `format(value, "d")` now admits the bare decimal specification for integer
   and Boolean values through the fixed decimal renderer; other non-empty

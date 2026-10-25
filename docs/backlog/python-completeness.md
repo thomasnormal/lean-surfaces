@@ -5140,3 +5140,19 @@ remain structured and loud, preserving evaluation and chaining boundaries.
 DECIDED: admit only literal-`None` exception chaining through ingestion
 lowering; retain loud failure for dynamic causes and bare re-raise until their
 context payload semantics are separately priced.
+
+## 2026-10-25-pycomplete-129 — extend the fixed rendering depth
+
+The caller-independent `reprFuel` budget rises from 256 to 512 levels, which
+admits the existing `repr_lab.deep(257)` witness on both interpreter surfaces.
+The budget remains separate from call fuel, and `deep(513)` stays loudly
+refused so an arbitrarily recursive renderer is never introduced.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `repr_lab.deep(257)` matches in both interpreters; `deep(513)` remains refused by the proof guard |
+| Refusal census | 84 rows, 0 drifts; `render.depth-limit` is removed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: spend a larger fixed rendering budget for ordinary nested containers;
+keep the budget caller-independent and retain loud refusal beyond 512 levels.

@@ -2980,7 +2980,7 @@ heap-recursive half built on top of it. -/
 /-- Depth budget for `repr` — FIXED (the loudness doctrine: a budget
 refusal must not depend on the caller's fuel). Cycles are caught by the
 active-path list instead, faithfully. -/
-def reprFuel : Nat := 256
+def reprFuel : Nat := 512
 
 /-! Decimal-limit detection follows the same bounded active-path traversal as
 `reprVal`, but keeps the renderer's existing `Option` interface intact. This

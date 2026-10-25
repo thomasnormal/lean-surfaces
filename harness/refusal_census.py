@@ -973,7 +973,6 @@ WHITELIST_CLASS = {
     "repr_lab::custom": "class.dunder-protocol",
     "repr_lab::closure": "render.identity",
     "repr_lab::generator": "render.identity",
-    "repr_lab::deep": "render.depth-limit",
     "exc_handlers_lab::handler_binding": "exc.handler",
     "exc_handlers_lab::shadowed_handler": "exc.handler",
     "exc_handlers_lab::local_shadowed_handler": "exc.handler",

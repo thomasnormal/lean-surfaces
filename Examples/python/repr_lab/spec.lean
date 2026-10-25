@@ -62,7 +62,8 @@ set_option exponentiation.threshold 4300
 #guard callFunction repr_lab "deep" #[.int 65] 4096 matches .ok _
 #guard callFunction repr_lab "deep" #[.int 80] 4096 matches .ok _
 #guard callFunction repr_lab "deep" #[.int 129] 4096 matches .ok _
-#guard callFunction repr_lab "deep" #[.int 257] 4096 matches .unsupported _
+#guard callFunction repr_lab "deep" #[.int 257] 4096 matches .ok _
+#guard callFunction repr_lab "deep" #[.int 513] 4096 matches .unsupported _
 #guard callFunction repr_lab "of" #[.bool true] 1 matches .timeout
 
 #guard match runScript repr_script 4096 with

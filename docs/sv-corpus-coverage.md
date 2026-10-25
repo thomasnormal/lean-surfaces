@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-25
 
-The chapter-scoped rerun covered **22,055** paths: **5,127 clean**,
-**16,861 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,055** paths: **5,128 clean**,
+**16,860 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`ExpressionStatement:CallExpression` (2,909), `AssignmentExpression:target` (2,908),
+`AssignmentExpression:target` (2,908), `ExpressionStatement:CallExpression` (2,908),
 `CallExpression` (2,801), `Hierarchy:ports` (2,398),
 `VariableSymbol:2state` (2,296), `SubroutineSymbol:Subroutine` (1,634),
 `NamedValueExpression:2state` (1,485), `ConcurrentAssertionStatement`
@@ -74,6 +74,24 @@ falls **2,910 → 2,909** while `AssignmentExpression:target` remains **2,908**.
 Differential coverage grows **213/208/0/5 → 214/209/0/5** with no
 disagreements, and grammar coverage remains **217 witnesses, 90 MATCH, and
 127 REFUSE**.
+
+## Task-selected `$swriteb`/`$swriteo`/`$swriteh` packed writes — 2026-10-25
+
+The self-check lowering now admits direct packed-integral destinations for the
+IEEE 1800-2023 §21.3.3 task-selected binary, octal, and hexadecimal forms when
+the source is an earlier blocking literal integral assignment. Four-state
+groups retain their `x`/`z` spelling and the rendered bytes are right-aligned
+in the packed destination. String targets, dynamic sources, timing controls,
+and other task uses remain loud. The `swrite_default_radix` fixture supplies
+the differential witness, generated envelope, and Lean receipt; extractor
+tests cover the unknown-digit rendering and dynamic-source refusal.
+
+The refreshed **22,055-path** census moves **5,127 → 5,128 clean** and
+**16,861 → 16,860 partial** (67 include skips). The leading
+`ExpressionStatement:CallExpression` blocker falls **2,909 → 2,908**; the
+`AssignmentExpression:target` blocker remains **2,908**. Differential coverage
+grows **214/209/0/5 → 215/210/0/5** with no disagreements, and grammar coverage
+remains **217/90/127**.
 
 ## Enum `.name()` values — 2026-10-25
 

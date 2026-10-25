@@ -7758,3 +7758,21 @@ and partial files **16,862 → 16,861** (67 include skips).
 `AssignmentExpression:target` remains **2,908**. Differential coverage grows
 **213/208/0/5 → 214/209/0/5** with no disagreements; grammar coverage remains
 **217/90/127**.
+
+## Task-selected `$swriteb`/`$swriteo`/`$swriteh` packed writes — 2026-10-25
+
+Direct packed-integral destinations now lower the IEEE 1800-2023 §21.3.3
+task-selected binary, octal, and hexadecimal output forms when their source is
+an earlier blocking literal integral assignment. Radix groups preserve the
+four-state `x`/`z` spelling and right-align their rendered bytes in the packed
+destination. String destinations, dynamic sources, timing controls, and other
+task forms remain loud. `swrite_default_radix` is the differential and Lean
+receipt fixture, with extractor regressions for the admitted rendering and its
+dynamic-source boundary.
+
+The refreshed **22,055-path** census moves **5,127 → 5,128 clean** and
+**16,861 → 16,860 partial** (67 include skips). The leading
+`ExpressionStatement:CallExpression` blocker falls **2,909 → 2,908**, while
+`AssignmentExpression:target` remains **2,908**. Differential coverage grows
+**214/209/0/5 → 215/210/0/5** with no disagreements; grammar coverage remains
+**217/90/127**.

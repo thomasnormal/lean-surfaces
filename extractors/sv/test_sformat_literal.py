@@ -106,6 +106,40 @@ class SformatLiteral(unittest.TestCase):
             [node.get("sv_kind") for node in nodes(design)].count(
                 "ExpressionStatement:CallExpression"), 2)
 
+    def test_default_radix_literal_source_preserves_unknown_digits(self):
+        design = lower(
+            '''module top;
+               logic [7:0] payload;
+               logic [63:0] binary_text, octal_text, hex_text;
+               initial begin
+                 payload = 8'b10xz_zzzz;
+                 $swriteb(binary_text, payload);
+                 $swriteo(octal_text, payload);
+                 $swriteh(hex_text, payload);
+               end
+               endmodule''')
+        lowered = [node for node in nodes(design)
+                   if node.get("default_radix_integral_assignment")]
+        self.assertEqual([node["default_radix_integral_assignment"] for node in lowered],
+                         ["$swriteb", "$swriteo", "$swriteh"])
+        self.assertEqual(lowered[0]["value"]["bits"],
+                         "0011000100110000011110000111101001111010011110100111101001111010")
+        self.assertEqual(lowered[1]["value"]["bits"],
+                         "0000000000000000000000000000000000000000001100100111100001111010")
+        self.assertEqual(lowered[2]["value"]["bits"],
+                         "0000000000000000000000000000000000000000000000000111100001111010")
+
+    def test_default_radix_dynamic_source_stays_loud(self):
+        design = lower(
+            '''module top;
+               logic [7:0] payload;
+               logic [63:0] binary_text;
+               initial $swriteb(binary_text, payload);
+               endmodule''')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1928,6 +1928,15 @@
         "RSORT PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "swrite_default_radix",
+      "file": "Examples/system-verilog/swrite_default_radix/swrite_default_radix.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -13188,6 +13188,147 @@ def _format_literal_integral_text(format_text, arguments):
     return text
 
 
+def _literal_integral_bits(expression):
+    """Return the exact four-state spelling of a direct integral literal."""
+    node = expression
+    while type(node).__name__ == "ConversionExpression":
+        node = getattr(node, "operand", None)
+        if node is None:
+            return None
+    if type(node).__name__ not in ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
+        return None
+    try:
+        bits = svint_bits(node.value)
+    except Exception:
+        return None
+    return bits if bits and all(bit in "01xz" for bit in bits) else None
+
+
+def _default_radix_text(bits, radix):
+    """Render a packed value using the task-selected b/o/h radix.
+
+    A group containing an unknown bit is rendered with the corresponding
+    unknown digit, matching the IEEE system-task spelling.  Known groups use
+    lower-case hexadecimal digits; the caller supplies the complete packed
+    width, so leading groups are retained.
+    """
+    if radix == "b":
+        return bits
+    group = 3 if radix == "o" else 4
+    padded = bits.rjust(((len(bits) + group - 1) // group) * group, "0")
+    digits = "0123456789abcdef"
+    rendered = []
+    for start in range(0, len(padded), group):
+        chunk = padded[start:start + group]
+        if "x" in chunk:
+            rendered.append("x")
+        elif "z" in chunk:
+            rendered.append("z")
+        else:
+            rendered.append(digits[int(chunk, 2)])
+    return "".join(rendered)
+
+
+def _constant_default_radix_integral_assignment(sm, expression):
+    """Lower a literal-source ``$swriteb/o/h`` packed write.
+
+    The source value must be established by a direct blocking integral
+    literal assignment before this call.  This keeps the lowering source
+    ordered and preserves X/Z radix spelling without introducing a string
+    runtime object; all other task forms remain loud.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or not expression.isSystemCall
+                or expression.subroutineName not in ("$swriteb", "$swriteo", "$swriteh")
+                or getattr(expression, "timingControl", None) is not None):
+            return None
+        arguments = list(expression.arguments)
+        if len(arguments) != 2:
+            return None
+        output, source = arguments
+        if (type(output).__name__ != "AssignmentExpression"
+                or output.op is not None
+                or output.timingControl is not None
+                or output.isNonBlocking
+                or type(output.right).__name__ != "EmptyArgumentExpression"
+                or type(source).__name__ != "NamedValueExpression"):
+            return None
+        target_expr = output.left
+        if (type(target_expr).__name__ != "NamedValueExpression"
+                or not getattr(target_expr.type, "isIntegral", False)):
+            return None
+        target_width, target_two_state, reason = type_width_2s(target_expr.type)
+        source_width, _source_two_state, source_reason = type_width_2s(source.type)
+        if (target_width is None or target_two_state is None or reason is not None
+                or source_width is None or source_reason is not None
+                or target_width <= 0 or target_width % 8 or source_width <= 0):
+            return None
+        target, admitted = legacy_blocking_target(sm, target_expr)
+        if not admitted or target.get("kind") != "Ident":
+            return None
+
+        source_symbol = getattr(source, "symbol", None)
+        instance = getattr(getattr(source_symbol, "parentScope", None),
+                           "containingInstance", None)
+        call_start = getattr(getattr(getattr(expression, "sourceRange", None),
+                                     "start", None), "offset", None)
+        if source_symbol is None or instance is None or call_start is None:
+            return None
+
+        assignments = []
+        invalid_write = False
+
+        def inspect(node):
+            nonlocal invalid_write
+            if type(node).__name__ != "AssignmentExpression":
+                return
+            lhs = getattr(node, "left", None)
+            if (getattr(lhs, "symbol", None) is not source_symbol
+                    or type(lhs).__name__ != "NamedValueExpression"):
+                return
+            offset = getattr(getattr(getattr(node, "sourceRange", None),
+                                     "start", None), "offset", None)
+            if offset is None or offset >= call_start:
+                return
+            if (node.op is not None or node.timingControl is not None
+                    or node.isNonBlocking):
+                invalid_write = True
+                return
+            bits = _literal_integral_bits(getattr(node, "right", None))
+            if bits is None:
+                invalid_write = True
+                return
+            assignments.append((offset, bits))
+
+        instance.visit(inspect)
+        if invalid_write or not assignments:
+            return None
+        assignments.sort(key=lambda item: item[0])
+        bits = assignments[-1][1]
+        if len(bits) != source_width:
+            return None
+        text = _default_radix_text(bits, expression.subroutineName[-1])
+        try:
+            data = text.encode("latin-1")
+        except (UnicodeEncodeError, Exception):
+            return None
+        source_bits = "".join(format(byte, "08b") for byte in data)
+        if len(source_bits) > target_width:
+            source_bits = source_bits[-target_width:]
+        value = {"kind": "Literal", "span": node_span(sm, expression),
+                 "width": target_width,
+                 "bits": source_bits.rjust(target_width, "0"),
+                 "default_radix_assignment": expression.subroutineName}
+        if target_two_state:
+            value = squash2_wrap(value, target_width)
+        return {"kind": "BlockingAssign", "span": node_span(sm, expression),
+                "target": target, "value": value,
+                "default_radix_integral_assignment": expression.subroutineName}
+    except Exception:
+        return None
+
+
 def _constant_formatted_integral_assignment(sm, expression):
     """Lower constant `$sformat`/`$swrite` output to a packed assignment."""
     try:
@@ -13303,6 +13444,11 @@ def _convert_syscall(sm, s, e):
         constant_assignment = _constant_formatted_integral_assignment(sm, e)
         if constant_assignment is not None:
             return constant_assignment
+    if _SYM is None and e.isSystemCall and e.subroutineName in (
+            "$swriteb", "$swriteo", "$swriteh"):
+        default_radix_assignment = _constant_default_radix_integral_assignment(sm, e)
+        if default_radix_assignment is not None:
+            return default_radix_assignment
     if _SYM is None and e.isSystemCall and e.subroutineName == "$q_initialize":
         status_assignment = _q_initialize_status_call(sm, e)
         if status_assignment is not None:

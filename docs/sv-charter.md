@@ -7706,3 +7706,21 @@ and partial files **16,920 → 16,910** (67 include skips). `CallExpression` fal
 `ExpressionStatement:CallExpression` remains **2,909**. Differential coverage
 grows **210/205/0/5 → 211/206/0/5** with no disagreements; grammar coverage
 remains **217/90/127**.
+
+## Finite literal integral-key associative-array cells — 2026-10-25
+
+Associative arrays with a finite set of literal integral keys now lower to one
+flat scalar cell per observed key when their elements are scalar or packed
+integral values. Blocking reads and writes preserve negative and positive
+literal keys, source order, two-state defaults, and four-state values through
+the existing assignment and expression nodes. Dynamic or unknown keys,
+whole-array uses, methods, and aggregate elements remain loud. The
+`assoc_integral_cells` fixture and Lean receipt cover the admitted cells, while
+extractor tests pin dynamic-key and whole-array refusals.
+
+On the refreshed **22,055-path** census, clean files move **5,077 → 5,084**
+and partial files **16,910 → 16,904** (67 include skips). The leading
+`AssignmentExpression:target` blocker remains **2,937** and
+`ExpressionStatement:CallExpression` moves **2,909 → 2,910**. Differential
+coverage grows **211/206/0/5 → 212/207/0/5** with no disagreements; grammar
+coverage remains **217/90/127**.

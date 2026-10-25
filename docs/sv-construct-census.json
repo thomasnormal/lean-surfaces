@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22054,
+  "corpus_files": 22055,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -20,7 +20,7 @@
    ],
    [
     "ExpressionStatement:CallExpression",
-    2909
+    2910
    ],
    [
     "CallExpression",
@@ -32,7 +32,7 @@
    ],
    [
     "VariableSymbol:2state",
-    2302
+    2296
    ],
    [
     "SubroutineSymbol:Subroutine",
@@ -40,7 +40,7 @@
    ],
    [
     "NamedValueExpression:2state",
-    1484
+    1485
    ],
    [
     "ConcurrentAssertionStatement",
@@ -68,7 +68,7 @@
    ],
    [
     "ConversionExpression:width",
-    782
+    783
    ],
    [
     "HierarchicalValueExpression",
@@ -91,12 +91,12 @@
     562
    ],
    [
-    "ElementSelectExpression:source-type",
-    546
-   ],
-   [
     "CheckerInstanceSymbol:CheckerInstance",
     543
+   ],
+   [
+    "ElementSelectExpression:source-type",
+    539
    ],
    [
     "ClassType:ClassType",
@@ -395,16 +395,16 @@
     27
    ],
    [
-    "ExpressionStatement:UnaryExpression-target",
-    26
-   ],
-   [
     "ParameterSymbol",
     25
    ],
    [
     "ImmediateAssertion:implicit-error",
     25
+   ],
+   [
+    "ExpressionStatement:UnaryExpression-target",
+    22
    ],
    [
     "NetSymbol:Tri0",
@@ -980,8 +980,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5077,
-   "partial": 16910,
+   "clean": 5084,
+   "partial": 16904,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1042,8 +1042,8 @@
     52
    ],
    "simulation": [
-    4389,
-    18685
+    4396,
+    18686
    ],
    "simulation elaboration": [
     2,
@@ -1417,9 +1417,9 @@
    "chapter-21": {
     "clean": 125,
     "error": 0,
-    "partial": 777,
+    "partial": 778,
     "skip_include": 0,
-    "total": 902,
+    "total": 903,
     "unlockable": 0
    },
    "chapter-22": {
@@ -1607,9 +1607,9 @@
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 234,
+    "clean": 241,
     "error": 0,
-    "partial": 562,
+    "partial": 555,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

@@ -55,6 +55,22 @@ The refreshed **22,054-path** census moves **5,067 → 5,077 clean** and
 with no disagreements, and grammar coverage remains **217 witnesses, 90 MATCH,
 and 127 REFUSE**.
 
+## Finite integral-key associative-array cells — 2026-10-25
+
+The extractor now represents a finite set of literal integral associative-array
+keys as independent flat scalar cells when the values are scalar or packed
+integral. Blocking reads and writes retain source order and four-state or
+two-state value behavior. Dynamic keys, whole-array operations, methods, and
+aggregate elements remain loud. The `assoc_integral_cells` fixture covers the
+admitted path and its generated envelope and Lean receipt.
+
+The refreshed **22,055-path** census moves **5,077 → 5,084 clean** and
+**16,910 → 16,904 partial** (67 include skips); `AssignmentExpression:target`
+remains **2,937** and `ExpressionStatement:CallExpression` moves
+**2,909 → 2,910**. Differential coverage grows **211/206/0/5 → 212/207/0/5**
+with no disagreements, and grammar coverage remains **217 witnesses, 90 MATCH,
+and 127 REFUSE**.
+
 ## Discarded empty queue pops — 2026-10-25
 
 Statement-position `void'(q.pop_front())` and `void'(q.pop_back())` now lower

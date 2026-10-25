@@ -1715,6 +1715,110 @@ def _finite_string_assoc_cell(sm, expression):
     return cells[key]
 
 
+def _assoc_integral_key(expression):
+    """Return a known integral associative-array key, else ``None``."""
+    try:
+        value = _literal_integral_value(expression)
+        return value
+    except Exception:
+        return None
+
+
+def _finite_integral_assoc_cells(sm, symbol):
+    """Collect a finite, literal-key integral associative array.
+
+    Like the finite string-key lowering above, this replaces each observed
+    literal key with one ordinary scalar cell.  The array must be used only
+    through literal integral selections and its element type must already fit
+    the flat scalar state; dynamic keys, whole-array operations, methods, and
+    other aggregate elements stay loud.
+    """
+    try:
+        if (str(getattr(symbol, "kind", "")) != "SymbolKind.Variable"
+                or type(symbol.type.canonicalType).__name__ != "AssociativeArrayType"):
+            return None
+        array_type = symbol.type.canonicalType
+        index_type = array_type.indexType.canonicalType
+        if not getattr(index_type, "isIntegral", False):
+            return None
+        element_type = array_type.elementType
+        width, two_state, reason = type_width_2s(element_type)
+        if width is None or reason is not None or width <= 0:
+            return None
+        instance = symbol.parentScope.containingInstance
+        if instance is None:
+            return None
+        keys = {}
+        named_count = 0
+        selected_count = 0
+        invalid = False
+
+        def inspect(node):
+            nonlocal named_count, selected_count, invalid
+            kind = type(node).__name__
+            if kind == "ElementSelectExpression":
+                value = getattr(node, "value", None)
+                if getattr(value, "symbol", None) is symbol:
+                    selected_count += 1
+                    key = _assoc_integral_key(getattr(node, "selector", None))
+                    if key is None:
+                        invalid = True
+                    else:
+                        keys.setdefault(key, None)
+            elif kind in ("NamedValueExpression", "HierarchicalValueExpression"):
+                if getattr(node, "symbol", None) is symbol:
+                    named_count += 1
+
+        instance.visit(inspect)
+        if invalid or not keys or named_count != selected_count:
+            return None
+        base = _array_storage_name(symbol)
+        cells = {}
+        for key in keys:
+            cells[key] = {
+                "name": f"{base}[int:{key}]",
+                "width": width,
+                "two_state": two_state,
+            }
+        _ASSOC_CELLS[symbol] = cells
+        return cells
+    except Exception:
+        return None
+
+
+def _finite_integral_assoc_decls(sm, symbol):
+    cells = _ASSOC_CELLS.get(symbol)
+    if cells is None:
+        cells = _finite_integral_assoc_cells(sm, symbol)
+    if cells is None:
+        return None
+    return [signed_metadata({
+        "kind": "Var", "span": sym_span(sm, symbol),
+        "name": cell["name"], "width": cell["width"],
+        "init": ({"kind": "Literal", "span": None,
+                   "width": cell["width"], "bits": "0" * cell["width"]}
+                  if cell["two_state"] else None),
+    }, symbol.type.elementType) for cell in cells.values()]
+
+
+def _finite_integral_assoc_cell(sm, expression):
+    if _SYM is not None or type(expression).__name__ != "ElementSelectExpression":
+        return None
+    value = getattr(expression, "value", None)
+    symbol = getattr(value, "symbol", None)
+    if symbol is None:
+        return None
+    cells = _ASSOC_CELLS.get(symbol)
+    if cells is None:
+        cells = _finite_integral_assoc_cells(sm, symbol)
+    if cells is None:
+        return None
+    key = _assoc_integral_key(getattr(expression, "selector", None))
+    if key not in cells:
+        return None
+    return cells[key]
+
+
 def _fixed_array_dimensions(array_type, max_cells=1024):
     """Return unpacked dimensions and the integral leaf type.
 
@@ -6312,6 +6416,14 @@ def _convert_selected_read(sm, expr, expression_kind):
                 "width": assoc_cell["width"],
                 "name": assoc_cell["name"],
             }
+        assoc_cell = _finite_integral_assoc_cell(sm, expr)
+        if assoc_cell is not None:
+            return {
+                "kind": "Ident",
+                "span": node_span(sm, expr),
+                "width": assoc_cell["width"],
+                "name": assoc_cell["name"],
+            }
         cell = _fixed_array_cell(sm, expr)
         if cell is not None:
             name, width, _two_state = cell
@@ -10118,6 +10230,17 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
             if concat_leaf:
                 target["two_state"] = assoc_cell["two_state"]
             return target, True
+        assoc_cell = _finite_integral_assoc_cell(sm, lhs)
+        if assoc_cell is not None:
+            target = {
+                "kind": "Ident",
+                "span": node_span(sm, lhs),
+                "width": assoc_cell["width"],
+                "name": assoc_cell["name"],
+            }
+            if concat_leaf:
+                target["two_state"] = assoc_cell["two_state"]
+            return target, True
     if expression_kind in ("ElementSelectExpression", "RangeSelectExpression"):
         packed_array_window = _fixed_array_packed_window(
             sm, lhs, "SelectTarget")
@@ -12761,6 +12884,19 @@ def _convert_local_decl(sm, stmt):
             if lifetime == "Static":
                 return {"kind": "Empty", "span": node_span(sm, stmt)}
             return unsupported(sm, stmt, "VariableDeclStatement:array-lifetime")
+        assoc_decls = _finite_integral_assoc_decls(sm, symbol)
+        if assoc_decls is not None:
+            lifetime = str(symbol.lifetime).split(".")[-1]
+            if lifetime == "Automatic":
+                return {"kind": "Block", "span": node_span(sm, stmt), "stmts": [
+                    {"kind": "LocalDecl", "span": cell["span"],
+                     "name": cell["name"], "width": cell["width"],
+                     "two_state": cell.get("two_state", False),
+                     "init": cell.get("init")}
+                    for cell in assoc_decls]}
+            if lifetime == "Static":
+                return {"kind": "Empty", "span": node_span(sm, stmt)}
+            return unsupported(sm, stmt, "VariableDeclStatement:array-lifetime")
     if _SYM is None and is_inert_2state_associative_array_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None:
@@ -14300,6 +14436,9 @@ def convert_var(sm, m):
     if union_decls is not None:
         return union_decls
     assoc_decls = _finite_string_assoc_decls(sm, m)
+    if assoc_decls is not None:
+        return assoc_decls
+    assoc_decls = _finite_integral_assoc_decls(sm, m)
     if assoc_decls is not None:
         return assoc_decls
     array_decls = convert_fixed_array_vars(sm, m)

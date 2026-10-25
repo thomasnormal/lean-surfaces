@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 211 | 206 | 0 | 5 | sv-tests-2 declarations |
+| 212 | 207 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -225,6 +225,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `string_macro_len` | `Examples/system-verilog/string_macro_len/string_macro_len.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_size_property` | `Examples/system-verilog/dynamic_array_size_property/dynamic_array_size_property.sv` | match | **MATCH** | `ok` | MATCH |
 | `enum_name_method` | `Examples/system-verilog/enum_name_method/enum_name_method.sv` | match | **MATCH** | `ok` | MATCH |
+| `assoc_integral_cells` | `Examples/system-verilog/assoc_integral_cells/assoc_integral_cells.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -460,24 +461,24 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22054 | 5077 | 16910 | 67 |
+| 22055 | 5084 | 16904 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2937 |
-| `ExpressionStatement:CallExpression` | 2909 |
+| `ExpressionStatement:CallExpression` | 2910 |
 | `CallExpression` | 2799 |
 | `Hierarchy:ports` | 2398 |
-| `VariableSymbol:2state` | 2302 |
+| `VariableSymbol:2state` | 2296 |
 | `SubroutineSymbol:Subroutine` | 1634 |
-| `NamedValueExpression:2state` | 1484 |
+| `NamedValueExpression:2state` | 1485 |
 | `ConcurrentAssertionStatement` | 1359 |
 | `InvalidStatement` | 1329 |
 | `ClassType` | 1329 |
 | `Hierarchy:module-kind` | 1248 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1154 |
 | `MemberAccessExpression` | 1020 |
-| `ConversionExpression:width` | 782 |
+| `ConversionExpression:width` | 783 |
 | `HierarchicalValueExpression` | 749 |
 
 The committed census provenance identifies frontend family `pyslang-11` and corpus `sv-tests-2`. The corpus snapshot is not silently substituted when the external checkout is unavailable.

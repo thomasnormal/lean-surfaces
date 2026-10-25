@@ -849,6 +849,23 @@ def callableBinaryGreaterEqualFrameWitness : Bool := binaryGreaterEqualFrame
 
 #guard callableBinaryGreaterEqualFrameWitness
 
+private def sizeOfFrame : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := unsignedLongType, parameters := [], variadic := false}
+    parameters := []
+    body := .block (.return_ {
+      expression := .sizeOf shortType
+      sourceType := unsignedLongType
+      type := unsignedLongType})}
+  match evaluateCallableObject 32 .lp64 function [] with
+  | .ok (.ok value) => value == ⟨.unsigned 64, 2⟩
+  | _ => false
+
+def callableSizeOfFrameWitness : Bool := sizeOfFrame
+
+#guard callableSizeOfFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

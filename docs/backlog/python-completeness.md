@@ -4848,3 +4848,24 @@ DECIDED: retain loud class-creation refusal for effectful decorators and
 unsupported class construction; do not add a decorator protocol without a
 measured, semantically closed shape. Move to the next higher-payoff syntax
 wall while keeping this census as the admission gate for future class work.
+
+## 2026-10-25-pycomplete-116 — validate the closed lambda slice
+
+The lambda priority was already implemented by the H7 nested-definition
+lowering: a direct single-target assignment becomes a synthetic nested
+function, with literal defaults, a simple return body, and either no capture
+or the admitted frame-cell capture. Calls through the local callable use the
+same closure path as nested `def`; aliases remain ordinary first-class closure
+references, while escaping cells, unsupported defaults, nested scopes, and
+late generator captures remain loud.
+
+| Measurement | Result |
+|---|---|
+| Direct lambda probes | capture-free call, captured call, and alias call all match CPython 3.9 |
+| Existing acceptance | `closure_lab.lam_basic`, `lam_capture`, and `lam_rebound` are checked in the shipped H7 spec |
+| Survey lambda nodes | 36 nodes in 5 vendored files; every row also has class/import or other walls, 0 lambda-only refusals |
+| Formatting | `git diff --check` passed |
+
+DECIDED: keep the closed, non-escaping lambda lowering as the supported slice;
+retain loud failure for first-class callable forms whose capture or boundary
+semantics are not represented, and move to starred syntax next.

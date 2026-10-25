@@ -976,6 +976,23 @@ def callableNullComparisonFrameWitness : Bool := nullComparisonFrame
 
 #guard callableNullComparisonFrameWitness
 
+private def nullInequalityFrame : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .builtin .boolean, parameters := [], variadic := false}
+    parameters := []
+    body := .block (.return_ {
+      expression := .nullComparison "!="
+      sourceType := .builtin .boolean
+      type := .builtin .boolean})}
+  match evaluateCallableObject 32 .lp64 function [] with
+  | .ok (.ok value) => value == ⟨.boolean, 0⟩
+  | _ => false
+
+def callableNullInequalityFrameWitness : Bool := nullInequalityFrame
+
+#guard callableNullInequalityFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

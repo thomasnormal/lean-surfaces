@@ -4753,3 +4753,45 @@ order. Hash-key behavior remains loud.
 
 DECIDED: admit unordered NaN comparisons and sorting; retain NaN hashing as a
 separate boundary.
+
+## 2026-10-25-pycomplete-113 — public baseline inventory
+
+The first master baseline was measured before choosing the next semantic slice.
+The executable harness is green on the existing runner: all 3,693 closed-call
+rows and all 142 script rows agree with CPython 3.9, with zero divergences.
+The script survey runs 198 of 219 oracle-comparable files to matching output
+(90.4%); 21 refuse. Its 21 refusal walls are 9 class-creation, 3
+source-order, and one each for function-value aliasing, shadowed builtin
+raise, three `del` forms, non-top-level import, exact set rendering, and
+handler rebinding. The 142-script corpus has 130 matches and 12 loud rows.
+The refusal census records 98 closed-call rows in 29 classes and 12 script rows
+in 8 classes, with zero drift. The CPython 3.9 library subset contributes 8
+class-creation refusals; no differential mismatch was found.
+
+Static census ranking (an upper bound because an unsupported node hides its
+subtree) is 52,259/52,512 nodes in tier (99.5%). The largest visible walls are
+`Import` (59 nodes, 12 files), `ImportFrom` (40, 9), `Lambda` (36, 5),
+`Starred` (26, 3), `Delete` (25, 3), value-less `AnnAssign` (16, 4), and
+`AsyncFunctionDef` (9, 2). The sole-blocker view has 2 import-only files and
+1 class-creation-only file; 10 refusing files have no statically visible sole
+wall because admission order or dynamic checks stop them first.
+
+The documentation and coverage checks are fresh. A clean scoped build from
+current master is red in `LeanModels.Python.ClockErase`: 17 stale proof errors
+begin at `ClockErase.lean:1222` after the recent semantic additions, so the
+curated proof-axiom check cannot run (`ClockErase.olean` is absent). The
+notebook gate is unavailable in this environment because `nbformat` is not
+installed. These are recorded as environment/build gaps, not semantic
+mismatches.
+
+| Priority | Next gap | Evidence | First useful slice |
+|---|---|---|---|
+| 0 | `ClockErase` proof build red | fresh `tools/triad.sh` build: first error at line 1222, 17 errors total | rebase the clock-erasure walker against current `Semantics` before any tier extension |
+| 1 | module imports | 2 sole blockers; 59 `Import` + 40 `ImportFrom` nodes | measure a Python-only closure and admit only a proved, explicit registry |
+| 2 | class creation | 1 sole blocker; 9 dynamic refusals and 8 CPython-library refusals | admit one creation-pure base/decorator shape with differential coverage |
+| 3 | lambdas and first-class callable values | 36 `Lambda` nodes; aliasing row still loud | choose a closed, non-escaping lambda shape and prove its boundary |
+| 4 | starred syntax | 26 nodes across 3 files | extend only measured target/argument forms, preserving evaluation order |
+| 5 | async and remaining statement walls | 9 `AsyncFunctionDef`, plus `Yield`/`YieldFrom` | census coroutine scheduling and require an explicit oracle decision |
+
+DECIDED: baseline inventory is complete; the next turn repairs the red
+`ClockErase` proof module, then resumes construct work in the measured order.

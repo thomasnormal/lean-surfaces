@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.20] — 2026-10-25
+
+The self-check surface now has 161 differential rows: 157 matches, zero
+disagreements, and 4 recorded refusals. The grammar census remains at 214
+pyslang syntax witnesses: 83 MATCH and 131 REFUSE. The 22,050-path corpus
+measures 4,888 clean files, 17,096 partial files, and 66 include skips. This
+release extends source-pure literal string support with assignment-aware
+`.len()`, `.atoi()`, `.compare()`, and `.icompare()` results, including exact
+decimal scanning and normalized ordering. Dynamic, aliased, non-ASCII, and
+stateful string operations remain loud.
+
 ## [0.1.19] — 2026-10-25
 
 The self-check surface now has 158 differential rows: 154 matches, zero

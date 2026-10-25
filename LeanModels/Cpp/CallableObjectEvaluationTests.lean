@@ -1312,6 +1312,40 @@ def callableConditionalNoElseStatementFrameWitness : Bool := conditionalNoElseSt
 
 #guard callableConditionalNoElseStatementFrameWitness
 
+private def switchFallthroughStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .parameter (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let five : TypedCallableExpression := {
+    expression := .integer 5
+    sourceType := intType
+    type := intType}
+  let two : TypedCallableExpression := {
+    expression := .integer 2
+    sourceType := intType
+    type := intType}
+  let function := {base with body := .block (.sequence
+    (.switch_ condition [
+      {label := some 1, body := .assign (handle "0x10") five},
+      {label := some 2, body := .compoundAssign "+=" (handle "0x10") two},
+      {label := none, body := .break_}])
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 64 .lp64 function [signed 1],
+      evaluateCallableObject 64 .lp64 function [signed 2],
+      evaluateCallableObject 64 .lp64 function [signed 0] with
+  | .ok (.ok one), .ok (.ok twoValue), .ok (.ok zero) =>
+      one == signed 7 && twoValue == signed 4 && zero == signed 0
+  | _, _, _ => false
+
+def callableSwitchFallthroughStatementFrameWitness : Bool := switchFallthroughStatementFrame
+
+#guard callableSwitchFallthroughStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

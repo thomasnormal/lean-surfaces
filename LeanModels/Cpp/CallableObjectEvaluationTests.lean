@@ -1126,6 +1126,31 @@ def callableForStatementFrameWitness : Bool := forStatementFrame
 
 #guard callableForStatementFrameWitness
 
+private def breakContinueStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .integer 1
+    sourceType := intType
+    type := intType}
+  let increment : CallableStatement := .expression {
+    expression := .increment "++" false (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let body := .sequence increment (.sequence .break_ .continue_)
+  let function := {base with body := .block (.sequence
+    (.whileLoop condition body)
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 64 .lp64 function [signed 0] with
+  | .ok (.ok value) => value == signed 1
+  | _ => false
+
+def callableBreakContinueStatementFrameWitness : Bool := breakContinueStatementFrame
+
+#guard callableBreakContinueStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

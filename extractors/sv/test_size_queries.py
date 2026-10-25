@@ -356,13 +356,43 @@ class SizeQueries(unittest.TestCase):
                 '$display("%0d", s.getc(0)); end endmodule',
                 'module top; string s; string other; initial begin s = "abc"; '
                 'other = s; $display("%0d", s.getc(0)); end endmodule',
-                'module top; string s; initial begin s = "abc"; s.len(); '
+                'module top; string s; initial begin s = "abc"; s.putc(65); '
                 '$display("%0d", s.getc(0)); end endmodule'):
             design = lower(source)
             self.assertFalse(any(node.get("string_literal_getc_query")
                                  for node in nodes(design)))
             self.assertTrue(any(node.get("kind") == "Unsupported"
                                 for node in nodes(design)))
+
+    def test_string_literal_queries_ignore_comments(self):
+        design = lower(
+            '/* s.getc(99) and s.len() in a comment are not runtime uses. */\n'
+            'module top; string s = "a \\t b"; initial begin\n'
+            '  // s.getc(98) and s.len() in line-comment prose\n'
+            '  if (s.len() == 5 && s.getc(0) == 8\'h61 && '
+            's.getc(2) == 8\'h09) $display("PASS");\n'
+            'end endmodule')
+        lengths = [node for node in nodes(design)
+                   if node.get("string_literal_length_query")]
+        getcs = [node for node in nodes(design)
+                 if node.get("string_literal_getc_query")]
+        self.assertEqual([int(node["bits"], 2) for node in lengths], [5])
+        self.assertEqual([int(node["bits"], 2) for node in getcs], [97, 9])
+
+    def test_escaped_newline_string_literal_queries_preserve_value(self):
+        design = lower(
+            'module top; string s; initial begin\n'
+            '  // A quoted \\n escape precedes a line-continuation escape.\n'
+            '  s = "AB.\\n\\\nCD";\n'
+            '  if (s.len() == 6 && s.getc(0) == 8\'d65 && '
+            's.getc(3) == 8\'d10 && s.getc(4) == 8\'d67) '
+            '$display("PASS");\nend endmodule')
+        lengths = [node for node in nodes(design)
+                   if node.get("string_literal_length_query")]
+        getcs = [node for node in nodes(design)
+                 if node.get("string_literal_getc_query")]
+        self.assertEqual([int(node["bits"], 2) for node in lengths], [6])
+        self.assertEqual([int(node["bits"], 2) for node in getcs], [65, 10, 67])
 
     def test_non_ascii_string_getc_stays_loud(self):
         design = lower(

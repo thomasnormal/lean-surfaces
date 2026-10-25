@@ -7557,3 +7557,22 @@ On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
 remains **2,937** and `ExpressionStatement:CallExpression` remains **2,911**.
 Differential coverage grows **201/196/0/5 → 202/197/0/5** with no
 disagreements; grammar coverage remains **216/89/127**.
+
+## String literal queries across comments and escaped line continuations — 2026-10-25
+
+The source-order history shared by literal string queries now scans a masked
+code view: comments and quoted-string contents are blanked while offsets stay
+stable. This keeps prose mentions of a receiver from becoming false runtime
+uses and admits the standard combination of `.len()` and `.getc(index)` on a
+proven ASCII literal, including a `\n` escape followed by a consumed
+backslash-newline continuation. Dynamic writes, aliases, non-ASCII values,
+unsupported methods, and other nonliteral observations remain loud. The
+`string_query_lexing` fixture and extractor regressions cover the masking and
+the exact six-character escaped value.
+
+On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
+**5,031 → 5,057** and partial files **16,955 → 16,929** (67 include skips).
+`CallExpression` falls **2,859 → 2,833** while `AssignmentExpression:target`
+remains **2,937** and `ExpressionStatement:CallExpression` remains **2,911**.
+Differential coverage grows **202/197/0/5 → 203/198/0/5** with no
+disagreements; grammar coverage remains **216/89/127**.

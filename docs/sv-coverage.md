@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 202 | 197 | 0 | 5 | sv-tests-2 declarations |
+| 203 | 198 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -152,6 +152,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `literal_string_len` | `Examples/system-verilog/literal_string_len/literal_string_len.sv` | match | **MATCH** | `ok` | MATCH |
 | `literal_string_getc` | `Examples/system-verilog/literal_string_getc/literal_string_getc.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_getc_assignment` | `Examples/system-verilog/string_getc_assignment/string_getc_assignment.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_query_lexing` | `Examples/system-verilog/string_query_lexing/string_query_lexing.sv` | match | **MATCH** | `ok` | MATCH |
 | `constant_net_driver` | `Examples/system-verilog/constant_net_driver/constant_net_driver.sv` | match | **MATCH** | `ok` | MATCH |
 | `typed_default_array_pattern` | `Examples/system-verilog/typed_default_array_pattern/typed_default_array_pattern.sv` | match | **MATCH** | `ok` | MATCH |
 | `constant_net_bit_driver` | `Examples/system-verilog/constant_net_bit_driver/constant_net_bit_driver.sv` | match | **MATCH** | `ok` | MATCH |
@@ -450,13 +451,13 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22053 | 5031 | 16955 | 67 |
+| 22053 | 5057 | 16929 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2937 |
 | `ExpressionStatement:CallExpression` | 2911 |
-| `CallExpression` | 2859 |
+| `CallExpression` | 2833 |
 | `Hierarchy:ports` | 2398 |
 | `VariableSymbol:2state` | 2313 |
 | `SubroutineSymbol:Subroutine` | 1634 |

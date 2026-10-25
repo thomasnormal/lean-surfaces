@@ -9429,13 +9429,23 @@ def _string_literal_len_method(expression):
             instance.visit(inspect)
         name = getattr(receiver.symbol, "name", "")
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        # Discover runtime occurrences in code only.  Comments and diagnostic
+        # strings can mention the receiver without being another observation;
+        # keep the raw source for the suffix spelling and source offsets below.
+        code_source = _sv_code_source(source)
         occurrences = list(re.finditer(r"(?<![A-Za-z0-9_$])" + re.escape(name)
-                                       + r"(?![A-Za-z0-9_$])", source))
+                                       + r"(?![A-Za-z0-9_$])", code_source))
         if not occurrences:
             return False
         def inert_occurrence(match):
             tail = source[match.end():].lstrip()
             if tail.startswith(".len"):
+                return True
+            # ``len`` and ``getc`` are both scalar observations of the same
+            # proven literal.  A source may use either query (the conformance
+            # tests intentionally combine them), so neither makes the other
+            # history recognizer unsafe.
+            if tail.startswith(".getc"):
                 return True
             if tail.startswith("="):
                 # The source spelling must be a literal assignment.  AST
@@ -9510,26 +9520,20 @@ def _string_literal_source_value(expression, method, receiver=None,
             instance.visit(inspect)
         name = getattr(symbol, "name", "")
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
-        def in_string(position):
-            quoted = False
-            escaped = False
-            for char in source[:position]:
-                if escaped:
-                    escaped = False
-                elif char == "\\":
-                    escaped = True
-                elif char == '"':
-                    quoted = not quoted
-            return quoted
-        occurrences = [match for match in re.finditer(
+        # Mask comments and string contents before locating source-order
+        # references.  The original source remains authoritative for suffix
+        # spelling and offset-based assignment ordering.
+        code_source = _sv_code_source(source)
+        occurrences = list(re.finditer(
             r"(?<![A-Za-z0-9_$])" + re.escape(name)
-            + r"(?![A-Za-z0-9_$])", source)
-                       if not in_string(match.start())]
+            + r"(?![A-Za-z0-9_$])", code_source))
         if not occurrences:
             return None
         for match in occurrences[1:]:
             tail = source[match.end():].lstrip()
             if (tail.startswith("." + method)
+                    or (method in ("len", "getc")
+                        and tail.startswith((".len", ".getc")))
                     or (method in ("compare", "icompare")
                         and tail.startswith((".compare", ".icompare")))
                     or re.match(r'=\s*"', tail)):

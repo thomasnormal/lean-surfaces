@@ -993,6 +993,23 @@ def callableNullInequalityFrameWitness : Bool := nullInequalityFrame
 
 #guard callableNullInequalityFrameWitness
 
+private def integerLiteralFrame : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [], variadic := false}
+    parameters := []
+    body := .block (.return_ {
+      expression := .integer 42
+      sourceType := intType
+      type := intType})}
+  match evaluateCallableObject 32 .lp64 function [] with
+  | .ok (.ok value) => value == signed 42
+  | _ => false
+
+def callableIntegerLiteralFrameWitness : Bool := integerLiteralFrame
+
+#guard callableIntegerLiteralFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

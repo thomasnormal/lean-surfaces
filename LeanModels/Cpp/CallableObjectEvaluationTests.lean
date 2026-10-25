@@ -1495,6 +1495,34 @@ def callableDoWhileContinueStatementFrameWitness : Bool := doWhileContinueStatem
 
 #guard callableDoWhileContinueStatementFrameWitness
 
+private def whileContinueStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .binary "<"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 3, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let body := .sequence
+    (.compoundAssign "+=" (handle "0x10") {
+      expression := .integer 1
+      sourceType := intType
+      type := intType})
+    .continue_
+  let function := {base with body := .block (.sequence
+    (.whileLoop condition body)
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 128 .lp64 function [signed 0] with
+  | .ok (.ok value) => value == signed 3
+  | _ => false
+
+def callableWhileContinueStatementFrameWitness : Bool := whileContinueStatementFrame
+
+#guard callableWhileContinueStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

@@ -1385,6 +1385,68 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
           | some pr =>
             cases pr with
             | mk ci cdef => exact .ite (.exn h _) .unsupported
+        case call func args kwargs cu _ =>
+          cases func with
+          | name id _ =>
+            cases hkw : kwargs.toList with
+            | cons _ _ =>
+              have hkwNonempty : kwargs.isEmpty = false := by
+                apply Bool.eq_false_iff.mpr
+                intro he
+                have hkwEmpty : kwargs = #[] := Array.isEmpty_iff.mp he
+                simp [hkwEmpty] at hkw
+              simp [hkwNonempty]
+              exact .unsupported
+            | nil =>
+              have hkwEmpty : kwargs = #[] :=
+                Array.toList_inj.mp (by simpa using hkw)
+              cases hcu : cu with
+              | some reason => simp [hkw, hkwEmpty, hcu]; exact .unsupported
+              | none =>
+                simp [hkw, hkwEmpty, hcu]
+                split
+                · exact .unsupported
+                · cases hfc : findClass m id with
+                  | some p =>
+                    obtain ⟨ci, c⟩ := p
+                    simp [hfc]
+                    split
+                    · cases args.toList with
+                      | nil => exact .unsupported
+                      | cons arg rest =>
+                        cases rest with
+                        | cons _ _ => simp; exact .unsupported
+                        | nil =>
+                          cases arg with
+                          | constant c _ =>
+                            cases c with
+                            | str msg => simp; exact .exn h _
+                            | _ => exact .unsupported
+                          | _ => exact .unsupported
+                    · exact .unsupported
+                  | none =>
+                    cases hnt : findNamedTuple m id with
+                    | some nt => simp [hfc, hnt]; exact .unsupported
+                    | none =>
+                      simp [hfc, hnt]
+                      cases args.toList with
+                      | nil => exact .unsupported
+                      | cons arg rest =>
+                        cases rest with
+                        | cons _ _ => simp; exact .unsupported
+                        | nil =>
+                          cases arg with
+                          | constant c _ =>
+                            cases c with
+                            | str msg =>
+                              cases hbe : builtinExcWithMessage id msg with
+                              | some e => simp [hbe]; exact .exn h _
+                              | none =>
+                                simp [hbe]
+                                split <;> exact .unsupported
+                            | _ => exact .unsupported
+                          | _ => exact .unsupported
+          | _ => exact .unsupported
   | tryStmt body excName handler tryUnsupported sp =>
     simp only [execStmt]
     ce_norm

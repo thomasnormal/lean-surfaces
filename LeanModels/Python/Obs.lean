@@ -1342,8 +1342,10 @@ theorem fuelMono (fuel : Nat) :
           -- pass 5: an un-lowered `yield from` refuses, fuel-free
           simp only [execStmt]; exact Run.le_refl _
         | raiseStmt exc cause _ =>
-          -- fuel-free: the raise arm only does pure lookups
-          simp only [execStmt]; exact Run.le_refl _
+          -- The admitted literal payload form is fuel-free, like the
+          -- class-identity raise path.
+          simp only [execStmt]
+          exact Run.le_refl _
         | delStmt names _ =>
           -- del RECONCILED: fuel-free — a pure fold over the locals
           simp only [execStmt]; exact Run.le_refl _
@@ -3028,6 +3030,68 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               | some p =>
                 obtain ⟨ci, c⟩ := p
                 exact .ite .exn .unsupported
+            case call func args kwargs cu _ =>
+              cases func with
+              | name id _ =>
+                cases hkw : kwargs.toList with
+                | cons _ _ =>
+                  have hkwNonempty : kwargs.isEmpty = false := by
+                    apply Bool.eq_false_iff.mpr
+                    intro he
+                    have hkwEmpty : kwargs = #[] := Array.isEmpty_iff.mp he
+                    simp [hkwEmpty] at hkw
+                  simp [hkwNonempty]
+                  exact .unsupported
+                | nil =>
+                  have hkwEmpty : kwargs = #[] :=
+                    Array.toList_inj.mp (by simpa using hkw)
+                  cases hcu : cu with
+                  | some reason => simp [hkw, hkwEmpty, hcu]; exact .unsupported
+                  | none =>
+                    simp [hkw, hkwEmpty, hcu]
+                    split
+                    · exact .unsupported
+                    · cases hfc : findClass m id with
+                      | some p =>
+                        obtain ⟨ci, c⟩ := p
+                        simp [hfc]
+                        split
+                        · cases args.toList with
+                          | nil => exact .unsupported
+                          | cons arg rest =>
+                            cases rest with
+                            | cons _ _ => simp; exact .unsupported
+                            | nil =>
+                              cases arg with
+                              | constant c _ =>
+                                cases c with
+                                | str msg => simp; exact .exn
+                                | _ => exact .unsupported
+                              | _ => exact .unsupported
+                        · exact .unsupported
+                      | none =>
+                        cases hnt : findNamedTuple m id with
+                        | some nt => simp [hfc, hnt]; exact .unsupported
+                        | none =>
+                          simp [hfc, hnt]
+                          cases args.toList with
+                          | nil => exact .unsupported
+                          | cons arg rest =>
+                            cases rest with
+                            | cons _ _ => simp; exact .unsupported
+                            | nil =>
+                              cases arg with
+                              | constant c _ =>
+                                cases c with
+                                | str msg =>
+                                  cases hbe : builtinExcWithMessage id msg with
+                                  | some e => simp [hbe]; exact .exn
+                                  | none =>
+                                    simp [hbe]
+                                    split <;> exact .unsupported
+                                | _ => exact .unsupported
+                              | _ => exact .unsupported
+              | _ => exact .unsupported
       | assertStmt test msg _ =>
         -- the tail batch: IN the fragment and NOT vacuously — the
         -- passing path decides `.ok` with the input state untouched

@@ -9317,6 +9317,51 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                 else if admittedBuiltinRaise.contains id then .exn st (.builtinException id)
                 else
                   .unsupported s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)")
+         | some (.call (.name id _) args kwargs callUnsupported _) =>
+           -- The measured proof-facing payload form is one positional
+           -- string literal passed to an admitted exception class. Resolve
+           -- the class before inspecting the literal, matching Python's
+           -- callee-first order and the static shadow guard above. The
+           -- monadic runner admits the wider expression form; keeping this
+           -- pure literal slice here preserves the fuel-free proof geometry.
+           if !kwargs.isEmpty || callUnsupported.isSome then
+             .unsupported "'raise N(…)': keyword/starred constructor arguments are outside the tier (docs/memory-model.md §exceptions)"
+           else if (Env.lookup st.locals id).isSome
+               || (lookupG (moduleGlobals m).1 id).isSome
+               || (Env.lookup st.world.globals id).isSome
+               || (findFunction m id).isSome then
+             .unsupported s!"'raise {id}': the name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
+           else if (findClass m id).isSome then
+             match findClass m id with
+             | some (ci, c) =>
+               if c.isExc then
+                 match args.toList with
+                 | [(.constant (.str msg) _)] =>
+                   .exn st (.userMessage ci c.name msg)
+                 | [_] =>
+                   .unsupported s!"'raise {id}(…)': the measured constructor form requires one string argument — outside the tier (docs/memory-model.md §exceptions)"
+                 | _ =>
+                   .unsupported s!"'raise {id}(…)': the measured constructor form requires exactly one positional string argument — outside the tier (docs/memory-model.md §exceptions)"
+               else
+                 .unsupported s!"'raise {id}(…)': only an admitted exception class (`class N(Exception): pass` or a measured direct builtin ancestor) can be raised — outside the tier (docs/memory-model.md §exceptions)"
+             | none =>
+               .unsupported s!"'raise {id}(…)': user exception and namedtuple constructors with payloads are outside the tier (docs/memory-model.md §exceptions)"
+           else if (findNamedTuple m id).isSome then
+             .unsupported s!"'raise {id}(…)': user exception and namedtuple constructors with payloads are outside the tier (docs/memory-model.md §exceptions)"
+           else
+             match args.toList with
+             | [(.constant (.str msg) _)] =>
+               match builtinExcWithMessage id msg with
+               | some e => .exn st e
+               | none =>
+                 if admittedBuiltinRaise.contains id then
+                   .unsupported s!"'raise {id}(…)': only the measured one-string builtin exception constructors are admitted — outside the tier (docs/memory-model.md §exceptions)"
+                 else
+                   .unsupported s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)"
+             | [_] =>
+               .unsupported s!"'raise {id}(…)': the measured constructor form requires one string argument — outside the tier (docs/memory-model.md §exceptions)"
+             | _ =>
+               .unsupported s!"'raise {id}(…)': the measured constructor form requires exactly one positional string argument — outside the tier (docs/memory-model.md §exceptions)"
          | some _ =>
            .unsupported "'raise <expression>' (anything but an admitted exception class name) is outside the tier (docs/memory-model.md §exceptions)")
     | .assertStmt test msg _ =>

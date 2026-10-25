@@ -4980,3 +4980,26 @@ arbitrary set iteration frontier remains loud.
 DECIDED: share the exact increasing-integer set renderer across `print`,
 f-strings, and assertion messages; retain loud failure for arbitrary hash order.
 Move to the next remaining synchronous wall.
+
+## 2026-10-25-pycomplete-122 — align proof semantics for literal exception payloads
+
+The monadic runner already preserved one-string payloads for admitted builtin
+and user exception constructors, but the fuel-based proof interpreter still
+refused every constructor form. Its `raise N("literal")` slice now returns
+`PyErr.userMessage` or the corresponding builtin payload error. The argument is
+restricted to a string literal on this proof surface, keeping the raise arm
+fuel-free and preserving the existing `fuelMono`, `worldInv`, clock-erasure,
+and payload-blind proof geometry; expression-valued arguments remain loud.
+
+| Measurement | Result |
+|---|---|
+| Proof-facing guards | 4/4 agree: user payload, `ValueError`, `TypeError`, and a matching handler |
+| Python differential | 3,693 cases: 0 failed, 95 whitelisted-unsupported, 3,598 matched |
+| Focused builds | `LeanModels.Python.Obs`, `LeanModels.Python.ClockErase`, and `leanmodels-run` pass |
+| Refusal census | 95 rows, 0 drifts; the runner's existing wide payload rows remain matches |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit literal one-string payloads on the closed proof surface and keep
+non-literal, keyword, starred, multi-argument, and unmodelled exception
+constructors loud until their evaluation and proof obligations are measured.
+Move to the next remaining synchronous wall.

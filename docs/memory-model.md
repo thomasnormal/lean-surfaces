@@ -1396,6 +1396,10 @@ builtin payload form admits exactly one
 positional string for `TypeError`, `ValueError`, `RuntimeError`,
 `OverflowError`, and `AssertionError`; the resulting `PyErr` retains that
 message, so the boundary can agree with CPython's uncaught-exception text.
+On the closed fuel-based proof surface, the currently admitted payload
+argument is a string literal; expression-valued payloads remain loud while
+their fuel and proof obligations are priced separately. The monadic runner
+keeps the wider evaluated-string form.
 Other builtin constructors, keyword or multiple arguments, and non-string
 payloads remain loud. `raise <expr>` of anything but an admitted class name,
 `raise … from`, and the bare re-raise `raise` all refuse loudly. A direct zero-argument

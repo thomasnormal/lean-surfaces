@@ -3444,6 +3444,65 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                   | some cic =>
                       obtain ⟨ci, c⟩ := cic
                       exact PBF.ite (fun _ => PBF.exn hslot _) (fun _ => PBF.unsupported)
+              | call func args kwargs cu _ =>
+                  cases func with
+                  | name id _ =>
+                      cases hkw : kwargs.toList with
+                      | cons _ _ =>
+                          have hkwNonempty : kwargs.isEmpty = false := by
+                            apply Bool.eq_false_iff.mpr
+                            intro he
+                            have hkwEmpty : kwargs = #[] := Array.isEmpty_iff.mp he
+                            simp [hkwEmpty] at hkw
+                          simp [hkwNonempty]
+                          exact PBF.unsupported
+                      | nil =>
+                          have hkwEmpty : kwargs = #[] :=
+                            Array.toList_inj.mp (by simpa using hkw)
+                          cases hcu : cu with
+                          | some reason => simp [hkw, hkwEmpty, hcu]; exact PBF.unsupported
+                          | none =>
+                              simp [hkw, hkwEmpty, hcu]
+                              refine PBF.ite (fun _ => PBF.unsupported) (fun _ => ?_)
+                              cases hfc : findClass m id with
+                              | some p =>
+                                  obtain ⟨ci, c⟩ := p
+                                  simp [hfc]
+                                  refine PBF.ite (fun _ => ?_) (fun _ => PBF.unsupported)
+                                  cases args.toList with
+                                  | nil => exact PBF.unsupported
+                                  | cons arg rest =>
+                                      cases rest with
+                                      | cons _ _ => simp; exact PBF.unsupported
+                                      | nil =>
+                                          cases arg with
+                                          | constant c _ =>
+                                              cases c with
+                                              | str msg => simp; exact PBF.exn hslot _
+                                              | _ => exact PBF.unsupported
+                                          | _ => exact PBF.unsupported
+                              | none =>
+                                  cases hnt : findNamedTuple m id with
+                                  | some nt => simp [hnt]; exact PBF.unsupported
+                                  | none =>
+                                      cases args.toList with
+                                      | nil => exact PBF.unsupported
+                                      | cons arg rest =>
+                                          cases rest with
+                                          | cons _ _ => simp; exact PBF.unsupported
+                                          | nil =>
+                                              cases arg with
+                                              | constant c _ =>
+                                                  cases c with
+                                                  | str msg =>
+                                                      cases hbe : builtinExcWithMessage id msg with
+                                                      | some e => simp [hbe]; exact PBF.exn hslot _
+                                                      | none =>
+                                                          simp [hbe]
+                                                          split <;> exact PBF.unsupported
+                                                  | _ => exact PBF.unsupported
+                                              | _ => exact PBF.unsupported
+                  | _ => exact PBF.unsupported
               | _ => exact PBF.unsupported
   | assertStmt test msg sp =>
       simp only [execStmt]

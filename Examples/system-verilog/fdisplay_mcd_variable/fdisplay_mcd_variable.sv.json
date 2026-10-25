@@ -1,0 +1,125 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/fdisplay_mcd_variable/fdisplay_mcd_variable.sv",
+  "source_sha256": "6500b8fe8fe5bdd3726daae9a581c96ced97a7ae20662f6051403543180e737a",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 11,
+              "end_line": 3,
+              "end_col": 14
+            },
+            "name": "mcd",
+            "width": 32,
+            "init": null,
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 4,
+              "col": 3,
+              "end_line": 8,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 4,
+                "col": 11,
+                "end_line": 8,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 5,
+                    "col": 5,
+                    "end_line": 5,
+                    "end_col": 13
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 5,
+                      "col": 5,
+                      "end_line": 5,
+                      "end_col": 8
+                    },
+                    "width": 32,
+                    "name": "mcd",
+                    "signed": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 5,
+                      "col": 11,
+                      "end_line": 5,
+                      "end_col": 12
+                    },
+                    "width": 32,
+                    "bits": "00000000000000000000000000000001"
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 6,
+                    "col": 5,
+                    "end_line": 6,
+                    "end_col": 42
+                  },
+                  "name": "$display",
+                  "format": "PASS via MCD bit 0",
+                  "args": [],
+                  "arg_signed": [],
+                  "stdout_file_descriptor": 1
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

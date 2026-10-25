@@ -571,6 +571,15 @@
       "expect": "match"
     },
     {
+      "name": "fdisplay_mcd_variable",
+      "file": "Examples/system-verilog/fdisplay_mcd_variable/fdisplay_mcd_variable.sv",
+      "module": "top",
+      "oracle": [
+        "PASS via MCD bit 0"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "severity_dynamic",
       "file": "Examples/system-verilog/severity_dynamic/severity_dynamic.sv",
       "module": "top",

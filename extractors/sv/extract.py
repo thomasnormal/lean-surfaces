@@ -7276,6 +7276,152 @@ def _literal_integral_value(expression):
     return None
 
 
+def _stdout_descriptor_variable(sm, expression):
+    """Return a predefined stdout MCD assigned immediately before a call.
+
+    IEEE 1800-2023 §21.3.1 permits a descriptor variable to carry the
+    predefined stdout MCD (bit 0, or ``32'h8000_0001``).  The flat self-check
+    state has no file-descriptor object, so admit only the source-pure shape
+    that can be replaced by the existing literal descriptor: a 32-bit
+    integral variable, exactly one direct blocking literal assignment in the
+    same initial block before this call, and no other read or write of that
+    variable.  Conditional, aliased, selected, nonblocking, timed, and
+    computed forms stay loud rather than guessing a descriptor's runtime
+    history.
+    """
+    try:
+        if type(expression).__name__ != "NamedValueExpression":
+            return None
+        symbol = getattr(expression, "symbol", None)
+        if (symbol is None
+                or str(getattr(symbol, "kind", "")).split(".")[-1] != "Variable"
+                or not getattr(expression.type, "isIntegral", False)
+                or getattr(expression.type, "bitWidth", None) != 32
+                or getattr(symbol, "initializer", None) is not None):
+            return None
+        call_start = getattr(getattr(getattr(expression, "sourceRange", None),
+                                     "start", None), "offset", None)
+        if call_start is None:
+            return None
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return None
+
+        # Keep the call and assignment in one direct initial-block statement
+        # list.  This excludes writes hidden behind branches, loops, or a
+        # different process whose execution order the time-zero surface does
+        # not model.
+        def source_range(node):
+            sr = getattr(node, "sourceRange", None)
+            start = getattr(getattr(sr, "start", None), "offset", None)
+            end = getattr(getattr(sr, "end", None), "offset", None)
+            return (start, end) if start is not None and end is not None else None
+
+        direct_expressions = {}
+        def inspect_process(node):
+            if type(node).__name__ != "ProceduralBlockSymbol":
+                return
+            syntax = getattr(node, "syntax", None)
+            if str(getattr(syntax, "kind", "")).split(".")[-1] != "InitialBlock":
+                return
+            body = getattr(node, "body", None)
+            if str(getattr(body, "kind", "")).split(".")[-1] != "Block":
+                return
+            sequence = getattr(getattr(body, "body", None), "list", None)
+            if sequence is None:
+                return
+            for statement in sequence:
+                if type(statement).__name__ == "ExpressionStatement":
+                    value = getattr(statement, "expr", None)
+                    if value is not None:
+                        span = source_range(value)
+                        if span is not None:
+                            direct_expressions[span] = id(node)
+        instance.visit(inspect_process)
+        argument_span = source_range(expression)
+        if argument_span is None:
+            return None
+        call_processes = {
+            process for (start, end), process in direct_expressions.items()
+            if start <= argument_span[0] < end
+        }
+        if len(call_processes) != 1:
+            return None
+        call_process = next(iter(call_processes))
+
+        assignments = []
+        all_references = []
+        all_writes = []
+        def inspect(node):
+            kind = type(node).__name__
+            if kind in ("NamedValueExpression", "HierarchicalValueExpression"):
+                if getattr(node, "symbol", None) is symbol:
+                    span = source_range(node)
+                    if span is not None:
+                        all_references.append(span)
+                return
+            if kind != "AssignmentExpression":
+                return
+            left = getattr(node, "left", None)
+            if left is None:
+                return
+            # A selected/compound assignment still contains a reference to
+            # the descriptor variable and is therefore a write we reject.
+            references = []
+            def inspect_left(child):
+                if (type(child).__name__ in
+                        ("NamedValueExpression", "HierarchicalValueExpression")
+                        and getattr(child, "symbol", None) is symbol):
+                    references.append(child)
+            left.visit(inspect_left)
+            if references:
+                all_writes.append(node)
+            left_span = source_range(left)
+            node_span_key = source_range(node)
+            if (len(references) != 1 or left_span != source_range(references[0])
+                    or node_span_key not in direct_expressions
+                    or direct_expressions[node_span_key] != call_process
+                    or getattr(node, "op", None) is not None
+                    or getattr(node, "timingControl", None) is not None
+                    or getattr(node, "isNonBlocking", False)):
+                return
+            start = getattr(getattr(getattr(node, "sourceRange", None),
+                                    "start", None), "offset", None)
+            if start is None or start >= call_start:
+                return
+            rhs = getattr(node, "right", None)
+            if not _integral_literal_source(rhs):
+                return
+            value = convert_expr(sm, rhs)
+            if (value is None or value.get("kind") != "Literal"
+                    or value.get("width") != 32):
+                return
+            bits = value.get("bits", "")
+            if not bits or any(bit not in "01" for bit in bits):
+                return
+            assignments.append((node, int(bits, 2)))
+        instance.visit(inspect)
+
+        if len(assignments) != 1 or len(all_writes) != 1:
+            return None
+        assignment, descriptor = assignments[0]
+        if descriptor not in (1, 0x80000001):
+            return None
+        # The only permitted references are the assignment's LHS and this
+        # call's descriptor argument.  Any extra read could observe a value
+        # that the literal replacement would erase.
+        allowed = {source_range(assignment.left), argument_span}
+        if any(reference not in allowed for reference in all_references):
+            return None
+        if (source_range(assignment) not in direct_expressions
+                or direct_expressions[source_range(assignment)] != call_process):
+            return None
+        return descriptor
+    except Exception:
+        return None
+
+
 def _string_literal_getc_method(expression):
     """Recognize ``getc`` on an unchanged pure ASCII string literal.
 
@@ -10676,12 +10822,15 @@ def _convert_syscall(sm, s, e):
         if len(args) < 2:
             return unsupported(sm, s, "ExpressionStatement:CallExpression")
         fd = convert_expr(sm, args[0])
-        if fd is None or fd.get("kind") != "Literal":
-            return unsupported(sm, s, "ExpressionStatement:CallExpression")
-        bits = fd.get("bits", "")
-        if not bits or any(bit not in "01" for bit in bits):
-            return unsupported(sm, s, "ExpressionStatement:CallExpression")
-        fd_value = int(bits, 2)
+        if fd is not None and fd.get("kind") == "Literal":
+            bits = fd.get("bits", "")
+            if not bits or any(bit not in "01" for bit in bits):
+                return unsupported(sm, s, "ExpressionStatement:CallExpression")
+            fd_value = int(bits, 2)
+        else:
+            fd_value = _stdout_descriptor_variable(sm, args[0])
+            if fd_value is None:
+                return unsupported(sm, s, "ExpressionStatement:CallExpression")
         if fd_value not in (1, 0x80000001):
             return unsupported(sm, s, "ExpressionStatement:CallExpression")
         first = args[1]

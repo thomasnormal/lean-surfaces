@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 171 | 166 | 0 | 5 | sv-tests-2 declarations |
+| 172 | 167 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -77,6 +77,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `printtimescale_scope` | `Examples/system-verilog/printtimescale_scope/printtimescale_scope.sv` | match | **MATCH** | `ok` | MATCH |
 | `strobe_literal` | `Examples/system-verilog/strobe_literal/strobe_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `fdisplay_stdout` | `Examples/system-verilog/fdisplay_stdout/fdisplay_stdout.sv` | match | **MATCH** | `ok` | MATCH |
+| `fdisplay_mcd_variable` | `Examples/system-verilog/fdisplay_mcd_variable/fdisplay_mcd_variable.sv` | match | **MATCH** | `ok` | MATCH |
 | `severity_dynamic` | `Examples/system-verilog/severity_dynamic/severity_dynamic.sv` | match | **MATCH** | `ok` | MATCH |
 | `severity_opaque_args` | `Examples/system-verilog/severity_opaque_args/severity_opaque_args.sv` | match | **MATCH** | `ok` | MATCH |
 | `exit_declaration` | `Examples/system-verilog/exit_decl/exit_decl.sv` | match | **MATCH** | `ok` | MATCH |
@@ -417,12 +418,12 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22050 | 4924 | 17060 | 66 |
+| 22050 | 4925 | 17059 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `ExpressionStatement:CallExpression` | 2972 |
 | `AssignmentExpression:target` | 2971 |
+| `ExpressionStatement:CallExpression` | 2971 |
 | `CallExpression` | 2939 |
 | `Hierarchy:ports` | 2398 |
 | `VariableSymbol:2state` | 2331 |

@@ -7016,3 +7016,19 @@ partial** (66 include skips). `ExpressionStatement:CallExpression` falls
 **2,973 → 2,972**; `AssignmentExpression:target` and `CallExpression` remain
 2,971 and 2,939. Differential coverage moves **170/165/0/5 → 171/166/0/5**;
 grammar coverage remains **214/83/131**.
+
+## Variable standard-output MCD `$fdisplay` — 2026-10-25
+
+`$fdisplay` now accepts a direct 32-bit integer descriptor variable when the
+same initial block assigns it exactly once from the predefined stdout MCD
+(`1` or `32'h8000_0001`) before the call. The lowering substitutes the
+existing `$display` stream; computed, conditional, aliased, reassigned,
+nonblocking, and nonstandard descriptor forms remain loud. The
+`fdisplay_mcd_variable` fixture and extractor regressions cover the admitted
+and refusal boundaries, with a Lean fixture receipt and differential row.
+
+The 22,050-path census moves **4,924 → 4,925 clean** and **17,060 → 17,059
+partial** (66 include skips). `ExpressionStatement:CallExpression` falls
+**2,972 → 2,971**, tying `AssignmentExpression:target` at 2,971; `CallExpression`
+remains 2,939. Differential coverage moves **171/166/0/5 → 172/167/0/5**;
+grammar coverage remains **214/83/131**.

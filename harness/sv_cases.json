@@ -198,6 +198,15 @@
       "expect": "refuse"
     },
     {
+      "name": "dynamic_array_pattern",
+      "file": "Examples/system-verilog/dynamic_array_pattern/dynamic_array_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "empty_queue_declaration",
       "file": "Examples/system-verilog/empty_queue_decl/empty_queue_decl.sv",
       "module": "top",

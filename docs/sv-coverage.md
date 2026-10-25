@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 169 | 164 | 0 | 5 | sv-tests-2 declarations |
+| 170 | 165 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -36,6 +36,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `dynamic_array_oob_write` | `Examples/system-verilog/dynamic_array_oob_write/dynamic_array_oob_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_concat` | `Examples/system-verilog/dynamic_array_concat/dynamic_array_concat.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_concat_refuse` | `Examples/system-verilog/dynamic_array_concat_refuse/dynamic_array_concat_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `dynamic_array_pattern` | `Examples/system-verilog/dynamic_array_pattern/dynamic_array_pattern.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_queue_declaration` | `Examples/system-verilog/empty_queue_decl/empty_queue_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `increment` | `Examples/system-verilog/increment/incdec.sv` | match | **MATCH** | `ok` | MATCH |
 | `streaming_aggregate_member` | `Examples/system-verilog/streaming_aggregate_member/streaming_aggregate_member.sv` | match | **MATCH** | `ok` | MATCH |
@@ -415,12 +416,12 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22050 | 4922 | 17062 | 66 |
+| 22050 | 4923 | 17061 | 66 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 2974 |
 | `ExpressionStatement:CallExpression` | 2973 |
+| `AssignmentExpression:target` | 2971 |
 | `CallExpression` | 2939 |
 | `Hierarchy:ports` | 2398 |
 | `VariableSymbol:2state` | 2331 |

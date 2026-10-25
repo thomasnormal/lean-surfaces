@@ -6987,3 +6987,18 @@ partial** (66 include skips). `AssignmentExpression:target` falls **2,975 →
 2,974** and `CallExpression` falls **2,947 → 2,939**; the other leading
 blockers are unchanged. Differential coverage moves **167/163/0/4 →
 169/164/0/5**; grammar coverage remains **214/83/131**.
+
+## Dynamic-array positional assignment patterns — 2026-10-25
+
+An exact positional assignment pattern of scalar integral values now samples a
+dynamic array's finite extent and lowers each element to its existing flat
+cells. This reuses the same source-order and two-state conversion path as the
+unpacked concatenation rung. Nested, keyed/default, aliased, effectful,
+nonintegral, and nonblocking or timed patterns remain loud. The real §10.9
+shape is covered by `dynamic_array_pattern` and its Lean receipt.
+
+The 22,050-path census moves **4,922 → 4,923 clean** and **17,062 → 17,061
+partial** (66 include skips). `AssignmentExpression:target` falls **2,974 →
+2,971**; `ExpressionStatement:CallExpression` and `CallExpression` remain
+2,973 and 2,939. Differential coverage moves **169/164/0/5 → 170/165/0/5**;
+grammar coverage remains **214/83/131**.

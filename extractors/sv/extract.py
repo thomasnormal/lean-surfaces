@@ -2440,6 +2440,72 @@ def _dynamic_array_allocation_assignment(sm, expr):
         return None
 
 
+def _dynamic_array_pattern_assignment(sm, expr):
+    """Lower an exact scalar assignment pattern into sampled array cells.
+
+    A dynamic array has no aggregate slot in the self-check state, but a
+    finite positional pattern samples a fixed length just like an unpacked
+    concatenation.  Keep the lowering strict: scalar integral elements only,
+    exact width, no destination reads, and no nonblocking/timed form.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None
+                or type(expr.left).__name__ != "NamedValueExpression"):
+            return None
+        lhs = expr.left
+        array_type = lhs.type.canonicalType
+        if type(array_type).__name__ != "DynamicArrayType":
+            return None
+        pattern = expr.right
+        if type(pattern).__name__ not in (
+                "SimpleAssignmentPatternExpression",
+                "StructuredAssignmentPatternExpression"):
+            return None
+        elements = _pattern_source_elements(pattern)
+        if not elements or len(elements) != _dynamic_array_constant_extent(lhs.symbol):
+            return None
+        element_type = array_type.elementType
+        width, two_state, reason = type_width_2s(element_type)
+        if width is None or reason is not None:
+            return None
+        base = _array_storage_name(lhs.symbol)
+        values = []
+        for element in elements:
+            if not _case_source_expression_ok(element, packed_members=True):
+                return None
+            reads_target = False
+            def inspect(node):
+                nonlocal reads_target
+                if type(node).__name__ in ("NamedValueExpression",
+                                            "HierarchicalValueExpression"):
+                    try:
+                        reads_target = reads_target or _array_storage_name(node.symbol) == base
+                    except Exception:
+                        reads_target = True
+            _visit_selected_expression(element, inspect)
+            if reads_target:
+                return None
+            value = convert_expr(sm, element)
+            if (value is None or value.get("kind") == "Unsupported"
+                    or width_of(value) != width or not _case_expression_ok(value)):
+                return None
+            if two_state:
+                value = squash2_wrap(value, width)
+            values.append(value)
+        return {"kind": "Block", "span": node_span(sm, expr),
+                "stmts": [{
+                    "kind": "BlockingAssign",
+                    "span": node_span(sm, expr),
+                    "target": {"kind": "Ident", "span": node_span(sm, lhs),
+                               "width": width, "name": f"{base}[{index}]"},
+                    "value": value,
+                } for index, value in enumerate(values)],
+                "dynamic_array_pattern_lowered": True}
+    except Exception:
+        return None
+
+
 def _dynamic_fixed_size_mismatch(sm, expression):
     """Recognize the IEEE 7.6 dynamic-to-fixed size mismatch.
 
@@ -9900,6 +9966,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         if streaming_target is not None:
             return streaming_target
     if expr.op is None and _SYM is None:
+        dynamic_pattern = _dynamic_array_pattern_assignment(sm, expr)
+        if dynamic_pattern is not None:
+            return dynamic_pattern
         dynamic_allocation = _dynamic_array_allocation_assignment(sm, expr)
         if dynamic_allocation is not None:
             return dynamic_allocation

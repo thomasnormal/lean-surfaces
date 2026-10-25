@@ -4561,6 +4561,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-unsigned-short-compound-divide-mid",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableUnsignedShortCompoundDivideFrameWitness",
+    "cpp_source": "unsigned short frame_unsigned_short_compound_divide(unsigned short value) { value /= 3; return value; } bool callable_witness() { return frame_unsigned_short_compound_divide(12) == 4; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-unsigned-short-compound-modulo-mid",
     "kind": "expression",
     "corpus": "rung-3 witness",

@@ -4195,3 +4195,15 @@ The fresh 22,050-path census moves 4,906 → 4,910 clean and 17,078 → 17,074
 partial (66 include skips); `CallExpression` falls 2,965 → 2,958. The
 differential table moves 163/159/0/4 → 164/160/0/4, with grammar coverage
 unchanged at 214/83/131.
+## Default-zero literal semaphore `try_get` — 2026-10-25
+
+The default `semaphore new()` constructor creates zero available keys. The
+self-check tier now admits a direct literal `try_get(k)` after that
+constructor and returns exact scalar zero, while preserving loud boundaries
+for aliases, dynamic counts, reassignment, and other semaphore methods. The
+`semaphore_default_try_get` fixture exercises the form.
+
+The fresh 22,050-path census moves 4,910 → 4,912 clean and 17,074 → 17,072
+partial (66 include skips); `CallExpression` falls 2,958 → 2,956. The
+differential table moves 164/160/0/4 → 165/161/0/4, with grammar coverage
+unchanged at 214/83/131.

@@ -1477,6 +1477,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "semaphore_default_try_get",
+      "file": "Examples/system-verilog/semaphore_default_try_get/semaphore_default_try_get.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -6928,3 +6928,17 @@ partial (66 include skips). `CallExpression` falls 2,965 → 2,958 while
 `AssignmentExpression:target` remains 2,975 and
 `ExpressionStatement:CallExpression` remains 2,973. Differential coverage
 moves 163/159/0/4 → 164/160/0/4; grammar coverage remains 214/83/131.
+## Default-zero literal semaphore `try_get` — 2026-10-25
+
+The literal semaphore sequence now also accepts the standard `new()` form,
+whose default key count is zero. A subsequent literal `try_get(k)` therefore
+returns scalar zero without consuming keys. The existing direct-constructor,
+source-order, alias, dynamic-count, and mixed-method guards remain in force;
+all other semaphore behavior stays loud. `semaphore_default_try_get` supplies
+the fixture and proof receipt.
+
+The 22,050-path census moves 4,910 → 4,912 clean and 17,074 → 17,072
+partial (66 include skips). `CallExpression` falls 2,958 → 2,956 while
+`AssignmentExpression:target` remains 2,975 and
+`ExpressionStatement:CallExpression` remains 2,973. Differential coverage
+moves 164/160/0/4 → 165/161/0/4; grammar coverage remains 214/83/131.

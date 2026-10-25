@@ -6605,12 +6605,12 @@ def _semaphore_literal_try_get_state(expression):
 
         constructor_re = re.compile(
             r"(?<![A-Za-z0-9_$])" + name
-            + r"\s*=\s*new\s*\(\s*([+-]?\d+)\s*\)")
+            + r"\s*=\s*new\s*\(\s*([+-]?\d+)?\s*\)")
         constructors = list(constructor_re.finditer(source))
         if len(constructors) != 1:
             return None
         constructor = constructors[0]
-        initial = int(constructor.group(1), 10)
+        initial = int(constructor.group(1), 10) if constructor.group(1) else 0
         if initial < 0 or constructor.start() >= current_start:
             return None
         constructor_value = constructor_nodes[0]
@@ -6619,7 +6619,8 @@ def _semaphore_literal_try_get_state(expression):
         call = getattr(constructor_value, "constructorCall", None)
         constructor_args = list(getattr(call, "arguments", []))
         proven_initial = (_literal_integral_value(constructor_args[0])
-                          if len(constructor_args) == 1 else None)
+                          if len(constructor_args) == 1 else
+                          0 if not constructor_args else None)
         if proven_initial != initial:
             return None
         method_re = re.compile(
@@ -7547,6 +7548,8 @@ def _semaphore_new_nonnegative_literal(expr):
             return False
         call = getattr(node, "constructorCall", None)
         args = list(getattr(call, "arguments", []))
+        if not args:
+            return True
         if len(args) != 1:
             return False
         value = _literal_integral_value(args[0])

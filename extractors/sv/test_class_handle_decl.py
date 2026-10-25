@@ -164,6 +164,18 @@ class ClassHandleDeclarations(unittest.TestCase):
         self.assertEqual([node["bits"] for node in values],
                          ["0" * 31 + "1", "0" * 32])
 
+    def test_literal_semaphore_default_constructor_has_zero_keys(self):
+        design = lower(
+            'module top; semaphore sem; int result; initial begin '
+            'sem = new(); result = sem.try_get(1); '
+            'if (result == 0) $display("PASS"); else $display("FAIL"); '
+            'end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("semaphore_literal_try_get")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(values[0]["semaphore_available"], 0)
+        self.assertEqual(values[0]["bits"], "0" * 32)
+
     def test_dynamic_or_mixed_semaphore_try_get_stays_loud(self):
         design = lower(
             'module top; semaphore sem; int keys, result; initial begin '

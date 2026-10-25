@@ -27,8 +27,8 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-25
 
-The chapter-scoped rerun covered **22,054** paths: **5,066 clean**,
-**16,921 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,054** paths: **5,067 clean**,
+**16,920 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
 `AssignmentExpression:target` (2,937), `ExpressionStatement:CallExpression` (2,909),
@@ -96,6 +96,20 @@ The refreshed **22,054-path** census moves **5,064 → 5,066 clean** and
 **2,829 → 2,827**. Differential coverage grows **208/203/0/5 → 209/204/0/5**
 with no disagreements, and grammar coverage remains **217 witnesses, 90 MATCH,
 and 127 REFUSE**.
+
+## Dynamic-array `.size` without parentheses — 2026-10-25
+
+The constant dynamic-array allocation lowering now accepts the IEEE 1800-2023
+§5.13 spelling `values.size` alongside `values.size()`. It still requires one
+source-pure `new[N]` allocation and rejects later resizes, mutation, aliases,
+and dynamic extents. The `dynamic_array_size_property` fixture supplies the
+differential and Lean receipt.
+
+The refreshed **22,054-path** census moves **5,066 → 5,067 clean** and
+**16,921 → 16,920 partial** (67 include skips); `CallExpression` remains
+**2,827**. Differential coverage grows **209/204/0/5 → 210/205/0/5** with no
+disagreements, and grammar coverage remains **217 witnesses, 90 MATCH, and
+127 REFUSE**.
 
 The queue-declaration slice lowers an uninitialized 2-state queue to inert
 metadata; queue initializers and all queue operations remain loud. The fresh

@@ -7676,7 +7676,8 @@ def _dynamic_array_literal_size_method(expression):
         # are the only whole-array uses allowed by this object-free lowering.
         methods = list(re.finditer(
             r"(?<![A-Za-z0-9_$])" + name
-            + r"\s*\.\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*\(", source))
+            + r"\s*\.\s*([A-Za-z_$][A-Za-z0-9_$]*)"
+            + r"(?:\s*\(\s*\))?", source))
         if not methods or any(m.group(1) != "size" for m in methods):
             return False
         return True

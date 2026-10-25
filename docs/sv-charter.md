@@ -7660,6 +7660,22 @@ and partial files **16,924 → 16,923** (67 include skips). `CallExpression` fal
 grows **207/202/0/5 → 208/203/0/5** with no disagreements; grammar coverage
 remains **217/90/127**.
 
+## Dynamic-array `.size` without parentheses — 2026-10-25
+
+The constant dynamic-array size lowering now accepts the IEEE 1800-2023 §5.13
+omission of empty parentheses (`values.size`) as well as `values.size()`. A
+single source-pure `new[N]` allocation is still required; later resizes,
+mutation, aliases, and dynamic extents remain loud. The
+`dynamic_array_size_property` fixture supplies the differential witness and
+Lean receipt.
+
+On the refreshed **22,054-path** census, clean files move **5,066 → 5,067**
+and partial files **16,921 → 16,920** (67 include skips). `CallExpression`
+remains **2,827** while `AssignmentExpression:target` remains **2,937** and
+`ExpressionStatement:CallExpression` remains **2,909**. Differential coverage
+grows **209/204/0/5 → 210/205/0/5** with no disagreements; grammar coverage
+remains **217/90/127**.
+
 ## Predefined string macro `.len()` queries — 2026-10-25
 
 The string-length lowering now accepts a string variable assigned a predefined

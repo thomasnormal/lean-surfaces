@@ -35,7 +35,9 @@ a named or computed integer operand remains loud. These paths are not generic
 callable frames and do not make arbitrary calls live. A scalar `.len()` query
 on a string assigned a proven ASCII literal also folds, including a predefined
 string macro whose AST value is a literal; dynamic assignments and other string
-methods remain loud.
+methods remain loud. Built-in dynamic-array `.size` accepts the IEEE 5.13
+omission of empty parentheses when one constant `new[N]` allocation is already
+sampled; later resizes and other array operations remain loud.
 
 ## Refusal boundary
 

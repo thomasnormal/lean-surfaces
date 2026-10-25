@@ -121,6 +121,19 @@ class DynamicArrayDeclarations(unittest.TestCase):
                             and node.get("name") == "$finish"
                             for node in nodes(design)))
 
+    def test_dynamic_array_size_without_parentheses_is_exact(self):
+        design = lower(
+            'module top; int values[]; int result; initial begin '
+            'values = new[7]; result = values.size; '
+            'if (result === 7) $display("PASS"); else $display("FAIL"); '
+            'end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("dynamic_array_literal_size")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(int(values[0]["bits"], 2), 7)
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
     def test_dynamic_to_fixed_size_mismatch_halts_without_copy(self):
         design = lower(
             """module top;

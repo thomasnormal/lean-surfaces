@@ -1880,6 +1880,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "dynamic_array_size_property",
+      "file": "Examples/system-verilog/dynamic_array_size_property/dynamic_array_size_property.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

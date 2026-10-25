@@ -106,7 +106,7 @@ would otherwise go. -/
       · rintro st rfl
         refine ⟨rfl, rfl, #[.int (k : Nat)], .int (factorial k),
           .cons (.of_eval (fuel := 3) ?_) .nil, rfl, ih, rfl⟩
-        py_simp [factM, factFn]
+        py_simp [factM, factFn, evalBinOpH, PyVCGen.binOpBeqBitAnd]
       · -- return n * r
         rintro st rfl
         refine ⟨.int ((↑(k + 1) : Int) * ↑(factorial k)),

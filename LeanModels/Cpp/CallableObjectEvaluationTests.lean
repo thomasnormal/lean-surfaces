@@ -1523,6 +1523,22 @@ def callableWhileContinueStatementFrameWitness : Bool := whileContinueStatementF
 
 #guard callableWhileContinueStatementFrameWitness
 
+private def localDeclarationStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let function := {base with body := .block (.sequence
+    (automaticLiteral "0x11" 3)
+    (.return_ {
+      expression := .parameter (handle "0x11")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 64 .lp64 function [signed 7] with
+  | .ok (.ok value) => value == signed 3
+  | _ => false
+
+def callableLocalDeclarationStatementFrameWitness : Bool := localDeclarationStatementFrame
+
+#guard callableLocalDeclarationStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

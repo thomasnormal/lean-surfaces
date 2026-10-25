@@ -963,6 +963,28 @@ def _contains_guarded_expression(expression, *, guard_calls):
     return found
 
 
+def _fixed_real_bits_call_width(expression):
+    """Return the fixed width of a pure real-to-bit conversion call."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName not in ("$realtobits", "$shortrealtobits")
+                or len(expression.arguments) != 1):
+            return None
+        argument = expression.arguments[0]
+        if (getattr(argument, "bad", False)
+                or type(argument.type.canonicalType).__name__ != "FloatingType"
+                or not expression.type.isIntegral):
+            return None
+        width = 64 if expression.subroutineName == "$realtobits" else 32
+        if expression.type.bitWidth != width:
+            return None
+        return width
+    except Exception:
+        return None
+
+
 def _bits_argument_source_ok(expression):
     """Effectful query operands remain outside the licensed-confirmed tier."""
     pure = True
@@ -977,6 +999,9 @@ def _bits_argument_source_ok(expression):
             pure = pure and len(node.arguments) == 1 and all(
                 argument.type.isIntegral and _bits_argument_source_ok(argument)
                 for argument in node.arguments)
+            return VisitAction.Skip
+        if _SYM is None and _fixed_real_bits_call_width(node) is not None:
+            pure = pure and _bits_argument_source_ok(node.arguments[0])
             return VisitAction.Skip
         if kind == "CallExpression" and _fixed_bits_query_width(node) is not None:
             return VisitAction.Skip

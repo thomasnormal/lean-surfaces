@@ -1862,6 +1862,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "real_bits_query",
+      "file": "Examples/system-verilog/real_bits_query/real_bits_query.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

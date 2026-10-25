@@ -24,7 +24,7 @@
    ],
    [
     "CallExpression",
-    2831
+    2829
    ],
    [
     "Hierarchy:ports",
@@ -980,8 +980,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5063,
-   "partial": 16924,
+   "clean": 5064,
+   "partial": 16923,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1042,7 +1042,7 @@
     52
    ],
    "simulation": [
-    4376,
+    4377,
     18685
    ],
    "simulation elaboration": [
@@ -1235,9 +1235,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 554,
-    "clean": 487,
-    "partial": 556,
+    "blocked_by_more": 553,
+    "clean": 488,
+    "partial": 555,
     "simulation_tests": 1043,
     "top_residual_blockers": [
      [
@@ -1258,15 +1258,15 @@
      ],
      [
       "VariableDeclStatement:2state",
-      131
+      130
      ],
      [
       "ConversionExpression:width",
-      129
+      128
      ],
      [
       "CallExpression",
-      126
+      124
      ],
      [
       "TypeAliasType:TypeAlias",
@@ -1278,7 +1278,7 @@
      ],
      [
       "RealLiteral",
-      51
+      50
      ],
      [
       "ElementSelectExpression:source-type",
@@ -1599,9 +1599,9 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 504,
+    "clean": 505,
     "error": 0,
-    "partial": 683,
+    "partial": 682,
     "skip_include": 0,
     "total": 1187,
     "unlockable": 3

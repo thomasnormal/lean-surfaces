@@ -27,12 +27,12 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-25
 
-The chapter-scoped rerun covered **22,054** paths: **5,063 clean**,
-**16,924 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,054** paths: **5,064 clean**,
+**16,923 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
 `AssignmentExpression:target` (2,937), `ExpressionStatement:CallExpression` (2,909),
-`CallExpression` (2,831), `Hierarchy:ports` (2,398),
+`CallExpression` (2,829), `Hierarchy:ports` (2,398),
 `VariableSymbol:2state` (2,302), `SubroutineSymbol:Subroutine` (1,634),
 `NamedValueExpression:2state` (1,484), `ConcurrentAssertionStatement`
 (1,359), `InvalidStatement` (1,329), and `ClassType` (1,329).
@@ -66,6 +66,20 @@ state.
 The refreshed **22,054-path** census moves **5,061 → 5,063 clean** and
 **16,926 → 16,924 partial** (67 include skips); `CallExpression` falls
 **2,833 → 2,831**. Differential coverage grows **206/201/0/5 → 207/202/0/5**
+with no disagreements, and grammar coverage remains **217 witnesses, 90 MATCH,
+and 127 REFUSE**.
+
+## Fixed-width real conversion `$bits` queries — 2026-10-25
+
+`$bits($realtobits(real_value))` and
+`$bits($shortrealtobits(shortreal_value))` now fold their fixed 64- and 32-bit
+results without observing opaque real storage. Direct `$bits` queries on named
+real values, effectful conversion operands, and other real calls remain loud.
+The `real_bits_query` fixture supplies the differential and Lean receipt.
+
+The refreshed **22,054-path** census moves **5,063 → 5,064 clean** and
+**16,924 → 16,923 partial** (67 include skips); `CallExpression` falls
+**2,831 → 2,829**. Differential coverage grows **207/202/0/5 → 208/203/0/5**
 with no disagreements, and grammar coverage remains **217 witnesses, 90 MATCH,
 and 127 REFUSE**.
 

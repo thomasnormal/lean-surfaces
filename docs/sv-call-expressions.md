@@ -12,7 +12,9 @@ Fixed `$bits`, `$high`, `$left`, `$right`, `$low`, `$increment`, `$size`,
 `$dimensions`, and `$unpacked_dimensions` queries fold from elaborated type
 metadata. `$bits(real)` and `$bits(shortreal)` now use the same metadata-only
 path for their fixed 64- and 32-bit type widths; a named real value remains
-loud. Pure `$clog2` constants fold to the existing signed 32-bit literal;
+loud. The fixed-width results of `$realtobits(real_value)` and
+`$shortrealtobits(shortreal_value)` are also valid `$bits` operands, so nested
+queries return 64 and 32 without reading opaque real storage. Pure `$clog2` constants fold to the existing signed 32-bit literal;
 runtime integral `$clog2` uses the shared expression evaluator. A zero-argument
 `$time` in the time-zero self-check slice is the existing 64-bit zero literal
 with time-zero provenance. A `$rtoi` with one finite real literal now lowers

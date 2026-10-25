@@ -197,6 +197,22 @@ class FixedBitQueries(unittest.TestCase):
         source = query_source("$bits(value)", "real value; ")
         self.assert_query_refused(source)
 
+    def test_real_bit_conversion_queries_use_fixed_result_width(self):
+        source = query_source(
+            "$bits($shortrealtobits(sr)) + $bits($realtobits(dr))",
+            "shortreal sr; real dr; ")
+        design = lower(source)
+        literals = query_nodes(design)
+        self.assertEqual([int(node["bits"], 2) for node in literals], [32, 64])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_effectful_real_conversion_operand_stays_loud(self):
+        declarations = ("function automatic real effect(); $display(\"CALLED\"); "
+                        "effect = 1.0; endfunction ")
+        self.assert_query_refused(query_source("$bits($realtobits(effect()))",
+                                              declarations))
+
     def test_unpacked_union_query_stays_loud(self):
         source = ("module top; initial begin "
                   "typedef union {logic [7:0] word; logic [3:0] nibble;} union_t; "

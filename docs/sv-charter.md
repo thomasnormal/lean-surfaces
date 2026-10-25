@@ -7643,3 +7643,19 @@ and partial files **16,926 → 16,924** (67 include skips).
 `CallExpression` falls **2,833 → 2,831** while `AssignmentExpression:target`
 remains **2,937**. Differential coverage grows **206/201/0/5 → 207/202/0/5**
 with no disagreements; grammar coverage remains **217/90/127**.
+
+## Fixed-width real conversion `$bits` queries — 2026-10-25
+
+The self-check surface now folds `$bits($realtobits(real_value))` and
+`$bits($shortrealtobits(shortreal_value))` from the conversion result's fixed
+64- or 32-bit width. The conversion remains pure metadata for this query and
+does not expose real storage. Direct `$bits` of a named real, effectful
+conversion operands, and other real calls remain loud. `real_bits_query` supplies
+the differential witness and Lean receipt.
+
+On the refreshed **22,054-path** census, clean files move **5,063 → 5,064**
+and partial files **16,924 → 16,923** (67 include skips). `CallExpression` falls
+**2,831 → 2,829** while `AssignmentExpression:target` remains **2,937** and
+`ExpressionStatement:CallExpression` remains **2,909**. Differential coverage
+grows **207/202/0/5 → 208/203/0/5** with no disagreements; grammar coverage
+remains **217/90/127**.

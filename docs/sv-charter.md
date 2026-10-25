@@ -7083,3 +7083,20 @@ partial files **16,452 → 16,451** (29 include skips); the leading
 `AssignmentExpression:target` blocker falls **2,794 → 2,793**. Differential
 coverage grows **174/169/0/5 → 175/170/0/5** with no disagreements, and grammar
 coverage remains **214/83/131**.
+
+## Dynamic-array struct default allocation — 2026-10-25
+
+Finite dynamic arrays whose element type is an untagged unpacked struct now
+lower to one flat cell per integral field. A single constant `new[N]` samples
+the extent, and each element receives the IEEE default value for every field;
+field initializers are preserved and two-state fields are squashed at the
+declaration boundary. Four-state, tagged, nested-array, union, and other
+aggregate fields remain loud. The `dynamic_array_struct_defaults` and
+`dynamic_array_struct_field_defaults` fixtures provide the §7.5.1 witnesses,
+with extractor regressions covering both defaults and the four-state refusal.
+
+On the available 21,342-path snapshot, clean files move **4,862 → 4,864** and
+partial files **16,451 → 16,449** (29 include skips). `VariableSymbol:2state`
+falls **2,246 → 2,243**; the remaining leading blockers are unchanged.
+Differential coverage grows **175/170/0/5 → 177/172/0/5** with no
+disagreements, and grammar coverage remains **214/83/131**.

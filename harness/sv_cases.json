@@ -1574,6 +1574,24 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "dynamic_array_struct_defaults",
+      "file": "Examples/system-verilog/dynamic_array_struct_defaults/dynamic_array_struct_defaults.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_struct_field_defaults",
+      "file": "Examples/system-verilog/dynamic_array_struct_field_defaults/dynamic_array_struct_field_defaults.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

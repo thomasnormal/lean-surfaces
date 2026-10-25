@@ -32,7 +32,7 @@
    ],
    [
     "VariableSymbol:2state",
-    2246
+    2243
    ],
    [
     "SubroutineSymbol:Subroutine",
@@ -968,8 +968,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4862,
-   "partial": 16451,
+   "clean": 4864,
+   "partial": 16449,
    "skip_include": 29
   },
   "clean_by_type": {
@@ -1030,7 +1030,7 @@
     52
    ],
    "simulation": [
-    4184,
+    4186,
     18003
    ],
    "simulation elaboration": [
@@ -1595,9 +1595,9 @@
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 179,
+    "clean": 181,
     "error": 0,
-    "partial": 592,
+    "partial": 590,
     "skip_include": 0,
     "total": 771,
     "unlockable": 0

@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 175 | 170 | 0 | 5 | sv-tests-2 declarations |
+| 177 | 172 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -189,6 +189,8 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `mailbox_empty_try` | `Examples/system-verilog/mailbox_empty_try/mailbox_empty_try.sv` | match | **MATCH** | `ok` | MATCH |
 | `event_triggered_false` | `Examples/system-verilog/event_triggered_false/event_triggered_false.sv` | match | **MATCH** | `ok` | MATCH |
 | `semaphore_literal_put_get` | `Examples/system-verilog/semaphore_literal_put_get/semaphore_literal_put_get.sv` | match | **MATCH** | `ok` | MATCH |
+| `dynamic_array_struct_defaults` | `Examples/system-verilog/dynamic_array_struct_defaults/dynamic_array_struct_defaults.sv` | match | **MATCH** | `ok` | MATCH |
+| `dynamic_array_struct_field_defaults` | `Examples/system-verilog/dynamic_array_struct_field_defaults/dynamic_array_struct_field_defaults.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -229,7 +231,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.BinaryXorExpression` | `Examples/system-verilog/sem2/alu_div/cv32e40p_alu_div.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.BitSelect` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.BitType` | `Examples/system-verilog/assignment_patterns/structs.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ByteType` | `Examples/system-verilog/selected_types/selected_types.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ByteType` | `Examples/system-verilog/dynamic_array_struct_field_defaults/dynamic_array_struct_field_defaults.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CHandleType` | `Examples/system-verilog/chandle_decl/chandle_decl.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/case_equality/case_equality.sv` | **REFUSE** | `unsupported` non-initial process 'AlwaysPosedge:clk' (self-check tier runs initial-only designs) |
 | `SyntaxKind.CaseGenerate` | `Examples/system-verilog/elaborated_generate/choices.sv` | **MATCH** | `ok`  |
@@ -421,7 +423,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 21342 | 4862 | 16451 | 29 |
+| 21342 | 4864 | 16449 | 29 |
 
 | blocker kind | files |
 |---|---:|
@@ -429,7 +431,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 | `CallExpression` | 2782 |
 | `ExpressionStatement:CallExpression` | 2644 |
 | `Hierarchy:ports` | 2265 |
-| `VariableSymbol:2state` | 2246 |
+| `VariableSymbol:2state` | 2243 |
 | `SubroutineSymbol:Subroutine` | 1395 |
 | `NamedValueExpression:2state` | 1375 |
 | `ConcurrentAssertionStatement` | 1323 |

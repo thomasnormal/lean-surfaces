@@ -12078,6 +12078,33 @@ def convert_fixed_array_vars(sm, m):
             if count is None:
                 return None
             element_type = array_type.elementType
+            element_leaf = element_type.canonicalType
+            if type(element_leaf).__name__ == "UnpackedStructType":
+                # A struct element is represented by one cell per integral
+                # field. ``new[N]`` creates N default-valued elements, so
+                # apply field initializers independently to each sampled
+                # element while retaining the existing aggregate boundaries.
+                if getattr(element_leaf, "isTagged", False):
+                    return None
+                base = _array_storage_name(m)
+                declarations = []
+                for position in range(count):
+                    cell_base = f"{base}[{position}]"
+                    cells = _unpacked_struct_oob_defaults(
+                        sm, cell_base, element_leaf, sym_span(sm, m))
+                    if cells is None:
+                        return None
+                    for name, width, init, field_type in cells:
+                        if init is not None and not field_type.isFourState:
+                            init = squash2_wrap(init, width)
+                        declarations.append(signed_metadata({
+                            "kind": "Var",
+                            "span": sym_span(sm, m),
+                            "name": name,
+                            "width": width,
+                            "init": init,
+                        }, field_type))
+                return declarations
             width, two, reason = type_width_2s(element_type)
             if width is None or reason is not None:
                 return None

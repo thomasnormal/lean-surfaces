@@ -125,6 +125,57 @@ class DynamicArrayDeclarations(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_struct_elements_receive_type_defaults(self):
+        design = lower(
+            """module top;
+               typedef struct { int count; bit [3:0] tag; } item_t;
+               item_t items[];
+               initial begin
+                 items = new[2];
+                 if (items[0].count == 0 && items[0].tag === 0 &&
+                     items[1].count == 0 && items[1].tag === 0)
+                   $display("PASS");
+               end
+               endmodule""")
+        decls = [node for node in nodes(design) if node.get("kind") == "Var"]
+        self.assertEqual([decl["name"] for decl in decls], [
+            "items[0].count", "items[0].tag", "items[1].count", "items[1].tag"])
+        self.assertEqual(decls[0]["init"]["operand"]["bits"], "0" * 32)
+        self.assertEqual(decls[1]["init"]["operand"]["bits"], "0" * 4)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_struct_elements_receive_field_initializers(self):
+        design = lower(
+            """module top;
+               typedef struct { int id = 7; byte code; } item_t;
+               item_t items[];
+               initial begin
+                 items = new[2];
+                 if (items[0].id == 7 && items[0].code == 0 &&
+                     items[1].id == 7 && items[1].code == 0)
+                   $display("PASS");
+               end
+               endmodule""")
+        decls = [node for node in nodes(design) if node.get("kind") == "Var"]
+        ids = [decl for decl in decls if decl["name"].endswith(".id")]
+        self.assertEqual(len(ids), 2)
+        self.assertTrue(all(decl["init"]["kind"] == "Squash2" for decl in ids))
+        self.assertTrue(all(decl["init"]["operand"]["bits"] ==
+                            format(7, "032b") for decl in ids))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_four_state_struct_dynamic_array_stays_loud(self):
+        design = lower(
+            """module top;
+               typedef struct { logic value; bit ready; } item_t;
+               item_t items[];
+               initial items = new[2];
+               endmodule""")
+        self.assertTrue(any(node.get("sv_kind") == "VariableSymbol:type"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

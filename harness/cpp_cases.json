@@ -4681,6 +4681,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-signed-char-compound-bitxor-mid",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableSignedCharCompoundBitXorFrameWitness",
+    "cpp_source": "signed char frame_signed_char_compound_bitxor(signed char value) { value ^= 3; return value; } bool callable_witness() { return frame_signed_char_compound_bitxor(12) == 15; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-signed-overflow-retention",
     "kind": "expression",
     "corpus": "rung-3 witness",

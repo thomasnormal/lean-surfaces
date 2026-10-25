@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 578 | 561 | 0 | 7 | 0 | 10 |
+| 579 | 562 | 0 | 7 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -588,6 +588,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `statement.callable-frame-local-nested-compound-assignment-direct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-frame-local-nested-increment-direct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-frame-local-nested-post-increment-direct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-frame-local-nested-decrement-direct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `tinyxml2.IsUTF8Continuation.negative` | 2 | `ok 1` | `ORACLE` | **ORACLE** | set LEANCPP_TINYXML2_DIR for the unchanged source |
 | `tinyxml2.IsUTF8Continuation.minimum` | 2 | `ok 1` | `ORACLE` | **ORACLE** | set LEANCPP_TINYXML2_DIR for the unchanged source |
 | `tinyxml2.IsUTF8Continuation.nonnegative` | 2 | `ok 0` | `ORACLE` | **ORACLE** | set LEANCPP_TINYXML2_DIR for the unchanged source |

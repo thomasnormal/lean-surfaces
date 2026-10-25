@@ -1830,6 +1830,30 @@ def callableLocalNestedIncrementStatementFrameWitness : Bool :=
 
 #guard callableLocalNestedIncrementStatementFrameWitness
 
+private def localNestedPostIncrementStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let function := {base with body := .block (.sequence
+    (.automatic {
+      statement := .declare (handle "0x11") intType intType (.literal (signed 3))
+      declarations := [handle "0x11"]})
+    (.sequence
+      (.block (.expression {
+        expression := .increment "++" true (handle "0x11")
+        sourceType := intType
+        type := intType}))
+      (.return_ {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType})))}
+  match evaluateCallableObject 64 .lp64 function [signed 7] with
+  | .ok (.ok value) => value == signed 4
+  | _ => false
+
+def callableLocalNestedPostIncrementStatementFrameWitness : Bool :=
+  localNestedPostIncrementStatementFrame
+
+#guard callableLocalNestedPostIncrementStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

@@ -5869,6 +5869,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-assignment",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableAssignmentFrameWitness",
+    "cpp_source": "int assignment_frame_witness(int value) { value = 7; return value; } bool callable_witness() { return assignment_frame_witness(4) == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

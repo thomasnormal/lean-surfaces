@@ -521,6 +521,22 @@ def callableCommaFrameWitness : Bool := commaFrame
 
 #guard callableCommaFrameWitness
 
+private def assignmentFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let function := {base with body := .block (.sequence
+    (.assign (handle "0x10")
+      {expression := .integer 7, sourceType := intType, type := intType})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := intType, type := intType}))}
+  match evaluateCallableObject 32 .lp64 function [signed 4] with
+  | .ok (.ok value) => value == signed 7
+  | _ => false
+
+def callableAssignmentFrameWitness : Bool := assignmentFrame
+
+#guard callableAssignmentFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

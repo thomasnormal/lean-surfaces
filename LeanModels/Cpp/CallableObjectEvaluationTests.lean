@@ -943,6 +943,26 @@ def callableUnsignedShortCompoundModuloFrameWitness : Bool :=
 
 #guard callableUnsignedShortCompoundModuloFrameWitness
 
+private def unsignedCharCompoundDivideFrame : Bool :=
+  let base := incrementFunction .unsignedChar "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign "/=" (handle "0x10")
+      {expression := .integer 3, sourceType := .builtin .unsignedChar,
+        type := .builtin .unsignedChar})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .unsignedChar, type := .builtin .unsignedChar}))}
+  match CallableObjectFrame.start .lp64 function [⟨.unsigned 8, 12⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.unsigned 8, 4⟩)
+
+def callableUnsignedCharCompoundDivideFrameWitness : Bool :=
+  unsignedCharCompoundDivideFrame
+
+#guard callableUnsignedCharCompoundDivideFrameWitness
+
 private def unsignedCharCompoundModuloFrame : Bool :=
   let base := incrementFunction .unsignedChar "++" false
   let function := {base with body := .block (.sequence

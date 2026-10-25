@@ -1729,6 +1729,15 @@
       "expect": "match"
     },
     {
+      "name": "mailbox_parameterized_packed_vector",
+      "file": "Examples/system-verilog/mailbox_parameterized_packed_vector/mailbox_parameterized_packed_vector.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "semaphore_negative_try_get",
       "file": "Examples/system-verilog/semaphore_negative_try_get/semaphore_negative_try_get.sv",
       "module": "top",

@@ -7740,19 +7740,20 @@ def _mailbox_literal_sequence(expression):
 
 
 def _mailbox_literal_get_state(sm, expression):
-    """Sample a scalar FIFO mailbox sequence through a direct ``get``.
+    """Sample a scalar FIFO mailbox sequence through direct method calls.
 
     An unbounded mailbox has no flat representation in the self-check state,
-    but a linear sequence of literal integral ``put`` calls and scalar output
-    ``get`` calls is an exact queue snapshot.  Keep the scan source-ordered
-    and reject aliases, bounded constructors, dynamic messages, empty gets,
-    and every method outside ``put``/``get``/``num``.
+    but a linear sequence of literal integral ``put``/``try_put`` calls and
+    scalar output ``get``/``try_get`` calls is an exact queue snapshot.  Keep
+    the scan source-ordered and reject aliases, bounded constructors, dynamic
+    messages, empty gets, and every method outside the admitted FIFO surface.
     """
     try:
         if (type(expression).__name__ != "CallExpression"
                 or getattr(expression, "bad", False)
                 or expression.isSystemCall
-                or expression.subroutineName not in ("put", "get", "num")):
+                or expression.subroutineName not in (
+                    "put", "get", "num", "try_put", "try_get")):
             return None
         receiver = getattr(expression, "thisClass", None)
         if (receiver is None or type(receiver).__name__ != "NamedValueExpression"
@@ -7855,8 +7856,13 @@ def _mailbox_literal_get_state(sm, expression):
         instance.visit(inspect)
         calls.sort(key=lambda item: item[0])
         control_ranges = list(set(control_ranges))
-        if any(any(start < offset < end for start, end in control_ranges)
-               for offset, _ in calls):
+        # A count query is a pure read and may occur in a condition or a
+        # diagnostic argument.  Mutating calls still have to be linear: a
+        # branch-local put/get/try_* would make the replay path-dependent.
+        if any(getattr(node, "subroutineName", "") != "num"
+               and start < offset < end
+               for offset, node in calls
+               for start, end in control_ranges):
             return None
         scalar_writes.sort(key=lambda item: item[0])
         if any(any(start < write_offset < end
@@ -7865,11 +7871,43 @@ def _mailbox_literal_get_state(sm, expression):
             return None
         if not any(node is expression for _, node in calls):
             return None
-        if any(getattr(node, "subroutineName", "") not in ("put", "get", "num")
+        if any(getattr(node, "subroutineName", "") not in (
+                    "put", "get", "num", "try_put", "try_get")
                for _, node in calls):
             return None
 
-        def literal_message(node, offset):
+        def formal_message_width(call):
+            """Return a typed mailbox method's scalar message width.
+
+            Built-in untyped mailboxes expose an ``untyped`` formal and keep
+            the old width-from-message behavior.  Parameterized integral
+            mailboxes expose a concrete formal; requiring the source argument
+            and output target to match it keeps truncating or widening calls
+            loud instead of silently changing the queued value.
+            """
+            try:
+                formal = list(getattr(call.subroutine, "arguments", []))
+                if len(formal) != 1:
+                    return None
+                width, _two_state, reason = type_width_2s(formal[0].type)
+                return width if width is not None and reason is None else None
+            except Exception:
+                return None
+
+        def source_integral_width(node):
+            """Width before pyslang inserts a formal-argument conversion."""
+            raw = node
+            while type(raw).__name__ == "ConversionExpression":
+                raw = getattr(raw, "operand", None)
+                if raw is None:
+                    return None
+            try:
+                width, _two_state, reason = type_width_2s(raw.type)
+                return width if width is not None and reason is None else None
+            except Exception:
+                return None
+
+        def literal_message(node, offset, call):
             if not _case_source_expression_ok(node):
                 return None
             named = []
@@ -7882,6 +7920,12 @@ def _mailbox_literal_get_state(sm, expression):
             _visit_selected_expression(node, inspect_value)
             width, _two_state, reason = type_width_2s(node.type)
             if width is None or reason is not None:
+                return None
+            expected_width = formal_message_width(call)
+            source_width = source_integral_width(node)
+            if (expected_width is not None
+                    and (source_width is not None and source_width != expected_width
+                         or source_width is None and width != expected_width)):
                 return None
             if named:
                 # The variable-message extension is deliberately one direct
@@ -7915,22 +7959,46 @@ def _mailbox_literal_get_state(sm, expression):
             if node is expression:
                 current_result = (method, queue[:], prior_activity)
                 break
-            if method == "put":
+            if method in ("put", "try_put"):
                 if len(arguments) != 1:
                     return None
-                message = literal_message(arguments[0], _)
+                message = literal_message(arguments[0], _, node)
                 if message is None:
                     return None
                 queue.append(message)
                 prior_activity = True
-            elif method == "get":
+            elif method in ("get", "try_get"):
                 if len(arguments) != 1 or not queue:
+                    if method == "try_get" and len(arguments) == 1:
+                        target, admitted = legacy_blocking_target(
+                            sm, arguments[0], True)
+                        if (not admitted or target.get("kind") != "Ident"
+                                or (formal_message_width(node) is not None
+                                    and (source_integral_width(arguments[0])
+                                         is not None
+                                         and source_integral_width(arguments[0])
+                                         != formal_message_width(node))
+                                    or (formal_message_width(node) is not None
+                                        and source_integral_width(arguments[0])
+                                        is None
+                                        and width_of(target)
+                                        != formal_message_width(node)))):
+                            return None
+                        prior_activity = True
+                        continue
                     return None
                 target, admitted = legacy_blocking_target(sm, arguments[0], True)
                 if not admitted or target.get("kind") != "Ident":
                     return None
                 target_width = width_of(target)
-                if target_width != queue[0][1]:
+                expected_width = formal_message_width(node)
+                source_target_width = source_integral_width(arguments[0])
+                if ((expected_width is not None
+                     and ((source_target_width is not None
+                           and source_target_width != expected_width)
+                          or (source_target_width is None
+                              and target_width != expected_width)))
+                        or target_width != queue[0][1]):
                     return None
                 queue.pop(0)
                 prior_activity = True
@@ -7943,29 +8011,51 @@ def _mailbox_literal_get_state(sm, expression):
         if method == "put":
             if len(expression.arguments) != 1:
                 return None
-            message = literal_message(expression.arguments[0], position)
+            message = literal_message(expression.arguments[0], position, expression)
             if message is None:
                 return None
             return {"method": method, "value": message[0],
                     "width": message[1], "count": len(available),
                     "activity": activity}
+        if method == "try_put":
+            if len(expression.arguments) != 1:
+                return None
+            message = literal_message(expression.arguments[0], position, expression)
+            if message is None:
+                return None
+            return {"method": method, "value": message[0],
+                    "width": message[1], "count": len(available),
+                    "activity": activity, "success": True}
         if method == "num":
             if expression.arguments:
                 return None
             return {"method": method, "count": len(available),
                     "activity": activity}
-        if len(expression.arguments) != 1 or not available:
+        if len(expression.arguments) != 1:
             return None
         target, admitted = legacy_blocking_target(sm, expression.arguments[0], True)
         if not admitted or target.get("kind") != "Ident":
             return None
         target_width = width_of(target)
+        expected_width = formal_message_width(expression)
+        source_target_width = source_integral_width(expression.arguments[0])
+        if (expected_width is not None
+                and ((source_target_width is not None
+                      and source_target_width != expected_width)
+                     or (source_target_width is None
+                         and target_width != expected_width))):
+            return None
+        if method == "try_get" and not available:
+            return {"method": method, "target": target, "count": 0,
+                    "activity": activity, "success": False}
+        if not available:
+            return None
         value, value_width = available[0]
         if target_width != value_width:
             return None
         return {"method": method, "target": target, "value": value,
                 "width": value_width, "count": len(available),
-                "activity": activity}
+                "activity": activity, "success": method == "try_get"}
     except Exception:
         return None
 
@@ -8002,14 +8092,37 @@ def _convert_mailbox_literal_num(sm, expression):
 
 
 def _convert_mailbox_literal_state_call(sm, expression):
-    """Render a literal mailbox ``num()`` value after put/get activity."""
+    """Render a literal mailbox FIFO method after source-ordered activity."""
     state = _mailbox_literal_get_state(sm, expression)
+    if state is None:
+        return None
+    method = expression.subroutineName
+    if method in ("try_put", "try_get"):
+        width = getattr(expression.type, "bitWidth", None)
+        if width is None or width <= 0:
+            return unsupported(sm, expression, "CallExpression:mailbox-try-width")
+        result = 1 if state.get("success", False) else 0
+        converted = signed_metadata({
+            "kind": "Literal", "span": node_span(sm, expression),
+            "width": width,
+            "bits": ("0" * (width - 1)) + str(result),
+            "mailbox_literal_try": method,
+            "mailbox_try_success": bool(state.get("success", False)),
+        }, expression.type)
+        # ``try_get`` is a function with an output argument.  Expression
+        # lowering carries the direct scalar store as metadata; assignment
+        # conversion turns it into a preceding BlockingAssign so the output
+        # update is not lost when the return value is assigned elsewhere.
+        if method == "try_get" and state.get("success", False):
+            converted["mailbox_literal_try_get_target"] = state["target"]
+            converted["mailbox_literal_try_get_value"] = state["value"]
+        return converted
     # ``num()`` is also meaningful immediately after construction: the
     # mailbox contains zero messages before the first put/get.  The state
     # scanner already proves the direct constructor, source order, and all
     # subsequent methods, so an inactive snapshot is exact rather than an
     # opaque handle guess.
-    if state is None or expression.subroutineName != "num":
+    if method != "num":
         return None
     # Keep the dedicated untouched-mailbox marker for the old one-query
     # shape; it is useful to clients that distinguish an empty object from a
@@ -11993,17 +12106,40 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and not _case_source_expression_ok(expr.right, packed_members=_SYM is None)):
         return unsupported(sm, span_node or expr, "AssignmentExpression:selected-effects")
     value = convert_expr(sm, expr.right)
+    mailbox_try_get_target = None
+    mailbox_try_get_value = None
+    if isinstance(value, dict) and value.get("mailbox_literal_try_get_target") is not None:
+        mailbox_try_get_target = value["mailbox_literal_try_get_target"]
+        mailbox_try_get_value = value.get("mailbox_literal_try_get_value")
+        value = dict(value)
+        value.pop("mailbox_literal_try_get_target", None)
+        value.pop("mailbox_literal_try_get_value", None)
     try:
         if not expr.left.type.isFourState:
             value = squash2_wrap(value, expr.left.type.bitWidth)
     except Exception:
         pass
-    return {
+    result = {
         "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
         "span": node_span(sm, span_node or expr),
         "target": target,
         "value": value,
     }
+    if mailbox_try_get_target is not None and mailbox_try_get_value is not None:
+        return {
+            "kind": "Block",
+            "span": node_span(sm, span_node or expr),
+            "stmts": [
+                {"kind": "BlockingAssign",
+                 "span": node_span(sm, expr.right),
+                 "target": mailbox_try_get_target,
+                 "value": mailbox_try_get_value,
+                 "mailbox_literal_try_get": True},
+                result,
+            ],
+            "mailbox_literal_try_get_assignment": True,
+        }
+    return result
 
 
 def _convert_expression_stmt(sm, stmt):
@@ -12389,9 +12525,20 @@ def _convert_syscall(sm, s, e):
             if name == "put":
                 return {"kind": "Empty", "span": node_span(sm, s),
                         "mailbox_literal_put": True}
+            if name == "try_put":
+                return {"kind": "Empty", "span": node_span(sm, s),
+                        "mailbox_literal_try_put": True}
             if name == "num":
                 return {"kind": "Empty", "span": node_span(sm, s),
                         "mailbox_literal_num_statement": mailbox_get["count"]}
+            if name == "try_get":
+                if not mailbox_get.get("success", False):
+                    return {"kind": "Empty", "span": node_span(sm, s),
+                            "mailbox_literal_try_get": True}
+                return {"kind": "BlockingAssign", "span": node_span(sm, s),
+                        "target": mailbox_get["target"],
+                        "value": mailbox_get["value"],
+                        "mailbox_literal_try_get": True}
             return {"kind": "BlockingAssign", "span": node_span(sm, s),
                     "target": mailbox_get["target"],
                     "value": mailbox_get["value"],

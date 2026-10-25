@@ -7404,3 +7404,22 @@ remains **216/88/128**.
 DECIDED: continue with the next sound sole `CallExpression` family, keeping
 scheduler-dependent sampled-value functions and nondeterministic randomization
 loud until their owning semantics exist.
+
+## Parameterized packed-vector mailbox `try_put`/`try_get` — 2026-10-25
+
+An unbounded `mailbox #(bit [7:0])` now admits source-ordered literal
+`try_put` and `try_get` calls in expression assignments. `try_put` returns the
+immediate success value, while `try_get` updates its scalar output argument
+before publishing its return value; `num()` remains exact even when queried in
+the surrounding condition. The recognizer checks the parameterized formal
+width and keeps dynamic messages, aliases, unsupported methods, bounded
+constructors, and width-mismatched messages or outputs loud. The
+`mailbox_parameterized_packed_vector` fixture, Lean receipt, and focused
+extractor tests cover the successful and refusal paths.
+
+On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
+**4,996 → 5,008** and partial files **16,990 → 16,978** (67 include skips).
+`ExpressionStatement:CallExpression` falls **2,925 → 2,911** and
+`CallExpression` falls **2,902 → 2,888**; `AssignmentExpression:target` remains
+**2,937**. Differential coverage grows **193/188/0/5 → 194/189/0/5** with no
+disagreements; grammar coverage grows **216/88/128 → 216/89/127**.

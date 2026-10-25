@@ -480,6 +480,29 @@ def callableLogicalOrFrameWitness : Bool := logicalOrFrame
 
 #guard callableLogicalOrFrameWitness
 
+private def conditionalFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+  let whenTrue : TypedCallableExpression := {
+    expression := .increment "++" false (handle "0x10"),
+    sourceType := intType, type := intType}
+  let whenFalse := condition
+  let selected : TypedCallableExpression := {
+    expression := .conditional condition whenTrue whenFalse,
+    sourceType := intType, type := intType}
+  let function := {base with body := .block (.return_ {
+    expression := .comma selected condition,
+    sourceType := intType, type := intType})}
+  match evaluateCallableObject 32 .lp64 function [signed 1],
+      evaluateCallableObject 32 .lp64 function [signed 0] with
+  | .ok (.ok one), .ok (.ok zero) => one == signed 2 && zero == signed 0
+  | _, _ => false
+
+def callableConditionalFrameWitness : Bool := conditionalFrame
+
+#guard callableConditionalFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

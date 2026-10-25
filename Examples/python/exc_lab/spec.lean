@@ -109,7 +109,7 @@ form — deliberate). Every remaining deviation from the retained shape is
 loud. -/
 
 #guard callFunction exc_lab "as_binding" #[.int 7] 4096 matches .ok (.int 7)
-#guard callFunction exc_lab "finally_clause" #[.int 1] 4096 matches .unsupported _
+#py_check exc_lab.finally_clause(1) = 1
 #guard callFunction exc_lab "bare_except" #[.int 0] 4096 matches .ok (.int (-1))
 #guard callFunction exc_lab "multi_handler" #[.int 1] 4096 matches .unsupported _
 #py_check exc_lab.tuple_handler(1) = 1

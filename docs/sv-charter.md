@@ -7288,3 +7288,23 @@ On the fresh 22,053-path sv-tests-2 snapshot, clean files remain **4,979 →
 principal corpus witness also contains unsupported `sort()` calls. Differential
 coverage grows **186/181/0/5 → 187/182/0/5** with no disagreements, and grammar
 coverage remains **214/86/128**.
+
+## Literal scalar mailbox FIFO `put()`/`get()` — 2026-10-25
+
+A direct unbounded mailbox with a linear sequence of literal integral
+`put()` calls now supports FIFO scalar `get()` calls. The extractor snapshots
+messages in source order, lowers each get to the existing blocking scalar
+assignment, and keeps `num()` exact after puts and gets. Bounded or aliased
+mailboxes, dynamic messages, empty or width-mismatched gets, branching or looped
+sequences, and other methods remain loud because the self-check state has no
+mailbox object or scheduler.
+The `mailbox_literal_fifo` fixture and Lean receipt cover literal, arithmetic,
+and parameterized-int messages; extractor tests pin empty, dynamic, alias, and
+branching refusals.
+
+On the fresh 22,053-path sv-tests-2 snapshot, clean files move **4,979 →
+4,990** and partial files **17,007 → 16,996** (67 include skips). The leading
+call-statement blocker falls **2,942 → 2,926**, leaving
+`AssignmentExpression:target` at **2,940** as the new leader. Differential
+coverage grows **187/182/0/5 → 188/183/0/5** with no disagreements, and grammar
+coverage remains **214/86/128**.

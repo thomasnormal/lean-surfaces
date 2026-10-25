@@ -6381,6 +6381,9 @@ def _convert_legacy_call(sm, expression):
                     return value
     except Exception:
         pass
+    mailbox_state = _convert_mailbox_literal_state_call(sm, expression)
+    if mailbox_state is not None:
+        return mailbox_state
     for recognizes, convert in (
             (_time_scale_call, _convert_time_scale_call),
             (_plusargs_call, _convert_plusargs_call),
@@ -7563,6 +7566,183 @@ def _mailbox_literal_sequence(expression):
         return None
 
 
+def _mailbox_literal_get_state(sm, expression):
+    """Sample a scalar FIFO mailbox sequence through a direct ``get``.
+
+    An unbounded mailbox has no flat representation in the self-check state,
+    but a linear sequence of literal integral ``put`` calls and scalar output
+    ``get`` calls is an exact queue snapshot.  Keep the scan source-ordered
+    and reject aliases, bounded constructors, dynamic messages, empty gets,
+    and every method outside ``put``/``get``/``num``.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or expression.isSystemCall
+                or expression.subroutineName not in ("put", "get", "num")):
+            return None
+        receiver = getattr(expression, "thisClass", None)
+        if (receiver is None or type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "bad", False)):
+            return None
+        canonical = getattr(getattr(receiver, "type", None), "canonicalType", None)
+        if (type(canonical).__name__ != "ClassType"
+                or getattr(canonical, "name", None) != "mailbox"):
+            return None
+        symbol = getattr(receiver, "symbol", None)
+        name = getattr(symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        if symbol is None or not name or not source:
+            return None
+        constructor = re.search(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"\s*=\s*new\s*\(\s*\)", source)
+        if constructor is None:
+            return None
+        position = getattr(getattr(expression, "sourceRange", None),
+                           "start", None)
+        position = getattr(position, "offset", None)
+        if position is None or position < constructor.end():
+            return None
+
+        # Every post-construction bare occurrence must be a method receiver.
+        # This rejects handles passed through another variable or subroutine
+        # without depending on frontend source-range details.
+        for occurrence in re.finditer(
+                r"(?<![A-Za-z0-9_$])" + re.escape(name)
+                + r"(?![A-Za-z0-9_$])", source):
+            if occurrence.start() <= constructor.end():
+                continue
+            if not source[occurrence.end():].lstrip().startswith("."):
+                return None
+
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return None
+        calls = []
+        control_ranges = []
+
+        def inspect(node):
+            kind = type(node).__name__
+            if any(token in kind for token in (
+                    "Conditional", "Case", "For", "While", "Repeat",
+                    "Foreach", "Forever", "Wait", "Fork")):
+                start = getattr(getattr(getattr(node, "sourceRange", None),
+                                        "start", None), "offset", None)
+                end = getattr(getattr(getattr(node, "sourceRange", None),
+                                      "end", None), "offset", None)
+                if start is not None and end is not None:
+                    control_ranges.append((start, end))
+            if type(node).__name__ != "CallExpression":
+                return
+            receiver_node = getattr(node, "thisClass", None)
+            if (type(receiver_node).__name__ == "NamedValueExpression"
+                    and getattr(receiver_node, "symbol", None) is symbol):
+                offset = getattr(getattr(getattr(node, "sourceRange", None),
+                                         "start", None), "offset", None)
+                if offset is not None and offset >= constructor.end():
+                    calls.append((offset, node))
+
+        instance.visit(inspect)
+        calls.sort(key=lambda item: item[0])
+        control_ranges = list(set(control_ranges))
+        if any(any(start < offset < end for start, end in control_ranges)
+               for offset, _ in calls):
+            return None
+        if not any(node is expression for _, node in calls):
+            return None
+        if any(getattr(node, "subroutineName", "") not in ("put", "get", "num")
+               for _, node in calls):
+            return None
+
+        def literal_message(node):
+            if not _case_source_expression_ok(node):
+                return None
+            named = False
+
+            def inspect_value(value):
+                nonlocal named
+                if type(value).__name__ in ("NamedValueExpression",
+                                            "HierarchicalValueExpression"):
+                    named = True
+
+            _visit_selected_expression(node, inspect_value)
+            if named:
+                return None
+            width, _two_state, reason = type_width_2s(node.type)
+            if width is None or reason is not None:
+                return None
+            value = convert_expr(sm, node)
+            if (value is None or value.get("kind") == "Unsupported"
+                    or width_of(value) != width or not _case_expression_ok(value)):
+                return None
+            return value, width
+
+        queue = []
+        prior_activity = False
+        current_result = None
+        for _, node in calls:
+            method = str(getattr(node, "subroutineName", ""))
+            arguments = list(getattr(node, "arguments", []))
+            if node is expression:
+                current_result = (method, queue[:], prior_activity)
+                break
+            if method == "put":
+                if len(arguments) != 1:
+                    return None
+                message = literal_message(arguments[0])
+                if message is None:
+                    return None
+                queue.append(message)
+                prior_activity = True
+            elif method == "get":
+                if len(arguments) != 1 or not queue:
+                    return None
+                target, admitted = legacy_blocking_target(sm, arguments[0], True)
+                if not admitted or target.get("kind") != "Ident":
+                    return None
+                target_width = width_of(target)
+                if target_width != queue[0][1]:
+                    return None
+                queue.pop(0)
+                prior_activity = True
+            elif method == "num":
+                if arguments:
+                    return None
+        if current_result is None:
+            return None
+        method, available, activity = current_result
+        if method == "put":
+            if len(expression.arguments) != 1:
+                return None
+            message = literal_message(expression.arguments[0])
+            if message is None:
+                return None
+            return {"method": method, "value": message[0],
+                    "width": message[1], "count": len(available),
+                    "activity": activity}
+        if method == "num":
+            if expression.arguments:
+                return None
+            return {"method": method, "count": len(available),
+                    "activity": activity}
+        if len(expression.arguments) != 1 or not available:
+            return None
+        target, admitted = legacy_blocking_target(sm, expression.arguments[0], True)
+        if not admitted or target.get("kind") != "Ident":
+            return None
+        target_width = width_of(target)
+        value, value_width = available[0]
+        if target_width != value_width:
+            return None
+        return {"method": method, "target": target, "value": value,
+                "width": value_width, "count": len(available),
+                "activity": activity}
+    except Exception:
+        return None
+
+
 def _convert_mailbox_empty_num(sm, expression):
     if not _mailbox_empty_num_method(expression):
         return unsupported(sm, expression, "CallExpression:mailbox-num")
@@ -7590,6 +7770,23 @@ def _convert_mailbox_literal_num(sm, expression):
         "span": node_span(sm, expression),
         "width": width,
         "bits": format(count & ((1 << width) - 1), f"0{width}b"),
+        "mailbox_literal_num": True,
+    }, expression.type)
+
+
+def _convert_mailbox_literal_state_call(sm, expression):
+    """Render a literal mailbox ``num()`` value after put/get activity."""
+    state = _mailbox_literal_get_state(sm, expression)
+    if (state is None or expression.subroutineName != "num"
+            or not state.get("activity", False)):
+        return None
+    width = getattr(expression.type, "bitWidth", None)
+    if width is None or width <= 0 or state["count"] < 0:
+        return unsupported(sm, expression, "CallExpression:mailbox-num")
+    bits = format(state["count"] & ((1 << width) - 1), f"0{width}b")
+    return signed_metadata({
+        "kind": "Literal", "span": node_span(sm, expression),
+        "width": width, "bits": bits,
         "mailbox_literal_num": True,
     }, expression.type)
 
@@ -11946,6 +12143,18 @@ def _convert_syscall(sm, s, e):
             # accounts for this successful acquisition in later calls.
             return {"kind": "Empty", "span": node_span(sm, s),
                     "semaphore_literal_try_get": True}
+        mailbox_get = _mailbox_literal_get_state(sm, e)
+        if mailbox_get is not None:
+            if name == "put":
+                return {"kind": "Empty", "span": node_span(sm, s),
+                        "mailbox_literal_put": True}
+            if name == "num":
+                return {"kind": "Empty", "span": node_span(sm, s),
+                        "mailbox_literal_num_statement": mailbox_get["count"]}
+            return {"kind": "BlockingAssign", "span": node_span(sm, s),
+                    "target": mailbox_get["target"],
+                    "value": mailbox_get["value"],
+                    "mailbox_literal_get": True}
         mailbox_sequence = _mailbox_literal_sequence(e)
         if mailbox_sequence is not None:
             if name == "put":

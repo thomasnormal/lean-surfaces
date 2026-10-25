@@ -4248,3 +4248,18 @@ include skips), with `ExpressionStatement:CallExpression` at **2,942**. The
 corpus clean count is unchanged because the main external witness still has
 unsupported `sort()` calls; differential coverage moves **186/181/0/5 →
 187/182/0/5**, and grammar coverage remains **214/86/128**.
+
+## Literal scalar mailbox FIFO `put()`/`get()` — 2026-10-25
+
+A direct unbounded mailbox with a linear sequence of literal integral `put()`
+calls now lowers FIFO scalar `get()` calls to blocking assignments, and `num()`
+remains exact after the queue is consumed. Bounded or aliased handles, dynamic
+messages, empty or width-mismatched gets, branching or looped sequences, and
+other methods remain loud. The `mailbox_literal_fifo` fixture supplies the
+`PASS` row and Lean receipt; extractor tests cover the refusal boundaries.
+
+The fresh 22,053-path census moves **4,979 → 4,990 clean** and **17,007 →
+16,996 partial** (67 include skips). `ExpressionStatement:CallExpression`
+falls **2,942 → 2,926**; `AssignmentExpression:target` is now the leading
+blocker at **2,940**. Differential coverage moves **187/182/0/5 → 188/183/0/5**,
+and grammar coverage remains **214/86/128**.

@@ -303,16 +303,54 @@ class SizeQueries(unittest.TestCase):
                              for node in nodes(design)), 2)
 
     def test_mailbox_literal_sequence_rejects_other_methods_and_aliases(self):
+        design = lower(
+            'module top; mailbox box; int result; initial begin box = new(); '
+            'box.put(1); box.get(result); $display("%0d", box.num()); end endmodule')
+        self.assertTrue(any(node.get("mailbox_literal_get")
+                            for node in nodes(design)))
+        self.assertTrue(any(node.get("mailbox_literal_num")
+                            for node in nodes(design)))
+
+        design = lower(
+            'module top; mailbox box; mailbox alias; initial begin box = new(); '
+            'alias = box; $display("%0d", box.num()); end endmodule')
+        self.assertFalse(any(node.get("mailbox_literal_num")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            for node in nodes(design)))
+
+    def test_mailbox_literal_fifo_get_writes_scalar_outputs(self):
+        design = lower(
+            'module top; mailbox box; int first, second; initial begin '
+            'box = new(); box.put(10); box.put(20); box.get(first); '
+            'box.get(second); end endmodule')
+        gets = [node for node in nodes(design)
+                if node.get("mailbox_literal_get")]
+        self.assertEqual(len(gets), 2)
+        self.assertEqual([node["value"]["bits"] for node in gets],
+                         [format(value, "032b") for value in (10, 20)])
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_mailbox_literal_get_rejects_empty_or_dynamic_messages(self):
         for source in (
                 'module top; mailbox box; int result; initial begin box = new(); '
-                'box.put(1); box.get(result); $display("%0d", box.num()); end endmodule',
-                'module top; mailbox box; mailbox alias; initial begin box = new(); '
-                'alias = box; $display("%0d", box.num()); end endmodule'):
+                'box.get(result); end endmodule',
+                'module top; mailbox box; int source, result; initial begin box = new(); '
+                'box.put(source); box.get(result); end endmodule'):
             design = lower(source)
-            self.assertFalse(any(node.get("mailbox_literal_num")
-                                 for node in nodes(design)))
-            self.assertTrue(any(node.get("kind") == "Unsupported"
+            self.assertTrue(any(node.get("sv_kind") ==
+                                "ExpressionStatement:CallExpression"
                                 for node in nodes(design)))
+
+    def test_mailbox_literal_get_rejects_branching_sequence(self):
+        design = lower(
+            'module top; mailbox box; int result; initial begin box = new(); '
+            'if (1) box.put(1); box.get(result); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
 
 
 if __name__ == "__main__":

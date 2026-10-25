@@ -612,6 +612,21 @@ def callableBinaryAddFrameWitness : Bool := binaryAddFrame
 
 #guard callableBinaryAddFrameWitness
 
+private def binarySubtractFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let function := {base with body := .block (.return_ {
+    expression := .binary "-"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 7, sourceType := intType, type := intType}
+    sourceType := intType, type := intType})}
+  match evaluateCallableObject 32 .lp64 function [signed 12] with
+  | .ok (.ok value) => value == signed 5
+  | _ => false
+
+def callableBinarySubtractFrameWitness : Bool := binarySubtractFrame
+
+#guard callableBinarySubtractFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

@@ -805,9 +805,9 @@ def iter_list_exhausted(a):
 
 
 def iter_sentinel_still_loud(a):
-    # the 2-argument SENTINEL form: CPython needs a CALLABLE first argument
-    # and builds a `callable_iterator` (on a dict it raises TypeError). A
-    # second object kind, so the tier refuses.
+    # the 2-argument SENTINEL form: CPython needs a CALLABLE first argument.
+    # A dict is known non-callable, so its faithful TypeError is decidable;
+    # callable iterators themselves remain outside the tier.
     d = {1: a}
     it = iter(d, 0)
     return 1

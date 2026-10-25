@@ -298,6 +298,20 @@ def iterValues (K : Kont) (m : Module) (fname : String) (guardGen : Bool) :
       | Option.none => refuse danglingMsg
   | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
 
+/-- The sentinel spelling of `iter` first requires a callable.  The tier has
+no `callable_iterator`, but it can still answer the faithful error for a
+receiver whose heap kind is known to be non-callable.  Genuine closures stay
+loud because their callable iterator protocol is not modelled. -/
+def iterSentinelValH (h : Heap) : RVal → Res RVal
+  | .ref a =>
+      match Heap.get? h a with
+      | some (.closure ..) =>
+          .unsupported "iter(v, w) over a callable is outside the tier (callable_iterator is not modelled; docs/memory-model.md §dict iteration)"
+      | some (.cell _) => .unsupported cellInternal
+      | Option.none => .unsupported danglingMsg
+      | _ => .exn (.typeError "iter(v, w): v must be callable")
+  | _ => .exn (.typeError "iter(v, w): v must be callable")
+
 /-- The builtin table. `isBuiltinName` (Ast.lean) is the AUTHORITATIVE
 implemented set — so a name reaching here is one the tier claims, and
 a name it does not claim can never fall silently past the table. Arguments are
@@ -579,19 +593,19 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     -- the draining consumers all reach it through `stepIter` unchanged, and
     -- none of them needed a line.
     --
-    -- The 2-argument SENTINEL form refuses: CPython's `iter(v, w)` requires a
-    -- CALLABLE `v` and builds a `callable_iterator`, a second object kind this
-    -- tier does not have. On a dict receiver CPython raises
-    -- `TypeError: iter(v, w): v must be callable`, so the tier is refusing
-    -- where CPython raises — never answering where it raises.
+    -- The 2-argument SENTINEL form admits the faithful non-callable error.
+    -- A genuine callable still refuses because CPython builds a
+    -- `callable_iterator`, a second object kind this tier does not have.
     match vs with
     | [] => raisePy (.typeError "iter expected at least 1 argument, got 0")
     | [v] => do
         let fr ← liftRes (iterFrame (← frameHeap) v)
         let a ← heapPush (.generator "<iter>" [] [fr] .suspended)
         pure (.ref a)
-    | _ =>
-        refuse "the 2-argument sentinel form of iter() is outside the tier (it needs a CALLABLE first argument and builds a callable_iterator; docs/memory-model.md §dict iteration)"
+    | [v, _] => do
+        liftRes (iterSentinelValH (← frameHeap) v)
+    | vs =>
+        raisePy (.typeError s!"iter expected at most 2 arguments, got {vs.length}")
   else if fname == "count" then
     -- `itertools.count` — INFINITE by construction; a consumer's `break` is
     -- what ends it (sunfish's ray loop `for j in count(i + d, d)`).

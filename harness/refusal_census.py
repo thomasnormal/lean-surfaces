@@ -1055,9 +1055,9 @@ WHITELIST_CLASS = {
     # dict and refuses every other receiver, because CPython has a distinct
     # iterator TYPE per receiver and each carries its own mutation regime.
     "dict_lab::iter_list_recv_still_loud": "iter.non-dict-receiver",
-    # §iter: the 2-argument SENTINEL form needs a CALLABLE first argument and
-    # builds a `callable_iterator` — a second object kind, not a frame.
-    "dict_lab::iter_sentinel_still_loud": "iter.sentinel-form",
+    # The sentinel form's non-callable TypeError is now admitted; callable
+    # iterator construction remains outside the tier and is not in this
+    # non-callable witness census.
     # §genexp: the CAPTURE admission, not the dict cursor -- `genexp_next_key`
     # is the same construct with the captured name a PARAMETER and it MATCHES,
     # so what refuses here is a conservative by-value-snapshot rule, sound but

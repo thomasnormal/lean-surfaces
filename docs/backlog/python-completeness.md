@@ -5215,3 +5215,25 @@ remain loud because the class tier excludes those dunders.
 
 DECIDED: admit only the faithful non-numeric heap error; retain loud failure
 for future user-defined conversion protocols.
+
+## 2026-10-25-pycomplete-133 — admit the non-callable `iter(v, sentinel)` error
+
+The two-argument `iter` spelling now evaluates its arguments left to right and
+raises CPython's exact `TypeError: iter(v, w): v must be callable` when the
+first value is a known non-callable heap object or immediate. The one-argument
+dict/list cursor behavior is unchanged. A callable first value remains loud,
+because CPython returns a `callable_iterator`, a distinct object kind whose
+call protocol is not yet modeled; arity above two now uses CPython's ordinary
+arity error.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `iter_sentinel_still_loud()` matches; existing dict/list iterator rows remain matches |
+| Full executable differential | 3,694 cases: 0 failed, 79 whitelisted-unsupported, 3,615 matched |
+| Full proof differential | 3,694 cases: 0 failed, 186 refused, 3,508 matched |
+| Refusal census | 79 rows, 0 drifts; `dict_lab::iter_sentinel_still_loud` removed |
+| Lean build | `lake build leanmodels-run` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the measured non-callable sentinel error; retain loud
+failure for callable-iterator construction.

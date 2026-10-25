@@ -338,7 +338,9 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
   else if fname == "int" then
     liftRes (intCastArgs vs)
   else if fname == "float" then
-    liftRes (floatCastArgs vs)
+    do
+      let h ← frameHeap
+      liftRes (floatCastArgsH h vs)
   else if fname == "bool" then
     liftRes (boolCastArgs (← frameHeap) vs)
   else if fname == "divmod" then

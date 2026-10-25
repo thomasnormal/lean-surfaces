@@ -5197,3 +5197,21 @@ multi-part specs and the rest of the format mini-language remain loud.
 DECIDED: admit only the measured literal numeric format forms through the
 shared worker; retain loud failure for dynamic, multi-part, and richer format
 specifications until their grammar and protocols are priced.
+
+## 2026-10-25-pycomplete-132 — admit faithful `float()` heap TypeErrors
+
+`float()` now distinguishes an ordinary heap value with no admitted numeric
+protocol from an unresolved conversion protocol. Lists, dictionaries, sets,
+generators, closures, and default-protocol instances raise CPython's exact
+non-numeric `TypeError` using the heap type name; custom `__float__` protocols
+remain loud because the class tier excludes those dunders.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `float_lab.constructor_heap()` matches in native and proof interpreters |
+| Refusal census | 80 rows, 0 drifts; `float.constructor-protocols` removed |
+| Lean build | `lake build leanmodels-run` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the faithful non-numeric heap error; retain loud failure
+for future user-defined conversion protocols.

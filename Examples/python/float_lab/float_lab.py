@@ -261,6 +261,8 @@ def constructor_keyword():
 
 
 def constructor_heap():
+    # A plain heap list has no admitted __float__ protocol, so CPython's
+    # ordinary non-numeric TypeError is decidable without inventing a protocol.
     return float([])
 
 

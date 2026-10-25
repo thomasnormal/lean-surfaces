@@ -183,8 +183,10 @@ word and explicit sign bit.
 Malformed strings raise the repr-rendered `ValueError` when the shared
 string renderer can decide its message exactly. Quote selection traverses
 the structural code-point list, keeping error rendering kernel-reducible.
-Unresolved Unicode repr, payload spellings such as `nan(1)`, and object conversion protocols remain explicit
-unfinished work. Existing NaN words are preserved without selecting
+Unresolved Unicode repr and payload spellings such as `nan(1)` remain explicit
+unfinished work. Heap containers and instances without an admitted `__float__`
+protocol now take CPython's ordinary non-numeric `TypeError`; custom object
+conversion protocols remain unfinished. Existing NaN words are preserved without selecting
 a new payload. Positional arity and immediate nonnumeric type errors retain
 CPython's exception classes and messages; keyword construction stays loud
 until its evaluation and positional-only protocol are modeled.

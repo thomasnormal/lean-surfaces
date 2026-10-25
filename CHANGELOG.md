@@ -45,6 +45,9 @@ change is listed here under **Changed** or **Removed**.
 - Literal f-string format specifications `d`, `>5`, and `03d` now run for
   integer and Boolean fields through a shared synthetic format worker. Dynamic,
   multi-part, and richer format mini-language forms remain loud.
+- `float([])` and other heap values without an admitted `__float__` protocol now
+  raise CPython's faithful non-numeric `TypeError`; custom conversion protocols
+  remain loud.
 - The grammar's complex-literal witness now matches for the exact direct
   `print(1j)` observation.  The runtime keeps complex values themselves loud,
   so non-print uses and other spellings remain outside the modeled value tier.

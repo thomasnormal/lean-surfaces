@@ -2859,6 +2859,21 @@ def floatCastVal : RVal → Res RVal
     .unsupported "float() heap-object conversion protocols remain unmodelled (docs/python-floats.md)"
   | value => .exn (.typeError s!"float() argument must be a string or a number, not '{value.typeName}'")
 
+/-- The heap-aware constructor boundary. Admitted classes cannot define a
+`__float__` protocol, so a heap value in this tier has the ordinary CPython
+non-numeric `TypeError`; a future protocol tier can replace this arm without
+changing the scalar parser above. -/
+def floatCastValH (h : Heap) : RVal → Res RVal
+  | .ref a =>
+      .exn (.typeError s!"float() argument must be a string or a number, not '{RVal.typeNameH h (.ref a)}'")
+  | value => floatCastVal value
+
+def floatCastArgsH (h : Heap) (arguments : List RVal) : Res RVal :=
+  match arguments with
+  | [] => .ok (.float (Float64.ofBits 0))
+  | [value] => floatCastValH h value
+  | _ => .exn (.typeError s!"float expected at most 1 argument, got {arguments.length}")
+
 def floatCastArgs (arguments : List RVal) : Res RVal :=
   match arguments with
   | [] => .ok (.float (Float64.ofBits 0))
@@ -8237,7 +8252,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     Run.liftRes st (intCastArgs vs)
                   else if fname == "float" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
-                    Run.liftRes st (floatCastArgs vs)
+                    Run.liftRes st (floatCastArgsH st.world.heap vs)
                   else if fname == "bool" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     Run.liftRes st (boolCastArgs st.world.heap vs)

@@ -1387,6 +1387,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "unpacked_union_case_member",
+      "file": "Examples/system-verilog/unpacked_union_case_member/unpacked_union_case_member.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

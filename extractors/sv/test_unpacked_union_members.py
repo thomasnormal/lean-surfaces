@@ -103,6 +103,16 @@ class UnpackedUnionMembers(unittest.TestCase):
         self.assertEqual(compounds[0]["target"]["name"], "value")
         self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
 
+    def test_case_subject_reads_a_direct_union_member(self):
+        design = extract_source(
+            "module top; typedef union { logic [7:0] a; logic [7:0] b; } u_t; "
+            "u_t value; initial begin value.a = 8'hA5; case (value.b) "
+            "8'hA5: $display(\"PASS\"); default: $display(\"FAIL\"); endcase end endmodule")
+        lowered = [node for node in nodes(design) if node.get("case_lowered")]
+        self.assertEqual(len(lowered), 1)
+        self.assertEqual(lowered[0]["cond"]["left"]["name"], "value")
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
     def test_local_union_uses_flat_cell(self):
         design = extract_source(
             "module top; initial begin typedef union { bit [3:0] a; bit [3:0] b; } u_t; "

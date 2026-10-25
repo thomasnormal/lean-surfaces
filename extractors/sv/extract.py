@@ -7343,8 +7343,16 @@ def _semaphore_literal_try_get_state(expression):
         if len(arguments) != 1:
             return None
         request = _literal_integral_value(arguments[0])
-        if request is None or request < 0:
+        negative_request = request is not None and request < 0
+        # The pinned conformance witness records this simulator's §15.3.4
+        # behavior: a negative literal keyCount on ``try_get`` is treated as
+        # one.  Keep the compatibility rule specific to that nonblocking
+        # method; negative ``put``/``get`` calls remain outside the snapshot.
+        if request is None or (negative_request
+                               and expression.subroutineName != "try_get"):
             return None
+        if negative_request:
+            request = 1
 
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
         if not source or not getattr(symbol, "name", ""):
@@ -7453,7 +7461,9 @@ def _semaphore_literal_try_get_state(expression):
             else:
                 return None
             if value < 0:
-                return None
+                if method.group(1) != "try_get":
+                    return None
+                value = 1
             values_by_start[method.start()] = value
         available = initial
         for method in sorted(prior, key=lambda item: item.start()):
@@ -7470,7 +7480,8 @@ def _semaphore_literal_try_get_state(expression):
         method_name = current_methods[0].group(1)
         success = method_name == "put" or request <= available
         return {"available": available, "request": request,
-                "success": success, "method": method_name}
+                "success": success, "method": method_name,
+                "negative_key_normalized": negative_request}
     except Exception:
         return None
 
@@ -7510,6 +7521,8 @@ def _convert_semaphore_literal_try_get(sm, expression):
         "semaphore_literal_try_get": True,
         "semaphore_available": state["available"],
         "semaphore_request": state["request"],
+        "semaphore_negative_key_normalized": state.get(
+            "negative_key_normalized", False),
     }, expression.type)
 
 

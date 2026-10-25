@@ -7384,3 +7384,23 @@ remains **216/88/128**.
 
 DECIDED: continue with the next sound sole `CallExpression` family after the
 mailbox lifetime slice, preserving the capped validation and loud boundaries.
+
+## Negative literal semaphore `try_get` normalization — 2026-10-25
+
+The literal semaphore state snapshot now accepts the pinned `try_get(-1)`
+compatibility form and normalizes its negative key count to one, matching the
+self-check declaration for this simulator. The rule is limited to nonblocking
+`try_get`; negative `put()` and `get()` calls, dynamic counts, aliases, and
+other semaphore operations remain loud. `semaphore_negative_try_get` supplies
+the differential row and Lean receipt.
+
+On the refreshed 22,053-path snapshot, clean files move **4,995 → 4,996** and
+partial files **16,991 → 16,990** (67 include skips). `CallExpression` falls
+**2,903 → 2,902** while `AssignmentExpression:target` remains **2,937** and
+`ExpressionStatement:CallExpression` remains **2,925**. Differential coverage
+grows **192/187/0/5 → 193/188/0/5** with no disagreements; grammar coverage
+remains **216/88/128**.
+
+DECIDED: continue with the next sound sole `CallExpression` family, keeping
+scheduler-dependent sampled-value functions and nondeterministic randomization
+loud until their owning semantics exist.

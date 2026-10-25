@@ -1727,6 +1727,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "semaphore_negative_try_get",
+      "file": "Examples/system-verilog/semaphore_negative_try_get/semaphore_negative_try_get.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

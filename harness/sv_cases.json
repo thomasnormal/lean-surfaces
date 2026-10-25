@@ -1369,6 +1369,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "unpacked_union_conditional",
+      "file": "Examples/system-verilog/unpacked_union_conditional/unpacked_union_conditional.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

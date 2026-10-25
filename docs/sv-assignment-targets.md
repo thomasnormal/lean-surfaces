@@ -245,6 +245,15 @@ outside the flat-cell representation.
 `unpacked_union_equality` is the source-bound witness; it compares values
 written through alternate members without adding aggregate storage.
 
+## Shallow unpacked-union conditional values — 2026-10-25
+
+A conditional expression whose two arms are equal-width integral values of the
+admitted shallow untagged unpacked-union shape now selects between their shared
+flat cells. The result keeps the ordinary `Ternary` value path; mixed shapes,
+aggregate arms, scheduled operations, and union arithmetic remain loud.
+
+`unpacked_union_conditional` is the source-bound witness.
+
 ## Single literal continuous packed-bit drivers — 2026-10-24
 
 A single continuous assignment to one constant packed bit or part-select is

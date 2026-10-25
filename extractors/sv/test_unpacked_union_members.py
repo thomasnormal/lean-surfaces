@@ -79,6 +79,18 @@ class UnpackedUnionMembers(unittest.TestCase):
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             for node in nodes(design)))
 
+    def test_conditional_selects_between_whole_union_cells(self):
+        design = extract_source(
+            "module top; typedef union { logic [7:0] a; logic [7:0] b; } u_t; "
+            "u_t left; u_t right; u_t out; bit choose; initial begin "
+            "left.a = 8'hA5; right.b = 8'h3C; choose = 1'b1; "
+            "out = choose ? left : right; if (out === left) $display(\"PASS\"); "
+            "else $display(\"FAIL\"); end endmodule")
+        ternaries = [node for node in nodes(design) if node.get("kind") == "Ternary"]
+        self.assertEqual(len(ternaries), 1)
+        self.assertEqual(ternaries[0]["width"], 8)
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
     def test_local_union_uses_flat_cell(self):
         design = extract_source(
             "module top; initial begin typedef union { bit [3:0] a; bit [3:0] b; } u_t; "

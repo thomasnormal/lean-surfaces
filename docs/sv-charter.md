@@ -6762,3 +6762,16 @@ The fresh **22,049-path** census remains **4,855 clean / 17,128 partial**
 (66 include skips), with `AssignmentExpression:target` at **2,975**.
 Differential coverage moves **151/147/0/4 → 152/148/0/4**; grammar coverage
 remains **214/83/131**.
+
+## Shallow unpacked-union conditional values — 2026-10-25
+
+A conditional expression between two equal-width integral values of the
+admitted shallow untagged unpacked-union shape now selects their shared flat
+cells through the ordinary `Ternary` path. Mixed shapes, aggregate arms,
+union arithmetic, and scheduled forms remain loud. `unpacked_union_conditional`
+supplies the differential witness.
+
+The fresh **22,049-path** census remains **4,855 clean / 17,128 partial**
+(66 include skips), with `AssignmentExpression:target` at **2,975**.
+Differential coverage moves **152/148/0/4 → 153/149/0/4**; grammar coverage
+remains **214/83/131**.

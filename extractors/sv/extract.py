@@ -4775,7 +4775,15 @@ def _convert_conditional_expr(sm, e):
         cond = _division_self_operand(sm, conds[0].expr, cond)
     then = _convert_expr(sm, e.left)
     els = _convert_expr(sm, e.right)
-    width = e.type.bitWidth
+    union_shape = (_unpacked_union_shape(e.type) if _SYM is None else None)
+    if union_shape is not None:
+        left_shape = _unpacked_union_shape(e.left.type)
+        right_shape = _unpacked_union_shape(e.right.type)
+        if left_shape != union_shape or right_shape != union_shape:
+            return unsupported(sm, e, "ConditionalExpression:union-shape")
+        width = union_shape[0]
+    else:
+        width = e.type.bitWidth
     then_width, else_width = width_of(then), width_of(els)
     if (then_width is not None and then_width != width) or (
         else_width is not None and else_width != width

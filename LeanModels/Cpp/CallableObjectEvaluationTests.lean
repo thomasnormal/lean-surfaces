@@ -1273,6 +1273,20 @@ def callableBlockScopeStatementFrameWitness : Bool := blockScopeStatementFrame
 
 #guard callableBlockScopeStatementFrameWitness
 
+private def voidReturnStatementFrame : Bool :=
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := .void, parameters := [intType], variadic := false}
+    parameters := [parameter]
+    body := .block .returnVoid}
+  match evaluateCallableObjectResult 32 .lp64 function [signed 7] with
+  | .ok (.ok none) => true
+  | _ => false
+
+def callableVoidReturnStatementFrameWitness : Bool := voidReturnStatementFrame
+
+#guard callableVoidReturnStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

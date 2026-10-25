@@ -1346,6 +1346,33 @@ def callableSwitchFallthroughStatementFrameWitness : Bool := switchFallthroughSt
 
 #guard callableSwitchFallthroughStatementFrameWitness
 
+private def whileZeroIterationStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .binary ">"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 1, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let replacement : TypedCallableExpression := {
+    expression := .integer 0
+    sourceType := intType
+    type := intType}
+  let function := {base with body := .block (.sequence
+    (.whileLoop condition (.assign (handle "0x10") replacement))
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 32 .lp64 function [signed 1],
+      evaluateCallableObject 32 .lp64 function [signed 2] with
+  | .ok (.ok one), .ok (.ok two) => one == signed 1 && two == signed 0
+  | _, _ => false
+
+def callableWhileZeroIterationStatementFrameWitness : Bool := whileZeroIterationStatementFrame
+
+#guard callableWhileZeroIterationStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

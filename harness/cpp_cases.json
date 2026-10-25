@@ -6565,6 +6565,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-parameter-initialization-direct",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalParameterInitializationStatementFrameWitness",
+    "cpp_source": "int local_parameter_initialization_statement_frame_witness(int value) { int local = value; return local; } bool callable_witness() { return local_parameter_initialization_statement_frame_witness(7) == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

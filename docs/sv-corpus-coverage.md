@@ -4142,3 +4142,15 @@ relative to the previous **22,049-path** measurement, this item moves clean
 files **4,856 → 4,875** and partial files **17,127 → 17,109** (66 include
 skips), with `CallExpression` falling **3,017 → 3,007**. Differential coverage
 moves **159/155/0/4 → 160/156/0/4**; grammar coverage remains **214/83/131**.
+
+## Literal string `compare()` and `icompare()` — 2026-10-25
+
+Source-pure ASCII string comparisons now return normalized `-1`, `0`, or `1`
+ordering results; `icompare()` folds ASCII case first. Dynamic writes,
+non-ASCII values, unsupported methods, and other effects remain loud. The
+`string_compare_literal` fixture supplies the differential witness.
+
+The 22,050-path census moves **4,875 → 4,888 clean** and **17,109 → 17,096
+partial** (66 include skips); `CallExpression` falls **3,007 → 2,994** while
+`AssignmentExpression:target` remains **2,975**. Differential coverage moves
+**160/156/0/4 → 161/157/0/4**; grammar coverage remains **214/83/131**.

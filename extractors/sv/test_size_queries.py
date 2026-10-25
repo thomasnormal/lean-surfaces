@@ -113,6 +113,26 @@ class SizeQueries(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
+    def test_literal_string_compare_and_icompare_are_normalized(self):
+        design = lower(
+            'module top; string a; string b; initial begin a = "Alpha"; '
+            'b = "alpha"; $display("%0d %0d", a.compare(b), a.icompare(b)); end endmodule')
+        compare = [node for node in nodes(design)
+                   if node.get("string_literal_compare")]
+        icompare = [node for node in nodes(design)
+                    if node.get("string_literal_icompare")]
+        self.assertEqual([int(node["bits"], 2) for node in compare], [2**32 - 1])
+        self.assertEqual([int(node["bits"], 2) for node in icompare], [0])
+
+    def test_dynamic_string_compare_stays_loud(self):
+        design = lower(
+            'module top; string a; string b; initial begin a = b; '
+            '$display("%0d", a.compare(b)); end endmodule')
+        self.assertFalse(any(node.get("string_literal_compare")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
     def test_literal_string_getc_returns_ascii_and_zero_bounds(self):
         design = lower(
             'module top; string s = "abc"; initial begin '

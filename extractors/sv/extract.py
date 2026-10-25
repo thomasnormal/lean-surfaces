@@ -5758,6 +5758,7 @@ def _convert_legacy_call(sm, expression):
             (_clog2_call, _convert_clog2),
             (_dimension_query_call, _convert_dimension_query),
             (_string_literal_getc_method, _convert_string_literal_getc),
+            (_string_literal_compare_method, _convert_string_literal_compare),
             (_string_literal_atoi_method, _convert_string_literal_atoi),
             (_string_literal_len_method, _convert_string_literal_len_method),
             (_semaphore_zero_try_get, _convert_semaphore_zero_try_get),
@@ -6955,7 +6956,8 @@ def _string_literal_len_method(expression):
         return False
 
 
-def _string_literal_source_value(expression, method):
+def _string_literal_source_value(expression, method, receiver=None,
+                                 permit_argument=None):
     """Return the latest ASCII literal assigned to a string receiver."""
     try:
         if (type(expression).__name__ != "CallExpression"
@@ -6964,9 +6966,10 @@ def _string_literal_source_value(expression, method):
                 or expression.subroutineName != method):
             return None
         arguments = list(expression.arguments)
-        if len(arguments) != 1 or type(arguments[0]).__name__ != "NamedValueExpression":
-            return None
-        receiver = arguments[0]
+        if receiver is None:
+            if not arguments:
+                return None
+            receiver = arguments[0]
         if type(receiver.type.canonicalType).__name__ != "StringType":
             return None
         symbol = receiver.symbol
@@ -7005,13 +7008,41 @@ def _string_literal_source_value(expression, method):
             instance.visit(inspect)
         name = getattr(symbol, "name", "")
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
-        occurrences = list(re.finditer(r"(?<![A-Za-z0-9_$])" + re.escape(name)
-                                       + r"(?![A-Za-z0-9_$])", source))
+        def in_string(position):
+            quoted = False
+            escaped = False
+            for char in source[:position]:
+                if escaped:
+                    escaped = False
+                elif char == "\\":
+                    escaped = True
+                elif char == '"':
+                    quoted = not quoted
+            return quoted
+        occurrences = [match for match in re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"(?![A-Za-z0-9_$])", source)
+                       if not in_string(match.start())]
         if not occurrences:
             return None
         for match in occurrences[1:]:
             tail = source[match.end():].lstrip()
-            if tail.startswith("." + method) or re.match(r'=\s*"', tail):
+            if (tail.startswith("." + method)
+                    or (method in ("compare", "icompare")
+                        and tail.startswith((".compare", ".icompare")))
+                    or re.match(r'=\s*"', tail)):
+                continue
+            if (permit_argument is not None
+                    and type(permit_argument).__name__ == "NamedValueExpression"
+                    and abs(match.start()
+                            - getattr(permit_argument.sourceRange.start,
+                                      "offset", -100000)) <= 8):
+                continue
+            method_pattern = (r'(?:compare|icompare)'
+                              if method in ("compare", "icompare")
+                              else re.escape(method))
+            if re.search(r'\.' + method_pattern
+                         + r'\s*\([^;]*$', source[:match.start()]):
                 continue
             return None
         position = getattr(getattr(expression, "sourceRange", None), "start", None)
@@ -7055,6 +7086,66 @@ def _convert_string_literal_atoi(sm, expression):
         "width": width,
         "bits": format(parsed, f"0{width}b"),
         "string_literal_atoi": True,
+    }, expression.type)
+
+
+def _string_literal_compare_method(expression):
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName not in ("compare", "icompare")
+                or len(expression.arguments) != 2):
+            return False
+        left = _string_literal_source_value(
+            expression, expression.subroutineName,
+            permit_argument=expression.arguments[0])
+        right = expression.arguments[1]
+        node = right
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+        if type(node).__name__ == "StringLiteral":
+            value = getattr(node, "value", None)
+            right_value = (value if isinstance(value, str)
+                           and all(ord(char) != 0 and ord(char) <= 127
+                                    for char in value) else None)
+        else:
+            right_value = _string_literal_source_value(
+                expression, expression.subroutineName,
+                receiver=right, permit_argument=right)
+        return left is not None and right_value is not None
+    except Exception:
+        return False
+
+
+def _convert_string_literal_compare(sm, expression):
+    if not _string_literal_compare_method(expression):
+        return unsupported(sm, expression, "CallExpression:string-compare")
+    method = expression.subroutineName
+    left = _string_literal_source_value(
+        expression, method, permit_argument=expression.arguments[0])
+    right = expression.arguments[1]
+    node = right
+    while type(node).__name__ == "ConversionExpression":
+        node = getattr(node, "operand", None)
+    if type(node).__name__ == "StringLiteral":
+        right_value = node.value
+    else:
+        right_value = _string_literal_source_value(
+            expression, method, receiver=right, permit_argument=right)
+    if method == "icompare":
+        left, right_value = left.lower(), right_value.lower()
+    result = -1 if left < right_value else (1 if left > right_value else 0)
+    width = getattr(expression.type, "bitWidth", None)
+    if width != 32 or not getattr(expression.type, "isSigned", False):
+        return unsupported(sm, expression, "CallExpression:string-compare-width")
+    return signed_metadata({
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": width,
+        "bits": format(result & ((1 << width) - 1), f"0{width}b"),
+        "string_literal_icompare" if method == "icompare"
+        else "string_literal_compare": True,
     }, expression.type)
 
 

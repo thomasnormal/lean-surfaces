@@ -1441,6 +1441,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "string_compare_literal",
+      "file": "Examples/system-verilog/string_compare_literal/string_compare_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

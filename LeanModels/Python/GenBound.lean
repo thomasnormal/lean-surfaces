@@ -196,10 +196,11 @@ theorem EvalsIn.sortedDrain {m : Module} {st st₁ : FrameState}
   obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
   have hkw : (#[] : Array (String × Expr)).isEmpty = true := rfl
   have hlen : ("sorted" == "len") = false := rfl
+  have hmult : ("sorted" == lenMultBuiltinName) = false := rfl
   have hself : ("sorted" == "sorted") = true := rfl
   rw [evalExpr]
   simp only [hkw, hlocal, hglob, hfn, hcls, hnt, Option.isSome_none, hlen, hself,
-    Bool.false_eq_true, if_neg, not_false_eq_true, if_pos,
+    hmult, Bool.false_eq_true, if_neg, not_false_eq_true, if_pos,
     ht₁ F' (by omega), Run.ok_bind, Run.liftRes, hobj,
     Run.withLocals, ht₃ F' (by omega), hsort]
 

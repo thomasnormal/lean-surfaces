@@ -254,6 +254,16 @@ aggregate arms, scheduled operations, and union arithmetic remain loud.
 
 `unpacked_union_conditional` is the source-bound witness.
 
+## Shallow unpacked-union compound member updates — 2026-10-25
+
+A blocking compound assignment through a direct member of the admitted shallow
+untagged unpacked-union shape now performs its read-modify-write on the shared
+flat cell. Selector evaluation remains the existing packed-member path;
+nonblocking, timed, mixed-shape, and unsupported compound operators remain
+loud.
+
+`unpacked_union_compound` is the source-bound witness.
+
 ## Single literal continuous packed-bit drivers — 2026-10-24
 
 A single continuous assignment to one constant packed bit or part-select is

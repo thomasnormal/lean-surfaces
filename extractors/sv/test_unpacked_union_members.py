@@ -91,6 +91,18 @@ class UnpackedUnionMembers(unittest.TestCase):
         self.assertEqual(ternaries[0]["width"], 8)
         self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
 
+    def test_compound_member_update_uses_the_shared_cell(self):
+        design = extract_source(
+            "module top; typedef union { logic [7:0] a; logic [7:0] b; } u_t; "
+            "u_t value; initial begin value.a = 8'hA5; value.b += 1; "
+            "if (value.a === 8'hA6) $display(\"PASS\"); end endmodule")
+        compounds = [node for node in nodes(design)
+                     if node.get("kind") == "BlockingAssign"
+                     and node.get("compound_assignment_lowered")]
+        self.assertEqual(len(compounds), 1)
+        self.assertEqual(compounds[0]["target"]["name"], "value")
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
     def test_local_union_uses_flat_cell(self):
         design = extract_source(
             "module top; initial begin typedef union { bit [3:0] a; bit [3:0] b; } u_t; "

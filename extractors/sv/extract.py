@@ -8297,6 +8297,8 @@ def _case_source_expression_ok(expression, *, packed_members=False):
                 pure = pure and not getattr(container, "isTagged", False)
             elif type(container).__name__ == "UnpackedStructType":
                 pure = pure and _unpacked_struct_member(None, node) is not None
+            elif type(container).__name__ == "UnpackedUnionType":
+                pure = pure and _unpacked_struct_member(None, node) is not None
             else:
                 pure = False
             return

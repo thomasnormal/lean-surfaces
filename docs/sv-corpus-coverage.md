@@ -4047,3 +4047,15 @@ The fresh **22,049-path** census remains **4,855 clean / 17,128 partial**
 (66 include skips), with `AssignmentExpression:target` at **2,975**.
 Differential coverage moves **152/148/0/4 → 153/149/0/4**; grammar coverage
 remains **214/83/131**.
+
+## Shallow unpacked-union compound member updates — 2026-10-25
+
+A blocking compound assignment through a direct member of the admitted shallow
+untagged unpacked-union shape now performs its read-modify-write on the shared
+flat cell. Nonblocking, timed, mixed-shape, and unsupported compound operators
+remain loud.
+
+The fresh **22,049-path** census remains **4,855 clean / 17,128 partial**
+(66 include skips), with `AssignmentExpression:target` at **2,975**.
+Differential coverage moves **153/149/0/4 → 154/150/0/4**; grammar coverage
+remains **214/83/131**.

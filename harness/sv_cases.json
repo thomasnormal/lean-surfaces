@@ -1378,6 +1378,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "unpacked_union_compound",
+      "file": "Examples/system-verilog/unpacked_union_compound/unpacked_union_compound.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

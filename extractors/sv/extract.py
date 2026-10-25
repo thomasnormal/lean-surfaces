@@ -10496,6 +10496,17 @@ def _convert_syscall(sm, s, e):
     if is_sys and _dynamic_array_literal_size_method(e):
         return {"kind": "Empty", "span": node_span(sm, s),
                 "dynamic_array_literal_size": True}
+    if is_sys and name == "$system":
+        # IEEE 1800-2023 §20.17.1: the no-argument task form calls
+        # system(NULL) and discards its status.  The self-check state has no
+        # host-process or diagnostic channel, so this exact form is inert;
+        # commands with a string argument retain the external-effect wall.
+        try:
+            if not list(e.arguments):
+                return {"kind": "Empty", "span": node_span(sm, s),
+                        "system_null_task": True}
+        except Exception:
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

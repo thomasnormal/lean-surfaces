@@ -207,6 +207,15 @@
       "expect": "match"
     },
     {
+      "name": "system_null",
+      "file": "Examples/system-verilog/system_null/system_null.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "empty_queue_declaration",
       "file": "Examples/system-verilog/empty_queue_decl/empty_queue_decl.sv",
       "module": "top",

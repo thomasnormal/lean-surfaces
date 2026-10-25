@@ -7002,3 +7002,17 @@ partial** (66 include skips). `AssignmentExpression:target` falls **2,974 →
 2,971**; `ExpressionStatement:CallExpression` and `CallExpression` remain
 2,973 and 2,939. Differential coverage moves **169/164/0/5 → 170/165/0/5**;
 grammar coverage remains **214/83/131**.
+
+## Null-command `$system` task — 2026-10-25
+
+The exact no-argument task form `$system()` is now admitted as an inert
+self-check statement. IEEE §20.17.1 calls `system(NULL)` and discards the
+status in task position; the flat state has no host-process or diagnostic
+channel. String-command forms remain loud because they carry external effects.
+The `system_null` fixture and differential row cover the admitted form.
+
+The 22,050-path census moves **4,923 → 4,924 clean** and **17,061 → 17,060
+partial** (66 include skips). `ExpressionStatement:CallExpression` falls
+**2,973 → 2,972**; `AssignmentExpression:target` and `CallExpression` remain
+2,971 and 2,939. Differential coverage moves **170/165/0/5 → 171/166/0/5**;
+grammar coverage remains **214/83/131**.

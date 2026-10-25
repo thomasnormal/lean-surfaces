@@ -7673,6 +7673,35 @@ def _string_literal_source_value(expression, method, receiver=None,
         return None
 
 
+def _floating_string_atoreal_call(expression):
+    """Whether ``string.atoreal()`` is a source-pure opaque real result.
+
+    The legacy self-check state deliberately has no real-valued storage.  A
+    blocking write of a conversion from a proven ASCII literal therefore has
+    no represented effect, just like the existing literal and pure IEEE math
+    writes.  Keep the receiver history check in one place with the other
+    string methods; aliases, dynamic writes, and every other observation stay
+    on the normal loud boundary.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "atoreal"):
+            return False
+        arguments = list(expression.arguments)
+        if len(arguments) != 1:
+            return False
+        receiver = arguments[0]
+        if type(receiver).__name__ != "NamedValueExpression":
+            return False
+        if type(receiver.type.canonicalType).__name__ != "StringType":
+            return False
+        return _string_literal_source_value(expression, "atoreal") is not None
+    except Exception:
+        return False
+
+
 def _string_literal_atoi_method(expression):
     """Recognize ``atoi`` on a source-pure ASCII string literal."""
     return _string_literal_source_value(expression, "atoi") is not None
@@ -10036,6 +10065,18 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and _floating_pure_call(expr.right)):
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "floating_pure_call_write_noop": True}
+    # ``string.atoreal()`` is likewise a pure conversion when its receiver's
+    # ASCII literal history is proven.  Real storage is opaque in the
+    # self-check state, so discard only this direct blocking write; reads,
+    # aliases, dynamic strings, and scheduled forms remain loud.
+    if (_SYM is None and expr.op is None and expr.timingControl is None
+            and not expr.isNonBlocking
+            and type(expr.left).__name__ == "NamedValueExpression"
+            and type(getattr(expr.left.type, "canonicalType", None)).__name__
+            == "FloatingType"
+            and _floating_string_atoreal_call(expr.right)):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "floating_string_atoreal_write_noop": True}
     # `$realtime` is fixed at zero in the self-check time-zero slice, while
     # real storage remains opaque.  Erase only this blocking write; integer
     # targets, timed/nonblocking forms, and real reads stay loud.

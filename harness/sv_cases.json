@@ -580,6 +580,15 @@
       "expect": "match"
     },
     {
+      "name": "string_atoreal_real_write",
+      "file": "Examples/system-verilog/string_atoreal_real_write/string_atoreal_real_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "severity_dynamic",
       "file": "Examples/system-verilog/severity_dynamic/severity_dynamic.sv",
       "module": "top",

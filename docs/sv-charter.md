@@ -7032,3 +7032,18 @@ partial** (66 include skips). `ExpressionStatement:CallExpression` falls
 **2,972 → 2,971**, tying `AssignmentExpression:target` at 2,971; `CallExpression`
 remains 2,939. Differential coverage moves **171/166/0/5 → 172/167/0/5**;
 grammar coverage remains **214/83/131**.
+
+## Source-pure `string.atoreal()` writes to real storage — 2026-10-25
+
+When a blocking assignment writes `string.atoreal()` from a proven ASCII
+literal history into a named `real` or `shortreal`, the self-check tier now
+erases the write. Real storage is opaque and the conversion has no represented
+effect in this slice; dynamic or aliased string histories, non-ASCII values,
+observed real reads, nonblocking writes, and timed assignments remain loud.
+The `string_atoreal_real_write` fixture, extractor regressions, Lean receipt,
+and differential row cover the admitted shape and its boundaries.
+
+The fresh 22,050-path census remains **4,925 clean / 17,059 partial** (66
+include skips); `AssignmentExpression:target` falls **2,971 → 2,967**. The
+differential coverage moves **172/167/0/5 → 173/168/0/5** and grammar coverage
+remains **214/83/131**.

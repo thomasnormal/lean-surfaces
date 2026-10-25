@@ -1628,6 +1628,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "dynamic_array_self_resize",
+      "file": "Examples/system-verilog/dynamic_array_self_resize/dynamic_array_self_resize.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

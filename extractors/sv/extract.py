@@ -1845,6 +1845,35 @@ def _dynamic_array_constant_extent(symbol):
 
         instance.visit(inspect)
         candidates.extend(whole_assignments)
+        if len(candidates) == 2:
+            first, second = candidates
+            def allocation_parts(node):
+                while type(node).__name__ == "ConversionExpression":
+                    node = getattr(node, "operand", None)
+                if type(node).__name__ != "NewArrayExpression":
+                    return None
+                size = getattr(node, "sizeExpr", None)
+                if (type(size).__name__ != "IntegerLiteral"
+                        or getattr(size, "bad", False)):
+                    return None
+                return int(getattr(size, "value", -1)), getattr(node, "initExpr", None)
+            first_parts = allocation_parts(first)
+            second_parts = allocation_parts(second)
+            if first_parts is None or second_parts is None:
+                return None
+            first_count, first_init = first_parts
+            second_count, second_init = second_parts
+            while type(second_init).__name__ == "ConversionExpression":
+                second_init = getattr(second_init, "operand", None)
+            if (first_count <= 0 or second_count <= first_count
+                    or first_init is not None
+                    or type(second_init).__name__ != "NamedValueExpression"
+                    or getattr(second_init, "symbol", None) is not symbol):
+                return None
+            element = symbol.type.canonicalType.elementType
+            width, _two, reason = type_width_2s(element)
+            return (second_count if width is not None and reason is None
+                    and second_count <= 1024 else None)
         if len(candidates) != 1:
             return None
         allocation = candidates[0]
@@ -2515,7 +2544,8 @@ def _dynamic_array_resize_copy_assignment(sm, expr):
         if type(source_expression).__name__ != "NamedValueExpression":
             return None
         source = getattr(source_expression, "symbol", None)
-        if source is None or source is destination:
+        self_resize = source is destination
+        if source is None:
             return None
         source_type = type(source.type.canonicalType).__name__
         if source_type not in ("DynamicArrayType", "FixedSizeUnpackedArrayType"):
@@ -2534,6 +2564,36 @@ def _dynamic_array_resize_copy_assignment(sm, expr):
             source_left, source_right + (1 if source_right >= source_left else -1),
             1 if source_right >= source_left else -1))
         source_count = len(source_positions)
+        if self_resize:
+            # The destination shape includes the new cells. Only the cells
+            # from the preceding allocation are source values, and growth is
+            # the sole admitted self-resize direction.
+            if source_type != "DynamicArrayType":
+                return None
+            instance = destination.parentScope.containingInstance
+            allocations = []
+            def inspect(node):
+                if (type(node).__name__ == "AssignmentExpression"
+                        and getattr(getattr(node, "left", None), "symbol", None)
+                        is destination):
+                    allocations.append(node.right)
+            instance.visit(inspect)
+            if len(allocations) != 2:
+                return None
+            first = allocations[0]
+            while type(first).__name__ == "ConversionExpression":
+                first = getattr(first, "operand", None)
+            if type(first).__name__ != "NewArrayExpression":
+                return None
+            first_size = getattr(first, "sizeExpr", None)
+            if (type(first_size).__name__ != "IntegerLiteral"
+                    or getattr(first_size, "bad", False)):
+                return None
+            old_count = int(getattr(first_size, "value", -1))
+            if old_count <= 0 or old_count > source_count:
+                return None
+            source_positions = source_positions[:old_count]
+            source_count = old_count
         destination_element = destination.type.canonicalType.elementType
         source_element = source.type.canonicalType.elementType
         destination_width, destination_two, destination_reason = type_width_2s(
@@ -2545,13 +2605,30 @@ def _dynamic_array_resize_copy_assignment(sm, expr):
             return None
         destination_base = _array_storage_name(destination)
         span = node_span(sm, expr)
+        prefix = []
+        source_values = []
+        if self_resize:
+            for position in range(source_count):
+                temporary = _scoped_temp("$resize:", expr.sourceRange.start.offset,
+                                         ":%d" % position)
+                source_values.append({"kind": "Ident", "span": None,
+                                      "width": source_width, "name": temporary})
+                prefix.append({"kind": "LocalDecl", "span": span,
+                               "width": source_width, "name": temporary,
+                               "two_state": False,
+                               "init": {"kind": "Ident",
+                                        "span": node_span(sm, initializer),
+                                        "width": source_width,
+                                        "name": f"{source_base}[{source_positions[position]}]"},
+                               "automatic_resize": True})
         statements = []
         for position in range(destination_count):
             if position < source_count:
                 value = {
                     "kind": "Ident", "span": node_span(sm, initializer),
                     "width": source_width,
-                    "name": f"{source_base}[{source_positions[position]}]",
+                    "name": (source_values[position]["name"] if self_resize
+                              else f"{source_base}[{source_positions[position]}]"),
                 }
                 if destination_two and source_element.isFourState:
                     value = squash2_wrap(value, destination_width)
@@ -2570,7 +2647,7 @@ def _dynamic_array_resize_copy_assignment(sm, expr):
                 },
                 "value": value,
             })
-        return {"kind": "Block", "span": span, "stmts": statements,
+        return {"kind": "Block", "span": span, "stmts": prefix + statements,
                 "dynamic_array_resize_copy_lowered": True}
     except Exception:
         return None

@@ -7177,3 +7177,21 @@ The paired 21,342-path census moves **4,867 clean → 4,875 clean** and
 `AssignmentExpression:target` falls **2,792 → 2,784**. Differential coverage
 moves **180/175/0/5 → 181/176/0/5** with no disagreements, and grammar coverage
 remains **214/83/131**.
+
+## Finite dynamic-array self-grow — 2026-10-25
+
+A blocking `a = new[N](a)` now lowers for one sampled scalar dynamic array
+whose preceding allocation has a smaller positive literal extent and whose new
+extent is also a positive literal. The extractor captures every old flat cell
+in an automatic temporary before writing the destination cells, preserving
+source values and applying two-state zero padding or four-state x padding.
+Self-shrink, repeated or dynamic resize, aliases, aggregate elements, and
+scheduled forms remain loud; no heap object or second scheduler is introduced.
+`dynamic_array_self_resize` supplies the differential fixture and Lean receipt,
+and extractor tests pin capture ordering and shrink refusal.
+
+The paired 21,342-path census moves **4,875 clean → 4,879 clean** and
+**16,438 partial → 16,434 partial** (29 include skips);
+`AssignmentExpression:target` falls **2,784 → 2,776**. Differential coverage
+moves **181/176/0/5 → 182/177/0/5** with no disagreements, and grammar coverage
+remains **214/83/131**.

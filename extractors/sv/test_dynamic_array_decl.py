@@ -209,6 +209,40 @@ class DynamicArrayDeclarations(unittest.TestCase):
                             ("VariableSymbol:type", "VariableSymbol:2state")
                             for node in nodes(design)))
 
+    def test_self_resize_grow_captures_old_cells_before_padding(self):
+        design = lower(
+            """module top;
+               initial begin
+                 int values[];
+                 values = new[2];
+                 values[0] = 3;
+                 values[1] = 4;
+                 values = new[4](values);
+                 if (values[0] == 3 && values[1] == 4 &&
+                     values[2] == 0 && values[3] == 0)
+                   $display("PASS");
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        copies = [node for node in nodes(design)
+                  if node.get("dynamic_array_resize_copy_lowered")]
+        self.assertEqual(len(copies), 1)
+        self.assertEqual(len([stmt for stmt in copies[0]["stmts"]
+                              if stmt.get("kind") == "LocalDecl"]), 2)
+
+    def test_self_resize_shrink_stays_loud(self):
+        design = lower(
+            """module top;
+               initial begin
+                 int values[];
+                 values = new[3];
+                 values = new[2](values);
+               end
+               endmodule""")
+        self.assertTrue(any(node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
     def test_struct_elements_receive_type_defaults(self):
         design = lower(
             """module top;

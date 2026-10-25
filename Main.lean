@@ -135,6 +135,7 @@ open LeanModels.Python
 def errName : PyErr → String
   | .typeError _ => "TypeError"
   | .nameError _ => "NameError"
+  | .unboundLocalError _ => "UnboundLocalError"
   | .zeroDivisionError => "ZeroDivisionError"
   | .trueZeroDivisionError => "ZeroDivisionError"
   | .floatZeroDivisionError => "ZeroDivisionError"
@@ -175,6 +176,7 @@ condition-specific `IndexError` constructors below carry the exact CPython
 def errMessage : PyErr → Option String
   | .typeError msg => some msg
   | .nameError n => some s!"name '{n}' is not defined"
+  | .unboundLocalError n => some s!"local variable '{n}' referenced before assignment"
   | .valueError msg => some msg
   | .runtimeError msg => some msg
   -- `StopIteration` is raised BARE by CPython (`str(e)` is empty), so the

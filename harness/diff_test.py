@@ -257,10 +257,6 @@ def run_cpython(mod, fname, args):
         v = fn(*[from_typed(a) for a in args])
     except Exception as e:  # runtime errors are data, not harness failures
         name = type(e).__name__
-        # UnboundLocalError is a NameError subclass; the interpreter reports
-        # the parent class (DESIGN.md name-resolution row).
-        if name == "UnboundLocalError":
-            name = "NameError"
         return {"status": "exn", "exn": name}
     try:
         return {"status": "ok", "value": to_canonical_value(v)}

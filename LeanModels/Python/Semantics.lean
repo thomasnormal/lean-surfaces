@@ -6429,6 +6429,61 @@ def globalMarker (id : String) : String := "<global>" ++ id
 def globalDeclared (locals : Env) (id : String) : Bool :=
   (Env.lookup locals (globalMarker id)).isSome
 
+/-! ### PEP 526 value-less annotations
+
+`x: T` in a function body does not execute a value store, but it DOES make
+`x` a local for the whole frame.  A dynamic environment therefore needs one
+small piece of frame metadata: a reserved marker for each such declaration.
+The marker is deliberately kept in `Env` (like `globalMarker`) so the proof
+surface and the public frame type do not change.  A later ordinary assignment
+shadows the marker in lookup order; a read while the marker is still the first
+binding raises the faithful `UnboundLocalError`.
+
+The extractor leaves observed declarations as `Unsupported "AnnAssign:no-value"`
+nodes.  Their source text is enough to recover the plain target name, while
+the recursive walker makes declarations in a branch/loop local from function
+entry, as CPython's symbol-table pass requires.  Function definitions are
+scope boundaries and are intentionally not descended into here. -/
+
+def unboundLocalMarker (id : String) : String := "<unbound-local>" ++ id
+
+def hasUnboundLocal (locals : Env) (id : String) : Bool :=
+  (Env.lookup locals (unboundLocalMarker id)).isSome
+
+def annNoValueName (text : String) : Option String :=
+  match text.splitOn ":" with
+  | name :: _ =>
+      let name := name.trim
+      if name == "" then Option.none else some name
+  | [] => Option.none
+
+mutual
+  partial def stmtUnboundLocalNames : Stmt → List String
+    | .unsupported "AnnAssign:no-value" text _ =>
+        (annNoValueName text).toList
+    | .whileLoop _ body orelse _ | .ifStmt _ body orelse _ =>
+        (body.toList.map stmtUnboundLocalNames).flatten
+          ++ (orelse.toList.map stmtUnboundLocalNames).flatten
+    | .forStmt _ _ body orelse _ =>
+        (body.toList.map stmtUnboundLocalNames).flatten
+          ++ (orelse.toList.map stmtUnboundLocalNames).flatten
+    | .tryStmt body _ handler _ _ =>
+        (body.toList.map stmtUnboundLocalNames).flatten
+          ++ (handler.toList.map stmtUnboundLocalNames).flatten
+    | .withStmt _ body _ _ =>
+        (body.toList.map stmtUnboundLocalNames).flatten
+    | .defStmt .. => []
+    | _ => []
+
+  partial def stmtUnboundLocalNamesList : List Stmt → List String
+    | [] => []
+    | s :: ss => stmtUnboundLocalNames s ++ stmtUnboundLocalNamesList ss
+end
+
+def markUnboundLocals (body : List Stmt) (env : Env) : Env :=
+  (stmtUnboundLocalNamesList body).foldl
+    (fun env id => Env.set env (unboundLocalMarker id) RVal.none) env
+
 /-- Extract names from the extractor's retained `Unsupported Global` text.
 The declaration has no runtime action; its names are the compile-time scope
 fact consumed by the call frame. -/
@@ -6450,19 +6505,21 @@ def globalMarkedEnv (body : Array Stmt) : Env :=
 
 def mkCallEnvGlobals (params : Array Param) (args : Array RVal)
     (body : Array Stmt) (hasGlobal : Bool) : Env :=
-  if hasGlobal then globalMarkedEnv body ++ mkCallEnv params args
-  else mkCallEnv params args
+  let env := if hasGlobal then globalMarkedEnv body ++ mkCallEnv params args
+    else mkCallEnv params args
+  markUnboundLocals body.toList env
 
 def globalCallEnv (w : World) (params : Array Param) (args : Array RVal)
     (body : Array Stmt) (hasGlobal : Bool) : Env :=
-  if hasGlobal then
-    let names := globalNamesBody body
-    let values := names.filterMap fun id =>
-      match Env.lookup w.globals id with
-      | some v => some (id, v)
-      | none => none
-    globalMarkedEnv body ++ values ++ mkCallEnv params args
-  else mkCallEnv params args
+  let env := if hasGlobal then
+      let names := globalNamesBody body
+      let values := names.filterMap fun id =>
+        match Env.lookup w.globals id with
+        | some v => some (id, v)
+        | none => none
+      globalMarkedEnv body ++ values ++ mkCallEnv params args
+    else mkCallEnv params args
+  markUnboundLocals body.toList env
 
 /-- The first global slice admits only direct statements.  A global name in a
 loop/compound target, unpack, or attribute needs a frame-aware target walker;
@@ -7602,7 +7659,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
       match Env.lookup st.locals id with
       | some v => .ok st v
       | Option.none =>
-        match lookupG (moduleGlobals m).1 id with
+        if hasUnboundLocal st.locals id then
+          .exn st (.unboundLocalError id)
+        else match lookupG (moduleGlobals m).1 id with
         | some (some v) => .ok st v
         | some Option.none =>
           -- pass 3: a statically-POISONED name consults the LIVE view
@@ -9441,6 +9500,11 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
     | .pass _ => .ok st .next
     | .brk _ => .ok st .brk
     | .cont _ => .ok st .cont
+    | .unsupported "AnnAssign:no-value" text _ =>
+      match annNoValueName text with
+      | some id =>
+          .ok { st with locals := Env.set st.locals (unboundLocalMarker id) RVal.none } .next
+      | Option.none => .unsupported "unsupported statement 'AnnAssign:no-value'"
     | .unsupported pyKind _ _ => .unsupported s!"unsupported statement '{pyKind}'"
   termination_by structural fuel
 

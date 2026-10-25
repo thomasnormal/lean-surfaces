@@ -1615,7 +1615,16 @@ theorem fuelMono (fuel : Nat) :
         | pass _ => simp only [execStmt]; exact Run.le_refl _
         | brk _ => simp only [execStmt]; exact Run.le_refl _
         | cont _ => simp only [execStmt]; exact Run.le_refl _
-        | unsupported pyKind text _ => simp only [execStmt]; exact Run.le_refl _
+        | unsupported pyKind text _ =>
+          simp [execStmt]
+          by_cases h : pyKind == "AnnAssign:no-value"
+          · have hstr : pyKind = "AnnAssign:no-value" := by simpa using h
+            subst pyKind
+            simp [h, annNoValueName]
+            exact Run.le_refl _
+          · have hn : pyKind ≠ "AnnAssign:no-value" := by simpa using h
+            simp [hn]
+            exact Run.le_refl _
     -- execStmts
     · intro m st ss fuel' hf
       cases fuel' with
@@ -2408,26 +2417,32 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         cases Env.lookup st.locals id with
         | some v => exact .okF rfl _
         | none =>
-          cases lookupG (moduleGlobals m).1 id with
-          | some vv =>
-            cases vv with
-            | some v => exact .okF rfl _
+          cases hu : hasUnboundLocal st.locals id with
+          | true =>
+            simp only [hu, if_true]
+            exact .exn
+          | false =>
+            simp only [hu, Bool.false_eq_true, if_false]
+            cases lookupG (moduleGlobals m).1 id with
+            | some vv =>
+              cases vv with
+              | some v => exact .okF rfl _
+              | none =>
+                -- pass 3: the poisoned-arm live view — a hit is a pure
+                -- world read, a miss the old refusal
+                cases Env.lookup st.world.globals id with
+                | some v => exact .okF rfl _
+                | none => exact .unsupported
             | none =>
-              -- pass 3: the poisoned-arm live view — a hit is a pure
-              -- world read, a miss the old refusal
+              -- findFunction / findClass / findNamedTuple / isBuiltinName /
+              -- isModuleDunder / the pass-3 live view / analysable → NameError
+              refine .ite .unsupported (.ite .unsupported (.ite .unsupported
+                (.ite .unsupported (.ite .unsupported ?_))))
               cases Env.lookup st.world.globals id with
               | some v => exact .okF rfl _
-              | none => exact .unsupported
-          | none =>
-            -- findFunction / findClass / findNamedTuple / isBuiltinName /
-            -- isModuleDunder / the pass-3 live view / analysable → NameError
-            refine .ite .unsupported (.ite .unsupported (.ite .unsupported
-              (.ite .unsupported (.ite .unsupported ?_))))
-            cases Env.lookup st.world.globals id with
-            | some v => exact .okF rfl _
-            -- the unmodelled-CPython-builtin refusal (2026-08-13) sits in
-            -- front of the analysable/NameError fork
-            | none => exact .ite (.okF rfl _) (.ite .unsupported (.ite .exn .unsupported))
+              -- the unmodelled-CPython-builtin refusal (2026-08-13) sits in
+              -- front of the analysable/NameError fork
+              | none => exact .ite (.okF rfl _) (.ite .unsupported (.ite .exn .unsupported))
       | binOp l op r _ =>
         cases hop : op == .bitAnd with
         | true =>
@@ -3155,7 +3170,17 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
       | pass _ => simp only [execStmt]; exact .okF rfl _
       | brk _ => simp only [execStmt]; exact .okF rfl _
       | cont _ => simp only [execStmt]; exact .okF rfl _
-      | unsupported pyKind text _ => simp only [execStmt]; exact .unsupported
+      | unsupported pyKind text _ =>
+        simp only [execStmt]
+        by_cases h : pyKind == "AnnAssign:no-value"
+        · have hstr : pyKind = "AnnAssign:no-value" := by simpa using h
+          subst pyKind
+          cases hn : annNoValueName text with
+          | some id => simp [hn]; exact .okF rfl _
+          | none => simp [hn]; exact .unsupported
+        · have hn : pyKind ≠ "AnnAssign:no-value" := by simpa using h
+          simp [hn]
+          exact .unsupported
     -- execStmts
     · intro st ss hfree
       cases ss with

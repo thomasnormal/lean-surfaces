@@ -138,7 +138,7 @@ RUNNER_TIMEOUT = 120
 CPYTHON_TIMEOUT = 15
 
 # Canonicalizing CPython driver run in a subprocess by %pydiff (mirrors
-# harness/diff_test.py: bool before int, UnboundLocalError -> NameError).
+# harness/diff_test.py: bool before int and exact exception classes).
 _CPY_DRIVER = r"""
 import importlib.util, json, struct, sys
 path, fn = sys.argv[1], sys.argv[2]
@@ -172,8 +172,6 @@ try:
     v = f(*args)
 except Exception as e:
     name = type(e).__name__
-    if name == "UnboundLocalError":
-        name = "NameError"
     print(json.dumps({"status": "exn", "exn": name}))
     sys.exit(0)
 try:

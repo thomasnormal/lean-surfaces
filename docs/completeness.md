@@ -307,11 +307,11 @@ rewrite exact with NO condition on the annotation expression.
 
 **Three boundaries stay loud, each for a measured reason.** Module and class
 scope evaluate the annotation and write `__annotations__` (after storing
-the value — the order is measured). A value-less `x: int` binds nothing
-but LOCALISES its name, so the extractor erases it only when no load or
-delete can observe that binding; `ann_lab.ann_novalue_shadows_global` keeps
-the silent-wrong-answer case loud. Non-simple targets still evaluate their
-annotation.
+the value — the order is measured). A value-less `x: int` binds nothing but
+LOCALISES its name. The function frame records that static-local fact at
+entry and raises the exact `UnboundLocalError` on a read before assignment,
+including when the declaration sits in a skipped branch; the no-read shape
+remains an erased no-op. Non-simple targets still evaluate their annotation.
 
 **Unblocks**: typed application and library code, where a single
 annotated local used to cost the whole module.

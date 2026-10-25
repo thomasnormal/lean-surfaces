@@ -104,7 +104,7 @@ states — use a raw `#guard … matches .unsupported _` if you need to pin
 that). See
 [check-what-the-extractor-supports.md](check-what-the-extractor-supports.md).
 
-**`UnboundLocalError` in the harness.** CPython raises the subclass; the
-model and harness canonicalize to `NameError`
-([reference](../reference.md#error-classes)) — differential rows on such
-functions still match.
+**`UnboundLocalError` in the harness.** Observed value-less local
+annotations preserve CPython's subclass and message; the model and harness
+compare the exact class at the boundary
+([reference](../reference.md#error-classes)).

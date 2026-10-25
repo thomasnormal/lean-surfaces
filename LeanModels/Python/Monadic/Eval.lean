@@ -823,7 +823,10 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
       match ← envGet id with
       | some v => pure v
       | Option.none =>
-        match lookupG (moduleGlobals m).1 id with
+        let st ← get
+        if hasUnboundLocal st.locals id then
+          raisePy (.unboundLocalError id)
+        else match lookupG (moduleGlobals m).1 id with
         | some (some v) => pure v
         | some Option.none =>
             -- a statically-POISONED name consults the LIVE view before refusing
@@ -1537,6 +1540,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
           pure .next
         else
           refuse "unsupported statement 'Nonlocal'"
+      else if pyKind == "AnnAssign:no-value" then pure .next
       else refuse s!"unsupported statement '{pyKind}'"
   | .yieldStmt _ _ =>
       refuse "'yield' outside a generator body (the def is not marked `is_generator`) — outside the tier"
@@ -2122,12 +2126,14 @@ def callCloAt (K : Kont) (m : Module) (name : String) (params : Array Param)
     raisePy (.typeError (arityErrorMsg name (paramArity params) args.size))
   else if isGenerator then do
     let w ← get
-    let g : Obj := .generator s!"<closure:{name}>" (mkCallEnv params args ++ captured)
+    let env := markUnboundLocals body.toList (mkCallEnv params args) ++ captured
+    let g : Obj := .generator s!"<closure:{name}>" env
       [.block body.toList] .created
     set { w with heap := w.heap.push g }
     pure (.ref w.heap.size)
   else do
-    match ← inWorld (mkCallEnv params args ++ captured) (execOpenList K m body.toList) with
+    let env := markUnboundLocals body.toList (mkCallEnv params args) ++ captured
+    match ← inWorld env (execOpenList K m body.toList) with
     | .ret v => pure v
     | .next  => pure .none
     | .brk   => refuse "'break' outside loop"

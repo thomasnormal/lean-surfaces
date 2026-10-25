@@ -1421,6 +1421,81 @@ def convert_stmt_list(nodes, enclosing=None, module_scope=False,
     return converted
 
 
+def _hoist_ann_no_value(stmts):
+    """Hoist observed value-less local annotations to function entry.
+
+    PEP 526 makes the target a static local for the entire function, even
+    when its declaration sits in a branch that is not taken.  The runtime
+    records that fact by stepping the retained ``AnnAssign:no-value`` node;
+    moving those no-op markers to the entry of this scope preserves the
+    declaration's only observable effect while keeping the ordinary control
+    tree unchanged.  Nested function scopes are independent and are left
+    alone (their own converter applies this pass).
+    """
+    markers = []
+    marker_names = set()
+
+    def collect_namedexpr(value):
+        """Collect static-local walrus targets in this function scope."""
+        if isinstance(value, dict):
+            kind = value.get("kind")
+            if kind in ("NestedDef", "FunctionDef", "Lambda", "ClassDef"):
+                return
+            if kind == "NamedExpr":
+                target = value.get("target")
+                if isinstance(target, str):
+                    name = target
+                elif isinstance(target, dict) and target.get("kind") == "Name":
+                    name = target.get("id")
+                else:
+                    name = None
+                if name:
+                    if name and name not in marker_names:
+                        marker_names.add(name)
+                        markers.append({
+                            "kind": "Unsupported",
+                            "span": value.get("span", {}),
+                            "py_kind": "AnnAssign:no-value",
+                            "text": name + ": <walrus>",
+                        })
+            for child in value.values():
+                collect_namedexpr(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect_namedexpr(child)
+
+    def walk(stmt):
+        if not isinstance(stmt, dict):
+            return stmt
+        kind = stmt.get("kind")
+        if kind == "Unsupported" and stmt.get("py_kind") == "AnnAssign:no-value":
+            name = (stmt.get("text") or "").split(":", 1)[0].strip()
+            if name not in marker_names:
+                marker_names.add(name)
+                markers.append(stmt)
+            return None
+        if kind in ("NestedDef", "FunctionDef", "Lambda"):
+            return stmt
+        collect_namedexpr(stmt)
+        for key in ("body", "orelse", "handler"):
+            value = stmt.get(key)
+            if isinstance(value, list):
+                kept = []
+                for child in value:
+                    child = walk(child)
+                    if child is not None:
+                        kept.append(child)
+                stmt[key] = kept
+        return stmt
+
+    out = []
+    for stmt in stmts:
+        stmt = walk(stmt)
+        if stmt is not None:
+            out.append(stmt)
+    return markers + out
+
+
 def _ann_name_used(enclosing, name):
     """Whether a value-less annotation's name has an observable use.
 
@@ -1541,7 +1616,8 @@ def convert_ann_assign(node, module_scope=False, func_scope=False,
             "value": convert_expr(node.value),
         }]
     return unsupported(node, "AnnAssign:" + (
-        "no-value" if node.value is None
+        ("module-no-value" if module_scope else "no-value")
+        if node.value is None
         else "non-simple-target" if not node.simple
         else "module-scope"))
 
@@ -1630,8 +1706,9 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             # (a single-target `name = lambda …` assign likewise); one
             # nested deeper (inside an if/loop) stays a plain
             # FunctionDef/Lambda node, which ingestion refuses loudly
-            "body": convert_stmt_list(node.body, enclosing=node,
-                                       func_scope=True),
+            "body": _hoist_ann_no_value(
+                convert_stmt_list(node.body, enclosing=node,
+                                  func_scope=True)),
         }
         if _has_global(node):
             out["has_global"] = True

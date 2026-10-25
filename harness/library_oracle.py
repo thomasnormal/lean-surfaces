@@ -129,11 +129,8 @@ def from_canonical_value(a):
 
 
 def exception_name(e):
-    """The class name the model reports. `UnboundLocalError` is a NameError
-    subclass and the interpreter reports the parent (DESIGN.md
-    name-resolution row) — the one alias diff_test.py also applies."""
-    name = type(e).__name__
-    return "NameError" if name == "UnboundLocalError" else name
+    """The exact class name the model reports."""
+    return type(e).__name__
 
 
 # ---------------------------------------------------------------------------

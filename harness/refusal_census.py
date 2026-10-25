@@ -1038,8 +1038,6 @@ WHITELIST_CLASS = {
     "star_lab::star_for": "starred.position",
     "star_shadow::shadowed": "shadow.module-census",
     "star_shadow::elsewhere": "shadow.module-census",
-    "ann_lab::ann_novalue_read": "annassign.no-value",
-    "ann_lab::ann_novalue_shadows_global": "annassign.no-value",
     "assert_lab::msg_set": "set.order",
     "fstring_lab::format_spec": "fstring.format-spec",
     "fstring_lab::format_spec_num": "fstring.format-spec",

@@ -15,6 +15,11 @@
 - Direct subclasses of the measured builtin exception names now preserve their
   class identity through `raise` and explicit handler matching; shadowed,
   dynamic, and unmeasured exception bases remain loud.
+- Function-local value-less annotations now install a static-local marker and
+  raise CPython's exact `UnboundLocalError` class and message on an observed
+  read, including declarations in skipped branches; harmless no-read forms
+  remain erased. The harness no longer normalizes this subclass to
+  `NameError`.
 
 All notable changes to the **Python tier** of this repository (the extractor,
 the Lean semantics under `LeanModels/Python/`, its proof surface, and its

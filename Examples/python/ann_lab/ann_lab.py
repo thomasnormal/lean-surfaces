@@ -93,26 +93,23 @@ def ann_aug(n):
 
 
 def ann_novalue(n):
-    # LOUD: `x: int` binds nothing. Dropping it would be harmless HERE and
-    # a silent wrong answer in `ann_novalue_shadows_global`, so the shape
-    # is refused as a shape, not case by case
+    # `x: int` binds nothing but localises the name. With no later read the
+    # declaration is an unobservable no-op.
     x: int
     return n
 
 
 def ann_novalue_read(n):
-    # LOUD: CPython raises UnboundLocalError -- the name is local because
-    # the annotation localised it, and nothing ever bound it
+    # CPython raises the exact UnboundLocalError: the annotation localised
+    # the name, and nothing ever bound it.
     x: int
     return x
 
 
 def ann_novalue_shadows_global(n):
-    # LOUD, and this is THE row the refusal exists for: `g` is a module
-    # global holding 5, and the value-less annotation makes it LOCAL for
-    # the whole body, so CPython raises UnboundLocalError. A model that
-    # dropped the statement would read the global and answer 5 --
-    # a silent wrong answer, not a refusal
+    # `g` is a module global holding 5, but the value-less annotation makes it
+    # LOCAL for the whole body, so CPython raises UnboundLocalError instead
+    # of reading the module global.
     g: int
     return g
 

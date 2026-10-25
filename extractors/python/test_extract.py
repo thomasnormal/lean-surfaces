@@ -880,13 +880,21 @@ class ExtractorTests(unittest.TestCase):
                 self.assertEqual(local["kind"], "Assign")
         module = self._envelope_of("x: int\n")["module"]["body"][0]
         self.assertEqual(module["kind"], "Unsupported")
-        self.assertEqual(module["py_kind"], "AnnAssign:no-value")
+        self.assertEqual(module["py_kind"], "AnnAssign:module-no-value")
         local = self._first_fn("def f():\n    x: int\n    return 1")
         self.assertEqual(local["body"][0]["kind"], "Pass")
         local_read = self._first_fn("def f():\n    x: int\n    return x")
         self.assertEqual(local_read["body"][0]["kind"], "Unsupported")
         self.assertEqual(local_read["body"][0]["py_kind"],
                          "AnnAssign:no-value")
+        walrus = self._first_fn(
+            "def f(n):\n"
+            "    if n and (q := n + 1):\n"
+            "        return 1\n"
+            "    return q\n")
+        self.assertEqual(walrus["body"][0]["py_kind"],
+                         "AnnAssign:no-value")
+        self.assertEqual(walrus["body"][0]["text"], "q: <walrus>")
         cls = self._envelope_of("class C:\n    x: int = 7\n")["module"]["body"][0]
         self.assertEqual(cls["body"][0]["kind"], "Unsupported")
         self.assertEqual(cls["body"][0]["py_kind"], "AnnAssign:module-scope")

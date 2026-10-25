@@ -633,6 +633,11 @@ constructors retain their standard texts. -/
 inductive PyErr where
   | typeError (msg : String)
   | nameError (name : String)
+  /-- A function-local name introduced by a value-less annotation (PEP 526)
+  was read before any value was assigned.  CPython exposes this as the
+  `NameError` subclass `UnboundLocalError`, with a distinct class and
+  message; retaining the name keeps the boundary exact. -/
+  | unboundLocalError (name : String)
   /-- `x // 0` and `x % 0` — CPython's
   `integer division or modulo by zero`. -/
   | zeroDivisionError
@@ -824,6 +829,7 @@ def builtinExcCatches : String → PyErr → Bool
   | "LookupError",       .keyError           => true
   | "TypeError",         .typeError _        => true
   | "NameError",         .nameError _        => true
+  | "NameError",         .unboundLocalError _ => true
   | "ZeroDivisionError", .zeroDivisionError  => true
   | "ZeroDivisionError", .zeroDivisionPow    => true
   | "ZeroDivisionError", .trueZeroDivisionError => true

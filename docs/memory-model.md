@@ -1240,9 +1240,10 @@ walrus allocates nothing of its own.
 
 **Acceptance.** `walrus_lab`: the binding outliving its expression, the
 evaluation ORDER (`w_order`, `w_call_arg`), the loop-condition idiom, a
-short-circuited walrus that never binds (`w_short_circuit(0)` is
-CPython's `UnboundLocalError`, which the harness maps to this tier's
-`NameError`), and the genexp filter's hoist.
+short-circuited walrus that never binds (`w_short_circuit(0)` remains the
+recorded `NameError` boundary for a conditional walrus), and the genexp
+filter's hoist. The exact `UnboundLocalError` class is now carried for the
+observed value-less annotation slice.
 
 ## `yield from` a non-genexp delegate (pass 5+ — BUILT 2026-08-19)
 
@@ -2206,22 +2207,27 @@ division by zero, all identical, because none of them runs.
   has to reproduce that order, which is why it is written down here
   before anyone needs it.
 * **A value-less `x: int` binds nothing but LOCALISES its name.** In a
-  function, `x: int` followed by `return x` is `UnboundLocalError` — and
-  so is `g: int; return g` where `g` is a module global holding 5. The
-  extractor erases the declaration only when no load or delete can observe
-  that binding; `ann_lab.ann_novalue_shadows_global` keeps the silent-wrong-
-  answer case loud.
+  function, `x: int` followed by `return x` is the exact
+  `UnboundLocalError` — and so is `g: int; return g` where `g` is a module
+  global holding 5. The function frame installs a reserved local marker at
+  entry, including declarations in skipped branches, and a later assignment
+  shadows it. `ann_lab.ann_novalue` keeps the harmless no-read shape, while
+  `ann_lab.ann_novalue_read` and `ann_lab.ann_novalue_shadows_global` pin the
+  class and CPython message at the observation boundary.
 * **`simple == 0` targets** (`(x)`, `c.a`, `d[k]`) get no
   `__annotations__` entry but still evaluate the annotation. They lower to
   the annotation expression followed by the ordinary assignment, preserving
   that order without adding an annotation-table store.
 
-**Function-scope lowering.** One extractor clause, no interpreter change, no
-proof-layer change, no new AST node: a function-body `AnnAssign` with
-`simple == 1` and a value converts to the `Assign` node it already is; an
-unobserved value-less declaration becomes `Pass`. The original refusal
-`py_kind` split remains useful for the observed value-less and module-scope
-boundaries; non-simple targets now use the structured assignment path.
+**Function-scope lowering.** One extractor clause and no new AST node: a
+function-body `AnnAssign` with `simple == 1` and a value converts to the
+`Assign` node it already is. A value-less declaration is retained as an
+observed marker when a load or delete can see its static-local binding, and
+is erased only when no such observation exists. The runtime hoists those
+markers to frame entry and raises the exact `UnboundLocalError` on a miss;
+walrus targets use the same marker path. The original `py_kind` split remains
+useful for module-scope boundaries; non-simple targets use the structured
+assignment path.
 
 The one mechanical piece is a `func_scope` flag threaded through
 `convert_stmt` beside the existing `module_scope`, set only by the
@@ -2259,8 +2265,7 @@ heap dictionary and its aliases receive the same insertion in CPython order.
 Other explicit bindings remain `AnnAssign:annotations-bound` and loud;
 rebinding the table to `None`, deleting it, or constructing it through a
 separate alias changes the target or exception behavior and is not guessed.
-Future-annotations imports, class annotations, and observed value-less
-annotations stay loud.
+Future-annotations imports and class annotations stay loud.
 
 Dynamic annotations are now lowered to the same two statements as literal
 annotations when the implicit table is unobservable: store the value first,

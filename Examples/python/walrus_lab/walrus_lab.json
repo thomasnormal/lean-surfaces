@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.19"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/walrus_lab/walrus_lab.py",
   "source_sha256": "fe95dbafa1c6d3bbb5d817967b316e9c273a5b0acdb5515321a93ace96b8f92b",
@@ -55,6 +55,17 @@
         "args_unsupported": null,
         "locals_unsupported": null,
         "body": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "lineno": 19,
+              "col_offset": 8,
+              "end_lineno": 19,
+              "end_col_offset": 18
+            },
+            "py_kind": "AnnAssign:no-value",
+            "text": "m: <walrus>"
+          },
           {
             "kind": "If",
             "span": {
@@ -210,6 +221,17 @@
         "args_unsupported": null,
         "locals_unsupported": null,
         "body": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "lineno": 26,
+              "col_offset": 9,
+              "end_lineno": 26,
+              "end_col_offset": 19
+            },
+            "py_kind": "AnnAssign:no-value",
+            "text": "b: <walrus>"
+          },
           {
             "kind": "Assign",
             "span": {
@@ -382,6 +404,17 @@
         "locals_unsupported": null,
         "body": [
           {
+            "kind": "Unsupported",
+            "span": {
+              "lineno": 33,
+              "col_offset": 14,
+              "end_lineno": 33,
+              "end_col_offset": 24
+            },
+            "py_kind": "AnnAssign:no-value",
+            "text": "q: <walrus>"
+          },
+          {
             "kind": "If",
             "span": {
               "lineno": 33,
@@ -551,6 +584,17 @@
         "args_unsupported": null,
         "locals_unsupported": null,
         "body": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "lineno": 41,
+              "col_offset": 11,
+              "end_lineno": 41,
+              "end_col_offset": 21
+            },
+            "py_kind": "AnnAssign:no-value",
+            "text": "n: <walrus>"
+          },
           {
             "kind": "Assign",
             "span": {
@@ -763,6 +807,17 @@
         "locals_unsupported": null,
         "body": [
           {
+            "kind": "Unsupported",
+            "span": {
+              "lineno": 48,
+              "col_offset": 16,
+              "end_lineno": 48,
+              "end_col_offset": 26
+            },
+            "py_kind": "AnnAssign:no-value",
+            "text": "h: <walrus>"
+          },
+          {
             "kind": "Assign",
             "span": {
               "lineno": 48,
@@ -949,6 +1004,17 @@
         "args_unsupported": null,
         "locals_unsupported": null,
         "body": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "lineno": 54,
+              "col_offset": 12,
+              "end_lineno": 54,
+              "end_col_offset": 22
+            },
+            "py_kind": "AnnAssign:no-value",
+            "text": "p: <walrus>"
+          },
           {
             "kind": "Return",
             "span": {

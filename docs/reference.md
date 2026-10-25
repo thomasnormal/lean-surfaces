@@ -171,8 +171,9 @@ Notes:
 - `Res.unsupported` is **not** an error class: it marks the v0 tier boundary
   (loud, never wrong), and the harness whitelists it only via
   `"expect": "unsupported"`.
-- CPython's `UnboundLocalError` is a `NameError` subclass; the harness
-  canonicalizes it to `NameError` (DESIGN.md name-resolution row).
+- Function-local value-less annotations preserve CPython's distinct
+  `UnboundLocalError` class and message when a read observes the unbound
+  local; the harness compares that class directly.
 - `==>!` compares the whole `PyErr` *value*, message included — payload-free
   classes (`.zeroDivisionError` and the condition-specific `IndexError`
   constructors) are the practical targets

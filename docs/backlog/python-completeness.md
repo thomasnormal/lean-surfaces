@@ -17,6 +17,33 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-25-pycomplete-112 — observed value-less annotated locals
+
+Function-local `x: T` declarations now preserve CPython's static-local
+boundary. The extractor retains a marker when a load or delete can observe the
+declaration, and the runtime hoists it to frame entry so skipped branches still
+localise the name. Reads before assignment raise the exact
+`UnboundLocalError: local variable 'x' referenced before assignment`; later
+assignments shadow the marker. The no-read form remains an erased no-op, and
+walrus targets use the same marker path. The proof interpreter's world
+invariant covers the locals-only marker update and the exception path.
+
+`ann_lab.ann_novalue_read` and `ann_lab.ann_novalue_shadows_global` moved from
+recorded refusals to differential MATCH rows. The harness now compares the
+exception subclass directly instead of normalizing `UnboundLocalError` to
+`NameError`.
+
+| Measurement | Result |
+|---|---|
+| Extractor tests | 128 passed |
+| Differential suite | 3693 cases: 0 failed, 98 whitelisted, 3595 matched |
+| Focused executable witnesses | `ann_novalue_read` and `ann_novalue_shadows_global` MATCH with class and message |
+| Lean build | `lake build leanmodels-run` passed |
+
+DECIDED: admit observed function-local value-less annotations and exact
+`UnboundLocalError`; retain loud failure for module/class value-less forms and
+other unmodeled annotation effects.
+
 ## 2026-10-25-pycomplete-111 — direct builtin-exception subclass inheritance
 
 The exception class slice now admits one direct subclass of a measured builtin

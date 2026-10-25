@@ -6409,6 +6409,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-while-zero-iteration",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableWhileZeroIterationStatementFrameWitness",
+    "cpp_source": "int while_zero_iteration_statement_frame_witness(int value) { while (value > 1) value = 0; return value; } bool callable_witness() { return while_zero_iteration_statement_frame_witness(1) == 1 && while_zero_iteration_statement_frame_witness(2) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

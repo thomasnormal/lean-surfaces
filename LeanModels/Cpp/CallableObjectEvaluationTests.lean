@@ -1210,6 +1210,33 @@ def callableReturnStatementFrameWitness : Bool := returnStatementFrame
 
 #guard callableReturnStatementFrameWitness
 
+private def doWhileStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .binary ">"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 0, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let step : CallableStatement := .expression {
+    expression := .increment "--" false (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let function := {base with body := .block (.sequence
+    (.doWhile step condition)
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 64 .lp64 function [signed 3],
+      evaluateCallableObject 64 .lp64 function [signed 0] with
+  | .ok (.ok three), .ok (.ok zero) => three == signed 0 && zero == signed (-1)
+  | _, _ => false
+
+def callableDoWhileStatementFrameWitness : Bool := doWhileStatementFrame
+
+#guard callableDoWhileStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

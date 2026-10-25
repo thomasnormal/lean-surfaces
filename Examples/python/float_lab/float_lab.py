@@ -123,12 +123,19 @@ def indeterminate_division_still_loud():
     return float("inf") / float("-inf")
 
 
-def keys_still_loud():
-    return {1.0: "one"}
+def finite_keys():
+    values = {1.0: "one", 2: "two"}
+    return values[1], values[1.0], values[True], len(values)
 
 
-def nested_keys_still_loud():
-    return {(1.0,): "one"}
+def nested_finite_keys():
+    values = {(1.0,): "one"}
+    return values[(1,)], values[(1.0,)], len(values)
+
+
+def set_finite_keys():
+    values = {1.0, 2.0}
+    return 1 in values, True in values, len(values)
 
 
 def attribute_still_loud():

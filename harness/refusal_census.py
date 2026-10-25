@@ -930,8 +930,6 @@ WHITELIST_CLASS = {
     "bytes_lab::numeric_int_still_loud": "bytes.numeric-parsing",
     "bytes_lab::numeric_float_still_loud": "bytes.numeric-parsing",
     "float_lab::constructor_heap": "float.constructor-protocols",
-    "float_lab::keys_still_loud": "float.hashing",
-    "float_lab::nested_keys_still_loud": "float.hashing",
     "float_lab::attribute_still_loud": "float.attributes",
     "rsa_inverse::inverse": "exc.raise",
     "bench_bisect::bisect_left": "exc.raise",

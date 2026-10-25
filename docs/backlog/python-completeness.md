@@ -5051,3 +5051,27 @@ row continues to pin that boundary.
 DECIDED: admit only the exact no-op finalizer lowering and retain loud failure
 for effectful finalization until the frame's all-flow cleanup semantics is
 priced and proved.
+
+## 2026-10-25-pycomplete-125 — admit finite float dictionary and set keys
+
+The float tier already had exact binary64 equality and ordering, but the
+dict/set key gate rejected every float before those relations could be used.
+Finite floats are now hashable in the linear key model, with the same
+float/int/bool equality and signed-zero behavior as Python. Tuple keys recurse
+through the finite gate, and set membership uses the same relation. NaN and
+infinity keys remain loud because an immediate float cannot model CPython's
+identity shortcut for a NaN key; mixed tuples containing a non-finite float
+retain that boundary.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `finite_keys`, `nested_finite_keys`, and `set_finite_keys`: 3/3 MATCH in both interpreters |
+| Full executable differential | 3,694 cases: 0 failed, 90 whitelisted-unsupported, 3,604 matched |
+| Full proof differential | 3,694 cases: 0 failed, 196 refused, 3,498 matched |
+| Refusal census | 90 rows, 0 drifts; `float.hashing` removed |
+| Example proof | `lake build Examples.python.float_lab.spec` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit finite float keys and their tuple/set consumers; retain loud
+failure for non-finite float keys until immediate-value identity semantics are
+priced separately.

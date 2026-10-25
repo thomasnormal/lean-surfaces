@@ -416,6 +416,21 @@ mutual
     | value :: rest => value.hasFloat || RVal.hasFloatList rest
 end
 
+mutual
+  /-- Whether a value contains a NaN or infinity. Finite floats are
+  hashable; non-finite floats remain loud because their immediate
+  representation has no object identity for CPython's NaN key shortcut. -/
+  def RVal.hasNonFiniteFloat : RVal → Bool
+    | .float value => value.isNaN || value.isInf
+    | .tuple values | .listV values | .ntuple _ _ values =>
+      RVal.hasNonFiniteFloatList values.toList
+    | _ => false
+
+  def RVal.hasNonFiniteFloatList : List RVal → Bool
+    | [] => false
+    | value :: rest => value.hasNonFiniteFloat || RVal.hasNonFiniteFloatList rest
+end
+
 /-- Admit integer range fields without erasing their bool subtype. -/
 def asRangeBound : RVal → Option RangeBound
   | .int value => some (.int value)
@@ -3797,14 +3812,15 @@ def danglingMsg : String :=
 
 mutual
   /-- Is this runtime value usable as a dict key? Hashability, not
-  immutability (docs/memory-model.md §dict semantics): scalars are
-  hashable; a tuple iff its elements are; lists are unhashable; a ref's
+  immutability (docs/memory-model.md §dict semantics): scalars, including
+  finite floats, are hashable; a tuple iff its elements are; lists are
+  unhashable; a ref's
   hashability depends on its referent — every H1 heap object is a dict,
   which is unhashable (H3 instances revisit this arm, heap parameter and
   all). -/
   def hashableKey : RVal → Bool
     | .none | .ellipsis | .bool _ | .int _ | .str _ | .bytes _ => true
-    | .float _ => false
+    | .float value => !value.isNaN && !value.isInf
     | .tuple xs => hashableKeyList xs.toList
     -- a namedtuple hashes as a tuple (tuple.__hash__): hashable iff its
     -- elements are — sunfish's `(pos, depth, root)` keys stay in tier
@@ -3847,6 +3863,11 @@ mutual
     | .bool a, .int m => (if a then (1 : Int) else 0) == m
     | .int n, .bool b => n == (if b then (1 : Int) else 0)
     | .int n, .int m => n == m
+    | .float a, .float b => a.eqv b
+    | .float a, .int n => a.eqInt n
+    | .int n, .float a => a.eqInt n
+    | .float a, .bool b => a.eqInt (if b then 1 else 0)
+    | .bool b, .float a => a.eqInt (if b then 1 else 0)
     | .str s, .str t => s == t
     | .bytes left, .bytes right => left == right
     | .tuple xs, .tuple ys => keyEqList xs.toList ys.toList
@@ -3927,7 +3948,8 @@ actually failed. `getD` supplies the key's own name for the arm the
 caller's precondition makes unreachable — `keyRefusal` is only reached
 when `hashableKey k = false`, and then the search always finds one. -/
 def keyRefusal (h : Heap) (k : RVal) : Res α :=
-  if k.hasFloat then .unsupported "float dictionary and set keys are outside the tier"
+  if k.hasNonFiniteFloat then
+    .unsupported "non-finite float dictionary and set keys are outside the tier"
   else if keyHasInstanceRef h k then
     .unsupported "a class instance or generator as a dict key (identity hash) is outside the tier (docs/memory-model.md)"
   else

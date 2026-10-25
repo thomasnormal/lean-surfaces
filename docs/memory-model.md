@@ -1293,6 +1293,11 @@ unhashable element gets `keyRefusal`'s answer (the faithful
 `unhashable type: '…'` `TypeError` for lists/dicts, LOUD for
 identity-hashed instances/closures).
 
+Finite float elements are hashable in this relation and use Python's numeric
+equality with integers, booleans, and signed zero. NaN and infinity elements
+remain loud because immediate float values do not carry the identity needed
+for CPython's NaN key shortcut.
+
 **Admitted readers** — membership (`in`/`not in`, the same
 value-equality scan; CPython HASHES the probe before any comparison,
 so an unhashable probe raises the same faithful `TypeError`, empty

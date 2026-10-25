@@ -26,6 +26,21 @@ theorem addition :
     float_lab.addition() ==> Float64.ofBits 0x4008000000000000 := by
   exact ⟨32, rfl⟩
 
+theorem finite_keys :
+    float_lab.finite_keys() ==>
+      Val.tuple #[.str "one", .str "one", .str "one", .int 2] := by
+  exact ⟨64, rfl⟩
+
+theorem nested_finite_keys :
+    float_lab.nested_finite_keys() ==>
+      Val.tuple #[.str "one", .str "one", .int 1] := by
+  exact ⟨64, rfl⟩
+
+theorem set_finite_keys :
+    float_lab.set_finite_keys() ==>
+      Val.tuple #[.bool true, .bool true, .int 2] := by
+  exact ⟨64, rfl⟩
+
 theorem nan_equality :
     float_lab.nan_equality_still_loud(Float64.ofBits 0x7ff8000000000000) ==> false := by
   exact ⟨32, rfl⟩

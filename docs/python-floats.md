@@ -126,8 +126,11 @@ division and float division have distinct zero-division messages, and the
 Finite numeric `sorted`/`max`/`min` use the shared exact order. NaN comparisons
 with `<`/`<=`/`>`/`>=` are false, but ordering NaNs inside containers refuses:
 the insertion-sort implementation cannot claim CPython's results for a
-non-total order. NaN equality and float dictionary/set keys (including nested
-tuple keys) also refuse. Existing float attributes remain loud rather than
+non-total order. NaN equality and non-finite float dictionary/set keys
+(including nested tuple keys) also refuse. Finite float keys use Python's
+numeric equality, including equality with equal integers and signed zeros,
+through the same linear key relation as other scalar keys. Existing float
+attributes remain loud rather than
 fabricating missing-attribute exceptions. Other float arithmetic must not fall
 into an integer-only `TypeError`.
 

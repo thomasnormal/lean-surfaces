@@ -44,6 +44,12 @@ set_option exponentiation.threshold 2048
 #py_check float_lab.count_many() raises
     .typeError "count() takes at most 2 arguments (3 given)"
 #py_check float_lab.addition() = Float64.ofBits 0x4008000000000000
+#py_check float_lab.finite_keys() =
+  Val.tuple #[.str "one", .str "one", .str "one", .int 2]
+#py_check float_lab.nested_finite_keys() =
+  Val.tuple #[.str "one", .str "one", .int 1]
+#py_check float_lab.set_finite_keys() =
+  Val.tuple #[.bool true, .bool true, .int 2]
 #py_check float_lab.nan_arithmetic_still_loud(0) = Float64.ofBits 0xfff8000000000000
 #py_check float_lab.nan_arithmetic_still_loud(1) = Float64.ofBits 0xfff8000000000000
 #py_check float_lab.nan_arithmetic_still_loud(2) = Float64.ofBits 0xfff8000000000000

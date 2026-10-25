@@ -5233,6 +5233,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-long-compound-bitxor-mid",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLongCompoundBitXorFrameWitness",
+    "cpp_source": "long frame_long_compound_bitxor(long value) { value ^= 3; return value; } bool callable_witness() { return frame_long_compound_bitxor(12) == 15; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-long-long-compound-add-mid",
     "kind": "expression",
     "corpus": "rung-3 witness",

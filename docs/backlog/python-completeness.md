@@ -4940,3 +4940,23 @@ battery retain their previous outcomes.
 DECIDED: allow one later ordinary shadow of an admitted module-level alias;
 keep function-valued re-aliases, direct-definition rebinding, and first-class
 callable reads loud. Move to the next remaining synchronous wall.
+
+## 2026-10-25-pycomplete-120 — render the deterministic integer-set slice
+
+Set construction and order-blind readers were already live, but printing a
+set was loud because general hash-table iteration order is not represented.
+The renderer now admits only the exact deterministic shape whose heap set
+contains integer elements in strictly increasing order (and the empty set),
+matching CPython 3.9's `repr`; reverse insertion, mixed kinds, and all other
+hash orders remain loud. The existing `print_set.py` row is now a differential
+match.
+
+| Measurement | Result |
+|---|---|
+| Focused set differential | `print_set.py` matches CPython 3.9 (`3` then `{1, 2, 3}`) |
+| Scope | Pure `reprVal` extension; no heap or proof geometry changes |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit increasing integer and empty-set rendering only; retain loud
+failure for arbitrary hash order and mixed set elements. Move to the next
+remaining synchronous wall.

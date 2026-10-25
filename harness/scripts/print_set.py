@@ -1,9 +1,7 @@
-"""leanpy corpus: PRINTING A SET is loud (telemetry row).
+"""leanpy corpus: the increasing integer set rendering slice.
 
-Containers render exactly since 2026-08-13, but a set's `repr` is its
-HASH ORDER, which the model deliberately never guesses (the order
-doctrine: first-seen order is unobservable, so nothing may depend on it).
-Loud, never a plausible-looking wrong line.
+The renderer admits only the deterministic CPython 3.9 order for this
+increasing integer shape; arbitrary hash-table orders remain loud.
 """
 
 s = set([1, 2, 3])

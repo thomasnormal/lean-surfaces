@@ -30,6 +30,7 @@ set_option exponentiation.threshold 4300
 #py_check repr_lab.recursive_dict() = "{'self': {...}}"
 #py_check repr_lab.shared_path() = "([1], [1])"
 #py_check repr_lab.updated_argument() = "(None, [1])"
+#py_check repr_lab.set_value() = "{1, 2}"
 #py_check repr_lab.no_arguments() raises
   .typeError "repr() takes exactly one argument (0 given)"
 #py_check repr_lab.two_arguments() raises
@@ -54,7 +55,6 @@ set_option exponentiation.threshold 4300
 #guard callFunction repr_lab "first_class" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "instance" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "custom" #[] 4096 matches .unsupported _
-#guard callFunction repr_lab "set_value" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "closure" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "generator" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "large_length" #[.int 4301] 4096 ==

@@ -1056,7 +1056,7 @@
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "first_class", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "instance", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "custom", "args": [[]], "expect": "unsupported"},
-  {"file": "Examples/python/repr_lab/repr_lab.py", "function": "set_value", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/repr_lab/repr_lab.py", "function": "set_value", "args": [[]], "expect": "match", "note": "deterministic increasing integer set repr"},
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "closure", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "generator", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "large_length", "args": [[1025], [4300]], "expect": "match"},

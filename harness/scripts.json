@@ -122,7 +122,8 @@
   },
   {
     "file": "harness/scripts/print_set.py",
-    "expect": "unsupported"
+    "expect": "match",
+    "note": "increasing integer set rendering uses the exact deterministic CPython order"
   },
   {
     "file": "harness/scripts/with_script.py",

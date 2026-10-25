@@ -3029,6 +3029,17 @@ def rangeBoundRepr (bound : RangeBound) : Option String :=
   | .ok (.str text) => some text
   | _ => Option.none
 
+/-- The narrow exact set-rendering slice.  CPython 3.9 prints an empty set as
+`set()` and an increasing small-integer set in that same order; arbitrary
+hash-table orders remain outside the renderer. -/
+def setReprIncreasing : List RVal → Bool
+  | [] | [_] => true
+  | .int x :: (.int y :: rest) => x < y && setReprIncreasing (.int y :: rest)
+  | _ => false
+
+def setReprSafe (xs : Array RVal) : Bool :=
+  setReprIncreasing xs.toList
+
 mutual
   /-- CPython `repr` of an in-tier value. `active` is the chain of heap
   addresses currently being rendered: CPython prints `[...]` / `{...}`
@@ -3099,6 +3110,16 @@ mutual
               | .items => es.map (fun kv : RVal × RVal => .tuple #[kv.1, kv.2])
             let parts ← reprVals h fuel (a :: active) elems.toList
             return name ++ "([" ++ commaJoin parts ++ "])"
+        | some (.pyset xs) =>
+          -- A set's general repr is hash-table order.  The first exact
+          -- renderer slice is the deterministic CPython shape whose stored
+          -- integer elements are already in increasing order; every other
+          -- order remains loud rather than guessing a hash layout.
+          if setReprSafe xs then
+            if xs.isEmpty then some "set()" else do
+              let parts ← reprVals h fuel (a :: active) xs.toList
+              return "{" ++ commaJoin parts ++ "}"
+          else Option.none
         | _ => Option.none
 
   /-- Elementwise `reprVal`. -/

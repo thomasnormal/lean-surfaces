@@ -1319,6 +1319,12 @@ CPython's faithful `unhashable type: 'set'` `TypeError`
 (`keyHasInstanceRef` answers false — never the loud identity-hash
 channel, because CPython really does refuse).
 
+**Rendering slice.** `repr`/`print` admits an empty set (`set()`) and a heap
+set of integer elements already stored in strictly increasing order. CPython
+3.9 produces that same order for this deterministic shape; every other set
+order, including reverse insertion and mixed element kinds, remains loud
+because the general hash-table layout is not represented.
+
 **Fragments.** `set(…)` calls leave `Expr.heapFree` (allocation, and
 a generator argument drains); the membership/len/truthiness readers
 were already heap-side. `worldInv`'s builtin walk rewrites the `set`

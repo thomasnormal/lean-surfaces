@@ -787,6 +787,26 @@ def callableSignedCharCompoundSubtractFrameWitness : Bool :=
 
 #guard callableSignedCharCompoundSubtractFrameWitness
 
+private def signedCharCompoundModuloFrame : Bool :=
+  let base := incrementFunction .signedChar "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign "%=" (handle "0x10")
+      {expression := .integer 5, sourceType := .builtin .signedChar,
+        type := .builtin .signedChar})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .signedChar, type := .builtin .signedChar}))}
+  match CallableObjectFrame.start .lp64 function [⟨.signed 8, 13⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.signed 8, 3⟩)
+
+def callableSignedCharCompoundModuloFrameWitness : Bool :=
+  signedCharCompoundModuloFrame
+
+#guard callableSignedCharCompoundModuloFrameWitness
+
 private def shortCompoundSubtractFrame : Bool :=
   let base := incrementFunction .short "++" false
   let function := {base with body := .block (.sequence

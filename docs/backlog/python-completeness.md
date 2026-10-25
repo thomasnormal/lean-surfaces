@@ -4795,3 +4795,29 @@ mismatches.
 
 DECIDED: baseline inventory is complete; the next turn repairs the red
 `ClockErase` proof module, then resumes construct work in the measured order.
+
+## 2026-10-25-pycomplete-114 — import closure repriced on the current interpreter
+
+The first useful slice for the import wall was already present as the static
+closure walker, so it was rerun against the pinned CPython 3.9.25 rather than
+admitting an unmeasured module registry. The controls remain green: the
+synthetic closure has 0/13 failures and the four real-table controls have
+0/4 failures.
+
+| Scope | no import | pure | C-reaching | nearest C |
+|---|---:|---:|---:|---|
+| import-time module bodies | 12 | 0 | 154 | 131 at one hop, 23 at two |
+| unconditional direct children | 19 | 1 | 146 | 121 at one hop, 23 at two, 2 at three |
+| whole program | 10 | 0 | 156 | 137 at one hop, 19 at two |
+
+The import-time closure reaches 61 distinct C modules; 146 of the 154
+refusing seeds reach an operating-system, I/O, thread, or interpreter module,
+and only 8 reach computational C modules alone. The closure contains 207
+distinct pure-Python modules, but even granting every C module natively only
+19 of 154 importing seeds have an all-in-tier pure closure. A Python-only
+module registry therefore has no measured import-time payoff on this corpus,
+while remaining a future requirement for third-party pure-Python packages.
+
+DECIDED: keep imports loud for now; preserve the measured closure and its
+controls, and move to the next higher-payoff construct rather than admitting
+an unproved registry.

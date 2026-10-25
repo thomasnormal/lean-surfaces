@@ -7047,3 +7047,21 @@ The fresh 22,050-path census remains **4,925 clean / 17,059 partial** (66
 include skips); `AssignmentExpression:target` falls **2,971 → 2,967**. The
 differential coverage moves **172/167/0/5 → 173/168/0/5** and grammar coverage
 remains **214/83/131**.
+
+## Literal semaphore `put`/`get` balance — 2026-10-25
+
+Direct literal semaphore constructors now carry a source-ordered key balance
+through literal `put(n)` and immediately completing `get(n)` calls. A `get`
+is erased only when the statically tracked bucket contains enough keys; later
+literal `try_get` expressions observe the consumed balance. Aliases, dynamic
+counts, other methods, and calls that would block remain loud because the flat
+self-check state does not represent semaphore objects or scheduler waiters.
+The `semaphore_literal_put_get` fixture and its Lean receipt provide the
+differential witness.
+
+On the available 21,342-path sv-tests-2 snapshot, clean files move **4,840 →
+4,861** and partial files **16,473 → 16,452** (29 include skips). The leading
+`CallExpression` blocker falls **2,802 → 2,782** and
+`ExpressionStatement:CallExpression` falls **2,668 → 2,644**. Differential
+coverage grows **173/168/0/5 → 174/169/0/5**; grammar coverage remains
+**214/83/131**.

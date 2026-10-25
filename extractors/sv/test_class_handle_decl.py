@@ -183,6 +183,26 @@ class ClassHandleDeclarations(unittest.TestCase):
         self.assertIn("CallExpression",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_literal_semaphore_put_and_get_balance(self):
+        design = lower(
+            'module top; semaphore sem; bit done; initial begin '
+            'sem = new(1); sem.put(2); sem.get(3); done = 1; '
+            'if (done) $display("PASS"); end endmodule')
+        methods = [node for node in nodes(design)
+                   if node.get("semaphore_literal_method")]
+        self.assertEqual([node["semaphore_literal_method"] for node in methods],
+                         ["put", "get"])
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_literal_semaphore_get_that_would_block_stays_loud(self):
+        design = lower(
+            'module top; semaphore sem; initial begin '
+            'sem = new(1); sem.get(2); end endmodule')
+        self.assertIn("ExpressionStatement:CallExpression",
+                      [node.get("sv_kind") for node in nodes(design)])
+
     def test_empty_mailbox_num_returns_zero_after_construction(self):
         design = lower(
             'module top; mailbox box; int result; initial begin '

@@ -1556,6 +1556,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "semaphore_literal_put_get",
+      "file": "Examples/system-verilog/semaphore_literal_put_get/semaphore_literal_put_get.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

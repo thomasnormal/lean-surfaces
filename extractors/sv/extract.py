@@ -6657,21 +6657,22 @@ def _semaphore_zero_try_get(expression):
 
 
 def _semaphore_literal_try_get_state(expression):
-    """Return the source-ordered state of a literal semaphore ``try_get``.
+    """Return the source-ordered state of a literal semaphore method.
 
     This is intentionally a small, object-free slice of IEEE 1800-2023
-    §15.3.4.  A handle must have exactly one direct ``new(N)`` constructor,
-    every use of it must be a literal ``try_get`` (the frontend supplies the
-    default argument as literal one), and no other named use or alias may
-    occur.  The returned ``available`` count is the value immediately before
-    this call; ``request`` is the literal key count and ``success`` records
-    whether the call consumes it.
+    §15.3.2–15.3.4. A handle must have exactly one direct ``new(N)``
+    constructor, every use of it must be a literal ``put``, ``get``, or
+    ``try_get`` (the frontend supplies the default argument as literal one),
+    and no other named use or alias may occur. The returned ``available``
+    count is the value immediately before this call; ``request`` is the
+    literal key count and ``success`` records whether the call can complete
+    without blocking.
     """
     try:
         if (type(expression).__name__ != "CallExpression"
                 or getattr(expression, "bad", False)
                 or expression.isSystemCall
-                or expression.subroutineName != "try_get"):
+                or expression.subroutineName not in ("put", "get", "try_get")):
             return None
         receiver = getattr(expression, "thisClass", None)
         if (type(receiver).__name__ != "NamedValueExpression"
@@ -6755,7 +6756,7 @@ def _semaphore_literal_try_get_state(expression):
         for method in methods:
             if method.start() <= constructor.end():
                 continue
-            if method.group(1) != "try_get":
+            if method.group(1) not in ("put", "get", "try_get"):
                 return None
         # Any post-construction bare occurrence must be one of the admitted
         # method receivers. This rejects aliases and ordinary reads.
@@ -6769,9 +6770,15 @@ def _semaphore_literal_try_get_state(expression):
                            if method.start() == current_start]
         if not current_methods:
             # pyslang's source range begins at the call, while the regex begins
-            # at the receiver; accept the unique method containing that range.
+            # at the receiver. Some elaborated calls instead begin at the
+            # first argument, so accept the nearest preceding receiver.
             current_methods = [method for method in methods
-                               if method.start() <= current_start < method.end()]
+                               if method.start() <= current_start <= method.end()]
+        if not current_methods:
+            preceding = [method for method in methods
+                         if method.start() <= current_start]
+            if preceding:
+                current_methods = [max(preceding, key=lambda item: item.start())]
         if len(current_methods) != 1:
             return None
         current_method_start = current_methods[0].start()
@@ -6795,16 +6802,40 @@ def _semaphore_literal_try_get_state(expression):
         available = initial
         for method in sorted(prior, key=lambda item: item.start()):
             value = values_by_start[method.start()]
-            if value <= available:
+            method_name = method.group(1)
+            if method_name == "put":
+                available += value
+            elif method_name == "get":
+                if value > available:
+                    return None
                 available -= value
+            elif value <= available:
+                available -= value
+        method_name = current_methods[0].group(1)
+        success = method_name == "put" or request <= available
         return {"available": available, "request": request,
-                "success": request <= available}
+                "success": success, "method": method_name}
     except Exception:
         return None
 
 
 def _semaphore_literal_try_get(expression):
-    return _semaphore_literal_try_get_state(expression) is not None
+    state = _semaphore_literal_try_get_state(expression)
+    return state is not None and state.get("method") == "try_get"
+
+
+def _semaphore_literal_put_get(expression):
+    """Recognize a literal ``put``/nonblocking ``get`` statement.
+
+    A direct source-ordered balance proves that ``get`` has enough keys and
+    therefore cannot enter the scheduler. The statement result is discarded,
+    so the self-check representation may erase both methods while retaining
+    the exact balance for later ``try_get`` expressions.
+    """
+    state = _semaphore_literal_try_get_state(expression)
+    return (state is not None
+            and state.get("method") in ("put", "get")
+            and state.get("success", False))
 
 
 def _convert_semaphore_literal_try_get(sm, expression):
@@ -10632,6 +10663,13 @@ def _convert_syscall(sm, s, e):
             # retain the call's sequencing position as an ordinary no-op.
             return {"kind": "Empty", "span": node_span(sm, s),
                     "semaphore_zero_method": name}
+        if _semaphore_literal_put_get(e):
+            # A source-ordered literal balance proves that this put/get pair
+            # completes without entering the scheduler. The handle itself is
+            # intentionally outside the flat state; later literal try_get
+            # expressions consume the same statically tracked balance.
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "semaphore_literal_method": name}
         if _dynamic_array_literal_size_method(e):
             return {"kind": "Empty", "span": node_span(sm, s),
                     "dynamic_array_literal_size": True}

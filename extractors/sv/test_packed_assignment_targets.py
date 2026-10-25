@@ -275,6 +275,32 @@ class PackedAssignmentTargets(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_right_streaming_extent_reads_previous_target(self):
+        design = extract_source(
+            "module top; bit [95:0] source; int len; int arr[]; "
+            "initial begin arr = new[4]; len = 0; "
+            "source = {32'd2, 32'hAA, 32'hBB}; "
+            "{>> {len, arr with [0 +: len]}} = source; end endmodule")
+        statement, = [node for node in nodes(design)
+                      if node.get("kind") == "BlockingAssign"
+                      and node.get("dynamic_stream_with_prefix_lowered")]
+        self.assertEqual([part["name"].split(":")[-1]
+                          for part in statement["target"]["parts"]],
+                         ["len", "arr[0]", "arr[1]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_right_streaming_previous_target_requires_constant_source(self):
+        design = extract_source(
+            "module top; bit [95:0] source; int len; int arr[]; "
+            "initial begin arr = new[4]; len = 0; "
+            "source = $urandom(); "
+            "{>> {len, arr with [0 +: len]}} = source; end endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
     def test_right_streaming_indexed_with_range_selects_array_cells(self):
         design = extract_source(
             "module top; bit [95:0] source; bit [31:0] arr[8]; "

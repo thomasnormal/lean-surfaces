@@ -7100,3 +7100,21 @@ partial files **16,451 → 16,449** (29 include skips). `VariableSymbol:2state`
 falls **2,246 → 2,243**; the remaining leading blockers are unchanged.
 Differential coverage grows **175/170/0/5 → 177/172/0/5** with no
 disagreements, and grammar coverage remains **214/83/131**.
+
+## Streaming `with` extent from an earlier target — 2026-10-25
+
+Right-streaming unpack now admits the §11.4.14.4 form where a dynamic-array
+`with [base +: count]` extent refers to a target unpacked earlier in the same
+stream, such as `{>> {len, payload with [0 +: len]}}`. The extractor samples a
+single unconditional constant source assignment, uses the source prefix to
+resolve the extent, and lowers the prefix plus selected array cells to the
+existing flat target window. Computed or multiply assigned sources, aliases,
+dynamic bases, and other stream shapes remain loud. The
+`streaming_with_previous_extent` fixture and extractor acceptance/refusal
+regressions cover this boundary.
+
+On the available 21,342-path snapshot, clean files move **4,864 → 4,865** and
+partial files **16,449 → 16,448** (29 include skips). The leading
+`AssignmentExpression:target` blocker falls **2,793 → 2,792**. Differential
+coverage grows **177/172/0/5 → 178/173/0/5** with no disagreements, and grammar
+coverage remains **214/83/131**.

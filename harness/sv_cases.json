@@ -1592,6 +1592,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "streaming_with_previous_extent",
+      "file": "Examples/system-verilog/streaming_with_previous_extent/streaming_with_previous_extent.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

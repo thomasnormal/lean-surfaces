@@ -8443,6 +8443,175 @@ def _fixed_array_stream_targets_with(sm, operand, with_expr, symbolic=False):
         return None
 
 
+def _dynamic_streaming_with_prefix_target_assignment(sm, expr):
+    """Lower a stream whose extent names an earlier target in the same stream.
+
+    IEEE evaluates a ``with`` expression immediately before its stream.  In
+    ``{>> {len, payload with [0 +: len]}}`` the first target is therefore
+    unpacked before the dynamic extent is read.  The flat self-check state can
+    admit the narrow constant-source form by sampling that prefix value and
+    expanding the corresponding dynamic-array cells.  Computed sources,
+    aliases, multiple writes, and control-dependent writes stay loud.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None):
+            return None
+        lhs = expr.left
+        if type(lhs).__name__ != "StreamingConcatenationExpression":
+            return None
+        token = getattr(getattr(lhs, "syntax", None), "operatorToken", None)
+        if str(getattr(token, "kind", "")).split(".")[-1] != "RightShift":
+            return None
+        streams = list(lhs.streams)
+        if len(streams) < 2:
+            return None
+        final = streams[-1]
+        operand = getattr(final, "operand", None)
+        with_expr = getattr(final, "withExpr", None)
+        if (operand is None or type(with_expr).__name__ != "RangeSelectExpression"
+                or str(with_expr.selectionKind).split(".")[-1] != "IndexedUp"
+                or type(operand.type.canonicalType).__name__ != "DynamicArrayType"):
+            return None
+        base = _constant_dimension_selector(with_expr.left)
+        extent_expr = with_expr.right
+        if (base is None or type(extent_expr).__name__ != "NamedValueExpression"
+                or getattr(extent_expr, "symbol", None) is None):
+            return None
+        extent_width, _extent_two, extent_reason = type_width_2s(extent_expr.type)
+        if extent_width is None or extent_reason is not None:
+            return None
+
+        prefix_parts = []
+        prefix_width = 0
+        prefix_symbols = []
+        for stream in streams[:-1]:
+            if getattr(stream, "withExpr", None) is not None:
+                return None
+            prefix = getattr(stream, "operand", None)
+            if type(prefix).__name__ != "NamedValueExpression":
+                return None
+            target, admitted = legacy_blocking_target(sm, prefix, True)
+            if (not admitted or target is None
+                    or target.get("kind") not in ("Ident", "SelectTarget")):
+                return None
+            width = width_of(target)
+            if width is None or width <= 0:
+                return None
+            prefix_parts.append(target)
+            prefix_width += width
+            prefix_symbols.append(prefix.symbol)
+        if extent_expr.symbol not in prefix_symbols:
+            return None
+
+        shape = _fixed_array_shape(operand)
+        if shape is None:
+            return None
+        name, width, two_state, left, right = shape
+        if left > right or base < left or base > right:
+            return None
+        targets = _fixed_array_stream_targets(sm, operand, False)
+        if targets is None or len(targets) != right - left + 1:
+            targets = [{
+                "kind": "Ident", "span": node_span(sm, operand),
+                "width": width, "name": f"{name}[{position}]",
+                "two_state": two_state,
+            } for position in range(left, right + 1)]
+
+        # The source must have one earlier, unconditional assignment whose
+        # converted value supplies the prefix and payload bits.  This keeps
+        # the sampled extent independent of a live scheduler or alias.
+        source = expr.right
+        if type(source).__name__ != "NamedValueExpression":
+            return None
+        source_symbol = getattr(source, "symbol", None)
+        if source_symbol is None:
+            return None
+        assignments = []
+        controls = []
+
+        def inspect(node):
+            kind = type(node).__name__
+            if kind == "AssignmentExpression":
+                left_expr = getattr(node, "left", None)
+                if (type(left_expr).__name__ == "NamedValueExpression"
+                        and getattr(left_expr, "symbol", None) is source_symbol):
+                    assignments.append(node)
+            elif kind in ("ConditionalStatement", "ForLoopStatement",
+                          "WhileLoopStatement", "DoWhileLoopStatement",
+                          "RepeatLoopStatement", "ForeachLoopStatement",
+                          "CaseStatement", "CaseInsideStatement",
+                          "CasePatternStatement", "LoopStatement"):
+                controls.append(node)
+
+        source_symbol.parentScope.containingInstance.visit(inspect)
+        if len(assignments) != 1:
+            return None
+        source_assignment = assignments[0]
+        if (source_assignment.sourceRange.start.offset >= expr.sourceRange.start.offset
+                or source_assignment.op is not None
+                or source_assignment.isNonBlocking
+                or source_assignment.timingControl is not None
+                or any(control.sourceRange.start.offset <=
+                       source_assignment.sourceRange.start.offset and
+                       source_assignment.sourceRange.end.offset <=
+                       control.sourceRange.end.offset for control in controls)):
+            return None
+        value = convert_expr(sm, source_assignment.right)
+        if (value is None or value.get("kind") == "Unsupported"
+                or not _case_source_expression_ok(source_assignment.right)
+                or width_of(value) is None or not _case_expression_ok(value)):
+            return None
+        source_width = width_of(value)
+
+        def static_bits(node):
+            if not isinstance(node, dict):
+                return None
+            kind = node.get("kind")
+            if kind == "Squash2":
+                return static_bits(node.get("operand"))
+            if kind == "Literal":
+                bits = node.get("bits")
+                return bits if isinstance(bits, str) and all(
+                    bit in "01" for bit in bits) else None
+            if kind == "Concat":
+                pieces = [static_bits(part) for part in node.get("parts", [])]
+                return "".join(pieces) if pieces and all(
+                    piece is not None for piece in pieces) else None
+            return None
+
+        bits = static_bits(value)
+        if bits is None or len(bits) != source_width or prefix_width > len(bits):
+            return None
+        prefix_value = bits[:prefix_width]
+        if any(bit not in "01" for bit in prefix_value):
+            return None
+        extent_value = int(prefix_value, 2)
+        if extent_value < 0 or extent_value > right - base + 1:
+            return None
+        if extent_value == 0:
+            return {"kind": "Empty", "span": node_span(sm, expr),
+                    "dynamic_stream_with_prefix_zero_extent": True}
+        total_width = prefix_width + extent_value * width
+        if total_width > source_width:
+            return None
+        selected = targets[base - left:base - left + extent_value]
+        if len(selected) != extent_value:
+            return None
+        target = {"kind": "ConcatTarget", "span": node_span(sm, lhs),
+                  "width": total_width,
+                  "parts": prefix_parts + [dict(t) for t in selected]}
+        return {
+            "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+            "span": node_span(sm, expr), "target": target,
+            "value": _streaming_source_window(convert_expr(sm, source),
+                                                total_width, False),
+            "dynamic_stream_with_prefix_lowered": True,
+        }
+    except Exception:
+        return None
+
+
 def _dynamic_streaming_with_target_assignment(sm, expr):
     """Lower a finite dynamic-array stream with a runtime ``with`` extent.
 
@@ -8471,7 +8640,7 @@ def _dynamic_streaming_with_target_assignment(sm, expr):
         if str(getattr(token, "kind", "")).split(".")[-1] != "RightShift":
             return None
         if len(lhs.streams) != 1:
-            return None
+            return _dynamic_streaming_with_prefix_target_assignment(sm, expr)
         stream = lhs.streams[0]
         operand = getattr(stream, "operand", None)
         with_expr = getattr(stream, "withExpr", None)

@@ -5,6 +5,23 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.97] — 2026-10-25
+
+### Added
+
+- Added object-frame witnesses for conditional false-branch local
+  initialization, `while`-body local initialization, `for`-body local
+  initialization, `do … while`-body local initialization, and `switch`-case
+  local initialization.
+
+### Measured
+
+- The checked-in corpus now contains **588 differential rows**: **571 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.96] — 2026-10-25
 
 ### Added

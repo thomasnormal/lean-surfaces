@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-25
 
-The chapter-scoped rerun covered **22,055** paths: **5,126 clean**,
-**16,862 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,055** paths: **5,127 clean**,
+**16,861 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`ExpressionStatement:CallExpression` (2,910), `AssignmentExpression:target` (2,908),
+`ExpressionStatement:CallExpression` (2,909), `AssignmentExpression:target` (2,908),
 `CallExpression` (2,801), `Hierarchy:ports` (2,398),
 `VariableSymbol:2state` (2,296), `SubroutineSymbol:Subroutine` (1,634),
 `NamedValueExpression:2state` (1,485), `ConcurrentAssertionStatement`
@@ -55,6 +55,23 @@ The refreshed **22,055-path** census moves **5,084 → 5,126 clean** and
 **16,904 → 16,862 partial** (67 include skips). `AssignmentExpression:target`
 falls **2,937 → 2,908**, while `ExpressionStatement:CallExpression` remains
 **2,910**. Differential coverage grows **212/207/0/5 → 213/208/0/5** with no
+disagreements, and grammar coverage remains **217 witnesses, 90 MATCH, and
+127 REFUSE**.
+
+## Fixed-array `sort()` and `rsort()` after literal initialization — 2026-10-25
+
+Fixed one-dimensional integral arrays now replay a complete blocking literal
+pattern before `sort()` or `rsort()`, and repeated ordering calls consume the
+previously sorted cell state. Signed values use their declared integral order;
+unknown cells, aliases, dynamic or multidimensional arrays, and `with` clauses
+remain loud. The `fixed_array_sort` fixture supplies both ascending and
+descending checks with a Lean receipt; extractor regressions cover replay and
+unknown-value refusal.
+
+The refreshed **22,055-path** census moves **5,126 → 5,127 clean** and
+**16,862 → 16,861 partial** (67 include skips). `ExpressionStatement:CallExpression`
+falls **2,910 → 2,909** while `AssignmentExpression:target` remains **2,908**.
+Differential coverage grows **213/208/0/5 → 214/209/0/5** with no
 disagreements, and grammar coverage remains **217 witnesses, 90 MATCH, and
 127 REFUSE**.
 

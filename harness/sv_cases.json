@@ -1918,6 +1918,16 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "fixed_array_sort",
+      "file": "Examples/system-verilog/fixed_array_sort/fixed_array_sort.sv",
+      "module": "top",
+      "oracle": [
+        "SORT PASS",
+        "RSORT PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

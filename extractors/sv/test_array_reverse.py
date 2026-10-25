@@ -166,6 +166,64 @@ class ArrayReverse(unittest.TestCase):
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))
 
+    def test_fixed_array_pattern_sort_and_rsort_replay_source_order(self):
+        design = lower(
+            """module top;
+               int signed values[0:3];
+               initial begin
+                 values = '{-3, 5, 0, -3};
+                 values.sort();
+                 values.rsort();
+               end
+               endmodule""")
+        lowered = [node for node in nodes(design)
+                   if node.get("fixed_array_ordering_lowered")]
+        self.assertEqual([node["fixed_array_ordering_lowered"] for node in lowered],
+                         ["sort", "rsort"])
+        def bits(value):
+            while value.get("kind") == "Squash2":
+                value = value["operand"]
+            if value.get("kind") == "Unary":
+                return format((-int(value["operand"]["bits"], 2)) & 0xffffffff,
+                              "032b")
+            return value["bits"]
+
+        self.assertEqual(
+            [[bits(write["value"]) for write in node["stmts"]]
+             for node in lowered],
+            [[format(value & 0xffffffff, "032b") for value in (-3, -3, 0, 5)],
+             [format(value & 0xffffffff, "032b") for value in (5, 0, -3, -3)]])
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_fixed_array_sort_with_unknown_cell_stays_loud(self):
+        design = lower(
+            """module top;
+               int values[0:1];
+               int source;
+               initial begin
+                 values = '{source, 2};
+                 values.sort();
+               end
+               endmodule""")
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
+    def test_fixed_array_sort_after_direct_cell_write_stays_loud(self):
+        design = lower(
+            """module top;
+               int values[0:1] = '{1, 2};
+               initial begin
+                 values[0] = 9;
+                 values.sort();
+               end
+               endmodule""")
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

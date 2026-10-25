@@ -7741,3 +7741,20 @@ and partial files **16,904 → 16,862** (67 include skips). The leading
 `ExpressionStatement:CallExpression` remains **2,910**. Differential coverage
 grows **212/207/0/5 → 213/208/0/5** with no disagreements; grammar coverage
 remains **217/90/127**.
+
+## Fixed-array `sort()` and `rsort()` after literal initialization — 2026-10-25
+
+Fixed one-dimensional integral arrays now replay a complete blocking literal
+pattern before `sort()` or `rsort()`. Repeated ordering calls consume the
+previously sorted flat-cell state, and signed values use their declared
+integral order. Unknown cells, aliases, dynamic or multidimensional arrays,
+and `with` clauses remain loud. The `fixed_array_sort` fixture, generated
+envelope, Lean receipt, and extractor regressions cover the admitted and
+refused shapes.
+
+On the refreshed **22,055-path** census, clean files move **5,126 → 5,127**
+and partial files **16,862 → 16,861** (67 include skips).
+`ExpressionStatement:CallExpression` falls **2,910 → 2,909**, while
+`AssignmentExpression:target` remains **2,908**. Differential coverage grows
+**213/208/0/5 → 214/209/0/5** with no disagreements; grammar coverage remains
+**217/90/127**.

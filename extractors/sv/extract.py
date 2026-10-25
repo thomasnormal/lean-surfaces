@@ -9306,6 +9306,31 @@ def _fixed_array_ordering_method(sm, expression):
         def inspect_uses(node):
             nonlocal valid
             node_kind = type(node).__name__
+            if node_kind == "AssignmentExpression":
+                # Whole-array pattern/copy assignments are lowered to the
+                # flat cells below.  Skip their aggregate children so the
+                # source array read in a copy is not mistaken for an opaque
+                # alias use.
+                lhs = getattr(node, "left", None)
+                if (_storage_expression(lhs)
+                        and getattr(lhs, "symbol", None) is symbol
+                        and (_fixed_array_pattern_assignment(sm, node)
+                             or _fixed_array_copy_assignment(sm, node))):
+                    return VisitAction.Skip
+                if _fixed_array_pattern_assignment(sm, node):
+                    return VisitAction.Skip
+                if _fixed_array_copy_assignment(sm, node):
+                    return VisitAction.Skip
+            if node_kind == "CallExpression":
+                arguments = getattr(node, "arguments", [])
+                if (len(arguments) == 1
+                        and type(arguments[0]).__name__ == "NamedValueExpression"
+                        and getattr(arguments[0], "symbol", None) is symbol):
+                    name = str(getattr(node, "subroutineName", ""))
+                    if name in ("sort", "rsort"):
+                        return VisitAction.Skip
+                    valid = False
+                    return VisitAction.Skip
             if node_kind == "ElementSelectExpression":
                 value = getattr(node, "value", None)
                 if (type(value).__name__ == "NamedValueExpression"
@@ -9335,8 +9360,102 @@ def _fixed_array_ordering_method(sm, expression):
         if initializer is not None:
             values = _fixed_array_initializer_values(
                 sm, initializer, _array_storage_name(symbol), width, count)
-        if values is None and not dynamic:
-            return None
+
+        if not dynamic:
+            # A fixed array may be initialized procedurally with one literal
+            # assignment pattern before sorting. Replay that assignment and
+            # any earlier sort/rsort calls so repeated ordering observes the
+            # preceding mutation exactly.
+            operations = []
+
+            def inspect_fixed_operations(node):
+                nonlocal valid
+                offset = getattr(getattr(getattr(node, "sourceRange", None),
+                                          "start", None), "offset", None)
+                if offset is None or offset >= call_start:
+                    return
+                kind = type(node).__name__
+                if kind == "AssignmentExpression":
+                    lhs = getattr(node, "left", None)
+                    if (_storage_expression(lhs)
+                            and getattr(lhs, "symbol", None) is symbol):
+                        lowered = _fixed_array_pattern_assignment(sm, node)
+                        if lowered is not None:
+                            operations.append((offset, "assign", lowered))
+                        else:
+                            valid = False
+                    elif (type(lhs).__name__ == "ElementSelectExpression"
+                          and type(getattr(lhs, "value", None)).__name__ ==
+                          "NamedValueExpression"
+                          and getattr(lhs.value, "symbol", None) is symbol):
+                        # A direct cell write before ordering would change
+                        # the aggregate snapshot; do not silently sort the
+                        # declaration initializer instead.
+                        valid = False
+                elif kind == "CallExpression":
+                    arguments = getattr(node, "arguments", [])
+                    if (len(arguments) == 1
+                            and type(arguments[0]).__name__ ==
+                            "NamedValueExpression"
+                            and getattr(arguments[0], "symbol", None) is symbol):
+                        name = str(getattr(node, "subroutineName", ""))
+                        if name in ("sort", "rsort"):
+                            operations.append((offset, name, None))
+
+            instance.visit(inspect_fixed_operations)
+            operations.sort(key=lambda item: item[0])
+
+            def lowered_values(lowered):
+                result = []
+                for statement in lowered.get("stmts", []):
+                    value = statement.get("value")
+                    if value is None:
+                        return None
+                    result.append(value)
+                return result if len(result) == count else None
+
+            if values is None:
+                for _offset, operation, lowered in operations:
+                    if operation == "assign":
+                        values = lowered_values(lowered)
+                    elif operation in ("sort", "rsort"):
+                        if values is None:
+                            valid = False
+                            break
+                        keyed = []
+                        for value in values:
+                            key = _literal_array_order_key(
+                                value, width, bool(leaf_type.isSigned))
+                            if key is None:
+                                valid = False
+                                break
+                            keyed.append((key, value))
+                        if not valid:
+                            break
+                        values = [value for _key, value in sorted(
+                            keyed, key=lambda item: item[0],
+                            reverse=operation == "rsort")]
+            else:
+                for _offset, operation, lowered in operations:
+                    if operation == "assign":
+                        values = lowered_values(lowered)
+                    elif operation in ("sort", "rsort"):
+                        keyed = []
+                        for value in values:
+                            key = _literal_array_order_key(
+                                value, width, bool(leaf_type.isSigned))
+                            if key is None:
+                                valid = False
+                                break
+                            keyed.append((key, value))
+                        if not valid:
+                            break
+                        values = [value for _key, value in sorted(
+                            keyed, key=lambda item: item[0],
+                            reverse=operation == "rsort")]
+
+            if not valid or values is None:
+                return None
 
         if values is None:
             # Dynamic arrays without a declaration initializer are admitted

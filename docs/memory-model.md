@@ -1419,9 +1419,11 @@ admits EXACTLY one handler, either naming one admitted exception class or
 using a bare `except:`. An unused `as e` binding is erased safely; observing
 the bound exception object remains outside the tier. `else` is lowered at
 ingestion to a success flag, the existing `try` node, and an ordinary `if`,
-so the suite runs only after a normal body exit; `finally` remains loud.
+so the suite runs only after a normal body exit; a `finally: pass` suite is
+lowered away because it is observationally a no-op, while effectful
+`finally` suites remain loud.
 Everything else (multiple handlers, tuple patterns, observed `as e`, and
-`finally`) stays structured-but-loud. Evaluation composes on the existing
+effectful `finally`) stays structured-but-loud. Evaluation composes on the existing
 `Run`: run the body; `.ok` skips the handler; a bare handler catches every
 represented `.exn`; `.exn (.user cid)` with cid matching a named handler's
 class runs the handler FROM THE RETAINED STATE (no rollback — CPython); any

@@ -4659,37 +4659,23 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "Try",
+            "kind": "Return",
             "span": {
-              "lineno": 242,
-              "col_offset": 4,
-              "end_lineno": 245,
-              "end_col_offset": 12
+              "lineno": 243,
+              "col_offset": 8,
+              "end_lineno": 243,
+              "end_col_offset": 16
             },
-            "body": [
-              {
-                "kind": "Return",
-                "span": {
-                  "lineno": 243,
-                  "col_offset": 8,
-                  "end_lineno": 243,
-                  "end_col_offset": 16
-                },
-                "value": {
-                  "kind": "Name",
-                  "span": {
-                    "lineno": 243,
-                    "col_offset": 15,
-                    "end_lineno": 243,
-                    "end_col_offset": 16
-                  },
-                  "id": "n"
-                }
-              }
-            ],
-            "exc_name": "",
-            "handler": [],
-            "try_unsupported": "no handler, 'finally' clause"
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 243,
+                "col_offset": 15,
+                "end_lineno": 243,
+                "end_col_offset": 16
+              },
+              "id": "n"
+            }
           }
         ]
       },

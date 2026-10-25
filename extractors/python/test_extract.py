@@ -681,6 +681,17 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(body[2]["test"]["id"], marker)
         self.assertEqual(body[2]["body"][0]["kind"], "Return")
 
+    def test_noop_finally_lowers_to_body(self):
+        env = self._envelope_of(
+            "def f(n):\n"
+            "    try:\n"
+            "        return n\n"
+            "    finally:\n"
+            "        pass\n")
+        body = env["module"]["body"][0]["body"]
+        self.assertIsNone(env["module"]["body"][0].get("locals_unsupported"))
+        self.assertEqual(body[0]["kind"], "Return")
+
 
     # -- For statements and module constants (sunfish ladder steps 1-2) ----
 

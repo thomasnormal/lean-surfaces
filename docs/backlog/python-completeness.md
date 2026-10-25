@@ -5029,3 +5029,25 @@ the two repaired rows executable.
 DECIDED: keep the `del` census conservative at control-flow joins while
 admitting definite straight-line and loop-body rebinding. Move to the next
 remaining synchronous wall.
+
+## 2026-10-25-pycomplete-124 — admit no-op `finally: pass`
+
+The exceptions tier still refused every `finally` clause, but the
+`exc_lab.finally_clause` witness has a literal `pass` finalizer. A pass suite
+has no observable effect on normal return, propagated exceptions, or control
+flow, so ingestion now lowers exactly that shape to its `try` body. Finalizers
+with any effect remain structured-but-loud; the `exc_handlers_lab` mutation
+row continues to pin that boundary.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `exc_lab.finally_clause(1)` matches in both interpreters |
+| Full executable differential | 3,693 cases: 0 failed, 92 whitelisted-unsupported, 3,601 matched |
+| Full proof differential | 3,693 cases: 0 failed, 198 refused, 3,495 matched |
+| Refusal census | 92 rows, 0 drifts; `exc.finally` retains only the effectful row |
+| Extractor tests | 133/133 passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the exact no-op finalizer lowering and retain loud failure
+for effectful finalization until the frame's all-flow cleanup semantics is
+priced and proved.

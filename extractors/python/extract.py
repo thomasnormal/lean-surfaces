@@ -2234,6 +2234,15 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # execution refuses with the reason -- structured-but-loud. The
         # body/handler are carried best-effort either way so the Lean-side
         # censuses (binds/refs/yield/def walkers) stay exact.
+        # A `finally: pass` suite has no observable effect on any flow
+        # (normal return, break/continue, or a propagated exception), so the
+        # exact lowering is simply the try body. Keep real finalizers in the
+        # structured-but-loud path below; dropping their effects would be
+        # unsound.
+        if (node.finalbody and not node.handlers and not node.orelse
+                and all(isinstance(s, ast.Pass) for s in node.finalbody)):
+            return convert_stmt_list(node.body, module_scope=module_scope,
+                                     func_scope=func_scope)
         reasons = []
         exc_name = ""
         handler_body = []

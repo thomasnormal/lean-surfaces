@@ -1323,7 +1323,9 @@ channel, because CPython really does refuse).
 set of integer elements already stored in strictly increasing order. CPython
 3.9 produces that same order for this deterministic shape; every other set
 order, including reverse insertion and mixed element kinds, remains loud
-because the general hash-table layout is not represented.
+because the general hash-table layout is not represented. The same renderer
+also serves f-string fields and assertion messages, so those channels admit
+the deterministic shape with no separate ordering rule.
 
 **Fragments.** `set(…)` calls leave `Expr.heapFree` (allocation, and
 a generator argument drains); the membership/len/truthiness readers

@@ -4960,3 +4960,23 @@ match.
 DECIDED: admit increasing integer and empty-set rendering only; retain loud
 failure for arbitrary hash order and mixed set elements. Move to the next
 remaining synchronous wall.
+
+## 2026-10-25-pycomplete-121 — thread deterministic set rendering through derived channels
+
+The deterministic integer-set renderer now reaches the two existing consumers
+that share `printOne`: f-string fields and assertion messages. Their stale
+example envelopes had retained the old `Set` unsupported nodes, so they were
+regenerated from the Python sources; both rows now match CPython 3.9. The
+arbitrary set iteration frontier remains loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `assert_lab.msg_set(-1)` and `fstring_lab.set_field(3)` both match |
+| Full differential | `3693 cases: 0 failed, 95 whitelisted-unsupported, 3598 matched` |
+| Refusal census | 95 rows, 0 drifts; `set.order` now has 3 rows |
+| Generated artifacts | `assert_lab.json` and `fstring_lab.json` regenerated with the current extractor |
+| Formatting | `git diff --check` passed |
+
+DECIDED: share the exact increasing-integer set renderer across `print`,
+f-strings, and assertion messages; retain loud failure for arbitrary hash order.
+Move to the next remaining synchronous wall.

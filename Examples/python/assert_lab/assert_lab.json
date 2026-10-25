@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.19"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/assert_lab/assert_lab.py",
   "source_sha256": "dd4bfad8184ea9f05e4881816f88ea29fdcd078c675f0a41450ada176ec78fbc",
@@ -1939,15 +1939,64 @@
               ]
             },
             "msg": {
-              "kind": "Unsupported",
+              "kind": "Call",
               "span": {
                 "lineno": 129,
                 "col_offset": 18,
                 "end_lineno": 129,
                 "end_col_offset": 24
               },
-              "py_kind": "Set",
-              "text": "{1, 2}"
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 129,
+                  "col_offset": 18,
+                  "end_lineno": 129,
+                  "end_col_offset": 24
+                },
+                "id": "set"
+              },
+              "args": [
+                {
+                  "kind": "List",
+                  "span": {
+                    "lineno": 129,
+                    "col_offset": 18,
+                    "end_lineno": 129,
+                    "end_col_offset": 24
+                  },
+                  "elts": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 129,
+                        "col_offset": 19,
+                        "end_lineno": 129,
+                        "end_col_offset": 20
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    },
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 129,
+                        "col_offset": 22,
+                        "end_lineno": 129,
+                        "end_col_offset": 23
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "2"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
             }
           },
           {

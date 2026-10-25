@@ -4597,6 +4597,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-signed-char-compound-divide-mid",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableSignedCharCompoundDivideFrameWitness",
+    "cpp_source": "signed char frame_signed_char_compound_divide(signed char value) { value /= 3; return value; } bool callable_witness() { return frame_signed_char_compound_divide(12) == 4; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-unsigned-char-compound-modulo-mid",
     "kind": "expression",
     "corpus": "rung-3 witness",

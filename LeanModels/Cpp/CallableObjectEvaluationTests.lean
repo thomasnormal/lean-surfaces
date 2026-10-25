@@ -1646,6 +1646,28 @@ def callableLocalDecrementStatementFrameWitness : Bool := localDecrementStatemen
 
 #guard callableLocalDecrementStatementFrameWitness
 
+private def localPostDecrementStatementFrame : Bool :=
+  let base := incrementFunction .int "--" false
+  let function := {base with body := .block (.sequence
+    (automaticLiteral "0x11" 3)
+    (.sequence
+      (.expression {
+        expression := .increment "--" true (handle "0x11")
+        sourceType := intType
+        type := intType})
+      (.return_ {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType})))}
+  match evaluateCallableObject 64 .lp64 function [signed 7] with
+  | .ok (.ok value) => value == signed 2
+  | _ => false
+
+def callableLocalPostDecrementStatementFrameWitness : Bool :=
+  localPostDecrementStatementFrame
+
+#guard callableLocalPostDecrementStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

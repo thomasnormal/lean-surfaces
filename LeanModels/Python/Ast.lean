@@ -202,7 +202,8 @@ inductive Stmt where
   /-- `raise` (schema `Raise`, the exceptions tier — docs/memory-model.md
   §exceptions). Structured in FULL generality (`exc`/`cause` both
   optional, any expressions); EVALUATION admits exactly `raise N` where
-  `N` names an admitted exception class (`class N(Exception): pass`,
+  `N` names an admitted exception class (`class N(Exception): pass` or a
+  measured direct builtin ancestor,
   `ClassDefn.isExc`) — bare `raise`, `raise <expr>`, `raise N(args…)`
   and `raise … from …` all refuse loudly there, never here. -/
   | raiseStmt (exc : Option Expr) (cause : Option Expr) (span : Span)
@@ -526,6 +527,8 @@ structure ClassDefn where
   `raise N("message")` form maps to `userMessage`; other value-position
   constructors remain loud. -/
   isExc : Bool := false
+  /-- Direct builtin exception ancestor for the measured subclass slice. -/
+  excBase : Option String := Option.none
   /-- Is CREATING this class observationally free? CPython executes a
   class body — and evaluates its bases — at the `class` statement. The
   model builds `ClassDefn` at ingestion. A pure body may be skipped; an
@@ -712,7 +715,7 @@ inductive PyErr where
   | importError (modName : String)
   /-- A USER exception (the exceptions tier, docs/memory-model.md
   §exceptions): class-identity, no payload — `raise N` of an admitted
-  `class N(Exception): pass` IS its class. `cid` is the `ClassId` (the
+  `class N(Exception): pass` (or a measured direct builtin ancestor) IS its class. `cid` is the `ClassId` (the
   `Module.classes` index — identity for handler matching and `==`);
   `name` is the class name, carried so the boundary can render
   CPython's `type(e).__name__` without the module in hand (within one
@@ -786,7 +789,8 @@ explicit list of pairs.
                        represented as builtin identities but remain outside
                        `Exception`, matching CPython's direct subclasses
     Exception          catches everything below, and every admitted user
-                       exception class too (`class N(Exception): pass`)
+                       exception class too (`class N(Exception): pass` or a
+                       measured direct builtin ancestor)
     ArithmeticError    catches both division-error constructors
     LookupError        catches IndexError and KeyError
     ZeroDivisionError  catches BOTH `zeroDivisionError` and `zeroDivisionPow`
@@ -856,6 +860,35 @@ def builtinExcCatches : String → PyErr → Bool
       raised == "OSError" || raised == "EnvironmentError"
   | name,                 .builtinException raised => name == raised
   | _,                   _                   => false
+
+/-- Subsumption for a user exception class with one measured builtin base. -/
+def builtinExcNameCatches (handler base : String) : Bool :=
+  handler == "BaseException" ||
+  (handler == "Exception" && base != "BaseException"
+    && base != "SystemExit" && base != "KeyboardInterrupt"
+    && base != "GeneratorExit") ||
+  (handler == "ArithmeticError" &&
+    (base == "ArithmeticError" || base == "ZeroDivisionError"
+      || base == "OverflowError")) ||
+  (handler == "LookupError" &&
+    (base == "LookupError" || base == "IndexError" || base == "KeyError")) ||
+  (handler == "RuntimeError" &&
+    (base == "RuntimeError" || base == "RecursionError")) ||
+  handler == base
+
+def classAtExc : List ClassDefn → Nat → Option ClassDefn
+  | [], _ => Option.none
+  | c :: _, 0 => some c
+  | _ :: rest, n + 1 => classAtExc rest n
+
+def userExcCatches (m : Module) (handler : String) : PyErr → Bool
+  | .user cid _ | .userMessage cid _ _ =>
+      match classAtExc m.classes.toList cid with
+      | some c => match c.excBase with
+        | some base => builtinExcNameCatches handler base
+        | none => false
+      | none => false
+  | _ => false
 
 /-- PEP 479: StopIteration escaping a generator body becomes RuntimeError.
 Normal iterator exhaustion returns `none` and never reaches this worker. -/

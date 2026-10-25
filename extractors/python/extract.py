@@ -1712,6 +1712,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         namedtuple_base = None
         simple_base = None
         exception_base = False
+        exception_ancestor = None
         if node.bases:
             # A SINGLE base that is a plain `namedtuple(...)` call is the
             # recorded value-like subclass shape (sunfish's Position):
@@ -1737,6 +1738,20 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                                 and isinstance(s.value, ast.Constant))
                             for s in node.body)):
                 exception_base = True
+            elif (len(node.bases) == 1 and isinstance(b, ast.Name)
+                    and b.id in {
+                        "BaseException", "Exception", "ArithmeticError",
+                        "LookupError", "TypeError", "NameError",
+                        "ZeroDivisionError", "OverflowError", "IndexError",
+                        "ValueError", "KeyError", "RuntimeError",
+                        "RecursionError", "AttributeError", "AssertionError",
+                        "StopIteration", "OSError", "EnvironmentError"}
+                    and not node.keywords and not node.decorator_list
+                    and all(isinstance(s, ast.Pass)
+                            or (isinstance(s, ast.Expr)
+                                and isinstance(s.value, ast.Constant))
+                            for s in node.body)):
+                exception_ancestor = b.id
             elif (len(node.bases) == 1 and isinstance(b, ast.Name)):
                 # Narrow inheritance slice: a plain same-module class name.
                 # Ingestion checks source order and the base's own admission;
@@ -1780,7 +1795,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # property/setter/classmethod/staticmethod, which happen to have
         # no creation-time effect -- lucky, not sound.
         creation_effects = bool(node.keywords) or bool(node.decorator_list)
-        if node.bases and namedtuple_base is None and not exception_base:
+        if node.bases and namedtuple_base is None and not exception_base and exception_ancestor is None:
             creation_effects = True
         for s in node.body:
             if isinstance(s, ast.FunctionDef):
@@ -1817,6 +1832,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             out["base"] = simple_base
         if exception_base:
             out["exception_base"] = True
+        if exception_ancestor is not None:
+            out["exception_ancestor"] = exception_ancestor
         if _has_global(node):
             out["has_global"] = True
         return out

@@ -17,6 +17,33 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-25-pycomplete-111 — direct builtin-exception subclass inheritance
+
+The exception class slice now admits one direct subclass of a measured builtin
+exception, such as `class ValueSignal(ValueError): pass`. Ingestion records the
+ancestor, checks that its builtin name is not rebound anywhere in the module,
+and marks the class as an exception only after that census succeeds. Handler
+matching uses the explicit measured ancestor table: `BaseException` and
+`Exception` catch the subclass, while the arithmetic, lookup, runtime, and
+exact-name entries retain their pinned CPython relationships. Shadowed,
+forward, dynamic, and unmeasured exception bases remain loud.
+
+`exc_ancestors_lab.value_ancestor` raises the subclass and catches it through
+`except ValueError`; the generated envelope and `#py_check` pin the class
+identity path, and the differential suite adds the same row.
+
+| Measurement | Result |
+|---|---|
+| Extractor tests | 128 passed |
+| Focused executable witness | `value_ancestor()` → `1`; `graphlib.py` runs without the class wall |
+| Differential suite | 3693 cases: 0 failed, 100 whitelisted, 3593 matched |
+| Class census | 21 fixtures + graphlib/opcode/bisect: 0 failures; 0 ground-truth violations |
+| Lean build | `lake build leanmodels-run` passed |
+
+DECIDED: admit only the measured direct builtin-exception ancestor names and
+their explicit handler subsumption table; retain loud failure for exception
+MROs, rebinding, and exception classes outside that table.
+
 ## 2026-10-24-pycomplete-110 — built-in `object` class base
 
 The class tier now admits `class C(object)` as the default-protocol class it

@@ -163,7 +163,8 @@ each for 17 more.
 * **Exceptions are the largest single class and the tier has MOVED under
   the record.** `exc.handler` + `exc.raise` + `exc.finally` is 17 of 113
   rows. But the measured message says `'except AssertionError:': only an
-  admitted exception class (class N(Exception): pass) or the pinned
+  admitted exception class (class N(Exception): pass, including a measured
+  direct builtin ancestor) or the pinned
   import …` — a user-defined exception class IS admitted today. What is
   left is BUILTIN handler classes, `as` bindings, `else`, bare `except`,
   tuple handlers, `raise <expression>`, `raise C(args)`, bare re-raise,
@@ -384,12 +385,15 @@ in Python.
 
 17 of 113 whitelisted rows, one grammar production (`Try`), four
 interpreter messages — and, per §3, a tier that has ALREADY moved: a
-user-defined `class N(Exception): pass` handler is admitted today.
+user-defined `class N(Exception): pass` handler and the measured direct
+builtin-ancestor subclass slice are admitted today.
 
-What is left needs one thing the model does not have: an exception
-VALUE. `PyErr` is a closed enum, so `except ValueError`, `raise
-C(args)`, `as e`, bare re-raise and `raise … from …` all need a class +
-args object and a subclass relation for handler matching. `else` and
+What is left includes exception values and general MROs. `PyErr` is a closed
+enum, so `raise
+C(args)`, `as e`, bare re-raise and `raise … from …` all need an exception
+value and a broader subclass relation for handler matching. The direct
+builtin-ancestor table is explicit and finite; general MROs remain loud.
+`else` and
 `finally` are flow, and cheaper. Sequence the value first; the flow
 arms fall out.
 

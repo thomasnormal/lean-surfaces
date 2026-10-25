@@ -10,6 +10,7 @@ load_program exc_ancestors_script from "Examples/python/exc_ancestors_lab/exc_an
 set_option maxRecDepth 8192
 
 #py_check exc_ancestors_lab.caught_arithmetic_identity(0) = 0
+#py_check exc_ancestors_lab.value_ancestor() = 1
 #py_check exc_ancestors_lab.caught_arithmetic_identity(-7) = -7
 #py_check exc_ancestors_lab.base_inventory(0) = 100
 #py_check exc_ancestors_lab.base_inventory(1) = 101

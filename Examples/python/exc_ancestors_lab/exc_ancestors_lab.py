@@ -2,6 +2,10 @@ class Signal(Exception):
     pass
 
 
+class ValueSignal(ValueError):
+    pass
+
+
 class Box:
     pass
 
@@ -16,6 +20,13 @@ def caught_arithmetic_identity(value):
         return 1 // 0
     except ArithmeticError:
         return value
+
+
+def value_ancestor():
+    try:
+        raise ValueSignal
+    except ValueError:
+        return 1
 
 
 def base_inventory(kind):

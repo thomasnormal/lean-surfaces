@@ -70,6 +70,15 @@ open LeanModels LeanModels.Python
 
 namespace LeanModels.Python.Monadic
 
+def userExcCatches (m : Module) (handler : String) : PyErr → Bool
+  | .user cid _ | .userMessage cid _ _ =>
+      match getClass? m cid with
+      | some c => match c.excBase with
+        | some base => builtinExcNameCatches handler base
+        | none => false
+      | none => false
+  | _ => false
+
 def hasContextProtocolM (c : ClassDefn) : Bool :=
   c.methods.toList.contains "__enter__"
     && c.methods.toList.contains "__exit__"
@@ -1570,7 +1579,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
               match findClass m id with
               | some (ci, c) =>
                   if c.isExc then raisePy (.user ci c.name)
-                  else refuse s!"'raise {id}': only an admitted exception class (`class N(Exception): pass`) can be raised — outside the tier (docs/memory-model.md §exceptions)"
+                  else refuse s!"'raise {id}': only an admitted exception class (`class N(Exception): pass` or a measured direct builtin ancestor) can be raised — outside the tier (docs/memory-model.md §exceptions)"
               | Option.none =>
                   if (findNamedTuple m id).isSome then
                     raisePy (.typeError "exceptions must derive from BaseException")
@@ -1603,7 +1612,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
                         | _ => refuse s!"'raise {id}(…)': the measured constructor form requires one string argument — outside the tier (docs/memory-model.md §exceptions)"
                     | _ => refuse s!"'raise {id}(…)': the measured constructor form requires exactly one positional string argument — outside the tier (docs/memory-model.md §exceptions)"
                   else
-                    refuse s!"'raise {id}(…)': only an admitted exception class (`class N(Exception): pass`) can be raised — outside the tier (docs/memory-model.md §exceptions)"
+                    refuse s!"'raise {id}(…)': only an admitted exception class (`class N(Exception): pass` or a measured direct builtin ancestor) can be raised — outside the tier (docs/memory-model.md §exceptions)"
               | none => refuse s!"'raise {id}(…)': user exception and namedtuple constructors with payloads are outside the tier (docs/memory-model.md §exceptions)"
             else if (findNamedTuple m id).isSome then
               refuse s!"'raise {id}(…)': user exception and namedtuple constructors with payloads are outside the tier (docs/memory-model.md §exceptions)"
@@ -1695,12 +1704,12 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
                 -- drifts. Nothing is inferred from CPython's hierarchy --
                 -- every pair in that table is one the tier can exhibit.
                 tryCatch (execOpenList K m body.toList) (fun e =>
-                  if builtinExcCatches excName e then execOpenList K m handler.toList
+                  if builtinExcCatches excName e || userExcCatches m excName e then execOpenList K m handler.toList
                   else raisePy e)
               else if refusedAncestorExc.contains excName then
                 refuse s!"'except {excName}:': '{excName}' is a CPython ANCESTOR class the tier has not measured — admitting it would claim a catch set this model has never enumerated, so it is refused BY NAME rather than derived from a hierarchy (docs/memory-model.md §exceptions)"
               else
-                refuse s!"'except {excName}:': matchable classes are an admitted user class (`class N(Exception): pass`), the pinned import-error names, or one of `admittedBuiltinExc` — '{excName}' is none of those (docs/memory-model.md §exceptions)"
+                refuse s!"'except {excName}:': matchable classes are an admitted user class (`class N(Exception): pass` or a measured direct builtin ancestor), the pinned import-error names, or one of `admittedBuiltinExc` — '{excName}' is none of those (docs/memory-model.md §exceptions)"
           | some (ci, c) =>
               if !c.isExc then
                 refuse s!"'except {excName}:': class '{excName}' is not an admitted exception class — outside the tier (docs/memory-model.md §exceptions)"

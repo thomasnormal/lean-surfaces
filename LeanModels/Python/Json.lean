@@ -974,14 +974,16 @@ def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) 
       | .ok .null => pure Option.none
       | .ok baseJson => do
         pure (ntupleCallSpec name span (← parseExpr baseJson))
-    -- the exceptions tier's THIRD class kind (docs/memory-model.md
+    -- the exceptions tier's class kinds (docs/memory-model.md
     -- §exceptions): the extractor marks the exact `class N(Exception):
-    -- pass` shape; a CANDIDATE here — `parseModule`'s census demotes it
-    -- (isExc := false, ok := false) unless `Exception` is provably
+    -- pass` shape and the measured direct builtin-ancestor shape. These are
+    -- CANDIDATES here — `parseModule`'s census demotes them (isExc := false,
+    -- ok := false) unless the referenced builtin name is provably
     -- unshadowed at module level (the ntBase demotion discipline).
     let isExc := match j.getObjVal? "exception_base" with
       | .ok (.bool b) => b
       | _ => false
+    let excBase ← getOptStrField j "exception_ancestor"
     let body ← (← getField j "body").getArr?
     let mut methods : Array String := #[]
     let mut fns : Array FunctionDefn := #[]
@@ -1009,7 +1011,7 @@ def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) 
       if k == "FunctionDef" then pure (methodCreationPure stmtJson)
       else pure (classBodyStmtPure (← parseStmt stmtJson))
     return ({ name, ok := classUnsupported.isNone, methods, base, slots, hasGlobal, ntBase,
-              isExc, creationPure := noCreationEffects && bodyPure, span,
+              isExc, excBase, creationPure := noCreationEffects && bodyPure, span,
               body := classBody,
               creationExecutable := classCreationExecutableShape classUnsupported
                 decoratedMethod classBody }, fns)
@@ -1833,11 +1835,31 @@ def parseModule (j : Json) : Except String Module :=
       && functions.toList.all (fun f => f.name != "Exception" && !f.hasGlobal)
       && classes'.toList.all (fun c => c.name != "Exception" && !c.hasGlobal)
       && namedtuples.toList.all (fun nt => nt.name != "Exception")
+    let builtinExcOk :=
+      (match topLevel'.toList.mapM stmtBinds with
+       | some _ => true
+       | none => false)
+      && classes'.toList.all fun c =>
+        match c.excBase with
+        | some b => admittedBuiltinExc.contains b
+          && !(topLevel'.toList.map (fun st => (stmtBinds st).getD [])).flatten.contains b
+          && !functions.toList.any (fun f => f.name == b || f.hasGlobal)
+          && !classes'.toList.any (fun d => d.name == b || d.hasGlobal)
+          && !namedtuples.toList.any (fun nt => nt.name == b)
+        | none => true
     let classes' :=
       if excOk then classes'
       else classes'.map fun c =>
         if c.isExc then
           { c with isExc := false, ok := false, creationPure := false } else c
+    let classes' :=
+      if builtinExcOk then classes'.map fun c =>
+        if c.excBase.isSome then { c with isExc := true, creationPure := c.creationExecutable }
+        else c
+      else classes'.map fun c =>
+        if c.excBase.isSome then
+          { c with excBase := Option.none, isExc := false, ok := false, creationPure := false }
+        else c
     -- A name-only base would become ambiguous if the module later rebinds the
     -- base class.  Keep the admitted slice conservative rather than silently
     -- dispatching through the wrong MRO; an ordered ClassId field is the

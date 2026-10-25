@@ -7576,3 +7576,21 @@ On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
 remains **2,937** and `ExpressionStatement:CallExpression` remains **2,911**.
 Differential coverage grows **202/197/0/5 → 203/198/0/5** with no
 disagreements; grammar coverage remains **216/89/127**.
+
+## Empty queue pops into integral unpacked structs — 2026-10-25
+
+An empty `pop_front()` or `pop_back()` on an uninitialized queue now assigns an
+untagged unpacked struct default field by field when every leaf is scalar or
+packed integral. The lowering reuses the existing flattened struct cells and
+therefore follows the §7.10.2.4 empty-pop result and §7.4.6 default
+initialization without introducing queue storage. Mutated or aliased queues,
+nonempty pops, aggregate fields, and scheduled forms remain loud. The
+`queue_empty_pop_struct_default` fixture supplies the differential row and Lean
+receipt.
+
+On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
+**5,057 → 5,058** and partial files **16,929 → 16,928** (67 include skips).
+`AssignmentExpression:target` falls **2,937 → 2,936** while
+`ExpressionStatement:CallExpression` remains **2,911**. Differential coverage
+grows **203/198/0/5 → 204/199/0/5** with no disagreements; grammar coverage
+remains **216/89/127**.

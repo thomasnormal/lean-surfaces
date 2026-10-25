@@ -372,3 +372,18 @@ window; later writes, control-dependent assignments, and out-of-range counts
 remain loud. The `streaming_dynamic_with_range` fixture covers the §11.4.14.4
 shape. On the available 21,342-path snapshot, clean files move **4,861 →
 4,862** and `AssignmentExpression:target` falls **2,794 → 2,793**.
+
+## Empty queue pops into integral unpacked structs — 2026-10-25
+
+When an uninitialized queue is popped and its element type is an untagged
+unpacked struct whose leaves are scalar or packed integral fields, the default
+element value is lowered to one zero/default write per flattened destination
+cell. This follows §7.10.2.4's empty-pop result and §7.4.6's aggregate default
+initialization while reusing the existing struct field-cell representation.
+Queue mutations, aliases, nonempty queues, aggregate fields, and scheduled
+forms remain loud.
+
+`queue_empty_pop_struct_default` is the differential witness. In the 22,053-path
+snapshot, clean files move **5,057 → 5,058**, partial files **16,929 → 16,928**,
+and `AssignmentExpression:target` falls **2,937 → 2,936**; differential
+coverage moves **203/198/0/5 → 204/199/0/5**.

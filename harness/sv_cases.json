@@ -1826,6 +1826,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "queue_empty_pop_struct_default",
+      "file": "Examples/system-verilog/queue_empty_pop_struct_default/queue_empty_pop_struct_default.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

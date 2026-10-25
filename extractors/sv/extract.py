@@ -7330,7 +7330,7 @@ def _zero_size_method(expression):
         return False
 
 
-def _queue_empty_pop_method(expression):
+def _queue_empty_pop_method(expression, allow_struct=False):
     """Recognize a zero-argument pop on a source-pure empty queue.
 
     IEEE 1800-2023 §7.10.2.4–7.10.2.5 returns the element type's default
@@ -7358,9 +7358,14 @@ def _queue_empty_pop_method(expression):
         initializer = getattr(symbol, "initializer", None)
         if initializer is not None and not _empty_queue_literal(initializer):
             return False
-        width, two_state, reason = type_width_2s(expression.type)
+        width, _two_state, reason = type_width_2s(expression.type)
         if width is None or reason is not None:
-            return False
+            if not allow_struct:
+                return False
+            aggregate = expression.type.canonicalType
+            if (type(aggregate).__name__ != "UnpackedStructType"
+                    or _unpacked_struct_field_cells("$queue", aggregate, None) is None):
+                return False
         name = getattr(symbol, "name", "")
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
         if not name or not source:
@@ -7393,6 +7398,57 @@ def _convert_queue_empty_pop(sm, expression):
         "bits": ("0" if two_state else "x") * width,
         "queue_empty_pop": expression.subroutineName,
     }, expression.type)
+
+
+def _queue_empty_pop_struct_assignment(sm, expr):
+    """Lower an empty queue pop into the destination's flattened struct cells.
+
+    An empty queue returns the default value of its element type.  The legacy
+    state represents integral-only unpacked structs as one scalar/vector cell
+    per field, so a direct whole-struct assignment can use the same lowering
+    as an out-of-bounds struct read.  Queue mutations, aliases, aggregate
+    fields, and nonempty queues remain outside this representation.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or type(expr.right).__name__ != "CallExpression"):
+            return None
+        if not _queue_empty_pop_method(expr.right, allow_struct=True):
+            return None
+        lhs_path = _unpacked_struct_path(expr.left)
+        if lhs_path is None:
+            return None
+        lhs_name, lhs_type = lhs_path
+        rhs_type = expr.right.type.canonicalType
+        if (type(lhs_type).__name__ != "UnpackedStructType"
+                or type(rhs_type).__name__ != "UnpackedStructType"):
+            return None
+        lhs_cells = _unpacked_struct_field_cells(lhs_name, lhs_type,
+                                                 node_span(sm, expr))
+        values = _unpacked_struct_oob_defaults(
+            sm, "$queue", rhs_type, node_span(sm, expr))
+        if (lhs_cells is None or values is None
+                or len(lhs_cells) != len(values)):
+            return None
+        if any(lwidth != vwidth for (_lname, lwidth, _linit, _ltype),
+               (_vname, vwidth, _value, _vtype) in zip(lhs_cells, values)):
+            return None
+        stmts = []
+        for (name, width, _init, ltype), (_vname, _vwidth, value, _vtype) in zip(
+                lhs_cells, values):
+            if not ltype.isFourState:
+                value = squash2_wrap(value, width)
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                           "width": width, "name": name},
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts,
+                "queue_empty_struct_pop_lowered": True}
+    except Exception:
+        return None
 
 
 def _associative_empty_query(expression):
@@ -12396,6 +12452,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         dynamic_fixed_mismatch = _dynamic_fixed_size_mismatch(sm, expr)
         if dynamic_fixed_mismatch is not None:
             return dynamic_fixed_mismatch
+        queue_struct_pop = _queue_empty_pop_struct_assignment(sm, expr)
+        if queue_struct_pop is not None:
+            return queue_struct_pop
         struct_pattern = _unpacked_struct_pattern_assignment(sm, expr)
         if struct_pattern is not None:
             return struct_pattern

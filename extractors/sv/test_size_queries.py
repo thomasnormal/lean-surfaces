@@ -80,6 +80,34 @@ class SizeQueries(unittest.TestCase):
         self.assertEqual([(node["queue_empty_pop"], node["bits"]) for node in pops],
                          [("pop_back", "0" * 32)])
 
+    def test_empty_queue_pop_struct_returns_field_defaults(self):
+        design = lower(
+            'typedef struct { int id; bit [3:0] flags; } item_t; '
+            'module top; item_t q[$]; item_t item; initial begin '
+            'item.id = 99; item.flags = 4\'hf; item = q.pop_front(); '
+            'if (q.size() == 0 && item.id == 0 && item.flags == 4\'h0) '
+            '$display("PASS"); end endmodule')
+        lowered = [node for node in nodes(design)
+                   if node.get("queue_empty_struct_pop_lowered")]
+        self.assertEqual(len(lowered), 1)
+        self.assertEqual([stmt["target"]["name"] for stmt in lowered[0]["stmts"]],
+                         ["item.id", "item.flags"])
+        self.assertEqual([stmt["value"]["operand"]["bits"]
+                          for stmt in lowered[0]["stmts"]],
+                         ["0" * 32, "0000"])
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_nonempty_struct_queue_pop_stays_loud(self):
+        design = lower(
+            'typedef struct { int id; bit [3:0] flags; } item_t; '
+            'module top; item_t q[$]; item_t item; initial begin '
+            'q.push_back(\'{1, 4\'h2}); item = q.pop_front(); end endmodule')
+        self.assertFalse(any(node.get("queue_empty_struct_pop_lowered")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
     def test_nonempty_queue_pop_stays_loud(self):
         design = lower(
             'module top; int q[$] = {1}; int result; initial begin '

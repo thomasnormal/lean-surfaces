@@ -32,7 +32,10 @@ explicit casts and overflow remain loud. Dynamic integral `$cast` has its own
 capture and copyback contract. `$rtoi($itor(I))` also lowers when `I` is one
 direct finite integral literal, because the integer-to-real conversion is exact;
 a named or computed integer operand remains loud. These paths are not generic
-callable frames and do not make arbitrary calls live.
+callable frames and do not make arbitrary calls live. A scalar `.len()` query
+on a string assigned a proven ASCII literal also folds, including a predefined
+string macro whose AST value is a literal; dynamic assignments and other string
+methods remain loud.
 
 ## Refusal boundary
 

@@ -1871,6 +1871,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "string_macro_len",
+      "file": "Examples/system-verilog/string_macro_len/string_macro_len.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

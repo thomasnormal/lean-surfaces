@@ -7659,3 +7659,19 @@ and partial files **16,924 → 16,923** (67 include skips). `CallExpression` fal
 `ExpressionStatement:CallExpression` remains **2,909**. Differential coverage
 grows **207/202/0/5 → 208/203/0/5** with no disagreements; grammar coverage
 remains **217/90/127**.
+
+## Predefined string macro `.len()` queries — 2026-10-25
+
+The string-length lowering now accepts a string variable assigned a predefined
+macro whose elaborated value is an ASCII literal. It matches that AST literal
+assignment by source position, preserving the existing refusal for dynamic
+assignments and other string methods. The `string_macro_len` fixture supplies
+the triple-quoted macro and `` `__FILE__`` differential witness and Lean
+receipt.
+
+On the refreshed **22,054-path** census, clean files move **5,064 → 5,066**
+and partial files **16,923 → 16,921** (67 include skips). `CallExpression` falls
+**2,829 → 2,827** while `AssignmentExpression:target` remains **2,937** and
+`ExpressionStatement:CallExpression` remains **2,909**. Differential coverage
+grows **208/203/0/5 → 209/204/0/5** with no disagreements; grammar coverage
+remains **217/90/127**.

@@ -9572,9 +9572,13 @@ def _string_literal_len_method(expression):
             if tail.startswith("="):
                 # The source spelling must be a literal assignment.  AST
                 # offsets include trivia differently from the raw source
-                # buffer, so use the spelling here and the elaborated offsets
-                # only for ordering values at the query site.
-                return re.match(r'=\s*"', tail) is not None
+                # buffer.  A predefined string macro is nevertheless a
+                # StringLiteral in the AST, so accept it by matching the
+                # occurrence to the collected literal assignment offset.
+                if re.match(r'=\s*"', tail) is not None:
+                    return True
+                return any(start >= 0 and abs(start - match.start()) <= 8
+                           for start, _ in assignments)
             return False
         if not all(inert_occurrence(match) for match in occurrences[1:]):
             return False

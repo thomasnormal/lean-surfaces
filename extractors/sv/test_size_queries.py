@@ -289,6 +289,15 @@ class SizeQueries(unittest.TestCase):
                   if node.get("string_literal_length_query")]
         self.assertEqual([int(node["bits"], 2) for node in values], [5, 2])
 
+    def test_predefined_string_macro_assignment_is_literal_history(self):
+        source = ('`define TEXT """\nmacro\ntext"""\n'
+                  'module top; string s; initial begin s = `TEXT; '
+                  '$display("%0d", s.len()); end endmodule')
+        design = lower(source)
+        values = [node for node in nodes(design)
+                  if node.get("string_literal_length_query")]
+        self.assertEqual([int(node["bits"], 2) for node in values], [11])
+
     def test_dynamic_string_assignment_before_len_stays_loud(self):
         design = lower(
             'module top; string s; string other; initial begin '

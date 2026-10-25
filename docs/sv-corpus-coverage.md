@@ -27,12 +27,12 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-25
 
-The chapter-scoped rerun covered **22,054** paths: **5,064 clean**,
-**16,923 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,054** paths: **5,066 clean**,
+**16,921 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
 `AssignmentExpression:target` (2,937), `ExpressionStatement:CallExpression` (2,909),
-`CallExpression` (2,829), `Hierarchy:ports` (2,398),
+`CallExpression` (2,827), `Hierarchy:ports` (2,398),
 `VariableSymbol:2state` (2,302), `SubroutineSymbol:Subroutine` (1,634),
 `NamedValueExpression:2state` (1,484), `ConcurrentAssertionStatement`
 (1,359), `InvalidStatement` (1,329), and `ClassType` (1,329).
@@ -80,6 +80,20 @@ The `real_bits_query` fixture supplies the differential and Lean receipt.
 The refreshed **22,054-path** census moves **5,063 → 5,064 clean** and
 **16,924 → 16,923 partial** (67 include skips); `CallExpression` falls
 **2,831 → 2,829**. Differential coverage grows **207/202/0/5 → 208/203/0/5**
+with no disagreements, and grammar coverage remains **217 witnesses, 90 MATCH,
+and 127 REFUSE**.
+
+## Predefined string macro `.len()` queries — 2026-10-25
+
+String variables assigned a predefined macro that elaborates to an ASCII
+literal now expose the exact `.len()` result. The lowering uses the AST's
+literal assignment and source order, so dynamic assignments and other string
+methods remain loud. The `string_macro_len` fixture covers both a triple-quoted
+macro and `` `__FILE__``.
+
+The refreshed **22,054-path** census moves **5,064 → 5,066 clean** and
+**16,923 → 16,921 partial** (67 include skips); `CallExpression` falls
+**2,829 → 2,827**. Differential coverage grows **208/203/0/5 → 209/204/0/5**
 with no disagreements, and grammar coverage remains **217 witnesses, 90 MATCH,
 and 127 REFUSE**.
 

@@ -7365,3 +7365,22 @@ partial files **16,993 → 16,992** (67 include skips). The leading
 `ExpressionStatement:CallExpression` blocker falls **2,926 → 2,925**.
 Differential coverage grows **190/185/0/5 → 191/186/0/5** with no
 disagreements; grammar coverage remains **216/88/128**.
+
+## Mailbox `num()` before the first operation — 2026-10-25
+
+The source-ordered scalar mailbox snapshot now lowers `num()` immediately
+after a direct unbounded `new()` to the exact zero count, while retaining the
+existing count updates for later `put()` and `get()` calls. The dedicated
+untouched-mailbox marker remains for the one-query shape; aliases, bounded
+constructors, other methods, and dynamic activity stay loud. The
+`mailbox_num_lifetime` fixture and Lean receipt cover the before/after counts.
+
+On the refreshed 22,053-path snapshot, clean files move **4,994 → 4,995** and
+partial files **16,992 → 16,991** (67 include skips). `CallExpression` falls
+**2,904 → 2,903** while `AssignmentExpression:target` remains **2,937** and
+`ExpressionStatement:CallExpression` remains **2,925**. Differential coverage
+grows **191/186/0/5 → 192/187/0/5** with no disagreements; grammar coverage
+remains **216/88/128**.
+
+DECIDED: continue with the next sound sole `CallExpression` family after the
+mailbox lifetime slice, preserving the capped validation and loud boundaries.

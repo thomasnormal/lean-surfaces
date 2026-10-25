@@ -7991,8 +7991,19 @@ def _convert_mailbox_literal_num(sm, expression):
 def _convert_mailbox_literal_state_call(sm, expression):
     """Render a literal mailbox ``num()`` value after put/get activity."""
     state = _mailbox_literal_get_state(sm, expression)
-    if (state is None or expression.subroutineName != "num"
-            or not state.get("activity", False)):
+    # ``num()`` is also meaningful immediately after construction: the
+    # mailbox contains zero messages before the first put/get.  The state
+    # scanner already proves the direct constructor, source order, and all
+    # subsequent methods, so an inactive snapshot is exact rather than an
+    # opaque handle guess.
+    if state is None or expression.subroutineName != "num":
+        return None
+    # Keep the dedicated untouched-mailbox marker for the old one-query
+    # shape; it is useful to clients that distinguish an empty object from a
+    # stateful FIFO snapshot.  Once another operation appears in the proven
+    # source sequence, this path owns the zero-count query as well.
+    if (not state.get("activity", False)
+            and _mailbox_empty_num_method(expression)):
         return None
     width = getattr(expression.type, "bitWidth", None)
     if width is None or width <= 0 or state["count"] < 0:

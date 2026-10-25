@@ -1718,6 +1718,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "mailbox_num_lifetime",
+      "file": "Examples/system-verilog/mailbox_num_lifetime/mailbox_num_lifetime.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

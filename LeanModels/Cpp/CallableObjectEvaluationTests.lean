@@ -1373,6 +1373,40 @@ def callableWhileZeroIterationStatementFrameWitness : Bool := whileZeroIteration
 
 #guard callableWhileZeroIterationStatementFrameWitness
 
+private def forInitializerBodyStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let initializer : CallableStatement := .assign (handle "0x10") {
+    expression := .integer 0
+    sourceType := intType
+    type := intType}
+  let condition : TypedCallableExpression := {
+    expression := .binary "<"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 3, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let step : CallableStatement := .expression {
+    expression := .increment "++" false (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let body : CallableStatement := .compoundAssign "+=" (handle "0x10") {
+    expression := .integer 1
+    sourceType := intType
+    type := intType}
+  let function := {base with body := .block (.sequence
+    (.forLoop initializer condition step body)
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 128 .lp64 function [signed 9] with
+  | .ok (.ok value) => value == signed 4
+  | _ => false
+
+def callableForInitializerBodyStatementFrameWitness : Bool := forInitializerBodyStatementFrame
+
+#guard callableForInitializerBodyStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

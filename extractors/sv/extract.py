@@ -8291,6 +8291,11 @@ def _case_source_expression_ok(expression, *, packed_members=False):
         if kind == "CallExpression" and _signing_call(node):
             pure = pure and _signing_signature_ok(node)
             return
+        if kind == "MemberAccessExpression":
+            container = node.value.type.canonicalType
+            if type(container).__name__ == "UnpackedUnionType":
+                pure = pure and _unpacked_struct_member(None, node) is not None
+                return
         if kind == "MemberAccessExpression" and packed_members:
             container = node.value.type.canonicalType
             if type(container).__name__ in ("PackedStructType", "PackedUnionType"):

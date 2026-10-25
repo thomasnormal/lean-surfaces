@@ -87,7 +87,7 @@ See [the measured coverage](docs/python-coverage.md) and
 
 ## C++ tier status
 
-The C++ tier prerelease is **v0.1.91 (2026-10-25)**. Tag `cpp-v0.1.91` identifies
+The C++ tier prerelease is **v0.1.92 (2026-10-25)**. Tag `cpp-v0.1.92` identifies
 the release commit on `master`; see the [C++ changelog](docs/cpp-changelog.md).
 The bounded surface admits translation roots and exact-path namespace,
 function, parameter, record, field, variable, enum, typedef, type-alias,

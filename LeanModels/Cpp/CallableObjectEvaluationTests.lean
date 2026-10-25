@@ -690,6 +690,26 @@ def callableUnsignedShortCompoundAddFrameWitness : Bool :=
 
 #guard callableUnsignedShortCompoundAddFrameWitness
 
+private def unsignedCharCompoundAddFrame : Bool :=
+  let base := incrementFunction .unsignedChar "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign "+=" (handle "0x10")
+      {expression := .integer 3, sourceType := .builtin .unsignedChar,
+        type := .builtin .unsignedChar})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .unsignedChar, type := .builtin .unsignedChar}))}
+  match CallableObjectFrame.start .lp64 function [⟨.unsigned 8, 12⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.unsigned 8, 15⟩)
+
+def callableUnsignedCharCompoundAddFrameWitness : Bool :=
+  unsignedCharCompoundAddFrame
+
+#guard callableUnsignedCharCompoundAddFrameWitness
+
 private def signedShortCompoundFrame : Bool :=
   let base := incrementFunction .short "++" false
   let function := {base with body := .block (.sequence

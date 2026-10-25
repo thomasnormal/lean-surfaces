@@ -5041,6 +5041,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-unsigned-long-long-compound-subtract-mid",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableUnsignedLongLongCompoundSubtractFrameWitness",
+    "cpp_source": "unsigned long long frame_unsigned_long_long_compound_subtract(unsigned long long value) { value -= 3; return value; } bool callable_witness() { return frame_unsigned_long_long_compound_subtract(12) == 9; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-int-compound-bitand-mid",
     "kind": "expression",
     "corpus": "rung-3 witness",

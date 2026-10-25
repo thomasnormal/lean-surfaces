@@ -1937,6 +1937,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "packed_nested_scalar_select",
+      "file": "Examples/system-verilog/packed_nested_scalar_select/packed_nested_scalar_select.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

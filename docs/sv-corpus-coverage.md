@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-25
 
-The chapter-scoped rerun covered **22,055** paths: **5,128 clean**,
-**16,860 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,055** paths: **5,130 clean**,
+**16,858 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`AssignmentExpression:target` (2,908), `ExpressionStatement:CallExpression` (2,908),
+`ExpressionStatement:CallExpression` (2,908), `AssignmentExpression:target` (2,905),
 `CallExpression` (2,801), `Hierarchy:ports` (2,398),
 `VariableSymbol:2state` (2,296), `SubroutineSymbol:Subroutine` (1,634),
 `NamedValueExpression:2state` (1,485), `ConcurrentAssertionStatement`
@@ -40,6 +40,21 @@ simulation tier. The leading refusal classes by file are
 The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
 matched all 200 fixed-seed sample classifications.
+
+## Constant nested packed scalar selections — 2026-10-25
+
+Constant element and part selections through two or more packed dimensions now
+flatten to one offset in the root integral vector for both reads and writes.
+Declared descending and ascending labels compose in source order; dynamic
+labels and aggregate or member receivers remain loud. The
+`packed_nested_scalar_select` fixture covers both range directions, scalar and
+part selections, and four-state `x` preservation.
+
+The refreshed **22,055-path** census moves **5,128 → 5,130 clean** and
+**16,860 → 16,858 partial** (67 include skips). `AssignmentExpression:target`
+falls **2,908 → 2,905**, while `ExpressionStatement:CallExpression` remains
+**2,908**. Differential coverage grows **215/210/0/5 → 216/211/0/5** with no
+disagreements; grammar coverage remains **217/90/127**.
 
 ## Nested multidimensional packed-array elements — 2026-10-25
 

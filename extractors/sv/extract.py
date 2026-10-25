@@ -6443,6 +6443,9 @@ def _convert_selected_read(sm, expr, expression_kind):
         dynamic_array = _fixed_array_dynamic_read(sm, expr)
         if dynamic_array is not None:
             return dynamic_array
+    nested_window = _nested_packed_constant_window(sm, expr, "SelectRead")
+    if nested_window is not None:
+        return nested_window
     packed_array_window = _fixed_array_packed_window(
         sm, expr, "SelectRead")
     if packed_array_window is not None:
@@ -6975,6 +6978,76 @@ def _fixed_array_packed_window(sm, expression, result_kind):
                   "descending": False}
         if result_kind == "SelectTarget":
             result["two_state"] = bool(base_two)
+        return result
+    except Exception:
+        return None
+
+
+def _nested_packed_constant_window(sm, expression, result_kind):
+    """Flatten constant selections through nested packed dimensions.
+
+    A packed vector such as ``logic [1:0][3:0] value`` is one flat LVec.
+    When every element/range label is constant, compose each declared-range
+    offset and reuse the ordinary selected-read/target node against the root
+    vector.  Dynamic labels and aggregate/member receivers stay on their
+    existing loud boundaries.
+    """
+    try:
+        current = expression
+        offset = 0
+        selections = 0
+        while type(current).__name__ in ("ElementSelectExpression",
+                                         "RangeSelectExpression"):
+            selections += 1
+            source = getattr(current, "value", None)
+            source_type = getattr(source, "type", None)
+            canonical = getattr(source_type, "canonicalType", source_type)
+            if type(canonical).__name__ != "PackedArrayType":
+                return None
+            kind = type(current).__name__
+            if kind == "ElementSelectExpression":
+                normalized = _packed_constant_index(sm, source_type,
+                                                    current.selector)
+            else:
+                selection = str(current.selectionKind).split(".")[-1]
+                if selection == "Simple":
+                    normalized = _packed_constant_simple_index(
+                        sm, source_type, current.left, current.right,
+                        current.type.bitWidth)
+                elif selection in ("IndexedUp", "IndexedDown"):
+                    normalized = _packed_constant_indexed_index(
+                        sm, source_type, current.left, current.type.bitWidth,
+                        selection == "IndexedDown")
+                else:
+                    normalized = None
+            if normalized is None:
+                return None
+            literal, _ = normalized
+            bits = literal.get("bits")
+            if not isinstance(bits, str) or any(bit not in "01" for bit in bits):
+                return None
+            offset += int(bits, 2)
+            current = source
+        if selections < 2:
+            return None
+        if not _storage_expression(current):
+            return None
+        root_width, _root_two, root_reason = type_width_2s(current.type)
+        if root_width is None or root_reason is not None:
+            return None
+        width = expression.type.bitWidth
+        if width <= 0 or offset < 0 or offset + width > root_width:
+            return None
+        base = convert_expr(sm, current)
+        if not _case_expression_ok(base):
+            return None
+        index = {"kind": "Literal", "span": node_span(sm, expression),
+                 "width": 32, "bits": format(offset, "032b")}
+        result = {"kind": result_kind, "span": node_span(sm, expression),
+                  "width": width, "value": base, "index": index,
+                  "index_signed": False, "descending": False}
+        if result_kind == "SelectTarget":
+            result["two_state"] = not expression.type.isFourState
         return result
     except Exception:
         return None
@@ -10368,6 +10441,10 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
                 target["two_state"] = assoc_cell["two_state"]
             return target, True
     if expression_kind in ("ElementSelectExpression", "RangeSelectExpression"):
+        nested_window = _nested_packed_constant_window(
+            sm, lhs, "SelectTarget")
+        if nested_window is not None:
+            return nested_window, True
         packed_array_window = _fixed_array_packed_window(
             sm, lhs, "SelectTarget")
         if packed_array_window is not None:

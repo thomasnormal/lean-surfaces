@@ -52,7 +52,22 @@ class PackedArrayMultidim(unittest.TestCase):
         value = process["value"]
         self.assertEqual(value["kind"], "SelectRead")
         self.assertEqual(value["index"]["bits"],
-                         "00000000000000000000000000000011")
+                         "00000000000000000000000000000111")
+        self.assertEqual(value["value"]["kind"], "Ident")
+        self.assertFalse(unsupported_nodes(design))
+
+    def test_nested_constant_scalar_write_flattens_to_root_vector(self):
+        design = extract_source(
+            "module top; logic [1:0][3:0] a; logic out; "
+            "initial begin a[1][2] = 1'b1; out = a[1][2]; end endmodule")
+        assignments = [node for node in design["modules"][0]["processes"][0]
+                       ["body"]["stmts"] if node.get("kind") == "BlockingAssign"]
+        self.assertEqual(assignments[0]["target"]["kind"], "SelectTarget")
+        self.assertEqual(assignments[0]["target"]["index"]["bits"],
+                         "00000000000000000000000000000110")
+        self.assertEqual(assignments[1]["value"]["kind"], "SelectRead")
+        self.assertEqual(assignments[1]["value"]["index"]["bits"],
+                         "00000000000000000000000000000110")
         self.assertFalse(unsupported_nodes(design))
 
     def test_packed_enum_array_keeps_scalar_cells(self):

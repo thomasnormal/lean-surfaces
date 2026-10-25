@@ -15,12 +15,12 @@
  "summary": {
   "blocker_files": [
    [
-    "AssignmentExpression:target",
+    "ExpressionStatement:CallExpression",
     2908
    ],
    [
-    "ExpressionStatement:CallExpression",
-    2908
+    "AssignmentExpression:target",
+    2905
    ],
    [
     "CallExpression",
@@ -960,8 +960,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5128,
-   "partial": 16860,
+   "clean": 5130,
+   "partial": 16858,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1022,7 +1022,7 @@
     52
    ],
    "simulation": [
-    4437,
+    4439,
     18686
    ],
    "simulation elaboration": [
@@ -1443,9 +1443,9 @@
     "unlockable": 0
    },
    "chapter-27": {
-    "clean": 192,
+    "clean": 193,
     "error": 0,
-    "partial": 162,
+    "partial": 161,
     "skip_include": 0,
     "total": 354,
     "unlockable": 0
@@ -1587,9 +1587,9 @@
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 249,
+    "clean": 250,
     "error": 0,
-    "partial": 547,
+    "partial": 546,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

@@ -7776,3 +7776,20 @@ The refreshed **22,055-path** census moves **5,127 → 5,128 clean** and
 `AssignmentExpression:target` remains **2,908**. Differential coverage grows
 **214/209/0/5 → 215/210/0/5** with no disagreements; grammar coverage remains
 **217/90/127**.
+
+## Constant nested packed scalar selections — 2026-10-25
+
+Constant element and part selections through two or more packed dimensions now
+flatten to one offset in the root integral vector for both reads and writes.
+Declared descending and ascending labels compose in source order, while
+dynamic labels and aggregate or member receivers remain loud. The
+`packed_nested_scalar_select` fixture supplies the differential row, generated
+envelope, and Lean receipt; extractor regressions cover scalar and part writes,
+ascending ranges, four-state `x`, and dynamic-index refusal.
+
+The refreshed **22,055-path** census moves **5,128 → 5,130 clean** and
+**16,860 → 16,858 partial** (67 include skips). The
+`AssignmentExpression:target` blocker falls **2,908 → 2,905**, while
+`ExpressionStatement:CallExpression` remains **2,908**. Differential coverage
+grows **215/210/0/5 → 216/211/0/5** with no disagreements; grammar coverage
+remains **217/90/127**.

@@ -4161,13 +4161,19 @@ payload blindness have ordinary proof arms for the intrinsic node.
 `Examples/python/fstring_repr` supplies real programs and symbolic proofs
 for Boolean/bounded-integer repr fields and arbitrary Unicode str fields,
 plus checks for effects, errors, containers, cycles, shadowing, and full script
-stdout. `!a`, nonempty format specifications, custom formatting protocols,
+stdout. `!a`, dynamic or richer format specifications, custom formatting protocols,
 and the renderer's remaining restrictions are unfinished semantics, not
 permanent exclusions from the Python goal.
 
 The following subsections are historical notes about the **pre-intrinsic**
 implementation. Their old constructor counts, census boundary, and measurements
 are not claims about the current implementation.
+
+The current literal-format rung admits one-part `d`, `>5`, and `03d`
+specifications for integer and Boolean fields. The lowering passes the raw field
+to a synthetic format worker for the default conversion, preserving CPython's
+`'    3'` and `'003'` results. Dynamic, multi-part, and richer specifications
+remain loud; the current lab has 24 matching rows and 4 recorded refusals.
 
 ### Historical sequencing choice
 

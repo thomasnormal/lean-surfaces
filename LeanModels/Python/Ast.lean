@@ -1069,6 +1069,11 @@ the structural evaluator recurse into each operand without a non-structural
 look through the call's argument array. -/
 def lenMultBuiltinName : String := "<lenmult>"
 
+/-- A literal f-string format specification lowered at ingestion. The angle
+brackets make the name unspellable in Python; it is checked before the real
+builtin tables for the same reason as the other synthetic names. -/
+def fstringFormatBuiltinName : String := "<fstring-format>"
+
 /-- §PEP 289: the synthesized genexp function's name PREFIX, and its implicit
 first parameter. Ingestion mints the names (`Json.lean`) and the EVALUATOR has
 to recognise them, because PEP 289 gives a genexp a creation-time rule that an

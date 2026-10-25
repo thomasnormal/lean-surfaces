@@ -231,6 +231,7 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
       -- `len(sequence * count)` is lowered by Json.lean so both operands
       -- remain structural call arguments (the evaluator cannot recurse
       -- through a pattern extracted from an argument array).
+      else if fname == fstringFormatBuiltinName then .builtin fname
       else if fname == lenMultBuiltinName then .builtin fname
       else if isBuiltinName fname then .builtin fname
       else if isModuleDunder fname then
@@ -308,6 +309,11 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     match vs with
     | [v] => lenM v
     | _ => raisePy (.typeError s!"len() takes exactly one argument ({vs.length} given)")
+  else if fname == fstringFormatBuiltinName then
+    match vs with
+    | [v, .str spec] => liftRes (formatSpecH v spec)
+    | [_, spec] => raisePy (.typeError s!"format() argument 2 must be str, not {spec.typeName}")
+    | _ => raisePy (.typeError s!"internal: {fstringFormatBuiltinName} expects two arguments")
   else if fname == lenMultBuiltinName then
     match vs with
     | [left, right] => lenMultM left right

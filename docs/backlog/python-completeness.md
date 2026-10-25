@@ -5175,3 +5175,25 @@ control-flow re-raises, and dynamic active-exception values remain loud.
 DECIDED: admit only the statically known direct class-identity re-raise;
 retain the general active-exception payload boundary until it is represented
 in the frame state and proved.
+
+## 2026-10-25-pycomplete-131 — admit literal f-string format specifications
+
+F-string fields with a one-part literal format specification now lower to a
+synthetic format worker. The admitted rung is CPython's integer/Boolean `d`,
+right-aligned width `>5`, and zero-padded decimal `03d` forms; the default
+conversion passes the raw field so numeric formatting is preserved. Dynamic or
+multi-part specs and the rest of the format mini-language remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 99 f-string cases: 0 failed, 98 matched, 1 boundary refusal in both interpreters |
+| Full executable differential | 3,694 cases: 0 failed, 81 whitelisted-unsupported, 3,613 matched |
+| Full proof differential | 3,694 cases: 0 failed, 187 refused, 3,507 matched |
+| Refusal census | 81 rows, 0 drifts; `fstring_lab::format_spec` and `format_spec_num` removed |
+| Extractor tests | 135/135 passed |
+| Lean build | `lake build leanmodels-run` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the measured literal numeric format forms through the
+shared worker; retain loud failure for dynamic, multi-part, and richer format
+specifications until their grammar and protocols are priced.

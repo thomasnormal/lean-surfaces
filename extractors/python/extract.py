@@ -401,16 +401,20 @@ def convert_fstring(node):
     """Preserve JoinedStr and FormattedValue for admitted str/repr fields.
 
     Ingestion concatenates the pieces and uses intrinsic conversions, not
-    shadowable names. Empty format specifications are admitted; nonempty
-    specifications and !a remain recorded gaps. Debug fields retain the
-    literal source text CPython supplies in the AST.
+    shadowable names. Empty format specifications and literal one-part
+    specifications are preserved; dynamic or multi-part specifications and
+    !a remain recorded gaps. Debug fields retain the literal source text
+    CPython supplies in the AST.
     """
     parts = []
     for part in node.values:
         if isinstance(part, ast.FormattedValue):
             if (part.format_spec is not None and
                     not (isinstance(part.format_spec, ast.JoinedStr) and
-                         not part.format_spec.values)):
+                         (not part.format_spec.values or
+                          (len(part.format_spec.values) == 1 and
+                           isinstance(part.format_spec.values[0], ast.Constant) and
+                           isinstance(part.format_spec.values[0].value, str))))):
                 return unsupported(node, "JoinedStr:format_spec")
             if part.conversion not in (-1, 97, 115, 114):
                 return unsupported(node, "JoinedStr:conversion")

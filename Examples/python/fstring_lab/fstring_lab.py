@@ -9,8 +9,8 @@ refusal cases are as load-bearing as the matching ones.
 The design claim under test: an f-string's `{x}` with no conversion and
 no format spec is exactly `str(x)` — the SAME operation `print` applies
 to one argument and `assert` applies to its message, i.e. `printOne`.
-If that is true, f-strings inherit the two-level rule and its pinned
-refusals for free, and no new renderer is written.
+Literal integer format specifications add the measured `>5` and `03d`
+shapes; dynamic or otherwise richer format mini-language forms remain loud.
 """
 
 
@@ -132,11 +132,12 @@ def conversion_str(n):
 
 
 def format_spec(n):
-    # a format spec is a whole mini-language (fill/align/width/precision)
+    # the admitted right-aligned width shape
     return f"{n:>5}"
 
 
 def format_spec_num(n):
+    # the admitted zero-padded decimal shape
     return f"{n:03d}"
 
 

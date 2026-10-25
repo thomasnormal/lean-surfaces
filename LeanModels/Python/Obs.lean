@@ -921,7 +921,8 @@ theorem fuelMono (fuel : Nat) :
                         -- len → sorted → max → min → any/all → set → abs →
                         -- int → sum → tuple → list → dict → range →
                         -- enumerate → count → next → ord → chr → hex → format → tail
-                        refine Run.le_ite ?_                                  -- len(sequence * count)
+                        refine Run.le_ite ?_                                  -- literal f-string format
+                            (Run.le_ite ?_                                  -- len(sequence * count)
                             (Run.le_ite (hb _)                                  -- len
                             (Run.le_ite ?_                                     -- sorted
                              (Run.le_ite ?_                                    -- max
@@ -947,7 +948,20 @@ theorem fuelMono (fuel : Nat) :
                                              (Run.le_ite (hb _)                 -- chr
                                              (Run.le_ite (hb _)                 -- hex
                                               (Run.le_ite (hb _)                -- format
-                                              ?_)))))))))))))))))))))))))
+                                              ?_))))))))))))))))))))))))))
+                        -- Literal f-string format specifications evaluate their
+                        -- two structural arguments and then use the pure
+                        -- format worker.
+                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                          cases vs with
+                          | nil => exact Run.le_refl _
+                          | cons _ rest =>
+                            cases rest with
+                            | nil => exact Run.le_refl _
+                            | cons _ rest' =>
+                              cases rest' with
+                              | nil => exact Run.le_refl _
+                              | cons _ _ => exact Run.le_refl _
                         -- `<lenmult>` evaluates its operands once and then
                         -- chooses a fuel-independent length/result worker.
                         · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
@@ -2585,7 +2599,20 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             -- §iter added a TWELFTH exclusion (`iter` ALLOCATES a key cursor);
             -- it is discarded here because this interpreter has no `iter` arm,
             -- so the chain below has no branch for it to rewrite away.
-            obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨hkw, hns⟩, hnn⟩, hne⟩, hnc⟩, hna⟩, hnl⟩, hnset⟩, hnpr⟩, hnlst⟩, hndct⟩, _⟩, hlm⟩, hflE⟩ := hfree
+            rcases hfree with ⟨hfree, hflE⟩
+            rcases hfree with ⟨hfree, hff⟩
+            rcases hfree with ⟨hfree, hlm⟩
+            rcases hfree with ⟨hfree, _⟩
+            rcases hfree with ⟨hfree, hndct⟩
+            rcases hfree with ⟨hfree, hnlst⟩
+            rcases hfree with ⟨hfree, hnpr⟩
+            rcases hfree with ⟨hfree, hnset⟩
+            rcases hfree with ⟨hfree, hnl⟩
+            rcases hfree with ⟨hfree, hna⟩
+            rcases hfree with ⟨hfree, hnc⟩
+            rcases hfree with ⟨hfree, hne⟩
+            rcases hfree with ⟨hfree, hnn⟩
+            rcases hfree with ⟨hkw, hns⟩
             have hs : (fname == "sorted") = false := by
               cases hbe : fname == "sorted"
               · rfl
@@ -2594,6 +2621,10 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               cases hbe : fname == lenMultBuiltinName
               · rfl
               · rw [bne, hbe] at hlm; simp at hlm
+            have hffx : (fname == fstringFormatBuiltinName) = false := by
+              cases hbe : fname == fstringFormatBuiltinName
+              · rfl
+              · rw [bne, hbe] at hff; simp at hff
             -- H4: `next` STEPS a generator and `enumerate`/`count`
             -- ALLOCATE an iterator object; H6 adds `any`/`all` (an
             -- unguarded short-circuit drain) — the fragment excludes all
@@ -2683,7 +2714,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 -- branch reduces away; the def/namedtuple collision guard
                 -- stays an undecided (walked) ite, and namedtuple
                 -- CONSTRUCTION is a pure value — world-preserving
-                simp only [hlmx, hs, hnx, hex, hcx, hay, hal, hsetx, hprx, hlstx, hdctx,
+                simp only [hlmx, hffx, hs, hnx, hex, hcx, hay, hal, hsetx, hprx, hlstx, hdctx,
                   findClass_heapFree hm fname,
                   Option.isSome_none, Bool.false_or, Bool.false_eq_true, if_false]
                 refine .ite (.ite .unsupported (.bind hargs fun st₁ vs h₁ => ?_)) ?_

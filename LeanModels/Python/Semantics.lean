@@ -2931,7 +2931,7 @@ interpreter was run as the runner). Kept separate from `isPyBuiltinName`,
 which stays the pinned CPython `dir(builtins)`. -/
 def isLoweredBuiltinName (id : String) : Bool :=
   id == dictDelBuiltinName || id == attrDelBuiltinName || id == "<dictkeys>" || id == "<dictvalues>" ||
-  id == "<dictitems>" || id == lenMultBuiltinName
+  id == "<dictitems>" || id == lenMultBuiltinName || id == fstringFormatBuiltinName
 
 /-- The refusal a name-resolution arm owes an UNMODELLED CPython builtin
 (see `isPyBuiltinName`) — the message names the construct, never a
@@ -3286,14 +3286,25 @@ def formatValueH (heap : Heap) (value : RVal) (reprConversion : Bool) : Res RVal
 integers and Booleans. The full format mini-language and non-integral
 protocols remain loud until their grammar is represented. -/
 def formatSpecH (value : RVal) (spec : String) : Res RVal :=
-  if spec == "d" then
+  if spec == "d" || spec == ">5" || spec == "03d" then
     match value with
     | .int n =>
         match intDecimal n with
-        | some text => .ok (.str text)
+        | some text =>
+            let rendered :=
+              if spec == ">5" then padFormatField 5 text
+              else if spec == "03d" then zeroPadFormatField 3 text
+              else text
+            .ok (.str rendered)
         | Option.none => .exn decimalLimitError
-    | .bool b => .ok (.str (if b then "1" else "0"))
-    | _ => .unsupported "format() with this value/specification is outside the tier (only bare d for int/bool is modeled)"
+    | .bool b =>
+        let text := if b then "1" else "0"
+        let rendered :=
+          if spec == ">5" then padFormatField 5 text
+          else if spec == "03d" then zeroPadFormatField 3 text
+          else text
+        .ok (.str rendered)
+    | _ => .unsupported "format() with this value/specification is outside the tier (only d, >5, and 03d for int/bool are modeled)"
   else
     .unsupported "format() with a non-empty format specification is outside the tier"
 
@@ -7169,6 +7180,9 @@ mutual
         -- allocates; keep it outside the conditional world-preservation
         -- fragment even when its immediate fast path is pure.
         && (id != lenMultBuiltinName)
+        -- The synthetic f-string format call is pure, but its proof branch
+        -- is conservatively kept outside this conditional fragment.
+        && (id != fstringFormatBuiltinName)
         && Expr.heapFreeList args.toList
     | .call (.attribute recv attr _) args kwargs _ _ =>
       kwargs.isEmpty && heapFreeAttr attr && recv.heapFree
@@ -7976,7 +7990,14 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                   else
                     .exn st (.typeError (ntArityErrorMsg nt.fields vs.length))
                 | Option.none =>
-                  if fname == lenMultBuiltinName then
+                  if fname == fstringFormatBuiltinName then
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    match vs with
+                    | [v, .str spec] => Run.liftRes st (formatSpecH v spec)
+                    | [_, spec] =>
+                      .exn st (.typeError s!"format() argument 2 must be str, not {spec.typeName}")
+                    | _ => .exn st (.typeError s!"internal: {fstringFormatBuiltinName} expects two arguments")
+                  else if fname == lenMultBuiltinName then
                     -- Ingestion lowers `len(sequence * count)` to this
                     -- synthetic call so the pure proof interpreter can
                     -- answer the length without constructing an over-budget

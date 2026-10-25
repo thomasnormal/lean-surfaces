@@ -176,16 +176,28 @@ partial def parseExpr (j : Json) : Except String Expr := do
     | "FormattedValue" =>
         let conversion ← (← getField j "conversion").getInt?
         let formatSpec ← getField j "format_spec"
-        if formatSpec != Json.null then
-          let specKind ← (← getField formatSpec "kind").getStr?
-          let specParts ← (← getField formatSpec "values").getArr?
-          if specKind != "JoinedStr" || !specParts.isEmpty then
-            return .unsupported "JoinedStr:format_spec" "" span
         if conversion != -1 && conversion != 97 && conversion != 115 && conversion != 114 then
           return .unsupported "JoinedStr:conversion" "" span
         let value ← parseExpr (← getField j "value")
-        if conversion == 97 then return .formattedValueAscii value span
-        return .formattedValue value (conversion == 114) span
+        let converted :=
+          if conversion == 97 then .formattedValueAscii value span
+          else .formattedValue value (conversion == 114) span
+        if formatSpec == Json.null then
+          return converted
+        let specKind ← (← getField formatSpec "kind").getStr?
+        let specParts ← (← getField formatSpec "values").getArr?
+        if specKind != "JoinedStr" then
+          return .unsupported "JoinedStr:format_spec" "" span
+        match specParts.toList with
+        | [] => return converted
+        | [part] =>
+            match ← parseExpr part with
+            | .constant (.str spec) _ =>
+                return .call (.name fstringFormatBuiltinName span)
+                  #[(if conversion == -1 then value else converted),
+                    .constant (.str spec) span] #[] Option.none span
+            | _ => return .unsupported "JoinedStr:format_spec" "" span
+        | _ => return .unsupported "JoinedStr:format_spec" "" span
     | "BoolOp" =>
         let op ← parseBoolOpName (← (← getField j "op").getStr?)
         let values ← (← (← getField j "values").getArr?).mapM parseExpr

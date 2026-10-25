@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/fstring_lab/fstring_lab.py",
-  "source_sha256": "25996a2efa1f31c85842e300b2863f1aba3c8c89363fbc45bc417b7107bda48c",
+  "source_sha256": "2e7ddd86e40125cf3f53a389b494d075b85900dcee8e2726eca747796ce4820c",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "Acceptance battery for `JoinedStr` (f-strings) \u2014 the tail batch,\nconstruct 2. Pinned against CPython 3.9 BEFORE anything is built.\n\nEvery function here is a diff_test row: it returns a value the harness\ncompares against CPython. The battery is written to catch the ways a\nmodel could be WRONG rather than to demonstrate that it is right, so the\nrefusal cases are as load-bearing as the matching ones.\n\nThe design claim under test: an f-string's `{x}` with no conversion and\nno format spec is exactly `str(x)` \u2014 the SAME operation `print` applies\nto one argument and `assert` applies to its message, i.e. `printOne`.\nIf that is true, f-strings inherit the two-level rule and its pinned\nrefusals for free, and no new renderer is written.\n"
+            "value": "Acceptance battery for `JoinedStr` (f-strings) \u2014 the tail batch,\nconstruct 2. Pinned against CPython 3.9 BEFORE anything is built.\n\nEvery function here is a diff_test row: it returns a value the harness\ncompares against CPython. The battery is written to catch the ways a\nmodel could be WRONG rather than to demonstrate that it is right, so the\nrefusal cases are as load-bearing as the matching ones.\n\nThe design claim under test: an f-string's `{x}` with no conversion and\nno format spec is exactly `str(x)` \u2014 the SAME operation `print` applies\nto one argument and `assert` applies to its message, i.e. `printOne`.\nLiteral integer format specifications add the measured `>5` and `03d`\nshapes; dynamic or otherwise richer format mini-language forms remain loud.\n"
           }
         }
       },
@@ -2135,15 +2135,59 @@
               "end_col_offset": 20
             },
             "value": {
-              "kind": "Unsupported",
+              "kind": "JoinedStr",
               "span": {
                 "lineno": 136,
                 "col_offset": 11,
                 "end_lineno": 136,
                 "end_col_offset": 20
               },
-              "py_kind": "JoinedStr:format_spec",
-              "text": "f'{n:>5}'"
+              "values": [
+                {
+                  "kind": "FormattedValue",
+                  "span": {
+                    "lineno": 136,
+                    "col_offset": 11,
+                    "end_lineno": 136,
+                    "end_col_offset": 20
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 136,
+                      "col_offset": 14,
+                      "end_lineno": 136,
+                      "end_col_offset": 15
+                    },
+                    "id": "n"
+                  },
+                  "conversion": -1,
+                  "format_spec": {
+                    "kind": "JoinedStr",
+                    "span": {
+                      "lineno": 136,
+                      "col_offset": 11,
+                      "end_lineno": 136,
+                      "end_col_offset": 20
+                    },
+                    "values": [
+                      {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 136,
+                          "col_offset": 11,
+                          "end_lineno": 136,
+                          "end_col_offset": 20
+                        },
+                        "value": {
+                          "type": "str",
+                          "value": ">5"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
             }
           }
         ]
@@ -2153,7 +2197,7 @@
         "span": {
           "lineno": 139,
           "col_offset": 0,
-          "end_lineno": 140,
+          "end_lineno": 141,
           "end_col_offset": 21
         },
         "name": "format_spec_num",
@@ -2174,21 +2218,65 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 140,
+              "lineno": 141,
               "col_offset": 4,
-              "end_lineno": 140,
+              "end_lineno": 141,
               "end_col_offset": 21
             },
             "value": {
-              "kind": "Unsupported",
+              "kind": "JoinedStr",
               "span": {
-                "lineno": 140,
+                "lineno": 141,
                 "col_offset": 11,
-                "end_lineno": 140,
+                "end_lineno": 141,
                 "end_col_offset": 21
               },
-              "py_kind": "JoinedStr:format_spec",
-              "text": "f'{n:03d}'"
+              "values": [
+                {
+                  "kind": "FormattedValue",
+                  "span": {
+                    "lineno": 141,
+                    "col_offset": 11,
+                    "end_lineno": 141,
+                    "end_col_offset": 21
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 141,
+                      "col_offset": 14,
+                      "end_lineno": 141,
+                      "end_col_offset": 15
+                    },
+                    "id": "n"
+                  },
+                  "conversion": -1,
+                  "format_spec": {
+                    "kind": "JoinedStr",
+                    "span": {
+                      "lineno": 141,
+                      "col_offset": 11,
+                      "end_lineno": 141,
+                      "end_col_offset": 21
+                    },
+                    "values": [
+                      {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 141,
+                          "col_offset": 11,
+                          "end_lineno": 141,
+                          "end_col_offset": 21
+                        },
+                        "value": {
+                          "type": "str",
+                          "value": "03d"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
             }
           }
         ]
@@ -2196,9 +2284,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 143,
+          "lineno": 144,
           "col_offset": 0,
-          "end_lineno": 144,
+          "end_lineno": 145,
           "end_col_offset": 18
         },
         "name": "debug_spec",
@@ -2206,9 +2294,9 @@
           {
             "arg": "n",
             "span": {
-              "lineno": 143,
+              "lineno": 144,
               "col_offset": 15,
-              "end_lineno": 143,
+              "end_lineno": 144,
               "end_col_offset": 16
             }
           }
@@ -2219,26 +2307,26 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 144,
+              "lineno": 145,
               "col_offset": 4,
-              "end_lineno": 144,
+              "end_lineno": 145,
               "end_col_offset": 18
             },
             "value": {
               "kind": "JoinedStr",
               "span": {
-                "lineno": 144,
+                "lineno": 145,
                 "col_offset": 11,
-                "end_lineno": 144,
+                "end_lineno": 145,
                 "end_col_offset": 18
               },
               "values": [
                 {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 144,
+                    "lineno": 145,
                     "col_offset": 11,
-                    "end_lineno": 144,
+                    "end_lineno": 145,
                     "end_col_offset": 18
                   },
                   "value": {
@@ -2249,17 +2337,17 @@
                 {
                   "kind": "FormattedValue",
                   "span": {
-                    "lineno": 144,
+                    "lineno": 145,
                     "col_offset": 11,
-                    "end_lineno": 144,
+                    "end_lineno": 145,
                     "end_col_offset": 18
                   },
                   "value": {
                     "kind": "Name",
                     "span": {
-                      "lineno": 144,
+                      "lineno": 145,
                       "col_offset": 14,
-                      "end_lineno": 144,
+                      "end_lineno": 145,
                       "end_col_offset": 15
                     },
                     "id": "n"
@@ -2275,9 +2363,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 147,
+          "lineno": 148,
           "col_offset": 0,
-          "end_lineno": 152,
+          "end_lineno": 153,
           "end_col_offset": 20
         },
         "name": "debug_spec_str",
@@ -2285,9 +2373,9 @@
           {
             "arg": "n",
             "span": {
-              "lineno": 147,
+              "lineno": 148,
               "col_offset": 19,
-              "end_lineno": 147,
+              "end_lineno": 148,
               "end_col_offset": 20
             }
           }
@@ -2298,26 +2386,26 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 152,
+              "lineno": 153,
               "col_offset": 4,
-              "end_lineno": 152,
+              "end_lineno": 153,
               "end_col_offset": 20
             },
             "value": {
               "kind": "JoinedStr",
               "span": {
-                "lineno": 152,
+                "lineno": 153,
                 "col_offset": 11,
-                "end_lineno": 152,
+                "end_lineno": 153,
                 "end_col_offset": 20
               },
               "values": [
                 {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 152,
+                    "lineno": 153,
                     "col_offset": 11,
-                    "end_lineno": 152,
+                    "end_lineno": 153,
                     "end_col_offset": 20
                   },
                   "value": {
@@ -2328,17 +2416,17 @@
                 {
                   "kind": "FormattedValue",
                   "span": {
-                    "lineno": 152,
+                    "lineno": 153,
                     "col_offset": 11,
-                    "end_lineno": 152,
+                    "end_lineno": 153,
                     "end_col_offset": 20
                   },
                   "value": {
                     "kind": "Name",
                     "span": {
-                      "lineno": 152,
+                      "lineno": 153,
                       "col_offset": 14,
-                      "end_lineno": 152,
+                      "end_lineno": 153,
                       "end_col_offset": 15
                     },
                     "id": "n"
@@ -2354,9 +2442,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 155,
+          "lineno": 156,
           "col_offset": 0,
-          "end_lineno": 157,
+          "end_lineno": 158,
           "end_col_offset": 24
         },
         "name": "set_field",
@@ -2364,9 +2452,9 @@
           {
             "arg": "n",
             "span": {
-              "lineno": 155,
+              "lineno": 156,
               "col_offset": 14,
-              "end_lineno": 155,
+              "end_lineno": 156,
               "end_col_offset": 15
             }
           }
@@ -2377,42 +2465,42 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 157,
+              "lineno": 158,
               "col_offset": 4,
-              "end_lineno": 157,
+              "end_lineno": 158,
               "end_col_offset": 24
             },
             "value": {
               "kind": "JoinedStr",
               "span": {
-                "lineno": 157,
+                "lineno": 158,
                 "col_offset": 11,
-                "end_lineno": 157,
+                "end_lineno": 158,
                 "end_col_offset": 24
               },
               "values": [
                 {
                   "kind": "FormattedValue",
                   "span": {
-                    "lineno": 157,
+                    "lineno": 158,
                     "col_offset": 11,
-                    "end_lineno": 157,
+                    "end_lineno": 158,
                     "end_col_offset": 24
                   },
                   "value": {
                     "kind": "Call",
                     "span": {
-                      "lineno": 157,
+                      "lineno": 158,
                       "col_offset": 15,
-                      "end_lineno": 157,
+                      "end_lineno": 158,
                       "end_col_offset": 21
                     },
                     "func": {
                       "kind": "Name",
                       "span": {
-                        "lineno": 157,
+                        "lineno": 158,
                         "col_offset": 15,
-                        "end_lineno": 157,
+                        "end_lineno": 158,
                         "end_col_offset": 21
                       },
                       "id": "set"
@@ -2421,18 +2509,18 @@
                       {
                         "kind": "List",
                         "span": {
-                          "lineno": 157,
+                          "lineno": 158,
                           "col_offset": 15,
-                          "end_lineno": 157,
+                          "end_lineno": 158,
                           "end_col_offset": 21
                         },
                         "elts": [
                           {
                             "kind": "Constant",
                             "span": {
-                              "lineno": 157,
+                              "lineno": 158,
                               "col_offset": 16,
-                              "end_lineno": 157,
+                              "end_lineno": 158,
                               "end_col_offset": 17
                             },
                             "value": {
@@ -2443,9 +2531,9 @@
                           {
                             "kind": "Constant",
                             "span": {
-                              "lineno": 157,
+                              "lineno": 158,
                               "col_offset": 19,
-                              "end_lineno": 157,
+                              "end_lineno": 158,
                               "end_col_offset": 20
                             },
                             "value": {
@@ -2470,9 +2558,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 160,
+          "lineno": 161,
           "col_offset": 0,
-          "end_lineno": 161,
+          "end_lineno": 162,
           "end_col_offset": 22
         },
         "name": "nested_fstring",
@@ -2480,9 +2568,9 @@
           {
             "arg": "n",
             "span": {
-              "lineno": 160,
+              "lineno": 161,
               "col_offset": 19,
-              "end_lineno": 160,
+              "end_lineno": 161,
               "end_col_offset": 20
             }
           }
@@ -2493,51 +2581,51 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 161,
+              "lineno": 162,
               "col_offset": 4,
-              "end_lineno": 161,
+              "end_lineno": 162,
               "end_col_offset": 22
             },
             "value": {
               "kind": "JoinedStr",
               "span": {
-                "lineno": 161,
+                "lineno": 162,
                 "col_offset": 11,
-                "end_lineno": 161,
+                "end_lineno": 162,
                 "end_col_offset": 22
               },
               "values": [
                 {
                   "kind": "FormattedValue",
                   "span": {
-                    "lineno": 161,
+                    "lineno": 162,
                     "col_offset": 11,
-                    "end_lineno": 161,
+                    "end_lineno": 162,
                     "end_col_offset": 22
                   },
                   "value": {
                     "kind": "JoinedStr",
                     "span": {
-                      "lineno": 161,
+                      "lineno": 162,
                       "col_offset": 14,
-                      "end_lineno": 161,
+                      "end_lineno": 162,
                       "end_col_offset": 20
                     },
                     "values": [
                       {
                         "kind": "FormattedValue",
                         "span": {
-                          "lineno": 161,
+                          "lineno": 162,
                           "col_offset": 14,
-                          "end_lineno": 161,
+                          "end_lineno": 162,
                           "end_col_offset": 20
                         },
                         "value": {
                           "kind": "Name",
                           "span": {
-                            "lineno": 161,
+                            "lineno": 162,
                             "col_offset": 17,
-                            "end_lineno": 161,
+                            "end_lineno": 162,
                             "end_col_offset": 18
                           },
                           "id": "n"

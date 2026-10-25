@@ -196,6 +196,21 @@ class ClassHandleDeclarations(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
 
+    def test_empty_mailbox_try_get_and_peek_return_zero(self):
+        design = lower(
+            'module top; mailbox box; int value, get_result, peek_result; '
+            'initial begin box = new(); get_result = box.try_get(value); '
+            'peek_result = box.try_peek(value); '
+            'if (get_result == 0 && peek_result == 0) $display("PASS"); '
+            'else $display("FAIL"); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("mailbox_empty_try")]
+        self.assertEqual([node["mailbox_empty_try"] for node in values],
+                         ["try_get", "try_peek"])
+        self.assertEqual([node["bits"] for node in values], ["0" * 32] * 2)
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
     def test_mailbox_num_after_literal_put_is_exact(self):
         design = lower(
             'module top; mailbox box; int result; initial begin '

@@ -5784,6 +5784,7 @@ def _convert_legacy_call(sm, expression):
             (_semaphore_zero_try_get, _convert_semaphore_zero_try_get),
             (_semaphore_literal_try_get, _convert_semaphore_literal_try_get),
             (_dynamic_array_literal_size_method, _convert_dynamic_array_literal_size),
+            (_mailbox_empty_try_method, _convert_mailbox_empty_try_method),
             (_mailbox_empty_num_method, _convert_mailbox_empty_num),
             (lambda e: _mailbox_literal_sequence(e) is not None
                        and e.subroutineName == "num",
@@ -6740,6 +6741,60 @@ def _mailbox_empty_num_method(expression):
                    for m in occurrences if m.start() > constructor.end())
     except Exception:
         return False
+
+
+def _mailbox_empty_try_method(expression):
+    """Recognize ``try_get``/``try_peek`` on an untouched ``mailbox new()``."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or expression.isSystemCall
+                or expression.subroutineName not in ("try_get", "try_peek")
+                or len(expression.arguments) != 1):
+            return False
+        receiver = getattr(expression, "thisClass", None)
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "bad", False)):
+            return False
+        canonical = getattr(getattr(receiver, "type", None), "canonicalType", None)
+        if (type(canonical).__name__ != "ClassType"
+                or getattr(canonical, "name", None) != "mailbox"):
+            return False
+        name = getattr(getattr(receiver, "symbol", None), "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        if not name or not source:
+            return False
+        constructor = re.search(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"\s*=\s*new\s*\(\s*\)", source)
+        if constructor is None:
+            return False
+        position = getattr(getattr(expression, "sourceRange", None), "start", None)
+        position = getattr(position, "offset", None)
+        if position is None or position < constructor.end():
+            return False
+        methods = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"\s*\.\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*\(", source))
+        if not methods:
+            return False
+        return all(method.group(1) in ("try_get", "try_peek")
+                   for method in methods if method.start() >= constructor.end())
+    except Exception:
+        return False
+
+
+def _convert_mailbox_empty_try_method(sm, expression):
+    if not _mailbox_empty_try_method(expression):
+        return unsupported(sm, expression, "CallExpression:mailbox-try")
+    width = getattr(expression.type, "bitWidth", None)
+    if width is None or width <= 0:
+        return unsupported(sm, expression, "CallExpression:mailbox-try-width")
+    return signed_metadata({
+        "kind": "Literal", "span": node_span(sm, expression),
+        "width": width, "bits": "0" * width,
+        "mailbox_empty_try": expression.subroutineName,
+    }, expression.type)
 
 
 def _mailbox_literal_sequence(expression):
@@ -10225,6 +10280,9 @@ def _convert_syscall(sm, s, e):
         if _dynamic_array_literal_size_method(e):
             return {"kind": "Empty", "span": node_span(sm, s),
                     "dynamic_array_literal_size": True}
+        if _mailbox_empty_try_method(e):
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "mailbox_empty_try": name}
         if _semaphore_literal_try_get(e):
             # The result is discarded, but the source-ordered recognizer
             # accounts for this successful acquisition in later calls.

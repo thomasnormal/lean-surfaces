@@ -6942,3 +6942,17 @@ partial (66 include skips). `CallExpression` falls 2,958 → 2,956 while
 `AssignmentExpression:target` remains 2,975 and
 `ExpressionStatement:CallExpression` remains 2,973. Differential coverage
 moves 164/160/0/4 → 165/161/0/4; grammar coverage remains 214/83/131.
+## Empty mailbox `try_get` and `try_peek` — 2026-10-25
+
+An untouched unbounded mailbox created by direct `new()` now answers both
+`try_get(output)` and `try_peek(output)` with exact scalar zero. The output
+argument is retained as an ordinary destination, while aliases, queued or
+bounded mailboxes, other methods, and mixed operations remain loud because no
+mailbox object is represented in the flat state. `mailbox_empty_try` supplies
+the fixture and proof receipt.
+
+The 22,050-path census moves 4,912 → 4,917 clean and 17,072 → 17,067
+partial (66 include skips). `CallExpression` falls 2,956 → 2,951 while
+`AssignmentExpression:target` remains 2,975 and
+`ExpressionStatement:CallExpression` remains 2,973. Differential coverage
+moves 165/161/0/4 → 166/162/0/4; grammar coverage remains 214/83/131.

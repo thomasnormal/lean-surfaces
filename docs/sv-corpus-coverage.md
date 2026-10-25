@@ -4207,3 +4207,14 @@ The fresh 22,050-path census moves 4,910 → 4,912 clean and 17,074 → 17,072
 partial (66 include skips); `CallExpression` falls 2,958 → 2,956. The
 differential table moves 164/160/0/4 → 165/161/0/4, with grammar coverage
 unchanged at 214/83/131.
+## Empty mailbox `try_get` and `try_peek` — 2026-10-25
+
+The self-check tier admits immediate zero results for `try_get(output)` and
+`try_peek(output)` on a direct empty unbounded mailbox. Other mailbox methods,
+aliases, bounded or nonempty states, and dynamic forms remain loud. The
+`mailbox_empty_try` fixture exercises both nonblocking methods.
+
+The fresh 22,050-path census moves 4,912 → 4,917 clean and 17,072 → 17,067
+partial (66 include skips); `CallExpression` falls 2,956 → 2,951. The
+differential table moves 165/161/0/4 → 166/162/0/4, with grammar coverage
+unchanged at 214/83/131.

@@ -1486,6 +1486,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "mailbox_empty_try",
+      "file": "Examples/system-verilog/mailbox_empty_try/mailbox_empty_try.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

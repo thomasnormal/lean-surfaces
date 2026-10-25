@@ -6193,6 +6193,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-null-equality",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableNullComparisonFrameWitness",
+    "cpp_source": "bool null_equality_frame_witness() { return nullptr == nullptr; } bool callable_witness() { return null_equality_frame_witness(); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

@@ -148,11 +148,16 @@ class ClassHandleDeclarations(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
 
-    def test_mailbox_num_after_put_stays_loud(self):
+    def test_mailbox_num_after_literal_put_is_exact(self):
         design = lower(
             'module top; mailbox box; int result; initial begin '
             'box = new(); box.put(1); result = box.num(); end endmodule')
-        self.assertIn("CallExpression", [node.get("sv_kind") for node in nodes(design)])
+        values = [node for node in nodes(design)
+                  if node.get("mailbox_literal_num")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(values[0]["bits"], "0" * 31 + "1")
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
 
     def test_mailbox_num_before_construction_stays_loud(self):
         design = lower(

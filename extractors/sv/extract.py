@@ -5761,6 +5761,9 @@ def _convert_legacy_call(sm, expression):
             (_string_literal_len_method, _convert_string_literal_len_method),
             (_semaphore_zero_try_get, _convert_semaphore_zero_try_get),
             (_mailbox_empty_num_method, _convert_mailbox_empty_num),
+            (lambda e: _mailbox_literal_sequence(e) is not None
+                       and e.subroutineName == "num",
+             _convert_mailbox_literal_num),
             (_zero_size_method, _convert_zero_size_method),
             (_rtoi_literal_call, _convert_rtoi_literal),
             (_realtobits_literal_call, _convert_realtobits_literal),
@@ -6487,6 +6490,83 @@ def _mailbox_empty_num_method(expression):
         return False
 
 
+def _mailbox_literal_sequence(expression):
+    """Recognize a direct unbounded mailbox ``put``/``num`` sequence.
+
+    The self-check store has no mailbox object.  An unbounded mailbox made by
+    literal ``new()`` nevertheless has an exact scalar count when every use is
+    a source-pure ``put`` or a ``num`` query on that same handle.  Keep the
+    source scan conservative: aliases, assignments, other methods, bounded
+    constructors, and calls before construction all remain loud.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or expression.isSystemCall
+                or expression.subroutineName not in ("put", "num")):
+            return None
+        receiver = getattr(expression, "thisClass", None)
+        if (receiver is None or type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "bad", False)):
+            return None
+        canonical = getattr(getattr(receiver, "type", None), "canonicalType", None)
+        if (type(canonical).__name__ != "ClassType"
+                or getattr(canonical, "name", None) != "mailbox"):
+            return None
+        name = getattr(getattr(receiver, "symbol", None), "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        if not name or not source:
+            return None
+        constructor = re.search(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"\s*=\s*new\s*\(\s*\)", source)
+        if constructor is None:
+            return None
+        position = getattr(getattr(expression, "sourceRange", None), "start", None)
+        position = getattr(position, "offset", None)
+        if position is None or position < constructor.end():
+            return None
+        methods = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"\s*\.\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*\(", source))
+        if not methods:
+            return None
+        # Every post-construction use must be one of the two scalar methods;
+        # this also rejects aliases and later writes by requiring all bare
+        # occurrences to be constructor or method receivers.
+        bare = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"(?![A-Za-z0-9_$])", source))
+        for match in bare:
+            if match.start() < constructor.start():
+                continue
+            tail = source[match.end():].lstrip()
+            if match.start() == constructor.start():
+                continue
+            if not tail.startswith("."):
+                return None
+        for method in methods:
+            if method.start() < constructor.end():
+                continue
+            if method.group(1) not in ("put", "num"):
+                return None
+        current = [m for m in methods if m.start() <= position]
+        current_match = [m for m in current if m.start() ==
+                         getattr(getattr(expression, "sourceRange", None), "start", None).offset]
+        if not current_match:
+            return None
+        if expression.subroutineName == "put":
+            if len(expression.arguments) != 1 or not _case_source_expression_ok(expression.arguments[0]):
+                return None
+        else:
+            if expression.arguments:
+                return None
+        count = sum(1 for method in current if method.group(1) == "put")
+        return count
+    except Exception:
+        return None
+
+
 def _convert_mailbox_empty_num(sm, expression):
     if not _mailbox_empty_num_method(expression):
         return unsupported(sm, expression, "CallExpression:mailbox-num")
@@ -6499,6 +6579,22 @@ def _convert_mailbox_empty_num(sm, expression):
         "width": width,
         "bits": "0" * width,
         "mailbox_empty_num": True,
+    }, expression.type)
+
+
+def _convert_mailbox_literal_num(sm, expression):
+    count = _mailbox_literal_sequence(expression)
+    if count is None or expression.subroutineName != "num":
+        return unsupported(sm, expression, "CallExpression:mailbox-num")
+    width = getattr(expression.type, "bitWidth", None)
+    if width is None or width <= 0:
+        return unsupported(sm, expression, "CallExpression:mailbox-num-width")
+    return signed_metadata({
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": width,
+        "bits": format(count & ((1 << width) - 1), f"0{width}b"),
+        "mailbox_literal_num": True,
     }, expression.type)
 
 
@@ -9562,6 +9658,14 @@ def _convert_syscall(sm, s, e):
             # retain the call's sequencing position as an ordinary no-op.
             return {"kind": "Empty", "span": node_span(sm, s),
                     "semaphore_zero_method": name}
+        mailbox_sequence = _mailbox_literal_sequence(e)
+        if mailbox_sequence is not None:
+            if name == "put":
+                return {"kind": "Empty", "span": node_span(sm, s),
+                        "mailbox_literal_put": True}
+            if name == "num":
+                return {"kind": "Empty", "span": node_span(sm, s),
+                        "mailbox_literal_num_statement": mailbox_sequence}
         if _mailbox_empty_num_method(e):
             return {"kind": "Empty", "span": node_span(sm, s),
                     "mailbox_empty_num": True}

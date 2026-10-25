@@ -1414,6 +1414,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "mailbox_literal_put_num",
+      "file": "Examples/system-verilog/mailbox_literal_put_num/mailbox_literal_put_num.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

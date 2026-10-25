@@ -4103,3 +4103,16 @@ include skips). `CallExpression` is **3,026**, up from **2,972**, because
 previously fabricated mailbox-method values are now explicit refusals;
 `AssignmentExpression:target` remains **2,975**. Differential coverage moves
 **156/152/0/4 → 157/153/0/4**; grammar coverage remains **214/83/131**.
+
+## Literal unbounded mailbox puts and counts — 2026-10-25
+
+An unbounded mailbox created by literal `new()` now admits source-pure literal
+`put` calls and an exact `num()` count for the same direct handle. Aliases,
+bounded constructors, other methods, dynamic arguments, and calls before
+construction remain loud. The `mailbox_literal_put_num` fixture supplies the
+differential witness while the flat self-check store retains no mailbox object.
+
+The fresh **22,049-path** census remains **4,856 clean / 17,127 partial** (66
+include skips), with `CallExpression` at **3,026** and
+`AssignmentExpression:target` at **2,975**. Differential coverage moves
+**157/153/0/4 → 158/154/0/4**; grammar coverage remains **214/83/131**.

@@ -193,6 +193,29 @@ class SizeQueries(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
+    def test_unbounded_mailbox_literal_puts_report_exact_num(self):
+        design = lower(
+            'module top; mailbox box; initial begin box = new(); '
+            'box.put(7); box.put(8); $display("%0d", box.num()); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("mailbox_literal_num")]
+        self.assertEqual([(node["width"], int(node["bits"], 2)) for node in values],
+                         [(32, 2)])
+        self.assertEqual(sum(node.get("mailbox_literal_put", False)
+                             for node in nodes(design)), 2)
+
+    def test_mailbox_literal_sequence_rejects_other_methods_and_aliases(self):
+        for source in (
+                'module top; mailbox box; int result; initial begin box = new(); '
+                'box.put(1); box.get(result); $display("%0d", box.num()); end endmodule',
+                'module top; mailbox box; mailbox alias; initial begin box = new(); '
+                'alias = box; $display("%0d", box.num()); end endmodule'):
+            design = lower(source)
+            self.assertFalse(any(node.get("mailbox_literal_num")
+                                 for node in nodes(design)))
+            self.assertTrue(any(node.get("kind") == "Unsupported"
+                                for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

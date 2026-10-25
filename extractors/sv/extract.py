@@ -8443,6 +8443,155 @@ def _fixed_array_stream_targets_with(sm, operand, with_expr, symbolic=False):
         return None
 
 
+def _dynamic_streaming_with_target_assignment(sm, expr):
+    """Lower a finite dynamic-array stream with a runtime ``with`` extent.
+
+    A dynamic array whose one allocation has a constant extent is already
+    represented by independent flat cells.  The remaining target-only shape
+    in this family is ``{>> {a with [base +: count]}}`` where ``count`` is an
+    ordinary integral variable with one unconditional literal assignment
+    before the stream.  That assignment is sampled exactly once by the
+    source statement, so the existing stream-window lowering can emit the
+    corresponding finite target directly.  Control-dependent, multiply
+    assigned, out-of-range, or effectful extents remain loud.
+
+    Keep this rung deliberately narrow: one ascending dynamic-array stream,
+    a constant base, and a single integral extent expression.  Multi-stream
+    aggregates, dynamic bases, descending arrays, and effectful RHSs still
+    use the ordinary target boundary.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None):
+            return None
+        lhs = expr.left
+        if type(lhs).__name__ != "StreamingConcatenationExpression":
+            return None
+        token = getattr(getattr(lhs, "syntax", None), "operatorToken", None)
+        if str(getattr(token, "kind", "")).split(".")[-1] != "RightShift":
+            return None
+        if len(lhs.streams) != 1:
+            return None
+        stream = lhs.streams[0]
+        operand = getattr(stream, "operand", None)
+        with_expr = getattr(stream, "withExpr", None)
+        if (operand is None or type(with_expr).__name__ != "RangeSelectExpression"
+                or str(with_expr.selectionKind).split(".")[-1] != "IndexedUp"):
+            return None
+        # The left bound is a dimension index, while the right bound is the
+        # run-time extent.  The ordinary constant helper already rejects
+        # unsized/unknown values and gives us the elaborated array index.
+        base = _constant_dimension_selector(with_expr.left)
+        if base is None:
+            return None
+        extent_expr = with_expr.right
+        extent_width, _extent_two, extent_reason = type_width_2s(extent_expr.type)
+        if extent_width is None or extent_reason is not None:
+            return None
+        if (type(extent_expr).__name__ != "NamedValueExpression"
+                and not _case_source_expression_ok(extent_expr)):
+            return None
+        shape = _fixed_array_shape(operand)
+        if shape is None:
+            return None
+        name, width, two_state, left, right = shape
+        if (type(operand.type.canonicalType).__name__ != "DynamicArrayType"
+                or left > right or base < left or base > right):
+            return None
+        targets = _fixed_array_stream_targets(sm, operand, False)
+        if targets is None or len(targets) != right - left + 1:
+            # ``_fixed_array_stream_targets`` intentionally focuses on fixed
+            # dimensions; build the already-sampled dynamic cells directly.
+            targets = [{
+                "kind": "Ident", "span": node_span(sm, operand),
+                "width": width,
+                "name": f"{name}[{position}]",
+                "two_state": two_state,
+            } for position in range(left, right + 1)]
+        value = _convert_streaming_source(sm, expr.right)
+        source_lowered = value is not None
+        if value is None:
+            value = convert_expr(sm, expr.right)
+        if (value is None or value.get("kind") == "Unsupported"
+                or (not source_lowered
+                    and not _case_source_expression_ok(expr.right))
+                or width_of(value) is None or not _case_expression_ok(value)):
+            return None
+        source_width = width_of(value)
+        extent = convert_expr(sm, extent_expr)
+        if (extent is None or extent.get("kind") == "Unsupported"
+                or width_of(extent) != extent_width
+                or not _case_expression_ok(extent)):
+            return None
+        # The flat envelope has no dynamic target node.  Admit the exact
+        # source shape used by the corpus when the extent variable has one
+        # unconditional literal assignment before this stream.  A control
+        # dependent or multiply assigned extent remains the ordinary loud
+        # target boundary rather than being guessed from source order.
+        extent_value = None
+        try:
+            symbol = extent_expr.symbol
+            instance = symbol.parentScope.containingInstance
+            assignments = []
+            controls = []
+
+            def inspect(node):
+                kind = type(node).__name__
+                if kind == "AssignmentExpression":
+                    left = getattr(node, "left", None)
+                    if (type(left).__name__ == "NamedValueExpression"
+                            and getattr(left, "symbol", None) is symbol):
+                        assignments.append(node)
+                elif kind in ("ConditionalStatement", "ForLoopStatement",
+                              "WhileLoopStatement", "DoWhileLoopStatement",
+                              "RepeatLoopStatement", "ForeachLoopStatement",
+                              "CaseStatement", "CaseInsideStatement",
+                              "CasePatternStatement", "LoopStatement"):
+                    controls.append(node)
+
+            instance.visit(inspect)
+            if (getattr(symbol, "initializer", None) is None
+                    and len(assignments) == 1):
+                assignment = assignments[0]
+                ar = assignment.sourceRange
+                er = expr.sourceRange
+                before = ar.start.offset < er.start.offset
+                enclosed = any(
+                    control.sourceRange.start.offset <= ar.start.offset
+                    and ar.end.offset <= control.sourceRange.end.offset
+                    for control in controls)
+                if (before and not enclosed and assignment.op is None
+                        and not assignment.isNonBlocking
+                        and assignment.timingControl is None):
+                    extent_value = _constant_dimension_selector(assignment.right)
+        except Exception:
+            extent_value = None
+        if extent_value is None or extent_value < 0:
+            return None
+        count = int(extent_value)
+        if count == 0:
+            return {"kind": "Empty", "span": node_span(sm, expr),
+                    "dynamic_stream_with_zero_extent": True}
+        total_width = count * width
+        if (count > right - base + 1 or total_width > source_width
+                or count <= 0):
+            return None
+        selected = targets[base - left:base - left + count]
+        if len(selected) != count:
+            return None
+        target = {"kind": "ConcatTarget", "span": node_span(sm, lhs),
+                  "width": total_width, "parts": [dict(t) for t in selected]}
+        return {
+            "kind": "NonblockingAssign" if expr.isNonBlocking
+            else "BlockingAssign",
+            "span": node_span(sm, expr), "target": target,
+            "value": _streaming_source_window(value, total_width, False),
+            "dynamic_stream_with_lowered": True,
+        }
+    except Exception:
+        return None
+
+
 def _convert_streaming_source(sm, expression):
     """Convert a simple right-streaming source, including unpacked structs."""
     try:
@@ -10178,6 +10327,11 @@ def _convert_assignment_expr(sm, expr, span_node=None):
     if scan is not None:
         return scan
     if expr.op is None:
+        dynamic_streaming_target = (
+            _dynamic_streaming_with_target_assignment(sm, expr)
+            if _SYM is None else None)
+        if dynamic_streaming_target is not None:
+            return dynamic_streaming_target
         streaming_target = (
             _symbolic_streaming_target_assignment(sm, expr)
             if _SYM is not None else _streaming_target_assignment(sm, expr))

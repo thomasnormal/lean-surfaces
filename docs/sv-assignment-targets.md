@@ -20,6 +20,13 @@ is one of those fixed destinations and the source width is definite. Select
 indices and source expressions must remain in the pure integral subset; an
 effectful selector or right-hand side is retained as `Unsupported`.
 
+The legacy path also admits a finite dynamic-array `with [base +: count]`
+stream target when the array has one constant allocation and `count` is an
+integral variable assigned exactly once from a literal before the stream. The
+extractor samples that source-ordered extent and lowers the selected cells
+individually; control-dependent or reassigned extents remain outside this
+representation.
+
 The symbolic path carries `Ident`, `BitSel`, and `PartSel` targets over an
 identifier. Its continuous-assignment slice additionally admits a nested
 concatenation of direct scalar, constant bit-select, or constant part-select
@@ -42,7 +49,8 @@ the public tier does not have:
   the direct packed-window case;
 * dynamic or effectful select bounds and streaming forms with a direction or
   slice size outside the admitted subset (constant indexed `with` ranges over
-  ascending fixed cells are admitted); and
+  ascending fixed cells, plus the single-assignment literal dynamic extent,
+  are admitted); and
 * legacy continuous assignments whose target needs a continuous-driver,
   update-region, or net-resolution rule.
 
@@ -354,3 +362,13 @@ loud; no dynamic-array object or scheduler state is introduced.
 has no exact instance of this shape, so its census remains **4,816 clean /
 17,166 partial / 66 include skips** with `AssignmentExpression:target` at
 **3,035 files**; differential coverage moves **121/117/0/4 → 122/118/0/4**.
+
+## Literal dynamic extents in streaming targets — 2026-10-25
+
+The finite dynamic-array streaming rung now admits `{>> {a with [base +:
+count]}}` when `count` has one unconditional literal assignment before the
+stream. The extractor samples that value and reuses the flattened-cell stream
+window; later writes, control-dependent assignments, and out-of-range counts
+remain loud. The `streaming_dynamic_with_range` fixture covers the §11.4.14.4
+shape. On the available 21,342-path snapshot, clean files move **4,861 →
+4,862** and `AssignmentExpression:target` falls **2,794 → 2,793**.

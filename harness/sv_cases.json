@@ -1060,6 +1060,15 @@
       "expect": "match"
     },
     {
+      "name": "streaming_dynamic_with_range",
+      "file": "Examples/system-verilog/streaming_dynamic_with_range/streaming_dynamic_with_range.sv",
+      "module": "test",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "streaming_indexed_with_range",
       "file": "Examples/system-verilog/streaming_indexed_with_range/streaming_indexed_with_range.sv",
       "module": "top",

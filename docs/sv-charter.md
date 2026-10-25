@@ -7065,3 +7065,21 @@ On the available 21,342-path sv-tests-2 snapshot, clean files move **4,840 →
 `ExpressionStatement:CallExpression` falls **2,668 → 2,644**. Differential
 coverage grows **173/168/0/5 → 174/169/0/5**; grammar coverage remains
 **214/83/131**.
+
+## Dynamic-extent streaming `with` targets — 2026-10-25
+
+Right-streaming unpack now admits a finite dynamic-array target whose
+`with [base +: count]` extent is an integral variable assigned exactly once
+from a literal before the stream. The extractor samples that source-ordered
+extent, expands the already allocated array into flat cells, and reuses the
+existing leading-bit stream window. Control-dependent, multiply assigned,
+out-of-range, descending, aggregate, and effectful forms remain loud because
+the flat self-check state has no general dynamic target node. The
+`streaming_dynamic_with_range` fixture and differential row exercise the
+admitted §11.4.14.4 shape.
+
+On the available 21,342-path snapshot, clean files move **4,861 → 4,862** and
+partial files **16,452 → 16,451** (29 include skips); the leading
+`AssignmentExpression:target` blocker falls **2,794 → 2,793**. Differential
+coverage grows **174/169/0/5 → 175/170/0/5** with no disagreements, and grammar
+coverage remains **214/83/131**.

@@ -250,6 +250,31 @@ class PackedAssignmentTargets(unittest.TestCase):
                              and node.get("sv_kind") == "AssignmentExpression:target"
                              for node in nodes(design)))
 
+    def test_right_streaming_literal_extent_variable_selects_dynamic_cells(self):
+        design = extract_source(
+            "module top; bit [63:0] source; int arr[]; integer count; "
+            "initial begin arr = new[4]; count = 2; "
+            "{>> {arr with [0 +: count]}} = source; end endmodule")
+        statement, = [node for node in nodes(design)
+                      if node.get("kind") == "BlockingAssign"
+                      and node.get("target", {}).get("kind") == "ConcatTarget"
+                      and node.get("dynamic_stream_with_lowered")]
+        self.assertEqual([part["name"].split(":")[-1]
+                          for part in statement["target"]["parts"]],
+                         ["arr[0]", "arr[1]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_right_streaming_reassigned_extent_stays_loud(self):
+        design = extract_source(
+            "module top; bit [63:0] source; int arr[]; integer count; "
+            "initial begin arr = new[4]; count = 2; count = 1; "
+            "{>> {arr with [0 +: count]}} = source; end endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
     def test_right_streaming_indexed_with_range_selects_array_cells(self):
         design = extract_source(
             "module top; bit [95:0] source; bit [31:0] arr[8]; "

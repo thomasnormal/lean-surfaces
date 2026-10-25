@@ -1940,6 +1940,26 @@ def callableLongLongCompoundDivideFrameWitness : Bool :=
 
 #guard callableLongLongCompoundDivideFrameWitness
 
+private def longLongCompoundModuloFrame : Bool :=
+  let base := incrementFunction .longLong "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign "%=" (handle "0x10")
+      {expression := .integer 5, sourceType := .builtin .longLong,
+        type := .builtin .longLong})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .longLong, type := .builtin .longLong}))}
+  match CallableObjectFrame.start .lp64 function [⟨.signed 64, 13⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.signed 64, 3⟩)
+
+def callableLongLongCompoundModuloFrameWitness : Bool :=
+  longLongCompoundModuloFrame
+
+#guard callableLongLongCompoundModuloFrameWitness
+
 private def intCompoundBitAndFrame : Bool :=
   let base := incrementFunction .int "++" false
   let function := {base with body := .block (.sequence

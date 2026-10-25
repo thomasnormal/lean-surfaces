@@ -6801,3 +6801,18 @@ The fresh **22,049-path** census remains **4,855 clean / 17,128 partial** (66
 include skips), with `AssignmentExpression:target` at **2,975**. Differential
 coverage moves **154/150/0/4 → 155/151/0/4**; grammar coverage remains
 **214/83/131**.
+
+## Zero-key semaphore `try_get` — 2026-10-25
+
+IEEE 1800-2023 §15.3.4 defines `semaphore.try_get(0)` as an immediate
+successful attempt returning a positive value; it consumes no keys. The
+self-check surface represents that positive result as scalar `1` when the
+receiver has a preceding literal `new(...)` constructor and the count is
+exactly zero. Dynamic counts, unproven receivers, and nonzero or otherwise
+stateful semaphore operations remain loud. `semaphore_zero_try_get` supplies
+the differential witness.
+
+The fresh **22,049-path** census moves **4,855 → 4,856 clean** and **17,128 →
+17,127 partial** (66 include skips); `CallExpression` falls **2,973 → 2,972**
+while `AssignmentExpression:target` remains **2,975**. Differential coverage
+moves **155/151/0/4 → 156/152/0/4**; grammar coverage remains **214/83/131**.

@@ -122,6 +122,19 @@ class ClassHandleDeclarations(unittest.TestCase):
                              "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
+    def test_zero_key_semaphore_try_get_returns_success(self):
+        design = lower(
+            'module top; semaphore sem; int result; initial begin '
+            'sem = new(1); result = sem.try_get(0); '
+            'if (result > 0) $display("PASS"); else $display("FAIL"); '
+            'end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("semaphore_zero_try_get")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(values[0]["bits"], "0" * 31 + "1")
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
     def test_dynamic_semaphore_key_method_stays_loud(self):
         design = lower(
             'module top; semaphore sem; integer keys; initial begin '

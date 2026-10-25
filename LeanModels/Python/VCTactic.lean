@@ -633,13 +633,22 @@ def interpUnfolds : List Name :=
    ``stmtIsClockImport, ``moduleClockOk, ``clockRecvOk, ``isClockCall,
    ``envInt]
 
+/-! The interpreter's heap-aware binary dispatch tests `op == .bitAnd`.
+`BinOp` intentionally derives `BEq` without `DecidableEq`, so the default
+simplifier does not reduce that generated equality even when `op` is a
+concrete constructor.  Expose its constructor reduction to the VC walker's
+simp context; this is a proof-layer bridge, not a semantic shortcut. -/
+theorem binOpBeqBitAnd (op : BinOp) :
+    (op == .bitAnd) = (match op with | .bitAnd => true | _ => false) := by
+  cases op <;> rfl
+
 /-- Rewrite lemmas added to captured symbolic execution: the branch-collapse
 of loop tests, the symbolic-tail environment lemmas, and the `sorted`
 bridges (`sortInts`/`insertLe` stay frozen — symbolic goals keep the
 compact `sortInts data` handle; these two lemmas let the run step through a
 marshalled `sorted(data)` call and its downstream `len`/index bounds). -/
 def interpLemmas : List Name :=
-  [``ite_ok_bool, ``Env.lookup_set_self, ``Env.lookup_set_ne, ``Env.set_set,
+  [``ite_ok_bool, ``binOpBeqBitAnd, ``Env.lookup_set_self, ``Env.lookup_set_ne, ``Env.set_set,
    ``asIntList_map_int, ``asIntList_map_toVal, ``asIntList_map_thaw_comp,
    ``sortInts_length,
    -- the marshalled SUBSCRIPT read, conditional on the index being in

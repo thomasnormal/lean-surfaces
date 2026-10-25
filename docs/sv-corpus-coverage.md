@@ -27,12 +27,12 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-25
 
-The chapter-scoped rerun covered **22,054** paths: **5,061 clean**,
-**16,926 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,054** paths: **5,063 clean**,
+**16,924 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
 `AssignmentExpression:target` (2,937), `ExpressionStatement:CallExpression` (2,909),
-`CallExpression` (2,833), `Hierarchy:ports` (2,398),
+`CallExpression` (2,831), `Hierarchy:ports` (2,398),
 `VariableSymbol:2state` (2,302), `SubroutineSymbol:Subroutine` (1,634),
 `NamedValueExpression:2state` (1,484), `ConcurrentAssertionStatement`
 (1,359), `InvalidStatement` (1,329), and `ClassType` (1,329).
@@ -54,6 +54,20 @@ The refreshed **22,054-path** census moves **5,059 → 5,061 clean** and
 reduce `ExpressionStatement:CallExpression` **2,911 → 2,909**. Differential
 coverage grows **205/200/0/5 → 206/201/0/5** with no disagreements, and the
 grammar census is **217 witnesses, 90 MATCH, and 127 REFUSE**.
+
+## Bounded `$isunbounded` queries — 2026-10-25
+
+`$isunbounded(p)` now lowers to the exact one-bit zero when `p` is a known
+bounded integral parameter (or a direct integral literal). Ordinary variables,
+the special unbounded `$` parameter value, and non-parameter arguments remain
+loud because their parameter binding is not represented in the self-check
+state.
+
+The refreshed **22,054-path** census moves **5,061 → 5,063 clean** and
+**16,926 → 16,924 partial** (67 include skips); `CallExpression` falls
+**2,833 → 2,831**. Differential coverage grows **206/201/0/5 → 207/202/0/5**
+with no disagreements, and grammar coverage remains **217 witnesses, 90 MATCH,
+and 127 REFUSE**.
 
 The queue-declaration slice lowers an uninitialized 2-state queue to inert
 metadata; queue initializers and all queue operations remain loud. The fresh

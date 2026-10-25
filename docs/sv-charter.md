@@ -7627,3 +7627,19 @@ and partial files **16,928 → 16,926** (67 include skips).
 `AssignmentExpression:target` remains **2,937**. Differential coverage grows
 **205/200/0/5 → 206/201/0/5** with no disagreements; grammar coverage is
 **217/90/127**.
+
+## Bounded `$isunbounded` queries — 2026-10-25
+
+The self-check surface now lowers `$isunbounded(p)` to a one-bit zero when
+`p` is a known bounded integral parameter, as specified by IEEE 1800-2023
+§6.20.7. A direct integral literal follows the same pure path. Ordinary
+variables, the special unbounded `$` value, and other parameter forms remain
+loud because their binding is not represented in the flat state. The
+`isunbounded_bounded` fixture supplies the differential row and Lean receipt;
+extractor regressions pin literal, bounded-parameter, and variable refusals.
+
+On the refreshed **22,054-path** census, clean files move **5,061 → 5,063**
+and partial files **16,926 → 16,924** (67 include skips).
+`CallExpression` falls **2,833 → 2,831** while `AssignmentExpression:target`
+remains **2,937**. Differential coverage grows **206/201/0/5 → 207/202/0/5**
+with no disagreements; grammar coverage remains **217/90/127**.

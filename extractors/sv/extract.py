@@ -1112,6 +1112,51 @@ DIMENSION_QUERY_CALLS = (
 )
 
 
+def _isunbounded_call(expression):
+    """Recognize ``$isunbounded`` on a known bounded integral parameter.
+
+    IEEE 1800-2023 §6.20.7 defines the result as one only for the special
+    unbounded value ``$``.  A literal or a bound parameter is therefore a
+    pure one-bit zero; ordinary variables and an unbounded parameter stay
+    loud because their value is not represented by the self-check state.
+    """
+    try:
+        if (_SYM is not None or type(expression).__name__ != "CallExpression"
+                or expression.bad or not expression.isSystemCall
+                or expression.subroutineName != "$isunbounded"
+                or len(expression.arguments) != 1
+                or expression.type.bitWidth != 1):
+            return False
+        argument = expression.arguments[0]
+        if not _case_source_expression_ok(argument):
+            return False
+        if _literal_integral_value(argument) is not None:
+            return True
+        symbol = getattr(argument, "symbol", None)
+        if symbol is None or str(getattr(symbol, "kind", "")).split(".")[-1] != "Parameter":
+            return False
+        # pyslang exposes a bounded parameter's elaborated value as an
+        # integral ``ConstantValue``.  The unbounded `$` value has no SVInt
+        # payload, so it cannot pass this test.
+        constant = getattr(getattr(symbol, "value", None), "value", None)
+        return (type(constant).__name__ == "SVInt"
+                and not any(bit not in "01" for bit in svint_bits(constant)))
+    except Exception:
+        return False
+
+
+def _convert_isunbounded(sm, expression):
+    if not _isunbounded_call(expression):
+        return unsupported(sm, expression, "CallExpression:$isunbounded")
+    return {
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": 1,
+        "bits": "0",
+        "isunbounded_bounded": True,
+    }
+
+
 def _signing_call(expression):
     return (type(expression).__name__ == "CallExpression"
             and not expression.bad and expression.isSystemCall
@@ -6670,6 +6715,7 @@ def _convert_legacy_call(sm, expression):
             (_time_scale_call, _convert_time_scale_call),
             (_plusargs_call, _convert_plusargs_call),
             (_dynamic_cast_call, _convert_dynamic_cast),
+            (_isunbounded_call, _convert_isunbounded),
             (_array_reduction_call, _convert_array_reduction),
             (_enum_method_call, _convert_enum_method),
             (_clog2_call, _convert_clog2),

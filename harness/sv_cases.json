@@ -1853,6 +1853,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "isunbounded_bounded",
+      "file": "Examples/system-verilog/isunbounded_bounded/isunbounded_bounded.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

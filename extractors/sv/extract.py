@@ -5779,6 +5779,7 @@ def _convert_legacy_call(sm, expression):
             (_string_literal_getc_method, _convert_string_literal_getc),
             (_string_literal_compare_method, _convert_string_literal_compare),
             (_string_literal_atoi_method, _convert_string_literal_atoi),
+            (_string_literal_radix_method, _convert_string_literal_radix),
             (_string_literal_len_method, _convert_string_literal_len_method),
             (_semaphore_zero_try_get, _convert_semaphore_zero_try_get),
             (_semaphore_literal_try_get, _convert_semaphore_literal_try_get),
@@ -7308,6 +7309,56 @@ def _string_literal_source_value(expression, method, receiver=None,
 def _string_literal_atoi_method(expression):
     """Recognize ``atoi`` on a source-pure ASCII string literal."""
     return _string_literal_source_value(expression, "atoi") is not None
+
+
+_STRING_RADIX_METHODS = {"atobin": 1, "atooct": 3, "atohex": 4}
+
+
+def _string_literal_radix_method(expression):
+    """Recognize a literal string radix conversion with scalar output."""
+    try:
+        method = getattr(expression, "subroutineName", None)
+        if method not in _STRING_RADIX_METHODS:
+            return False
+        value = _string_literal_source_value(expression, method)
+        width = getattr(expression.type, "bitWidth", None)
+        return (value is not None and width == 32
+                and getattr(expression.type, "isIntegral", False))
+    except Exception:
+        return False
+
+
+def _convert_string_literal_radix(sm, expression):
+    if not _string_literal_radix_method(expression):
+        return unsupported(sm, expression, "CallExpression:string-radix")
+    method = expression.subroutineName
+    value = _string_literal_source_value(expression, method)
+    group = _STRING_RADIX_METHODS[method]
+    digits = "0123456789abcdef"
+    bits = []
+    for char in value.lower():
+        if char in "?":
+            char = "z"
+        if char in "xz":
+            bits.append(char * group)
+            continue
+        if char not in digits:
+            return unsupported(sm, expression, "CallExpression:string-radix-digit")
+        number = digits.index(char)
+        if number >= (1 << group):
+            return unsupported(sm, expression, "CallExpression:string-radix-digit")
+        bits.append(format(number, f"0{group}b"))
+    encoded = "".join(bits)
+    if len(encoded) > 32:
+        encoded = encoded[-32:]
+    encoded = encoded.rjust(32, "0")
+    return signed_metadata({
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": 32,
+        "bits": encoded,
+        "string_literal_radix": method,
+    }, expression.type)
 
 
 def _convert_string_literal_atoi(sm, expression):

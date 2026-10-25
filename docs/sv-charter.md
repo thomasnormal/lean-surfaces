@@ -6914,3 +6914,17 @@ partial (66 include skips). `CallExpression` falls 2,982 → 2,965 and the
 leading `AssignmentExpression:target` blocker remains 2,975; the next
 `ExpressionStatement:CallExpression` blocker remains 2,973. Differential
 coverage moves 162/158/0/4 → 163/159/0/4; grammar coverage remains 214/83/131.
+## Literal string radix conversions — 2026-10-25
+
+The self-check surface now admits source-pure literal string `atobin()`,
+`atooct()`, and `atohex()` calls with 32-bit integral results. Valid radix
+digits are converted exactly; `x`, `z`, and `?` preserve their four-state
+unknown bits at the corresponding radix width. Dynamic strings, invalid
+digits, unsupported methods, and non-32-bit results remain loud.
+`string_radix_literal` supplies the executable fixture and proof receipt.
+
+The 22,050-path census moves 4,906 → 4,910 clean and 17,078 → 17,074
+partial (66 include skips). `CallExpression` falls 2,965 → 2,958 while
+`AssignmentExpression:target` remains 2,975 and
+`ExpressionStatement:CallExpression` remains 2,973. Differential coverage
+moves 163/159/0/4 → 164/160/0/4; grammar coverage remains 214/83/131.

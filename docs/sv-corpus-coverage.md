@@ -4183,3 +4183,15 @@ The fresh 22,050-path census moves 4,901 → 4,906 clean and 17,083 → 17,078
 partial (66 include skips). `CallExpression` falls 2,982 → 2,965; the
 differential table moves 162/158/0/4 → 163/159/0/4, with grammar coverage
 unchanged at 214/83/131.
+## Literal string radix conversions — 2026-10-25
+
+Source-pure literal strings now convert through `atobin()`, `atooct()`, and
+`atohex()` into exact 32-bit values. The admitted conversion preserves
+SystemVerilog four-state `x`, `z`, and `?` radix digits; dynamic strings,
+invalid digits, and other string methods remain loud. The
+`string_radix_literal` fixture exercises all three methods.
+
+The fresh 22,050-path census moves 4,906 → 4,910 clean and 17,078 → 17,074
+partial (66 include skips); `CallExpression` falls 2,965 → 2,958. The
+differential table moves 163/159/0/4 → 164/160/0/4, with grammar coverage
+unchanged at 214/83/131.

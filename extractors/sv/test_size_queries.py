@@ -113,6 +113,31 @@ class SizeQueries(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
+    def test_string_radix_methods_preserve_unknown_digits(self):
+        design = lower(
+            'module top; string h = "2x"; string b = "10x1"; '
+            'string o = "7?"; logic [31:0] hv, bv, ov; initial begin '
+            'hv = h.atohex(); bv = b.atobin(); ov = o.atooct(); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("string_literal_radix")]
+        self.assertEqual([node["string_literal_radix"] for node in values],
+                         ["atohex", "atobin", "atooct"])
+        self.assertEqual([node["bits"] for node in values], [
+            "0" * 24 + "0010" + "xxxx",
+            "0" * 28 + "10" + "x" + "1",
+            "0" * 26 + "111" + "zzz",
+        ])
+
+    def test_string_radix_dynamic_and_invalid_digits_stay_loud(self):
+        for source in (
+                'module top; string s; string other; int result; initial begin '
+                's = other; result = s.atohex(); end endmodule',
+                'module top; string s = "8"; int result; initial '
+                'result = s.atobin(); endmodule'):
+            design = lower(source)
+            self.assertTrue(any(str(node.get("sv_kind", "")).startswith("CallExpression")
+                                for node in nodes(design)))
+
     def test_literal_string_compare_and_icompare_are_normalized(self):
         design = lower(
             'module top; string a; string b; initial begin a = "Alpha"; '

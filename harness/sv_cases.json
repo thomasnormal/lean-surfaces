@@ -1844,6 +1844,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "queue_empty_pop_discarded",
+      "file": "Examples/system-verilog/queue_empty_pop_discarded/queue_empty_pop_discarded.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -131,3 +131,13 @@ stays loud.
 Reproduce the call-only table with
 `python3.9 extractors/sv/call_reprice.py --corpus <corpus>/tests`; the tool
 reads sources in process and writes no envelopes beside the corpus.
+
+## Discarded empty queue pops — 2026-10-25
+
+The direct statement forms `void'(q.pop_front())` and
+`void'(q.pop_back())` are admitted when source order proves that `q` is an
+uninitialized or empty queue. IEEE 1800-2023 §§7.10.2.4–7.10.2.5 specify that
+an empty pop has no effect on the queue, so erasing the discarded result is
+exact in the flat self-check state. A queue with a push, alias, dynamic
+receiver, or other operation remains a loud `ExpressionStatement:CallExpression`;
+value-position pops continue to use their separate default-value lowering.

@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 205 | 200 | 0 | 5 | sv-tests-2 declarations |
+| 206 | 201 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -219,6 +219,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `semaphore_negative_try_get` | `Examples/system-verilog/semaphore_negative_try_get/semaphore_negative_try_get.sv` | match | **MATCH** | `ok` | MATCH |
 | `queue_empty_pop_struct_default` | `Examples/system-verilog/queue_empty_pop_struct_default/queue_empty_pop_struct_default.sv` | match | **MATCH** | `ok` | MATCH |
 | `mailbox_module_init` | `Examples/system-verilog/mailbox_module_init/mailbox_module_init.sv` | match | **MATCH** | `ok` | MATCH |
+| `queue_empty_pop_discarded` | `Examples/system-verilog/queue_empty_pop_discarded/queue_empty_pop_discarded.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -226,7 +227,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 216 | 89 | 127 | pyslang SyntaxKind |
+| 217 | 90 | 127 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -441,6 +442,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.VariableDimension` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.VariablePortHeader` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.VirtualInterfaceType` | `Examples/system-verilog/opaque_virtual_interface_null_write/opaque_virtual_interface_null_write.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.VoidCastedCallStatement` | `Examples/system-verilog/queue_empty_pop_discarded/queue_empty_pop_discarded.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.VoidType` | `Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.WildcardEqualityExpression` | `Examples/system-verilog/wildcard_equality/values.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.WildcardInequalityExpression` | `Examples/system-verilog/wildcard_equality/values.sv` | **MATCH** | `ok`  |
@@ -453,12 +455,12 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22054 | 5059 | 16928 | 67 |
+| 22054 | 5061 | 16926 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2937 |
-| `ExpressionStatement:CallExpression` | 2911 |
+| `ExpressionStatement:CallExpression` | 2909 |
 | `CallExpression` | 2833 |
 | `Hierarchy:ports` | 2398 |
 | `VariableSymbol:2state` | 2302 |

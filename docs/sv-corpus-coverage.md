@@ -16,7 +16,7 @@ python3.12 extractors/sv/census.py --corpus /path/to/tests --recheck  # determin
 
 Machine-readable results: `harness/sv/conformance/census.json`
 (per-file records + this document's aggregates). The current committed summary
-is the **2026-10-23** snapshot below, measured with Python 3.9 and pyslang 11;
+is the **2026-10-25** snapshot below, measured with Python 3.9 and pyslang 11;
 the dated sections retain their original measurement denominators.
 
 The committed summary uses a portable corpus-layout placeholder, not a
@@ -25,21 +25,35 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
-## Fresh extractor census — 2026-10-23
+## Fresh extractor census — 2026-10-25
 
-The chapter-scoped rerun covered **22,035** paths: **4,552 clean**,
-**17,417 partial**, **66 include skips**, and **zero errors**. The adapter
-walk found **27 unlockable** files, of which **17** are eligible for its
+The chapter-scoped rerun covered **22,054** paths: **5,061 clean**,
+**16,926 partial**, **67 include skips**, and **zero errors**. The adapter
+walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`AssignmentExpression:target` (3,580), `ExpressionStatement:CallExpression` (3,565),
-`VariableSymbol:2state` (3,501), `CallExpression` (3,290),
-`Hierarchy:ports` (2,397), `SubroutineSymbol:Subroutine` (1,714),
-`NamedValueExpression:2state` (1,481), `ConcurrentAssertionStatement`
-(1,353), `InvalidStatement` (1,329), and `ClassType` (1,327).
+`AssignmentExpression:target` (2,937), `ExpressionStatement:CallExpression` (2,909),
+`CallExpression` (2,833), `Hierarchy:ports` (2,398),
+`VariableSymbol:2state` (2,302), `SubroutineSymbol:Subroutine` (1,634),
+`NamedValueExpression:2state` (1,484), `ConcurrentAssertionStatement`
+(1,359), `InvalidStatement` (1,329), and `ClassType` (1,329).
 
 The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
 matched all 200 fixed-seed sample classifications.
+
+## Discarded empty queue pops — 2026-10-25
+
+Statement-position `void'(q.pop_front())` and `void'(q.pop_back())` now lower
+to inert `Empty` statements when source-order analysis proves that the queue
+is uninitialized or empty. The queue remains unchanged, matching IEEE
+1800-2023 §§7.10.2.4–7.10.2.5. Nonempty or mutated queues, aliases, dynamic
+receivers, and value-position pops retain their existing loud boundaries.
+
+The refreshed **22,054-path** census moves **5,059 → 5,061 clean** and
+**16,928 → 16,926 partial** (67 include skips); the two admitted witnesses
+reduce `ExpressionStatement:CallExpression` **2,911 → 2,909**. Differential
+coverage grows **205/200/0/5 → 206/201/0/5** with no disagreements, and the
+grammar census is **217 witnesses, 90 MATCH, and 127 REFUSE**.
 
 The queue-declaration slice lowers an uninitialized 2-state queue to inert
 metadata; queue initializers and all queue operations remain loud. The fresh

@@ -12924,6 +12924,12 @@ def _convert_syscall(sm, s, e):
     negative signed values — the envelope carries no sign). `$finish`/
     `$stop` arguments (verbosity levels) are ignored. Any other call stays
     `Unsupported` (statement tag `ExpressionStatement:CallExpression`)."""
+    if _SYM is None and _queue_empty_pop_method(e, allow_struct=True):
+        # A discarded empty-queue pop has no represented result and leaves the
+        # already-empty queue unchanged. Preserve the source-order proof used
+        # by value-position empty pops while erasing only this void statement.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "queue_empty_pop_statement": e.subroutineName}
     if _SYM is None and e.isSystemCall and e.subroutineName in ("$sformat", "$swrite"):
         constant_assignment = _constant_formatted_integral_assignment(sm, e)
         if constant_assignment is not None:

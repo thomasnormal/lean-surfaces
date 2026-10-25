@@ -80,6 +80,27 @@ class SizeQueries(unittest.TestCase):
         self.assertEqual([(node["queue_empty_pop"], node["bits"]) for node in pops],
                          [("pop_back", "0" * 32)])
 
+    def test_discarded_empty_queue_pops_are_noops(self):
+        design = lower(
+            "module top; int q[$]; initial begin "
+            "void'(q.pop_front()); void'(q.pop_back()); "
+            'if (q.size() === 0) $display("PASS"); end endmodule')
+        pops = [node for node in nodes(design)
+                if node.get("queue_empty_pop_statement")]
+        self.assertEqual([node["queue_empty_pop_statement"] for node in pops],
+                         ["pop_front", "pop_back"])
+        self.assertFalse(any(node.get("sv_kind") == "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_discarded_nonempty_queue_pop_stays_loud(self):
+        design = lower(
+            "module top; int q[$] = {1}; initial begin "
+            "void'(q.pop_front()); end endmodule")
+        self.assertFalse(any(node.get("queue_empty_pop_statement")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("sv_kind") == "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
     def test_empty_queue_pop_struct_returns_field_defaults(self):
         design = lower(
             'typedef struct { int id; bit [3:0] flags; } item_t; '

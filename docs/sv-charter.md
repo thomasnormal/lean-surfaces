@@ -7610,3 +7610,20 @@ On the refreshed **22,054-path** sv-tests-2 snapshot, clean files move
 `VariableSymbol:2state` falls **2,313 → 2,302**; `AssignmentExpression:target`
 is **2,937**. Differential coverage grows **204/199/0/5 → 205/200/0/5** with
 no disagreements; grammar coverage remains **216/89/127**.
+
+## Discarded empty queue pops — 2026-10-25
+
+The self-check surface now erases a direct `void'` call to `pop_front()` or
+`pop_back()` when source-order analysis proves the queue is still empty. The
+operation has no represented result or queue mutation, as required by IEEE
+1800-2023 §§7.10.2.4–7.10.2.5. Nonempty and mutated queues, aliases, dynamic
+receivers, and value-position calls remain loud. The
+`queue_empty_pop_discarded` fixture supplies the differential row and Lean
+receipt; extractor regressions cover both directions and the nonempty refusal.
+
+On the refreshed **22,054-path** census, clean files move **5,059 → 5,061**
+and partial files **16,928 → 16,926** (67 include skips).
+`ExpressionStatement:CallExpression` falls **2,911 → 2,909** while
+`AssignmentExpression:target` remains **2,937**. Differential coverage grows
+**205/200/0/5 → 206/201/0/5** with no disagreements; grammar coverage is
+**217/90/127**.

@@ -551,6 +551,20 @@ def callableUnaryMinusFrameWitness : Bool := unaryMinusFrame
 
 #guard callableUnaryMinusFrameWitness
 
+private def unaryComplementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let function := {base with body := .block (.return_ {
+    expression := .unary "~"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+    sourceType := intType, type := intType})}
+  match evaluateCallableObject 32 .lp64 function [signed (-1)] with
+  | .ok (.ok value) => value == signed 0
+  | _ => false
+
+def callableUnaryComplementFrameWitness : Bool := unaryComplementFrame
+
+#guard callableUnaryComplementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

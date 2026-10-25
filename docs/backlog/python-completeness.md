@@ -4869,3 +4869,23 @@ late generator captures remain loud.
 DECIDED: keep the closed, non-escaping lambda lowering as the supported slice;
 retain loud failure for first-class callable forms whose capture or boundary
 semantics are not represented, and move to starred syntax next.
+
+## 2026-10-25-pycomplete-117 — close the starred-syntax audit
+
+The starred syntax priority is already covered at its two landed expression
+and target sites. Starred displays lower through immediate tuple construction
+and an outer fresh `list`, preserving evaluation order and copy semantics;
+flat one-star assignment targets drain the source before allocating the middle
+slice. The `star_script` and `unpack_script` harness programs match CPython
+3.9, including stdout ordering and short-input behavior.
+
+| Measurement | Result |
+|---|---|
+| Display and target scripts | 2/2 model/oracle matches |
+| Static nodes | 26 nodes in 3 files; two in-repo rows are already MATCH, the remaining vendored rows have class/import walls |
+| Remaining shape | starred call arguments remain loud through `call_unsupported`; no corpus row is star-only |
+| Formatting | `git diff --check` passed |
+
+DECIDED: retain the landed display and flat-target forms and keep starred call
+arguments loud until a callable-argument expansion shape has a sole measured
+payoff; move to the remaining statement walls next.

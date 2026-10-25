@@ -83,6 +83,30 @@ class DynamicArrayDeclarations(unittest.TestCase):
                             node.get("name") == "dynamic_values[2]"
                             for node in nodes(design)))
 
+    def test_unpacked_concat_flattens_fixed_array_operands(self):
+        design = lower(
+            """module top;
+               typedef int pair_t[2];
+               int values[];
+               initial begin
+                 pair_t middle;
+                 pair_t tail;
+                 middle = '{2, 3};
+                 tail = '{5, 6};
+                 values = {1, middle, 4, tail};
+                 if (values.size() == 6 && values[0] == 1 && values[5] == 6)
+                   $display("PASS");
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        concat_blocks = [node for node in nodes(design)
+                         if node.get("dynamic_array_concat_lowered")]
+        self.assertEqual(len(concat_blocks), 1)
+        self.assertEqual(
+            [stmt["target"]["name"] for stmt in concat_blocks[0]["stmts"]],
+            [f"values[{index}]" for index in range(6)])
+
     def test_dynamic_to_fixed_size_mismatch_is_runtime_halt(self):
         design = lower(
             """module top;

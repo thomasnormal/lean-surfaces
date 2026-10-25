@@ -6989,6 +6989,22 @@ partial** (66 include skips). `AssignmentExpression:target` falls **2,975 →
 blockers are unchanged. Differential coverage moves **167/163/0/4 →
 169/164/0/5**; grammar coverage remains **214/83/131**.
 
+## Dynamic-array concatenations with fixed-array operands — 2026-10-25
+
+A finite unpacked concatenation assigned to a scalar-integral dynamic array
+may now include fixed unpacked scalar arrays. Each operand is sampled in source
+order and expanded into the destination's existing flat cells, preserving the
+exact concatenation length, two-state conversion, and destination alias guard.
+Nested aggregate, effectful, aliased, nonintegral, nonblocking, and timed
+forms remain loud. The `dynamic_array_concat_subarrays` fixture covers the
+`{1, middle, 4, tail}` shape.
+
+The 22,053-path census moves **4,990 → 4,992 clean** and **16,996 → 16,994
+partial** (67 include skips). `AssignmentExpression:target` falls **2,940 →
+2,937** and `ElementSelectExpression:source-type` falls **549 → 546**.
+Differential coverage moves **188/183/0/5 → 189/184/0/5**; grammar coverage
+remains **214/86/128**.
+
 ## Dynamic-array positional assignment patterns — 2026-10-25
 
 An exact positional assignment pattern of scalar integral values now samples a

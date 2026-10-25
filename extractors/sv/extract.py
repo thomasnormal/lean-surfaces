@@ -2060,6 +2060,30 @@ def _dynamic_array_constant_extent(symbol):
                             return None
                         total += nested
                     return total if total > 0 else None
+                if kind == "NamedValueExpression":
+                    # An unpacked fixed-array operand contributes each of its
+                    # scalar cells to an unpacked concatenation.  A scalar
+                    # named value remains one item.  Only integral leaf
+                    # arrays are representable by the flat dynamic cells.
+                    aggregate = getattr(getattr(node, "type", None),
+                                        "canonicalType", None)
+                    if type(aggregate).__name__ == "FixedSizeUnpackedArrayType":
+                        dimensions, leaf = _fixed_array_dimensions(aggregate)
+                        if dimensions is None:
+                            return None
+                        if type(getattr(leaf, "canonicalType", leaf)).__name__ in (
+                                "FixedSizeUnpackedArrayType", "DynamicArrayType",
+                                "QueueType", "AssociativeArrayType",
+                                "UnpackedStructType", "UnpackedUnionType"):
+                            return None
+                        width, _two, reason = type_width_2s(leaf)
+                        if width is None or reason is not None:
+                            return None
+                        count = 1
+                        for left, right in dimensions:
+                            count *= abs(int(left) - int(right)) + 1
+                        return count if count > 0 else None
+                    return 1
                 if kind in ("SimpleAssignmentPatternExpression",
                             "StructuredAssignmentPatternExpression"):
                     elements = list(getattr(node, "elements", []))
@@ -2081,7 +2105,7 @@ def _dynamic_array_constant_extent(symbol):
                         total += nested
                     return total if total > 0 else None
                 if kind in ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral",
-                            "NamedValueExpression", "UnaryExpression",
+                            "UnaryExpression",
                             "BinaryExpression", "ConditionalExpression"):
                     return 1
                 return None
@@ -2987,6 +3011,110 @@ def _dynamic_array_pattern_assignment(sm, expr):
                     "value": value,
                 } for index, value in enumerate(values)],
                 "dynamic_array_pattern_lowered": True}
+    except Exception:
+        return None
+
+
+def _dynamic_array_concat_assignment(sm, expr):
+    """Lower a finite unpacked concatenation with fixed-array operands.
+
+    The dynamic destination already has one flat cell per sampled element.
+    A concatenation contributes scalar leaves in source order; a fixed
+    unpacked scalar array contributes its cells in declaration order.  Keep
+    this path blocking, integral, effect-free, exact-width, and alias-free so
+    the cell expansion preserves the single RHS snapshot required by §10.10.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None or expr.isNonBlocking
+                or type(expr.left).__name__ != "NamedValueExpression"):
+            return None
+        lhs = expr.left
+        array_type = lhs.type.canonicalType
+        if type(array_type).__name__ != "DynamicArrayType":
+            return None
+        rhs = expr.right
+        while type(rhs).__name__ == "ConversionExpression":
+            rhs = getattr(rhs, "operand", None)
+            if rhs is None:
+                return None
+        if type(rhs).__name__ != "ConcatenationExpression":
+            return None
+        extent = _dynamic_array_constant_extent(lhs.symbol)
+        if extent is None:
+            return None
+        element_type = array_type.elementType
+        width, two_state, reason = type_width_2s(element_type)
+        if width is None or reason is not None:
+            return None
+        destination = _array_storage_name(lhs.symbol)
+        values = []
+
+        def append_scalar(node):
+            if not _case_source_expression_ok(node, packed_members=True):
+                return False
+            reads_destination = False
+
+            def inspect(selected):
+                nonlocal reads_destination
+                if type(selected).__name__ in ("NamedValueExpression",
+                                                "HierarchicalValueExpression"):
+                    try:
+                        reads_destination = (reads_destination or
+                                             _array_storage_name(selected.symbol)
+                                             == destination)
+                    except Exception:
+                        reads_destination = True
+
+            _visit_selected_expression(node, inspect)
+            if reads_destination:
+                return False
+            value = convert_expr(sm, node)
+            if (value is None or value.get("kind") == "Unsupported"
+                    or width_of(value) != width or not _case_expression_ok(value)):
+                return False
+            values.append(squash2_wrap(value, width) if two_state else value)
+            return True
+
+        def flatten(node):
+            while type(node).__name__ == "ConversionExpression":
+                node = getattr(node, "operand", None)
+                if node is None:
+                    return False
+            if type(node).__name__ == "ConcatenationExpression":
+                operands = list(getattr(node, "operands", []))
+                return bool(operands) and all(flatten(item) for item in operands)
+            shape = _fixed_array_assignment_shape(node)
+            if shape is not None:
+                source_name, source_width, _source_two, positions = shape
+                source_type = getattr(getattr(node, "type", None),
+                                       "canonicalType", None)
+                if (type(source_type).__name__ != "FixedSizeUnpackedArrayType"
+                        or source_width != width or source_name == destination
+                        or not _case_source_expression_ok(node)):
+                    return False
+                for position in positions:
+                    values.append({
+                        "kind": "Ident", "span": node_span(sm, node),
+                        "width": width,
+                        "name": f"{source_name}[{position}]",
+                    })
+                return True
+            return append_scalar(node)
+
+        if not flatten(rhs) or len(values) != extent:
+            return None
+        span = node_span(sm, expr)
+        return {
+            "kind": "Block", "span": span,
+            "stmts": [{
+                "kind": "BlockingAssign", "span": span,
+                "target": {"kind": "Ident", "span": node_span(sm, lhs),
+                           "width": width, "name": f"{destination}[{index}]"},
+                "value": value,
+            } for index, value in enumerate(values)],
+            "dynamic_array_concat_lowered": True,
+        }
     except Exception:
         return None
 
@@ -11625,6 +11753,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         dynamic_new_pattern = _dynamic_array_new_pattern_assignment(sm, expr)
         if dynamic_new_pattern is not None:
             return dynamic_new_pattern
+        dynamic_concat = _dynamic_array_concat_assignment(sm, expr)
+        if dynamic_concat is not None:
+            return dynamic_concat
         dynamic_pattern = _dynamic_array_pattern_assignment(sm, expr)
         if dynamic_pattern is not None:
             return dynamic_pattern

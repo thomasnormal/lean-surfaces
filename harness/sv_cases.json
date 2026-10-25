@@ -1691,6 +1691,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "dynamic_array_concat_subarrays",
+      "file": "Examples/system-verilog/dynamic_array_concat_subarrays/dynamic_array_concat_subarrays.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

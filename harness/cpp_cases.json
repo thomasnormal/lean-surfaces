@@ -6073,6 +6073,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-binary-equal",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableBinaryEqualFrameWitness",
+    "cpp_source": "bool binary_equal_frame_witness(int value) { return value == 5; } bool callable_witness() { return binary_equal_frame_witness(5); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

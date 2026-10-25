@@ -781,6 +781,23 @@ def callableBinaryLessEqualFrameWitness : Bool := binaryLessEqualFrame
 
 #guard callableBinaryLessEqualFrameWitness
 
+private def binaryEqualFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let function := {base with
+    signature := {result := .builtin .boolean, parameters := [.builtin .int], variadic := false}
+    body := .block (.return_ {
+      expression := .binary "=="
+        {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+        {expression := .integer 5, sourceType := intType, type := intType}
+      sourceType := .builtin .boolean, type := .builtin .boolean})}
+  match evaluateCallableObject 32 .lp64 function [signed 5] with
+  | .ok (.ok value) => value == ⟨.boolean, 1⟩
+  | _ => false
+
+def callableBinaryEqualFrameWitness : Bool := binaryEqualFrame
+
+#guard callableBinaryEqualFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

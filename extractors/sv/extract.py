@@ -5752,6 +5752,7 @@ def _convert_legacy_call(sm, expression):
             (_dimension_query_call, _convert_dimension_query),
             (_string_literal_getc_method, _convert_string_literal_getc),
             (_string_literal_len_method, _convert_string_literal_len_method),
+            (_semaphore_zero_try_get, _convert_semaphore_zero_try_get),
             (_zero_size_method, _convert_zero_size_method),
             (_rtoi_literal_call, _convert_rtoi_literal),
             (_realtobits_literal_call, _convert_realtobits_literal),
@@ -6379,20 +6380,21 @@ def _zero_size_method(expression):
 
 
 def _semaphore_zero_method(expression):
-    """Recognize the state-free semaphore ``get(0)``/``put(0)`` calls.
+    """Recognize state-free semaphore ``get(0)``/``put(0)``/``try_get(0)``.
 
-    IEEE 1800-2023 §15.3.2–15.3.3 specifies that a zero key count neither
-    consumes nor returns keys, and ``get(0)`` cannot block.  The self-check
-    state does not represent semaphore handles, so this narrow rule only
-    erases a call whose receiver has a preceding ``= new(...)`` in the same
-    source and whose sole argument is the literal integral zero.  Any
-    dynamic count, unproven/null receiver, or other method remains loud.
+    IEEE 1800-2023 §15.3.2–15.3.4 specifies that a zero key count neither
+    consumes nor returns keys, ``get(0)`` cannot block, and ``try_get(0)``
+    succeeds. The self-check state does not represent semaphore handles, so
+    this narrow rule only erases a call whose receiver has a preceding
+    ``= new(...)`` in the same source and whose sole argument is the literal
+    integral zero. Any dynamic count, unproven/null receiver, or other method
+    remains loud.
     """
     try:
         if (type(expression).__name__ != "CallExpression"
                 or getattr(expression, "bad", False)
                 or expression.isSystemCall
-                or expression.subroutineName not in ("get", "put")
+                or expression.subroutineName not in ("get", "put", "try_get")
                 or len(expression.arguments) != 1
                 or _literal_integral_value(expression.arguments[0]) != 0):
             return False
@@ -6416,6 +6418,27 @@ def _semaphore_zero_method(expression):
                          + r"\s*=\s*new\s*\(", source) is not None
     except Exception:
         return False
+
+
+def _convert_semaphore_zero_try_get(sm, expression):
+    """Return the successful scalar result of ``semaphore.try_get(0)``."""
+    if not _semaphore_zero_method(expression) or expression.subroutineName != "try_get":
+        return unsupported(sm, expression, "CallExpression:semaphore-try-get")
+    width = getattr(expression.type, "bitWidth", None)
+    if width is None or width <= 0:
+        return unsupported(sm, expression, "CallExpression:semaphore-try-get-width")
+    return signed_metadata({
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": width,
+        "bits": ("0" * (width - 1)) + "1",
+        "semaphore_zero_try_get": True,
+    }, expression.type)
+
+
+def _semaphore_zero_try_get(expression):
+    return (_semaphore_zero_method(expression)
+            and expression.subroutineName == "try_get")
 
 
 def _q_initialize_status_call(sm, expression):

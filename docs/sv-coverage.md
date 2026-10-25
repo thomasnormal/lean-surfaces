@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 195 | 190 | 0 | 5 | sv-tests-2 declarations |
+| 196 | 191 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -186,6 +186,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `string_atoi_literal` | `Examples/system-verilog/string_atoi_literal/string_atoi_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_compare_literal` | `Examples/system-verilog/string_compare_literal/string_compare_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `semaphore_literal_try_get` | `Examples/system-verilog/semaphore_literal_try_get/semaphore_literal_try_get.sv` | match | **MATCH** | `ok` | MATCH |
+| `std_semaphore_try_get` | `Examples/system-verilog/std_semaphore_try_get/std_semaphore_try_get.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_literal_size` | `Examples/system-verilog/dynamic_array_literal_size/dynamic_array_literal_size.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_radix_literal` | `Examples/system-verilog/string_radix_literal/string_radix_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `semaphore_default_try_get` | `Examples/system-verilog/semaphore_default_try_get/semaphore_default_try_get.sv` | match | **MATCH** | `ok` | MATCH |
@@ -443,13 +444,13 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22053 | 5009 | 16977 | 67 |
+| 22053 | 5010 | 16976 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2937 |
 | `ExpressionStatement:CallExpression` | 2911 |
-| `CallExpression` | 2887 |
+| `CallExpression` | 2886 |
 | `Hierarchy:ports` | 2398 |
 | `VariableSymbol:2state` | 2313 |
 | `SubroutineSymbol:Subroutine` | 1634 |

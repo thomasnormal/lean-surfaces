@@ -151,6 +151,22 @@ class ClassHandleDeclarations(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
 
+    def test_literal_semaphore_try_get_ignores_comments_and_strings(self):
+        design = lower(
+            'module top; std::semaphore sem = new(2); int result; '
+            'initial begin '
+            '// sem = new(99); sem.try_get(99);\n'
+            'result = sem.try_get(1); '
+            'if (result !== 1) $display("FAIL: sem.try_get(1)"); '
+            'result = sem.try_get(1); '
+            'if (result !== 1) $display("FAIL: sem = new(4)"); '
+            'else $display("PASS"); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("semaphore_literal_try_get")]
+        self.assertEqual([node["semaphore_available"] for node in values], [2, 1])
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
     def test_literal_semaphore_try_get_default_is_one(self):
         design = lower(
             'module top; semaphore sem = new(1); int result; '
@@ -182,6 +198,13 @@ class ClassHandleDeclarations(unittest.TestCase):
             'sem = new(2); result = sem.try_get(keys); sem.put(1); end endmodule')
         self.assertIn("CallExpression",
                       [node.get("sv_kind") for node in nodes(design)])
+
+    def test_aliased_semaphore_try_get_stays_loud(self):
+        design = lower(
+            'module top; semaphore sem, alias; int result; initial begin '
+            'sem = new(1); alias = sem; result = sem.try_get(1); end endmodule')
+        self.assertFalse(any(node.get("semaphore_literal_try_get")
+                             for node in nodes(design)))
 
     def test_literal_semaphore_put_and_get_balance(self):
         design = lower(

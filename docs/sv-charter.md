@@ -7439,3 +7439,18 @@ On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
 remains **2,911** and `AssignmentExpression:target` remains **2,937**.
 Differential coverage grows **194/189/0/5 → 195/190/0/5** with no
 disagreements; grammar coverage remains **216/89/127**.
+
+## `std::semaphore::try_get()` source-order scan — 2026-10-25
+
+The literal semaphore `try_get` lowering now ignores comments and diagnostic
+format strings while checking source-ordered constructor and method uses. This
+admits the standard-library-qualified spelling in `std_semaphore_try_get` and
+keeps the AST-backed constructor proof and literal balance unchanged. Aliases,
+dynamic key counts, unsupported methods, and blocking operations remain loud.
+
+On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
+**5,009 → 5,010** and partial files **16,977 → 16,976** (67 include skips).
+`CallExpression` falls **2,887 → 2,886** while `AssignmentExpression:target`
+remains **2,937** and `ExpressionStatement:CallExpression` remains **2,911**.
+Differential coverage grows **195/190/0/5 → 196/191/0/5** with no
+disagreements; grammar coverage remains **216/89/127**.

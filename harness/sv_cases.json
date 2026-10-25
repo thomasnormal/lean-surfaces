@@ -1549,6 +1549,15 @@
       "expect": "match"
     },
     {
+      "name": "std_semaphore_try_get",
+      "file": "Examples/system-verilog/std_semaphore_try_get/std_semaphore_try_get.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "dynamic_array_literal_size",
       "file": "Examples/system-verilog/dynamic_array_literal_size/dynamic_array_literal_size.sv",
       "module": "top",

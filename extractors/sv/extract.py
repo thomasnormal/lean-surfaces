@@ -237,6 +237,68 @@ def sym_span(sm, sym):
 # offsets are byte offsets into the file content.
 _SOURCE_BYTES = None
 
+
+def _sv_code_source(source):
+    """Blank comments and string literals while preserving source offsets.
+
+    A few narrow source-order recognizers use regular expressions after the
+    frontend has proved the relevant AST shape.  Their scans must not treat a
+    variable name mentioned in a comment or a diagnostic format string as a
+    second runtime use.  Keep every character position intact so the masked
+    text can still be compared with ``SourceRange`` offsets.
+    """
+    chars = list(source)
+    i = 0
+    state = "code"
+    while i < len(chars):
+        if state == "code":
+            if source.startswith("//", i):
+                chars[i] = chars[i + 1] = " "
+                i += 2
+                state = "line-comment"
+            elif source.startswith("/*", i):
+                chars[i] = chars[i + 1] = " "
+                i += 2
+                state = "block-comment"
+            elif source[i] == '"':
+                chars[i] = " "
+                i += 1
+                state = "string"
+            else:
+                i += 1
+        elif state == "line-comment":
+            if source[i] == "\n":
+                state = "code"
+                i += 1
+            else:
+                chars[i] = " "
+                i += 1
+        elif state == "block-comment":
+            if source.startswith("*/", i):
+                chars[i] = chars[i + 1] = " "
+                i += 2
+                state = "code"
+            else:
+                if source[i] != "\n":
+                    chars[i] = " "
+                i += 1
+        else:  # string
+            if source[i] == "\\":
+                chars[i] = " "
+                i += 1
+                if i < len(chars) and source[i] != "\n":
+                    chars[i] = " "
+                    i += 1
+            elif source[i] == '"':
+                chars[i] = " "
+                i += 1
+                state = "code"
+            else:
+                if source[i] != "\n":
+                    chars[i] = " "
+                i += 1
+    return "".join(chars)
+
 # Symbolic-mode context (SymCtx) — None in single-file M0/self-check mode.
 # Every symbolic-mode behavior change in the shared converters is guarded
 # by `_SYM is not None`, keeping single-file output byte-identical.
@@ -7358,6 +7420,7 @@ def _semaphore_literal_try_get_state(expression):
             request = 1
 
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        code_source = _sv_code_source(source)
         if not source or not getattr(symbol, "name", ""):
             return None
         name = re.escape(symbol.name)
@@ -7396,7 +7459,7 @@ def _semaphore_literal_try_get_state(expression):
         constructor_re = re.compile(
             r"(?<![A-Za-z0-9_$])" + name
             + r"\s*=\s*new\s*\(\s*([+-]?\d+)?\s*\)")
-        constructors = list(constructor_re.finditer(source))
+        constructors = list(constructor_re.finditer(code_source))
         if len(constructors) != 1:
             return None
         constructor = constructors[0]
@@ -7416,7 +7479,7 @@ def _semaphore_literal_try_get_state(expression):
         method_re = re.compile(
             r"(?<![A-Za-z0-9_$])" + name
             + r"\s*\.\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*\(")
-        methods = list(method_re.finditer(source))
+        methods = list(method_re.finditer(code_source))
         if not methods:
             return None
         values_by_start = {}
@@ -7428,7 +7491,7 @@ def _semaphore_literal_try_get_state(expression):
         # Any post-construction bare occurrence must be one of the admitted
         # method receivers. This rejects aliases and ordinary reads.
         for occurrence in re.finditer(r"(?<![A-Za-z0-9_$])" + name
-                                      + r"(?![A-Za-z0-9_$])", source):
+                                      + r"(?![A-Za-z0-9_$])", code_source):
             if occurrence.start() <= constructor.end():
                 continue
             if not any(method.start() == occurrence.start() for method in methods):
@@ -7452,7 +7515,7 @@ def _semaphore_literal_try_get_state(expression):
         prior = [method for method in methods
                  if constructor.end() < method.start() < current_method_start]
         for method in methods:
-            text = source[method.end():]
+            text = code_source[method.end():]
             close = text.find(")")
             if close < 0:
                 return None

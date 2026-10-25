@@ -1906,8 +1906,37 @@ def _dynamic_array_constant_extent(symbol):
                 return None
             count = literal_extent(allocation)
             return count if count is not None and 0 < count <= 1024 else None
-        if getattr(allocation, "initExpr", None) is not None:
-            return None
+        initializer = getattr(allocation, "initExpr", None)
+        if initializer is not None:
+            # A scalar dynamic array may be allocated from one other sampled
+            # scalar dynamic array.  The copy itself is lowered at the
+            # assignment site; this branch only exposes the fresh destination
+            # extent to declaration/selection lowering.  Keep the source and
+            # destination distinct so the later cell writes cannot overwrite
+            # values that have not yet been copied.
+            # Declaration-time initializers are converted by ``convert_var``;
+            # this procedural assignment helper is the only place that emits
+            # the source-cell copy, so do not expose an unmodelled declaration
+            # copy as a sampled extent.
+            if getattr(symbol, "initializer", None) is not None:
+                return None
+            if type(initializer).__name__ != "NamedValueExpression":
+                return None
+            source = getattr(initializer, "symbol", None)
+            if (source is None or source is symbol
+                    or type(source.type.canonicalType).__name__ != "DynamicArrayType"):
+                return None
+            if _dynamic_array_constant_extent(source) is None:
+                return None
+            source_element = source.type.canonicalType.elementType
+            destination_element = symbol.type.canonicalType.elementType
+            source_width, _source_two, source_reason = type_width_2s(source_element)
+            destination_width, _destination_two, destination_reason = type_width_2s(
+                destination_element)
+            if (source_width is None or destination_width is None
+                    or source_reason is not None or destination_reason is not None
+                    or source_width != destination_width):
+                return None
         size = getattr(allocation, "sizeExpr", None)
         if (type(size).__name__ != "IntegerLiteral"
                 or getattr(size, "bad", False)):
@@ -2437,6 +2466,89 @@ def _dynamic_array_allocation_assignment(sm, expr):
             return None
         return {"kind": "Empty", "span": node_span(sm, expr),
                 "dynamic_array_allocation_lowered": True}
+    except Exception:
+        return None
+
+
+def _dynamic_array_resize_copy_assignment(sm, expr):
+    """Lower ``dst = new[N](src)`` for sampled scalar arrays.
+
+    A dynamic array has no aggregate slot in the flat self-check state, but a
+    fresh constant-size array does have one independent cell per element.  For
+    two distinct sampled scalar arrays, the IEEE copy is therefore a block of
+    ordinary cell writes followed by the destination's default padding.  A
+    self-copy, dynamic size, aggregate element, nested array, or source type
+    mismatch stays on the ordinary target boundary.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None or expr.isNonBlocking
+                or type(expr.left).__name__ != "NamedValueExpression"):
+            return None
+        destination = getattr(expr.left, "symbol", None)
+        if (destination is None
+                or type(destination.type.canonicalType).__name__ != "DynamicArrayType"):
+            return None
+        allocation = expr.right
+        if type(allocation).__name__ == "ConversionExpression":
+            allocation = getattr(allocation, "operand", None)
+        if type(allocation).__name__ != "NewArrayExpression":
+            return None
+        initializer = getattr(allocation, "initExpr", None)
+        if type(initializer).__name__ != "NamedValueExpression":
+            return None
+        source = getattr(initializer, "symbol", None)
+        if (source is None or source is destination
+                or type(source.type.canonicalType).__name__ != "DynamicArrayType"):
+            return None
+        size = getattr(allocation, "sizeExpr", None)
+        if type(size).__name__ != "IntegerLiteral" or getattr(size, "bad", False):
+            return None
+        destination_count = int(getattr(size, "value", -1))
+        if destination_count <= 0 or destination_count > 1024:
+            return None
+        source_count = _dynamic_array_constant_extent(source)
+        if source_count is None:
+            return None
+        destination_element = destination.type.canonicalType.elementType
+        source_element = source.type.canonicalType.elementType
+        destination_width, destination_two, destination_reason = type_width_2s(
+            destination_element)
+        source_width, _source_two, source_reason = type_width_2s(source_element)
+        if (destination_width is None or source_width is None
+                or destination_reason is not None or source_reason is not None
+                or destination_width != source_width):
+            return None
+        destination_base = _array_storage_name(destination)
+        source_base = _array_storage_name(source)
+        span = node_span(sm, expr)
+        statements = []
+        for position in range(destination_count):
+            if position < source_count:
+                value = {
+                    "kind": "Ident", "span": node_span(sm, initializer),
+                    "width": source_width,
+                    "name": f"{source_base}[{position}]",
+                }
+                if destination_two and source_element.isFourState:
+                    value = squash2_wrap(value, destination_width)
+            else:
+                value = {
+                    "kind": "Literal", "span": span,
+                    "width": destination_width,
+                    "bits": ("0" if destination_two else "x") * destination_width,
+                }
+            statements.append({
+                "kind": "BlockingAssign", "span": span,
+                "target": {
+                    "kind": "Ident", "span": node_span(sm, expr.left),
+                    "width": destination_width,
+                    "name": f"{destination_base}[{position}]",
+                },
+                "value": value,
+            })
+        return {"kind": "Block", "span": span, "stmts": statements,
+                "dynamic_array_resize_copy_lowered": True}
     except Exception:
         return None
 
@@ -10511,6 +10623,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         dynamic_pattern = _dynamic_array_pattern_assignment(sm, expr)
         if dynamic_pattern is not None:
             return dynamic_pattern
+        dynamic_resize_copy = _dynamic_array_resize_copy_assignment(sm, expr)
+        if dynamic_resize_copy is not None:
+            return dynamic_resize_copy
         dynamic_allocation = _dynamic_array_allocation_assignment(sm, expr)
         if dynamic_allocation is not None:
             return dynamic_allocation

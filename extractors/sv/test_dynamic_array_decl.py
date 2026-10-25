@@ -146,6 +146,56 @@ class DynamicArrayDeclarations(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_distinct_dynamic_array_resize_copies_and_pads_scalar_cells(self):
+        design = lower(
+            """module top;
+               int source[];
+               int result[];
+               logic four_source[];
+               logic four_result[];
+               initial begin
+                 source = new[2];
+                 source[0] = 11;
+                 source[1] = 22;
+                 result = new[4](source);
+                 if (result[0] == 11 && result[1] == 22 &&
+                     result[2] == 0 && result[3] == 0)
+                   begin
+                     four_source = new[1];
+                     four_source[0] = 1'b1;
+                     four_result = new[2](four_source);
+                     if (four_result[0] === 1'b1 && four_result[1] === 1'bx)
+                       $display("PASS");
+                   end
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        copies = [node for node in nodes(design)
+                  if node.get("dynamic_array_resize_copy_lowered")]
+        self.assertEqual(len(copies), 2)
+        result_copy = next(copy for copy in copies
+                           if copy["stmts"][0]["target"]["name"].endswith("result[0]"))
+        statements = result_copy["stmts"]
+        self.assertEqual([stmt["target"]["name"].split(":")[-1]
+                          for stmt in statements],
+                         ["result[0]", "result[1]", "result[2]", "result[3]"])
+        self.assertEqual(statements[-1]["value"]["bits"], "0" * 32)
+        four_copy = next(copy for copy in copies
+                         if copy["stmts"][0]["target"]["name"].endswith("four_result[0]"))
+        self.assertEqual(four_copy["stmts"][1]["value"]["bits"], "x")
+
+    def test_declaration_time_dynamic_array_copy_stays_loud(self):
+        design = lower(
+            """module top;
+               int source[] = new[2];
+               int result[] = new[2](source);
+               initial $finish;
+               endmodule""")
+        self.assertTrue(any(node.get("sv_kind") in
+                            ("VariableSymbol:type", "VariableSymbol:2state")
+                            for node in nodes(design)))
+
     def test_struct_elements_receive_type_defaults(self):
         design = lower(
             """module top;

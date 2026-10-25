@@ -7138,3 +7138,22 @@ partial files **16,448 → 16,446** (29 include skips). The leading
 `VariableSymbol:type` wall falls **60 → 57**. Differential coverage grows
 **178/173/0/5 → 179/174/0/5** with no disagreements, and grammar coverage
 remains **214/83/131**.
+
+## Finite dynamic-array resize copies — 2026-10-25
+
+A blocking `dst = new[N](src)` now lowers for two distinct, finite sampled
+dynamic arrays whose scalar integral elements have the same width. The
+destination receives one flat-cell copy per source position and the remaining
+cells receive their IEEE default (zero for two-state elements, x for
+four-state elements). Self-resize, declaration-time copies, dynamic sizes,
+aliases, width mismatches, nested arrays, aggregate elements, and scheduled
+forms remain loud; no heap resize or second scheduler is introduced.
+`dynamic_array_resize_copy` supplies the differential fixture and Lean receipt,
+with extractor regressions covering the admitted copy and the declaration-time
+boundary.
+
+The paired 21,342-path census remains **4,867 clean → 4,867 clean** and
+**16,446 partial → 16,446 partial** (29 include skips); the leading
+`AssignmentExpression:target` blocker remains **2,792**. Differential coverage
+moves **179/174/0/5 → 180/175/0/5** with no disagreements, and grammar
+coverage remains **214/83/131**.

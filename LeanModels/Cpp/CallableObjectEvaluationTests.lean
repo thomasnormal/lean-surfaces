@@ -1195,6 +1195,21 @@ def callableNullStatementFrameWitness : Bool := nullStatementFrame
 
 #guard callableNullStatementFrameWitness
 
+private def returnStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let returned : TypedCallableExpression := {
+    expression := .integer 11
+    sourceType := intType
+    type := intType}
+  let function := {base with body := .block (.return_ returned)}
+  match evaluateCallableObject 32 .lp64 function [signed 0] with
+  | .ok (.ok value) => value == signed 11
+  | _ => false
+
+def callableReturnStatementFrameWitness : Bool := returnStatementFrame
+
+#guard callableReturnStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

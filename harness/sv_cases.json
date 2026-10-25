@@ -1459,6 +1459,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "dynamic_array_literal_size",
+      "file": "Examples/system-verilog/dynamic_array_literal_size/dynamic_array_literal_size.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

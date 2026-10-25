@@ -4170,3 +4170,16 @@ partial (66 include skips); `CallExpression` falls 2,994 → 2,982 and
 `ExpressionStatement:CallExpression` falls 2,974 → 2,973. The differential
 table moves 161/157/0/4 → 162/158/0/4, with grammar coverage unchanged at
 214/83/131.
+
+## Literal dynamic-array `size()` after allocation — 2026-10-25
+
+After a positive literal `new[N]` allocation, IEEE 1800-2023 dynamic-array
+`size()` returns the sampled extent. The self-check tier admits this exact
+scalar query while retaining loud boundaries for resize, delete, aliases,
+dynamic bounds, and other methods. The `dynamic_array_literal_size` fixture
+and differential row exercise the admitted form.
+
+The fresh 22,050-path census moves 4,901 → 4,906 clean and 17,083 → 17,078
+partial (66 include skips). `CallExpression` falls 2,982 → 2,965; the
+differential table moves 162/158/0/4 → 163/159/0/4, with grammar coverage
+unchanged at 214/83/131.

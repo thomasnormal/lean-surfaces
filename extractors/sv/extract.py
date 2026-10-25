@@ -5782,6 +5782,7 @@ def _convert_legacy_call(sm, expression):
             (_string_literal_len_method, _convert_string_literal_len_method),
             (_semaphore_zero_try_get, _convert_semaphore_zero_try_get),
             (_semaphore_literal_try_get, _convert_semaphore_literal_try_get),
+            (_dynamic_array_literal_size_method, _convert_dynamic_array_literal_size),
             (_mailbox_empty_num_method, _convert_mailbox_empty_num),
             (lambda e: _mailbox_literal_sequence(e) is not None
                        and e.subroutineName == "num",
@@ -6410,6 +6411,64 @@ def _zero_size_method(expression):
         return all(inert_occurrence(m) for m in occurrences[1:])
     except Exception:
         return False
+
+
+def _dynamic_array_literal_size_method(expression):
+    """Recognize ``size()`` after one sampled literal dynamic-array resize.
+
+    The flat store already expands a constant ``new[N]`` allocation into
+    independent cells.  Its length is therefore an exact scalar fact, while
+    later resizes, dynamic receivers, and other array methods remain loud.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or expression.subroutineName != "size"
+                or len(expression.arguments) != 1):
+            return False
+        receiver = expression.arguments[0]
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "bad", False)):
+            return False
+        canonical = getattr(getattr(receiver, "type", None), "canonicalType", None)
+        if type(canonical).__name__ != "DynamicArrayType":
+            return False
+        symbol = getattr(receiver, "symbol", None)
+        if symbol is None:
+            return False
+        count = _dynamic_array_constant_extent(symbol)
+        if count is None:
+            return False
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        name = re.escape(getattr(symbol, "name", ""))
+        if not name or not source:
+            return False
+        # Keep the receiver source-pure: the one allocation and size queries
+        # are the only whole-array uses allowed by this object-free lowering.
+        methods = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + name
+            + r"\s*\.\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*\(", source))
+        if not methods or any(m.group(1) != "size" for m in methods):
+            return False
+        return True
+    except Exception:
+        return False
+
+
+def _convert_dynamic_array_literal_size(sm, expression):
+    if not _dynamic_array_literal_size_method(expression):
+        return unsupported(sm, expression, "CallExpression:dynamic-array-size")
+    receiver = expression.arguments[0]
+    count = _dynamic_array_constant_extent(receiver.symbol)
+    width = getattr(expression.type, "bitWidth", None)
+    if count is None or width is None or width <= 0:
+        return unsupported(sm, expression, "CallExpression:dynamic-array-size")
+    return signed_metadata({
+        "kind": "Literal", "span": node_span(sm, expression),
+        "width": width,
+        "bits": format(count & ((1 << width) - 1), f"0{width}b"),
+        "dynamic_array_literal_size": True,
+    }, expression.type)
 
 
 def _semaphore_zero_method(expression):
@@ -10109,6 +10168,9 @@ def _convert_syscall(sm, s, e):
             # retain the call's sequencing position as an ordinary no-op.
             return {"kind": "Empty", "span": node_span(sm, s),
                     "semaphore_zero_method": name}
+        if _dynamic_array_literal_size_method(e):
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "dynamic_array_literal_size": True}
         if _semaphore_literal_try_get(e):
             # The result is discarded, but the source-ordered recognizer
             # accounts for this successful acquisition in later calls.
@@ -10151,6 +10213,9 @@ def _convert_syscall(sm, s, e):
                 and _literal_function_call(e)):
             return {"kind": "Empty", "span": node_span(sm, s),
                     "literal_function_statement": name}
+    if is_sys and _dynamic_array_literal_size_method(e):
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "dynamic_array_literal_size": True}
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

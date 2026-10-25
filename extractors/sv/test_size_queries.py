@@ -246,10 +246,23 @@ class SizeQueries(unittest.TestCase):
             '$display("%0d", values.size()); end endmodule')
         self.assertTrue(any(node.get("zero_size_query") for node in nodes(design)))
 
-    def test_positive_dynamic_allocation_size_stays_loud(self):
+    def test_positive_dynamic_allocation_size_is_exact(self):
+        design = lower(
+            'module top; int values[]; int result; initial begin '
+            'values = new[4]; result = values.size(); '
+            'if (result === 4) $display("PASS"); else $display("FAIL"); '
+            'end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("dynamic_array_literal_size")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(values[0]["bits"], "0" * 29 + "100")
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_dynamic_allocation_size_with_other_method_stays_loud(self):
         design = lower(
             'module top; int values[]; initial begin values = new[1]; '
-            '$display("%0d", values.size()); end endmodule')
+            'values.delete(); $display("%0d", values.size()); end endmodule')
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 

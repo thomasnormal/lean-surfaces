@@ -15,16 +15,16 @@
  "summary": {
   "blocker_files": [
    [
-    "CallExpression",
-    2982
-   ],
-   [
     "AssignmentExpression:target",
     2975
    ],
    [
     "ExpressionStatement:CallExpression",
     2973
+   ],
+   [
+    "CallExpression",
+    2965
    ],
    [
     "Hierarchy:ports",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4901,
-   "partial": 17083,
+   "clean": 4906,
+   "partial": 17078,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4223,
+    4228,
     18683
    ],
    "simulation elaboration": [
@@ -1323,9 +1323,9 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 299,
+    "clean": 301,
     "error": 0,
-    "partial": 359,
+    "partial": 357,
     "skip_include": 0,
     "total": 658,
     "unlockable": 0
@@ -1603,9 +1603,9 @@
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 188,
+    "clean": 191,
     "error": 0,
-    "partial": 608,
+    "partial": 605,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

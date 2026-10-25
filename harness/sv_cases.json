@@ -182,6 +182,22 @@
       "expect": "match"
     },
     {
+      "name": "dynamic_array_concat",
+      "file": "Examples/system-verilog/dynamic_array_concat/dynamic_array_concat.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "dynamic_array_concat_refuse",
+      "file": "Examples/system-verilog/dynamic_array_concat_refuse/dynamic_array_concat_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
       "name": "empty_queue_declaration",
       "file": "Examples/system-verilog/empty_queue_decl/empty_queue_decl.sv",
       "module": "top",

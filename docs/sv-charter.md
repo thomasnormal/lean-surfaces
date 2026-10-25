@@ -6970,3 +6970,20 @@ partial (66 include skips). `CallExpression` falls 2,951 → 2,947 while
 `AssignmentExpression:target` remains 2,975 and
 `ExpressionStatement:CallExpression` remains 2,973. Differential coverage
 moves 166/162/0/4 → 167/163/0/4; grammar coverage remains 214/83/131.
+
+## Dynamic-array unpacked concatenation — 2026-10-25
+
+An assignment of a finite unpacked concatenation of scalar integral values to a
+dynamic array now samples the concatenation's exact length and lowers each
+element to the existing flat dynamic-array cells. The declaration/allocation
+path, constant indexed reads and writes, and `size()` therefore observe the
+same values as the source operation without adding an aggregate store. Empty,
+dynamic, effectful, aliased, and nonintegral aggregate forms remain loud; a
+function-call element is pinned by `dynamic_array_concat_refuse` as a recorded
+refusal.
+
+The 22,050-path census moves **4,921 → 4,922 clean** and **17,063 → 17,062
+partial** (66 include skips). `AssignmentExpression:target` falls **2,975 →
+2,974** and `CallExpression` falls **2,947 → 2,939**; the other leading
+blockers are unchanged. Differential coverage moves **167/163/0/4 →
+169/164/0/5**; grammar coverage remains **214/83/131**.

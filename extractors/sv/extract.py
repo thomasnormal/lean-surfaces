@@ -1851,7 +1851,61 @@ def _dynamic_array_constant_extent(symbol):
         if type(allocation).__name__ == "ConversionExpression":
             allocation = getattr(allocation, "operand", None)
         if type(allocation).__name__ != "NewArrayExpression":
-            return None
+            # Declaration-time aggregate initializers remain outside this
+            # object-free slice.  The new sampled-shape rule is specifically
+            # for a later procedural assignment, where the destination's
+            # storage cells already exist and the write can be lowered in
+            # source order.
+            if initializer is not None:
+                return None
+            # An unpacked concatenation assigned to a dynamic array samples
+            # its finite length at the assignment boundary.  The flat
+            # self-check store can represent that sampled shape with the
+            # same cells used by ``new[N]``.  Admit only scalar leaves and
+            # exact nested assignment-pattern leaves; effectful or otherwise
+            # aggregate RHSs remain loud instead of guessing their size.
+            def literal_extent(node):
+                kind = type(node).__name__
+                if kind == "ConversionExpression":
+                    return literal_extent(getattr(node, "operand", None))
+                if kind == "ConcatenationExpression":
+                    operands = list(getattr(node, "operands", []))
+                    if not operands:
+                        return None
+                    total = 0
+                    for operand in operands:
+                        nested = literal_extent(operand)
+                        if nested is None:
+                            return None
+                        total += nested
+                    return total if total > 0 else None
+                if kind in ("SimpleAssignmentPatternExpression",
+                            "StructuredAssignmentPatternExpression"):
+                    elements = list(getattr(node, "elements", []))
+                    if not elements:
+                        return None
+                    total = 0
+                    for element in elements:
+                        nested = literal_extent(element)
+                        if nested is None:
+                            # A scalar pattern element is one array cell;
+                            # nested patterns recurse through the branch above.
+                            if type(element).__name__ in (
+                                    "IntegerLiteral", "UnbasedUnsizedIntegerLiteral",
+                                    "NamedValueExpression", "UnaryExpression",
+                                    "BinaryExpression", "ConditionalExpression"):
+                                total += 1
+                                continue
+                            return None
+                        total += nested
+                    return total if total > 0 else None
+                if kind in ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral",
+                            "NamedValueExpression", "UnaryExpression",
+                            "BinaryExpression", "ConditionalExpression"):
+                    return 1
+                return None
+            count = literal_extent(allocation)
+            return count if count is not None and 0 < count <= 1024 else None
         if getattr(allocation, "initExpr", None) is not None:
             return None
         size = getattr(allocation, "sizeExpr", None)

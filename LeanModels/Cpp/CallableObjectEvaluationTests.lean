@@ -1900,6 +1900,26 @@ def callableLongLongCompoundSubtractFrameWitness : Bool :=
 
 #guard callableLongLongCompoundSubtractFrameWitness
 
+private def longLongCompoundMultiplyFrame : Bool :=
+  let base := incrementFunction .longLong "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign "*=" (handle "0x10")
+      {expression := .integer 3, sourceType := .builtin .longLong,
+        type := .builtin .longLong})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .longLong, type := .builtin .longLong}))}
+  match CallableObjectFrame.start .lp64 function [⟨.signed 64, 4⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.signed 64, 12⟩)
+
+def callableLongLongCompoundMultiplyFrameWitness : Bool :=
+  longLongCompoundMultiplyFrame
+
+#guard callableLongLongCompoundMultiplyFrameWitness
+
 private def intCompoundBitAndFrame : Bool :=
   let base := incrementFunction .int "++" false
   let function := {base with body := .block (.sequence

@@ -339,6 +339,71 @@ theorem bindE {x : Run FrameState α} {y : List Int → Run FrameState α}
     · cases h
     · cases h
 
+/-- A pair-sequence conversion followed by a fresh dictionary allocation
+is clock-oblivious.  The pure builders may return either a value or an
+exception; `bind` and `allocDict` transport both outcomes. -/
+theorem dictPairsAlloc {st : FrameState} (h : st.world.clock = [])
+    (vals : List RVal) :
+    ClockErasedF
+      ((Run.liftRes st (dictPairs st.world.heap 0 vals)).bind fun st items =>
+        (Run.liftRes st (dictBuild st.world.heap [] items)).bind fun st entries =>
+          allocDictRun st entries.toArray)
+      (fun tr =>
+        ((Run.liftRes (st.withClock tr)
+          (dictPairs (st.withClock tr).world.heap 0 vals)).bind fun st items =>
+          (Run.liftRes st (dictBuild st.world.heap [] items)).bind fun st entries =>
+            allocDictRun st entries.toArray)) := by
+  refine .bind (.liftRes h _) ?_
+  intro s items hs
+  refine .bind (.liftRes hs _) ?_
+  intro s entries hs
+  exact .allocDict hs _
+
+theorem matchBindE {x : Run FrameState RFlow} {y : List Int → Run FrameState RFlow}
+    {f : FrameState → RFlow → Run FrameState RFlow}
+    {g : FrameState → PyErr → Run FrameState RFlow}
+    (hx : ClockErasedF x y)
+    (hf : ∀ st v, st.world.clock = [] → ClockErasedF (f st v) (fun tr => f (st.withClock tr) v))
+    (hg : ∀ st e, st.world.clock = [] → ClockErasedF (g st e) (fun tr => g (st.withClock tr) e)) :
+    ClockErasedF (α := RFlow)
+      (match x with | .ok s a => f s a | .exn s e => g s e | .timeout => .timeout | .unsupported m => .unsupported m)
+      (fun tr => match y tr with | .ok s a => f s a | .exn s e => g s e | .timeout => .timeout | .unsupported m => .unsupported m) := by
+  obtain ⟨hok, hexn, hto⟩ := hx
+  cases x with
+  | ok s a =>
+    obtain ⟨hs, hy⟩ := hok s a rfl
+    have hh := hf s a hs
+    refine ⟨?_, ?_, ?_⟩
+    · intro st v h
+      obtain ⟨h1, h2⟩ := hh.1 st v h
+      exact ⟨h1, fun tr => by simp only [hy tr]; exact h2 tr⟩
+    · intro st e h
+      obtain ⟨h1, h2⟩ := hh.2.1 st e h
+      exact ⟨h1, fun tr => by simp only [hy tr]; exact h2 tr⟩
+    · intro h; exact fun tr => by simp only [hy tr]; exact hh.2.2 h tr
+  | exn s e =>
+    obtain ⟨hs, hy⟩ := hexn s e rfl
+    have hh := hg s e hs
+    refine ⟨?_, ?_, ?_⟩
+    · intro st v h
+      obtain ⟨h1, h2⟩ := hh.1 st v h
+      exact ⟨h1, fun tr => by simp only [hy tr]; exact h2 tr⟩
+    · intro st e' h
+      obtain ⟨h1, h2⟩ := hh.2.1 st e' h
+      exact ⟨h1, fun tr => by simp only [hy tr]; exact h2 tr⟩
+    · intro h; exact fun tr => by simp only [hy tr]; exact hh.2.2 h tr
+  | timeout =>
+    refine ⟨fun s v h => ?_, fun s e h => ?_, fun htimeout tr => ?_⟩
+    · cases h
+    · cases h
+    · change (match y tr with
+        | .ok s v => f s v
+        | .exn s e => g s e
+        | .timeout => .timeout
+        | .unsupported m => .unsupported m) = .timeout
+      rw [hto htimeout tr]
+  | unsupported m => exact ClockErasedF.unsupported
+
 /-- `ite` congruence: the condition is trace-independent (it normalized
 to the SAME term on both sides), so the fork is shared. -/
 theorem ite {c : Prop} [Decidable c] {x z : Run FrameState α}
@@ -1219,7 +1284,13 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
              .of_seed (fun tr => by simp)
                (by simp only [FrameState.withClock_self hs6]))
         case listV xs => exact .unsupported
-        case ref a2 => exact .unsupported
+        case ref a2 =>
+          refine .bind (ihE m s3 value hs3) fun s4 v hs4 => ?_
+          refine .bind (.liftRes hs4 (heapListAugAssign s4.world.heap a2 op v))
+            fun s5 h2 hs5 => ?_
+          ce_norm
+          exact .of_seed (fun tr => by simp [Run.seedF])
+            (by simp [FrameState.withClock_self hs5, hs5])
   | whileLoop test body orelse sp =>
     simp only [execStmt]
     exact ihW m st test body.toList orelse.toList h
@@ -1320,8 +1391,12 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
     cases tryUnsupported with
     | some reason => exact .unsupported
     | none =>
-      refine .ite .unsupported ?_
-      cases hfc : findClass m excName with
+      refine .ite ?_ ?_
+      · simpa only using (.matchBindE (ihSs m st body.toList h)
+          (fun _ flow hs => .ok hs flow)
+          (fun s _ hs => ihSs m s handler.toList hs))
+      · refine .ite .unsupported ?_
+        cases hfc : findClass m excName with
       | none =>
         refine .ite ?_ ?_
         · exact .bindE (ihSs m st body.toList h)
@@ -1502,7 +1577,17 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
   | pass sp => simp only [execStmt]; exact .ok h _
   | brk sp => simp only [execStmt]; exact .ok h _
   | cont sp => simp only [execStmt]; exact .ok h _
-  | unsupported pyKind txt sp => simp only [execStmt]; exact .unsupported
+  | unsupported pyKind txt sp =>
+    by_cases hpy : pyKind = "AnnAssign:no-value"
+    · subst pyKind
+      simp only [execStmt]
+      cases han : annNoValueName txt with
+      | none => exact .unsupported
+      | some id =>
+        refine .of_seed (fun tr => by simp [han, Run.seedF]) ?_
+        simp [han, FrameState.withClock_self h]
+    · simp [execStmt, hpy]
+      exact .unsupported
 
 
 theorem ceExecAttrCall_succ (ih : CE fuel) : CEExecAttrCall (fuel + 1) := by
@@ -1620,24 +1705,35 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
     cases hl : Env.lookup st.locals id with
     | some v => exact .ok h _
     | none =>
-      cases hg : lookupG (moduleGlobals m).1 id with
-      | some ov =>
-        cases ov with
-        | some v => exact .ok h _
-        | none =>
-          cases hlive : Env.lookup st.world.globals id with
-          | some v => exact .ok h _
-          | none => exact .unsupported
-      | none =>
-        refine .ite .unsupported (.ite .unsupported (.ite .unsupported
-          (.ite .unsupported (.ite .unsupported ?_))))
-        cases hlive : Env.lookup st.world.globals id with
-        | some v => exact .ok h _
-        | none => exact .ite (.ok h _) (.ite .unsupported (.ite (.exn h _) .unsupported))
+        by_cases hu : hasUnboundLocal st.locals id = true
+        · simp [FrameState.withClock_locals, hu]
+          exact .exn h _
+        · simp [FrameState.withClock_locals, hu]
+          cases hg : lookupG (moduleGlobals m).1 id with
+          | some ov =>
+            cases ov with
+            | some v => exact .ok h _
+            | none =>
+              cases hlive : Env.lookup st.world.globals id with
+              | some v => exact .ok h _
+              | none => exact .unsupported
+          | none =>
+            refine .ite .unsupported (.ite .unsupported (.ite .unsupported
+              (.ite .unsupported (.ite .unsupported ?_))))
+            cases hlive : Env.lookup st.world.globals id with
+            | some v => exact .ok h _
+            | none => exact .ite (.ok h _) (.ite .unsupported (.ite (.exn h _) .unsupported))
   | binOp l op r sp =>
     simp only [evalExpr]
     exact .bind (ihE m st l h) fun s1 a hs1 =>
-      .bind (ihE m s1 r hs1) fun s2 b hs2 => .liftRes hs2 _
+      .bind (ihE m s1 r hs1) fun s2 b hs2 => by
+        cases hop : op == .bitAnd with
+        | false => exact .liftRes hs2 _
+        | true =>
+          ce_norm
+          refine .bind (.liftRes hs2 (evalBinOpH s2.world.heap op a b))
+            fun s3 hr hs3 => ?_
+          exact .of_seed (fun tr => by simp [Run.seedF]) (by simp [h, hs3])
   | unaryOp op operand sp =>
     simp only [evalExpr]
     refine .bind (ihE m st operand h) fun s1 v hs1 => ?_
@@ -1682,11 +1778,11 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
     refine .bind (ihItems m st keys.toList values.toList h) fun s2 items hs2 => ?_
     ce_norm
     refine .bind (.liftRes hs2 _) fun s3 entries hs3 => ?_
-    exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs3, hs3])
+    exact .allocDict hs3 _
   | «attribute» recv attr sp =>
     simp only [evalExpr]
     refine .bind (ihE m st recv h) fun s2 r hs2 => ?_
-    cases r <;> try exact .unsupported
+    cases r <;> try exact .exn hs2 _
     case ref a => exact ceAttrReadResult hs2
     case ntuple tn fields xs => exact .liftRes hs2 _
   | ifExp t b o sp =>
@@ -1792,15 +1888,15 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
                         try dsimp only
                         ce_norm
-                        refine .ite ?init ?noinit
-                        case init =>
+                        cases hi : classMethodQname m ci "__init__" with
+                        | some initName =>
                           refine .bind
                             (ClockErasedW.withLocals
-                              (ihCall m _ (fname ++ ".__init__") _ hs2))
+                              (ihCall m _ initName _ hs2))
                             fun s3 r hs3 => ?_
                           cases r <;> try exact .exn hs3 _
                           case none => exact .ok hs3 _
-                        case noinit =>
+                        | none =>
                           cases vs with
                           | nil =>
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [hs2])
@@ -1811,17 +1907,42 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                     exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
                       .ite (.ok hs2 _) (.exn hs2 _)
                   | none =>
-                    refine .ite ?blen (.ite ?bsorted (.ite ?bmax (.ite ?bmin
+                    refine .ite ?blenmult (.ite ?blen (.ite ?bsorted (.ite ?bmax (.ite ?bmin
                       (.ite ?banyall (.ite ?bset (.ite ?babs (.ite ?bround (.ite ?bint
                       (.ite ?bfloat (.ite ?bbool
                       (.ite ?bdivmod
                       (.ite ?bpow
                       (.ite ?bsum (.ite ?btuple (.ite ?blist (.ite ?bdict
                       (.ite ?brange (.ite ?benum (.ite ?bcount (.ite ?bnext
-                      (.ite ?bord (.ite ?bchr (.ite ?bhex (.ite ?bformat (.ite ?bstr (.ite ?brepr (.ite .unsupported
-                      (.ite ?bprint
-                        (.ite .unsupported ?blive)))))))))))))))))))))))))))
-                    ))
+                      (.ite ?bord (.ite ?bchr (.ite ?bhex (.ite ?bformat (.ite ?bstr (.ite ?brepr
+                      (.ite ?binput (.ite ?bprint (.ite ?bdunder ?blive)))))))))))))))))))))))))))
+                    )))
+                    case blenmult =>
+                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      cases vs with
+                      | cons left rest =>
+                        cases rest with
+                        | cons right tail =>
+                          cases tail with
+                          | nil =>
+                            cases hsm : sequenceMultLength left right with
+                            | some result =>
+                              simp only [hsm]
+                              exact .liftRes hs2 result
+                            | none =>
+                              simp only [hsm]
+                              refine .bind (.liftRes hs2 (evalBinOpH s2.world.heap .mult left right))
+                                fun s3 hr hs3 => ?_
+                              ce_norm
+                              exact .of_seed (fun tr => by
+                                cases s3 with
+                                | mk w l => cases w with | mk hp gl so c =>
+                                  cases hlen : lenValH hr.fst hr.snd <;>
+                                    simp [hlen, Run.seedF, FrameState.withClock, World.withClock])
+                                (by simp [FrameState.withClock_self hs3, hs3])
+                          | cons _ _ => exact .exn hs2 _
+                        | nil => exact .exn hs2 _
+                      | nil => exact .exn hs2 _
                     case blen =>
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
                       cases vs with
@@ -2239,14 +2360,28 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         | cons d t2 => exact .exn hs2 _
                         | nil =>
                           cases v <;> try exact .exn hs2 _
-                          case listV xs => exact .unsupported
-                          case bytes _ => exact .unsupported
+                          case str s0 =>
+                            simp only [dictPairValues]
+                            exact .dictPairsAlloc hs2 (strCharVals s0)
+                          case bytes values =>
+                            simp only [dictPairValues]
+                            exact .dictPairsAlloc hs2 (bytesIntVals values)
+                          case tuple xs =>
+                            simp only [dictPairValues]
+                            exact .dictPairsAlloc hs2 xs.toList
+                          case ntuple tn fs xs =>
+                            simp only [dictPairValues]
+                            exact .dictPairsAlloc hs2 xs.toList
+                          case listV xs =>
+                            simp only [dictPairValues]
+                            exact .dictPairsAlloc hs2 xs.toList
                           case ref a =>
                             ce_norm
                             cases hh : Heap.get? s2.world.heap a with
                             | none => exact .unsupported
                             | some obj =>
                               cases obj <;> try exact .unsupported
+                              case list xs => exact .dictPairsAlloc hs2 xs.toList
                               case dict es sv => exact .allocDict hs2 _
                               case generator qname locals continuation status =>
                                 refine .bind
@@ -2358,7 +2493,9 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           | nil =>
                             cases spec with
                             | str spec =>
-                              refine .ite ?_ .unsupported
+                              refine .ite ?_ ?_
+                              · ce_norm
+                                exact .liftRes hs2 _
                               · ce_norm
                                 exact .liftRes hs2 _
                             | _ =>
@@ -2381,18 +2518,20 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
                       ce_norm
                       exact .liftRes hs2 _
+                    case binput => exact .unsupported
                     case bprint =>
                       -- 2026-08-13: `print` is an ordinary builtin here. It reads
                       -- no clock and appends one stdout chunk, so the seeded
                       -- family IS the seeded base run — `of_seed` closes it, the
                       -- `withClock` projections carrying the modified world.
-                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      refine .bind (ihEs m st (complexPrintArgs args.toList) h) fun s2 vs hs2 => ?_
                       cases hsa : strOfArgs s2.world.heap vs with
                       | none => simp only [hsa]; exact .unsupported
                       | some line =>
                         refine .of_seed (fun tr => ?_) ?_
                         · simp [hsa, Run.seedF]
                         · simp [hsa, FrameState.withClock_self hs2, hs2]
+                    case bdunder => exact .unsupported
                     case blive =>
                       cases hlive : Env.lookup st.world.globals fname with
                       | none => exact .ite .unsupported (.ite (.exn h _) .unsupported)
@@ -2419,13 +2558,13 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
           refine .ite ?clock ?dispatch
           case clock =>
             cases hargs : args.toList with
-            | cons a0 t => exact .unsupported
+            | cons a0 t => exact .exn h _
             | nil =>
               simp only [h]
               exact .unsupported
           case dispatch =>
             refine .bind (ihE m st recv h) fun s2 r hs2 => ?_
-            cases r <;> try exact .unsupported
+            cases r <;> try exact .exn hs2 _
             case ref a => exact ihAttrC m s2 a attr args.toList hs2
             case ntuple tn fs xs =>
               try dsimp only
@@ -2506,7 +2645,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                 | nil => exact .ok hs3 _
                 | cons _ _ => exact .exn hs3 _
               | false =>
-                exact .unsupported
+                exact .exn hs2 PyErr.attributeError
       case kw =>
         cases f <;> try exact .unsupported
         case name fname sp2 =>

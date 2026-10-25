@@ -5,6 +5,22 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.81] — 2026-10-25
+
+### Added
+
+- Added narrow integral compound arithmetic witnesses for unsigned-`short`,
+  unsigned-`char`, and signed-`char` addition, subtraction, division, and
+  modulo, using defined mid-range values and preserving the existing wrap cases.
+
+### Measured
+
+- The checked-in corpus now contains **508 differential rows**: **491 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.80] — 2026-10-25
 
 ### Added

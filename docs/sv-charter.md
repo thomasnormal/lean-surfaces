@@ -6857,3 +6857,17 @@ The fresh **22,049-path** census moves **4,856 → 4,865 clean** and **17,127 �
 17,118 partial** (66 include skips); `CallExpression` falls **3,026 → 3,017**
 while `AssignmentExpression:target` remains **2,975**. Differential coverage
 moves **158/154/0/4 → 159/155/0/4**; grammar coverage remains **214/83/131**.
+
+## Literal string `atoi()` conversions — 2026-10-25
+
+String `.atoi()` calls now scan the latest source-pure ASCII literal value for
+leading decimal digits and underscores, stopping at the first other character
+and returning the exact signed 32-bit result. Dynamic writes, signs, base
+prefixes, overflow, non-ASCII values, and other string methods remain loud.
+`string_atoi_literal` supplies the differential witness.
+
+The corpus snapshot now has **22,050 paths** after an upstream fixture update;
+relative to the previous **22,049-path** measurement, this item moves clean
+files **4,856 → 4,875** and partial files **17,127 → 17,109** (66 include
+skips), with `CallExpression` falling **3,017 → 3,007**. Differential coverage
+moves **159/155/0/4 → 160/156/0/4**; grammar coverage remains **214/83/131**.

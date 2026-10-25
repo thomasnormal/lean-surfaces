@@ -1432,6 +1432,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "string_atoi_literal",
+      "file": "Examples/system-verilog/string_atoi_literal/string_atoi_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

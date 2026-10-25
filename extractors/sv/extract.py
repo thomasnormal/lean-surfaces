@@ -5758,6 +5758,7 @@ def _convert_legacy_call(sm, expression):
             (_clog2_call, _convert_clog2),
             (_dimension_query_call, _convert_dimension_query),
             (_string_literal_getc_method, _convert_string_literal_getc),
+            (_string_literal_atoi_method, _convert_string_literal_atoi),
             (_string_literal_len_method, _convert_string_literal_len_method),
             (_semaphore_zero_try_get, _convert_semaphore_zero_try_get),
             (_mailbox_empty_num_method, _convert_mailbox_empty_num),
@@ -6952,6 +6953,109 @@ def _string_literal_len_method(expression):
         return bool(history)
     except Exception:
         return False
+
+
+def _string_literal_source_value(expression, method):
+    """Return the latest ASCII literal assigned to a string receiver."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != method):
+            return None
+        arguments = list(expression.arguments)
+        if len(arguments) != 1 or type(arguments[0]).__name__ != "NamedValueExpression":
+            return None
+        receiver = arguments[0]
+        if type(receiver.type.canonicalType).__name__ != "StringType":
+            return None
+        symbol = receiver.symbol
+        initializer = getattr(symbol, "initializer", None)
+        while type(initializer).__name__ == "ConversionExpression":
+            initializer = getattr(initializer, "operand", None)
+        initial_value = (getattr(initializer, "value", None)
+                         if type(initializer).__name__ == "StringLiteral"
+                         and not getattr(initializer, "bad", False) else None)
+        if (initial_value is not None and
+                (not isinstance(initial_value, str)
+                 or any(ord(char) == 0 or ord(char) > 127 for char in initial_value))):
+            return None
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        assignments = []
+        if instance is not None:
+            def inspect(node):
+                if (type(node).__name__ != "AssignmentExpression"
+                        or getattr(node, "left", None) is None
+                        or getattr(node.left, "symbol", None) is not symbol
+                        or getattr(node, "op", None) is not None
+                        or getattr(node, "timingControl", None) is not None):
+                    return
+                value = node.right
+                while type(value).__name__ == "ConversionExpression":
+                    value = getattr(value, "operand", None)
+                if (type(value).__name__ != "StringLiteral"
+                        or getattr(value, "bad", False)
+                        or not isinstance(getattr(value, "value", None), str)
+                        or any(ord(char) == 0 or ord(char) > 127
+                               for char in value.value)):
+                    return
+                assignments.append((getattr(node.sourceRange.start, "offset", -1),
+                                    value.value))
+            instance.visit(inspect)
+        name = getattr(symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        occurrences = list(re.finditer(r"(?<![A-Za-z0-9_$])" + re.escape(name)
+                                       + r"(?![A-Za-z0-9_$])", source))
+        if not occurrences:
+            return None
+        for match in occurrences[1:]:
+            tail = source[match.end():].lstrip()
+            if tail.startswith("." + method) or re.match(r'=\s*"', tail):
+                continue
+            return None
+        position = getattr(getattr(expression, "sourceRange", None), "start", None)
+        position = getattr(position, "offset", None)
+        if position is None:
+            return None
+        history = [(start, value) for start, value in assignments if start < position]
+        if initial_value is not None:
+            history.insert(0, (-1, initial_value))
+        return max(history, key=lambda item: item[0])[1] if history else None
+    except Exception:
+        return None
+
+
+def _string_literal_atoi_method(expression):
+    """Recognize ``atoi`` on a source-pure ASCII string literal."""
+    return _string_literal_source_value(expression, "atoi") is not None
+
+
+def _convert_string_literal_atoi(sm, expression):
+    value = _string_literal_source_value(expression, "atoi")
+    if value is None:
+        return unsupported(sm, expression, "CallExpression:string-atoi")
+    digits = []
+    for char in value:
+        if "0" <= char <= "9":
+            digits.append(char)
+        elif char == "_" and digits:
+            continue
+        else:
+            break
+    parsed = int("".join(digits), 10) if digits else 0
+    width = getattr(expression.type, "bitWidth", None)
+    if (width != 32 or not getattr(expression.type, "isIntegral", False)
+            or not getattr(expression.type, "isSigned", False)
+            or parsed >= (1 << (width - 1))):
+        return unsupported(sm, expression, "CallExpression:string-atoi-range")
+    return signed_metadata({
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": width,
+        "bits": format(parsed, f"0{width}b"),
+        "string_literal_atoi": True,
+    }, expression.type)
 
 
 def _convert_string_literal_len_method(sm, expression):

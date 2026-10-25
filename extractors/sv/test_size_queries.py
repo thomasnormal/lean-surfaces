@@ -95,6 +95,24 @@ class SizeQueries(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
+    def test_literal_string_atoi_scans_digits_and_underscores(self):
+        design = lower(
+            'module top; string s; int result; initial begin '
+            's = "1_000x"; result = s.atoi(); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("string_literal_atoi")]
+        self.assertEqual([(node["width"], int(node["bits"], 2)) for node in values],
+                         [(32, 1000)])
+
+    def test_dynamic_string_atoi_stays_loud(self):
+        design = lower(
+            'module top; string s; string other; initial begin '
+            's = other; $display("%0d", s.atoi()); end endmodule')
+        self.assertFalse(any(node.get("string_literal_atoi")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
     def test_literal_string_getc_returns_ascii_and_zero_bounds(self):
         design = lower(
             'module top; string s = "abc"; initial begin '

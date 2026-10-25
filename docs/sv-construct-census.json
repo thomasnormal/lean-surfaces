@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22049,
+  "corpus_files": 22050,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "CallExpression",
-    3017
+    3007
    ],
    [
     "AssignmentExpression:target",
@@ -28,7 +28,7 @@
    ],
    [
     "Hierarchy:ports",
-    2397
+    2398
    ],
    [
     "VariableSymbol:2state",
@@ -823,6 +823,10 @@
     2
    ],
    [
+    "PortSymbol:type",
+    2
+   ],
+   [
     "NamedValueExpression:Specparam",
     2
    ],
@@ -951,10 +955,6 @@
     1
    ],
    [
-    "PortSymbol:type",
-    1
-   ],
-   [
     "DefParamSymbol",
     1
    ],
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 4865,
-   "partial": 17118,
+   "clean": 4875,
+   "partial": 17109,
    "skip_include": 66
   },
   "clean_by_type": {
@@ -1038,8 +1038,8 @@
     52
    ],
    "simulation": [
-    4187,
-    18682
+    4197,
+    18683
    ],
    "simulation elaboration": [
     2,
@@ -1053,9 +1053,9 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 225,
-    "clean": 757,
-    "partial": 234,
+    "blocked_by_more": 223,
+    "clean": 759,
+    "partial": 232,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
@@ -1072,7 +1072,7 @@
      ],
      [
       "VariableSymbol:2state",
-      60
+      58
      ],
      [
       "SubroutineSymbol:Subroutine",
@@ -1080,7 +1080,7 @@
      ],
      [
       "CallExpression",
-      48
+      46
      ],
      [
       "RealLiteral",
@@ -1231,14 +1231,14 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 578,
-    "clean": 462,
-    "partial": 580,
-    "simulation_tests": 1042,
+    "blocked_by_more": 571,
+    "clean": 470,
+    "partial": 573,
+    "simulation_tests": 1043,
     "top_residual_blockers": [
      [
       "VariableSymbol:2state",
-      177
+      173
      ],
      [
       "NamedValueExpression:2state",
@@ -1246,15 +1246,15 @@
      ],
      [
       "CallExpression",
-      157
-     ],
-     [
-      "VariableDeclStatement:2state",
-      145
+      147
      ],
      [
       "TimedStatement:DelayControl",
-      143
+      144
+     ],
+     [
+      "VariableDeclStatement:2state",
+      141
      ],
      [
       "AssignmentExpression:target",
@@ -1270,7 +1270,7 @@
      ],
      [
       "InstanceSymbol:Instance",
-      54
+      55
      ],
      [
       "RealLiteral",
@@ -1331,9 +1331,9 @@
     "unlockable": 0
    },
    "chapter-11": {
-    "clean": 761,
+    "clean": 763,
     "error": 0,
-    "partial": 273,
+    "partial": 271,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 9
@@ -1595,11 +1595,11 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 479,
+    "clean": 487,
     "error": 0,
-    "partial": 707,
+    "partial": 700,
     "skip_include": 0,
-    "total": 1186,
+    "total": 1187,
     "unlockable": 3
    },
    "chapter-7": {

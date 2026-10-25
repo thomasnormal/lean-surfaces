@@ -1600,6 +1600,26 @@ def callableUnsignedIntCompoundBitAndFrameWitness : Bool :=
 
 #guard callableUnsignedIntCompoundBitAndFrameWitness
 
+private def unsignedIntCompoundBitOrFrame : Bool :=
+  let base := incrementFunction .unsignedInt "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign "|=" (handle "0x10")
+      {expression := .integer 3, sourceType := .builtin .unsignedInt,
+        type := .builtin .unsignedInt})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .unsignedInt, type := .builtin .unsignedInt}))}
+  match CallableObjectFrame.start .lp64 function [⟨.unsigned 32, 12⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.unsigned 32, 15⟩)
+
+def callableUnsignedIntCompoundBitOrFrameWitness : Bool :=
+  unsignedIntCompoundBitOrFrame
+
+#guard callableUnsignedIntCompoundBitOrFrameWitness
+
 private def intCompoundBitAndFrame : Bool :=
   let base := incrementFunction .int "++" false
   let function := {base with body := .block (.sequence

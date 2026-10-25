@@ -4821,3 +4821,30 @@ while remaining a future requirement for third-party pure-Python packages.
 DECIDED: keep imports loud for now; preserve the measured closure and its
 controls, and move to the next higher-payoff construct rather than admitting
 an unproved registry.
+
+## 2026-10-25-pycomplete-115 — class creation priced before extension
+
+The class wall was measured with the extractor's own `creation_effects` and
+the existing class census controls before choosing a new creation rule. The
+controls cover bases, body statements, decorators, slots, exception
+ancestors, and real-file reconciliation with 0 failures.
+
+| Measurement | Result |
+|---|---|
+| Stdlib seeds | 152 files, 116 define top-level classes, 88 hit class creation |
+| Classes | 569 top-level classes; 338 have creation effects |
+| Sole class-creation blockers | 0 in the stdlib sweep; 1 in the 219-file survey (`cls_deco_script.py`) |
+| Survey | 198 MATCH / 21 REFUSE / 0 DIVERGE |
+| Controls | 21 synthetic fixtures + graphlib/opcode/bisect, 0 failures |
+
+The sole corpus witness deliberately uses a user decorator that prints while
+the class statement executes. Admitting decorators as a blanket rule would
+reintroduce the skipped class-creation effect that the current loud refusal
+was added to prevent; the other nine survey refusals also have imports or
+later walls. The class census therefore supplies no measured flip for a
+creation tier on the current corpus.
+
+DECIDED: retain loud class-creation refusal for effectful decorators and
+unsupported class construction; do not add a decorator protocol without a
+measured, semantically closed shape. Move to the next higher-payoff syntax
+wall while keeping this census as the admission gate for future class work.

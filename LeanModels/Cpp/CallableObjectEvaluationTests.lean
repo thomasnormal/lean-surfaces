@@ -503,6 +503,24 @@ def callableConditionalFrameWitness : Bool := conditionalFrame
 
 #guard callableConditionalFrameWitness
 
+private def commaFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let left : TypedCallableExpression := {
+    expression := .increment "++" false (handle "0x10"),
+    sourceType := intType, type := intType}
+  let right : TypedCallableExpression := {
+    expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+  let function := {base with body := .block (.return_ {
+    expression := .comma left right,
+    sourceType := intType, type := intType})}
+  match evaluateCallableObject 32 .lp64 function [signed 4] with
+  | .ok (.ok value) => value == signed 5
+  | _ => false
+
+def callableCommaFrameWitness : Bool := commaFrame
+
+#guard callableCommaFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

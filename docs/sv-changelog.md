@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.19] — 2026-10-25
+
+The self-check surface now has 158 differential rows: 154 matches, zero
+disagreements, and 4 recorded refusals. The grammar census remains at 214
+pyslang syntax witnesses: 83 MATCH and 131 REFUSE. The 22,049-path corpus
+measures 4,856 clean files, 17,127 partial files, and 66 include skips. This
+release admits the state-free zero-key `semaphore.try_get(0)` result, exact
+counts for untouched constructed mailboxes, and source-pure literal puts with
+their corresponding unbounded-mailbox `num()` counts. Dynamic, aliased,
+bounded, and other stateful mailbox/semaphore operations remain loud.
+
 ## [0.1.18] — 2026-10-25
 
 The self-check surface now has 155 differential rows: 151 matches, zero

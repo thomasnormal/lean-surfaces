@@ -2050,6 +2050,37 @@ def callableLocalWhileInitializationStatementFrameWitness : Bool :=
 
 #guard callableLocalWhileInitializationStatementFrameWitness
 
+private def localForInitializationStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let initializer : CallableStatement := .assign (handle "0x10") {
+    expression := .integer 0
+    sourceType := intType
+    type := intType}
+  let condition : TypedCallableExpression := {
+    expression := .binary "<"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 3, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let step : CallableStatement := .expression {
+    expression := .increment "++" false (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let function := {base with body := .block (.sequence
+    (.forLoop initializer condition step (.block (automaticLiteral "0x11" 5)))
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 128 .lp64 function [signed 9] with
+  | .ok (.ok value) => value == signed 3
+  | _ => false
+
+def callableLocalForInitializationStatementFrameWitness : Bool :=
+  localForInitializationStatementFrame
+
+#guard callableLocalForInitializationStatementFrameWitness
+
 private def checkIncrement (type : CppIntType) (operator : String) (isPostfix : Bool)
     (argument expected : IntegralValue) : Bool :=
   let function := incrementFunction type operator isPostfix

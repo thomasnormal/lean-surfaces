@@ -4116,3 +4116,15 @@ The fresh **22,049-path** census remains **4,856 clean / 17,127 partial** (66
 include skips), with `CallExpression` at **3,026** and
 `AssignmentExpression:target` at **2,975**. Differential coverage moves
 **157/153/0/4 → 158/154/0/4**; grammar coverage remains **214/83/131**.
+
+## Literal string length after assignments — 2026-10-25
+
+String `.len()` queries now follow source-pure literal assignment history and
+use the most recent literal value for the receiver. Dynamic writes, aliases,
+non-ASCII values, and other string operations remain loud. The
+`string_len_assignment` fixture supplies the differential witness.
+
+The fresh **22,049-path** census moves **4,856 → 4,865 clean** and **17,127 →
+17,118 partial** (66 include skips); `CallExpression` falls **3,026 → 3,017**
+while `AssignmentExpression:target` remains **2,975**. Differential coverage
+moves **158/154/0/4 → 159/155/0/4**; grammar coverage remains **214/83/131**.

@@ -1423,6 +1423,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "string_len_assignment",
+      "file": "Examples/system-verilog/string_len_assignment/string_len_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

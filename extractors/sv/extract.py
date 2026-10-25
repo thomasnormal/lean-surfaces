@@ -6889,16 +6889,40 @@ def _string_literal_len_method(expression):
         receiver = arguments[0]
         if type(receiver.type.canonicalType).__name__ != "StringType":
             return False
-        initializer = getattr(receiver.symbol, "initializer", None)
+        symbol = receiver.symbol
+        initializer = getattr(symbol, "initializer", None)
         while type(initializer).__name__ == "ConversionExpression":
             initializer = getattr(initializer, "operand", None)
-        if (type(initializer).__name__ != "StringLiteral"
-                or getattr(initializer, "bad", False)):
+        initial_value = (getattr(initializer, "value", None)
+                         if type(initializer).__name__ == "StringLiteral"
+                         and not getattr(initializer, "bad", False) else None)
+        if (initial_value is not None and
+                (not isinstance(initial_value, str)
+                 or any(ord(char) == 0 or ord(char) > 127 for char in initial_value))):
             return False
-        value = getattr(initializer, "value", None)
-        if not isinstance(value, str) or any(ord(char) == 0 or ord(char) > 127
-                                             for char in value):
-            return False
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        assignments = []
+        if instance is not None:
+            def inspect(node):
+                if (type(node).__name__ != "AssignmentExpression"
+                        or getattr(node, "left", None) is None
+                        or getattr(node.left, "symbol", None) is not symbol
+                        or getattr(node, "op", None) is not None
+                        or getattr(node, "timingControl", None) is not None):
+                    return
+                value = node.right
+                while type(value).__name__ == "ConversionExpression":
+                    value = getattr(value, "operand", None)
+                if (type(value).__name__ != "StringLiteral"
+                        or getattr(value, "bad", False)
+                        or not isinstance(getattr(value, "value", None), str)
+                        or any(ord(char) == 0 or ord(char) > 127
+                               for char in value.value)):
+                    return
+                assignments.append((getattr(node.left.sourceRange.start, "offset", -1),
+                                    getattr(value, "value", "")))
+            instance.visit(inspect)
         name = getattr(receiver.symbol, "name", "")
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
         occurrences = list(re.finditer(r"(?<![A-Za-z0-9_$])" + re.escape(name)
@@ -6907,8 +6931,25 @@ def _string_literal_len_method(expression):
             return False
         def inert_occurrence(match):
             tail = source[match.end():].lstrip()
-            return tail.startswith(".len")
-        return all(inert_occurrence(match) for match in occurrences[1:])
+            if tail.startswith(".len"):
+                return True
+            if tail.startswith("="):
+                # The source spelling must be a literal assignment.  AST
+                # offsets include trivia differently from the raw source
+                # buffer, so use the spelling here and the elaborated offsets
+                # only for ordering values at the query site.
+                return re.match(r'=\s*"', tail) is not None
+            return False
+        if not all(inert_occurrence(match) for match in occurrences[1:]):
+            return False
+        position = getattr(getattr(expression, "sourceRange", None), "start", None)
+        position = getattr(position, "offset", None)
+        if position is None:
+            return False
+        history = [(start, value) for start, value in assignments if start < position]
+        if initial_value is not None:
+            history.insert(0, (-1, initial_value))
+        return bool(history)
     except Exception:
         return False
 
@@ -6916,14 +6957,37 @@ def _string_literal_len_method(expression):
 def _convert_string_literal_len_method(sm, expression):
     if not _string_literal_len_method(expression):
         return unsupported(sm, expression, "CallExpression:string-len")
-    initializer = expression.arguments[0].symbol.initializer
+    receiver = expression.arguments[0]
+    symbol = receiver.symbol
+    initializer = getattr(symbol, "initializer", None)
     while type(initializer).__name__ == "ConversionExpression":
         initializer = initializer.operand
+    value = (initializer.value if type(initializer).__name__ == "StringLiteral"
+             else "")
+    instance = getattr(getattr(symbol, "parentScope", None),
+                       "containingInstance", None)
+    position = expression.sourceRange.start.offset
+    if instance is not None:
+        def inspect(node):
+            nonlocal value
+            if (type(node).__name__ != "AssignmentExpression"
+                    or getattr(node, "left", None) is None
+                    or getattr(node.left, "symbol", None) is not symbol
+                    or getattr(node, "op", None) is not None
+                    or getattr(node, "timingControl", None) is not None
+                    or node.sourceRange.start.offset >= position):
+                return
+            candidate = node.right
+            while type(candidate).__name__ == "ConversionExpression":
+                candidate = getattr(candidate, "operand", None)
+            if type(candidate).__name__ == "StringLiteral":
+                value = candidate.value
+        instance.visit(inspect)
     return {
         "kind": "Literal",
         "span": node_span(sm, expression),
         "width": expression.type.bitWidth,
-        "bits": format(len(initializer.value) & ((1 << expression.type.bitWidth) - 1),
+        "bits": format(len(value) & ((1 << expression.type.bitWidth) - 1),
                         f"0{expression.type.bitWidth}b"),
         "string_literal_length_query": True,
     }

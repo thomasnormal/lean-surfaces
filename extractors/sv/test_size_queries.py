@@ -72,6 +72,24 @@ class SizeQueries(unittest.TestCase):
         design = lower(
             'module top; string s = "hello"; initial begin s = "x"; '
             '$display("%0d", s.len()); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("string_literal_length_query")]
+        self.assertEqual([(node["width"], int(node["bits"], 2)) for node in values],
+                         [(32, 1)])
+
+    def test_literal_string_assignment_history_tracks_each_len(self):
+        design = lower(
+            'module top; string s; initial begin s = "hello"; '
+            '$display("%0d", s.len()); s = "xy"; '
+            '$display("%0d", s.len()); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("string_literal_length_query")]
+        self.assertEqual([int(node["bits"], 2) for node in values], [5, 2])
+
+    def test_dynamic_string_assignment_before_len_stays_loud(self):
+        design = lower(
+            'module top; string s; string other; initial begin '
+            's = other; $display("%0d", s.len()); end endmodule')
         self.assertFalse(any(node.get("string_literal_length_query")
                              for node in nodes(design)))
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
@@ -157,8 +175,10 @@ class SizeQueries(unittest.TestCase):
         design = lower(
             'module top; string s; initial begin s = "x"; '
             '$display("%0d", s.len()); end endmodule')
-        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
-                            for node in nodes(design)))
+        values = [node for node in nodes(design)
+                  if node.get("string_literal_length_query")]
+        self.assertEqual([(node["width"], int(node["bits"], 2)) for node in values],
+                         [(32, 1)])
 
     def test_empty_queue_write_keeps_size_zero(self):
         design = lower(
@@ -170,8 +190,10 @@ class SizeQueries(unittest.TestCase):
         design = lower(
             'module top; string s; initial begin s = ""; '
             '$display("%0d", s.len()); end endmodule')
-        self.assertTrue(any(node.get("zero_string_length_query")
-                            for node in nodes(design)))
+        values = [node for node in nodes(design)
+                  if node.get("string_literal_length_query")]
+        self.assertEqual([(node["width"], int(node["bits"], 2)) for node in values],
+                         [(32, 0)])
 
     def test_nonempty_write_before_query_stays_loud(self):
         design = lower(

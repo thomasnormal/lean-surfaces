@@ -4945,6 +4945,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-unsigned-int-compound-divide-mid",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableUnsignedIntCompoundDivideFrameWitness",
+    "cpp_source": "unsigned int frame_unsigned_int_compound_divide(unsigned int value) { value /= 3; return value; } bool callable_witness() { return frame_unsigned_int_compound_divide(12) == 4; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-int-compound-bitand-mid",
     "kind": "expression",
     "corpus": "rung-3 witness",

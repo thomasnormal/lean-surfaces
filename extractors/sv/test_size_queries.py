@@ -113,6 +113,46 @@ class SizeQueries(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
+    def test_empty_associative_first_and_last_return_zero(self):
+        design = lower(
+            'module top; int by_name[string]; int by_number[int]; '
+            'string name; int key; int first_result, last_result; initial begin '
+            'first_result = by_name.first(name); last_result = by_number.last(key); '
+            'if (first_result === 0 && last_result === 0) $display("PASS"); '
+            'end endmodule')
+        endpoints = [node for node in nodes(design)
+                     if node.get("associative_empty_endpoint")]
+        self.assertEqual([node["associative_empty_endpoint"] for node in endpoints],
+                         ["first", "last"])
+        self.assertTrue(all(node["bits"] == "0" * 32 for node in endpoints))
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_empty_associative_endpoint_ignores_comments(self):
+        design = lower(
+            'module top; int values[string]; string key; int result; initial begin '
+            '// values["comment"] = 1; values.next(key) is prose\n'
+            'result = values.first(key); if (result === 0) $display("PASS"); '
+            'end endmodule')
+        self.assertTrue(any(node.get("associative_empty_endpoint") == "first"
+                            for node in nodes(design)))
+
+    def test_nonempty_associative_endpoint_stays_loud(self):
+        design = lower(
+            'module top; int values[string]; string key; int result; initial begin '
+            'values["key"] = 1; result = values.first(key); end endmodule')
+        self.assertFalse(any(node.get("associative_empty_endpoint")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
+    def test_associative_endpoint_requires_named_index(self):
+        design = lower(
+            'module top; int values[string]; int result; initial '
+            'result = values.first("key"); endmodule')
+        self.assertFalse(any(node.get("associative_empty_endpoint")
+                             for node in nodes(design)))
+
     def test_uninitialized_dynamic_array_size_is_zero(self):
         design = lower(
             'module top; int values[]; initial $display("%0d", values.size()); endmodule')

@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 198 | 193 | 0 | 5 | sv-tests-2 declarations |
+| 199 | 194 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -211,6 +211,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `queue_empty_init` | `Examples/system-verilog/queue_empty_init/queue_empty_init.sv` | match | **MATCH** | `ok` | MATCH |
 | `queue_empty_pop` | `Examples/system-verilog/queue_empty_pop/queue_empty_pop.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_empty_num` | `Examples/system-verilog/assoc_empty_num/assoc_empty_num.sv` | match | **MATCH** | `ok` | MATCH |
+| `assoc_empty_endpoint` | `Examples/system-verilog/assoc_empty_endpoint/assoc_empty_endpoint.sv` | match | **MATCH** | `ok` | MATCH |
 | `semaphore_negative_try_get` | `Examples/system-verilog/semaphore_negative_try_get/semaphore_negative_try_get.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
@@ -254,7 +255,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.BitType` | `Examples/system-verilog/assignment_patterns/structs.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ByteType` | `Examples/system-verilog/dynamic_array_struct_field_defaults/dynamic_array_struct_field_defaults.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CHandleType` | `Examples/system-verilog/chandle_decl/chandle_decl.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/assoc_empty_num/assoc_empty_num.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/assoc_empty_endpoint/assoc_empty_endpoint.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseGenerate` | `Examples/system-verilog/elaborated_generate/choices.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseInequalityExpression` | `Examples/system-verilog/case_equality/case_equality.sv` | **REFUSE** | `unsupported` non-initial process 'AlwaysPosedge:clk' (self-check tier runs initial-only designs) |
 | `SyntaxKind.CaseStatement` | `Examples/system-verilog/case_inside/array_widening.sv` | **REFUSE** | `unsupported` unsupported statement 'CaseStatement:pattern' |
@@ -402,7 +403,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.StreamExpressionWithRange` | `Examples/system-verilog/streaming_dynamic_with_range/streaming_dynamic_with_range.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.StreamingConcatenationExpression` | `Examples/system-verilog/sem2/fixed_array_stream_continuous/fixed_array_stream_continuous.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.StringLiteralExpression` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
-| `SyntaxKind.StringType` | `Examples/system-verilog/assoc_empty_num/assoc_empty_num.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.StringType` | `Examples/system-verilog/assoc_empty_endpoint/assoc_empty_endpoint.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.StructType` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.StructUnionMember` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.StructuredAssignmentPattern` | `Examples/system-verilog/assignment_patterns/arrays.sv` | **MATCH** | `ok`  |
@@ -446,13 +447,13 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22053 | 5015 | 16971 | 67 |
+| 22053 | 5019 | 16967 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2937 |
 | `ExpressionStatement:CallExpression` | 2911 |
-| `CallExpression` | 2875 |
+| `CallExpression` | 2871 |
 | `Hierarchy:ports` | 2398 |
 | `VariableSymbol:2state` | 2313 |
 | `SubroutineSymbol:Subroutine` | 1634 |

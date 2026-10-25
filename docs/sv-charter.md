@@ -7487,3 +7487,21 @@ On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
 remains **2,937** and `ExpressionStatement:CallExpression` remains **2,911**.
 Differential coverage grows **197/192/0/5 → 198/193/0/5** with no
 disagreements; grammar coverage remains **216/89/127**.
+
+## Empty associative-array `first()` / `last()` — 2026-10-25
+
+An untouched, uninitialized 2-state associative array now lowers `first(index)`
+and `last(index)` to their exact signed 32-bit zero result when the index is a
+direct named string or integral variable. The source-order check ignores
+comments and strings and admits only further empty endpoint queries; writes,
+aliases, four-state arrays, dynamic index expressions, and other associative
+methods remain loud. The four sv-tests-2 endpoint files are clean, and the
+`assoc_empty_endpoint` fixture supplies the module-scope differential and Lean
+receipt.
+
+On the refreshed **22,053-path** sv-tests-2 snapshot, clean files move
+**5,015 → 5,019** and partial files **16,971 → 16,967** (67 include skips).
+`CallExpression` falls **2,875 → 2,871** while `AssignmentExpression:target`
+remains **2,937** and `ExpressionStatement:CallExpression` remains **2,911**.
+Differential coverage grows **198/193/0/5 → 199/194/0/5** with no
+disagreements; grammar coverage remains **216/89/127**.

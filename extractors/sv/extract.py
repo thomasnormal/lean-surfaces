@@ -6630,6 +6630,7 @@ def _convert_legacy_call(sm, expression):
              _convert_mailbox_literal_num),
             (_queue_empty_pop_method, _convert_queue_empty_pop),
             (_associative_empty_query, _convert_associative_empty_query),
+            (_associative_empty_endpoint, _convert_associative_empty_endpoint),
             (_zero_size_method, _convert_zero_size_method),
             (_rtoi_literal_call, _convert_rtoi_literal),
             (_realtobits_literal_call, _convert_realtobits_literal),
@@ -7379,6 +7380,77 @@ def _convert_associative_empty_query(sm, expression):
         "kind": "Literal", "span": node_span(sm, expression),
         "width": width, "bits": "0" * width,
         "associative_empty_query": expression.subroutineName,
+    }, expression.type)
+
+
+def _associative_empty_endpoint(expression):
+    """Recognize ``first(index)``/``last(index)`` on an empty assoc array.
+
+    IEEE 1800-2023 §7.9.4--7.9.5 returns zero when no element exists.  The
+    index argument is an output in the non-empty case, so this source slice
+    admits only a direct named variable and deliberately does not model any
+    index expression effects.  The array itself has no runtime slot in the
+    flat self-check state; keep the admission source-pure by allowing only
+    the same empty endpoint queries after the declaration.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName not in ("first", "last")
+                or len(expression.arguments) != 2):
+            return False
+        receiver, index = expression.arguments
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "bad", False)
+                or receiver.type.isFourState
+                or type(receiver.type.canonicalType).__name__ != "AssociativeArrayType"):
+            return False
+        if (type(index).__name__ != "NamedValueExpression"
+                or getattr(index, "bad", False)):
+            return False
+        index_type = getattr(index.type, "canonicalType", index.type)
+        if (type(index_type).__name__ != "StringType"
+                and not getattr(index.type, "isIntegral", False)):
+            return False
+        symbol = getattr(receiver, "symbol", None)
+        if getattr(symbol, "initializer", None) is not None:
+            return False
+        width, _two_state, reason = type_width_2s(expression.type)
+        if (width != 32 or reason is not None
+                or not getattr(expression.type, "isIntegral", False)
+                or not getattr(expression.type, "isSigned", False)):
+            return False
+        name = getattr(symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        if not name or not source:
+            return False
+        code_source = _sv_code_source(source)
+        occurrences = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"(?![A-Za-z0-9_$])", code_source))
+        if not occurrences:
+            return False
+        for occurrence in occurrences[1:]:
+            tail = code_source[occurrence.end():].lstrip()
+            if re.match(r"\.(?:first|last)\s*\(", tail):
+                continue
+            return False
+        return True
+    except Exception:
+        return False
+
+
+def _convert_associative_empty_endpoint(sm, expression):
+    if not _associative_empty_endpoint(expression):
+        return unsupported(sm, expression, "CallExpression:associative-empty-endpoint")
+    width, _two_state, reason = type_width_2s(expression.type)
+    if width != 32 or reason is not None:
+        return unsupported(sm, expression, "CallExpression:associative-empty-endpoint-type")
+    return signed_metadata({
+        "kind": "Literal", "span": node_span(sm, expression),
+        "width": width, "bits": "0" * width,
+        "associative_empty_endpoint": expression.subroutineName,
     }, expression.type)
 
 

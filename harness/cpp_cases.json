@@ -6397,6 +6397,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-switch-fallthrough",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableSwitchFallthroughStatementFrameWitness",
+    "cpp_source": "int switch_fallthrough_statement_frame_witness(int value) { switch (value) { case 1: value = 5; case 2: value += 2; default: break; } return value; } bool callable_witness() { return switch_fallthrough_statement_frame_witness(1) == 7 && switch_fallthrough_statement_frame_witness(2) == 4 && switch_fallthrough_statement_frame_witness(0) == 0; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "tinyxml2.IsUTF8Continuation.negative",
     "corpus": "TinyXML-2",
     "lean_module": "Examples.cpp.tinyxml2.proof",

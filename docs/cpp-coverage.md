@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 478 | 461 | 0 | 7 | 0 | 10 |
+| 479 | 462 | 0 | 7 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -469,6 +469,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `expression.callable-frame-long-long-compound-bitand-mid` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-long-long-compound-bitor-mid` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-long-long-compound-bitxor-mid` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `expression.callable-frame-long-long-compound-shift-left-mid` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-int-compound-bitand-mid` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-int-compound-bitor-mid` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `expression.callable-frame-int-compound-bitxor-mid` | 3 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |

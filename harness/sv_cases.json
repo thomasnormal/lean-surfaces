@@ -1637,6 +1637,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "dynamic_array_new_pattern",
+      "file": "Examples/system-verilog/dynamic_array_new_pattern/dynamic_array_new_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

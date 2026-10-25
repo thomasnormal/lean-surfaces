@@ -7195,3 +7195,22 @@ The paired 21,342-path census moves **4,875 clean → 4,879 clean** and
 `AssignmentExpression:target` falls **2,784 → 2,776**. Differential coverage
 moves **181/176/0/5 → 182/177/0/5** with no disagreements, and grammar coverage
 remains **214/83/131**.
+
+## Dynamic-array `new[N]` positional patterns — 2026-10-25
+
+A blocking assignment of the form `values = new[N]('{a, b, ...})` now lowers
+for a finite scalar dynamic array when the literal size exactly matches a
+pure positional pattern of integral scalar elements. The extractor samples the
+new extent, materializes one flat cell per element, preserves source order, and
+applies two-state x/z squashing at each destination cell. Keyed/default or
+replicated patterns, effectful or aggregate elements, size mismatches,
+declaration-time initializers, and scheduled forms remain loud because the
+self-check state has no aggregate dynamic-array object.
+The `dynamic_array_new_pattern` fixture and Lean receipt cover both two-state
+and four-state cells, with extractor regressions pinning the refusal edges.
+
+On the refreshed 22,050-path sv-tests-2 snapshot, clean files remain
+**4,964 → 4,964** and partial files **17,020 → 17,020** (66 include skips);
+`AssignmentExpression:target` falls **2,949 → 2,948**. Differential coverage grows
+**182/177/0/5 → 183/178/0/5** with no disagreements, and grammar coverage
+remains **214/83/131**.

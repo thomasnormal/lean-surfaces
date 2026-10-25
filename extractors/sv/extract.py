@@ -1937,6 +1937,36 @@ def _dynamic_array_constant_extent(symbol):
             return count if count is not None and 0 < count <= 1024 else None
         initializer = getattr(allocation, "initExpr", None)
         if initializer is not None:
+            # A fresh dynamic array may be initialized from an exact
+            # positional assignment pattern.  Its sampled extent is the
+            # allocation size; the assignment converter below expands the
+            # scalar elements into the same flat cells used by a direct
+            # dynamic-array pattern write.  Keep keyed/default, replicated,
+            # aggregate, and effectful initializers outside this shape.
+            while type(initializer).__name__ == "ConversionExpression":
+                initializer = getattr(initializer, "operand", None)
+                if initializer is None:
+                    return None
+            if type(initializer).__name__ in (
+                    "SimpleAssignmentPatternExpression",
+                    "StructuredAssignmentPatternExpression"):
+                elements = _pattern_source_elements(initializer)
+                size = getattr(allocation, "sizeExpr", None)
+                if (not elements or type(size).__name__ != "IntegerLiteral"
+                        or getattr(size, "bad", False)):
+                    return None
+                count = int(getattr(size, "value", -1))
+                if count <= 0 or count > 1024 or len(elements) != count:
+                    return None
+                element_type = symbol.type.canonicalType.elementType
+                width, _two_state, reason = type_width_2s(element_type)
+                if width is None or reason is not None:
+                    return None
+                if any(not _case_source_expression_ok(element,
+                                                      packed_members=True)
+                       for element in elements):
+                    return None
+                return count
             # A scalar dynamic array may be allocated from one other sampled
             # scalar dynamic array.  The copy itself is lowered at the
             # assignment site; this branch only exposes the fresh destination
@@ -2649,6 +2679,97 @@ def _dynamic_array_resize_copy_assignment(sm, expr):
             })
         return {"kind": "Block", "span": span, "stmts": prefix + statements,
                 "dynamic_array_resize_copy_lowered": True}
+    except Exception:
+        return None
+
+
+def _dynamic_array_new_pattern_assignment(sm, expr):
+    """Lower ``dst = new[N]('{scalar, ...})`` into flat array cells.
+
+    The allocated array has no aggregate slot in the self-check state, so
+    this admits only an exact positional pattern of scalar integral values.
+    The size, element count, width, source effects, and destination shape are
+    all checked before any cells are emitted; keyed/default, replicated,
+    nested, effectful, nonblocking, and timed forms stay on the ordinary loud
+    assignment boundary.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None or expr.isNonBlocking
+                or type(expr.left).__name__ != "NamedValueExpression"):
+            return None
+        lhs = expr.left
+        array_type = lhs.type.canonicalType
+        if type(array_type).__name__ != "DynamicArrayType":
+            return None
+        allocation = expr.right
+        while type(allocation).__name__ == "ConversionExpression":
+            allocation = getattr(allocation, "operand", None)
+            if allocation is None:
+                return None
+        if type(allocation).__name__ != "NewArrayExpression":
+            return None
+        size = getattr(allocation, "sizeExpr", None)
+        if (type(size).__name__ != "IntegerLiteral"
+                or getattr(size, "bad", False)):
+            return None
+        count = int(getattr(size, "value", -1))
+        if count <= 0 or count > 1024:
+            return None
+        pattern = getattr(allocation, "initExpr", None)
+        while type(pattern).__name__ == "ConversionExpression":
+            pattern = getattr(pattern, "operand", None)
+            if pattern is None:
+                return None
+        if type(pattern).__name__ not in (
+                "SimpleAssignmentPatternExpression",
+                "StructuredAssignmentPatternExpression"):
+            return None
+        elements = _pattern_source_elements(pattern)
+        if not elements or len(elements) != count:
+            return None
+        if _dynamic_array_constant_extent(lhs.symbol) != count:
+            return None
+        element_type = array_type.elementType
+        width, two_state, reason = type_width_2s(element_type)
+        if width is None or reason is not None:
+            return None
+        base = _array_storage_name(lhs.symbol)
+        values = []
+        for element in elements:
+            if not _case_source_expression_ok(element, packed_members=True):
+                return None
+            reads_target = False
+
+            def inspect(node):
+                nonlocal reads_target
+                if type(node).__name__ in ("NamedValueExpression",
+                                            "HierarchicalValueExpression"):
+                    try:
+                        reads_target = reads_target or (
+                            _array_storage_name(node.symbol) == base)
+                    except Exception:
+                        reads_target = True
+
+            _visit_selected_expression(element, inspect)
+            if reads_target:
+                return None
+            value = convert_expr(sm, element)
+            if (value is None or value.get("kind") == "Unsupported"
+                    or width_of(value) != width
+                    or not _case_expression_ok(value)):
+                return None
+            if two_state:
+                value = squash2_wrap(value, width)
+            values.append(value)
+        span = node_span(sm, expr)
+        return {"kind": "Block", "span": span, "stmts": [{
+            "kind": "BlockingAssign", "span": span,
+            "target": {"kind": "Ident", "span": node_span(sm, lhs),
+                       "width": width, "name": f"{base}[{index}]"},
+            "value": value,
+        } for index, value in enumerate(values)],
+                "dynamic_array_new_pattern_lowered": True}
     except Exception:
         return None
 
@@ -10720,6 +10841,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         if streaming_target is not None:
             return streaming_target
     if expr.op is None and _SYM is None:
+        dynamic_new_pattern = _dynamic_array_new_pattern_assignment(sm, expr)
+        if dynamic_new_pattern is not None:
+            return dynamic_new_pattern
         dynamic_pattern = _dynamic_array_pattern_assignment(sm, expr)
         if dynamic_pattern is not None:
             return dynamic_pattern

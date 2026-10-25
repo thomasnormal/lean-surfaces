@@ -243,6 +243,43 @@ class DynamicArrayDeclarations(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_new_pattern_initializes_scalar_cells_in_source_order(self):
+        design = lower(
+            """module top;
+               initial begin
+                 int values[];
+                 logic bits[];
+                 values = new[3]('{10, 20, 30});
+                 bits = new[3]('{1'bx, 1'b1, 1'bz});
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        lowered = [node for node in nodes(design)
+                   if node.get("dynamic_array_new_pattern_lowered")]
+        self.assertEqual(len(lowered), 2)
+        assignments = [node for node in nodes(design)
+                       if node.get("kind") == "BlockingAssign"
+                       and any(node.get("target", {}).get("name", "").endswith(
+                           suffix) for suffix in
+                           ("values[0]", "values[1]", "values[2]",
+                            "bits[0]", "bits[1]", "bits[2]"))]
+        self.assertEqual([node["target"]["name"].split(":")[-1]
+                          for node in assignments],
+                         ["values[0]", "values[1]", "values[2]",
+                          "bits[0]", "bits[1]", "bits[2]"])
+
+    def test_new_pattern_requires_exact_pure_positional_scalar_shape(self):
+        for initializer in ("'{default: 10}", "'{10, 20}", "'{effect(), 20, 30}"):
+            source = ("module top; function int effect(); effect = 1; endfunction "
+                      "initial begin int values[]; values = new[3](" +
+                      initializer + "); end endmodule")
+            design = lower(source)
+            self.assertTrue(any(node.get("kind") == "Unsupported"
+                                and node.get("sv_kind") ==
+                                "AssignmentExpression:target"
+                                for node in nodes(design)), initializer)
+
     def test_struct_elements_receive_type_defaults(self):
         design = lower(
             """module top;

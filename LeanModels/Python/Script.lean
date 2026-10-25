@@ -742,14 +742,14 @@ mutual
                  match execScriptStmts m fuel st body.toList with
                  | .ok st' flow => .ok st' flow
                  | .exn st' e =>
-                   if builtinExcCatches excName e then execScriptStmts m fuel st' handler.toList
+                   if builtinExcCatches excName e || userExcCatches m excName e then execScriptStmts m fuel st' handler.toList
                    else .exn st' e
                  | .timeout => .timeout
                  | .unsupported msg => .unsupported msg
                else if refusedAncestorExc.contains excName then
                  .unsupported s!"'except {excName}:': '{excName}' is a CPython ANCESTOR class the tier has not measured — admitting it would claim a catch set this model has never enumerated, so it is refused BY NAME rather than derived from a hierarchy (docs/memory-model.md §exceptions)"
                else
-                 .unsupported s!"'except {excName}:': matchable classes are an admitted user class (`class N(Exception): pass`), the pinned import-error names, or one of `admittedBuiltinExc` — '{excName}' is none of those (docs/memory-model.md §exceptions)"
+                 .unsupported s!"'except {excName}:': matchable classes are an admitted user class (`class N(Exception): pass` or a measured direct builtin ancestor), the pinned import-error names, or one of `admittedBuiltinExc` — '{excName}' is none of those (docs/memory-model.md §exceptions)"
              | some (ci, c) =>
                if !c.isExc then
                  .unsupported s!"'except {excName}:': class '{excName}' is not an admitted exception class — outside the tier (docs/memory-model.md §exceptions)"

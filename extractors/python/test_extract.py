@@ -1052,6 +1052,13 @@ class ClassDefTests(unittest.TestCase):
         self.assertEqual(c["base"], "object")
         self.assertTrue(c["creation_effects"])
 
+    def test_builtin_exception_ancestor_is_structured_and_conservative(self):
+        c = self._module_body("class C(ValueError):\n    pass\n")[0]
+        self.assertEqual(c["exception_ancestor"], "ValueError")
+        # This structural slice is creation-pure; ingestion still performs
+        # the module-shadowing check before admitting it.
+        self.assertFalse(c["creation_effects"])
+
     def test_metaclass_and_decorators_flag(self):
         body = self._module_body("class C(metaclass=type):\n    pass\n")
         self.assertIn("metaclass", body[0]["class_unsupported"])

@@ -243,7 +243,8 @@ def render(diff, proof, grammar, tables):
              "`ImportError` and `ModuleNotFoundError` additionally work as handler "
              "names, but their bare raises remain unfinished. Other builtin "
              "exception names refuse, including OS-error ancestors such as `OSError`; "
-             "user classes `class E(Exception): pass` are admitted." % (len(exc), ", ".join("`%s`" % e for e in exc)))
+             "user classes `class E(Exception): pass` and the measured direct "
+             "builtin-ancestor shapes are admitted." % (len(exc), ", ".join("`%s`" % e for e in exc)))
     L.append("")
     others = sorted(n for n in cpython
                     if not n[:1].islower() and n not in catches

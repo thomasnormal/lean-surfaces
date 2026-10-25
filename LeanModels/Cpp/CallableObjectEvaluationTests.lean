@@ -1260,6 +1260,106 @@ def callableUnsignedShortCompoundShiftRightFrameWitness : Bool :=
 
 #guard callableUnsignedShortCompoundShiftRightFrameWitness
 
+private def signedCharCompoundShiftLeftFrame : Bool :=
+  let base := incrementFunction .signedChar "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign "<<=" (handle "0x10")
+      {expression := .integer 1, sourceType := .builtin .signedChar,
+        type := .builtin .signedChar})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .signedChar, type := .builtin .signedChar}))}
+  match CallableObjectFrame.start .lp64 function [⟨.signed 8, 12⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.signed 8, 24⟩)
+
+def callableSignedCharCompoundShiftLeftFrameWitness : Bool :=
+  signedCharCompoundShiftLeftFrame
+
+#guard callableSignedCharCompoundShiftLeftFrameWitness
+
+private def signedCharCompoundShiftRightFrame : Bool :=
+  let base := incrementFunction .signedChar "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign ">>=" (handle "0x10")
+      {expression := .integer 1, sourceType := .builtin .signedChar,
+        type := .builtin .signedChar})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .signedChar, type := .builtin .signedChar}))}
+  match CallableObjectFrame.start .lp64 function [⟨.signed 8, 12⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.signed 8, 6⟩)
+
+def callableSignedCharCompoundShiftRightFrameWitness : Bool :=
+  signedCharCompoundShiftRightFrame
+
+#guard callableSignedCharCompoundShiftRightFrameWitness
+
+private def unsignedCharCompoundShiftLeftFrame : Bool :=
+  let base := incrementFunction .unsignedChar "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign "<<=" (handle "0x10")
+      {expression := .integer 1, sourceType := .builtin .unsignedChar,
+        type := .builtin .unsignedChar})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .unsignedChar, type := .builtin .unsignedChar}))}
+  match CallableObjectFrame.start .lp64 function [⟨.unsigned 8, 12⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.unsigned 8, 24⟩)
+
+def callableUnsignedCharCompoundShiftLeftFrameWitness : Bool :=
+  unsignedCharCompoundShiftLeftFrame
+
+#guard callableUnsignedCharCompoundShiftLeftFrameWitness
+
+private def unsignedCharCompoundShiftRightFrame : Bool :=
+  let base := incrementFunction .unsignedChar "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign ">>=" (handle "0x10")
+      {expression := .integer 1, sourceType := .builtin .unsignedChar,
+        type := .builtin .unsignedChar})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .unsignedChar, type := .builtin .unsignedChar}))}
+  match CallableObjectFrame.start .lp64 function [⟨.unsigned 8, 12⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.unsigned 8, 6⟩)
+
+def callableUnsignedCharCompoundShiftRightFrameWitness : Bool :=
+  unsignedCharCompoundShiftRightFrame
+
+#guard callableUnsignedCharCompoundShiftRightFrameWitness
+
+private def intCompoundShiftLeftFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign "<<=" (handle "0x10")
+      {expression := .integer 2, sourceType := .builtin .int,
+        type := .builtin .int})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .int, type := .builtin .int}))}
+  match CallableObjectFrame.start .lp64 function [⟨.signed 32, 3⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.signed 32, 12⟩)
+
+def callableIntCompoundShiftLeftFrameWitness : Bool :=
+  intCompoundShiftLeftFrame
+
+#guard callableIntCompoundShiftLeftFrameWitness
+
 -- No native oracle execution is run for signed overflow. The failed arithmetic
 -- leaves the live parameter unchanged in both prefix and postfix cases.
 private def overflowRetainsParameter (operator : String) (isPostfix : Bool) (value : Int) : Bool :=

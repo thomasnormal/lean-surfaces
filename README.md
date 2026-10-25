@@ -790,8 +790,8 @@ table is [docs/python-coverage.md](docs/python-coverage.md). The main gaps:
   deep embedding → tiered interpreter).
 - **`mvcgen` integration**: hook the spec layer into Lean's verification
   condition generator instead of hand-rolled Hoare reasoning.
-- **Python beyond the current tier**: floats, a module system (most
-  real-world imports reach C extension modules), class inheritance.
+- **Python beyond the current tier**: a module system (most real-world
+  imports reach C extension modules), general class inheritance and MROs.
 
 ## License
 

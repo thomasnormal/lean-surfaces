@@ -12,6 +12,9 @@
   forward, multiple, dynamic, and external bases remain loud.
 - Explicit `class C(object)` now uses the existing default-protocol instance
   semantics; other external and dynamic bases remain loud.
+- Direct subclasses of the measured builtin exception names now preserve their
+  class identity through `raise` and explicit handler matching; shadowed,
+  dynamic, and unmeasured exception bases remain loud.
 
 All notable changes to the **Python tier** of this repository (the extractor,
 the Lean semantics under `LeanModels/Python/`, its proof surface, and its

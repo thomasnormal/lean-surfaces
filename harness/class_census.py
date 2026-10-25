@@ -38,8 +38,8 @@ false; it refuses later, as an ordinary statement. The static wall
 census in `leanpy_survey.py` walks the whole envelope and does count
 them — the difference is reported, not smoothed over.
 
-THE GATE: `--controls` runs 17 synthetic fixtures with hand-computed
-verdicts plus two real-file controls, and main() runs them before the
+THE GATE: `--controls` runs 21 synthetic fixtures with hand-computed
+verdicts plus three real-file controls, and main() runs them before the
 census and aborts if any row fails. A classifier whose output was not
 paid for with a positive and a negative control has burned this project
 five times.
@@ -65,8 +65,9 @@ import extract  # noqa: E402  (the ground truth, imported not re-implemented)
 sys.setrecursionlimit(20000)
 
 # CPython 3.9's builtin exception names — a base drawn from here is an
-# exception base even when it is not literally `Exception` (the extractor
-# admits only the literal name, so `class E(ValueError)` is a wall today).
+# exception base even when it is not literally `Exception`. The extractor
+# admits the measured direct-ancestor names and ingestion rechecks that the
+# name remains unshadowed.
 import builtins  # noqa: E402
 
 EXC_NAMES = frozenset(n for n in dir(builtins)
@@ -251,7 +252,8 @@ def class_row(node, class_names, import_names, truth, recognized=None,
     """One top-level class: its demands, its shape, the extractor's verdict.
 
     ``recognized`` is the extractor's own structural recognition of the base
-    (``"exc"`` for the exact `class N(Exception): pass` shape, ``"nt"`` for a
+    (``"exc"`` for a direct builtin exception ancestor, including the exact
+    `class N(Exception): pass` shape, ``"nt"`` for a
     plain `namedtuple(...)` base, ``"base"`` for an earlier same-module plain
     base, ``None`` otherwise) — it is what makes the
     ground-truth cross-check exact instead of exempting a whole feature.
@@ -331,18 +333,134 @@ def _import_names(tree):
     return out
 
 
+def _target_names(target):
+    if isinstance(target, ast.Name):
+        return {target.id}
+    if isinstance(target, (ast.Tuple, ast.List)):
+        out = set()
+        for elt in target.elts:
+            out.update(_target_names(elt))
+        return out
+    if isinstance(target, ast.Starred):
+        return _target_names(target.value)
+    return set()
+
+
+def _top_level_binds(tree):
+    """The conservative top-level binding set used by Json.lean's census."""
+    def walk_stmt(stmt):
+        if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef,
+                             ast.ClassDef)):
+            return {stmt.name}
+        if isinstance(stmt, ast.Assign):
+            out = set()
+            for target in stmt.targets:
+                out.update(_target_names(target))
+            return out
+        if isinstance(stmt, (ast.AnnAssign, ast.AugAssign)):
+            return _target_names(stmt.target)
+        if isinstance(stmt, (ast.For, ast.AsyncFor)):
+            out = _target_names(stmt.target)
+            for body in (stmt.body, stmt.orelse):
+                for child in body:
+                    out.update(walk_stmt(child))
+            return out
+        if isinstance(stmt, (ast.While, ast.If)):
+            out = set()
+            for body in (stmt.body, stmt.orelse):
+                for child in body:
+                    out.update(walk_stmt(child))
+            return out
+        if isinstance(stmt, ast.Try):
+            out = set()
+            for body in (stmt.body, stmt.orelse, stmt.finalbody):
+                for child in body:
+                    out.update(walk_stmt(child))
+            for handler in stmt.handlers:
+                for child in handler.body:
+                    out.update(walk_stmt(child))
+            return out
+        if isinstance(stmt, (ast.With, ast.AsyncWith)):
+            out = set()
+            for item in stmt.items:
+                if item.optional_vars:
+                    out.update(_target_names(item.optional_vars))
+            for child in stmt.body:
+                out.update(walk_stmt(child))
+            return out
+        if isinstance(stmt, ast.Import):
+            return {a.asname or a.name.split(".")[0] for a in stmt.names}
+        if isinstance(stmt, ast.ImportFrom):
+            return {a.asname or a.name for a in stmt.names
+                    if a.name != "*"}
+        if isinstance(stmt, ast.Delete):
+            out = set()
+            for target in stmt.targets:
+                out.update(_target_names(target))
+            return out
+        return set()
+
+    out = set()
+    for stmt in tree.body:
+        out.update(walk_stmt(stmt))
+    return out
+
+
+def _class_body_effectful(node):
+    """Whether the class body itself has an observable creation effect."""
+    if node.keywords or node.decorator_list:
+        return True
+    for stmt in node.body:
+        if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if stmt.decorator_list:
+                return True
+            continue
+        if isinstance(stmt, ast.Pass):
+            continue
+        if isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant):
+            continue
+        if (isinstance(stmt, ast.Assign) and len(stmt.targets) == 1
+                and all(isinstance(t, ast.Name) for t in stmt.targets)
+                and isinstance(stmt.value, ast.Constant)):
+            continue
+        # Literal __slots__ is a storage declaration, not an effect at class
+        # creation, and the extractor has already validated its shape.
+        if (isinstance(stmt, ast.Assign) and len(stmt.targets) == 1
+                and isinstance(stmt.targets[0], ast.Name)
+                and stmt.targets[0].id == "__slots__"
+                and isinstance(stmt.value, (ast.Constant, ast.Tuple, ast.List))):
+            continue
+        return True
+    return False
+
+
 def _module_envelope(tree):
     """The extractor's own module dict — GROUND TRUTH, built in memory."""
     body = [extract.convert_stmt(s, module_scope=True) for s in tree.body]
     prior = set()
+    class_nodes = {(s.name, s.lineno): s for s in tree.body
+                   if isinstance(s, ast.ClassDef)}
+    bound = _top_level_binds(tree)
     for d in body:
         if d.get("kind") == "ClassDef":
             base = d.get("base")
+            node = class_nodes.get((d.get("name"), d.get("span", {}).get("lineno")))
             if ((base == "object" or (base is not None and base in prior))
-                    and d.get("class_unsupported") is None):
+                    and d.get("class_unsupported") is None
+                    and node is not None and not _class_body_effectful(node)):
                 # Ingestion proves this name-only base at the class statement;
                 # its evaluation is then creation-pure.
                 d["creation_effects"] = False
+            exc = d.get("exception_ancestor")
+            if d.get("exception_base"):
+                exc = "Exception"
+            if (exc is not None and exc not in bound
+                    and d.get("class_unsupported") is None):
+                # Ingestion admits the direct builtin ancestor only while its
+                # name is unshadowed in the module.
+                d["creation_effects"] = False
+            elif exc is not None:
+                d["creation_effects"] = True
             prior.add(d.get("name"))
     return {"kind": "Module", "body": body}
 
@@ -388,16 +506,22 @@ def file_row(path, name):
     top = [s for s in tree.body if isinstance(s, ast.ClassDef)]
     class_names = set(s.name for s in top)
     imports = _import_names(tree)
+    bound = _top_level_binds(tree)
     truth = {}
     for d in env["body"]:
         if d.get("kind") == "ClassDef":
-            rec = ("nt" if d.get("namedtuple_base") is not None
-                   else "exc" if d.get("exception_base") else
+            exc = d.get("exception_ancestor")
+            if d.get("exception_base"):
+                exc = "Exception"
+            admissible = d.get("class_unsupported") is None
+            rec = ("nt" if admissible and d.get("namedtuple_base") is not None
+                   else "exc" if admissible and exc is not None and exc not in bound else
                    "object" if any(c.name == d["name"]
                                     and c.lineno == d["span"]["lineno"]
                                     and len(c.bases) == 1
                                     and isinstance(c.bases[0], ast.Name)
                                     and c.bases[0].id == "object"
+                                    and admissible
                                     for c in top) else
                    "base" if any(c.name == d["name"]
                                   and c.lineno == d["span"]["lineno"]
@@ -405,6 +529,7 @@ def file_row(path, name):
                                   and isinstance(c.bases[0], ast.Name)
                                   and any(p.name == c.bases[0].id
                                           and p.lineno < c.lineno for p in top)
+                                  and admissible
                                   for c in top)
                    else None)
             truth[(d["name"], d["span"]["lineno"])] = (
@@ -472,7 +597,7 @@ TIERS = [
     ("T2  + an explicit `object` base", frozenset(["base:object"])),
     ("T3  + ONE base, a same-module class  <<< v0 BOUNDARY",
      frozenset(["base:same-module-class"])),
-    ("T4  + ONE base, a builtin EXCEPTION  <<< v0 BOUNDARY",
+    ("T4  + ONE base, a builtin EXCEPTION  <<< BUILT",
      frozenset(["base:exception"])),
     ("T5  + `__slots__` (the storage rule, priced separately)",
      frozenset(["body:slots"])),
@@ -557,7 +682,10 @@ FIXTURES = [
     ("same-module base",
      "class A:\n    pass\nclass B(A):\n    pass\n", ["base:same-module-class"], False),
     ("Exception base", "class E(Exception):\n    pass\n", ["base:exception"], False),
-    ("ValueError base", "class E(ValueError):\n    pass\n", ["base:exception"], True),
+    ("ValueError base", "class E(ValueError):\n    pass\n", ["base:exception"], False),
+    ("shadowed ValueError base",
+     "ValueError = object\nclass E(ValueError):\n    pass\n",
+     ["base:exception"], True),
     ("multiple bases",
      "class A:\n    pass\nclass B:\n    pass\nclass C(A, B):\n    pass\n",
      ["base:multiple", "base:same-module-class"], True),
@@ -594,9 +722,13 @@ def controls(verbose=True):
         imports = _import_names(tree)
         env = _module_envelope(tree)
         node = top[-1]
+        bound = _top_level_binds(tree)
         truth = [(bool(d.get("creation_effects")),
                   "nt" if d.get("namedtuple_base") is not None
-                  else "exc" if d.get("exception_base") else
+                  else "exc" if ((d.get("exception_ancestor") is not None
+                                  or d.get("exception_base"))
+                                 and ((d.get("exception_ancestor") or
+                                       "Exception") not in bound)) else
                   "object" if len(node.bases) == 1
                   and isinstance(node.bases[0], ast.Name)
                   and node.bases[0].id == "object" else
@@ -624,7 +756,7 @@ def controls(verbose=True):
                      % (",".join(sorted(want)) or "-", want_effects)))
     # real-file controls: a hand-read stdlib module must come out as read
     table = ic.ModuleTable.of(os.environ.get("LEANPY_CPYTHON") or "python3.9")
-    for mod, want_walled, want_classes in (("graphlib", True, 3),
+    for mod, want_walled, want_classes in (("graphlib", False, 3),
                                            ("opcode", False, 0),
                                            ("bisect", False, 0)):
         path = os.path.join(table.lib, mod + ".py")

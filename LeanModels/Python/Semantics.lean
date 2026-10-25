@@ -7550,9 +7550,9 @@ as a table, never a hierarchy walk). Consulted at BOTH resolution sites
 (statically-first, the existing order) and matches only `.user cid`, so
 `.importError` propagates through it — CPython's behavior too (an
 admitted `class ImportError(Exception): pass` is a different class and
-catches nothing builtin). Every other builtin exception name,
-`except Exception:`, tuple patterns and `as` bindings keep today's
-refusals verbatim; `raise ImportError` stays refused (`raise` admits
+catches nothing builtin). Every other builtin exception name beyond the
+admitted table, tuple patterns and `as` bindings keep today's refusals
+verbatim; `raise ImportError` stays refused (`raise` admits
 only admitted user classes, unchanged). -/
 def importErrorHandlerMatch : String → Bool
   | "ImportError" | "ModuleNotFoundError" => true
@@ -9230,7 +9230,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
               | some (ci, c) =>
                 if c.isExc then .exn st (.user ci c.name)
                 else
-                  .unsupported s!"'raise {id}': only an admitted exception class (`class N(Exception): pass`) can be raised — outside the tier (docs/memory-model.md §exceptions)"
+                  .unsupported s!"'raise {id}': only an admitted exception class (`class N(Exception): pass` or a measured direct builtin ancestor) can be raised — outside the tier (docs/memory-model.md §exceptions)"
               | Option.none =>
                 if (findNamedTuple m id).isSome then
                   .exn st (.typeError "exceptions must derive from BaseException")
@@ -9403,14 +9403,14 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                match execStmts m fuel st body.toList with
                | .ok st' flow => .ok st' flow
                | .exn st' e =>
-                 if builtinExcCatches excName e then execStmts m fuel st' handler.toList
+                   if builtinExcCatches excName e || userExcCatches m excName e then execStmts m fuel st' handler.toList
                  else .exn st' e
                | .timeout => .timeout
                | .unsupported msg => .unsupported msg
              else if refusedAncestorExc.contains excName then
                .unsupported s!"'except {excName}:': '{excName}' is a CPython ANCESTOR class the tier has not measured — admitting it would claim a catch set this model has never enumerated, so it is refused BY NAME rather than derived from a hierarchy (docs/memory-model.md §exceptions)"
              else
-               .unsupported s!"'except {excName}:': matchable classes are an admitted user class (`class N(Exception): pass`), the pinned import-error names, or one of `admittedBuiltinExc` — '{excName}' is none of those (docs/memory-model.md §exceptions)"
+               .unsupported s!"'except {excName}:': matchable classes are an admitted user class (`class N(Exception): pass` or a measured direct builtin ancestor), the pinned import-error names, or one of `admittedBuiltinExc` — '{excName}' is none of those (docs/memory-model.md §exceptions)"
            | some (ci, c) =>
              if !c.isExc then
                .unsupported s!"'except {excName}:': class '{excName}' is not an admitted exception class — outside the tier (docs/memory-model.md §exceptions)"

@@ -1374,12 +1374,14 @@ exception INSTANCES as values.
 **Representation: class-identity exceptions, with one measured string payload.**
 `PyErr.user (cid : ClassId)` — a bare raised user exception IS its class
 identity; `PyErr.userMessage` adds the measured string payload. The admitted
-class shape is recognized at ingestion, like
-namedtuples: `class N(Exception): pass` EXACTLY (single base literally
-named `Exception`, body `pass`/docstring only, no methods) — the
-`Stop` shape. Such a class is an exception NAME, not an instantiable
-object: `N()` as a value and attributes remain loud. The measured user-class
-payload form admits exactly one positional string and preserves it in the
+class shapes are recognized at ingestion, like namedtuples:
+`class N(Exception): pass` (the `Stop` shape), plus one direct plain-name
+ancestor from the measured builtin table, such as
+`class ValueSignal(ValueError): pass`. Both require a single base, no
+keywords/decorators, and only `pass`/docstring statements. Ingestion checks
+that the ancestor name is not rebound in the module before admitting it. Such
+a class is an exception NAME, not an instantiable object: `N()` as a value and
+attributes remain loud. The measured user-class payload form admits exactly one positional string and preserves it in the
 exception message; other user-class argument forms remain loud. The measured
 builtin payload form admits exactly one
 positional string for `TypeError`, `ValueError`, `RuntimeError`,
@@ -1410,13 +1412,11 @@ Everything else (multiple handlers, tuple patterns, observed `as e`, and
 `Run`: run the body; `.ok` skips the handler; a bare handler catches every
 represented `.exn`; `.exn (.user cid)` with cid matching a named handler's
 class runs the handler FROM THE RETAINED STATE (no rollback — CPython); any
-other `.exn` propagates. Matching is
-IDENTITY on `ClassId`: with bases beyond `Exception` refused there is
-no hierarchy to walk. `except Exception:` is REFUSED in v0 (it would
-catch builtin `PyErr`s and change every faithfulness story); matching
-a BUILTIN exception name (`except ImportError:` — the `PyErr` kind ↔
-name table the leanpy boundary already owns) is the recorded first
-extension, not v0. Handler flow is ordinary flow (`break`/`return`
+other `.exn` propagates. Matching is identity on `ClassId` for exact user
+classes, with the direct builtin-ancestor table handling admitted subclass
+relationships; no general MRO walk is attempted. `except Exception:` and
+the other admitted builtin names match the represented builtin errors and
+direct subclasses. Handler flow is ordinary flow (`break`/`return`
 inside a handler route as anywhere); nested `try` needs no design —
 structural recursion composes, and an exception raised INSIDE a
 handler propagates (CPython, chaining refused with `from` above). No
@@ -1473,9 +1473,9 @@ zero-argument constructor spelling is pinned by
 builtin and user-class payload forms. Non-string and multi-argument user-class
 constructors remain the next exception-value boundary.
 
-**Explicitly NOT decided here:** the `time.time()` abstraction,
-`except Exception`, builtin-name matching, `finally`, exception
-payloads/`as` bindings. Each needs its own recorded decision.
+**Explicitly NOT decided here:** the `time.time()` abstraction, general
+exception MROs beyond the direct measured ancestor table, `finally`, and
+exception payloads/`as` bindings. Each needs its own recorded decision.
 
 **As built (2026-08-11, pass 4) — the deltas the implementation
 forced, each recorded with its reason:**
@@ -1486,18 +1486,27 @@ forced, each recorded with its reason:**
   exists so the boundary (`errName`, Main.lean; the leanpy class line)
   can render CPython's `type(e).__name__` without threading the module
   through `PyErr`.
-* **Recognition rides `exception_base`** (extractor marker, the
-  `namedtuple_base` pattern): the exact shape `class N(Exception):
-  pass` (single base literally named `Exception`, no keywords/
-  decorators, body only `pass`/docstring, no methods) suppresses the
-  "bases (inheritance)" refusal and marks the class; ingestion then
-  runs a module CENSUS — every top-level statement bind-analyzable
-  (`stmtBinds`, the namedtuple census's walker) and `Exception` bound
-  NOWHERE (no top-level bind, no def/class/namedtuple of that name, no
-  `has_global` anywhere that could rebind it) — and on ANY failure
-  demotes the class to the ordinary loud state (`isExc := false`,
-  `ok := false`, exactly the `ntBase` demotion discipline): a shadowed
-  `Exception` must not recognize as the builtin one.
+* **Recognition rides `exception_base` and `exception_ancestor`** (extractor
+  markers, the `namedtuple_base` pattern): the exact `class N(Exception):
+  pass` shape and the measured one-base builtin-ancestor shapes suppress the
+  "bases (inheritance)" refusal and mark the class. Ingestion runs the same
+  module CENSUS — every top-level statement bind-analyzable (`stmtBinds`, the
+  namedtuple census's walker) and the builtin name bound NOWHERE (no top-level
+  bind, no def/class/namedtuple of that name, no `has_global` anywhere that
+  could rebind it) — and on ANY failure demotes the class to the ordinary loud
+  state (`isExc := false`, `ok := false`, exactly the `ntBase` demotion
+  discipline). A shadowed ancestor must never be mistaken for the builtin.
+  `builtinExcNameCatches` is an explicit table for `BaseException`,
+  `Exception`, `ArithmeticError`, `LookupError`, `RuntimeError`, and exact
+  ancestor names; it is not a derived hierarchy.
+
+The direct-ancestor landing (2026-10-25) is pinned by
+`Examples/python/exc_ancestors_lab.ValueSignal` and the
+`value_ancestor` check: a `ValueSignal` raised by identity is caught by
+`except ValueError`. The accepted ancestor names are the measured entries in
+`admittedBuiltinExc`; a dynamic base, a rebound name, a forward name, or a
+multiple-inheritance shape remains loud. The class census applies the same
+unshadowed-name rule and reports zero ground-truth violations.
 * **`Stmt.raiseStmt (exc cause : Option Expr)`** is structured in FULL
   generality (bare `raise`, `raise <expr>`, `raise … from …` all parse);
   ingestion lowers a direct zero-argument NAME constructor to `raise N`,
@@ -1518,7 +1527,7 @@ forced, each recorded with its reason:**
   when an exception arrives, so a module whose body never raises could
   run under a bogus handler name — the tier refuses it up front. Loud,
   never wrong; the faithful late-`NameError` story is deferred with
-  builtin-name matching.
+  builtin-name matching beyond the admitted table.
 * **`tryStmt` is OUT of `Stmt.heapFree`** (the design said both new
   statements could stay in; the PROOF disagrees for `try`): `worldInv`
   is an `.ok`-only invariant, and the handler resumes from the BODY'S
@@ -3977,12 +3986,10 @@ moves.
 
 ### What stays loud, and one asymmetry recorded
 
-An `AssertionError` can be RAISED but not CAUGHT. The v0 `try`/`except`
-tier matches the class identity of an admitted `class N(Exception): pass`
-only, so `except AssertionError:` refuses exactly as `except
-ZeroDivisionError:` already does — the existing except-tier boundary, not
-a new one. It is asymmetric on purpose: a loud refusal beats a handler
-that silently matches nothing. `assert_lab.catch_assert` pins it.
+An `AssertionError` can be RAISED but not CAUGHT. The `try`/`except` tier
+matches exact admitted user classes and the explicit builtin table; a class
+name outside those sets refuses rather than silently matching nothing.
+`assert_lab.catch_assert` pins the remaining assertion-handler boundary.
 
 `assert (a, b)` — the classic always-true parenthesised assert CPython
 warns about at compile time — is NOT special-cased: a non-empty tuple is
@@ -4431,8 +4438,8 @@ the recorded first extension, not v0". This design lands that extension
 AT MINIMUM WIDTH: a PINNED two-row match table — handler names
 `ImportError` and `ModuleNotFoundError` both match the kind
 `.importError` (CPython's one relevant subclass edge, carried as a
-table, never a hierarchy walk). Everything else is untouched: every
-other builtin exception name, `except Exception:`, tuple patterns,
+table, never a hierarchy walk). Everything else is untouched: every other
+builtin exception name beyond the admitted table, tuple patterns,
 `as` bindings all keep today's refusals verbatim. A USER class named
 `ImportError` resolves first (`findClass`, the existing
 statically-first order) and then matches only `.user cid` — so
@@ -5367,6 +5374,12 @@ regenerated with CPython 3.9.25 metadata and the current source hash. The
 stdlib census and broad survey remain measurements of the larger class and
 import frontiers; this landing adds only the narrow same-module single-base
 slice, while class attributes, decorators, and metaclass support remain outside.
+
+The 2026-10-25 exception landing extends class admission with one direct
+plain-name builtin-exception ancestor. `graphlib.py`'s `CycleError(ValueError)`
+now clears the class wall; general imported bases, MROs, and dynamic bases
+remain outside the tier. The class census applies the same source-order and
+unshadowed-name rule used by ingestion.
 
 ### Priced extensions, in the order the census ranks them
 

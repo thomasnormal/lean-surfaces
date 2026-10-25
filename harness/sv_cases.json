@@ -1405,6 +1405,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "mailbox_empty_num",
+      "file": "Examples/system-verilog/mailbox_empty_num/mailbox_empty_num.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

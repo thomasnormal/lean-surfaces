@@ -4088,3 +4088,18 @@ The fresh **22,049-path** census moves **4,855 → 4,856 clean** and **17,128 �
 17,127 partial** (66 include skips); `CallExpression` falls **2,973 → 2,972**
 while `AssignmentExpression:target` remains **2,975**. Differential coverage
 moves **155/151/0/4 → 156/152/0/4**; grammar coverage remains **214/83/131**.
+
+## Empty mailbox `num()` queries — 2026-10-25
+
+An untouched mailbox created by literal `new()` now answers `num()` with the
+exact scalar value zero. The receiver must have a constructor witness and no
+later mailbox operation; method calls that could observe queued messages remain
+loud. The generic empty-function shortcut no longer fabricates a result for
+mailbox `num()` calls, closing that wrong-answer path. The `mailbox_empty_num`
+fixture supplies the differential witness.
+
+The fresh **22,049-path** census remains **4,856 clean / 17,127 partial** (66
+include skips). `CallExpression` is **3,026**, up from **2,972**, because
+previously fabricated mailbox-method values are now explicit refusals;
+`AssignmentExpression:target` remains **2,975**. Differential coverage moves
+**156/152/0/4 → 157/153/0/4**; grammar coverage remains **214/83/131**.

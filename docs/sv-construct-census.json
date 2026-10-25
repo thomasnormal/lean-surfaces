@@ -15,16 +15,16 @@
  "summary": {
   "blocker_files": [
    [
+    "CallExpression",
+    3026
+   ],
+   [
     "AssignmentExpression:target",
     2975
    ],
    [
     "ExpressionStatement:CallExpression",
     2974
-   ],
-   [
-    "CallExpression",
-    2972
    ],
    [
     "Hierarchy:ports",

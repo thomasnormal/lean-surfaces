@@ -5710,8 +5710,15 @@ def _convert_legacy_call(sm, expression):
                      if type(body).__name__ == "StatementList" else None)
         kind = str(getattr(subroutine, "subroutineKind", "")).split(".")[-1]
         formal_args = list(getattr(subroutine, "arguments", []))
+        receiver = getattr(expression, "thisClass", None)
+        receiver_type = getattr(getattr(receiver, "type", None), "canonicalType", None)
+        opaque_method_call = (
+            receiver is not None
+            and type(receiver_type).__name__ == "ClassType"
+            and getattr(receiver_type, "name", None) == "mailbox"
+            and getattr(expression, "subroutineName", None) == "num")
         no_args = (kind == "Function" and list(expression.arguments) == []
-                   and formal_args == [])
+                   and formal_args == [] and not opaque_method_call)
         if no_args and body_list == []:
             width, two_state, reason = type_width_2s(expression.type)
             if width is not None and reason is None:
@@ -5728,7 +5735,7 @@ def _convert_legacy_call(sm, expression):
         # deliberately narrower than general constant-function evaluation:
         # names, operators, nested calls, and multi-statement bodies remain
         # ordinary unsupported calls rather than silently erasing effects.
-        if (_literal_function_call(expression)
+        if (not opaque_method_call and _literal_function_call(expression)
                 and type(body).__name__ == "ReturnStatement"):
             returned = getattr(body, "expr", None)
             if (returned is not None and _literal_function_return(returned)
@@ -5753,6 +5760,7 @@ def _convert_legacy_call(sm, expression):
             (_string_literal_getc_method, _convert_string_literal_getc),
             (_string_literal_len_method, _convert_string_literal_len_method),
             (_semaphore_zero_try_get, _convert_semaphore_zero_try_get),
+            (_mailbox_empty_num_method, _convert_mailbox_empty_num),
             (_zero_size_method, _convert_zero_size_method),
             (_rtoi_literal_call, _convert_rtoi_literal),
             (_realtobits_literal_call, _convert_realtobits_literal),
@@ -6439,6 +6447,59 @@ def _convert_semaphore_zero_try_get(sm, expression):
 def _semaphore_zero_try_get(expression):
     return (_semaphore_zero_method(expression)
             and expression.subroutineName == "try_get")
+
+
+def _mailbox_empty_num_method(expression):
+    """Recognize ``num()`` on a newly constructed, otherwise untouched mailbox."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or expression.isSystemCall
+                or expression.subroutineName != "num"
+                or len(expression.arguments) != 0):
+            return False
+        receiver = getattr(expression, "thisClass", None)
+        if (receiver is None or type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "bad", False)):
+            return False
+        canonical = getattr(getattr(receiver, "type", None), "canonicalType", None)
+        if (type(canonical).__name__ != "ClassType"
+                or getattr(canonical, "name", None) != "mailbox"):
+            return False
+        name = getattr(getattr(receiver, "symbol", None), "name", "")
+        if not name:
+            return False
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        constructor = re.search(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"\s*=\s*new\s*\(\s*\)", source)
+        if constructor is None:
+            return False
+        if re.search(r"(?<![A-Za-z0-9_$])" + re.escape(name)
+                     + r"\s*\.", source[:constructor.start()]):
+            return False
+        occurrences = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"(?![A-Za-z0-9_$])", source))
+        return all(source[m.end():].lstrip().startswith(".num")
+                   for m in occurrences if m.start() > constructor.end())
+    except Exception:
+        return False
+
+
+def _convert_mailbox_empty_num(sm, expression):
+    if not _mailbox_empty_num_method(expression):
+        return unsupported(sm, expression, "CallExpression:mailbox-num")
+    width = getattr(expression.type, "bitWidth", None)
+    if width is None or width <= 0:
+        return unsupported(sm, expression, "CallExpression:mailbox-num-width")
+    return signed_metadata({
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": width,
+        "bits": "0" * width,
+        "mailbox_empty_num": True,
+    }, expression.type)
 
 
 def _q_initialize_status_call(sm, expression):
@@ -9501,6 +9562,9 @@ def _convert_syscall(sm, s, e):
             # retain the call's sequencing position as an ordinary no-op.
             return {"kind": "Empty", "span": node_span(sm, s),
                     "semaphore_zero_method": name}
+        if _mailbox_empty_num_method(e):
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "mailbox_empty_num": True}
         # A zero-argument task/function with an actually empty body has no
         # state, timing, or diagnostic effect.  In statement position its
         # discarded result is unobservable, so erase this narrow call while

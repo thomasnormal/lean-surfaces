@@ -5377,6 +5377,18 @@
     "rung": 3
   },
   {
+    "id": "expression.callable-frame-unsigned-long-compound-shift-right-mid",
+    "kind": "expression",
+    "corpus": "rung-3 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableUnsignedLongCompoundShiftRightFrameWitness",
+    "cpp_source": "unsigned long frame_unsigned_long_compound_shift_right(unsigned long value) { value >>= 1; return value; } bool callable_witness() { return frame_unsigned_long_compound_shift_right(12) == 6; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
+  },
+  {
     "id": "expression.callable-frame-long-long-compound-add-mid",
     "kind": "expression",
     "corpus": "rung-3 witness",

@@ -2260,6 +2260,26 @@ def callableUnsignedLongCompoundShiftLeftFrameWitness : Bool :=
 
 #guard callableUnsignedLongCompoundShiftLeftFrameWitness
 
+private def unsignedLongCompoundShiftRightFrame : Bool :=
+  let base := incrementFunction .unsignedLong "++" false
+  let function := {base with body := .block (.sequence
+    (.compoundAssign ">>=" (handle "0x10")
+      {expression := .integer 1, sourceType := .builtin .unsignedLong,
+        type := .builtin .unsignedLong})
+    (.return_ {
+      expression := .parameter (handle "0x10"),
+      sourceType := .builtin .unsignedLong, type := .builtin .unsignedLong}))}
+  match CallableObjectFrame.start .lp64 function [⟨.unsigned 64, 12⟩] with
+  | .error _ => false
+  | .ok started =>
+      let outcome := evaluateCallableObjectInFrame 32 started
+      outcome.result matches .ok (.ok ⟨.unsigned 64, 6⟩)
+
+def callableUnsignedLongCompoundShiftRightFrameWitness : Bool :=
+  unsignedLongCompoundShiftRightFrame
+
+#guard callableUnsignedLongCompoundShiftRightFrameWitness
+
 private def longLongCompoundAddFrame : Bool :=
   let base := incrementFunction .longLong "++" false
   let function := {base with body := .block (.sequence

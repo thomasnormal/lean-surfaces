@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.33] — 2026-10-26
+
+The self-check surface now has 255 differential rows: 250 matches, zero
+disagreements, and 5 recorded refusals. The grammar census remains at 217
+pyslang syntax witnesses: 92 MATCH and 125 REFUSE. The 22,058-path corpus
+moves to 5,233 clean files and 16,758 partial files, with
+`AssignmentExpression:target` falling to 2,853. Pure conditional net drivers
+with literal arms and one direct literal source initialization now snapshot
+before static per-bit resolution; changing, effectful, unknown, and
+strength-sensitive drivers remain loud.
+
 ## [0.1.32] — 2026-10-26
 
 The self-check surface now has 254 differential rows: 249 matches, zero

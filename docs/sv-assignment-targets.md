@@ -59,6 +59,18 @@ a second scheduler. A future target rung must first supply the missing storage
 or the scheduler-facing continuous-assignment rule, then add a source-bound
 fixture and an independent simulator comparison.
 
+## Pure conditional continuous drivers from literal source state — 2026-10-26
+
+A whole packed-net driver whose conditional expression has only literal arms
+and conditions with one direct literal initialization may be sampled at time
+zero. The selected literal drivers then use the existing per-bit wire resolver,
+covering the all-high-impedance case and the ordinary net-declaration driver
+shape without introducing live driver state. Unknown conditions, source
+changes, effectful expressions, strengths, and scheduler-visible forms remain
+loud. The `continuous_conditional_history_drivers` fixture covers the admitted
+shape; `wire_z_z_resolves_to_z` and `net_decl_assign_one_per_net_v4` are the
+corpus witnesses.
+
 ## Selected continuous windows from one literal source write — 2026-10-26
 
 A packed net's selected continuous drivers may read a variable with one direct

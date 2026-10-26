@@ -178,6 +178,31 @@ class ContinuousLiteralDrivers(unittest.TestCase):
         self.assertFalse(any(node.get("continuous_selected_static_resolution")
                              for node in nodes(design)))
 
+    def test_conditional_history_drivers_resolve(self):
+        design = extract_source(
+            "module top; logic a = 1'b0, b = 1'b0; wire bus; "
+            "assign bus = a ? 1'b1 : 1'bz; "
+            "assign bus = b ? 1'b0 : 1'bz; endmodule")
+        module = design["modules"][0]
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        initial = [process for process in module["processes"]
+                   if process.get("continuous_static_resolution")]
+        self.assertEqual(len(initial), 2)
+        self.assertEqual(initial[0]["body"]["value"]["bits"], "z")
+        self.assertEqual(initial[1]["body"]["kind"], "Empty")
+
+    def test_conditional_multiple_source_writes_remain_dynamic(self):
+        design = extract_source(
+            "module top; logic a, b; wire bus; "
+            "assign bus = a ? 1'b1 : 1'bz; "
+            "assign bus = b ? 1'b0 : 1'bz; "
+            "initial begin a = 1'b0; a = 1'b1; b = 1'b0; end endmodule")
+        self.assertTrue(any(node.get("kind") == "Assign"
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("continuous_static_resolution")
+                             for node in nodes(design)))
+
     def test_control_dependent_initial_write_remains_dynamic(self):
         design = extract_source(
             "module top; logic source; wire bus; assign bus = source; "

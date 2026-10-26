@@ -43,6 +43,19 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Pure conditional continuous drivers from literal source state — 2026-10-26
+
+Whole packed-net drivers with literal arms and one direct literal
+initialization for each condition now snapshot their selected arm before the
+existing static per-bit resolver. Unknown, changing, effectful,
+strength-sensitive, and scheduler-visible forms remain loud because they need
+the kernel's live driver path. The `continuous_conditional_history_drivers`
+fixture and the `wire_z_z_resolves_to_z` / `net_decl_assign_one_per_net_v4`
+corpus witnesses cover the admitted shape. The 22,058-path census moves
+**5,231 → 5,233 clean** and **16,760 → 16,758 partial**;
+`AssignmentExpression:target` falls **2,855 → 2,853**; differential coverage
+is **255/250/0/5** and grammar coverage remains **217/92/125**.
+
 ## Selected continuous windows from one literal source write — 2026-10-26
 
 Fixed packed-net windows whose source variable has one direct literal

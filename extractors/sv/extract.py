@@ -8935,14 +8935,43 @@ def _continuous_static_value(sm, expression):
 
     A selected read such as ``data[3:0]`` is also source-pure when ``data``
     has exactly one direct blocking literal write in an ``initial`` block.
-    Snapshotting that fixed window lets the existing literal net-resolution
-    path handle overlapping selected drivers without inventing a live driver
-    store.  Dynamic selectors, aliases, and every source with more than one
-    write stay on the scheduler-owned boundary.
+    A conditional with literal arms is source-pure when its condition has the
+    same single-write or declaration-initializer history. Snapshotting these
+    fixed values lets the existing literal net-resolution path handle
+    overlapping drivers without inventing a live driver store. Dynamic
+    selectors, aliases, unknown conditions, and every source with more than
+    one write stay on the scheduler-owned boundary.
     """
     try:
+        if _integral_literal_source(expression):
+            value = convert_expr(sm, expression)
+            if isinstance(value, dict) and value.get("kind") == "Literal":
+                return value
         if type(expression).__name__ == "NamedValueExpression":
-            return _continuous_history_literal(sm, expression)
+            value = _continuous_history_literal(sm, expression)
+            return value if value is not None else _continuous_bound_literal(sm, expression)
+        if type(expression).__name__ == "ConditionalExpression":
+            conditions = list(getattr(expression, "conditions", []))
+            if len(conditions) != 1 or getattr(conditions[0], "pattern", None) is not None:
+                return None
+            condition = _continuous_static_value(sm, conditions[0].expr)
+            when_true = _continuous_static_value(sm, expression.left)
+            when_false = _continuous_static_value(sm, expression.right)
+            if (condition is None or when_true is None or when_false is None
+                    or condition.get("kind") != "Literal"
+                    or when_true.get("kind") != "Literal"
+                    or when_false.get("kind") != "Literal"):
+                return None
+            condition_bits = condition.get("bits")
+            if (not isinstance(condition_bits, str)
+                    or not condition_bits
+                    or any(bit not in "01" for bit in condition_bits)):
+                return None
+            selected = when_true if "1" in condition_bits else when_false
+            width = getattr(expression.type, "bitWidth", None)
+            if selected.get("width") != width:
+                return None
+            return selected
         if type(expression).__name__ not in (
                 "ElementSelectExpression", "RangeSelectExpression"):
             return None

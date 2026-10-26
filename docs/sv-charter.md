@@ -8240,3 +8240,19 @@ The refreshed **22,058-path** census remains **5,227 clean / 16,764 partial**
 (67 include skips), with `AssignmentExpression:target` at **2,857**.
 Differential coverage grows **246/241/0/5 → 247/242/0/5** with no
 disagreements; grammar coverage remains **217/92/125**.
+
+## Dynamic multidimensional subarray source reads — 2026-10-26
+
+A bounded multidimensional unpacked integral source with one dynamic selector
+may now be read into a distinct flat fixed-array row. The extractor lowers
+the finite selector range to mutually exclusive `===` branches and expands
+the omitted suffix cells in declaration order, so the interpreter continues
+to use only the existing scalar-cell state. Multiple dynamic selectors,
+shape mismatches, aliases, aggregate leaves, timed assignments, and
+effectful sources remain loud.
+
+`nested_fixed_array_dynamic_subarray_read_copy` supplies the differential
+row and Lean receipt. The current 22,058-path census remains 5,227 clean and
+16,764 partial with 67 include skips; differential coverage is 248 rows,
+243 matches, zero disagreements, and 5 recorded refusals, while the grammar
+census remains 217 witnesses (92 MATCH, 125 REFUSE).

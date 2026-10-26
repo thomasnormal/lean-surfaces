@@ -127,6 +127,32 @@ class FixedArrayNestedCopy(unittest.TestCase):
             [stmt["target"]["name"] for stmt in branches[0]["else"]["then"]["stmts"]],
             ["cube[0][1][0]", "cube[0][1][1]", "cube[0][1][2]"])
 
+    def test_dynamic_subarray_source_copies_into_a_flat_row(self):
+        design = lower(
+            "module top; logic [3:0] matrix [0:1][0:2]; "
+            "logic [3:0] row [5:3]; logic index; initial begin "
+            "matrix = '{'{4'h1, 4'h2, 4'h3}, '{4'h4, 4'h5, 4'h6}}; "
+            "index = 1; row = matrix[index]; if (row[5] === 4'h4 && "
+            "row[4] === 4'h5 && row[3] === 4'h6) $display(\"PASS\"); "
+            "end endmodule")
+        branches = [node for node in nodes(design)
+                    if node.get("fixed_array_dynamic_subarray_read_copy_lowered")]
+        self.assertEqual(len(branches), 1)
+        self.assertEqual(
+            [stmt["target"]["name"] for stmt in branches[0]["else"]["then"]["stmts"]],
+            ["row[5]", "row[4]", "row[3]"])
+        self.assertEqual(
+            [stmt["value"]["name"] for stmt in branches[0]["else"]["then"]["stmts"]],
+            ["matrix[1][0]", "matrix[1][1]", "matrix[1][2]"])
+
+    def test_dynamic_subarray_source_shape_mismatch_stays_loud(self):
+        design = lower(
+            "module top; logic [3:0] matrix [0:1][0:2]; "
+            "logic [3:0] row [1:0]; logic index; "
+            "initial row = matrix[index]; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

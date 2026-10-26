@@ -41,6 +41,23 @@ The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
 matched all 200 fixed-seed sample classifications.
 
+## Dynamic multidimensional subarray source reads — 2026-10-26
+
+A single dynamic selector of a bounded multidimensional unpacked integral
+array may now be read into a distinct flat fixed-array row. The extractor
+expands the finite selector range into guarded branches and copies each
+omitted suffix cell in declaration order, reusing the existing flat-cell
+state. Multiple dynamic selectors, shape mismatches, aliases, aggregate
+leaves, timed assignments, and effectful sources remain loud. The
+`nested_fixed_array_dynamic_subarray_read_copy` fixture supplies the
+differential row and Lean receipt, with extractor regressions for cell order
+and the shape refusal.
+
+The refreshed **22,058-path** census remains **5,227 clean / 16,764 partial**
+(67 include skips), with `AssignmentExpression:target` at **2,857**.
+Differential coverage grows **247/242/0/5 → 248/243/0/5** with no
+disagreements; grammar coverage remains **217/92/125**.
+
 ## Destructive finite dynamic-array reinitialization — 2026-10-26
 
 Two plain positive constant allocations of one finite scalar dynamic array now

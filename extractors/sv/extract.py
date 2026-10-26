@@ -3293,6 +3293,128 @@ def _fixed_array_dynamic_subarray_copy_assignment(sm, expr):
         return None
 
 
+def _fixed_array_dynamic_subarray_read_copy_assignment(sm, expr):
+    """Copy one dynamic multidimensional prefix into a flat fixed array."""
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None):
+            return None
+        lhs_shape = _fixed_array_assignment_shape(expr.left)
+        if lhs_shape is None:
+            return None
+        lhs_name, lhs_width, lhs_two, lhs_positions = lhs_shape
+        selectors = []
+        current = expr.right
+        while type(current).__name__ == "ElementSelectExpression":
+            selectors.append(current.selector)
+            current = current.value
+        if not selectors or not _storage_expression(current):
+            return None
+        if str(current.symbol.kind) != "SymbolKind.Variable":
+            return None
+        shape = _fixed_array_dimensions(current.type, max_cells=1024)
+        if shape is None:
+            return None
+        dimensions, leaf_type = shape
+        prefix_positions = list(reversed(selectors))
+        if not (0 < len(prefix_positions) < len(dimensions)):
+            return None
+        dynamic = [index for index, item in enumerate(prefix_positions)
+                   if _constant_dimension_selector(item) is None]
+        if len(dynamic) != 1:
+            return None
+        dynamic_index = dynamic[0]
+        selector = prefix_positions[dynamic_index]
+        width, _two_state, reason = type_width_2s(leaf_type)
+        if width is None or reason is not None:
+            return None
+        index_width, _index_two, index_reason = type_width_2s(selector.type)
+        if (index_width is None or index_reason is not None
+                or not _case_source_expression_ok(selector)
+                or not _case_source_expression_ok(expr.right)):
+            return None
+        converted_index = convert_expr(sm, selector)
+        if (converted_index is None or not _case_expression_ok(converted_index)
+                or width_of(converted_index) != index_width):
+            return None
+
+        fixed_prefix = []
+        for index, (selector_value, (left, right)) in enumerate(
+                zip(prefix_positions, dimensions)):
+            if index == dynamic_index:
+                fixed_prefix.append(None)
+                continue
+            position = _constant_dimension_selector(selector_value)
+            if position is None or position < min(left, right) or position > max(left, right):
+                return None
+            fixed_prefix.append(position)
+        suffix = dimensions[len(prefix_positions):]
+        suffix_positions = [()]
+        for left, right in suffix:
+            step = 1 if right >= left else -1
+            suffix_positions = [prefix + (position,)
+                                for prefix in suffix_positions
+                                for position in range(left, right + step, step)]
+        if (not suffix_positions or len(suffix_positions) > 1024
+                or len(lhs_positions) != len(suffix_positions)
+                or lhs_width != width or not _case_source_expression_ok(expr.right)):
+            return None
+
+        root_name = _array_storage_name(current.symbol)
+        lhs_cells = [f"{lhs_name}[{position}]" for position in lhs_positions]
+        dynamic_left, dynamic_right = dimensions[dynamic_index]
+        dynamic_step = 1 if dynamic_right >= dynamic_left else -1
+        source_cells = []
+        for outer in range(dynamic_left, dynamic_right + dynamic_step, dynamic_step):
+            indexes = list(fixed_prefix)
+            indexes[dynamic_index] = outer
+            source_cells.extend(
+                root_name + "".join(f"[{position}]" for position in indexes)
+                + "".join(f"[{position}]" for position in suffix)
+                for suffix in suffix_positions)
+        if lhs_name == root_name and set(lhs_cells) & set(source_cells):
+            return None
+
+        mask = (1 << index_width) - 1
+        result = None
+        for outer in reversed(list(range(dynamic_left, dynamic_right + dynamic_step,
+                                        dynamic_step))):
+            indexes = list(fixed_prefix)
+            indexes[dynamic_index] = outer
+            branch_sources = [
+                root_name + "".join(f"[{position}]" for position in indexes)
+                + "".join(f"[{position}]" for position in suffix)
+                for suffix in suffix_positions]
+            stmts = []
+            for lhs_cell, source_name in zip(lhs_cells, branch_sources):
+                value = {"kind": "Ident", "span": node_span(sm, expr.right),
+                         "width": width, "name": source_name}
+                if lhs_two:
+                    value = squash2_wrap(value, lhs_width)
+                stmts.append({
+                    "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                    "span": node_span(sm, expr),
+                    "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                               "width": lhs_width, "name": lhs_cell},
+                    "value": value,
+                })
+            literal = {"kind": "Literal", "span": node_span(sm, selector),
+                       "width": index_width,
+                       "bits": format(outer & mask, f"0{index_width}b")}
+            result = {"kind": "If", "span": node_span(sm, expr),
+                      "cond": {"kind": "Binary", "span": node_span(sm, selector),
+                               "width": 1, "op": "===", "left": converted_index,
+                               "right": literal},
+                      "then": {"kind": "Block", "span": node_span(sm, expr),
+                               "stmts": stmts},
+                      "else": result}
+        if result is not None:
+            result["fixed_array_dynamic_subarray_read_copy_lowered"] = True
+        return result
+    except Exception:
+        return None
+
+
 def _fixed_array_subarray_pattern_assignment(sm, expr):
     """Lower an exact pattern assigned to a constant array subarray."""
     try:
@@ -14447,6 +14569,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         array_subarray_pattern = _fixed_array_subarray_pattern_assignment(sm, expr)
         if array_subarray_pattern is not None:
             return array_subarray_pattern
+        array_dynamic_subarray_read_copy = _fixed_array_dynamic_subarray_read_copy_assignment(sm, expr)
+        if array_dynamic_subarray_read_copy is not None:
+            return array_dynamic_subarray_read_copy
         array_dynamic_subarray_copy = _fixed_array_dynamic_subarray_copy_assignment(sm, expr)
         if array_dynamic_subarray_copy is not None:
             return array_dynamic_subarray_copy

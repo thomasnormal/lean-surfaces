@@ -535,13 +535,17 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
-    def test_dynamic_subarray_copy_stays_loud(self):
+    def test_dynamic_subarray_source_copy_expands_finite_rows(self):
         design = extract_source(
             "module top; int source [0:1][0:2]; int row [0:2]; int i; "
             "initial row = source[i]; endmodule")
-        self.assertTrue(any(node.get("kind") == "Unsupported"
-                            and node.get("sv_kind") == "AssignmentExpression:target"
-                            for node in nodes(design)))
+        branches = [node for node in nodes(design)
+                    if node.get("fixed_array_dynamic_subarray_read_copy_lowered")]
+        self.assertEqual(len(branches), 1)
+        self.assertEqual(
+            [stmt["value"]["operand"]["name"]
+             for stmt in branches[0]["else"]["then"]["stmts"]],
+            ["source[1][0]", "source[1][1]", "source[1][2]"])
 
     def test_dynamic_array_constant_oob_write_is_noop(self):
         design = extract_source(

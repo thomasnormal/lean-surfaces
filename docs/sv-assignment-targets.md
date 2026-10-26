@@ -440,3 +440,16 @@ effectful sources remain loud.
 `nested_fixed_array_dynamic_inner_subarray_copy` is the differential witness;
 the 22,058-path census remains **5,227 clean / 16,764 partial** with
 `AssignmentExpression:target` at **2,857**.
+
+## Dynamic multidimensional subarray source reads — 2026-10-26
+
+A single dynamic selector of a bounded multidimensional unpacked integral
+array may now be read into a distinct flat fixed-array row. Finite selector
+values become mutually exclusive `===` branches, and each omitted suffix
+cell is copied in declaration order through the existing flat storage.
+Multiple dynamic selectors, shape mismatches, aliases, aggregate leaves,
+timed assignments, and effectful sources remain loud.
+
+`nested_fixed_array_dynamic_subarray_read_copy` is the differential witness;
+the 22,058-path census remains **5,227 clean / 16,764 partial** with
+`AssignmentExpression:target` at **2,857**.

@@ -74,6 +74,10 @@ Zero-argument `$time` and `$stime` calls are inert at the time-zero boundary
 when their integer result is discarded. The exact zero-literal converter is
 reused; argumented, delayed, and value-returning time queries remain loud.
 
+The same discarded-result rule admits a zero-argument `$realtime` call at time
+zero. Its real value is not represented; argumented, delayed, and value forms
+remain loud at the real/time boundary.
+
 The self-check executor runs these calls at time zero. The retained stepper
 delegates the same `SysCall` leaves to that executor after a delay or event
 wait, so no second call interpreter is introduced. The scheduler's existing

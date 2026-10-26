@@ -15813,6 +15813,13 @@ def _convert_syscall(sm, s, e):
         # effect; argumented and delayed forms remain on the time boundary.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "time_query_statement": name}
+    if is_sys and _realtime_call(e):
+        # A zero-argument real-time query at the time-zero boundary is an
+        # unobserved zero value when used as a statement. The real value is
+        # intentionally not represented; argumented and value forms stay
+        # loud through the existing real/time boundary.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "realtime_query_statement": name}
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

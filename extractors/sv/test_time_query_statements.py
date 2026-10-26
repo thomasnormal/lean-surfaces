@@ -37,6 +37,15 @@ class TimeQueryStatements(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_discarded_realtime_is_inert(self):
+        design = extract_source(
+            "module top; initial begin $realtime; end endmodule")
+        marks = [node.get("realtime_query_statement") for node in nodes(design)
+                 if node.get("realtime_query_statement")]
+        self.assertEqual(marks, ["$realtime"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_argumented_queries_stay_loud(self):
         design = extract_source(
             "module top; int unit; initial begin $time(unit); $stime(unit); "

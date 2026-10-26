@@ -25,6 +25,17 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Discarded time-zero realtime query — 2026-10-26
+
+The zero-argument `$realtime` call now erases when its real result is discarded
+at time zero. Argumented, delayed, and value-returning forms remain loud
+because the tier has no general real-time state. The
+`realtime_query_statements` fixture supplies the differential row and Lean
+receipt. The fresh census remains **5,240 clean / 16,752 partial** (67 include
+skips), with `AssignmentExpression:target` at **2,853**. Differential coverage
+grows **263/258/0/5 → 264/259/0/5** with no disagreements, and grammar coverage
+remains **217/92/125**.
+
 ## Discarded time-zero integer queries — 2026-10-26
 
 Zero-argument `$time` and `$stime` calls in statement position now erase their

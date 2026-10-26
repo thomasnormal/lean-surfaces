@@ -2370,6 +2370,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "realtime_query_statements",
+      "file": "Examples/system-verilog/realtime_query_statements/realtime_query_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

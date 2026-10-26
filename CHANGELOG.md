@@ -7,6 +7,7 @@
 - Bare-name `del` in function scope now installs the static-local marker that CPython uses: reads after deletion, deleting a module-global or never-bound name, and a second deletion all raise the faithful `UnboundLocalError` while earlier deletions retain their partial effect.
 - Bare `raise OSError` now uses the existing empty builtin class-identity exception path; payload-bearing and OS-derived constructors, plus direct `EnvironmentError`, remain loud.
 - Raising an ordinary scalar parameter, including a parameter that shadows a builtin exception, now preserves CPython's `TypeError: exceptions must derive from BaseException`; late or rebound locals and heap-backed values remain loud.
+- A single direct assignment before a local exception raise now follows the same dynamic scalar path; late or rebound assignments retain their static-local refusal.
 - Unknown exception constructor names now raise CPython's exact `NameError` before constructor arguments are evaluated; known but unmodelled builtins and shadowed names remain loud.
 - Container `repr` and `ascii` rendering now use a fixed 512-level depth budget; deeper structures remain loud independently of caller fuel.
 - Python `global` declarations now support direct scalar reads, assignments, and

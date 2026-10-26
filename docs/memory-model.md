@@ -1386,11 +1386,10 @@ does NOT exist: exception INSTANCES as values and general dynamic
 raise/re-raise payloads. A direct `raise n` where `n` is an ordinary
 parameter is the measured scalar exception slice: an immediate runtime value
 raises CPython's `TypeError("exceptions must derive from BaseException")`,
-while a heap reference remains loud. The extractor keeps late or additional
-local bindings on the static-locals refusal path, while a parameter-only shadow
-follows the same dynamic scalar
-path (immediate values produce `TypeError`, heap references remain loud). In a
-constructor form
+while a heap reference remains loud. A parameter-only shadow, or one direct
+assignment that precedes every raise of the name, follows the same dynamic
+scalar path. Late or additional local bindings remain on the static-locals
+refusal path. In a constructor form
 `raise Missing(args…)`, callee lookup happens before argument evaluation: an
 unbound, non-builtin name therefore raises the exact `NameError` with its name,
 while known but unmodelled builtins and shadowed names remain loud.

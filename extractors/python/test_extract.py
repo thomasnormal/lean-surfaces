@@ -562,6 +562,11 @@ class ExtractorTests(unittest.TestCase):
         fn = self._first_fn("def f(ValueError):\n    raise ValueError\n")
         self.assertIsNone(fn["locals_unsupported"])
 
+    def test_raise_ordered_direct_shadow_is_dynamic(self):
+        fn = self._first_fn(
+            "def f(n):\n    Stop = n\n    raise Stop\n")
+        self.assertIsNone(fn["locals_unsupported"])
+
     def test_raise_parameter_rebinding_stays_loud(self):
         for source in (
             "def f(n):\n    raise n\n    n = 1\n",

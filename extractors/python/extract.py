@@ -1335,10 +1335,33 @@ def _shadowed_raises(fn):
     for name in names & bindings:
         # A parameter-only shadow is a dynamic value, just like ``raise n``:
         # the runtime can report TypeError for an immediate scalar and keep
-        # heap-backed values loud.  Non-parameter bindings still create the
-        # static-local/name-resolution window that this census cannot carry.
-        if name in nonparam or (name in BUILTIN_EXCEPTION_NAMES
-                                and name not in params):
+        # heap-backed values loud.  A single direct assignment in the body is
+        # also faithful when it textually precedes every raise of that name:
+        # there is no UnboundLocalError window, and the runtime reads the
+        # assigned value.  Other non-parameter bindings stay loud.
+        if name in nonparam:
+            direct_assigns = [
+                st for st in fn.body
+                if isinstance(st, ast.Assign) and len(st.targets) == 1
+                and isinstance(st.targets[0], ast.Name)
+                and st.targets[0].id == name
+            ]
+            raise_lines = [
+                node.lineno for node in _walk_scope(fn)
+                if isinstance(node, ast.Raise) and node.exc is not None
+                and ((isinstance(node.exc, ast.Name)
+                      and node.exc.id == name)
+                     or (isinstance(node.exc, ast.Call)
+                         and isinstance(node.exc.func, ast.Name)
+                         and node.exc.func.id == name))
+            ]
+            ordered = (name not in params and len(direct_assigns) == 1
+                       and bool(raise_lines)
+                       and all(direct_assigns[0].lineno < line
+                               for line in raise_lines))
+            if not ordered:
+                shadowed.add(name)
+        elif name in BUILTIN_EXCEPTION_NAMES and name not in params:
             shadowed.add(name)
     return sorted(shadowed)
 

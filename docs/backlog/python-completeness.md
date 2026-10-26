@@ -17,6 +17,30 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-142 — admit ordered local exception shadows
+
+`exc_lab.raise_shadowed` assigns `Stop = n` and immediately raises the local.
+The previous static-locals guard rejected every non-parameter shadow even when
+there was no unbound window. Ingestion now admits one direct assignment that
+precedes every raise of that name; the existing runtime resolves the assigned
+value, returning CPython's scalar `TypeError` and retaining loud behavior for
+heap-backed values. Late or rebound assignments, including
+`builtin_raise_lab.late_shadow`, remain refused.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `exc_lab.raise_shadowed(1)` MATCH in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,629 matched / 65 refused / 0 failed |
+| Full proof differential | 3,694 cases: 3,520 matched / 174 refused / 0 failed |
+| Refusal census | 65 rows, 0 drift; `exc_lab::raise_shadowed` removed from `exc.raise` |
+| Extractor tests | 141 passed, including ordered and late-shadow controls |
+| Coverage page | Regenerated with the updated 3,629/3,520 measurements |
+
+DECIDED: admit only a single direct assignment that textually precedes every
+raise of a local exception name; retain loud behavior for unbound windows,
+rebound names, heap-backed values, exception instances, chaining, and other
+unsupported raise forms.
+
 ## 2026-10-26-pycomplete-141 — admit parameter-only exception-name shadows
 
 `builtin_raise_lab.parameter_shadow` defines a parameter named

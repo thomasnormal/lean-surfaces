@@ -5913,3 +5913,23 @@ loud.
 
 DECIDED: admit only the immediate local `repr` alias call; retain loud
 failure for returned or general first-class callable values.
+
+## 2026-10-26-pycomplete-166 — admit the immediate local `len` alias
+
+The local-builtin alias rewrite now includes `len`: `constructor = len;
+return constructor(value)` lowers to the ordinary builtin call. Tuple, list,
+and string arguments preserve their existing length semantics and boundary
+behavior. Returning `len` itself, shadowing it, and general first-class
+callable forms remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 3 cases: 0 failed, 3 matched on both interpreters |
+| Full executable differential | 3,701 cases: 0 failed, 44 whitelisted refusals, 3,657 matched |
+| Full proof differential | 3,701 cases: 0 failed, 153 refusals, 3,548 matched |
+| Refusal census | 44 rows, 0 drifts; no new refusal class |
+| Lean build | `lake build leanmodels-run` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `len` alias call; retain loud failure
+for returned or general first-class callable values.

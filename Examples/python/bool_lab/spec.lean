@@ -38,6 +38,8 @@ set_option maxRecDepth 8192
 #py_check bool_lab.kwargs() raises
   (.typeError "bool() takes no keyword arguments")
 #py_check bool_lab.first_class() = true
+#py_check bool_lab.len_alias(Val.tuple #[.int 1, .int 2]) = 2
+#py_check bool_lab.len_alias(Val.list #[]) = 0
 
 theorem integer_truth (value : PyInt) :
     bool_lab.of(value) ==> (value != 0) := by proofs

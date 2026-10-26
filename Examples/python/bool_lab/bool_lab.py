@@ -78,5 +78,10 @@ def first_class():
     return constructor(1)
 
 
+def len_alias(value):
+    constructor = len
+    return constructor(value)
+
+
 def custom():
     return bool(Custom())

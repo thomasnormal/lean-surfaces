@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/bool_lab/bool_lab.py",
-  "source_sha256": "ebb1b99caeb7e42b5195ce8a1f1dd2cae747865d524502daf5a5d0cbd04b64a6",
+  "source_sha256": "846928c02a5e78ca95606de006cb5d6060910d79487f6971661cd94bcb8b4886",
   "module": {
     "kind": "Module",
     "body": [
@@ -2035,7 +2035,105 @@
         "span": {
           "lineno": 81,
           "col_offset": 0,
-          "end_lineno": 82,
+          "end_lineno": 83,
+          "end_col_offset": 29
+        },
+        "name": "len_alias",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 81,
+              "col_offset": 14,
+              "end_lineno": 81,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 82,
+              "col_offset": 4,
+              "end_lineno": 82,
+              "end_col_offset": 21
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 82,
+                  "col_offset": 4,
+                  "end_lineno": 82,
+                  "end_col_offset": 15
+                },
+                "id": "constructor"
+              }
+            ],
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 82,
+                "col_offset": 18,
+                "end_lineno": 82,
+                "end_col_offset": 21
+              },
+              "id": "len"
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 83,
+              "col_offset": 4,
+              "end_lineno": 83,
+              "end_col_offset": 29
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 83,
+                "col_offset": 11,
+                "end_lineno": 83,
+                "end_col_offset": 29
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 83,
+                  "col_offset": 11,
+                  "end_lineno": 83,
+                  "end_col_offset": 22
+                },
+                "id": "constructor"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 83,
+                    "col_offset": 23,
+                    "end_lineno": 83,
+                    "end_col_offset": 28
+                  },
+                  "id": "value"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 86,
+          "col_offset": 0,
+          "end_lineno": 87,
           "end_col_offset": 25
         },
         "name": "custom",
@@ -2046,25 +2144,25 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 82,
+              "lineno": 87,
               "col_offset": 4,
-              "end_lineno": 82,
+              "end_lineno": 87,
               "end_col_offset": 25
             },
             "value": {
               "kind": "Call",
               "span": {
-                "lineno": 82,
+                "lineno": 87,
                 "col_offset": 11,
-                "end_lineno": 82,
+                "end_lineno": 87,
                 "end_col_offset": 25
               },
               "func": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 82,
+                  "lineno": 87,
                   "col_offset": 11,
-                  "end_lineno": 82,
+                  "end_lineno": 87,
                   "end_col_offset": 15
                 },
                 "id": "bool"
@@ -2073,17 +2171,17 @@
                 {
                   "kind": "Call",
                   "span": {
-                    "lineno": 82,
+                    "lineno": 87,
                     "col_offset": 16,
-                    "end_lineno": 82,
+                    "end_lineno": 87,
                     "end_col_offset": 24
                   },
                   "func": {
                     "kind": "Name",
                     "span": {
-                      "lineno": 82,
+                      "lineno": 87,
                       "col_offset": 16,
-                      "end_lineno": 82,
+                      "end_lineno": 87,
                       "end_col_offset": 22
                     },
                     "id": "Custom"

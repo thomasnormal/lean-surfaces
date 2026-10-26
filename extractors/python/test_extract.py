@@ -861,6 +861,27 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(st["kind"], "For")
         self.assertEqual(len(st["orelse"]), 1)
 
+    def test_starred_for_target_lowers_to_unpack_in_loop_body(self):
+        env = self._envelope_of(
+            "def f(rows):\n    for a, *rest, z in rows:\n"
+            "        return a, rest, z\n")
+        st = env["module"]["body"][0]["body"][0]
+        self.assertEqual(st["kind"], "For")
+        self.assertEqual(st["target"]["id"], "<star-for-target>")
+        self.assertEqual(st["body"][0]["kind"], "UnpackAssign")
+        self.assertEqual(st["body"][0]["before"], ["a"])
+        self.assertEqual(st["body"][0]["star"], "rest")
+        self.assertEqual(st["body"][0]["after"], ["z"])
+        self.assertEqual(st["body"][0]["value"]["id"], "<star-for-target>")
+
+    def test_starred_for_target_keeps_nested_shape_loud(self):
+        env = self._envelope_of(
+            "def f(rows):\n    for (a, *rest), z in rows:\n"
+            "        return a, rest, z\n")
+        st = env["module"]["body"][0]["body"][0]
+        self.assertEqual(st["kind"], "Unsupported")
+        self.assertEqual(st["py_kind"], "Starred:target")
+
     def test_module_constants_are_plain_assigns(self):
         # Top-level constant bindings (G1 globals) ride through as ordinary
         # Assign statements in module body order — no special marking.

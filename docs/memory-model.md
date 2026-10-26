@@ -4168,8 +4168,18 @@ strings, ranges, and the supported boundary iterable values. There is no
 "too many values" case; a short input raises
 `ValueError: not enough values to unpack (expected at least k, got n)`.
 
-Nested targets, multiple stars, attribute/subscript neighbors, and starred
-`for` targets remain loud. Call sites remain loud through `callUnsupported`.
+Nested targets, multiple stars, and attribute/subscript neighbors remain loud.
+Keyword-unpacked calls and unsupported iterable shapes remain loud.
+
+### Starred `for` targets are landed (2026-10-26)
+
+A flat `for a, *rest, z in rows` target lowers at extraction to a fresh,
+unspellable loop name followed by the existing `UnpackAssign` as the first
+statement of the loop body. Each item is therefore assigned before the
+unpack runs, and the starred slice receives the same fresh heap list and
+faithful short-input errors as an ordinary starred assignment. Nested,
+multiple-star, and non-name target shapes remain loud. `star_lab.star_for`
+pins the suffix case.
 
 ### Starred call arguments are landed (2026-10-26)
 

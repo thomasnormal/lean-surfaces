@@ -17,6 +17,27 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-160 — admit flat starred `for` targets
+
+Flat starred loop targets now lower to a synthetic loop binding followed by
+the existing `UnpackAssign` at the front of the loop body. The item is bound
+before unpacking, the middle slice is a fresh heap list, and the loop and
+ordinary assignment paths therefore share their error and aliasing behavior.
+Nested, multiple-star, and non-name target shapes remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `star_lab::star_for` matches the CPython suffix-target case in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,646 matched / 48 recorded refusals / 0 failed |
+| Full proof differential | 3,694 cases: 3,537 matched / 157 refusals / 0 failed |
+| Refusal census | 48 rows in 12 classes, 0 drifts; `star_lab::star_for` removed from `starred.position` |
+| Extractor tests | 148 passed |
+| Lean build and checks | `lake build leanmodels-run`, focused differential, and `git diff --check` passed |
+
+DECIDED: admit one flat starred `for` target by lowering it to the existing
+unpack worker; retain loud failure for nested or otherwise unsupported target
+shapes.
+
 ## 2026-10-26-pycomplete-159 — admit starred positional call arguments
 
 Positional starred call arguments now lower to the unspellable `<star-arg>`
@@ -49,7 +70,7 @@ acceptance example observes `len({*a})`; direct set returns remain loud.
 
 | Measurement | Result |
 |---|---|
-| Focused differential | `star_lab::star_set` matches in native and proof interpreters; the two existing starred-call/for rows remain refused |
+| Focused differential | `star_lab::star_set` matches in native and proof interpreters; the starred-call and starred-`for` rows are landed |
 | Full executable differential | 3,694 cases: 3,644 matched / 50 recorded refusals / 0 failed |
 | Full proof differential | 3,694 cases: 3,535 matched / 159 refusals / 0 failed |
 | Refusal census | 50 rows in 13 classes, 0 drifts; `star_lab::star_set` removed from `set.order` |

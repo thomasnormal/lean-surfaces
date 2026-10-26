@@ -9,10 +9,10 @@ passed to the existing `set(...)` constructor. `list(...)` appears only on
 the OUTSIDE — a fresh heap list is exactly what CPython builds there — and
 never as a concatenation operand, where a heap object would refuse.
 
-The loud frontier is pinned by refusal probes: a dict receiver, a starred
-assignment TARGET and a
-starred `for` target. Those are separate constructs with separate
-prices; display and call positions are landed.
+The loud frontier is pinned by refusal probes: a dict receiver and the
+unsupported nested starred-target shapes. Flat starred assignment and `for`
+targets use the same existing unpacking worker; nested forms remain loud.
+The flat form is shared by assignment and loop targets.
 """
 
 
@@ -131,7 +131,7 @@ def star_target():
 
 
 def star_for():
-    # a starred `for` target remains a separate, loud construct
-    for a, *b in [[1, 2, 3]]:
-        return (a, b)
+    # a starred `for` target unpacks each item before the body runs
+    for a, *b, z in [[1, 2, 3]]:
+        return (a, b, z)
     return None

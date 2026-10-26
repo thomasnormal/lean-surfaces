@@ -702,7 +702,7 @@
   {"file": "Examples/python/star_lab/star_lab.py", "function": "star_set", "args": [[]], "expect": "match"},
   {"file": "Examples/python/star_lab/star_lab.py", "function": "star_dict", "args": [[]], "expect": "match"},
   {"file": "Examples/python/star_lab/star_lab.py", "function": "star_target", "args": [[]], "expect": "match"},
-  {"file": "Examples/python/star_lab/star_lab.py", "function": "star_for", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/star_lab/star_lab.py", "function": "star_for", "args": [[]], "expect": "match"},
   {"file": "Examples/python/star_shadow/star_shadow.py", "function": "shadowed", "args": [[3]], "expect": "match", "note": "Starred displays use unspellable synthetic builtin names, so a function-local list shadow cannot alter their result."},
   {"file": "Examples/python/star_shadow/star_shadow.py", "function": "elsewhere", "args": [[3]], "expect": "match", "note": "The generated unspellable names are unaffected by source-level shadows in sibling scopes."},
   {"file": "Examples/python/star_shadow/star_shadow.py", "function": "plain_display", "args": [[3], [-2]], "expect": "match"},

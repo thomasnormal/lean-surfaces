@@ -2276,6 +2276,46 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         unpack = _starred_unpack_target(node.target)
         if unpack is not None:
             before, star, after = unpack
+            # A starred loop target is the same per-iteration operation as a
+            # starred assignment target.  Lower it into a fresh, unspellable
+            # loop variable followed by the existing `UnpackAssign` arm.  The
+            # synthetic name cannot collide with source bindings, and putting
+            # the unpack at the front of the body preserves CPython's order:
+            # bind the whole item, unpack it, then run the user body.
+            synthetic = "<star-for-target>"
+            synthetic_target = {
+                "kind": "Name",
+                "span": span(node.target),
+                "id": synthetic,
+            }
+            synthetic_value = {
+                "kind": "Name",
+                "span": span(node.target),
+                "id": synthetic,
+            }
+            unpack_stmt = {
+                "kind": "UnpackAssign",
+                "span": span(node.target),
+                "before": before,
+                "star": star,
+                "after": after,
+                "value": synthetic_value,
+            }
+            body = convert_stmt_list(node.body, module_scope=module_scope,
+                                     func_scope=func_scope)
+            return {
+                "kind": "For",
+                "span": span(node),
+                "target": synthetic_target,
+                "iter": convert_expr(node.iter),
+                "body": [unpack_stmt] + body,
+                "orelse": convert_stmt_list(node.orelse, module_scope=module_scope,
+                                             func_scope=func_scope),
+            }
+        if _target_has_starred(node.target):
+            # Nested, multiple-star, and other non-flat target shapes must
+            # remain a whole-node refusal rather than reaching the ordinary
+            # tuple target walker and fabricating an arity error.
             return unsupported(node, "Starred:target")
         return {
             "kind": "For",

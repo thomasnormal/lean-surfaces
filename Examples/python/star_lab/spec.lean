@@ -24,10 +24,10 @@ easily breaks: `+` associates left and the `binOp` arm binds left before
 right, so the operands run in source order (`star_script.py` pins it
 through stdout).
 
-Pinned loud, because these are SEPARATE constructs with separate prices:
-a starred call argument now expands eager iterables in place. Assignment
-targets are now handled by the dedicated
-`UnpackAssign` statement; a starred `for` target (`star_for`) remains loud.
+Pinned boundaries remain separate constructs: starred call arguments expand
+admitted eager iterables in place, while flat assignment and `for` targets use
+the dedicated `UnpackAssign` worker. Nested and otherwise unsupported target
+shapes remain loud.
 -/
 
 open LeanModels LeanModels.Python
@@ -78,7 +78,7 @@ different message. -/
 #py_check star_lab.star_none() raises
   (.typeError "'NoneType' object is not iterable")
 
-/-! ### the loud frontier: a starred `for` target -/
+/-! ### starred `for` targets reuse the existing unpacking worker -/
 
 #py_check star_lab.star_call() = (Val.int 3)
 #py_check star_lab.star_set() = (Val.int 2)
@@ -89,7 +89,8 @@ different message. -/
 #py_check star_lab.star_dict() = (Val.list #[.str "x", .str "y"])
 #py_check star_lab.star_target() =
   (Val.tuple #[.int 1, .list #[.int 2, .int 3]])
-#guard callFunction star_lab "star_for" #[] 4096 matches .unsupported _
+#py_check star_lab.star_for() =
+  (Val.tuple #[.int 1, .list #[.int 2], .int 3])
 
 /-! ### what the lowering does to the heap-free fragment, pinned per
 function: a LIST display leaves it (`list(…)` allocates — the exclusion

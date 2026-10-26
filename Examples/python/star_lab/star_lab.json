@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/star_lab/star_lab.py",
-  "source_sha256": "3467c4bb0c03b69b7fcf30bb64bdd27558304b12b669956e24f6fc5aa55d0362",
+  "source_sha256": "a6fd72455021b60c852183d275d784101615b6a39344ff2a2bf75d554f1cdde2",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "star_lab \u2014 starred DISPLAYS, the extractor lowering (checks-only).\n\n`[*a, 3]`, `{*a, 3}`, `(1, *a)` and `pair(*a)` are lowered by the extractor into\n`list((e1,) + tuple(a) + (e2,))` and `(e1,) + tuple(a) + (e2,)`\n(docs/memory-model.md \u00a7starred displays): zero new AST kinds, zero\ninterpreter arms, zero proof arms. Starred call arguments use an unspellable\n`<star-arg>` marker that the call expands in place. For a set display the lowered list is\npassed to the existing `set(...)` constructor. `list(...)` appears only on\nthe OUTSIDE \u2014 a fresh heap list is exactly what CPython builds there \u2014 and\nnever as a concatenation operand, where a heap object would refuse.\n\nThe loud frontier is pinned by refusal probes: a dict receiver, a starred\nassignment TARGET and a\nstarred `for` target. Those are separate constructs with separate\nprices; display and call positions are landed.\n"
+            "value": "star_lab \u2014 starred DISPLAYS, the extractor lowering (checks-only).\n\n`[*a, 3]`, `{*a, 3}`, `(1, *a)` and `pair(*a)` are lowered by the extractor into\n`list((e1,) + tuple(a) + (e2,))` and `(e1,) + tuple(a) + (e2,)`\n(docs/memory-model.md \u00a7starred displays): zero new AST kinds, zero\ninterpreter arms, zero proof arms. Starred call arguments use an unspellable\n`<star-arg>` marker that the call expands in place. For a set display the lowered list is\npassed to the existing `set(...)` constructor. `list(...)` appears only on\nthe OUTSIDE \u2014 a fresh heap list is exactly what CPython builds there \u2014 and\nnever as a concatenation operand, where a heap object would refuse.\n\nThe loud frontier is pinned by refusal probes: a dict receiver and the\nunsupported nested starred-target shapes. Flat starred assignment and `for`\ntargets use the same existing unpacking worker; nested forms remain loud.\nThe flat form is shared by assignment and loop targets.\n"
           }
         }
       },
@@ -3296,15 +3296,163 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "Unsupported",
+            "kind": "For",
             "span": {
               "lineno": 135,
               "col_offset": 4,
               "end_lineno": 136,
-              "end_col_offset": 21
+              "end_col_offset": 24
             },
-            "py_kind": "Starred:target",
-            "text": "for (a, *b) in [[1, 2, 3]]:\n    return (a, b)"
+            "target": {
+              "kind": "Name",
+              "span": {
+                "lineno": 135,
+                "col_offset": 8,
+                "end_lineno": 135,
+                "end_col_offset": 16
+              },
+              "id": "<star-for-target>"
+            },
+            "iter": {
+              "kind": "List",
+              "span": {
+                "lineno": 135,
+                "col_offset": 20,
+                "end_lineno": 135,
+                "end_col_offset": 31
+              },
+              "elts": [
+                {
+                  "kind": "List",
+                  "span": {
+                    "lineno": 135,
+                    "col_offset": 21,
+                    "end_lineno": 135,
+                    "end_col_offset": 30
+                  },
+                  "elts": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 135,
+                        "col_offset": 22,
+                        "end_lineno": 135,
+                        "end_col_offset": 23
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    },
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 135,
+                        "col_offset": 25,
+                        "end_lineno": 135,
+                        "end_col_offset": 26
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "2"
+                      }
+                    },
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 135,
+                        "col_offset": 28,
+                        "end_lineno": 135,
+                        "end_col_offset": 29
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "3"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "UnpackAssign",
+                "span": {
+                  "lineno": 135,
+                  "col_offset": 8,
+                  "end_lineno": 135,
+                  "end_col_offset": 16
+                },
+                "before": [
+                  "a"
+                ],
+                "star": "b",
+                "after": [
+                  "z"
+                ],
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 135,
+                    "col_offset": 8,
+                    "end_lineno": 135,
+                    "end_col_offset": 16
+                  },
+                  "id": "<star-for-target>"
+                }
+              },
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 136,
+                  "col_offset": 8,
+                  "end_lineno": 136,
+                  "end_col_offset": 24
+                },
+                "value": {
+                  "kind": "Tuple",
+                  "span": {
+                    "lineno": 136,
+                    "col_offset": 15,
+                    "end_lineno": 136,
+                    "end_col_offset": 24
+                  },
+                  "elts": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 136,
+                        "col_offset": 16,
+                        "end_lineno": 136,
+                        "end_col_offset": 17
+                      },
+                      "id": "a"
+                    },
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 136,
+                        "col_offset": 19,
+                        "end_lineno": 136,
+                        "end_col_offset": 20
+                      },
+                      "id": "b"
+                    },
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 136,
+                        "col_offset": 22,
+                        "end_lineno": 136,
+                        "end_col_offset": 23
+                      },
+                      "id": "z"
+                    }
+                  ]
+                }
+              }
+            ],
+            "orelse": []
           },
           {
             "kind": "Return",

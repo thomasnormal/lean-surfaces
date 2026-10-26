@@ -15740,6 +15740,15 @@ def _convert_syscall(sm, s, e):
     if is_sys and _dynamic_array_literal_size_method(e):
         return {"kind": "Empty", "span": node_span(sm, s),
                 "dynamic_array_literal_size": True}
+    if is_sys and _zero_size_method(e):
+        # Untouched queues/dynamic arrays have size zero, and an untouched
+        # empty string has length zero.  Reuse the value converter's source
+        # history and receiver checks before erasing the discarded scalar;
+        # mutation, aliases, and value-position observations remain loud.
+        value = _convert_zero_size_method(sm, e)
+        if value.get("kind") != "Unsupported":
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "zero_size_statement": name}
     if is_sys and _associative_empty_query(e):
         # An untouched 2-state associative array has an exact zero element
         # count.  Reuse the value converter's source-order and type checks

@@ -86,6 +86,20 @@ skips), with `AssignmentExpression:target` at **2,853** and
 `ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
 **270/265/0/5 → 271/266/0/5** and grammar coverage remains **217/92/125**.
 
+## Discarded zero-size queries — 2026-10-26
+
+Discarded `size()` calls on untouched queues or dynamic arrays, and `len()` on
+an untouched empty string, now erase their exact scalar zero through the
+existing zero-size converter. Mutation, aliases, initialized nonempty values,
+and value-position observations remain loud. The `zero_size_statement` fixture
+supplies the self-check differential row and Lean receipt; the pinned oracle
+agrees with its `PASS` transcript.
+
+The 22,059-path census remains **5,240 clean / 16,752 partial** (67 include
+skips), with `AssignmentExpression:target` at **2,853** and
+`ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
+**271/266/0/5 → 272/267/0/5** and grammar coverage remains **217/92/125**.
+
 ## Discarded time-scale metadata queries — 2026-10-26
 
 Valid `$timeunit` and `$timeprecision` calls in statement position now erase

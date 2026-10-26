@@ -59,6 +59,11 @@ associative array follow the same empty-array rule. The direct named index
 argument is still checked by the existing converter; populated arrays and
 effectful or computed indices remain loud.
 
+Discarded `size()` on an untouched queue or dynamic array, and `len()` on an
+untouched empty string, are inert after the existing zero-size converter proves
+their scalar zero. Any mutation, alias, or value-position observation remains
+loud because the receiver's size is then runtime state.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument

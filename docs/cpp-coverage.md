@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 635 | 618 | 0 | 7 | 0 | 10 |
+| 636 | 619 | 0 | 7 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -634,6 +634,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `statement.callable-frame-local-conditional-shadow-initialization-direct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-frame-local-conditional-shadow-computed-initialization-direct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-frame-local-conditional-else-shadow-computed-initialization-direct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-frame-local-conditional-shadow-computed-initialization-return` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-frame-local-conditional-computed-initialization-direct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-frame-local-conditional-false-computed-initialization-direct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-frame-local-conditional-else-computed-initialization-direct` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |

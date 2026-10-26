@@ -138,6 +138,24 @@ The capped **22,055-path** census moves **5,174 → 5,175 clean / 16,814 →
 **2,862 → 2,861**. Differential coverage grows **224/219/0/5 → 225/220/0/5**
 with no disagreements, and grammar coverage remains **217/90/127**.
 
+## Finite literal dynamic-array reductions — 2026-10-26
+
+Finite dynamic arrays initialized by positional integral literal patterns now
+sample their elements into the existing flat cells. The established `sum`,
+`product`, `and`, `or`, and `xor` reductions then fold those cells with their
+intrinsic element or `with` width. Uninitialized, resized, keyed/default,
+effectful, aggregate, and nonintegral dynamic arrays remain loud. The
+`dynamic_array_reductions` fixture and differential row cover all five
+methods, with extractor regressions for initialization, lowering, and the
+uninitialized boundary.
+
+The capped **22,056-path** census moves **5,175 → 5,192 clean / 16,813 →
+16,797 partial** (67 include skips); `VariableSymbol:2state` falls **2,285 →
+2,223** and `ExpressionStatement:CallExpression` falls **2,777 → 2,776**.
+`AssignmentExpression:target` remains **2,861** and `CallExpression` remains
+**2,801**. Differential coverage grows **225/220/0/5 → 226/221/0/5** with no
+disagreements; grammar coverage remains **217/90/127**.
+
 ## Semaphore zero-key methods — 2026-10-24
 
 The self-check surface now admits `semaphore.put(0)` and `semaphore.get(0)`

@@ -2547,13 +2547,31 @@ def _dynamic_array_constant_extent(symbol):
         if type(allocation).__name__ == "ConversionExpression":
             allocation = getattr(allocation, "operand", None)
         if type(allocation).__name__ != "NewArrayExpression":
-            # Declaration-time aggregate initializers remain outside this
-            # object-free slice.  The new sampled-shape rule is specifically
-            # for a later procedural assignment, where the destination's
-            # storage cells already exist and the write can be lowered in
-            # source order.
+            # A declaration-time positional literal pattern samples a finite
+            # dynamic-array extent before the process starts.  The flat state
+            # can represent that sampled shape exactly, provided the element
+            # type is integral and every pattern element is a pure expression.
+            # Keyed/default, nested aggregate, and effectful initializers stay
+            # outside this object-free slice.
             if initializer is not None:
-                return None
+                pattern = initializer
+                while type(pattern).__name__ == "ConversionExpression":
+                    pattern = getattr(pattern, "operand", None)
+                    if pattern is None:
+                        return None
+                if type(pattern).__name__ not in (
+                        "SimpleAssignmentPatternExpression",
+                        "StructuredAssignmentPatternExpression"):
+                    return None
+                elements = _pattern_source_elements(pattern)
+                element_type = symbol.type.canonicalType.elementType
+                width, _two, reason = type_width_2s(element_type)
+                if (not elements or width is None or reason is not None
+                        or any(not _case_source_expression_ok(element,
+                                                               packed_members=True)
+                               for element in elements)):
+                    return None
+                return len(elements) if len(elements) <= 1024 else None
             # An unpacked concatenation assigned to a dynamic array samples
             # its finite length at the assignment boundary.  The flat
             # self-check store can represent that sampled shape with the
@@ -4757,7 +4775,8 @@ def _fixed_array_initializer_values(sm, initializer, target_name, width, count):
             if getattr(pattern, "bad", False):
                 return None
             pattern_type = pattern.type.canonicalType
-            if type(pattern_type).__name__ != "FixedSizeUnpackedArrayType":
+            if type(pattern_type).__name__ not in (
+                    "FixedSizeUnpackedArrayType", "DynamicArrayType"):
                 return None
             element_type = pattern_type.elementType
             pattern_width, _pattern_two, pattern_reason = type_width_2s(element_type)
@@ -15206,15 +15225,29 @@ def convert_fixed_array_vars(sm, m):
             if width is None or reason is not None:
                 return None
             base = _array_storage_name(m)
+            initializer = getattr(m, "initializer", None)
+            values = None
+            initializer_shape = initializer
+            while type(initializer_shape).__name__ == "ConversionExpression":
+                initializer_shape = getattr(initializer_shape, "operand", None)
+            if (initializer is not None
+                    and type(initializer_shape).__name__ != "NewArrayExpression"):
+                values = _fixed_array_initializer_values(
+                    sm, initializer, base, width, count)
+                if values is None:
+                    return None
             return [signed_metadata({
                 "kind": "Var",
                 "span": sym_span(sm, m),
                 "name": f"{base}[{position}]",
                 "width": width,
-                "init": ({"kind": "Literal", "span": None,
-                          "width": width, "bits": "0" * width}
-                         if two else None),
-            }, element_type) for position in range(count)]
+                "init": (squash2_wrap(values[index], width) if two
+                          and values is not None and values[index] is not None else
+                          values[index] if values is not None else
+                          ({"kind": "Literal", "span": None,
+                            "width": width, "bits": "0" * width}
+                           if two else None)),
+            }, element_type) for index, position in enumerate(range(count))]
         if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
             return None
         dimensions_shape = _fixed_array_dimensions(array_type)

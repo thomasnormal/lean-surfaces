@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22055,
+  "corpus_files": 22056,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -24,7 +24,7 @@
    ],
    [
     "ExpressionStatement:CallExpression",
-    2777
+    2776
    ],
    [
     "Hierarchy:ports",
@@ -32,7 +32,7 @@
    ],
    [
     "VariableSymbol:2state",
-    2285
+    2223
    ],
    [
     "SubroutineSymbol:Subroutine",
@@ -48,11 +48,11 @@
    ],
    [
     "InvalidStatement",
-    1329
+    1330
    ],
    [
     "ClassType",
-    1329
+    1330
    ],
    [
     "Hierarchy:module-kind",
@@ -100,7 +100,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    502
+    500
    ],
    [
     "PropertySymbol:Property",
@@ -248,7 +248,7 @@
    ],
    [
     "TypeAlias:invalid-compilation",
-    61
+    62
    ],
    [
     "EmptyMemberSymbol:EmptyMember",
@@ -311,11 +311,11 @@
     45
    ],
    [
-    "VariableSymbol:type",
-    44
+    "NetSymbol:WAnd",
+    43
    ],
    [
-    "NetSymbol:WAnd",
+    "VariableSymbol:type",
     43
    ],
    [
@@ -351,11 +351,11 @@
     37
    ],
    [
-    "NamedValueExpression:Parameter",
-    36
+    "Enum:invalid-compilation",
+    37
    ],
    [
-    "Enum:invalid-compilation",
+    "NamedValueExpression:Parameter",
     36
    ],
    [
@@ -364,10 +364,6 @@
    ],
    [
     "RandCaseStatement",
-    35
-   ],
-   [
-    "ArrayReduction:storage-or-effects",
     35
    ],
    [
@@ -420,6 +416,10 @@
    ],
    [
     "CaseStatement:subject",
+    19
+   ],
+   [
+    "ArrayReduction:storage-or-effects",
     19
    ],
    [
@@ -491,10 +491,6 @@
     13
    ],
    [
-    "VariableDeclStatement:2state",
-    13
-   ],
-   [
     "ConditionalStatement:pattern",
     12
    ],
@@ -512,6 +508,10 @@
    ],
    [
     "ElabSystemTaskSymbol:ElabSystemTask",
+    12
+   ],
+   [
+    "VariableDeclStatement:2state",
     12
    ],
    [
@@ -859,6 +859,10 @@
     1
    ],
    [
+    "VariableDeclStatement:array-type",
+    1
+   ],
+   [
     "AutomaticLocal:default-lifetime",
     1
    ],
@@ -960,8 +964,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5175,
-   "partial": 16813,
+   "clean": 5192,
+   "partial": 16797,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1022,8 +1026,8 @@
     52
    ],
    "simulation": [
-    4484,
-    18686
+    4501,
+    18687
    ],
    "simulation elaboration": [
     2,
@@ -1587,9 +1591,9 @@
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 254,
+    "clean": 271,
     "error": 0,
-    "partial": 542,
+    "partial": 525,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0
@@ -1597,9 +1601,9 @@
    "chapter-8": {
     "clean": 1,
     "error": 0,
-    "partial": 841,
+    "partial": 842,
     "skip_include": 1,
-    "total": 843,
+    "total": 844,
     "unlockable": 0
    },
    "chapter-9": {

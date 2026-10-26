@@ -27,19 +27,35 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-26
 
-The chapter-scoped rerun covered **22,055** paths: **5,169 clean**,
-**16,819 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,056** paths: **5,192 clean**,
+**16,797 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`AssignmentExpression:target` (2,872), `CallExpression` (2,801),
-`ExpressionStatement:CallExpression` (2,778), `Hierarchy:ports` (2,398),
-`VariableSymbol:2state` (2,296), `SubroutineSymbol:Subroutine` (1,634),
+`AssignmentExpression:target` (2,861), `CallExpression` (2,801),
+`ExpressionStatement:CallExpression` (2,776), `Hierarchy:ports` (2,398),
+`VariableSymbol:2state` (2,223), `SubroutineSymbol:Subroutine` (1,634),
 `NamedValueExpression:2state` (1,485), `ConcurrentAssertionStatement`
 (1,359), `InvalidStatement` (1,329), and `ClassType` (1,329).
 
 The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
 matched all 200 fixed-seed sample classifications.
+
+## Finite literal dynamic-array reductions — 2026-10-26
+
+Positional literal initializers for finite integral dynamic arrays now become
+independent flat cells, so the existing `sum`, `product`, `and`, `or`, and
+`xor` reduction lowering can evaluate them exactly. Later resize, uninitialized
+or dynamic sources, keyed/default patterns, and nonintegral elements remain
+outside the representation. The `dynamic_array_reductions` fixture covers the
+five methods and their combined self-check output.
+
+The **22,056-path** census moves **5,175 → 5,192 clean** and **16,813 →
+16,797 partial** (67 include skips). `VariableSymbol:2state` falls **2,285 →
+2,223** and `ExpressionStatement:CallExpression` falls **2,777 → 2,776**;
+`AssignmentExpression:target` remains **2,861** and `CallExpression` remains
+**2,801**. Differential coverage grows **225/220/0/5 → 226/221/0/5** with no
+disagreements; grammar coverage remains **217/90/127**.
 
 ## Packed-array packed-struct member windows — 2026-10-26
 

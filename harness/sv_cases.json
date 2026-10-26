@@ -1585,6 +1585,15 @@
       "expect": "match"
     },
     {
+      "name": "dynamic_array_reductions",
+      "file": "Examples/system-verilog/dynamic_array_reductions/dynamic_array_reductions.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "string_radix_literal",
       "file": "Examples/system-verilog/string_radix_literal/string_radix_literal.sv",
       "module": "top",

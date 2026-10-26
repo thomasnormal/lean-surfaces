@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 225 | 220 | 0 | 5 | sv-tests-2 declarations |
+| 226 | 221 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -190,6 +190,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `semaphore_literal_try_get` | `Examples/system-verilog/semaphore_literal_try_get/semaphore_literal_try_get.sv` | match | **MATCH** | `ok` | MATCH |
 | `std_semaphore_try_get` | `Examples/system-verilog/std_semaphore_try_get/std_semaphore_try_get.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_literal_size` | `Examples/system-verilog/dynamic_array_literal_size/dynamic_array_literal_size.sv` | match | **MATCH** | `ok` | MATCH |
+| `dynamic_array_reductions` | `Examples/system-verilog/dynamic_array_reductions/dynamic_array_reductions.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_radix_literal` | `Examples/system-verilog/string_radix_literal/string_radix_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `semaphore_default_try_get` | `Examples/system-verilog/semaphore_default_try_get/semaphore_default_try_get.sv` | match | **MATCH** | `ok` | MATCH |
 | `mailbox_empty_try` | `Examples/system-verilog/mailbox_empty_try/mailbox_empty_try.sv` | match | **MATCH** | `ok` | MATCH |
@@ -279,7 +280,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.BinaryXorExpression` | `Examples/system-verilog/sem2/alu_div/cv32e40p_alu_div.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.BitSelect` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.BitType` | `Examples/system-verilog/assignment_patterns/structs.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ByteType` | `Examples/system-verilog/dynamic_array_struct_field_defaults/dynamic_array_struct_field_defaults.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ByteType` | `Examples/system-verilog/dynamic_array_reductions/dynamic_array_reductions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CHandleType` | `Examples/system-verilog/chandle_decl/chandle_decl.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/assoc_empty_endpoint/assoc_empty_endpoint.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseGenerate` | `Examples/system-verilog/elaborated_generate/choices.sv` | **MATCH** | `ok`  |
@@ -474,20 +475,20 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22055 | 5175 | 16813 | 67 |
+| 22056 | 5192 | 16797 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2861 |
 | `CallExpression` | 2801 |
-| `ExpressionStatement:CallExpression` | 2777 |
+| `ExpressionStatement:CallExpression` | 2776 |
 | `Hierarchy:ports` | 2398 |
-| `VariableSymbol:2state` | 2285 |
+| `VariableSymbol:2state` | 2223 |
 | `SubroutineSymbol:Subroutine` | 1634 |
 | `NamedValueExpression:2state` | 1485 |
 | `ConcurrentAssertionStatement` | 1359 |
-| `InvalidStatement` | 1329 |
-| `ClassType` | 1329 |
+| `InvalidStatement` | 1330 |
+| `ClassType` | 1330 |
 | `Hierarchy:module-kind` | 1248 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1154 |
 | `MemberAccessExpression` | 1017 |

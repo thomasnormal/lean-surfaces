@@ -27,17 +27,61 @@ def nodes(value):
 
 
 class DynamicArrayDeclarations(unittest.TestCase):
+    def test_literal_dynamic_array_flattens_with_integral_initializers(self):
+        design = lower(
+            """module top;
+               byte values[] = '{1, 2, 3, 4};
+               initial $finish;
+               endmodule""")
+        self.assertFalse(any(node.get("sv_kind") == "VariableSymbol:2state"
+                             for node in nodes(design)))
+        decls = [node for node in nodes(design)
+                 if node.get("kind") == "Var"
+                 and node.get("name", "").startswith("values[")]
+        self.assertEqual([node["name"] for node in decls],
+                         ["values[0]", "values[1]", "values[2]", "values[3]"])
+        self.assertEqual([node["init"]["operand"]["bits"] for node in decls],
+                         [format(value, "08b") for value in (1, 2, 3, 4)])
+
+    def test_literal_dynamic_array_reduction_methods_lower(self):
+        design = lower(
+            """module top;
+               byte values[] = '{1, 2, 3, 4};
+               byte sum, product, all_bits, any_bits, parity;
+               initial begin
+                 sum = values.sum();
+                 product = values.product();
+                 all_bits = values.and();
+                 any_bits = values.or();
+                 parity = values.xor();
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("sv_kind") for node in nodes(design)))
+        lowered = [node["array_reduction_lowered"] for node in nodes(design)
+                   if "array_reduction_lowered" in node]
+        self.assertEqual(lowered, ["sum", "product", "and", "or", "xor"])
+
+    def test_dynamic_array_reduction_requires_literal_initializer(self):
+        design = lower(
+            """module top;
+               byte values[];
+               byte total;
+               initial total = values.sum();
+               endmodule""")
+        self.assertIn("ArrayReduction:storage-or-effects",
+                      [node.get("sv_kind") for node in nodes(design)])
+
     def test_uninitialized_2state_dynamic_array_is_inert(self):
         design = lower(
             'module top; bit values[]; initial $display("PASS"); endmodule')
         self.assertFalse(any(node.get("sv_kind") == "VariableSymbol:2state"
                              for node in nodes(design)))
 
-    def test_initialized_dynamic_array_stays_loud(self):
+    def test_literal_initialized_dynamic_array_is_flattened(self):
         design = lower(
             "module top; bit values[] = '{1, 2}; initial $finish; endmodule")
-        self.assertIn("VariableSymbol:2state",
-                      [node.get("sv_kind") for node in nodes(design)])
+        self.assertFalse(any(node.get("sv_kind") == "VariableSymbol:2state"
+                             for node in nodes(design)))
 
     def test_4state_dynamic_array_without_allocation_stays_loud(self):
         design = lower(

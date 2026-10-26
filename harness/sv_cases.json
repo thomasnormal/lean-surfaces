@@ -2145,6 +2145,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "fixed_array_net_copy",
+      "file": "Examples/system-verilog/fixed_array_net_copy/fixed_array_net_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

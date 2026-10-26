@@ -2808,7 +2808,7 @@ def _fixed_array_shape(source):
         if _storage_expression(source):
             source_name = _array_storage_name(source.symbol)
             source_type = source.type
-            if str(source.symbol.kind) != "SymbolKind.Variable":
+            if str(source.symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net"):
                 return None
         else:
             path = _unpacked_struct_path(source)
@@ -2969,6 +2969,13 @@ def _fixed_array_subarray_copy_assignment(sm, expr):
                      if lhs_subarray is None else None)
         rhs_shape = _fixed_array_subarray_shape(expr.right)
         rhs_array = _fixed_array_assignment_shape(expr.right)
+        rhs_source = expr.right
+        while type(rhs_source).__name__ == "ConversionExpression":
+            rhs_source = getattr(rhs_source, "operand", None)
+            if rhs_source is None:
+                return None
+        rhs_is_net = (str(getattr(getattr(rhs_source, "symbol", None), "kind", ""))
+                      == "SymbolKind.Net")
         if lhs_subarray is not None and rhs_shape is None and rhs_array is not None:
             lhs_root, lhs_cells, lhs_width, lhs_two = lhs_subarray
             rhs_root, rhs_width, _rhs_two, rhs_positions = rhs_array
@@ -3029,9 +3036,12 @@ def _fixed_array_subarray_copy_assignment(sm, expr):
                                "name": f"{lhs_name}[{lhs_position}]"},
                     "value": value,
                 })
-            return {"kind": "Block", "span": node_span(sm, expr),
-                    "stmts": stmts,
-                    "fixed_array_slice_copy_lowered": True}
+            result = {"kind": "Block", "span": node_span(sm, expr),
+                      "stmts": stmts,
+                      "fixed_array_slice_copy_lowered": True}
+            if rhs_is_net:
+                result["fixed_array_net_copy_lowered"] = True
+            return result
         if lhs_shape is None or rhs_shape is None:
             return None
         lhs_name, lhs_width, lhs_two, lhs_positions = lhs_shape
@@ -5228,6 +5238,13 @@ def _fixed_array_copy_assignment(sm, expr):
             rhs_name, rhs_width, _rhs_two, rhs_left, rhs_right = rhs_shape
             rhs_step = 1 if rhs_right >= rhs_left else -1
             rhs_positions = list(range(rhs_left, rhs_right + rhs_step, rhs_step))
+        rhs_source = rhs
+        while type(rhs_source).__name__ == "ConversionExpression":
+            rhs_source = getattr(rhs_source, "operand", None)
+            if rhs_source is None:
+                return None
+        rhs_is_net = (str(getattr(getattr(rhs_source, "symbol", None), "kind", ""))
+                      == "SymbolKind.Net")
         lhs_count = len(lhs_positions)
         rhs_count = len(rhs_positions)
         if lhs_count != rhs_count or lhs_width != rhs_width:
@@ -5260,7 +5277,10 @@ def _fixed_array_copy_assignment(sm, expr):
                 },
                 "value": value,
             })
-        return {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts}
+        result = {"kind": "Block", "span": node_span(sm, expr), "stmts": stmts}
+        if rhs_is_net:
+            result["fixed_array_net_copy_lowered"] = True
+        return result
     except Exception:
         return None
 

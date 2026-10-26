@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    2861
+    2860
    ],
    [
     "CallExpression",
@@ -24,7 +24,7 @@
    ],
    [
     "ExpressionStatement:CallExpression",
-    2776
+    2775
    ],
    [
     "Hierarchy:ports",
@@ -100,7 +100,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    500
+    497
    ],
    [
     "PropertySymbol:Property",
@@ -964,8 +964,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5207,
-   "partial": 16782,
+   "clean": 5209,
+   "partial": 16780,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1026,7 +1026,7 @@
     52
    ],
    "simulation": [
-    4516,
+    4518,
     18687
    ],
    "simulation elaboration": [
@@ -1041,9 +1041,9 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 215,
-    "clean": 767,
-    "partial": 224,
+    "blocked_by_more": 213,
+    "clean": 769,
+    "partial": 222,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
@@ -1083,10 +1083,6 @@
       15
      ],
      [
-      "ElementSelectExpression:source-type",
-      10
-     ],
-     [
       "TimedStatement:DelayControl",
       9
      ],
@@ -1097,6 +1093,10 @@
      [
       "ConversionExpression:StreamingConcat",
       9
+     ],
+     [
+      "ElementSelectExpression:source-type",
+      8
      ],
      [
       "InvalidStatement",
@@ -1319,9 +1319,9 @@
     "unlockable": 0
    },
    "chapter-11": {
-    "clean": 771,
+    "clean": 773,
     "error": 0,
-    "partial": 263,
+    "partial": 261,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 9

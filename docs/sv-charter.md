@@ -8093,3 +8093,21 @@ source cell; overlapping slices and dynamic or aggregate forms remain loud.
 The `fixed_array_disjoint_slice_copy` fixture supplies the differential row
 and Lean receipt, with extractor regressions for the admitted and overlap
 boundaries.
+
+## Whole fixed-array copies from wire arrays — 2026-10-26
+
+Blocking assignment from an equal-length finite unpacked integral wire array
+now expands to cellwise reads and writes. The source cells are already
+resolved by the existing net lowering, so this preserves the wire values
+without inventing aggregate storage. Dynamic or mismatched arrays and other
+aggregate forms remain loud. The `fixed_array_net_copy` fixture supplies the
+differential row and Lean receipt, with extractor regressions for the wire
+source and mismatch boundary.
+
+On the refreshed **22,056-path** census, clean files move **5,207 → 5,209**
+and partial files **16,782 → 16,780** (67 include skips). The
+`AssignmentExpression:target` blocker falls **2,861 → 2,860**,
+`ExpressionStatement:CallExpression` falls **2,776 → 2,775**, and
+`ElementSelectExpression:source-type` falls **500 → 497**. Differential
+coverage grows **238/233/0/5 → 239/234/0/5** with no disagreements; grammar
+coverage remains **217/90/127**.

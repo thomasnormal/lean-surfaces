@@ -27,15 +27,15 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-26
 
-The chapter-scoped rerun covered **22,056** paths: **5,195 clean**,
-**16,794 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,056** paths: **5,209 clean**,
+**16,780 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`AssignmentExpression:target` (2,861), `CallExpression` (2,801),
-`ExpressionStatement:CallExpression` (2,776), `Hierarchy:ports` (2,398),
+`AssignmentExpression:target` (2,860), `CallExpression` (2,780),
+`ExpressionStatement:CallExpression` (2,775), `Hierarchy:ports` (2,398),
 `VariableSymbol:2state` (2,223), `SubroutineSymbol:Subroutine` (1,634),
 `NamedValueExpression:2state` (1,485), `ConcurrentAssertionStatement`
-(1,359), `InvalidStatement` (1,329), and `ClassType` (1,329).
+(1,359), `InvalidStatement` (1,330), and `ClassType` (1,330).
 
 The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
@@ -4696,3 +4696,13 @@ On the refreshed **22,056-path** sv-tests-2 snapshot, clean files move
 `CallExpression` falls **2,796 → 2,780**. Differential coverage grows
 **231/226/0/5 → 232/227/0/5** with no disagreements; grammar coverage remains
 **217/90/127**.
+
+## Whole fixed-array copies from wire arrays — 2026-10-26
+
+Equal-length finite unpacked integral wire-array sources now lower to
+cellwise blocking assignments. Dynamic or mismatched arrays and aggregate
+forms remain loud. The refreshed **22,056-path** census moves **5,207 → 5,209
+clean** and **16,782 → 16,780 partial** (67 include skips); the
+`AssignmentExpression:target` blocker falls **2,861 → 2,860**. Differential
+coverage grows **238/233/0/5 → 239/234/0/5** with no disagreements; grammar
+coverage remains **217/90/127**.

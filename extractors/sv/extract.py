@@ -12160,17 +12160,10 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
     elif (expression_kind == "ElementSelectExpression"
           and canonical_kind == "PackedArrayType"
           and not canonical_select):
-        # Dynamic targets are admitted for the wide nested-element shape added
-        # here.  The one-bit noncanonical target boundary remains loud; its
-        # read-side widening is an older foreach-specific representation and
-        # does not imply a target lowering.
-        try:
-            element_width = int(lhs.value.type.canonicalType.elementType
-                                .canonicalType.bitWidth)
-        except Exception:
-            element_width = 1
-        normalized = (_packed_element_index(sm, lhs.value.type, index)
-                      if element_width != 1 else None)
+        # Reuse the read-side label normalizer for pure signed dynamic
+        # element targets.  It preserves the older 32-bit signed boundary for
+        # one-bit elements and scales wide nested elements by their width.
+        normalized = _packed_element_index(sm, lhs.value.type, index)
         if normalized is None:
             return unsupported(sm, lhs, expression_kind + ":target-source"), False
         converted_index, index_signed = normalized

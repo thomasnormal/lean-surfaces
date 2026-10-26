@@ -41,6 +41,19 @@ The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
 matched all 200 fixed-seed sample classifications.
 
+## Dynamic noncanonical packed-element targets — 2026-10-26
+
+Blocking assignments to dynamic elements of noncanonical one-bit packed
+vectors now reuse the existing declared-label offset normalizer. Ascending
+ranges map the runtime index from the right label, so the write and subsequent
+read address the same flat cell; the signed 32-bit index boundary and all
+unsigned, effectful, aggregate, and unsupported forms remain loud. The
+`packed_array_dynamic_target` fixture supplies the differential row and Lean
+receipt. This shape is absent from the refreshed corpus, so its extractor
+census remains **5,230 clean / 16,761 partial** (67 include skips) with
+`AssignmentExpression:target` at **2,856**. Differential coverage grows
+**250/245/0/5 → 251/246/0/5**; grammar coverage remains **217/92/125**.
+
 ## Dynamic nested packed-element indexing — 2026-10-26
 
 A dynamic element select on a nested packed array with integral elements now

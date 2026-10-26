@@ -43,6 +43,22 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Dynamic noncanonical packed-element targets — 2026-10-26
+
+Blocking assignments to dynamic elements of noncanonical one-bit packed vectors
+now reuse the declared-label normalizer already used by packed reads. An
+ascending target such as `a[i]` for `logic [0:7] a` maps `i` from the declared
+right label into the flat vector offset, preserving read/write aliasing and the
+existing signed 32-bit index boundary. Unsigned, effectful, aggregate, and
+unsupported selectors remain loud. The `packed_array_dynamic_target` fixture
+and differential row cover the admitted ascending target.
+
+The refreshed **22,058-path** census remains **5,230 clean / 16,761 partial**
+(67 include skips), with `AssignmentExpression:target` at **2,856** because
+the corpus has no target-only instance of this shape. Differential coverage
+grows **250/245/0/5 → 251/246/0/5** with no disagreements, and grammar
+coverage remains **217/92/125**.
+
 ## Dynamic nested packed-element indexing — 2026-10-26
 
 A dynamic element select on a nested packed array with integral elements now

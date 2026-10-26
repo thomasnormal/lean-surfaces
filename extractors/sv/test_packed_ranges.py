@@ -52,12 +52,17 @@ class PackedRanges(unittest.TestCase):
         self.assertFalse(targets[0]["index_signed"])
         self.assertEqual(targets[0]["index"]["bits"], "0" * 29 + "101")
 
-    def test_dynamic_selected_ascending_vector_remains_loud(self):
+    def test_dynamic_selected_ascending_vector_normalizes_target(self):
         design = extract_source(
             "module top; logic [0:7] value; integer index; "
             "initial value[index] = 1'b1; endmodule")
-        kinds = [node.get("sv_kind") for node in nodes(design)]
-        self.assertIn("AssignmentExpression:target", kinds)
+        targets = [node for node in nodes(design)
+                   if node.get("kind") == "SelectTarget"]
+        self.assertEqual(len(targets), 1)
+        self.assertEqual(targets[0]["index"]["op"], "-")
+        self.assertEqual(targets[0]["index"]["left"]["bits"],
+                         "0" * 31 + "111")
+        self.assertTrue(targets[0]["index_signed"])
 
     def test_constant_part_select_ascending_vector_is_normalized(self):
         design = extract_source(

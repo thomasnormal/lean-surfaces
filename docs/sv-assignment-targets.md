@@ -59,6 +59,16 @@ a second scheduler. A future target rung must first supply the missing storage
 or the scheduler-facing continuous-assignment rule, then add a source-bound
 fixture and an independent simulator comparison.
 
+## Dynamic noncanonical packed-element targets — 2026-10-26
+
+A pure signed dynamic element target on a noncanonical one-bit packed vector
+now uses the same declared-label-to-offset conversion as packed reads. For an
+ascending range such as `logic [0:7] a`, `a[i] = value` maps the runtime index
+from the right label and updates the cell later read through `a[i]`. The
+existing 32-bit signed index restriction remains; unsigned or effectful
+selectors, aggregate targets, and unsupported ranges stay loud. The
+`packed_array_dynamic_target` fixture pins the ascending geometry and alias.
+
 ## Dynamic nested packed-element targets — 2026-10-26
 
 A dynamic element target on a nested packed array with integral elements now

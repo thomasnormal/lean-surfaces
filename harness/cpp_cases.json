@@ -7045,6 +7045,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-nested-shadow-computed-initialization-while",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalNestedShadowComputedInitializationWhileStatementFrameWitness",
+    "cpp_source": "int local_nested_shadow_computed_initialization_while_statement_frame_witness(int value) { int outer = 3; { int local = outer + 1; while (value > 0) { int shadow = local + 2; value -= 1; } } return outer; } bool callable_witness() { return local_nested_shadow_computed_initialization_while_statement_frame_witness(2) == 3; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-frame-local-nested-initialization-direct",
     "kind": "statement",
     "corpus": "rung-4 witness",

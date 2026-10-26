@@ -63,6 +63,13 @@ for the same reason. Unknown and dynamic bit patterns remain loud.
 The single-precision `$bitstoshortreal` call follows the same rule for one
 known 32-bit integral literal; unknown and dynamic patterns remain loud.
 
+Fixed-type `$size`, `$high`, `$left`, `$right`, `$low`, `$increment`,
+`$dimensions`, and `$unpacked_dimensions` calls are also inert in statement
+position when their metadata query is valid and the result is discarded. The
+existing query converter proves fixed dimensions without evaluating the
+operand; dynamic arrays, selectors, effectful operands, malformed calls, and
+value uses remain on their ordinary boundaries.
+
 The self-check executor runs these calls at time zero. The retained stepper
 delegates the same `SysCall` leaves to that executor after a delay or event
 wait, so no second call interpreter is introduced. The scheduler's existing

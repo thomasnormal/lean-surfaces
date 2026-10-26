@@ -15798,6 +15798,15 @@ def _convert_syscall(sm, s, e):
                         "bit_query_statement": name}
         except Exception:
             return unsupported(sm, s, "ExpressionStatement:CallExpression")
+    if is_sys and _dimension_query_call(e):
+        # Fixed dimension queries read only elaborated type metadata.  A
+        # discarded result therefore has no represented state effect, while
+        # dynamic arrays, selectors, and effectful operands remain loud via
+        # the existing value-position converter.
+        value = _convert_dimension_query(sm, e)
+        if value.get("kind") != "Unsupported":
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "dimension_query_statement": name}
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

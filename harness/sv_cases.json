@@ -2352,6 +2352,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "dimension_query_statements",
+      "file": "Examples/system-verilog/dimension_query_statements/dimension_query_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -4130,13 +4130,11 @@ lookups the source never wrote. CPython's display never performs one
 (`BUILD_LIST_UNPACK` is a bytecode), but the interpreter reaches its
 builtins only AFTER every shadow-resolving arm, so a module BINDING
 either name would run the display through the shadow and be SILENTLY
-WRONG. The extractor therefore censuses the whole module (any scope, any
-binding form) and refuses every starred display in it —
-`Examples/python/star_shadow/star_shadow.py` is the row that catches the
-census being dropped. Whole-module and conservative by design: deciding
-it per scope would mean re-deciding CPython's scoping rules inside the
-extractor, and the f-string lowering's `str` census is the same shape for
-the same reason.
+WRONG. The extractor checks the lexical scope containing each display
+(including module scope) for a binding of either synthetic name. A local
+`list`/`tuple` shadow still refuses that function, while an unrelated sibling
+scope remains live. `Examples/python/star_shadow/star_shadow.py` pins both
+directions: `shadowed` remains loud and `elsewhere` now matches.
 
 ### Assignment targets are landed (2026-10-21)
 

@@ -17,6 +17,28 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-149 — scope starred-display shadow checks lexically
+
+Starred-display lowering now checks `list` and `tuple` bindings in the lexical
+scope containing each display. A function-local shadow still refuses that
+function, while an unrelated sibling function no longer poisons the module;
+`star_shadow.elsewhere(3)` therefore matches CPython's `[1, 2, 3]` while
+`shadowed(3)` remains loud. Module-scope bindings still refuse all displays in
+that module, preserving soundness for the lowered names.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `star_shadow.elsewhere(3)` matches `[1, 2, 3]`; `shadowed(3)` remains refused |
+| Full executable differential | 3,694 cases: 3,634 matched / 60 refused / 0 failed |
+| Full proof differential | 3,694 cases: 3,525 matched / 169 refused / 0 failed |
+| Refusal census | 60 rows in 18 classes, 0 drifts; `star_shadow::elsewhere` removed from `shadow.module-census` |
+| Build/checks | extractor/spec/tool checks, `lake build leanmodels-run`, coverage freshness, backlog-index freshness, and `git diff --check` pass |
+
+DECIDED: scope synthetic-name shadow checks lexically; retain loud behavior for
+the shadowed scope and module-scope bindings, while allowing unaffected sibling
+scopes to lower starred displays. Reread the inbox before selecting the next
+measured gap.
+
 ## 2026-10-26-pycomplete-148 — admit the attribute-first chained assignment slice
 
 The measured `cell.x = m = n + 1` shape now lowers at ingestion to three

@@ -1012,7 +1012,6 @@ WHITELIST_CLASS = {
     "star_lab::star_target": "starred.position",
     "star_lab::star_for": "starred.position",
     "star_shadow::shadowed": "shadow.module-census",
-    "star_shadow::elsewhere": "shadow.module-census",
     "fstring_lab::format_spec": "fstring.format-spec",
     "fstring_lab::format_spec_num": "fstring.format-spec",
     "fstring_repr::instance": "render.identity",

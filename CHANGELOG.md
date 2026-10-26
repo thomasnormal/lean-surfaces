@@ -14,6 +14,7 @@
 - A same-list scalar `append` in an effectful `finally` now runs before the returned list is published; other cleanup shapes remain loud.
 - Tuple unpacking now stores a constant-key dictionary subscript element through the existing heap path; other non-name target shapes remain loud.
 - Attribute-first chained assignment now names the RHS once in an unspellable temporary before left-to-right stores; other non-name-first chains remain loud.
+- Starred display shadow checks now follow lexical scope: a local `list`/`tuple` binding still refuses that function, while an unrelated sibling function remains live.
 - Unknown exception constructor names now raise CPython's exact `NameError` before constructor arguments are evaluated; known but unmodelled builtins and shadowed names remain loud.
 - Container `repr` and `ascii` rendering now use a fixed 512-level depth budget; deeper structures remain loud independently of caller fuel.
 - Python `global` declarations now support direct scalar reads, assignments, and

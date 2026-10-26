@@ -704,7 +704,7 @@
   {"file": "Examples/python/star_lab/star_lab.py", "function": "star_target", "args": [[]], "expect": "match"},
   {"file": "Examples/python/star_lab/star_lab.py", "function": "star_for", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/star_shadow/star_shadow.py", "function": "shadowed", "args": [[3]], "expect": "unsupported"},
-  {"file": "Examples/python/star_shadow/star_shadow.py", "function": "elsewhere", "args": [[3]], "expect": "unsupported"},
+  {"file": "Examples/python/star_shadow/star_shadow.py", "function": "elsewhere", "args": [[3]], "expect": "match", "note": "A local shadow in a sibling function does not affect this display's lexical scope."},
   {"file": "Examples/python/star_shadow/star_shadow.py", "function": "plain_display", "args": [[3], [-2]], "expect": "match"},
   {"file": "Examples/python/assert_lab/assert_lab.py", "function": "guard_pass", "args": [[3], [1]], "expect": "match"},
   {"file": "Examples/python/assert_lab/assert_lab.py", "function": "guard_fail", "args": [[-1], [0]], "expect": "match"},

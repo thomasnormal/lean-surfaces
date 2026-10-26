@@ -1,5 +1,5 @@
-"""The starred-display lowering's ONE new boundary: a module that BINDS
-`list` or `tuple` (docs/memory-model.md §starred displays, the shadow
+"""The starred-display lowering's ONE new boundary: a lexical scope that
+BINDS `list` or `tuple` (docs/memory-model.md §starred displays, the shadow
 census).
 
 `[*a, 3]` is lowered to `list(tuple(a) + (3,))`, which spells the display
@@ -9,11 +9,11 @@ bytecode, so a shadowed `list` cannot affect it. The interpreter, though,
 reaches its builtins only AFTER every shadow-resolving arm, so the
 lowered calls would run through the shadow and be SILENTLY WRONG.
 
-So the extractor censuses the whole module for a binding of either name
-(any scope, any binding form) and refuses every starred display in it,
-loudly. This file is the row that would catch the census being dropped:
-without it `shadowed(3)` answers "SHADOW" instead of refusing, and
-nothing else fails.
+So the extractor checks the module scope and each function's own lexical
+bindings, refusing only the starred display that could observe the shadow.
+This file is the row that would catch the scope check being dropped: without
+it `shadowed(3)` answers "SHADOW" instead of refusing, while `elsewhere(3)`
+would be poisoned by its sibling.
 """
 
 
@@ -28,10 +28,8 @@ def shadowed(n):
 
 
 def elsewhere(n):
-    # No shadow in THIS function — refused anyway, because the census is
-    # whole-module. Deciding it per scope would mean re-deciding CPython's
-    # scoping rules inside the extractor, a second table; the
-    # conservative refusal costs a file nobody writes.
+    # No shadow in THIS function, so its synthetic calls still resolve to the
+    # real builtins even though `shadowed` has a local named `list`.
     a = [1, 2]
     return [*a, n]
 

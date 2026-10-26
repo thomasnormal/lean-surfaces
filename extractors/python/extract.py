@@ -100,9 +100,10 @@ UNSUPPORTED_TEXT_LIMIT = 200
 # lane's implementation extracted. It spells source that performs NO name
 # lookup as a call of a name
 # the source never wrote, and the interpreter reaches its builtins only
-# AFTER every shadow-resolving arm; so a module that binds the name would
-# run the lowering through the shadow and be SILENTLY WRONG. One census,
-# one flag per lowering, and the name set carries the reason.
+# AFTER every shadow-resolving arm; so a lexical scope that binds the name
+# would run the lowering through the shadow and be SILENTLY WRONG. The
+# module flag handles module bindings; function conversion temporarily adds
+# each function's own scope to the same flag.
 _MODULE_SHADOWS_DISPLAY = False     # starred displays: `[*a]` -> `list(tuple(a))`
 _MODULE_ANNOTATIONS_BOUND = False
 _MODULE_ANNOTATION_TABLE = None
@@ -174,6 +175,17 @@ def binds_any_name(tree, names):
             if any(x in names for x in n.names):
                 return True
     return False
+
+
+def binds_any_name_scope(scope, names):
+    """Whether one lexical scope binds one of ``names``.
+
+    Unlike ``binds_any_name`` this skips nested function/class bodies.  It is
+    used by starred-display lowering so a local shadow refuses only the
+    function that can observe it; an unrelated function in the same module
+    remains eligible.
+    """
+    return bool(_scope_binding_names(scope) & set(names))
 
 
 def _try_else_marker(node):
@@ -1877,6 +1889,12 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         if nd is not None:
             return nd
     if isinstance(node, ast.FunctionDef):
+        global _MODULE_SHADOWS_DISPLAY
+        module_shadows_display = _MODULE_SHADOWS_DISPLAY
+        _MODULE_SHADOWS_DISPLAY = (
+            module_shadows_display
+            or binds_any_name_scope(node, DISPLAY_LOWERING_NAMES)
+        )
         a = node.args
         plain = list(a.posonlyargs) + list(a.args)
         reasons = []
@@ -1905,6 +1923,12 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             reasons.append("**kwargs")
         if node.decorator_list:
             reasons.append("decorators")
+        try:
+            body = _hoist_ann_no_value(
+                convert_stmt_list(node.body, enclosing=node,
+                                  func_scope=True))
+        finally:
+            _MODULE_SHADOWS_DISPLAY = module_shadows_display
         out = {
             "kind": "FunctionDef",
             "span": span(node),
@@ -1936,9 +1960,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             # (a single-target `name = lambda …` assign likewise); one
             # nested deeper (inside an if/loop) stays a plain
             # FunctionDef/Lambda node, which ingestion refuses loudly
-            "body": _hoist_ann_no_value(
-                convert_stmt_list(node.body, enclosing=node,
-                                  func_scope=True)),
+            "body": body,
         }
         if _has_global(node):
             out["has_global"] = True
@@ -2853,9 +2875,9 @@ def process_file(source_path, companion_dir, out=None):
 
     blocks = scan_lean_blocks(text.splitlines(), source_path)
 
-    # The lowerings' shadow censuses (see `binds_any_name`) are
-    # whole-module, so they are decided once, here, before any expression
-    # is converted.
+    # Module-scope shadow censuses are decided once here. Function conversion
+    # temporarily extends the display flag with that function's own lexical
+    # bindings before converting its body.
     global _MODULE_SHADOWS_DISPLAY, _MODULE_ANNOTATIONS_BOUND
     global _MODULE_ANNOTATION_TABLE
     global _MODULE_SAFE_ANNOTATIONS
@@ -2869,7 +2891,7 @@ def process_file(source_path, companion_dir, out=None):
             _SYNTHETIC_NAMES.add(item.name)
         elif isinstance(item, ast.arg):
             _SYNTHETIC_NAMES.add(item.arg)
-    _MODULE_SHADOWS_DISPLAY = binds_any_name(tree, DISPLAY_LOWERING_NAMES)
+    _MODULE_SHADOWS_DISPLAY = binds_any_name_scope(tree, DISPLAY_LOWERING_NAMES)
     _MODULE_ANNOTATIONS_BOUND = binds_any_name(tree, ("__annotations__",))
     _MODULE_ANNOTATION_TABLE = annotation_table_alias(tree)
     _MODULE_SAFE_ANNOTATIONS = {

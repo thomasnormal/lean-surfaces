@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    2872
+    2869
    ],
    [
     "CallExpression",
@@ -24,7 +24,7 @@
    ],
    [
     "ExpressionStatement:CallExpression",
-    2778
+    2777
    ],
    [
     "Hierarchy:ports",
@@ -32,7 +32,7 @@
    ],
    [
     "VariableSymbol:2state",
-    2296
+    2285
    ],
    [
     "SubroutineSymbol:Subroutine",
@@ -64,7 +64,7 @@
    ],
    [
     "MemberAccessExpression",
-    1018
+    1017
    ],
    [
     "ConversionExpression:width",
@@ -95,12 +95,12 @@
     543
    ],
    [
-    "ElementSelectExpression:source-type",
-    516
-   ],
-   [
     "ClassType:ClassType",
     510
+   ],
+   [
+    "ElementSelectExpression:source-type",
+    502
    ],
    [
     "PropertySymbol:Property",
@@ -175,12 +175,12 @@
     146
    ],
    [
-    "TypeAliasType:TypeAlias",
+    "TimedStatement:CycleDelayControl",
     145
    ],
    [
-    "TimedStatement:CycleDelayControl",
-    145
+    "TypeAliasType:TypeAlias",
+    134
    ],
    [
     "SubroutineSymbol",
@@ -223,16 +223,16 @@
     83
    ],
    [
-    "TypeAliasType",
-    73
-   ],
-   [
     "VariableSymbol",
     73
    ],
    [
     "RandSequenceStatement",
     72
+   ],
+   [
+    "TypeAliasType",
+    70
    ],
    [
     "NetSymbol:Tri",
@@ -291,10 +291,6 @@
     48
    ],
    [
-    "VariableSymbol:type",
-    48
-   ],
-   [
     "CallExpression:dimension:argument",
     48
    ],
@@ -313,6 +309,10 @@
    [
     "Package:ClassType",
     45
+   ],
+   [
+    "VariableSymbol:type",
+    44
    ],
    [
     "NetSymbol:WAnd",
@@ -1056,7 +1056,7 @@
      ],
      [
       "VariableSymbol:2state",
-      55
+      54
      ],
      [
       "SubroutineSymbol:Subroutine",
@@ -1080,7 +1080,7 @@
      ],
      [
       "ElementSelectExpression:source-type",
-      11
+      10
      ],
      [
       "TimedStatement:DelayControl",
@@ -1222,7 +1222,7 @@
     "top_residual_blockers": [
      [
       "VariableSymbol:2state",
-      167
+      166
      ],
      [
       "NamedValueExpression:2state",
@@ -1242,7 +1242,7 @@
      ],
      [
       "AssignmentExpression:target",
-      125
+      124
      ],
      [
       "CallExpression",
@@ -1262,7 +1262,7 @@
      ],
      [
       "ElementSelectExpression:source-type",
-      44
+      40
      ],
      [
       "SubroutineSymbol:Subroutine",

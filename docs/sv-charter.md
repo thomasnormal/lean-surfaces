@@ -77,6 +77,22 @@ falls **2,873 → 2,872**; `CallExpression` remains **2,801**. Differential
 coverage grows **220/215/0/5 → 221/216/0/5** with no disagreements, and
 grammar coverage remains **217/90/127**.
 
+## Fixed-array fields inside unpacked structs — 2026-10-26
+
+Unpacked structs may now contain finite fixed unpacked arrays of scalar or
+packed-integral leaves. The legacy flat state emits one cell per declared
+array element, and constant or dynamic element writes through the struct
+field use those cells; dynamic or aggregate fields remain loud. The
+`struct_array_field_windows` fixture and differential row cover declaration,
+constant selection, dynamic selection, and readback, with extractor
+regressions for the flattened names and guarded writes.
+
+The **22,055-path** census remains **5,169 clean / 16,819 partial** (67 include
+skips); `AssignmentExpression:target` shifts **2,872 → 2,869** while the
+files using this shape retain independent unsupported constructs. Differential
+coverage grows **221/216/0/5 → 222/217/0/5** with no disagreements, and grammar
+coverage remains **217/90/127**.
+
 ## Semaphore zero-key methods — 2026-10-24
 
 The self-check surface now admits `semaphore.put(0)` and `semaphore.get(0)`

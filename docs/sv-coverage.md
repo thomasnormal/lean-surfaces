@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 221 | 216 | 0 | 5 | sv-tests-2 declarations |
+| 222 | 217 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -235,6 +235,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `assoc_bound_key` | `Examples/system-verilog/assoc_bound_key/assoc_bound_key.sv` | match | **MATCH** | `ok` | MATCH |
 | `packed_array_struct_member` | `Examples/system-verilog/packed_array_struct_member/packed_array_struct_member.sv` | match | **MATCH** | `ok` | MATCH |
 | `packed_union_reshaped_member` | `Examples/system-verilog/packed_union_reshaped_member/packed_union_reshaped_member.sv` | match | **MATCH** | `ok` | MATCH |
+| `struct_array_field_windows` | `Examples/system-verilog/struct_array_field_windows/struct_array_field_windows.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -474,11 +475,11 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 2872 |
+| `AssignmentExpression:target` | 2869 |
 | `CallExpression` | 2801 |
-| `ExpressionStatement:CallExpression` | 2778 |
+| `ExpressionStatement:CallExpression` | 2777 |
 | `Hierarchy:ports` | 2398 |
-| `VariableSymbol:2state` | 2296 |
+| `VariableSymbol:2state` | 2285 |
 | `SubroutineSymbol:Subroutine` | 1634 |
 | `NamedValueExpression:2state` | 1485 |
 | `ConcurrentAssertionStatement` | 1359 |
@@ -486,7 +487,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 | `ClassType` | 1329 |
 | `Hierarchy:module-kind` | 1248 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1154 |
-| `MemberAccessExpression` | 1018 |
+| `MemberAccessExpression` | 1017 |
 | `ConversionExpression:width` | 783 |
 | `HierarchicalValueExpression` | 750 |
 

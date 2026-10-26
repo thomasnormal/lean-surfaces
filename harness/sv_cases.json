@@ -1991,6 +1991,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "struct_array_field_windows",
+      "file": "Examples/system-verilog/struct_array_field_windows/struct_array_field_windows.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

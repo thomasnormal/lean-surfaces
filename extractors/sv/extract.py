@@ -712,6 +712,21 @@ def is_flat_unpacked_struct_alias(symbol):
                     if not integral_tree(leaf, seen):
                         return False
                     continue
+                if type(leaf).__name__ == "FixedSizeUnpackedArrayType":
+                    array_shape = _fixed_array_dimensions(field.type,
+                                                           max_cells=1024)
+                    if array_shape is None:
+                        return False
+                    _dimensions, array_leaf = array_shape
+                    width, _, reason = type_width_2s(array_leaf)
+                    if (width is None or reason is not None or
+                            type(array_leaf.canonicalType).__name__ in (
+                                "FixedSizeUnpackedArrayType",
+                                "DynamicArrayType", "QueueType",
+                                "AssociativeArrayType", "UnpackedStructType",
+                                "UnpackedUnionType")):
+                        return False
+                    continue
                 width, _, reason = type_width_2s(field.type)
                 if width is None or reason is not None:
                     return False
@@ -1875,7 +1890,12 @@ def _fixed_array_dimensions(array_type, max_cells=1024):
         dimensions = []
         current = array_type.canonicalType
         total = 1
+        seen = set()
         while type(current).__name__ == "FixedSizeUnpackedArrayType":
+            marker = id(current)
+            if marker in seen or len(dimensions) >= 64:
+                return None
+            seen.add(marker)
             left, right = int(current.range.left), int(current.range.right)
             count = abs(left - right) + 1
             if count <= 0:
@@ -1933,11 +1953,30 @@ def _fixed_array_selection_prefix(expression):
                 return None
             selectors.append(position)
             current = current.value
-        if not _storage_expression(current):
+        source_symbol = None
+        if _storage_expression(current):
+            source_name = _array_storage_name(current.symbol)
+            source_type = current.type
+            source_symbol = current.symbol
+        else:
+            path = _unpacked_struct_path(current)
+            if path is None:
+                return None
+            source_name, selected_type = path
+            source_type = selected_type
+            root = current
+            while type(root).__name__ == "MemberAccessExpression":
+                root = root.value
+            if not _storage_expression(root):
+                return None
+            source_symbol = root.symbol
+        if str(source_symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net"):
             return None
-        if str(current.symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net"):
-            return None
-        if type(current.type.canonicalType).__name__ == "DynamicArrayType":
+        if type(source_type.canonicalType).__name__ == "DynamicArrayType":
+            # A dynamic array field has no independent symbol from which to
+            # recover a sampled extent; keep that aggregate boundary loud.
+            if not _storage_expression(current):
+                return None
             count = _dynamic_array_constant_extent(current.symbol)
             if count is None:
                 return None
@@ -1952,7 +1991,7 @@ def _fixed_array_selection_prefix(expression):
                 inner_dimensions, leaf_type, _width, _two_state = inner
                 shape = ([(0, count - 1)] + inner_dimensions, leaf_type)
         else:
-            shape = _fixed_array_dimensions(current.type, max_cells=None)
+            shape = _fixed_array_dimensions(source_type, max_cells=None)
         if shape is None:
             return None
         dimensions, leaf_type = shape
@@ -1962,7 +2001,7 @@ def _fixed_array_selection_prefix(expression):
         for position, (left, right) in zip(positions, dimensions):
             if position < min(left, right) or position > max(left, right):
                 return None
-        name = _array_storage_name(current.symbol)
+        name = source_name
         for position in positions:
             name += f"[{position}]"
         return name, leaf_type
@@ -2159,9 +2198,6 @@ def _unpacked_struct_path(expression):
     try:
         if _storage_expression(expression):
             return _storage_name(expression.symbol), expression.type.canonicalType
-        selected = _fixed_array_selection_prefix(expression)
-        if selected is not None:
-            return selected[0], selected[1].canonicalType
         if type(expression).__name__ == "MemberAccessExpression":
             parent = _unpacked_struct_path(expression.value)
             if parent is None:
@@ -2173,6 +2209,13 @@ def _unpacked_struct_path(expression):
             if member.type.canonicalType is None:
                 return None
             return f"{parent_name}.{member.name}", member.type.canonicalType
+        # Only element selections can reach the fixed-array helper here.
+        # Calling it for a member access would recurse back into this
+        # function while it tries to resolve that same member path.
+        if type(expression).__name__ == "ElementSelectExpression":
+            selected = _fixed_array_selection_prefix(expression)
+            if selected is not None:
+                return selected[0], selected[1].canonicalType
         return None
     except Exception:
         return None
@@ -2198,6 +2241,31 @@ def _unpacked_struct_field_cells(base_name, aggregate, span, seen=None):
             if nested is None:
                 return None
             cells.extend(nested)
+            continue
+        if type(leaf).__name__ == "FixedSizeUnpackedArrayType":
+            array_shape = _fixed_array_dimensions(field.type, max_cells=1024)
+            if array_shape is None:
+                return None
+            dimensions, array_leaf = array_shape
+            width, two_state, reason = type_width_2s(array_leaf)
+            if (width is None or reason is not None or
+                    type(array_leaf.canonicalType).__name__ in (
+                        "FixedSizeUnpackedArrayType", "DynamicArrayType",
+                        "QueueType", "AssociativeArrayType",
+                        "UnpackedStructType", "UnpackedUnionType")):
+                return None
+            positions = [()]
+            for left, right in dimensions:
+                step = 1 if right >= left else -1
+                positions = [prefix + (position,)
+                             for prefix in positions
+                             for position in range(left, right + step, step)]
+            for indexes in positions:
+                name = f"{base_name}.{field.name}" + "".join(
+                    f"[{position}]" for position in indexes)
+                init = ({"kind": "Literal", "span": None, "width": width,
+                         "bits": "0" * width} if two_state else None)
+                cells.append((name, width, init, array_leaf))
             continue
         width, two_state, reason = type_width_2s(field.type)
         if width is None or reason is not None:
@@ -2274,7 +2342,8 @@ def _unpacked_struct_decls(sm, symbol):
             return None
         initializer = getattr(symbol, "initializer", None)
 
-        if any(type(field.type.canonicalType).__name__ == "UnpackedStructType"
+        if any(type(field.type.canonicalType).__name__ in (
+                "UnpackedStructType", "FixedSizeUnpackedArrayType")
                for field in fields):
             if initializer is None:
                 cells = _unpacked_struct_field_cells(
@@ -2602,11 +2671,23 @@ def _fixed_array_shape(source):
             source = getattr(source, "operand", None)
             if source is None:
                 return None
-        if not _storage_expression(source):
-            return None
-        if str(source.symbol.kind) != "SymbolKind.Variable":
-            return None
-        array_type = source.type.canonicalType
+        if _storage_expression(source):
+            source_name = _array_storage_name(source.symbol)
+            source_type = source.type
+            if str(source.symbol.kind) != "SymbolKind.Variable":
+                return None
+        else:
+            path = _unpacked_struct_path(source)
+            if path is None:
+                return None
+            source_name, source_type = path
+            root = source
+            while type(root).__name__ == "MemberAccessExpression":
+                root = root.value
+            if (not _storage_expression(root) or
+                    str(root.symbol.kind) != "SymbolKind.Variable"):
+                return None
+        array_type = source_type.canonicalType
         array_kind = type(array_type).__name__
         if array_kind == "DynamicArrayType":
             # A dynamic array is representable by the flat state only when
@@ -2616,6 +2697,8 @@ def _fixed_array_shape(source):
             # Four-state elements use the same flat cells, retaining their
             # x startup value; two-state elements keep their existing squash
             # rule.
+            if not _storage_expression(source):
+                return None
             count = _dynamic_array_constant_extent(source.symbol)
             if count is None:
                 return None
@@ -2633,7 +2716,7 @@ def _fixed_array_shape(source):
         count = abs(left - right) + 1
         if count <= 0 or count > 1024:
             return None
-        return _array_storage_name(source.symbol), width, two_state, left, right
+        return source_name, width, two_state, left, right
     except Exception:
         return None
 

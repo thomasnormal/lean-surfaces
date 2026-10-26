@@ -584,6 +584,21 @@ class UnpackedArrayAssignments(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_struct_fixed_array_field_element_windows(self):
+        design = extract_source(
+            "module top; typedef struct { logic [3:0] values [0:1]; } T; "
+            "T value; int index; initial begin "
+            "value.values[0] = 4'h1; value.values[1] = 4'h2; "
+            "index = 1; value.values[index] = 4'h3; "
+            "if (value.values[0] == 4'h1 && value.values[1] == 4'h3) "
+            "$display(\"PASS\"); end endmodule")
+        module = design["modules"][0]
+        self.assertEqual([decl["name"] for decl in module["decls"]
+                          if decl.get("kind") == "Var"],
+                         ["value.values[0]", "value.values[1]", "index"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -59,6 +59,17 @@ a second scheduler. A future target rung must first supply the missing storage
 or the scheduler-facing continuous-assignment rule, then add a source-bound
 fixture and an independent simulator comparison.
 
+## Dynamic noncanonical packed indexed slices — 2026-10-26
+
+Dynamic `+:` and `-:` targets on noncanonical one-bit packed vectors now map
+the runtime base label into the flat selected-write window. Ascending ranges
+are converted to increasing flat offsets so both directions preserve the
+source-order value and later readback; the pure signed 32-bit base restriction
+remains. Simple dynamic ranges, effectful or unsigned bases, aggregate
+targets, and unsupported forms remain loud; partial reads retain the selected
+evaluator boundary. The
+`packed_array_dynamic_part_select` fixture pins both indexed directions.
+
 ## Dynamic noncanonical packed-element targets — 2026-10-26
 
 A pure signed dynamic element target on a noncanonical one-bit packed vector

@@ -7268,6 +7268,51 @@ def _packed_element_index(sm, source_type, index):
     return None
 
 
+def _packed_dynamic_indexed_index(sm, source_type, index, width, selection):
+    """Normalize a dynamic indexed part-select on a noncanonical 1-bit range.
+
+    ``_packed_element_index`` already produces the flat offset of the
+    runtime label.  For an ascending declaration, ``+:`` starts at the
+    high-label end of the selected window, while ``-:`` starts at its
+    low-label end; both are represented as an increasing flat window.  A
+    descending declaration keeps the evaluator's ordinary indexed-select
+    direction convention.
+    """
+    try:
+        ct = source_type.canonicalType
+        if (type(ct).__name__ != "PackedArrayType"
+                or int(ct.elementType.canonicalType.bitWidth) != 1
+                or width <= 0
+                or selection not in ("IndexedUp", "IndexedDown")):
+            return None
+        normalized = _packed_element_index(sm, source_type, index)
+        if normalized is None:
+            return None
+        converted, index_signed = normalized
+        descending_range = int(ct.range.left) > int(ct.range.right)
+        descending_select = selection == "IndexedDown"
+        if not descending_range and not descending_select:
+            amount = width - 1
+            if amount:
+                span = node_span(sm, index)
+                literal = {
+                    "kind": "Literal", "span": span,
+                    "width": converted["width"],
+                    "bits": format(amount & ((1 << converted["width"]) - 1),
+                                     f"0{converted['width']}b"),
+                }
+                converted = {
+                    "kind": "Binary", "span": span,
+                    "width": converted["width"], "op": "-",
+                    "left": converted, "right": literal,
+                }
+        # Ascending ranges are already normalized to increasing flat offsets;
+        # descending ranges retain the evaluator's IndexedDown convention.
+        return converted, index_signed, (descending_range and descending_select)
+    except Exception:
+        return None
+
+
 def _packed_constant_simple_index(sm, source_type, left, right, width):
     """Normalize a constant simple part-select's right label to an offset."""
     try:
@@ -7577,14 +7622,26 @@ def _convert_selected_read(sm, expr, expression_kind):
             normalized = _packed_constant_simple_index(
                 sm, source_type, expr.left, expr.right, expr.type.bitWidth)
         elif selection in ("IndexedUp", "IndexedDown"):
-            normalized = _packed_constant_indexed_index(
-                sm, source_type, expr.left, expr.type.bitWidth,
-                selection == "IndexedDown")
+            if _constant_dimension_selector(expr.left) is None:
+                dynamic = _packed_dynamic_indexed_index(
+                    sm, source_type, expr.left, expr.type.bitWidth, selection)
+                if dynamic is None:
+                    normalized = None
+                else:
+                    converted_index, index_signed, descending = dynamic
+                    normalized = (converted_index, index_signed, descending)
+            else:
+                normalized = _packed_constant_indexed_index(
+                    sm, source_type, expr.left, expr.type.bitWidth,
+                    selection == "IndexedDown")
         else:
             normalized = None
         if normalized is None:
             return unsupported(sm, expr, expression_kind + ":source-type")
-        converted_index, index_signed = normalized
+        if len(normalized) == 3:
+            converted_index, index_signed, descending = normalized
+        else:
+            converted_index, index_signed = normalized
     else:
         _, _, index_reason = type_width_2s(index.type)
         if index_reason is not None:
@@ -12188,14 +12245,21 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
             normalized = _packed_constant_simple_index(
                 sm, lhs.value.type, lhs.left, lhs.right, lhs.type.bitWidth)
         elif selection in ("IndexedUp", "IndexedDown"):
-            normalized = _packed_constant_indexed_index(
-                sm, lhs.value.type, lhs.left, lhs.type.bitWidth,
-                selection == "IndexedDown")
+            dynamic = _packed_dynamic_indexed_index(
+                sm, lhs.value.type, index, lhs.type.bitWidth, selection)
+            if dynamic is None:
+                normalized = None
+            else:
+                converted_index, index_signed, descending = dynamic
+                normalized = (converted_index, index_signed, descending)
         else:
             normalized = None
         if normalized is None:
             return unsupported(sm, lhs, expression_kind + ":target-source"), False
-        converted_index, index_signed = normalized
+        if len(normalized) == 3:
+            converted_index, index_signed, descending = normalized
+        else:
+            converted_index, index_signed = normalized
     else:
         _, _, index_reason = type_width_2s(index.type)
         converted_index = convert_expr(sm, index)

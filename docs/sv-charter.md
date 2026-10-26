@@ -43,6 +43,24 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Dynamic noncanonical packed indexed slices — 2026-10-26
+
+Dynamic `+:` and `-:` part-selects on noncanonical one-bit packed vectors now
+reuse the flat selected-read/write evaluator after normalizing the runtime
+base label. Ascending declarations map each slice to an increasing flat
+window, while descending declarations retain the evaluator's indexed direction
+convention. The pure signed 32-bit base restriction remains. Effectful,
+unsigned, aggregate, and unsupported forms stay loud; partial reads retain the
+selected evaluator boundary. The
+`packed_array_dynamic_part_select` fixture covers both directions and their
+read/write aliasing.
+
+The refreshed **22,058-path** census remains **5,230 clean / 16,761 partial**
+(67 include skips), with `AssignmentExpression:target` at **2,856**; this
+fixture shape is absent from the corpus. Differential coverage grows
+**251/246/0/5 → 252/247/0/5** with no disagreements, and grammar coverage
+remains **217/92/125**.
+
 ## Dynamic noncanonical packed-element targets — 2026-10-26
 
 Blocking assignments to dynamic elements of noncanonical one-bit packed vectors

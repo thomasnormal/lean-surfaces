@@ -55,9 +55,11 @@ class SelectedTypes(unittest.TestCase):
         self.assertEqual(result["kind"], "Squash2")
         self.assertEqual(int(result["operand"]["index"]["bits"], 2), 3)
 
-    def test_dynamic_noncanonical_two_state_range_stays_loud(self):
-        design, _ = self.read("bit [0:7] value;")
-        self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+    def test_dynamic_noncanonical_two_state_range_preserves_squash(self):
+        design, result = self.read("bit [0:7] value;")
+        self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+        self.assertEqual(result["kind"], "Squash2")
+        self.assertEqual(result["operand"]["kind"], "SelectRead")
 
     def test_effectful_indices_and_unpacked_aggregates_stay_loud(self):
         for declaration, expression in (

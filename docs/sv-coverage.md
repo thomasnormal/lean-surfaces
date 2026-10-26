@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 251 | 246 | 0 | 5 | sv-tests-2 declarations |
+| 252 | 247 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -228,6 +228,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `enum_name_method` | `Examples/system-verilog/enum_name_method/enum_name_method.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_integral_cells` | `Examples/system-verilog/assoc_integral_cells/assoc_integral_cells.sv` | match | **MATCH** | `ok` | MATCH |
 | `packed_array_multidim` | `Examples/system-verilog/packed_array_multidim/packed_array_multidim.sv` | match | **MATCH** | `ok` | MATCH |
+| `packed_array_dynamic_part_select` | `Examples/system-verilog/packed_array_dynamic_part_select/packed_array_dynamic_part_select.sv` | match | **MATCH** | `ok` | MATCH |
 | `packed_array_dynamic_target` | `Examples/system-verilog/packed_array_dynamic_target/packed_array_dynamic_target.sv` | match | **MATCH** | `ok` | MATCH |
 | `packed_array_dynamic_index` | `Examples/system-verilog/packed_array_dynamic_index/packed_array_dynamic_index.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_sort` | `Examples/system-verilog/fixed_array_sort/fixed_array_sort.sv` | match | **MATCH** | `ok` | MATCH |

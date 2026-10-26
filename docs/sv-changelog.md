@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.30] — 2026-10-26
+
+The self-check surface now has 252 differential rows: 247 matches, zero
+disagreements, and 5 recorded refusals. The grammar census remains at 217
+pyslang syntax witnesses: 92 MATCH and 125 REFUSE. The 22,058-path corpus
+remains at 5,230 clean files, 16,761 partial files, and 67 include skips. This
+release admits dynamic `+:` and `-:` reads and targets on noncanonical one-bit
+packed vectors through normalized flat windows; simple dynamic ranges,
+effectful, unsigned, aggregate, and unsupported forms remain loud; partial
+reads retain the selected evaluator boundary.
+
 ## [0.1.29] — 2026-10-26
 
 The self-check surface now has 251 differential rows: 246 matches, zero

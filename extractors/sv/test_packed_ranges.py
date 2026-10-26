@@ -89,6 +89,19 @@ class PackedRanges(unittest.TestCase):
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             for node in nodes(design)))
 
+    def test_dynamic_indexed_part_select_ascending_vector_normalizes(self):
+        design = extract_source(
+            "module top; logic [0:7] value; integer index; "
+            "initial begin value[index +: 2] = 2'b10; "
+            "value[index -: 2] = 2'b01; end endmodule")
+        targets = [node for node in nodes(design)
+                   if node.get("kind") == "SelectTarget"]
+        self.assertEqual(len(targets), 2)
+        self.assertTrue(all(target["index_signed"] for target in targets))
+        self.assertTrue(all(not target["descending"] for target in targets))
+        self.assertEqual(targets[0]["index"]["op"], "-")
+        self.assertNotEqual(targets[0]["index"], targets[1]["index"])
+
     def test_out_of_range_part_select_ascending_vector_remains_loud(self):
         design = extract_source(
             "module top; logic [0:7] value; "

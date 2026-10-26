@@ -15768,6 +15768,16 @@ def _convert_syscall(sm, s, e):
         # no represented state effect after reporting its deterministic error.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "ftell_stdout_error_statement": True}
+    if is_sys and name == "$typename":
+        # IEEE 1800-2023 §20.6.1 determines a type without evaluating the
+        # expression. A valid one-argument call with a discarded result is
+        # therefore inert even when its argument would otherwise be loud.
+        try:
+            if not getattr(e, "bad", False) and len(e.arguments) == 1:
+                return {"kind": "Empty", "span": node_span(sm, s),
+                        "typename_statement": True}
+        except Exception:
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

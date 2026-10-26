@@ -2325,6 +2325,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "typename_discarded",
+      "file": "Examples/system-verilog/typename_discarded/typename_discarded.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

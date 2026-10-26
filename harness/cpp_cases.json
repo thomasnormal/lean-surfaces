@@ -6985,6 +6985,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-conditional-else-computed-initialization-direct",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalConditionalElseComputedInitializationStatementFrameWitness",
+    "cpp_source": "int local_conditional_else_computed_initialization_statement_frame_witness(int value) { int outer = 3; if (value > 0) { outer = 0; } else { int local = outer + 2; outer = local; } return outer; } bool callable_witness() { return local_conditional_else_computed_initialization_statement_frame_witness(0) == 5; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-frame-local-for-computed-initialization-direct",
     "kind": "statement",
     "corpus": "rung-4 witness",

@@ -8020,3 +8020,19 @@ The refreshed **22,055-path** census remains **5,166 clean** and **16,822
 partial** (67 include skips), with `AssignmentExpression:target` remaining
 **2,875**. Differential coverage grows **218/213/0/5 → 219/214/0/5** with no
 disagreements; grammar coverage remains **217/90/127**.
+## Literal-bound real-to-bits conversions — 2026-10-26
+
+`$realtobits` and `$shortrealtobits` now consume a named `real` or `shortreal`
+when its declaration initializer or each preceding direct blocking assignment
+is a finite literal outside control flow. The extractor preserves the exact
+IEEE-754 double or single bit pattern while keeping dynamic reads, arithmetic,
+nonblocking writes, and control-dependent rebinding loud. The
+`literal_bound_real_bits` fixture supplies the differential row and Lean
+receipt, with regressions for declaration and assignment bindings and the
+rebind boundary.
+
+On the refreshed **22,056-path** sv-tests-2 snapshot, clean files move
+**5,200 → 5,207** and partial files **16,789 → 16,782** (67 include skips).
+`CallExpression` falls **2,796 → 2,780**. Differential coverage grows
+**231/226/0/5 → 232/227/0/5** with no disagreements; grammar coverage remains
+**217/90/127**.

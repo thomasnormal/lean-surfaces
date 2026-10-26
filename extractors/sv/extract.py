@@ -6981,6 +6981,88 @@ def _literal_real_decimal(expression):
     return None
 
 
+def _bound_real_decimal(expression):
+    """Resolve a literal-bound real/shortreal variable at one call site.
+
+    Real storage is deliberately absent from the flat self-check state.  A
+    named floating value is nevertheless exact when its declaration
+    initializer, or each earlier direct blocking assignment, is a finite
+    literal and no such assignment is control-dependent.  The source-order
+    check is conservative: a dynamic write, nonblocking write, or assignment
+    inside a control shell keeps the ordinary opaque-storage boundary loud.
+    """
+    direct = _literal_real_decimal(expression)
+    if direct is not None:
+        return direct
+    try:
+        node = expression
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return None
+        if (type(node).__name__ != "NamedValueExpression"
+                or getattr(node, "bad", False)):
+            return None
+        canonical = getattr(getattr(node, "type", None), "canonicalType", None)
+        if type(canonical).__name__ != "FloatingType":
+            return None
+        symbol = getattr(node, "symbol", None)
+        if symbol is None:
+            return None
+        position = getattr(getattr(getattr(node, "sourceRange", None),
+                                   "start", None), "offset", None)
+        if position is None:
+            return None
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return None
+        controls = []
+        assignments = []
+
+        def inspect(node):
+            kind = type(node).__name__
+            if kind in ("ConditionalStatement", "ForLoopStatement",
+                        "WhileLoopStatement", "DoWhileLoopStatement",
+                        "RepeatLoopStatement", "ForeachLoopStatement",
+                        "CaseStatement", "CaseInsideStatement",
+                        "CasePatternStatement", "LoopStatement"):
+                controls.append(getattr(node, "sourceRange", None))
+            elif kind == "AssignmentExpression":
+                left = getattr(node, "left", None)
+                if (type(left).__name__ == "NamedValueExpression"
+                        and getattr(left, "symbol", None) is symbol):
+                    assignments.append(node)
+
+        instance.visit(inspect)
+        prior = []
+        for assignment in assignments:
+            start = getattr(getattr(assignment.sourceRange, "start", None), "offset", None)
+            end = getattr(getattr(assignment.sourceRange, "end", None), "offset", None)
+            if start is None or end is None or start >= position:
+                continue
+            prior.append(assignment)
+            if (assignment.op is not None or assignment.timingControl is not None
+                    or getattr(assignment, "isNonBlocking", False)
+                    or any(r is not None
+                           and r.start.offset <= start and end <= r.end.offset
+                           for r in controls)):
+                return None
+        initializer = getattr(symbol, "initializer", None)
+        value = _literal_real_decimal(initializer) if initializer is not None else None
+        if initializer is not None and value is None:
+            return None
+        for assignment in sorted(prior,
+                                 key=lambda a: a.sourceRange.start.offset):
+            candidate = _literal_real_decimal(getattr(assignment, "right", None))
+            if candidate is None:
+                return None
+            value = candidate
+        return value
+    except Exception:
+        return None
+
+
 def _rtoi_literal_call(expression):
     """Whether ``$rtoi`` has one finite literal real in value position."""
     try:
@@ -7093,7 +7175,8 @@ def _realtobits_literal_call(expression):
             node = getattr(node, "operand", None)
         # Do not strip a conversion shell here: shortreal or an explicit real
         # cast changes the source value before the IEEE-754 bit conversion.
-        literal_operand = type(node).__name__ == "RealLiteral"
+        literal_operand = (type(node).__name__ == "RealLiteral"
+                           or type(node).__name__ == "NamedValueExpression")
         itor_operand = (type(node).__name__ == "CallExpression"
                         and not getattr(node, "bad", False)
                         and getattr(node, "isSystemCall", False)
@@ -7103,7 +7186,8 @@ def _realtobits_literal_call(expression):
                 and getattr(expression.type, "bitWidth", None) == 64
                 and getattr(expression.type, "isIntegral", False)
                 and not getattr(expression.type, "isSigned", True)
-                and _literal_real_decimal(argument) is not None)
+                and (_literal_real_decimal(argument) is not None
+                     or _bound_real_decimal(argument) is not None))
     except Exception:
         return False
 
@@ -7111,7 +7195,9 @@ def _realtobits_literal_call(expression):
 def _convert_realtobits_literal(sm, expression):
     if not _realtobits_literal_call(expression):
         return unsupported(sm, expression, "CallExpression:$realtobits")
-    value = _literal_real_decimal(expression.arguments[0])
+    value = (_literal_real_decimal(expression.arguments[0])
+             if _literal_real_decimal(expression.arguments[0]) is not None
+             else _bound_real_decimal(expression.arguments[0]))
     try:
         real_value = float(value)
         if not math.isfinite(real_value):
@@ -7144,17 +7230,21 @@ def _shortrealtobits_literal_call(expression):
         if len(arguments) != 1:
             return False
         argument = arguments[0]
-        if (type(argument).__name__ != "ConversionExpression"
-                or str(getattr(argument, "conversionKind", "")).split(".")[-1]
-                != "Implicit"):
+        if type(argument).__name__ == "ConversionExpression":
+            if str(getattr(argument, "conversionKind", "")).split(".")[-1] != "Implicit":
+                return False
+            node = getattr(argument, "operand", None)
+        elif type(argument).__name__ == "NamedValueExpression":
+            node = argument
+        else:
             return False
-        node = getattr(argument, "operand", None)
         if type(node).__name__ == "UnaryExpression":
             op = str(getattr(node, "op", "")).split(".")[-1]
             if op not in ("Plus", "Minus", "UnaryPlus", "UnaryMinus"):
                 return False
             node = getattr(node, "operand", None)
-        literal_operand = type(node).__name__ == "RealLiteral"
+        literal_operand = (type(node).__name__ in
+                           ("RealLiteral", "NamedValueExpression"))
         itor_operand = (type(node).__name__ == "CallExpression"
                         and not getattr(node, "bad", False)
                         and getattr(node, "isSystemCall", False)
@@ -7164,7 +7254,8 @@ def _shortrealtobits_literal_call(expression):
                 and getattr(expression.type, "bitWidth", None) == 32
                 and getattr(expression.type, "isIntegral", False)
                 and not getattr(expression.type, "isSigned", True)
-                and _literal_real_decimal(argument) is not None)
+                and (_literal_real_decimal(argument) is not None
+                     or _bound_real_decimal(argument) is not None))
     except Exception:
         return False
 
@@ -7172,7 +7263,9 @@ def _shortrealtobits_literal_call(expression):
 def _convert_shortrealtobits_literal(sm, expression):
     if not _shortrealtobits_literal_call(expression):
         return unsupported(sm, expression, "CallExpression:$shortrealtobits")
-    value = _literal_real_decimal(expression.arguments[0])
+    value = (_literal_real_decimal(expression.arguments[0])
+             if _literal_real_decimal(expression.arguments[0]) is not None
+             else _bound_real_decimal(expression.arguments[0]))
     try:
         real_value = float(value)
         if not math.isfinite(real_value):

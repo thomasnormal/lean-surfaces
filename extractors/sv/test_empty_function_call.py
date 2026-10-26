@@ -335,6 +335,35 @@ class EmptyFunctionCalls(unittest.TestCase):
                              "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
+    def test_realtobits_literal_bound_name_is_exact(self):
+        design = lower(
+            'module top; logic [63:0] bits; real value; initial begin '
+            'value = -2.5; bits = $realtobits(value); end endmodule')
+        literals = [node for node in nodes(design)
+                    if node.get("realtobits_literal")]
+        self.assertEqual(len(literals), 1)
+        self.assertEqual(literals[0]["bits"],
+                         "1100000000000100000000000000000000000000000000000000000000000000")
+
+    def test_shortrealtobits_literal_bound_name_is_exact(self):
+        design = lower(
+            'module top; logic [31:0] bits; shortreal value = 1.0; initial '
+            'bits = $shortrealtobits(value); end endmodule')
+        literals = [node for node in nodes(design)
+                    if node.get("shortrealtobits_literal")]
+        self.assertEqual(len(literals), 1)
+        self.assertEqual(literals[0]["bits"],
+                         "00111111100000000000000000000000")
+
+    def test_literal_bound_real_control_write_stays_loud(self):
+        design = lower(
+            'module top; logic [63:0] bits; real value; initial begin '
+            'value = 1.0; if (1) value = 2.0; bits = $realtobits(value); '
+            'end endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            and "$realtobits" in node.get("text", "")
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

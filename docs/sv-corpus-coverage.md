@@ -4635,3 +4635,16 @@ On the refreshed **22,054-path** sv-tests-2 snapshot, clean files move
 `AssignmentExpression:target` is **2,937**. Differential coverage grows
 **204/199/0/5 → 205/200/0/5** with no disagreements; grammar coverage remains
 **216/89/127**.
+
+## Literal-bound real-to-bits conversions — 2026-10-26
+
+The extractor now lowers `$realtobits` and `$shortrealtobits` when a named
+real value is proven from a finite literal initializer or earlier direct
+blocking assignment. Dynamic and control-dependent real storage remains loud;
+the corpus and differential deltas are recorded below.
+
+On the refreshed **22,056-path** sv-tests-2 snapshot, clean files move
+**5,200 → 5,207** and partial files **16,789 → 16,782** (67 include skips).
+`CallExpression` falls **2,796 → 2,780**. Differential coverage grows
+**231/226/0/5 → 232/227/0/5** with no disagreements; grammar coverage remains
+**217/90/127**.

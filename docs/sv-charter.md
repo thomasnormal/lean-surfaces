@@ -128,6 +128,19 @@ skips), with `AssignmentExpression:target` at **2,853** and
 `ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
 **273/268/0/5 → 274/269/0/5** and grammar coverage remains **217/92/125**.
 
+## Discarded pre-trigger `event.triggered()` queries — 2026-10-26
+
+Discarded `event.triggered()` calls on untouched events now erase their exact
+pre-trigger false result through the existing event-history converter.
+Triggered, dynamic, and value-position queries remain loud. The
+`event_triggered_statement` fixture supplies the self-check differential row
+and Lean receipt; the pinned oracle agrees with its `PASS` transcript.
+
+The 22,059-path census remains **5,240 clean / 16,752 partial** (67 include
+skips), with `AssignmentExpression:target` at **2,853** and
+`ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
+**274/269/0/5 → 275/270/0/5** and grammar coverage remains **217/92/125**.
+
 ## Discarded time-scale metadata queries — 2026-10-26
 
 Valid `$timeunit` and `$timeprecision` calls in statement position now erase

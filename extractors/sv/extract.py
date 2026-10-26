@@ -15775,6 +15775,15 @@ def _convert_syscall(sm, s, e):
             # outside this boundary.
             return {"kind": "Empty", "span": node_span(sm, s),
                     "floating_string_atoreal_statement": name}
+    if is_sys and _event_triggered_false(e):
+        # Before any trigger, an untouched event's one-bit ``triggered`` query
+        # is exactly false. Reuse the value converter's event-history check
+        # before erasing the discarded result; triggered or dynamic events
+        # remain loud.
+        value = _convert_event_triggered_false(sm, e)
+        if value.get("kind") != "Unsupported":
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "event_triggered_statement": name}
     if is_sys and _associative_empty_query(e):
         # An untouched 2-state associative array has an exact zero element
         # count.  Reuse the value converter's source-order and type checks

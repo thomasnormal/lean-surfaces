@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 274 | 269 | 0 | 5 | sv-tests-2 declarations |
+| 275 | 270 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -198,6 +198,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `semaphore_default_try_get` | `Examples/system-verilog/semaphore_default_try_get/semaphore_default_try_get.sv` | match | **MATCH** | `ok` | MATCH |
 | `mailbox_empty_try` | `Examples/system-verilog/mailbox_empty_try/mailbox_empty_try.sv` | match | **MATCH** | `ok` | MATCH |
 | `event_triggered_false` | `Examples/system-verilog/event_triggered_false/event_triggered_false.sv` | match | **MATCH** | `ok` | MATCH |
+| `event_triggered_statement` | `Examples/system-verilog/event_triggered_statement/event_triggered_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `semaphore_literal_put_get` | `Examples/system-verilog/semaphore_literal_put_get/semaphore_literal_put_get.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_struct_defaults` | `Examples/system-verilog/dynamic_array_struct_defaults/dynamic_array_struct_defaults.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_struct_field_defaults` | `Examples/system-verilog/dynamic_array_struct_field_defaults/dynamic_array_struct_field_defaults.sv` | match | **MATCH** | `ok` | MATCH |

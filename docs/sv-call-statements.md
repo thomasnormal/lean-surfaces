@@ -73,6 +73,11 @@ A discarded `atoreal()` conversion from a proven ASCII literal is likewise
 inert because the tier has no represented real storage. Dynamic strings,
 nonliteral writes, and value-position real conversions remain loud.
 
+A discarded `event.triggered()` query on an untouched event is inert after the
+existing converter proves its pre-trigger false result. Triggered events,
+dynamic handles, and value-position queries remain loud at the event-state
+boundary.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument

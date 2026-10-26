@@ -1657,6 +1657,15 @@
       "expect": "match"
     },
     {
+      "name": "event_triggered_statement",
+      "file": "Examples/system-verilog/event_triggered_statement/event_triggered_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "semaphore_literal_put_get",
       "file": "Examples/system-verilog/semaphore_literal_put_get/semaphore_literal_put_get.sv",
       "module": "top",

@@ -1691,8 +1691,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
       let st ← get
       match delNames st.locals names.toList with
       | (env, Option.none) => do envPut env; pure .next
-      | (_, some n) =>
-          refuse s!"'del {n}': the name is not a bound local — CPython raises UnboundLocalError here and the model never invents one (docs/memory-model.md §the del statement)"
+      | (_, some n) => raisePy (.unboundLocalError n)
   | .tryStmt body excName handler tryUnsupported _ =>
       -- THE SUBSTRATE EARNS ITS KEEP HERE. `tryCatch` on `ExceptT PyErr …`
       -- catches exactly the LANGUAGE's raise and lets `Loud` — the model giving

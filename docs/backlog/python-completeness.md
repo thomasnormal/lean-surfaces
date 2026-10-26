@@ -17,6 +17,30 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-137 — make function-scope `del` errors faithful
+
+The remaining four `del.name-set-census` rows were the same missing semantic:
+the extractor refused any read after a delete and the runtime refused every
+delete miss instead of producing CPython's `UnboundLocalError`. Function
+frames now mark every bare-name delete as a static local at entry. Reads after
+straight-line, branch, or loop deletes see that marker; a later assignment
+shadows it. The delete arm raises the same error for a module-global target,
+a never-bound name, and a second delete, retaining earlier left-to-right
+deletions.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `del_lab.read_after`, `del_global`, `del_never`, and `double_del` MATCH in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,624 matched / 70 refused / 0 failed |
+| Full proof differential | 3,694 cases: 3,515 matched / 179 refused / 0 failed |
+| Refusal census | 70 rows, 0 drift; `del.name-set-census` removed |
+| Extractor tests | 137 passed, with branch/loop/read-after-delete controls updated |
+| Formatting | `git diff --check` passed |
+
+DECIDED: use the static-local marker and faithful `UnboundLocalError` for all
+bare-name function deletes; retain existing loud boundaries for unsupported
+delete targets and module-scope static bindings.
+
 ## 2026-10-26-pycomplete-136 — admit the safe generator yield-under-try slice
 
 The remaining `exc.handler` census row was `drive_yield_under_try`: its

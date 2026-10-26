@@ -4757,18 +4757,16 @@ with NO `ce_norm` (nothing reads heap or clock — `withClock_locals`
 aligns the seeded scrutinee). The script arm is OUTSIDE the mutual
 block and outside all three inductions.
 
-**Function scope (the recorded census).** Clause 1: `del` targets BIND
+**Function scope.** Clause 1: `del` targets BIND
 (`_assigned_names` gains `ast.Delete`, repairing its recorded
 disagreement with `_binding_linenos` — which also makes a deleted
 capture a REBIND for the H7 snapshot admission, and a deleted callee a
-`_shadowed_calls` hit, both for free). Clause 2: a load reachable while
-the name may still be deleted refuses the function through
-`locals_unsupported`. The extractor now carries a small flow census:
-straight-line stores and loop-body stores clear the deleted state, while
-branch joins remain conservative. Thus `rebind_after` and `loop_del` agree
-with CPython, while `read_after` remains loud. The runtime arm's miss case
-is therefore only ever `del` of a never-bound name (`del g`/`del nope`/double-
-del): loud, never a fabricated `UnboundLocalError`.
+`_shadowed_calls` hit, both for free). Every deleted bare name also gets a
+static-local marker at frame entry. A later read therefore raises the
+faithful `UnboundLocalError`, including reads after a branch or loop delete;
+a later assignment shadows the marker. The runtime miss path uses the same
+error for a module-global target, a never-bound name, and a second delete,
+while preserving the left-to-right partial effect.
 
 **Module scope (the reconciled arm, script surface only).** By §the
 publish the frame's locals ARE the module globals and the one pipeline

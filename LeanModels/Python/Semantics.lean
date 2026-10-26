@@ -6595,6 +6595,7 @@ mutual
   partial def stmtUnboundLocalNames : Stmt → List String
     | .unsupported "AnnAssign:no-value" text _ =>
         (annNoValueName text).toList
+    | .delStmt names _ => names.toList
     | .whileLoop _ body orelse _ | .ifStmt _ body orelse _ =>
         (body.toList.map stmtUnboundLocalNames).flatten
           ++ (orelse.toList.map stmtUnboundLocalNames).flatten
@@ -9557,19 +9558,15 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
       -- (the partial effect: earlier removals are already applied when a
       -- later target misses); a hit only rewrites `st.locals`, which is
       -- not a `World` field, so `worldInv` holds by construction. The
-      -- miss case is where CPython raises `UnboundLocalError` — with the
-      -- extractor census in force (clauses 1–2) no admitted body ever
-      -- READS a deleted name, so a miss is only ever `del` of a
-      -- never-bound name (`del g`, `del nope`, double `del`) and the
-      -- model refuses LOUDLY rather than invent an error class it does
-      -- not carry. (Module scope never reaches this arm from the script
+      -- miss case is CPython's `UnboundLocalError`: the static-local marker
+      -- installed at frame entry covers a module-global target, a
+      -- never-bound name, and a second deletion. (Module scope never reaches this arm from the script
       -- surface — `execScriptOne` owns it — except through a delegated
       -- `while … else`, where locals ARE the module globals and the same
       -- hit/miss split is exact/loud.)
       (match delNames st.locals names.toList with
        | (env, Option.none) => .ok { st with locals := env } .next
-       | (_, some n) =>
-         .unsupported s!"'del {n}': the name is not a bound local — CPython raises UnboundLocalError here and the model never invents one (docs/memory-model.md §the del statement)")
+       | (_, some n) => .exn st (.unboundLocalError n))
     | .withStmt items body withUnsupported _ =>
       match withUnsupported, items.toList with
       | some reason, _ =>
@@ -9904,11 +9901,15 @@ def callIn (m : Module) (fuel : Nat) (w : World) (fname : String)
         -- TT writes) therefore happens only as a consumer steps it,
         -- which is exactly the laziness the search depends on.
         let g : Obj :=
-          .generator fname (mkCallEnv f.params args) [.block f.body.toList] .created
+          .generator fname
+            (markUnboundLocals f.body.toList (mkCallEnv f.params args))
+            [.block f.body.toList] .created
         .ok { w with heap := w.heap.push g } (.ref w.heap.size)
       else
         Run.toWorld <|
-          execStmts m fuel ⟨w, mkCallEnv f.params args⟩ f.body.toList ⤳ fun st flow =>
+          execStmts m fuel
+            ⟨w, markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
+            f.body.toList ⤳ fun st flow =>
           match flow with
           | .ret v => .ok st v
           | .next => .ok st .none

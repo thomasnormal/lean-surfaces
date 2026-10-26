@@ -1026,10 +1026,6 @@ WHITELIST_CLASS = {
     "fstring_lab::format_spec_num": "fstring.format-spec",
     "fstring_repr::instance": "render.identity",
     "alias_lab::read_alias": "firstclass.callable",
-    "del_lab::read_after": "del.name-set-census",
-    "del_lab::del_global": "del.name-set-census",
-    "del_lab::del_never": "del.name-set-census",
-    "del_lab::double_del": "del.name-set-census",
     # `del_lab::del_sub` LEFT this table with §del: clause 4 admits a single
     # subscript target and ingestion rewrites it, so the row is now `match`.
     # §del: the same-size KEY-SET CHURN regime, REACHABLE for the first time

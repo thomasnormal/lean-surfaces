@@ -1818,14 +1818,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                     "rule): " + ", ".join(early)
                     if (early := _early_nested_calls(node))
                     else (
-                        # del census clause 2 (docs/memory-model.md
-                        # paragraph "the del statement")
-                        "reads del'd name(s) (a dynamic-env fallthrough "
-                        "to a module name would be silently wrong): "
-                        + ", ".join(delread)
-                        if (delread := _del_read_names(node))
-                        else (
-                            "matches locally-bound handler name(s) "
+                        "matches locally-bound handler name(s) "
                             "(static-locals rule): " + ", ".join(handlers)
                             if (handlers := _shadowed_handlers(node))
                             else (
@@ -1836,8 +1829,7 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                             )
                         )
                     )
-                )
-            ),
+                ),
             # a nested def DIRECTLY in this body is the H7 closure shape
             # (a single-target `name = lambda …` assign likewise); one
             # nested deeper (inside an if/loop) stays a plain

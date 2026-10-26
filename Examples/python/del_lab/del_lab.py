@@ -4,20 +4,20 @@ with the one pipeline").
 
 FUNCTION scope is the recorded slice: `del` of a bound local is a pure
 locals rewrite (`Env.remove` -- no World field moves), the effect is
-PARTIAL left to right, and the read-after-del hazard is closed by the
-extractor CENSUS (clause 2: a load reachable while the name may still be
-deleted refuses the whole function), never by a fabricated UnboundLocalError.
-The census tracks straight-line rebinding and loop-body rebinding, so
-`rebind_after` and `loop_del` agree with CPython while a true read-after-del
-still stays loud.
+PARTIAL left to right, and the read-after-del hazard uses the function's
+static-local marker to produce CPython's UnboundLocalError. The marker is
+installed for every bare-name delete, so straight-line, branch, and loop
+reads all retain Python's whole-body local rule.
 
-Runtime refusals (the census cannot see boundness): `del` of a
-module-global NAME (CPython localises it and raises UnboundLocalError),
-`del` of a never-bound name, double `del` -- all LOUD, never a guessed
-exception class. Attribute deletion follows the measured single-target
+Runtime misses now raise the faithful UnboundLocalError: `del` of a
+module-global NAME (CPython localises it), `del` of a never-bound name, and
+double `del`. Attribute deletion follows the measured single-target
 admission alongside item deletion: `del o.attr` is lowered at ingestion and
 mutates an admitted instance; unsupported receivers and missing attributes
 keep their loud or faithful boundaries.
+
+The closed-call battery below covers the three faithful miss cases.
+The proof and runner surfaces carry the same exception class.
 
 MODULE-scope `del` is the script surface's arm and is pinned by the
 script corpus rows (del_global_script / del_never_script /

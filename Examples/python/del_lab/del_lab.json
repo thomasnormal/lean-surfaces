@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/del_lab/del_lab.py",
-  "source_sha256": "a4c184ff5aa2baf82f1f59e40eeb80b22458da874e9e3c4c8c6338c44cfeec07",
+  "source_sha256": "1f145978e6711f051b753bda8410be4552614156058023a76b7fe4c88717ab84",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "del_lab -- the `del <name>` acceptance set (docs/memory-model.md\nparagraph \"the del statement\"; docs/backlog.md paragraph \"del RECONCILED\nwith the one pipeline\").\n\nFUNCTION scope is the recorded slice: `del` of a bound local is a pure\nlocals rewrite (`Env.remove` -- no World field moves), the effect is\nPARTIAL left to right, and the read-after-del hazard is closed by the\nextractor CENSUS (clause 2: a load reachable while the name may still be\ndeleted refuses the whole function), never by a fabricated UnboundLocalError.\nThe census tracks straight-line rebinding and loop-body rebinding, so\n`rebind_after` and `loop_del` agree with CPython while a true read-after-del\nstill stays loud.\n\nRuntime refusals (the census cannot see boundness): `del` of a\nmodule-global NAME (CPython localises it and raises UnboundLocalError),\n`del` of a never-bound name, double `del` -- all LOUD, never a guessed\nexception class. Attribute deletion follows the measured single-target\nadmission alongside item deletion: `del o.attr` is lowered at ingestion and\nmutates an admitted instance; unsupported receivers and missing attributes\nkeep their loud or faithful boundaries.\n\nMODULE-scope `del` is the script surface's arm and is pinned by the\nscript corpus rows (del_global_script / del_never_script /\ndel_trailing_script / del_partial_script and the loud trio), not here:\non the closed-function surface a top-level `del` refuses at module init\n(empty init locals) and poisons its targets -- `gnum` below exists so\n`del_global` has a real module global to fail on.\n"
+            "value": "del_lab -- the `del <name>` acceptance set (docs/memory-model.md\nparagraph \"the del statement\"; docs/backlog.md paragraph \"del RECONCILED\nwith the one pipeline\").\n\nFUNCTION scope is the recorded slice: `del` of a bound local is a pure\nlocals rewrite (`Env.remove` -- no World field moves), the effect is\nPARTIAL left to right, and the read-after-del hazard uses the function's\nstatic-local marker to produce CPython's UnboundLocalError. The marker is\ninstalled for every bare-name delete, so straight-line, branch, and loop\nreads all retain Python's whole-body local rule.\n\nRuntime misses now raise the faithful UnboundLocalError: `del` of a\nmodule-global NAME (CPython localises it), `del` of a never-bound name, and\ndouble `del`. Attribute deletion follows the measured single-target\nadmission alongside item deletion: `del o.attr` is lowered at ingestion and\nmutates an admitted instance; unsupported receivers and missing attributes\nkeep their loud or faithful boundaries.\n\nThe closed-call battery below covers the three faithful miss cases.\nThe proof and runner surfaces carry the same exception class.\n\nMODULE-scope `del` is the script surface's arm and is pinned by the\nscript corpus rows (del_global_script / del_never_script /\ndel_trailing_script / del_partial_script and the loud trio), not here:\non the closed-function surface a top-level `del` refuses at module init\n(empty init locals) and poisons its targets -- `gnum` below exists so\n`del_global` has a real module global to fail on.\n"
           }
         }
       },
@@ -664,7 +664,7 @@
           }
         ],
         "args_unsupported": null,
-        "locals_unsupported": "reads del'd name(s) (a dynamic-env fallthrough to a module name would be silently wrong): x",
+        "locals_unsupported": null,
         "body": [
           {
             "kind": "Assign",

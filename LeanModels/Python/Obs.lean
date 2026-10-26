@@ -1702,7 +1702,10 @@ theorem fuelMono (fuel : Nat) :
           refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
             (Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)))
           refine Run.le_toWorld
-            (Run.le_bind (ihSs m ⟨w, mkCallEnv f.params args⟩ f.body.toList k hk)
+            (Run.le_bind
+              (ihSs m
+                ⟨w, markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
+                f.body.toList k hk)
               fun st flow => ?_)
           cases flow <;> exact Run.le_refl _
     -- execFor
@@ -3165,7 +3168,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         | mk env miss =>
           cases miss with
           | none => exact .okF rfl _
-          | some n => exact .unsupported
+          | some n => exact .exn
       | yieldStmt e _ => simp only [execStmt]; exact .unsupported
       | ret value _ =>
         cases value with
@@ -3332,7 +3335,10 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         simp only [findFunction_notGen hm hff, Bool.false_eq_true, if_false]
         refine .ite .unsupported (.ite .unsupported (.ite .exn ?_))
         refine Run.OkW.toWorld ?_
-        refine .bind (ihSs ⟨w, mkCallEnv f.params args⟩ f.body.toList
+        refine .bind
+          (ihSs
+            ⟨w, markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
+            f.body.toList
           (findFunction_heapFree hm hff)) fun st₁ flow h₁ => ?_
         cases flow with
         | ret v => exact .okF h₁ _

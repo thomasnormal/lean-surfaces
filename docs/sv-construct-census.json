@@ -487,10 +487,6 @@
     13
    ],
    [
-    "ArrayReduction:storage-or-effects",
-    13
-   ],
-   [
     "ConditionalStatement:pattern",
     12
    ],
@@ -512,6 +508,10 @@
    ],
    [
     "VariableDeclStatement:2state",
+    12
+   ],
+   [
+    "ArrayReduction:storage-or-effects",
     12
    ],
    [
@@ -964,8 +964,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5198,
-   "partial": 16791,
+   "clean": 5199,
+   "partial": 16790,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1026,7 +1026,7 @@
     52
    ],
    "simulation": [
-    4507,
+    4508,
     18687
    ],
    "simulation elaboration": [
@@ -1591,9 +1591,9 @@
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 277,
+    "clean": 278,
     "error": 0,
-    "partial": 519,
+    "partial": 518,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

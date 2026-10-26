@@ -93,11 +93,21 @@ class ArrayReductions(unittest.TestCase):
         self.assertTrue(any(n.get('array_reduction_lowered') == 'sum'
                             for n in nodes(d)))
 
+    def test_dynamic_array_index_reduction_is_admitted(self):
+        source = ("module top; int values[]; int total; initial begin "
+                  "values = new[3]('{10,20,30}); "
+                  "total = values.sum with (item + item.index()); end endmodule")
+        d = lower(source)
+        self.assertFalse(walls(d))
+        self.assertTrue(any(n.get('array_reduction_index') for n in nodes(d)))
+
     def test_with_effects_remain_loud(self):
         self.assertIn('ArrayReduction:storage-or-effects',walls(fixture('effect')))
 
-    def test_iterator_index_query_remains_loud(self):
-        self.assertIn('ArrayReduction:storage-or-effects',walls(fixture('iterator_index')))
+    def test_iterator_index_query_uses_sampled_position(self):
+        d = fixture('iterator_index')
+        self.assertFalse(walls(d))
+        self.assertTrue(any(n.get('array_reduction_index') for n in nodes(d)))
 
     def test_empty_dynamic_storage_uses_zero_identity(self):
         d=lower('module top;int a[];int y,z;initial begin '

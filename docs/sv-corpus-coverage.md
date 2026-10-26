@@ -93,6 +93,17 @@ The **22,056-path** census moves **5,197 → 5,198 clean** and **16,792 →
 **228/223/0/5 → 229/224/0/5** with no disagreements; grammar coverage remains
 **217/90/127**.
 
+## Dynamic-array iterator-index reductions — 2026-10-26
+
+The finite sampled dynamic-array reduction lowering now supplies the
+zero-based cell position to a pure `item.index()` term. Dynamic or unrelated
+iterator calls remain outside the representation.
+
+The **22,056-path** census moves **5,198 → 5,199 clean** and **16,791 →
+16,790 partial** (67 include skips). Differential coverage grows
+**229/224/0/5 → 230/225/0/5** with no disagreements; grammar coverage remains
+**217/90/127**.
+
 ## Packed-array packed-struct member windows — 2026-10-26
 
 Constant element selections of packed arrays whose elements are untagged

@@ -38,6 +38,11 @@ clause that selects one integral field. The row iterator is bound directly to
 the already-flattened `array[index].field` cell; whole-struct reductions,
 aggregate fields, and iterator-index queries remain outside the representation.
 
+For a finite zero-based dynamic array, the iterator `index()` method is also
+pure: each expanded reduction term receives its sampled position as an
+integral literal. Dynamic or nonzero-index uncertainty and non-reduction
+iterator calls remain loud.
+
 The paired **22,035** paths gain **11 clean extractions**, no losses:
 **4,309 → 4,320 clean**, **17,660 → 17,649 partial**, **66 include skips**,
 zero errors. All 4,309 previously clean extracted designs remain identical.
@@ -72,6 +77,14 @@ field cells provide the row binding, so `items.sum() with (item.weight)` keeps
 the ordinary scalar width and signedness. Aggregate results, nested aggregate
 fields, and `item.index()` remain loud. The `dynamic_struct_reduction` fixture
 and differential row cover this field form.
+
+## Dynamic-array iterator-index reductions — 2026-10-26
+
+The finite sampled dynamic-array surface now admits `item.index()` inside a
+pure reduction `with` expression. The index is the expanded zero-based cell
+position, so `values.sum with (item + item.index())` retains intrinsic width
+and evaluates deterministically. The `dynamic_array_index_reduction` fixture
+and differential row cover this method; unrelated iterator calls remain loud.
 
 ## Empty dynamic-array reductions — 2026-10-26
 

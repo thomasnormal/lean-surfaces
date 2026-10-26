@@ -196,6 +196,18 @@ The capped **22,056-path** census moves **5,197 → 5,198 clean / 16,792 →
 → 229/224/0/5** with no disagreements; grammar coverage remains
 **217/90/127**.
 
+## Dynamic-array iterator-index reductions — 2026-10-26
+
+Pure reductions over a finite sampled dynamic array now lower `item.index()`
+to each cell's zero-based position. The ordinary scalar width and signedness
+remain in force, while dynamic or unrelated iterator calls remain loud. The
+`dynamic_array_index_reduction` fixture and differential case cover the form.
+
+The capped **22,056-path** census moves **5,198 → 5,199 clean / 16,791 →
+16,790 partial** (67 include skips). Differential coverage grows **229/224/0/5
+→ 230/225/0/5** with no disagreements; grammar coverage remains
+**217/90/127**.
+
 ## Semaphore zero-key methods — 2026-10-24
 
 The self-check surface now admits `semaphore.put(0)` and `semaphore.get(0)`

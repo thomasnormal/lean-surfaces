@@ -2064,6 +2064,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "dynamic_array_index_reduction",
+      "file": "Examples/system-verilog/dynamic_array_index_reduction/dynamic_array_index_reduction.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

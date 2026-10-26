@@ -1587,6 +1587,7 @@ _ELAB_PARAMETERS = set()
 _ELAB_HIER_VALUES = set()
 _ELAB_CURRENT_SCOPE = ""
 _ARRAY_REDUCTION_VALUES = {}
+_ARRAY_REDUCTION_INDICES = {}
 _ASSOC_CELLS = {}
 
 
@@ -7215,6 +7216,7 @@ def _convert_legacy_call(sm, expression):
             (_plusargs_call, _convert_plusargs_call),
             (_dynamic_cast_call, _convert_dynamic_cast),
             (_isunbounded_call, _convert_isunbounded),
+            (_array_reduction_index_call, _convert_array_reduction_index),
             (_array_reduction_call, _convert_array_reduction),
             (lambda e: _enum_method_call(e, include_name=True), _convert_enum_method),
             (_clog2_call, _convert_clog2),
@@ -12091,6 +12093,37 @@ def _array_reduction_call(expression):
             and expression.subroutineName in ("sum", "product", "and", "or", "xor"))
 
 
+def _array_reduction_index_call(expression):
+    """Recognize ``item.index()`` while lowering a finite array reduction."""
+    try:
+        if (_SYM is not None or type(expression).__name__ != "CallExpression"
+                or not expression.isSystemCall
+                or expression.subroutineName != "index"
+                or len(expression.arguments) != 1):
+            return False
+        argument = expression.arguments[0]
+        return (str(getattr(getattr(argument, "symbol", None), "kind", ""))
+                == "SymbolKind.Iterator")
+    except Exception:
+        return False
+
+
+def _convert_array_reduction_index(sm, expression):
+    if not _array_reduction_index_call(expression):
+        return unsupported(sm, expression, "ArrayReduction:iterator-index")
+    value = _ARRAY_REDUCTION_INDICES.get(expression.arguments[0].symbol)
+    if value is None:
+        return unsupported(sm, expression, "ArrayReduction:iterator-index")
+    width, _two_state, reason = type_width_2s(expression.type)
+    if width is None or reason is not None:
+        return unsupported(sm, expression, "ArrayReduction:iterator-index")
+    return signed_metadata({
+        "kind": "Literal", "span": node_span(sm, expression),
+        "width": width, "bits": format(value % (1 << width), "0%db" % width),
+        "array_reduction_index": True,
+    }, expression.type)
+
+
 def _array_reduction_shape(expression):
     """Return the finite unpacked dimensions available to a reduction.
 
@@ -12225,12 +12258,16 @@ def _array_reduction_terms(sm, expression, shape):
                                     expression.arguments[0].type.canonicalType.elementType)
         if info is not None:
             previous = dict(_ARRAY_REDUCTION_VALUES)
+            previous_indices = dict(_ARRAY_REDUCTION_INDICES)
             _ARRAY_REDUCTION_VALUES[info.iterVar] = value
+            _ARRAY_REDUCTION_INDICES[info.iterVar] = position
             try:
                 value = convert_expr(sm, info.iterExpr)
             finally:
                 _ARRAY_REDUCTION_VALUES.clear()
                 _ARRAY_REDUCTION_VALUES.update(previous)
+                _ARRAY_REDUCTION_INDICES.clear()
+                _ARRAY_REDUCTION_INDICES.update(previous_indices)
         parts.append(value)
     return parts
 
@@ -12544,6 +12581,8 @@ def _case_skip_call_purity(node, packed_members):
             for argument in node.arguments)
     if _SYM is None and _array_reduction_call(node):
         return _array_reduction_source_ok(node)
+    if _SYM is None and _array_reduction_index_call(node):
+        return True
     if _SYM is None and _string_literal_getc_method(node):
         return True
     if (type(node).__name__ == "CallExpression"

@@ -161,7 +161,7 @@ and `ExpressionStatement:CallExpression` at **2,775**. Differential coverage
 grows **276/271/0/5 → 277/272/0/5** with no disagreements, and grammar
 coverage remains **217/92/125**.
 
-## Discarded literal-string transformations — 2026-10-27
+## Discarded literal-string transformations — 2026-10-26
 
 Discarded `toupper()`, `tolower()`, and literal-bound `substr()` calls now
 erase their fresh string result after the existing ASCII source-history check.

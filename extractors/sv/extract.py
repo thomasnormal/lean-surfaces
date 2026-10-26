@@ -12057,9 +12057,66 @@ def _array_reduction_call(expression):
             and expression.subroutineName in ("sum", "product", "and", "or", "xor"))
 
 
+def _array_reduction_shape(expression):
+    """Return the finite unpacked dimensions available to a reduction.
+
+    Reduction methods consume one unpacked dimension at a time.  Ordinary
+    storage expressions use their flat array name; an iterator bound by an
+    enclosing ``with`` expression uses the synthetic row name installed by
+    ``_array_reduction_terms``.  Dynamic, queue, associative, and aggregate
+    leaves remain outside this representation.
+    """
+    try:
+        if type(expression).__name__ == "ConversionExpression":
+            expression = getattr(expression, "operand", None)
+            if expression is None:
+                return None
+        if _SYM is None and getattr(expression, "symbol", None) in _ARRAY_REDUCTION_VALUES:
+            source_name = _ARRAY_REDUCTION_VALUES[expression.symbol].get("name")
+            source_type = expression.type
+        elif (_storage_expression(expression)
+              and str(expression.symbol.kind) == "SymbolKind.Variable"):
+            source_name = _array_storage_name(expression.symbol)
+            source_type = expression.type
+        elif (type(expression).__name__ == "NamedValueExpression"
+              and str(getattr(expression.symbol, "kind", ""))
+              == "SymbolKind.Iterator"):
+            # Purity checking visits an inner reduction before its enclosing
+            # iterator has been bound.  Its type still carries the complete
+            # finite suffix shape; the concrete synthetic name is supplied
+            # when the enclosing reduction converts its terms.
+            source_name = getattr(expression.symbol, "name", None)
+            source_type = expression.type
+        else:
+            return None
+        if type(source_type.canonicalType).__name__ == "DynamicArrayType":
+            count = (_dynamic_array_constant_extent(expression.symbol)
+                     if getattr(expression, "symbol", None) is not None else None)
+            if count is None:
+                return None
+            inner = _dynamic_array_element_shape(source_type.canonicalType.elementType)
+            if inner is None:
+                return None
+            inner_dimensions, leaf_type, _inner_width, _inner_two = inner
+            shape = ([(0, count - 1)] + inner_dimensions, leaf_type)
+        else:
+            shape = _fixed_array_dimensions(source_type)
+        if shape is None:
+            return None
+        dimensions, leaf_type = shape
+        width, two_state, reason = type_width_2s(leaf_type)
+        if source_name is None or width is None or reason is not None:
+            return None
+        return source_name, width, two_state, dimensions, leaf_type
+    except Exception:
+        return None
+
+
 def _array_reduction_source_ok(expression):
-    if (expression.bad or len(expression.arguments) != 1
-            or _fixed_array_shape(expression.arguments[0]) is None):
+    if expression.bad or len(expression.arguments) != 1:
+        return False
+    shape = _array_reduction_shape(expression.arguments[0])
+    if shape is None:
         return False
     info = expression.subroutine.extraInfo
     return info is None or (type(info).__name__ == "IteratorCallInfo"
@@ -12067,7 +12124,8 @@ def _array_reduction_source_ok(expression):
 
 
 def _array_reduction_terms(sm, expression, shape):
-    name, width, _two_state, left, right = shape
+    name, width, _two_state, dimensions, _leaf_type = shape
+    left, right = dimensions[0]
     info = expression.subroutine.extraInfo
     parts = []
     for position in range(left, right + (1 if right >= left else -1), 1 if right >= left else -1):
@@ -12111,7 +12169,7 @@ def _convert_array_reduction(sm, expression):
     if (reason is not None or type_width_2s(result_type)[0] != width
             or bool(result_type.isSigned) != bool(expression.type.isSigned)):
         return unsupported(sm, expression, "ArrayReduction:result-type")
-    parts = _array_reduction_terms(sm, expression, _fixed_array_shape(expression.arguments[0]))
+    parts = _array_reduction_terms(sm, expression, _array_reduction_shape(expression.arguments[0]))
     if not _case_expression_ok(parts) or any(width_of(part) != width for part in parts):
         return unsupported(sm, expression, "ArrayReduction:with-expression")
     result = _balanced_array_reduction(sm, expression, parts)

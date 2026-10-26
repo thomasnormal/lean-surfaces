@@ -419,10 +419,6 @@
     19
    ],
    [
-    "ArrayReduction:storage-or-effects",
-    19
-   ],
-   [
     "TypeParameterSymbol:TypeParameter",
     18
    ],
@@ -448,6 +444,10 @@
    ],
    [
     "Generate:invalid-array",
+    16
+   ],
+   [
+    "ArrayReduction:storage-or-effects",
     16
    ],
    [
@@ -964,8 +964,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5192,
-   "partial": 16797,
+   "clean": 5195,
+   "partial": 16794,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1026,7 +1026,7 @@
     52
    ],
    "simulation": [
-    4501,
+    4504,
     18687
    ],
    "simulation elaboration": [
@@ -1591,9 +1591,9 @@
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 271,
+    "clean": 274,
     "error": 0,
-    "partial": 525,
+    "partial": 522,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

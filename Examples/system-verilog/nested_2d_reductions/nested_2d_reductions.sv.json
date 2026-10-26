@@ -1,0 +1,516 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/nested_2d_reductions/nested_2d_reductions.sv",
+  "source_sha256": "46a54c98500e4025a75c445401624880801fd9aa6b30b1da524e6237a115c023",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 15,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 52
+            },
+            "name": "matrix[0][0]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 3,
+                "col": 34,
+                "end_line": 3,
+                "end_col": 35
+              },
+              "width": 8,
+              "bits": "00000101"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 52
+            },
+            "name": "matrix[0][1]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 3,
+                "col": 37,
+                "end_line": 3,
+                "end_col": 39
+              },
+              "width": 8,
+              "bits": "00001010"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 52
+            },
+            "name": "matrix[1][0]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 3,
+                "col": 44,
+                "end_line": 3,
+                "end_col": 46
+              },
+              "width": 8,
+              "bits": "00001111"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 52
+            },
+            "name": "matrix[1][1]",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 3,
+                "col": 48,
+                "end_line": 3,
+                "end_col": 50
+              },
+              "width": 8,
+              "bits": "00010100"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 15,
+              "end_line": 4,
+              "end_col": 25
+            },
+            "name": "rows_total",
+            "width": 8,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 29
+            },
+            "name": "explicit_total",
+            "width": 8,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 6,
+              "col": 3,
+              "end_line": 14,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 6,
+                "col": 11,
+                "end_line": 14,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 45
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 7,
+                      "col": 5,
+                      "end_line": 7,
+                      "end_col": 15
+                    },
+                    "width": 8,
+                    "name": "rows_total"
+                  },
+                  "value": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 7,
+                      "col": 18,
+                      "end_line": 7,
+                      "end_col": 24
+                    },
+                    "width": 8,
+                    "op": "+",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 7,
+                        "col": 35,
+                        "end_line": 7,
+                        "end_col": 39
+                      },
+                      "width": 8,
+                      "op": "+",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 7,
+                          "col": 35,
+                          "end_line": 7,
+                          "end_col": 39
+                        },
+                        "name": "matrix[0][0]",
+                        "width": 8
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 7,
+                          "col": 35,
+                          "end_line": 7,
+                          "end_col": 39
+                        },
+                        "name": "matrix[0][1]",
+                        "width": 8
+                      },
+                      "array_reduction_lowered": "sum"
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 7,
+                        "col": 35,
+                        "end_line": 7,
+                        "end_col": 39
+                      },
+                      "width": 8,
+                      "op": "+",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 7,
+                          "col": 35,
+                          "end_line": 7,
+                          "end_col": 39
+                        },
+                        "name": "matrix[1][0]",
+                        "width": 8
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 7,
+                          "col": 35,
+                          "end_line": 7,
+                          "end_col": 39
+                        },
+                        "name": "matrix[1][1]",
+                        "width": 8
+                      },
+                      "array_reduction_lowered": "sum"
+                    },
+                    "array_reduction_lowered": "sum"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 61
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 5,
+                      "end_line": 8,
+                      "end_col": 19
+                    },
+                    "width": 8,
+                    "name": "explicit_total"
+                  },
+                  "value": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 8,
+                      "col": 22,
+                      "end_line": 8,
+                      "end_col": 28
+                    },
+                    "width": 8,
+                    "op": "+",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 8,
+                        "col": 39,
+                        "end_line": 8,
+                        "end_col": 43
+                      },
+                      "width": 8,
+                      "op": "+",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 8,
+                          "col": 39,
+                          "end_line": 8,
+                          "end_col": 43
+                        },
+                        "name": "matrix[0][0]",
+                        "width": 8
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 8,
+                          "col": 39,
+                          "end_line": 8,
+                          "end_col": 43
+                        },
+                        "name": "matrix[0][1]",
+                        "width": 8
+                      },
+                      "array_reduction_lowered": "sum"
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 8,
+                        "col": 39,
+                        "end_line": 8,
+                        "end_col": 43
+                      },
+                      "width": 8,
+                      "op": "+",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 8,
+                          "col": 39,
+                          "end_line": 8,
+                          "end_col": 43
+                        },
+                        "name": "matrix[1][0]",
+                        "width": 8
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 8,
+                          "col": 39,
+                          "end_line": 8,
+                          "end_col": 43
+                        },
+                        "name": "matrix[1][1]",
+                        "width": 8
+                      },
+                      "array_reduction_lowered": "sum"
+                    },
+                    "array_reduction_lowered": "sum"
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 60
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 9,
+                      "col": 9,
+                      "end_line": 9,
+                      "end_col": 57
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 9,
+                        "col": 9,
+                        "end_line": 9,
+                        "end_col": 29
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 9,
+                          "col": 9,
+                          "end_line": 9,
+                          "end_col": 19
+                        },
+                        "width": 8,
+                        "name": "rows_total"
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 9,
+                          "col": 24,
+                          "end_line": 9,
+                          "end_col": 29
+                        },
+                        "width": 8,
+                        "bits": "00110010"
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 9,
+                        "col": 33,
+                        "end_line": 9,
+                        "end_col": 57
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 9,
+                          "col": 33,
+                          "end_line": 9,
+                          "end_col": 47
+                        },
+                        "width": 8,
+                        "name": "explicit_total"
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 9,
+                          "col": 52,
+                          "end_line": 9,
+                          "end_col": 57
+                        },
+                        "width": 8,
+                        "bits": "00110010"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 10,
+                      "col": 7,
+                      "end_line": 10,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 12,
+                      "col": 7,
+                      "end_line": 12,
+                      "end_col": 60
+                    },
+                    "name": "$display",
+                    "format": "FAIL %0d %0d",
+                    "args": [
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 12,
+                          "col": 32,
+                          "end_line": 12,
+                          "end_col": 42
+                        },
+                        "width": 8,
+                        "name": "rows_total"
+                      },
+                      {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 12,
+                          "col": 44,
+                          "end_line": 12,
+                          "end_col": 58
+                        },
+                        "width": 8,
+                        "name": "explicit_total"
+                      }
+                    ],
+                    "arg_signed": [
+                      false,
+                      false
+                    ]
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

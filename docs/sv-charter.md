@@ -156,6 +156,20 @@ The capped **22,056-path** census moves **5,175 → 5,192 clean / 16,813 →
 **2,801**. Differential coverage grows **225/220/0/5 → 226/221/0/5** with no
 disagreements; grammar coverage remains **217/90/127**.
 
+## Nested finite fixed-array reductions — 2026-10-26
+
+Finite nested unpacked arrays can reduce one dimension when a pure `with`
+expression recursively reduces each row to an integral scalar. The lowering
+binds each row to its flat storage prefix, so both `item.sum` and
+`item.sum with (item)` preserve the actual iterator binding. Aggregate,
+effectful, and non-finite storage shapes remain explicit refusals. The
+`nested_2d_reductions` fixture and differential case exercise both forms.
+
+The capped **22,056-path** census moves **5,192 → 5,195 clean / 16,797 →
+16,794 partial** (67 include skips). Differential coverage grows **226/221/0/5
+→ 227/222/0/5** with no disagreements; grammar coverage remains
+**217/90/127**.
+
 ## Semaphore zero-key methods — 2026-10-24
 
 The self-check surface now admits `semaphore.put(0)` and `semaphore.get(0)`

@@ -1,7 +1,8 @@
 # Fixed-array reduction methods
 
 IEEE 1800-2023 §7.12 and §7.12.3 `sum`, `product`, `and`, `or` and `xor`
-operate on the existing one-dimensional fixed unpacked integral-cell store.
+operate on the existing finite fixed unpacked integral-cell store, consuming
+one unpacked dimension at a time.
 The result has the element type when no `with` clause is present, and the
 bound `with` expression's type otherwise. An outer assignment does not widen
 the reduction. Every combining operation retains this intrinsic width, so
@@ -41,3 +42,14 @@ general frontend correctness theorem. Extraction is distinct from whole-corpus
 runtime conformance.
 
 See [the fixtures and receipts](../Examples/system-verilog/array_reductions/README.md).
+
+## Nested finite fixed-array reductions — 2026-10-26
+
+Reduction methods now consume one finite unpacked dimension at a time when a
+pure `with` expression reduces each row to the scalar result type. A 2-D
+`matrix.sum with (item.sum)` therefore expands the outer rows to their flat
+cell names and recursively folds each inner row; an explicit inner iterator,
+`item.sum with (item)`, retains the same binding. Direct aggregate results,
+dynamic/queue/associative storage, and effectful inner expressions remain
+loud. The `nested_2d_reductions` fixture and differential row cover both
+forms and their common `PASS` transcript.

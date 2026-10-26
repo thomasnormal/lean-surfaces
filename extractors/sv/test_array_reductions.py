@@ -69,6 +69,20 @@ class ArrayReductions(unittest.TestCase):
         self.assertFalse(walls(d))
         self.assertFalse(extract._ARRAY_REDUCTION_VALUES)
 
+    def test_nested_fixed_array_rows_reduce_to_scalar(self):
+        source = ("module top; logic [7:0] m[2][2] = "
+                  "'{ '{5,10}, '{15,20} }; logic [7:0] y; "
+                  "initial y = m.sum with (item.sum with (item)); endmodule")
+        d = lower(source)
+        self.assertFalse(walls(d))
+        lowered = [n for n in nodes(d) if n.get('array_reduction_lowered')]
+        self.assertGreaterEqual(len(lowered), 2)
+        self.assertTrue(all(n.get('width') == 8 for n in lowered))
+
+    def test_nested_reduction_fixture_is_admitted(self):
+        d = fixture('../nested_2d_reductions/nested_2d_reductions')
+        self.assertFalse(walls(d))
+
     def test_with_effects_remain_loud(self):
         self.assertIn('ArrayReduction:storage-or-effects',walls(fixture('effect')))
 

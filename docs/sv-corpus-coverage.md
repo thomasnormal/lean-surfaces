@@ -27,8 +27,8 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-26
 
-The chapter-scoped rerun covered **22,056** paths: **5,192 clean**,
-**16,797 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,056** paths: **5,195 clean**,
+**16,794 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
 `AssignmentExpression:target` (2,861), `CallExpression` (2,801),
@@ -56,6 +56,19 @@ The **22,056-path** census moves **5,175 → 5,192 clean** and **16,813 →
 `AssignmentExpression:target` remains **2,861** and `CallExpression` remains
 **2,801**. Differential coverage grows **225/220/0/5 → 226/221/0/5** with no
 disagreements; grammar coverage remains **217/90/127**.
+
+## Nested finite fixed-array reductions — 2026-10-26
+
+Pure nested reductions over finite two-dimensional unpacked arrays now lower
+row-by-row through the existing flat cells. Both implicit `item.sum` and the
+explicit `item.sum with (item)` form retain their iterator bindings; aggregate
+results, effects, and non-finite storage remain loud. The `nested_2d_reductions`
+fixture covers both forms.
+
+The **22,056-path** census moves **5,192 → 5,195 clean** and **16,797 →
+16,794 partial** (67 include skips); the leading blocker classes and the
+grammar census are unchanged. Differential coverage is refreshed separately
+in `docs/sv-coverage.md`.
 
 ## Packed-array packed-struct member windows — 2026-10-26
 

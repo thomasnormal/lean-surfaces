@@ -2037,6 +2037,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "nested_2d_reductions",
+      "file": "Examples/system-verilog/nested_2d_reductions/nested_2d_reductions.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

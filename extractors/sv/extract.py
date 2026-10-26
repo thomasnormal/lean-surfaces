@@ -15740,6 +15740,15 @@ def _convert_syscall(sm, s, e):
     if is_sys and _dynamic_array_literal_size_method(e):
         return {"kind": "Empty", "span": node_span(sm, s),
                 "dynamic_array_literal_size": True}
+    if is_sys and _associative_empty_query(e):
+        # An untouched 2-state associative array has an exact zero element
+        # count.  Reuse the value converter's source-order and type checks
+        # before erasing a discarded ``num``/``size`` result; populated,
+        # aliased, and dynamic arrays remain on the ordinary call boundary.
+        value = _convert_associative_empty_query(sm, e)
+        if value.get("kind") != "Unsupported":
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "associative_empty_query_statement": name}
     if is_sys and name == "$system":
         # IEEE 1800-2023 §20.17.1: the no-argument task form calls
         # system(NULL) and discards its status.  The self-check state has no

@@ -49,6 +49,11 @@ after the existing file converter confirms the path and mode. IEEE
 access; valid or dynamic modes and value-position calls remain loud at the
 file-state boundary.
 
+Discarded `num()` and `size()` queries on an untouched 2-state associative
+array are inert after the existing empty-array converter proves their exact
+zero result. Populated, aliased, initialized, dynamic, and value-position
+queries remain loud because their count is runtime state.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument

@@ -1801,6 +1801,15 @@
       "expect": "match"
     },
     {
+      "name": "assoc_empty_query_statement",
+      "file": "Examples/system-verilog/assoc_empty_query_statement/assoc_empty_query_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "assoc_empty_endpoint",
       "file": "Examples/system-verilog/assoc_empty_endpoint/assoc_empty_endpoint.sv",
       "module": "top",

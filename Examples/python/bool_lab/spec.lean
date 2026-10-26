@@ -37,7 +37,7 @@ set_option maxRecDepth 8192
 
 #py_check bool_lab.kwargs() raises
   (.typeError "bool() takes no keyword arguments")
-#guard callFunction bool_lab "first_class" #[] 4096 matches .unsupported _
+#py_check bool_lab.first_class() = true
 
 theorem integer_truth (value : PyInt) :
     bool_lab.of(value) ==> (value != 0) := by proofs

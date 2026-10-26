@@ -43,7 +43,8 @@ erasure remains independent of that module-scope restriction.
 [`divmod_lab`](divmod_lab/) proves integral division by one symbolically and
 kernel-checks signed quotient/remainder pairs, Boolean coercions, and errors.
 Its whole-program fixture also pins argument effects and exception precedence;
-nonintegral operands and first-class builtin values remain loud.
+nonintegral operands and general first-class builtin values remain loud;
+the exact local-alias-then-call slice for `bool` and `divmod` is admitted.
 The mutation-and-catch case is kernel-checked through the retained exception
 state as well as differentially tested on the native and script surfaces.
 
@@ -65,7 +66,8 @@ an arithmetic-error handler returning an arbitrary integer.
 [`bool_lab`](bool_lab/) proves integer nonzero truthiness and Boolean identity
 symbolically. Concrete checks cover heap containers, default instances, closures,
 nondraining generator truthiness, argument effects, and excess-argument errors;
-custom truthiness protocols and first-class builtin type values stay loud.
+custom truthiness protocols and first-class builtin type values stay loud;
+direct local aliases used immediately as `bool`/`divmod` calls are covered.
 
 [`repr_lab`](repr_lab/) proves Boolean and bounded integer `repr` results
 symbolically, using the same renderer as container printing. Kernel checks and

@@ -17,6 +17,26 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-161 — admit immediate local aliases of `bool` and `divmod`
+
+The exact two-statement shape `f = bool; return f(x)` (and its two-argument
+`divmod` counterpart) now lowers at ingestion to the ordinary builtin call.
+This preserves the existing runtime and proof paths while keeping returned
+function values, class values, and general callable aliases loud: the public
+value boundary still has no function identity.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `bool_lab::first_class` and `divmod_lab::first_class` MATCH in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,648 matched / 46 recorded refusals / 0 failed |
+| Full proof differential | 3,694 cases: 3,539 matched / 155 refusals / 0 failed |
+| Refusal census | 46 rows in 12 classes, 0 drifts; `firstclass.callable` fell from 8 to 6 |
+| Build and checks | `lake build leanmodels-run`, docs check, both differentials, and `git diff --check` passed |
+
+DECIDED: admit only a direct local builtin alias followed immediately by its
+call for `bool` and `divmod`; retain loud failure for all other first-class
+callable observations and aliases.
+
 ## 2026-10-26-pycomplete-160 — admit flat starred `for` targets
 
 Flat starred loop targets now lower to a synthetic loop binding followed by

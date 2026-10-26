@@ -1627,6 +1627,38 @@ private def lowerGenExps (outer : List String) (functions : Array FunctionDefn)
   let (topLevel', st'') := (lowerStmts topCtx topLevel).run step.2
   (step.1 ++ st''.2, topLevel')
 
+/-! ## Immediate local aliases of admitted builtins
+
+The runtime deliberately keeps a function-valued name loud: `RVal` has no
+callable immediate, and returning a builtin through the public boundary would
+lose its identity. There is one smaller Python shape whose semantics are fully
+static, however: a direct local alias followed immediately by a call, as in
+`f = bool; return f(x)`. CPython evaluates the builtin lookup at the
+assignment and the call later, but this exact two-statement shape has no
+intervening observation or rebinding. Lower it to the ordinary builtin call and
+keep all other first-class callable forms refused.
+-/
+
+private def immediateBuiltinAlias (name : String) : Bool :=
+  name == "bool" || name == "divmod"
+
+private def rewriteImmediateBuiltinAlias (outer : List String)
+    (params : Array Param) (body : Array Stmt) : Array Stmt :=
+  match body.toList with
+  | [.assign #[.name alias _] (.name builtin _) _assignSp,
+      .ret (some (.call (.name callee calleeSp) args kws cu callSp)) retSp] =>
+      if alias == callee && immediateBuiltinAlias builtin && alias != builtin
+          && !outer.contains builtin && !params.toList.any (·.arg == builtin) then
+        #[.ret (some (.call (.name builtin calleeSp) args kws cu callSp)) retSp]
+      else body
+  | _ => body
+
+private def rewriteImmediateBuiltinAliases (outer : List String)
+    (functions : Array FunctionDefn) :
+    Array FunctionDefn :=
+  functions.map fun f =>
+    { f with body := rewriteImmediateBuiltinAlias outer f.params f.body }
+
 private def chainAttrTempName : String := "<leanpy-chain-attr-temp>"
 
 mutual
@@ -1960,6 +1992,7 @@ def parseModule (j : Json) : Except String Module :=
         ++ namedtuples.toList.map NamedTupleDefn.name
         ++ (topLevel.toList.map (fun st => (stmtBinds st).getD [])).flatten
     let (functions', topLevel'') := lowerGenExps outer functions topLevel'
+    let functions' := rewriteImmediateBuiltinAliases outer functions'
     -- module-level def aliasing, LAST (docs/memory-model.md §module-level
     -- def aliasing): the censuses above see the original assigns, and the
     -- alias copies share the just-synthesized `<genexpr@n>` helpers.

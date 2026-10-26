@@ -50,7 +50,7 @@ set_option maxRecDepth 8192
   (.typeError "unsupported operand type(s) for divmod(): 'int' and 'NoneType'")
 #py_check divmod_lab.kwargs() raises
   (.typeError "divmod() takes no keyword arguments")
-#guard callFunction divmod_lab "first_class" #[] 4096 matches .unsupported _
+#py_check divmod_lab.first_class() = (Val.tuple #[.int 2, .int 1])
 
 theorem by_one_total (value : PyInt) :
     divmod_lab.by_one(value) ==> (Val.tuple #[.int value, .int 0]) := by proofs

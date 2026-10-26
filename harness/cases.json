@@ -298,7 +298,7 @@
   {"file": "Examples/python/exc_lab/exc_lab.py", "function": "raise_value", "args": [[1]], "expect": "match", "note": "Raising a scalar parameter preserves CPython's TypeError instead of stopping at the static-locals guard."},
   {"file": "Examples/python/exc_lab/exc_lab.py", "function": "raise_from", "args": [[1]], "expect": "match", "note": "A literal None cause has no observable payload in the tier and lowers to the ordinary class-identity raise."},
   {"file": "Examples/python/exc_lab/exc_lab.py", "function": "raise_shadowed", "args": [[1]], "expect": "match", "note": "The local Stop assignment precedes the raise, so CPython raises the scalar value's faithful TypeError."},
-  {"file": "Examples/python/exc_lab/exc_lab.py", "function": "exc_as_value", "args": [[1]], "expect": "unsupported"},
+  {"file": "Examples/python/exc_lab/exc_lab.py", "function": "exc_as_value", "args": [[1]], "expect": "match", "note": "An admitted exception class assigned to an unread local is erased at ingestion; observed exception values remain loud."},
   {"file": "Examples/python/exc_lab/exc_lab.py", "function": "drive_yield_under_try", "args": [[1]], "expect": "match", "note": "A safe parameter yield under `except Stop: pass` lowers to the existing generator continuation; raising yield expressions and other try shapes remain loud."},
   {"file": "Examples/python/kw_lab/kw_lab.py", "function": "kw_plain", "args": [[1], [7], [0]], "expect": "match"},
   {"file": "Examples/python/kw_lab/kw_lab.py", "function": "kw_all", "args": [[3], [-2]], "expect": "match"},

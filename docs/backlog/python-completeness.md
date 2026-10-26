@@ -17,6 +17,26 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-162 — erase an unread exception-class assignment
+
+An admitted exception class assigned to a local and never read before a direct
+return is now erased at ingestion. The rewrite is limited to the exact
+`x = Stop; return value` shape and checks the module's admitted exception-class
+table; observed values, returned classes, and all other first-class class
+forms remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `exc_lab::exc_as_value(1)` MATCH in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,649 matched / 45 recorded refusals / 0 failed |
+| Full proof differential | 3,694 cases: 3,540 matched / 154 refusals / 0 failed |
+| Refusal census | 45 rows in 12 classes, 0 drifts; `firstclass.callable` fell from 6 to 5 |
+| Build and checks | JSON/runner build, both differentials, and `git diff --check` passed |
+
+DECIDED: erase only an unread assignment of an admitted exception class in the
+exact two-statement return shape; retain loud failure for observed exception
+values and general first-class class values.
+
 ## 2026-10-26-pycomplete-161 — admit immediate local aliases of `bool` and `divmod`
 
 The exact two-statement shape `f = bool; return f(x)` (and its two-argument

@@ -1659,6 +1659,32 @@ private def rewriteImmediateBuiltinAliases (outer : List String)
   functions.map fun f =>
     { f with body := rewriteImmediateBuiltinAlias outer f.params f.body }
 
+/-! An exception class lookup is pure, but the class OBJECT itself is not a
+runtime value in the current tier.  The one useful boundary case is a dead
+local assignment whose value is never observed:
+`x = Stop; return n`.  Erase only this exact two-statement form when the
+source name is an admitted exception class; a live assignment still reaches
+the loud first-class-value arm. -/
+
+private def rewriteDeadExceptionValue (exceptionNames : List String)
+    (params : Array Param) (body : Array Stmt) : Array Stmt :=
+  match body.toList with
+  | [.assign #[.name target _] (.name exception _) _assignSp,
+      .ret (some value) retSp] =>
+      if exceptionNames.contains exception
+          && !params.toList.any (·.arg == exception)
+          && !(exprRefs value).contains target then
+        #[.ret (some value) retSp]
+      else body
+  | _ => body
+
+private def rewriteDeadExceptionValues (classes : Array ClassDefn)
+    (functions : Array FunctionDefn) : Array FunctionDefn :=
+  let names := admittedBuiltinExc ++ classes.toList.filterMap fun c =>
+    if c.isExc then some c.name else none
+  functions.map fun f =>
+    { f with body := rewriteDeadExceptionValue names f.params f.body }
+
 private def chainAttrTempName : String := "<leanpy-chain-attr-temp>"
 
 mutual
@@ -1993,6 +2019,7 @@ def parseModule (j : Json) : Except String Module :=
         ++ (topLevel.toList.map (fun st => (stmtBinds st).getD [])).flatten
     let (functions', topLevel'') := lowerGenExps outer functions topLevel'
     let functions' := rewriteImmediateBuiltinAliases outer functions'
+    let functions' := rewriteDeadExceptionValues classes' functions'
     -- module-level def aliasing, LAST (docs/memory-model.md §module-level
     -- def aliasing): the censuses above see the original assigns, and the
     -- alias copies share the just-synthesized `<genexpr@n>` helpers.

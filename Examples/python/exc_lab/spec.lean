@@ -122,5 +122,5 @@ loud. -/
 #py_check exc_lab.raise_from(1) raises (.user _ "Stop")
 #py_check exc_lab.raise_shadowed(1) raises
   (.typeError "exceptions must derive from BaseException")
-#guard callFunction exc_lab "exc_as_value" #[.int 1] 4096 matches .unsupported _
+#py_check exc_lab.exc_as_value(1) = 1
 #py_check exc_lab.drive_yield_under_try(1) = 1

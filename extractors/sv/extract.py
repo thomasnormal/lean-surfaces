@@ -6168,13 +6168,28 @@ def _fixed_array_pattern_elements(pattern, dimensions):
     names produced by ``convert_fixed_array_vars``.
     """
     if not dimensions:
-        # At the leaf a pattern element must be one scalar/packed value.  A
-        # composite pattern is consumed by the enclosing unpacked dimension.
+        # At the leaf a pattern element must be one scalar/packed value.  An
+        # enum type-key pattern is still a scalar value; let the ordinary
+        # packed-pattern converter preserve its declared enum literal.  Other
+        # composite patterns are consumed by the enclosing unpacked dimension.
         if type(pattern).__name__ in (
                 "SimpleAssignmentPatternExpression",
                 "StructuredAssignmentPatternExpression",
                 "ReplicatedAssignmentPatternExpression"):
-            return None
+            scalar_pattern = False
+            if type(pattern).__name__ == "StructuredAssignmentPatternExpression":
+                canonical = type(pattern.type.canonicalType).__name__
+                scalar_pattern = canonical == "EnumType"
+                if (canonical == "PredefinedIntegerType"
+                        and getattr(pattern, "typeSetters", [])
+                        and not getattr(pattern, "indexSetters", [])
+                        and not getattr(pattern, "memberSetters", [])):
+                    scalar_pattern = all(
+                        type(getattr(setter.type, "canonicalType", None)).__name__
+                        == "EnumType"
+                        for setter in pattern.typeSetters)
+            if not scalar_pattern:
+                return None
         return [pattern]
     if getattr(pattern, "bad", False):
         return None

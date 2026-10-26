@@ -123,6 +123,21 @@ The capped **22,055-path** census moves **5,171 → 5,174 clean / 16,817 →
 **2,867 → 2,862**. Differential coverage grows **223/218/0/5 → 224/219/0/5**
 with no disagreements, and grammar coverage remains **217/90/127**.
 
+## Struct array-field enum type-key defaults — 2026-10-26
+
+Nested enum type-key patterns now lower through fixed unpacked array fields in
+untagged unpacked structs. Enum leaves use the existing declared-value pattern
+converter while scalar default leaves retain their normal width and signedness;
+other aggregate leaf shapes remain loud. The
+`struct_array_field_enum_default` fixture and differential row cover the
+recursive enum/default form, with extractor regression coverage for the cell
+names and values.
+
+The capped **22,055-path** census moves **5,174 → 5,175 clean / 16,814 →
+16,813 partial** (67 include skips); `AssignmentExpression:target` falls
+**2,862 → 2,861**. Differential coverage grows **224/219/0/5 → 225/220/0/5**
+with no disagreements, and grammar coverage remains **217/90/127**.
+
 ## Semaphore zero-key methods — 2026-10-24
 
 The self-check surface now admits `semaphore.put(0)` and `semaphore.get(0)`

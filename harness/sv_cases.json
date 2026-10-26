@@ -2019,6 +2019,15 @@
         "KEYED PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "struct_array_field_enum_default",
+      "file": "Examples/system-verilog/struct_array_field_enum_default/struct_array_field_enum_default.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -657,6 +657,24 @@ class UnpackedArrayAssignments(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_unpacked_struct_array_enum_type_key_default(self):
+        design = extract_source(
+            "module top; typedef enum int {IDLE=1, BUSY=2} state_t; "
+            "typedef struct { state_t states [0:1]; int raw [0:1]; } T; "
+            "T value; initial value = '{default: '{state_t: BUSY, default: 7}}; "
+            "endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual([a["target"]["name"] for a in assigns],
+                         ["value.states[0]", "value.states[1]",
+                          "value.raw[0]", "value.raw[1]"])
+        self.assertEqual([a["value"].get("bits") or
+                          a["value"].get("operand", {}).get("bits")
+                          for a in assigns],
+                         [format(2, "032b")] * 2 + [format(7, "032b")] * 2)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

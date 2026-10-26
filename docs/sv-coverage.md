@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 277 | 272 | 0 | 5 | sv-tests-2 declarations |
+| 278 | 273 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -234,6 +234,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `enum_name_method` | `Examples/system-verilog/enum_name_method/enum_name_method.sv` | match | **MATCH** | `ok` | MATCH |
 | `enum_name_statement` | `Examples/system-verilog/enum_name_statement/enum_name_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `enum_numeric_statement` | `Examples/system-verilog/enum_numeric_statement/enum_numeric_statement.sv` | match | **MATCH** | `ok` | MATCH |
+| `array_reduction_statements` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_integral_cells` | `Examples/system-verilog/assoc_integral_cells/assoc_integral_cells.sv` | match | **MATCH** | `ok` | MATCH |
 | `packed_array_multidim` | `Examples/system-verilog/packed_array_multidim/packed_array_multidim.sv` | match | **MATCH** | `ok` | MATCH |
 | `packed_array_dynamic_part_select` | `Examples/system-verilog/packed_array_dynamic_part_select/packed_array_dynamic_part_select.sv` | match | **MATCH** | `ok` | MATCH |
@@ -315,10 +316,10 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ArithmeticRightShiftAssignmentExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArithmeticShiftLeftExpression` | `Examples/system-verilog/shifts/shifts.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ArithmeticShiftRightExpression` | `Examples/system-verilog/shifts/shifts.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
-| `SyntaxKind.ArrayAndMethod` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ArrayOrMethod` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ArrayAndMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ArrayOrMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayOrRandomizeMethodExpression` | `Examples/system-verilog/array_reductions/effect.sv` | **REFUSE** | `unsupported` unsupported expression 'ArrayReduction:storage-or-effects' |
-| `SyntaxKind.ArrayXorMethod` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ArrayXorMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AscendingRangeSelect` | `Examples/system-verilog/compound_assignments/members.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssertionItemPort` | `Examples/system-verilog/let_expressions/binding.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssertionItemPortList` | `Examples/system-verilog/let_expressions/binding.sv` | **MATCH** | `ok`  |

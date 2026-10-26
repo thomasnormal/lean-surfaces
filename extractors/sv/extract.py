@@ -15664,6 +15664,15 @@ def _convert_syscall(sm, s, e):
                       else "enum_numeric_statement")
             return {"kind": "Empty", "span": node_span(sm, s),
                     marker: name}
+    if is_sys and _SYM is None and _array_reduction_call(e):
+        # A pure array reduction only reads its source cells and produces an
+        # unobserved scalar in statement position. Reuse the value converter
+        # so storage shape, iterator bindings, widths, and effect checks stay
+        # identical; dynamic or effectful reductions remain loud.
+        value = _convert_array_reduction(sm, e)
+        if value.get("kind") != "Unsupported":
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "array_reduction_statement": name}
     if not is_sys:
         if _semaphore_zero_method(e):
             # A zero-key semaphore method has no represented state effect;

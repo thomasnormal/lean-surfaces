@@ -1983,6 +1983,15 @@
       "expect": "match"
     },
     {
+      "name": "array_reduction_statements",
+      "file": "Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "assoc_integral_cells",
       "file": "Examples/system-verilog/assoc_integral_cells/assoc_integral_cells.sv",
       "module": "top",

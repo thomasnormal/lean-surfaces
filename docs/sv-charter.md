@@ -169,6 +169,20 @@ skips), with `AssignmentExpression:target` at **2,853** and
 `ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
 **276/271/0/5 → 277/272/0/5** and grammar coverage remains **217/92/125**.
 
+## Discarded fixed-array reductions — 2026-10-26
+
+Discarded fixed-array reductions (`sum`, `product`, `and`, `or`, and `xor`)
+now reuse the balanced value lowering after storage-shape, width, iterator, and
+purity checks. Dynamic storage, effectful `with` expressions, and value-position
+reductions remain loud. The `array_reduction_statements` fixture supplies the
+self-check differential row and Lean receipt; the pinned oracle agrees with
+its `PASS` transcript.
+
+The 22,059-path census remains **5,240 clean / 16,752 partial** (67 include
+skips), with `AssignmentExpression:target` at **2,853** and
+`ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
+**277/272/0/5 → 278/273/0/5** and grammar coverage remains **217/92/125**.
+
 ## Discarded time-scale metadata queries — 2026-10-26
 
 Valid `$timeunit` and `$timeprecision` calls in statement position now erase

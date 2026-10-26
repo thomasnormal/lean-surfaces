@@ -117,6 +117,15 @@ class ArrayReductions(unittest.TestCase):
             {n.get('array_reduction_lowered') for n in nodes(d)
              if n.get('empty_array_reduction')}, {'sum', 'product'})
 
+    def test_discarded_reductions_reuse_value_lowering(self):
+        d = lower('module top; logic [3:0] a[2]; initial begin '
+                   'a[0]=1; a[1]=2; a.sum(); a.product(); a.and(); '
+                   'a.or(); a.xor(); $display("PASS"); $finish; end endmodule')
+        methods = [node.get('array_reduction_statement') for node in nodes(d)
+                   if node.get('array_reduction_statement')]
+        self.assertEqual(methods, ['sum', 'product', 'and', 'or', 'xor'])
+        self.assertFalse(walls(d))
+
     def test_dynamic_storage_with_unknown_extent_remains_loud(self):
         d=lower('module top;int a[];int n;int y;'
                  'initial begin a=new[n]; y=a.sum(); end endmodule')

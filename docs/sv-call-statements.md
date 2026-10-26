@@ -90,8 +90,9 @@ calls remain on their ordinary enum boundary.
 
 Discarded fixed-array reductions (`sum`, `product`, `and`, `or`, and `xor`)
 reuse the balanced reduction lowering after its storage-shape, width, iterator,
-and purity checks. Dynamic storage, effectful `with` expressions, and
-value-position reductions remain loud.
+and purity checks. The existing empty-dynamic-array identity also permits
+discarded `sum` and `product`; other dynamic storage, effectful `with`
+expressions, and value-position reductions remain loud.
 
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded

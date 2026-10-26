@@ -126,6 +126,14 @@ class ArrayReductions(unittest.TestCase):
         self.assertEqual(methods, ['sum', 'product', 'and', 'or', 'xor'])
         self.assertFalse(walls(d))
 
+    def test_discarded_empty_dynamic_sum_and_product(self):
+        d = lower('module top; int a[]; initial begin '
+                   'a.sum(); a.product(); $display("PASS"); $finish; end endmodule')
+        self.assertEqual(
+            [node.get('array_reduction_statement') for node in nodes(d)
+             if node.get('array_reduction_statement')], ['sum', 'product'])
+        self.assertFalse(walls(d))
+
     def test_dynamic_storage_with_unknown_extent_remains_loud(self):
         d=lower('module top;int a[];int n;int y;'
                  'initial begin a=new[n]; y=a.sum(); end endmodule')

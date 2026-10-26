@@ -165,10 +165,11 @@ coverage remains **217/92/125**.
 
 Discarded fixed-array reductions (`sum`, `product`, `and`, `or`, and `xor`)
 now reuse the balanced value lowering after storage-shape, width, iterator, and
-purity checks. Dynamic storage, effectful `with` expressions, and value-position
-reductions remain loud. The `array_reduction_statements` fixture supplies the
-differential row and Lean receipt; the pinned self-check oracle agrees with its
-`PASS` transcript.
+purity checks. The existing empty-dynamic-array identity also permits discarded
+`sum` and `product`; other dynamic storage, effectful `with` expressions, and
+value-position reductions remain loud. The `array_reduction_statements` fixture
+supplies the differential row and Lean receipt; the pinned self-check oracle
+agrees with its `PASS` transcript.
 
 The committed **22,059-path** snapshot remains **5,240 clean / 16,752
 partial** (67 include skips), with `AssignmentExpression:target` at **2,853**

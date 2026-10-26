@@ -1426,17 +1426,20 @@ representation by any deviation from the exact shape.
 
 **`try`/`except`: structure and semantics.** `Stmt.tryStmt body
 handlers orelse finalbody` is structured by the extractor; the v0 tier
-admits EXACTLY one handler, either naming one admitted exception class or
+admits one handler, either naming one admitted exception class or
 using a bare `except:`. An unused `as e` binding is erased safely; observing
 the bound exception object remains outside the tier. `else` is lowered at
 ingestion to a success flag, the existing `try` node, and an ordinary `if`,
 so the suite runs only after a normal body exit; a `finally: pass` suite is
 lowered away because it is observationally a no-op, while effectful
 `finally` suites remain loud. A tuple of plain admitted exception names is
-matched left to right against the same retained-state handler body; dynamic
-exception expressions and multiple handler bodies remain loud.
-Everything else (multiple handlers, tuple patterns, observed `as e`, and
-effectful `finally`) stays structured-but-loud. Evaluation composes on the existing
+matched left to right against the same retained-state handler body. The
+measured multiple-handler slice has two plain-name clauses whose handler
+bodies are one scalar-literal `return`; ingestion lowers these clauses to
+nested existing `Try` nodes in source order. This is sound because the
+handlers cannot raise and therefore cannot be mistaken for a sibling clause.
+Other multiple-handler bodies, dynamic exception expressions, and tuple
+patterns stay structured-but-loud. Evaluation composes on the existing
 `Run`: run the body; `.ok` skips the handler; a bare handler catches every
 represented `.exn`; `.exn (.user cid)` with cid matching a named handler's
 class runs the handler FROM THE RETAINED STATE (no rollback — CPython); any
@@ -1545,9 +1548,10 @@ unshadowed-name rule and reports zero ground-truth violations.
 * **`Stmt.tryStmt body excName handler tryUnsupported`** carries the
   single-handler shape plus the `callUnsupported`-style reason
   field: the extractor fills `try_unsupported` for every remaining
-  out-of-v0 feature (multiple handlers, tuple pattern, observed `as`,
-  `finally`, a non-name handler class expression) and execution refuses
-  with that reason — structured-but-loud, one channel. A `try … else`
+  out-of-v0 feature (multiple handlers beyond the measured literal-return
+  slice, tuple pattern, observed `as`, `finally`, a non-name handler class
+  expression) and execution refuses with that reason — structured-but-loud,
+  one channel. A `try … else`
   suite is lowered at ingestion to a success flag and an ordinary `if`,
   so it keeps the same constructor and runs only after normal completion.
 * **The handler class resolves STATICALLY-FIRST**: `except N:` refuses
@@ -2674,9 +2678,9 @@ class where CPython raises `UnboundLocalError` or a handler-matching `TypeError`
 Existing local/global/definition shadow guards remain in force. Module try
 bodies that rebind their handler names also refuse, including compounds that
 can raise before publishing their bindings. Tuple/attribute patterns,
-observed `as` bindings,
-multiple handlers, `finally`, and builtin exception objects as values remain
-loud; `else` is admitted through the ingestion lowering described above.
+observed `as` bindings, wider multiple-handler bodies, `finally`, and builtin
+exception objects as values remain loud; `else` is admitted through the
+ingestion lowering described above.
 
 `exc_handlers_lab` pins the matching and refusal boundaries in the kernel and
 against CPython 3.9. Its module fixture also pins global publication through a

@@ -979,7 +979,6 @@ WHITELIST_CLASS = {
     "exc_handlers_lab::late_shadowed_handler": "exc.handler",
     "exc_handlers_lab::nested_def_handler": "exc.handler",
     "exc_handlers_lab::finally_clause": "exc.finally",
-    "exc_handlers_lab::multiple_handlers": "exc.handler",
     "exc_handlers_lab::exception_value": "firstclass.callable",
     "exc_ancestors_lab::parameter_shadow": "exc.handler",
     "exc_ancestors_lab::body_shadow": "exc.handler",
@@ -999,7 +998,6 @@ WHITELIST_CLASS = {
     "gen_lab::drain_unbound": "genexp.lowering-admission",
     "gen_lab::yf_leak_drive": "genexp.lowering-admission",
     "exc_lab::time_live": "clock.underrun",
-    "exc_lab::multi_handler": "exc.handler",
     # §except-builtin: the FRONTIER. `except_builtin`/`except_exception` LEFT
     # this table when builtin classes became matchable; this row is what keeps
     # the boundary falsifiable -- an ancestor the tier refuses BY NAME rather

@@ -2243,6 +2243,42 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # exact lowering is simply the try body. Keep real finalizers in the
         # structured-but-loud path below; dropping their effects would be
         # unsound.
+        # A measured two-handler slice is lowered to nested existing Try
+        # nodes.  This preserves clause order and lets a nonmatching error
+        # reach the next clause without changing the Lean AST schema.  The
+        # lowering is deliberately narrow: each handler must be a plain-name
+        # class with one scalar-literal return and no binding, so an exception
+        # raised by a handler can never be mistaken for a sibling clause.  A
+        # wider representation needs an explicit handler list and remains a
+        # loud boundary until that state is modeled.
+        if (len(node.handlers) == 2 and not node.orelse and not node.finalbody
+                and all(isinstance(h.type, ast.Name) and h.name is None
+                        and len(h.body) == 1
+                        and isinstance(h.body[0], ast.Return)
+                        and h.body[0].value is not None
+                        and isinstance(h.body[0].value, ast.Constant)
+                        and (h.body[0].value.value is None
+                             or isinstance(h.body[0].value.value,
+                                           (bool, int, str, bytes, float)))
+                        for h in node.handlers)):
+            nested_body = convert_stmt_list(node.body,
+                                            module_scope=module_scope,
+                                            func_scope=func_scope,
+                                            import_guard=False)
+            # Build the first clause closest to the original body; each later
+            # clause wraps it and therefore sees only a nonmatching error.
+            for h in node.handlers:
+                nested_body = [{
+                    "kind": "Try",
+                    "span": span(node),
+                    "body": nested_body,
+                    "exc_name": h.type.id,
+                    "handler": convert_stmt_list(
+                        h.body, module_scope=module_scope,
+                        func_scope=func_scope, import_guard=False),
+                    "try_unsupported": None,
+                }]
+            return nested_body
         if (node.finalbody and not node.handlers and not node.orelse
                 and all(isinstance(s, ast.Pass) for s in node.finalbody)):
             return convert_stmt_list(node.body, module_scope=module_scope,

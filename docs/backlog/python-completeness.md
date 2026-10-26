@@ -17,6 +17,30 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-135 — measured two-handler exception clauses
+
+The extractor now lowers a narrow two-handler form to nested existing `Try`
+nodes: both clauses use plain exception names, have no `as` binding, and return
+one scalar literal. Nesting preserves source order and lets a nonmatching
+exception reach the next clause; because the handler bodies cannot raise, a
+handler exception cannot be mistaken for a sibling clause. Wider multiple
+handler suites remain structured-but-loud. The `exc_lab.multi_handler` and
+`exc_handlers_lab.multiple_handlers` witnesses now match on both interpreters,
+and their specs use `#py_check`.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 2 native matches / 2 proof matches / 0 failures |
+| Full executable differential | 3,694 cases: 3,619 matched / 75 refused / 0 failed |
+| Full proof differential | 3,694 cases: 3,510 matched / 184 refused / 0 failed |
+| Refusal census | 75 rows, 0 drift |
+| Extractor tests | 135 passed |
+| Generated/check gates | coverage page, backlog index, JSON validation, and `git diff --check` passed |
+
+DECIDED: admit only the measured constant-return two-handler slice; retain
+handler bodies with effects or possible exceptions, larger handler lists, and
+dynamic/tuple class expressions as loud boundaries.
+
 ## 2026-10-26-pycomplete-134 — heap-dict percent-format mappings
 
 The monadic string percent-formatting arm now threads the current heap for a

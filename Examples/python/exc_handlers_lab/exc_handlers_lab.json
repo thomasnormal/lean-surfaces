@@ -5004,54 +5004,114 @@
             },
             "body": [
               {
-                "kind": "Return",
+                "kind": "Try",
                 "span": {
-                  "lineno": 299,
-                  "col_offset": 8,
-                  "end_lineno": 299,
-                  "end_col_offset": 21
+                  "lineno": 298,
+                  "col_offset": 4,
+                  "end_lineno": 303,
+                  "end_col_offset": 17
                 },
-                "value": {
-                  "kind": "BinOp",
-                  "span": {
-                    "lineno": 299,
-                    "col_offset": 15,
-                    "end_lineno": 299,
-                    "end_col_offset": 21
-                  },
-                  "left": {
-                    "kind": "Constant",
+                "body": [
+                  {
+                    "kind": "Return",
                     "span": {
                       "lineno": 299,
-                      "col_offset": 15,
-                      "end_lineno": 299,
-                      "end_col_offset": 16
-                    },
-                    "value": {
-                      "type": "int",
-                      "repr": "1"
-                    }
-                  },
-                  "op": "FloorDiv",
-                  "right": {
-                    "kind": "Constant",
-                    "span": {
-                      "lineno": 299,
-                      "col_offset": 20,
+                      "col_offset": 8,
                       "end_lineno": 299,
                       "end_col_offset": 21
                     },
                     "value": {
-                      "type": "int",
-                      "repr": "0"
+                      "kind": "BinOp",
+                      "span": {
+                        "lineno": 299,
+                        "col_offset": 15,
+                        "end_lineno": 299,
+                        "end_col_offset": 21
+                      },
+                      "left": {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 299,
+                          "col_offset": 15,
+                          "end_lineno": 299,
+                          "end_col_offset": 16
+                        },
+                        "value": {
+                          "type": "int",
+                          "repr": "1"
+                        }
+                      },
+                      "op": "FloorDiv",
+                      "right": {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 299,
+                          "col_offset": 20,
+                          "end_lineno": 299,
+                          "end_col_offset": 21
+                        },
+                        "value": {
+                          "type": "int",
+                          "repr": "0"
+                        }
+                      }
                     }
+                  }
+                ],
+                "exc_name": "TypeError",
+                "handler": [
+                  {
+                    "kind": "Return",
+                    "span": {
+                      "lineno": 301,
+                      "col_offset": 8,
+                      "end_lineno": 301,
+                      "end_col_offset": 17
+                    },
+                    "value": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 301,
+                        "col_offset": 15,
+                        "end_lineno": 301,
+                        "end_col_offset": 17
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "20"
+                      }
+                    }
+                  }
+                ],
+                "try_unsupported": null
+              }
+            ],
+            "exc_name": "ZeroDivisionError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 303,
+                  "col_offset": 8,
+                  "end_lineno": 303,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 303,
+                    "col_offset": 15,
+                    "end_lineno": 303,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "21"
                   }
                 }
               }
             ],
-            "exc_name": "",
-            "handler": [],
-            "try_unsupported": "multiple handlers"
+            "try_unsupported": null
           }
         ]
       },

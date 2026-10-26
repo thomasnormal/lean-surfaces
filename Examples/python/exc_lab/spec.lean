@@ -111,7 +111,7 @@ loud. -/
 #guard callFunction exc_lab "as_binding" #[.int 7] 4096 matches .ok (.int 7)
 #py_check exc_lab.finally_clause(1) = 1
 #guard callFunction exc_lab "bare_except" #[.int 0] 4096 matches .ok (.int (-1))
-#guard callFunction exc_lab "multi_handler" #[.int 1] 4096 matches .unsupported _
+#py_check exc_lab.multi_handler(1) = 1
 #py_check exc_lab.tuple_handler(1) = 1
 #guard callFunction exc_lab "raise_args" #[.int 1] 4096
   matches .exn (.userMessage _ "Stop" "with a message")

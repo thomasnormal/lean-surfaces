@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/exc_lab/exc_lab.py",
-  "source_sha256": "760ad98d0213d2c231a81f8fede1c7c0759521c3e4bfab23399ee248ddd38b7a",
+  "source_sha256": "b6b7e1d30b7864fce06502462f8bd201b97ccc66f29ea6f47de887f21ba91e72",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "exc_lab -- the exceptions acceptance set (docs/memory-model.md\nparagraph \"exceptions\", BUILT pass 4).\n\nThe admitted surface, each row differential against CPython:\n`class N(Exception): pass` as a raisable class NAME (class identity, no\npayload), `raise N`, and the v0 single-handler `try`/`except N:` on the\nretained-state covenant -- mutations up to the raise stay visible in the\nhandler, a non-matching class propagates (out of nested tries and out of\nthe whole call), a raise UNWINDS nested calls, and an exception\npropagating through a generator RESUME closes the generator (the\ngen_lab status pin's differential twin, observable now that a handler\ncan survive the raise).\n\nThe deadline capstone is the shape sunfish's Stop serves, with the wall\nclock replaced by a node counter: MiniSearcher.walk raises Stop from a\nresumed generator frame when its budget passes, and the driver's\ntry/except catches it mid-iteration -- raise-through-resume-into-handler\nend to end.\n\nThe refusal battery (whitelisted rows + raw #guards in spec.lean) pins\nthe loud frontier: observed `as` bindings and `finally`,\nmultiple handlers, tuple patterns, unmeasured builtin ancestors,\nraise with arguments, bare raise, value raise, raise-from,\nshadowed names, exception classes as values, and yield-under-try.\n\nThe WALL-CLOCK battery (docs/memory-model.md \"Wall-clock time\", as\nAMENDED by pass 6's trace clock): `time_dead` proves the shipped\nguard's short-circuit keeps the clock dead (deadline None,\ndifferential MATCH -- nothing is popped), `time_live` proves the\nmoment a deadline makes the clock live, evaluation under this\nharness's EMPTY trace refuses loudly (the underrun -- pass 6 moved\nthe refusal from the poisoned binding to the trace pop; the full\nlive-clock battery is `clock_lab`).\n"
+            "value": "exc_lab -- the exceptions acceptance set (docs/memory-model.md\nparagraph \"exceptions\", BUILT pass 4).\n\nThe admitted surface, each row differential against CPython:\n`class N(Exception): pass` as a raisable class NAME (class identity, no\npayload), `raise N`, and the v0 single-handler `try`/`except N:` on the\nretained-state covenant -- mutations up to the raise stay visible in the\nhandler, a non-matching class propagates (out of nested tries and out of\nthe whole call), a raise UNWINDS nested calls, and an exception\npropagating through a generator RESUME closes the generator (the\ngen_lab status pin's differential twin, observable now that a handler\ncan survive the raise).\n\nThe deadline capstone is the shape sunfish's Stop serves, with the wall\nclock replaced by a node counter: MiniSearcher.walk raises Stop from a\nresumed generator frame when its budget passes, and the driver's\ntry/except catches it mid-iteration -- raise-through-resume-into-handler\nend to end.\n\nThe refusal battery (whitelisted rows + raw #guards in spec.lean) pins\nthe loud frontier: observed `as` bindings and `finally`,\nmultiple handlers, tuple patterns, unmeasured builtin ancestors,\nraise with arguments, general bare re-raise, value raise, raise-from,\nshadowed names, exception classes as values, and yield-under-try.\n\nThe WALL-CLOCK battery (docs/memory-model.md \"Wall-clock time\", as\nAMENDED by pass 6's trace clock): `time_dead` proves the shipped\nguard's short-circuit keeps the clock dead (deadline None,\ndifferential MATCH -- nothing is popped), `time_live` proves the\nmoment a deadline makes the clock live, evaluation under this\nharness's EMPTY trace refuses loudly (the underrun -- pass 6 moved\nthe refusal from the poisoned binding to the trace pop; the full\nlive-clock battery is `clock_lab`).\n"
           }
         }
       },
@@ -5267,28 +5267,88 @@
             },
             "body": [
               {
-                "kind": "Raise",
+                "kind": "Try",
                 "span": {
-                  "lineno": 275,
-                  "col_offset": 8,
-                  "end_lineno": 275,
-                  "end_col_offset": 18
+                  "lineno": 274,
+                  "col_offset": 4,
+                  "end_lineno": 279,
+                  "end_col_offset": 16
                 },
-                "exc": {
-                  "kind": "Name",
+                "body": [
+                  {
+                    "kind": "Raise",
+                    "span": {
+                      "lineno": 275,
+                      "col_offset": 8,
+                      "end_lineno": 275,
+                      "end_col_offset": 18
+                    },
+                    "exc": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 275,
+                        "col_offset": 14,
+                        "end_lineno": 275,
+                        "end_col_offset": 18
+                      },
+                      "id": "Stop"
+                    }
+                  }
+                ],
+                "exc_name": "Stop",
+                "handler": [
+                  {
+                    "kind": "Return",
+                    "span": {
+                      "lineno": 277,
+                      "col_offset": 8,
+                      "end_lineno": 277,
+                      "end_col_offset": 16
+                    },
+                    "value": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 277,
+                        "col_offset": 15,
+                        "end_lineno": 277,
+                        "end_col_offset": 16
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    }
+                  }
+                ],
+                "try_unsupported": null
+              }
+            ],
+            "exc_name": "Other",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 279,
+                  "col_offset": 8,
+                  "end_lineno": 279,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "kind": "Constant",
                   "span": {
-                    "lineno": 275,
-                    "col_offset": 14,
-                    "end_lineno": 275,
-                    "end_col_offset": 18
+                    "lineno": 279,
+                    "col_offset": 15,
+                    "end_lineno": 279,
+                    "end_col_offset": 16
                   },
-                  "id": "Stop"
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
                 }
               }
             ],
-            "exc_name": "",
-            "handler": [],
-            "try_unsupported": "multiple handlers"
+            "try_unsupported": null
           }
         ]
       },

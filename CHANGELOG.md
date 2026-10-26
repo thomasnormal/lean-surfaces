@@ -60,8 +60,10 @@ change is listed here under **Changed** or **Removed**.
   so non-print uses and other spellings remain outside the modeled value tier.
 - `try … except … else` now runs its `else` suite after a normal body exit.
   The extractor lowers the construct to the existing retained-state `try`
-  node plus a fresh success flag and `if`; `finally`, multiple handlers,
-  tuple patterns, and observed exception bindings remain loud.
+  node plus a fresh success flag and `if`; `finally`, tuple patterns, and
+  observed exception bindings remain loud. A measured two-handler slice with
+  scalar-literal returns is lowered to nested retained-state `try` nodes in
+  source order; wider handler suites remain loud.
 - `except (A, B, …)` now admits tuples of plain, admitted exception names and
   matches each member against the existing builtin and user-class tables.
   Dynamic expressions, shadowed names, and multiple handler suites remain

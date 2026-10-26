@@ -228,6 +228,36 @@ change is listed here under **Changed** or **Removed**.
 - A single bare `except:` now catches every represented exception; multiple
   handlers, tuple patterns, and observed exception bindings remain loud.
 
+## [0.1.15] — 2026-10-26
+
+### Added
+
+- Exception control flow now covers `try … except … else`, measured multiple
+  handlers, tuple patterns, direct re-raises, empty `OSError`, scalar raise
+  errors, and safe generator yields under `try`; dynamic payloads and wider
+  handler forms remain loud.
+- Starred assignment targets, starred positional calls, and starred set
+  displays now reuse the existing eager unpacking paths with CPython's
+  evaluation order and errors.
+- Float NaN equality and ordering, Unicode integer parsing, literal f-string
+  format specifications, and the fixed 512-level container renderer now
+  follow the measured CPython behavior.
+- Direct global/nonlocal updates, simple class inheritance and object bases,
+  class protocol methods, dictionary-view operations, sequence repetition, and
+  the exact synchronous context-manager suppression form are admitted.
+- Immediate local aliases of `bool` and `divmod`, plus unread assignments of
+  admitted exception classes, ordinary classes, and module functions, are
+  erased at ingestion when their values are not observed.
+
+### Fixed
+
+- Proof-side monotonicity, clock-erasure, payload-blind, builtin-dispatch,
+  and generator-dispatch walkers now track the corresponding semantic arms.
+- The measured Python differential suite now has **3,695 rows**, with **3,651
+  matches / 44 recorded refusals** in the executable runner and **3,542
+  matches / 153 refusals** in the proof interpreter; the grammar census has
+  **145 witnesses, 136 MATCH and 9 REFUSE**.
+
 ## [0.1.14] — 2026-10-21
 
 ### Added

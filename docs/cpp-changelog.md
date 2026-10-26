@@ -5,6 +5,22 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.109] — 2026-10-26
+
+### Added
+
+- Added five object-frame witnesses for nested shadow-computed local
+  initialization across `switch` and conditional branches, including switch
+  fallthrough and `return` transfer.
+
+### Measured
+
+- The checked-in corpus now contains **658 differential rows**: **641 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.108] — 2026-10-26
 
 ### Added

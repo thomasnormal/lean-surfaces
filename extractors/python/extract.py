@@ -1222,16 +1222,29 @@ def _shadowed_calls(fn):
     faithful. Emitted as `locals_unsupported` so the interpreter refuses
     loudly.
 
+    Direct nested ``def`` names are handled by the runtime's static-local
+    marker instead: calls before the definition raise the faithful
+    ``UnboundLocalError`` and calls after it use the closure binding.
+
     H7 refinement (the closure-escape pattern `g = _mk(a); g()`): a name
     bound EXACTLY ONCE, by a single-target plain assignment DIRECTLY in the
     body (so never inside a loop), with every call textually AFTER it, has
     no UnboundLocalError window — the dynamic env is faithful there, so it
     is not flagged."""
     assigned = _assigned_names(fn)
+    # A direct nested ``def`` is a normal local binding. Calls after its
+    # definition already resolve through the runtime closure binding; calls
+    # before it are handled by the static-local marker installed for every
+    # nested definition. Keep ordinary assignments on the conservative
+    # refusal path below.
+    direct_defs = {
+        st.name for st in fn.body
+        if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
     hits = set()
     for node in _walk_scope(fn):
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
-            if node.func.id in assigned:
+            if node.func.id in assigned and node.func.id not in direct_defs:
                 hits.add(node.func.id)
     safe = set()
     for name in hits:
@@ -1571,10 +1584,12 @@ def _closure_analysis(nd, enclosing, nd_name=None):
 
 
 def _early_nested_calls(fn):
-    """Calls of a DIRECT nested-def name at a line before its def: CPython's
-    static-locals rule makes the name local throughout, so such a call
-    raises UnboundLocalError — a dynamic-env fallthrough to a module name
-    would be silently wrong. Loud, via `locals_unsupported`."""
+    """Return direct nested-def calls before their definition.
+
+    This historical census helper remains available to callers that want to
+    inspect the shape; admission now uses the runtime static-local marker so
+    the call raises CPython's ``UnboundLocalError`` instead of refusing.
+    """
     defs = {st.name: st.lineno for st in fn.body
             if isinstance(st, ast.FunctionDef)}
     hits = set()
@@ -1938,22 +1953,17 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                 + ", ".join(shadowed)
                 if (shadowed := _shadowed_calls(node))
                 else (
-                    "calls nested-def name(s) before the def (static-locals "
-                    "rule): " + ", ".join(early)
-                    if (early := _early_nested_calls(node))
+                    "matches locally-bound handler name(s) "
+                    "(static-locals rule): " + ", ".join(handlers)
+                    if (handlers := _shadowed_handlers(node))
                     else (
-                        "matches locally-bound handler name(s) "
-                            "(static-locals rule): " + ", ".join(handlers)
-                            if (handlers := _shadowed_handlers(node))
-                            else (
-                                "raises locally-bound name(s) "
-                                "(static-locals rule): " + ", ".join(raised)
-                                if (raised := _shadowed_raises(node))
-                                else None
-                            )
-                        )
+                        "raises locally-bound name(s) "
+                        "(static-locals rule): " + ", ".join(raised)
+                        if (raised := _shadowed_raises(node))
+                        else None
                     )
-                ),
+                )
+            ),
             # a nested def DIRECTLY in this body is the H7 closure shape
             # (a single-target `name = lambda …` assign likewise); one
             # nested deeper (inside an if/loop) stays a plain

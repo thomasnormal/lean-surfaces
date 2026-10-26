@@ -981,20 +981,24 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
               -- also what keeps this block structurally recursive, since a
               -- mutual member taking the SAME `List Expr` is not a decrease.
               let st ← get
-              match callNamePlan m st.locals st.world.globals fname with
-              | .preRefuse msg => refuse msg
-              | .preNameError n => raisePy (.nameError n)
-              | plan => do
-                  let vs ← match plan with
-                    | .builtin "print" =>
-                        match args.toList with
-                        | [e] =>
-                            match complexPrintLiteral e with
-                            | some v => pure [v]
-                            | Option.none => evalOpenList K m args.toList
-                        | _ => evalOpenList K m args.toList
-                    | _ => evalOpenList K m args.toList
-                  applyCallPlan K m plan vs
+              if (Env.lookup st.locals fname).isNone &&
+                  !funsHeapFree m.functions.toList && hasUnboundLocal st.locals fname then
+                raisePy (.unboundLocalError fname)
+              else
+                match callNamePlan m st.locals st.world.globals fname with
+                | .preRefuse msg => refuse msg
+                | .preNameError n => raisePy (.nameError n)
+                | plan => do
+                    let vs ← match plan with
+                      | .builtin "print" =>
+                          match args.toList with
+                          | [e] =>
+                              match complexPrintLiteral e with
+                              | some v => pure [v]
+                              | Option.none => evalOpenList K m args.toList
+                          | _ => evalOpenList K m args.toList
+                      | _ => evalOpenList K m args.toList
+                    applyCallPlan K m plan vs
           | .attribute recv attr _ => do
               -- ===== THE TRACE CLOCK. Time is an INPUT: an unshadowed
               -- benign-import clock name consumes the next reading of the
@@ -1065,7 +1069,10 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
           match f with
           | .name fname _ => do
               let st ← get
-              match callNamePlan m st.locals st.world.globals fname with
+              if (Env.lookup st.locals fname).isNone &&
+                  !funsHeapFree m.functions.toList && hasUnboundLocal st.locals fname then
+                raisePy (.unboundLocalError fname)
+              else match callNamePlan m st.locals st.world.globals fname with
               | .preRefuse msg => refuse msg
               | .preNameError n => raisePy (.nameError n)
               | .notCallable t => do

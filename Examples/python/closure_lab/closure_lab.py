@@ -5,10 +5,10 @@ a nested def captures enclosing locals AT DEF TIME, admitted exactly
 when no capture is rebound after the def — where snapshot and CPython's
 cell are observationally equal, generator bodies (which read captures
 at RESUME time) included. Everything else refuses LOUDLY at extraction:
-rebinding after the def, unsupported compound `nonlocal` targets, a def inside a loop, a call of the
-nested name before its def (CPython's UnboundLocalError — a module
-fallthrough would silently call the wrong function). CPython is the
-oracle for every row.
+rebinding after the def, unsupported compound `nonlocal` targets, and a
+def inside a loop. A direct nested-name call before its def is admitted
+through the static-local marker and raises CPython's `UnboundLocalError`.
+CPython is the oracle for every row.
 """
 
 

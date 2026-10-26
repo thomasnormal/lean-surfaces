@@ -6759,7 +6759,7 @@ mutual
           ++ (handler.toList.map stmtUnboundLocalNames).flatten
     | .withStmt _ body _ _ =>
         (body.toList.map stmtUnboundLocalNames).flatten
-    | .defStmt .. => []
+    | .defStmt name .. => [name]
     | _ => []
 
   partial def stmtUnboundLocalNamesList : List Stmt → List String
@@ -8126,7 +8126,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
               evalExprs m fuel st args.toList ⤳ fun st _ =>
               .exn st (.typeError s!"'{v.typeName}' object is not callable")
           | Option.none =>
-            match lookupG (moduleGlobals m).1 fname with
+            if !funsHeapFree m.functions.toList && hasUnboundLocal st.locals fname then
+              .exn st (.unboundLocalError fname)
+            else match lookupG (moduleGlobals m).1 fname with
             | some (some (.ref _)) =>
                 evalExprs m fuel st args.toList ⤳ fun st _ =>
                 .exn st (.typeError "'dict' object is not callable")

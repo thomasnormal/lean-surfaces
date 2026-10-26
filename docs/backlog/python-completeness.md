@@ -17,6 +17,28 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-157 — admit early nested calls
+
+Direct calls of a nested function name before its `def` now use the existing
+static-local marker installed at frame entry. The marker preserves CPython's
+lookup rule and raises `UnboundLocalError` before the definition executes;
+ordinary local-shadowing calls and deeper unsupported closure shapes remain
+loud. The extractor no longer rejects this direct nested-def shape, and both
+interpreter paths carry the same class and name.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `closure_lab.early_call(1)` matches CPython's `UnboundLocalError` in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,643 matched / 51 recorded refusals / 0 failed |
+| Full proof differential | 3,694 cases: 3,534 matched / 160 refusals / 0 failed |
+| Refusal census | 51 rows in 13 classes, 0 drifts; `closure_lab::early_call` removed from `closure.admission` |
+| Extractor tests | 145 passed |
+| Lean build and generated checks | `lake build leanmodels-run`, docs check, coverage freshness, backlog-index freshness, and `git diff --check` passed |
+
+DECIDED: admit direct nested-def calls before the definition through the
+static-local marker; retain loud failure for ordinary dynamic local shadows,
+recursive nested-name captures, and other closure boundaries.
+
 ## 2026-10-26-pycomplete-156 — make starred-display lowering immune to shadowing
 
 Starred displays now lower through the unspellable synthetic builtin names

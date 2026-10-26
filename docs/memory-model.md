@@ -1026,14 +1026,15 @@ the moment any body contains a nested def — so heap-free modules keep
 the existing faithful `TypeError` for called refs, and `worldInv` never
 meets a closure call (the `moduleGenFree` guard discipline).
 
-**As built (2026-08-10):** `callClosure` is a frozen mutual member
+**As built (2026-08-10, extended 2026-10-26):** `callClosure` is a frozen mutual member
 (conjunct appended LAST); the extractor emits `NestedDef` for DIRECT
 children of a function body with the capture set and the refusal
 reasons; two admission edges hardened beyond the design: a call of a
 nested-def NAME before its def is CPython's `UnboundLocalError` under
-the static-locals rule, so it rides the loud `locals_unsupported`
-channel (a module fallthrough would silently call the wrong function),
-and direct nested-def names count as enclosing LOCALS for the capture
+the static-locals rule, so the frame installs a marker at entry and the
+runtime raises the exact class before the definition executes (a module
+fallthrough would silently call the wrong function), and direct nested-def
+names count as enclosing LOCALS for the capture
 analysis, so a closure may capture an EARLIER closure (`chain`) under
 the same never-rebound rule. The pre-#236 `moves()` was ADMITTED as
 analyzed: captures `depth`/`gamma`/`pos`/`root`/`self`/`val_lower`,

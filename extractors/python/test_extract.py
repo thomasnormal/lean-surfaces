@@ -483,13 +483,13 @@ class ExtractorTests(unittest.TestCase):
         loop = fn["body"][1]
         self.assertEqual(loop["body"][0]["kind"], "FunctionDef")
 
-    def test_early_call_of_nested_name_flags_locals(self):
-        # CPython: UnboundLocalError (static-locals rule) — a module
-        # fallthrough would silently call the wrong function: LOUD.
+    def test_early_call_of_nested_name_uses_static_marker(self):
+        # CPython: UnboundLocalError (static-locals rule). The runtime marks
+        # direct nested definitions at frame entry, so the shape is admitted.
         fn = self._first_fn(
             "def outer(a):\n    r = f()\n    def f():\n"
             "        return a\n    return r\n")
-        self.assertIn("nested-def name", fn["locals_unsupported"])
+        self.assertIsNone(fn["locals_unsupported"])
 
     def test_lambda_assign_is_nested_def(self):
         # H7 lambdas: `put = lambda …` directly in a body is the

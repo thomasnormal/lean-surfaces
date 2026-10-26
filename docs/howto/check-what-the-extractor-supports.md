@@ -67,9 +67,11 @@ jq '.module.body[] | select(.kind == "FunctionDef") | {name, args_unsupported, l
 - `args_unsupported` — non-null iff the def uses defaults/`*args`/kw-only/
   `**kwargs`/decorators; calling it is `unsupported` (positional params are
   still listed).
-- `locals_unsupported` — non-null iff the body *calls* a name it also
-  assigns (CPython's static-locals rule; the dynamic-env interpreter refuses
-  rather than resolve it wrongly).
+- `locals_unsupported` — non-null for dynamic local-shadowing calls and
+  locally-bound exception names that the interpreter cannot resolve
+  faithfully. A direct nested `def` name is handled by a static-local marker:
+  a call before the definition raises `UnboundLocalError`, while a later call
+  uses the closure binding.
 - `call_unsupported` on `Call` expressions — keywords / starred args at a
   call site.
 

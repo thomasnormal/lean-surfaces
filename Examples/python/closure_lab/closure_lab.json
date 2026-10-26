@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/closure_lab/closure_lab.py",
-  "source_sha256": "0dfa764fba5a766a1cb70e3c015c4af378e077b8bbca791db0b9628801b51b8e",
+  "source_sha256": "07ecdfcbf31d73b3290ce75d11bf9e2afbd02df26f263216519d077c84501b5e",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "closure_lab \u2014 H7 nested defs and closures: the acceptance battery.\n\nThe snapshot tier (docs/memory-model.md \u00a7nested defs and closures):\na nested def captures enclosing locals AT DEF TIME, admitted exactly\nwhen no capture is rebound after the def \u2014 where snapshot and CPython's\ncell are observationally equal, generator bodies (which read captures\nat RESUME time) included. Everything else refuses LOUDLY at extraction:\nrebinding after the def, unsupported compound `nonlocal` targets, a def inside a loop, a call of the\nnested name before its def (CPython's UnboundLocalError \u2014 a module\nfallthrough would silently call the wrong function). CPython is the\noracle for every row.\n"
+            "value": "closure_lab \u2014 H7 nested defs and closures: the acceptance battery.\n\nThe snapshot tier (docs/memory-model.md \u00a7nested defs and closures):\na nested def captures enclosing locals AT DEF TIME, admitted exactly\nwhen no capture is rebound after the def \u2014 where snapshot and CPython's\ncell are observationally equal, generator bodies (which read captures\nat RESUME time) included. Everything else refuses LOUDLY at extraction:\nrebinding after the def, unsupported compound `nonlocal` targets, and a\ndef inside a loop. A direct nested-name call before its def is admitted\nthrough the static-local marker and raises CPython's `UnboundLocalError`.\nCPython is the oracle for every row.\n"
           }
         }
       },
@@ -4523,7 +4523,7 @@
           }
         ],
         "args_unsupported": null,
-        "locals_unsupported": "calls nested-def name(s) before the def (static-locals rule): f",
+        "locals_unsupported": null,
         "body": [
           {
             "kind": "Assign",

@@ -835,6 +835,7 @@ theorem fuelMono (fuel : Nat) :
                   -- module globals (G1) → module function → builtins →
                   -- NameError/unsupported (the globals and the final fork are
                   -- fuel-independent, hence `le_refl`)
+                  refine Run.le_ite (Run.le_refl _) ?_
                   cases lookupG (moduleGlobals m).1 fname with
                   | some vv =>
                     cases vv with
@@ -2697,7 +2698,8 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               cases hbe : fname == "dict"
               · rfl
               · rw [bne, hbe] at hndct; simp at hndct
-            simp only [evalExpr, hkw, eq_self_iff_true, if_true]
+            simp only [evalExpr, hkw, funsHeapFree, Module.heapFree_funs hm,
+              eq_self_iff_true, if_true]
             have hargs : Run.OkW (·.world = st.world) (evalExprs m fuel st cargs.toList) :=
               ihEs st cargs.toList hflE
             cases Env.lookup st.locals fname with
@@ -2743,6 +2745,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 simp only [hlmx, hffx, hs, hnx, hex, hcx, hay, hal, hsetx, hprx, hlstx, hstarx, hdctx,
                   findClass_heapFree hm fname,
                   Option.isSome_none, Bool.false_or, Bool.false_eq_true, if_false]
+                refine .ite .exn ?_
                 refine .ite (.ite .unsupported (.bind hargs fun st₁ vs h₁ => ?_)) ?_
                 · exact ((ihCall st₁.world fname vs.toArray).withLocals
                     (l := st₁.locals)).mono

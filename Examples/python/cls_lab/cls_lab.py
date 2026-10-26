@@ -279,11 +279,11 @@ def unpack_arity(k):
 
 
 def unpack_subscript_elem(k):
-    # a subscript ELEMENT inside a tuple target stays loud
+    # a dict subscript ELEMENT inside a tuple target stores left to right
     c = Counter()
     d = {}
     d[0], c.a = 1, k
-    return 0
+    return (d[0], c.a)
 
 
 # pass 5 (docs/memory-model.md "search()'s first blockers"): CHAINED

@@ -17,6 +17,28 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-147 — admit constant-key dictionary subscripts in tuple targets
+
+Tuple unpacking now admits a dictionary subscript element when its receiver is
+a local heap reference and its key is a literal constant, for example
+`d[0], c.a = 1, k`. The right-hand side is unpacked first, then stores run
+left to right through the existing `heapStore` path, so aliases observe the
+same mutation order as CPython. Nonconstant keys, boundary lists, and other
+non-name target shapes remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `cls_lab.unpack_subscript_elem(1)` matches `(1, 1)` in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,632 matched / 62 refused / 0 failed |
+| Full proof differential | 3,694 cases: 3,523 matched / 171 refused / 0 failed |
+| Refusal census | 62 rows in 19 classes, 0 drifts; the constant-key tuple-subscript row removed |
+| Build/checks | `lake build leanmodels-run`, extractor/spec/tool checks, coverage freshness, backlog-index freshness, and `git diff --check` pass |
+
+DECIDED: admit only constant-key dictionary subscript elements whose receiver
+is a local heap reference; retain loud behavior for dynamic keys, boundary
+lists, unsupported receivers, and all other compound target shapes. Reread the
+inbox before selecting the next measured gap.
+
 ## 2026-10-26-pycomplete-146 — admit the scalar append-before-return `finally` slice
 
 The exceptions tier now lowers the measured shape whose try body returns a

@@ -253,7 +253,7 @@
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "unpack_attrs_mixed", "args": [[4]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "unpack_attrs_swap", "args": [[9]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "unpack_arity", "args": [[1]], "expect": "match"},
-  {"file": "Examples/python/cls_lab/cls_lab.py", "function": "unpack_subscript_elem", "args": [[1]], "expect": "unsupported"},
+  {"file": "Examples/python/cls_lab/cls_lab.py", "function": "unpack_subscript_elem", "args": [[1]], "expect": "match", "note": "A dict subscript element in a tuple target stores left to right with the existing heap store path."},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "chain_names", "args": [[5], [0], [-2]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "chain_attr", "args": [[5], [0]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "chain_rebind_receiver", "args": [[4]], "expect": "match"},

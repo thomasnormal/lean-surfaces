@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/cls_lab/cls_lab.py",
-  "source_sha256": "5c33b551ce4b3977e5c835cd7d3bdfb373a141f4817b33640bffa9037ef24e9f",
+  "source_sha256": "ba8e05b0f619ef779ecf1bb2440d9a2320984e9a32b654272d8ffcfd1d74164b",
   "module": {
     "kind": "Module",
     "body": [
@@ -7158,7 +7158,7 @@
           "lineno": 281,
           "col_offset": 0,
           "end_lineno": 286,
-          "end_col_offset": 12
+          "end_col_offset": 22
         },
         "name": "unpack_subscript_elem",
         "args": [
@@ -7364,20 +7364,70 @@
               "lineno": 286,
               "col_offset": 4,
               "end_lineno": 286,
-              "end_col_offset": 12
+              "end_col_offset": 22
             },
             "value": {
-              "kind": "Constant",
+              "kind": "Tuple",
               "span": {
                 "lineno": 286,
                 "col_offset": 11,
                 "end_lineno": 286,
-                "end_col_offset": 12
+                "end_col_offset": 22
               },
-              "value": {
-                "type": "int",
-                "repr": "0"
-              }
+              "elts": [
+                {
+                  "kind": "Subscript",
+                  "span": {
+                    "lineno": 286,
+                    "col_offset": 12,
+                    "end_lineno": 286,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 286,
+                      "col_offset": 12,
+                      "end_lineno": 286,
+                      "end_col_offset": 13
+                    },
+                    "id": "d"
+                  },
+                  "index": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 286,
+                      "col_offset": 14,
+                      "end_lineno": 286,
+                      "end_col_offset": 15
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "0"
+                    }
+                  }
+                },
+                {
+                  "kind": "Attribute",
+                  "span": {
+                    "lineno": 286,
+                    "col_offset": 18,
+                    "end_lineno": 286,
+                    "end_col_offset": 21
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 286,
+                      "col_offset": 18,
+                      "end_lineno": 286,
+                      "end_col_offset": 19
+                    },
+                    "id": "c"
+                  },
+                  "attr": "a"
+                }
+              ]
             }
           }
         ]

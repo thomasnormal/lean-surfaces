@@ -133,8 +133,8 @@ the same `.ref` re-entering `callIn` at every depth, one shared
 evaluates, so `aug_attr_missing`'s division by zero never runs) and
 tuple targets with ATTRIBUTE elements (`Searcher.__init__`'s
 `self.a, self.b = …`; the RHS reads before any store). The loud
-frontier: a list-valued attribute's `+=` (in-place mutation) and a
-subscript element inside a tuple target. -/
+frontier: a list-valued attribute's `+=` (in-place mutation); dict
+subscript elements now use the same left-to-right heap store path. -/
 
 #py_check cls_lab.aug_attr(3) = 6
 #py_check cls_lab.aug_attr(0) = 0
@@ -147,7 +147,7 @@ subscript element inside a tuple target. -/
 
 #py_check cls_lab.aug_attr_list(1) = 1
 #py_check cls_lab.aug_attr_list(0) = 1
-#guard callFunction cls_lab "unpack_subscript_elem" #[.int 1] 4096 matches .unsupported _
+#py_check cls_lab.unpack_subscript_elem(1) = (Val.tuple #[.int 1, .int 1])
 
 /-! ### pass 5: CHAINED assignment, split at ingestion
 (docs/memory-model.md §search()'s first blockers): `t1 = t2 = v` ⇢

@@ -5575,6 +5575,18 @@ def unpackStoreHM (m : Module) (h : Heap) (env : Env) :
     | some _ => .exn .attributeError
     | Option.none =>
       .unsupported s!"tuple-target attribute store through non-local receiver '{rid}' is outside the tier"
+  | .subscript (.name rid _) (.constant c _) _ :: es, v :: vs =>
+    match Env.lookup env rid with
+    | some (.ref a) =>
+      (heapStore h a (Const.toRVal c) v) >>= fun h' =>
+        unpackStoreHM m h' env es vs
+    | some (.listV _) =>
+      .unsupported "tuple-target subscript store to a boundary list is outside the tier"
+    | some _ => .exn (.typeError "tuple-target subscript store requires a heap object")
+    | Option.none =>
+      .unsupported s!"tuple-target subscript store through non-local receiver '{rid}' is outside the tier"
+  | .subscript (.name rid _) _ _ :: _, _ :: _ =>
+    .unsupported s!"tuple-target subscript key through '{rid}' is outside the tier"
   | e :: _, _ :: _ =>
     .unsupported s!"tuple-unpack target element '{e.kindName}' (beyond plain names and local-receiver attributes) is outside the tier"
   | _, _ => .unsupported "internal: unpack arity mismatch after unpackSeq (report this)"

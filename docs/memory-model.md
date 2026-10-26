@@ -1711,7 +1711,7 @@ remaining gaps against the shipped file: THREE constructs.
    rides `attrReadResult`; `Stmt.heapFree` stays `false` for attribute targets
    because the list mutation changes the heap.
 
-2. **Tuple targets with ATTRIBUTE elements**
+2. **Tuple targets with ATTRIBUTE elements and constant-key subscripts**
    (`self.tp_score, self.tp_move, self.history = {}, {}, set()`).
    CPython: RHS evaluates, unpacks, then the element stores run LEFT TO
    RIGHT, each mutating the heap. All-NAME tuples keep the pure
@@ -1719,8 +1719,10 @@ remaining gaps against the shipped file: THREE constructs.
    the new heap-threading pair `unpackSeq` (the `assignTo` arity/type
    discipline factored out; heap lists unpack as an eager snapshot) +
    `unpackStoreH` (names bind; attribute elements store through a
-   LOCAL-name receiver holding a `.ref` — sunfish's `self.x`; any other
-   element or receiver shape refuses loudly). Both are WORKERS and join
+   LOCAL-name receiver holding a `.ref` — sunfish's `self.x`; constant-key
+   dictionary subscript elements such as `d[0]` use the same heap store in
+   left-to-right order; any other element, key, or receiver shape refuses
+   loudly). Both are WORKERS and join
    `py_simp`/`interpUnfolds` (the recorded simp-set trap).
    `Stmt.heapFree`: a tuple target stays in the fragment iff it is
    all-names (`targetNames.isSome`).

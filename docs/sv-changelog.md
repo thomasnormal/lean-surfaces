@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.42] — 2026-10-26
+
+The self-check surface now has 276 differential rows: 271 matches, zero
+disagreements, and 5 recorded refusals. The grammar census remains at 217
+pyslang syntax witnesses: 92 MATCH and 125 REFUSE. The 22,059-path corpus
+remains at 5,240 clean files and 16,752 partial files, with
+`AssignmentExpression:target` at 2,853 and
+`ExpressionStatement:CallExpression` at 2,775. The discarded-result slice
+now covers zero-size queue/array/string queries, ASCII string queries and
+`atoreal()`, pre-trigger `event.triggered()`, and enum `.name()` calls; each
+reuses the value converter and leaves dynamic or stateful forms loud.
+
 ## [0.1.41] — 2026-10-26
 
 The self-check surface now has 271 differential rows: 266 matches, zero

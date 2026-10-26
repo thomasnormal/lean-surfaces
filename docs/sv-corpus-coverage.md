@@ -25,6 +25,18 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Literal predefined-stdout position errors — 2026-10-26
+
+The exact `$ftell(32'h8000_0001)` query on the predefined stdout descriptor
+now lowers to the standard signed 32-bit error result `-1`. Discarded calls are
+inert because the self-check state has no seekable file object; dynamic
+descriptors and file-position state remain loud. The `ftell_stdout_error`
+fixture supplies the differential row and Lean receipt. The fresh census remains
+**5,240 clean / 16,752 partial** (67 include skips), with `CallExpression` at
+**2,771** because this exact shape is absent from sv-tests-2. Differential
+coverage grows **257/252/0/5 → 258/253/0/5** with no disagreements, and grammar
+coverage remains **217/92/125**.
+
 ## Literal predefined-stdout seek errors — 2026-10-26
 
 The exact `$fseek(32'h8000_0001, 0, 0)` query on the predefined stdout

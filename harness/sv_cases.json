@@ -2316,6 +2316,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "ftell_stdout_error",
+      "file": "Examples/system-verilog/ftell_stdout_error/ftell_stdout_error.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

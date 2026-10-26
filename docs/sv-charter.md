@@ -43,6 +43,18 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Literal predefined-stdout position errors — 2026-10-26
+
+The exact `$ftell(32'h8000_0001)` query on the predefined stdout descriptor
+now lowers to the IEEE error result, signed 32-bit `-1`, while a discarded
+call is inert because the self-check state has no seekable file object. Dynamic
+descriptors and file-position state remain loud. The `ftell_stdout_error`
+fixture and Lean receipt pin the result. The 22,059-path census remains
+**5,240 clean / 16,752 partial** (67 include skips), with `CallExpression` at
+**2,771** because the corpus has no exact predefined-stdout `$ftell` witness;
+differential coverage grows **257/252/0/5 → 258/253/0/5** and grammar coverage
+remains **217/92/125**.
+
 ## Literal predefined-stdout seek errors — 2026-10-26
 
 The exact `$fseek(32'h8000_0001, 0, 0)` query on the predefined stdout

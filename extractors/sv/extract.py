@@ -1583,6 +1583,38 @@ def _convert_fseek_stdout_error(sm, expression):
     }, expression.type)
 
 
+def _ftell_stdout_error_call(expression):
+    """Recognize the deterministic error for querying predefined stdout.
+
+    The self-check state has no seekable file object for the predefined stdout
+    descriptor, so IEEE 1800's ``$ftell`` error result is the literal ``-1``.
+    Dynamic descriptors remain at the external file-state boundary.
+    """
+    try:
+        if (_SYM is not None or type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "$ftell"
+                or len(expression.arguments) != 1
+                or expression.type.bitWidth != 32
+                or not expression.type.isIntegral
+                or not expression.type.isSigned):
+            return False
+        return _literal_integral_value(expression.arguments[0]) == 0x80000001
+    except Exception:
+        return False
+
+
+def _convert_ftell_stdout_error(sm, expression):
+    if not _ftell_stdout_error_call(expression):
+        return unsupported(sm, expression, "CallExpression:$ftell")
+    return signed_metadata({
+        "kind": "Literal", "span": node_span(sm, expression),
+        "width": 32, "bits": "1" * 32,
+        "ftell_stdout_error": True,
+    }, expression.type)
+
+
 def _stime_call(expression):
     """A zero-argument `$stime` query in the time-zero self-check slice."""
     try:
@@ -8259,6 +8291,7 @@ def _convert_legacy_call(sm, expression):
             (_time_scale_call, _convert_time_scale_call),
             (_fopen_invalid_mode_call, _convert_fopen_invalid_mode),
             (_fseek_stdout_error_call, _convert_fseek_stdout_error),
+            (_ftell_stdout_error_call, _convert_ftell_stdout_error),
             (_plusargs_call, _convert_plusargs_call),
             (_dynamic_cast_call, _convert_dynamic_cast),
             (_coverage_call, _convert_coverage_call),
@@ -15730,6 +15763,11 @@ def _convert_syscall(sm, s, e):
         # state.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "fseek_stdout_error_statement": True}
+    if is_sys and _ftell_stdout_error_call(e):
+        # A discarded position query on the predefined stdout descriptor has
+        # no represented state effect after reporting its deterministic error.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "ftell_stdout_error_statement": True}
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

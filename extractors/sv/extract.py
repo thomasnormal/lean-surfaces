@@ -15749,6 +15749,16 @@ def _convert_syscall(sm, s, e):
         if value.get("kind") != "Unsupported":
             return {"kind": "Empty", "span": node_span(sm, s),
                     "associative_empty_query_statement": name}
+    if is_sys and _associative_empty_endpoint(e):
+        # On an untouched associative array, ``first``/``last`` return zero
+        # without selecting an element.  The existing converter checks the
+        # direct named index argument and empty-array source history before
+        # erasing this discarded result; populated and effectful forms stay
+        # loud.
+        value = _convert_associative_empty_endpoint(sm, e)
+        if value.get("kind") != "Unsupported":
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "associative_empty_endpoint_statement": name}
     if is_sys and name == "$system":
         # IEEE 1800-2023 §20.17.1: the no-argument task form calls
         # system(NULL) and discards its status.  The self-check state has no

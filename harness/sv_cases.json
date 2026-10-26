@@ -1819,6 +1819,15 @@
       "expect": "match"
     },
     {
+      "name": "assoc_empty_endpoint_statement",
+      "file": "Examples/system-verilog/assoc_empty_endpoint_statement/assoc_empty_endpoint_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "mailbox_type_mismatch",
       "file": "Examples/system-verilog/mailbox_type_mismatch/mailbox_type_mismatch.sv",
       "module": "top",

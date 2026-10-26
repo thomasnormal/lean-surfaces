@@ -56,6 +56,22 @@ and `ExpressionStatement:CallExpression` at **2,775**. Differential coverage
 grows **269/264/0/5 → 270/265/0/5** with no disagreements, and grammar
 coverage remains **217/92/125**.
 
+## Discarded empty associative-array endpoint queries — 2026-10-26
+
+Discarded `first(index)` and `last(index)` calls on a proven untouched 2-state
+associative array now erase their exact zero result through the existing empty
+endpoint converter. The direct named index argument remains checked, while
+populated, aliased, initialized, dynamic, and value-position queries stay
+loud. The `assoc_empty_endpoint_statement` fixture supplies the differential
+row and Lean receipt; the pinned self-check oracle agrees with its `PASS`
+transcript.
+
+The committed **22,059-path** snapshot remains **5,240 clean / 16,752
+partial** (67 include skips), with `AssignmentExpression:target` at **2,853**
+and `ExpressionStatement:CallExpression` at **2,775**. Differential coverage
+grows **270/265/0/5 → 271/266/0/5** with no disagreements, and grammar
+coverage remains **217/92/125**.
+
 ## Discarded time-scale metadata queries — 2026-10-26
 
 Valid `$timeunit` and `$timeprecision` calls in statement position now erase

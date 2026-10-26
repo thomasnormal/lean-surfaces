@@ -54,6 +54,11 @@ array are inert after the existing empty-array converter proves their exact
 zero result. Populated, aliased, initialized, dynamic, and value-position
 queries remain loud because their count is runtime state.
 
+Discarded `first(index)` and `last(index)` queries on an untouched 2-state
+associative array follow the same empty-array rule. The direct named index
+argument is still checked by the existing converter; populated arrays and
+effectful or computed indices remain loud.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument

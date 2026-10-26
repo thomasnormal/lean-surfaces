@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 270 | 265 | 0 | 5 | sv-tests-2 declarations |
+| 271 | 266 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -216,6 +216,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `assoc_empty_num` | `Examples/system-verilog/assoc_empty_num/assoc_empty_num.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_empty_query_statement` | `Examples/system-verilog/assoc_empty_query_statement/assoc_empty_query_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_empty_endpoint` | `Examples/system-verilog/assoc_empty_endpoint/assoc_empty_endpoint.sv` | match | **MATCH** | `ok` | MATCH |
+| `assoc_empty_endpoint_statement` | `Examples/system-verilog/assoc_empty_endpoint_statement/assoc_empty_endpoint_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `mailbox_type_mismatch` | `Examples/system-verilog/mailbox_type_mismatch/mailbox_type_mismatch.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_dynamic_bits` | `Examples/system-verilog/empty_dynamic_bits/empty_dynamic_bits.sv` | match | **MATCH** | `ok` | MATCH |
 | `semaphore_negative_try_get` | `Examples/system-verilog/semaphore_negative_try_get/semaphore_negative_try_get.sv` | match | **MATCH** | `ok` | MATCH |

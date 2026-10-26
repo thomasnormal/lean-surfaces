@@ -242,8 +242,9 @@ def render(diff, proof, grammar, tables):
     L.append("**Exception classes `except` and bare `raise` can name (%d):** %s. "
              "`ImportError` and `ModuleNotFoundError` additionally work as handler "
              "names, but their bare raises remain unfinished. Other builtin "
-             "exception names refuse, including OS-error ancestors such as `OSError`; "
-             "user classes `class E(Exception): pass` and the measured direct "
+             "exception names refuse; the empty `OSError` class identity is also "
+             "admitted for direct raises, while OS-derived and payload-bearing "
+             "constructors remain loud. User classes `class E(Exception): pass` and the measured direct "
              "builtin-ancestor shapes are admitted." % (len(exc), ", ".join("`%s`" % e for e in exc)))
     L.append("")
     others = sorted(n for n in cpython

@@ -1290,7 +1290,7 @@
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "late_shadow", "args": [[]], "expect": "unsupported", "note": "Bare raise admission excludes local shadows, exception instances, chaining and unmodelled exception classes."},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "raised_instance", "args": [[]], "expect": "match", "note": "A direct zero-argument exception constructor lowers to the admitted class-identity raise; payload-bearing constructors and other expression forms remain loud."},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "chained", "args": [[]], "expect": "match", "note": "A literal None cause has no observable payload in the tier and lowers to the ordinary builtin class-identity raise."},
-  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "unsupported_class", "args": [[]], "expect": "unsupported", "note": "Bare raise admission excludes local shadows, exception instances, chaining and unmodelled exception classes."},
+  {"file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py", "function": "unsupported_class", "args": [[]], "expect": "match", "note": "An empty OSError class identity is admitted; OS-derived and payload-bearing constructors remain loud."},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_namedtuple.py", "function": "raise_value_error", "args": [[]], "expect": "match"},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_namedtuple.py", "function": "raise_stop_iteration", "args": [[]], "expect": "match"},
   {"file": "Examples/python/builtin_raise_lab/builtin_raise_namedtuple.py", "function": "raise_record", "args": [[]], "expect": "match"},

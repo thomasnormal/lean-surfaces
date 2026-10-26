@@ -761,16 +761,16 @@ def admittedBuiltinExc : List String :=
    "AttributeError", "AssertionError", "StopIteration", "SystemExit",
    "KeyboardInterrupt", "GeneratorExit", "OSError", "EnvironmentError"]
 
-/-- Builtin identities that may be raised directly.  `OSError` and its alias
-are handler names only until an OS-producing operation supplies a faithful
-constructor; keeping this list separate prevents a handler admission from
-silently widening `raise OSError`. -/
+/-- Builtin identities that may be raised directly.  `OSError` is admitted as
+an empty class-identity raise even though no in-tier operation produces an
+OS error; its payload-bearing and OS-derived constructors remain outside the
+tier.  `EnvironmentError` stays a handler-only alias. -/
 def admittedBuiltinRaise : List String :=
   ["BaseException", "Exception", "ArithmeticError", "LookupError",
    "TypeError", "NameError", "ZeroDivisionError", "OverflowError", "IndexError",
    "ValueError", "KeyError", "RuntimeError", "RecursionError",
    "AttributeError", "AssertionError", "StopIteration", "SystemExit",
-   "KeyboardInterrupt", "GeneratorExit"]
+   "KeyboardInterrupt", "GeneratorExit", "OSError"]
 
 /-- The measured one-string constructor surface for explicit `raise`.  These
   are exactly the builtin exception representations that retain a String

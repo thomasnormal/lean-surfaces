@@ -117,7 +117,7 @@ load_program builtin_raise_namedtuple from "Examples/python/builtin_raise_lab/bu
 
 #py_check builtin_raise_lab.chained() raises (.builtinException "ValueError")
 
-#guard callFunction builtin_raise_lab "unsupported_class" #[] 4096 matches .unsupported _
+#py_check builtin_raise_lab.unsupported_class() raises (.builtinException "OSError")
 
 #guard callFunction builtin_raise_lab "parameter_shadow" #[.int 1] 4096 matches .unsupported _
 

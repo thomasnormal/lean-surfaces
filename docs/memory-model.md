@@ -5625,7 +5625,7 @@ boundary values, high octets, error paths, consumers, and dictionary keys.
 
 ## Bare builtin raises (2026-10-19)
 
-`raise N` now accepts the same 16 builtin names as `admittedBuiltinExc` when
+`raise N` now accepts the same 17 builtin names as `admittedBuiltinExc` when
 no local, module binding, function or user class shadows the name. An admitted
 user exception class resolves first and keeps its class identity. Builtin raises
 use `PyErr.builtinException name`, preserving both the class and the empty
@@ -5638,6 +5638,10 @@ one produces CPython's `TypeError("exceptions must derive from BaseException")`.
 A namedtuple used as a handler class raises the separate catching-class
 `TypeError` only if the body raises; successful bodies remain successful, and
 both script shells retain the body's published effects before the error.
+
+The empty `OSError` class identity is included even though no in-tier operation
+produces an OS error; payload-bearing and OS-derived constructors remain loud,
+and `EnvironmentError` remains a handler-only alias.
 
 PEP 479 applies at generator exit: `generatorEscape` maps either representation
 of `StopIteration` to `RuntimeError("generator raised StopIteration")` after the

@@ -988,7 +988,6 @@ WHITELIST_CLASS = {
     "builtin_raise_lab::parameter_shadow": "exc.raise",
     "builtin_raise_lab::late_shadow": "exc.raise",
     "builtin_raise_lab::raised_instance": "exc.raise",
-    "builtin_raise_lab::unsupported_class": "exc.raise",
     "iter_lab::chr_surrogate": "str.surrogate",
     "gen_lab::walrus_leak": "genexp.lowering-admission",
     "gen_lab::upto": "boundary.generator",

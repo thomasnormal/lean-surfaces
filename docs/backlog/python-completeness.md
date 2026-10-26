@@ -17,6 +17,27 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-138 — admit empty `OSError` raises
+
+The builtin exception representation already carried an empty class identity
+for `OSError`, and the handler table already matched it, but the direct-raise
+admission intentionally stopped short of the name because no in-tier operation
+produces an OS error. A bare `raise OSError` needs no OS payload, so it now uses
+the existing `PyErr.builtinException` path. Payload-bearing and OS-derived
+constructors remain loud, and `EnvironmentError` remains a handler-only alias.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `builtin_raise_lab.unsupported_class` MATCH in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,625 matched / 69 refused / 0 failed |
+| Full proof differential | 3,694 cases: 3,516 matched / 178 refused / 0 failed |
+| Refusal census | 69 rows, 0 drift; `exc.raise` loses its direct `OSError` row |
+| Proof surface | `#py_check builtin_raise_lab.unsupported_class()` checks the builtin identity |
+
+DECIDED: admit only the payload-free `OSError` class identity; retain loud
+behavior for `EnvironmentError` as a direct raise, OS-producing operations, and
+all payload-bearing OS constructors.
+
 ## 2026-10-26-pycomplete-137 — make function-scope `del` errors faithful
 
 The remaining four `del.name-set-census` rows were the same missing semantic:

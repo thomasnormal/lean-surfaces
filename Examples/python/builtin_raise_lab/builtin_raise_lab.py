@@ -278,4 +278,6 @@ def chained():
 
 
 def unsupported_class():
+    # OSError has an empty class identity just like the already admitted
+    # builtin raises; OS-derived and payload-bearing constructors stay loud.
     raise OSError

@@ -2163,6 +2163,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "array_oob_reads",
+      "file": "Examples/system-verilog/array_oob_reads/array_oob_reads.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

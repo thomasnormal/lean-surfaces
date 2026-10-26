@@ -2114,6 +2114,51 @@ def _fixed_array_oob_select(sm, expression):
         return False
 
 
+def _fixed_array_oob_read(sm, expression):
+    """Return ``(width, two_state)`` for a constant fixed-array OOB read.
+
+    IEEE 1800-2023 §7.4.5 gives an out-of-bounds unpacked-array read the
+    element type's default value: all zeroes for a two-state element and all
+    x for a four-state element.  The flat state can represent that result
+    without inventing an aggregate slot, but only for a fully constant,
+    finite unpacked array with an integral leaf.  Dynamic indices, dynamic
+    arrays, aggregate leaves, and packed/scalar selections remain loud.
+    """
+    try:
+        if type(expression).__name__ != "ElementSelectExpression":
+            return None
+        selectors = []
+        current = expression
+        while type(current).__name__ == "ElementSelectExpression":
+            position = _constant_dimension_selector(current.selector)
+            if position is None:
+                return None
+            selectors.append(position)
+            current = current.value
+        if not _storage_expression(current):
+            return None
+        if str(current.symbol.kind) not in ("SymbolKind.Variable", "SymbolKind.Net"):
+            return None
+        if type(current.type.canonicalType).__name__ != "FixedSizeUnpackedArrayType":
+            return None
+        shape = _fixed_array_dimensions(current.type, max_cells=None)
+        if shape is None:
+            return None
+        dimensions, leaf_type = shape
+        if len(selectors) != len(dimensions):
+            return None
+        if not any(position < min(left, right) or position > max(left, right)
+                   for position, (left, right) in
+                   zip(reversed(selectors), dimensions)):
+            return None
+        width, two_state, reason = type_width_2s(leaf_type)
+        if width is None or reason is not None:
+            return None
+        return width, two_state
+    except Exception:
+        return None
+
+
 def _foreach_storage_name(symbol):
     """Bind an automatic iterator by its declaration, including anonymous scopes."""
     return _scoped_temp("$foreach:", symbol.location.offset, ":" + symbol.name)
@@ -7073,6 +7118,16 @@ def _convert_selected_read(sm, expr, expression_kind):
         nested_dynamic_array = _fixed_array_nested_dynamic_read(sm, expr)
         if nested_dynamic_array is not None:
             return nested_dynamic_array
+        oob = _fixed_array_oob_read(sm, expr)
+        if oob is not None:
+            width, two_state = oob
+            return signed_metadata({
+                "kind": "Literal",
+                "span": node_span(sm, expr),
+                "width": width,
+                "bits": ("0" if two_state else "x") * width,
+                "unpacked_array_oob_read": True,
+            }, expr.type)
     nested_window = _nested_packed_constant_window(sm, expr, "SelectRead")
     if nested_window is not None:
         return nested_window

@@ -56,6 +56,19 @@ The **22,056-path** census moves **5,209 → 5,210 clean** and **16,780 →
 coverage grows **239/234/0/5 → 240/235/0/5** with no disagreements; grammar
 coverage remains **217/90/127**.
 
+## Constant out-of-bounds unpacked-array reads — 2026-10-26
+
+Constant reads beyond a finite unpacked integral array now lower to the IEEE
+element default: all zeroes for a two-state element and all x for a four-state
+element, including an enum's four-state base type. Dynamic indices, packed or
+scalar diagnostics, aggregate leaves, and dynamic arrays remain loud. The
+`array_oob_reads` fixture covers the two state kinds and enum result.
+
+The **22,056-path** census moves **5,210 → 5,215 clean** and **16,779 →
+16,774 partial** (67 include skips). `ElementSelectExpression:source-type`
+falls **495 → 490**. Differential coverage grows **240/235/0/5 → 241/236/0/5**
+with no disagreements; grammar coverage remains **217/90/127**.
+
 ## Finite literal dynamic-array reductions — 2026-10-26
 
 Positional literal initializers for finite integral dynamic arrays now become

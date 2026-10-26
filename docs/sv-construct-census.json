@@ -100,7 +100,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    495
+    490
    ],
    [
     "PropertySymbol:Property",
@@ -964,8 +964,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5210,
-   "partial": 16779,
+   "clean": 5215,
+   "partial": 16774,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1026,7 +1026,7 @@
     52
    ],
    "simulation": [
-    4519,
+    4524,
     18687
    ],
    "simulation elaboration": [
@@ -1591,9 +1591,9 @@
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 279,
+    "clean": 284,
     "error": 0,
-    "partial": 517,
+    "partial": 512,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

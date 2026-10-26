@@ -8128,3 +8128,18 @@ and partial files **16,780 → 16,779** (67 include skips). The
 `CallExpression` **2,780 → 2,778**. Differential coverage grows
 **239/234/0/5 → 240/235/0/5** with no disagreements; grammar coverage remains
 **217/90/127**.
+
+## Constant out-of-bounds unpacked-array reads — 2026-10-26
+
+Constant reads beyond a finite unpacked integral array now lower to the IEEE
+element default: all zeroes for a two-state element and all x for a four-state
+element, including an enum's four-state base type. Dynamic indices, packed or
+scalar diagnostics, aggregate leaves, and dynamic arrays remain loud. The
+`array_oob_reads` fixture supplies the differential row and Lean receipt, with
+extractor regressions for both state kinds and the scalar boundary.
+
+On the refreshed **22,056-path** census, clean files move **5,210 → 5,215**
+and partial files **16,779 → 16,774** (67 include skips).
+`ElementSelectExpression:source-type` falls **495 → 490**. Differential
+coverage grows **240/235/0/5 → 241/236/0/5** with no disagreements; grammar
+coverage remains **217/90/127**.

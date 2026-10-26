@@ -184,6 +184,32 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_out_of_bounds_integral_array_reads_use_element_defaults(self):
+        design = extract_source(
+            "module top; typedef enum logic [1:0] { RED=2'b00, "
+            "GREEN=2'b01, BLUE=2'b10 } color_t; "
+            "bit [7:0] bits [0:3]; logic [7:0] logic_values [0:3]; "
+            "color_t colors [0:3]; logic [7:0] result; "
+            "initial begin result = bits[10]; result = logic_values[10]; "
+            "result = colors[10]; end endmodule")
+        reads = [node for node in nodes(design)
+                 if node.get("unpacked_array_oob_read")]
+        self.assertEqual(len(reads), 3)
+        self.assertEqual([node["bits"] for node in reads],
+                         ["0" * 8, "x" * 8, "x" * 2])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_out_of_bounds_array_reads_keep_scalar_boundaries(self):
+        design = extract_source(
+            "module top; logic scalar; int result; "
+            "initial begin result = scalar[0]; end endmodule")
+        self.assertFalse(any(node.get("unpacked_array_oob_read")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ElementSelectExpression:source-type"
+                            for node in nodes(design)))
+
     def test_mismatched_array_copy_stays_loud(self):
         design = extract_source(
             "module top; logic [7:0] source [0:2]; logic [7:0] value [0:1]; "

@@ -2234,6 +2234,48 @@ def callableLocalNestedShadowComputedInitializationDoWhileBreakStatementFrameWit
 
 #guard callableLocalNestedShadowComputedInitializationDoWhileBreakStatementFrameWitness
 
+private def localNestedShadowComputedInitializationForStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let initializer : CallableStatement := .assign (handle "0x10") {
+    expression := .integer 0
+    sourceType := intType
+    type := intType}
+  let condition : TypedCallableExpression := {
+    expression := .binary "<"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 2, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let step : CallableStatement := .expression {
+    expression := .increment "++" false (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let loopBody := .block (.automatic {
+    statement := .declare (handle "0x13") intType intType
+      (.binary .add (.read (handle "0x12")) (.literal (signed 2)))
+    declarations := [handle "0x13"]})
+  let function := {base with body := .block (.sequence
+    (automaticLiteral "0x11" 3)
+    (.sequence
+      (.block (.sequence
+        (.automatic {
+          statement := .declare (handle "0x12") intType intType
+            (.binary .add (.read (handle "0x11")) (.literal (signed 1)))
+          declarations := [handle "0x12"]})
+        (.forLoop initializer condition step loopBody)))
+      (.return_ {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType}))) }
+  match evaluateCallableObject 128 .lp64 function [signed 9] with
+  | .ok (.ok value) => value == signed 3
+  | _ => false
+
+def callableLocalNestedShadowComputedInitializationForStatementFrameWitness : Bool :=
+  localNestedShadowComputedInitializationForStatementFrame
+
+#guard callableLocalNestedShadowComputedInitializationForStatementFrameWitness
+
 private def localNestedInitializationStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let initializer : Expression := .read (handle "0x11")

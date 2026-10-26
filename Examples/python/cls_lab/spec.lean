@@ -86,7 +86,7 @@ guard means no `__len__`/`__getitem__`/`__iter__` can exist) -/
   (Val.tuple #[.int 1, .bool true, .bool true, .bool true])
 #py_check cls_lab.sub_inherits(1) = 1
 #py_check cls_lab.object_base_truthy() = true
-#guard callFunction cls_lab "class_as_value" #[] 4096 matches .unsupported _
+#py_check cls_lab.class_as_value() = 0
 #guard callFunction cls_lab "attr_on_int" #[.int 1] 4096
   matches .exn .attributeError
 

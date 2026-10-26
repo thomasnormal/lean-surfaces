@@ -17,6 +17,26 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-163 — erase an unread ordinary-class assignment
+
+The dead-value ingestion rewrite now covers admitted, creation-pure ordinary
+classes as well as builtin exception classes. The exact `f = Cell; return n`
+shape is erased only when the assigned name is not a parameter and does not
+occur in the returned expression. Returned class objects, parameter shadows,
+and every other observed first-class class value remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `cls_lab::class_as_value` MATCH in native and proof interpreters; returned class values remain loud and parameter shadowing follows CPython |
+| Full executable differential | 3,694 cases: 3,650 matched / 44 recorded refusals / 0 failed |
+| Full proof differential | 3,694 cases: 3,541 matched / 153 refusals / 0 failed |
+| Refusal census | 44 rows in 12 classes, 0 drifts; `firstclass.callable` fell from 5 to 4 |
+| Build and checks | `lake build leanmodels-run`, both differentials, and `git diff --check` passed |
+
+DECIDED: erase only an unread assignment of an admitted, creation-pure class in
+the exact two-statement return shape; retain loud failure for returned class
+objects, shadowed names, and general first-class class values.
+
 ## 2026-10-26-pycomplete-162 — erase an unread exception-class assignment
 
 An admitted exception class assigned to a local and never read before a direct

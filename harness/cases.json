@@ -138,7 +138,7 @@
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "weird_eq", "args": [[1]], "expect": "match", "note": "A direct __eq__(self, other): return True literal is admitted for instance equality."},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "sub_inherits", "args": [[1]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "object_base_truthy", "args": [[]], "expect": "match"},
-  {"file": "Examples/python/cls_lab/cls_lab.py", "function": "class_as_value", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/cls_lab/cls_lab.py", "function": "class_as_value", "args": [[]], "expect": "match", "note": "An admitted class assigned to an unread local is erased at ingestion; observed class values remain loud."},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "slot_read", "args": [[7], [0], [-3]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "slot_store", "args": [[7], [0], [-3]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "slot_aug", "args": [[7], [0], [-3]], "expect": "match"},

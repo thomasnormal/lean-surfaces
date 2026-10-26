@@ -5,6 +5,22 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.115] — 2026-10-26
+
+### Added
+
+- Added eight callable statement witnesses for single-iteration and transfer
+  paths in shadow-computed `while`, `do … while`, and `for` loops, including
+  nested scope cleanup and assignment behavior.
+
+### Measured
+
+- The checked-in corpus now contains **706 differential rows**: **689 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.114] — 2026-10-26
 
 ### Added

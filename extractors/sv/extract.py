@@ -6418,68 +6418,83 @@ def _packed_struct_member(sm, expression):
 
 
 def _legacy_member_select_window(sm, expression, expression_kind, result_kind):
-    """Flatten a constant selection inside a packed-member chain.
+    """Flatten a constant selection chain rooted at a packed member.
 
-    Legacy selected reads/targets store one vector plus an LSB offset. A
-    nested untagged packed-struct/union members have fixed outer offsets, so a
-    constant bit or simple part select can add its local normalized offset and
-    reuse that representation. Indexed, dynamic and tagged aggregate forms
-    stay outside this helper rather than manufacturing a runtime aggregate
-    path.
+    Legacy selected reads/targets store one vector plus an LSB offset. Every
+    constant element or part selection in a chain contributes a fixed local
+    offset, so compose those offsets through the existing packed-member
+    window. Dynamic, tagged and nonintegral forms remain outside this helper.
     """
-    try:
-        if type(expression.value).__name__ != "MemberAccessExpression":
-            return None
-        member = _packed_struct_member(sm, expression.value)
-        if member is None:
-            return None
-        base, _member_width, parent_offset, _two_state = member
-        normalized = None
-        if expression_kind == "ElementSelectExpression":
-            normalized = _packed_constant_index(
-                sm, expression.value.type, expression.selector)
-        elif expression_kind == "RangeSelectExpression":
-            selection = str(expression.selectionKind).split(".")[-1]
-            if selection == "Simple":
-                normalized = _packed_constant_simple_index(
-                    sm, expression.value.type, expression.left,
-                    expression.right, expression.type.bitWidth)
-            elif selection in ("IndexedUp", "IndexedDown"):
-                normalized = _packed_constant_indexed_index(
-                    sm, expression.value.type, expression.left,
-                    expression.type.bitWidth, selection == "IndexedDown")
-            else:
+    def member_window(node):
+        try:
+            kind = type(node).__name__
+            if kind == "MemberAccessExpression":
+                member = _packed_struct_member(sm, node)
+                if member is None:
+                    return None
+                base, width, offset, two_state = member
+                return base, width, offset, two_state, False
+            if kind not in ("ElementSelectExpression", "RangeSelectExpression"):
                 return None
-        if normalized is None:
+            parent = member_window(node.value)
+            if parent is None:
+                return None
+            base, _parent_width, parent_offset, _parent_two_state, _parent_descending = parent
+            normalized = None
+            if kind == "ElementSelectExpression":
+                normalized = _packed_constant_index(
+                    sm, node.value.type, node.selector)
+            else:
+                selection = str(node.selectionKind).split(".")[-1]
+                if selection == "Simple":
+                    normalized = _packed_constant_simple_index(
+                        sm, node.value.type, node.left, node.right,
+                        node.type.bitWidth)
+                elif selection in ("IndexedUp", "IndexedDown"):
+                    normalized = _packed_constant_indexed_index(
+                        sm, node.value.type, node.left,
+                        node.type.bitWidth, selection == "IndexedDown")
+                else:
+                    return None
+            if normalized is None:
+                return None
+            local_index, _index_signed = normalized
+            bits = local_index.get("bits")
+            if not isinstance(bits, str) or any(bit not in "01" for bit in bits):
+                return None
+            descending = (kind == "RangeSelectExpression"
+                          and str(node.selectionKind).split(".")[-1]
+                          == "IndexedDown")
+            return (base, node.type.bitWidth,
+                    parent_offset + int(bits, 2),
+                    not node.type.isFourState, descending)
+        except Exception:
             return None
-        local_index, _index_signed = normalized
-        bits = local_index.get("bits")
-        if not isinstance(bits, str) or any(bit not in "01" for bit in bits):
-            return None
-        offset = parent_offset + int(bits, 2)
-        index = {
-            "kind": "Literal",
-            "span": node_span(sm, expression),
-            "width": 32,
-            "bits": format(offset & ((1 << 32) - 1), "032b"),
-        }
-        result = {
-            "kind": result_kind,
-            "span": node_span(sm, expression),
-            "width": expression.type.bitWidth,
-            "value": _convert_expr(sm, base),
-            "index": index,
-            "index_signed": False,
-            "descending": (normalized[1] if expression_kind ==
-                            "RangeSelectExpression" and
-                            str(expression.selectionKind).split(".")[-1]
-                            in ("IndexedUp", "IndexedDown") else False),
-        }
-        if result_kind == "SelectTarget":
-            result["two_state"] = not expression.type.isFourState
-        return result
-    except Exception:
+
+    if expression_kind not in ("ElementSelectExpression", "RangeSelectExpression"):
         return None
+    window = member_window(expression)
+    if window is None:
+        return None
+    base, width, offset, two_state, descending = window
+    index = {
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": 32,
+        "bits": format(offset & ((1 << 32) - 1), "032b"),
+    }
+    result = {
+        "kind": result_kind,
+        "span": node_span(sm, expression),
+        "width": width,
+        "value": _convert_expr(sm, base),
+        "index": index,
+        "index_signed": False,
+        "descending": descending,
+    }
+    if result_kind == "SelectTarget":
+        result["two_state"] = two_state
+    return result
 
 
 def _convert_selected_read(sm, expr, expression_kind):

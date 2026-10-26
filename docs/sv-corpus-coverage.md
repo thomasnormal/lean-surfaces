@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-26
 
-The chapter-scoped rerun covered **22,055** paths: **5,168 clean**,
-**16,820 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,055** paths: **5,169 clean**,
+**16,819 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`AssignmentExpression:target` (2,873), `CallExpression` (2,801),
+`AssignmentExpression:target` (2,872), `CallExpression` (2,801),
 `ExpressionStatement:CallExpression` (2,778), `Hierarchy:ports` (2,398),
 `VariableSymbol:2state` (2,296), `SubroutineSymbol:Subroutine` (1,634),
 `NamedValueExpression:2state` (1,485), `ConcurrentAssertionStatement`
@@ -56,6 +56,21 @@ falls **2,875 → 2,873** and `MemberAccessExpression` **1,019 → 1,018**;
 `CallExpression` remains **2,801**. Differential coverage grows
 **219/214/0/5 → 220/215/0/5** with no disagreements; grammar coverage remains
 **217/90/127**.
+
+## Packed-union reshaped member windows — 2026-10-26
+
+Constant element and part selections chained through an untagged packed-union
+member now compose each fixed offset into the existing flat vector window.
+Dynamic selectors, overlapping continuous drivers, tagged aggregates, and
+nonintegral members remain loud. The `packed_union_reshaped_member` fixture
+supplies the differential row and Lean receipt, and extractor tests retain the
+dynamic and overlap boundaries.
+
+The refreshed **22,055-path** census moves **5,168 → 5,169 clean** and
+**16,820 → 16,819 partial** (67 include skips). `AssignmentExpression:target`
+falls **2,873 → 2,872**; `CallExpression` remains **2,801**. Differential
+coverage grows **220/215/0/5 → 221/216/0/5** with no disagreements; grammar
+coverage remains **217/90/127**.
 
 ## Literal wired-net resolution — 2026-10-26
 

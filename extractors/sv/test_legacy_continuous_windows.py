@@ -522,6 +522,23 @@ class LegacyContinuousWindows(unittest.TestCase):
         processes = envelope["design"]["modules"][0]["processes"]
         self.assertEqual(processes[0]["kind"], "Unsupported")
 
+    def test_packed_union_reshaped_nested_selection_is_one_window(self):
+        envelope = self.extract(
+            "module top; union packed { logic [7:0] raw; "
+            "logic [0:1][3:0] lanes; } value; "
+            "initial begin value.raw = 8'h00; "
+            "value.lanes[0][2:1] = 2'bz1; "
+            "if (value.raw === 8'b0z10_0000) $display(\"PASS\"); "
+            "end endmodule")
+        processes = envelope["design"]["modules"][0]["processes"]
+        assigns = [node for node in processes[0]["body"]["stmts"]
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual(len(assigns), 2)
+        self.assertEqual(assigns[1]["target"]["kind"], "SelectTarget")
+        self.assertEqual(assigns[1]["target"]["value"]["name"], "value")
+        self.assertEqual(assigns[1]["target"]["index"]["bits"],
+                         "0" * 29 + "101")
+
     def test_direct_packed_union_alias_windows_are_continuous(self):
         envelope = self.extract(
             "module top(input logic [1:0] source, output logic [1:0] out); "

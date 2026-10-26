@@ -1982,6 +1982,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "packed_union_reshaped_member",
+      "file": "Examples/system-verilog/packed_union_reshaped_member/packed_union_reshaped_member.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

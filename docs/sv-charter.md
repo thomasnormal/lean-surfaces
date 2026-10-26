@@ -61,6 +61,22 @@ falls **2,875 → 2,873** and `MemberAccessExpression` **1,019 → 1,018**;
 **219/214/0/5 → 220/215/0/5** with no disagreements, and grammar coverage
 remains **217/90/127**.
 
+## Packed-union reshaped member windows — 2026-10-26
+
+Constant element and part selections chained through an untagged packed-union
+member now compose every fixed offset into one `SelectRead` or `SelectTarget`
+window. This covers reshaped views such as `value.lanes[0][2:1]` while keeping
+dynamic selectors, overlapping continuous drivers, tagged aggregates, and
+nonintegral members loud. The `packed_union_reshaped_member` fixture and
+differential row exercise the aliasing behavior; extractor regressions retain
+the dynamic and overlap boundaries.
+
+The refreshed **22,055-path** census moves **5,168 → 5,169 clean** and
+**16,820 → 16,819 partial** (67 include skips). `AssignmentExpression:target`
+falls **2,873 → 2,872**; `CallExpression` remains **2,801**. Differential
+coverage grows **220/215/0/5 → 221/216/0/5** with no disagreements, and
+grammar coverage remains **217/90/127**.
+
 ## Semaphore zero-key methods — 2026-10-24
 
 The self-check surface now admits `semaphore.put(0)` and `semaphore.get(0)`

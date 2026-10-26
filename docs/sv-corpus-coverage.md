@@ -25,6 +25,17 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Literal coverage queries in the empty database — 2026-10-26
+
+Literal-only `$coverage_control`, `$coverage_get`, `$coverage_get_max`,
+`$coverage_merge`, and `$coverage_save` calls now lower to the standard
+`SV_COV_NOCOV` zero because the self-check state has no coverage database or
+registered coverage objects. Dynamic scope/arguments and source coverage
+constructs remain loud. The fresh census measures **5,239 clean / 16,753
+partial** (67 include skips), with `CallExpression` falling **2,778 → 2,772**.
+Differential coverage grows **255/250/0/5 → 256/251/0/5** with no
+disagreements, and grammar coverage remains **217/92/125**.
+
 ## Pure conditional continuous drivers from literal source state — 2026-10-26
 
 Whole packed-net drivers with literal arms and one direct literal
@@ -51,12 +62,12 @@ coverage remains **217/92/125**.
 
 ## Fresh extractor census — 2026-10-26
 
-The chapter-scoped rerun covered **22,058** paths: **5,233 clean**,
-**16,758 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,059** paths: **5,239 clean**,
+**16,753 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`AssignmentExpression:target` (2,853), `CallExpression` (2,778),
-`ExpressionStatement:CallExpression` (2,775), `Hierarchy:ports` (2,400),
+`AssignmentExpression:target` (2,853), `ExpressionStatement:CallExpression`
+(2,775), `CallExpression` (2,772), `Hierarchy:ports` (2,400),
 `VariableSymbol:2state` (2,223), `SubroutineSymbol:Subroutine` (1,634),
 `NamedValueExpression:2state` (1,485), `ConcurrentAssertionStatement`
 (1,359), `InvalidStatement` (1,330), and `ClassType` (1,330).

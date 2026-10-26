@@ -152,6 +152,12 @@ SYSCALL_ASSERT_CTRL = ("$asserton", "$assertoff", "$assertkill", "$assertcontrol
 # self-check state has no monitor stream, so no-argument toggles are inert when
 # the design contains no registration; registered monitors stay loud.
 SYSCALL_MONITOR_CTRL = ("$monitoron", "$monitoroff")
+# Coverage query calls have no represented coverage database in the
+# self-check state.  A literal-only call therefore has the standard
+# ``SV_COV_NOCOV`` result (zero); calls that could observe registered
+# coverage, external databases, or dynamic scope remain loud.
+COVERAGE_CALLS = ("$coverage_control", "$coverage_get", "$coverage_get_max",
+                  "$coverage_merge", "$coverage_save")
 UNARY_OPS = {
     UnaryOperator.BitwiseNot: "~",
     UnaryOperator.LogicalNot: "!",
@@ -1181,6 +1187,83 @@ def _isunbounded_call(expression):
                 and not any(bit not in "01" for bit in svint_bits(constant)))
     except Exception:
         return False
+
+
+def _coverage_call(expression):
+    """Recognize a literal-argument coverage query in the empty DB model.
+
+    The legacy self-check state has no covergroup, coverage counter, or
+    external coverage database.  IEEE permits ``SV_COV_NOCOV`` (zero) for
+    each of these queries when no coverage is available, so a call whose
+    control and scope arguments are literals can be represented by a plain
+    signed 32-bit zero.  A dynamic argument or any source coverage construct
+    stays at the call boundary rather than receiving a guessed result.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName not in COVERAGE_CALLS):
+            return False
+        args = list(expression.arguments)
+        arities = {
+            "$coverage_control": 4,
+            "$coverage_get": 3,
+            "$coverage_get_max": 3,
+            "$coverage_merge": 2,
+            "$coverage_save": 2,
+        }
+        if len(args) != arities[expression.subroutineName]:
+            return False
+        integral_count = {
+            "$coverage_control": 3,
+            "$coverage_get": 2,
+            "$coverage_get_max": 2,
+            "$coverage_merge": 1,
+            "$coverage_save": 1,
+        }[expression.subroutineName]
+        for argument in args[:integral_count]:
+            if not _integral_literal_source(argument):
+                return False
+        for argument in args[integral_count:]:
+            # Contextual string arguments are represented by pyslang as a
+            # ConversionExpression around the source StringLiteral.  Peel
+            # that elaboration shell, while keeping names and computed string
+            # expressions outside this literal-only query slice.
+            node = argument
+            while type(node).__name__ == "ConversionExpression":
+                node = getattr(node, "operand", None)
+                if node is None:
+                    return False
+            if (type(node).__name__ != "StringLiteral"
+                    or getattr(node, "bad", False)):
+                return False
+        source = (_SOURCE_BYTES.decode("utf-8", errors="replace")
+                  if _SOURCE_BYTES else "")
+        masked = _sv_code_source(source)
+        if re.search(r"\bcovergroup\b|\bcoverpoint\b|\bbins\b|\bcross\b",
+                     masked):
+            return False
+        width, _two_state, reason = type_width_2s(expression.type)
+        return (getattr(expression.type, "isIntegral", False)
+                and width == 32 and reason is None)
+    except Exception:
+        return False
+
+
+def _convert_coverage_call(sm, expression):
+    if not _coverage_call(expression):
+        return unsupported(sm, expression,
+                           "CallExpression:" + getattr(expression,
+                                                        "subroutineName",
+                                                        "coverage"))
+    return signed_metadata({
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": 32,
+        "bits": "0" * 32,
+        "coverage_nocov": True,
+    }, expression.type)
 
 
 def _convert_isunbounded(sm, expression):
@@ -8140,6 +8223,7 @@ def _convert_legacy_call(sm, expression):
             (_fopen_invalid_mode_call, _convert_fopen_invalid_mode),
             (_plusargs_call, _convert_plusargs_call),
             (_dynamic_cast_call, _convert_dynamic_cast),
+            (_coverage_call, _convert_coverage_call),
             (_isunbounded_call, _convert_isunbounded),
             (_array_reduction_index_call, _convert_array_reduction_index),
             (_array_reduction_call, _convert_array_reduction),
@@ -15596,6 +15680,12 @@ def _convert_syscall(sm, s, e):
                         "system_null_task": True}
         except Exception:
             return unsupported(sm, s, "ExpressionStatement:CallExpression")
+    if is_sys and _coverage_call(e):
+        # With no coverage database or registered covergroup in this tier,
+        # the literal query returns SV_COV_NOCOV.  In statement position its
+        # result is discarded and the call has no represented state effect.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "coverage_nocov_statement": True}
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.34] — 2026-10-26
+
+The self-check surface now has 256 differential rows: 251 matches, zero
+disagreements, and 5 recorded refusals. The grammar census remains at 217
+pyslang syntax witnesses: 92 MATCH and 125 REFUSE. The 22,059-path corpus
+measures 5,239 clean files and 16,753 partial files, with
+`CallExpression` falling from 2,778 to 2,772. Literal-only
+`$coverage_control`, `$coverage_get`, `$coverage_get_max`, `$coverage_merge`,
+and `$coverage_save` calls return the standard `SV_COV_NOCOV` zero in the
+empty self-check coverage database; dynamic scopes and coverage constructs
+remain loud.
+
 ## [0.1.33] — 2026-10-26
 
 The self-check surface now has 255 differential rows: 250 matches, zero

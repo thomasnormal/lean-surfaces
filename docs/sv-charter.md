@@ -43,6 +43,18 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Literal coverage queries in the empty database — 2026-10-26
+
+The self-check surface now lowers literal-only `$coverage_control`,
+`$coverage_get`, `$coverage_get_max`, `$coverage_merge`, and `$coverage_save`
+calls to signed 32-bit `SV_COV_NOCOV` zero. The model has no coverage database,
+covergroup counters, or external coverage state, so dynamic scopes and source
+coverage constructs stay loud. The `coverage_nocov_queries` fixture covers all
+five calls and their zero results. The 22,059-path census measures **5,239
+clean / 16,753 partial** (67 include skips); `CallExpression` falls **2,778 →
+2,772**, differential coverage is **256/251/0/5**, and grammar coverage remains
+**217/92/125**.
+
 ## Pure conditional continuous drivers from literal source state — 2026-10-26
 
 Whole packed-net drivers with literal arms and one direct literal

@@ -2298,6 +2298,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "coverage_nocov_queries",
+      "file": "Examples/system-verilog/coverage_nocov_queries/coverage_nocov_queries.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

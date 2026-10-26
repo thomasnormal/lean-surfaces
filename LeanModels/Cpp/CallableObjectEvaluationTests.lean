@@ -6042,6 +6042,45 @@ def callableLocalSwitchShadowComputedInitializationAssignmentStatementFrameWitne
 
 #guard callableLocalSwitchShadowComputedInitializationAssignmentStatementFrameWitness
 
+private def localSwitchShadowComputedInitializationAssignmentReturnStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .parameter (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let localInitializer : Expression :=
+    .binary .add (.read (handle "0x11")) (.literal (signed 2))
+  let function := {base with body := .block (.sequence
+    (automaticLiteral "0x11" 3)
+    (.sequence
+      (.switch_ condition [
+        {label := some 1, body := .block (.sequence
+          (.automatic {
+            statement := .declare (handle "0x13") intType intType localInitializer
+            declarations := [handle "0x13"]})
+          (.sequence
+            (.assign (handle "0x11") {
+              expression := .parameter (handle "0x13")
+              sourceType := intType
+              type := intType})
+            (.return_ {
+              expression := .parameter (handle "0x11")
+              sourceType := intType
+              type := intType})))},
+        {label := none, body := .break_}])
+      (.return_ {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType}))) }
+  match evaluateCallableObject 128 .lp64 function [signed 1] with
+  | .ok (.ok value) => value == signed 5
+  | _ => false
+
+def callableLocalSwitchShadowComputedInitializationAssignmentReturnStatementFrameWitness : Bool :=
+  localSwitchShadowComputedInitializationAssignmentReturnStatementFrame
+
+#guard callableLocalSwitchShadowComputedInitializationAssignmentReturnStatementFrameWitness
+
 private def localSwitchShadowComputedInitializationAssignmentFalseStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let condition : TypedCallableExpression := {

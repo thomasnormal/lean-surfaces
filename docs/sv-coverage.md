@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 272 | 267 | 0 | 5 | sv-tests-2 declarations |
+| 273 | 268 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -154,6 +154,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `literal_string_getc` | `Examples/system-verilog/literal_string_getc/literal_string_getc.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_getc_assignment` | `Examples/system-verilog/string_getc_assignment/string_getc_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_query_lexing` | `Examples/system-verilog/string_query_lexing/string_query_lexing.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_query_statement` | `Examples/system-verilog/string_query_statement/string_query_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `constant_net_driver` | `Examples/system-verilog/constant_net_driver/constant_net_driver.sv` | match | **MATCH** | `ok` | MATCH |
 | `typed_default_array_pattern` | `Examples/system-verilog/typed_default_array_pattern/typed_default_array_pattern.sv` | match | **MATCH** | `ok` | MATCH |
 | `constant_net_bit_driver` | `Examples/system-verilog/constant_net_bit_driver/constant_net_bit_driver.sv` | match | **MATCH** | `ok` | MATCH |

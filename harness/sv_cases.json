@@ -1261,6 +1261,15 @@
       "expect": "match"
     },
     {
+      "name": "string_query_statement",
+      "file": "Examples/system-verilog/string_query_statement/string_query_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "constant_net_driver",
       "file": "Examples/system-verilog/constant_net_driver/constant_net_driver.sv",
       "module": "top",

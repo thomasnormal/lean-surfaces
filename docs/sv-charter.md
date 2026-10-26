@@ -100,6 +100,21 @@ skips), with `AssignmentExpression:target` at **2,853** and
 `ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
 **271/266/0/5 → 272/267/0/5** and grammar coverage remains **217/92/125**.
 
+## Discarded literal-string queries — 2026-10-26
+
+Discarded `len`, `getc`, `atoi`, radix, `compare`, and `icompare` calls on
+unchanged ASCII literal strings now erase their scalar result through the
+existing source-history converters. Non-ASCII strings, dynamic or mutated
+receivers, aliases, unsupported conversions, and value-position observations
+remain loud. The `string_query_statement` fixture supplies the self-check
+differential row and Lean receipt; the pinned oracle agrees with its `PASS`
+transcript.
+
+The 22,059-path census remains **5,240 clean / 16,752 partial** (67 include
+skips), with `AssignmentExpression:target` at **2,853** and
+`ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
+**272/267/0/5 → 273/268/0/5** and grammar coverage remains **217/92/125**.
+
 ## Discarded time-scale metadata queries — 2026-10-26
 
 Valid `$timeunit` and `$timeprecision` calls in statement position now erase

@@ -64,6 +64,11 @@ untouched empty string, are inert after the existing zero-size converter proves
 their scalar zero. Any mutation, alias, or value-position observation remains
 loud because the receiver's size is then runtime state.
 
+Discarded `len`, `getc`, `atoi`, radix, `compare`, and `icompare` calls on
+unchanged ASCII literal strings are also inert after their existing source
+history converters validate the receiver and arguments. Non-ASCII, dynamic,
+mutated, aliased, and unsupported string operations remain loud.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument

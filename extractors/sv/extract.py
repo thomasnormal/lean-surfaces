@@ -15749,6 +15749,25 @@ def _convert_syscall(sm, s, e):
         if value.get("kind") != "Unsupported":
             return {"kind": "Empty", "span": node_span(sm, s),
                     "zero_size_statement": name}
+    if is_sys:
+        # Literal-backed string queries are pure scalar observations. Reuse
+        # each value-position converter so ASCII history, argument, width,
+        # and range checks remain identical before erasing the discarded
+        # result; dynamic strings and effectful uses stay loud.
+        string_query_converters = (
+            (_string_literal_getc_method, _convert_string_literal_getc),
+            (_string_literal_compare_method, _convert_string_literal_compare),
+            (_string_literal_atoi_method, _convert_string_literal_atoi),
+            (_string_literal_radix_method, _convert_string_literal_radix),
+            (_string_literal_len_method, _convert_string_literal_len_method),
+        )
+        for recognizes, convert in string_query_converters:
+            if recognizes(e):
+                value = convert(sm, e)
+                if value.get("kind") != "Unsupported":
+                    return {"kind": "Empty", "span": node_span(sm, s),
+                            "string_query_statement": name}
+                break
     if is_sys and _associative_empty_query(e):
         # An untouched 2-state associative array has an exact zero element
         # count.  Reuse the value converter's source-order and type checks

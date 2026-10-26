@@ -2118,6 +2118,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "constant_expression_net_driver",
+      "file": "Examples/system-verilog/constant_expression_net_driver/constant_expression_net_driver.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

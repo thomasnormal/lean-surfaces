@@ -105,6 +105,14 @@ nested streams, and aggregate targets remain loud. The refreshed corpus counts
 are unchanged because this narrow one-bit shape has no sole witness in the
 current sv-tests-2 snapshot.
 
+## Pure literal integral continuous expressions — 2026-10-26
+
+Continuous assignment now folds an all-literal unsigned integral arithmetic or
+bitwise expression into the existing time-zero driver. Variables, X/Z
+operands, signed or dynamic expressions, and effectful calls remain outside
+the fold. The refreshed corpus counts are unchanged because this narrow pure
+expression shape has no sole witness in the current sv-tests-2 snapshot.
+
 ## Dynamic-array struct-field reductions — 2026-10-26
 
 Finite dynamic arrays of untagged unpacked structs now admit a pure reduction

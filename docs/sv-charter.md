@@ -6782,6 +6782,15 @@ dynamic-array operations remain loud. `dynamic_fixed_size_mismatch` supplies
 the `BEFORE` transcript and the extractor tests pin the mismatch and equal-size
 boundaries.
 
+## Pure literal integral continuous expressions — 2026-10-26
+
+Continuous assignment now folds an all-literal unsigned integral arithmetic or
+bitwise expression into the existing time-zero driver. The fold is restricted
+to known 0/1 leaves and side-effect-free operators; variables, X/Z operands,
+signed or dynamic expressions, and effectful calls remain live or loud. The
+`constant_expression_net_driver` fixture supplies the differential row and
+Lean receipt, with extractor regressions for the fold and variable boundary.
+
 ## Unsized left streaming over one-bit leaves — 2026-10-26
 
 Left-streaming assignment now accepts the IEEE default one-bit chunk when

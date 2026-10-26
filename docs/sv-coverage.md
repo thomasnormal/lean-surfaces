@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 235 | 230 | 0 | 5 | sv-tests-2 declarations |
+| 236 | 231 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -249,6 +249,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `continuous_bound_literal` | `Examples/system-verilog/continuous_bound_literal/continuous_bound_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_disjoint_slice_copy` | `Examples/system-verilog/fixed_array_disjoint_slice_copy/fixed_array_disjoint_slice_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `unsized_left_stream` | `Examples/system-verilog/unsized_left_stream/unsized_left_stream.sv` | match | **MATCH** | `ok` | MATCH |
+| `constant_expression_net_driver` | `Examples/system-verilog/constant_expression_net_driver/constant_expression_net_driver.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -384,13 +385,13 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ModuleHeader` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.MultipleConcatenationExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.MultiplyAssignmentExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.MultiplyExpression` | `Examples/system-verilog/dynamic_cast/selected.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.MultiplyExpression` | `Examples/system-verilog/constant_expression_net_driver/constant_expression_net_driver.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedArgument` | `Examples/system-verilog/let_expressions/binding.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedBlockClause` | `Examples/system-verilog/elaborated_generate/captures.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NamedLabel` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedParamAssignment` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NamedType` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
-| `SyntaxKind.NetDeclaration` | `Examples/system-verilog/constant_net_array_cell_driver/constant_net_array_cell_driver.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.NetDeclaration` | `Examples/system-verilog/constant_expression_net_driver/constant_expression_net_driver.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NewArrayExpression` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NewClassExpression` | `Examples/system-verilog/literal_semaphore_constructor/literal_semaphore_constructor.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NonblockingAssignmentExpression` | `Examples/system-verilog/array_reductions/timing.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |

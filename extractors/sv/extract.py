@@ -7860,6 +7860,111 @@ def _integral_literal_source(expr):
     return False
 
 
+def _constant_integral_source(sm, expr):
+    """Return a binder-folded literal for a pure integral source expression.
+
+    This extends the direct-literal driver path only when pyslang has already
+    proved the complete expression at elaboration. Dynamic reads and effectful
+    calls therefore remain on the live continuous-driver boundary.
+    """
+    try:
+        if (_integral_literal_source(expr)
+                or not _all_literal_integral_tree(expr)
+                or not _case_source_expression_ok(expr)):
+            return None
+        literal = const_literal(sm, expr)
+        if literal is None:
+            literal = _evaluate_unsigned_literal(sm, expr)
+        if literal is None or not expr.type.isIntegral:
+            return None
+        return literal
+    except Exception:
+        return None
+
+
+def _all_literal_integral_tree(expr):
+    """Reject names, calls, and elaboration-bound references before folding."""
+    allowed = {"IntegerLiteral", "UnbasedUnsizedIntegerLiteral",
+               "ConversionExpression", "UnaryExpression", "BinaryExpression"}
+    try:
+        valid = True
+        def inspect(node):
+            nonlocal valid
+            valid = valid and type(node).__name__ in allowed
+        expr.visit(inspect)
+        return valid
+    except Exception:
+        return False
+
+
+def _evaluate_unsigned_literal(sm, expr):
+    """Evaluate a small all-literal unsigned integral expression tree.
+
+    This is deliberately separate from the general expression converter: only
+    known 0/1 literals, unsigned operands, and side-effect-free arithmetic or
+    bitwise operators are folded into a continuous driver's time-zero value.
+    """
+    try:
+        if getattr(expr.type, "isSigned", True) or not expr.type.isIntegral:
+            return None
+        width = expr.type.bitWidth
+        if width <= 0 or width > 1024:
+            return None
+        kind = type(expr).__name__
+        value = None
+        if kind in ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
+            bits = svint_bits(expr.value)
+            if any(bit not in "01" for bit in bits):
+                return None
+            value = int(bits, 2)
+        elif kind == "ConversionExpression":
+            operand = _literal_value(_evaluate_unsigned_literal(sm, expr.operand))
+            value = int(operand["bits"], 2) if operand is not None else None
+            if value is None:
+                return None
+        elif kind == "UnaryExpression":
+            operand = _evaluate_unsigned_literal(sm, expr.operand)
+            if operand is None:
+                return None
+            value = int(operand["bits"], 2)
+            op = str(expr.op).split(".")[-1]
+            if op == "Plus":
+                pass
+            elif op == "Minus":
+                value = -value
+            elif op == "BitwiseNot":
+                value = ~value
+            else:
+                return None
+        elif kind == "BinaryExpression":
+            left = _evaluate_unsigned_literal(sm, expr.left)
+            right = _evaluate_unsigned_literal(sm, expr.right)
+            if left is None or right is None:
+                return None
+            a, b = int(left["bits"], 2), int(right["bits"], 2)
+            op = str(expr.op).split(".")[-1]
+            value = {"Add": a + b, "Subtract": a - b,
+                     "Multiply": a * b, "BitwiseAnd": a & b,
+                     "BitwiseOr": a | b, "BitwiseXor": a ^ b}.get(op)
+            if value is None:
+                return None
+        else:
+            return None
+        mask = (1 << width) - 1
+        return {"kind": "Literal", "span": node_span(sm, expr),
+                "width": width, "bits": format(value & mask, f"0{width}b"),
+                "constant_integral_source": True}
+    except Exception:
+        return None
+
+
+def _literal_value(node):
+    if not isinstance(node, dict) or node.get("kind") != "Literal":
+        return None
+    bits = node.get("bits")
+    return node if isinstance(bits, str) and bits and all(bit in "01" for bit in bits) else None
+
+
 def _continuous_bound_literal(sm, expression):
     """Return a literal RHS when a net driver reads an immutable literal var."""
     try:
@@ -15347,6 +15452,8 @@ def convert_continuous_assign(sm, m):
         value = convert_expr(sm, e.right)
         bound_literal = (_continuous_bound_literal(sm, e.right)
                          if _SYM is None else None)
+        if bound_literal is None and _SYM is None:
+            bound_literal = _constant_integral_source(sm, e.right)
         if bound_literal is not None:
             value = bound_literal
     # A single explicitly strengthened whole-net literal is value-equivalent

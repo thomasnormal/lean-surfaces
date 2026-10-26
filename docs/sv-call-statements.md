@@ -78,6 +78,11 @@ existing converter proves its pre-trigger false result. Triggered events,
 dynamic handles, and value-position queries remain loud at the event-state
 boundary.
 
+A discarded `enum.name()` query is inert after the existing enum method
+converter validates its receiver and declaration-order cases. Numeric enum
+methods, effectful receivers, malformed calls, and value-position queries
+retain their existing boundaries.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument

@@ -1965,6 +1965,15 @@
       "expect": "match"
     },
     {
+      "name": "enum_name_statement",
+      "file": "Examples/system-verilog/enum_name_statement/enum_name_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "assoc_integral_cells",
       "file": "Examples/system-verilog/assoc_integral_cells/assoc_integral_cells.sv",
       "module": "top",

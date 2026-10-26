@@ -141,6 +141,20 @@ skips), with `AssignmentExpression:target` at **2,853** and
 `ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
 **274/269/0/5 → 275/270/0/5** and grammar coverage remains **217/92/125**.
 
+## Discarded enum `.name()` queries — 2026-10-26
+
+Discarded `enum.name()` calls now reuse the existing enum method converter and
+erase the unobserved string result after receiver and declaration-order checks.
+Numeric enum methods, effectful receivers, malformed calls, and value-position
+queries remain loud. The `enum_name_statement` fixture supplies the self-check
+differential row and Lean receipt; the pinned oracle agrees with its `PASS`
+transcript.
+
+The 22,059-path census remains **5,240 clean / 16,752 partial** (67 include
+skips), with `AssignmentExpression:target` at **2,853** and
+`ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
+**275/270/0/5 → 276/271/0/5** and grammar coverage remains **217/92/125**.
+
 ## Discarded time-scale metadata queries — 2026-10-26
 
 Valid `$timeunit` and `$timeprecision` calls in statement position now erase

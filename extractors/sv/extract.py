@@ -7826,6 +7826,40 @@ def _integral_literal_source(expr):
     return False
 
 
+def _continuous_bound_literal(sm, expression):
+    """Return a literal RHS when a net driver reads an immutable literal var."""
+    try:
+        if type(expression).__name__ != "NamedValueExpression":
+            return None
+        symbol = getattr(expression, "symbol", None)
+        if symbol is None or str(getattr(symbol, "kind", "")).split(".")[-1] != "Variable":
+            return None
+        initializer = getattr(symbol, "initializer", None)
+        if initializer is None or not _integral_literal_source(initializer):
+            return None
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return None
+        writes = []
+        def inspect(node):
+            if type(node).__name__ != "AssignmentExpression":
+                return
+            left = getattr(node, "left", None)
+            if (type(left).__name__ == "NamedValueExpression"
+                    and getattr(left, "symbol", None) is symbol):
+                writes.append(node)
+        instance.visit(inspect)
+        if writes:
+            return None
+        value = convert_expr(sm, initializer)
+        if value is None or value.get("kind") == "Unsupported":
+            return None
+        return value
+    except Exception:
+        return None
+
+
 _PURE_FLOATING_CALLS = {
     "$itor", "$bitstoreal", "$bitstoshortreal", "$sqrt", "$pow",
     "$floor", "$ceil", "$ln", "$log10", "$exp", "$sin", "$cos",
@@ -15246,6 +15280,7 @@ def convert_continuous_assign(sm, m):
     streaming = type(e.left).__name__ == "StreamingConcatenationExpression"
     legacy_streaming = _SYM is None and streaming
     symbolic_streaming = _SYM is not None and streaming
+    bound_literal = None
     if streaming:
         lowered = (_streaming_target_assignment(sm, e)
                    if legacy_streaming else
@@ -15276,6 +15311,10 @@ def convert_continuous_assign(sm, m):
         if not ok:
             return unsupported(sm, m, "AssignmentExpression:target")
         value = convert_expr(sm, e.right)
+        bound_literal = (_continuous_bound_literal(sm, e.right)
+                         if _SYM is None else None)
+        if bound_literal is not None:
+            value = bound_literal
     # A single explicitly strengthened whole-net literal is value-equivalent
     # to the ordinary flat driver. Selected strength forms are kept loud until
     # the target representation carries per-window strength metadata.
@@ -15292,7 +15331,7 @@ def convert_continuous_assign(sm, m):
             and str(left_symbol.kind) in ("SymbolKind.Variable", "SymbolKind.Net")
             and target.get("kind") == "Ident"
             and value is not None and value.get("kind") == "Literal"
-            and _integral_literal_source(e.right)):
+            and (_integral_literal_source(e.right) or bound_literal is not None)):
         cell = _fixed_array_cell(sm, e.left)
         if cell is not None:
             cell_name = target.get("name", "")
@@ -15320,7 +15359,7 @@ def convert_continuous_assign(sm, m):
             and getattr(left_symbol, "kind", None) is not None
             and str(left_symbol.kind) in ("SymbolKind.Net", "SymbolKind.Variable")
             and value is not None and value.get("kind") == "Literal"
-            and _integral_literal_source(e.right)):
+            and (_integral_literal_source(e.right) or bound_literal is not None)):
         # A single whole-net or constant packed-window literal driver has no
         # future re-evaluation and no resolution choice. At time zero it is
         # exactly the existing flat state assignment. Keep every other
@@ -15376,7 +15415,7 @@ def convert_continuous_assign(sm, m):
         "value": value,
     }
     if (_SYM is None and target.get("kind") in ("Ident", "SelectTarget")
-            and _integral_literal_source(e.right)):
+            and (_integral_literal_source(e.right) or bound_literal is not None)):
         result["continuous_literal_source"] = True
         result["continuous_strength"] = explicit_strength
         if continuous_resolution is not None:

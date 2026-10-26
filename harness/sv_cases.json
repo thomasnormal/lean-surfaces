@@ -2091,6 +2091,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "continuous_bound_literal",
+      "file": "Examples/system-verilog/continuous_bound_literal/continuous_bound_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

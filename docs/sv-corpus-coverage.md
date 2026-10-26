@@ -81,6 +81,14 @@ The **22,056-path** census moves **5,195 → 5,197 clean** and **16,794 →
 **227/222/0/5 → 228/223/0/5** with no disagreements; grammar coverage remains
 **217/90/127**.
 
+## Immutable literal variables as continuous net sources — 2026-10-26
+
+The extractor now folds a whole net driven by an immutable declaration-
+initialized integral literal variable into the existing time-zero literal
+driver. Dynamic sources, rebinding, and multi-driver resolution remain loud.
+The refreshed corpus counts are unchanged because the current sv-tests-2
+snapshot has no sole witness for this narrow source-purity form.
+
 ## Dynamic-array struct-field reductions — 2026-10-26
 
 Finite dynamic arrays of untagged unpacked structs now admit a pure reduction

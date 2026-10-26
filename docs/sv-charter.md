@@ -8036,3 +8036,14 @@ On the refreshed **22,056-path** sv-tests-2 snapshot, clean files move
 `CallExpression` falls **2,796 → 2,780**. Differential coverage grows
 **231/226/0/5 → 232/227/0/5** with no disagreements; grammar coverage remains
 **217/90/127**.
+
+## Immutable literal variables as continuous net sources — 2026-10-26
+
+Continuous assignment now accepts a whole net driven by a variable whose
+declaration initializer is a finite integral literal and which has no
+procedural writes. The source is folded to the existing time-zero literal
+driver, preserving the flat net value without inventing a live driver. Dynamic
+sources, aggregate targets, rebinding, and multi-driver resolution remain
+loud. The `continuous_bound_literal` fixture supplies the differential row
+and Lean receipt, with extractor regressions for the immutable and rebind
+boundaries.

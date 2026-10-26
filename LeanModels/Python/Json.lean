@@ -1659,30 +1659,35 @@ private def rewriteImmediateBuiltinAliases (outer : List String)
   functions.map fun f =>
     { f with body := rewriteImmediateBuiltinAlias outer f.params f.body }
 
-/-! A class lookup is pure, but the class OBJECT itself is not a runtime value
-in the current tier.  The one useful boundary case is a dead local assignment
-whose value is never observed: `x = C; return n`.  Erase only this exact
-two-statement form when the source name is an admitted, creation-pure class;
-a live assignment still reaches the loud first-class-value arm. -/
+/-! A function/class lookup is pure, but the OBJECT itself is not a runtime
+value in the current tier.  The one useful boundary case is a dead local
+assignment whose value is never observed: `x = f; return n`.  Erase only this
+exact two-statement form when the source name is an admitted module function or
+creation-pure class; a live assignment still reaches the loud first-class-value
+arm. -/
 
-private def rewriteDeadClassValue (classNames : List String)
+private def rewriteDeadValue (valueNames : List String)
     (params : Array Param) (body : Array Stmt) : Array Stmt :=
   match body.toList with
   | [.assign #[.name target _] (.name exception _) _assignSp,
       .ret (some value) retSp] =>
-      if classNames.contains exception
+      if valueNames.contains exception
+          && target != exception
           && !params.toList.any (·.arg == exception)
           && !(exprRefs value).contains target then
         #[.ret (some value) retSp]
       else body
   | _ => body
 
-private def rewriteDeadClassValues (classes : Array ClassDefn)
+private def rewriteDeadFunctionValues (classes : Array ClassDefn)
     (functions : Array FunctionDefn) : Array FunctionDefn :=
-  let names := admittedBuiltinExc ++ classes.toList.filterMap fun c =>
+  let classNames := classes.toList.filterMap fun c =>
     if c.ok && c.creationPure then some c.name else none
+  let functionNames := functions.toList.filterMap fun f =>
+    if !f.name.toList.any (· == '.') then some f.name else none
+  let names := admittedBuiltinExc ++ classNames ++ functionNames
   functions.map fun f =>
-    { f with body := rewriteDeadClassValue names f.params f.body }
+    { f with body := rewriteDeadValue names f.params f.body }
 
 private def chainAttrTempName : String := "<leanpy-chain-attr-temp>"
 
@@ -2018,12 +2023,14 @@ def parseModule (j : Json) : Except String Module :=
         ++ (topLevel.toList.map (fun st => (stmtBinds st).getD [])).flatten
     let (functions', topLevel'') := lowerGenExps outer functions topLevel'
     let functions' := rewriteImmediateBuiltinAliases outer functions'
-    let functions' := rewriteDeadClassValues classes' functions'
     -- module-level def aliasing, LAST (docs/memory-model.md §module-level
     -- def aliasing): the censuses above see the original assigns, and the
     -- alias copies share the just-synthesized `<genexpr@n>` helpers.
     let (functions'', topLevel''', aliases) :=
       recognizeDefAliases functions' classes' namedtuples topLevel''
+    -- Dead-value erasure runs after alias recognition so the value-name
+    -- census includes admitted module-level aliases as well as definitions.
+    let functions'' := rewriteDeadFunctionValues classes' functions''
     -- del RECONCILED, after the alias pass (alias entries ARE functions
     -- entries, so `del bisect` of an admitted alias is covered by the
     -- same definition-name test).

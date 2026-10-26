@@ -5872,3 +5872,24 @@ arity error.
 
 DECIDED: admit only the measured non-callable sentinel error; retain loud
 failure for callable-iterator construction.
+
+## 2026-10-26-pycomplete-164 — erase unread module-function values
+
+An exact two-statement local assignment of an admitted module function is now
+erased when its target is never observed: `f = scale2; return 0`. The rewrite
+runs after module-level alias recognition, so direct definitions and admitted
+aliases are covered. Parameter shadowing, returned-target references, and
+function values that are actually observed remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 20 cases: 0 failed, 19 matched, 1 whitelisted refusal |
+| Full executable differential | 3,695 cases: 0 failed, 44 whitelisted refusals, 3,651 matched |
+| Full proof differential | 3,695 cases: 0 failed, 153 refusals, 3,542 matched |
+| Refusal census | 44 rows, 0 drifts; no new refusal class |
+| Lean build | `lake build leanmodels-run` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: erase only unread assignments of admitted module functions, including
+recognized aliases; retain loud failure for returned or otherwise observed
+function values and shadowed names.

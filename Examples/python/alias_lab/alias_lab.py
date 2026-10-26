@@ -36,3 +36,8 @@ def use_gen_alias(n):
 def read_alias():
     return scale2
 
+
+def dead_alias():
+    f = scale2
+    return 0
+

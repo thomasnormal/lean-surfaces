@@ -70,6 +70,16 @@ targets, and unsupported forms remain loud; partial reads retain the selected
 evaluator boundary. The
 `packed_array_dynamic_part_select` fixture pins both indexed directions.
 
+## Dynamic indexed slices over wide packed elements — 2026-10-26
+
+Dynamic `+:` and `-:` targets over a nested packed array now normalize the
+runtime outer label in whole inner-element chunks. A selected width is an
+integral number of those chunks; ascending slices use the increasing flat
+window and descending slices retain the evaluator's high-endpoint convention.
+Effectful bases, aggregate receivers, and unsupported selections remain loud.
+The `packed_array_dynamic_wide_slice` fixture covers both declared directions,
+read/write aliasing, and the wide-element geometry.
+
 ## Dynamic noncanonical packed-element targets — 2026-10-26
 
 A pure signed dynamic element target on a noncanonical one-bit packed vector

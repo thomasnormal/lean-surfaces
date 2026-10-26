@@ -102,6 +102,30 @@ class PackedRanges(unittest.TestCase):
         self.assertEqual(targets[0]["index"]["op"], "-")
         self.assertNotEqual(targets[0]["index"], targets[1]["index"])
 
+    def test_dynamic_indexed_part_select_nested_wide_elements_normalizes(self):
+        design = extract_source(
+            "module top; logic [1:0][3:0] desc; logic [0:1][3:0] asc; "
+            "integer index; initial begin desc[index +: 1] = 4'hc; "
+            "desc[index -: 1] = 4'hd; asc[index +: 2] = 8'hef; "
+            "asc[index -: 2] = 8'h12; end endmodule")
+        targets = [node for node in nodes(design)
+                   if node.get("kind") == "SelectTarget"]
+        self.assertEqual([target["width"] for target in targets], [4, 4, 8, 8])
+        self.assertEqual([target["descending"] for target in targets],
+                         [False, True, False, False])
+        self.assertEqual(targets[0]["index"]["op"], "*")
+        self.assertEqual(targets[1]["index"]["op"], "+")
+        self.assertEqual(targets[2]["index"]["op"], "-")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_dynamic_indexed_part_select_nested_effect_stays_loud(self):
+        design = extract_source(
+            "module top; logic [1:0][3:0] value; integer index; "
+            "initial value[index++ +: 1] = 4'h1; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            for node in nodes(design)))
+
     def test_out_of_range_part_select_ascending_vector_remains_loud(self):
         design = extract_source(
             "module top; logic [0:7] value; "

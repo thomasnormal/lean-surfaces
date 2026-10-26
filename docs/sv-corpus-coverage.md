@@ -41,6 +41,18 @@ The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
 matched all 200 fixed-seed sample classifications.
 
+## Dynamic indexed slices over wide packed elements — 2026-10-26
+
+Dynamic `+:` and `-:` slices over nested packed elements now normalize the
+runtime outer label in whole inner-element chunks before using the existing
+flat selected window. Ascending and descending declarations preserve their
+source order and read/write aliasing; effectful bases and aggregate forms
+remain loud. The `packed_array_dynamic_wide_slice` fixture supplies the
+differential row and Lean receipt. The refreshed census remains **5,230 clean /
+16,761 partial** (67 include skips), with `AssignmentExpression:target` at
+**2,856**; differential coverage grows **252/247/0/5 → 253/248/0/5**, and
+grammar remains **217/92/125**.
+
 ## Dynamic noncanonical packed indexed slices — 2026-10-26
 
 Dynamic `+:` and `-:` part-select targets and reads on noncanonical one-bit

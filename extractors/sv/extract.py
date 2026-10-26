@@ -7269,43 +7269,54 @@ def _packed_element_index(sm, source_type, index):
 
 
 def _packed_dynamic_indexed_index(sm, source_type, index, width, selection):
-    """Normalize a dynamic indexed part-select on a noncanonical 1-bit range.
+    """Normalize a dynamic indexed part-select on a packed range.
 
-    ``_packed_element_index`` already produces the flat offset of the
-    runtime label.  For an ascending declaration, ``+:`` starts at the
-    high-label end of the selected window, while ``-:`` starts at its
-    low-label end; both are represented as an increasing flat window.  A
-    descending declaration keeps the evaluator's ordinary indexed-select
-    direction convention.
+    ``_packed_element_index`` produces the flat offset of the runtime outer
+    label. A one-bit range uses one flat bit per label; a nested packed range
+    uses one flat chunk per label, so the selected width must be a whole number
+    of element chunks. For an ascending declaration, ``+:`` starts at the
+    high-label end of the selected window, while ``-:`` starts at its low-label
+    end; both are represented as an increasing flat window. A descending
+    declaration keeps the evaluator's ordinary indexed-select direction
+    convention.
     """
     try:
         ct = source_type.canonicalType
         if (type(ct).__name__ != "PackedArrayType"
-                or int(ct.elementType.canonicalType.bitWidth) != 1
                 or width <= 0
                 or selection not in ("IndexedUp", "IndexedDown")):
             return None
+        element_width = int(ct.elementType.canonicalType.bitWidth)
+        if element_width <= 0 or width % element_width:
+            return None
+        count = width // element_width
         normalized = _packed_element_index(sm, source_type, index)
         if normalized is None:
             return None
         converted, index_signed = normalized
         descending_range = int(ct.range.left) > int(ct.range.right)
         descending_select = selection == "IndexedDown"
-        if not descending_range and not descending_select:
-            amount = width - 1
-            if amount:
-                span = node_span(sm, index)
-                literal = {
-                    "kind": "Literal", "span": span,
-                    "width": converted["width"],
-                    "bits": format(amount & ((1 << converted["width"]) - 1),
-                                     f"0{converted['width']}b"),
-                }
-                converted = {
-                    "kind": "Binary", "span": span,
-                    "width": converted["width"], "op": "-",
-                    "left": converted, "right": literal,
-                }
+        # ``selectedRead`` takes the low flat offset for an increasing window
+        # and the high flat offset for a descending one. The amount is the
+        # number of complete packed chunks between the base label and that
+        # endpoint, rather than the raw selected bit width.
+        amount = ((element_width - 1) if (descending_range and descending_select)
+                  else (count - 1) * element_width)
+        if ((not descending_range and not descending_select)
+                or (descending_range and descending_select)) and amount:
+            span = node_span(sm, index)
+            literal = {
+                "kind": "Literal", "span": span,
+                "width": converted["width"],
+                "bits": format(amount & ((1 << converted["width"]) - 1),
+                                 f"0{converted['width']}b"),
+            }
+            converted = {
+                "kind": "Binary", "span": span,
+                "width": converted["width"],
+                "op": "+" if descending_range and descending_select else "-",
+                "left": converted, "right": literal,
+            }
         # Ascending ranges are already normalized to increasing flat offsets;
         # descending ranges retain the evaluator's IndexedDown convention.
         return converted, index_signed, (descending_range and descending_select)

@@ -2271,6 +2271,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "packed_array_dynamic_wide_slice",
+      "file": "Examples/system-verilog/packed_array_dynamic_wide_slice/packed_array_dynamic_wide_slice.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

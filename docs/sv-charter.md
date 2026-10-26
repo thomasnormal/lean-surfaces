@@ -61,6 +61,23 @@ fixture shape is absent from the corpus. Differential coverage grows
 **251/246/0/5 → 252/247/0/5** with no disagreements, and grammar coverage
 remains **217/92/125**.
 
+## Dynamic indexed slices over wide packed elements — 2026-10-26
+
+Dynamic `+:` and `-:` slices over nested packed arrays now scale the runtime
+outer label by the packed inner-element width before entering the existing
+selected-read/write evaluator. Widths are admitted in whole inner-element
+chunks; ascending slices use an increasing flat window and descending slices
+retain the evaluator's high-endpoint convention. Effectful bases, aggregate
+receivers, and unsupported forms stay loud. The
+`packed_array_dynamic_wide_slice` fixture and Lean receipt cover both range
+directions and read/write aliasing.
+
+The refreshed **22,058-path** census remains **5,230 clean / 16,761 partial**
+(67 include skips), with `AssignmentExpression:target` at **2,856**; this
+fixture shape is absent from the corpus. Differential coverage grows
+**252/247/0/5 → 253/248/0/5** with no disagreements, and grammar coverage
+remains **217/92/125**.
+
 ## Dynamic noncanonical packed-element targets — 2026-10-26
 
 Blocking assignments to dynamic elements of noncanonical one-bit packed vectors

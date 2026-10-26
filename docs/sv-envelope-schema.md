@@ -722,8 +722,14 @@ paths remain unsupported.
 
 Literal indexed part-selects (`base +: width` and `base -: width`) are
 normalized to ordinary constant `PartSel` bounds when the selected window is
-in range. Dynamic or parameter-dependent bases and out-of-range windows remain
-`Unsupported`; `indexed_part_assign` pins the accepted source-order form.
+in range. The legacy path also admits dynamic indexed slices over a nested
+packed array when the selected width is a whole number of inner-element
+chunks: the runtime outer label is scaled to the flat vector offset, with
+ascending slices represented as increasing windows and descending slices using
+the evaluator's high-endpoint convention. Dynamic or parameter-dependent bases
+outside this packed shape and out-of-range windows remain `Unsupported`;
+`indexed_part_assign` and `packed_array_dynamic_wide_slice` pin the accepted
+forms.
 
 For a literal simple part-select on a noncanonical packed range, the extractor
 maps both source and destination labels to zero-based LVec offsets before

@@ -83,6 +83,16 @@ class ArrayReductions(unittest.TestCase):
         d = fixture('../nested_2d_reductions/nested_2d_reductions')
         self.assertFalse(walls(d))
 
+    def test_dynamic_struct_field_reduction_is_admitted(self):
+        source = ("module top; typedef struct { int id; int weight; } item_t; "
+                  "item_t items[]; int total; initial begin items=new[2]; "
+                  "items[0]='{id:1,weight:10}; items[1]='{id:2,weight:20}; "
+                  "total=items.sum() with (item.weight); end endmodule")
+        d = lower(source)
+        self.assertFalse(walls(d))
+        self.assertTrue(any(n.get('array_reduction_lowered') == 'sum'
+                            for n in nodes(d)))
+
     def test_with_effects_remain_loud(self):
         self.assertIn('ArrayReduction:storage-or-effects',walls(fixture('effect')))
 

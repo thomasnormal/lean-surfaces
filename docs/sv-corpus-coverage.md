@@ -81,6 +81,18 @@ The **22,056-path** census moves **5,195 → 5,197 clean** and **16,794 →
 **227/222/0/5 → 228/223/0/5** with no disagreements; grammar coverage remains
 **217/90/127**.
 
+## Dynamic-array struct-field reductions — 2026-10-26
+
+Finite dynamic arrays of untagged unpacked structs now admit a pure reduction
+of one integral field through the existing flattened cells. Whole-struct and
+aggregate-field reductions, and iterator-index expressions, remain outside
+the representation.
+
+The **22,056-path** census moves **5,197 → 5,198 clean** and **16,792 →
+16,791 partial** (67 include skips). Differential coverage grows
+**228/223/0/5 → 229/224/0/5** with no disagreements; grammar coverage remains
+**217/90/127**.
+
 ## Packed-array packed-struct member windows — 2026-10-26
 
 Constant element selections of packed arrays whose elements are untagged

@@ -183,6 +183,19 @@ The capped **22,056-path** census moves **5,195 → 5,197 clean / 16,794 →
 → 228/223/0/5** with no disagreements; grammar coverage remains
 **217/90/127**.
 
+## Dynamic-array struct-field reductions — 2026-10-26
+
+Finite dynamic arrays of untagged unpacked structs now admit pure reductions
+whose `with` expression selects one integral field. The row iterator resolves
+to the existing flattened field cell; whole structs, aggregate fields, and
+iterator-index queries remain loud. The `dynamic_struct_reduction` fixture and
+differential case cover the admitted form.
+
+The capped **22,056-path** census moves **5,197 → 5,198 clean / 16,792 →
+16,791 partial** (67 include skips). Differential coverage grows **228/223/0/5
+→ 229/224/0/5** with no disagreements; grammar coverage remains
+**217/90/127**.
+
 ## Semaphore zero-key methods — 2026-10-24
 
 The self-check surface now admits `semaphore.put(0)` and `semaphore.get(0)`

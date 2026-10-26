@@ -2155,6 +2155,40 @@ def _unpacked_struct_member(sm, expression):
         if type(expression).__name__ != "MemberAccessExpression":
             return None
         value = expression.value
+        if (_SYM is None and type(value).__name__ == "NamedValueExpression"
+                and getattr(value, "symbol", None) in _ARRAY_REDUCTION_VALUES):
+            bound = _ARRAY_REDUCTION_VALUES[value.symbol]
+            aggregate = bound.get("aggregate") if isinstance(bound, dict) else None
+            aggregate_leaf = (aggregate.canonicalType if aggregate is not None
+                              else None)
+            if (aggregate_leaf is not None
+                    and type(aggregate_leaf).__name__ == "UnpackedStructType"):
+                member = expression.member
+                width, two_state, reason = type_width_2s(member.type)
+                leaf = member.type.canonicalType
+                if (width is None or reason is not None
+                        or type(leaf).__name__ in ("FixedSizeUnpackedArrayType",
+                                                    "DynamicArrayType", "QueueType",
+                                                    "AssociativeArrayType",
+                                                    "UnpackedStructType", "UnpackedUnionType")):
+                    return None
+                return {"name": f"{bound['name']}.{member.name}",
+                        "width": width, "two_state": two_state}
+        if (_SYM is None and type(value).__name__ == "NamedValueExpression"
+                and str(getattr(getattr(value, "symbol", None), "kind", ""))
+                == "SymbolKind.Iterator"
+                and type(value.type.canonicalType).__name__ == "UnpackedStructType"):
+            member = expression.member
+            width, two_state, reason = type_width_2s(member.type)
+            leaf = member.type.canonicalType
+            if (width is None or reason is not None
+                    or type(leaf).__name__ in ("FixedSizeUnpackedArrayType",
+                                                "DynamicArrayType", "QueueType",
+                                                "AssociativeArrayType",
+                                                "UnpackedStructType", "UnpackedUnionType")):
+                return None
+            return {"name": f"$iterator.{member.name}",
+                    "width": width, "two_state": two_state}
         path = _unpacked_struct_path(value)
         if path is None:
             return None
@@ -12096,16 +12130,23 @@ def _array_reduction_shape(expression):
                 return None
             inner = _dynamic_array_element_shape(source_type.canonicalType.elementType)
             if inner is None:
-                return None
-            inner_dimensions, leaf_type, _inner_width, _inner_two = inner
-            shape = ([(0, count - 1)] + inner_dimensions, leaf_type)
+                element_type = source_type.canonicalType.elementType
+                if type(element_type.canonicalType).__name__ != "UnpackedStructType":
+                    return None
+                shape = ([(0, count - 1)], element_type)
+            else:
+                inner_dimensions, leaf_type, _inner_width, _inner_two = inner
+                shape = ([(0, count - 1)] + inner_dimensions, leaf_type)
         else:
             shape = _fixed_array_dimensions(source_type)
         if shape is None:
             return None
         dimensions, leaf_type = shape
         width, two_state, reason = type_width_2s(leaf_type)
-        if source_name is None or width is None or reason is not None:
+        if (source_name is None
+                or (width is None and type(leaf_type.canonicalType).__name__
+                    != "UnpackedStructType")
+                or (width is not None and reason is not None)):
             return None
         return source_name, width, two_state, dimensions, leaf_type
     except Exception:
@@ -12170,14 +12211,18 @@ def _array_reduction_source_ok(expression):
 
 
 def _array_reduction_terms(sm, expression, shape):
-    name, width, _two_state, dimensions, _leaf_type = shape
+    name, width, _two_state, dimensions, leaf_type = shape
     left, right = dimensions[0]
     info = expression.subroutine.extraInfo
     parts = []
     for position in range(left, right + (1 if right >= left else -1), 1 if right >= left else -1):
-        value = signed_metadata({"kind": "Ident", "span": node_span(sm, expression),
-                                 "name": f"{name}[{position}]", "width": width},
-                                expression.arguments[0].type.canonicalType.elementType)
+        row_name = f"{name}[{position}]"
+        if type(leaf_type.canonicalType).__name__ == "UnpackedStructType":
+            value = {"name": row_name, "aggregate": leaf_type}
+        else:
+            value = signed_metadata({"kind": "Ident", "span": node_span(sm, expression),
+                                     "name": row_name, "width": width},
+                                    expression.arguments[0].type.canonicalType.elementType)
         if info is not None:
             previous = dict(_ARRAY_REDUCTION_VALUES)
             _ARRAY_REDUCTION_VALUES[info.iterVar] = value

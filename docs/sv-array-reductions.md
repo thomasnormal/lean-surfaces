@@ -33,6 +33,11 @@ An untouched, default-empty dynamic array is a scalar exception: `sum()` and
 state exists to observe. Writes, resizes, selected elements, and other
 reductions remain loud.
 
+Finite dynamic arrays of untagged unpacked structs also admit a pure `with`
+clause that selects one integral field. The row iterator is bound directly to
+the already-flattened `array[index].field` cell; whole-struct reductions,
+aggregate fields, and iterator-index queries remain outside the representation.
+
 The paired **22,035** paths gain **11 clean extractions**, no losses:
 **4,309 → 4,320 clean**, **17,660 → 17,649 partial**, **66 include skips**,
 zero errors. All 4,309 previously clean extracted designs remain identical.
@@ -58,6 +63,15 @@ cell names and recursively folds each inner row; an explicit inner iterator,
 dynamic/queue/associative storage, and effectful inner expressions remain
 loud. The `nested_2d_reductions` fixture and differential row cover both
 forms and their common `PASS` transcript.
+
+## Dynamic-array struct-field reductions — 2026-10-26
+
+An allocated finite dynamic array of untagged unpacked structs may reduce a
+direct integral field with a pure `with` expression. The existing per-element
+field cells provide the row binding, so `items.sum() with (item.weight)` keeps
+the ordinary scalar width and signedness. Aggregate results, nested aggregate
+fields, and `item.index()` remain loud. The `dynamic_struct_reduction` fixture
+and differential row cover this field form.
 
 ## Empty dynamic-array reductions — 2026-10-26
 

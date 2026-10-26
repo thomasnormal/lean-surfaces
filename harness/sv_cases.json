@@ -2055,6 +2055,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "dynamic_struct_reduction",
+      "file": "Examples/system-verilog/dynamic_struct_reduction/dynamic_struct_reduction.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

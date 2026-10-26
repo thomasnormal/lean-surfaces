@@ -312,8 +312,8 @@ def chain_rebind_receiver(n):
 
 
 def chain_attr_first(n):
-    # REFUSED: the first target is an attribute -- the chain cannot be
-    # split without re-evaluating or naming the RHS
+    # The first target is an attribute; ingestion names the RHS once in a
+    # synthetic temporary before performing the left-to-right stores.
     cell = Cell(0)
     cell.x = m = n + 1
     return m

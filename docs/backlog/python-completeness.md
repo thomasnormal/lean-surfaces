@@ -17,6 +17,30 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-148 — admit the attribute-first chained assignment slice
+
+The measured `cell.x = m = n + 1` shape now lowers at ingestion to three
+single-target assignments using the synthetic unspellable name
+`<leanpy-chain-attr-temp>`: evaluate the RHS once, store the attribute, then
+bind the plain name. This preserves CPython's left-to-right target order and
+avoids evaluating an effectful RHS twice. The lowering is restricted to an
+attribute first target followed only by plain names; other non-name-first
+chains remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `cls_lab.chain_attr_first(5)` matches `6` in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,633 matched / 61 refused / 0 failed |
+| Full proof differential | 3,694 cases: 3,524 matched / 170 refused / 0 failed |
+| Refusal census | 61 rows in 18 classes, 0 drifts; `cls_lab::chain_attr_first` removed from `assign.non-name-target` |
+| Build/checks | `lake build leanmodels-run`, extractor/spec/tool checks, coverage freshness, backlog-index freshness, and `git diff --check` pass |
+
+DECIDED: admit only attribute-first chains whose remaining targets are plain
+names, using the unspellable temporary to preserve one RHS evaluation and
+left-to-right stores. Keep subscript-first, tuple-first, dynamic, and all
+other unsupported chain shapes loud. Reread the inbox before selecting the
+next measured gap.
+
 ## 2026-10-26-pycomplete-147 — admit constant-key dictionary subscripts in tuple targets
 
 Tuple unpacking now admits a dictionary subscript element when its receiver is

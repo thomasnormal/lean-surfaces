@@ -2475,8 +2475,8 @@ closed:
    TO RIGHT, each target's subexpressions evaluated at ITS store time.
    Built as an INGESTION SPLIT (`splitChains`, Json.lean — the
    yield-from/genexp lowering family, running FIRST so every later
-   census sees plain assigns), admitted when the FIRST target is a
-   plain NAME:
+   census sees plain assigns). A first plain NAME keeps the original
+   read-back form:
 
        t1 = t2 = … = v   ⇢   t1 = v; t2 = t1; …
 
@@ -2487,11 +2487,12 @@ closed:
    subexpressions still evaluate after the earlier stores, and every
    target rides the EXISTING single-target discipline (including its
    per-statement `Stmt.heapFree` classification — no fragment edits at
-   all, no interpreter edits at all, no new mutual member). A chain
-   whose first target is NOT a name cannot be split without
-   re-evaluating or naming the RHS; it stays un-split and hits the
-   standing loud multi-target refusal (`chain_attr_first` the exposing
-   row).
+   all, no interpreter edits at all, no new mutual member). The measured
+   ATTRIBUTE-first form (`cell.x = m = v`) now uses a synthetic name that
+   cannot be written by Python source: `tmp = v; cell.x = tmp; m = tmp`.
+   This keeps one RHS evaluation and the exact store order. Other
+   non-name-first chains remain loud (`chain_attr_first` is the battery
+   row for the admitted attribute shape).
 
 3. **`pst["K"] = K_MID if … else K_END` from a function body** — the
    pass-4 gap note ("the subscript-store arm must accept a live-view

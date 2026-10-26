@@ -257,7 +257,7 @@
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "chain_names", "args": [[5], [0], [-2]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "chain_attr", "args": [[5], [0]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "chain_rebind_receiver", "args": [[4]], "expect": "match"},
-  {"file": "Examples/python/cls_lab/cls_lab.py", "function": "chain_attr_first", "args": [[5]], "expect": "unsupported"},
+  {"file": "Examples/python/cls_lab/cls_lab.py", "function": "chain_attr_first", "args": [[5]], "expect": "match", "note": "An attribute-first chain names the RHS once in a synthetic temporary before left-to-right stores."},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "drain_assigned", "args": [[5], [2], [0]], "expect": "match"},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "drain_assigned_param", "args": [[4], [0]], "expect": "match"},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "gen_assigned_lazy", "args": [[3]], "expect": "unsupported"},

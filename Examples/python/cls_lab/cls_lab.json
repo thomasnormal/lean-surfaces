@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/cls_lab/cls_lab.py",
-  "source_sha256": "ba8e05b0f619ef779ecf1bb2440d9a2320984e9a32b654272d8ffcfd1d74164b",
+  "source_sha256": "58cf4141d5b4c740704f032c5acab04fcb77342fbcb45a8721bdd3cbafc360c3",
   "module": {
     "kind": "Module",
     "body": [

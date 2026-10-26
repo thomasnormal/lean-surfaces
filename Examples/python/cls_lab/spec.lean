@@ -155,14 +155,14 @@ subscript elements now use the same left-to-right heap store path. -/
 the dup read back from the name. `chain_rebind_receiver` pins the
 ORDER claim: the second store's receiver reads the NEW `x` (an int),
 so the faithful AttributeError fires after the rebind, exactly as
-CPython. `chain_attr_first` is the refusal frontier (an attribute
-first target cannot be split without naming the RHS). -/
+CPython. `chain_attr_first` pins the synthetic-temporary lowering for an
+attribute-first chain. -/
 
 #py_check cls_lab.chain_names(5) = 18
 #py_check cls_lab.chain_attr(5) = (Val.tuple #[.int 10, .int 10])
 #py_check cls_lab.chain_rebind_receiver(4) raises .attributeError
 
-#guard callFunction cls_lab "chain_attr_first" #[.int 5] 4096 matches .unsupported _
+#py_check cls_lab.chain_attr_first(5) = 6
 
 #py_check cls_lab.bytes_index_instance() raises
   (.typeError "byte indices must be integers or slices, not Cell")

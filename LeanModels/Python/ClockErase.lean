@@ -1569,7 +1569,7 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
                       let a := s2.world.heap.size
                       let s2' := { s2 with world :=
-                        { s2.world with heap := s2.world.heap.push (.instance ci #[]) } }
+                        { s2.world with heap := s2.world.heap.push (.instance ci (instanceAttrs m ci)) } }
                       cases vs with
                       | nil =>
                         refine .bind

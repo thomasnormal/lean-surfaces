@@ -958,7 +958,6 @@ WHITELIST_CLASS = {
     "tuple_repeat::repeat_namedtuple_left": "op.Mult-repetition",
     "tuple_repeat::repeat_namedtuple_aug": "op.Mult-repetition",
     "bool_lab::first_class": "firstclass.callable",
-    "bool_lab::custom": "class.dunder-protocol",
     "divmod_lab::first_class": "firstclass.callable",
     "repr_lab::first_class": "firstclass.callable",
     "repr_lab::instance": "render.identity",

@@ -33,11 +33,11 @@ set_option maxRecDepth 8192
 #py_check bool_lab.arity_three() raises
   (.typeError "bool expected at most 1 argument, got 3")
 #py_check bool_lab.shadow(3) = 5
+#py_check bool_lab.custom() = false
 
 #py_check bool_lab.kwargs() raises
   (.typeError "bool() takes no keyword arguments")
 #guard callFunction bool_lab "first_class" #[] 4096 matches .unsupported _
-#guard callFunction bool_lab "custom" #[] 4096 matches .unsupported _
 
 theorem integer_truth (value : PyInt) :
     bool_lab.of(value) ==> (value != 0) := by proofs

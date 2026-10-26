@@ -292,17 +292,20 @@ cycle DETECTION, never by running out of fuel).
   and `class` is loud (the split representation loses source order).
 * **The dunder guard** (the tier's soundness principle): a class
   defining any dunder beyond `__init__` and the exact literal-returning
-  `__repr__` slice, with unsupported bases (multiple,
+  `__repr__`/`__bool__` slices, with unsupported bases (multiple,
   dynamic, forward, or external), keywords/metaclass, decorators, or class-level
   statements (class attributes) is REPRESENTED but UNINSTANTIABLE
   (loud). Therefore every instance that exists has DEFAULT object
   protocol, which makes the following faithful by construction:
   instance `==` is identity (no shortcut subtleties — no user `__eq__`
-  can exist), truthiness is `True`, `is`/`is not` by address, and the
+  can exist), truthiness is `True` unless the class has the admitted direct
+  Boolean-literal `__bool__`, `is`/`is not` by address, and the
   default-protocol refusals are real CPython errors — `len()`/
   subscript/iteration/unpacking/membership/`sorted`/`max`/`min` on an
   instance raise the faithful `TypeError`.
-* **Instantiation** `C(args)`: allocate `Obj.instance ci #[]` in the
+* **Instantiation** `C(args)`: allocate `Obj.instance ci` with empty user
+  attributes (and, for the admitted literal `__bool__`, one reserved internal
+  truthiness marker) in the
   shared world, then run `C.__init__` through `callIn` with
   `self = .ref a`; a non-`None` `__init__` result is the faithful
   `TypeError`; an `__init__`-less class called with arguments likewise
@@ -312,8 +315,8 @@ cycle DETECTION, never by running out of fuel).
   The base's methods and `__init__` are resolved through that single link;
   unresolved, forward, multiple, dynamic, and unsupported-base forms remain
   loud. Inherited dunders keep the default-protocol guard sound. The direct
-  `repr(C())` builtin uses a literal string returned by that exact `__repr__`
-  shape; general custom rendering remains loud.
+  `repr(C())` and `bool(C())` use the literal returned by those exact protocol
+  shapes; general custom rendering and truthiness remain loud.
   The built-in `object` base is also admitted as an explicit spelling of the
   default class; its raw envelope marker is cleared only after ingestion proves
   that exact name.

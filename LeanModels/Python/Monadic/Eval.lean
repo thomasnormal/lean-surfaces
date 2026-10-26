@@ -97,10 +97,16 @@ def hasExtraDunderM (c : ClassDefn) : Bool :=
 def hasUnsupportedDunderM (m : Module) (c : ClassDefn) : Bool :=
   c.methods.toList.any fun n =>
     dunderShaped n && n != "__init__" &&
-      (n != "__repr__" ||
-        match findFunction m (c.name ++ ".__repr__") with
-        | some f => f.reprLiteral.isNone
-        | none => true)
+      match n with
+      | "__repr__" =>
+          match findFunction m (c.name ++ ".__repr__") with
+          | some f => f.reprLiteral.isNone
+          | none => true
+      | "__bool__" =>
+          match findFunction m (c.name ++ ".__bool__") with
+          | some f => f.boolLiteral.isNone
+          | none => true
+      | _ => true
 
 def classHasExtraDunderM (m : Module) : Nat → ClassId → Bool
   | 0, _ => true
@@ -118,6 +124,20 @@ def classHasExtraDunderM (m : Module) : Nat → ClassId → Bool
 
 def classHasExtraDunderMAt (m : Module) (ci : ClassId) : Bool :=
   classHasExtraDunderM m m.classes.size ci
+
+def hasNtupleExtraDunderM (c : ClassDefn) : Bool :=
+  c.methods.toList.any fun n => dunderShaped n && n != "__init__"
+
+def instanceAttrsM (m : Module) (ci : ClassId) : Array (String × RVal) :=
+  match classMethodQname m ci "__bool__" with
+  | some qname =>
+      match findFunction m qname with
+      | some f =>
+          match f.boolLiteral with
+          | some b => #[(instanceBoolMarker, .bool b)]
+          | none => #[]
+      | none => #[]
+  | none => #[]
 
 def findContextClassM (m : Module) (name : String) : Option (Nat × ClassDefn) :=
   match findClass m name with
@@ -229,7 +249,7 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
             if !c.ok then
               .preRefuse s!"class '{fname}' uses unsupported features besides its namedtuple base — instantiation is outside the tier"
             else if (if hasContextProtocolM c then hasContextUnsupportedDunderM c
-                     else classHasExtraDunderMAt m ci) then
+                     else hasNtupleExtraDunderM c) then
               .preRefuse s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
             else if (findFunction m (fname ++ ".__init__")).isSome then
               .preRefuse s!"'__init__' on the namedtuple subclass '{fname}' (immutable self) is outside the tier"
@@ -708,7 +728,7 @@ def applyCallPlan (K : Kont) (m : Module) : CallPlan → List RVal → SemF RVal
       else raisePy (.typeError (ntArityErrorMsg flds vs.length))
   | .instantiate ci cname hasInit, vs =>
       if hasInit then do
-        let a ← heapPush (.instance ci #[])
+        let a ← heapPush (.instance ci (instanceAttrsM m ci))
         let initName := (classMethodQname m ci "__init__").getD (cname ++ ".__init__")
         let r ← inFrame (K.call initName ((RVal.ref a :: vs).toArray))
         match r with
@@ -720,7 +740,7 @@ def applyCallPlan (K : Kont) (m : Module) : CallPlan → List RVal → SemF RVal
         -- The arity error fires BEFORE the allocation, so the failing run's
         -- world is the caller's untouched — the trunk raises from `st`, not
         -- from the post-allocation `st'`.
-        | [] => do let a ← heapPush (.instance ci #[]); pure (.ref a)
+        | [] => do let a ← heapPush (.instance ci (instanceAttrsM m ci)); pure (.ref a)
         | _ => raisePy (.typeError s!"{cname}() takes no arguments")
 
 

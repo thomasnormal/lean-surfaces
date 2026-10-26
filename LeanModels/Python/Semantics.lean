@@ -340,6 +340,11 @@ def truthy : RVal → Res Bool
   | .ref _ => .unsupported
       "truthiness of a heap object lives in the heap (`truthyH` decides it; this pure helper is the proof-layer vocabulary)"
 
+/- Reserved instance payload used only for the exact literal `__bool__` slice.
+It is not a Python-spellable attribute and therefore cannot be observed as
+instance data; `truthyH` consumes it before the ordinary default-protocol arm. -/
+def instanceBoolMarker : String := "<leanpy:bool-literal>"
+
 /-- Heap-resolving type name (H2): a `.ref` names its referent's type.
 The `"object"` fallback is the dangling arm — unreachable from WF worlds,
 and never part of a decided outcome that isn't already loud.
@@ -4568,7 +4573,10 @@ def truthyH (h : Heap) : RVal → Res Bool
     | some (.list xs) => .ok (xs.size != 0)
     | some (.dictView da _) =>
       do let es ← dictViewEntries h da; return es.size != 0
-    | some (.instance _ _) => .ok true
+    | some (.instance _ attrs) =>
+      match Env.lookup attrs.toList instanceBoolMarker with
+      | some (.bool b) => .ok b
+      | _ => .ok true
     -- a generator object is always truthy (no `__bool__`/`__len__`)
     | some (.generator ..) => .ok true
     | some (.cell _) => .unsupported cellInternal
@@ -5706,10 +5714,27 @@ def hasExtraDunder (c : ClassDefn) : Bool :=
 def hasUnsupportedDunder (m : Module) (c : ClassDefn) : Bool :=
   c.methods.toList.any fun n =>
     dunderShaped n && n != "__init__" &&
-      (n != "__repr__" ||
-        match findFunction m (c.name ++ ".__repr__") with
-        | some f => f.reprLiteral.isNone
-        | none => true)
+      match n with
+      | "__repr__" =>
+          match findFunction m (c.name ++ ".__repr__") with
+          | some f => f.reprLiteral.isNone
+          | none => true
+      | "__bool__" =>
+          match findFunction m (c.name ++ ".__bool__") with
+          | some f => f.boolLiteral.isNone
+          | none => true
+      | _ => true
+
+def instanceAttrs (m : Module) (ci : ClassId) : Array (String × RVal) :=
+  match classMethodQname m ci "__bool__" with
+  | some qname =>
+      match findFunction m qname with
+      | some f =>
+          match f.boolLiteral with
+          | some b => #[(instanceBoolMarker, .bool b)]
+          | none => #[]
+      | none => #[]
+  | none => #[]
 
 /-- The default-protocol guard includes inherited dunders.  A subclass of a
 class defining `__eq__`, for example, is not an identity-only instance even
@@ -5730,6 +5755,12 @@ def classHasExtraDunderFuel (m : Module) : Nat → ClassId → Bool
 
 def classHasExtraDunder (m : Module) (ci : ClassId) : Bool :=
   classHasExtraDunderFuel m m.classes.size ci
+
+/- Namedtuple subclasses are represented as immediate tuple values, so their
+custom protocol methods cannot be carried by an instance heap marker. Keep
+all such dunders loud at that boundary. -/
+def hasNtupleExtraDunder (c : ClassDefn) : Bool :=
+  c.methods.toList.any fun n => dunderShaped n && n != "__init__"
 
 def hasContextProtocol (c : ClassDefn) : Bool :=
   c.methods.toList.contains "__enter__"
@@ -8123,7 +8154,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            then c.methods.toList.any fun n =>
                              dunderShaped n && n != "__init__"
                                && n != "__enter__" && n != "__exit__" && n != "__repr__"
-                           else classHasExtraDunder m ci) then
+                           else hasNtupleExtraDunder c) then
                     .unsupported s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
                   else if (findFunction m (fname ++ ".__init__")).isSome then
                     .unsupported s!"'__init__' on the namedtuple subclass '{fname}' (immutable self) is outside the tier"
@@ -8147,7 +8178,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     let a := st.world.heap.size
                     let st' := { st with world :=
-                      { st.world with heap := st.world.heap.push (.instance ci #[]) } }
+                      { st.world with heap := st.world.heap.push (.instance ci (instanceAttrs m ci)) } }
                     match classMethodQname m ci "__init__" with
                     | some initName =>
                       Run.withLocals st'.locals
@@ -9712,7 +9743,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                 let enterName := fname ++ ".__enter__"
                 let a := st.world.heap.size
                 let st' := { st with world :=
-                  { st.world with heap := st.world.heap.push (.instance ci #[]) } }
+                  { st.world with heap := st.world.heap.push (.instance ci (instanceAttrs m ci)) } }
                 match vs with
                 | [] =>
                   Run.withLocals st'.locals

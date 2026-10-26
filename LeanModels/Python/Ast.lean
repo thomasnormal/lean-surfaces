@@ -471,6 +471,13 @@ def FunctionDefn.reprLiteral (f : FunctionDefn) : Option String :=
   | [_], [.ret (some (.constant (.str s) _)) _] => some s
   | _, _ => none
 
+/- Exact pure `__bool__` body admitted by the truthiness slice: one `self`
+parameter and a direct Boolean-literal return. -/
+def FunctionDefn.boolLiteral (f : FunctionDefn) : Option Bool :=
+  match f.params.toList, f.body.toList with
+  | [_], [.ret (some (.constant (.bool b) _)) _] => some b
+  | _, _ => none
+
 
 /-- A module-level namedtuple class (H3+, docs/memory-model.md §class
 semantics — the recorded VALUE-like decision): recognized at INGESTION

@@ -83,6 +83,23 @@ inside containers; only the direct scalar result is admitted.
 DECIDED: admit only the exact literal-returning direct `__repr__` shape;
 retain loud failure for richer custom rendering and nested instance repr.
 
+## 2026-10-26-pycomplete-154 — admit literal custom instance truthiness
+
+Direct `bool(C())` now accepts a class whose `__bool__` has one `self`
+parameter and returns a Boolean literal. The instance carries that fixed
+protocol result through the heap, so conditionals and other truthiness sites
+see the same result; default instances and richer custom truthiness remain
+loud or retain their default `True` behavior.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `bool_lab.custom()` matches with value `False`; `bool_lab.instance()` remains `True` |
+| Refusal census | `bool_lab::custom` removed from `class.dunder-protocol` |
+| Lean build | `lake build leanmodels-run` passed |
+
+DECIDED: admit only the exact one-parameter Boolean-literal `__bool__` shape;
+retain loud failure for richer custom truthiness and all other protocol dunders.
+
 ## 2026-10-26-pycomplete-149 — scope starred-display shadow checks lexically
 
 Starred-display lowering now checks `list` and `tuple` bindings in the lexical

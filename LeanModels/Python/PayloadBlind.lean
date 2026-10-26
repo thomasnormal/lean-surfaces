@@ -3551,12 +3551,12 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                     World.swapAt_heap, Heap.size_swapAt,
                     Heap.swapAt_push (Heap.lt_size_of_get? invariant)]
                   have allocatedInvariant :=
-                    Heap.get?_push_of_get? (.instance classId #[]) invariant
+                    Heap.get?_push_of_get? (.instance classId (instanceAttrs m classId)) invariant
                   cases values with
                   | cons _ _ => exact PBF.exn allocatedInvariant _
                   | nil =>
                     let allocatedWorld : World := { allocatedFrom.world with
-                      heap := allocatedFrom.world.heap.push (.instance classId #[]) }
+                      heap := allocatedFrom.world.heap.push (.instance classId (instanceAttrs m classId)) }
                     refine PBF.bind (PBW.withLocals
                       (ihCall m allocatedWorld
                         (className ++ ".__enter__")
@@ -3996,7 +3996,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                         Heap.size_swapAt]
                                       refine PBF.bind (PBW.withLocals (ihIn m
                                         { s1.world with
-                                            heap := s1.world.heap.push (.instance ci #[]) }
+                                            heap := s1.world.heap.push (.instance ci (instanceAttrs m ci)) }
                                         initName
                                         ((RVal.ref s1.world.heap.size :: vs).toArray)
                                         (Heap.get?_push_of_get? _ hs1))) fun s2 r _ hs2 => ?_

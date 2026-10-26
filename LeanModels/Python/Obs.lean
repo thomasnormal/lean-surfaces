@@ -1499,7 +1499,7 @@ theorem fuelMono (fuel : Nat) :
                             | nil =>
                               let a := s2.world.heap.size
                               let s2' := { s2 with world :=
-                                { s2.world with heap := s2.world.heap.push (.instance ci #[]) } }
+                                { s2.world with heap := s2.world.heap.push (.instance ci (instanceAttrs m ci)) } }
                               refine Run.le_bind
                                 (Run.le_withLocals
                                   (ihCall m s2'.world (fname ++ ".__enter__") #[.ref a] k hk))

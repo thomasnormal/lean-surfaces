@@ -3260,18 +3260,22 @@ def _fixed_array_nested_dynamic_read(sm, expression):
         positions = list(reversed(selectors))
         dynamic = [i for i, selector in enumerate(positions)
                    if _constant_dimension_selector(selector) is None]
-        if len(dynamic) != 1 or dynamic[0] != len(dimensions) - 1:
+        if len(dynamic) != 1:
             return None
+        dynamic_index = dynamic[0]
         width, two_state, reason = type_width_2s(leaf_type)
         if width is None or reason is not None:
             return None
         fixed = []
-        for selector, (left, right) in zip(positions[:-1], dimensions[:-1]):
+        for index, (selector, (left, right)) in enumerate(zip(positions, dimensions)):
+            if index == dynamic_index:
+                fixed.append(None)
+                continue
             value = _constant_dimension_selector(selector)
             if value is None or value < min(left, right) or value > max(left, right):
                 return None
             fixed.append(value)
-        selector = positions[-1]
+        selector = positions[dynamic_index]
         index_width, _index_two, index_reason = type_width_2s(selector.type)
         if (index_width is None or index_reason is not None
                 or not _case_source_expression_ok(selector)):
@@ -3279,7 +3283,7 @@ def _fixed_array_nested_dynamic_read(sm, expression):
         converted_index = convert_expr(sm, selector)
         if converted_index is None or width_of(converted_index) != index_width:
             return None
-        left, right = dimensions[-1]
+        left, right = dimensions[dynamic_index]
         result = {"kind": "Literal", "span": node_span(sm, expression),
                   "width": width, "bits": "0" if two_state else "x" * width}
         if two_state:
@@ -3288,7 +3292,9 @@ def _fixed_array_nested_dynamic_read(sm, expression):
         step = 1 if right >= left else -1
         root = _array_storage_name(current.symbol)
         for position in reversed(list(range(left, right + step, step))):
-            name = root + "".join(f"[{item}]" for item in fixed + [position])
+            indexes = list(fixed)
+            indexes[dynamic_index] = position
+            name = root + "".join(f"[{item}]" for item in indexes)
             literal = {"kind": "Literal", "span": node_span(sm, selector),
                        "width": index_width,
                        "bits": format(position & mask, f"0{index_width}b")}
@@ -3427,12 +3433,6 @@ def _fixed_array_nested_dynamic_assignment(sm, expr):
         if len(dynamic) != 1:
             return None
         dynamic_index = dynamic[0]
-        # Keep outer-dimension dispatch loud: the existing flat-array
-        # expansion has no row object to preserve when an outer index changes.
-        # The innermost selector alone can be represented as a finite leaf
-        # choice after all enclosing dimensions are fixed.
-        if dynamic_index != len(dimensions) - 1:
-            return None
         width, two_state, reason = type_width_2s(leaf_type)
         if width is None or reason is not None:
             return None

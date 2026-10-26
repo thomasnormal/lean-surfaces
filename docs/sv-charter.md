@@ -6782,6 +6782,15 @@ dynamic-array operations remain loud. `dynamic_fixed_size_mismatch` supplies
 the `BEFORE` transcript and the extractor tests pin the mismatch and equal-size
 boundaries.
 
+## Single dynamic selectors in finite multidimensional arrays — 2026-10-26
+
+Assignments and reads with exactly one dynamic selector in any unpacked
+dimension of a finite multidimensional integral array now dispatch through the
+flat cell expansion. All other dimensions must be constant; multiple dynamic
+selectors and aggregate leaves remain loud. The nested dynamic-target fixtures
+cover both inner and outer selectors, with extractor regressions for the
+admitted and rejected shapes.
+
 ## Innermost dynamic selectors in finite multidimensional arrays — 2026-10-26
 
 Assignments and reads with one dynamic selector in the innermost dimension of

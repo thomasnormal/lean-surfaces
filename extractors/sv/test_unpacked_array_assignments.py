@@ -135,9 +135,9 @@ class UnpackedArrayAssignments(unittest.TestCase):
         design = extract_source(
             "module top; logic [7:0] value [0:1][0:1]; logic [1:0] index; "
             "initial value[index][0] = 8'h34; endmodule")
-        self.assertTrue(any(node.get("kind") == "Unsupported"
-                            and node.get("sv_kind") == "AssignmentExpression:target"
-                            for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
 
     def test_postincrement_index_updates_after_write(self):
         design = extract_source(

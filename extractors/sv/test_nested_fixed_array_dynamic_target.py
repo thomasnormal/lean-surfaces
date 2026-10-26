@@ -43,6 +43,15 @@ class NestedFixedArrayDynamicTarget(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_one_dynamic_outer_dimension_also_lowers(self):
+        design = lower(
+            'module top; int value [0:1][0:1]; integer index; '
+            'initial begin value[0][1] = 7; value[1][1] = 8; index = 1; '
+            'value[index][1] = 9; if (value[1][1] === 9) $display("PASS"); '
+            'end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -478,6 +478,13 @@ def FunctionDefn.boolLiteral (f : FunctionDefn) : Option Bool :=
   | [_], [.ret (some (.constant (.bool b) _)) _] => some b
   | _, _ => none
 
+/- Exact pure `__eq__` body admitted by the identity/equality slice: two
+parameters (`self`, `other`) and a direct Boolean-literal return. -/
+def FunctionDefn.eqLiteral (f : FunctionDefn) : Option Bool :=
+  match f.params.toList, f.body.toList with
+  | [_, _], [.ret (some (.constant (.bool b) _)) _] => some b
+  | _, _ => none
+
 
 /-- A module-level namedtuple class (H3+, docs/memory-model.md §class
 semantics — the recorded VALUE-like decision): recognized at INGESTION

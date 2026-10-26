@@ -229,50 +229,57 @@ theorem heapEqMono (fuel : Nat) :
         case tuple.ntuple xs tn2 fs2 ys =>
           exact ihL h active xs.toList ys.toList k hk
         case ref.ref x y =>
-          refine Res.le_ite (Res.le_refl _) (Res.le_ite (Res.le_refl _) ?_)
-          cases hx : Heap.get? h x with
+          cases hmx : instanceEqMarkerH h (.ref x) with
+          | some bx => exact Res.le_refl _
           | none =>
-            cases Heap.get? h y <;> exact Res.le_refl _
-          | some o1 =>
-            cases Heap.get? h y with
-            | none => cases o1 <;> simp [heapEq, Res.le_iff]
-            | some o2 =>
-              cases o1 with
-              | cell cv => cases o2 <;> exact Res.le_refl _
-              | dict es v1 =>
-                cases o2 with
-                | dict fs v2 =>
-                  exact Res.le_ite (ihN h ((x, y) :: active) es.toList fs.toList k hk)
-                    (Res.le_refl _)
-                | list ys => exact Res.le_refl _
-                | dictView da kind => exact Res.le_refl _
-                | «instance» ci attrs => exact Res.le_refl _
-                | generator qn lo kk stt => exact Res.le_refl _
-                | cell cv => exact Res.le_refl _
-                | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
-                | pyset zs => exact Res.le_refl _
-              | list xs =>
-                cases o2 with
-                | dict fs v2 => exact Res.le_refl _
-                | list ys =>
-                  exact Res.le_ite (ihL h ((x, y) :: active) xs.toList ys.toList k hk)
-                    (Res.le_refl _)
-                | dictView da kind => exact Res.le_refl _
-                | «instance» ci attrs => exact Res.le_refl _
-                | generator qn lo kk stt => exact Res.le_refl _
-                | cell cv => exact Res.le_refl _
-                | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
-                | pyset zs => exact Res.le_refl _
-              | dictView da kind =>
-                cases o2 with
-                | dictView da₂ kind₂ =>
-                  cases kind <;> cases kind₂ <;> exact Res.le_refl _
-                | _ => simp [heapEq, Res.le_iff]
-              | «instance» ci attrs => cases o2 <;> exact Res.le_refl _
-              | generator qn lo kk stt => cases o2 <;> exact Res.le_refl _
-              | closure nm ps ao lo' hg ig bd cap =>
-                cases o2 <;> exact Res.le_refl _
-              | pyset zs => cases o2 <;> exact Res.le_refl _
+            cases hmy : instanceEqMarkerH h (.ref y) with
+            | some bval => exact Res.le_refl _
+            | none =>
+              simp only [hmx, hmy]
+              refine Res.le_ite (Res.le_refl _) (Res.le_ite (Res.le_refl _) ?_)
+              cases hx : Heap.get? h x with
+              | none =>
+                cases Heap.get? h y <;> exact Res.le_refl _
+              | some o1 =>
+                cases Heap.get? h y with
+                | none => cases o1 <;> simp [heapEq, Res.le_iff]
+                | some o2 =>
+                  cases o1 with
+                  | cell cv => cases o2 <;> exact Res.le_refl _
+                  | dict es v1 =>
+                    cases o2 with
+                    | dict fs v2 =>
+                      exact Res.le_ite (ihN h ((x, y) :: active) es.toList fs.toList k hk)
+                        (Res.le_refl _)
+                    | list ys => exact Res.le_refl _
+                    | dictView da kind => exact Res.le_refl _
+                    | «instance» ci attrs => exact Res.le_refl _
+                    | generator qn lo kk stt => exact Res.le_refl _
+                    | cell cv => exact Res.le_refl _
+                    | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
+                    | pyset zs => exact Res.le_refl _
+                  | list xs =>
+                    cases o2 with
+                    | dict fs v2 => exact Res.le_refl _
+                    | list ys =>
+                      exact Res.le_ite (ihL h ((x, y) :: active) xs.toList ys.toList k hk)
+                        (Res.le_refl _)
+                    | dictView da kind => exact Res.le_refl _
+                    | «instance» ci attrs => exact Res.le_refl _
+                    | generator qn lo kk stt => exact Res.le_refl _
+                    | cell cv => exact Res.le_refl _
+                    | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
+                    | pyset zs => exact Res.le_refl _
+                  | dictView da kind =>
+                    cases o2 with
+                    | dictView da₂ kind₂ =>
+                      cases kind <;> cases kind₂ <;> exact Res.le_refl _
+                    | _ => simp [heapEq, Res.le_iff]
+                  | «instance» ci attrs => cases o2 <;> exact Res.le_refl _
+                  | generator qn lo kk stt => cases o2 <;> exact Res.le_refl _
+                  | closure nm ps ao lo' hg ig bd cap =>
+                    cases o2 <;> exact Res.le_refl _
+                  | pyset zs => cases o2 <;> exact Res.le_refl _
     · intro h active as bs fuel' hf
       cases fuel' with
       | zero => exact absurd hf (Nat.not_succ_le_zero fuel)

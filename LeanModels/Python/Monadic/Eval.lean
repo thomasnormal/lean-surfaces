@@ -106,6 +106,10 @@ def hasUnsupportedDunderM (m : Module) (c : ClassDefn) : Bool :=
           match findFunction m (c.name ++ ".__bool__") with
           | some f => f.boolLiteral.isNone
           | none => true
+      | "__eq__" =>
+          match findFunction m (c.name ++ ".__eq__") with
+          | some f => f.eqLiteral.isNone
+          | none => true
       | _ => true
 
 def classHasExtraDunderM (m : Module) : Nat → ClassId → Bool
@@ -129,15 +133,27 @@ def hasNtupleExtraDunderM (c : ClassDefn) : Bool :=
   c.methods.toList.any fun n => dunderShaped n && n != "__init__"
 
 def instanceAttrsM (m : Module) (ci : ClassId) : Array (String × RVal) :=
-  match classMethodQname m ci "__bool__" with
-  | some qname =>
-      match findFunction m qname with
-      | some f =>
-          match f.boolLiteral with
-          | some b => #[(instanceBoolMarker, .bool b)]
-          | none => #[]
-      | none => #[]
-  | none => #[]
+  let boolAttrs :=
+    match classMethodQname m ci "__bool__" with
+    | some qname =>
+        match findFunction m qname with
+        | some f =>
+            match f.boolLiteral with
+            | some b => #[(instanceBoolMarker, .bool b)]
+            | none => #[]
+        | none => #[]
+    | none => #[]
+  let eqAttrs :=
+    match classMethodQname m ci "__eq__" with
+    | some qname =>
+        match findFunction m qname with
+        | some f =>
+            match f.eqLiteral with
+            | some b => #[(instanceEqMarker, .bool b)]
+            | none => #[]
+        | none => #[]
+    | none => #[]
+  boolAttrs ++ eqAttrs
 
 def findContextClassM (m : Module) (name : String) : Option (Nat × ClassDefn) :=
   match findClass m name with

@@ -160,7 +160,7 @@ def store_attr_on_dict(a):
 
 def weird_eq(a):
     w = Weird()
-    return w.x
+    return (w.x, w == a, a == w, w == w)
 
 
 def sub_inherits(a):

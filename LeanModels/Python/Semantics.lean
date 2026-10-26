@@ -345,6 +345,12 @@ It is not a Python-spellable attribute and therefore cannot be observed as
 instance data; `truthyH` consumes it before the ordinary default-protocol arm. -/
 def instanceBoolMarker : String := "<leanpy:bool-literal>"
 
+/-- Reserved instance payload used only for the exact literal `__eq__` slice.
+It is not a Python-spellable attribute. `heapEq` consumes it before the
+ordinary identity/default-protocol arm, so a literal custom equality method
+also applies when the instance is compared with itself or an immediate. -/
+def instanceEqMarker : String := "<leanpy:eq-literal>"
+
 /-- Heap-resolving type name (H2): a `.ref` names its referent's type.
 The `"object"` fallback is the dangling arm — unreachable from WF worlds,
 and never part of a decided outcome that isn't already loud.
@@ -4675,6 +4681,19 @@ def powModArgs : List RVal → Res RVal
       .exn (.typeError "pow() 3rd argument not allowed unless all arguments are integers")
   | values => .exn (.typeError s!"pow() expected 2 or 3 arguments, got {values.length}")
 
+/-- Read the reserved literal-equality marker from an instance referent.
+The marker is internal-only; ordinary instance attributes never use this
+unspellable name. -/
+def instanceEqMarkerH (h : Heap) : RVal → Option Bool
+  | .ref a =>
+      match Heap.get? h a with
+      | some (.instance _ attrs) =>
+          match Env.lookup attrs.toList instanceEqMarker with
+          | some (.bool b) => some b
+          | _ => none
+      | _ => none
+  | _ => none
+
 mutual
   /-- Python `==` over the heap (docs/memory-model.md §identity) — the
   H1-complete equality. Ref/ref: (1) identity shortcut (`d == d` holds
@@ -4695,28 +4714,38 @@ mutual
     | fuel + 1 =>
       match a, b with
       | .ref x, .ref y =>
-        if x == y then .ok true
-        else if active.contains (x, y) then .exn .recursionError
-        else
-          match Heap.get? h x, Heap.get? h y with
-          | some (.dict es _), some (.dict fs _) =>
-            if es.size == fs.size then
-              heapEqEntries h fuel ((x, y) :: active) es.toList fs.toList
-            else .ok false
-          | some (.list xs), some (.list ys) =>
-            if xs.size == ys.size then
-              heapEqList h fuel ((x, y) :: active) xs.toList ys.toList
-            else .ok false
-          | some (.dictView da .keys), some (.dictView db .keys) =>
-              if da == db then .ok true
-              else .unsupported "dictionary view set comparison is outside the tier"
-          | some (.dictView _ .values), some (.dictView _ .values) => .ok false
-          | some (.dictView ..), some _ | some _, some (.dictView ..) =>
-              .unsupported "dictionary view set comparison is outside the tier"
-          | some _, some _ => .ok false   -- dict vs list: cross-type `==`
-          | _, _ => .unsupported danglingMsg
-      | .ref _, _ => .ok false
-      | _, .ref _ => .ok false
+        match instanceEqMarkerH h (.ref x), instanceEqMarkerH h (.ref y) with
+        | some result, _ => .ok result
+        | none, some result => .ok result
+        | none, none =>
+          if x == y then .ok true
+          else if active.contains (x, y) then .exn .recursionError
+          else
+            match Heap.get? h x, Heap.get? h y with
+            | some (.dict es _), some (.dict fs _) =>
+              if es.size == fs.size then
+                heapEqEntries h fuel ((x, y) :: active) es.toList fs.toList
+              else .ok false
+            | some (.list xs), some (.list ys) =>
+              if xs.size == ys.size then
+                heapEqList h fuel ((x, y) :: active) xs.toList ys.toList
+              else .ok false
+            | some (.dictView da .keys), some (.dictView db .keys) =>
+                if da == db then .ok true
+                else .unsupported "dictionary view set comparison is outside the tier"
+            | some (.dictView _ .values), some (.dictView _ .values) => .ok false
+            | some (.dictView ..), some _ | some _, some (.dictView ..) =>
+                .unsupported "dictionary view set comparison is outside the tier"
+            | some _, some _ => .ok false   -- dict vs list: cross-type `==`
+            | _, _ => .unsupported danglingMsg
+      | .ref x, _ =>
+        match instanceEqMarkerH h (.ref x) with
+        | some result => .ok result
+        | none => .ok false
+      | _, .ref y =>
+        match instanceEqMarkerH h (.ref y) with
+        | some result => .ok result
+        | none => .ok false
       | .tuple xs, .tuple ys => heapEqList h fuel active xs.toList ys.toList
       | .listV xs, .listV ys => heapEqList h fuel active xs.toList ys.toList
       -- namedtuples compare as tuples through the heap too (elements may
@@ -5723,18 +5752,34 @@ def hasUnsupportedDunder (m : Module) (c : ClassDefn) : Bool :=
           match findFunction m (c.name ++ ".__bool__") with
           | some f => f.boolLiteral.isNone
           | none => true
+      | "__eq__" =>
+          match findFunction m (c.name ++ ".__eq__") with
+          | some f => f.eqLiteral.isNone
+          | none => true
       | _ => true
 
 def instanceAttrs (m : Module) (ci : ClassId) : Array (String × RVal) :=
-  match classMethodQname m ci "__bool__" with
-  | some qname =>
-      match findFunction m qname with
-      | some f =>
-          match f.boolLiteral with
-          | some b => #[(instanceBoolMarker, .bool b)]
-          | none => #[]
-      | none => #[]
-  | none => #[]
+  let boolAttrs :=
+    match classMethodQname m ci "__bool__" with
+    | some qname =>
+        match findFunction m qname with
+        | some f =>
+            match f.boolLiteral with
+            | some b => #[(instanceBoolMarker, .bool b)]
+            | none => #[]
+        | none => #[]
+    | none => #[]
+  let eqAttrs :=
+    match classMethodQname m ci "__eq__" with
+    | some qname =>
+        match findFunction m qname with
+        | some f =>
+            match f.eqLiteral with
+            | some b => #[(instanceEqMarker, .bool b)]
+            | none => #[]
+        | none => #[]
+    | none => #[]
+  boolAttrs ++ eqAttrs
 
 /-- The default-protocol guard includes inherited dunders.  A subclass of a
 class defining `__eq__`, for example, is not an identity-only instance even

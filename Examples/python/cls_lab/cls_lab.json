@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/cls_lab/cls_lab.py",
-  "source_sha256": "58cf4141d5b4c740704f032c5acab04fcb77342fbcb45a8721bdd3cbafc360c3",
+  "source_sha256": "e9d2a84fbf96eb45fe44f2dda947d24850008a191ba44a728b5540c2be6892c4",
   "module": {
     "kind": "Module",
     "body": [
@@ -3968,7 +3968,7 @@
           "lineno": 161,
           "col_offset": 0,
           "end_lineno": 163,
-          "end_col_offset": 14
+          "end_col_offset": 40
         },
         "name": "weird_eq",
         "args": [
@@ -4034,27 +4034,140 @@
               "lineno": 163,
               "col_offset": 4,
               "end_lineno": 163,
-              "end_col_offset": 14
+              "end_col_offset": 40
             },
             "value": {
-              "kind": "Attribute",
+              "kind": "Tuple",
               "span": {
                 "lineno": 163,
                 "col_offset": 11,
                 "end_lineno": 163,
-                "end_col_offset": 14
+                "end_col_offset": 40
               },
-              "value": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 163,
-                  "col_offset": 11,
-                  "end_lineno": 163,
-                  "end_col_offset": 12
+              "elts": [
+                {
+                  "kind": "Attribute",
+                  "span": {
+                    "lineno": 163,
+                    "col_offset": 12,
+                    "end_lineno": 163,
+                    "end_col_offset": 15
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 163,
+                      "col_offset": 12,
+                      "end_lineno": 163,
+                      "end_col_offset": 13
+                    },
+                    "id": "w"
+                  },
+                  "attr": "x"
                 },
-                "id": "w"
-              },
-              "attr": "x"
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 163,
+                    "col_offset": 17,
+                    "end_lineno": 163,
+                    "end_col_offset": 23
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 163,
+                      "col_offset": 17,
+                      "end_lineno": 163,
+                      "end_col_offset": 18
+                    },
+                    "id": "w"
+                  },
+                  "ops": [
+                    "Eq"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 163,
+                        "col_offset": 22,
+                        "end_lineno": 163,
+                        "end_col_offset": 23
+                      },
+                      "id": "a"
+                    }
+                  ]
+                },
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 163,
+                    "col_offset": 25,
+                    "end_lineno": 163,
+                    "end_col_offset": 31
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 163,
+                      "col_offset": 25,
+                      "end_lineno": 163,
+                      "end_col_offset": 26
+                    },
+                    "id": "a"
+                  },
+                  "ops": [
+                    "Eq"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 163,
+                        "col_offset": 30,
+                        "end_lineno": 163,
+                        "end_col_offset": 31
+                      },
+                      "id": "w"
+                    }
+                  ]
+                },
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 163,
+                    "col_offset": 33,
+                    "end_lineno": 163,
+                    "end_col_offset": 39
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 163,
+                      "col_offset": 33,
+                      "end_lineno": 163,
+                      "end_col_offset": 34
+                    },
+                    "id": "w"
+                  },
+                  "ops": [
+                    "Eq"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 163,
+                        "col_offset": 38,
+                        "end_lineno": 163,
+                        "end_col_offset": 39
+                      },
+                      "id": "w"
+                    }
+                  ]
+                }
+              ]
             }
           }
         ]

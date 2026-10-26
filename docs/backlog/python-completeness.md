@@ -17,6 +17,23 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-155 — admit literal custom instance equality
+
+The class tier now admits the exact two-parameter method
+`__eq__(self, other): return True` or `False`. Instances carry an internal
+marker consumed by heap equality, so the literal result applies to self,
+instance, and immediate comparisons in either operand order. Richer equality
+protocols remain refused under the dunder guard.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `cls_lab.weird_eq()` and `weird_eq_compare()` match CPython |
+| Refusal census | `cls_lab::weird_eq` removed from `class.dunder-protocol` |
+| Lean build | `lake build leanmodels-run` passed |
+
+DECIDED: admit only the exact two-parameter Boolean-literal `__eq__` shape;
+retain loud failure for richer custom equality and all other protocol dunders.
+
 ## 2026-10-26-pycomplete-150 — admit the exact exception-sensitive `__exit__` test
 
 The synchronous context-manager slice now recognizes the exact four-parameter

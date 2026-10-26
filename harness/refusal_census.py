@@ -934,7 +934,6 @@ WHITELIST_CLASS = {
     "bench_bisect::bisect_left": "exc.raise",
     "dict_lab::ret_dict": "boundary.heap-value",
     "dict_lab::ret_tuple_with_dict": "boundary.heap-value",
-    "cls_lab::weird_eq": "class.dunder-protocol",
     "cls_lab::class_as_value": "firstclass.callable",
     "with_lab::multiple_items": "with.multiple-items",
     "with_lab::explicit_init": "with.explicit-constructor",

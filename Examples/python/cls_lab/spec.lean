@@ -80,9 +80,10 @@ guard means no `__len__`/`__getitem__`/`__iter__` can exist) -/
 #guard callFunction cls_lab "iterate_instance" #[.int 1] 4096
   matches .exn (.typeError _)
 
-/-! ### the loud frontier: extra dunders, inheritance, and class-as-value -/
+/-! ### literal custom equality, inheritance, and class-as-value -/
 
-#guard callFunction cls_lab "weird_eq" #[.int 1] 4096 matches .unsupported _
+#py_check cls_lab.weird_eq(1) =
+  (Val.tuple #[.int 1, .bool true, .bool true, .bool true])
 #py_check cls_lab.sub_inherits(1) = 1
 #py_check cls_lab.object_base_truthy() = true
 #guard callFunction cls_lab "class_as_value" #[] 4096 matches .unsupported _

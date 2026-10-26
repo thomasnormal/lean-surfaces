@@ -461,6 +461,42 @@ class SizeQueries(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
 
+    def test_literal_string_index_returns_ascii_and_zero_bounds(self):
+        design = lower(
+            'module top; string s = "abc"; initial begin '
+            '$display("%0d %0d %0d", s[0], s[10], s[-1]); '
+            'end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("string_literal_index")]
+        self.assertEqual([(node["width"], node["bits"]) for node in values], [
+            (8, "01100001"), (8, "00000000"), (8, "00000000")])
+
+    def test_written_string_index_uses_latest_literal_assignment(self):
+        design = lower(
+            'module top; string s; initial begin s = "abc"; '
+            '$display("%0d %0d", s[0], s[3]); s = "x"; '
+            '$display("%0d", s[0]); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("string_literal_index")]
+        self.assertEqual([node["bits"] for node in values], [
+            "01100001", "00000000", "01111000"])
+
+    def test_string_index_dynamic_alias_and_non_ascii_writes_stay_loud(self):
+        for source in (
+                'module top; string s = "abc"; int i; '
+                'initial $display("%0d", s[i]); endmodule',
+                'module top; string s = "abc"; string other; int result; '
+                'initial begin other = s; result = s[0]; end endmodule',
+                'module top; string s = "abc"; int result; '
+                'initial begin s = "é"; result = s[0]; end endmodule',
+                'module top; string s = "abc"; int result; '
+                'initial begin s[0] = 65; result = s[0]; end endmodule'):
+            design = lower(source)
+            self.assertFalse(any(node.get("string_literal_index")
+                                 for node in nodes(design)))
+            self.assertTrue(any(node.get("kind") == "Unsupported"
+                                for node in nodes(design)))
+
     def test_single_literal_continuous_net_driver_is_time_zero_assignment(self):
         design = lower(
             'module top; wire y; assign y = 1\'b1; '

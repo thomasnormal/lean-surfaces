@@ -27,8 +27,8 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-26
 
-The chapter-scoped rerun covered **22,056** paths: **5,210 clean**,
-**16,779 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,056** paths: **5,227 clean**,
+**16,762 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
 `AssignmentExpression:target` (2,857), `CallExpression` (2,778),
@@ -68,6 +68,20 @@ The **22,056-path** census moves **5,210 → 5,215 clean** and **16,779 →
 16,774 partial** (67 include skips). `ElementSelectExpression:source-type`
 falls **495 → 490**. Differential coverage grows **240/235/0/5 → 241/236/0/5**
 with no disagreements; grammar coverage remains **217/90/127**.
+
+## Direct indexing of literal ASCII strings — 2026-10-26
+
+Constant indexing of a source-pure ASCII string now lowers to its byte value,
+with the IEEE zero result for negative and out-of-range indices. Dynamic
+indices, aliases, non-ASCII or nonliteral writes, and element writes remain
+loud. The `string_index` fixture supplies the differential row and Lean
+receipt; extractor tests cover literal history and each refusal boundary.
+
+On the refreshed **22,056-path** census, clean files move **5,215 → 5,227**
+and partial files **16,774 → 16,762** (67 include skips).
+`ElementSelectExpression:source-type` falls **490 → 479**. Differential
+coverage grows **241/236/0/5 → 242/237/0/5** with no disagreements; grammar
+coverage remains **217/92/125**.
 
 ## Finite literal dynamic-array reductions — 2026-10-26
 

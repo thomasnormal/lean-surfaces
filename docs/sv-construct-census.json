@@ -100,7 +100,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    490
+    479
    ],
    [
     "PropertySymbol:Property",
@@ -155,12 +155,12 @@
     194
    ],
    [
-    "StaticLocal:initializer",
-    170
-   ],
-   [
     "TimedStatement:DelayControl:expression",
     169
+   ],
+   [
+    "StaticLocal:initializer",
+    168
    ],
    [
     "NamedValueExpression:ClockVar",
@@ -964,8 +964,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5215,
-   "partial": 16774,
+   "clean": 5227,
+   "partial": 16762,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1026,7 +1026,7 @@
     52
    ],
    "simulation": [
-    4524,
+    4536,
     18687
    ],
    "simulation elaboration": [
@@ -1041,9 +1041,9 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 213,
-    "clean": 769,
-    "partial": 222,
+    "blocked_by_more": 211,
+    "clean": 771,
+    "partial": 220,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
@@ -1060,7 +1060,7 @@
      ],
      [
       "VariableSymbol:2state",
-      54
+      52
      ],
      [
       "SubroutineSymbol:Subroutine",
@@ -1095,16 +1095,16 @@
       9
      ],
      [
-      "ElementSelectExpression:source-type",
-      8
-     ],
-     [
       "InvalidStatement",
       7
      ],
      [
       "NullLiteral",
       7
+     ],
+     [
+      "ElementSelectExpression:source-type",
+      6
      ],
      [
       "ClassType",
@@ -1219,30 +1219,30 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 515,
-    "clean": 526,
-    "partial": 517,
+    "blocked_by_more": 505,
+    "clean": 536,
+    "partial": 507,
     "simulation_tests": 1043,
     "top_residual_blockers": [
      [
-      "VariableSymbol:2state",
-      166
-     ],
-     [
       "NamedValueExpression:2state",
       164
+     ],
+     [
+      "VariableSymbol:2state",
+      158
      ],
      [
       "TimedStatement:DelayControl",
       128
      ],
      [
-      "VariableDeclStatement:2state",
-      128
+      "ConversionExpression:width",
+      126
      ],
      [
-      "ConversionExpression:width",
-      128
+      "VariableDeclStatement:2state",
+      124
      ],
      [
       "AssignmentExpression:target",
@@ -1265,10 +1265,6 @@
       50
      ],
      [
-      "ElementSelectExpression:source-type",
-      40
-     ],
-     [
       "SubroutineSymbol:Subroutine",
       37
      ],
@@ -1283,6 +1279,10 @@
      [
       "NullLiteral",
       30
+     ],
+     [
+      "ElementSelectExpression:source-type",
+      29
      ],
      [
       "ClassType:ClassType",
@@ -1319,9 +1319,9 @@
     "unlockable": 0
    },
    "chapter-11": {
-    "clean": 773,
+    "clean": 775,
     "error": 0,
-    "partial": 261,
+    "partial": 259,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 9
@@ -1583,9 +1583,9 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 543,
+    "clean": 553,
     "error": 0,
-    "partial": 644,
+    "partial": 634,
     "skip_include": 0,
     "total": 1187,
     "unlockable": 3

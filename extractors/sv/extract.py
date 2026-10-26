@@ -7087,6 +7087,17 @@ def _legacy_member_select_window(sm, expression, expression_kind, result_kind):
 
 def _convert_selected_read(sm, expr, expression_kind):
     if expression_kind == "ElementSelectExpression":
+        string_byte = _string_literal_index_value(expr)
+        if string_byte is not None:
+            width = expr.type.bitWidth
+            return signed_metadata({
+                "kind": "Literal",
+                "span": node_span(sm, expr),
+                "width": width,
+                "bits": format(string_byte & ((1 << width) - 1),
+                               f"0{width}b"),
+                "string_literal_index": True,
+            }, expr.type)
         assoc_cell = _finite_string_assoc_cell(sm, expr)
         if assoc_cell is not None:
             return {
@@ -10735,6 +10746,114 @@ def _string_literal_getc_method(expression):
         return _string_literal_source_value(expression, "getc") is not None
     except Exception:
         return False
+
+
+def _string_literal_index_value(expression):
+    """Return the byte selected from a source-pure ASCII string.
+
+    Direct ``s[i]`` indexing has the same literal history boundary as
+    ``s.getc(i)``: the receiver must be initialized or assigned from an ASCII
+    literal, every observed index must be a constant, and an out-of-range
+    index returns zero.  String storage itself remains opaque; aliases,
+    dynamic indices, nonliteral writes, and other observations stay loud.
+    """
+    try:
+        if type(expression).__name__ != "ElementSelectExpression":
+            return None
+        receiver = expression.value
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or type(receiver.type.canonicalType).__name__ != "StringType"):
+            return None
+        index = _literal_integral_value(expression.selector)
+        if index is None:
+            return None
+        symbol = receiver.symbol
+        initializer = getattr(symbol, "initializer", None)
+        while type(initializer).__name__ == "ConversionExpression":
+            initializer = getattr(initializer, "operand", None)
+        initial_value = (getattr(initializer, "value", None)
+                         if type(initializer).__name__ == "StringLiteral"
+                         and not getattr(initializer, "bad", False) else None)
+        if (initial_value is not None
+                and (not isinstance(initial_value, str)
+                     or any(ord(char) == 0 or ord(char) > 127
+                            for char in initial_value))):
+            return None
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        assignments = []
+        dynamic_index = False
+        invalid_write = False
+        if instance is not None:
+            def inspect(node):
+                nonlocal dynamic_index, invalid_write
+                kind = type(node).__name__
+                if kind == "ElementSelectExpression":
+                    value = getattr(node, "value", None)
+                    if (type(value).__name__ == "NamedValueExpression"
+                            and getattr(value, "symbol", None) is symbol
+                            and _literal_integral_value(node.selector) is None):
+                        dynamic_index = True
+                    return
+                if kind != "AssignmentExpression":
+                    return
+                left = getattr(node, "left", None)
+                if left is None:
+                    return
+                if (type(left).__name__ == "ElementSelectExpression"
+                        and type(getattr(left, "value", None)).__name__
+                        == "NamedValueExpression"
+                        and getattr(left.value, "symbol", None) is symbol):
+                    invalid_write = True
+                    return
+                if (getattr(left, "symbol", None) is not symbol):
+                    return
+                if (getattr(node, "op", None) is not None
+                        or getattr(node, "timingControl", None) is not None
+                        or getattr(node, "isNonBlocking", False)):
+                    invalid_write = True
+                    return
+                value = node.right
+                while type(value).__name__ == "ConversionExpression":
+                    value = getattr(value, "operand", None)
+                if (type(value).__name__ != "StringLiteral"
+                        or getattr(value, "bad", False)
+                        or not isinstance(getattr(value, "value", None), str)
+                        or any(ord(char) == 0 or ord(char) > 127
+                               for char in value.value)):
+                    invalid_write = True
+                    return
+                assignments.append((getattr(node.sourceRange.start, "offset", -1),
+                                    value.value))
+            instance.visit(inspect)
+        if dynamic_index or invalid_write:
+            return None
+        name = getattr(symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        code_source = _sv_code_source(source)
+        occurrences = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"(?![A-Za-z0-9_$])", code_source))
+        if not occurrences:
+            return None
+        for match in occurrences[1:]:
+            tail = source[match.end():].lstrip()
+            if tail.startswith("[") or re.match(r'=\s*"', tail):
+                continue
+            return None
+        position = getattr(getattr(expression, "sourceRange", None), "start", None)
+        position = getattr(position, "offset", None)
+        if position is None:
+            return None
+        history = [(start, value) for start, value in assignments if start < position]
+        if initial_value is not None:
+            history.insert(0, (-1, initial_value))
+        if not history:
+            return None
+        value = max(history, key=lambda item: item[0])[1]
+        return ord(value[index]) if 0 <= index < len(value) else 0
+    except Exception:
+        return None
 
 
 def _convert_string_literal_getc(sm, expression):

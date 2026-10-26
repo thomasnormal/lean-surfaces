@@ -2172,6 +2172,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "string_index",
+      "file": "Examples/system-verilog/string_index/string_index.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

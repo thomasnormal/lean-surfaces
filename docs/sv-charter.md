@@ -8143,3 +8143,17 @@ and partial files **16,779 → 16,774** (67 include skips).
 `ElementSelectExpression:source-type` falls **495 → 490**. Differential
 coverage grows **240/235/0/5 → 241/236/0/5** with no disagreements; grammar
 coverage remains **217/90/127**.
+
+## Direct indexing of literal ASCII strings — 2026-10-26
+
+Constant indexing of a source-pure ASCII string now lowers to its byte value,
+with the IEEE zero result for negative and out-of-range indices. Dynamic
+indices, aliases, non-ASCII or nonliteral writes, and element writes remain
+loud. The `string_index` fixture supplies the differential row and Lean
+receipt, with extractor tests for literal history and each refusal boundary.
+
+On the refreshed **22,056-path** census, clean files move **5,215 → 5,227**
+and partial files **16,774 → 16,762** (67 include skips).
+`ElementSelectExpression:source-type` falls **490 → 479**. Differential
+coverage grows **241/236/0/5 → 242/237/0/5** with no disagreements; grammar
+coverage remains **217/92/125**.

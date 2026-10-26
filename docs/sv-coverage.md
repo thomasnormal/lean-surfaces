@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 241 | 236 | 0 | 5 | sv-tests-2 declarations |
+| 242 | 237 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -255,6 +255,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `fixed_array_net_copy` | `Examples/system-verilog/fixed_array_net_copy/fixed_array_net_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_reinitialization` | `Examples/system-verilog/dynamic_array_reinitialization/dynamic_array_reinitialization.sv` | match | **MATCH** | `ok` | MATCH |
 | `array_oob_reads` | `Examples/system-verilog/array_oob_reads/array_oob_reads.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_index` | `Examples/system-verilog/string_index/string_index.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -490,7 +491,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22056 | 5215 | 16774 | 67 |
+| 22056 | 5227 | 16762 | 67 |
 
 | blocker kind | files |
 |---|---:|

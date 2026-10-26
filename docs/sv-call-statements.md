@@ -70,6 +70,10 @@ existing query converter proves fixed dimensions without evaluating the
 operand; dynamic arrays, selectors, effectful operands, malformed calls, and
 value uses remain on their ordinary boundaries.
 
+Zero-argument `$time` and `$stime` calls are inert at the time-zero boundary
+when their integer result is discarded. The exact zero-literal converter is
+reused; argumented, delayed, and value-returning time queries remain loud.
+
 The self-check executor runs these calls at time zero. The retained stepper
 delegates the same `SysCall` leaves to that executor after a delay or event
 wait, so no second call interpreter is introduced. The scheduler's existing

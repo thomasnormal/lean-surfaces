@@ -2361,6 +2361,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "time_query_statements",
+      "file": "Examples/system-verilog/time_query_statements/time_query_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

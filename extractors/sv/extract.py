@@ -15807,6 +15807,12 @@ def _convert_syscall(sm, s, e):
         if value.get("kind") != "Unsupported":
             return {"kind": "Empty", "span": node_span(sm, s),
                     "dimension_query_statement": name}
+    if is_sys and (_time_call(e) or _stime_call(e)):
+        # At the time-zero self-check boundary, zero-argument integer time
+        # queries are exact zero literals. A discarded result has no state
+        # effect; argumented and delayed forms remain on the time boundary.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "time_query_statement": name}
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

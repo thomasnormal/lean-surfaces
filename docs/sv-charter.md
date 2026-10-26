@@ -43,6 +43,16 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Discarded time-zero integer queries — 2026-10-26
+
+Zero-argument `$time` and `$stime` calls in statement position now erase their
+discarded result using the existing exact time-zero literal rule. Argumented,
+delayed, and value-returning forms remain loud. The `time_query_statements`
+fixture covers both calls. The 22,059-path census remains **5,240 clean /
+16,752 partial** (67 include skips), with `AssignmentExpression:target` at
+**2,853**; differential coverage grows **262/257/0/5 → 263/258/0/5** and
+grammar coverage remains **217/92/125**.
+
 ## Discarded fixed dimension queries — 2026-10-26
 
 Valid fixed-type `$size`, `$high`, `$left`, `$right`, `$low`, `$increment`,

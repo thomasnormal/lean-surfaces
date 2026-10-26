@@ -109,6 +109,24 @@ class FixedArrayNestedCopy(unittest.TestCase):
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             for node in nodes(design)))
 
+    def test_dynamic_inner_prefix_subarray_copies_a_flat_row(self):
+        design = lower(
+            "module top; logic [3:0] cube [0:1][0:1][0:2]; "
+            "logic [3:0] row [5:3]; logic index; initial begin "
+            "row = '{4'ha, 4'hb, 4'hc}; index = 1; cube[0][index] = row; "
+            "if (cube[0][1][0] === 4'ha && cube[0][1][1] === 4'hb && "
+            "cube[0][1][2] === 4'hc) $display(\"PASS\"); "
+            "end endmodule")
+        branches = [node for node in nodes(design)
+                    if node.get("fixed_array_dynamic_subarray_copy_lowered")]
+        self.assertEqual(len(branches), 1)
+        self.assertEqual(
+            [stmt["target"]["name"] for stmt in branches[0]["then"]["stmts"]],
+            ["cube[0][0][0]", "cube[0][0][1]", "cube[0][0][2]"])
+        self.assertEqual(
+            [stmt["target"]["name"] for stmt in branches[0]["else"]["then"]["stmts"]],
+            ["cube[0][1][0]", "cube[0][1][1]", "cube[0][1][2]"])
+
 
 if __name__ == "__main__":
     unittest.main()

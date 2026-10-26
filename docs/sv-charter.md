@@ -8224,3 +8224,19 @@ The refreshed **22,058-path** census remains **5,227 clean / 16,764 partial**
 (67 include skips), with `AssignmentExpression:target` at **2,857**.
 Differential coverage grows **245/240/0/5 → 246/241/0/5** with no
 disagreements; grammar coverage remains **217/92/125**.
+
+## Dynamic inner-prefix multidimensional subarray copies — 2026-10-26
+
+The same finite branch expansion now admits one dynamic selector after a
+constant prefix of a bounded multidimensional unpacked integral array. A form
+such as `cube[0][index] = row` copies a distinct flat row into the omitted
+suffix cells in declaration order, using only the existing flat storage. The
+multiple-dynamic, aliasing, shape-mismatch, aggregate, timed, and effectful
+boundaries remain loud. The `nested_fixed_array_dynamic_inner_subarray_copy`
+fixture supplies the differential row and Lean receipt, with extractor
+regressions for the inner-prefix branch mapping.
+
+The refreshed **22,058-path** census remains **5,227 clean / 16,764 partial**
+(67 include skips), with `AssignmentExpression:target` at **2,857**.
+Differential coverage grows **246/241/0/5 → 247/242/0/5** with no
+disagreements; grammar coverage remains **217/92/125**.

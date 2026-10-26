@@ -427,3 +427,16 @@ and effectful sources remain loud.
 `nested_fixed_array_dynamic_subarray_copy` is the differential witness; the
 22,058-path census remains **5,227 clean / 16,764 partial** with
 `AssignmentExpression:target` at **2,857**.
+
+## Dynamic inner-prefix multidimensional subarray copies — 2026-10-26
+
+The dynamic-prefix lowering now also admits one dynamic selector after a
+constant prefix, such as `cube[0][index] = row`, while one or more trailing
+dimensions remain omitted. Each finite branch copies the distinct flat source
+row through the existing cell state in declaration order. Multiple dynamic
+selectors, aliases, shape mismatches, aggregate leaves, timed forms, and
+effectful sources remain loud.
+
+`nested_fixed_array_dynamic_inner_subarray_copy` is the differential witness;
+the 22,058-path census remains **5,227 clean / 16,764 partial** with
+`AssignmentExpression:target` at **2,857**.

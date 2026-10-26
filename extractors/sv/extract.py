@@ -3156,14 +3156,14 @@ def _fixed_array_subarray_copy_assignment(sm, expr):
 
 
 def _fixed_array_dynamic_subarray_copy_assignment(sm, expr):
-    """Copy a flat fixed-array row into one dynamic outer subarray.
+    """Copy a flat fixed-array row into one dynamic multidimensional prefix.
 
     A dynamic prefix selection such as ``matrix[i] = row`` has no aggregate
     slot in the flat self-check state.  For a bounded multidimensional array,
-    expand the selected row into mutually exclusive branches over the finite
-    outer range, then copy each suffix cell in declaration order.  The source
-    is required to be a distinct, constant-shape flat array so a blocking
-    expansion cannot observe an earlier destination write.
+    expand the selected prefix into mutually exclusive branches over the
+    finite dynamic dimension, then copy each suffix cell in declaration order.
+    The source is required to be a distinct, constant-shape flat array so a
+    blocking expansion cannot observe an earlier destination write.
     """
     try:
         if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
@@ -3171,24 +3171,31 @@ def _fixed_array_dynamic_subarray_copy_assignment(sm, expr):
                 or type(expr.left).__name__ != "ElementSelectExpression"):
             return None
         lhs = expr.left
-        # This item deliberately admits exactly one (outer) selector.  A
-        # constant selector is already handled by the ordinary subarray copy.
-        if type(lhs.value).__name__ != "NamedValueExpression":
+        selectors = []
+        current = lhs
+        while type(current).__name__ == "ElementSelectExpression":
+            selectors.append(current.selector)
+            current = current.value
+        # A constant selector is already handled by the ordinary subarray
+        # copy; this item admits exactly one dynamic selector in the selected
+        # prefix and leaves at least one suffix dimension omitted.
+        if not selectors or not _storage_expression(current):
             return None
-        selector = lhs.selector
-        if _constant_dimension_selector(selector) is not None:
-            return None
-        if not _storage_expression(lhs.value):
-            return None
-        current = lhs.value
         if str(current.symbol.kind) != "SymbolKind.Variable":
             return None
         shape = _fixed_array_dimensions(current.type, max_cells=1024)
         if shape is None:
             return None
         dimensions, leaf_type = shape
-        if len(dimensions) < 2:
+        prefix_positions = list(reversed(selectors))
+        if not (0 < len(prefix_positions) < len(dimensions)):
             return None
+        dynamic = [index for index, item in enumerate(prefix_positions)
+                   if _constant_dimension_selector(item) is None]
+        if len(dynamic) != 1:
+            return None
+        dynamic_index = dynamic[0]
+        selector = prefix_positions[dynamic_index]
         width, two_state, reason = type_width_2s(leaf_type)
         if width is None or reason is not None:
             return None
@@ -3206,7 +3213,18 @@ def _fixed_array_dynamic_subarray_copy_assignment(sm, expr):
         if rhs_shape is None:
             return None
         rhs_root, rhs_width, _rhs_two, rhs_positions = rhs_shape
-        suffix = dimensions[1:]
+        fixed_prefix = []
+        for index, (selector_value, (left, right)) in enumerate(
+                zip(prefix_positions, dimensions)):
+            if index == dynamic_index:
+                fixed_prefix.append(None)
+                continue
+            position = _constant_dimension_selector(selector_value)
+            if position is None or position < min(left, right) or position > max(left, right):
+                return None
+            fixed_prefix.append(position)
+
+        suffix = dimensions[len(prefix_positions):]
         suffix_positions = [()]
         for left, right in suffix:
             step = 1 if right >= left else -1
@@ -3221,11 +3239,14 @@ def _fixed_array_dynamic_subarray_copy_assignment(sm, expr):
         root_name = _array_storage_name(current.symbol)
         rhs_cells = [f"{rhs_root}[{position}]" for position in rhs_positions]
         destination_cells = []
-        for outer in range(dimensions[0][0],
-                           dimensions[0][1] + (1 if dimensions[0][1] >= dimensions[0][0] else -1),
-                           1 if dimensions[0][1] >= dimensions[0][0] else -1):
+        dynamic_left, dynamic_right = dimensions[dynamic_index]
+        dynamic_step = 1 if dynamic_right >= dynamic_left else -1
+        for outer in range(dynamic_left, dynamic_right + dynamic_step, dynamic_step):
+            indexes = list(fixed_prefix)
+            indexes[dynamic_index] = outer
             destination_cells.extend(
-                f"{root_name}[{outer}]" + "".join(f"[{position}]" for position in suffix)
+                root_name + "".join(f"[{position}]" for position in indexes)
+                + "".join(f"[{position}]" for position in suffix)
                 for suffix in suffix_positions)
         # A same-root source may overlap one of the possible rows; reject it
         # rather than changing the source snapshot through blocking writes.
@@ -3233,13 +3254,15 @@ def _fixed_array_dynamic_subarray_copy_assignment(sm, expr):
             return None
 
         mask = (1 << index_width) - 1
-        left, right = dimensions[0]
-        step = 1 if right >= left else -1
         result = None
-        for outer in reversed(list(range(left, right + step, step))):
+        for outer in reversed(list(range(dynamic_left, dynamic_right + dynamic_step,
+                                        dynamic_step))):
+            indexes = list(fixed_prefix)
+            indexes[dynamic_index] = outer
             stmts = []
             for target_name, rhs_name in zip(
-                    [f"{root_name}[{outer}]" + "".join(f"[{position}]" for position in suffix)
+                    [root_name + "".join(f"[{position}]" for position in indexes)
+                     + "".join(f"[{position}]" for position in suffix)
                      for suffix in suffix_positions],
                     rhs_cells):
                 value = {"kind": "Ident", "span": node_span(sm, expr.right),

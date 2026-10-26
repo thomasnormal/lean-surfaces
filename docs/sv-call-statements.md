@@ -88,6 +88,11 @@ use the same pure converter and are erased after the receiver and step checks
 pass. Dynamic or effectful receivers, malformed methods, and value-position
 calls remain on their ordinary enum boundary.
 
+Discarded `toupper()`, `tolower()`, and literal-bound `substr()` calls on a
+proven ASCII string likewise erase their fresh string result after the existing
+source-history check. Dynamic, aliased, mutated, non-ASCII, symbolic, and
+value-position string transformations remain loud.
+
 Discarded fixed-array reductions (`sum`, `product`, `and`, `or`, and `xor`)
 reuse the balanced reduction lowering after its storage-shape, width, iterator,
 and purity checks. The existing empty-dynamic-array identity also permits

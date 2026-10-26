@@ -1,0 +1,66 @@
+"""Discarded pure string transformations retain their literal history gate."""
+from pathlib import Path
+import unittest
+
+import extract
+from test_bit_queries import lower, nodes
+from test_division import symbolic
+
+
+REPO = Path(__file__).resolve().parents[2]
+
+
+def fixture():
+    return lower((REPO / "Examples/system-verilog/string_transform_statements/"
+                  "string_transform_statements.sv").read_text())
+
+
+class StringTransformStatements(unittest.TestCase):
+    def test_case_and_substr_queries_are_discarded(self):
+        design = fixture()
+        unsupported = [node for node in nodes(design)
+                       if node.get("kind") == "Unsupported"]
+        self.assertEqual(unsupported, [])
+        self.assertEqual(
+            [node.get("string_case_statement") for node in nodes(design)
+             if node.get("string_case_statement")],
+            ["toupper", "tolower"],
+        )
+        self.assertEqual(
+            [node.get("string_substr_statement") for node in nodes(design)
+             if node.get("string_substr_statement")],
+            ["substr", "substr"],
+        )
+
+    def test_dynamic_and_effectful_string_forms_stay_loud(self):
+        source = (
+            'module top; string s; string other; initial begin '
+            's = other; s.toupper(); s.putc(0, 65); end endmodule'
+        )
+        design = lower(source)
+        walls = [node.get("sv_kind") for node in nodes(design)
+                 if node.get("kind") == "Unsupported"]
+        self.assertGreaterEqual(walls.count("ExpressionStatement:CallExpression"), 2)
+
+    def test_value_position_stays_loud(self):
+        source = (
+            'module top; string s = "abc"; string out; '
+            'initial begin out = s.toupper(); end endmodule'
+        )
+        design = lower(source)
+        self.assertTrue(any(node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)
+                            if node.get("kind") == "Unsupported"))
+
+    def test_symbolic_mode_stays_loud(self):
+        design = symbolic(
+            'module divider; string s = "abc"; '
+            'initial begin s.toupper(); s.substr(1, 2); end endmodule'
+        )
+        walls = [node.get("sv_kind") for node in nodes(design)
+                 if node.get("kind") == "Unsupported"]
+        self.assertGreaterEqual(walls.count("ExpressionStatement:CallExpression"), 2)
+
+
+if __name__ == "__main__":
+    unittest.main()

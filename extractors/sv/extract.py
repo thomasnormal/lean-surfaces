@@ -11618,6 +11618,45 @@ def _string_literal_getc_method(expression):
         return False
 
 
+def _string_literal_case_method(expression):
+    """Recognize a discarded case conversion on a proven ASCII string.
+
+    ``toupper`` and ``tolower`` return a fresh string and have no represented
+    state effect when their result is discarded.  Keep the receiver history
+    check identical to the other literal-string queries; non-ASCII, dynamic,
+    aliased, and mutated strings remain outside the flat self-check state.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName not in ("toupper", "tolower")
+                or len(expression.arguments) != 1
+                or type(expression.arguments[0]).__name__ != "NamedValueExpression"):
+            return False
+        return _string_literal_source_value(
+            expression, expression.subroutineName) is not None
+    except Exception:
+        return False
+
+
+def _string_literal_substr_method(expression):
+    """Recognize ``substr`` on a proven ASCII string and literal bounds."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "substr"
+                or len(expression.arguments) != 3
+                or type(expression.arguments[0]).__name__ != "NamedValueExpression"
+                or _literal_integral_value(expression.arguments[1]) is None
+                or _literal_integral_value(expression.arguments[2]) is None):
+            return False
+        return _string_literal_source_value(expression, "substr") is not None
+    except Exception:
+        return False
+
+
 def _string_literal_index_value(expression):
     """Return the byte selected from a source-pure ASCII string.
 
@@ -11912,6 +11951,8 @@ def _string_literal_source_value(expression, method, receiver=None,
                         and tail.startswith((".len", ".getc")))
                     or (method in ("compare", "icompare")
                         and tail.startswith((".compare", ".icompare")))
+                    or (method in ("toupper", "tolower", "substr")
+                        and tail.startswith((".toupper", ".tolower", ".substr")))
                     or re.match(r'=\s*"', tail)):
                 continue
             if (permit_argument is not None
@@ -15788,6 +15829,16 @@ def _convert_syscall(sm, s, e):
                     return {"kind": "Empty", "span": node_span(sm, s),
                             "string_query_statement": name}
                 break
+        if _SYM is None and _string_literal_case_method(e):
+            # Case conversion allocates a string value that is discarded here;
+            # source-pure ASCII history is the only represented fact needed.
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "string_case_statement": name}
+        if _SYM is None and _string_literal_substr_method(e):
+            # ``substr`` has no observable effect in statement position once
+            # the receiver and both inclusive bounds are source-pure literals.
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "string_substr_statement": name}
         if _floating_string_atoreal_call(e):
             # A proven ASCII literal has no represented real storage.  Its
             # opaque `atoreal` result is therefore inert when discarded; the

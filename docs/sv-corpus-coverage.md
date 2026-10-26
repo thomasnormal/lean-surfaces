@@ -161,6 +161,20 @@ and `ExpressionStatement:CallExpression` at **2,775**. Differential coverage
 grows **276/271/0/5 → 277/272/0/5** with no disagreements, and grammar
 coverage remains **217/92/125**.
 
+## Discarded literal-string transformations — 2026-10-27
+
+Discarded `toupper()`, `tolower()`, and literal-bound `substr()` calls now
+erase their fresh string result after the existing ASCII source-history check.
+Dynamic, aliased, mutated, non-ASCII, symbolic, and value-position forms remain
+loud. The `string_transform_statements` fixture supplies the differential row
+and Lean receipt; the pinned self-check oracle agrees with its `PASS` transcript.
+
+The committed **22,059-path** snapshot remains **5,240 clean / 16,752
+partial** (67 include skips), with `AssignmentExpression:target` at **2,853**
+and `ExpressionStatement:CallExpression` at **2,775**. Differential coverage
+grows **278/273/0/5 → 279/274/0/5** with no disagreements, and grammar
+coverage remains **217/92/125**.
+
 ## Discarded fixed-array reductions — 2026-10-26
 
 Discarded fixed-array reductions (`sum`, `product`, `and`, `or`, and `xor`)

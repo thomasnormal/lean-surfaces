@@ -2505,6 +2505,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "string_transform_statements",
+      "file": "Examples/system-verilog/string_transform_statements/string_transform_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -97,6 +97,14 @@ selectors, and aggregate or effectful sources remain loud. The refreshed
 corpus counts are unchanged because this narrow alias-safe shape has no sole
 witness in the current sv-tests-2 snapshot.
 
+## Unsized left streaming over one-bit leaves — 2026-10-26
+
+Left-streaming assignment now uses the IEEE default one-bit chunk when every
+direct target leaf is one bit. Wider unsized leaves, explicit dynamic forms,
+nested streams, and aggregate targets remain loud. The refreshed corpus counts
+are unchanged because this narrow one-bit shape has no sole witness in the
+current sv-tests-2 snapshot.
+
 ## Dynamic-array struct-field reductions — 2026-10-26
 
 Finite dynamic arrays of untagged unpacked structs now admit a pure reduction

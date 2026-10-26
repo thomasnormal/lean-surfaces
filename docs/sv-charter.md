@@ -6782,6 +6782,15 @@ dynamic-array operations remain loud. `dynamic_fixed_size_mismatch` supplies
 the `BEFORE` transcript and the extractor tests pin the mismatch and equal-size
 boundaries.
 
+## Unsized left streaming over one-bit leaves — 2026-10-26
+
+Left-streaming assignment now accepts the IEEE default one-bit chunk when
+every direct target leaf is one bit. The existing sampled-vector lowering is
+reused; wider unsized leaves, explicit dynamic forms, nested streams, and
+aggregate targets remain loud. The `unsized_left_stream` fixture supplies the
+differential row and Lean receipt, with extractor regressions for the default
+and wider-leaf boundaries.
+
 The 22,049-path census moves **4,841 → 4,842 clean** and **17,142 → 17,141
 partial** (66 include skips); `AssignmentExpression:target` falls **2,980 →
 2,979**. Differential coverage moves **141/137/0/4 → 142/138/0/4**; grammar

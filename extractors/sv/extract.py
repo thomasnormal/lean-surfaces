@@ -11672,13 +11672,14 @@ def _convert_streaming_source(sm, expression):
 
 
 def _streaming_left_target_assignment(sm, expr, symbolic=False):
-    """Lower an explicit-slice left stream over direct integral leaves.
+    """Lower a left stream over direct integral leaves.
 
     Left streaming reverses fixed-size chunks: the first target leaf receives
     the source's least-significant chunk, then the next chunk, and so on.  The
-    admitted shape requires an explicit positive slice size, exact source and
-    target widths, and one target leaf per chunk.  This keeps the lowering a
-    pure sampled vector operation while leaving unsized, partial, dynamic,
+    admitted shape requires exact source and target widths and one target leaf
+    per chunk. An omitted slice size is admitted only when every target leaf
+    is one bit, matching the IEEE default. This keeps the lowering a pure
+    sampled vector operation while leaving wider unsized, partial, dynamic,
     nested, and aggregate forms loud.
     """
     try:
@@ -11694,9 +11695,8 @@ def _streaming_left_target_assignment(sm, expr, symbolic=False):
         syntax = getattr(lhs, "syntax", None)
         if operator != "LeftShift" or syntax is None:
             return None
-        if getattr(syntax, "sliceSize", None) is None:
-            return None
-        slice_size = _streaming_slice_size(lhs)
+        unsized = getattr(syntax, "sliceSize", None) is None
+        slice_size = 1 if unsized else _streaming_slice_size(lhs)
         if slice_size is None:
             return None
         parts = []

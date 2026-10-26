@@ -2109,6 +2109,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "unsized_left_stream",
+      "file": "Examples/system-verilog/unsized_left_stream/unsized_left_stream.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

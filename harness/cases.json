@@ -699,7 +699,7 @@
   {"file": "Examples/python/star_lab/star_lab.py", "function": "star_int", "args": [[]], "expect": "match"},
   {"file": "Examples/python/star_lab/star_lab.py", "function": "star_none", "args": [[]], "expect": "match"},
   {"file": "Examples/python/star_lab/star_lab.py", "function": "star_call", "args": [[]], "expect": "unsupported"},
-  {"file": "Examples/python/star_lab/star_lab.py", "function": "star_set", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/star_lab/star_lab.py", "function": "star_set", "args": [[]], "expect": "match"},
   {"file": "Examples/python/star_lab/star_lab.py", "function": "star_dict", "args": [[]], "expect": "match"},
   {"file": "Examples/python/star_lab/star_lab.py", "function": "star_target", "args": [[]], "expect": "match"},
   {"file": "Examples/python/star_lab/star_lab.py", "function": "star_for", "args": [[]], "expect": "unsupported"},

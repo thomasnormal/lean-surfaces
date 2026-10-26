@@ -17,6 +17,27 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-158 — admit starred set displays
+
+Starred set displays now reuse the landed display lowering: the expanded
+elements are materialized through `<star-list>` and passed to the existing
+`set(...)` constructor. This preserves left-to-right element evaluation,
+hashability checks, and value deduplication without adding interpreter or
+proof arms. A set result still cannot cross the public value boundary, so the
+acceptance example observes `len({*a})`; direct set returns remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `star_lab::star_set` matches in native and proof interpreters; the two existing starred-call/for rows remain refused |
+| Full executable differential | 3,694 cases: 3,644 matched / 50 recorded refusals / 0 failed |
+| Full proof differential | 3,694 cases: 3,535 matched / 159 refusals / 0 failed |
+| Refusal census | 50 rows in 13 classes, 0 drifts; `star_lab::star_set` removed from `set.order` |
+| Extractor tests | 145 passed |
+| Lean build and generated checks | `lake build leanmodels-run`, docs check, coverage freshness, backlog index, and diff check pass; the repository-wide build still has the pre-existing VC2/Tests and unrelated example failures |
+
+DECIDED: admit starred set displays through `set(list(...))`; retain loud
+boundary behavior for returning a heap set and hash-order-dependent operations.
+
 ## 2026-10-26-pycomplete-157 — admit early nested calls
 
 Direct calls of a nested function name before its `def` now use the existing

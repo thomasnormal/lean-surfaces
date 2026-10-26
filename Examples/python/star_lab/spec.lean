@@ -3,11 +3,12 @@ import LeanModels
 /-!
 # star_lab — starred DISPLAYS, the extractor lowering (checks-only example)
 
-`[*a, 3]` and `(1, *a)` are LOWERED by the extractor
+`[*a, 3]`, `{*a, 3}` and `(1, *a)` are LOWERED by the extractor
 (docs/memory-model.md §starred displays):
 
 * `(e1, *a, e2)` ⟶ `(e1,) + tuple(a) + (e2,)`
 * `[e1, *a, e2]` ⟶ `list((e1,) + tuple(a) + (e2,))`
+* `{e1, *a}` ⟶ `set(list((e1,) + tuple(a)))`
 
 Zero new AST constructors, zero `evalExpr` arms, zero walkers, ZERO proof
 arms — `fuelMono`/`worldInv`/`ceExecStmt_succ` do not move. The obvious
@@ -23,8 +24,8 @@ right, so the operands run in source order (`star_script.py` pins it
 through stdout).
 
 Pinned loud, because these are SEPARATE constructs with separate prices:
-a starred call argument (`star_call`) and a set display (`star_set`) remain
-outside the tier. Assignment targets are now handled by the dedicated
+a starred call argument (`star_call`) remains outside the tier. Assignment
+targets are now handled by the dedicated
 `UnpackAssign` statement; a starred `for` target (`star_for`) remains loud.
 -/
 
@@ -76,10 +77,10 @@ different message. -/
 #py_check star_lab.star_none() raises
   (.typeError "'NoneType' object is not iterable")
 
-/-! ### the loud frontier: call and set positions, plus a starred `for` target -/
+/-! ### the loud frontier: call position and a starred `for` target -/
 
 #guard callFunction star_lab "star_call" #[] 4096 matches .unsupported _
-#guard callFunction star_lab "star_set" #[] 4096 matches .unsupported _
+#py_check star_lab.star_set() = (Val.int 2)
 -- the DICT receiver LANDED with §L53 rung 3b: `[*d]` is CPython's key
 -- iteration, insertion-ordered. This guard asserted the refusal, and it is
 -- the regression guard that flipped when the draining consumers gained

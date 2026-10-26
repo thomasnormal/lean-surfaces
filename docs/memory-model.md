@@ -4095,6 +4095,7 @@ arms for a statement that allocates its starred slice.
     (e1, *a, e2)  ⟶  (e1,) + tuple(a) + (e2,)
     [e1, *a, e2]  ⟶  list((e1,) + tuple(a) + (e2,))
     [*a]          ⟶  list(tuple(a))
+    {e1, *a, e2}  ⟶  set(list((e1,) + tuple(a) + (e2,)))
 
 `[*a, 3]` looks like `list(a) + [3]`. It is not. `list(x)` ALLOCATES a
 fresh heap object, so it returns a `.ref`, and `evalBinOp`'s `.ref` arm
@@ -4123,6 +4124,13 @@ allocates) and does NOT exclude `tuple` (it does not), so a lowered LIST
 display leaves the fragment exactly as a comprehension does, and a
 lowered TUPLE display stays inside it exactly as the plain `.tuple` node
 did. Both are pinned in `Examples/python/star_lab/spec.lean`.
+
+Set displays with starred elements use the same fresh-list expansion for
+their element sequence and pass that list to the existing `set(...)`
+constructor. The constructor retains its established hashability and
+value-deduplication checks. A set remains heap-backed and cannot cross the
+public value boundary, so observations such as `len({*a})` are the acceptance
+surface.
 
 ### Inherited refusals — the reuse dividend
 

@@ -657,7 +657,22 @@ def convert_expr(node):
         if _MODULE_SHADOWS_DISPLAY:
             return unsupported(node, "Set:shadowed")
         if any(isinstance(e, ast.Starred) for e in node.elts):
-            return unsupported(node, "Set:unpack")
+            # A starred set display has the same element evaluation and
+            # deduplication as ``set([*parts])``.  Reuse the existing
+            # starred-display lowering for the fresh list argument, then the
+            # ordinary set constructor for hashability and value equality.
+            return {
+                "kind": "Call",
+                "span": span(node),
+                "func": {
+                    "kind": "Name",
+                    "span": span(node),
+                    "id": "set",
+                },
+                "args": [lower_starred_display(node, outer="list")],
+                "keywords": [],
+                "call_unsupported": None,
+            }
         return {
             "kind": "Call",
             "span": span(node),
@@ -878,14 +893,17 @@ def _convert_comprehension(node, g, kind=None, elt=None):
     }
 
 
-def lower_starred_display(node):
+def lower_starred_display(node, outer=None):
     """Lower a starred DISPLAY (docs/memory-model.md §starred displays):
 
         (e1, *a, e2)  ->  (e1,) + tuple(a) + (e2,)
         [e1, *a, e2]  ->  list((e1,) + tuple(a) + (e2,))
         [*a]          ->  list(tuple(a))
+        {*a, e}        ->  set(list(tuple(a) + (e,)))
 
-    Zero new node kinds, so nothing downstream moves. The obvious lowering
+    Zero new node kinds, so nothing downstream moves. Set displays use the
+    same fresh-list expansion as list displays before the existing `set`
+    constructor deduplicates by the dict-key rules. The obvious lowering
     `list(a) + [3]` is WRONG: `list(...)` allocates a heap object, and
     concatenation of heap objects refuses loudly — so `list(...)` appears
     only on the OUTSIDE, where a fresh list is exactly what CPython
@@ -934,7 +952,7 @@ def lower_starred_display(node):
     for p in parts[1:]:
         out = {"kind": "BinOp", "span": span(node),
                "left": out, "op": "Add", "right": p}
-    if isinstance(node, ast.List):
+    if isinstance(node, ast.List) or outer == "list":
         out = {
             "kind": "Call",
             "span": span(node),

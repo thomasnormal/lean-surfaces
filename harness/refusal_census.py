@@ -1001,7 +1001,6 @@ WHITELIST_CLASS = {
     "clock_lab::armed": "exc.handler",
     "clock_lab::read_clock": "clock.underrun",
     "star_lab::star_call": "starred.position",
-    "star_lab::star_set": "set.order",
     "star_lab::star_target": "starred.position",
     "star_lab::star_for": "starred.position",
     "fstring_lab::format_spec": "fstring.format-spec",

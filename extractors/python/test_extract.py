@@ -1088,10 +1088,12 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(e["args"][0]["kind"], "List")
         self.assertEqual(len(e["args"][0]["elts"]), 3)
 
-    def test_set_display_unpack_stays_unsupported(self):
+    def test_set_display_unpack_reuses_starred_list_lowering(self):
         e = self._first_return_expr("def f(xs):\n    return {*xs}\n")
-        self.assertEqual(e["kind"], "Unsupported")
-        self.assertEqual(e["py_kind"], "Set:unpack")
+        self.assertEqual(e["kind"], "Call")
+        self.assertEqual(e["func"]["id"], "set")
+        self.assertEqual(e["args"][0]["kind"], "Call")
+        self.assertEqual(e["args"][0]["func"]["id"], "<star-list>")
 
     def test_set_comprehension_lowers_to_set_generator(self):
         e = self._first_return_expr(

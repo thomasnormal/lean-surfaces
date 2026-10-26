@@ -1,14 +1,15 @@
 """star_lab — starred DISPLAYS, the extractor lowering (checks-only).
 
-`[*a, 3]` and `(1, *a)` are lowered by the extractor into
+`[*a, 3]`, `{*a, 3}` and `(1, *a)` are lowered by the extractor into
 `list((e1,) + tuple(a) + (e2,))` and `(e1,) + tuple(a) + (e2,)`
 (docs/memory-model.md §starred displays): zero new AST kinds, zero
-interpreter arms, zero proof arms. `list(...)` appears only on the
-OUTSIDE — a fresh heap list is exactly what CPython builds there — and
+interpreter arms, zero proof arms. For a set display the lowered list is
+passed to the existing `set(...)` constructor. `list(...)` appears only on
+the OUTSIDE — a fresh heap list is exactly what CPython builds there — and
 never as a concatenation operand, where a heap object would refuse.
 
 The loud frontier is pinned by refusal probes: a starred CALL argument,
-a set display, a dict receiver, a starred assignment TARGET and a
+a dict receiver, a starred assignment TARGET and a
 starred `for` target. Those are separate constructs with separate
 prices; only the display position is landed.
 """
@@ -109,9 +110,10 @@ def star_call():
 
 
 def star_set():
-    # a set display is OUT: `{*a}` is a set, whose order is never guessed
+    # set display unpacking reuses the existing set constructor.  Observe it
+    # through len because a set itself cannot cross the public value boundary.
     a = [1, 2]
-    return {*a}
+    return len({*a})
 
 
 def star_dict():

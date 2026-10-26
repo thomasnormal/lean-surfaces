@@ -444,17 +444,31 @@ def scriptAnnotationTableStmt (m : Module) : List Stmt :=
   | Option.none => []
 
 /-- Names the module's BENIGN-whitelisted imports bind (`time`, `count`,
-`namedtuple`). They bind STATICALLY — never in the script frame's locals
-— so the module-scope `del` arm has nothing to remove and refuses
-LOUDLY: CPython's `import time; del time` succeeds silently, and a
-faithful `NameError` here would be a wrong answer
-(docs/backlog.md §`del` RECONCILED, measured row 3). -/
+`namedtuple`). They bind STATICALLY — never in the script frame's locals.
+An unobserved deletion is erased as a no-op; a later read remains loud
+because the static table cannot be tombstoned without a stale binding.
+(docs/backlog.md §`del` RECONCILED). -/
 def benignImportNames (m : Module) : List String :=
   m.topLevel.toList.filterMap fun s =>
     match s with
     | .unsupported "Import" text _ | .unsupported "ImportFrom" text _ =>
       (benignImportBinds text).map Prod.fst
     | _ => Option.none
+
+/-- A static definition/import binding can be deleted as a no-op when the
+name is never read after the deletion (including by a function that later
+executes). The live frame cannot tombstone position-independent tables, so
+this narrow observation check admits the measured `del f; print(…)` and
+`import time; del time; print(…)` shapes without inventing a stale binding. -/
+def scriptStaticDeleteNoop (m : Module) (s : Stmt) (name : String) : Bool :=
+  let endLine := (scriptStmtSpan s).endLineno
+  let laterRead := m.topLevel.toList.any fun t =>
+    (scriptStmtSpan t).endLineno > endLine && (Stmt.allNames t).contains name
+  let calledLater := (moduleGlobalReads m).contains name
+  let staticName := (findFunction m name).isSome || (findClass m name).isSome
+      || m.namedtuples.any (·.name == name)
+      || (benignImportNames m).contains name
+  staticName && !laterRead && !calledLater
 
 /-- THE SCRIPT VIEW: the module frames resolve names against while a
 PROGRAM runs. Its top level carries no program statement, so
@@ -780,7 +794,7 @@ mutual
       | .unsupported "ImportFrom" text sp =>
         if (benignImportBinds text).isSome then .ok st .next
         else execStmt m fuel st (.unsupported "ImportFrom" text sp)
-      | .delStmt names _ =>
+      | .delStmt names sp =>
         -- The MODULE-scope `del` arm (docs/backlog.md §`del` RECONCILED
         -- with the one pipeline; docs/memory-model.md §the del
         -- statement). By §the publish the frame's locals ARE the module
@@ -802,13 +816,15 @@ mutual
         (match delNames st.locals names.toList with
          | (env, Option.none) => .ok { st with locals := env } .next
          | (env, some n) =>
-           if dunderShaped n then
+           if names.toList == [n] && scriptStaticDeleteNoop m (.delStmt names sp) n then
+             .ok { st with locals := env } .next
+           else if dunderShaped n then
              .unsupported s!"'del {n}': deleting a module dunder is outside the tier (the model resolves dunder reads statically; CPython's removal uncovers the BUILTINS module's binding — docs/backlog.md §del RECONCILED)"
            else if (benignImportNames m).contains n then
              .unsupported s!"'del {n}': the name is bound by a whitelisted import, which the model binds statically — outside the tier (docs/backlog.md §del RECONCILED)"
            else if (findFunction m n).isSome || (findClass m n).isSome
                || m.namedtuples.any (·.name == n) then
-             .unsupported s!"'del {n}': a module 'def'/'class'/namedtuple name is a static table entry; only a TRAILING del of it is admitted (rewritten at ingestion — docs/backlog.md §del RECONCILED)"
+             .unsupported s!"'del {n}': a module 'def'/'class'/namedtuple name is a static table entry; only a TRAILING or unobserved del is admitted (docs/backlog.md §del RECONCILED)"
            else .exn { st with locals := env } (.nameError n))
       | s => execStmt m fuel st s
   termination_by structural fuel

@@ -379,7 +379,7 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
   | .unsupported "ImportFrom" text sp =>
       if (benignImportBinds text).isSome then pure .next
       else execOpen K m (.unsupported "ImportFrom" text sp)
-  | .delStmt names _ => do
+  | .delStmt names sp => do
       -- THE MODULE-SCOPE `del`. The frame's locals ARE the module globals and
       -- the one pipeline keeps them COMPLETE, so a locals HIT removes exactly
       -- CPython's module global. A MISS is decided in CPython's own order of
@@ -390,13 +390,16 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
       match delNames st.locals names.toList with
       | (env, Option.none) => do envPut env; pure .next
       | (env, some n) =>
-          if dunderShaped n then
+          if names.toList == [n] && scriptStaticDeleteNoop m (.delStmt names sp) n then
+            envPut env
+            pure .next
+          else if dunderShaped n then
             refuse s!"'del {n}': deleting a module dunder is outside the tier (the model resolves dunder reads statically; CPython's removal uncovers the BUILTINS module's binding — docs/backlog.md §del RECONCILED)"
           else if (benignImportNames m).contains n then
             refuse s!"'del {n}': the name is bound by a whitelisted import, which the model binds statically — outside the tier (docs/backlog.md §del RECONCILED)"
           else if (findFunction m n).isSome || (findClass m n).isSome
               || m.namedtuples.any (·.name == n) then
-            refuse s!"'del {n}': a module 'def'/'class'/namedtuple name is a static table entry; only a TRAILING del of it is admitted (rewritten at ingestion — docs/backlog.md §del RECONCILED)"
+            refuse s!"'del {n}': a module 'def'/'class'/namedtuple name is a static table entry; only a TRAILING or unobserved del is admitted (docs/backlog.md §del RECONCILED)"
           else do envPut env; raisePy (.nameError n)
   | s => execOpen K m s
 

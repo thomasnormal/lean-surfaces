@@ -17,6 +17,27 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-143 — erase unobserved static-name deletions
+
+The script surface now handles the two safe module-level deletion shapes that
+were previously loud: `del f` after a top-level `def f` when no later
+top-level or function-global read can observe the name, and `import time; del
+time` when the imported name is likewise unobserved. The executor erases the
+static table entry as a no-op, preserving CPython's successful exit and output;
+observed definition/import deletions, dunder deletion, and partial multi-target
+deletes remain loud or faithful as before.
+
+| Measurement | Result |
+|---|---|
+| Focused script differential | `del_def_mid_script.py` and `del_import_script.py` MATCH; `del_dunder_script.py` remains loud |
+| Script census | 7 loud rows in 6 classes, 0 drift after removing two `del.definition-name` rows |
+| Proof/build | `lake build LeanModels.Python.Script LeanModels.Python.Monadic.Script` passed |
+| Scope | Both pure and monadic script executors share the static-read observation guard |
+
+DECIDED: erase only static definition/import deletions with no later observable
+read; retain loud behavior for observed static names, dunders, and unsupported
+compound or multi-target deletion cases.
+
 ## 2026-10-26-pycomplete-142 — admit ordered local exception shadows
 
 `exc_lab.raise_shadowed` assigns `Stop = n` and immediately raises the local.

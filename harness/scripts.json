@@ -247,8 +247,8 @@
   },
   {
     "file": "harness/scripts/del_def_mid_script.py",
-    "expect": "unsupported",
-    "note": "CPython prints 1; a NON-trailing del of a def name is a static table entry the runtime cannot remove (docs/backlog.md del RECONCILED)"
+    "expect": "match",
+    "note": "The static definition entry is safely erased because no later top-level or function-global read observes it."
   },
   {
     "file": "harness/scripts/del_dunder_script.py",
@@ -257,8 +257,8 @@
   },
   {
     "file": "harness/scripts/del_import_script.py",
-    "expect": "unsupported",
-    "note": "CPython exits 0; the benign import binds statically (never in locals), so the del has nothing to act on -- LOUD"
+    "expect": "match",
+    "note": "The benign import binding is safely erased because no later read observes it."
   },
   {
     "file": "harness/scripts/fmt_script.py",

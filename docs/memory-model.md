@@ -4783,15 +4783,15 @@ while preserving the left-to-right partial effect.
 **Module scope (the reconciled arm, script surface only).** By §the
 publish the frame's locals ARE the module globals and the one pipeline
 keeps them complete, so in `execScriptOne`: a locals HIT removes and
-publishes; a MISS is decided in measured order — dunder targets loud
-(CPython's `del __name__; print(__name__)` prints `builtins`: the
-removal uncovers the builtins module's own binding), benign-import
-names loud (`benignImportNames` — they bind statically, `import time;
-del time` succeeds silently in CPython and a NameError would be
-WRONG), definition names loud (static table entries), and anything
-else the faithful `.exn (.nameError n)` with the partial effect
-retained. Deletion never consults builtins — CPython's `del len` is
-the same `NameError` (measured), so no `isPyBuiltinName` gate.
+publishes; a MISS is decided in measured order — dunder targets remain loud
+(CPython's `del __name__; print(__name__)` prints `builtins`: the removal
+uncovers the builtins module's own binding). A benign-import or definition
+name is erased as a no-op when no later top-level or function-global read can
+observe it; an observed static deletion remains loud because the tables cannot
+be tombstoned without a stale value. Anything else yields the faithful
+`.exn (.nameError n)` with the partial effect retained. Deletion never consults
+builtins — CPython's `del len` is the same `NameError` (measured), so no
+`isPyBuiltinName` gate.
 
 **The trailing rewrite (ingestion, the aliasing precedent).** In the
 maximal all-`Delete`/`Pass` SUFFIX of the top level, a del target that

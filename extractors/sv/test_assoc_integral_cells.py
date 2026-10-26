@@ -16,7 +16,34 @@ def extract_source(source):
     return extract.convert_design(tree.sourceManager, compilation)
 
 
+def nodes(value):
+    if isinstance(value, dict):
+        yield value
+        for child in value.values():
+            yield from nodes(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from nodes(child)
+
+
 class AssocIntegralCells(unittest.TestCase):
+    def test_literal_bound_key_is_admitted(self):
+        design = extract_source(
+            'module top; initial begin int score[int]; '
+            'int key = 7; score[key] = 15; '
+            'if (score[key] == 15) $display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_rebound_key_stays_loud(self):
+        design = extract_source(
+            'module top; initial begin int score[int]; '
+            'int key = 7; key = 8; score[key] = 15; '
+            'end endmodule')
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
+
     def test_literal_keys_flatten_static_cells_and_reads(self):
         design = extract_source(
             'module top; initial begin logic [7:0] score[int]; '

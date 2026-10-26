@@ -1603,7 +1603,51 @@ def _array_storage_name(symbol):
     return _storage_name(symbol)
 
 
-def _assoc_string_key(expression):
+def _assoc_key_binding(expression, symbol, kind):
+    """Resolve a selector through one immutable literal local binding.
+
+    The finite associative-cell lowering can represent a named selector when
+    its declaration initializer is a literal and the containing scope never
+    assigns that selector again.  A later assignment would make the cell name
+    depend on runtime state, so it deliberately remains outside this path.
+    """
+    try:
+        if type(expression).__name__ != "NamedValueExpression":
+            return None
+        bound = getattr(expression, "symbol", None)
+        if bound is None or bound is symbol:
+            return None
+        initializer = getattr(bound, "initializer", None)
+        if initializer is None:
+            return None
+        if kind == "string":
+            value = _assoc_string_key(initializer)
+        else:
+            value = _assoc_integral_key(initializer)
+        if value is None:
+            return None
+        instance = getattr(getattr(bound, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return None
+        rebound = False
+
+        def inspect(node):
+            nonlocal rebound
+            if type(node).__name__ != "AssignmentExpression":
+                return
+            left = getattr(node, "left", None)
+            rebound = rebound or (
+                type(left).__name__ == "NamedValueExpression"
+                and getattr(left, "symbol", None) is bound)
+
+        instance.visit(inspect)
+        return None if rebound else value
+    except Exception:
+        return None
+
+
+def _assoc_string_key(expression, symbol=None):
     """Return a small literal string associative-array key, else ``None``."""
     node = expression
     while type(node).__name__ == "ConversionExpression":
@@ -1612,7 +1656,7 @@ def _assoc_string_key(expression):
             return None
     if (type(node).__name__ != "StringLiteral" or getattr(node, "bad", False)
             or any(ord(char) > 127 for char in getattr(node, "value", ""))):
-        return None
+        return _assoc_key_binding(expression, symbol, "string") if symbol is not None else None
     return node.value
 
 
@@ -1652,7 +1696,7 @@ def _finite_string_assoc_cells(sm, symbol):
                 value = getattr(node, "value", None)
                 if getattr(value, "symbol", None) is symbol:
                     selected_count += 1
-                    key = _assoc_string_key(getattr(node, "selector", None))
+                    key = _assoc_string_key(getattr(node, "selector", None), symbol)
                     if key is None:
                         invalid = True
                     else:
@@ -1707,17 +1751,19 @@ def _finite_string_assoc_cell(sm, expression):
         cells = _finite_string_assoc_cells(sm, symbol)
     if cells is None:
         return None
-    key = _assoc_string_key(getattr(expression, "selector", None))
+    key = _assoc_string_key(getattr(expression, "selector", None), symbol)
     if key not in cells:
         return None
     return cells[key]
 
 
-def _assoc_integral_key(expression):
+def _assoc_integral_key(expression, symbol=None):
     """Return a known integral associative-array key, else ``None``."""
     try:
         value = _literal_integral_value(expression)
-        return value
+        if value is not None:
+            return value
+        return _assoc_key_binding(expression, symbol, "integral") if symbol is not None else None
     except Exception:
         return None
 
@@ -1758,7 +1804,7 @@ def _finite_integral_assoc_cells(sm, symbol):
                 value = getattr(node, "value", None)
                 if getattr(value, "symbol", None) is symbol:
                     selected_count += 1
-                    key = _assoc_integral_key(getattr(node, "selector", None))
+                    key = _assoc_integral_key(getattr(node, "selector", None), symbol)
                     if key is None:
                         invalid = True
                     else:
@@ -1811,7 +1857,7 @@ def _finite_integral_assoc_cell(sm, expression):
         cells = _finite_integral_assoc_cells(sm, symbol)
     if cells is None:
         return None
-    key = _assoc_integral_key(getattr(expression, "selector", None))
+    key = _assoc_integral_key(getattr(expression, "selector", None), symbol)
     if key not in cells:
         return None
     return cells[key]

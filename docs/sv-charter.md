@@ -7827,3 +7827,18 @@ The refreshed **22,055-path** census moves **5,132 → 5,166 clean** and
 `CallExpression` remains **2,801** and `ExpressionStatement:CallExpression`
 remains **2,778**. Differential coverage grows **217/212/0/5 → 218/213/0/5**
 with no disagreements; grammar coverage remains **217/90/127**.
+
+## Literal-bound associative-array keys — 2026-10-26
+
+Finite associative-array lowering now resolves a selector through a named
+string or integral variable when its declaration initializer is a literal and
+the variable has no later assignment. The existing flat scalar cell is reused
+for the proven key, including compound writes; dynamic or rebound selectors,
+whole-array uses, and aggregate elements remain loud. The `assoc_bound_key`
+fixture supplies the differential row and Lean receipt, with extractor
+regressions for both key kinds and the rebind boundary.
+
+The refreshed **22,055-path** census remains **5,166 clean** and **16,822
+partial** (67 include skips), with `AssignmentExpression:target` remaining
+**2,875**. Differential coverage grows **218/213/0/5 → 219/214/0/5** with no
+disagreements; grammar coverage remains **217/90/127**.

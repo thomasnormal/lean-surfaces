@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 218 | 213 | 0 | 5 | sv-tests-2 declarations |
+| 219 | 214 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -232,6 +232,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `packed_nested_scalar_select` | `Examples/system-verilog/packed_nested_scalar_select/packed_nested_scalar_select.sv` | match | **MATCH** | `ok` | MATCH |
 | `sdf_static_scope` | `Examples/system-verilog/sdf_static_scope/sdf_static_scope.sv` | match | **MATCH** | `ok` | MATCH |
 | `wired_net_resolution` | `Examples/system-verilog/wired_net_resolution/wired_net_resolution.sv` | match | **MATCH** | `ok` | MATCH |
+| `assoc_bound_key` | `Examples/system-verilog/assoc_bound_key/assoc_bound_key.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -422,7 +423,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.StreamExpressionWithRange` | `Examples/system-verilog/streaming_dynamic_with_range/streaming_dynamic_with_range.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.StreamingConcatenationExpression` | `Examples/system-verilog/sem2/fixed_array_stream_continuous/fixed_array_stream_continuous.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.StringLiteralExpression` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
-| `SyntaxKind.StringType` | `Examples/system-verilog/assoc_empty_endpoint/assoc_empty_endpoint.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.StringType` | `Examples/system-verilog/assoc_bound_key/assoc_bound_key.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.StructType` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.StructUnionMember` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.StructuredAssignmentPattern` | `Examples/system-verilog/assignment_patterns/arrays.sv` | **MATCH** | `ok`  |

@@ -1964,6 +1964,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "assoc_bound_key",
+      "file": "Examples/system-verilog/assoc_bound_key/assoc_bound_key.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

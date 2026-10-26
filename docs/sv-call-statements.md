@@ -69,6 +69,10 @@ unchanged ASCII literal strings are also inert after their existing source
 history converters validate the receiver and arguments. Non-ASCII, dynamic,
 mutated, aliased, and unsupported string operations remain loud.
 
+A discarded `atoreal()` conversion from a proven ASCII literal is likewise
+inert because the tier has no represented real storage. Dynamic strings,
+nonliteral writes, and value-position real conversions remain loud.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument

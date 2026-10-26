@@ -15768,6 +15768,13 @@ def _convert_syscall(sm, s, e):
                     return {"kind": "Empty", "span": node_span(sm, s),
                             "string_query_statement": name}
                 break
+        if _floating_string_atoreal_call(e):
+            # A proven ASCII literal has no represented real storage.  Its
+            # opaque `atoreal` result is therefore inert when discarded; the
+            # existing history helper keeps dynamic and effectful strings
+            # outside this boundary.
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "floating_string_atoreal_statement": name}
     if is_sys and _associative_empty_query(e):
         # An untouched 2-state associative array has an exact zero element
         # count.  Reuse the value converter's source-order and type checks

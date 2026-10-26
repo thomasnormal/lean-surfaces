@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 273 | 268 | 0 | 5 | sv-tests-2 declarations |
+| 274 | 269 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -80,6 +80,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `fdisplay_stdout` | `Examples/system-verilog/fdisplay_stdout/fdisplay_stdout.sv` | match | **MATCH** | `ok` | MATCH |
 | `fdisplay_mcd_variable` | `Examples/system-verilog/fdisplay_mcd_variable/fdisplay_mcd_variable.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_atoreal_real_write` | `Examples/system-verilog/string_atoreal_real_write/string_atoreal_real_write.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_atoreal_statement` | `Examples/system-verilog/string_atoreal_statement/string_atoreal_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `severity_dynamic` | `Examples/system-verilog/severity_dynamic/severity_dynamic.sv` | match | **MATCH** | `ok` | MATCH |
 | `severity_opaque_args` | `Examples/system-verilog/severity_opaque_args/severity_opaque_args.sv` | match | **MATCH** | `ok` | MATCH |
 | `exit_declaration` | `Examples/system-verilog/exit_decl/exit_decl.sv` | match | **MATCH** | `ok` | MATCH |

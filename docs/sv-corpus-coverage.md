@@ -103,6 +103,20 @@ and `ExpressionStatement:CallExpression` at **2,775**. Differential coverage
 grows **272/267/0/5 → 273/268/0/5** with no disagreements, and grammar
 coverage remains **217/92/125**.
 
+## Discarded literal-string `atoreal()` conversions — 2026-10-26
+
+A discarded `atoreal()` call on an unchanged ASCII literal string now erases
+its opaque real result through the existing source-history converter. Dynamic
+strings, nonliteral writes, and value-position real conversions remain loud.
+The `string_atoreal_statement` fixture supplies the differential row and Lean
+receipt; the pinned self-check oracle agrees with its `PASS` transcript.
+
+The committed **22,059-path** snapshot remains **5,240 clean / 16,752
+partial** (67 include skips), with `AssignmentExpression:target` at **2,853**
+and `ExpressionStatement:CallExpression` at **2,775**. Differential coverage
+grows **273/268/0/5 → 274/269/0/5** with no disagreements, and grammar
+coverage remains **217/92/125**.
+
 ## Discarded time-scale metadata queries — 2026-10-26
 
 Valid `$timeunit` and `$timeprecision` calls in statement position now erase

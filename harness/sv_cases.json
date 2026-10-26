@@ -598,6 +598,15 @@
       "expect": "match"
     },
     {
+      "name": "string_atoreal_statement",
+      "file": "Examples/system-verilog/string_atoreal_statement/string_atoreal_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "severity_dynamic",
       "file": "Examples/system-verilog/severity_dynamic/severity_dynamic.sv",
       "module": "top",

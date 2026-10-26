@@ -16,6 +16,7 @@
 - Attribute-first chained assignment now names the RHS once in an unspellable temporary before left-to-right stores; other non-name-first chains remain loud.
 - Starred display shadow checks now follow lexical scope: a local `list`/`tuple` binding still refuses that function, while an unrelated sibling function remains live.
 - Synchronous context managers now admit the exact `__exit__(self, exc_type, exc, tb): return exc_type is not None` suppression test, passing a fixed exception marker on exceptional body paths; arbitrary exception-triple inspection remains loud.
+- Context managers may define `__repr__` without losing the supported protocol; other extra dunders remain loud.
 - Unknown exception constructor names now raise CPython's exact `NameError` before constructor arguments are evaluated; known but unmodelled builtins and shadowed names remain loud.
 - Container `repr` and `ascii` rendering now use a fixed 512-level depth budget; deeper structures remain loud independently of caller fuel.
 - Python `global` declarations now support direct scalar reads, assignments, and

@@ -87,6 +87,10 @@ def hasContextExtraDunderM (c : ClassDefn) : Bool :=
   c.methods.toList.any fun n =>
     dunderShaped n && n != "__init__" && n != "__enter__" && n != "__exit__"
 
+def hasContextUnsupportedDunderM (c : ClassDefn) : Bool :=
+  c.methods.toList.any fun n =>
+    dunderShaped n && n != "__init__" && n != "__enter__" && n != "__exit__" && n != "__repr__"
+
 def findContextClassM (m : Module) (name : String) : Option (Nat × ClassDefn) :=
   match findClass m name with
   | some (ci, c) =>
@@ -196,7 +200,7 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
             -- `__init__` run.
             if !c.ok then
               .preRefuse s!"class '{fname}' uses unsupported features besides its namedtuple base — instantiation is outside the tier"
-            else if (if hasContextProtocolM c then hasContextExtraDunderM c
+            else if (if hasContextProtocolM c then hasContextUnsupportedDunderM c
                      else classHasExtraDunder m ci) then
               .preRefuse s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
             else if (findFunction m (fname ++ ".__init__")).isSome then
@@ -205,7 +209,7 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
           | Option.none =>
             if !c.ok then
               .preRefuse s!"class '{fname}' uses unsupported features (bases/metaclass/decorators/class-level statements) — instantiation is outside the H3 tier"
-            else if (if hasContextProtocolM c then hasContextExtraDunderM c
+            else if (if hasContextProtocolM c then hasContextUnsupportedDunderM c
                      else classHasExtraDunder m ci) then
               .preRefuse s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
             else .instantiate ci fname (classMethodQname m ci "__init__").isSome

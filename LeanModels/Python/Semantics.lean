@@ -5696,11 +5696,18 @@ def hasContextExtraDunder (c : ClassDefn) : Bool :=
   c.methods.toList.any fun n =>
     dunderShaped n && n != "__init__" && n != "__enter__" && n != "__exit__"
 
+/-- `__repr__` is harmless for a context manager whose instance never enters
+the rendering surface: instance representation still refuses loudly. Other
+extra dunders can change operations decided by the default-protocol tier. -/
+def hasContextUnsupportedDunder (c : ClassDefn) : Bool :=
+  c.methods.toList.any fun n =>
+    dunderShaped n && n != "__init__" && n != "__enter__" && n != "__exit__" && n != "__repr__"
+
 def findContextClass (m : Module) (name : String) : Option (Nat × ClassDefn) :=
   match findClass m name with
   | some (ci, c) =>
       if c.ok && !c.isExc && c.ntBase.isNone && hasContextProtocol c
-          && !hasContextExtraDunder c then
+          && !hasContextUnsupportedDunder c then
         some (ci, c)
       else Option.none
   | Option.none => Option.none
@@ -8072,7 +8079,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                               && c.methods.toList.contains "__exit__"
                            then c.methods.toList.any fun n =>
                              dunderShaped n && n != "__init__"
-                               && n != "__enter__" && n != "__exit__"
+                               && n != "__enter__" && n != "__exit__" && n != "__repr__"
                            else classHasExtraDunder m ci) then
                     .unsupported s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
                   else if (findFunction m (fname ++ ".__init__")).isSome then
@@ -8090,7 +8097,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                               && c.methods.toList.contains "__exit__"
                            then c.methods.toList.any fun n =>
                              dunderShaped n && n != "__init__"
-                               && n != "__enter__" && n != "__exit__"
+                               && n != "__enter__" && n != "__exit__" && n != "__repr__"
                            else classHasExtraDunder m ci) then
                     .unsupported s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
                   else

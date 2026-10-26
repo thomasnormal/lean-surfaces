@@ -478,7 +478,10 @@ cycle DETECTION, never by running out of fuel).
   `("exception", None, None)` on an exceptional body path and the normal
   `(None, None, None)` triple otherwise. Arbitrary exception-triple
   inspection remains loud. Full exception triples are still a future
-  representation extension. A
+  representation extension. A context manager may also define `__repr__`;
+  instance rendering itself remains loud, so this method cannot affect an
+  admitted operation. Other extra dunders remain outside the default-protocol
+  slice. A
   supported explicit zero-argument `__init__` runs through the ordinary
   class-call path. `async with` is likewise still unfinished scope.
 * At module scope the script executor owns a matching control shell: the

@@ -27,5 +27,5 @@ load_program with_lab from "Examples/python/with_lab/with_lab.json"
 #py_check with_lab.suppressed_exception() = 7
 #py_check with_lab.computed_suppressed_exception() = 8
 #py_check with_lab.argument_sensitive_suppression() = 10
+#py_check with_lab.extra_dunder() = 0
 
-#guard callFunction with_lab "extra_dunder" #[] 4096 matches .unsupported _

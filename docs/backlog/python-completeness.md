@@ -35,6 +35,22 @@ DECIDED: admit only this structural test with the fixed marker; retain loud
 failure for arbitrary exception payload inspection until frame state carries a
 full exception triple.
 
+## 2026-10-26-pycomplete-151 — allow inert `__repr__` on context managers
+
+The context-manager admission now permits a class to define `__repr__` in
+addition to `__enter__` and `__exit__`. Instances still refuse at the rendering
+boundary, so the method cannot affect an operation admitted by the tier. Other
+extra dunders remain refused under the default-protocol guard.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `with_lab.extra_dunder()` matches with value `0` |
+| Refusal census | `with_lab::extra_dunder` removed from `with.extra-dunder` |
+| Lean build | `lake build leanmodels-run` passed |
+
+DECIDED: permit only inert `__repr__` on an admitted context manager; retain
+loud failure for dunders that can alter modeled protocol operations.
+
 ## 2026-10-26-pycomplete-149 — scope starred-display shadow checks lexically
 
 Starred-display lowering now checks `list` and `tuple` bindings in the lexical

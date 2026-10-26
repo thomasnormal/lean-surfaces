@@ -939,7 +939,6 @@ WHITELIST_CLASS = {
     "cls_lab::class_as_value": "firstclass.callable",
     "with_lab::multiple_items": "with.multiple-items",
     "with_lab::explicit_init": "with.explicit-constructor",
-    "with_lab::extra_dunder": "with.extra-dunder",
     "str_lab::cast_int": "builtin.int-of-str",
     "str_lab::swap": "str.non-ascii",
     "str_lab::isup": "str.non-ascii",

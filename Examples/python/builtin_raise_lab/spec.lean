@@ -119,7 +119,8 @@ load_program builtin_raise_namedtuple from "Examples/python/builtin_raise_lab/bu
 
 #py_check builtin_raise_lab.unsupported_class() raises (.builtinException "OSError")
 
-#guard callFunction builtin_raise_lab "parameter_shadow" #[.int 1] 4096 matches .unsupported _
+#py_check builtin_raise_lab.parameter_shadow(1) raises
+  (.typeError "exceptions must derive from BaseException")
 
 theorem catch_value_error_total (value : PyInt) :
     builtin_raise_lab.catch_ValueError(value) ==> value := by proofs

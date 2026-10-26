@@ -1333,7 +1333,12 @@ def _shadowed_raises(fn):
 
     shadowed = set()
     for name in names & bindings:
-        if name in nonparam or name in BUILTIN_EXCEPTION_NAMES:
+        # A parameter-only shadow is a dynamic value, just like ``raise n``:
+        # the runtime can report TypeError for an immediate scalar and keep
+        # heap-backed values loud.  Non-parameter bindings still create the
+        # static-local/name-resolution window that this census cannot carry.
+        if name in nonparam or (name in BUILTIN_EXCEPTION_NAMES
+                                and name not in params):
             shadowed.add(name)
     return sorted(shadowed)
 

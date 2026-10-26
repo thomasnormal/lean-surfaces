@@ -540,8 +540,6 @@ class ExtractorTests(unittest.TestCase):
 
     def test_raise_local_binding_refuses_without_order_exemptions(self):
         for source in (
-            "def f(ValueError):\n    raise ValueError\n",
-            "def f(ValueError):\n    raise ValueError()\n",
             "def f():\n    raise ValueError\n    ValueError = 1\n",
             "def f():\n    raise ValueError()\n    ValueError = 1\n",
             "def f():\n    if False:\n        ValueError = 1\n    raise ValueError\n",
@@ -556,6 +554,13 @@ class ExtractorTests(unittest.TestCase):
         self.assertIsNone(fn["locals_unsupported"])
         self.assertEqual(fn["body"][0]["exc"]["kind"], "Name")
         self.assertEqual(fn["body"][0]["exc"]["id"], "n")
+
+    def test_raise_builtin_exception_parameter_is_dynamic(self):
+        # A parameter shadows the builtin class, so CPython raises the
+        # parameter's value; the runtime handles scalar TypeError and keeps
+        # heap-backed values loud.
+        fn = self._first_fn("def f(ValueError):\n    raise ValueError\n")
+        self.assertIsNone(fn["locals_unsupported"])
 
     def test_raise_parameter_rebinding_stays_loud(self):
         for source in (

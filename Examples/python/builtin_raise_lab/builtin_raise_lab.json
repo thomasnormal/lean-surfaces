@@ -3156,7 +3156,7 @@
           }
         ],
         "args_unsupported": null,
-        "locals_unsupported": "raises locally-bound name(s) (static-locals rule): ValueError",
+        "locals_unsupported": null,
         "body": [
           {
             "kind": "Raise",

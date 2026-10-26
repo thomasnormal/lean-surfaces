@@ -17,6 +17,30 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-141 — admit parameter-only exception-name shadows
+
+`builtin_raise_lab.parameter_shadow` defines a parameter named
+`ValueError` and raises it. CPython resolves the parameter local, so the
+scalar input `1` raises `TypeError: exceptions must derive from
+BaseException`; it is the same dynamic immediate-value path already used by
+`raise n`. Ingestion now admits parameter-only shadows, while late or
+additional local bindings keep their static-local refusal and heap-backed
+values remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `builtin_raise_lab.parameter_shadow(1)` MATCH in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,628 matched / 66 refused / 0 failed |
+| Full proof differential | 3,694 cases: 3,519 matched / 175 refused / 0 failed |
+| Refusal census | 66 rows, 0 drift; `builtin_raise_lab::parameter_shadow` removed from `exc.raise` |
+| Extractor tests | 140 passed, including parameter-only and rebinding controls |
+| Coverage page | Regenerated with the updated 3,628/3,519 measurements |
+
+DECIDED: admit only parameter-only exception-name shadows through the dynamic
+scalar raise path; retain loud behavior for late or rebound locals,
+heap-backed values, exception instances, chaining, and other unsupported
+raise forms.
+
 ## 2026-10-26-pycomplete-140 — admit unknown exception constructor names
 
 `rsa_inverse.inverse(4, 6)` reaches `raise NotRelativePrimeError(x, n,

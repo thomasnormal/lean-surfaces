@@ -3028,6 +3028,37 @@ def callableLocalConditionalShadowInitializationStatementFrameWitness : Bool :=
 
 #guard callableLocalConditionalShadowInitializationStatementFrameWitness
 
+private def localConditionalShadowComputedInitializationStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .binary ">"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 0, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let localInitializer : Expression :=
+    .binary .add (.read (handle "0x11")) (.literal (signed 2))
+  let function := {base with body := .block (.sequence
+    (automaticLiteral "0x11" 3)
+    (.sequence
+      (.conditional condition
+        (.block (.automatic {
+          statement := .declare (handle "0x13") intType intType localInitializer
+          declarations := [handle "0x13"]}))
+        .skip)
+      (.return_ {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType}))) }
+  match evaluateCallableObject 128 .lp64 function [signed 1] with
+  | .ok (.ok value) => value == signed 3
+  | _ => false
+
+def callableLocalConditionalShadowComputedInitializationStatementFrameWitness : Bool :=
+  localConditionalShadowComputedInitializationStatementFrame
+
+#guard callableLocalConditionalShadowComputedInitializationStatementFrameWitness
+
 private def localConditionalComputedInitializationStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let condition : TypedCallableExpression := {

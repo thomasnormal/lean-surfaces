@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.12.14"
   },
   "source_file": "Examples/python/builtin_raise_lab/builtin_raise_lab.py",
   "source_sha256": "3b73a2f3a82c9ba39e0a8cd0d21dd6998abb0c050947ba66a8c262c00abe6925",
@@ -3190,7 +3190,7 @@
         "name": "late_shadow",
         "args": [],
         "args_unsupported": null,
-        "locals_unsupported": "raises locally-bound name(s) (static-locals rule): ValueError",
+        "locals_unsupported": null,
         "body": [
           {
             "kind": "Raise",

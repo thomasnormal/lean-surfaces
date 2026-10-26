@@ -1388,8 +1388,10 @@ parameter is the measured scalar exception slice: an immediate runtime value
 raises CPython's `TypeError("exceptions must derive from BaseException")`,
 while a heap reference remains loud. A parameter-only shadow, or one direct
 assignment that precedes every raise of the name, follows the same dynamic
-scalar path. Late or additional local bindings remain on the static-locals
-refusal path. In a constructor form
+scalar path. The narrow straight-line case with one direct assignment after
+every raise now exposes CPython's `UnboundLocalError` through the existing
+static-local marker; branch-local, repeated, and other additional bindings
+remain on the static-locals refusal path. In a constructor form
 `raise Missing(args…)`, callee lookup happens before argument evaluation: an
 unbound, non-builtin name therefore raises the exact `NameError` with its name,
 while known but unmodelled builtins and shadowed names remain loud.
@@ -5643,8 +5645,9 @@ user exception class resolves first and keeps its class identity. Builtin raises
 use `PyErr.builtinException name`, preserving both the class and the empty
 message without inventing a first-class exception value. The existing explicit
 hierarchy table handles these errors; `Exception` excludes a raised
-`BaseException`. The extractor refuses a bare raise name bound anywhere in its
-function scope, including a later assignment, to close the unbound-local window.
+`BaseException`. The extractor admits one direct assignment after every bare
+raise of that name, which reaches the faithful `UnboundLocalError` static-local
+path; branch-local and repeated assignments remain loud.
 Recognized namedtuple classes also take precedence over builtin names; raising
 one produces CPython's `TypeError("exceptions must derive from BaseException")`.
 A namedtuple used as a handler class raises the separate catching-class

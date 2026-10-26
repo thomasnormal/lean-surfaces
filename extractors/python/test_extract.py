@@ -538,10 +538,15 @@ class ExtractorTests(unittest.TestCase):
             fn["locals_unsupported"],
             "calls locally-assigned name(s) (static-locals rule): sorted")
 
-    def test_raise_local_binding_refuses_without_order_exemptions(self):
+    def test_raise_local_binding_unbound_window_is_admitted(self):
         for source in (
             "def f():\n    raise ValueError\n    ValueError = 1\n",
-            "def f():\n    raise ValueError()\n    ValueError = 1\n",
+        ):
+            with self.subTest(source=source):
+                self.assertIsNone(self._first_fn(source)["locals_unsupported"])
+
+    def test_raise_local_binding_control_flow_stays_loud(self):
+        for source in (
             "def f():\n    if False:\n        ValueError = 1\n    raise ValueError\n",
             "def f():\n    if False:\n        ValueError = 1\n    raise ValueError()\n",
         ):

@@ -17,6 +17,29 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-145 — admit the straight-line unbound exception raise
+
+The exception-name admission now accepts the narrow straight-line shape
+`raise ValueError` followed by one direct assignment to `ValueError`. Function
+entry installs the existing static-local marker, and both interpreters check it
+before resolving locals or exception classes, producing CPython's exact
+`UnboundLocalError`. Branch-local, repeated, constructor-form, and other
+additional bindings remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `builtin_raise_lab.late_shadow()` matches `UnboundLocalError` in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,630 matched / 64 refused / 0 failed |
+| Full proof differential | 3,694 cases: 3,521 matched / 173 refused / 0 failed |
+| Refusal census | 64 rows, 0 drifts; `builtin_raise_lab::late_shadow` removed from `exc.raise` |
+| Extractor tests | 142 passed, including control-flow refusal cases |
+| Build/checks | `lake build leanmodels-run`, coverage freshness, backlog-index freshness, and `git diff --check` pass |
+
+DECIDED: admit only one direct assignment after a bare raise of the same name
+in straight-line code; retain loud behavior for branches, repeated or
+constructor-form shadows, and all other unbound-local shapes. Reread the inbox
+before selecting the next measured gap.
+
 ## 2026-10-26-pycomplete-144 — expose the builtins fallback after deleting `__name__`
 
 Script mode now models the runner-supplied module `__name__` as a deletable

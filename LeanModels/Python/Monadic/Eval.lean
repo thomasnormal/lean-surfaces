@@ -1608,28 +1608,31 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
             refuse "bare 'raise' (re-raise of the active exception) is outside the tier (docs/memory-model.md §exceptions)"
         | some (.name id _) => do
             let st ← get
-            match Env.lookup st.locals id with
-            | some (.ref _) =>
-                refuse s!"'raise {id}': a heap-backed exception value is outside the tier (docs/memory-model.md §exceptions)"
-            | some _ =>
-                raisePy (.typeError "exceptions must derive from BaseException")
-            | Option.none =>
-                if (lookupG (moduleGlobals m).1 id).isSome
-                    || (Env.lookup st.world.globals id).isSome
-                    || (findFunction m id).isSome then
-                  refuse s!"'raise {id}': the name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
-                else
-                  match findClass m id with
-                  | some (ci, c) =>
-                      if c.isExc then raisePy (.user ci c.name)
-                      else refuse s!"'raise {id}': only an admitted exception class (`class N(Exception): pass` or a measured direct builtin ancestor) can be raised — outside the tier (docs/memory-model.md §exceptions)"
-                  | Option.none =>
-                      if (findNamedTuple m id).isSome then
-                        raisePy (.typeError "exceptions must derive from BaseException")
-                      else if admittedBuiltinRaise.contains id then
-                        raisePy (.builtinException id)
-                      else
-                        refuse s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)"
+            if hasUnboundLocal st.locals id then
+              raisePy (.unboundLocalError id)
+            else
+              match Env.lookup st.locals id with
+              | some (.ref _) =>
+                  refuse s!"'raise {id}': a heap-backed exception value is outside the tier (docs/memory-model.md §exceptions)"
+              | some _ =>
+                  raisePy (.typeError "exceptions must derive from BaseException")
+              | Option.none =>
+                  if (lookupG (moduleGlobals m).1 id).isSome
+                      || (Env.lookup st.world.globals id).isSome
+                      || (findFunction m id).isSome then
+                    refuse s!"'raise {id}': the name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
+                  else
+                    match findClass m id with
+                    | some (ci, c) =>
+                        if c.isExc then raisePy (.user ci c.name)
+                        else refuse s!"'raise {id}': only an admitted exception class (`class N(Exception): pass` or a measured direct builtin ancestor) can be raised — outside the tier (docs/memory-model.md §exceptions)"
+                    | Option.none =>
+                        if (findNamedTuple m id).isSome then
+                          raisePy (.typeError "exceptions must derive from BaseException")
+                        else if admittedBuiltinRaise.contains id then
+                          raisePy (.builtinException id)
+                        else
+                          refuse s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)"
         | some (.call (.name id _) args kwargs callUnsupported _) => do
             -- The measured payload form is one positional string passed to a
             -- builtin exception class whose `PyErr` retains that string.

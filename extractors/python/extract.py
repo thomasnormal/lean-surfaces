@@ -1283,8 +1283,10 @@ def _shadowed_raises(fn):
     dynamic value, so ``raise n`` is admitted and the runtime can report
     CPython's ``TypeError`` for scalar arguments.  A name assigned anywhere
     else in the function, or a parameter/local that shadows a builtin
-    exception class, still refuses: CPython's static-local rule would make
-    the value or class identity observable in ways the tier does not carry.
+    exception class, still refuses. One direct assignment that follows every
+    raise of the name is the narrow unbound-window slice: CPython raises
+    ``UnboundLocalError`` before the assignment, and the interpreter's
+    static-local marker already carries that result.
     """
     names = set()
     for node in _walk_scope(fn):
@@ -1359,7 +1361,11 @@ def _shadowed_raises(fn):
                        and bool(raise_lines)
                        and all(direct_assigns[0].lineno < line
                                for line in raise_lines))
-            if not ordered:
+            unbound_window = (name not in params and len(direct_assigns) == 1
+                              and bool(raise_lines)
+                              and all(line < direct_assigns[0].lineno
+                                      for line in raise_lines))
+            if not (ordered or unbound_window):
                 shadowed.add(name)
         elif name in BUILTIN_EXCEPTION_NAMES and name not in params:
             shadowed.add(name)

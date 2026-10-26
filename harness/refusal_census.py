@@ -984,7 +984,6 @@ WHITELIST_CLASS = {
     "exc_ancestors_lab::body_shadow_nonmatch": "exc.handler",
     "exc_ancestors_lab::late_shadow": "exc.handler",
     "exc_ancestors_lab::first_class_base": "firstclass.callable",
-    "builtin_raise_lab::late_shadow": "exc.raise",
     "builtin_raise_lab::raised_instance": "exc.raise",
     "iter_lab::chr_surrogate": "str.surrogate",
     "gen_lab::walrus_leak": "genexp.lowering-admission",

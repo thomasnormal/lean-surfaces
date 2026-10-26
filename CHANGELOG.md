@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Decimal `int(str)` conversion now returns CPython's pinned 4300-digit `ValueError` instead of a tier refusal; malformed inputs within the budget retain their exact literal errors.
+- A generator's safe `try: yield <scalar literal or parameter> except Stop: pass` shape now lowers to the existing continuation and matches CPython; yield expressions that can raise and other suspendable `try` forms remain loud.
 - Container `repr` and `ascii` rendering now use a fixed 512-level depth budget; deeper structures remain loud independently of caller fuel.
 - Python `global` declarations now support direct scalar reads, assignments, and
   augmented assignments across function frames, with module-global publication

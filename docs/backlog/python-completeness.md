@@ -17,6 +17,32 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-136 — admit the safe generator yield-under-try slice
+
+The remaining `exc.handler` census row was `drive_yield_under_try`: its
+generator contained only `try: yield n` with `except Stop: pass`. A general
+yield under `try` needs a suspended try frame so that an exception raised while
+resuming can reach the handler. The current generator continuation has no such
+frame, and generator `throw` is outside the tier. Ingestion therefore lowers
+only the measured safe form when the yield is a scalar literal or a direct
+function parameter; those expressions cannot raise, so the handler has no
+observable work on the admitted surface. A yield expression with a call or
+other potentially raising operation, a different handler, or any additional
+suite statement remains structured-but-loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `exc_lab.drive_yield_under_try(1)` MATCH in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,620 matched / 74 refused / 0 failed |
+| Full proof differential | 3,694 cases: 3,511 matched / 183 refused / 0 failed |
+| Refusal census | 74 rows, 0 drift; `exc.handler` retains only shadow/rebinding and clock-boundary rows |
+| Extractor tests | 137 passed, including safe and unsafe yield-under-try controls |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the non-raising scalar-literal/parameter yield under
+`except Stop: pass`; retain the general suspendable try frame as a future
+generator-runtime item.
+
 ## 2026-10-26-pycomplete-135 — measured two-handler exception clauses
 
 The extractor now lowers a narrow two-handler form to nested existing `Try`

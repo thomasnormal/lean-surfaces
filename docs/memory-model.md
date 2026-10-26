@@ -1474,10 +1474,13 @@ divergence yet — nothing in tier survives the second step — so the pin
 is Lean-side, and the fix lands WITH the tier (the build flips the pin
 to `closed` and adds the `try`-driven differential row in `exc_lab`). `execForGen` needs nothing: `Run.bind` already propagates the
 step's `.exn` out of the loop. A `yield` INSIDE a `try` body would make
-`tryStmt` a suspendable construct needing its own `GenFrame` — REFUSED
-in v0 (`genPlan` has no try frame; the extractor flags a generator
-whose `yield` sits under `try`), and nothing in the shipped file does
-it (`moves()`/`gen_moves`/`search` all yield outside `try`).
+`tryStmt` a suspendable construct needing its own `GenFrame`. The measured
+safe slice is narrower: ingestion lowers a generator whose entire body is
+`try: yield <scalar literal or direct parameter> except Stop: pass` to the
+existing yield continuation. The yield expression cannot raise in that
+slice and generator `throw` is outside the tier, so erasing the otherwise
+unobservable handler is faithful. All other yield-under-try forms remain
+structured-but-loud (`genPlan` still refuses a surviving try frame).
 
 **Fragments and proof layer.** `raise` of an admitted class and
 `tryStmt` over heap-free subtrees allocate nothing — both can stay IN
@@ -1491,7 +1494,9 @@ raise-catch roundtrip; mutations-before-raise visible in the handler
 propagates; an exception crossing a generator resume closes the
 generator (the `next()`-after-exn row); the refusal battery (observed `as`,
 `finally`, args on raise, `raise` bare,
-value raise, yield-under-try). Corpus script with a top-level
+value raise, and general yield-under-try). The safe parameter-yield slice is
+covered by `exc_lab.drive_yield_under_try`; the remaining forms stay loud.
+Corpus script with a top-level
 try/except once the shell learns the statement. THEN the sunfish
 shapes: `Stop` recognized on the shipped file's census, and a
 lab-scale deadline capstone — a MiniSearcher raising on a NODE-COUNT

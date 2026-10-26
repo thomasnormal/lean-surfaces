@@ -6040,47 +6040,23 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "Try",
+            "kind": "Yield",
             "span": {
-              "lineno": 333,
-              "col_offset": 4,
-              "end_lineno": 336,
-              "end_col_offset": 12
+              "lineno": 334,
+              "col_offset": 8,
+              "end_lineno": 334,
+              "end_col_offset": 15
             },
-            "body": [
-              {
-                "kind": "Yield",
-                "span": {
-                  "lineno": 334,
-                  "col_offset": 8,
-                  "end_lineno": 334,
-                  "end_col_offset": 15
-                },
-                "value": {
-                  "kind": "Name",
-                  "span": {
-                    "lineno": 334,
-                    "col_offset": 14,
-                    "end_lineno": 334,
-                    "end_col_offset": 15
-                  },
-                  "id": "n"
-                }
-              }
-            ],
-            "exc_name": "Stop",
-            "handler": [
-              {
-                "kind": "Pass",
-                "span": {
-                  "lineno": 336,
-                  "col_offset": 8,
-                  "end_lineno": 336,
-                  "end_col_offset": 12
-                }
-              }
-            ],
-            "try_unsupported": null
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 334,
+                "col_offset": 14,
+                "end_lineno": 334,
+                "end_col_offset": 15
+              },
+              "id": "n"
+            }
           }
         ],
         "is_generator": true

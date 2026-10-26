@@ -2279,6 +2279,40 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                     "try_unsupported": None,
                 }]
             return nested_body
+        # A generator whose only suspendable statement is a safe yield under
+        # ``except Stop: pass`` can use the existing generator continuation
+        # directly. The general shape needs a try frame so that an exception
+        # raised while resuming can reach its handler; that frame is not part
+        # of the current runtime. This narrow lowering is faithful for the
+        # measured slice because the yield expression is either a scalar
+        # literal or a direct function parameter (neither can raise), and
+        # generator ``throw`` is outside the tier. Keep all other forms
+        # structured-but-loud rather than silently dropping the handler.
+        if (func_scope and isinstance(enclosing, (ast.FunctionDef,
+                                                   ast.AsyncFunctionDef))
+                and _is_generator(enclosing)
+                and len(node.handlers) == 1 and not node.orelse
+                and not node.finalbody
+                and isinstance(node.handlers[0].type, ast.Name)
+                and node.handlers[0].type.id == "Stop"
+                and node.handlers[0].name is None
+                and len(node.handlers[0].body) == 1
+                and isinstance(node.handlers[0].body[0], ast.Pass)
+                and len(node.body) == 1
+                and isinstance(node.body[0], ast.Expr)
+                and isinstance(node.body[0].value, ast.Yield)):
+            yielded = node.body[0].value.value
+            params = {a.arg for a in (*enclosing.args.posonlyargs,
+                                      *enclosing.args.args)}
+            scalar = (isinstance(yielded, ast.Constant)
+                      and (yielded.value is None
+                           or isinstance(yielded.value,
+                                         (bool, int, str, bytes, float))))
+            parameter = isinstance(yielded, ast.Name) and yielded.id in params
+            if scalar or parameter:
+                return convert_stmt_list(
+                    node.body, module_scope=module_scope,
+                    func_scope=func_scope)
         if (node.finalbody and not node.handlers and not node.orelse
                 and all(isinstance(s, ast.Pass) for s in node.finalbody)):
             return convert_stmt_list(node.body, module_scope=module_scope,

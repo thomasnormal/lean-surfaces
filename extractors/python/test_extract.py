@@ -708,6 +708,28 @@ class ExtractorTests(unittest.TestCase):
         self.assertIsNone(env["module"]["body"][0].get("locals_unsupported"))
         self.assertEqual(body[0]["kind"], "Return")
 
+    def test_safe_generator_yield_under_stop_lowers_to_yield(self):
+        env = self._envelope_of(
+            "def f(value):\n"
+            "    try:\n"
+            "        yield value\n"
+            "    except Stop:\n"
+            "        pass\n")
+        fn = env["module"]["body"][0]
+        self.assertTrue(fn.get("is_generator"))
+        self.assertEqual([s["kind"] for s in fn["body"]], ["Yield"])
+
+    def test_unsafe_generator_yield_under_try_stays_structured(self):
+        env = self._envelope_of(
+            "def f(value):\n"
+            "    try:\n"
+            "        yield value + missing\n"
+            "    except Stop:\n"
+            "        pass\n")
+        fn = env["module"]["body"][0]
+        self.assertEqual(fn["body"][0]["kind"], "Try")
+        self.assertIsNone(fn["body"][0]["try_unsupported"])
+
 
     # -- For statements and module constants (sunfish ladder steps 1-2) ----
 

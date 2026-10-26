@@ -25,6 +25,17 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Discarded `$bits` does not evaluate its expression — 2026-10-26
+
+Valid one-argument `$bits(expr)` calls in statement position now erase without
+evaluating `expr`, matching IEEE 1800-2023 §20.6.2. The `bits_discarded`
+fixture supplies the differential row and Lean receipt; value-returning,
+malformed, and stateful calls remain loud. The fresh census remains **5,240
+clean / 16,752 partial** (67 include skips), with
+`ExpressionStatement:CallExpression` at **2,775** because this standalone
+shape is absent from sv-tests-2. Differential coverage grows **259/254/0/5 →
+260/255/0/5** with no disagreements, and grammar coverage remains **217/92/125**.
+
 ## Discarded `$typename` does not evaluate its expression — 2026-10-26
 
 Valid one-argument `$typename(expr)` calls in statement position now erase

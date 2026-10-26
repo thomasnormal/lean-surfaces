@@ -15778,6 +15778,15 @@ def _convert_syscall(sm, s, e):
                         "typename_statement": True}
         except Exception:
             return unsupported(sm, s, "ExpressionStatement:CallExpression")
+    if is_sys and name == "$bits":
+        # IEEE 1800-2023 §20.6.2 determines bit-stream size without evaluating
+        # the expression. A valid discarded query has no represented effect.
+        try:
+            if not getattr(e, "bad", False) and len(e.arguments) == 1:
+                return {"kind": "Empty", "span": node_span(sm, s),
+                        "bits_statement": True}
+        except Exception:
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

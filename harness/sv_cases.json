@@ -2334,6 +2334,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "bits_discarded",
+      "file": "Examples/system-verilog/bits_discarded/bits_discarded.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

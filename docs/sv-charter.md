@@ -43,6 +43,17 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Discarded `$bits` does not evaluate its expression — 2026-10-26
+
+Valid one-argument `$bits(expr)` calls in statement position now erase without
+evaluating `expr`, matching IEEE 1800-2023 §20.6.2. The `bits_discarded`
+fixture proves that a post-increment argument stays at zero; value-returning,
+malformed, and other stateful calls remain loud. The 22,059-path census remains
+**5,240 clean / 16,752 partial** (67 include skips), with
+`ExpressionStatement:CallExpression` at **2,775** because the corpus has no
+standalone discarded `$bits` witness; differential coverage grows
+**259/254/0/5 → 260/255/0/5** and grammar coverage remains **217/92/125**.
+
 ## Discarded `$typename` does not evaluate its expression — 2026-10-26
 
 Valid one-argument `$typename(expr)` calls in statement position now erase

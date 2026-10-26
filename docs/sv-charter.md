@@ -183,6 +183,21 @@ skips), with `AssignmentExpression:target` at **2,853** and
 `ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
 **278/273/0/5 → 279/274/0/5** and grammar coverage remains **217/92/125**.
 
+## Discarded fixed-array locator queries — 2026-10-26
+
+Discarded `min()`, `max()`, `unique()`, and `unique_index()` calls now erase
+their unobserved queue result for named fixed-size arrays with integral leaves
+when no `with` clause is present. Dynamic, queue, associative, aggregate,
+`with`, symbolic, and value-position forms remain loud. The
+`array_query_statements` fixture supplies the self-check differential row and
+Lean receipt; the pinned oracle agrees with its `PASS` transcript.
+
+The 22,059-path census remains **5,240 clean / 16,752 partial** (67 include
+skips), with `AssignmentExpression:target` at **2,853** and
+`ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
+**279/274/0/5 → 280/275/0/5** and grammar coverage grows **217/92/125 →
+218/93/125**.
+
 ## Discarded fixed-array reductions — 2026-10-26
 
 Discarded fixed-array reductions (`sum`, `product`, `and`, `or`, and `xor`)

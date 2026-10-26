@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 279 | 274 | 0 | 5 | sv-tests-2 declarations |
+| 280 | 275 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -293,6 +293,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `signing_statement` | `Examples/system-verilog/signing_statement/signing_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `time_scale_statements` | `Examples/system-verilog/time_scale_statements/time_scale_statements.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_transform_statements` | `Examples/system-verilog/string_transform_statements/string_transform_statements.sv` | match | **MATCH** | `ok` | MATCH |
+| `array_query_statements` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -300,7 +301,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 217 | 92 | 125 | pyslang SyntaxKind |
+| 218 | 93 | 125 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -320,6 +321,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ArrayAndMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayOrMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayOrRandomizeMethodExpression` | `Examples/system-verilog/array_reductions/effect.sv` | **REFUSE** | `unsupported` unsupported expression 'ArrayReduction:storage-or-effects' |
+| `SyntaxKind.ArrayUniqueMethod` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayXorMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AscendingRangeSelect` | `Examples/system-verilog/compound_assignments/members.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssertionItemPort` | `Examples/system-verilog/let_expressions/binding.sv` | **MATCH** | `ok`  |

@@ -13732,6 +13732,36 @@ def _array_reduction_call(expression):
             and expression.subroutineName in ("sum", "product", "and", "or", "xor"))
 
 
+def _pure_array_query_call(expression):
+    """Recognize discarded no-``with`` queries on fixed integral arrays."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName not in
+                ("min", "max", "unique", "unique_index")
+                or len(expression.arguments) != 1
+                or getattr(expression.subroutine, "extraInfo", None) is not None):
+            return False
+        receiver = expression.arguments[0]
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or type(receiver.type.canonicalType).__name__
+                != "FixedSizeUnpackedArrayType"):
+            return False
+        shape = _fixed_array_dimensions(receiver.type)
+        if shape is None:
+            return False
+        _dimensions, element_type = shape
+        if type(element_type.canonicalType).__name__ in (
+                "PackedStructType", "PackedUnionType",
+                "UnpackedStructType", "UnpackedUnionType"):
+            return False
+        width, _two_state, reason = type_width_2s(element_type)
+        return width is not None and reason is None
+    except Exception:
+        return False
+
+
 def _array_reduction_index_call(expression):
     """Recognize ``item.index()`` while lowering a finite array reduction."""
     try:
@@ -15705,6 +15735,12 @@ def _convert_syscall(sm, s, e):
                       else "enum_numeric_statement")
             return {"kind": "Empty", "span": node_span(sm, s),
                     marker: name}
+    if is_sys and _SYM is None and _pure_array_query_call(e):
+        # Integral fixed-array locator queries only read their receiver and
+        # return an unobserved queue.  Keep ``with`` clauses and aggregate or
+        # dynamic storage on the ordinary call boundary.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "array_query_statement": name}
     if is_sys and _SYM is None and _array_reduction_call(e):
         # A pure array reduction only reads its source cells and produces an
         # unobserved scalar in statement position. Reuse the value converter

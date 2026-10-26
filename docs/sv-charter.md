@@ -8207,3 +8207,20 @@ The refreshed **22,058-path** census remains **5,227 clean / 16,764 partial**
 the remaining corpus target rows require other aggregate or scheduler state.
 Differential coverage grows **244/239/0/5 → 245/240/0/5** with no
 disagreements; grammar coverage remains **217/92/125**.
+
+## Dynamic outer multidimensional subarray copies — 2026-10-26
+
+A single dynamic outer selector may now copy a distinct flat fixed-array row
+into a bounded multidimensional unpacked integral array. The extractor lowers
+the finite outer range to mutually exclusive `===` branches and expands each
+suffix cell in declaration order, so the existing flat state remains the only
+storage representation. Multiple dynamic selectors, aliases, mismatched
+shapes, aggregate leaves, timed assignments, and effectful sources remain
+loud. The `nested_fixed_array_dynamic_subarray_copy` fixture supplies the
+differential row and Lean receipt, with extractor regressions for cell order
+and the shape refusal.
+
+The refreshed **22,058-path** census remains **5,227 clean / 16,764 partial**
+(67 include skips), with `AssignmentExpression:target` at **2,857**.
+Differential coverage grows **245/240/0/5 → 246/241/0/5** with no
+disagreements; grammar coverage remains **217/92/125**.

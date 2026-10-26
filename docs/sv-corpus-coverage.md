@@ -133,6 +133,23 @@ the remaining corpus target rows require other aggregate or scheduler state.
 Differential coverage grows **244/239/0/5 → 245/240/0/5** with no
 disagreements; grammar coverage remains **217/92/125**.
 
+## Dynamic outer multidimensional subarray copies — 2026-10-26
+
+A single dynamic outer index of a bounded multidimensional unpacked integral
+array now expands to guarded cellwise assignments from a distinct flat row.
+The finite branch expansion preserves declaration order and leaves multiple
+dynamic selectors, aliases, mismatched shapes, aggregate leaves, timed forms,
+and effectful sources loud. The
+`nested_fixed_array_dynamic_subarray_copy` fixture supplies the differential
+row and Lean receipt, with extractor regression coverage for the lowering and
+shape boundary.
+
+The refreshed **22,058-path** census remains **5,227 clean / 16,764 partial**
+(67 include skips), with `AssignmentExpression:target` at **2,857** because
+the remaining corpus target rows require other aggregate or scheduler state.
+Differential coverage grows **245/240/0/5 → 246/241/0/5** with no
+disagreements; grammar coverage remains **217/92/125**.
+
 ## Finite literal dynamic-array reductions — 2026-10-26
 
 Positional literal initializers for finite integral dynamic arrays now become

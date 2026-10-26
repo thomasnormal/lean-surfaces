@@ -3155,6 +3155,121 @@ def _fixed_array_subarray_copy_assignment(sm, expr):
         return None
 
 
+def _fixed_array_dynamic_subarray_copy_assignment(sm, expr):
+    """Copy a flat fixed-array row into one dynamic outer subarray.
+
+    A dynamic prefix selection such as ``matrix[i] = row`` has no aggregate
+    slot in the flat self-check state.  For a bounded multidimensional array,
+    expand the selected row into mutually exclusive branches over the finite
+    outer range, then copy each suffix cell in declaration order.  The source
+    is required to be a distinct, constant-shape flat array so a blocking
+    expansion cannot observe an earlier destination write.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None
+                or type(expr.left).__name__ != "ElementSelectExpression"):
+            return None
+        lhs = expr.left
+        # This item deliberately admits exactly one (outer) selector.  A
+        # constant selector is already handled by the ordinary subarray copy.
+        if type(lhs.value).__name__ != "NamedValueExpression":
+            return None
+        selector = lhs.selector
+        if _constant_dimension_selector(selector) is not None:
+            return None
+        if not _storage_expression(lhs.value):
+            return None
+        current = lhs.value
+        if str(current.symbol.kind) != "SymbolKind.Variable":
+            return None
+        shape = _fixed_array_dimensions(current.type, max_cells=1024)
+        if shape is None:
+            return None
+        dimensions, leaf_type = shape
+        if len(dimensions) < 2:
+            return None
+        width, two_state, reason = type_width_2s(leaf_type)
+        if width is None or reason is not None:
+            return None
+        index_width, _index_two, index_reason = type_width_2s(selector.type)
+        if (index_width is None or index_reason is not None
+                or not _case_source_expression_ok(selector)
+                or not _case_source_expression_ok(expr.right)):
+            return None
+        converted_index = convert_expr(sm, selector)
+        if (converted_index is None or not _case_expression_ok(converted_index)
+                or width_of(converted_index) != index_width):
+            return None
+
+        rhs_shape = _fixed_array_assignment_shape(expr.right)
+        if rhs_shape is None:
+            return None
+        rhs_root, rhs_width, _rhs_two, rhs_positions = rhs_shape
+        suffix = dimensions[1:]
+        suffix_positions = [()]
+        for left, right in suffix:
+            step = 1 if right >= left else -1
+            suffix_positions = [prefix + (position,)
+                                for prefix in suffix_positions
+                                for position in range(left, right + step, step)]
+        if (not suffix_positions or len(suffix_positions) > 1024
+                or len(rhs_positions) != len(suffix_positions)
+                or rhs_width != width):
+            return None
+
+        root_name = _array_storage_name(current.symbol)
+        rhs_cells = [f"{rhs_root}[{position}]" for position in rhs_positions]
+        destination_cells = []
+        for outer in range(dimensions[0][0],
+                           dimensions[0][1] + (1 if dimensions[0][1] >= dimensions[0][0] else -1),
+                           1 if dimensions[0][1] >= dimensions[0][0] else -1):
+            destination_cells.extend(
+                f"{root_name}[{outer}]" + "".join(f"[{position}]" for position in suffix)
+                for suffix in suffix_positions)
+        # A same-root source may overlap one of the possible rows; reject it
+        # rather than changing the source snapshot through blocking writes.
+        if rhs_root == root_name and set(destination_cells) & set(rhs_cells):
+            return None
+
+        mask = (1 << index_width) - 1
+        left, right = dimensions[0]
+        step = 1 if right >= left else -1
+        result = None
+        for outer in reversed(list(range(left, right + step, step))):
+            stmts = []
+            for target_name, rhs_name in zip(
+                    [f"{root_name}[{outer}]" + "".join(f"[{position}]" for position in suffix)
+                     for suffix in suffix_positions],
+                    rhs_cells):
+                value = {"kind": "Ident", "span": node_span(sm, expr.right),
+                         "width": rhs_width, "name": rhs_name}
+                if two_state:
+                    value = squash2_wrap(value, width)
+                stmts.append({
+                    "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                    "span": node_span(sm, expr),
+                    "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                               "width": width, "name": target_name},
+                    "value": value,
+                })
+            branch = {"kind": "Block", "span": node_span(sm, expr),
+                      "stmts": stmts}
+            literal = {"kind": "Literal", "span": node_span(sm, selector),
+                       "width": index_width,
+                       "bits": format(outer & mask, f"0{index_width}b")}
+            result = {"kind": "If", "span": node_span(sm, expr),
+                      "cond": {"kind": "Binary", "span": node_span(sm, selector),
+                               "width": 1, "op": "===", "left": converted_index,
+                               "right": literal},
+                      "then": branch, "else": result}
+        if result is not None:
+            result["fixed_array_dynamic_subarray_copy_lowered"] = True
+        return result
+    except Exception:
+        return None
+
+
 def _fixed_array_subarray_pattern_assignment(sm, expr):
     """Lower an exact pattern assigned to a constant array subarray."""
     try:
@@ -14309,6 +14424,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         array_subarray_pattern = _fixed_array_subarray_pattern_assignment(sm, expr)
         if array_subarray_pattern is not None:
             return array_subarray_pattern
+        array_dynamic_subarray_copy = _fixed_array_dynamic_subarray_copy_assignment(sm, expr)
+        if array_dynamic_subarray_copy is not None:
+            return array_dynamic_subarray_copy
         array_subarray_copy = _fixed_array_subarray_copy_assignment(sm, expr)
         if array_subarray_copy is not None:
             return array_subarray_copy

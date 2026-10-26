@@ -2156,6 +2156,15 @@
       "expect": "match"
     },
     {
+      "name": "nested_fixed_array_dynamic_subarray_copy",
+      "file": "Examples/system-verilog/nested_fixed_array_dynamic_subarray_copy/nested_fixed_array_dynamic_subarray_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "fixed_array_net_copy",
       "file": "Examples/system-verilog/fixed_array_net_copy/fixed_array_net_copy.sv",
       "module": "top",

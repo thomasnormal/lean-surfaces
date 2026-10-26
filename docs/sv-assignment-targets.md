@@ -414,3 +414,16 @@ loud.
 `fixed_array_subarray_copy` is the differential witness; the current
 22,058-path census remains **5,227 clean / 16,764 partial** with
 `AssignmentExpression:target` at **2,857**.
+
+## Dynamic outer multidimensional subarray copies — 2026-10-26
+
+A single dynamic outer index of a bounded multidimensional unpacked integral
+array may now receive a distinct flat fixed-array row. The extractor expands
+the finite outer range into guarded branches and copies each suffix cell in
+declaration order, preserving descending labels and four-state values. Multiple
+dynamic selectors, shape mismatches, aliases, aggregate leaves, timed forms,
+and effectful sources remain loud.
+
+`nested_fixed_array_dynamic_subarray_copy` is the differential witness; the
+22,058-path census remains **5,227 clean / 16,764 partial** with
+`AssignmentExpression:target` at **2,857**.

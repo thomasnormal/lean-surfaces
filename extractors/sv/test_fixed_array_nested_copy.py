@@ -82,6 +82,33 @@ class FixedArrayNestedCopy(unittest.TestCase):
             [stmt["value"]["name"] for stmt in blocks[0]["stmts"]],
             ["source[1][0]", "source[1][1]", "source[1][2]"])
 
+    def test_dynamic_outer_subarray_copies_a_flat_row(self):
+        design = lower(
+            "module top; logic [3:0] matrix [3:2][0:2]; "
+            "logic [3:0] row [7:5]; logic [1:0] index; "
+            "initial begin row = '{4'h1, 4'h2, 4'h3}; index = 2; "
+            "matrix[index] = row; if (matrix[2][0] === 4'h1 && "
+            "matrix[2][1] === 4'h2 && matrix[2][2] === 4'h3) "
+            "$display(\"PASS\"); end endmodule")
+        branches = [node for node in nodes(design)
+                    if node.get("fixed_array_dynamic_subarray_copy_lowered")]
+        self.assertEqual(len(branches), 1)
+        self.assertEqual(
+            [stmt["target"]["name"] for stmt in branches[0]["then"]["stmts"]],
+            ["matrix[3][0]", "matrix[3][1]", "matrix[3][2]"])
+        self.assertEqual(
+            [stmt["value"]["name"] for stmt in branches[0]["then"]["stmts"]],
+            ["row[7]", "row[6]", "row[5]"])
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_dynamic_outer_subarray_shape_mismatch_stays_loud(self):
+        design = lower(
+            "module top; int matrix [0:1][0:2]; int row [0:1]; int index; "
+            "initial matrix[index] = row; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

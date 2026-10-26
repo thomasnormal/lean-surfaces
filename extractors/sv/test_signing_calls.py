@@ -52,6 +52,16 @@ class SigningCalls(unittest.TestCase):
         call = next(node for node in nodes(design) if node.get("kind") == "SysCall")
         self.assertEqual(call["arg_signed"], [True, False])
 
+    def test_discarded_integral_casts_are_inert(self):
+        source = ("module top; logic [7:0] value; initial begin "
+                  "$signed(8'hff); $unsigned(value); "
+                  "$display(\"PASS\"); end endmodule")
+        design = lower(source)
+        self.assertEqual([node.get("signing_statement") for node in nodes(design)
+                          if node.get("signing_statement")],
+                         ["$signed", "$unsigned"])
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+
     def test_two_state_call_does_not_squash_four_state_result(self):
         source = ("module top; bit [3:0] value; logic [3:0] result; "
                   "initial result = $signed(value); endmodule")

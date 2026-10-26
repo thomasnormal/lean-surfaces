@@ -2397,6 +2397,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "signing_statement",
+      "file": "Examples/system-verilog/signing_statement/signing_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -34,6 +34,11 @@ converter accepts its operand. This preserves the converter's source-effect
 checks while dropping an unobserved pure result; malformed or effectful forms
 remain loud.
 
+Valid discarded `$signed` and `$unsigned` calls are inert after the existing
+signing converter accepts their integral operand. The statement boundary keeps
+all operand and width checks, while malformed, aggregate, real, or effectful
+forms remain loud.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument

@@ -43,6 +43,18 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Discarded integral signing casts — 2026-10-26
+
+Valid `$signed` and `$unsigned` calls in statement position now erase their
+discarded integral result after the existing signing converter checks arity,
+width, and operand purity. Real, aggregate, malformed, and effectful operands
+remain loud. The `signing_statement` fixture supplies the differential row and
+Lean receipt; the pinned self-check oracle agrees with its PASS transcript. The
+22,059-path census remains **5,240 clean / 16,752 partial** (67 include skips),
+with `AssignmentExpression:target` at **2,853** and
+`ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
+**266/261/0/5 → 267/262/0/5** and grammar coverage remains **217/92/125**.
+
 ## Discarded constant `$clog2` queries — 2026-10-26
 
 An admitted `$clog2` call in statement position now erases its discarded

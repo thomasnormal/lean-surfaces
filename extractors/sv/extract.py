@@ -15836,6 +15836,14 @@ def _convert_syscall(sm, s, e):
         if value.get("kind") != "Unsupported":
             return {"kind": "Empty", "span": node_span(sm, s),
                     "clog2_statement": name}
+    if is_sys and _signing_call(e):
+        # A valid integral signing cast is pure. Reuse the expression
+        # converter's arity, width, and operand checks before erasing its
+        # discarded result; effectful and unsupported operands stay loud.
+        value = _convert_signing_call(sm, e)
+        if value.get("kind") != "Unsupported":
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "signing_statement": name}
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

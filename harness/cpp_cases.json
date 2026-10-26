@@ -6841,6 +6841,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-nested-shadow-computed-initialization-for-assignment",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalNestedShadowComputedInitializationForAssignmentStatementFrameWitness",
+    "cpp_source": "int local_nested_shadow_computed_initialization_for_assignment_statement_frame_witness(int value) { int outer = 3; { int nested = outer + 1; for (value = 0; value < 2; ++value) { int local = nested + 2; outer = local; } } return outer; } bool callable_witness() { return local_nested_shadow_computed_initialization_for_assignment_statement_frame_witness(9) == 6; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-frame-local-nested-shadow-computed-initialization-switch",
     "kind": "statement",
     "corpus": "rung-4 witness",

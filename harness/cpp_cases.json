@@ -6877,6 +6877,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-do-while-initialization-break",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalDoWhileInitializationBreakStatementFrameWitness",
+    "cpp_source": "int local_do_while_initialization_break_statement_frame_witness(int value) { do { int local = 5; value += 1; break; } while (value < 3); return value; } bool callable_witness() { return local_do_while_initialization_break_statement_frame_witness(0) == 1; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-frame-local-switch-initialization-direct",
     "kind": "statement",
     "corpus": "rung-4 witness",

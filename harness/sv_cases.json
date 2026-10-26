@@ -2009,6 +2009,16 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "struct_array_field_default",
+      "file": "Examples/system-verilog/struct_array_field_default/struct_array_field_default.sv",
+      "module": "top",
+      "oracle": [
+        "DEFAULT PASS",
+        "KEYED PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

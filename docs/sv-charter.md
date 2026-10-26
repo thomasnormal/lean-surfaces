@@ -108,6 +108,21 @@ partial** (67 include skips); `AssignmentExpression:target` falls **2,869 →
 2,867**. Differential coverage grows **222/217/0/5 → 223/218/0/5** with no
 disagreements, and grammar coverage remains **217/90/127**.
 
+## Struct array-field default patterns — 2026-10-26
+
+Keyed and `default` assignment patterns now recurse through finite fixed
+unpacked array fields inside untagged unpacked structs. Each array element is
+expanded in declaration order into the existing flat cells, preserving
+two-state conversion and rejecting patterns that read the destination while
+it is being sampled. The `struct_array_field_default` fixture and differential
+row cover both whole-default and keyed-default forms; dynamic and aliased
+aggregate patterns remain loud.
+
+The capped **22,055-path** census moves **5,171 → 5,174 clean / 16,817 →
+16,814 partial** (67 include skips); `AssignmentExpression:target` falls
+**2,867 → 2,862**. Differential coverage grows **223/218/0/5 → 224/219/0/5**
+with no disagreements, and grammar coverage remains **217/90/127**.
+
 ## Semaphore zero-key methods — 2026-10-24
 
 The self-check surface now admits `semaphore.put(0)` and `semaphore.get(0)`

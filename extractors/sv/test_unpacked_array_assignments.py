@@ -620,6 +620,43 @@ class UnpackedArrayAssignments(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_unpacked_struct_array_field_default_recurses(self):
+        design = extract_source(
+            "module top; typedef struct { int scalar; int values [0:2]; } T; "
+            "T value; initial value = '{default:7}; endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual([a["target"]["name"] for a in assigns],
+                         ["value.scalar", "value.values[0]",
+                          "value.values[1]", "value.values[2]"])
+        self.assertEqual([a["value"].get("operand", a["value"]).get("bits")
+                          for a in assigns], [format(7, "032b")] * 4)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_unpacked_struct_array_field_keyed_default(self):
+        design = extract_source(
+            "module top; typedef struct { int header; int payload [0:2]; } T; "
+            "T value; initial value = '{header:12, default:7}; endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual([a["target"]["name"] for a in assigns],
+                         ["value.header", "value.payload[0]",
+                          "value.payload[1]", "value.payload[2]"])
+        self.assertEqual([a["value"].get("operand", a["value"]).get("bits")
+                          for a in assigns],
+                         [format(12, "032b")] + [format(7, "032b")] * 3)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_unpacked_struct_array_field_pattern_alias_stays_loud(self):
+        design = extract_source(
+            "module top; typedef struct { int scalar; int values [0:1]; } T; "
+            "T value; initial value = '{scalar:value.scalar, default:7}; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

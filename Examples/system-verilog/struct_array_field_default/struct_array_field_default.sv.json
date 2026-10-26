@@ -1,0 +1,858 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/struct_array_field_default/struct_array_field_default.sv",
+  "source_sha256": "fb3e119216384635e8a4906f5345f9d05b56bb54e0f4632d1d160c15a10c247b",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 30,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 12,
+              "col": 12,
+              "end_line": 12,
+              "end_col": 18
+            },
+            "name": "packet.header",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 12,
+              "col": 12,
+              "end_line": 12,
+              "end_col": 18
+            },
+            "name": "packet.payload[0]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 12,
+              "col": 12,
+              "end_line": 12,
+              "end_col": 18
+            },
+            "name": "packet.payload[1]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 12,
+              "col": 12,
+              "end_line": 12,
+              "end_col": 18
+            },
+            "name": "packet.payload[2]",
+            "width": 32,
+            "init": {
+              "kind": "Literal",
+              "span": null,
+              "width": 32,
+              "bits": "00000000000000000000000000000000"
+            },
+            "signed": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 14,
+              "col": 3,
+              "end_line": 29,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 14,
+                "col": 11,
+                "end_line": 29,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 27
+                  },
+                  "stmts": [
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 15,
+                        "col": 5,
+                        "end_line": 15,
+                        "end_col": 27
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 15,
+                          "col": 5,
+                          "end_line": 15,
+                          "end_col": 11
+                        },
+                        "width": 32,
+                        "name": "packet.header"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 15,
+                            "col": 25,
+                            "end_line": 15,
+                            "end_col": 26
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000111"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 15,
+                        "col": 5,
+                        "end_line": 15,
+                        "end_col": 27
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 15,
+                          "col": 5,
+                          "end_line": 15,
+                          "end_col": 11
+                        },
+                        "width": 32,
+                        "name": "packet.payload[0]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 15,
+                            "col": 25,
+                            "end_line": 15,
+                            "end_col": 26
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000111"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 15,
+                        "col": 5,
+                        "end_line": 15,
+                        "end_col": 27
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 15,
+                          "col": 5,
+                          "end_line": 15,
+                          "end_col": 11
+                        },
+                        "width": 32,
+                        "name": "packet.payload[1]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 15,
+                            "col": 25,
+                            "end_line": 15,
+                            "end_col": 26
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000111"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 15,
+                        "col": 5,
+                        "end_line": 15,
+                        "end_col": 27
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 15,
+                          "col": 5,
+                          "end_line": 15,
+                          "end_col": 11
+                        },
+                        "width": 32,
+                        "name": "packet.payload[2]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 15,
+                            "col": 25,
+                            "end_line": 15,
+                            "end_col": 26
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000111"
+                        }
+                      }
+                    }
+                  ],
+                  "unpacked_struct_pattern_lowered": true
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 16,
+                    "col": 5,
+                    "end_line": 20,
+                    "end_col": 32
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 16,
+                      "col": 9,
+                      "end_line": 17,
+                      "end_col": 57
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 16,
+                        "col": 9,
+                        "end_line": 17,
+                        "end_col": 31
+                      },
+                      "width": 1,
+                      "op": "&&",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 16,
+                          "col": 9,
+                          "end_line": 16,
+                          "end_col": 53
+                        },
+                        "width": 1,
+                        "op": "&&",
+                        "left": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 16,
+                            "col": 9,
+                            "end_line": 16,
+                            "end_col": 27
+                          },
+                          "width": 1,
+                          "op": "==",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 16,
+                              "col": 9,
+                              "end_line": 16,
+                              "end_col": 22
+                            },
+                            "width": 32,
+                            "name": "packet.header",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 16,
+                              "col": 26,
+                              "end_line": 16,
+                              "end_col": 27
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000111"
+                          }
+                        },
+                        "right": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 16,
+                            "col": 31,
+                            "end_line": 16,
+                            "end_col": 53
+                          },
+                          "width": 1,
+                          "op": "==",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 16,
+                              "col": 31,
+                              "end_line": 16,
+                              "end_col": 48
+                            },
+                            "width": 32,
+                            "name": "packet.payload[0]",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 16,
+                              "col": 52,
+                              "end_line": 16,
+                              "end_col": 53
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000111"
+                          }
+                        }
+                      },
+                      "right": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 17,
+                          "col": 9,
+                          "end_line": 17,
+                          "end_col": 31
+                        },
+                        "width": 1,
+                        "op": "==",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 17,
+                            "col": 9,
+                            "end_line": 17,
+                            "end_col": 26
+                          },
+                          "width": 32,
+                          "name": "packet.payload[1]",
+                          "signed": true
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 17,
+                            "col": 30,
+                            "end_line": 17,
+                            "end_col": 31
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000111"
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 17,
+                        "col": 35,
+                        "end_line": 17,
+                        "end_col": 57
+                      },
+                      "width": 1,
+                      "op": "==",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 17,
+                          "col": 35,
+                          "end_line": 17,
+                          "end_col": 52
+                        },
+                        "width": 32,
+                        "name": "packet.payload[2]",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 17,
+                          "col": 56,
+                          "end_line": 17,
+                          "end_col": 57
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000111"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 18,
+                      "col": 7,
+                      "end_line": 18,
+                      "end_col": 32
+                    },
+                    "name": "$display",
+                    "format": "DEFAULT PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 20,
+                      "col": 7,
+                      "end_line": 20,
+                      "end_col": 32
+                    },
+                    "name": "$display",
+                    "format": "DEFAULT FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "Block",
+                  "span": {
+                    "line": 22,
+                    "col": 5,
+                    "end_line": 22,
+                    "end_col": 39
+                  },
+                  "stmts": [
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 22,
+                        "col": 5,
+                        "end_line": 22,
+                        "end_col": 39
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 22,
+                          "col": 5,
+                          "end_line": 22,
+                          "end_col": 11
+                        },
+                        "width": 32,
+                        "name": "packet.header"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 22,
+                            "col": 24,
+                            "end_line": 22,
+                            "end_col": 26
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000001100"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 22,
+                        "col": 5,
+                        "end_line": 22,
+                        "end_col": 39
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 22,
+                          "col": 5,
+                          "end_line": 22,
+                          "end_col": 11
+                        },
+                        "width": 32,
+                        "name": "packet.payload[0]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 22,
+                            "col": 37,
+                            "end_line": 22,
+                            "end_col": 38
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000011"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 22,
+                        "col": 5,
+                        "end_line": 22,
+                        "end_col": 39
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 22,
+                          "col": 5,
+                          "end_line": 22,
+                          "end_col": 11
+                        },
+                        "width": 32,
+                        "name": "packet.payload[1]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 22,
+                            "col": 37,
+                            "end_line": 22,
+                            "end_col": 38
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000011"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 22,
+                        "col": 5,
+                        "end_line": 22,
+                        "end_col": 39
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 22,
+                          "col": 5,
+                          "end_line": 22,
+                          "end_col": 11
+                        },
+                        "width": 32,
+                        "name": "packet.payload[2]"
+                      },
+                      "value": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 22,
+                            "col": 37,
+                            "end_line": 22,
+                            "end_col": 38
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000011"
+                        }
+                      }
+                    }
+                  ],
+                  "unpacked_struct_pattern_lowered": true
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 23,
+                    "col": 5,
+                    "end_line": 27,
+                    "end_col": 30
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 23,
+                      "col": 9,
+                      "end_line": 24,
+                      "end_col": 57
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 23,
+                        "col": 9,
+                        "end_line": 24,
+                        "end_col": 31
+                      },
+                      "width": 1,
+                      "op": "&&",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 23,
+                          "col": 9,
+                          "end_line": 23,
+                          "end_col": 54
+                        },
+                        "width": 1,
+                        "op": "&&",
+                        "left": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 23,
+                            "col": 9,
+                            "end_line": 23,
+                            "end_col": 28
+                          },
+                          "width": 1,
+                          "op": "==",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 23,
+                              "col": 9,
+                              "end_line": 23,
+                              "end_col": 22
+                            },
+                            "width": 32,
+                            "name": "packet.header",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 23,
+                              "col": 26,
+                              "end_line": 23,
+                              "end_col": 28
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000001100"
+                          }
+                        },
+                        "right": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 23,
+                            "col": 32,
+                            "end_line": 23,
+                            "end_col": 54
+                          },
+                          "width": 1,
+                          "op": "==",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 23,
+                              "col": 32,
+                              "end_line": 23,
+                              "end_col": 49
+                            },
+                            "width": 32,
+                            "name": "packet.payload[0]",
+                            "signed": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 23,
+                              "col": 53,
+                              "end_line": 23,
+                              "end_col": 54
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000011"
+                          }
+                        }
+                      },
+                      "right": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 24,
+                          "col": 9,
+                          "end_line": 24,
+                          "end_col": 31
+                        },
+                        "width": 1,
+                        "op": "==",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 24,
+                            "col": 9,
+                            "end_line": 24,
+                            "end_col": 26
+                          },
+                          "width": 32,
+                          "name": "packet.payload[1]",
+                          "signed": true
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 24,
+                            "col": 30,
+                            "end_line": 24,
+                            "end_col": 31
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000011"
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 24,
+                        "col": 35,
+                        "end_line": 24,
+                        "end_col": 57
+                      },
+                      "width": 1,
+                      "op": "==",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 24,
+                          "col": 35,
+                          "end_line": 24,
+                          "end_col": 52
+                        },
+                        "width": 32,
+                        "name": "packet.payload[2]",
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 24,
+                          "col": 56,
+                          "end_line": 24,
+                          "end_col": 57
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000011"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 25,
+                      "col": 7,
+                      "end_line": 25,
+                      "end_col": 30
+                    },
+                    "name": "$display",
+                    "format": "KEYED PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 27,
+                      "col": 7,
+                      "end_line": 27,
+                      "end_col": 30
+                    },
+                    "name": "$display",
+                    "format": "KEYED FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 28,
+                    "col": 5,
+                    "end_line": 28,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

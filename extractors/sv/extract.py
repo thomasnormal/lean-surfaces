@@ -2282,7 +2282,15 @@ def _unpacked_struct_field_cells(base_name, aggregate, span, seen=None):
 
 def _unpacked_struct_initializer_cells(sm, base_name, aggregate, initializer,
                                        seen=None):
-    """Flatten a complete nested struct assignment pattern into leaf cells."""
+    """Flatten a complete nested struct assignment pattern into leaf cells.
+
+    Fixed unpacked array fields are finite in the legacy store just like the
+    scalar fields around them.  Slang elaborates a struct ``default``/keyed
+    default into one pattern value per field, with an array field's value
+    carrying its own complete element pattern.  Expand that inner pattern in
+    declaration order so a procedural write can use the same cells as a
+    declaration initializer.
+    """
     if seen is None:
         seen = set()
     marker = id(aggregate)
@@ -2309,6 +2317,45 @@ def _unpacked_struct_initializer_cells(sm, base_name, aggregate, initializer,
             if nested is None:
                 return None
             cells.extend(nested)
+            continue
+        if type(leaf).__name__ == "FixedSizeUnpackedArrayType":
+            shape = _fixed_array_dimensions(field.type, max_cells=1024)
+            if shape is None:
+                return None
+            dimensions, array_leaf = shape
+            width, two_state, reason = type_width_2s(array_leaf)
+            if (width is None or reason is not None
+                    or type(array_leaf.canonicalType).__name__ in (
+                        "FixedSizeUnpackedArrayType", "DynamicArrayType",
+                        "QueueType", "AssociativeArrayType",
+                        "UnpackedStructType", "UnpackedUnionType")):
+                return None
+            elements = _fixed_array_pattern_elements(value, dimensions)
+            if elements is None:
+                return None
+            positions = [()]
+            for left, right in dimensions:
+                step = 1 if right >= left else -1
+                positions = [prefix + (position,)
+                             for prefix in positions
+                             for position in range(left, right + step, step)]
+            if len(elements) != len(positions):
+                return None
+            for indexes, element in zip(positions, elements):
+                if (element is None
+                        or not _case_source_expression_ok(
+                            element, packed_members=True)):
+                    return None
+                converted = convert_expr(sm, element)
+                if (converted is None or converted.get("kind") == "Unsupported"
+                        or width_of(converted) != width
+                        or not _case_expression_ok(converted)):
+                    return None
+                if two_state:
+                    converted = squash2_wrap(converted, width)
+                cell_name = name + "".join(f"[{position}]"
+                                            for position in indexes)
+                cells.append((cell_name, width, converted, array_leaf))
             continue
         width, two_state, reason = type_width_2s(field.type)
         if width is None or reason is not None:
@@ -4429,12 +4476,29 @@ def _unpacked_struct_pattern_assignment(sm, expr):
                 "SimpleAssignmentPatternExpression",
                 "StructuredAssignmentPatternExpression"):
             return None
-        # Nested struct patterns are already normalized recursively by the
-        # same cell flattener used for declaration initializers. Reuse those
-        # converted leaf values so nested defaults and two-state fields keep
-        # exactly the declaration-path behavior.
-        if any(type(field.type.canonicalType).__name__ == "UnpackedStructType"
+        # Nested structs and finite array fields are normalized recursively by
+        # the same cell flattener used for declaration initializers. Reuse
+        # those converted leaf values so keyed/default patterns and two-state
+        # fields keep exactly the declaration-path behavior.
+        if any(type(field.type.canonicalType).__name__ in (
+                "UnpackedStructType", "FixedSizeUnpackedArrayType")
                for field in aggregate):
+            target_root = name.split(".", 1)[0].split("[", 1)[0]
+            reads_target = False
+
+            def inspect(node):
+                nonlocal reads_target
+                if type(node).__name__ in (
+                        "NamedValueExpression", "HierarchicalValueExpression"):
+                    try:
+                        reads_target = (reads_target or
+                                        _storage_name(node.symbol) == target_root)
+                    except Exception:
+                        reads_target = True
+
+            _visit_selected_expression(pattern, inspect)
+            if reads_target:
+                return None
             nested_cells = _unpacked_struct_initializer_cells(
                 sm, name, aggregate, pattern)
             if nested_cells is None:

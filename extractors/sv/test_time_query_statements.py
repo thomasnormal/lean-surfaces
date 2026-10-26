@@ -55,6 +55,16 @@ class TimeQueryStatements(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "InvalidStatement"
                             for node in nodes(design)))
 
+    def test_discarded_time_scale_queries_are_inert(self):
+        design = extract_source(
+            "`timescale 1ns/1ps\nmodule top; initial begin "
+            "$timeunit; $timeprecision; end endmodule")
+        marks = [node.get("time_scale_statement") for node in nodes(design)
+                 if node.get("time_scale_statement")]
+        self.assertEqual(marks, ["$timeunit", "$timeprecision"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

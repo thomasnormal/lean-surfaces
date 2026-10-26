@@ -15844,6 +15844,14 @@ def _convert_syscall(sm, s, e):
         if value.get("kind") != "Unsupported":
             return {"kind": "Empty", "span": node_span(sm, s),
                     "signing_statement": name}
+    if is_sys and _time_scale_call(e):
+        # Time-scale queries read only the literal compilation-unit metadata.
+        # Reuse the existing converter so a missing or malformed directive
+        # remains loud before erasing the discarded signed exponent.
+        value = _convert_time_scale_call(sm, e)
+        if value is not None:
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "time_scale_statement": name}
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

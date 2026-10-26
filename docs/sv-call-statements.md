@@ -39,6 +39,10 @@ signing converter accepts their integral operand. The statement boundary keeps
 all operand and width checks, while malformed, aggregate, real, or effectful
 forms remain loud.
 
+Valid discarded `$timeunit` and `$timeprecision` calls are inert after the
+existing metadata converter accepts a literal `` `timescale `` directive.
+Missing directives, malformed metadata, and value-position forms remain loud.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument

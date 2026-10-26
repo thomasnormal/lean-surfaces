@@ -2406,6 +2406,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "time_scale_statements",
+      "file": "Examples/system-verilog/time_scale_statements/time_scale_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

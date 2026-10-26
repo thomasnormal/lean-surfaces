@@ -43,6 +43,18 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Discarded time-scale metadata queries — 2026-10-26
+
+Valid `$timeunit` and `$timeprecision` calls in statement position now erase
+their discarded signed exponent after the existing converter reads a literal
+`` `timescale `` directive. Missing or malformed metadata and value uses remain
+loud. The `time_scale_statements` fixture supplies the differential row and
+Lean receipt; the pinned self-check oracle agrees with its PASS transcript. The
+22,059-path census remains **5,240 clean / 16,752 partial** (67 include skips),
+with `AssignmentExpression:target` at **2,853** and
+`ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
+**267/262/0/5 → 268/263/0/5** and grammar coverage remains **217/92/125**.
+
 ## Discarded integral signing casts — 2026-10-26
 
 Valid `$signed` and `$unsigned` calls in statement position now erase their

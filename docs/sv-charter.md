@@ -8174,3 +8174,20 @@ On the refreshed **22,056-path** census, clean and partial counts remain
 **5,227 / 16,762** (67 include skips), and `AssignmentExpression:target`
 remains **2,857**. Differential coverage grows **242/237/0/5 → 243/238/0/5**
 with no disagreements; grammar coverage remains **217/92/125**.
+
+## Whole bounded multidimensional fixed-array copies — 2026-10-26
+
+Assignments between distinct bounded multidimensional unpacked arrays with
+integral leaves now expand in declaration order to the existing flat vector
+cells. Equal ordinal shapes may use different declared index labels, matching
+SystemVerilog's assignment-compatible unpacked arrays. Self-copies,
+mismatched dimensions, dynamic or aggregate leaves, and effectful sources
+remain loud. The `fixed_array_nested_copy` fixture supplies the differential
+row and Lean receipt, with extractor regressions for ordinal mapping and the
+refusal boundaries.
+
+The refreshed **22,058-path** census remains **5,227 clean / 16,764 partial**
+(67 include skips), with `AssignmentExpression:target` at **2,857** because
+the remaining corpus target rows require other aggregate or scheduler state.
+Differential coverage grows **243/238/0/5 → 244/239/0/5** with no
+disagreements; grammar coverage remains **217/92/125**.

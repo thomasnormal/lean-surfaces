@@ -387,3 +387,17 @@ forms remain loud.
 snapshot, clean files move **5,057 → 5,058**, partial files **16,929 → 16,928**,
 and `AssignmentExpression:target` falls **2,937 → 2,936**; differential
 coverage moves **203/198/0/5 → 204/199/0/5**.
+
+## Whole bounded multidimensional fixed-array copies — 2026-10-26
+
+Distinct bounded multidimensional unpacked arrays with integral leaves may be
+copied cellwise in declaration order. Assignment-compatible arrays may use
+different index labels when each dimension has the same ordinal extent. The
+flat state already contains every leaf cell, so this lowering needs no
+aggregate store and samples the complete source before writing the target.
+Self-copies, mismatched extents, dynamic or aggregate leaves, and effectful
+sources remain loud.
+
+`fixed_array_nested_copy` is the differential witness; the current
+22,058-path census remains **5,227 clean / 16,764 partial** with
+`AssignmentExpression:target` at **2,857**.

@@ -5388,6 +5388,81 @@ def _fixed_array_copy_assignment(sm, expr):
         return None
 
 
+def _fixed_array_nested_copy_assignment(sm, expr):
+    """Lower a whole bounded multidimensional fixed-array copy.
+
+    The legacy state expands every bounded integral leaf to an ordinary vector
+    cell, so an assignment between two distinct arrays can be copied in
+    declaration order without an aggregate store.  Require the same finite
+    dimension counts and leaf width; differing declared bounds are still
+    assignment-compatible when their ordinal shapes agree.  Dynamic,
+    aggregate, aliased, and effectful forms stay on the target boundary.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None):
+            return None
+        lhs, rhs = expr.left, expr.right
+        if not (_storage_expression(lhs) and _storage_expression(rhs)):
+            return None
+        lhs_shape = _fixed_array_dimensions(lhs.type)
+        rhs_shape = _fixed_array_dimensions(rhs.type)
+        if lhs_shape is None or rhs_shape is None:
+            return None
+        lhs_dims, lhs_leaf = lhs_shape
+        rhs_dims, rhs_leaf = rhs_shape
+        if len(lhs_dims) <= 1 or len(lhs_dims) != len(rhs_dims):
+            return None
+        lhs_width, _lhs_two, lhs_reason = type_width_2s(lhs_leaf)
+        rhs_width, _rhs_two, rhs_reason = type_width_2s(rhs_leaf)
+        if (lhs_width is None or rhs_width is None or lhs_reason is not None
+                or rhs_reason is not None or lhs_width != rhs_width):
+            return None
+        lhs_counts = [abs(left - right) + 1 for left, right in lhs_dims]
+        rhs_counts = [abs(left - right) + 1 for left, right in rhs_dims]
+        if lhs_counts != rhs_counts:
+            return None
+        lhs_root = _array_storage_name(lhs.symbol)
+        rhs_root = _array_storage_name(rhs.symbol)
+        if not lhs_root or not rhs_root or lhs_root == rhs_root:
+            return None
+        if not _case_source_expression_ok(rhs):
+            return None
+
+        def cells(root, dimensions):
+            positions = [()]
+            for left, right in dimensions:
+                step = 1 if right >= left else -1
+                positions = [prefix + (position,)
+                             for prefix in positions
+                             for position in range(left, right + step, step)]
+            return [root + "".join(f"[{position}]" for position in indexes)
+                    for indexes in positions]
+
+        lhs_cells = cells(lhs_root, lhs_dims)
+        rhs_cells = cells(rhs_root, rhs_dims)
+        if len(lhs_cells) != len(rhs_cells):
+            return None
+        stmts = []
+        for lhs_name, rhs_name in zip(lhs_cells, rhs_cells):
+            value = {"kind": "Ident", "span": node_span(sm, rhs),
+                     "width": rhs_width, "name": rhs_name}
+            if not lhs_leaf.isFourState:
+                value = squash2_wrap(value, lhs_width)
+            stmts.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {"kind": "Ident", "span": node_span(sm, lhs),
+                           "width": lhs_width, "name": lhs_name},
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr),
+                "stmts": stmts,
+                "fixed_array_nested_copy_lowered": True}
+    except Exception:
+        return None
+
+
 def _fixed_array_conditional_assignment(sm, expr):
     """Lower a pure conditional whole-array assignment cell by cell."""
     try:
@@ -14224,6 +14299,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         array_struct_pattern = _fixed_array_struct_pattern_assignment(sm, expr)
         if array_struct_pattern is not None:
             return array_struct_pattern
+        array_nested_copy = _fixed_array_nested_copy_assignment(sm, expr)
+        if array_nested_copy is not None:
+            return array_nested_copy
         array_copy = _fixed_array_copy_assignment(sm, expr)
         if array_copy is not None:
             return array_copy

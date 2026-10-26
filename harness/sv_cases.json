@@ -2165,6 +2165,15 @@
       "expect": "match"
     },
     {
+      "name": "fixed_array_nested_copy",
+      "file": "Examples/system-verilog/fixed_array_nested_copy/fixed_array_nested_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "dynamic_array_reinitialization",
       "file": "Examples/system-verilog/dynamic_array_reinitialization/dynamic_array_reinitialization.sv",
       "module": "top",

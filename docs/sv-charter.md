@@ -7811,3 +7811,19 @@ overtaken by `AssignmentExpression:target` at **2,905**; 130 corpus call sites
 match this static-scope form and two of their files become clean. Differential
 coverage grows **216/211/0/5 → 217/212/0/5** with no disagreements; grammar
 coverage remains **217/90/127**.
+
+## Literal wired-net resolution — 2026-10-26
+
+Literal continuous drivers of `wand`, `wor`, `triand`, and `trior` nets now
+resolve at time zero with the IEEE wired-AND and wired-OR four-state tables.
+The extractor folds complete literal driver sets into one flat net write;
+dynamic, strengthened, and mixed driver sets remain loud. The
+`wired_net_resolution` fixture supplies the differential row and Lean receipt,
+and extractor regressions cover vector resolution and dynamic-driver refusal.
+
+The refreshed **22,055-path** census moves **5,132 → 5,166 clean** and
+**16,856 → 16,822 partial** (67 include skips). The
+`AssignmentExpression:target` blocker falls **2,905 → 2,875**;
+`CallExpression` remains **2,801** and `ExpressionStatement:CallExpression`
+remains **2,778**. Differential coverage grows **217/212/0/5 → 218/213/0/5**
+with no disagreements; grammar coverage remains **217/90/127**.

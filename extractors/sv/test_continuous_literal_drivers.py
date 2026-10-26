@@ -128,6 +128,34 @@ class ContinuousLiteralDrivers(unittest.TestCase):
                          ["Initial"])
         self.assertTrue(module["processes"][0].get("continuous_constant_lowered"))
 
+    def test_wand_literal_drivers_use_wired_and_resolution(self):
+        design = extract_source(
+            "module top; wand bus; assign bus = 1'b1; "
+            "assign bus = 1'b0; endmodule")
+        module = design["modules"][0]
+        self.assertEqual(module["decls"][0].get("continuous_resolution"), "and")
+        initial = [p for p in module["processes"]
+                   if p.get("continuous_static_resolution")]
+        self.assertEqual(initial[0]["body"]["value"]["bits"], "0")
+
+    def test_wor_literal_drivers_use_wired_or_resolution(self):
+        design = extract_source(
+            "module top; wor bus; assign bus = 1'b0; "
+            "assign bus = 1'b1; endmodule")
+        module = design["modules"][0]
+        self.assertEqual(module["decls"][0].get("continuous_resolution"), "or")
+        initial = [p for p in module["processes"]
+                   if p.get("continuous_static_resolution")]
+        self.assertEqual(initial[0]["body"]["value"]["bits"], "1")
+
+    def test_wand_dynamic_driver_stays_loud(self):
+        design = extract_source(
+            "module top; wand bus; logic source; assign bus = source; "
+            "assign bus = 1'b1; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "NetSymbol:WAnd"
+                            for node in nodes(design)))
+
     def test_dynamic_tri_driver_stays_loud(self):
         design = extract_source(
             "module top; tri bus; logic source; assign bus = source; endmodule")

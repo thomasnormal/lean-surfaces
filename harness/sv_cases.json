@@ -1955,6 +1955,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "wired_net_resolution",
+      "file": "Examples/system-verilog/wired_net_resolution/wired_net_resolution.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

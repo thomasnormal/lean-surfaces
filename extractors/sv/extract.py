@@ -14255,8 +14255,13 @@ def _symbolic_target_windows(target):
     return None
 
 
-def _resolve_literal_driver_bits(values):
-    """Resolve fixed literal wire drivers one bit at a time (§28.12)."""
+def _resolve_literal_driver_bits(values, resolution="wire"):
+    """Resolve fixed literal net drivers one bit at a time (§28.12).
+
+    ``wire`` uses the ordinary strength-free resolution table; ``and`` and
+    ``or`` are the corresponding wired-net reductions, where the dominant
+    zero or one wins before unknowns are considered.
+    """
     if not values or any(not isinstance(value, str) for value in values):
         return None
     width = len(values[0])
@@ -14267,6 +14272,10 @@ def _resolve_literal_driver_bits(values):
         active = [bit for bit in bits if bit != "z"]
         if not active:
             result.append("z")
+        elif resolution == "and" and "0" in active:
+            result.append("0")
+        elif resolution == "or" and "1" in active:
+            result.append("1")
         elif any(bit == "x" for bit in active):
             result.append("x")
         elif all(bit == active[0] for bit in active):
@@ -14458,7 +14467,13 @@ def _reject_overlapping_symbolic_drivers(processes, resolvable_nets=None):
                    for index in indices):
                 continue
             values = [processes[index]["value"].get("bits") for index in indices]
-            resolved = _resolve_literal_driver_bits(values)
+            resolutions = {
+                process.get("continuous_resolution", "wire")
+                for process in (processes[index] for index in indices)}
+            if len(resolutions) != 1:
+                continue
+            resolved = _resolve_literal_driver_bits(
+                values, resolutions.pop())
             if resolved is None:
                 continue
             first = indices[0]
@@ -14589,6 +14604,14 @@ def convert_continuous_assign(sm, m):
     explicit_strength = _continuous_assignment_has_strength(m)
     if type(e).__name__ != "AssignmentExpression":
         return unsupported(sm, m, "ContinuousAssignSymbol:" + type(e).__name__)
+    left_symbol = getattr(e.left, "symbol", None)
+    if left_symbol is None:
+        left_symbol = getattr(getattr(e.left, "value", None), "symbol", None)
+    net_kind = str(getattr(getattr(left_symbol, "netType", None),
+                           "netKind", "")).split(".")[-1]
+    continuous_resolution = (
+        "and" if net_kind in ("WAnd", "TriAnd") else
+        "or" if net_kind in ("WOr", "TriOr") else None)
     if e.op is not None or e.timingControl is not None or e.isNonBlocking:
         return unsupported(sm, m, "ContinuousAssignSymbol:form")
     if _dynamic_array_continuous_target(e.left):
@@ -14635,9 +14658,6 @@ def convert_continuous_assign(sm, m):
         if not ok:
             return unsupported(sm, m, "AssignmentExpression:target")
         value = convert_expr(sm, e.right)
-    left_symbol = getattr(e.left, "symbol", None)
-    if left_symbol is None:
-        left_symbol = getattr(getattr(e.left, "value", None), "symbol", None)
     # A single explicitly strengthened whole-net literal is value-equivalent
     # to the ordinary flat driver. Selected strength forms are kept loud until
     # the target representation carries per-window strength metadata.
@@ -14741,6 +14761,8 @@ def convert_continuous_assign(sm, m):
             and _integral_literal_source(e.right)):
         result["continuous_literal_source"] = True
         result["continuous_strength"] = explicit_strength
+        if continuous_resolution is not None:
+            result["continuous_resolution"] = continuous_resolution
     return result
 
 
@@ -15132,12 +15154,50 @@ def _net_has_only_literal_continuous_drivers(m):
         return False
 
 
+def _wired_net_has_only_literal_drivers(m):
+    """Whether a wired net has a closed set of literal continuous drivers."""
+    try:
+        instance = m.parentScope.containingInstance
+        found = False
+        valid = True
+
+        def inspect(node):
+            nonlocal found, valid
+            if type(node).__name__ != "ContinuousAssignSymbol":
+                return
+            assignment = getattr(node, "assignment", None)
+            if assignment is None:
+                return
+            left = getattr(assignment, "left", None)
+            symbol = getattr(left, "symbol", None)
+            if symbol is None:
+                symbol = getattr(getattr(left, "value", None), "symbol", None)
+            if symbol is not m:
+                return
+            found = True
+            valid = (valid and assignment.op is None
+                     and assignment.timingControl is None
+                     and not assignment.isNonBlocking
+                     and not _continuous_assignment_has_strength(node)
+                     and _integral_literal_source(assignment.right))
+
+        instance.visit(inspect)
+        return found and valid
+    except Exception:
+        return False
+
+
 def convert_net(sm, m):
     nk = str(m.netType.netKind).split(".")[-1]
-    if nk not in ("Wire", "Tri"):
+    if nk not in ("Wire", "Tri", "WAnd", "WOr", "TriAnd", "TriOr"):
         return unsupported(sm, m, "NetSymbol:" + nk)
     if nk == "Tri" and not _net_has_only_literal_continuous_drivers(m):
         return unsupported(sm, m, "NetSymbol:Tri")
+    resolution = None
+    if nk in ("WAnd", "TriAnd", "WOr", "TriOr"):
+        if not _wired_net_has_only_literal_drivers(m):
+            return unsupported(sm, m, "NetSymbol:" + nk)
+        resolution = "and" if nk in ("WAnd", "TriAnd") else "or"
     if getattr(m, "delay", None) is not None:
         return unsupported(sm, m, "NetSymbol:delay")
     # A one-dimensional fixed-unpacked wire array can use the same flat
@@ -15168,13 +15228,16 @@ def convert_net(sm, m):
     if w is None:
         return unsupported(sm, m, "NetSymbol:" + reason)
     init = m.initializer
-    return signed_metadata({
+    declaration = signed_metadata({
         "kind": "Net",
         "span": sym_span(sm, m),
         "name": _storage_name(m),
         "width": w,
         "init": convert_expr(sm, init) if init is not None else None,
     }, m.type)
+    if resolution is not None:
+        declaration["continuous_resolution"] = resolution
+    return declaration
 
 
 # ---------------------------------------------------------------------------

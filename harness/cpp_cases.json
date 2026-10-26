@@ -8173,6 +8173,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-conditional-shadow-computed-initialization-assignment-return",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalConditionalShadowComputedInitializationAssignmentReturnStatementFrameWitness",
+    "cpp_source": "int local_conditional_shadow_computed_initialization_assignment_return_statement_frame_witness(int value) { int outer = 3; if (value > 0) { int local = outer + 2; outer = local; return outer; } return outer; } bool callable_witness() { return local_conditional_shadow_computed_initialization_assignment_return_statement_frame_witness(1) == 5; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-frame-local-conditional-else-shadow-computed-initialization-assignment",
     "kind": "statement",
     "corpus": "rung-4 witness",

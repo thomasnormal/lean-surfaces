@@ -43,6 +43,17 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Discarded constant `$clog2` queries — 2026-10-26
+
+An admitted `$clog2` call in statement position now erases its discarded
+result. The existing converter still checks the operand and leaves malformed,
+effectful, and otherwise unsupported calls loud. The `clog2_statement` fixture
+covers literal and constant-parameter operands; Icarus agrees with the PASS
+transcript. The 22,059-path census remains **5,240 clean / 16,752 partial**
+(67 include skips), with `AssignmentExpression:target` at **2,853** and
+`ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
+**265/260/0/5 → 266/261/0/5** and grammar coverage remains **217/92/125**.
+
 ## Discarded bounded `$isunbounded` queries — 2026-10-26
 
 A literal or bounded-parameter `$isunbounded` call in statement position now

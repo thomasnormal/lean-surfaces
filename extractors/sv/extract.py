@@ -15827,6 +15827,15 @@ def _convert_syscall(sm, s, e):
         # expression boundary.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "isunbounded_statement": name}
+    if is_sys and _clog2_call(e):
+        # An admitted ``$clog2`` query has no represented state effect when
+        # its result is discarded. Require the existing converter to accept
+        # the operand so malformed or effectful forms remain on their normal
+        # call boundary.
+        value = _convert_clog2(sm, e)
+        if value.get("kind") != "Unsupported":
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "clog2_statement": name}
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

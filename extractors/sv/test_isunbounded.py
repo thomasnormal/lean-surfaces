@@ -40,6 +40,15 @@ class IsUnbounded(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_discarded_clog2_literal_is_inert(self):
+        design = lower(
+            'module top; initial begin $clog2(8); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("clog2_statement")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

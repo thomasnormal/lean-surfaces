@@ -2388,6 +2388,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "clog2_statement",
+      "file": "Examples/system-verilog/clog2_statement/clog2_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

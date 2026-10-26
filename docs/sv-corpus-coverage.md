@@ -25,6 +25,18 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Discarded constant `$clog2` queries — 2026-10-26
+
+Admitted `$clog2` calls in statement position now erase their discarded
+result after the existing converter accepts the operand. Unsupported or
+effectful forms remain loud. The `clog2_statement` fixture supplies the
+differential row and Lean receipt, and Icarus agrees with its PASS transcript.
+The fresh census remains **5,240 clean / 16,752 partial** (67 include skips),
+with `AssignmentExpression:target` at **2,853** and
+`ExpressionStatement:CallExpression` at **2,775**. Differential coverage grows
+**265/260/0/5 → 266/261/0/5** with no disagreements, and grammar coverage
+remains **217/92/125**.
+
 ## Discarded bounded `$isunbounded` queries — 2026-10-26
 
 Literal and bounded-parameter `$isunbounded` calls in statement position now

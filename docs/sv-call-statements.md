@@ -29,6 +29,11 @@ parameter operand. The existing expression rule proves the one-bit result is
 zero, and statement position observes no value. Ordinary variables, unbounded
 parameters, malformed calls, and value-position queries remain loud.
 
+A discarded `$clog2` query is inert whenever the existing expression
+converter accepts its operand. This preserves the converter's source-effect
+checks while dropping an unobserved pure result; malformed or effectful forms
+remain loud.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument

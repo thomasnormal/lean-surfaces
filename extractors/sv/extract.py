@@ -1546,6 +1546,43 @@ def _convert_fopen_invalid_mode(sm, expression):
             "fopen_invalid_mode": True}
 
 
+def _fseek_stdout_error_call(expression):
+    """Recognize the deterministic error for seeking predefined stdout.
+
+    The flat self-check state represents stdout only as the predefined MCD
+    used by the formatted-output tasks; it has no seekable file object.  IEEE
+    1800 therefore gives the literal ``$fseek(32'h8000_0001, 0, 0)`` probe
+    the standard error result ``-1``.  Dynamic descriptors, offsets, and
+    whence values remain at the file-state boundary.
+    """
+    try:
+        if (_SYM is not None or type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "$fseek"
+                or len(expression.arguments) != 3
+                or expression.type.bitWidth != 32
+                or not expression.type.isIntegral
+                or not expression.type.isSigned):
+            return False
+        fd, offset, whence = expression.arguments
+        return (_literal_integral_value(fd) == 0x80000001
+                and _literal_integral_value(offset) == 0
+                and _literal_integral_value(whence) == 0)
+    except Exception:
+        return False
+
+
+def _convert_fseek_stdout_error(sm, expression):
+    if not _fseek_stdout_error_call(expression):
+        return unsupported(sm, expression, "CallExpression:$fseek")
+    return signed_metadata({
+        "kind": "Literal", "span": node_span(sm, expression),
+        "width": 32, "bits": "1" * 32,
+        "fseek_stdout_error": True,
+    }, expression.type)
+
+
 def _stime_call(expression):
     """A zero-argument `$stime` query in the time-zero self-check slice."""
     try:
@@ -8221,6 +8258,7 @@ def _convert_legacy_call(sm, expression):
     for recognizes, convert in (
             (_time_scale_call, _convert_time_scale_call),
             (_fopen_invalid_mode_call, _convert_fopen_invalid_mode),
+            (_fseek_stdout_error_call, _convert_fseek_stdout_error),
             (_plusargs_call, _convert_plusargs_call),
             (_dynamic_cast_call, _convert_dynamic_cast),
             (_coverage_call, _convert_coverage_call),
@@ -15686,6 +15724,12 @@ def _convert_syscall(sm, s, e):
         # result is discarded and the call has no represented state effect.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "coverage_nocov_statement": True}
+    if is_sys and _fseek_stdout_error_call(e):
+        # A discarded seek on the predefined stdout descriptor reports its
+        # deterministic file-positioning error but changes no represented
+        # state.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "fseek_stdout_error_statement": True}
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

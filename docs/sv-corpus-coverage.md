@@ -25,6 +25,18 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Literal predefined-stdout seek errors — 2026-10-26
+
+The exact `$fseek(32'h8000_0001, 0, 0)` query on the predefined stdout
+descriptor now lowers to the standard signed 32-bit error result `-1`.
+Discarded calls are inert because the self-check state has no seekable file
+object; dynamic descriptors, offsets, whence values, and other file operations
+remain loud. The `fseek_stdout_error` fixture supplies the differential row and
+Lean receipt. The fresh census moves **5,239 → 5,240 clean** and **16,753 →
+16,752 partial** (67 include skips), with `CallExpression` falling **2,772 →
+2,771**. Differential coverage grows **256/251/0/5 → 257/252/0/5** with no
+disagreements, and grammar coverage remains **217/92/125**.
+
 ## Literal coverage queries in the empty database — 2026-10-26
 
 Literal-only `$coverage_control`, `$coverage_get`, `$coverage_get_max`,

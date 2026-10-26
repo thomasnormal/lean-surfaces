@@ -2307,6 +2307,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "fseek_stdout_error",
+      "file": "Examples/system-verilog/fseek_stdout_error/fseek_stdout_error.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

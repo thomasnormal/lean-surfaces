@@ -155,6 +155,20 @@ skips), with `AssignmentExpression:target` at **2,853** and
 `ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
 **275/270/0/5 → 276/271/0/5** and grammar coverage remains **217/92/125**.
 
+## Discarded numeric enum queries — 2026-10-26
+
+Discarded numeric enum methods (`first`, `last`, `num`, `next`, and `prev`)
+now reuse the existing pure enum converter and erase their unobserved scalar
+results after receiver and step checks. Dynamic or effectful receivers,
+malformed methods, and value-position calls remain loud. The
+`enum_numeric_statement` fixture supplies the self-check differential row and
+Lean receipt; the pinned oracle agrees with its `PASS` transcript.
+
+The 22,059-path census remains **5,240 clean / 16,752 partial** (67 include
+skips), with `AssignmentExpression:target` at **2,853** and
+`ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
+**276/271/0/5 → 277/272/0/5** and grammar coverage remains **217/92/125**.
+
 ## Discarded time-scale metadata queries — 2026-10-26
 
 Valid `$timeunit` and `$timeprecision` calls in statement position now erase

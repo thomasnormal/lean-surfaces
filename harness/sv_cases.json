@@ -1974,6 +1974,15 @@
       "expect": "match"
     },
     {
+      "name": "enum_numeric_statement",
+      "file": "Examples/system-verilog/enum_numeric_statement/enum_numeric_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "assoc_integral_cells",
       "file": "Examples/system-verilog/assoc_integral_cells/assoc_integral_cells.sv",
       "module": "top",

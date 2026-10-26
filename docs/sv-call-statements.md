@@ -83,6 +83,11 @@ converter validates its receiver and declaration-order cases. Numeric enum
 methods, effectful receivers, malformed calls, and value-position queries
 retain their existing boundaries.
 
+Discarded numeric enum methods (`first`, `last`, `num`, `next`, and `prev`)
+use the same pure converter and are erased after the receiver and step checks
+pass. Dynamic or effectful receivers, malformed methods, and value-position
+calls remain on their ordinary enum boundary.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument

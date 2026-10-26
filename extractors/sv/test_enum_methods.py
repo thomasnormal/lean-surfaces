@@ -119,6 +119,19 @@ class EnumNumericMethods(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_discarded_numeric_statements_reuse_enum_lowering(self):
+        design = lower(
+            "module top; " + DECL
+            + " initial begin value = B; value.first(); value.last(); "
+              "value.num(); value.next(); value.prev(); $display(\"PASS\"); "
+              "$finish; end endmodule")
+        statements = [node for node in nodes(design)
+                      if node.get("enum_numeric_statement")]
+        self.assertEqual([node["enum_numeric_statement"] for node in statements],
+                         ["first", "last", "num", "next", "prev"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_frontend_error_is_a_design_barrier(self):
         design = lower(source("value.first()", DECL + " int bad=missing;"), require_valid=False)
         self.assertTrue(any(n.get("sv_kind") == "EnumMethod:invalid-compilation" for n in nodes(design)))

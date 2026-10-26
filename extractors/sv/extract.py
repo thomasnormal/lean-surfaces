@@ -15654,15 +15654,16 @@ def _convert_syscall(sm, s, e):
     except Exception:
         return unsupported(sm, s, "ExpressionStatement:CallExpression")
     if is_sys and _SYM is None and _enum_method_call(e, include_name=True):
-        # ``enum.name()`` only reads the current enum value and produces an
-        # unobserved string in statement position. Reuse the value converter
-        # so receiver effects and enum-member checks remain identical;
-        # numeric enum methods and malformed forms stay loud.
-        if name == "name":
-            value = _convert_enum_method(sm, e)
-            if value.get("kind") != "Unsupported":
-                return {"kind": "Empty", "span": node_span(sm, s),
-                        "enum_name_statement": True}
+        # Enum methods only read the current value and produce an unobserved
+        # scalar in statement position. Reuse the value converter so receiver
+        # effects and enum-member checks remain identical; malformed forms
+        # stay loud.
+        value = _convert_enum_method(sm, e)
+        if value.get("kind") != "Unsupported":
+            marker = ("enum_name_statement" if name == "name"
+                      else "enum_numeric_statement")
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    marker: name}
     if not is_sys:
         if _semaphore_zero_method(e):
             # A zero-key semaphore method has no represented state effect;

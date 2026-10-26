@@ -17,6 +17,30 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-134 — heap-dict percent-format mappings
+
+The monadic string percent-formatting arm now threads the current heap for a
+dict RHS. Literal string keys in `%(key)s` are found through the existing
+insertion-order dict representation and scalar conversions reuse the admitted
+format conversion worker. Missing keys retain `KeyError`, while
+rich mapping syntax and unsupported conversions remain loud. A dict RHS also
+suppresses CPython's leftover-argument error, so `'abc' % {'k': 1}` returns
+`'abc'`. The proof interpreter remains intentionally narrower for heap-dict
+formatting.
+
+| Measurement | Result |
+|---|---|
+| Focused executable witnesses | `fmt_mapping()` → `'1'`; `fmt_dict_leftover()` → `'abc'` |
+| Full executable differential | 3,694 cases: 3,617 matched / 77 refused / 0 failed |
+| Full proof differential | 3,694 cases: 3,508 matched / 186 refused / 0 failed |
+| Refusal census | 77 rows, 0 drift |
+| Grammar census | 145 witnesses: 136 MATCH / 9 REFUSE |
+| Generated/check gates | coverage page, backlog index, and `git diff --check` passed |
+
+DECIDED: admit literal string-key heap-dict mappings and CPython's guarded
+leftover rule; retain rich mapping mini-language and non-scalar conversion
+forms as loud boundaries.
+
 ## 2026-10-25-pycomplete-112 — observed value-less annotated locals
 
 Function-local `x: T` declarations now preserve CPython's static-local

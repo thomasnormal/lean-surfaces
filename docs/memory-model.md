@@ -5167,14 +5167,13 @@ flag, width, precision, length modifier, or mapping key. Per conversion:
   still LOUD because its `repr` requires the heap, and NEVER becomes a
   `TypeError` built from `RVal.typeName`'s `"object"` placeholder (the
   recorded rule: the placeholder is never part of a decided outcome). A
-  `.ref` in operand position never reaches the arm at all —
-  `evalBinOp`'s heap-operand refusal already fires, which is why the
-  `%(key)s` mapping protocol over a dict RHS is loud today and stays so.
+  `.ref` in operand position now reaches the arm for heap dicts; other heap
+  operand kinds retain the existing refusal.
 
 The remaining minilanguage stays refused, and so does every conversion
 character outside the ten bare forms. The fixed `%5d`, `%-5d`, and `%05d`
 fields are admitted with CPython's space or zero padding and no truncation;
-other flags, widths, precision, and mapping keys remain loud.
+other flags, widths, precision, and rich mapping syntax remain loud.
 The invalid `%q` form now carries CPython's faithful
 `ValueError: unsupported format character 'q' (0x71) at index 1`; a trailing
 `%` likewise carries `ValueError: incomplete format`. The remaining
@@ -5182,7 +5181,7 @@ minilanguage and valid-but-unmodelled conversion forms stay loudly refused.
 Their refusal messages name the character, so the census can still see the
 demand.
 
-### The mapping right operand (a WRONG ANSWER, fixed 2026-08-16)
+### The mapping right operand (list/range slice, fixed 2026-08-16)
 
 The design above is missing one branch of `PyUnicode_Format`, and library
 mode found it as a live divergence: **`'  x  ' % [1, 3, 5]` is `'  x  '`
@@ -5215,17 +5214,15 @@ recorded:
   `not enough arguments` — which is what the one-element list `[rhs]`
   does. Measured: `'%s' % [1, 2]` → `'[1, 2]'`, `'%s %s' % [1, 2]` →
   `not enough arguments`.
-* The `%(key)s` protocol — the OTHER half of `ctx.dict` — is refused
-  LOUDLY by the walker and stays refused, so the fix cannot open a path
-  to a guessed answer. Note the asymmetry it leaves, pinned as
-  `fmt_dict_leftover`: `'abc' % {'k': 1}` is `'abc'` under CPython and
-  LOUD here, because `evalBinOp`'s heap-operand refusal fires before the
-  arm. That is a declared gap, not a wrong answer.
-
-REVISIT AT H2: `listV` is the transitional value-semantics list. When
-lists move to the heap the mapping RHS becomes a `.ref`, and this
-predicate must move with them — today `.ref` answers `false` only
-because `evalBinOp` refuses it first.
+* The `%(key)s` protocol — the OTHER half of `ctx.dict` — now has a narrow
+  heap-dict slice. Literal string keys are looked up through the heap and the
+  existing scalar conversion worker; missing keys retain CPython's `KeyError`.
+  Rich mapping
+  format syntax, non-string keys, and unsupported conversion characters stay
+  loud. `fmt_mapping` pins `'%(k)s' % {'k': 1}` → `'1'`.
+* A heap dict also takes the `ctx.dict` leftover path: `'abc' % {'k': 1}`
+  returns `'abc'`, because CPython suppresses the leftover-argument check for
+  mappings. `fmt_dict_leftover` pins this result.
 
 Measured rows, all differential (`fmt_bare_leftover`, `fmt_seq_arg`,
 `fmt_dec_seq`, `fmt_range_leftover`, `fmt_dict_leftover` in `str_lab`,
@@ -5240,11 +5237,25 @@ CPython and now matches when the list arrives as a ref-free boundary
 snapshot; a list created on the heap still refuses because its `repr` needs
 the heap this pure operator cannot see.
 
+### Heap-dict mapping formatting (fixed 2026-10-26)
+
+The monadic interpreter now admits the heap-backed dict half of the same
+`ctx.dict` protocol. The operator arm reads the dictionary from the current
+heap, scans literal string keys in insertion order, and delegates each value
+to the existing scalar conversion worker. Thus `'%(k)s' % {'k': 1}` returns
+`'1'`, while missing keys retain CPython's `KeyError`; rich mapping syntax,
+non-string keys, and conversions outside the admitted scalar set remain loud.
+The no-conversion case also follows CPython's guarded leftover check:
+`'abc' % {'k': 1}` returns `'abc'`. The proof interpreter intentionally
+retains its narrower heap-operand refusal for these rows.
+
 ### Mechanism: one operator arm, and a verbatim MOVE
 
-`evalBinOp`'s `.mod, .str` refusal becomes `strFormat fmt b`. Workers:
+The pure `evalBinOp` `.mod, .str` arm remains `strFormat fmt b`; the monadic
+`binOpHM` arm dispatches heap-dict RHS values through `strFormatH`. Workers:
 `strFormatWalk` (the single pass, `List Char → List RVal → Bool →
 String → Res String` since the mapping fix above, structural),
+`strFormatMappingWalk` (the heap-dict mapping-key pass),
 `strFormatMappingRhs` (`ctx.dict`), `strFormatConv` (one conversion on one
 argument), `strFormatStr`/`strFormatRepr` (the scalar and ref-free-container
 renderers, defined

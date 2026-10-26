@@ -42,6 +42,10 @@ change is listed here under **Changed** or **Removed**.
 
 ### Changed
 
+- String percent formatting now admits the measured heap-dict mapping slice:
+  `'%(k)s' % {'k': 1}` performs literal string-key lookup and scalar
+  conversion, while `'abc' % {'k': 1}` follows CPython's mapping leftover
+  rule and returns `'abc'`; rich mapping syntax remains loud.
 - Literal f-string format specifications `d`, `>5`, and `03d` now run for
   integer and Boolean fields through a shared synthetic format worker. Dynamic,
   multi-part, and richer format mini-language forms remain loud.

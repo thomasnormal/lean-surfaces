@@ -266,7 +266,8 @@ def fmt_container():
 
 
 def fmt_mapping():
-    # the %(key)s mapping protocol: the heap-operand refusal fires first
+    # the %(key)s mapping protocol over a heap dict, with scalar conversion
+    # rendering and insertion-order-independent string-key lookup
     return "%(k)s" % {"k": 1}
 
 
@@ -305,9 +306,8 @@ def fmt_range_leftover():
 
 
 def fmt_dict_leftover():
-    # a dict is the mapping CPython's ctx.dict was named for, and it is
-    # LOUD here rather than 'abc': the heap-operand refusal fires before
-    # the operator arm, and that is the declared boundary
+    # CPython's ctx.dict suppresses the leftover-argument TypeError, even
+    # when the format contains no conversion
     return "abc" % {"k": 1}
 
 

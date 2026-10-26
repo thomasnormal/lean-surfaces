@@ -1996,6 +1996,61 @@ def strFormatMappingRhs : RVal → Bool
   | .rangeV _ _ _ => true
   | _ => false
 
+/-- Parse the small mapping-key token admitted by the heap formatting rung.
+The returned tail starts after the conversion character, so the formatting
+walk remains a single left-to-right pass. Rich mapping syntax remains loud. -/
+def strFormatMapToken : List Char → Option (String × Char × List Char)
+  | cs => go [] cs
+where
+  go (key : List Char) : List Char → Option (String × Char × List Char)
+    | [] => Option.none
+    | ')' :: c :: rest => some (String.ofList key, c, rest)
+    | c :: rest => go (key ++ [c]) rest
+
+def strFormatDictFind : List (RVal × RVal) → String → Option RVal
+  | [], _ => Option.none
+  | (k, v) :: rest, key =>
+      match k with
+      | .str stored => if stored == key then some v else strFormatDictFind rest key
+      | _ => strFormatDictFind rest key
+
+/-- The measured heap-dict mapping slice for `str % rhs`. A mapping key is a
+plain string in `%(key)s`; the dict lookup is insertion-order independent and
+uses the same `keyEq`/`dictFind` worker as ordinary subscripting. -/
+def strFormatMappingWalk (h : Heap) (a : Addr) : Nat → List Char → String → Res String
+  | 0, [], acc => .ok acc
+  | 0, _, _ => .timeout
+  | fuel + 1, [], acc => .ok acc
+  | fuel + 1, '%' :: '%' :: cs, acc => strFormatMappingWalk h a fuel cs (acc ++ "%")
+  | fuel + 1, '%' :: '(' :: cs, acc =>
+      match strFormatMapToken cs with
+      | some (key, conv, rest) =>
+          match Heap.get? h a with
+          | some (.dict entries _) =>
+              match strFormatDictFind entries.toList key with
+              | some value =>
+                  match strFormatConv conv value with
+                  | .ok piece => strFormatMappingWalk h a fuel rest (acc ++ piece)
+                  | .exn e => .exn e
+                  | .timeout => .timeout
+                  | .unsupported msg => .unsupported msg
+              | Option.none => .exn .keyError
+          | _ => .unsupported "dangling heap reference"
+      | Option.none =>
+          .unsupported "mapping-key string formatting is outside the tier (only literal string keys are admitted; docs/memory-model.md §`%`-formatting on strings)"
+  | fuel + 1, '%' :: c :: cs, acc =>
+      match Heap.get? h a with
+      | some (.dict entries _) =>
+          match strFormatDictFind entries.toList "" with
+          | _ =>
+              -- A non-mapping conversion has one mapping argument. Keep the
+              -- boundary loud rather than fabricating a dict representation.
+              .unsupported s!"the '%{c}' conversion over a dict mapping is outside the tier"
+      | _ => .unsupported "dangling heap reference"
+  | fuel + 1, ['%'], _ => .exn (.valueError "incomplete format")
+  | fuel + 1, c :: cs, acc => strFormatMappingWalk h a fuel cs (acc ++ String.ofList [c])
+  termination_by structural fuel => fuel
+
 def padFormatField (width : Nat) (s : String) : String :=
   if s.length < width then
     String.ofList (List.replicate (width - s.length) ' ') ++ s
@@ -2093,6 +2148,16 @@ def strFormat (fmt : String) (rhs : RVal) : Res RVal := do
     | v => [v]
   let s ← strFormatWalk fmt.data args (strFormatMappingRhs rhs) ""
   return .str s
+
+def strFormatH (h : Heap) (fmt : String) (rhs : RVal) : Res RVal :=
+  match rhs with
+  | .ref a =>
+      match Heap.get? h a with
+      | some (.dict ..) => do
+          let s ← strFormatMappingWalk h a fmt.length fmt.toList ""
+          return .str s
+      | _ => strFormat fmt rhs
+  | _ => strFormat fmt rhs
 
 /-- The measured bare bytes formatting rung: `b"%s" % bytes` copies the
 operand bytes. Other format strings and operand protocols remain loud until

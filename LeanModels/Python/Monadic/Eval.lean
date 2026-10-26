@@ -1345,6 +1345,12 @@ def binOpHM (op : BinOp) (a b : RVal) : SemF RVal := do
         | none => raisePy (.typeError s!"can't multiply sequence by non-int of type '{RVal.typeNameH h count}'")
       | _ => binOpM op a b
     | _, _ => binOpM op a b
+  else if op == .mod then
+    match a, b with
+    | .str fmt, .ref _ =>
+        let h ← frameHeap
+        liftRes (strFormatH h fmt b)
+    | _, _ => binOpM op a b
   else
     binOpM op a b
 

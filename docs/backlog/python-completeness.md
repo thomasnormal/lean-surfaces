@@ -67,6 +67,22 @@ remain loud because their identity is implementation-dependent.
 DECIDED: admit only the pinned bool and small-integer singleton identities;
 retain loud failure for implementation-dependent immediate identities.
 
+## 2026-10-26-pycomplete-153 — admit literal custom instance repr
+
+Direct `repr(C())` now accepts a class whose `__repr__` has one `self`
+parameter and returns a string literal. The renderer keeps the existing loud
+boundary for default instances, closures, generators, and custom protocols
+inside containers; only the direct scalar result is admitted.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `repr_lab.custom()` matches with value `"custom"`; `repr_lab.instance()` remains loud |
+| Refusal census | `repr_lab::custom` removed from `class.dunder-protocol` |
+| Lean build | `lake build leanmodels-run` passed |
+
+DECIDED: admit only the exact literal-returning direct `__repr__` shape;
+retain loud failure for richer custom rendering and nested instance repr.
+
 ## 2026-10-26-pycomplete-149 — scope starred-display shadow checks lexically
 
 Starred-display lowering now checks `list` and `tuple` bindings in the lexical

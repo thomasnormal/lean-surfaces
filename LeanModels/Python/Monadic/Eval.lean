@@ -91,6 +91,34 @@ def hasContextUnsupportedDunderM (c : ClassDefn) : Bool :=
   c.methods.toList.any fun n =>
     dunderShaped n && n != "__init__" && n != "__enter__" && n != "__exit__" && n != "__repr__"
 
+def hasExtraDunderM (c : ClassDefn) : Bool :=
+  c.methods.toList.any fun n => dunderShaped n && n != "__init__"
+
+def hasUnsupportedDunderM (m : Module) (c : ClassDefn) : Bool :=
+  c.methods.toList.any fun n =>
+    dunderShaped n && n != "__init__" &&
+      (n != "__repr__" ||
+        match findFunction m (c.name ++ ".__repr__") with
+        | some f => f.reprLiteral.isNone
+        | none => true)
+
+def classHasExtraDunderM (m : Module) : Nat → ClassId → Bool
+  | 0, _ => true
+  | fuel + 1, ci =>
+    match getClass? m ci with
+    | Option.none => true
+    | some c =>
+      if hasUnsupportedDunderM m c then true
+      else match c.base with
+        | Option.none => false
+        | some b =>
+          match findClass m b with
+          | some (bi, _) => classHasExtraDunderM m fuel bi
+          | Option.none => true
+
+def classHasExtraDunderMAt (m : Module) (ci : ClassId) : Bool :=
+  classHasExtraDunderM m m.classes.size ci
+
 def findContextClassM (m : Module) (name : String) : Option (Nat × ClassDefn) :=
   match findClass m name with
   | some (ci, c) =>
@@ -201,7 +229,7 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
             if !c.ok then
               .preRefuse s!"class '{fname}' uses unsupported features besides its namedtuple base — instantiation is outside the tier"
             else if (if hasContextProtocolM c then hasContextUnsupportedDunderM c
-                     else classHasExtraDunder m ci) then
+                     else classHasExtraDunderMAt m ci) then
               .preRefuse s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
             else if (findFunction m (fname ++ ".__init__")).isSome then
               .preRefuse s!"'__init__' on the namedtuple subclass '{fname}' (immutable self) is outside the tier"
@@ -210,7 +238,7 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
             if !c.ok then
               .preRefuse s!"class '{fname}' uses unsupported features (bases/metaclass/decorators/class-level statements) — instantiation is outside the H3 tier"
             else if (if hasContextProtocolM c then hasContextUnsupportedDunderM c
-                     else classHasExtraDunder m ci) then
+                     else classHasExtraDunderMAt m ci) then
               .preRefuse s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
             else .instantiate ci fname (classMethodQname m ci "__init__").isSome
       | Option.none =>
@@ -398,7 +426,7 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     | [v] => do liftRes (strOfValH (← frameHeap) v)
     | _ => refuse "str() with encoding/errors arguments is outside the tier (bytes decoding is not guessed; docs/memory-model.md §the cast tier)"
   else if fname == "repr" then
-    liftRes (reprArgs (← frameHeap) vs)
+    liftRes (reprArgsH m (← frameHeap) vs)
   else if fname == "print" then
     -- THE ONE EFFECT: stdout is `World` data, so `print` is an ORDINARY builtin
     -- here — reached only after every shadowing arm, so it works inside function

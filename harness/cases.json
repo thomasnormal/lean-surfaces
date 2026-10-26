@@ -1055,7 +1055,7 @@
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "keyword", "args": [[]], "expect": "match", "note": "Keyword values evaluate before CPython's faithful positional-only TypeError."},
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "first_class", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "instance", "args": [[]], "expect": "unsupported"},
-  {"file": "Examples/python/repr_lab/repr_lab.py", "function": "custom", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/repr_lab/repr_lab.py", "function": "custom", "args": [[]], "expect": "match"},
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "set_value", "args": [[]], "expect": "match", "note": "deterministic increasing integer set repr"},
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "closure", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "generator", "args": [[]], "expect": "unsupported"},

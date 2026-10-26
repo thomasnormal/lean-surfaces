@@ -291,7 +291,8 @@ cycle DETECTION, never by running out of fuel).
   shadowed earlier class is unconstructible. A name bound by both `def`
   and `class` is loud (the split representation loses source order).
 * **The dunder guard** (the tier's soundness principle): a class
-  defining any dunder beyond `__init__`, with unsupported bases (multiple,
+  defining any dunder beyond `__init__` and the exact literal-returning
+  `__repr__` slice, with unsupported bases (multiple,
   dynamic, forward, or external), keywords/metaclass, decorators, or class-level
   statements (class attributes) is REPRESENTED but UNINSTANTIABLE
   (loud). Therefore every instance that exists has DEFAULT object
@@ -310,7 +311,9 @@ cycle DETECTION, never by running out of fuel).
   A class may have one plain-name base from an earlier same-module class.
   The base's methods and `__init__` are resolved through that single link;
   unresolved, forward, multiple, dynamic, and unsupported-base forms remain
-  loud. Inherited dunders keep the default-protocol guard sound.
+  loud. Inherited dunders keep the default-protocol guard sound. The direct
+  `repr(C())` builtin uses a literal string returned by that exact `__repr__`
+  shape; general custom rendering remains loud.
   The built-in `object` base is also admitted as an explicit spelling of the
   default class; its raw envelope marker is cleared only after ingestion proves
   that exact name.

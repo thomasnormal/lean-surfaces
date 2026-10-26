@@ -962,7 +962,6 @@ WHITELIST_CLASS = {
     "divmod_lab::first_class": "firstclass.callable",
     "repr_lab::first_class": "firstclass.callable",
     "repr_lab::instance": "render.identity",
-    "repr_lab::custom": "class.dunder-protocol",
     "repr_lab::closure": "render.identity",
     "repr_lab::generator": "render.identity",
     "exc_handlers_lab::handler_binding": "exc.handler",

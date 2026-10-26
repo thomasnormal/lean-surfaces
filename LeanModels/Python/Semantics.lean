@@ -5537,6 +5537,23 @@ def classMethodQnameFuel (m : Module) : Nat → ClassId → String → Option St
 def classMethodQname (m : Module) (ci : ClassId) (attr : String) : Option String :=
   classMethodQnameFuel m m.classes.size ci attr
 
+def reprArgsH (m : Module) (h : Heap) (vs : List RVal) : Res RVal :=
+  match vs with
+  | [.ref a] =>
+      match Heap.get? h a with
+      | some (.instance ci _) =>
+          match classMethodQname m ci "__repr__" with
+          | some qname =>
+              match findFunction m qname with
+              | some f =>
+                  match FunctionDefn.reprLiteral f with
+                  | some s => .ok (.str s)
+                  | none => reprArgs h vs
+              | none => reprArgs h vs
+          | none => reprArgs h vs
+      | _ => reprArgs h vs
+  | _ => reprArgs h vs
+
 
 /-- Whether an instance attribute store is permitted by the class's
 `__slots__` declaration.  A class without a recognized declaration keeps
@@ -5684,6 +5701,16 @@ the faithful `TypeError`/`AttributeError` arms below correct. -/
 def hasExtraDunder (c : ClassDefn) : Bool :=
   c.methods.toList.any fun n => dunderShaped n && n != "__init__"
 
+/- The one rendering protocol admitted by the tier is a literal-returning
+`__repr__`; every other dunder remains outside the default-protocol slice. -/
+def hasUnsupportedDunder (m : Module) (c : ClassDefn) : Bool :=
+  c.methods.toList.any fun n =>
+    dunderShaped n && n != "__init__" &&
+      (n != "__repr__" ||
+        match findFunction m (c.name ++ ".__repr__") with
+        | some f => f.reprLiteral.isNone
+        | none => true)
+
 /-- The default-protocol guard includes inherited dunders.  A subclass of a
 class defining `__eq__`, for example, is not an identity-only instance even
 when the subclass body has no dunder of its own. -/
@@ -5693,7 +5720,7 @@ def classHasExtraDunderFuel (m : Module) : Nat → ClassId → Bool
     match getClass? m ci with
     | Option.none => true
     | some c =>
-      if hasExtraDunder c then true
+      if hasUnsupportedDunder m c then true
       else match c.base with
         | Option.none => false
         | some b =>
@@ -8706,7 +8733,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                      | _ => .unsupported "str() with encoding/errors arguments is outside the tier (bytes decoding is not guessed; docs/memory-model.md §the cast tier)")
                   else if fname == "repr" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
-                    Run.liftRes st (reprArgs st.world.heap vs)
+                    Run.liftRes st (reprArgsH m st.world.heap vs)
                   else if fname == "input" then
                     -- stdin is a RUNNER-boundary effect (§effects) — loud,
                     -- never a fake NameError (the recorded pass-4 gap)

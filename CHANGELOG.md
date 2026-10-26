@@ -18,6 +18,7 @@
 - Synchronous context managers now admit the exact `__exit__(self, exc_type, exc, tb): return exc_type is not None` suppression test, passing a fixed exception marker on exceptional body paths; arbitrary exception-triple inspection remains loud.
 - Context managers may define `__repr__` without losing the supported protocol; other extra dunders remain loud.
 - `is` and `is not` now decide booleans and CPython 3.9's cached small integers from `-5` through `256`; larger or otherwise implementation-dependent immediate identities remain loud.
+- Direct `repr()` of a class instance now admits the exact `__repr__(self): return "literal"` shape; richer custom rendering and instance rendering in containers remain loud.
 - Unknown exception constructor names now raise CPython's exact `NameError` before constructor arguments are evaluated; known but unmodelled builtins and shadowed names remain loud.
 - Container `repr` and `ascii` rendering now use a fixed 512-level depth budget; deeper structures remain loud independently of caller fuel.
 - Python `global` declarations now support direct scalar reads, assignments, and

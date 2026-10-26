@@ -464,6 +464,13 @@ def FunctionDefn.withExitExceptionTypeTest (f : FunctionDefn) : Bool :=
       id == excType.arg && exc.arg == "exc" && tb.arg == "tb"
   | _, _ => false
 
+/-- Exact pure `__repr__` body admitted by the rendering slice: one `self`
+parameter and a direct string-literal return. -/
+def FunctionDefn.reprLiteral (f : FunctionDefn) : Option String :=
+  match f.params.toList, f.body.toList with
+  | [_], [.ret (some (.constant (.str s) _)) _] => some s
+  | _, _ => none
+
 
 /-- A module-level namedtuple class (H3+, docs/memory-model.md §class
 semantics — the recorded VALUE-like decision): recognized at INGESTION

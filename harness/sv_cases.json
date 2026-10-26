@@ -2111,6 +2111,15 @@
       "expect": "match"
     },
     {
+      "name": "fopen_invalid_mode_statement",
+      "file": "Examples/system-verilog/fopen_invalid_mode_statement/fopen_invalid_mode_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "literal_bound_real_bits",
       "file": "Examples/system-verilog/literal_bound_real_bits/literal_bound_real_bits.sv",
       "module": "top",

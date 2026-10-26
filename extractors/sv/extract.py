@@ -15852,6 +15852,15 @@ def _convert_syscall(sm, s, e):
         if value is not None:
             return {"kind": "Empty", "span": node_span(sm, s),
                     "time_scale_statement": name}
+    if is_sys and _fopen_invalid_mode_call(e):
+        # IEEE 1800-2023 §21.3.1 rejects an invalid literal mode before any
+        # file operation.  In statement position the specified zero return
+        # value is discarded, so erase only after the expression converter
+        # has confirmed the path, mode, width, and literal boundary.
+        value = _convert_fopen_invalid_mode(sm, e)
+        if value.get("kind") != "Unsupported":
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "fopen_invalid_mode_statement": name}
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

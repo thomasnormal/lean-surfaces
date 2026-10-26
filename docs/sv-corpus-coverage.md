@@ -25,6 +25,22 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Discarded invalid literal `$fopen` modes — 2026-10-26
+
+An invalid literal mode in a discarded `$fopen(path, mode)` statement now
+lowers through the existing deterministic zero-result converter. The mode is
+validated before erasing the call, so valid modes, dynamic paths or modes,
+and value-position calls remain on their existing file-state boundary. The
+`fopen_invalid_mode_statement` fixture supplies the differential row and
+Lean receipt; Icarus also emits the declared `PASS` transcript (with its
+standard invalid-mode warning).
+
+The committed **22,059-path** snapshot remains **5,240 clean / 16,752
+partial** (67 include skips), with `AssignmentExpression:target` at **2,853**
+and `ExpressionStatement:CallExpression` at **2,775**. Differential coverage
+grows **268/263/0/5 → 269/264/0/5** with no disagreements, and grammar
+coverage remains **217/92/125**.
+
 ## Discarded time-scale metadata queries — 2026-10-26
 
 Valid `$timeunit` and `$timeprecision` calls in statement position now erase

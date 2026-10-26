@@ -43,6 +43,21 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Discarded invalid literal `$fopen` modes — 2026-10-26
+
+An invalid literal mode in a discarded `$fopen(path, mode)` statement now
+lowers through the existing deterministic zero-result converter. Validation
+still precedes erasure, so valid modes, dynamic file arguments, and
+value-position calls remain loud at the file-state boundary. The
+`fopen_invalid_mode_statement` fixture supplies the self-check differential
+row and Lean receipt; Icarus agrees with its `PASS` transcript (and reports
+its standard invalid-mode warning).
+
+The 22,059-path census remains **5,240 clean / 16,752 partial** (67 include
+skips), with `AssignmentExpression:target` at **2,853** and
+`ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
+**268/263/0/5 → 269/264/0/5** and grammar coverage remains **217/92/125**.
+
 ## Discarded time-scale metadata queries — 2026-10-26
 
 Valid `$timeunit` and `$timeprecision` calls in statement position now erase

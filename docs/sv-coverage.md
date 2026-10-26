@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 268 | 263 | 0 | 5 | sv-tests-2 declarations |
+| 269 | 264 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -248,6 +248,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `dynamic_struct_reduction` | `Examples/system-verilog/dynamic_struct_reduction/dynamic_struct_reduction.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_index_reduction` | `Examples/system-verilog/dynamic_array_index_reduction/dynamic_array_index_reduction.sv` | match | **MATCH** | `ok` | MATCH |
 | `fopen_invalid_mode` | `Examples/system-verilog/fopen_invalid_mode/fopen_invalid_mode.sv` | match | **MATCH** | `ok` | MATCH |
+| `fopen_invalid_mode_statement` | `Examples/system-verilog/fopen_invalid_mode_statement/fopen_invalid_mode_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `literal_bound_real_bits` | `Examples/system-verilog/literal_bound_real_bits/literal_bound_real_bits.sv` | match | **MATCH** | `ok` | MATCH |
 | `continuous_bound_literal` | `Examples/system-verilog/continuous_bound_literal/continuous_bound_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `continuous_history_literal` | `Examples/system-verilog/continuous_history_literal/continuous_history_literal.sv` | match | **MATCH** | `ok` | MATCH |

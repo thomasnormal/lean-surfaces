@@ -43,6 +43,12 @@ Valid discarded `$timeunit` and `$timeprecision` calls are inert after the
 existing metadata converter accepts a literal `` `timescale `` directive.
 Missing directives, malformed metadata, and value-position forms remain loud.
 
+An invalid literal mode in a discarded `$fopen(path, mode)` call is also inert
+after the existing file converter confirms the path and mode. IEEE
+1800-2023 §21.3.1 specifies the zero return for a rejected mode before file
+access; valid or dynamic modes and value-position calls remain loud at the
+file-state boundary.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument

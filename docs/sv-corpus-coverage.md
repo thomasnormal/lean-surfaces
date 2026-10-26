@@ -89,6 +89,14 @@ driver. Dynamic sources, rebinding, and multi-driver resolution remain loud.
 The refreshed corpus counts are unchanged because the current sv-tests-2
 snapshot has no sole witness for this narrow source-purity form.
 
+## Disjoint fixed-array slice copies — 2026-10-26
+
+Blocking assignment between non-overlapping constant slices of one finite
+unpacked integral array now lowers cellwise. Overlapping slices, dynamic
+selectors, and aggregate or effectful sources remain loud. The refreshed
+corpus counts are unchanged because this narrow alias-safe shape has no sole
+witness in the current sv-tests-2 snapshot.
+
 ## Dynamic-array struct-field reductions — 2026-10-26
 
 Finite dynamic arrays of untagged unpacked structs now admit a pure reduction

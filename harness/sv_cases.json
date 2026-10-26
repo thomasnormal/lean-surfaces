@@ -2100,6 +2100,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "fixed_array_disjoint_slice_copy",
+      "file": "Examples/system-verilog/fixed_array_disjoint_slice_copy/fixed_array_disjoint_slice_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

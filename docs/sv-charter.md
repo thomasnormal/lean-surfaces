@@ -8047,3 +8047,13 @@ sources, aggregate targets, rebinding, and multi-driver resolution remain
 loud. The `continuous_bound_literal` fixture supplies the differential row
 and Lean receipt, with extractor regressions for the immutable and rebind
 boundaries.
+
+## Disjoint fixed-array slice copies — 2026-10-26
+
+Blocking assignment between non-overlapping constant slices of one finite
+unpacked integral array now expands to cellwise reads and writes. The
+expansion preserves source values because no destination cell aliases a
+source cell; overlapping slices and dynamic or aggregate forms remain loud.
+The `fixed_array_disjoint_slice_copy` fixture supplies the differential row
+and Lean receipt, with extractor regressions for the admitted and overlap
+boundaries.

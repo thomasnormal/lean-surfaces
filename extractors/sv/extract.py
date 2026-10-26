@@ -2972,17 +2972,23 @@ def _fixed_array_subarray_copy_assignment(sm, expr):
         if lhs_subarray is not None and rhs_shape is None and rhs_array is not None:
             lhs_root, lhs_cells, lhs_width, lhs_two = lhs_subarray
             rhs_root, rhs_width, _rhs_two, rhs_positions = rhs_array
+            rhs_cells = [f"{rhs_root}[{position}]" for position in rhs_positions]
+            # A same-root copy is safe when the selected cell sets are
+            # disjoint: each RHS read then precedes no write to that cell.
+            # Overlap remains loud because a blocking expansion would expose
+            # an earlier destination write to a later source read.
+            aliasing = (lhs_root == rhs_root
+                        and bool(set(lhs_cells) & set(rhs_cells)))
             if (len(lhs_cells) != len(rhs_positions) or lhs_width != rhs_width
-                    or lhs_root == rhs_root
-                    or not _case_source_expression_ok(expr.right)):
+                    or aliasing or not _case_source_expression_ok(expr.right)):
                 return None
             stmts = []
-            for lhs_name, rhs_position in zip(lhs_cells, rhs_positions):
+            for lhs_name, rhs_name in zip(lhs_cells, rhs_cells):
                 value = {
                     "kind": "Ident",
                     "span": node_span(sm, expr.right),
                     "width": rhs_width,
-                    "name": f"{rhs_root}[{rhs_position}]",
+                    "name": rhs_name,
                 }
                 if lhs_two:
                     value = squash2_wrap(value, lhs_width)
@@ -3000,12 +3006,40 @@ def _fixed_array_subarray_copy_assignment(sm, expr):
             return {"kind": "Block", "span": node_span(sm, expr),
                     "stmts": stmts,
                     "fixed_array_subarray_copy_lowered": True}
+        if lhs_shape is not None and rhs_shape is None and rhs_array is not None:
+            lhs_name, lhs_width, lhs_two, lhs_positions = lhs_shape
+            rhs_root, rhs_width, _rhs_two, rhs_positions = rhs_array
+            lhs_cells = {f"{lhs_name}[{position}]" for position in lhs_positions}
+            rhs_cells = [f"{rhs_root}[{position}]" for position in rhs_positions]
+            aliasing = (lhs_name == rhs_root and bool(lhs_cells & set(rhs_cells)))
+            if (len(lhs_positions) != len(rhs_cells) or lhs_width != rhs_width
+                    or aliasing or not _case_source_expression_ok(expr.right)):
+                return None
+            stmts = []
+            for lhs_position, rhs_name in zip(lhs_positions, rhs_cells):
+                value = {"kind": "Ident", "span": node_span(sm, expr.right),
+                         "width": rhs_width, "name": rhs_name}
+                if lhs_two:
+                    value = squash2_wrap(value, lhs_width)
+                stmts.append({
+                    "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                    "span": node_span(sm, expr),
+                    "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                               "width": lhs_width,
+                               "name": f"{lhs_name}[{lhs_position}]"},
+                    "value": value,
+                })
+            return {"kind": "Block", "span": node_span(sm, expr),
+                    "stmts": stmts,
+                    "fixed_array_slice_copy_lowered": True}
         if lhs_shape is None or rhs_shape is None:
             return None
         lhs_name, lhs_width, lhs_two, lhs_positions = lhs_shape
         rhs_root, rhs_cells, rhs_width, _rhs_two = rhs_shape
+        lhs_cells = {f"{lhs_name}[{position}]" for position in lhs_positions}
+        aliasing = (lhs_name == rhs_root and bool(lhs_cells & set(rhs_cells)))
         if (len(lhs_positions) != len(rhs_cells) or lhs_width != rhs_width
-                or lhs_name == rhs_root):
+                or aliasing):
             return None
         if not _case_source_expression_ok(expr.right):
             return None

@@ -93,6 +93,21 @@ files using this shape retain independent unsupported constructs. Differential
 coverage grows **221/216/0/5 → 222/217/0/5** with no disagreements, and grammar
 coverage remains **217/90/127**.
 
+## Fixed-array field assignment patterns — 2026-10-26
+
+Exact positional assignment patterns can now write a finite fixed unpacked
+array field inside an unpacked struct. The pattern is expanded into the
+field's existing flattened cells, preserving source-before-destination
+sampling and two-state conversion; dynamic, partial, aggregate, and aliased
+patterns remain loud. The `struct_array_field_pattern` fixture and
+differential row cover the admitted form, with extractor regression coverage
+for the member-path lowering.
+
+The **22,055-path** census moves **5,169 → 5,171 clean / 16,819 → 16,817
+partial** (67 include skips); `AssignmentExpression:target` falls **2,869 →
+2,867**. Differential coverage grows **222/217/0/5 → 223/218/0/5** with no
+disagreements, and grammar coverage remains **217/90/127**.
+
 ## Semaphore zero-key methods — 2026-10-24
 
 The self-check surface now admits `semaphore.put(0)` and `semaphore.get(0)`

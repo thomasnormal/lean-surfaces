@@ -599,6 +599,27 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_struct_fixed_array_field_pattern_write(self):
+        design = extract_source(
+            "module top; typedef struct { int values [0:1]; } T; T value; "
+            "initial begin value.values = '{4, 8}; "
+            "if (value.values[0] == 4 && value.values[1] == 8) "
+            "$display(\"PASS\"); end endmodule")
+        module = design["modules"][0]
+        self.assertEqual(
+            [decl["name"] for decl in module["decls"] if decl.get("kind") == "Var"],
+            ["value.values[0]", "value.values[1]"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_struct_fixed_array_field_pattern_self_read_stays_loud(self):
+        design = extract_source(
+            "module top; typedef struct { int values [0:1]; } T; T value; "
+            "initial value.values = '{value.values[0], 8}; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

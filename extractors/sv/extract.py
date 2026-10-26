@@ -4039,11 +4039,29 @@ def _fixed_array_pattern_assignment(sm, expr):
         if expr.op is not None or expr.timingControl is not None:
             return None
         lhs = expr.left
-        if not _storage_expression(lhs):
-            return None
-        if str(lhs.symbol.kind) != "SymbolKind.Variable":
-            return None
-        lhs_type = lhs.type.canonicalType
+        lhs_name = None
+        if _storage_expression(lhs):
+            if str(lhs.symbol.kind) != "SymbolKind.Variable":
+                return None
+            lhs_type = lhs.type.canonicalType
+            lhs_name = _array_storage_name(lhs.symbol)
+        else:
+            # A fixed array field of an unpacked struct is flattened into the
+            # same independent cells as a top-level array.  Resolve its
+            # member path here so a positional pattern can target those cells
+            # without introducing aggregate storage.
+            path = _unpacked_struct_path(lhs)
+            if path is None:
+                return None
+            lhs_name, selected_type = path
+            lhs_type = selected_type
+            root = lhs
+            while type(root).__name__ == "MemberAccessExpression":
+                root = root.value
+            if (not _storage_expression(root)
+                    or str(root.symbol.kind) != "SymbolKind.Variable"):
+                return None
+        lhs_type = lhs_type.canonicalType
         if type(lhs_type).__name__ != "FixedSizeUnpackedArrayType":
             return None
         element_type = lhs_type.elementType
@@ -4090,7 +4108,7 @@ def _fixed_array_pattern_assignment(sm, expr):
             elements = _pattern_source_elements(pattern)
             if len(elements) != count:
                 return None
-        target_name = _array_storage_name(lhs.symbol)
+        target_name = lhs_name
         converted = []
         for element in elements:
             if not _case_source_expression_ok(element, packed_members=True):
@@ -4101,6 +4119,11 @@ def _fixed_array_pattern_assignment(sm, expr):
             reads_target = False
             def inspect(node):
                 nonlocal reads_target
+                if type(node).__name__ == "ElementSelectExpression":
+                    selected = _fixed_array_selection_prefix(node)
+                    if (selected is not None
+                            and selected[0].startswith(target_name + "[")):
+                        reads_target = True
                 if type(node).__name__ in ("NamedValueExpression", "HierarchicalValueExpression"):
                     try:
                         reads_target = reads_target or _array_storage_name(node.symbol) == target_name

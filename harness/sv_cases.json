@@ -2000,6 +2000,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "struct_array_field_pattern",
+      "file": "Examples/system-verilog/struct_array_field_pattern/struct_array_field_pattern.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

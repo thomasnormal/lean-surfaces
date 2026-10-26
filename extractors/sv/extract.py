@@ -1429,6 +1429,40 @@ def _time_call(expression):
         return False
 
 
+def _fopen_invalid_mode_call(expression):
+    """Recognize the deterministic zero result for an invalid `$fopen` mode."""
+    try:
+        if (_SYM is not None or type(expression).__name__ != "CallExpression"
+                or not expression.isSystemCall
+                or expression.subroutineName != "$fopen"
+                or len(expression.arguments) != 2
+                or expression.type.bitWidth != 32
+                or not expression.type.isIntegral):
+            return False
+        path, mode = expression.arguments
+        while type(path).__name__ == "ConversionExpression":
+            path = path.operand
+        while type(mode).__name__ == "ConversionExpression":
+            mode = mode.operand
+        if (type(path).__name__ != "StringLiteral"
+                or type(mode).__name__ != "StringLiteral"
+                or getattr(path, "bad", False) or getattr(mode, "bad", False)):
+            return False
+        # IEEE 21.3.1 permits r/w/a with optional +; every other literal mode
+        # is rejected before any file operation is attempted.
+        return mode.value not in ("r", "w", "a", "r+", "w+", "a+")
+    except Exception:
+        return False
+
+
+def _convert_fopen_invalid_mode(sm, expression):
+    if not _fopen_invalid_mode_call(expression):
+        return unsupported(sm, expression, "CallExpression:$fopen")
+    return {"kind": "Literal", "span": node_span(sm, expression),
+            "width": 32, "bits": "0" * 32,
+            "fopen_invalid_mode": True}
+
+
 def _stime_call(expression):
     """A zero-argument `$stime` query in the time-zero self-check slice."""
     try:
@@ -7213,6 +7247,7 @@ def _convert_legacy_call(sm, expression):
         return mailbox_mismatch
     for recognizes, convert in (
             (_time_scale_call, _convert_time_scale_call),
+            (_fopen_invalid_mode_call, _convert_fopen_invalid_mode),
             (_plusargs_call, _convert_plusargs_call),
             (_dynamic_cast_call, _convert_dynamic_cast),
             (_isunbounded_call, _convert_isunbounded),
@@ -12575,6 +12610,8 @@ def _lower_stateful_processes(processes):
 def _case_skip_call_purity(node, packed_members):
     if _SYM is None and _time_call(node):
         return len(node.arguments) == 0
+    if _SYM is None and _fopen_invalid_mode_call(node):
+        return True
     if _SYM is None and _clog2_call(node):
         return len(node.arguments) == 1 and all(
             _case_source_expression_ok(argument, packed_members=packed_members)

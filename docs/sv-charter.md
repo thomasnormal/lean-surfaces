@@ -208,6 +208,19 @@ The capped **22,056-path** census moves **5,198 → 5,199 clean / 16,791 →
 → 230/225/0/5** with no disagreements; grammar coverage remains
 **217/90/127**.
 
+## Invalid literal `$fopen` modes — 2026-10-26
+
+`$fopen` with a literal path and an invalid literal mode now lowers to the
+standard zero descriptor without touching the filesystem. Valid modes,
+existence-dependent paths, and dynamic arguments remain loud. The
+`fopen_invalid_mode` fixture and differential case cover the deterministic
+form.
+
+The capped **22,056-path** census moves **5,199 → 5,200 clean / 16,790 →
+16,789 partial** (67 include skips); `CallExpression` falls **2,801 → 2,796**.
+Differential coverage grows **230/225/0/5 → 231/226/0/5** with no
+disagreements; grammar coverage remains **217/90/127**.
+
 ## Semaphore zero-key methods — 2026-10-24
 
 The self-check surface now admits `semaphore.put(0)` and `semaphore.get(0)`

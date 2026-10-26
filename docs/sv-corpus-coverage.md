@@ -104,6 +104,17 @@ The **22,056-path** census moves **5,198 → 5,199 clean** and **16,791 →
 **229/224/0/5 → 230/225/0/5** with no disagreements; grammar coverage remains
 **217/90/127**.
 
+## Invalid literal `$fopen` modes — 2026-10-26
+
+The extractor admits the deterministic IEEE case where `$fopen` receives a
+literal path and an invalid literal mode, producing descriptor zero without
+filesystem access. Valid or dynamic modes remain outside the surface.
+
+The **22,056-path** census moves **5,199 → 5,200 clean** and **16,790 →
+16,789 partial** (67 include skips); `CallExpression` falls **2,801 → 2,796**.
+Differential coverage grows **230/225/0/5 → 231/226/0/5** with no
+disagreements; grammar coverage remains **217/90/127**.
+
 ## Packed-array packed-struct member windows — 2026-10-26
 
 Constant element selections of packed arrays whose elements are untagged

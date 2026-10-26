@@ -2073,6 +2073,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "fopen_invalid_mode",
+      "file": "Examples/system-verilog/fopen_invalid_mode/fopen_invalid_mode.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

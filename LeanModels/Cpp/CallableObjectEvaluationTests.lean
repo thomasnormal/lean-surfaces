@@ -1964,6 +1964,37 @@ def callableLocalNestedShadowComputedInitializationStatementFrameWitness : Bool 
 
 #guard callableLocalNestedShadowComputedInitializationStatementFrameWitness
 
+private def localNestedShadowComputedInitializationReturnStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let outerInitializer : Expression :=
+    .binary .add (.read (handle "0x11")) (.literal (signed 2))
+  let innerInitializer : Expression :=
+    .binary .add (.read (handle "0x12")) (.literal (signed 1))
+  let function := {base with body := .block (.sequence
+    (.automatic {
+      statement := .declare (handle "0x11") intType intType (.literal (signed 3))
+      declarations := [handle "0x11"]})
+    (.block (.sequence
+      (.automatic {
+        statement := .declare (handle "0x12") intType intType outerInitializer
+        declarations := [handle "0x12"]})
+      (.block (.sequence
+        (.automatic {
+          statement := .declare (handle "0x13") intType intType innerInitializer
+          declarations := [handle "0x13"]})
+        (.return_ {
+          expression := .parameter (handle "0x11")
+          sourceType := intType
+          type := intType})))))) }
+  match evaluateCallableObject 128 .lp64 function [signed 7] with
+  | .ok (.ok value) => value == signed 3
+  | _ => false
+
+def callableLocalNestedShadowComputedInitializationReturnStatementFrameWitness : Bool :=
+  localNestedShadowComputedInitializationReturnStatementFrame
+
+#guard callableLocalNestedShadowComputedInitializationReturnStatementFrameWitness
+
 private def localNestedInitializationStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let initializer : Expression := .read (handle "0x11")

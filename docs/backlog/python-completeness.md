@@ -5933,3 +5933,23 @@ callable forms remain loud.
 
 DECIDED: admit only the immediate local `len` alias call; retain loud failure
 for returned or general first-class callable values.
+
+## 2026-10-26-pycomplete-167 — admit the immediate local `sorted` alias
+
+The local-builtin alias rewrite now includes `sorted`: `f = sorted;
+return f(values)` lowers to the existing sorted worker. Tuple and list inputs
+retain their fresh-list results and current comparison behavior. Returning
+`sorted` itself, shadowing it, and general first-class callable forms remain
+loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 2 cases: 0 failed, 2 matched on both interpreters |
+| Full executable differential | 3,703 cases: 0 failed, 44 whitelisted refusals, 3,659 matched |
+| Full proof differential | 3,703 cases: 0 failed, 153 refusals, 3,550 matched |
+| Refusal census | 44 rows, 0 drifts; no new refusal class |
+| Lean build | `lake build leanmodels-run` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `sorted` alias call; retain loud
+failure for returned or general first-class callable values.

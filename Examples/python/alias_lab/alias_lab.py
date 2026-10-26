@@ -41,3 +41,8 @@ def dead_alias():
     f = scale2
     return 0
 
+
+def sorted_alias(values):
+    f = sorted
+    return f(values)
+

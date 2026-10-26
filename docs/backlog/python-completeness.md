@@ -17,6 +17,30 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-140 — admit unknown exception constructor names
+
+`rsa_inverse.inverse(4, 6)` reaches `raise NotRelativePrimeError(x, n,
+divider)`, but the vendored module intentionally omits that package class.
+CPython resolves the unknown callee before evaluating its arguments and raises
+`NameError: name 'NotRelativePrimeError' is not defined`. Both interpreters
+now preserve that lookup order and return the exact `NameError`; known but
+unmodelled builtins, shadowed names, and admitted user classes with unsupported
+payloads remain loud. The script fixture for a scalar shadow now records its
+faithful `TypeError` as a match as well.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `rsa_inverse.inverse(4, 6)` MATCH in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,627 matched / 67 refused / 0 failed |
+| Full proof differential | 3,694 cases: 3,518 matched / 176 refused / 0 failed |
+| Refusal census | 67 rows, 0 drift after removing `rsa_inverse::inverse` |
+| Script census | 9 loud rows in 6 classes, 0 drift; the scalar shadow script now MATCHES |
+| Proof surface | `Examples/python/rsa_inverse/spec.lean` now checks the concrete `NameError` |
+
+DECIDED: admit only an unbound, non-builtin constructor-name lookup as a
+faithful `NameError`; retain loud behavior for known unmodelled builtins,
+shadowed names, unsupported user constructors, and dynamic exception values.
+
 ## 2026-10-26-pycomplete-138 — admit empty `OSError` raises
 
 The builtin exception representation already carried an empty class identity

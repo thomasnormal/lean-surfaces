@@ -1653,6 +1653,10 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
               | none => refuse s!"'raise {id}(…)': user exception and namedtuple constructors with payloads are outside the tier (docs/memory-model.md §exceptions)"
             else if (findNamedTuple m id).isSome then
               refuse s!"'raise {id}(…)': user exception and namedtuple constructors with payloads are outside the tier (docs/memory-model.md §exceptions)"
+            else if !isPyBuiltinName id then
+              -- Resolve the callee before its arguments, as CPython does:
+              -- an unknown constructor name is a faithful NameError.
+              raisePy (.nameError id)
             else
               match args.toList with
               | [arg] => do

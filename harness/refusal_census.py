@@ -931,7 +931,6 @@ WHITELIST_CLASS = {
     "bytes_lab::numeric_float_still_loud": "bytes.numeric-parsing",
     "float_lab::constructor_heap": "float.constructor-protocols",
     "float_lab::attribute_still_loud": "float.attributes",
-    "rsa_inverse::inverse": "exc.raise",
     "bench_bisect::bisect_left": "exc.raise",
     "dict_lab::ret_dict": "boundary.heap-value",
     "dict_lab::ret_tuple_with_dict": "boundary.heap-value",
@@ -1066,7 +1065,6 @@ WHITELIST_CLASS = {
 # the adjudicator is just diff_test now.
 
 SCRIPT_CLASS = {
-    "builtin_raise_shadow": "exc.raise",
     "nan_floor_script": "float.nan-payload",
     "nan_division_script": "float.nan-payload",
     "call_before_def": "script.definition-order",

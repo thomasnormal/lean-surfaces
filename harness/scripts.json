@@ -581,7 +581,7 @@
   },
   {
     "file": "harness/scripts/builtin_raise_shadow.py",
-    "expect": "unsupported"
+    "expect": "match"
   },
   {
     "file": "harness/scripts/builtin_raise_namesake.py",

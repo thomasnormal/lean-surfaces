@@ -3128,24 +3128,27 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                         cases hnt : findNamedTuple m id with
                         | some nt => simp [hfc, hnt]; exact .unsupported
                         | none =>
-                          simp [hfc, hnt]
-                          cases args.toList with
-                          | nil => exact .unsupported
-                          | cons arg rest =>
-                            cases rest with
-                            | cons _ _ => simp; exact .unsupported
-                            | nil =>
-                              cases arg with
-                              | constant c _ =>
-                                cases c with
-                                | str msg =>
-                                  cases hbe : builtinExcWithMessage id msg with
-                                  | some e => simp [hbe]; exact .exn
-                                  | none =>
-                                    simp [hbe]
-                                    split <;> exact .unsupported
+                          by_cases hpy : isPyBuiltinName id
+                          · simp [hfc, hnt, hpy]
+                            cases args.toList with
+                            | nil => exact .unsupported
+                            | cons arg rest =>
+                              cases rest with
+                              | cons _ _ => simp; exact .unsupported
+                              | nil =>
+                                cases arg with
+                                | constant c _ =>
+                                  cases c with
+                                  | str msg =>
+                                    cases hbe : builtinExcWithMessage id msg with
+                                    | some e => simp [hbe]; exact .exn
+                                    | none =>
+                                      simp [hbe]
+                                      split <;> exact .unsupported
+                                  | _ => exact .unsupported
                                 | _ => exact .unsupported
-                              | _ => exact .unsupported
+                          · simp [hfc, hnt, hpy]
+                            exact .exn
               | _ => exact .unsupported
       | assertStmt test msg _ =>
         -- the tail batch: IN the fragment and NOT vacuously — the

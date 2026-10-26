@@ -244,7 +244,9 @@ def render(diff, proof, grammar, tables):
              "names, but their bare raises remain unfinished. Other builtin "
              "exception names refuse; the empty `OSError` class identity is also "
              "admitted for direct raises, while OS-derived and payload-bearing "
-             "constructors remain loud. User classes `class E(Exception): pass` and the measured direct "
+             "constructors remain loud. An unknown constructor name in "
+             "`raise Missing(args…)` produces CPython's exact `NameError` before "
+             "its arguments run. User classes `class E(Exception): pass` and the measured direct "
              "builtin-ancestor shapes are admitted." % (len(exc), ", ".join("`%s`" % e for e in exc)))
     L.append("")
     others = sorted(n for n in cpython

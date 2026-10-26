@@ -1388,7 +1388,10 @@ parameter is the measured scalar exception slice: an immediate runtime value
 raises CPython's `TypeError("exceptions must derive from BaseException")`,
 while a heap reference remains loud. The extractor keeps builtin exception
 shadows and any later or additional local binding on the static-locals refusal
-path, so this does not change class-identity resolution.
+path, so this does not change class-identity resolution. In a constructor form
+`raise Missing(args…)`, callee lookup happens before argument evaluation: an
+unbound, non-builtin name therefore raises the exact `NameError` with its name,
+while known but unmodelled builtins and shadowed names remain loud.
 
 **Representation: class-identity exceptions, with one measured string payload.**
 `PyErr.user (cid : ClassId)` — a bare raised user exception IS its class

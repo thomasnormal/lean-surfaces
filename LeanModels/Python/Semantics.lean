@@ -9520,6 +9520,11 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                .unsupported s!"'raise {id}(…)': user exception and namedtuple constructors with payloads are outside the tier (docs/memory-model.md §exceptions)"
            else if (findNamedTuple m id).isSome then
              .unsupported s!"'raise {id}(…)': user exception and namedtuple constructors with payloads are outside the tier (docs/memory-model.md §exceptions)"
+           else if !isPyBuiltinName id then
+             -- The callee name is resolved before constructor arguments.  An
+             -- unknown name therefore raises the faithful NameError even
+             -- when the constructor shape itself is outside the tier.
+             .exn st (.nameError id)
            else
              match args.toList with
              | [(.constant (.str msg) _)] =>

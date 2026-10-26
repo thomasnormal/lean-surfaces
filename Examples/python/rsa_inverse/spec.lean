@@ -17,20 +17,17 @@ Tier facts (envelope, extractor run 2026-07-21):
   (incl. tuple-unpack `(a, b) = (b, a % b)`), AugAssign:Add,
   BinOp FloorDiv/Mod/Mult/Sub, Compare Lt/NotEq, Constant, Expr
   (docstring), If, Name, Return, Tuple, While.
-* `inverse(x, n)` — in-tier except EXACTLY ONE Unsupported node: the
-  `raise NotRelativePrimeError(x, n, divider)` statement (rsa_inverse.py
-  line 71). `inverse_spec` covers precisely that node with an
-  unreachability argument: coprime inputs ⇒ divider = 1 ⇒ the `if` guard
-  is concretely false ⇒ symbolic execution never reaches the raise.
-  Out-of-tier code is fine when proven unreachable — the interpreter
-  refuses it loudly everywhere else (the `#guard … matches .unsupported`
-  line below documents the edge: NON-coprime input does reach it).
+* `inverse(x, n)` — in-tier, including its one dynamic raise: the vendored
+  `NotRelativePrimeError` name is absent, so non-coprime inputs produce the
+  faithful `NameError` before constructor arguments are evaluated.
+  `inverse_spec` still proves that branch unreachable on coprime inputs:
+  divider = 1 makes the `if` guard concretely false.
 
 Authenticity: every expected value below was computed with Python 3.9.25
 against the vendored file AND against the installed rsa==4.9.1 package
 (pip, 2026-07-21) — both agree; the same rows run through the CPython
-differential harness (harness/cases.json, incl. the non-coprime
-`unsupported` row).
+differential harness (harness/cases.json, including the non-coprime
+`NameError` row).
 -/
 import Examples.python.rsa_inverse.proof
 
@@ -52,11 +49,13 @@ Tuple results use the typed int-triple marshalling (`ToVal
 #py_check rsa_inverse.extended_gcd(5, 0) = (((5, 1, 0) : PyInt × PyInt × PyInt))
 
 /-! Tier-edge documentation: a NON-coprime `inverse` call reaches the
-vendored `raise NotRelativePrimeError(…)` — the single Unsupported node —
-and the interpreter refuses loudly (`.unsupported`, not a Python result),
-so the check stays a raw `#guard … matches`. The theorems below prove the
-node is unreachable on the coprime domain — never that it is absent. -/
-#guard (callFunction rsa_inverse "inverse" #[.int 4, .int 6] 4096 matches .unsupported _)
+vendored `raise NotRelativePrimeError(…)`. The vendored module deliberately
+omits that package class, so CPython resolves the callee first and raises the
+faithful `NameError` before evaluating its arguments. The interpreter now
+models that unknown-constructor path exactly. The theorems below prove the
+raise is unreachable on the coprime domain — never that the source branch is
+absent. -/
+#py_check rsa_inverse.inverse(4, 6) raises (.nameError "NotRelativePrimeError")
 
 /-! Spec-shape notes. `extended_gcd` returns coefficients that are not a
 function of the inputs any spec would name, so its theorems are
@@ -110,11 +109,11 @@ theorem extended_gcd_zero (a : PyInt) (ha : 0 ≤ a) :
 On coprime inputs (`0 < x`, `1 < n`, `gcd x n = 1`) `inverse(x, n)`
 terminates and returns THE modular inverse: the unique `r` with
 `0 ≤ r < n` and `(r * x) % n = 1`. The `raise NotRelativePrimeError`
-branch — the function's single out-of-tier node — is proven UNREACHABLE
-on this domain (coprimality forces `divider = 1`, the guard is
-concretely false, symbolic execution never touches the raise), so the
-theorem is total correctness of the byte-verbatim shipped source with
-its exception path intact. -/
+branch — which raises the faithful unknown-name `NameError` — is proven
+UNREACHABLE on this domain (coprimality forces `divider = 1`, the guard is
+concretely false, symbolic execution never touches the raise), so the theorem
+is total correctness of the byte-verbatim shipped source with its exception
+path intact. -/
 theorem inverse_spec (x n : PyInt) (hx : 0 < x) (hn : 1 < n)
     (hco : Int.gcd x n = 1) :
     ∃ r : PyInt, 0 ≤ r ∧ r < n ∧ (r * x) % n = 1 ∧

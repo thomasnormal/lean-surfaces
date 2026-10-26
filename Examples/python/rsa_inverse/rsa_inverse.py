@@ -20,9 +20,9 @@ Vendoring rules (real-world demo, Examples/python/rsa_inverse):
   * "import typing" is retained from the original module: the eagerly
     evaluated return annotation of extended_gcd needs the name at def time.
   * NotRelativePrimeError (a ValueError subclass in rsa/common.py) is NOT
-    vendored: it occurs only inside the raise statement of inverse -- the
-    single out-of-tier node, covered by the proof's unreachability argument
-    for coprime inputs; no in-tier run evaluates the name.
+    vendored: the non-coprime branch therefore resolves an unknown name and
+    raises CPython's faithful NameError; the proof still shows that branch is
+    unreachable for coprime inputs.
 
 Authenticity (2026-07-21, Python 3.9.25): inverse(3, 7) = 5,
 inverse(7, 40) = 23, extended_gcd(12, 18) = (6, 17, 1) computed against

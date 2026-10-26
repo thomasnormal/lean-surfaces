@@ -206,9 +206,9 @@ theorem extended_gcd_zero (a : PyInt) (ha : 0 ≤ a) :
 inputs. Coprimality rewrites the callee fact's gcd to 1, and the closing
 `py_vcgen` consumes it as a local `CallsTo` hypothesis at the call site;
 the guard `divider != 1` is then concretely false, so the walk proves the
-`raise NotRelativePrimeError(…)` — the function's single out-of-tier
-(`Unsupported`) node — unreachable rather than modeling it. Zero
-residuals. -/
+`raise NotRelativePrimeError(…)` — an unknown-name `NameError` because the
+vendored module omits that package class — is unreachable on this domain.
+Zero residuals. -/
 private theorem inverse_core (x n : Int) (hx : 0 < x) (hn : 1 < n)
     (hco : Int.gcd x n = 1) :
     ∃ r : Int, 0 ≤ r ∧ r < n ∧ (r * x) % n = 1 ∧
@@ -223,8 +223,8 @@ private theorem inverse_core (x n : Int) (hx : 0 < x) (hn : 1 < n)
 /-- **Total correctness of the shipped `inverse`** (python-rsa 4.9.1): on
 coprime inputs `0 < x`, `1 < n`, it terminates and returns the modular
 inverse — the unique `r` with `0 ≤ r < n` and `r·x ≡ 1 (mod n)`. The
-`raise NotRelativePrimeError` branch (the function's single out-of-tier
-node) is unreachable under `gcd x n = 1`; see `inverse_core`. -/
+`raise NotRelativePrimeError` branch (a faithful unknown-name `NameError`) is
+unreachable under `gcd x n = 1`; see `inverse_core`. -/
 theorem inverse_spec (x n : PyInt) (hx : 0 < x) (hn : 1 < n)
     (hco : Int.gcd x n = 1) :
     ∃ r : PyInt, 0 ≤ r ∧ r < n ∧ (r * x) % n = 1 ∧

@@ -2127,6 +2127,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "nested_fixed_array_dynamic_target",
+      "file": "Examples/system-verilog/nested_fixed_array_dynamic_target/nested_fixed_array_dynamic_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

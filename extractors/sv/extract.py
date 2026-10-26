@@ -3239,6 +3239,72 @@ def _fixed_array_dynamic_read(sm, expression):
         return None
 
 
+def _fixed_array_nested_dynamic_read(sm, expression):
+    """Read a finite multidimensional array with one innermost dynamic index."""
+    try:
+        if type(expression).__name__ != "ElementSelectExpression":
+            return None
+        selectors = []
+        current = expression
+        while type(current).__name__ == "ElementSelectExpression":
+            selectors.append(current.selector)
+            current = current.value
+        if not _storage_expression(current):
+            return None
+        shape = _fixed_array_dimensions(current.type, max_cells=1024)
+        if shape is None:
+            return None
+        dimensions, leaf_type = shape
+        if len(selectors) != len(dimensions):
+            return None
+        positions = list(reversed(selectors))
+        dynamic = [i for i, selector in enumerate(positions)
+                   if _constant_dimension_selector(selector) is None]
+        if len(dynamic) != 1 or dynamic[0] != len(dimensions) - 1:
+            return None
+        width, two_state, reason = type_width_2s(leaf_type)
+        if width is None or reason is not None:
+            return None
+        fixed = []
+        for selector, (left, right) in zip(positions[:-1], dimensions[:-1]):
+            value = _constant_dimension_selector(selector)
+            if value is None or value < min(left, right) or value > max(left, right):
+                return None
+            fixed.append(value)
+        selector = positions[-1]
+        index_width, _index_two, index_reason = type_width_2s(selector.type)
+        if (index_width is None or index_reason is not None
+                or not _case_source_expression_ok(selector)):
+            return None
+        converted_index = convert_expr(sm, selector)
+        if converted_index is None or width_of(converted_index) != index_width:
+            return None
+        left, right = dimensions[-1]
+        result = {"kind": "Literal", "span": node_span(sm, expression),
+                  "width": width, "bits": "0" if two_state else "x" * width}
+        if two_state:
+            result["bits"] = "0" * width
+        mask = (1 << index_width) - 1
+        step = 1 if right >= left else -1
+        root = _array_storage_name(current.symbol)
+        for position in reversed(list(range(left, right + step, step))):
+            name = root + "".join(f"[{item}]" for item in fixed + [position])
+            literal = {"kind": "Literal", "span": node_span(sm, selector),
+                       "width": index_width,
+                       "bits": format(position & mask, f"0{index_width}b")}
+            result = {"kind": "Ternary", "span": node_span(sm, expression),
+                      "width": width,
+                      "cond": {"kind": "Binary", "span": node_span(sm, selector),
+                               "width": 1, "op": "===", "left": converted_index,
+                               "right": literal},
+                      "then": {"kind": "Ident", "span": node_span(sm, expression),
+                               "width": width, "name": name},
+                      "else": result}
+        return result
+    except Exception:
+        return None
+
+
 def _fixed_array_dynamic_assignment(sm, expr):
     """Lower a dynamic write to mutually exclusive per-cell branches."""
     try:
@@ -3324,6 +3390,98 @@ def _fixed_array_dynamic_assignment(sm, expr):
             return {"kind": "Block", "span": node_span(sm, expr),
                     "stmts": [result, index_update],
                     "postindexed_array_write_lowered": True}
+        return result
+    except Exception:
+        return None
+
+
+def _fixed_array_nested_dynamic_assignment(sm, expr):
+    """Lower one dynamic selector through a finite multidimensional array.
+
+    Every other unpacked dimension must be selected by a constant label. The
+    finite cell expansion then becomes a mutually exclusive conditional over
+    the one dynamic dimension; multiple dynamic selectors and aggregate leaves
+    stay on the ordinary loud target boundary.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None
+                or type(expr.left).__name__ != "ElementSelectExpression"):
+            return None
+        selectors = []
+        current = expr.left
+        while type(current).__name__ == "ElementSelectExpression":
+            selectors.append(current.selector)
+            current = current.value
+        if not _storage_expression(current):
+            return None
+        shape = _fixed_array_dimensions(current.type, max_cells=1024)
+        if shape is None:
+            return None
+        dimensions, leaf_type = shape
+        if len(selectors) != len(dimensions):
+            return None
+        positions = list(reversed(selectors))
+        dynamic = [index for index, selector in enumerate(positions)
+                   if _constant_dimension_selector(selector) is None]
+        if len(dynamic) != 1:
+            return None
+        dynamic_index = dynamic[0]
+        # Keep outer-dimension dispatch loud: the existing flat-array
+        # expansion has no row object to preserve when an outer index changes.
+        # The innermost selector alone can be represented as a finite leaf
+        # choice after all enclosing dimensions are fixed.
+        if dynamic_index != len(dimensions) - 1:
+            return None
+        width, two_state, reason = type_width_2s(leaf_type)
+        if width is None or reason is not None:
+            return None
+        selector = positions[dynamic_index]
+        index_width, _index_two, index_reason = type_width_2s(selector.type)
+        if (index_width is None or index_reason is not None
+                or not _case_source_expression_ok(selector)
+                or not _case_source_expression_ok(expr.right)):
+            return None
+        converted_index = convert_expr(sm, selector)
+        value = convert_expr(sm, expr.right)
+        if (converted_index is None or value is None
+                or width_of(converted_index) != index_width
+                or width_of(value) != width
+                or not _case_expression_ok(converted_index)
+                or not _case_expression_ok(value)):
+            return None
+        fixed_positions = []
+        for index, (selector_value, (left, right)) in enumerate(zip(positions, dimensions)):
+            if index == dynamic_index:
+                fixed_positions.append(None)
+                continue
+            position = _constant_dimension_selector(selector_value)
+            if position is None or position < min(left, right) or position > max(left, right):
+                return None
+            fixed_positions.append(position)
+        left, right = dimensions[dynamic_index]
+        step = 1 if right >= left else -1
+        mask = (1 << index_width) - 1
+        result = None
+        for position in reversed(list(range(left, right + step, step))):
+            indexes = list(fixed_positions)
+            indexes[dynamic_index] = position
+            name = _array_storage_name(current.symbol) + "".join(
+                f"[{item}]" for item in indexes)
+            branch_value = squash2_wrap(value, width) if two_state else value
+            branch = {"kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                      "span": node_span(sm, expr),
+                      "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                                 "width": width, "name": name},
+                      "value": branch_value}
+            literal = {"kind": "Literal", "span": node_span(sm, selector),
+                       "width": index_width,
+                       "bits": format(position & mask, f"0{index_width}b")}
+            result = {"kind": "If", "span": node_span(sm, expr),
+                      "cond": {"kind": "Binary", "span": node_span(sm, selector),
+                               "width": 1, "op": "===", "left": converted_index,
+                               "right": literal},
+                      "then": branch, "else": result}
         return result
     except Exception:
         return None
@@ -6834,6 +6992,9 @@ def _convert_selected_read(sm, expr, expression_kind):
         dynamic_array = _fixed_array_dynamic_read(sm, expr)
         if dynamic_array is not None:
             return dynamic_array
+        nested_dynamic_array = _fixed_array_nested_dynamic_read(sm, expr)
+        if nested_dynamic_array is not None:
+            return nested_dynamic_array
     nested_window = _nested_packed_constant_window(sm, expr, "SelectRead")
     if nested_window is not None:
         return nested_window
@@ -13719,6 +13880,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         array_copy = _fixed_array_copy_assignment(sm, expr)
         if array_copy is not None:
             return array_copy
+        nested_dynamic_array = _fixed_array_nested_dynamic_assignment(sm, expr)
+        if nested_dynamic_array is not None:
+            return nested_dynamic_array
         dynamic_array = _fixed_array_dynamic_assignment(sm, expr)
         if dynamic_array is not None:
             return dynamic_array

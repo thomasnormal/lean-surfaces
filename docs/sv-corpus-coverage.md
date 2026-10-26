@@ -105,6 +105,14 @@ nested streams, and aggregate targets remain loud. The refreshed corpus counts
 are unchanged because this narrow one-bit shape has no sole witness in the
 current sv-tests-2 snapshot.
 
+## Innermost dynamic selectors in finite multidimensional arrays — 2026-10-26
+
+Assignments and reads with one dynamic selector in the innermost dimension of
+a finite multidimensional integral array now dispatch through flat cells.
+Outer dynamic selectors, multiple dynamic selectors, and aggregate leaves
+remain loud. The refreshed corpus counts are unchanged because this narrow
+shape has no sole witness in the current sv-tests-2 snapshot.
+
 ## Pure literal integral continuous expressions — 2026-10-26
 
 Continuous assignment now folds an all-literal unsigned integral arithmetic or

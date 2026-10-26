@@ -6782,6 +6782,15 @@ dynamic-array operations remain loud. `dynamic_fixed_size_mismatch` supplies
 the `BEFORE` transcript and the extractor tests pin the mismatch and equal-size
 boundaries.
 
+## Innermost dynamic selectors in finite multidimensional arrays — 2026-10-26
+
+Assignments and reads with one dynamic selector in the innermost dimension of
+a finite multidimensional integral array now dispatch through the existing
+cell expansion. All enclosing dimensions must be constant; outer dynamic
+selectors, multiple dynamic selectors, and aggregate leaves remain loud. The
+`nested_fixed_array_dynamic_target` fixture supplies the differential row and
+Lean receipt, with extractor regressions for the admitted and rejected shapes.
+
 ## Pure literal integral continuous expressions — 2026-10-26
 
 Continuous assignment now folds an all-literal unsigned integral arithmetic or

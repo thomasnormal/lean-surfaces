@@ -156,8 +156,9 @@ cycle DETECTION, never by running out of fuel).
 * `is` on two refs is address equality — faithful, decided dynamically
   (the extractor stops collapsing non-`None` identity comparisons to
   `Unsupported`; the interpreter refuses only the remaining out-of-tier
-  operand forms, loudly). `is` between non-ref immediates other than the
-  `None` link stays out of tier (CPython caching is
+  operand forms, loudly). Booleans and integer immediates in the pinned
+  CPython 3.9 small-integer cache `-5 … 256` now use their stable singleton
+  identity; other immediate pairs stay out of tier (CPython caching is
   implementation-defined). Tuple `is` stays out of tier (documented
   omission, never wrong).
 * Immediate binary64 NaNs compare unequal to every float, including another

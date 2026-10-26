@@ -51,6 +51,22 @@ extra dunders remain refused under the default-protocol guard.
 DECIDED: permit only inert `__repr__` on an admitted context manager; retain
 loud failure for dunders that can alter modeled protocol operations.
 
+## 2026-10-26-pycomplete-152 — admit cached immediate identity
+
+The identity comparison tier now decides booleans and integer immediates in
+CPython 3.9's pinned small-integer cache, `-5` through `256`. Mixed bool/int
+identity remains false, while larger integer pairs and other immediate kinds
+remain loud because their identity is implementation-dependent.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `dict_lab.int_is(1, 1)` matches `True`; `int_is(1, 2)` matches `False` |
+| Refusal census | `dict_lab::int_is` removed from `op.Is-immediates` |
+| Lean build | `lake build leanmodels-run` passed |
+
+DECIDED: admit only the pinned bool and small-integer singleton identities;
+retain loud failure for implementation-dependent immediate identities.
+
 ## 2026-10-26-pycomplete-149 — scope starred-display shadow checks lexically
 
 Starred-display lowering now checks `list` and `tuple` bindings in the lexical

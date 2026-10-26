@@ -74,7 +74,7 @@
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "nested_dicts", "args": [[]], "expect": "match"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "dict_eq_mixed", "args": [[]], "expect": "match"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "store_exc_state", "args": [[3]], "expect": "match"},
-  {"file": "Examples/python/dict_lab/dict_lab.py", "function": "int_is", "args": [[1, 1], [1, 2]], "expect": "unsupported"},
+  {"file": "Examples/python/dict_lab/dict_lab.py", "function": "int_is", "args": [[1, 1], [1, 2]], "expect": "match"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "iter_dict", "args": [[]], "expect": "match", "note": "OPENED by inch 3a (the live dict cursor). Was whitelisted while the trunk refused it; with one interpreter CPython adjudicates, which is what MONO_OPENED deferred to monadic_gate.py for"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "mate_style", "args": [[]], "expect": "match"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "clear_len", "args": [[5], [0]], "expect": "match"},

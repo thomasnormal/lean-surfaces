@@ -672,6 +672,8 @@ def floatOrder (op : CmpOp) (equal less greater : Bool) : Bool :=
   | .gtE => greater || equal
   | _ => false
 
+def smallIntIdentity (x : Int) : Bool := -5 ≤ x && x ≤ 256
+
 /-- One comparison step. `==`/`!=` are `valEq` (`Res`-valued since H1 — see
 there). Identity against `None` or `Ellipsis` is value-determined because
 both are singletons. Other immediate identities stay loud (small-int caching,
@@ -685,15 +687,23 @@ def evalCompareOp (op : CmpOp) (a b : RVal) : Res Bool :=
   | .is =>
     if a.isNone || b.isNone then .ok (a.isNone && b.isNone)
     else if a.isEllipsis || b.isEllipsis then .ok (a.isEllipsis && b.isEllipsis)
-    else
-      .unsupported
-        s!"'is' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the v0 tier"
+    else match a, b with
+      | .bool x, .bool y => .ok (x == y)
+      | .int x, .int y =>
+          if smallIntIdentity x && smallIntIdentity y then .ok (x == y)
+          else .unsupported s!"'is' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the v0 tier"
+      | .bool _, .int _ | .int _, .bool _ => .ok false
+      | _, _ => .unsupported s!"'is' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the v0 tier"
   | .isNot =>
     if a.isNone || b.isNone then .ok (!(a.isNone && b.isNone))
     else if a.isEllipsis || b.isEllipsis then .ok (!(a.isEllipsis && b.isEllipsis))
-    else
-      .unsupported
-        s!"'is not' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the v0 tier"
+    else match a, b with
+      | .bool x, .bool y => .ok (x != y)
+      | .int x, .int y =>
+          if smallIntIdentity x && smallIntIdentity y then .ok (x != y)
+          else .unsupported s!"'is not' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the v0 tier"
+      | .bool _, .int _ | .int _, .bool _ => .ok true
+      | _, _ => .unsupported s!"'is not' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the v0 tier"
   | .inOp =>
       .unsupported
         s!"'in' on '{b.typeName}' is outside this tier (dict membership lands with H1-proper, docs/memory-model.md)"
@@ -4868,9 +4878,12 @@ def evalCompareOpH (h : Heap) (fuel : Nat) (op : CmpOp) (a b : RVal) : Res Bool 
       | .ref x, .ref y => .ok (x == y)
       | .ref _, _ => .ok false
       | _, .ref _ => .ok false
-      | a, b =>
-        .unsupported
-          s!"'is' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the tier"
+      | .bool x, .bool y => .ok (x == y)
+      | .int x, .int y =>
+          if smallIntIdentity x && smallIntIdentity y then .ok (x == y)
+          else .unsupported "'is' between 'int' and 'int' (identity is not value-determined) is outside the tier"
+      | .bool _, .int _ | .int _, .bool _ => .ok false
+      | a, b => .unsupported s!"'is' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the tier"
   | .isNot =>
     if a.isNone || b.isNone then .ok (!(a.isNone && b.isNone))
     else if a.isEllipsis || b.isEllipsis then .ok (!(a.isEllipsis && b.isEllipsis))
@@ -4879,9 +4892,12 @@ def evalCompareOpH (h : Heap) (fuel : Nat) (op : CmpOp) (a b : RVal) : Res Bool 
       | .ref x, .ref y => .ok (x != y)
       | .ref _, _ => .ok true
       | _, .ref _ => .ok true
-      | a, b =>
-        .unsupported
-          s!"'is not' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the tier"
+      | .bool x, .bool y => .ok (x != y)
+      | .int x, .int y =>
+          if smallIntIdentity x && smallIntIdentity y then .ok (x != y)
+          else .unsupported "'is not' between 'int' and 'int' (identity is not value-determined) is outside the tier"
+      | .bool _, .int _ | .int _, .bool _ => .ok true
+      | a, b => .unsupported s!"'is not' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the tier"
   | .inOp => valContains h fuel a b
   | .notIn => do let e ← valContains h fuel a b; return !e
   | op => evalCompareOp op a b

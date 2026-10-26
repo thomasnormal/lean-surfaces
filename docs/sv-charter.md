@@ -43,6 +43,18 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Discarded bounded `$isunbounded` queries — 2026-10-26
+
+A literal or bounded-parameter `$isunbounded` call in statement position now
+erases its discarded one-bit result. IEEE 1800-2023 §6.20.7 makes these values
+known bounded rather than the special `$` value; ordinary variables, unbounded
+parameters, malformed calls, and value uses remain loud. The
+`isunbounded_statement` fixture covers both literal and parameter forms. The
+22,059-path census remains **5,240 clean / 16,752 partial** (67 include skips),
+with `AssignmentExpression:target` at **2,853** and
+`ExpressionStatement:CallExpression` at **2,775**; differential coverage grows
+**264/259/0/5 → 265/260/0/5** and grammar coverage remains **217/92/125**.
+
 ## Discarded time-zero realtime query — 2026-10-26
 
 The zero-argument `$realtime` call now erases when its real result is discarded

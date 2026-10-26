@@ -24,6 +24,11 @@ parallel signedness metadata. A bare output call is an empty write or line.
 The ordinary `$cast` statement has its own dynamic-cast lowering and therefore
 does not rely on the generic call-statement admission.
 
+A discarded `$isunbounded` query is also inert for a literal or bounded
+parameter operand. The existing expression rule proves the one-bit result is
+zero, and statement position observes no value. Ordinary variables, unbounded
+parameters, malformed calls, and value-position queries remain loud.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument

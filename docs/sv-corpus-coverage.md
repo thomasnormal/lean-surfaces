@@ -25,6 +25,19 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Discarded bounded `$isunbounded` queries — 2026-10-26
+
+Literal and bounded-parameter `$isunbounded` calls in statement position now
+erase their discarded result. The existing one-bit expression lowering proves
+that these operands cannot be the special unbounded value; ordinary variables,
+unbounded parameters, malformed calls, and value uses remain loud. The
+`isunbounded_statement` fixture supplies the differential row and Lean receipt.
+The fresh census remains **5,240 clean / 16,752 partial** (67 include skips),
+with `AssignmentExpression:target` at **2,853** and
+`ExpressionStatement:CallExpression` at **2,775**. Differential coverage grows
+**264/259/0/5 → 265/260/0/5** with no disagreements, and grammar coverage
+remains **217/92/125**.
+
 ## Discarded time-zero realtime query — 2026-10-26
 
 The zero-argument `$realtime` call now erases when its real result is discarded

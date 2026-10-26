@@ -31,6 +31,15 @@ class IsUnbounded(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
+    def test_discarded_bounded_literal_is_inert(self):
+        design = lower(
+            'module top; initial begin $isunbounded(5); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("isunbounded_statement")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

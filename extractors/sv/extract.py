@@ -15820,6 +15820,13 @@ def _convert_syscall(sm, s, e):
         # loud through the existing real/time boundary.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "realtime_query_statement": name}
+    if is_sys and _isunbounded_call(e):
+        # A bounded literal or parameter is never the special ``$`` value.
+        # Its one-bit result is pure and discarded here; ordinary variables,
+        # unbounded parameters, and value-position calls stay on the existing
+        # expression boundary.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "isunbounded_statement": name}
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

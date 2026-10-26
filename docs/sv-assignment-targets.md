@@ -59,6 +59,18 @@ a second scheduler. A future target rung must first supply the missing storage
 or the scheduler-facing continuous-assignment rule, then add a source-bound
 fixture and an independent simulator comparison.
 
+## Selected continuous windows from one literal source write — 2026-10-26
+
+A packed net's selected continuous drivers may read a variable with one direct
+literal initialization, either a declaration initializer or a blocking write
+in an `initial` block. The extractor snapshots each fixed source window and
+feeds the existing per-bit literal-driver resolver, so overlapping windows
+retain IEEE wire resolution without a live driver store. Dynamic selectors,
+aliases, multiple source writes, effectful expressions, strength combinations,
+and other scheduler-visible drivers remain loud. The
+`continuous_selected_history_windows` fixture covers an overlapping bit and
+part-select pair; `scalared_net_allows_bitselect` is the corpus witness.
+
 ## Dynamic noncanonical packed indexed slices — 2026-10-26
 
 Dynamic `+:` and `-:` targets on noncanonical one-bit packed vectors now map

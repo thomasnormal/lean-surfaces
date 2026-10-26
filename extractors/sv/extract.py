@@ -8931,11 +8931,61 @@ def _continuous_history_literal(sm, expression):
 
 
 def _continuous_static_value(sm, expression):
-    """Fold the admitted once-assigned literal source of a continuous driver."""
+    """Fold an admitted once-assigned literal source of a continuous driver.
+
+    A selected read such as ``data[3:0]`` is also source-pure when ``data``
+    has exactly one direct blocking literal write in an ``initial`` block.
+    Snapshotting that fixed window lets the existing literal net-resolution
+    path handle overlapping selected drivers without inventing a live driver
+    store.  Dynamic selectors, aliases, and every source with more than one
+    write stay on the scheduler-owned boundary.
+    """
     try:
         if type(expression).__name__ == "NamedValueExpression":
             return _continuous_history_literal(sm, expression)
-        return None
+        if type(expression).__name__ not in (
+                "ElementSelectExpression", "RangeSelectExpression"):
+            return None
+        base = getattr(expression, "value", None)
+        if type(base).__name__ != "NamedValueExpression":
+            return None
+        source = _continuous_history_literal(sm, base)
+        if source is None:
+            source = _continuous_bound_literal(sm, base)
+        if source is None:
+            return None
+        target, admitted = legacy_blocking_target(sm, expression)
+        if (not admitted or target.get("kind") != "SelectTarget"
+                or target.get("value", {}).get("kind") != "Ident"):
+            return None
+        source_name = _array_storage_name(getattr(base, "symbol", None))
+        if source_name is None or target["value"].get("name") != source_name:
+            return None
+        index = target.get("index")
+        width = target.get("width")
+        bits = index.get("bits") if isinstance(index, dict) else None
+        if (not isinstance(width, int) or width <= 0
+                or not isinstance(bits, str) or not bits
+                or any(bit not in "01" for bit in bits)):
+            return None
+        position = int(bits, 2)
+        low = position - width + 1 if target.get("descending") else position
+        source_width = source.get("width")
+        source_bits = source.get("bits")
+        if (not isinstance(source_width, int)
+                or not isinstance(source_bits, str)
+                or len(source_bits) != source_width
+                or low < 0 or low + width > source_width):
+            return None
+        # Envelope literals are MSB-first while the evaluator stores vectors
+        # LSB-first.  Preserve the selected read's source order by extracting
+        # the low-offset window and rendering it back in envelope order.
+        selected = list(reversed(source_bits))[low:low + width]
+        result = dict(source)
+        result["span"] = node_span(sm, expression)
+        result["width"] = width
+        result["bits"] = "".join(reversed(selected))
+        return result
     except Exception:
         return None
 

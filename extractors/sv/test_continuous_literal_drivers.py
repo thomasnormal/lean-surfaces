@@ -144,6 +144,40 @@ class ContinuousLiteralDrivers(unittest.TestCase):
         self.assertFalse(any(node.get("continuous_static_resolution")
                              for node in nodes(design)))
 
+    def test_selected_single_initial_write_sources_resolve(self):
+        design = extract_source(
+            "module top; logic [7:0] source; wire [7:0] bus; "
+            "assign bus[0] = source[0]; assign bus[3:0] = source[3:0]; "
+            "initial source = 8'b1010_1010; endmodule")
+        module = design["modules"][0]
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        initial = [process for process in module["processes"]
+                   if process.get("continuous_selected_static_resolution")]
+        self.assertEqual(len(initial), 2)
+        self.assertEqual(initial[0]["body"]["value"]["bits"], "zzzz1010")
+        self.assertEqual(initial[1]["body"]["kind"], "Empty")
+
+    def test_selected_declaration_literal_source_resolves(self):
+        design = extract_source(
+            "module top; logic [7:0] source = 8'b1010_1010; "
+            "wire [7:0] bus; assign bus[0] = source[0]; "
+            "assign bus[3:0] = source[3:0]; endmodule")
+        initial = [process for process in design["modules"][0]["processes"]
+                   if process.get("continuous_selected_static_resolution")]
+        self.assertEqual(len(initial), 2)
+        self.assertEqual(initial[0]["body"]["value"]["bits"], "zzzz1010")
+
+    def test_selected_multiple_initial_writes_remain_dynamic(self):
+        design = extract_source(
+            "module top; logic [3:0] source; wire [3:0] bus; "
+            "assign bus[1:0] = source[1:0]; "
+            "initial begin source = 4'b0001; source = 4'b0010; end endmodule")
+        self.assertTrue(any(node.get("kind") == "Assign"
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("continuous_selected_static_resolution")
+                             for node in nodes(design)))
+
     def test_control_dependent_initial_write_remains_dynamic(self):
         design = extract_source(
             "module top; logic source; wire bus; assign bus = source; "

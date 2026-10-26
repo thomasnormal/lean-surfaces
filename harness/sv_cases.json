@@ -2280,6 +2280,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "continuous_selected_history_windows",
+      "file": "Examples/system-verilog/continuous_selected_history_windows/continuous_selected_history_windows.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

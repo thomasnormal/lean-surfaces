@@ -43,6 +43,19 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Selected continuous windows from one literal source write — 2026-10-26
+
+Fixed packed-net windows whose source variable has one direct literal
+initialization now snapshot that source before the existing static per-bit
+resolver. Dynamic, multiply-written, effectful, and strength-sensitive drivers
+remain loud because they need the kernel's live continuous-driver path. The
+`continuous_selected_history_windows` fixture and the
+`scalared_net_allows_bitselect` corpus witness cover the admitted source-bound
+shape. The 22,058-path census moves **5,230 → 5,231 clean** and
+**16,761 → 16,760 partial**, while `AssignmentExpression:target` falls
+**2,856 → 2,855**; differential coverage is **254/249/0/5** and grammar
+coverage remains **217/92/125**.
+
 ## Dynamic noncanonical packed indexed slices — 2026-10-26
 
 Dynamic `+:` and `-:` part-selects on noncanonical one-bit packed vectors now

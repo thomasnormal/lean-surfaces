@@ -25,13 +25,25 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Selected continuous windows from one literal source write — 2026-10-26
+
+Fixed packed-net windows whose source variable has one direct literal
+initialization now snapshot that source before the existing static per-bit
+resolver. This admits the overlapping `scalared_net_allows_bitselect` witness
+without introducing a live continuous-driver store; dynamic, multiply-written,
+and effectful sources remain on the scheduler boundary. The fresh census moves
+**5,230 → 5,231 clean** and **16,761 → 16,760 partial** (67 include skips),
+with `AssignmentExpression:target` falling **2,856 → 2,855**. Differential
+coverage grows **253/248/0/5 → 254/249/0/5** with no disagreements, and grammar
+coverage remains **217/92/125**.
+
 ## Fresh extractor census — 2026-10-26
 
-The chapter-scoped rerun covered **22,058** paths: **5,230 clean**,
-**16,761 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,058** paths: **5,231 clean**,
+**16,760 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`AssignmentExpression:target` (2,856), `CallExpression` (2,778),
+`AssignmentExpression:target` (2,855), `CallExpression` (2,778),
 `ExpressionStatement:CallExpression` (2,775), `Hierarchy:ports` (2,400),
 `VariableSymbol:2state` (2,223), `SubroutineSymbol:Subroutine` (1,634),
 `NamedValueExpression:2state` (1,485), `ConcurrentAssertionStatement`

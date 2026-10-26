@@ -1530,8 +1530,10 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
       | none, [item] =>
           match item.context with
           | .call (.name fname _) _args kwargs callUnsupported _ =>
-              if !((findFunction m (fname ++ ".__exit__")).map
-                  FunctionDefn.withExitExceptionArgsFree == some true) then
+              let exitFn := findFunction m (fname ++ ".__exit__")
+              let exitArgsFree := exitFn.map FunctionDefn.withExitExceptionArgsFree == some true
+              let exitTypeTest := exitFn.map FunctionDefn.withExitExceptionTypeTest == some true
+              if !exitArgsFree && !exitTypeTest then
                 refuse "with body exceptions require __exit__ not to inspect exception arguments (full exception triples are outside the tier)"
               else if !kwargs.isEmpty || callUnsupported.isSome then
                 refuse "with context calls with keywords or starred arguments are outside the tier"
@@ -1556,10 +1558,14 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
                     assignTargetM item.target entered
                     let flow ←
                       tryCatch (do
-                        let flow ← execOpenList K m body.toList
+                        let flow ← K.withBody body.toList
                         pure (Except.ok flow)) (fun e => do
                       envSet contextName context
-                      withExitResult (evalOpen K m) exitExpr
+                      withExitResult (evalOpen K m)
+                        (if exitTypeTest then
+                          Expr.call (Expr.attribute (Expr.name contextName sp) "__exit__" sp)
+                            #[.constant (.str "exception") sp, noneExpr, noneExpr] #[] Option.none sp
+                        else exitExpr)
                         (restoreEnvM contextName old) e)
                     withExitOnFlow (evalOpen K m) exitExpr
                       (restoreEnvM contextName old) flow
@@ -2345,7 +2351,8 @@ def kont (m : Module) : Nat → Kont
       execGen := fun k => execGenAt (kont m fuel) m k
       forGen := fun t a b => forGenAt (kont m fuel) m t a b
       drainIter := fun a => drainIterAt (kont m fuel) a
-      anyAllIter := fun a b => anyAllIterAt (kont m fuel) a b }
+      anyAllIter := fun a b => anyAllIterAt (kont m fuel) a b
+      withBody := fun body => execOpenList (kont m fuel) m body }
   termination_by structural fuel => fuel
 
 

@@ -285,6 +285,8 @@ structure Kont where
   drainIter : Addr → SemW (List RVal)
   /-- `any`/`all` over a generator: short-circuits, leaves it SUSPENDED. -/
   anyAllIter : Addr → Bool → SemW Bool
+  /-- Execute a nested statement body through the successor continuation. -/
+  withBody : List Stmt → SemF RFlow
 
 /-- The fuel-exhausted continuation: every fueled operation is `.timeout`.
 This is `kont m 0`, and it is the ONLY source of `.timeout` in the rebuild —
@@ -304,6 +306,7 @@ def Kont.bottom : Kont where
   forGen      := fun _ _ _ => exhausted
   drainIter   := fun _     => exhausted
   anyAllIter  := fun _ _   => exhausted
+  withBody    := fun _     => exhausted
 
 /-! ## §4 THE REBUILD FRONTIER
 

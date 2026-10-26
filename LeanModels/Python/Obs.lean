@@ -1513,7 +1513,9 @@ theorem fuelMono (fuel : Nat) :
                                     Run.le_bind
                                       (Run.le_withLocals
                                         (ihCall m sBody.world (fname ++ ".__exit__")
-                                          #[.ref a, .none, .none, .none] k hk))
+                                          (withExitArgs
+                                            ((findFunction m (fname ++ ".__exit__")).map
+                                              FunctionDefn.withExitExceptionTypeTest == some true) a) k hk))
                                       (fun sExit _ => Run.le_refl _))
                                 cases flow with
                                 | next | ret _ | brk | cont =>
@@ -1532,7 +1534,9 @@ theorem fuelMono (fuel : Nat) :
                                     Run.le_bind
                                       (Run.le_withLocals
                                         (ihCall m sBody.world (fname ++ ".__exit__")
-                                          #[.ref a, .none, .none, .none] k hk))
+                                          (withExitArgs
+                                            ((findFunction m (fname ++ ".__exit__")).map
+                                              FunctionDefn.withExitExceptionTypeTest == some true) a) k hk))
                                       (fun sExit _ => Run.le_refl _))
                                 cases flow with
                                 | next | ret _ | brk | cont =>

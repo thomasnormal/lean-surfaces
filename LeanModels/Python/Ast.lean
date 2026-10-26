@@ -451,6 +451,20 @@ def FunctionDefn.withExitExceptionArgsFree (f : FunctionDefn) : Bool :=
       !f.body.toList.any (stmtMentionsAny names)
   | [] => false
 
+/-- The one exception-argument context-manager shape admitted beyond the
+`argsFree` slice: `__exit__(self, exc_type, exc, tb)` returns exactly
+`exc_type is not None`.  The evaluator can supply a non-`None` marker for
+the exception class on the exceptional path, so this narrow predicate does
+not pretend to model arbitrary exception triples. -/
+def FunctionDefn.withExitExceptionTypeTest (f : FunctionDefn) : Bool :=
+  match f.params.toList, f.body.toList with
+  | [_, excType, exc, tb],
+      [.ret (some (.compare (.name id _) #[.isNot]
+        #[.constant .none _] _)) _] =>
+      id == excType.arg && exc.arg == "exc" && tb.arg == "tb"
+  | _, _ => false
+
+
 /-- A module-level namedtuple class (H3+, docs/memory-model.md §class
 semantics — the recorded VALUE-like decision): recognized at INGESTION
 from a top-level `X = namedtuple("T", <fields>)` assignment under the

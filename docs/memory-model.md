@@ -472,11 +472,13 @@ cycle DETECTION, never by running out of fuel).
   `(None, None, None)` and re-raises the original `PyErr`, which is sound
   because the admitted body cannot inspect or suppress that triple. The
   `__exit__` result is evaluated with normal truthiness, so computed returns
-  such as `return not False` can suppress the body error. The three
-  exception-argument parameters remain a static loud boundary: methods that
-  inspect them are refused because the model still calls `__exit__` with the
-  placeholder triple `(None, None, None)`. Full exception triples are still a
-  future representation extension. A
+  such as `return not False` can suppress the body error. One exact
+  exception-sensitive shape is admitted: four parameters named
+  `self, exc_type, exc, tb` and `return exc_type is not None`; it receives
+  `("exception", None, None)` on an exceptional body path and the normal
+  `(None, None, None)` triple otherwise. Arbitrary exception-triple
+  inspection remains loud. Full exception triples are still a future
+  representation extension. A
   supported explicit zero-argument `__init__` runs through the ordinary
   class-call path. `async with` is likewise still unfinished scope.
 * At module scope the script executor owns a matching control shell: the

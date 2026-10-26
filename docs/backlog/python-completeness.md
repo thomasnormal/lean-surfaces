@@ -17,6 +17,24 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-150 — admit the exact exception-sensitive `__exit__` test
+
+The synchronous context-manager slice now recognizes the exact four-parameter
+method `__exit__(self, exc_type, exc, tb): return exc_type is not None`.
+Normal completion still supplies `(None, None, None)`; exceptional body paths
+supply a fixed non-`None` marker for `exc_type` and `None` for the other two
+arguments. General exception-triple inspection remains refused.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `with_lab.argument_sensitive_suppression()` matches with value `10`; existing normal and transparent suppression rows remain unchanged |
+| Refusal census | `with_lab::argument_sensitive_suppression` removed from `with.exception-arguments` |
+| Lean build | `lake build leanmodels-run` passed |
+
+DECIDED: admit only this structural test with the fixed marker; retain loud
+failure for arbitrary exception payload inspection until frame state carries a
+full exception triple.
+
 ## 2026-10-26-pycomplete-149 — scope starred-display shadow checks lexically
 
 Starred-display lowering now checks `list` and `tuple` bindings in the lexical

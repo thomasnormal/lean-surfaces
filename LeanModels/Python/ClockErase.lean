@@ -1562,6 +1562,8 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
                     by_cases hargsfree :
                         (findFunction m (fname ++ ".__exit__")).map
                             FunctionDefn.withExitExceptionArgsFree == some true
+                          || (findFunction m (fname ++ ".__exit__")).map
+                            FunctionDefn.withExitExceptionTypeTest == some true
                     · simp [execStmt, hitems, hrest, hctx, hfunc, hkwEmpty, hcall, hclass,
                         hargsfree]
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
@@ -1586,7 +1588,10 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
                             exact .bind
                               (ClockErasedW.withLocals
                                 (ihCall m s5.world (fname ++ ".__exit__")
-                                  #[.ref a, .none, .none, .none] (by simpa using hs5)))
+                                  (withExitArgs
+                                    ((findFunction m (fname ++ ".__exit__")).map
+                                      FunctionDefn.withExitExceptionTypeTest == some true) a)
+                                  (by simpa using hs5)))
                               (fun s6 _ hs6 => .ok hs6 _)
                           · refine .bind
                               (ClockErasedW.withLocals
@@ -1610,7 +1615,10 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
                             exact .bind
                               (ClockErasedW.withLocals
                                 (ihCall m s6.world (fname ++ ".__exit__")
-                                  #[.ref a, .none, .none, .none] (by simpa using hs6)))
+                                  (withExitArgs
+                                    ((findFunction m (fname ++ ".__exit__")).map
+                                      FunctionDefn.withExitExceptionTypeTest == some true) a)
+                                  (by simpa using hs6)))
                               (fun s7 _ hs7 => .ok hs7 _)
                           · refine .bind
                               (ClockErasedW.withLocals

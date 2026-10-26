@@ -208,7 +208,9 @@ def scriptWithAt (S : SKont) (K : Kont) (m : Module) (items : Array WithItem)
           let exitName := fname ++ ".__exit__"
           let exitArgsFree :=
             (findFunction m exitName).map FunctionDefn.withExitExceptionArgsFree == some true
-          if !exitArgsFree then
+          let exitTypeTest :=
+            (findFunction m exitName).map FunctionDefn.withExitExceptionTypeTest == some true
+          if !exitArgsFree && !exitTypeTest then
             refuse "with body exceptions require __exit__ not to inspect exception arguments (full exception triples are outside the tier)"
           else if !kwargs.isEmpty || callUnsupported.isSome then
             refuse "with context calls with keywords or starred arguments are outside the tier"
@@ -226,6 +228,12 @@ def scriptWithAt (S : SKont) (K : Kont) (m : Module) (items : Array WithItem)
                 let exitExpr :=
                   Expr.call (Expr.attribute contextExpr "__exit__" sp)
                     #[noneExpr, noneExpr, noneExpr] #[] Option.none sp
+                let exceptionExitExpr :=
+                  if exitTypeTest then
+                    Expr.call (Expr.attribute contextExpr "__exit__" sp)
+                      #[Expr.constant (.str "exception") sp, noneExpr, noneExpr]
+                      #[] Option.none sp
+                  else exitExpr
                 let old ← envGet contextName
                 let context ← evalOpen K m item.context
                 envSet contextName context
@@ -240,10 +248,10 @@ def scriptWithAt (S : SKont) (K : Kont) (m : Module) (items : Array WithItem)
                       envSet contextName context
                       match old with
                       | some value => do
-                          withExitResult (evalOpen K m) exitExpr
+                          withExitResult (evalOpen K m) exceptionExitExpr
                             (envSet contextName value) e
                       | none => do
-                          withExitResult (evalOpen K m) exitExpr
+                          withExitResult (evalOpen K m) exceptionExitExpr
                             (envRemove contextName) e)
                 match flow with
                 | Except.ok flow => do

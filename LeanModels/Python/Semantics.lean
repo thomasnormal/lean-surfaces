@@ -5705,6 +5705,12 @@ def findContextClass (m : Module) (name : String) : Option (Nat × ClassDefn) :=
       else Option.none
   | Option.none => Option.none
 
+def withExitArgs (exceptionType : Bool) (a : Addr) : Array RVal :=
+  if exceptionType then
+    #[.ref a, .str "exception", .none, .none]
+  else
+    #[.ref a, .none, .none, .none]
+
 /-- The decision of an attribute READ (`x.attr` as a value) on a heap
 receiver, computed PURELY from the referent — the interpreter arm and its
 meta-theorems (`fuelMono`/`worldInv`) fork on this one scrutinee instead
@@ -9647,7 +9653,9 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
               let exitName := fname ++ ".__exit__"
               let exitArgsFree :=
                 (findFunction m exitName).map FunctionDefn.withExitExceptionArgsFree == some true
-              if !exitArgsFree then
+              let exitTypeTest :=
+                (findFunction m exitName).map FunctionDefn.withExitExceptionTypeTest == some true
+              if !exitArgsFree && !exitTypeTest then
                 .unsupported "with body exceptions require __exit__ not to inspect exception arguments (full exception triples are outside the tier)"
               else
                 evalExprs m fuel st args.toList ⤳ fun st vs =>
@@ -9676,7 +9684,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                                 (fun stBody e =>
                                   Run.withLocals stBody.locals
                                     (callIn m fuel stBody.world exitName
-                                      #[.ref a, .none, .none, .none]) ⤳ fun stExit exitValue =>
+                                      (withExitArgs exitTypeTest a)) ⤳ fun stExit exitValue =>
                                     Run.liftRes stExit
                                       (truthyH stExit.world.heap exitValue) ⤳ fun stExit suppresses =>
                                       if suppresses then .ok stExit .next else .exn stExit e)
@@ -9693,7 +9701,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                             (fun stBody e =>
                               Run.withLocals stBody.locals
                                 (callIn m fuel stBody.world exitName
-                                  #[.ref a, .none, .none, .none]) ⤳ fun stExit exitValue =>
+                                  (withExitArgs exitTypeTest a)) ⤳ fun stExit exitValue =>
                                 Run.liftRes stExit
                                   (truthyH stExit.world.heap exitValue) ⤳ fun stExit suppresses =>
                                   if suppresses then .ok stExit .next else .exn stExit e)

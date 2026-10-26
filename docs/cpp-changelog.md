@@ -5,6 +5,26 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.104] — 2026-10-26
+
+### Added
+
+- Added fifteen object-frame witnesses for computed local initialization across
+  conditional branches, `switch` defaults, zero- and single-iteration loops,
+  loop `continue`/`break`, and shadowed locals in `for`, `while`, and
+  `do … while`.
+
+### Measured
+
+- The checked-in corpus now contains **624 differential rows**: **607 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
+This is the catch-up release for the three five-construct release points that
+followed `v0.1.101`; the metadata records their complete 609→624 batch.
+
 ## [0.1.101] — 2026-10-26
 
 ### Added

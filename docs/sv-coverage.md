@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 242 | 237 | 0 | 5 | sv-tests-2 declarations |
+| 243 | 238 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -247,6 +247,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `fopen_invalid_mode` | `Examples/system-verilog/fopen_invalid_mode/fopen_invalid_mode.sv` | match | **MATCH** | `ok` | MATCH |
 | `literal_bound_real_bits` | `Examples/system-verilog/literal_bound_real_bits/literal_bound_real_bits.sv` | match | **MATCH** | `ok` | MATCH |
 | `continuous_bound_literal` | `Examples/system-verilog/continuous_bound_literal/continuous_bound_literal.sv` | match | **MATCH** | `ok` | MATCH |
+| `continuous_history_literal` | `Examples/system-verilog/continuous_history_literal/continuous_history_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_disjoint_slice_copy` | `Examples/system-verilog/fixed_array_disjoint_slice_copy/fixed_array_disjoint_slice_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `unsized_left_stream` | `Examples/system-verilog/unsized_left_stream/unsized_left_stream.sv` | match | **MATCH** | `ok` | MATCH |
 | `constant_expression_net_driver` | `Examples/system-verilog/constant_expression_net_driver/constant_expression_net_driver.sv` | match | **MATCH** | `ok` | MATCH |
@@ -491,14 +492,14 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22056 | 5227 | 16762 | 67 |
+| 22058 | 5227 | 16764 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2857 |
 | `CallExpression` | 2778 |
 | `ExpressionStatement:CallExpression` | 2775 |
-| `Hierarchy:ports` | 2398 |
+| `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2223 |
 | `SubroutineSymbol:Subroutine` | 1634 |
 | `NamedValueExpression:2state` | 1485 |

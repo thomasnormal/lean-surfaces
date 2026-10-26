@@ -27,8 +27,8 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-26
 
-The chapter-scoped rerun covered **22,056** paths: **5,227 clean**,
-**16,762 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,058** paths: **5,227 clean**,
+**16,764 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
 `AssignmentExpression:target` (2,857), `CallExpression` (2,778),
@@ -82,6 +82,23 @@ and partial files **16,774 → 16,762** (67 include skips).
 `ElementSelectExpression:source-type` falls **490 → 479**. Differential
 coverage grows **241/236/0/5 → 242/237/0/5** with no disagreements; grammar
 coverage remains **217/92/125**.
+
+## Single literal initial-write continuous sources — 2026-10-26
+
+A continuous scalar net driver may now fold a variable RHS when that variable
+has exactly one direct blocking literal assignment in an `initial` block, with
+no declaration initializer or other writes. This is lowered to the existing
+time-zero literal driver, so the self-check observes the source value without
+introducing a live scheduler driver. Dynamic, control-dependent, multiply
+written, and nonliteral sources remain loud. The
+`continuous_history_literal` fixture supplies the differential row and Lean
+receipt, with extractor regressions for the one-write and multiple-write
+boundaries.
+
+On the refreshed **22,056-path** census, clean and partial counts remain
+**5,227 / 16,762** (67 include skips), and `AssignmentExpression:target`
+remains **2,857**. Differential coverage grows **242/237/0/5 → 243/238/0/5**
+with no disagreements; grammar coverage remains **217/92/125**.
 
 ## Finite literal dynamic-array reductions — 2026-10-26
 

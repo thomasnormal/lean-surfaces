@@ -2102,6 +2102,15 @@
       "expect": "match"
     },
     {
+      "name": "continuous_history_literal",
+      "file": "Examples/system-verilog/continuous_history_literal/continuous_history_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "fixed_array_disjoint_slice_copy",
       "file": "Examples/system-verilog/fixed_array_disjoint_slice_copy/fixed_array_disjoint_slice_copy.sv",
       "module": "top",

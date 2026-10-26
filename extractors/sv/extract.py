@@ -8304,6 +8304,101 @@ def _continuous_bound_literal(sm, expression):
         return None
 
 
+def _continuous_history_literal(sm, expression):
+    """Return a literal for a source variable assigned once at time zero.
+
+    A continuous driver normally needs the scheduler because its RHS can
+    change after elaboration.  The self-check surface can fold the narrower
+    shape where a module variable has one direct blocking literal assignment
+    in an initial block and no declaration initializer or other writes.  The
+    syntax-parent check excludes control-dependent, loop, task, and function
+    writes; all remaining driver forms stay on the live boundary.
+    """
+    try:
+        node = expression
+        if type(node).__name__ != "NamedValueExpression":
+            return None
+        symbol = getattr(node, "symbol", None)
+        if (symbol is None
+                or str(getattr(symbol, "kind", "")).split(".")[-1] != "Variable"
+                or getattr(symbol, "initializer", None) is not None):
+            return None
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return None
+        writes = []
+        invalid = False
+
+        def direct_initial_write(assignment):
+            syntax = getattr(assignment, "syntax", None)
+            saw_initial = False
+            allowed = {
+                "SyntaxKind.AssignmentExpression",
+                "SyntaxKind.ExpressionStatement",
+                "SyntaxKind.SequentialBlockStatement",
+                "SyntaxKind.InitialBlock",
+                "SyntaxKind.ModuleDeclaration",
+            }
+            while syntax is not None:
+                kind = str(getattr(syntax, "kind", ""))
+                if kind not in allowed:
+                    return False
+                saw_initial = saw_initial or kind == "SyntaxKind.InitialBlock"
+                syntax = getattr(syntax, "parent", None)
+            return saw_initial
+
+        def inspect(node):
+            nonlocal invalid
+            if type(node).__name__ != "AssignmentExpression":
+                return
+            left = getattr(node, "left", None)
+            if left is None:
+                return
+            references = []
+            def inspect_left(child):
+                if (type(child).__name__ in
+                        ("NamedValueExpression", "HierarchicalValueExpression")
+                        and getattr(child, "symbol", None) is symbol):
+                    references.append(child)
+            left.visit(inspect_left)
+            if not references:
+                return
+            if (len(references) != 1
+                    or references[0] is not left
+                    or getattr(node, "op", None) is not None
+                    or getattr(node, "timingControl", None) is not None
+                    or getattr(node, "isNonBlocking", False)
+                    or not direct_initial_write(node)):
+                invalid = True
+                return
+            writes.append(node)
+
+        instance.visit(inspect)
+        if invalid or len(writes) != 1:
+            return None
+        value = writes[0].right
+        if not _integral_literal_source(value):
+            return None
+        converted = convert_expr(sm, value)
+        if (converted is None or converted.get("kind") != "Literal"
+                or not _case_expression_ok(converted)):
+            return None
+        return converted
+    except Exception:
+        return None
+
+
+def _continuous_static_value(sm, expression):
+    """Fold the admitted once-assigned literal source of a continuous driver."""
+    try:
+        if type(expression).__name__ == "NamedValueExpression":
+            return _continuous_history_literal(sm, expression)
+        return None
+    except Exception:
+        return None
+
+
 _PURE_FLOATING_CALLS = {
     "$itor", "$bitstoreal", "$bitstoshortreal", "$sqrt", "$pow",
     "$floor", "$ceil", "$ln", "$log10", "$exp", "$sin", "$cos",
@@ -15868,6 +15963,8 @@ def convert_continuous_assign(sm, m):
         value = convert_expr(sm, e.right)
         bound_literal = (_continuous_bound_literal(sm, e.right)
                          if _SYM is None else None)
+        if bound_literal is None and _SYM is None:
+            bound_literal = _continuous_static_value(sm, e.right)
         if bound_literal is None and _SYM is None:
             bound_literal = _constant_integral_source(sm, e.right)
         if bound_literal is not None:

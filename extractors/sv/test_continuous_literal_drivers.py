@@ -118,6 +118,41 @@ class ContinuousLiteralDrivers(unittest.TestCase):
                          {"conflict": "x", "agree": "1",
                           "z_only": "z", "unknown": "x"})
 
+    def test_single_literal_initial_write_sources_resolve(self):
+        design = extract_source(
+            "module top; logic a, b; wire y, z; "
+            "assign y = a; assign z = b; "
+            "initial begin a = 1'b1; b = 1'b1; "
+            "if (y === 1'b1 && z === 1'b1) $display(\"PASS\"); "
+            "end endmodule")
+        module = design["modules"][0]
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        initial = [process for process in module["processes"]
+                   if process.get("continuous_constant_lowered")]
+        self.assertEqual(len(initial), 2)
+        values = [process["body"].get("value", {}).get("bits")
+                  for process in initial if process["body"]["kind"] == "BlockingAssign"]
+        self.assertIn("1", values)
+
+    def test_multiple_initial_writes_remain_dynamic(self):
+        design = extract_source(
+            "module top; logic source; wire bus; assign bus = source; "
+            "initial begin source = 1'b0; source = 1'b1; end endmodule")
+        self.assertTrue(any(node.get("kind") == "Assign"
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("continuous_static_resolution")
+                             for node in nodes(design)))
+
+    def test_control_dependent_initial_write_remains_dynamic(self):
+        design = extract_source(
+            "module top; logic source; wire bus; assign bus = source; "
+            "initial if (1'b1) source = 1'b1; endmodule")
+        self.assertTrue(any(node.get("kind") == "Assign"
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("continuous_static_resolution")
+                             for node in nodes(design)))
+
     def test_literal_tri_driver_uses_flat_net_path(self):
         design = extract_source(
             "module top; tri bus; assign bus = 1'b1; endmodule")

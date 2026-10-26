@@ -8157,3 +8157,20 @@ and partial files **16,774 → 16,762** (67 include skips).
 `ElementSelectExpression:source-type` falls **490 → 479**. Differential
 coverage grows **241/236/0/5 → 242/237/0/5** with no disagreements; grammar
 coverage remains **217/92/125**.
+
+## Single literal initial-write continuous sources — 2026-10-26
+
+A continuous scalar net driver may now fold a variable RHS when that variable
+has exactly one direct blocking literal assignment in an `initial` block, with
+no declaration initializer or other writes. This is lowered to the existing
+time-zero literal driver, so the self-check observes the source value without
+introducing a live scheduler driver. Dynamic, control-dependent, multiply
+written, and nonliteral sources remain loud. The
+`continuous_history_literal` fixture supplies the differential row and Lean
+receipt, with extractor regressions for the one-write and multiple-write
+boundaries.
+
+On the refreshed **22,056-path** census, clean and partial counts remain
+**5,227 / 16,762** (67 include skips), and `AssignmentExpression:target`
+remains **2,857**. Differential coverage grows **242/237/0/5 → 243/238/0/5**
+with no disagreements; grammar coverage remains **217/92/125**.

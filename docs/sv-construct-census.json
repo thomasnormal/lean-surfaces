@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22056,
+  "corpus_files": 22058,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -28,7 +28,7 @@
    ],
    [
     "Hierarchy:ports",
-    2398
+    2400
    ],
    [
     "VariableSymbol:2state",
@@ -965,7 +965,7 @@
   ],
   "by_status": {
    "clean": 5227,
-   "partial": 16762,
+   "partial": 16764,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1027,7 +1027,7 @@
    ],
    "simulation": [
     4536,
-    18687
+    18689
    ],
    "simulation elaboration": [
     2,
@@ -1417,9 +1417,9 @@
    "chapter-23": {
     "clean": 179,
     "error": 0,
-    "partial": 672,
+    "partial": 674,
     "skip_include": 0,
-    "total": 851,
+    "total": 853,
     "unlockable": 0
    },
    "chapter-24": {

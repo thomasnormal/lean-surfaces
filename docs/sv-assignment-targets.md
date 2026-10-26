@@ -401,3 +401,16 @@ sources remain loud.
 `fixed_array_nested_copy` is the differential witness; the current
 22,058-path census remains **5,227 clean / 16,764 partial** with
 `AssignmentExpression:target` at **2,857**.
+
+## Constant multidimensional subarray copies — 2026-10-26
+
+A constant prefix selection of a bounded multidimensional unpacked integral
+array may copy into a distinct flat fixed array in declaration order. The
+selected row is already represented by independent cells, so the lowering
+samples those cells without an aggregate store. Dynamic selectors, overlapping
+aliases, mismatched extents, aggregate leaves, and effectful sources remain
+loud.
+
+`fixed_array_subarray_copy` is the differential witness; the current
+22,058-path census remains **5,227 clean / 16,764 partial** with
+`AssignmentExpression:target` at **2,857**.

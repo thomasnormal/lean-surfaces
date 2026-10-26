@@ -3092,6 +3092,31 @@ def _fixed_array_subarray_copy_assignment(sm, expr):
             if rhs_is_net:
                 result["fixed_array_net_copy_lowered"] = True
             return result
+        if lhs_shape is not None and rhs_shape is not None and rhs_array is None:
+            lhs_name, lhs_width, lhs_two, lhs_positions = lhs_shape
+            rhs_root, rhs_cells, rhs_width, _rhs_two = rhs_shape
+            lhs_cells = [f"{lhs_name}[{position}]" for position in lhs_positions]
+            aliasing = (lhs_name == rhs_root
+                        and bool(set(lhs_cells) & set(rhs_cells)))
+            if (len(lhs_cells) != len(rhs_cells) or lhs_width != rhs_width
+                    or aliasing or not _case_source_expression_ok(expr.right)):
+                return None
+            stmts = []
+            for lhs_name_cell, rhs_name in zip(lhs_cells, rhs_cells):
+                value = {"kind": "Ident", "span": node_span(sm, expr.right),
+                         "width": rhs_width, "name": rhs_name}
+                if lhs_two:
+                    value = squash2_wrap(value, lhs_width)
+                stmts.append({
+                    "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                    "span": node_span(sm, expr),
+                    "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                               "width": lhs_width, "name": lhs_name_cell},
+                    "value": value,
+                })
+            return {"kind": "Block", "span": node_span(sm, expr),
+                    "stmts": stmts,
+                    "fixed_array_subarray_copy_lowered": True}
         if lhs_shape is None or rhs_shape is None:
             return None
         lhs_name, lhs_width, lhs_two, lhs_positions = lhs_shape

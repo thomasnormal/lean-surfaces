@@ -3066,18 +3066,25 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
           | some e =>
             cases e <;> try exact .unsupported
             case name id _ =>
-              refine .ite .unsupported ?_
-              cases findClass m id with
+              cases hlocal : Env.lookup st.locals id with
               | none =>
-                refine .ite .exn ?_
-                by_cases hb : admittedBuiltinRaise.contains id = true
-                · rw [if_pos hb]
-                  exact .exn
-                · rw [if_neg hb]
-                  exact .unsupported
-              | some p =>
-                obtain ⟨ci, c⟩ := p
-                exact .ite .exn .unsupported
+                simp [hlocal]
+                refine .ite .unsupported ?_
+                cases findClass m id with
+                | none =>
+                  refine .ite .exn ?_
+                  by_cases hb : id ∈ admittedBuiltinRaise
+                  · simp [hb]
+                    exact .exn
+                  · simp [hb]
+                    exact .unsupported
+                | some p =>
+                  obtain ⟨ci, c⟩ := p
+                  exact .ite .exn .unsupported
+              | some v =>
+                simp [hlocal]
+                cases v <;> try exact .exn
+                case ref a => exact .unsupported
             case call func args kwargs cu _ =>
               cases func with
               | name id _ =>

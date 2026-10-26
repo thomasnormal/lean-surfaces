@@ -1383,7 +1383,12 @@ propagated `.exn` is the state at the raise). Builtin raises are
 faithful throughout the tier, `==>!`/`Raises` is a stated judgment, and
 the leanpy boundary already renders a class line per `PyErr` kind. What
 does NOT exist: exception INSTANCES as values and general dynamic
-raise/re-raise payloads.
+raise/re-raise payloads. A direct `raise n` where `n` is an ordinary
+parameter is the measured scalar exception slice: an immediate runtime value
+raises CPython's `TypeError("exceptions must derive from BaseException")`,
+while a heap reference remains loud. The extractor keeps builtin exception
+shadows and any later or additional local binding on the static-locals refusal
+path, so this does not change class-identity resolution.
 
 **Representation: class-identity exceptions, with one measured string payload.**
 `PyErr.user (cid : ClassId)` — a bare raised user exception IS its class
@@ -1406,8 +1411,9 @@ argument is a string literal; expression-valued payloads remain loud while
 their fuel and proof obligations are priced separately. The monadic runner
 keeps the wider evaluated-string form.
 Other builtin constructors, keyword or multiple arguments, and non-string
-payloads remain loud. `raise <expr>` of anything but an admitted class name,
-dynamic exception causes, and general bare re-raises refuse loudly. The exact
+payloads remain loud. `raise <expr>` beyond the measured scalar-parameter
+slice or an admitted class name, dynamic exception causes, and general bare
+re-raises refuse loudly. The exact
 direct shape `try: raise N; except N: raise` is lowered to `raise N`, because
 the handler's active class identity is statically known; broad handlers,
 tuple handlers, and nested re-raises remain loud.
@@ -1494,8 +1500,10 @@ raise-catch roundtrip; mutations-before-raise visible in the handler
 propagates; an exception crossing a generator resume closes the
 generator (the `next()`-after-exn row); the refusal battery (observed `as`,
 `finally`, args on raise, `raise` bare,
-value raise, and general yield-under-try). The safe parameter-yield slice is
-covered by `exc_lab.drive_yield_under_try`; the remaining forms stay loud.
+heap-backed or rebound value raises, and general yield-under-try). The scalar
+parameter raise is covered by `exc_lab.raise_value`; the safe parameter-yield
+slice is covered by `exc_lab.drive_yield_under_try`; the remaining forms stay
+loud.
 Corpus script with a top-level
 try/except once the shell learns the statement. THEN the sunfish
 shapes: `Stop` recognized on the shipped file's census, and a

@@ -28,8 +28,8 @@ The claims worth naming, each falsifying a cheaper design:
   replaced by the node counter, exactly as the design records).
 
 The refusal battery below (raw `#guard`s + whitelisted rows) pins the
-loud frontier — every deviation from the retained shape refuses with a
-reason, never a guess. No `proof.lean`: checks-only, like `gen_lab`.
+loud frontier — every remaining deviation from the retained shape refuses
+with a reason, never a guess. No `proof.lean`: checks-only, like `gen_lab`.
 -/
 
 open LeanModels LeanModels.Python
@@ -117,7 +117,8 @@ loud. -/
   matches .exn (.userMessage _ "Stop" "with a message")
 #guard callFunction exc_lab "raise_bare" #[.int 1] 4096
   matches .exn (.user _ "Stop")
-#guard callFunction exc_lab "raise_value" #[.int 1] 4096 matches .unsupported _
+#guard callFunction exc_lab "raise_value" #[.int 1] 4096
+  matches .exn (.typeError "exceptions must derive from BaseException")
 #py_check exc_lab.raise_from(1) raises (.user _ "Stop")
 #guard callFunction exc_lab "raise_shadowed" #[.int 1] 4096 matches .unsupported _
 #guard callFunction exc_lab "exc_as_value" #[.int 1] 4096 matches .unsupported _

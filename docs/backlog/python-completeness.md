@@ -38,6 +38,29 @@ DECIDED: admit only the payload-free `OSError` class identity; retain loud
 behavior for `EnvironmentError` as a direct raise, OS-producing operations, and
 all payload-bearing OS constructors.
 
+## 2026-10-26-pycomplete-139 — admit scalar dynamic raises
+
+`raise n` in `exc_lab.raise_value` was previously rejected by the extractor's
+static-locals guard even when `n` was an ordinary function parameter. The
+extractor now keeps that parameter-only shape executable, while builtin
+exception names and any later or additional local binding remain guarded. Both
+interpreters inspect the resolved local: immediate values raise CPython's
+exact `TypeError: exceptions must derive from BaseException`; heap references
+stay loud because their exception identity and payload are not represented.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `exc_lab.raise_value(1)` MATCH in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,626 matched / 68 refused / 0 failed |
+| Full proof differential | 3,694 cases: 3,517 matched / 177 refused / 0 failed |
+| Refusal census | 68 rows, 0 drift; `exc.raise` loses the dynamic scalar row |
+| Extractor tests | 139 passed, including parameter and rebinding controls |
+| Proof surface | `LeanModels.Python.Obs` and `leanmodels-run` build successfully |
+
+DECIDED: admit only parameter-only dynamic raises whose resolved value is an
+immediate runtime value; retain loud behavior for heap-backed values,
+exception-class shadows, local rebinding, and non-name raise expressions.
+
 ## 2026-10-26-pycomplete-137 — make function-scope `del` errors faithful
 
 The remaining four `del.name-set-census` rows were the same missing semantic:

@@ -551,6 +551,21 @@ class ExtractorTests(unittest.TestCase):
                 reason = self._first_fn(source)["locals_unsupported"]
                 self.assertIn("ValueError", reason)
 
+    def test_raise_ordinary_parameter_is_dynamic(self):
+        fn = self._first_fn("def f(n):\n    raise n\n")
+        self.assertIsNone(fn["locals_unsupported"])
+        self.assertEqual(fn["body"][0]["exc"]["kind"], "Name")
+        self.assertEqual(fn["body"][0]["exc"]["id"], "n")
+
+    def test_raise_parameter_rebinding_stays_loud(self):
+        for source in (
+            "def f(n):\n    raise n\n    n = 1\n",
+            "def f(n):\n    n = 1\n    raise n\n",
+        ):
+            with self.subTest(source=source):
+                reason = self._first_fn(source)["locals_unsupported"]
+                self.assertIn("n", reason)
+
     def test_raise_guard_does_not_cross_nested_scopes(self):
         fn = self._first_fn(
             "def f():\n    def g(ValueError):\n        return ValueError\n"

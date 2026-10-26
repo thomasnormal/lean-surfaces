@@ -295,7 +295,7 @@
   {"file": "Examples/python/exc_lab/exc_lab.py", "function": "raise_type_message", "args": [[]], "expect": "match", "note": "The measured one-string builtin constructor form preserves TypeError's message."},
   {"file": "Examples/python/exc_lab/exc_lab.py", "function": "catch_value_message", "args": [[]], "expect": "match", "note": "A payload-bearing builtin raise still matches by exception class in a handler."},
   {"file": "Examples/python/exc_lab/exc_lab.py", "function": "raise_bare", "args": [[1]], "expect": "match", "note": "A direct bare re-raise after `raise Stop` is lowered to the same class-identity raise; general active-exception re-raises remain loud."},
-  {"file": "Examples/python/exc_lab/exc_lab.py", "function": "raise_value", "args": [[1]], "expect": "unsupported"},
+  {"file": "Examples/python/exc_lab/exc_lab.py", "function": "raise_value", "args": [[1]], "expect": "match", "note": "Raising a scalar parameter preserves CPython's TypeError instead of stopping at the static-locals guard."},
   {"file": "Examples/python/exc_lab/exc_lab.py", "function": "raise_from", "args": [[1]], "expect": "match", "note": "A literal None cause has no observable payload in the tier and lowers to the ordinary class-identity raise."},
   {"file": "Examples/python/exc_lab/exc_lab.py", "function": "raise_shadowed", "args": [[1]], "expect": "unsupported"},
   {"file": "Examples/python/exc_lab/exc_lab.py", "function": "exc_as_value", "args": [[1]], "expect": "unsupported"},

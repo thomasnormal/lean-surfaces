@@ -117,6 +117,36 @@ MODULE_SAFE_ANNOTATION_NAMES = (
     "bool", "bytes", "complex", "dict", "float", "int", "list",
     "object", "set", "str", "tuple", "type")
 
+# Names that CPython binds as exception classes.  A parameter with an
+# ordinary name may carry a scalar into ``raise`` (the runtime then reports
+# the faithful ``TypeError``), but a parameter or local using one of these
+# names still shadows the builtin exception identity and remains loud.  Keep
+# this list pinned to the Python 3.9 builtin surface rather than admitting a
+# shadow through the dynamic value path.
+BUILTIN_EXCEPTION_NAMES = frozenset({
+    "ArithmeticError", "AssertionError", "AttributeError",
+    "BaseException", "BlockingIOError", "BrokenPipeError", "BufferError",
+    "BytesWarning",
+    "ChildProcessError", "ConnectionAbortedError", "ConnectionError",
+    "ConnectionRefusedError", "ConnectionResetError", "EOFError",
+    "EnvironmentError", "Exception", "FileExistsError", "FileNotFoundError",
+    "DeprecationWarning", "FloatingPointError", "FutureWarning",
+    "GeneratorExit", "IOError", "ImportError", "ImportWarning",
+    "IndentationError", "IndexError", "InterruptedError",
+    "IsADirectoryError", "KeyError", "KeyboardInterrupt", "LookupError",
+    "MemoryError", "ModuleNotFoundError", "NameError", "NotADirectoryError",
+    "NotImplementedError", "OSError", "OverflowError", "PermissionError",
+    "ProcessLookupError", "RecursionError", "ReferenceError",
+    "ResourceWarning", "RuntimeError", "RuntimeWarning", "StopAsyncIteration",
+    "StopIteration", "SyntaxError", "SyntaxWarning", "SystemError",
+    "SystemExit", "TabError", "TimeoutError",
+    "TypeError", "UnboundLocalError", "UnicodeDecodeError",
+    "UnicodeEncodeError", "UnicodeError", "UnicodeTranslateError",
+    "UnicodeWarning", "UserWarning", "PendingDeprecationWarning",
+    "ValueError", "Warning",
+    "ZeroDivisionError",
+})
+
 
 def binds_any_name(tree, names):
     """Does the module bind any of ``names`` ANYWHERE — any scope, any
@@ -1246,12 +1276,15 @@ def _shadowed_handlers(fn):
 
 
 def _shadowed_raises(fn):
-    """A raise class name bound anywhere in this scope must not fall through.
+    """Guard builtin shadows while admitting scalar parameter raises.
 
     This includes direct zero-argument constructor spelling, which is lowered
-    to the same class-name shape, and a local assigned only after the raise:
-    CPython reports an unbound local (or a shadowed call), even though a
-    builtin with the same name exists.
+    to the same class-name shape.  An ordinary parameter such as ``n`` is a
+    dynamic value, so ``raise n`` is admitted and the runtime can report
+    CPython's ``TypeError`` for scalar arguments.  A name assigned anywhere
+    else in the function, or a parameter/local that shadows a builtin
+    exception class, still refuses: CPython's static-local rule would make
+    the value or class identity observable in ways the tier does not carry.
     """
     names = set()
     for node in _walk_scope(fn):
@@ -1267,7 +1300,42 @@ def _shadowed_raises(fn):
             # spelling too, or a shadowed `ValueError()` would silently
             # resolve as the builtin class.
             names.add(exc.func.id)
-    return sorted(names & _scope_binding_names(fn))
+
+    bindings = _scope_binding_names(fn)
+    params = {
+        arg.arg
+        for arg in (list(fn.args.posonlyargs) + list(fn.args.args)
+                    + list(fn.args.kwonlyargs))
+    }
+    if fn.args.vararg is not None:
+        params.add(fn.args.vararg.arg)
+    if fn.args.kwarg is not None:
+        params.add(fn.args.kwarg.arg)
+
+    # `_assigned_names` covers ordinary stores, deletes, and walrus targets;
+    # nested definition/import/with names are included by the broader scope
+    # census.  Preserve those as non-parameter bindings even when a parameter
+    # happens to use the same spelling.
+    nonparam = set(_assigned_names(fn))
+    for node in _walk_scope(fn, include_boundaries=True):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef,
+                             ast.ClassDef)):
+            nonparam.add(node.name)
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            for alias in node.names:
+                nonparam.add((alias.asname or alias.name).split(".")[0])
+        elif isinstance(node, (ast.With, ast.AsyncWith)):
+            for item in node.items:
+                if item.optional_vars is not None:
+                    nonparam.update(_target_bound_names(item.optional_vars))
+        elif isinstance(node, ast.ExceptHandler) and node.name is not None:
+            nonparam.add(node.name)
+
+    shadowed = set()
+    for name in names & bindings:
+        if name in nonparam or name in BUILTIN_EXCEPTION_NAMES:
+            shadowed.add(name)
+    return sorted(shadowed)
 
 
 def _has_global(node):

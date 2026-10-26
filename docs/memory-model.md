@@ -4136,18 +4136,16 @@ the lowering raises `'int' object is not iterable` from `tuple()`. Same
 exception CLASS, different message. Both harnesses compare the class, so
 the row passes; the message divergence is real and is written down here.
 
-### The shadow census — the ONE new boundary
+### Synthetic names and ordinary shadowing
 
-The lowering spells the display as calls of the NAMES `list` and `tuple`,
-lookups the source never wrote. CPython's display never performs one
-(`BUILD_LIST_UNPACK` is a bytecode), but the interpreter reaches its
-builtins only AFTER every shadow-resolving arm, so a module BINDING
-either name would run the display through the shadow and be SILENTLY
-WRONG. The extractor checks the lexical scope containing each display
-(including module scope) for a binding of either synthetic name. A local
-`list`/`tuple` shadow still refuses that function, while an unrelated sibling
-scope remains live. `Examples/python/star_shadow/star_shadow.py` pins both
-directions: `shadowed` remains loud and `elsewhere` now matches.
+The lowering spells the display as calls of two unspellable synthetic names,
+`<star-tuple>` and `<star-list>`. CPython's display never performs a name
+lookup (`BUILD_LIST_UNPACK` is a bytecode), so source bindings named `list` or
+`tuple` cannot change the lowered calls. The names are admitted as builtin
+markers and dispatch directly to the existing tuple/list constructors in both
+interpreters. `Examples/python/star_shadow/star_shadow.py` pins a local
+`list` shadow and an unrelated sibling scope; both displays now match
+CPython.
 
 ### Assignment targets are landed (2026-10-21)
 

@@ -982,6 +982,10 @@ Defined here (not `Semantics.lean`, their original home — moved verbatim
 INGESTION census (`Json.lean`) consults them too, and `Json.lean` /
 `Semantics.lean` are siblings above `Ast`/`Runtime`. -/
 
+/-- Unspellable builtin names used by starred-display lowering. -/
+def starListBuiltinName : String := "<star-list>"
+def starTupleBuiltinName : String := "<star-tuple>"
+
 /-- Builtin names the interpreter implements (resolution: shadowable by
 locals, module globals, and module `def`s, exactly like CPython builtins). -/
 def isBuiltinName (id : String) : Bool :=
@@ -1000,7 +1004,8 @@ def isBuiltinName (id : String) : Bool :=
   id == "any" || id == "all" || id == "set" ||
   id == "sum" || id == "tuple" || id == "range" || id == "list" ||
   id == "dict" || id == "ascii" || id == "hex" || id == "oct" || id == "bin" ||
-  id == "round" || id == "format"
+  id == "round" || id == "format" || id == starListBuiltinName ||
+  id == starTupleBuiltinName
 
 /-- Every name CPython 3.9's `builtins` module binds (`dir(builtins)`,
 minus the dunders — generated from the PINNED reference interpreter).

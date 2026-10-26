@@ -904,8 +904,6 @@ def lower_starred_display(node):
     `Value after * must be an iterable, not int` and the lowering raises
     `'int' object is not iterable` from `tuple()` — same exception CLASS,
     different message."""
-    if _MODULE_SHADOWS_DISPLAY:
-        return unsupported(node, "Starred:display_shadowed")
     parts = []
     group = []  # consecutive non-starred elements, flushed as one tuple
 
@@ -924,7 +922,7 @@ def lower_starred_display(node):
             parts.append({
                 "kind": "Call",
                 "span": span(e),
-                "func": {"kind": "Name", "span": span(e), "id": "tuple"},
+                "func": {"kind": "Name", "span": span(e), "id": "<star-tuple>"},
                 "args": [convert_expr(e.value)],
                 "keywords": [],
                 "call_unsupported": None,
@@ -940,7 +938,7 @@ def lower_starred_display(node):
         out = {
             "kind": "Call",
             "span": span(node),
-            "func": {"kind": "Name", "span": span(node), "id": "list"},
+            "func": {"kind": "Name", "span": span(node), "id": "<star-list>"},
             "args": [out],
             "keywords": [],
             "call_unsupported": None,

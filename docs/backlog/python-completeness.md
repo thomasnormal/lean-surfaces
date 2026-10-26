@@ -17,6 +17,28 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-156 — make starred-display lowering immune to shadowing
+
+Starred displays now lower through the unspellable synthetic builtin names
+`<star-tuple>` and `<star-list>`. The generated calls therefore cannot resolve
+through a source `list` or `tuple` binding, matching CPython's bytecode-level
+`BUILD_*_UNPACK` behavior. The old lexical shadow census is removed; the
+function-local `list` shadow in `star_shadow.shadowed` now runs and returns the
+same list as CPython.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | All four `star_shadow` rows match in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,642 matched / 52 refused / 0 failed |
+| Full proof differential | 3,694 cases: 3,533 matched / 161 refused / 0 failed |
+| Refusal census | 52 rows in 13 classes, 0 drifts; `star_shadow::shadowed` removed from `shadow.module-census` |
+| Extractor tests | 145 passed |
+| Lean build | `lake build leanmodels-run` passed |
+
+DECIDED: reserve unspellable synthetic names for generated starred-display
+constructors; ordinary source shadowing no longer affects the lowering. Reread
+the inbox before selecting the next measured gap.
+
 ## 2026-10-26-pycomplete-155 — admit literal custom instance equality
 
 The class tier now admits the exact two-parameter method

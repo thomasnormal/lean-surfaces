@@ -1,27 +1,27 @@
-"""The starred-display lowering's ONE new boundary: a lexical scope that
-BINDS `list` or `tuple` (docs/memory-model.md §starred displays, the shadow
-census).
+"""The starred-display lowering's shadowing boundary (docs/memory-model.md
+§starred displays).
 
-`[*a, 3]` is lowered to `list(tuple(a) + (3,))`, which spells the display
-as calls of the NAMES `list` and `tuple` — lookups the source never
-wrote. CPython's display performs no such lookup: BUILD_LIST_UNPACK is a
-bytecode, so a shadowed `list` cannot affect it. The interpreter, though,
-reaches its builtins only AFTER every shadow-resolving arm, so the
-lowered calls would run through the shadow and be SILENTLY WRONG.
+`[*a, 3]` is lowered to calls of unspellable internal `list`/`tuple` names,
+which the source never writes. CPython's display performs no ordinary name
+lookup: BUILD_LIST_UNPACK is a bytecode, so a shadowed `list` cannot affect
+it. The internal names preserve that behavior after lowering.
 
-So the extractor checks the module scope and each function's own lexical
-bindings, refusing only the starred display that could observe the shadow.
-This file is the row that would catch the scope check being dropped: without
-it `shadowed(3)` answers "SHADOW" instead of refusing, while `elsewhere(3)`
-would be poisoned by its sibling.
+Source-level shadows cannot affect the generated calls. This file pins that
+behavior: `shadowed(3)` and `elsewhere(3)` both produce the same list as
+CPython. The plain display below remains the no-star control.
+
+The generated names are recognized only by the model's builtin dispatcher.
+They cannot be written as Python identifiers, so module and local bindings
+cannot collide with them. This keeps the lowering faithful without a
+scope-sensitive refusal.
 """
 
 
 def shadowed(n):
     # The hazard in one function: a local `list` makes the name local
     # THROUGHOUT the body by CPython's static rule, so the lowered call
-    # would find "SHADOW". CPython builds [1, 2, 3]. The model must be
-    # LOUD.
+    # would find "SHADOW". CPython builds [1, 2, 3], and so does the model;
+    # the synthetic names make this ordinary local binding harmless.
     list = "SHADOW"
     a = [1, 2]
     return [*a, n]

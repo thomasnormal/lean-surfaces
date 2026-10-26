@@ -563,7 +563,7 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
       | start => do
           let xs ← iterValues K m "sum" true v
           liftRes (sumFold start xs)
-  else if fname == "tuple" then
+  else if fname == "tuple" || fname == starTupleBuiltinName then
     -- An IMMEDIATE value: `tuple()` allocates nothing.
     match vs with
     | [] => pure (.tuple #[])
@@ -571,7 +571,7 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
         let xs ← iterValues K m "tuple" true v
         pure (.tuple xs.toArray)
     | vs => raisePy (.typeError s!"tuple expected at most 1 argument, got {vs.length}")
-  else if fname == "list" then
+  else if fname == "list" || fname == starListBuiltinName then
     -- ALLOCATES: CPython's `list(x)` is always a NEW list, never an alias.
     match vs with
     | [] => do let a ← heapPush (.list #[]); pure (.ref a)

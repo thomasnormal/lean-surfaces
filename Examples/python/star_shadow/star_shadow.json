@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.12.14"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/star_shadow/star_shadow.py",
-  "source_sha256": "4348872a53021fd43727c3eabd804179e871b182a4103cf690dd00d807e4c128",
+  "source_sha256": "f07c9266be0bfc8188cca8bd815f9121c3e7bf0b0b0d89574e8c5145251fb546",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "The starred-display lowering's ONE new boundary: a lexical scope that\nBINDS `list` or `tuple` (docs/memory-model.md \u00a7starred displays, the shadow\ncensus).\n\n`[*a, 3]` is lowered to `list(tuple(a) + (3,))`, which spells the display\nas calls of the NAMES `list` and `tuple` \u2014 lookups the source never\nwrote. CPython's display performs no such lookup: BUILD_LIST_UNPACK is a\nbytecode, so a shadowed `list` cannot affect it. The interpreter, though,\nreaches its builtins only AFTER every shadow-resolving arm, so the\nlowered calls would run through the shadow and be SILENTLY WRONG.\n\nSo the extractor checks the module scope and each function's own lexical\nbindings, refusing only the starred display that could observe the shadow.\nThis file is the row that would catch the scope check being dropped: without\nit `shadowed(3)` answers \"SHADOW\" instead of refusing, while `elsewhere(3)`\nwould be poisoned by its sibling.\n"
+            "value": "The starred-display lowering's shadowing boundary (docs/memory-model.md\n\u00a7starred displays).\n\n`[*a, 3]` is lowered to calls of unspellable internal `list`/`tuple` names,\nwhich the source never writes. CPython's display performs no ordinary name\nlookup: BUILD_LIST_UNPACK is a bytecode, so a shadowed `list` cannot affect\nit. The internal names preserve that behavior after lowering.\n\nSource-level shadows cannot affect the generated calls. This file pins that\nbehavior: `shadowed(3)` and `elsewhere(3)` both produce the same list as\nCPython. The plain display below remains the no-star control.\n\nThe generated names are recognized only by the model's builtin dispatcher.\nThey cannot be written as Python identifiers, so module and local bindings\ncannot collide with them. This keeps the lowering faithful without a\nscope-sensitive refusal.\n"
           }
         }
       },
@@ -156,15 +156,91 @@
               "end_col_offset": 18
             },
             "value": {
-              "kind": "Unsupported",
+              "kind": "Call",
               "span": {
                 "lineno": 27,
                 "col_offset": 11,
                 "end_lineno": 27,
                 "end_col_offset": 18
               },
-              "py_kind": "Starred:display_shadowed",
-              "text": "[*a, n]"
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 27,
+                  "col_offset": 11,
+                  "end_lineno": 27,
+                  "end_col_offset": 18
+                },
+                "id": "<star-list>"
+              },
+              "args": [
+                {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 27,
+                    "col_offset": 11,
+                    "end_lineno": 27,
+                    "end_col_offset": 18
+                  },
+                  "left": {
+                    "kind": "Call",
+                    "span": {
+                      "lineno": 27,
+                      "col_offset": 12,
+                      "end_lineno": 27,
+                      "end_col_offset": 14
+                    },
+                    "func": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 27,
+                        "col_offset": 12,
+                        "end_lineno": 27,
+                        "end_col_offset": 14
+                      },
+                      "id": "<star-tuple>"
+                    },
+                    "args": [
+                      {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 27,
+                          "col_offset": 13,
+                          "end_lineno": 27,
+                          "end_col_offset": 14
+                        },
+                        "id": "a"
+                      }
+                    ],
+                    "keywords": [],
+                    "call_unsupported": null
+                  },
+                  "op": "Add",
+                  "right": {
+                    "kind": "Tuple",
+                    "span": {
+                      "lineno": 27,
+                      "col_offset": 11,
+                      "end_lineno": 27,
+                      "end_col_offset": 18
+                    },
+                    "elts": [
+                      {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 27,
+                          "col_offset": 16,
+                          "end_lineno": 27,
+                          "end_col_offset": 17
+                        },
+                        "id": "n"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
             }
           }
         ]
@@ -274,7 +350,7 @@
                   "end_lineno": 34,
                   "end_col_offset": 18
                 },
-                "id": "list"
+                "id": "<star-list>"
               },
               "args": [
                 {
@@ -301,7 +377,7 @@
                         "end_lineno": 34,
                         "end_col_offset": 14
                       },
-                      "id": "tuple"
+                      "id": "<star-tuple>"
                     },
                     "args": [
                       {

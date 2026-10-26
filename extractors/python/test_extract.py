@@ -829,8 +829,8 @@ class ExtractorTests(unittest.TestCase):
                 self.assertEqual(st["py_kind"], "Starred:target")
 
     def test_starred_display_shadow_is_lexical_not_whole_module(self):
-        # The synthetic list/tuple calls must refuse a shadow in the same
-        # function, while a sibling function with no shadow remains admitted.
+        # Synthetic starred-display calls use unspellable builtin names, so a
+        # shadow in the same function cannot change their meaning.
         env = self._envelope_of(
             "def shadowed(n):\n"
             "    list = 'shadow'\n"
@@ -840,8 +840,7 @@ class ExtractorTests(unittest.TestCase):
             "    a = [1, 2]\n"
             "    return [*a, n]\n")
         shadowed, elsewhere = env["module"]["body"]
-        self.assertEqual(shadowed["body"][-1]["value"]["py_kind"],
-                         "Starred:display_shadowed")
+        self.assertEqual(shadowed["body"][-1]["value"]["kind"], "Call")
         self.assertEqual(elsewhere["body"][-1]["value"]["kind"], "Call")
 
     def test_for_else_keeps_orelse(self):

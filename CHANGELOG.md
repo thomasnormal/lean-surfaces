@@ -14,7 +14,7 @@
 - A same-list scalar `append` in an effectful `finally` now runs before the returned list is published; other cleanup shapes remain loud.
 - Tuple unpacking now stores a constant-key dictionary subscript element through the existing heap path; other non-name target shapes remain loud.
 - Attribute-first chained assignment now names the RHS once in an unspellable temporary before left-to-right stores; other non-name-first chains remain loud.
-- Starred display shadow checks now follow lexical scope: a local `list`/`tuple` binding still refuses that function, while an unrelated sibling function remains live.
+- Starred displays now lower through unspellable `<star-tuple>` and `<star-list>` builtin markers, so ordinary `list`/`tuple` bindings cannot shadow the generated calls; local and sibling-scope displays both remain live.
 - Synchronous context managers now admit the exact `__exit__(self, exc_type, exc, tb): return exc_type is not None` suppression test, passing a fixed exception marker on exceptional body paths; arbitrary exception-triple inspection remains loud.
 - Context managers may define `__repr__` without losing the supported protocol; other extra dunders remain loud.
 - `is` and `is not` now decide booleans and CPython 3.9's cached small integers from `-5` through `256`; larger or otherwise implementation-dependent immediate identities remain loud.

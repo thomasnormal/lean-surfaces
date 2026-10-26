@@ -7432,7 +7432,8 @@ mutual
     | .call (.name id _) args kwargs _ _ =>
       kwargs.isEmpty && (id != "sorted") && (id != "next") && (id != "enumerate")
         && (id != "count") && (id != "any") && (id != "all") && (id != "set")
-        && (id != "print") && (id != "list") && (id != "dict") && (id != "iter")
+        && (id != "print") && (id != "list") && (id != starListBuiltinName)
+        && (id != "dict") && (id != "iter")
         -- `<lenmult>` may fall back to heap-backed multiplication, which
         -- allocates; keep it outside the conditional world-preservation
         -- fragment even when its immediate fast path is pure.
@@ -8565,7 +8566,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                                 .exn st (.typeError "'function' object is not iterable")
                               | Option.none => .unsupported danglingMsg)
                            | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))))
-                  else if fname == "tuple" then
+                  else if fname == "tuple" || fname == starTupleBuiltinName then
                     -- pass 3: the tuple CONSTRUCTOR — an immediate value
                     -- (no allocation): str/tuple/namedtuple(class-erased,
                     -- CPython)/boundary list/heap list(snapshot — CPython
@@ -8607,7 +8608,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            | Option.none => .unsupported danglingMsg)
                         | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
                      | vs => .exn st (.typeError s!"tuple expected at most 1 argument, got {vs.length}"))
-                  else if fname == "list" then
+                  else if fname == "list" || fname == starListBuiltinName then
                     -- 2026-08-13 (list comprehensions): the list
                     -- CONSTRUCTOR — `tuple`'s inventory of iterables,
                     -- but it ALLOCATES a fresh heap object, because

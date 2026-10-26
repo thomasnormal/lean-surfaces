@@ -2625,6 +2625,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             rcases hfree with ⟨hfree, hlm⟩
             rcases hfree with ⟨hfree, _⟩
             rcases hfree with ⟨hfree, hndct⟩
+            rcases hfree with ⟨hfree, hstar⟩
             rcases hfree with ⟨hfree, hnlst⟩
             rcases hfree with ⟨hfree, hnpr⟩
             rcases hfree with ⟨hfree, hnset⟩
@@ -2687,6 +2688,10 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               cases hbe : fname == "list"
               · rfl
               · rw [bne, hbe] at hnlst; simp at hnlst
+            have hstarx : (fname == starListBuiltinName) = false := by
+              cases hbe : fname == starListBuiltinName
+              · rfl
+              · rw [bne, hbe] at hstar; simp at hstar
             -- `dict(…)` ALLOCATES too (2026-08-13)
             have hdctx : (fname == "dict") = false := by
               cases hbe : fname == "dict"
@@ -2735,7 +2740,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 -- branch reduces away; the def/namedtuple collision guard
                 -- stays an undecided (walked) ite, and namedtuple
                 -- CONSTRUCTION is a pure value — world-preserving
-                simp only [hlmx, hffx, hs, hnx, hex, hcx, hay, hal, hsetx, hprx, hlstx, hdctx,
+                simp only [hlmx, hffx, hs, hnx, hex, hcx, hay, hal, hsetx, hprx, hlstx, hstarx, hdctx,
                   findClass_heapFree hm fname,
                   Option.isSome_none, Bool.false_or, Bool.false_eq_true, if_false]
                 refine .ite (.ite .unsupported (.bind hargs fun st₁ vs h₁ => ?_)) ?_

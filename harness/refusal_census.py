@@ -1000,7 +1000,6 @@ WHITELIST_CLASS = {
     "seq_lab::str_repeat_loud": "op.Mult-repetition",
     "clock_lab::armed": "exc.handler",
     "clock_lab::read_clock": "clock.underrun",
-    "star_lab::star_call": "starred.position",
     "star_lab::star_target": "starred.position",
     "star_lab::star_for": "starred.position",
     "fstring_lab::format_spec": "fstring.format-spec",

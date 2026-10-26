@@ -17,6 +17,7 @@
 - Starred displays now lower through unspellable `<star-tuple>` and `<star-list>` builtin markers, so ordinary `list`/`tuple` bindings cannot shadow the generated calls; local and sibling-scope displays both remain live.
 - Direct calls of a nested function before its definition now raise CPython's faithful `UnboundLocalError` through the frame's static-local marker; ordinary dynamically shadowed calls remain loud.
 - Starred set displays now lower through the existing `<star-list>` expansion and `set(...)` constructor; set results remain boundary-loud while observations such as `len({*a})` match CPython.
+- Starred positional call arguments now expand eager iterables in place through an unspellable `<star-arg>` marker, preserving source order and CPython's argument errors; keyword unpacking and other unsupported iterable shapes remain loud.
 - Synchronous context managers now admit the exact `__exit__(self, exc_type, exc, tb): return exc_type is not None` suppression test, passing a fixed exception marker on exceptional body paths; arbitrary exception-triple inspection remains loud.
 - Context managers may define `__repr__` without losing the supported protocol; other extra dunders remain loud.
 - `is` and `is not` now decide booleans and CPython 3.9's cached small integers from `-5` through `256`; larger or otherwise implementation-dependent immediate identities remain loud.

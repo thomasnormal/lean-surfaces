@@ -985,6 +985,12 @@ INGESTION census (`Json.lean`) consults them too, and `Json.lean` /
 /-- Unspellable builtin names used by starred-display lowering. -/
 def starListBuiltinName : String := "<star-list>"
 def starTupleBuiltinName : String := "<star-tuple>"
+/-- Synthetic call marker used to preserve a starred positional argument.
+The extractor wraps `f(*xs)` as `f(<star-arg>(xs))`; evaluation turns the
+wrapper into an immediate, unspellable tuple marker which the surrounding call
+expands in place. -/
+def starArgBuiltinName : String := "<star-arg>"
+def starArgValueName : String := "<star-arg-value>"
 
 /-- Builtin names the interpreter implements (resolution: shadowable by
 locals, module globals, and module `def`s, exactly like CPython builtins). -/

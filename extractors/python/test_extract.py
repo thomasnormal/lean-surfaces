@@ -522,6 +522,15 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(e["call_unsupported"], "** unpacking in call", src)
         self.assertEqual(e["keywords"], [], src)
 
+    def test_call_starred_argument_uses_synthetic_expansion_marker(self):
+        e = self._first_return_expr("def f(xs):\n    return g(1, *xs, 2)\n")
+        self.assertEqual(e["kind"], "Call")
+        self.assertIsNone(e["call_unsupported"])
+        self.assertEqual([arg["kind"] for arg in e["args"]],
+                         ["Constant", "Call", "Constant"])
+        self.assertEqual(e["args"][1]["func"]["id"], "<star-arg>")
+        self.assertEqual(e["args"][1]["args"][0]["id"], "xs")
+
     def test_sorted_shadowing_assignment_after_is_admitted(self):
         # H7 refinement: a single direct assignment with every call AFTER
         # it has no UnboundLocalError window — the dynamic env is faithful

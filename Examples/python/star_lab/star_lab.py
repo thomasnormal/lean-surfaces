@@ -1,17 +1,18 @@
 """star_lab — starred DISPLAYS, the extractor lowering (checks-only).
 
-`[*a, 3]`, `{*a, 3}` and `(1, *a)` are lowered by the extractor into
+`[*a, 3]`, `{*a, 3}`, `(1, *a)` and `pair(*a)` are lowered by the extractor into
 `list((e1,) + tuple(a) + (e2,))` and `(e1,) + tuple(a) + (e2,)`
 (docs/memory-model.md §starred displays): zero new AST kinds, zero
-interpreter arms, zero proof arms. For a set display the lowered list is
+interpreter arms, zero proof arms. Starred call arguments use an unspellable
+`<star-arg>` marker that the call expands in place. For a set display the lowered list is
 passed to the existing `set(...)` constructor. `list(...)` appears only on
 the OUTSIDE — a fresh heap list is exactly what CPython builds there — and
 never as a concatenation operand, where a heap object would refuse.
 
-The loud frontier is pinned by refusal probes: a starred CALL argument,
-a dict receiver, a starred assignment TARGET and a
+The loud frontier is pinned by refusal probes: a dict receiver, a starred
+assignment TARGET and a
 starred `for` target. Those are separate constructs with separate
-prices; only the display position is landed.
+prices; display and call positions are landed.
 """
 
 
@@ -104,7 +105,7 @@ def pair(x, y):
 
 
 def star_call():
-    # position 3: a starred CALL argument stays refused (`call_unsupported`)
+    # a starred CALL argument expands the eager list in place
     a = [1, 2]
     return pair(*a)
 

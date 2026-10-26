@@ -618,13 +618,31 @@ def convert_expr(node):
         # (a keyword node with arg=None) stays a loud call_unsupported.
         if any(kw.arg is None for kw in node.keywords):
             reasons.append("** unpacking in call")
-        if any(isinstance(a, ast.Starred) for a in node.args):
-            reasons.append("starred args")
         return {
             "kind": "Call",
             "span": span(node),
             "func": convert_expr(node.func),
-            "args": [convert_expr(a) for a in node.args],
+            # A starred positional argument is represented by an unspellable
+            # synthetic call.  The interpreter evaluates that wrapper to an
+            # internal tuple marker, and the surrounding call expands it in
+            # place.  This keeps ordinary calls and the JSON schema stable
+            # while preserving Python's left-to-right argument order.
+            "args": [
+                {
+                    "kind": "Call",
+                    "span": span(a),
+                    "func": {
+                        "kind": "Name",
+                        "span": span(a),
+                        "id": "<star-arg>",
+                    },
+                    "args": [convert_expr(a.value)],
+                    "keywords": [],
+                    "call_unsupported": None,
+                }
+                if isinstance(a, ast.Starred) else convert_expr(a)
+                for a in node.args
+            ],
             "keywords": [
                 {"arg": kw.arg, "value": convert_expr(kw.value)}
                 for kw in node.keywords

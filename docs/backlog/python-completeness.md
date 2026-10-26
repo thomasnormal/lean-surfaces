@@ -17,6 +17,27 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-159 — admit starred positional call arguments
+
+Positional starred call arguments now lower to the unspellable `<star-arg>`
+marker. Both interpreter paths evaluate the source expression once, expand its
+admitted eager iterable values in place, and preserve CPython's left-to-right
+argument order and error classes. Keyword unpacking and set-order-dependent
+iterables remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `star_lab::star_call` matches in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,645 matched / 49 recorded refusals / 0 failed |
+| Full proof differential | 3,694 cases: 3,536 matched / 158 refusals / 0 failed |
+| Refusal census | 49 rows in 13 classes, 0 drifts; `star_lab::star_call` removed from `call.starred-args` |
+| Extractor tests | 146 passed |
+| Lean build and generated checks | `lake build leanmodels-run`, docs check, coverage freshness, backlog index, and diff check pass |
+
+DECIDED: admit positional starred call arguments through `<star-arg>` and
+retain loud failure for `**kwargs`, set-order-dependent expansion, and other
+unmodeled iterable shapes.
+
 ## 2026-10-26-pycomplete-158 — admit starred set displays
 
 Starred set displays now reuse the landed display lowering: the expanded

@@ -4085,7 +4085,8 @@ would catch a well-meaning special case.
 
 `ast.Starred` is three constructs, not one (docs/backlog.md §the tail,
 construct 5). Displays are a lowering, assignment targets use the dedicated
-`Stmt.unpackAssign` statement, and call sites remain loud. The display
+`Stmt.unpackAssign` statement, and positional call sites now use the same
+synthetic-marker lowering. The display
 lowering costs zero Lean constructors or proof arms; the assignment target
 statement has the ordinary ingestion, interpreter, walker, and observation
 arms for a statement that allocates its starred slice.
@@ -4170,9 +4171,27 @@ strings, ranges, and the supported boundary iterable values. There is no
 Nested targets, multiple stars, attribute/subscript neighbors, and starred
 `for` targets remain loud. Call sites remain loud through `callUnsupported`.
 
-Call sites (position 3) need nothing: `Expr.call`'s `callUnsupported`
-already carries `starred args`, measured at implementation time rather
-than assumed.
+### Starred call arguments are landed (2026-10-26)
+
+Positional starred arguments now lower to an unspellable synthetic call,
+`<star-arg>(x)`, in the original argument position. The call evaluator
+recognizes that marker, evaluates `x` once, materializes its admitted eager
+iterable values, and splices them into the surrounding positional list. A
+normal call then sees the same argument sequence CPython does, so evaluation
+and side effects remain left-to-right. The marker is handled directly by both
+interpreter paths and is excluded from `Expr.heapFree` because the expansion
+can inspect a heap-backed iterable.
+
+The accepted iterable inventory is the existing `tuple(...)` inventory:
+scalar tuples, lists, namedtuples, ranges, strings, and the supported heap
+values. Non-iterables retain the model's loud refusal discipline. `**kwargs`,
+starred keyword values, and set-order-dependent iterables remain loud. The
+marker name cannot be shadowed by ordinary Python bindings. `star_lab.star_call`
+and its native/proof differential rows pin the landed shape.
+
+Call sites (position 3) therefore no longer use the blanket `callUnsupported`
+refusal for positional stars; the remaining refusal census names the precise
+keyword and iterable boundaries instead.
 
 ### One census, two lowerings (2026-08-16)
 

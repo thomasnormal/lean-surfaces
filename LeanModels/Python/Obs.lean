@@ -140,6 +140,10 @@ theorem Run.le_bind {σ α β : Type} {x x' : Run σ α} {f f' : σ → α → R
     | timeout => exact Or.inl rfl
     | unsupported msg => exact Or.inr rfl
 
+theorem flattenStarRun_mono {r r' : Run FrameState (List RVal)}
+    (h : r ⊑ʳ r') : flattenStarRun r ⊑ʳ flattenStarRun r' := by
+  exact Run.le_bind h (fun st vs => Run.le_refl _)
+
 /-- Congruence of `⊑ʳ` under `Run.bindE` (the exceptions tier: the
 stepper's close-on-exn-through-resume continuation — `fuelMono`'s glue
 for the one `bindE` consumer). -/
@@ -639,7 +643,7 @@ theorem fuelMono (fuel : Nat) :
                 cases Env.lookup st.locals fname with
                 | some v =>
                   cases v <;>
-                    exact Run.le_bind (ihEs m st cargs.toList k hk) fun st _ =>
+                    exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st _ =>
                       Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st _ =>
                         Run.le_refl _
                 | none =>
@@ -648,7 +652,7 @@ theorem fuelMono (fuel : Nat) :
                     cases vv with
                     | some v =>
                       cases v <;>
-                        exact Run.le_bind (ihEs m st cargs.toList k hk) fun st _ =>
+                        exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st _ =>
                           Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st _ =>
                             Run.le_refl _
                     | none => exact Run.le_refl _
@@ -657,7 +661,7 @@ theorem fuelMono (fuel : Nat) :
                     | some fdefn =>
                       try dsimp only
                       refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)
-                      refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                      refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
                       refine Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st kvs => ?_
                       refine Run.le_bind (Run.le_refl _) fun st full => ?_
                       exact Run.le_withLocals (ihCall m st.world fname full k hk)
@@ -675,7 +679,7 @@ theorem fuelMono (fuel : Nat) :
                             (Run.le_ite (Run.le_refl _) (Run.le_refl _)))))))))
                       cases findNamedTuple m fname with
                       | some nt =>
-                        exact Run.le_bind (ihEs m st cargs.toList k hk) fun st _ =>
+                        exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st _ =>
                           Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st _ =>
                             Run.le_refl _
                       | none => exact Run.le_refl _
@@ -686,11 +690,11 @@ theorem fuelMono (fuel : Nat) :
                       refine Run.le_ite (Run.le_refl _) ?_
                       cases ckw.toList.find? (fun kv => kv.1 != "reverse") with
                       | some kv =>
-                        exact Run.le_bind (ihEs m st cargs.toList k hk) fun st _ =>
+                        exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st _ =>
                           Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st _ =>
                             Run.le_refl _
                       | none =>
-                        refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                        refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
                         refine Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st kvs => ?_
                         cases vs with
                         | nil => exact Run.le_refl _
@@ -720,13 +724,13 @@ theorem fuelMono (fuel : Nat) :
                                         Run.le_refl _
                       -- float, divmod, len, bool, and repr with keywords: both argument lists bind before
                       -- the faithful positional-only TypeError.
-                      exact Run.le_bind (ihEs m st cargs.toList k hk) fun st _ =>
+                      exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st _ =>
                         Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st _ =>
                           Run.le_refl _
-                      exact Run.le_bind (ihEs m st cargs.toList k hk) fun st _ =>
+                      exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st _ =>
                         Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st _ =>
                           Run.le_refl _
-                      exact Run.le_bind (ihEs m st cargs.toList k hk) fun st _ =>
+                      exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st _ =>
                         Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st _ =>
                           Run.le_refl _
               case «attribute» recv attr spa =>
@@ -744,7 +748,7 @@ theorem fuelMono (fuel : Nat) :
                     | some fdefn =>
                       try dsimp only
                       refine Run.le_ite (Run.le_refl _) ?_
-                      refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                      refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
                       refine Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st kvs => ?_
                       refine Run.le_bind (Run.le_refl _) fun st full => ?_
                       exact Run.le_withLocals (ihCall m st.world qname full k hk)
@@ -758,7 +762,7 @@ theorem fuelMono (fuel : Nat) :
                     | some fdefn =>
                       try dsimp only
                       refine Run.le_ite (Run.le_refl _) ?_
-                      refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                      refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
                       refine Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st kvs => ?_
                       refine Run.le_bind (Run.le_refl _) fun st full => ?_
                       exact Run.le_withLocals (ihCall m st.world qname full k hk)
@@ -788,7 +792,7 @@ theorem fuelMono (fuel : Nat) :
                   dsimp only
                   cases ntupleCallPlan m tn fs attr <;> try exact Run.le_refl _
                   case instMethod qname =>
-                    exact Run.le_bind (ihEs m st cargs.toList k hk) fun st vs =>
+                    exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs =>
                       Run.le_withLocals
                         (ihCall m st.world qname ((RVal.ntuple tn fs xs :: vs).toArray) k hk)
                 case str sv =>
@@ -798,473 +802,489 @@ theorem fuelMono (fuel : Nat) :
                   cases strCallPlan attr <;>
                     first
                     | exact Run.le_refl _
-                    | exact Run.le_bind (ihEs m st cargs.toList k hk)
+                    | exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk))
                         fun st vs => Run.le_refl _
                 case float fv =>
                   -- `float.is_integer()` is a pure zero-argument query;
                   -- argument evaluation is the only recursive part.
                   dsimp only
                   split
-                  · exact Run.le_bind (ihEs m st cargs.toList k hk)
+                  · exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk))
                       fun st vs => Run.le_refl _
                   · exact Run.le_refl _
               case name fname _ =>
                 dsimp only
-                cases Env.lookup st.locals fname with
-                | some v =>
-                  cases v <;>
-                    first
-                    | exact Run.le_refl _
-                    | exact Run.le_bind (ihEs m st cargs.toList k hk) fun _ _ =>
-                        Run.le_refl _
-                    | skip
-                  case ref a =>
-                    -- H7: the guarded closure call
-                    refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                    refine Run.le_ite (Run.le_refl _) ?_
-                    cases Heap.get? st.world.heap a with
-                    | none => exact Run.le_refl _
-                    | some o =>
-                      cases o <;> try exact Run.le_refl _
-                      case closure nm ps ao lo hg ig bd cap =>
-                        exact Run.le_bind (Run.le_refl _) fun st cap' =>
-                          Run.le_withLocals
-                            (ihClosure m st.world
-                              nm ps ao lo ig bd cap' vs.toArray k hk)
-                | none =>
-                  -- module globals (G1) → module function → builtins →
-                  -- NameError/unsupported (the globals and the final fork are
-                  -- fuel-independent, hence `le_refl`)
-                  refine Run.le_ite (Run.le_refl _) ?_
-                  cases lookupG (moduleGlobals m).1 fname with
-                  | some vv =>
-                    cases vv with
-                    | some v =>
-                      cases v <;>
-                        exact Run.le_bind (ihEs m st cargs.toList k hk) fun _ _ =>
+                cases hstar : fname == starArgBuiltinName with
+                | true =>
+                  simp only [if_true]
+                  cases cargs.toList with
+                  | nil => exact Run.le_refl _
+                  | cons arg rest =>
+                    cases rest with
+                    | nil =>
+                      cases ckw.toList with
+                      | nil =>
+                        exact Run.le_bind (ihE m st arg k hk) fun st v =>
+                          Run.le_bind (Run.le_refl _) fun st xs => Run.le_refl _
+                      | cons _ _ => exact Run.le_refl _
+                    | cons _ _ => exact Run.le_refl _
+                | false =>
+                  simp only [hstar, Bool.false_eq_true, if_false]
+                  cases Env.lookup st.locals fname with
+                  | some v =>
+                    cases v <;>
+                      first
+                      | exact Run.le_refl _
+                      | exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun _ _ =>
                           Run.le_refl _
-                    | none =>
-                      -- pass 3: the poisoned-arm live view — value/exn
-                      -- arms bind then decide; a closure ref recurses
-                      -- through `callClosure` (its own conjunct)
-                      cases Env.lookup st.world.globals fname with
+                      | skip
+                    case ref a =>
+                      -- H7: the guarded closure call
+                      refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                      refine Run.le_ite (Run.le_refl _) ?_
+                      cases Heap.get? st.world.heap a with
                       | none => exact Run.le_refl _
-                      | some v =>
-                        cases v with
-                        | none => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
-                        | ellipsis => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
-                        | bool _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
-                        | int _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
-                        | float _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
-                        | str _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
-                        | bytes _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
-                        | listV _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
-                        | tuple _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
-                        | ntuple _ _ _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
-                        | rangeV _ _ _ => exact Run.le_bind (ihEs m st cargs.toList k hk) (fun st _ => Run.le_refl _)
-                        | ref a =>
-                          refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                          refine Run.le_ite (Run.le_refl _) ?_
-                          cases Heap.get? st.world.heap a with
-                          | none => exact Run.le_refl _
-                          | some obj =>
-                            cases obj <;> try exact Run.le_refl _
-                            case closure nm ps ao lo hg ig bd cap =>
-                              exact Run.le_bind (Run.le_refl _) fun st cap' =>
-                                Run.le_withLocals
-                                  (ihClosure m st.world
-                                    nm ps ao lo ig bd cap' vs.toArray k hk)
+                      | some o =>
+                        cases o <;> try exact Run.le_refl _
+                        case closure nm ps ao lo hg ig bd cap =>
+                          exact Run.le_bind (Run.le_refl _) fun st cap' =>
+                            Run.le_withLocals
+                              (ihClosure m st.world
+                                nm ps ao lo ig bd cap' vs.toArray k hk)
                   | none =>
-                    -- findFunction (def/class collision → call) → class
-                    -- instantiation (guards, args, `__init__` through
-                    -- `callIn`) → len → sorted → max → min → abs → int →
-                    -- NameError/unsupported (each builtin: bind args, result
-                    -- fuel-independent)
-                    have hb : ∀ {β : Type} (g : FrameState → List RVal → Run FrameState β),
-                        (evalExprs m fuel st cargs.toList).bind g ⊑ʳ
-                        (evalExprs m k st cargs.toList).bind g :=
-                      fun g => Run.le_bind (ihEs m st cargs.toList k hk)
-                        fun st vs => Run.le_refl _
-                    refine Run.le_ite
-                      (Run.le_ite (Run.le_refl _)
-                        (Run.le_bind (ihEs m st cargs.toList k hk) fun st vs =>
-                          Run.le_withLocals (ihCall m st.world fname vs.toArray k hk)))
-                      ?_
-                    cases findClass m fname with
-                    | some p =>
-                      obtain ⟨ci, c⟩ := p
-                      -- namedtuple-collision guard, then the exceptions
-                      -- tier's isExc guard (both fuel-independent)
-                      refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)
-                      cases c.ntBase with
-                      | some nt =>
-                        -- value-like subclass construction (H5): guards,
-                        -- then args, then a fuel-independent value/arity fork
-                        refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
-                          (Run.le_ite (Run.le_refl _) ?_))
-                        exact Run.le_bind (ihEs m st cargs.toList k hk)
-                          fun st vs => Run.le_refl _
+                    -- module globals (G1) → module function → builtins →
+                    -- NameError/unsupported (the globals and the final fork are
+                    -- fuel-independent, hence `le_refl`)
+                    refine Run.le_ite (Run.le_refl _) ?_
+                    cases lookupG (moduleGlobals m).1 fname with
+                    | some vv =>
+                      cases vv with
+                      | some v =>
+                        cases v <;>
+                          exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun _ _ =>
+                            Run.le_refl _
                       | none =>
-                        refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)
-                        refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                        cases classMethodQname m ci "__init__" with
-                        | some initName =>
-                          refine Run.le_bind (Run.le_withLocals
-                            (ihCall m _ initName ((RVal.ref st.world.heap.size :: vs).toArray) k hk))
-                            fun st'' r => ?_
-                          cases r <;> exact Run.le_refl _
+                        -- pass 3: the poisoned-arm live view — value/exn
+                        -- arms bind then decide; a closure ref recurses
+                        -- through `callClosure` (its own conjunct)
+                        cases Env.lookup st.world.globals fname with
                         | none => exact Run.le_refl _
+                        | some v =>
+                          cases v with
+                          | none => exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) (fun st _ => Run.le_refl _)
+                          | ellipsis => exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) (fun st _ => Run.le_refl _)
+                          | bool _ => exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) (fun st _ => Run.le_refl _)
+                          | int _ => exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) (fun st _ => Run.le_refl _)
+                          | float _ => exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) (fun st _ => Run.le_refl _)
+                          | str _ => exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) (fun st _ => Run.le_refl _)
+                          | bytes _ => exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) (fun st _ => Run.le_refl _)
+                          | listV _ => exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) (fun st _ => Run.le_refl _)
+                          | tuple _ => exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) (fun st _ => Run.le_refl _)
+                          | ntuple _ _ _ => exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) (fun st _ => Run.le_refl _)
+                          | rangeV _ _ _ => exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) (fun st _ => Run.le_refl _)
+                          | ref a =>
+                            refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            refine Run.le_ite (Run.le_refl _) ?_
+                            cases Heap.get? st.world.heap a with
+                            | none => exact Run.le_refl _
+                            | some obj =>
+                              cases obj <;> try exact Run.le_refl _
+                              case closure nm ps ao lo hg ig bd cap =>
+                                exact Run.le_bind (Run.le_refl _) fun st cap' =>
+                                  Run.le_withLocals
+                                    (ihClosure m st.world
+                                      nm ps ao lo ig bd cap' vs.toArray k hk)
                     | none =>
-                      -- namedtuple construction binds the arguments, then a
-                      -- fuel-independent value/arity fork; the builtin chain
-                      -- is as before
-                      cases findNamedTuple m fname with
-                      | some nt => exact hb _
+                      -- findFunction (def/class collision → call) → class
+                      -- instantiation (guards, args, `__init__` through
+                      -- `callIn`) → len → sorted → max → min → abs → int →
+                      -- NameError/unsupported (each builtin: bind args, result
+                      -- fuel-independent)
+                      have hb : ∀ {β : Type} (g : FrameState → List RVal → Run FrameState β),
+                          (flattenStarRun (evalExprs m fuel st cargs.toList)).bind g ⊑ʳ
+                          (flattenStarRun (evalExprs m k st cargs.toList)).bind g :=
+                        fun g => Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk))
+                          fun st vs => Run.le_refl _
+                      refine Run.le_ite
+                        (Run.le_ite (Run.le_refl _)
+                          (Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs =>
+                            Run.le_withLocals (ihCall m st.world fname vs.toArray k hk)))
+                        ?_
+                      cases findClass m fname with
+                      | some p =>
+                        obtain ⟨ci, c⟩ := p
+                        -- namedtuple-collision guard, then the exceptions
+                        -- tier's isExc guard (both fuel-independent)
+                        refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)
+                        cases c.ntBase with
+                        | some nt =>
+                          -- value-like subclass construction (H5): guards,
+                          -- then args, then a fuel-independent value/arity fork
+                          refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
+                            (Run.le_ite (Run.le_refl _) ?_))
+                          exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk))
+                            fun st vs => Run.le_refl _
+                        | none =>
+                          refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)
+                          refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                          cases classMethodQname m ci "__init__" with
+                          | some initName =>
+                            refine Run.le_bind (Run.le_withLocals
+                              (ihCall m _ initName ((RVal.ref st.world.heap.size :: vs).toArray) k hk))
+                              fun st'' r => ?_
+                            cases r <;> exact Run.le_refl _
+                          | none => exact Run.le_refl _
                       | none =>
-                        -- len, sorted (drains a generator), max/min (the
-                        -- guarded drain), any/all (the short-circuit
-                        -- drain), abs, round, int, enumerate, count (both
-                        -- ALLOCATE an iterator object), NEXT (binds the
-                        -- args, then steps the generator), ord, chr
-                        -- len → sorted → max → min → any/all → set → abs →
-                        -- int → sum → tuple → list → dict → range →
-                        -- enumerate → count → next → ord → chr → hex → format → tail
-                        refine Run.le_ite ?_                                  -- literal f-string format
-                            (Run.le_ite ?_                                  -- len(sequence * count)
-                            (Run.le_ite (hb _)                                  -- len
-                            (Run.le_ite ?_                                     -- sorted
-                             (Run.le_ite ?_                                    -- max
-                              (Run.le_ite ?_                                   -- min
-                               (Run.le_ite ?_                                  -- any/all
-                                (Run.le_ite ?_                                 -- set
-                                 (Run.le_ite (hb _)                            -- abs
-                                  (Run.le_ite (hb _)                           -- round
-                                   (Run.le_ite (hb _)                           -- int
-                                   (Run.le_ite (hb _)
-                                   (Run.le_ite (hb _)
-                                   (Run.le_ite (hb _)
-                                   (Run.le_ite ?_                              -- pow
-                                   (Run.le_ite ?_                              -- sum
-                                    (Run.le_ite ?_                             -- tuple
-                                     (Run.le_ite ?_                            -- list
-                                      (Run.le_ite ?_                           -- dict
-                                       (Run.le_ite (hb _)                      -- range
-                                      (Run.le_ite (hb _)                       -- enumerate
-                                       (Run.le_ite (hb _)                      -- count
-                                        (Run.le_ite ?_                         -- next
-                                         (Run.le_ite (hb _)                    -- ord
-                                             (Run.le_ite (hb _)                 -- chr
-                                             (Run.le_ite (hb _)                 -- hex
-                                              (Run.le_ite (hb _)                -- format
-                                              ?_))))))))))))))))))))))))))
-                        -- Literal f-string format specifications evaluate their
-                        -- two structural arguments and then use the pure
-                        -- format worker.
-                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                          cases vs with
-                          | nil => exact Run.le_refl _
-                          | cons _ rest =>
-                            cases rest with
-                            | nil => exact Run.le_refl _
-                            | cons _ rest' =>
-                              cases rest' with
-                              | nil => exact Run.le_refl _
-                              | cons _ _ => exact Run.le_refl _
-                        -- `<lenmult>` evaluates its operands once and then
-                        -- chooses a fuel-independent length/result worker.
-                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                          cases vs with
-                          | nil => exact Run.le_refl _
-                          | cons left rest =>
-                            cases rest with
-                            | nil => exact Run.le_refl _
-                            | cons right rest' =>
-                              cases rest' with
-                              | nil =>
-                                cases sequenceMultLength left right <;> exact Run.le_refl _
-                              | cons _ _ => exact Run.le_refl _
-                        -- sorted
-                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                          cases vs with
-                          | nil => exact Run.le_refl _
-                          | cons v vtail =>
-                            cases vtail with
-                            | cons _ _ => exact Run.le_refl _
-                            | nil =>
-                              dsimp only
-                              cases v <;> try exact Run.le_refl _
-                              case ref a =>
-                                dsimp only
-                                cases Heap.get? st.world.heap a with
-                                | none => exact Run.le_refl _
-                                | some obj =>
-                                  cases obj <;> try exact Run.le_refl _
-                                  case generator q l c stat =>
-                                    refine Run.le_bind
-                                      (Run.le_withLocals (ihDrain m st.world a k hk))
-                                      fun st vals => ?_
-                                    exact Run.le_bind (Run.le_refl _) fun st s2 =>
-                                      Run.le_refl _
-                        -- max
-                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                          cases vs with
-                          | nil => exact Run.le_refl _
-                          | cons v vtail =>
-                            cases v <;> try exact Run.le_refl _
-                            case ref a =>
-                              cases vtail with
-                              | cons _ _ => exact Run.le_refl _
-                              | nil =>
-                                dsimp only
-                                cases Heap.get? st.world.heap a with
-                                | none => exact Run.le_refl _
-                                | some obj =>
-                                  cases obj <;> try exact Run.le_refl _
-                                  case generator q l c stat =>
-                                    refine Run.le_ite (Run.le_refl _) ?_
-                                    refine Run.le_bind
-                                      (Run.le_withLocals (ihDrain m st.world a k hk))
-                                      fun st vals => ?_
-                                    exact Run.le_refl _
-                        -- min
-                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                          cases vs with
-                          | nil => exact Run.le_refl _
-                          | cons v vtail =>
-                            cases v <;> try exact Run.le_refl _
-                            case ref a =>
-                              cases vtail with
-                              | cons _ _ => exact Run.le_refl _
-                              | nil =>
-                                dsimp only
-                                cases Heap.get? st.world.heap a with
-                                | none => exact Run.le_refl _
-                                | some obj =>
-                                  cases obj <;> try exact Run.le_refl _
-                                  case generator q l c stat =>
-                                    refine Run.le_ite (Run.le_refl _) ?_
-                                    refine Run.le_bind
-                                      (Run.le_withLocals (ihDrain m st.world a k hk))
-                                      fun st vals => ?_
-                                    exact Run.le_refl _
-                        -- any/all
-                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                          cases vs with
-                          | nil => exact Run.le_refl _
-                          | cons v vtail =>
-                            cases vtail with
-                            | cons _ _ => exact Run.le_refl _
-                            | nil =>
-                              cases v <;> try exact Run.le_refl _
-                              case ref a =>
-                                dsimp only
-                                cases Heap.get? st.world.heap a with
-                                | none => exact Run.le_refl _
-                                | some obj =>
-                                  cases obj <;> try exact Run.le_refl _
-                                  case generator q l c stat =>
-                                    refine Run.le_bind
-                                      (Run.le_withLocals
-                                        (ihAnyAll m st.world a (fname == "all") k hk))
-                                      fun st b => ?_
-                                    exact Run.le_refl _
-                        -- set (H7+): binds, then per-receiver dedup
-                        -- (fuel-threaded scans) or the generator drain
-                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                          cases vs with
-                          | nil => exact Run.le_refl _
-                          | cons v vtail =>
-                            cases vtail with
-                            | cons _ _ => exact Run.le_refl _
-                            | nil =>
-                              dsimp only
-                              cases v <;>
-                                first
-                                | exact Run.le_refl _
-                                | exact Run.le_bind (Run.le_liftRes (setDedup_mono hk _))
-                                    fun st es => Run.le_refl _
-                                | skip
-                              case rangeV lo hi step =>
-                                exact Run.le_bind (Run.le_refl _) fun st xs =>
-                                  Run.le_bind (Run.le_liftRes (setDedup_mono hk _))
-                                    fun st es => Run.le_refl _
-                              case ref a =>
-                                dsimp only
-                                cases Heap.get? st.world.heap a with
-                                | none => exact Run.le_refl _
-                                | some obj =>
-                                  cases obj <;>
-                                    first
-                                    | exact Run.le_refl _
-                                    | exact Run.le_bind (Run.le_liftRes (setDedup_mono hk _))
-                                        fun st es => Run.le_refl _
-                                    | skip
-                                  case generator q l c stat =>
-                                    refine Run.le_bind
-                                      (Run.le_withLocals (ihDrain m st.world a k hk))
-                                      fun st vals => ?_
-                                    exact Run.le_bind (Run.le_liftRes (setDedup_mono hk _))
-                                      fun st es => Run.le_refl _
-                        -- pow: argument evaluation followed by the pure
-                        -- binary operation, or the loud modulus refusal
-                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                          cases vs with
-                          | nil => exact Run.le_refl _
-                          | cons _ rest =>
-                            cases rest with
+                        -- namedtuple construction binds the arguments, then a
+                        -- fuel-independent value/arity fork; the builtin chain
+                        -- is as before
+                        cases findNamedTuple m fname with
+                        | some nt => exact hb _
+                        | none =>
+                          -- len, sorted (drains a generator), max/min (the
+                          -- guarded drain), any/all (the short-circuit
+                          -- drain), abs, round, int, enumerate, count (both
+                          -- ALLOCATE an iterator object), NEXT (binds the
+                          -- args, then steps the generator), ord, chr
+                          -- len → sorted → max → min → any/all → set → abs →
+                          -- int → sum → tuple → list → dict → range →
+                          -- enumerate → count → next → ord → chr → hex → format → tail
+                          refine Run.le_ite ?_                                  -- literal f-string format
+                              (Run.le_ite ?_                                  -- len(sequence * count)
+                              (Run.le_ite (hb _)                                  -- len
+                              (Run.le_ite ?_                                     -- sorted
+                               (Run.le_ite ?_                                    -- max
+                                (Run.le_ite ?_                                   -- min
+                                 (Run.le_ite ?_                                  -- any/all
+                                  (Run.le_ite ?_                                 -- set
+                                   (Run.le_ite (hb _)                            -- abs
+                                    (Run.le_ite (hb _)                           -- round
+                                     (Run.le_ite (hb _)                           -- int
+                                     (Run.le_ite (hb _)
+                                     (Run.le_ite (hb _)
+                                     (Run.le_ite (hb _)
+                                     (Run.le_ite ?_                              -- pow
+                                     (Run.le_ite ?_                              -- sum
+                                      (Run.le_ite ?_                             -- tuple
+                                       (Run.le_ite ?_                            -- list
+                                        (Run.le_ite ?_                           -- dict
+                                         (Run.le_ite (hb _)                      -- range
+                                        (Run.le_ite (hb _)                       -- enumerate
+                                         (Run.le_ite (hb _)                      -- count
+                                          (Run.le_ite ?_                         -- next
+                                           (Run.le_ite (hb _)                    -- ord
+                                               (Run.le_ite (hb _)                 -- chr
+                                               (Run.le_ite (hb _)                 -- hex
+                                                (Run.le_ite (hb _)                -- format
+                                                ?_))))))))))))))))))))))))))
+                          -- Literal f-string format specifications evaluate their
+                          -- two structural arguments and then use the pure
+                          -- format worker.
+                          · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            cases vs with
                             | nil => exact Run.le_refl _
                             | cons _ rest =>
                               cases rest with
                               | nil => exact Run.le_refl _
-                              | cons _ _ => exact Run.le_refl _
-                        -- sum (pass 3): arity fork, the str-start fork,
-                        -- then the receiver — every value arm is the pure
-                        -- fold; the single-generator arm drains behind the
-                        -- `moduleGenFree` guard, like max/min
-                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                          cases sumArgs vs with
-                          | none => exact Run.le_refl _
-                          | some pr =>
-                            obtain ⟨v, start⟩ := pr
-                            dsimp only
-                            cases start <;> try exact Run.le_refl _
-                            all_goals
-                              cases v <;> try exact Run.le_refl _
-                            all_goals
-                              case ref a =>
-                                dsimp only
-                                cases Heap.get? st.world.heap a with
-                                | none => exact Run.le_refl _
-                                | some obj =>
-                                  cases obj <;> try exact Run.le_refl _
-                                  case generator q l c stat =>
-                                    refine Run.le_ite (Run.le_refl _) ?_
-                                    exact Run.le_bind
-                                      (Run.le_withLocals (ihDrain m st.world a k hk))
-                                      fun st vals => Run.le_refl _
-                        -- tuple (pass 3): snapshot constructors are
-                        -- fuel-free; the generator arm drains, guarded
-                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                          cases vs with
-                          | nil => exact Run.le_refl _
-                          | cons v vtail =>
-                            cases vtail with
-                            | cons _ _ => exact Run.le_refl _
-                            | nil =>
-                              dsimp only
-                              cases v <;> try exact Run.le_refl _
-                              case ref a =>
-                                dsimp only
-                                cases Heap.get? st.world.heap a with
-                                | none => exact Run.le_refl _
-                                | some obj =>
-                                  cases obj <;> try exact Run.le_refl _
-                                  case generator q l c stat =>
-                                    refine Run.le_ite (Run.le_refl _) ?_
-                                    exact Run.le_bind
-                                      (Run.le_withLocals (ihDrain m st.world a k hk))
-                                      fun st vals => Run.le_refl _
-                        -- list (2026-08-13): `tuple`'s inventory with an
-                        -- allocation, and the generator arm drains
-                        -- UNGUARDED (the call is outside heapFree, so no
-                        -- `moduleGenFree` ite to walk)
-                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                          cases vs with
-                          | nil => exact Run.le_refl _
-                          | cons v vtail =>
-                            cases vtail with
-                            | cons _ _ => exact Run.le_refl _
-                            | nil =>
-                              dsimp only
-                              cases v <;> try exact Run.le_refl _
-                              case ref a =>
-                                dsimp only
-                                cases Heap.get? st.world.heap a with
-                                | none => exact Run.le_refl _
-                                | some obj =>
-                                  cases obj <;> try exact Run.le_refl _
-                                  case generator q l c stat =>
-                                    exact Run.le_bind
-                                      (Run.le_withLocals (ihDrain m st.world a k hk))
-                                      fun st vals => Run.le_refl _
-                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                          cases vs with
-                          | nil => exact Run.le_refl _
-                          | cons value remaining =>
-                            cases remaining with
-                            | cons _ _ => exact Run.le_refl _
-                            | nil =>
-                              dsimp only
-                              cases value <;> try exact Run.le_refl _
-                              case ref address =>
-                                dsimp only
-                                cases Heap.get? st.world.heap address with
-                                | none => exact Run.le_refl _
-                                | some obj =>
-                                  cases obj <;> try exact Run.le_refl _
-                                  case generator kind locals captured status =>
-                                    exact Run.le_bind
-                                      (Run.le_withLocals (ihDrain m st.world address k hk))
-                                      fun st vals =>
-                                        Run.le_bind (Run.le_refl _) fun st items =>
-                                          Run.le_bind (Run.le_refl _) fun st entries =>
-                                            Run.le_refl _
-                        -- next
-                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                          cases vs with
-                          | nil => exact Run.le_refl _
-                          | cons v rest =>
-                            cases v <;> try exact Run.le_refl _
-                            case ref ad =>
-                              cases rest with
-                              | nil =>
-                                refine Run.le_bind
-                                  (Run.le_withLocals (ihStep m st.world ad k hk))
-                                  fun st r => ?_
-                                cases r <;> exact Run.le_refl _
-                              | cons d rest' =>
+                              | cons _ rest' =>
                                 cases rest' with
+                                | nil => exact Run.le_refl _
+                                | cons _ _ => exact Run.le_refl _
+                          -- `<lenmult>` evaluates its operands once and then
+                          -- chooses a fuel-independent length/result worker.
+                          · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            cases vs with
+                            | nil => exact Run.le_refl _
+                            | cons left rest =>
+                              cases rest with
+                              | nil => exact Run.le_refl _
+                              | cons right rest' =>
+                                cases rest' with
+                                | nil =>
+                                  cases sequenceMultLength left right <;> exact Run.le_refl _
+                                | cons _ _ => exact Run.le_refl _
+                          -- sorted
+                          · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            cases vs with
+                            | nil => exact Run.le_refl _
+                            | cons v vtail =>
+                              cases vtail with
+                              | cons _ _ => exact Run.le_refl _
+                              | nil =>
+                                dsimp only
+                                cases v <;> try exact Run.le_refl _
+                                case ref a =>
+                                  dsimp only
+                                  cases Heap.get? st.world.heap a with
+                                  | none => exact Run.le_refl _
+                                  | some obj =>
+                                    cases obj <;> try exact Run.le_refl _
+                                    case generator q l c stat =>
+                                      refine Run.le_bind
+                                        (Run.le_withLocals (ihDrain m st.world a k hk))
+                                        fun st vals => ?_
+                                      exact Run.le_bind (Run.le_refl _) fun st s2 =>
+                                        Run.le_refl _
+                          -- max
+                          · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            cases vs with
+                            | nil => exact Run.le_refl _
+                            | cons v vtail =>
+                              cases v <;> try exact Run.le_refl _
+                              case ref a =>
+                                cases vtail with
+                                | cons _ _ => exact Run.le_refl _
+                                | nil =>
+                                  dsimp only
+                                  cases Heap.get? st.world.heap a with
+                                  | none => exact Run.le_refl _
+                                  | some obj =>
+                                    cases obj <;> try exact Run.le_refl _
+                                    case generator q l c stat =>
+                                      refine Run.le_ite (Run.le_refl _) ?_
+                                      refine Run.le_bind
+                                        (Run.le_withLocals (ihDrain m st.world a k hk))
+                                        fun st vals => ?_
+                                      exact Run.le_refl _
+                          -- min
+                          · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            cases vs with
+                            | nil => exact Run.le_refl _
+                            | cons v vtail =>
+                              cases v <;> try exact Run.le_refl _
+                              case ref a =>
+                                cases vtail with
+                                | cons _ _ => exact Run.le_refl _
+                                | nil =>
+                                  dsimp only
+                                  cases Heap.get? st.world.heap a with
+                                  | none => exact Run.le_refl _
+                                  | some obj =>
+                                    cases obj <;> try exact Run.le_refl _
+                                    case generator q l c stat =>
+                                      refine Run.le_ite (Run.le_refl _) ?_
+                                      refine Run.le_bind
+                                        (Run.le_withLocals (ihDrain m st.world a k hk))
+                                        fun st vals => ?_
+                                      exact Run.le_refl _
+                          -- any/all
+                          · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            cases vs with
+                            | nil => exact Run.le_refl _
+                            | cons v vtail =>
+                              cases vtail with
+                              | cons _ _ => exact Run.le_refl _
+                              | nil =>
+                                cases v <;> try exact Run.le_refl _
+                                case ref a =>
+                                  dsimp only
+                                  cases Heap.get? st.world.heap a with
+                                  | none => exact Run.le_refl _
+                                  | some obj =>
+                                    cases obj <;> try exact Run.le_refl _
+                                    case generator q l c stat =>
+                                      refine Run.le_bind
+                                        (Run.le_withLocals
+                                          (ihAnyAll m st.world a (fname == "all") k hk))
+                                        fun st b => ?_
+                                      exact Run.le_refl _
+                          -- set (H7+): binds, then per-receiver dedup
+                          -- (fuel-threaded scans) or the generator drain
+                          · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            cases vs with
+                            | nil => exact Run.le_refl _
+                            | cons v vtail =>
+                              cases vtail with
+                              | cons _ _ => exact Run.le_refl _
+                              | nil =>
+                                dsimp only
+                                cases v <;>
+                                  first
+                                  | exact Run.le_refl _
+                                  | exact Run.le_bind (Run.le_liftRes (setDedup_mono hk _))
+                                      fun st es => Run.le_refl _
+                                  | skip
+                                case rangeV lo hi step =>
+                                  exact Run.le_bind (Run.le_refl _) fun st xs =>
+                                    Run.le_bind (Run.le_liftRes (setDedup_mono hk _))
+                                      fun st es => Run.le_refl _
+                                case ref a =>
+                                  dsimp only
+                                  cases Heap.get? st.world.heap a with
+                                  | none => exact Run.le_refl _
+                                  | some obj =>
+                                    cases obj <;>
+                                      first
+                                      | exact Run.le_refl _
+                                      | exact Run.le_bind (Run.le_liftRes (setDedup_mono hk _))
+                                          fun st es => Run.le_refl _
+                                      | skip
+                                    case generator q l c stat =>
+                                      refine Run.le_bind
+                                        (Run.le_withLocals (ihDrain m st.world a k hk))
+                                        fun st vals => ?_
+                                      exact Run.le_bind (Run.le_liftRes (setDedup_mono hk _))
+                                        fun st es => Run.le_refl _
+                          -- pow: argument evaluation followed by the pure
+                          -- binary operation, or the loud modulus refusal
+                          · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            cases vs with
+                            | nil => exact Run.le_refl _
+                            | cons _ rest =>
+                              cases rest with
+                              | nil => exact Run.le_refl _
+                              | cons _ rest =>
+                                cases rest with
+                                | nil => exact Run.le_refl _
+                                | cons _ _ => exact Run.le_refl _
+                          -- sum (pass 3): arity fork, the str-start fork,
+                          -- then the receiver — every value arm is the pure
+                          -- fold; the single-generator arm drains behind the
+                          -- `moduleGenFree` guard, like max/min
+                          · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            cases sumArgs vs with
+                            | none => exact Run.le_refl _
+                            | some pr =>
+                              obtain ⟨v, start⟩ := pr
+                              dsimp only
+                              cases start <;> try exact Run.le_refl _
+                              all_goals
+                                cases v <;> try exact Run.le_refl _
+                              all_goals
+                                case ref a =>
+                                  dsimp only
+                                  cases Heap.get? st.world.heap a with
+                                  | none => exact Run.le_refl _
+                                  | some obj =>
+                                    cases obj <;> try exact Run.le_refl _
+                                    case generator q l c stat =>
+                                      refine Run.le_ite (Run.le_refl _) ?_
+                                      exact Run.le_bind
+                                        (Run.le_withLocals (ihDrain m st.world a k hk))
+                                        fun st vals => Run.le_refl _
+                          -- tuple (pass 3): snapshot constructors are
+                          -- fuel-free; the generator arm drains, guarded
+                          · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            cases vs with
+                            | nil => exact Run.le_refl _
+                            | cons v vtail =>
+                              cases vtail with
+                              | cons _ _ => exact Run.le_refl _
+                              | nil =>
+                                dsimp only
+                                cases v <;> try exact Run.le_refl _
+                                case ref a =>
+                                  dsimp only
+                                  cases Heap.get? st.world.heap a with
+                                  | none => exact Run.le_refl _
+                                  | some obj =>
+                                    cases obj <;> try exact Run.le_refl _
+                                    case generator q l c stat =>
+                                      refine Run.le_ite (Run.le_refl _) ?_
+                                      exact Run.le_bind
+                                        (Run.le_withLocals (ihDrain m st.world a k hk))
+                                        fun st vals => Run.le_refl _
+                          -- list (2026-08-13): `tuple`'s inventory with an
+                          -- allocation, and the generator arm drains
+                          -- UNGUARDED (the call is outside heapFree, so no
+                          -- `moduleGenFree` ite to walk)
+                          · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            cases vs with
+                            | nil => exact Run.le_refl _
+                            | cons v vtail =>
+                              cases vtail with
+                              | cons _ _ => exact Run.le_refl _
+                              | nil =>
+                                dsimp only
+                                cases v <;> try exact Run.le_refl _
+                                case ref a =>
+                                  dsimp only
+                                  cases Heap.get? st.world.heap a with
+                                  | none => exact Run.le_refl _
+                                  | some obj =>
+                                    cases obj <;> try exact Run.le_refl _
+                                    case generator q l c stat =>
+                                      exact Run.le_bind
+                                        (Run.le_withLocals (ihDrain m st.world a k hk))
+                                        fun st vals => Run.le_refl _
+                          · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            cases vs with
+                            | nil => exact Run.le_refl _
+                            | cons value remaining =>
+                              cases remaining with
+                              | cons _ _ => exact Run.le_refl _
+                              | nil =>
+                                dsimp only
+                                cases value <;> try exact Run.le_refl _
+                                case ref address =>
+                                  dsimp only
+                                  cases Heap.get? st.world.heap address with
+                                  | none => exact Run.le_refl _
+                                  | some obj =>
+                                    cases obj <;> try exact Run.le_refl _
+                                    case generator kind locals captured status =>
+                                      exact Run.le_bind
+                                        (Run.le_withLocals (ihDrain m st.world address k hk))
+                                        fun st vals =>
+                                          Run.le_bind (Run.le_refl _) fun st items =>
+                                            Run.le_bind (Run.le_refl _) fun st entries =>
+                                              Run.le_refl _
+                          -- next
+                          · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            cases vs with
+                            | nil => exact Run.le_refl _
+                            | cons v rest =>
+                              cases v <;> try exact Run.le_refl _
+                              case ref ad =>
+                                cases rest with
                                 | nil =>
                                   refine Run.le_bind
                                     (Run.le_withLocals (ihStep m st.world ad k hk))
                                     fun st r => ?_
                                   cases r <;> exact Run.le_refl _
-                                | cons _ _ => exact Run.le_refl _
-                        -- the tail: str (pass 8 — args bind, pure
-                        -- worker) / input / print / module dunder, then
-                        -- the pass-3 absent-arm live view — the closure
-                        -- dispatch recurses through callClosure
-                        · refine Run.le_ite
-                            (Run.le_bind (ihEs m st cargs.toList k hk)
-                              fun st _ => Run.le_refl _)
-                            (Run.le_ite
-                              (Run.le_bind (ihEs m st cargs.toList k hk)
+                                | cons d rest' =>
+                                  cases rest' with
+                                  | nil =>
+                                    refine Run.le_bind
+                                      (Run.le_withLocals (ihStep m st.world ad k hk))
+                                      fun st r => ?_
+                                    cases r <;> exact Run.le_refl _
+                                  | cons _ _ => exact Run.le_refl _
+                          -- the tail: str (pass 8 — args bind, pure
+                          -- worker) / input / print / module dunder, then
+                          -- the pass-3 absent-arm live view — the closure
+                          -- dispatch recurses through callClosure
+                          · refine Run.le_ite
+                              (Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk))
                                 fun st _ => Run.le_refl _)
-                            (Run.le_ite (Run.le_refl _)
                               (Run.le_ite
-                                (Run.le_bind (ihEs m st (complexPrintArgs cargs.toList) k hk)
+                                (Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk))
                                   fun st _ => Run.le_refl _)
-                                (Run.le_ite (Run.le_refl _) ?_))))
-                          cases Env.lookup st.world.globals fname with
-                          | none => exact Run.le_refl _
-                          | some v =>
-                            cases v <;>
-                              first
-                                | exact Run.le_bind (ihEs m st cargs.toList k hk)
-                                    fun st _ => Run.le_refl _
-                                | skip
-                            case ref a =>
-                              refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                              refine Run.le_ite (Run.le_refl _) ?_
-                              cases Heap.get? st.world.heap a with
-                              | none => exact Run.le_refl _
-                              | some obj =>
-                                cases obj <;> try exact Run.le_refl _
-                                case closure nm ps ao lo hg ig bd cap =>
-                                  exact Run.le_bind (Run.le_refl _) fun st cap' =>
-                                    Run.le_withLocals
-                                      (ihClosure m st.world
-                                        nm ps ao lo ig bd cap' vs.toArray k hk)
+                              (Run.le_ite (Run.le_refl _)
+                                (Run.le_ite
+                                  (Run.le_bind (ihEs m st (complexPrintArgs cargs.toList) k hk)
+                                    fun st _ => Run.le_refl _)
+                                  (Run.le_ite (Run.le_refl _) ?_))))
+                            cases Env.lookup st.world.globals fname with
+                            | none => exact Run.le_refl _
+                            | some v =>
+                              cases v <;>
+                                first
+                                  | exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk))
+                                      fun st _ => Run.le_refl _
+                                  | skip
+                              case ref a =>
+                                refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                                refine Run.le_ite (Run.le_refl _) ?_
+                                cases Heap.get? st.world.heap a with
+                                | none => exact Run.le_refl _
+                                | some obj =>
+                                  cases obj <;> try exact Run.le_refl _
+                                  case closure nm ps ao lo hg ig bd cap =>
+                                    exact Run.le_bind (Run.le_refl _) fun st cap' =>
+                                      Run.le_withLocals
+                                        (ihClosure m st.world
+                                          nm ps ao lo ig bd cap' vs.toArray k hk)
         | genExp elt tgt it ifs wb _ =>
           simp only [evalExpr]; exact Run.le_refl _
         | list elts _ =>
@@ -1502,7 +1522,7 @@ theorem fuelMono (fuel : Nat) :
                           simp [hitems, hrest, hctx, hfunc, hkwEmpty, hcall, hclass]
                           split
                           · exact Run.le_refl _
-                          · refine Run.le_bind (ihEs m st args.toList k hk) fun s2 vs => ?_
+                          · refine Run.le_bind (flattenStarRun_mono (ihEs m st args.toList k hk)) fun s2 vs => ?_
                             cases vs with
                             | nil =>
                               let a := s2.world.heap.size
@@ -2352,6 +2372,11 @@ theorem bind {σ α β : Type} {p : σ → Prop} {x : Run σ α}
   obtain ⟨s, a, hx', hf'⟩ := h
   exact hf s a (hx s a hx') s' b hf'
 
+theorem flattenStarRun_okW {σ : Type} {p : σ → Prop}
+    {r : Run σ (List RVal)} (h : Run.OkW p r) :
+    Run.OkW p (Run.bind r (fun s vs => .ok s (flattenStarCallArgs vs))) := by
+  exact bind h (fun s vs hs => ok hs _)
+
 theorem ite {σ α : Type} {p : σ → Prop} {c : Prop} [Decidable c]
     {x y : Run σ α} (hx : Run.OkW p x) (hy : Run.OkW p y) :
     Run.OkW p (if c then x else y) := by
@@ -2591,7 +2616,8 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               -- argument list: the recipe must not depend on how the
               -- 4-pattern matcher happened to compile.
               dsimp only
-              have hvs := (ihEs st₁ cargs.toList hargsF).mono (wtrans st st₁ h₁)
+              have hvs := (Run.OkW.flattenStarRun_okW (ihEs st₁ cargs.toList hargsF)).mono
+                (wtrans st st₁ h₁)
               cases strCallPlan attr <;>
                 first
                 | exact .unsupported
@@ -2607,7 +2633,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               -- exception carrying that same state.
               dsimp only
               split
-              · refine .bind ((ihEs st₁ cargs.toList hargsF).mono
+              · refine .bind ((Run.OkW.flattenStarRun_okW (ihEs st₁ cargs.toList hargsF)).mono
                   (wtrans st st₁ h₁)) fun st₂ vs h₂ => ?_
                 cases vs with
                 | nil => exact .okF h₂ _
@@ -2626,6 +2652,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             rcases hfree with ⟨hfree, hlm⟩
             rcases hfree with ⟨hfree, _⟩
             rcases hfree with ⟨hfree, hndct⟩
+            rcases hfree with ⟨hfree, hstarArg⟩
             rcases hfree with ⟨hfree, hstar⟩
             rcases hfree with ⟨hfree, hnlst⟩
             rcases hfree with ⟨hfree, hnpr⟩
@@ -2693,15 +2720,22 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               cases hbe : fname == starListBuiltinName
               · rfl
               · rw [bne, hbe] at hstar; simp at hstar
+            have hstarArgx : (fname == starArgBuiltinName) = false := by
+              cases hbe : fname == starArgBuiltinName
+              · rfl
+              · rw [bne, hbe] at hstarArg; simp at hstarArg
             -- `dict(…)` ALLOCATES too (2026-08-13)
             have hdctx : (fname == "dict") = false := by
               cases hbe : fname == "dict"
               · rfl
               · rw [bne, hbe] at hndct; simp at hndct
             simp only [evalExpr, hkw, funsHeapFree, Module.heapFree_funs hm,
-              eq_self_iff_true, if_true]
-            have hargs : Run.OkW (·.world = st.world) (evalExprs m fuel st cargs.toList) :=
+              eq_self_iff_true, if_true, hstarArgx]
+            have hargs0 : Run.OkW (·.world = st.world) (evalExprs m fuel st cargs.toList) :=
               ihEs st cargs.toList hflE
+            have hargs : Run.OkW (·.world = st.world)
+                (flattenStarRun (evalExprs m fuel st cargs.toList)) := by
+              exact Run.OkW.flattenStarRun_okW hargs0
             cases Env.lookup st.locals fname with
             | some v =>
               cases v <;>
@@ -2742,7 +2776,8 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 -- branch reduces away; the def/namedtuple collision guard
                 -- stays an undecided (walked) ite, and namedtuple
                 -- CONSTRUCTION is a pure value — world-preserving
-                simp only [hlmx, hffx, hs, hnx, hex, hcx, hay, hal, hsetx, hprx, hlstx, hstarx, hdctx,
+                simp only [hlmx, hffx, hs, hnx, hex, hcx, hay, hal, hsetx, hprx, hlstx, hstarx,
+                  hstarArgx, hdctx,
                   findClass_heapFree hm fname,
                   Option.isSome_none, Bool.false_or, Bool.false_eq_true, if_false]
                 refine .ite .exn ?_

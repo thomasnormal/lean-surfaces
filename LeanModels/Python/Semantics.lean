@@ -5478,6 +5478,16 @@ def unpackAllStar (h : Heap) : RVal → Res (List RVal)
       | Option.none => .unsupported danglingMsg
   | v => .exn (.typeError s!"cannot unpack non-iterable {v.typeName} object")
 
+def flattenStarCallArgs (vs : List RVal) : List RVal :=
+  vs.flatMap fun v =>
+    match v with
+    | .ntuple tn fields xs =>
+        if tn == starArgValueName && fields.isEmpty then xs.toList else [v]
+    | _ => [v]
+
+def flattenStarRun (r : Run FrameState (List RVal)) : Run FrameState (List RVal) :=
+  Run.bind r (fun st vs => .ok st (flattenStarCallArgs vs))
+
 def unpackSeqStar (h : Heap) (before after : Nat) (v : RVal) :
     Res (List RVal × List RVal × List RVal) :=
   unpackAllStar h v >>= fun xs =>
@@ -7433,6 +7443,7 @@ mutual
       kwargs.isEmpty && (id != "sorted") && (id != "next") && (id != "enumerate")
         && (id != "count") && (id != "any") && (id != "all") && (id != "set")
         && (id != "print") && (id != "list") && (id != starListBuiltinName)
+        && (id != starArgBuiltinName)
         && (id != "dict") && (id != "iter")
         -- `<lenmult>` may fall back to heap-backed multiplication, which
         -- allocates; keep it outside the conditional world-preservation
@@ -8095,6 +8106,15 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
         if kwargs.isEmpty then
         match f with
         | .name fname _ =>
+          if fname == starArgBuiltinName then
+            match args.toList, kwargs.toList with
+            | [arg], [] =>
+                evalExpr m fuel st arg ⤳ fun st v =>
+                Run.liftRes st (unpackAllStar st.world.heap v) ⤳ fun st xs =>
+                .ok st (.ntuple starArgValueName #[] xs.toArray)
+            | _, _ =>
+                .unsupported "internal: <star-arg> expects one positional argument"
+          else
           -- The callee NAME is resolved before the arguments (an unbound name
           -- is a NameError without evaluating args, CPython order), but the
           -- callable CHECK happens at call time, AFTER argument evaluation:
@@ -8107,7 +8127,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
               -- heap-free modules keep the faithful TypeError below and
               -- worldInv never meets a closure call. Arguments evaluate
               -- BEFORE the callable check, CPython's order.
-              evalExprs m fuel st args.toList ⤳ fun st vs =>
+              flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
               if funsHeapFree m.functions.toList && topLevelDefFree m then
                 .exn st (.typeError "'dict' object is not callable")
               else
@@ -8123,17 +8143,17 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                   -- what the harness compares
                   .exn st (.typeError "'dict' object is not callable")
           | some v =>
-              evalExprs m fuel st args.toList ⤳ fun st _ =>
+              flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
               .exn st (.typeError s!"'{v.typeName}' object is not callable")
           | Option.none =>
             if !funsHeapFree m.functions.toList && hasUnboundLocal st.locals fname then
               .exn st (.unboundLocalError fname)
             else match lookupG (moduleGlobals m).1 fname with
             | some (some (.ref _)) =>
-                evalExprs m fuel st args.toList ⤳ fun st _ =>
+                flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                 .exn st (.typeError "'dict' object is not callable")
             | some (some v) =>
-                evalExprs m fuel st args.toList ⤳ fun st _ =>
+                flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                 .exn st (.typeError s!"'{v.typeName}' object is not callable")
             | some Option.none =>
               -- pass 3: the poisoned-arm LIVE view — a module-level
@@ -8141,7 +8161,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
               -- the locals-arm dispatch verbatim (`funsHeapFree`-guarded)
               (match Env.lookup st.world.globals fname with
                | some (.ref a) =>
-                   evalExprs m fuel st args.toList ⤳ fun st vs =>
+                   flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                    if funsHeapFree m.functions.toList && topLevelDefFree m then
                      .exn st (.typeError "'dict' object is not callable")
                    else
@@ -8153,7 +8173,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                           (callClosure m fuel st.world nm ps ao lo ig bd cap' vs.toArray)
                       | _ => .exn st (.typeError "'dict' object is not callable"))
                | some v =>
-                   evalExprs m fuel st args.toList ⤳ fun st _ =>
+                   flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                    .exn st (.typeError s!"'{v.typeName}' object is not callable")
                | Option.none =>
                  .unsupported s!"calling module-level '{fname}' (out-of-G1-tier value) is outside the tier")
@@ -8167,7 +8187,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                 -- the guard also covers hand-built modules.)
                 .unsupported s!"name '{fname}' is bound by both 'def' and 'class'/namedtuple at module level — source-order resolution is outside the tier (ordered ModuleItem representation is the recorded fix)"
               else
-                evalExprs m fuel st args.toList ⤳ fun st vs =>
+                flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                 -- The frozen recursion point: the callee shares this frame's
                 -- world; the caller's locals ride around the call.
                 Run.withLocals st.locals (callIn m fuel st.world fname vs.toArray)
@@ -8207,7 +8227,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                   else if (findFunction m (fname ++ ".__init__")).isSome then
                     .unsupported s!"'__init__' on the namedtuple subclass '{fname}' (immutable self) is outside the tier"
                   else
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     if vs.length == nt.fields.size then
                       .ok st (.ntuple nt.name nt.fields vs.toArray)
                     else
@@ -8223,7 +8243,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            else classHasExtraDunder m ci) then
                     .unsupported s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
                   else
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     let a := st.world.heap.size
                     let st' := { st with world :=
                       { st.world with heap := st.world.heap.push (.instance ci (instanceAttrs m ci)) } }
@@ -8250,14 +8270,14 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                   -- (CPython raises through tuple.__new__; the harness
                   -- compares exception classes). Keyword construction
                   -- never reaches here (`call_unsupported: "keywords"`).
-                  evalExprs m fuel st args.toList ⤳ fun st vs =>
+                  flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                   if vs.length == nt.fields.size then
                     .ok st (.ntuple nt.tname nt.fields vs.toArray)
                   else
                     .exn st (.typeError (ntArityErrorMsg nt.fields vs.length))
                 | Option.none =>
                   if fname == fstringFormatBuiltinName then
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     match vs with
                     | [v, .str spec] => Run.liftRes st (formatSpecH v spec)
                     | [_, spec] =>
@@ -8269,7 +8289,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- answer the length without constructing an over-budget
                     -- sequence.  Heap-backed operands still use the ordinary
                     -- stateful multiplication path, exactly as the runner.
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     match vs with
                     | [left, right] =>
                       match sequenceMultLength left right with
@@ -8281,7 +8301,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     | _ => .exn st (.typeError s!"internal: {lenMultBuiltinName} expects two arguments")
                   else
                   if fname == "len" then
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     match vs with
                     | [v] => Run.liftRes st (lenValH st.world.heap v)
                     | _ => .exn st (.typeError s!"len() takes exactly one argument ({vs.length} given)")
@@ -8293,7 +8313,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- H6: a GENERATOR argument drains through `drainIter`
                     -- (`sorted` is outside `heapFree`, so worldInv never
                     -- sees this arm).
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     match vs with
                     | [v] =>
                       (match v with
@@ -8320,7 +8340,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- modules keep the loud refusal: `max` stays in the
                     -- `heapFree` fragment, and worldInv's argument kills
                     -- this branch through the guard)
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     (match vs with
                      | [.ref a] =>
                        (match Heap.get? st.world.heap a with
@@ -8333,7 +8353,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                         | _ => Run.liftRes st (extremumValH st.world.heap true [.ref a]))
                      | vs => Run.liftRes st (extremumValH st.world.heap true vs))
                   else if fname == "min" then
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     (match vs with
                      | [.ref a] =>
                        (match Heap.get? st.world.heap a with
@@ -8352,7 +8372,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- suspended (`anyAllIter` — the partial drain is
                     -- observable through a later `next`). Outside
                     -- `heapFree` (an unguarded drain mutates the world).
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     (match vs with
                      | [v] =>
                        (match v with
@@ -8403,7 +8423,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- dict-key doctrine gates elements); a generator
                     -- argument DRAINS (`set` is outside `heapFree`).
                     -- Membership/len/truthiness are the only readers.
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     (match vs with
                      | [] =>
                        .ok { st with world :=
@@ -8478,7 +8498,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                         | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
                      | vs => .exn st (.typeError s!"set expected at most 1 argument, got {vs.length}"))
                   else if fname == "abs" then
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     match vs with
                     | [v] => Run.liftRes st (absVal v)
                     | _ => .exn st (.typeError s!"abs() takes exactly one argument ({vs.length} given)")
@@ -8488,7 +8508,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- while `round(bool)` returns an `int`, not a `bool`.
                     -- Float and ndigits protocols remain loud until their
                     -- rounding oracle is modeled.
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     match vs with
                     | [] => .exn st (.typeError "round() missing required argument 'number' (pos 1)")
                     | [v] =>
@@ -8499,19 +8519,19 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       )
                     | _ => .unsupported "round() with ndigits is outside the tier"
                   else if fname == "int" then
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     Run.liftRes st (intCastArgs vs)
                   else if fname == "float" then
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     Run.liftRes st (floatCastArgsH st.world.heap vs)
                   else if fname == "bool" then
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     Run.liftRes st (boolCastArgs st.world.heap vs)
                   else if fname == "divmod" then
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     Run.liftRes st (divmodArgs vs)
                   else if fname == "pow" then
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     (match vs with
                      | [base, exponent] => Run.liftRes st (evalBinOp .pow base exponent)
                      | [base, exponent, modulus] =>
@@ -8525,7 +8545,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- GENERATOR argument DRAINS — guarded on
                     -- `moduleGenFree` (the `max`/`min` discipline), so
                     -- `sum` stays in the heap-free fragment
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     (match sumArgs vs with
                      | Option.none =>
                        .exn st (.typeError s!"sum() takes at most 2 arguments ({vs.length} given)")
@@ -8574,7 +8594,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- CPython)/boundary list/heap list(snapshot — CPython
                     -- copies)/range/generator(+`moduleGenFree` guard);
                     -- dict/set receivers stay loud (order doctrine)
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     (match vs with
                      | [] => .ok st (.tuple #[])
                      | [v] =>
@@ -8620,7 +8640,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- generator arm drain without the `moduleGenFree`
                     -- guard `tuple` needs. dict/set receivers stay loud
                     -- (order doctrine).
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     (match vs with
                      | [] => allocListRun st #[]
                      | [v] =>
@@ -8661,7 +8681,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- comprehensions; immediate and heap-backed list, tuple,
                     -- bytes, string, and namedtuple sequences are admitted.
                     -- The keyword form `dict(k=v, …)` is in the kwargs arm.
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     (match vs with
                      | [] => allocDictRun st #[]
                      | [v] =>
@@ -8699,13 +8719,13 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- pass 3: an IMMEDIATE `rangeV` value (pure — no
                     -- allocation); arity/type/step-zero faithfulness in
                     -- `rangeMake`
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     Run.liftRes st (rangeMake st.world.heap vs)
                   else if fname == "enumerate" then
                     -- H4: a LAZY iterator object, not a materialized
                     -- list — `enumerate(self.board)` is stepped one pair
                     -- at a time, exactly as CPython's does.
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     (match vs with
                      | [] => .exn st (.typeError "enumerate expected at least 1 argument, got 0")
                      | v :: rest =>
@@ -8738,7 +8758,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- itertools.count — INFINITE by construction; a
                     -- consumer's `break` is what ends it (sunfish's ray
                     -- loop `for j in count(i + d, d)`)
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     (match countArgsVal vs with
                      | Option.none =>
                        Run.liftRes st (countRefusal vs)
@@ -8755,7 +8775,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- (sunfish's `king_capture` shape). A non-iterator
                     -- argument is the faithful `TypeError` (inside
                     -- `stepIter`, which owns the referent dispatch).
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     (match vs with
                      | [.ref a] =>
                        Run.withLocals st.locals (stepIter m fuel st.world a) ⤳ fun st r =>
@@ -8771,17 +8791,17 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                      | v :: _ =>
                        .exn st (.typeError s!"'{RVal.typeNameH st.world.heap v}' object is not an iterator"))
                   else if fname == "ord" then
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     match vs with
                     | [v] => Run.liftRes st (ordVal v)
                     | vs => .exn st (.typeError s!"ord() takes exactly one argument ({vs.length} given)")
                   else if fname == "chr" then
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     match vs with
                     | [v] => Run.liftRes st (chrVal v)
                     | vs => .exn st (.typeError s!"chr() takes exactly one argument ({vs.length} given)")
                   else if fname == "ascii" || fname == "hex" || fname == "oct" || fname == "bin" then
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     match vs with
                     | [v] =>
                       Run.liftRes st
@@ -8790,7 +8810,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                          else if fname == "oct" then octVal v else binVal v)
                     | vs => .exn st (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)")
                   else if fname == "format" then
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     match vs with
                     | [] => .exn st (.typeError "format expected at least 1 argument, got 0")
                     | [v] => Run.liftRes st (strOfValH st.world.heap v)
@@ -8805,13 +8825,13 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- containers/refs through printOne (CPython's two-level
                     -- str rule); loud on unrenderables and the 2+-argument
                     -- decoding form
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     (match vs with
                      | [] => .ok st (.str "")
                      | [v] => Run.liftRes st (strOfValH st.world.heap v)
                      | _ => .unsupported "str() with encoding/errors arguments is outside the tier (bytes decoding is not guessed; docs/memory-model.md §the cast tier)")
                   else if fname == "repr" then
-                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     Run.liftRes st (reprArgsH m st.world.heap vs)
                   else if fname == "input" then
                     -- stdin is a RUNNER-boundary effect (§effects) — loud,
@@ -8844,7 +8864,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- miss may be the NameError
                     (match Env.lookup st.world.globals fname with
                      | some (.ref a) =>
-                         evalExprs m fuel st args.toList ⤳ fun st vs =>
+                         flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                          if funsHeapFree m.functions.toList && topLevelDefFree m then
                            .exn st (.typeError "'dict' object is not callable")
                          else
@@ -8856,7 +8876,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                                 (callClosure m fuel st.world nm ps ao lo ig bd cap' vs.toArray)
                             | _ => .exn st (.typeError "'dict' object is not callable"))
                      | some v =>
-                         evalExprs m fuel st args.toList ⤳ fun st _ =>
+                         flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                          .exn st (.typeError s!"'{v.typeName}' object is not callable")
                      | Option.none =>
                        if isPyBuiltinName fname || isLoweredBuiltinName fname then
@@ -8908,7 +8928,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
             -- construction). The plan is decided BEFORE the arguments.
             (match ntupleCallPlan m tn fs attr with
              | .instMethod qname =>
-               evalExprs m fuel st args.toList ⤳ fun st vs =>
+               flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                Run.withLocals st.locals
                  (callIn m fuel st.world qname
                    ((RVal.ntuple tn fs xs :: vs).toArray))
@@ -8923,27 +8943,27 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
             -- values), so each in-tier arm is args + `liftRes`.
             (match strCallPlan attr with
              | .swapcase =>
-               evalExprs m fuel st args.toList ⤳ fun st vs =>
+               flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                match vs with
                | [] => Run.liftRes st (strSwapcase sv)
                | vs => .exn st (.typeError s!"swapcase() takes no arguments ({vs.length} given)")
              | .isupper =>
-               evalExprs m fuel st args.toList ⤳ fun st vs =>
+               flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                match vs with
                | [] => Run.liftRes st (strIsUpper sv)
                | vs => .exn st (.typeError s!"isupper() takes no arguments ({vs.length} given)")
              | .islower =>
-               evalExprs m fuel st args.toList ⤳ fun st vs =>
+               flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                match vs with
                | [] => Run.liftRes st (strIsLower sv)
                | vs => .exn st (.typeError s!"islower() takes no arguments ({vs.length} given)")
              | .upper =>
-               evalExprs m fuel st args.toList ⤳ fun st vs =>
+               flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                match vs with
                | [] => Run.liftRes st (strUpper sv)
                | vs => .exn st (.typeError s!"upper() takes no arguments ({vs.length} given)")
              | .index =>
-               evalExprs m fuel st args.toList ⤳ fun st vs =>
+               flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                match vs with
                | [] => .exn st (.typeError "index expected at least 1 argument, got 0")
                | [.str sub] => Run.liftRes st (strIndex sv sub)
@@ -8957,14 +8977,14 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                    .unsupported "str.index() with start/end arguments are outside the tier (docs/memory-model.md §string semantics)"
                  else .exn st (.typeError s!"index expected at most 3 arguments, got {vs.length}")
              | .join =>
-               evalExprs m fuel st args.toList ⤳ fun st vs =>
+               flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                match vs with
                | [v] => Run.liftRes st (strJoinH st.world.heap sv v)
                | vs => .exn st (.typeError s!"str.join() takes exactly one argument ({vs.length} given)")
              | .refuse msg => .unsupported msg)
           | .float fv =>
             if attr == "is_integer" then
-              evalExprs m fuel st args.toList ⤳ fun st vs =>
+              flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
               match vs with
               | [] => .ok st (.bool (floatIsInteger fv))
               | vs => .exn st (.typeError s!"float.is_integer() takes no arguments ({vs.length} given)")
@@ -8986,7 +9006,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
            | .name fname _ =>
              (match Env.lookup st.locals fname with
               | some (.ref a) =>
-                  evalExprs m fuel st args.toList ⤳ fun st _ =>
+                  flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                   evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
                   match Heap.get? st.world.heap a with
                   | some (.cell _) => .unsupported cellInternal
@@ -8994,17 +9014,17 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     .unsupported "keyword arguments on a closure call are outside the tier (docs/memory-model.md §nested defs and closures)"
                   | _ => .exn st (.typeError "'dict' object is not callable")
               | some v =>
-                  evalExprs m fuel st args.toList ⤳ fun st _ =>
+                  flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                   evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
                   .exn st (.typeError s!"'{v.typeName}' object is not callable")
               | Option.none =>
                 match lookupG (moduleGlobals m).1 fname with
                 | some (some (.ref _)) =>
-                    evalExprs m fuel st args.toList ⤳ fun st _ =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                     evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
                     .exn st (.typeError "'dict' object is not callable")
                 | some (some v) =>
-                    evalExprs m fuel st args.toList ⤳ fun st _ =>
+                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                     evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
                     .exn st (.typeError s!"'{v.typeName}' object is not callable")
                 | some Option.none =>
@@ -9019,7 +9039,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       -- the loud refusal must win over any binding TypeError
                       .unsupported s!"function '{fname}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
                     else
-                      evalExprs m fuel st args.toList ⤳ fun st vs =>
+                      flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                       evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
                       Run.liftRes st
                         (mergeKwArgs fname fdefn.params vs
@@ -9031,7 +9051,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     else if (findNamedTuple m fname).isSome then
                       match findNamedTuple m fname with
                       | some nt =>
-                        evalExprs m fuel st args.toList ⤳ fun st vs =>
+                        flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                         evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
                         Run.liftRes st
                           (mergeNtKw nt.fields vs
@@ -9062,11 +9082,11 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       else
                         (match kwargs.toList.find? (fun kv => kv.1 != "reverse") with
                          | some (k, _) =>
-                           evalExprs m fuel st args.toList ⤳ fun st _ =>
+                           flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                            evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
                            .exn st (.typeError s!"'{k}' is an invalid keyword argument for sorted()")
                          | Option.none =>
-                           evalExprs m fuel st args.toList ⤳ fun st vs =>
+                           flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                            evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
                            (match vs, kvs with
                             | [v], [rv] =>
@@ -9095,7 +9115,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       -- CPython's float, len, and bool constructors accept no keyword
                       -- arguments. Evaluate both argument lists before their
                       -- faithful TypeErrors, preserving Python's order.
-                      evalExprs m fuel st args.toList ⤳ fun st _ =>
+                      flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                       evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
                       .exn st (.typeError (if fname == "float" then
                         "float() takes no keyword arguments"
@@ -9106,14 +9126,14 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       -- CPython's divmod constructor accepts no keyword
                       -- arguments. Evaluate both argument lists before its
                       -- faithful TypeError, preserving Python's order.
-                      evalExprs m fuel st args.toList ⤳ fun st _ =>
+                      flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                       evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
                       .exn st (.typeError "divmod() takes no keyword arguments")
                     else if fname == "repr" || fname == "abs" || fname == "ord" || fname == "chr" || fname == "next" || fname == "ascii" || fname == "tuple" || fname == "list" || fname == "range" || fname == "int" || fname == "hex" || fname == "oct" || fname == "bin" then
                       -- CPython's repr, abs, ord, chr, next, ascii, tuple, list, range, hex, oct, and bin constructors accept no keyword;
                       -- int accepts base; its shared binder checks arity and keywords.
                       -- Evaluate both argument lists before validating the call.
-                      evalExprs m fuel st args.toList ⤳ fun st vs =>
+                      flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                       evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
                       if fname == "int" then
                         Run.liftRes st (intCastArgs vs ((kwargs.toList.map (·.1)).zip kvs))
@@ -9173,7 +9193,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       if !fdefn.argsOk then
                         .unsupported s!"function '{qname}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
                       else
-                        evalExprs m fuel st args.toList ⤳ fun st vs =>
+                        flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                         evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
                         Run.liftRes st
                           (mergeKwArgs qname fdefn.params (RVal.ref a :: vs)
@@ -9206,7 +9226,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       if !fdefn.argsOk then
                         .unsupported s!"function '{qname}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
                       else
-                        evalExprs m fuel st args.toList ⤳ fun st vs =>
+                        flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                         evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
                         Run.liftRes st
                           (mergeKwArgs qname fdefn.params
@@ -9787,7 +9807,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
               if !exitArgsFree && !exitTypeTest then
                 .unsupported "with body exceptions require __exit__ not to inspect exception arguments (full exception triples are outside the tier)"
               else
-                evalExprs m fuel st args.toList ⤳ fun st vs =>
+                flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                 let enterName := fname ++ ".__enter__"
                 let a := st.world.heap.size
                 let st' := { st with world :=

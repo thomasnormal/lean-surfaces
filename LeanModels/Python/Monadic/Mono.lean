@@ -96,6 +96,14 @@ theorem PyLe.bind {σ α β : Type} {x x' : PyM σ α} {f f' : α → PyM σ β}
       | error e => right; rfl
       | ok a => exact PyLe_iff.mp (hf a) s'
 
+/-! `Functor.map` is the pure bind shape of this stack.  Keeping its
+congruence explicit lets the fuel-free walker close mapped argument-splices
+without unfolding the entire `StateT`/`ExceptT` implementation. -/
+theorem PyLe.map {σ α β : Type} {g : α → β}
+    {x x' : PyM σ α} (hx : x ⊑ₚ x') : (g <$> x) ⊑ₚ (g <$> x') := by
+  rw [map_eq_pure_bind, map_eq_pure_bind]
+  exact PyLe.bind hx (fun a => PyLe.refl' _)
+
 theorem PyLe.ite {σ α : Type} {c : Prop} [Decidable c] {x x' y y' : PyM σ α}
     (hx : x ⊑ₚ x') (hy : y ⊑ₚ y') :
     (if c then x else y) ⊑ₚ (if c then x' else y') := by
@@ -334,6 +342,7 @@ One `mutual_induct`, four conjuncts, ONE uniform tactic over all 31 arms. The
 leaf list is the `Kont` fields the arms reach plus the two seams the fuel BOUND
 comes through (`PyLe.liftRes` over `evalCompareOpH_mono`). -/
 
+set_option maxHeartbeats 1000000 in
 set_option maxRecDepth 8000 in
 theorem evalOpen_monoAll (K K' : Kont) (hK : KontLe K K') (m : Module) :
     (∀ e : Expr, evalOpen K m e ⊑ₚ evalOpen K' m e) ∧
@@ -375,8 +384,10 @@ theorem evalOpen_monoAll (K K' : Kont) (hK : KontLe K K') (m : Module) :
       | exact hanyAll _ _
       | exact truthyM_mono _
       | exact PyLe.liftRes (evalCompareOpH_mono hfuel)
+      | exact PyLe.map (g := flattenStarCallArgs) assumption
       | assumption
       | apply_assumption)
+  all_goals simp_all [Array.isEmpty_iff, Array.toList_eq_nil_iff]
 
 theorem evalOpen_mono (K K' : Kont) (hK : KontLe K K') (m : Module) :
     ∀ e : Expr, evalOpen K m e ⊑ₚ evalOpen K' m e := (evalOpen_monoAll K K' hK m).1

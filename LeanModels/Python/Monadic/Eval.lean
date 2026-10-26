@@ -242,7 +242,9 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
         | Option.none =>
             .preRefuse s!"calling module-level '{fname}' (out-of-G1-tier value) is outside the tier"
     | Option.none =>
-      if (findFunction m fname).isSome then
+      if fname == starArgBuiltinName then
+        .builtin fname
+      else if (findFunction m fname).isSome then
         if (findClass m fname).isSome || (findNamedTuple m fname).isSome then
           .preRefuse s!"name '{fname}' is bound by both 'def' and 'class'/namedtuple at module level — source-order resolution is outside the tier (ordered ModuleItem representation is the recorded fix)"
         else .modFun fname
@@ -387,7 +389,13 @@ already values: `input` is the one builtin that refuses before they evaluate, an
 it is handled in the PLAN, not here. -/
 def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     SemF RVal := do
-  if fname == "len" then
+  if fname == starArgBuiltinName then
+    match vs with
+    | [v] => do
+        let xs ← liftRes (unpackAllStar (← frameHeap) v)
+        pure (.ntuple starArgValueName #[] xs.toArray)
+    | _ => refuse "internal: <star-arg> expects one positional argument"
+  else if fname == "len" then
     match vs with
     | [v] => lenM v
     | _ => raisePy (.typeError s!"len() takes exactly one argument ({vs.length} given)")
@@ -889,6 +897,14 @@ def applyStrMethod (sv : String) (drainIter : Addr → SemW (List RVal)) :
       | vs => raisePy (.typeError s!"str.join() takes exactly one argument ({vs.length} given)")
   | .refuse msg, _ => refuse msg
 
+/-! Call arguments use the ordinary left-to-right expression walk followed by
+the starred-value splice. This macro keeps the expansion outside the
+expression mutual block, so it adds no recursive proof member. -/
+macro "evalOpenCallList" "(" K:term "," m:term "," es:term ")" : term => do
+  let evalList := Lean.mkIdentFrom K `LeanModels.Python.Monadic.evalOpenList
+  let flatten := Lean.mkIdentFrom K `LeanModels.Python.flattenStarCallArgs
+  `(Functor.map $flatten ($evalList $K $m $es))
+
 /-! ## §1 THE FUEL-FREE EXPRESSION HALF — structural on `Expr` -/
 
 mutual
@@ -995,9 +1011,9 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                           | [e] =>
                               match complexPrintLiteral e with
                               | some v => pure [v]
-                              | Option.none => evalOpenList K m args.toList
-                          | _ => evalOpenList K m args.toList
-                      | _ => evalOpenList K m args.toList
+                              | Option.none => evalOpenCallList (K, m, args.toList)
+                          | _ => evalOpenCallList (K, m, args.toList)
+                      | _ => evalOpenCallList (K, m, args.toList)
                     applyCallPlan K m plan vs
           | .attribute recv attr _ => do
               -- ===== THE TRACE CLOCK. Time is an INPUT: an unshadowed
@@ -1034,24 +1050,24 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                   | .refuse msg => refuse msg
                   | .dangling => refuse danglingMsg
                   | plan => do
-                      let vs ← evalOpenList K m args.toList
+                      let vs ← evalOpenCallList (K, m, args.toList)
                       applyAttrPlan K a attr plan vs
               | .ntuple tn fs xs =>
                   -- namedtuple SUBCLASS method dispatch: methods ARE functions,
                   -- `self` is the ntuple VALUE. The plan precedes the arguments.
                   match ntupleCallPlan m tn fs attr with
                   | .instMethod qname => do
-                      let vs ← evalOpenList K m args.toList
+                      let vs ← evalOpenCallList (K, m, args.toList)
                       inFrame (K.call qname ((RVal.ntuple tn fs xs :: vs).toArray))
                   | .attrMissing => raisePy .attributeError
                   | .refuse msg => refuse msg
                   | _ => refuse "internal: namedtuple call plan out of range (report this)"
               | .str sv => do
-                  let vs ← evalOpenList K m args.toList
+                  let vs ← evalOpenCallList (K, m, args.toList)
                   applyStrMethod sv K.drainIter (strCallPlan attr) vs
               | .float fv =>
                   if attr == "is_integer" then do
-                    let vs ← evalOpenList K m args.toList
+                    let vs ← evalOpenCallList (K, m, args.toList)
                     match vs with
                     | [] => pure (.bool (floatIsInteger fv))
                     | vs => raisePy (.typeError s!"float.is_integer() takes no arguments ({vs.length} given)")
@@ -1076,13 +1092,13 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
               | .preRefuse msg => refuse msg
               | .preNameError n => raisePy (.nameError n)
               | .notCallable t => do
-                  let _ ← evalOpenList K m args.toList
+                  let _ ← evalOpenCallList (K, m, args.toList)
                   let _ ← K.kwArgs kwargs.toList
                   raisePy (.typeError s!"'{t}' object is not callable")
               | .instantiate _ cname _ =>
                   refuse s!"instantiating class '{cname}' with keyword arguments is outside the H6 tier"
               | .ntMake tn fields => do
-                  let vs ← evalOpenList K m args.toList
+                  let vs ← evalOpenCallList (K, m, args.toList)
                   let kvs ← K.kwArgs kwargs.toList
                   let full ← liftRes (mergeNtKw fields vs kvs)
                   pure (.ntuple tn fields full)
@@ -1113,11 +1129,11 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                     else
                       match kwargs.toList.find? (fun kv => kv.1 != "reverse") with
                       | some (k, _) => do
-                          let _ ← evalOpenList K m args.toList
+                          let _ ← evalOpenCallList (K, m, args.toList)
                           let _ ← K.kwArgs kwargs.toList
                           raisePy (.typeError s!"'{k}' is an invalid keyword argument for sorted()")
                       | Option.none => do
-                          let vs ← evalOpenList K m args.toList
+                          let vs ← evalOpenCallList (K, m, args.toList)
                           let kvs ← K.kwArgs kwargs.toList
                           match vs, kvs.map (·.2) with
                           | [v], [rv] => do
@@ -1143,7 +1159,7 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                     -- CPython's float, len, and bool constructors accept no keyword
                     -- arguments. Evaluate both argument lists before their
                     -- faithful TypeErrors, preserving Python's order.
-                    let _ ← evalOpenList K m args.toList
+                    let _ ← evalOpenCallList (K, m, args.toList)
                     let _ ← K.kwArgs kwargs.toList
                     raisePy (.typeError (if name == "float" then
                       "float() takes no keyword arguments"
@@ -1154,14 +1170,14 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                     -- CPython's divmod constructor accepts no keyword
                     -- arguments. Evaluate both argument lists before its
                     -- faithful TypeError, preserving Python's order.
-                    let _ ← evalOpenList K m args.toList
+                    let _ ← evalOpenCallList (K, m, args.toList)
                     let _ ← K.kwArgs kwargs.toList
                     raisePy (.typeError "divmod() takes no keyword arguments")
                   else if name == "repr" || name == "abs" || name == "ord" || name == "chr" || name == "next" || name == "ascii" || name == "tuple" || name == "list" || name == "range" || name == "int" || name == "hex" || name == "oct" || name == "bin" then
                     -- CPython's repr, abs, ord, chr, next, ascii, tuple, list, range, hex, oct, and bin constructors accept no keyword;
                     -- int accepts base; its shared binder checks arity and keywords.
                     -- Evaluate both argument lists before validating the call.
-                    let vs ← evalOpenList K m args.toList
+                    let vs ← evalOpenCallList (K, m, args.toList)
                     let kvs ← K.kwArgs kwargs.toList
                     if name == "int" then
                       liftRes (intCastArgs vs kvs)
@@ -1199,7 +1215,7 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                         -- the loud refusal must win over any binding TypeError.
                         refuse s!"function '{qname}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
                       else do
-                        let vs ← evalOpenList K m args.toList
+                        let vs ← evalOpenCallList (K, m, args.toList)
                         let kvs ← K.kwArgs kwargs.toList
                         let full ← liftRes (mergeKwArgs qname fdefn.params vs kvs)
                         inFrame (K.call qname full)
@@ -1216,7 +1232,7 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                           if !fdefn.argsOk then
                             refuse s!"function '{qname}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
                           else do
-                            let vs ← evalOpenList K m args.toList
+                            let vs ← evalOpenCallList (K, m, args.toList)
                             let kvs ← K.kwArgs kwargs.toList
                             let full ← liftRes (mergeKwArgs qname fdefn.params (RVal.ref a :: vs) kvs)
                             inFrame (K.call qname full)
@@ -1241,7 +1257,7 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                           if !fdefn.argsOk then
                             refuse s!"function '{qname}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
                           else do
-                            let vs ← evalOpenList K m args.toList
+                            let vs ← evalOpenCallList (K, m, args.toList)
                             let kvs ← K.kwArgs kwargs.toList
                             let full ← liftRes
                               (mergeKwArgs qname fdefn.params (RVal.ntuple tn fs xs :: vs) kvs)

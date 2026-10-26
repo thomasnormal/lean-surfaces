@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.23] — 2026-10-26
+
+The self-check surface now has 238 differential rows: 233 matches, zero
+disagreements, and 5 recorded refusals. The grammar census remains at 217
+pyslang syntax witnesses: 90 MATCH and 127 REFUSE. The 22,056-path corpus
+measures 5,207 clean files, 16,782 partial files, and 67 include skips. This
+release adds continuous sources from finite literal bindings, disjoint fixed
+array slice copies, unsized one-bit left streams, pure literal integral net
+expressions, and one dynamic selector in any dimension of finite multidimensional
+arrays. Dynamic, overlapping, aggregate, and otherwise stateful forms remain
+loud.
+
 ## [0.1.22] — 2026-10-26
 
 The self-check surface now has 232 differential rows: 227 matches, zero

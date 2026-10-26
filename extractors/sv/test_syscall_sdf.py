@@ -27,10 +27,11 @@ def nodes(value):
 
 
 class SdfAnnotateTask(unittest.TestCase):
-    def test_filename_and_empty_config_forms_are_inert(self):
+    def test_filename_static_scope_and_empty_config_forms_are_inert(self):
         design = lower(
             'module top; initial begin '
             '$sdf_annotate("timing.sdf"); '
+            '$sdf_annotate("scoped.sdf", top); '
             '$sdf_annotate("noexist.sdf", top, ""); '
             '$display("PASS"); end endmodule')
         unsupported = [node for node in nodes(design)
@@ -39,13 +40,13 @@ class SdfAnnotateTask(unittest.TestCase):
         self.assertEqual(
             [node.get("pure_diagnostic") for node in nodes(design)
              if node.get("kind") == "Empty"],
-            ["$sdf_annotate", "$sdf_annotate"],
+            ["$sdf_annotate", "$sdf_annotate", "$sdf_annotate"],
         )
 
     def test_timing_bearing_optional_forms_stay_loud(self):
         design = lower(
             'module top; string cfg; initial begin '
-            '$sdf_annotate("timing.sdf", top); '
+            '$sdf_annotate("timing.sdf", top, 1); '
             '$sdf_annotate("timing.sdf", top, "config.sdf"); '
             '$sdf_annotate(cfg); end endmodule')
         self.assertEqual(

@@ -120,10 +120,10 @@ SYSCALL_FILE_FMT = ("$fdisplay", "$fwrite")
 SYSCALL_CTRL = ("$finish", "$stop")
 SYSCALL_FATAL = "$fatal"
 # `$sdf_annotate` changes simulator timing data, which is outside the
-# time-zero self-check state.  The narrow inert slice below admits only the
-# forms whose call itself has no timing annotation to apply: a literal SDF
-# filename, or the explicit empty-config form.  Calls carrying a nonempty
-# config or other optional arguments stay loud until the timing model exists.
+# time-zero self-check state.  The narrow inert slice below admits only
+# literal filenames, optionally paired with a static module scope or an
+# explicit empty config string.  Calls carrying a nonempty config or other
+# optional arguments stay loud until the timing model exists.
 SYSCALL_SDF = "$sdf_annotate"
 SYSCALL_TIMEFORMAT = "$timeformat"
 # `$printtimescale` reports scope metadata without changing modeled state.  The
@@ -13733,13 +13733,24 @@ def _convert_syscall(sm, s, e):
             args = list(e.arguments)
         except Exception:
             return unsupported(sm, s, "ExpressionStatement:CallExpression")
-        # IEEE 32.3 requires the first argument.  With no optional arguments
-        # there is no modeled timing state to update.  The three-argument
-        # spelling is likewise inert when its config_file is the specified
-        # empty string; retain the static module-instance check so dynamic
-        # hierarchy and every timing-bearing form remain loud.
+        # IEEE 32.3 requires the first argument.  The one-argument spelling
+        # has no modeled timing state to update; the two-argument spelling is
+        # likewise inert only for a static module scope.  The three-argument
+        # spelling is inert when its config_file is the specified empty
+        # string; retain static scope checks so dynamic hierarchy and every
+        # timing-bearing form remain loud.
         filename_only = (len(args) == 1
                          and type(args[0]).__name__ == "StringLiteral")
+        static_scope = False
+        if len(args) == 2:
+            scope = args[1]
+            symbol = getattr(scope, "symbol", None)
+            scope_kind = str(getattr(symbol, "kind", "")).split(".")[-1]
+            static_scope = (
+                type(args[0]).__name__ == "StringLiteral"
+                and type(scope).__name__ == "ArbitrarySymbolExpression"
+                and not getattr(scope, "bad", False)
+                and scope_kind in ("Instance", "CompilationUnit", "Root"))
         empty_config = False
         if len(args) == 3:
             scope = args[1]
@@ -13753,7 +13764,7 @@ def _convert_syscall(sm, s, e):
                 and type(args[2]).__name__ == "StringLiteral"
                 and args[2].value == ""
             )
-        if filename_only or empty_config:
+        if filename_only or static_scope or empty_config:
             return {"kind": "Empty", "span": node_span(sm, s),
                     "pure_diagnostic": name}
     if is_sys and name == SYSCALL_TIMEFORMAT:

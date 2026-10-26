@@ -1946,6 +1946,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "sdf_static_scope",
+      "file": "Examples/system-verilog/sdf_static_scope/sdf_static_scope.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

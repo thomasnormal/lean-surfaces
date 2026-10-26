@@ -27,12 +27,12 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-25
 
-The chapter-scoped rerun covered **22,055** paths: **5,130 clean**,
-**16,858 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,055** paths: **5,132 clean**,
+**16,856 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`ExpressionStatement:CallExpression` (2,908), `AssignmentExpression:target` (2,905),
-`CallExpression` (2,801), `Hierarchy:ports` (2,398),
+`AssignmentExpression:target` (2,905), `CallExpression` (2,801),
+`ExpressionStatement:CallExpression` (2,778), `Hierarchy:ports` (2,398),
 `VariableSymbol:2state` (2,296), `SubroutineSymbol:Subroutine` (1,634),
 `NamedValueExpression:2state` (1,485), `ConcurrentAssertionStatement`
 (1,359), `InvalidStatement` (1,329), and `ClassType` (1,329).
@@ -40,6 +40,24 @@ simulation tier. The leading refusal classes by file are
 The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
 matched all 200 fixed-seed sample classifications.
+
+## Static-scope `$sdf_annotate` calls — 2026-10-25
+
+The self-check surface now erases `$sdf_annotate` when its SDF filename is a
+literal and its optional module scope is a static elaborated scope. The
+time-zero envelope has no timing-annotation state, so this form has no modeled
+effect; dynamic filenames, nonstatic scopes, nonempty config files, and other
+optional forms remain loud. The `sdf_static_scope` fixture supplies the
+differential row and Lean receipt, and the SDF extractor regression pins the
+static-scope boundary.
+
+The refreshed **22,055-path** census moves **5,130 → 5,132 clean** and
+**16,858 → 16,856 partial** (67 include skips). The
+`ExpressionStatement:CallExpression` blocker falls **2,908 → 2,778** and is
+overtaken by `AssignmentExpression:target` at **2,905**; 130 corpus call
+sites match this static-scope form, and two of their files become clean.
+Differential coverage grows **216/211/0/5 → 217/212/0/5** with no
+disagreements; grammar coverage remains **217/90/127**.
 
 ## Constant nested packed scalar selections — 2026-10-25
 

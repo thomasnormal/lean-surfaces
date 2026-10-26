@@ -7793,3 +7793,21 @@ The refreshed **22,055-path** census moves **5,128 → 5,130 clean** and
 `ExpressionStatement:CallExpression` remains **2,908**. Differential coverage
 grows **215/210/0/5 → 216/211/0/5** with no disagreements; grammar coverage
 remains **217/90/127**.
+
+## Static-scope `$sdf_annotate` calls — 2026-10-25
+
+The self-check surface now erases `$sdf_annotate` when its SDF filename is a
+literal and its optional module scope is a static elaborated scope. The
+time-zero envelope has no timing-annotation state, so this form has no modeled
+effect; dynamic filenames, nonstatic scopes, nonempty config files, and other
+optional forms remain loud. The `sdf_static_scope` fixture supplies the
+differential row and Lean receipt, with extractor coverage for the static-scope
+boundary.
+
+The refreshed **22,055-path** census moves **5,130 → 5,132 clean** and
+**16,858 → 16,856 partial** (67 include skips). The
+`ExpressionStatement:CallExpression` blocker falls **2,908 → 2,778** and is
+overtaken by `AssignmentExpression:target` at **2,905**; 130 corpus call sites
+match this static-scope form and two of their files become clean. Differential
+coverage grows **216/211/0/5 → 217/212/0/5** with no disagreements; grammar
+coverage remains **217/90/127**.

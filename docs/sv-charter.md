@@ -43,6 +43,17 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Discarded literal bit queries — 2026-10-26
+
+Valid discarded literal-operand `$countbits`, `$countones`, `$onehot`,
+`$onehot0`, and `$isunknown` calls now erase without a represented state
+effect. Dynamic operands stay loud because these queries must evaluate them;
+the `literal_bit_query_statements` fixture covers all five forms. The
+22,059-path census remains **5,240 clean / 16,752 partial** (67 include
+skips), with `ExpressionStatement:CallExpression` at **2,775**; differential
+coverage grows **260/255/0/5 → 261/256/0/5** and grammar coverage remains
+**217/92/125**.
+
 ## Discarded `$bits` does not evaluate its expression — 2026-10-26
 
 Valid one-argument `$bits(expr)` calls in statement position now erase without

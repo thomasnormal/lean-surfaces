@@ -15787,6 +15787,17 @@ def _convert_syscall(sm, s, e):
                         "bits_statement": True}
         except Exception:
             return unsupported(sm, s, "ExpressionStatement:CallExpression")
+    if is_sys and _bit_query_call(e):
+        # Literal bit queries are pure and their discarded result is
+        # unobservable. Dynamic operands remain ordinary calls because the
+        # query must evaluate them before producing its result.
+        try:
+            args = list(e.arguments)
+            if args and all(_integral_literal_source(argument) for argument in args):
+                return {"kind": "Empty", "span": node_span(sm, s),
+                        "bit_query_statement": name}
+        except Exception:
+            return unsupported(sm, s, "ExpressionStatement:CallExpression")
     if is_sys and name in SYSCALL_PURE_DIAGNOSTIC:
         try:
             args = list(e.arguments)

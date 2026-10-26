@@ -2343,6 +2343,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "literal_bit_query_statements",
+      "file": "Examples/system-verilog/literal_bit_query_statements/literal_bit_query_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

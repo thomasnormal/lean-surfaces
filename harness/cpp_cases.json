@@ -7153,6 +7153,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-switch-default-shadow-computed-initialization-direct",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalSwitchDefaultShadowComputedInitializationStatementFrameWitness",
+    "cpp_source": "int local_switch_default_shadow_computed_initialization_statement_frame_witness(int value) { int outer = 3; switch (value) { case 1: break; default: { int local = outer + 2; break; } } return outer; } bool callable_witness() { return local_switch_default_shadow_computed_initialization_statement_frame_witness(0) == 3; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-frame-local-conditional-shadow-initialization-direct",
     "kind": "statement",
     "corpus": "rung-4 witness",

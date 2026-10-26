@@ -6793,6 +6793,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-for-initialization-continue",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalForInitializationContinueStatementFrameWitness",
+    "cpp_source": "int local_for_initialization_continue_statement_frame_witness(int value) { for (value = 0; value < 3; ++value) { int local = 5; continue; } return value; } bool callable_witness() { return local_for_initialization_continue_statement_frame_witness(9) == 3; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-frame-local-do-while-initialization-direct",
     "kind": "statement",
     "corpus": "rung-4 witness",

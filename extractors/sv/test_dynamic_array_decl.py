@@ -336,6 +336,30 @@ class DynamicArrayDeclarations(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
+    def test_reinitialization_resets_finite_scalar_cells(self):
+        design = lower(
+            """module top;
+               initial begin
+                 int values[];
+                 values = new[3];
+                 values[0] = 7;
+                 values[2] = 9;
+                 values = new[2];
+                 if (values.size() == 2 && values[0] == 0 && values[1] == 0)
+                   $display("PASS");
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        resets = [node for node in nodes(design)
+                  if node.get("dynamic_array_reinitialization_lowered")]
+        self.assertEqual(len(resets), 1)
+        self.assertEqual([stmt["target"]["name"].split(":")[-1]
+                          for stmt in resets[0]["stmts"]],
+                         ["values[0]", "values[1]"])
+        self.assertTrue(all(stmt["value"]["bits"] == "0" * 32
+                            for stmt in resets[0]["stmts"]))
+
     def test_new_pattern_initializes_scalar_cells_in_source_order(self):
         design = lower(
             """module top;

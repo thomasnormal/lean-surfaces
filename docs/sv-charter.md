@@ -8111,3 +8111,20 @@ and partial files **16,782 → 16,780** (67 include skips). The
 `ElementSelectExpression:source-type` falls **500 → 497**. Differential
 coverage grows **238/233/0/5 → 239/234/0/5** with no disagreements; grammar
 coverage remains **217/90/127**.
+
+## Destructive finite dynamic-array reinitialization — 2026-10-26
+
+Two plain positive constant allocations of one finite scalar dynamic array now
+admit the IEEE destructive reinitialization rule. The second `new[N]` drops the
+old cells and publishes fresh type-default cells, while resize-copy,
+self-growth, zero-sized, dynamic-sized, and third allocations remain loud. The
+`dynamic_array_reinitialization` fixture supplies the differential row and Lean
+receipt, with extractor coverage for the reset cells and the existing resize
+boundaries.
+
+On the refreshed **22,056-path** census, clean files move **5,209 → 5,210**
+and partial files **16,780 → 16,779** (67 include skips). The
+`AssignmentExpression:target` blocker falls **2,860 → 2,857** and
+`CallExpression` **2,780 → 2,778**. Differential coverage grows
+**239/234/0/5 → 240/235/0/5** with no disagreements; grammar coverage remains
+**217/90/127**.

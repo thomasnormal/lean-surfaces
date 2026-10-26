@@ -2154,6 +2154,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "dynamic_array_reinitialization",
+      "file": "Examples/system-verilog/dynamic_array_reinitialization/dynamic_array_reinitialization.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -2601,15 +2601,20 @@ def _dynamic_array_constant_extent(symbol):
             second_count, second_init = second_parts
             while type(second_init).__name__ == "ConversionExpression":
                 second_init = getattr(second_init, "operand", None)
-            if (first_count <= 0 or second_count <= first_count
-                    or first_init is not None
-                    or type(second_init).__name__ != "NamedValueExpression"
-                    or getattr(second_init, "symbol", None) is not symbol):
+            if (first_count <= 0 or second_count <= 0
+                    or first_count > 1024 or second_count > 1024
+                    or first_init is not None):
                 return None
             element = symbol.type.canonicalType.elementType
             width, _two, reason = type_width_2s(element)
-            return (second_count if width is not None and reason is None
-                    and second_count <= 1024 else None)
+            if width is None or reason is not None:
+                return None
+            if type(second_init).__name__ == "NamedValueExpression":
+                if getattr(second_init, "symbol", None) is not symbol:
+                    return None
+            elif second_init is not None:
+                return None
+            return second_count
         if len(candidates) != 1:
             return None
         allocation = candidates[0]
@@ -3528,6 +3533,59 @@ def _dynamic_array_allocation_assignment(sm, expr):
                     "empty_dynamic_array_allocation_noop": True}
         if _dynamic_array_constant_extent(symbol) is None:
             return None
+        # A second ``new[N]`` without an initializer destroys the previous
+        # dynamic-array value and creates fresh default cells.  The flat
+        # representation keeps the same names for those cells, so publish
+        # the new defaults explicitly at the reinitialization boundary.
+        # Resize-copy (``new[N](old)``), self-growth, and every third
+        # allocation remain on their existing loud paths.
+        instance = symbol.parentScope.containingInstance
+        allocations = []
+        if instance is not None:
+            def inspect(node):
+                if (type(node).__name__ == "AssignmentExpression"
+                        and getattr(getattr(node, "left", None), "symbol", None)
+                        is symbol):
+                    allocations.append(node)
+            instance.visit(inspect)
+        if (len(allocations) == 2 and allocations[1] is expr
+                and getattr(allocations[0].right, "initExpr", None) is None):
+            first = allocations[0].right
+            while type(first).__name__ == "ConversionExpression":
+                first = getattr(first, "operand", None)
+            first_size = getattr(first, "sizeExpr", None)
+            if (type(first).__name__ == "NewArrayExpression"
+                    and type(first_size).__name__ == "IntegerLiteral"
+                    and not getattr(first_size, "bad", False)
+                    and getattr(first_size, "value", 0) > 0):
+                element = symbol.type.canonicalType.elementType
+                width, two_state, reason = type_width_2s(element)
+                count = int(getattr(size, "value", -1))
+                if (width is not None and reason is None and 0 < count <= 1024):
+                    base = _array_storage_name(symbol)
+                    default_bits = ("0" if two_state else "x") * width
+                    span = node_span(sm, expr)
+                    return {
+                        "kind": "Block",
+                        "span": span,
+                        "stmts": [{
+                            "kind": "BlockingAssign",
+                            "span": span,
+                            "target": {
+                                "kind": "Ident",
+                                "span": node_span(sm, expr.left),
+                                "width": width,
+                                "name": f"{base}[{index}]",
+                            },
+                            "value": {
+                                "kind": "Literal",
+                                "span": span,
+                                "width": width,
+                                "bits": default_bits,
+                            },
+                        } for index in range(count)],
+                        "dynamic_array_reinitialization_lowered": True,
+                    }
         return {"kind": "Empty", "span": node_span(sm, expr),
                 "dynamic_array_allocation_lowered": True}
     except Exception:

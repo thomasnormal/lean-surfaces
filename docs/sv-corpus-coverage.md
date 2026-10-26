@@ -27,11 +27,11 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-26
 
-The chapter-scoped rerun covered **22,056** paths: **5,209 clean**,
-**16,780 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,056** paths: **5,210 clean**,
+**16,779 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`AssignmentExpression:target` (2,860), `CallExpression` (2,780),
+`AssignmentExpression:target` (2,857), `CallExpression` (2,778),
 `ExpressionStatement:CallExpression` (2,775), `Hierarchy:ports` (2,398),
 `VariableSymbol:2state` (2,223), `SubroutineSymbol:Subroutine` (1,634),
 `NamedValueExpression:2state` (1,485), `ConcurrentAssertionStatement`
@@ -40,6 +40,21 @@ simulation tier. The leading refusal classes by file are
 The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
 matched all 200 fixed-seed sample classifications.
+
+## Destructive finite dynamic-array reinitialization — 2026-10-26
+
+Two plain positive constant allocations of one finite scalar dynamic array now
+admit the IEEE destructive reinitialization rule. The second `new[N]` drops the
+old cells and publishes fresh type-default cells, while resize-copy,
+self-growth, zero-sized, dynamic-sized, and third allocations remain loud. The
+`dynamic_array_reinitialization` fixture checks that old writes disappear and
+that the new extent and defaults are observed.
+
+The **22,056-path** census moves **5,209 → 5,210 clean** and **16,780 →
+16,779 partial** (67 include skips). `AssignmentExpression:target` falls
+**2,860 → 2,857** and `CallExpression` **2,780 → 2,778**. Differential
+coverage grows **239/234/0/5 → 240/235/0/5** with no disagreements; grammar
+coverage remains **217/90/127**.
 
 ## Finite literal dynamic-array reductions — 2026-10-26
 

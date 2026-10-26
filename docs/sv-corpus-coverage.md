@@ -16,7 +16,7 @@ python3.12 extractors/sv/census.py --corpus /path/to/tests --recheck  # determin
 
 Machine-readable results: `harness/sv/conformance/census.json`
 (per-file records + this document's aggregates). The current committed summary
-is the **2026-10-25** snapshot below, measured with Python 3.9 and pyslang 11;
+is the **2026-10-26** snapshot below, measured with Python 3.9 and pyslang 11;
 the dated sections retain their original measurement denominators.
 
 The committed summary uses a portable corpus-layout placeholder, not a
@@ -25,13 +25,13 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
-## Fresh extractor census — 2026-10-25
+## Fresh extractor census — 2026-10-26
 
-The chapter-scoped rerun covered **22,055** paths: **5,166 clean**,
-**16,822 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,055** paths: **5,168 clean**,
+**16,820 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`AssignmentExpression:target` (2,875), `CallExpression` (2,801),
+`AssignmentExpression:target` (2,873), `CallExpression` (2,801),
 `ExpressionStatement:CallExpression` (2,778), `Hierarchy:ports` (2,398),
 `VariableSymbol:2state` (2,296), `SubroutineSymbol:Subroutine` (1,634),
 `NamedValueExpression:2state` (1,485), `ConcurrentAssertionStatement`
@@ -40,6 +40,22 @@ simulation tier. The leading refusal classes by file are
 The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
 matched all 200 fixed-seed sample classifications.
+
+## Packed-array packed-struct member windows — 2026-10-26
+
+Constant element selections of packed arrays whose elements are untagged
+packed structs or unions now compose the array element offset with the direct
+field offset in the existing flat vector state. Dynamic selectors, tagged
+aggregates, and nonintegral fields remain loud. The new
+`packed_array_struct_member` fixture supplies the differential row and Lean
+receipt, and extractor tests pin the dynamic boundary.
+
+The refreshed **22,055-path** census moves **5,166 → 5,168 clean** and
+**16,822 → 16,820 partial** (67 include skips). `AssignmentExpression:target`
+falls **2,875 → 2,873** and `MemberAccessExpression` **1,019 → 1,018**;
+`CallExpression` remains **2,801**. Differential coverage grows
+**219/214/0/5 → 220/215/0/5** with no disagreements; grammar coverage remains
+**217/90/127**.
 
 ## Literal wired-net resolution — 2026-10-26
 

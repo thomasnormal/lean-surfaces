@@ -6356,16 +6356,39 @@ def _packed_struct_member(sm, expression):
             # A constant cell of a fixed-unpacked array is already lowered to
             # one ordinary vector signal.  Reuse the same packed-member
             # offset on that cell; dynamic cells and nested-unpacked elements
-            # fail the fixed-cell admission above.
-            if _fixed_array_cell(sm, value) is None:
-                return None
-            base = value
-            aggregate = value.type.canonicalType
-            if type(aggregate).__name__ not in ("PackedStructType", "PackedUnionType"):
-                return None
-            if getattr(aggregate, "isTagged", False):
-                return None
-            parent_offset = 0
+            # fail the fixed-cell admission above. A packed array is also a
+            # single vector, so compose its constant element offset with the
+            # selected field offset instead of manufacturing aggregate state.
+            packed_source = getattr(value, "value", None)
+            packed_type = getattr(getattr(packed_source, "type", None),
+                                  "canonicalType", None)
+            if (_storage_expression(packed_source)
+                    and type(packed_type).__name__ == "PackedArrayType"
+                    and type(packed_type.elementType.canonicalType).__name__
+                    in ("PackedStructType", "PackedUnionType")
+                    and not getattr(packed_type.elementType.canonicalType,
+                                    "isTagged", False)):
+                normalized = _packed_constant_index(
+                    sm, packed_source.type, value.selector)
+                if normalized is None:
+                    return None
+                literal, _ = normalized
+                bits = literal.get("bits")
+                if not isinstance(bits, str) or any(bit not in "01" for bit in bits):
+                    return None
+                base = packed_source
+                aggregate = packed_type.elementType.canonicalType
+                parent_offset = int(bits, 2)
+            else:
+                if _fixed_array_cell(sm, value) is None:
+                    return None
+                base = value
+                aggregate = value.type.canonicalType
+                if type(aggregate).__name__ not in ("PackedStructType", "PackedUnionType"):
+                    return None
+                if getattr(aggregate, "isTagged", False):
+                    return None
+                parent_offset = 0
         elif type(value).__name__ == "MemberAccessExpression":
             parent = _packed_struct_member(sm, value)
             if parent is None:

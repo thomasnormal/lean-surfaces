@@ -43,6 +43,24 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Packed-array packed-struct member windows — 2026-10-26
+
+Constant element selections of packed arrays whose elements are untagged
+packed structs or unions now share the existing flat vector representation.
+The extractor composes the declared packed-array element offset with the
+selected field's bit offset, so reads and blocking writes through forms such as
+`arr[0].hi` observe the same storage. Dynamic selectors, tagged aggregates,
+and nonintegral members remain loud. The `packed_array_struct_member` fixture
+and differential row exercise the admitted form; extractor regressions cover
+the dynamic boundary.
+
+The refreshed **22,055-path** census moves **5,166 → 5,168 clean** and
+**16,822 → 16,820 partial** (67 include skips). `AssignmentExpression:target`
+falls **2,875 → 2,873** and `MemberAccessExpression` **1,019 → 1,018**;
+`CallExpression` remains **2,801**. Differential coverage grows
+**219/214/0/5 → 220/215/0/5** with no disagreements, and grammar coverage
+remains **217/90/127**.
+
 ## Semaphore zero-key methods — 2026-10-24
 
 The self-check surface now admits `semaphore.put(0)` and `semaphore.get(0)`

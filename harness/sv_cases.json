@@ -2046,6 +2046,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "empty_array_reductions",
+      "file": "Examples/system-verilog/empty_array_reductions/empty_array_reductions.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

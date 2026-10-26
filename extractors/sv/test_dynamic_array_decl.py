@@ -61,12 +61,24 @@ class DynamicArrayDeclarations(unittest.TestCase):
                    if "array_reduction_lowered" in node]
         self.assertEqual(lowered, ["sum", "product", "and", "or", "xor"])
 
-    def test_dynamic_array_reduction_requires_literal_initializer(self):
+    def test_empty_dynamic_array_reduction_uses_zero_identity(self):
         design = lower(
             """module top;
                byte values[];
                byte total;
                initial total = values.sum();
+               endmodule""")
+        self.assertFalse(any(node.get("sv_kind") for node in nodes(design)))
+        self.assertTrue(any(node.get("empty_array_reduction")
+                            for node in nodes(design)))
+
+    def test_dynamic_array_reduction_still_requires_literal_after_resize(self):
+        design = lower(
+            """module top;
+               byte values[];
+               int n;
+               byte total;
+               initial begin values = new[n]; total = values.sum(); end
                endmodule""")
         self.assertIn("ArrayReduction:storage-or-effects",
                       [node.get("sv_kind") for node in nodes(design)])

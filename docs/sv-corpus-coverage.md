@@ -70,6 +70,17 @@ The **22,056-path** census moves **5,192 → 5,195 clean** and **16,797 →
 grammar census are unchanged. Differential coverage is refreshed separately
 in `docs/sv-coverage.md`.
 
+## Empty dynamic-array reductions — 2026-10-26
+
+Untouched default-empty dynamic arrays now lower `sum()` and `product()` to
+their scalar zero identity. The source must have no resize, write, selection,
+or effectful `with` use; other reduction methods remain loud.
+
+The **22,056-path** census moves **5,195 → 5,197 clean** and **16,794 →
+16,792 partial** (67 include skips). Differential coverage grows
+**227/222/0/5 → 228/223/0/5** with no disagreements; grammar coverage remains
+**217/90/127**.
+
 ## Packed-array packed-struct member windows — 2026-10-26
 
 Constant element selections of packed arrays whose elements are untagged

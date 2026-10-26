@@ -447,10 +447,6 @@
     16
    ],
    [
-    "ArrayReduction:storage-or-effects",
-    16
-   ],
-   [
     "NetSymbol:Interconnect",
     15
    ],
@@ -480,6 +476,10 @@
    ],
    [
     "NetSymbol:UWire",
+    14
+   ],
+   [
+    "ArrayReduction:storage-or-effects",
     14
    ],
    [
@@ -964,8 +964,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5195,
-   "partial": 16794,
+   "clean": 5197,
+   "partial": 16792,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1026,7 +1026,7 @@
     52
    ],
    "simulation": [
-    4504,
+    4506,
     18687
    ],
    "simulation elaboration": [
@@ -1591,9 +1591,9 @@
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 274,
+    "clean": 276,
     "error": 0,
-    "partial": 522,
+    "partial": 520,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

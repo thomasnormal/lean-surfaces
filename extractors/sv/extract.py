@@ -12112,11 +12112,57 @@ def _array_reduction_shape(expression):
         return None
 
 
+def _empty_dynamic_array_reduction(expression):
+    """Recognize an untouched, default-empty dynamic array reduction.
+
+    An uninitialized dynamic array has size zero.  The flat state does not
+    need an aggregate slot for this case: the reduction's empty result is a
+    scalar identity, provided no source occurrence can resize, write, or
+    select an element of the array.
+    """
+    try:
+        if type(expression).__name__ != "CallExpression" or len(expression.arguments) != 1:
+            return False
+        argument = expression.arguments[0]
+        if type(argument).__name__ == "ConversionExpression":
+            argument = getattr(argument, "operand", None)
+        symbol = getattr(argument, "symbol", None)
+        if (symbol is None or str(getattr(symbol, "kind", "")) != "SymbolKind.Variable"
+                or type(symbol.type.canonicalType).__name__ != "DynamicArrayType"
+                or getattr(symbol, "initializer", None) is not None):
+            return False
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return False
+        valid = True
+
+        def inspect(node):
+            nonlocal valid
+            if node is expression:
+                return
+            kind = type(node).__name__
+            if kind == "AssignmentExpression":
+                lhs = getattr(node, "left", None)
+                if (type(lhs).__name__ == "NamedValueExpression"
+                        and getattr(lhs, "symbol", None) is symbol):
+                    valid = False
+            elif kind == "ElementSelectExpression":
+                value = getattr(node, "value", None)
+                if getattr(value, "symbol", None) is symbol:
+                    valid = False
+
+        instance.visit(inspect)
+        return valid
+    except Exception:
+        return False
+
+
 def _array_reduction_source_ok(expression):
     if expression.bad or len(expression.arguments) != 1:
         return False
     shape = _array_reduction_shape(expression.arguments[0])
-    if shape is None:
+    if shape is None and not _empty_dynamic_array_reduction(expression):
         return False
     info = expression.subroutine.extraInfo
     return info is None or (type(info).__name__ == "IteratorCallInfo"
@@ -12169,6 +12215,18 @@ def _convert_array_reduction(sm, expression):
     if (reason is not None or type_width_2s(result_type)[0] != width
             or bool(result_type.isSigned) != bool(expression.type.isSigned)):
         return unsupported(sm, expression, "ArrayReduction:result-type")
+    if _empty_dynamic_array_reduction(expression):
+        if expression.subroutineName not in ("sum", "product"):
+            return unsupported(sm, expression, "ArrayReduction:storage-or-effects")
+        if info is not None and not _case_source_expression_ok(
+                info.iterExpr, packed_members=True):
+            return unsupported(sm, expression, "ArrayReduction:with-expression")
+        return signed_metadata({
+            "kind": "Literal", "span": node_span(sm, expression),
+            "width": width, "bits": "0" * width,
+            "array_reduction_lowered": expression.subroutineName,
+            "empty_array_reduction": True,
+        }, expression.type)
     parts = _array_reduction_terms(sm, expression, _array_reduction_shape(expression.arguments[0]))
     if not _case_expression_ok(parts) or any(width_of(part) != width for part in parts):
         return unsupported(sm, expression, "ArrayReduction:with-expression")

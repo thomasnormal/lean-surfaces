@@ -89,8 +89,17 @@ class ArrayReductions(unittest.TestCase):
     def test_iterator_index_query_remains_loud(self):
         self.assertIn('ArrayReduction:storage-or-effects',walls(fixture('iterator_index')))
 
-    def test_dynamic_storage_remains_loud(self):
-        d=lower('module top;int a[];int y;initial y=a.sum();endmodule')
+    def test_empty_dynamic_storage_uses_zero_identity(self):
+        d=lower('module top;int a[];int y,z;initial begin '
+                 'y=a.sum(); z=a.product(); end endmodule')
+        self.assertFalse(walls(d))
+        self.assertEqual(
+            {n.get('array_reduction_lowered') for n in nodes(d)
+             if n.get('empty_array_reduction')}, {'sum', 'product'})
+
+    def test_dynamic_storage_with_unknown_extent_remains_loud(self):
+        d=lower('module top;int a[];int n;int y;'
+                 'initial begin a=new[n]; y=a.sum(); end endmodule')
         self.assertIn('ArrayReduction:storage-or-effects',walls(d))
 
     def test_invalid_redefinition_retains_compilation_barrier(self):

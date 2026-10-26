@@ -170,6 +170,19 @@ The capped **22,056-path** census moves **5,192 → 5,195 clean / 16,797 →
 → 227/222/0/5** with no disagreements; grammar coverage remains
 **217/90/127**.
 
+## Empty dynamic-array reductions — 2026-10-26
+
+Untouched default-empty dynamic arrays now admit scalar `sum()` and
+`product()` reductions, both producing the specified zero identity. Any
+resize, write, element selection, effectful `with`, or other reduction stays
+loud. The `empty_array_reductions` fixture and differential case cover both
+methods.
+
+The capped **22,056-path** census moves **5,195 → 5,197 clean / 16,794 →
+16,792 partial** (67 include skips). Differential coverage grows **227/222/0/5
+→ 228/223/0/5** with no disagreements; grammar coverage remains
+**217/90/127**.
+
 ## Semaphore zero-key methods — 2026-10-24
 
 The self-check surface now admits `semaphore.put(0)` and `semaphore.get(0)`

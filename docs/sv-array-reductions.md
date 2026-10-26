@@ -28,6 +28,11 @@ queries such as `item.index` remain explicit `ArrayReduction` refusals. Invalid
 or redefined source retains a whole-design barrier. Symbolic extraction is
 unchanged.
 
+An untouched, default-empty dynamic array is a scalar exception: `sum()` and
+`product()` lower to the specified zero result because no element or aggregate
+state exists to observe. Writes, resizes, selected elements, and other
+reductions remain loud.
+
 The paired **22,035** paths gain **11 clean extractions**, no losses:
 **4,309 → 4,320 clean**, **17,660 → 17,649 partial**, **66 include skips**,
 zero errors. All 4,309 previously clean extracted designs remain identical.
@@ -53,3 +58,11 @@ cell names and recursively folds each inner row; an explicit inner iterator,
 dynamic/queue/associative storage, and effectful inner expressions remain
 loud. The `nested_2d_reductions` fixture and differential row cover both
 forms and their common `PASS` transcript.
+
+## Empty dynamic-array reductions — 2026-10-26
+
+The self-check surface admits `sum()` and `product()` on an untouched empty
+dynamic array as zero-valued scalar identities. The admission rejects any
+write, resize, element selection, unsupported `with` expression, or other
+reduction method, preserving the flat-state boundary. The
+`empty_array_reductions` fixture and differential row cover both identities.

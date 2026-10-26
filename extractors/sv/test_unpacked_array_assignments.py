@@ -582,12 +582,52 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
-    def test_dynamic_packed_slice_inside_array_cell_stays_loud(self):
+    def test_dynamic_packed_slice_inside_array_cell_uses_flattened_offset(self):
         design = extract_source(
             "module top; bit [3:0][7:0] joe [0:9]; int i; "
             "initial joe[7][i +: 2] = joe[6][1:0]; endmodule")
+        targets = [node for node in nodes(design)
+                   if node.get("kind") == "SelectTarget"]
+        self.assertEqual(len(targets), 1)
+        target = targets[0]
+        self.assertEqual(target["value"]["name"], "joe[7]")
+        self.assertEqual(target["width"], 16)
+        self.assertFalse(target["descending"])
+        self.assertTrue(target["index_signed"])
+        self.assertEqual(target["index"]["kind"], "Binary")
+        self.assertEqual(target["index"]["op"], "*")
+        self.assertEqual(target["index"]["right"]["bits"],
+                         "00000000000000000000000000001000")
+
+    def test_dynamic_packed_slice_inside_array_cell_reads_and_writes(self):
+        design = extract_source(
+            "module top; bit [3:0][7:0] source [0:0]; "
+            "bit [3:0][7:0] target [0:0]; int i; "
+            "initial begin source[0] = 32'h11223344; target[0] = 0; "
+            "i = 1; target[0][i +: 2] = source[0][1:0]; "
+            "if (target[0][i +: 2] === 16'h3344) $display(\"PASS\"); "
+            "end endmodule")
+        selected = [node for node in nodes(design)
+                    if node.get("kind") in ("SelectTarget", "SelectRead")]
+        self.assertGreaterEqual(len(selected), 2)
+        self.assertTrue(all(node["value"]["name"] in ("source[0]", "target[0]")
+                            for node in selected))
+
+    def test_dynamic_descending_packed_slice_inside_array_cell_keeps_direction(self):
+        design = extract_source(
+            "module top; bit [3:0][7:0] joe [0:9]; int i; "
+            "initial joe[7][i -: 2] = joe[6][1:0]; endmodule")
+        target = next(node for node in nodes(design)
+                      if node.get("kind") == "SelectTarget")
+        self.assertTrue(target["descending"])
+        self.assertEqual(target["index"]["kind"], "Binary")
+        self.assertEqual(target["index"]["op"], "-")
+
+    def test_dynamic_packed_slice_inside_array_cell_ascending_stays_loud(self):
+        design = extract_source(
+            "module top; bit [0:3][7:0] joe [0:9]; int i; "
+            "initial joe[7][i +: 2] = joe[6][1:0]; endmodule")
         self.assertTrue(any(node.get("kind") == "Unsupported"
-                            and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
 
     def test_fixed_array_of_structs_copy_flattens_each_element(self):

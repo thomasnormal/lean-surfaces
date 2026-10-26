@@ -7506,6 +7506,10 @@ def _convert_selected_read(sm, expr, expression_kind):
         sm, expr, "SelectRead")
     if packed_array_window is not None:
         return packed_array_window
+    dynamic_packed_array_window = _fixed_array_dynamic_packed_window(
+        sm, expr, "SelectRead")
+    if dynamic_packed_array_window is not None:
+        return dynamic_packed_array_window
     member_window = _legacy_member_select_window(
         sm, expr, expression_kind, "SelectRead")
     if member_window is not None:
@@ -8127,6 +8131,89 @@ def _fixed_array_packed_window(sm, expression, result_kind):
                   "width": expression.type.bitWidth, "value": base,
                   "index": index, "index_signed": False,
                   "descending": False}
+        if result_kind == "SelectTarget":
+            result["two_state"] = bool(base_two)
+        return result
+    except Exception:
+        return None
+
+
+def _fixed_array_dynamic_packed_window(sm, expression, result_kind):
+    """Lower a dynamic indexed slice of a packed fixed-array cell.
+
+    A cell such as ``joe[7]`` in ``bit [3:0][7:0] joe [0:9]`` is stored as
+    one flat 32-bit vector.  The indexed-select base is expressed in the
+    outer packed-array labels, so a runtime base must be scaled by the inner
+    element width before it reaches the selected-read/write evaluator.  This
+    deliberately keeps the admitted shape to descending packed ranges and a
+    pure integral base; scalar packed vectors already use the ordinary path.
+    """
+    try:
+        if type(expression).__name__ != "RangeSelectExpression":
+            return None
+        selection = str(expression.selectionKind).split(".")[-1]
+        if selection not in ("IndexedUp", "IndexedDown"):
+            return None
+        base_cell = _fixed_array_cell(sm, expression.value)
+        if base_cell is None:
+            return None
+        base_name, base_width, base_two = base_cell
+        source_type = expression.value.type.canonicalType
+        if type(source_type).__name__ != "PackedArrayType":
+            return None
+        inner_type = source_type.elementType.canonicalType
+        if type(inner_type).__name__ not in ("PackedArrayType",
+                                             "PackedStructType",
+                                             "PackedUnionType"):
+            return None
+        declared_left = int(source_type.range.left)
+        declared_right = int(source_type.range.right)
+        if declared_left <= declared_right:
+            return None
+        element_width = int(inner_type.bitWidth)
+        width = int(expression.type.bitWidth)
+        if (element_width <= 0 or width <= 0
+                or width % element_width != 0
+                or width > base_width):
+            return None
+        count = width // element_width
+        index = expression.left
+        index_width, _index_two, index_reason = type_width_2s(index.type)
+        if (index_width is None or index_reason is not None
+                or not _case_source_expression_ok(index)):
+            return None
+        converted_index = _convert_expr(sm, index)
+        if (converted_index is None or not _case_expression_ok(converted_index)
+                or width_of(converted_index) != index_width):
+            return None
+
+        span = node_span(sm, expression)
+
+        def literal(value):
+            mask = (1 << index_width) - 1
+            return {"kind": "Literal", "span": span, "width": index_width,
+                    "bits": format(value & mask, f"0{index_width}b")}
+
+        def binary(op, left, right):
+            return {"kind": "Binary", "span": span, "width": index_width,
+                    "op": op, "left": left, "right": right}
+
+        # Normalize the outer packed label to its cell's LSB offset.  The
+        # range is descending, so label ``right`` starts at offset zero.
+        normalized = converted_index
+        if declared_right:
+            normalized = binary("-", normalized, literal(declared_right))
+        if selection == "IndexedDown":
+            normalized = binary("+", normalized, literal(1))
+        normalized = binary("*", normalized, literal(element_width))
+        if selection == "IndexedDown":
+            normalized = binary("-", normalized, literal(1))
+        result = {"kind": result_kind, "span": span, "width": width,
+                  "value": {"kind": "Ident", "span": node_span(sm, expression.value),
+                            "width": base_width, "name": base_name},
+                  "index": normalized,
+                  "index_signed": bool(index.type.isSigned),
+                  "descending": selection == "IndexedDown"}
         if result_kind == "SelectTarget":
             result["two_state"] = bool(base_two)
         return result
@@ -11942,6 +12029,10 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
             sm, lhs, "SelectTarget")
         if packed_array_window is not None:
             return packed_array_window, True
+        dynamic_packed_array_window = _fixed_array_dynamic_packed_window(
+            sm, lhs, "SelectTarget")
+        if dynamic_packed_array_window is not None:
+            return dynamic_packed_array_window, True
         member_window = _legacy_member_select_window(
             sm, lhs, expression_kind, "SelectTarget")
         if member_window is not None:

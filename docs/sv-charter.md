@@ -8256,3 +8256,18 @@ row and Lean receipt. The current 22,058-path census remains 5,227 clean and
 16,764 partial with 67 include skips; differential coverage is 248 rows,
 243 matches, zero disagreements, and 5 recorded refusals, while the grammar
 census remains 217 witnesses (92 MATCH, 125 REFUSE).
+
+## Dynamic packed slices inside fixed-array cells — 2026-10-26
+
+Dynamic indexed part-selects inside a constant bounded-array cell now use the
+existing flat selected-read and selected-write nodes. For a descending packed
+cell such as `bit [3:0][7:0] joe [0:9]`, a runtime base is multiplied by the
+inner element width; `-:` additionally converts its high endpoint to the
+selected-write convention. The fixture exercises both directions and a
+runtime readback. Ascending packed ranges, dynamic widths, aggregate cells,
+and effectful bases remain loud.
+
+The 22,058-path corpus remains **5,227 clean / 16,764 partial** with 67
+include skips and `AssignmentExpression:target` at **2,857**. Differential
+coverage moves **248/243/0/5 → 249/244/0/5** with no disagreements; grammar
+coverage remains **217/92/125**.

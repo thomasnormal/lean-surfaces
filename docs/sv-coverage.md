@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 248 | 243 | 0 | 5 | sv-tests-2 declarations |
+| 249 | 244 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -256,6 +256,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `nested_fixed_array_dynamic_subarray_copy` | `Examples/system-verilog/nested_fixed_array_dynamic_subarray_copy/nested_fixed_array_dynamic_subarray_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `nested_fixed_array_dynamic_inner_subarray_copy` | `Examples/system-verilog/nested_fixed_array_dynamic_inner_subarray_copy/nested_fixed_array_dynamic_inner_subarray_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `nested_fixed_array_dynamic_subarray_read_copy` | `Examples/system-verilog/nested_fixed_array_dynamic_subarray_read_copy/nested_fixed_array_dynamic_subarray_read_copy.sv` | match | **MATCH** | `ok` | MATCH |
+| `fixed_array_dynamic_packed_slice` | `Examples/system-verilog/fixed_array_dynamic_packed_slice/fixed_array_dynamic_packed_slice.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_net_copy` | `Examples/system-verilog/fixed_array_net_copy/fixed_array_net_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_nested_copy` | `Examples/system-verilog/fixed_array_nested_copy/fixed_array_nested_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_subarray_copy` | `Examples/system-verilog/fixed_array_subarray_copy/fixed_array_subarray_copy.sv` | match | **MATCH** | `ok` | MATCH |

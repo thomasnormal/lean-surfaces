@@ -41,6 +41,22 @@ The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
 matched all 200 fixed-seed sample classifications.
 
+## Dynamic packed slices inside fixed-array cells — 2026-10-26
+
+Dynamic `+:` and `-:` slices over a descending multidimensional packed cell
+inside a bounded fixed unpacked array now reuse the flat selected-read and
+selected-write representation. The extractor scales the runtime outer label
+by the packed inner-element width and preserves the high-end position for
+`-:`. Ascending ranges, dynamic widths, aggregate cells, and effectful bases
+remain loud. The `fixed_array_dynamic_packed_slice` fixture supplies the
+differential row and Lean receipt, with extractor regressions for both
+directions and the ascending-range boundary.
+
+The refreshed **22,058-path** census remains **5,227 clean / 16,764 partial**
+(67 include skips), with `AssignmentExpression:target` at **2,857**.
+Differential coverage grows **248/243/0/5 → 249/244/0/5** with no
+disagreements; grammar coverage remains **217/92/125**.
+
 ## Dynamic multidimensional subarray source reads — 2026-10-26
 
 A single dynamic selector of a bounded multidimensional unpacked integral

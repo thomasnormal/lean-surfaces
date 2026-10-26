@@ -453,3 +453,15 @@ timed assignments, and effectful sources remain loud.
 `nested_fixed_array_dynamic_subarray_read_copy` is the differential witness;
 the 22,058-path census remains **5,227 clean / 16,764 partial** with
 `AssignmentExpression:target` at **2,857**.
+
+## Dynamic packed slices inside fixed-array cells — 2026-10-26
+
+Dynamic `+:` and `-:` part-selects over a descending multidimensional packed
+cell, such as `joe[7][i +: 2]`, now lower to the existing selected target and
+read nodes. The runtime base is scaled by the inner packed-element width and
+the descending form preserves its high-end position. Ascending packed ranges,
+dynamic widths, aggregate cells, and effectful bases remain loud.
+
+`fixed_array_dynamic_packed_slice` is the differential witness; the current
+22,058-path census remains **5,227 clean / 16,764 partial** with
+`AssignmentExpression:target` at **2,857**.

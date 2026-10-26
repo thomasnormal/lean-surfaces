@@ -988,7 +988,7 @@
   {"file": "Examples/python/exc_handlers_lab/exc_handlers_lab.py", "function": "arithmetic_ancestor", "args": [[]], "expect": "match"},
   {"file": "Examples/python/exc_handlers_lab/exc_handlers_lab.py", "function": "lookup_ancestor", "args": [[]], "expect": "match"},
   {"file": "Examples/python/exc_handlers_lab/exc_handlers_lab.py", "function": "else_clause", "args": [[]], "expect": "match", "note": "try-else runs its suite after a normal body exit."},
-  {"file": "Examples/python/exc_handlers_lab/exc_handlers_lab.py", "function": "finally_clause", "args": [[]], "expect": "unsupported", "note": "Finally side effects cannot be dropped or guessed."},
+  {"file": "Examples/python/exc_handlers_lab/exc_handlers_lab.py", "function": "finally_clause", "args": [[]], "expect": "match", "note": "A same-list scalar append finalizer lowers before the returned list crosses the boundary."},
   {"file": "Examples/python/exc_handlers_lab/exc_handlers_lab.py", "function": "multiple_handlers", "args": [[]], "expect": "match", "note": "Measured two-handler constant-return clauses preserve the first matching exception."},
   {"file": "Examples/python/exc_handlers_lab/exc_handlers_lab.py", "function": "exception_value", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/exc_ancestors_lab/exc_ancestors_lab.py", "function": "base_runtime", "args": [[]], "expect": "match", "note": "The native BaseException handler resumes after a dictionary cursor's size-change RuntimeError. The proof function surface still refuses iter(dict); its module items shell checks this catch instead."},

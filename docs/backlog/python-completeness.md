@@ -17,6 +17,30 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-146 — admit the scalar append-before-return `finally` slice
+
+The exceptions tier now lowers the measured shape whose try body returns a
+named list, whose `except TypeError` fallback is an empty list, and whose
+`finally` suite appends one scalar to that same list. The append runs before
+the returned heap list is frozen, so `exc_handlers_lab.finally_clause()` now
+matches CPython's `[19]` on both interpreter surfaces. General all-flow cleanup,
+other finalizer effects, and effectful shapes without this measured handler
+remain structured-but-loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | `exc_handlers_lab.finally_clause()` matches `[19]` in native and proof interpreters |
+| Full executable differential | 3,694 cases: 3,631 matched / 63 refused / 0 failed |
+| Full proof differential | 3,694 cases: 3,522 matched / 172 refused / 0 failed |
+| Refusal census | 63 rows, 0 drifts; `exc_handlers_lab::finally_clause` removed from `exc.finally` |
+| Extractor tests | 144 passed, including effectful-finally controls |
+| Build/checks | `lake build leanmodels-run`, coverage freshness, backlog-index freshness, and `git diff --check` pass |
+
+DECIDED: admit only the measured same-list scalar append before a returned
+list; retain loud behavior for general all-flow finalization and every other
+effectful `finally` shape. Reread the inbox before selecting the next measured
+gap.
+
 ## 2026-10-26-pycomplete-145 — admit the straight-line unbound exception raise
 
 The exception-name admission now accepts the narrow straight-line shape

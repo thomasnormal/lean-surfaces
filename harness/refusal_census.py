@@ -977,7 +977,6 @@ WHITELIST_CLASS = {
     "exc_handlers_lab::body_shadowed_nonmatching": "exc.handler",
     "exc_handlers_lab::late_shadowed_handler": "exc.handler",
     "exc_handlers_lab::nested_def_handler": "exc.handler",
-    "exc_handlers_lab::finally_clause": "exc.finally",
     "exc_handlers_lab::exception_value": "firstclass.callable",
     "exc_ancestors_lab::parameter_shadow": "exc.handler",
     "exc_ancestors_lab::body_shadow": "exc.handler",

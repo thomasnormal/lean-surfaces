@@ -1443,8 +1443,10 @@ using a bare `except:`. An unused `as e` binding is erased safely; observing
 the bound exception object remains outside the tier. `else` is lowered at
 ingestion to a success flag, the existing `try` node, and an ordinary `if`,
 so the suite runs only after a normal body exit; a `finally: pass` suite is
-lowered away because it is observationally a no-op, while effectful
-`finally` suites remain loud. A tuple of plain admitted exception names is
+lowered away because it is observationally a no-op. The measured narrow
+effectful slice whose body returns a name and whose finalizer appends one
+scalar to that same name lowers to the append followed by the return; other
+effectful `finally` suites remain loud. A tuple of plain admitted exception names is
 matched left to right against the same retained-state handler body. The
 measured multiple-handler slice has two plain-name clauses whose handler
 bodies are one scalar-literal `return`; ingestion lowers these clauses to
@@ -1505,7 +1507,8 @@ raise-catch roundtrip; mutations-before-raise visible in the handler
 (the state-retention covenant observable); non-matching class
 propagates; an exception crossing a generator resume closes the
 generator (the `next()`-after-exn row); the refusal battery (observed `as`,
-`finally`, args on raise, `raise` bare,
+effectful `finally` outside the measured append-before-return slice, args on
+raise, `raise` bare,
 heap-backed or rebound value raises, and general yield-under-try). The scalar
 parameter raise is covered by `exc_lab.raise_value`; the safe parameter-yield
 slice is covered by `exc_lab.drive_yield_under_try`; the remaining forms stay
@@ -1524,8 +1527,9 @@ builtin and user-class payload forms. Non-string and multi-argument user-class
 constructors remain the next exception-value boundary.
 
 **Explicitly NOT decided here:** the `time.time()` abstraction, general
-exception MROs beyond the direct measured ancestor table, `finally`, and
-exception payloads/`as` bindings. Each needs its own recorded decision.
+exception MROs beyond the direct measured ancestor table, all-flow `finally`
+cleanup outside the measured append-before-return slice, and exception
+payloads/`as` bindings. Each needs its own recorded decision.
 
 **As built (2026-08-11, pass 4) — the deltas the implementation
 forced, each recorded with its reason:**
@@ -1568,8 +1572,9 @@ unshadowed-name rule and reports zero ground-truth violations.
   single-handler shape plus the `callUnsupported`-style reason
   field: the extractor fills `try_unsupported` for every remaining
   out-of-v0 feature (multiple handlers beyond the measured literal-return
-  slice, tuple pattern, observed `as`, `finally`, a non-name handler class
-  expression) and execution refuses with that reason — structured-but-loud,
+  slice, tuple pattern, observed `as`, effectful `finally` outside the measured
+  append-before-return slice, a non-name handler class expression) and
+  execution refuses with that reason — structured-but-loud,
   one channel. A `try … else`
   suite is lowered at ingestion to a success flag and an ordinary `if`,
   so it keeps the same constructor and runs only after normal completion.
@@ -2697,8 +2702,9 @@ class where CPython raises `UnboundLocalError` or a handler-matching `TypeError`
 Existing local/global/definition shadow guards remain in force. Module try
 bodies that rebind their handler names also refuse, including compounds that
 can raise before publishing their bindings. Tuple/attribute patterns,
-observed `as` bindings, wider multiple-handler bodies, `finally`, and builtin
-exception objects as values remain loud; `else` is admitted through the
+observed `as` bindings, wider multiple-handler bodies, effectful `finally`
+outside the measured append-before-return slice, and builtin exception objects
+as values remain loud; `else` is admitted through the
 ingestion lowering described above.
 
 `exc_handlers_lab` pins the matching and refusal boundaries in the kernel and

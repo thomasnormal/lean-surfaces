@@ -52,7 +52,7 @@ set_option maxRecDepth 8192
 #py_check exc_handlers_lab.arithmetic_ancestor() = 17
 #py_check exc_handlers_lab.lookup_ancestor() = 18
 #py_check exc_handlers_lab.else_clause() = 1
-#guard callFunction exc_handlers_lab "finally_clause" #[] 4096 matches .unsupported _
+#py_check exc_handlers_lab.finally_clause() = (Val.list #[.int 19])
 #py_check exc_handlers_lab.multiple_handlers() = 21
 #py_check exc_handlers_lab.bare_handler() = 22
 #guard callFunction exc_handlers_lab "exception_value" #[] 4096 matches .unsupported _

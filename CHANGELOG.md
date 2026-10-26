@@ -11,6 +11,7 @@
 - Module-level `del` now erases an unobserved static definition or benign-import binding as a safe no-op; later reads keep the loud static-table refusal.
 - Deleting the script runner's `__name__` now exposes CPython's `builtins` fallback; other module dunders remain loud.
 - A bare builtin exception raise before one direct local assignment now reports CPython's `UnboundLocalError`; branch-local and repeated shadows remain loud.
+- A same-list scalar `append` in an effectful `finally` now runs before the returned list is published; other cleanup shapes remain loud.
 - Unknown exception constructor names now raise CPython's exact `NameError` before constructor arguments are evaluated; known but unmodelled builtins and shadowed names remain loud.
 - Container `repr` and `ascii` rendering now use a fixed 512-level depth budget; deeper structures remain loud independently of caller fuel.
 - Python `global` declarations now support direct scalar reads, assignments, and

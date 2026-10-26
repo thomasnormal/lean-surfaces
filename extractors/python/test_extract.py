@@ -738,6 +738,32 @@ class ExtractorTests(unittest.TestCase):
         self.assertIsNone(env["module"]["body"][0].get("locals_unsupported"))
         self.assertEqual(body[0]["kind"], "Return")
 
+    def test_scalar_append_finally_lowers_before_return(self):
+        env = self._envelope_of(
+            "def f():\n"
+            "    values = []\n"
+            "    try:\n"
+            "        return values\n"
+            "    except TypeError:\n"
+            "        return []\n"
+            "    finally:\n"
+            "        values.append(19)\n")
+        body = env["module"]["body"][0]["body"]
+        self.assertEqual([s["kind"] for s in body],
+                         ["Assign", "Expr", "Return"])
+        self.assertIsNone(env["module"]["body"][0].get("locals_unsupported"))
+
+    def test_effectful_finally_other_shapes_stay_structured(self):
+        env = self._envelope_of(
+            "def f(values):\n"
+            "    try:\n"
+            "        return values\n"
+            "    finally:\n"
+            "        values.append(19)\n")
+        stmt = env["module"]["body"][0]["body"][0]
+        self.assertEqual(stmt["kind"], "Try")
+        self.assertIn("'finally' clause", stmt["try_unsupported"])
+
     def test_safe_generator_yield_under_stop_lowers_to_yield(self):
         env = self._envelope_of(
             "def f(value):\n"

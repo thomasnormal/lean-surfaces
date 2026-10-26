@@ -4927,57 +4927,78 @@
             }
           },
           {
-            "kind": "Try",
+            "kind": "Expr",
             "span": {
-              "lineno": 289,
-              "col_offset": 4,
+              "lineno": 294,
+              "col_offset": 8,
               "end_lineno": 294,
               "end_col_offset": 25
             },
-            "body": [
-              {
-                "kind": "Return",
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 294,
+                "col_offset": 8,
+                "end_lineno": 294,
+                "end_col_offset": 25
+              },
+              "func": {
+                "kind": "Attribute",
                 "span": {
-                  "lineno": 290,
+                  "lineno": 294,
                   "col_offset": 8,
-                  "end_lineno": 290,
+                  "end_lineno": 294,
                   "end_col_offset": 21
                 },
                 "value": {
                   "kind": "Name",
                   "span": {
-                    "lineno": 290,
-                    "col_offset": 15,
-                    "end_lineno": 290,
-                    "end_col_offset": 21
+                    "lineno": 294,
+                    "col_offset": 8,
+                    "end_lineno": 294,
+                    "end_col_offset": 14
                   },
                   "id": "values"
-                }
-              }
-            ],
-            "exc_name": "TypeError",
-            "handler": [
-              {
-                "kind": "Return",
-                "span": {
-                  "lineno": 292,
-                  "col_offset": 8,
-                  "end_lineno": 292,
-                  "end_col_offset": 17
                 },
-                "value": {
-                  "kind": "List",
+                "attr": "append"
+              },
+              "args": [
+                {
+                  "kind": "Constant",
                   "span": {
-                    "lineno": 292,
-                    "col_offset": 15,
-                    "end_lineno": 292,
-                    "end_col_offset": 17
+                    "lineno": 294,
+                    "col_offset": 22,
+                    "end_lineno": 294,
+                    "end_col_offset": 24
                   },
-                  "elts": []
+                  "value": {
+                    "type": "int",
+                    "repr": "19"
+                  }
                 }
-              }
-            ],
-            "try_unsupported": "'finally' clause"
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 290,
+              "col_offset": 8,
+              "end_lineno": 290,
+              "end_col_offset": 21
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 290,
+                "col_offset": 15,
+                "end_lineno": 290,
+                "end_col_offset": 21
+              },
+              "id": "values"
+            }
           }
         ]
       },

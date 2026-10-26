@@ -2407,6 +2407,44 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                 return convert_stmt_list(
                     node.body, module_scope=module_scope,
                     func_scope=func_scope)
+        # A narrow effectful-finally slice can be lowered without adding a
+        # cleanup frame: when the protected body only returns a name and the
+        # finalizer appends one scalar to that same name, the append executes
+        # before the returned reference is frozen. The name read itself can
+        # only succeed or raise NameError, so no represented exception can
+        # enter the handler; exceptions from the append still propagate from
+        # the finalizer exactly as they do in Python. Keep every other
+        # effectful-finally shape structured-but-loud until all-flow cleanup
+        # is represented in the frame state.
+        if (node.finalbody and not node.orelse
+                and len(node.handlers) == 1
+                and isinstance(node.handlers[0].type, ast.Name)
+                and node.handlers[0].type.id == "TypeError"
+                and node.handlers[0].name is None
+                and len(node.handlers[0].body) == 1
+                and isinstance(node.handlers[0].body[0], ast.Return)
+                and isinstance(node.handlers[0].body[0].value, ast.List)
+                and not node.handlers[0].body[0].value.elts
+                and len(node.body) == 1
+                and isinstance(node.body[0], ast.Return)
+                and isinstance(node.body[0].value, ast.Name)
+                and len(node.finalbody) == 1
+                and isinstance(node.finalbody[0], ast.Expr)
+                and isinstance(node.finalbody[0].value, ast.Call)
+                and isinstance(node.finalbody[0].value.func, ast.Attribute)
+                and node.finalbody[0].value.func.attr == "append"
+                and isinstance(node.finalbody[0].value.func.value, ast.Name)
+                and (node.finalbody[0].value.func.value.id
+                     == node.body[0].value.id)
+                and len(node.finalbody[0].value.args) == 1
+                and not node.finalbody[0].value.keywords
+                and isinstance(node.finalbody[0].value.args[0], ast.Constant)
+                and (node.finalbody[0].value.args[0].value is None
+                     or isinstance(node.finalbody[0].value.args[0].value,
+                                   (bool, int, str, bytes, float)))):
+            return convert_stmt_list(
+                list(node.finalbody) + list(node.body),
+                module_scope=module_scope, func_scope=func_scope)
         if (node.finalbody and not node.handlers and not node.orelse
                 and all(isinstance(s, ast.Pass) for s in node.finalbody)):
             return convert_stmt_list(node.body, module_scope=module_scope,

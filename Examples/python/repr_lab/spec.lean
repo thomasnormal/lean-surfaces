@@ -42,6 +42,7 @@ set_option exponentiation.threshold 4300
 #py_check repr_lab.parameter_shadow(1) raises .typeError "'int' object is not callable"
 #py_check repr_lab.generator_shadow() = (Val.tuple #[.int 8, .int 9])
 #py_check repr_lab.custom() = "custom"
+#py_check repr_lab.alias_call(17) = "17"
 #py_check repr_shadow.direct(-7) = 4
 #py_check repr_shadow.captured_generator() = (Val.tuple #[.int 12, .int 13])
 

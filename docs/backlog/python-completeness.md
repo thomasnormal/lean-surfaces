@@ -5893,3 +5893,23 @@ function values that are actually observed remain loud.
 DECIDED: erase only unread assignments of admitted module functions, including
 recognized aliases; retain loud failure for returned or otherwise observed
 function values and shadowed names.
+
+## 2026-10-26-pycomplete-165 — admit the immediate local `repr` alias
+
+The existing two-statement local-builtin alias rewrite now includes `repr`:
+`f = repr; return f(value)` lowers to the ordinary builtin call. Argument
+evaluation and the shared renderer are unchanged. Returning `repr` itself,
+shadowing it with a parameter, and other first-class callable forms remain
+loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 3 cases: 0 failed, 3 matched on both interpreters |
+| Full executable differential | 3,698 cases: 0 failed, 44 whitelisted refusals, 3,654 matched |
+| Full proof differential | 3,698 cases: 0 failed, 153 refusals, 3,545 matched |
+| Refusal census | 44 rows, 0 drifts; no new refusal class |
+| Lean build | `lake build leanmodels-run` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `repr` alias call; retain loud
+failure for returned or general first-class callable values.

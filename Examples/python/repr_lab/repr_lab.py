@@ -83,6 +83,11 @@ def first_class():
     return repr
 
 
+def alias_call(value):
+    f = repr
+    return f(value)
+
+
 def instance():
     return repr(Plain())
 

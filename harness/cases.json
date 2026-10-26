@@ -1054,6 +1054,7 @@
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "of", "args": [[{"t": "str", "v": "é"}]], "expect": "match"},
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "of", "args": [[{"t": "str", "v": "٣"}], [{"t": "str", "v": "😀"}], [{"t": "str", "v": "λ😀"}], [{"t": "str", "v": "\u200b"}], [{"t": "str", "v": "\u2028"}], [{"t": "str", "v": "\ue000"}], [{"t": "str", "v": "\u0378"}]], "expect": "match", "note": "Unicode 13.0 printable characters stay direct; non-printable code points use CPython \\u/\\U escapes."},
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "keyword", "args": [[]], "expect": "match", "note": "Keyword values evaluate before CPython's faithful positional-only TypeError."},
+  {"file": "Examples/python/repr_lab/repr_lab.py", "function": "alias_call", "args": [[17], [true], [{"t": "str", "v": "quoted"}]], "expect": "match", "note": "The exact local-alias-then-call shape lowers to the admitted repr builtin."},
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "first_class", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "instance", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/repr_lab/repr_lab.py", "function": "custom", "args": [[]], "expect": "match"},

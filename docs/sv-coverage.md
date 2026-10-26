@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 249 | 244 | 0 | 5 | sv-tests-2 declarations |
+| 250 | 245 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -228,6 +228,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `enum_name_method` | `Examples/system-verilog/enum_name_method/enum_name_method.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_integral_cells` | `Examples/system-verilog/assoc_integral_cells/assoc_integral_cells.sv` | match | **MATCH** | `ok` | MATCH |
 | `packed_array_multidim` | `Examples/system-verilog/packed_array_multidim/packed_array_multidim.sv` | match | **MATCH** | `ok` | MATCH |
+| `packed_array_dynamic_index` | `Examples/system-verilog/packed_array_dynamic_index/packed_array_dynamic_index.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_sort` | `Examples/system-verilog/fixed_array_sort/fixed_array_sort.sv` | match | **MATCH** | `ok` | MATCH |
 | `swrite_default_radix` | `Examples/system-verilog/swrite_default_radix/swrite_default_radix.sv` | match | **MATCH** | `ok` | MATCH |
 | `packed_nested_scalar_select` | `Examples/system-verilog/packed_nested_scalar_select/packed_nested_scalar_select.sv` | match | **MATCH** | `ok` | MATCH |
@@ -270,7 +271,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 217 | 92 | 125 | pyslang SyntaxKind |
+| 217 | 94 | 123 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -344,8 +345,8 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ExpressionStatement` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ForLoopStatement` | `Examples/system-verilog/case_inside/table.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ForVariableDeclaration` | `Examples/system-verilog/dynamic_fixed_array_copy/dynamic_fixed_array_copy.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ForeachLoopList` | `Examples/system-verilog/foreach/indices.sv` | **REFUSE** | `unsupported` unsupported expression 'ElementSelectExpression:source-type' |
-| `SyntaxKind.ForeachLoopStatement` | `Examples/system-verilog/foreach/indices.sv` | **REFUSE** | `unsupported` unsupported expression 'ElementSelectExpression:source-type' |
+| `SyntaxKind.ForeachLoopList` | `Examples/system-verilog/foreach/indices.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ForeachLoopStatement` | `Examples/system-verilog/foreach/indices.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ForeverStatement` | `Examples/system-verilog/forever_loops/timers.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.FunctionDeclaration` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
 | `SyntaxKind.FunctionPort` | `Examples/system-verilog/let_expressions/call.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
@@ -498,11 +499,11 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22058 | 5227 | 16764 | 67 |
+| 22058 | 5230 | 16761 | 67 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 2857 |
+| `AssignmentExpression:target` | 2856 |
 | `CallExpression` | 2778 |
 | `ExpressionStatement:CallExpression` | 2775 |
 | `Hierarchy:ports` | 2400 |

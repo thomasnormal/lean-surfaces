@@ -1929,6 +1929,15 @@
       "expect": "match"
     },
     {
+      "name": "packed_array_dynamic_index",
+      "file": "Examples/system-verilog/packed_array_dynamic_index/packed_array_dynamic_index.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "fixed_array_sort",
       "file": "Examples/system-verilog/fixed_array_sort/fixed_array_sort.sv",
       "module": "top",

@@ -84,15 +84,29 @@ class PackedArrayMultidim(unittest.TestCase):
                          "00000000000000000000000000000010")
         self.assertFalse(unsupported_nodes(design))
 
-    def test_dynamic_index_of_wide_packed_element_stays_loud(self):
+    def test_dynamic_index_of_wide_packed_element_scales_offset(self):
         design = extract_source(
             "module top; logic [1:0][3:0] a; int i; logic [3:0] out; "
             "assign out = a[i]; endmodule")
         process = design["modules"][0]["processes"][0]
         self.assertEqual(process["kind"], "Assign")
-        self.assertEqual(process["value"]["kind"], "Unsupported")
-        self.assertEqual(process["value"]["sv_kind"],
-                         "ElementSelectExpression:source-type")
+        value = process["value"]
+        self.assertEqual(value["kind"], "SelectRead")
+        self.assertEqual(value["index"]["kind"], "Binary")
+        self.assertEqual(value["index"]["op"], "*")
+        self.assertEqual(value["index"]["right"]["bits"],
+                         "00000000000000000000000000000100")
+
+    def test_dynamic_index_of_wide_packed_element_write_scales_offset(self):
+        design = extract_source(
+            "module top; logic [1:0][3:0] a; int i; "
+            "initial begin i = 1; a[i] = 4'hA; end endmodule")
+        statements = design["modules"][0]["processes"][0]["body"]["stmts"]
+        target = next(statement["target"] for statement in statements
+                      if statement.get("kind") == "BlockingAssign"
+                      and statement["target"].get("kind") == "SelectTarget")
+        self.assertEqual(target["value"]["name"], "a")
+        self.assertEqual(target["index"]["op"], "*")
 
 
 if __name__ == "__main__":

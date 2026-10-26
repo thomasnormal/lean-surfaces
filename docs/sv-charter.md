@@ -43,6 +43,25 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Dynamic nested packed-element indexing — 2026-10-26
+
+A dynamic element select on a nested packed array with integral elements now
+normalizes the declared label into the existing flat-vector representation by
+scaling the runtime outer index by the packed element width. Reads and
+blocking targets share the lowering, and ascending and descending declared
+ranges use their right-hand label as the offset origin. Out-of-range values
+retain the selected-read/write behavior; aggregate, effectful, nonintegral,
+and unsupported index forms remain loud. The `packed_array_dynamic_index`
+fixture and differential row cover the read/write aliasing path, while the
+multidimensional extractor tests pin the offset geometry.
+
+The refreshed **22,058-path** census moves **5,227 → 5,230 clean** and
+**16,764 → 16,761 partial** (67 include skips). `AssignmentExpression:target`
+falls **2,857 → 2,856** and `ElementSelectExpression:source-type` falls
+**479 → 476**; `CallExpression` remains **2,778**. Differential coverage grows
+**249/244/0/5 → 250/245/0/5** with no disagreements, and grammar coverage
+remains **217/92/125**.
+
 ## Packed-array packed-struct member windows — 2026-10-26
 
 Constant element selections of packed arrays whose elements are untagged

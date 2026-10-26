@@ -27,12 +27,12 @@ published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
 ## Fresh extractor census — 2026-10-26
 
-The chapter-scoped rerun covered **22,058** paths: **5,227 clean**,
-**16,764 partial**, **67 include skips**, and **zero errors**. The adapter
+The chapter-scoped rerun covered **22,058** paths: **5,230 clean**,
+**16,761 partial**, **67 include skips**, and **zero errors**. The adapter
 walk found **24 unlockable** files, of which **17** are eligible for its
 simulation tier. The leading refusal classes by file are
-`AssignmentExpression:target` (2,857), `CallExpression` (2,778),
-`ExpressionStatement:CallExpression` (2,775), `Hierarchy:ports` (2,398),
+`AssignmentExpression:target` (2,856), `CallExpression` (2,778),
+`ExpressionStatement:CallExpression` (2,775), `Hierarchy:ports` (2,400),
 `VariableSymbol:2state` (2,223), `SubroutineSymbol:Subroutine` (1,634),
 `NamedValueExpression:2state` (1,485), `ConcurrentAssertionStatement`
 (1,359), `InvalidStatement` (1,330), and `ClassType` (1,330).
@@ -40,6 +40,24 @@ simulation tier. The leading refusal classes by file are
 The per-chapter counts are retained in `docs/sv-construct-census.json` and
 the per-file records in `harness/sv/conformance/census.json`; `--recheck`
 matched all 200 fixed-seed sample classifications.
+
+## Dynamic nested packed-element indexing — 2026-10-26
+
+A dynamic element select on a nested packed array with integral elements now
+normalizes the declared label into the flat vector state by scaling the runtime
+outer index by the element width. Reads and blocking targets share this
+lowering, with ascending and descending declared ranges mapped from their
+right-hand label. Out-of-range, aggregate, effectful, nonintegral, and
+unsupported index forms remain loud. The `packed_array_dynamic_index` fixture
+checks the read/write alias and its Lean receipt, while extractor regressions
+cover the offset geometry.
+
+The refreshed **22,058-path** census moves **5,227 → 5,230 clean** and
+**16,764 → 16,761 partial** (67 include skips), with
+`AssignmentExpression:target` falling **2,857 → 2,856** and
+`ElementSelectExpression:source-type` **479 → 476**; `CallExpression` remains
+**2,778**. Differential coverage grows **249/244/0/5 → 250/245/0/5** with no
+disagreements; grammar coverage remains **217/92/125**.
 
 ## Dynamic packed slices inside fixed-array cells — 2026-10-26
 

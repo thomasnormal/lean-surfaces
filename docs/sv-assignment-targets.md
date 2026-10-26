@@ -59,6 +59,18 @@ a second scheduler. A future target rung must first supply the missing storage
 or the scheduler-facing continuous-assignment rule, then add a source-bound
 fixture and an independent simulator comparison.
 
+## Dynamic nested packed-element targets — 2026-10-26
+
+A dynamic element target on a nested packed array with integral elements now
+maps the declared packed label to a flat-vector offset by multiplying the
+runtime outer index by the element width. The read and blocking-target paths
+use the same normalization, including ascending and descending declared
+ranges, so a write through `a[i]` updates the same cell read through `a[i]`.
+Out-of-range, aggregate, effectful, nonintegral, and unsupported index forms
+remain loud; no aggregate store or scheduler-facing driver is introduced.
+The `packed_array_dynamic_index` fixture and the multidimensional extractor
+regressions pin the admitted geometry and its aliasing behavior.
+
 ## 2026-10-21 census and decision
 
 The fresh chapter-scoped corpus contains 22,043 paths. The target wall occurs

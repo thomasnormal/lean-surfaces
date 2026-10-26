@@ -7212,34 +7212,60 @@ def _packed_constant_index(sm, source_type, index):
 
 
 def _packed_element_index(sm, source_type, index):
-    """Normalize a pure signed-int packed label without wrapping into valid bits.
+    """Normalize a dynamic integral packed label to an LVec offset.
 
-    Foreach iterators have this type. Widen before subtracting the signed
-    declaration bound; unknown/out-of-range offsets use selectedRead.
-    Other index types retain the prior boundary: wide unsigned indices on
-    negative ranges have an unresolved independent-observation discrepancy.
+    Wide packed elements scale the outer label by their element width;
+    one-bit elements retain the signed, 32-bit widened arithmetic used by
+    foreach iterators. Unknown/out-of-range offsets use selectedRead.
+    Negative-range unsigned-index corner cases retain the existing boundary.
     """
     constant = _packed_constant_index(sm, source_type, index)
     if constant is not None or _constant_dimension_selector(index) is not None:
         return constant
     width, _, reason = type_width_2s(index.type)
-    if (reason is not None or width != 32 or not index.type.isSigned
-            or not _case_source_expression_ok(index)):
+    if (reason is not None or not _case_source_expression_ok(index)):
         return None
     value = _convert_expr(sm, index)
     if not _case_expression_ok(value):
         return None
     ct = source_type.canonicalType
-    if int(ct.elementType.canonicalType.bitWidth) != 1:
-        return None
-    wide = width + 2
-    value = {"kind": "SignedResize",
-             "span": node_span(sm, index), "width": wide, "operand": value}
-    right = {"kind": "Literal", "span": node_span(sm, index), "width": wide,
-             "bits": format(int(ct.range.right) & ((1 << wide) - 1), f"0{wide}b")}
-    left, right = (value, right) if ct.range.left > ct.range.right else (right, value)
-    return {"kind": "Binary", "span": node_span(sm, index), "width": wide,
-            "op": "-", "left": left, "right": right}, True
+    element_width = int(ct.elementType.canonicalType.bitWidth)
+    if element_width == 1:
+        if width != 32 or not index.type.isSigned:
+            return None
+        wide = width + 2
+        value = {"kind": "SignedResize",
+                 "span": node_span(sm, index), "width": wide,
+                 "operand": value}
+        right = {"kind": "Literal", "span": node_span(sm, index),
+                 "width": wide,
+                 "bits": format(int(ct.range.right) & ((1 << wide) - 1),
+                                  f"0{wide}b")}
+        left, right = (value, right) if ct.range.left > ct.range.right else (right, value)
+        return {"kind": "Binary", "span": node_span(sm, index),
+                "width": wide, "op": "-", "left": left, "right": right}, True
+    if element_width != 1:
+        if type(ct).__name__ != "PackedArrayType" or element_width <= 0:
+            return None
+        span = node_span(sm, index)
+
+        def literal(number):
+            mask = (1 << width) - 1
+            return {"kind": "Literal", "span": span, "width": width,
+                    "bits": format(number & mask, f"0{width}b")}
+
+        def binary(op, left, right):
+            return {"kind": "Binary", "span": span, "width": width,
+                    "op": op, "left": left, "right": right}
+
+        left, right = int(ct.range.left), int(ct.range.right)
+        if left > right:
+            offset = binary("-", value, literal(right)) if right else value
+        else:
+            offset = binary("-", literal(right), value)
+        offset = binary("*", offset, literal(element_width))
+        return offset, bool(index.type.isSigned)
+    return None
 
 
 def _packed_constant_simple_index(sm, source_type, left, right, width):
@@ -12134,7 +12160,17 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
     elif (expression_kind == "ElementSelectExpression"
           and canonical_kind == "PackedArrayType"
           and not canonical_select):
-        normalized = _packed_constant_index(sm, lhs.value.type, index)
+        # Dynamic targets are admitted for the wide nested-element shape added
+        # here.  The one-bit noncanonical target boundary remains loud; its
+        # read-side widening is an older foreach-specific representation and
+        # does not imply a target lowering.
+        try:
+            element_width = int(lhs.value.type.canonicalType.elementType
+                                .canonicalType.bitWidth)
+        except Exception:
+            element_width = 1
+        normalized = (_packed_element_index(sm, lhs.value.type, index)
+                      if element_width != 1 else None)
         if normalized is None:
             return unsupported(sm, lhs, expression_kind + ":target-source"), False
         converted_index, index_signed = normalized

@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    2857
+    2856
    ],
    [
     "CallExpression",
@@ -100,7 +100,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    479
+    476
    ],
    [
     "PropertySymbol:Property",
@@ -964,8 +964,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5227,
-   "partial": 16764,
+   "clean": 5230,
+   "partial": 16761,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1026,7 +1026,7 @@
     52
    ],
    "simulation": [
-    4536,
+    4539,
     18689
    ],
    "simulation elaboration": [
@@ -1327,9 +1327,9 @@
     "unlockable": 9
    },
    "chapter-12": {
-    "clean": 298,
+    "clean": 301,
     "error": 0,
-    "partial": 329,
+    "partial": 326,
     "skip_include": 0,
     "total": 627,
     "unlockable": 1

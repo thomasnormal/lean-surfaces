@@ -802,8 +802,9 @@ mutual
         -- HIT removes exactly CPython's module global (published after
         -- the statement like any bind) and a MISS is decided in CPython's
         -- order of authority: a dunder target is loud (the model resolves
-        -- dunder reads statically — and CPython's `del __name__` UNCOVERS
-        -- builtins' own `__name__`, measured); a benign-import name is
+        -- dunder reads statically, except the runner-supplied `__name__`: its
+        -- deletion installs the builtins fallback; other dunders remain loud.
+        -- A benign-import name is
         -- loud (it binds statically, so the removal has nothing to act
         -- on); a `def`/`class`/namedtuple/alias name is loud (a static
         -- table entry — the TRAILING position is rewritten away at
@@ -816,10 +817,16 @@ mutual
         (match delNames st.locals names.toList with
          | (env, Option.none) => .ok { st with locals := env } .next
          | (env, some n) =>
-           if names.toList == [n] && scriptStaticDeleteNoop m (.delStmt names sp) n then
+           if names.toList == [n] && n == "__name__" then
+             if (Env.lookup st.world.globals (deletedModuleDunderMarker n)).isSome
+                 || (Env.lookup st.locals (deletedModuleDunderMarker n)).isSome then
+               .exn st (.nameError n)
+             else
+               .ok { st with locals := Env.set env (deletedModuleDunderMarker n) (.str "builtins") } .next
+           else if names.toList == [n] && scriptStaticDeleteNoop m (.delStmt names sp) n then
              .ok { st with locals := env } .next
            else if dunderShaped n then
-             .unsupported s!"'del {n}': deleting a module dunder is outside the tier (the model resolves dunder reads statically; CPython's removal uncovers the BUILTINS module's binding — docs/backlog.md §del RECONCILED)"
+             .unsupported s!"'del {n}': deleting this module dunder is outside the tier (only the runner-supplied `__name__` has the measured builtins fallback — docs/backlog.md §del RECONCILED)"
            else if (benignImportNames m).contains n then
              .unsupported s!"'del {n}': the name is bound by a whitelisted import, which the model binds statically — outside the tier (docs/backlog.md §del RECONCILED)"
            else if (findFunction m n).isSome || (findClass m n).isSome

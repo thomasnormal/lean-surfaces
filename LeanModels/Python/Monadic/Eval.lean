@@ -849,7 +849,13 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
         if hasUnboundLocal st.locals id then
           raisePy (.unboundLocalError id)
         else match lookupG (moduleGlobals m).1 id with
-        | some (some v) => pure v
+        | some (some v) =>
+            if id == "__name__" then
+              match Env.lookup (← frameGlobals) (deletedModuleDunderMarker id) with
+              | some dv => pure dv
+              | Option.none => pure v
+            else
+              pure v
         | some Option.none =>
             -- a statically-POISONED name consults the LIVE view before refusing
             match Env.lookup (← frameGlobals) id with

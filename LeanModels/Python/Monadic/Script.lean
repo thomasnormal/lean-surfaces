@@ -390,11 +390,18 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
       match delNames st.locals names.toList with
       | (env, Option.none) => do envPut env; pure .next
       | (env, some n) =>
-          if names.toList == [n] && scriptStaticDeleteNoop m (.delStmt names sp) n then
+          if names.toList == [n] && n == "__name__" then
+            if (Env.lookup (← frameGlobals) (deletedModuleDunderMarker n)).isSome
+                || (Env.lookup (← get).locals (deletedModuleDunderMarker n)).isSome then
+              raisePy (.nameError n)
+            else
+              envPut (Env.set env (deletedModuleDunderMarker n) (.str "builtins"))
+              pure .next
+          else if names.toList == [n] && scriptStaticDeleteNoop m (.delStmt names sp) n then
             envPut env
             pure .next
           else if dunderShaped n then
-            refuse s!"'del {n}': deleting a module dunder is outside the tier (the model resolves dunder reads statically; CPython's removal uncovers the BUILTINS module's binding — docs/backlog.md §del RECONCILED)"
+            refuse s!"'del {n}': deleting this module dunder is outside the tier (only the runner-supplied `__name__` has the measured builtins fallback — docs/backlog.md §del RECONCILED)"
           else if (benignImportNames m).contains n then
             refuse s!"'del {n}': the name is bound by a whitelisted import, which the model binds statically — outside the tier (docs/backlog.md §del RECONCILED)"
           else if (findFunction m n).isSome || (findClass m n).isSome

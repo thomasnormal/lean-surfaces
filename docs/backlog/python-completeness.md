@@ -17,6 +17,24 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-10-26-pycomplete-144 — expose the builtins fallback after deleting `__name__`
+
+Script mode now models the runner-supplied module `__name__` as a deletable
+binding. A single `del __name__` installs CPython's "builtins" fallback, so
+the following read prints `builtins`; a repeated deletion raises the faithful
+`NameError`. Other module dunders remain loud, and the static function and
+monadic name-resolution paths share the same marker.
+
+| Measurement | Result |
+|---|---|
+| Focused script differential | `del_dunder_script.py` matches CPython and prints `builtins`; repeated deletion reports `NameError: name '__name__' is not defined` |
+| Script census | 6 loud rows in 5 classes, 0 drifts; the `del.definition-name` dunder row is removed |
+| Build/checks | `lake build` for `Obs`, monadic specs, script modules, and `leanmodels-run`; coverage and backlog index freshness plus `git diff --check` pass |
+
+DECIDED: model only the runner-supplied `__name__` deletion fallback; retain
+loud behavior for every other module dunder and for unsupported deletion
+shapes. Reread the inbox before selecting the next measured gap.
+
 ## 2026-10-26-pycomplete-143 — erase unobserved static-name deletions
 
 The script surface now handles the two safe module-level deletion shapes that

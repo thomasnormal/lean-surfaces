@@ -252,8 +252,8 @@
   },
   {
     "file": "harness/scripts/del_dunder_script.py",
-    "expect": "unsupported",
-    "note": "CPython prints 'builtins' (the deleted module global uncovers builtins' __name__); dunder reads resolve statically, so the del refuses LOUDLY"
+    "expect": "match",
+    "note": "Deleting the runner-supplied __name__ uncovers CPython's builtins __name__, so the script prints 'builtins'."
   },
   {
     "file": "harness/scripts/del_import_script.py",

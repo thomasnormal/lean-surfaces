@@ -2459,7 +2459,14 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             cases lookupG (moduleGlobals m).1 id with
             | some vv =>
               cases vv with
-              | some v => exact .okF rfl _
+              | some v =>
+                by_cases hname : id == "__name__"
+                · simp [hname]
+                  cases Env.lookup st.world.globals (deletedModuleDunderMarker id) with
+                  | some dv => exact .okF rfl _
+                  | none => exact .okF rfl _
+                · simp [hname]
+                  exact .okF rfl _
               | none =>
                 -- pass 3: the poisoned-arm live view — a hit is a pure
                 -- world read, a miss the old refusal

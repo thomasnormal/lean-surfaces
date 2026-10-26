@@ -1072,7 +1072,6 @@ SCRIPT_CLASS = {
     "alias_before_def": "alias.admission",
     "ann_module_script": "annassign.module-scope",
     "ann_module_effect_script": "annassign.module-scope",
-    "del_dunder_script": "del.definition-name",
     "exc_handlers_rebound_script": "exc.handler",
     "cls_deco_script": "class.creation-effect",
     "star_target_script": "starred.position",

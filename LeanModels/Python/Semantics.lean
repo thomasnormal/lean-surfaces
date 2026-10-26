@@ -6563,6 +6563,14 @@ def globalMarker (id : String) : String := "<global>" ++ id
 def globalDeclared (locals : Env) (id : String) : Bool :=
   (Env.lookup locals (globalMarker id)).isSome
 
+/-- A script-level deletion of the runner-supplied `__name__` uncovers the
+BUILTINS module's own `__name__` value (`"builtins"`). The marker lives in the
+threaded module environment so both function and script name resolution can
+override the static `scriptNameBinding` without changing the public frame type.
+It is unspellable by Python source. -/
+def deletedModuleDunderMarker (id : String) : String :=
+  "<deleted-module-dunder>" ++ id
+
 /-! ### PEP 526 value-less annotations
 
 `x: T` in a function body does not execute a value store, but it DOES make
@@ -7843,7 +7851,13 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
         if hasUnboundLocal st.locals id then
           .exn st (.unboundLocalError id)
         else match lookupG (moduleGlobals m).1 id with
-        | some (some v) => .ok st v
+        | some (some v) =>
+          if id == "__name__" then
+            match Env.lookup st.world.globals (deletedModuleDunderMarker id) with
+            | some dv => .ok st dv
+            | Option.none => .ok st v
+          else
+            .ok st v
         | some Option.none =>
           -- pass 3: a statically-POISONED name consults the LIVE view
           -- (World.globals) before refusing — sound because the dirty

@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22064,
+  "corpus_files": 22065,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -16,15 +16,15 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    2842
+    2847
    ],
    [
     "ExpressionStatement:CallExpression",
-    2722
+    2718
    ],
    [
     "CallExpression",
-    2648
+    2653
    ],
    [
     "Hierarchy:ports",
@@ -40,7 +40,7 @@
    ],
    [
     "NamedValueExpression:2state",
-    1485
+    1488
    ],
    [
     "ConcurrentAssertionStatement",
@@ -56,7 +56,7 @@
    ],
    [
     "Hierarchy:module-kind",
-    1249
+    1250
    ],
    [
     "PrimitiveInstanceSymbol:PrimitiveInstance",
@@ -64,7 +64,7 @@
    ],
    [
     "MemberAccessExpression",
-    1017
+    1018
    ],
    [
     "ConversionExpression:width",
@@ -72,7 +72,7 @@
    ],
    [
     "HierarchicalValueExpression",
-    751
+    752
    ],
    [
     "CovergroupType:CovergroupType",
@@ -100,7 +100,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    472
+    473
    ],
    [
     "PropertySymbol:Property",
@@ -148,7 +148,7 @@
    ],
    [
     "StaticLocal:invalid-compilation",
-    215
+    217
    ],
    [
     "Package:Subroutine",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5327,
-   "partial": 16670,
+   "clean": 5331,
+   "partial": 16667,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1003,7 +1003,7 @@
    ],
    "compile_error": [
     128,
-    1750
+    1745
    ],
    "compile_fail": [
     0,
@@ -1038,8 +1038,8 @@
     52
    ],
    "simulation": [
-    4628,
-    18695
+    4632,
+    18701
    ],
    "simulation elaboration": [
     2,
@@ -1403,9 +1403,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 369,
+    "clean": 373,
     "error": 0,
-    "partial": 456,
+    "partial": 452,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0
@@ -1445,9 +1445,9 @@
    "chapter-25": {
     "clean": 8,
     "error": 0,
-    "partial": 473,
+    "partial": 474,
     "skip_include": 0,
-    "total": 481,
+    "total": 482,
     "unlockable": 0
    },
    "chapter-26": {

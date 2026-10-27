@@ -133,7 +133,7 @@ class QExamStatus(unittest.TestCase):
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))
 
-    def test_timed_statistics_remain_loud(self):
+    def test_literal_delay_statistics_use_source_timeline(self):
         design = lower(
             """module top;
                integer status, stat_value;
@@ -141,7 +141,86 @@ class QExamStatus(unittest.TestCase):
                  $q_initialize(6, 1, 10, status);
                  $q_add(6, 10, 0, status);
                  #1;
-                 $q_exam(6, 6, stat_value, status);
+                 $q_exam(6, 5, stat_value, status);
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+        values = [node["q_exam_stat_value_lowered"] for node in nodes(design)
+                  if node.get("q_exam_stat_value_lowered") is not None]
+        self.assertEqual(values, [1])
+
+    def test_dynamic_delay_statistics_remain_loud(self):
+        design = lower(
+            """module top;
+               integer status, stat_value, delay;
+               initial begin
+                 delay = 1;
+                 $q_initialize(7, 1, 10, status);
+                 $q_add(7, 10, 0, status);
+                 #delay;
+                 $q_exam(7, 5, stat_value, status);
+               end
+               endmodule""")
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
+    def test_timed_statistics_cover_all_four_time_codes(self):
+        design = lower(
+            """module top;
+               integer status, longest, mean_interarrival, shortest, average;
+               integer job, info;
+               initial begin
+                 $q_initialize(8, 1, 10, status);
+                 $q_add(8, 1, 0, status);
+                 #4;
+                 $q_add(8, 2, 0, status);
+                 $q_exam(8, 5, longest, status);
+                 #6;
+                 $q_remove(8, job, info, status);
+                 $q_exam(8, 2, mean_interarrival, status);
+                 $q_exam(8, 4, shortest, status);
+                 $q_exam(8, 6, average, status);
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+        values = [node["q_exam_stat_value_lowered"] for node in nodes(design)
+                  if node.get("q_exam_stat_value_lowered") is not None]
+        self.assertEqual(values, [4, 4, 10, 10])
+
+    def test_timed_history_rejects_unrelated_assignment(self):
+        design = lower(
+            """module top;
+               integer q_id, other, status, stat_value;
+               initial begin
+                 q_id = 9;
+                 other = 1;
+                 $q_initialize(q_id, 1, 10, status);
+                 $q_add(q_id, 1, 0, status);
+                 #1;
+                 $q_exam(q_id, 5, stat_value, status);
+               end
+               endmodule""")
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
+    def test_timed_history_requires_one_initial_process(self):
+        design = lower(
+            """module top;
+               integer status, stat_value;
+               initial begin
+                 $q_initialize(10, 1, 10, status);
+                 $q_add(10, 1, 0, status);
+                 #1;
+                 $q_exam(10, 5, stat_value, status);
+               end
+               initial begin
+                 status = 0;
                end
                endmodule""")
         self.assertTrue(any(node.get("sv_kind") ==

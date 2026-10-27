@@ -12484,6 +12484,221 @@ def _q_full_status_call(sm, expression):
         return None
 
 
+def _q_exam_timed_stat_value(instance, expression):
+    """Replay one straight-line literal queue history in simulator ticks.
+
+    The timed queue witnesses use only a single ``initial`` body, literal
+    ``#delay`` statements whose bodies are empty, and literal queue task
+    arguments.  That shape has no branch, loop, event, or dynamic state: the
+    source order itself determines each arrival/removal time.  Keep the
+    replay local to that exact shape and return the statistic requested by
+    *expression*.  The timed loader still owns suspension and wakeup; this
+    helper only supplies the scalar queue statistic at the task's source
+    point.
+    """
+    try:
+        call_range = getattr(expression, "sourceRange", None)
+        call_start = getattr(getattr(call_range, "start", None), "offset", None)
+        if call_start is None:
+            return None
+
+        # Locate the one initial procedural block containing the query.  The
+        # module symbol's visitor exposes the procedural symbol, while its
+        # body supplies the source-ordered statement list.
+        body = None
+        initial_count = 0
+        def find_initial(node):
+            nonlocal body, initial_count
+            if type(node).__name__ != "ProceduralBlockSymbol":
+                return
+            kind = str(getattr(node, "procedureKind", "")).split(".")[-1]
+            candidate = getattr(node, "body", None)
+            if kind != "Initial":
+                return
+            initial_count += 1
+            if body is not None or candidate is None:
+                return
+            span = getattr(candidate, "sourceRange", None)
+            start = getattr(getattr(span, "start", None), "offset", None)
+            end = getattr(getattr(span, "end", None), "offset", None)
+            if start is not None and end is not None and start <= call_start <= end:
+                body = candidate
+        instance.visit(find_initial)
+        if (initial_count != 1 or body is None
+                or type(body).__name__ != "BlockStatement"):
+            return None
+        statement_list = getattr(body, "body", None)
+        if type(statement_list).__name__ != "StatementList":
+            return None
+
+        stat_code = _literal_integral_value(expression.arguments[1])
+        if stat_code not in (2, 4, 5, 6):
+            return None
+        qid = _literal_integral_value(expression.arguments[0])
+        if qid is None:
+            qid = _queue_history_literal(expression.arguments[0], instance,
+                                          call_start)
+        if qid is None:
+            return None
+        init = None
+        queue = []  # (arrival time, job, inform)
+        arrivals = []
+        completed_waits = []
+        max_length = 0
+        now = 0
+        fifo = True
+
+        def literal_delay(timing):
+            if type(timing).__name__ != "DelayControl":
+                return None
+            delay_expr = getattr(timing, "expr", None)
+            if type(delay_expr).__name__ != "IntegerLiteral":
+                return None
+            if not getattr(delay_expr, "type", None).isIntegral:
+                return None
+            bits = svint_bits(delay_expr.value)
+            if not bits or any(bit not in "01" for bit in bits):
+                return None
+            if delay_expr.type.isSigned and bits[0] == "1":
+                return None
+            amount = int(bits, 2)
+            return amount if amount < (1 << 64) else None
+
+        def output_call(call, name):
+            if (type(call).__name__ != "CallExpression"
+                    or not getattr(call, "isSystemCall", False)
+                    or str(getattr(call, "subroutineName", "")) != name):
+                return False
+            args = list(getattr(call, "arguments", []))
+            if name == "$q_initialize":
+                if len(args) != 4:
+                    return False
+                output = args[3]
+                return (type(output).__name__ == "AssignmentExpression"
+                        and getattr(output, "op", None) is None
+                        and getattr(output, "timingControl", None) is None
+                        and type(getattr(output, "right", None)).__name__
+                        == "EmptyArgumentExpression")
+            if name == "$q_add":
+                return _q_add_output_shape(call)
+            if name == "$q_remove":
+                return _q_remove_output_shape(call)
+            if name == "$q_exam":
+                return _q_exam_output_shape(call)
+            return False
+
+        qid_expr = expression.arguments[0]
+        qid_symbol = getattr(qid_expr, "symbol", None)
+        qid_is_named = (type(qid_expr).__name__ == "NamedValueExpression"
+                        and qid_symbol is not None)
+        qid_assignment_count = 0
+
+        for statement in statement_list.list:
+            start = getattr(getattr(getattr(statement, "sourceRange", None),
+                                    "start", None), "offset", None)
+            if start is None:
+                return None
+            if type(statement).__name__ == "TimedStatement":
+                if literal_delay(getattr(statement, "timing", None)) is None:
+                    return None
+                if type(getattr(statement, "stmt", None)).__name__ != "EmptyStatement":
+                    return None
+                now += literal_delay(getattr(statement, "timing", None))
+                continue
+            if start > call_start:
+                break
+            if type(statement).__name__ != "ExpressionStatement":
+                return None
+            call = getattr(statement, "expr", None)
+            if type(call).__name__ == "AssignmentExpression":
+                # The queue witnesses establish a named ID with one direct
+                # blocking literal assignment before the first task.  It is
+                # part of the static proof, not a queue operation; permit
+                # that one scalar write while rejecting computed or timed
+                # histories.
+                left = getattr(call, "left", None)
+                if (not qid_is_named
+                        or getattr(left, "symbol", None) is not qid_symbol
+                        or getattr(call, "op", None) is not None
+                        or getattr(call, "timingControl", None) is not None
+                        or getattr(call, "isNonBlocking", False)
+                        or _literal_integral_value(getattr(call, "right", None)) is None):
+                    return None
+                qid_assignment_count += 1
+                if qid_assignment_count > 1:
+                    return None
+                continue
+            if type(call).__name__ != "CallExpression":
+                return None
+            name = str(getattr(call, "subroutineName", ""))
+            if name not in ("$q_initialize", "$q_add", "$q_remove", "$q_exam"):
+                return None
+            args = list(getattr(call, "arguments", []))
+            if not args:
+                return None
+            call_qid = _literal_integral_value(args[0])
+            if call_qid is None:
+                call_qid = _queue_history_literal(args[0], instance, start)
+            if call_qid != qid:
+                return None
+            if name == "$q_initialize":
+                if init is not None or not output_call(call, name) or len(args) != 4:
+                    return None
+                qtype = _literal_integral_value(args[1])
+                capacity = _literal_integral_value(args[2])
+                if qtype not in (1, 2) or capacity is None or capacity <= 0:
+                    return None
+                init = capacity
+                fifo = qtype == 1
+            elif name == "$q_add":
+                if init is None or not output_call(call, name) or len(args) != 4:
+                    return None
+                job = _literal_integral_value(args[1])
+                inform = _literal_integral_value(args[2])
+                if job is None or inform is None:
+                    return None
+                # A rejected full-queue add has simulator-defined statistics;
+                # keep this source replay to successful arrivals only.
+                if len(queue) >= init:
+                    return None
+                arrivals.append(now)
+                queue.append((now, job, inform))
+                max_length = max(max_length, len(queue))
+            elif name == "$q_remove":
+                if init is None or not output_call(call, name) or len(args) != 4:
+                    return None
+                if not queue:
+                    return None
+                item = queue.pop(0 if fifo else -1)
+                completed_waits.append(now - item[0])
+            else:
+                if not output_call(call, name) or call is not expression:
+                    if start == call_start:
+                        # PySlang wrappers are not identity-stable in every
+                        # visitor; source offset is the fallback identity.
+                        if start != call_start:
+                            return None
+                    else:
+                        continue
+                code = _literal_integral_value(args[1])
+                if code != stat_code:
+                    return None
+                if code == 2:
+                    if len(arrivals) < 2:
+                        return 0
+                    gaps = [b - a for a, b in zip(arrivals, arrivals[1:])]
+                    return sum(gaps) // len(gaps)
+                if code == 4:
+                    return min(completed_waits) if completed_waits else 0
+                if code == 5:
+                    return max((now - item[0] for item in queue), default=0)
+                return (sum(completed_waits) // len(completed_waits)
+                        if completed_waits else 0)
+        return None
+    except Exception:
+        return None
+
+
 def _q_exam_status_call(sm, expression):
     """Lower literal queue length statistics from a source-pure ``$q_exam``.
 
@@ -12492,7 +12707,8 @@ def _q_exam_status_call(sm, expression):
     ``$q_exam`` calls.  A small source-order replay retains only payload
     occupancy, so current/max length remain exact without introducing a
     runtime queue object.  The four time statistics are zero for a history
-    with no delay or event control; timed histories stay on the loud path.
+    with no delay or event control; a separate straight-line literal-delay
+    replay admits those columns without introducing a runtime queue object.
     The task writes the statistic first and then status 0, matching the
     argument order and preserving the ordinary output-assignment semantics.
     """
@@ -12515,9 +12731,11 @@ def _q_exam_status_call(sm, expression):
             return None
 
         # The time columns (and, more generally, queue statistics) depend on
-        # simulator time.  The replay below is deliberately the time-zero
-        # slice; reject any delay/event/timing syntax in the enclosing
-        # instance rather than manufacturing a timestamp.
+        # simulator time.  A straight-line literal queue history with literal
+        # delay statements has an exact source-order timeline, so the timed
+        # extension below can consume the existing scheduler.  Every other
+        # timed or eventful shape remains loud rather than manufacturing a
+        # timestamp.
         timed = False
         def inspect_timing(node):
             nonlocal timed
@@ -12528,8 +12746,11 @@ def _q_exam_status_call(sm, expression):
                     or getattr(node, "timingControl", None) is not None):
                 timed = True
         instance.visit(inspect_timing)
+        timed_value = None
         if timed:
-            return None
+            timed_value = _q_exam_timed_stat_value(instance, expression)
+            if timed_value is None:
+                return None
         expression_position = getattr(getattr(getattr(expression, "sourceRange", None),
                                               "start", None), "offset", -1)
         qid_value = _queue_history_literal(qid, instance, expression_position)
@@ -12608,8 +12829,9 @@ def _q_exam_status_call(sm, expression):
                     return None
             else:
                 return None
-        length = len(queue) if stat_code_value == 1 else (
-            max_length if stat_code_value == 3 else 0)
+        length = (timed_value if timed_value is not None else
+                  (len(queue) if stat_code_value == 1 else
+                   (max_length if stat_code_value == 3 else 0)))
 
         stat_width, stat_two_state, stat_reason = type_width_2s(stat_value.left.type)
         status_width, status_two_state, status_reason = type_width_2s(status.left.type)

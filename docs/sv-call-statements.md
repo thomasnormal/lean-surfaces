@@ -207,6 +207,24 @@ operand, a removal, another statistic code, or a value-position call remains
 `Unsupported`. The `q_exam_stat_codes` fixture pins the two statistic codes and
 the named-history transcript.
 
+## Timed literal `$q_exam` statistics — 2026-10-27
+
+The timed surface now replays one straight-line literal queue history through
+literal `#delay` statements and lowers statistic codes 2 (mean interarrival),
+4 (shortest completed wait), 5 (longest current wait), and 6 (average
+completed wait). The replay is source-ordered and admits one initial process,
+literal queue IDs or one prior direct literal ID assignment, literal FIFO/LIFO
+initialization, successful scalar-literal additions, nonempty scalar removals,
+and direct output lvalues. Dynamic delays, overflowed additions, unrelated or
+reassigned variables, branches, event controls, additional initial processes,
+and every other queue form remain `Unsupported`.
+
+`q_exam_timed_statistics` is a dedicated timed receipt: it elaborates with
+`elabTimedDesign`, advances the existing timer scheduler at 4 and 6 ticks, and
+checks the transcript `PASS q_exam_timed_statistics`. The time-zero differential
+runner remains deliberately separate and continues to report timed calls as a
+loud scheduler boundary.
+
 ## Refusal boundary
 
 All other statement-position calls remain `Unsupported` with their source

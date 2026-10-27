@@ -576,24 +576,24 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22064 | 5327 | 16670 | 67 |
+| 22065 | 5331 | 16667 | 67 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 2842 |
-| `ExpressionStatement:CallExpression` | 2722 |
-| `CallExpression` | 2648 |
+| `AssignmentExpression:target` | 2847 |
+| `ExpressionStatement:CallExpression` | 2718 |
+| `CallExpression` | 2653 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2118 |
 | `SubroutineSymbol:Subroutine` | 1634 |
-| `NamedValueExpression:2state` | 1485 |
+| `NamedValueExpression:2state` | 1488 |
 | `ConcurrentAssertionStatement` | 1359 |
 | `InvalidStatement` | 1330 |
 | `ClassType` | 1330 |
-| `Hierarchy:module-kind` | 1249 |
+| `Hierarchy:module-kind` | 1250 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1154 |
-| `MemberAccessExpression` | 1017 |
+| `MemberAccessExpression` | 1018 |
 | `ConversionExpression:width` | 784 |
-| `HierarchicalValueExpression` | 751 |
+| `HierarchicalValueExpression` | 752 |
 
 The committed census provenance identifies frontend family `pyslang-11` and corpus `sv-tests-2`. The corpus snapshot is not silently substituted when the external checkout is unavailable.

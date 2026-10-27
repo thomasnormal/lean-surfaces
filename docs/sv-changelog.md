@@ -1,5 +1,18 @@
 # SystemVerilog tier changelog
 
+## [0.1.72] — 2026-10-27
+
+The four timed sv-tests-2 `$q_exam` witnesses now lower through a
+source-ordered literal-delay replay: codes 2, 4, 5, and 6 report exact tick
+statistics for mean interarrival, shortest completed wait, longest current
+wait, and average completed wait. The timed receipt drives the existing
+`elabTimedDesign`/timer scheduler at 4 and 6 ticks; the time-zero differential
+matrix remains 326 rows with 320 matches, no disagreements, and 6 recorded
+refusals. The chapter-only census is now **5,331 clean / 16,667 partial** over
+22,065 files (67 include skips), and `ExpressionStatement:CallExpression`
+falls from 2,722 to 2,718. Dynamic delays, overflow, branches, extra initial
+processes, and computed or aliased queue histories remain loud.
+
 ## [0.1.71] — 2026-10-27
 
 The self-check surface now has 326 differential rows: 320 matches, zero

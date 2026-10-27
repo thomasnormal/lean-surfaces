@@ -69,6 +69,24 @@ The chapter-only census remains **5,327 clean / 16,670 partial** (67 include
 skips), while differential coverage grows **324/318/0/6 → 325/319/0/6** and
 grammar remains **218/97/121**.
 
+## Timed literal `$q_exam` statistics — 2026-10-27
+
+The surface now admits a single straight-line literal queue history with empty
+literal delays. Codes 2, 4, 5, and 6 are calculated from the source-ordered
+tick timeline and lower to the existing scalar output assignments. One initial
+process, literal queue IDs or one direct literal ID write, successful scalar
+adds, nonempty scalar removes, and direct output lvalues are required; dynamic
+delays, overflow, branches, additional processes, and computed or aliased
+histories remain loud. The `q_exam_timed_statistics` receipt advances the
+existing timed scheduler at 4 and 6 ticks and checks its PASS transcript; the
+time-zero differential runner intentionally keeps timed calls as refusals.
+
+The four timed corpus witnesses reduce `ExpressionStatement:CallExpression`
+from **2,722 to 2,718**. The current 22,065-file chapter walk is **5,331 clean /
+16,667 partial** with 67 include skips; one new upstream partial file accounts
+for the denominator change from the prior 22,064 snapshot. Differential coverage
+stays **326/320/0/6**, and grammar coverage stays **218/97/121**.
+
 ## Source-pure named-real `$rtoi` — 2026-10-27
 
 The expression tier now folds `$rtoi` over a finite named real or short-real

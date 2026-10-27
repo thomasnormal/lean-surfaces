@@ -25,6 +25,26 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Timed literal `$q_exam` statistics — 2026-10-27
+
+The extractor now replays a single straight-line initial process with literal
+queue operations and empty literal delays. Statistic codes 2, 4, 5, and 6 use
+the resulting tick timeline for mean interarrival, shortest completed wait,
+longest current wait, and average completed wait. The source must have one
+initial process, literal queue IDs or one direct prior literal ID assignment,
+successful scalar-literal additions, nonempty scalar removals, and direct
+output lvalues; dynamic delays, overflow, branches, extra processes, and
+computed or aliased histories remain loud.
+
+The four timed sv-tests-2 witnesses move the statement-call blocker from
+**2,722 to 2,718**. The current pinned chapter-only walk has **22,065** files:
+**5,331 clean / 16,667 partial** with 67 include skips (the previous committed
+snapshot had 22,064 files, so one upstream partial file also arrived). The
+time-zero differential matrix is unchanged at **326 rows / 320 matches / 0
+disagreements / 6 recorded refusals**; the timed fixture is checked by the
+separate `q_exam_timed_statistics` receipt because the self-check runner is
+time-zero-only. Grammar coverage remains **218 / 97 / 121**.
+
 ## Time-zero `$realtime` conversions — 2026-10-27
 
 The exact real-conversion paths now fold `$rtoi($realtime)`,

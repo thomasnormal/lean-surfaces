@@ -6,6 +6,10 @@ module top;
     values.max();
     values.unique();
     values.unique_index();
+    values.min with (item + 1);
+    values.max with (item * 2);
+    values.unique with (item + 1);
+    values.unique_index with (item + 1);
     $display("PASS");
     $finish;
   end

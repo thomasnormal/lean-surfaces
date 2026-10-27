@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 280 | 275 | 0 | 5 | sv-tests-2 declarations |
+| 281 | 276 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -294,6 +294,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `time_scale_statements` | `Examples/system-verilog/time_scale_statements/time_scale_statements.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_transform_statements` | `Examples/system-verilog/string_transform_statements/string_transform_statements.sv` | match | **MATCH** | `ok` | MATCH |
 | `array_query_statements` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | match | **MATCH** | `ok` | MATCH |
+| `array_query_with_statements` | `Examples/system-verilog/array_query_with_statements/array_query_with_statements.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -301,7 +302,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 218 | 93 | 125 | pyslang SyntaxKind |
+| 218 | 95 | 123 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -320,7 +321,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ArithmeticShiftRightExpression` | `Examples/system-verilog/shifts/shifts.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ArrayAndMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayOrMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ArrayOrRandomizeMethodExpression` | `Examples/system-verilog/array_reductions/effect.sv` | **REFUSE** | `unsupported` unsupported expression 'ArrayReduction:storage-or-effects' |
+| `SyntaxKind.ArrayOrRandomizeMethodExpression` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayUniqueMethod` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayXorMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AscendingRangeSelect` | `Examples/system-verilog/compound_assignments/members.sv` | **MATCH** | `ok`  |
@@ -430,7 +431,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ModuleHeader` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.MultipleConcatenationExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.MultiplyAssignmentExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.MultiplyExpression` | `Examples/system-verilog/constant_expression_net_driver/constant_expression_net_driver.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.MultiplyExpression` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedArgument` | `Examples/system-verilog/let_expressions/binding.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedBlockClause` | `Examples/system-verilog/elaborated_generate/captures.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NamedLabel` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
@@ -454,7 +455,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ParameterDeclarationStatement` | `Examples/system-verilog/assignment_patterns/replicated.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ParameterPortList` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.ParameterValueAssignment` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
-| `SyntaxKind.ParenExpressionList` | `Examples/system-verilog/array_reductions/effect.sv` | **REFUSE** | `unsupported` unsupported expression 'ArrayReduction:storage-or-effects' |
+| `SyntaxKind.ParenExpressionList` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ParenthesizedEventExpression` | `Examples/system-verilog/always/events.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ParenthesizedExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ParenthesizedSequenceExpr` | `Examples/system-verilog/min_typ_max/argument_context.sv` | **REFUSE** | `unsupported` unsupported statement 'InvalidStatement' |

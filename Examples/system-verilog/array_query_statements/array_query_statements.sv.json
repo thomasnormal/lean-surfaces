@@ -6,7 +6,7 @@
     "family": "pyslang-11"
   },
   "source_file": "Examples/system-verilog/array_query_statements/array_query_statements.sv",
-  "source_sha256": "908f31fa10c5d4ffcd73c6a7d638d92082c123ad341d126e7992dfe019cb1197",
+  "source_sha256": "1cb6b2904f4b56c1eedd0a6afe01c5160e9ba14915adfba8ee4ee4c7772f25a2",
   "design": {
     "kind": "Design",
     "modules": [
@@ -15,7 +15,7 @@
         "span": {
           "line": 2,
           "col": 1,
-          "end_line": 12,
+          "end_line": 16,
           "end_col": 10
         },
         "name": "top",
@@ -52,7 +52,7 @@
             "span": {
               "line": 4,
               "col": 3,
-              "end_line": 11,
+              "end_line": 15,
               "end_col": 6
             },
             "body": {
@@ -60,7 +60,7 @@
               "span": {
                 "line": 4,
                 "col": 11,
-                "end_line": 11,
+                "end_line": 15,
                 "end_col": 6
               },
               "stmts": [
@@ -105,11 +105,51 @@
                   "array_query_statement": "unique_index"
                 },
                 {
-                  "kind": "SysCall",
+                  "kind": "Empty",
                   "span": {
                     "line": 9,
                     "col": 5,
                     "end_line": 9,
+                    "end_col": 32
+                  },
+                  "array_query_statement": "min"
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 10,
+                    "end_col": 32
+                  },
+                  "array_query_statement": "max"
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 35
+                  },
+                  "array_query_statement": "unique"
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 41
+                  },
+                  "array_query_statement": "unique_index"
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
                     "end_col": 22
                   },
                   "name": "$display",
@@ -120,9 +160,9 @@
                 {
                   "kind": "SysCall",
                   "span": {
-                    "line": 10,
+                    "line": 14,
                     "col": 5,
-                    "end_line": 10,
+                    "end_line": 14,
                     "end_col": 13
                   },
                   "name": "$finish",

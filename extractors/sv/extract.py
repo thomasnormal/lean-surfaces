@@ -13740,8 +13740,7 @@ def _pure_array_query_call(expression):
                 or not expression.isSystemCall
                 or expression.subroutineName not in
                 ("min", "max", "unique", "unique_index")
-                or len(expression.arguments) != 1
-                or getattr(expression.subroutine, "extraInfo", None) is not None):
+                or len(expression.arguments) != 1):
             return False
         receiver = expression.arguments[0]
         if (type(receiver).__name__ != "NamedValueExpression"
@@ -13757,7 +13756,24 @@ def _pure_array_query_call(expression):
                 "UnpackedStructType", "UnpackedUnionType"):
             return False
         width, _two_state, reason = type_width_2s(element_type)
-        return width is not None and reason is None
+        if width is None or reason is not None:
+            return False
+        info = getattr(expression.subroutine, "extraInfo", None)
+        if info is None:
+            return True
+        if type(info).__name__ != "IteratorCallInfo":
+            return False
+        iter_expr = getattr(info, "iterExpr", None)
+        if (iter_expr is None
+                or not _case_source_expression_ok(iter_expr, packed_members=True)):
+            return False
+        iter_width, _iter_two_state, iter_reason = type_width_2s(iter_expr.type)
+        if (iter_width is None or iter_reason is not None
+                or type(iter_expr.type.canonicalType).__name__ in (
+                    "PackedStructType", "PackedUnionType",
+                    "UnpackedStructType", "UnpackedUnionType")):
+            return False
+        return True
     except Exception:
         return False
 

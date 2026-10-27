@@ -94,9 +94,10 @@ source-history check. Dynamic, aliased, mutated, non-ASCII, symbolic, and
 value-position string transformations remain loud.
 
 Discarded `min()`, `max()`, `unique()`, and `unique_index()` queries on a named
-fixed-size integral array are also inert when no `with` clause is present. The
-returned queue is unobserved; dynamic, queue, associative, aggregate, `with`,
-symbolic, and value-position forms remain loud.
+fixed-size integral array are also inert with no `with` clause or with a
+source-pure integral `with` expression. The returned queue is unobserved;
+dynamic, queue, associative, aggregate, effectful `with`, symbolic, and
+value-position forms remain loud.
 
 Discarded fixed-array reductions (`sum`, `product`, `and`, `or`, and `xor`)
 reuse the balanced reduction lowering after its storage-shape, width, iterator,

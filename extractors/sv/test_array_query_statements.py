@@ -14,9 +14,25 @@ def fixture():
                   "array_query_statements.sv").read_text())
 
 
+def with_fixture():
+    return lower((REPO / "Examples/system-verilog/array_query_with_statements/"
+                  "array_query_with_statements.sv").read_text())
+
+
 class ArrayQueryStatements(unittest.TestCase):
     def test_discarded_fixed_integral_queries_are_inert(self):
         design = fixture()
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        self.assertEqual(
+            [node.get("array_query_statement") for node in nodes(design)
+             if node.get("array_query_statement")],
+            ["min", "max", "unique", "unique_index",
+             "min", "max", "unique", "unique_index"],
+        )
+
+    def test_source_pure_with_queries_are_discarded(self):
+        design = with_fixture()
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
         self.assertEqual(
@@ -28,7 +44,7 @@ class ArrayQueryStatements(unittest.TestCase):
     def test_dynamic_with_and_aggregate_forms_stay_loud(self):
         sources = (
             'module top; logic [7:0] a[]; initial a.unique(); endmodule',
-            'module top; logic [7:0] a[2]; initial a.min with (item); endmodule',
+            'module top; logic [7:0] a[2]; initial a.min with ($urandom()); endmodule',
             'module top; typedef struct packed {logic [7:0] x;} cell_t; '
             'cell_t a[2]; initial a.max(); endmodule',
         )

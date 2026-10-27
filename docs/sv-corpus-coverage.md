@@ -190,6 +190,20 @@ and `ExpressionStatement:CallExpression` at **2,775**. Differential coverage
 grows **279/274/0/5 → 280/275/0/5** with no disagreements, and grammar
 coverage grows **217/92/125 → 218/93/125**.
 
+## Discarded fixed-array locator `with` queries — 2026-10-26
+
+The same discarded `min()`, `max()`, `unique()`, and `unique_index()` queries
+now accept a source-pure integral `with` expression after the existing iterator
+purity check. Effectful `with` clauses remain loud. The
+`array_query_with_statements` fixture supplies the differential row and Lean
+receipt; the pinned self-check oracle agrees with its `PASS` transcript.
+
+The committed **22,059-path** snapshot remains **5,240 clean / 16,752
+partial** (67 include skips), with `AssignmentExpression:target` at **2,853**
+and `ExpressionStatement:CallExpression` at **2,775**. Differential coverage
+grows **280/275/0/5 → 281/276/0/5** with no disagreements, and grammar
+coverage grows **218/93/125 → 218/95/123**.
+
 ## Discarded fixed-array reductions — 2026-10-26
 
 Discarded fixed-array reductions (`sum`, `product`, `and`, `or`, and `xor`)

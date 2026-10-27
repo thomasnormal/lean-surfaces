@@ -2523,6 +2523,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "array_query_with_statements",
+      "file": "Examples/system-verilog/array_query_with_statements/array_query_with_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

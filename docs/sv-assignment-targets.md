@@ -41,8 +41,9 @@ rule.
 The target conversion stays loud for destinations that need a representation
 the public tier does not have:
 
-* dynamic, associative, queue, multidimensional, or otherwise unpacked
-  aggregate storage;
+* dynamic, unbounded-associative, queue, multidimensional, or otherwise
+  unpacked aggregate storage (finite literal-key associative cells are the
+  narrow exception below);
 * keyed/default/replicated aggregate patterns outside the admitted fixed-cell
   lowering, and whole aggregate copies without a cellwise snapshot rule;
 * nested, unpacked, tagged, class, interface, or hierarchical members outside
@@ -58,6 +59,24 @@ No target family is admitted by manufacturing an aggregate store or by adding
 a second scheduler. A future target rung must first supply the missing storage
 or the scheduler-facing continuous-assignment rule, then add a source-bound
 fixture and an independent simulator comparison.
+
+## Finite associative-cell presence — 2026-10-27
+
+Finite literal-key associative arrays now carry one flat value cell and one
+two-state presence bit for each observed key. A blocking or nonblocking element
+write updates both cells, and `exists(key)` reads the exact presence bit, so an
+absent key remains false even when its value cell has the element type's default
+value. The admission is shared by string and integral keys and remains limited
+to literal keys with scalar or packed-integral elements. Dynamic keys, whole
+array aliases, `delete`, other methods, aggregate elements, and continuous
+drivers stay loud; no associative object or scheduler state is fabricated.
+
+The `assoc_exists_cells` fixture covers an empty query, value writes,
+`exists`, and a compound element write; `assoc_exists_dynamic_refuse` pins the
+dynamic-key boundary. The capped 22,059-path census moves **5,298 → 5,301
+clean** and **16,694 → 16,691 partial** (67 include skips), while
+`AssignmentExpression:target` falls **2,852 → 2,845**. Differential coverage
+grows by two rows (one match and one recorded refusal), with no disagreement.
 
 ## Bounded dynamic `$dist_uniform` fixed-array writes — 2026-10-27
 

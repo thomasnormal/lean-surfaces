@@ -1865,6 +1865,22 @@
       "expect": "match"
     },
     {
+      "name": "assoc_exists_cells",
+      "file": "Examples/system-verilog/assoc_exists_cells/assoc_exists_cells.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_exists_dynamic_refuse",
+      "file": "Examples/system-verilog/assoc_exists_dynamic_refuse/assoc_exists_dynamic_refuse.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
+    },
+    {
       "name": "dynamic_array_concat_subarrays",
       "file": "Examples/system-verilog/dynamic_array_concat_subarrays/dynamic_array_concat_subarrays.sv",
       "module": "top",

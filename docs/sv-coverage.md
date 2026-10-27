@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 312 | 307 | 0 | 5 | sv-tests-2 declarations |
+| 314 | 308 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -221,6 +221,8 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `mailbox_literal_loop_fifo` | `Examples/system-verilog/mailbox_literal_loop_fifo/mailbox_literal_loop_fifo.sv` | match | **MATCH** | `ok` | MATCH |
 | `unique_case_complete` | `Examples/system-verilog/unique_case_complete/unique_case_complete.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_string_cells` | `Examples/system-verilog/assoc_string_cells/assoc_string_cells.sv` | match | **MATCH** | `ok` | MATCH |
+| `assoc_exists_cells` | `Examples/system-verilog/assoc_exists_cells/assoc_exists_cells.sv` | match | **MATCH** | `ok` | MATCH |
+| `assoc_exists_dynamic_refuse` | `Examples/system-verilog/assoc_exists_dynamic_refuse/assoc_exists_dynamic_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `dynamic_array_concat_subarrays` | `Examples/system-verilog/dynamic_array_concat_subarrays/dynamic_array_concat_subarrays.sv` | match | **MATCH** | `ok` | MATCH |
 | `mailbox_typed_fifo` | `Examples/system-verilog/mailbox_typed_fifo/mailbox_typed_fifo.sv` | match | **MATCH** | `ok` | MATCH |
 | `mailbox_variable_fifo` | `Examples/system-verilog/mailbox_variable_fifo/mailbox_variable_fifo.sv` | match | **MATCH** | `ok` | MATCH |
@@ -333,7 +335,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 218 | 96 | 122 | pyslang SyntaxKind |
+| 218 | 97 | 121 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -449,7 +451,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.LogicalAndExpression` | `Examples/system-verilog/array_oob_reads/array_oob_reads.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalImplicationExpression` | `Examples/system-verilog/implication/implication.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.LogicalLeftShiftAssignmentExpression` | `Examples/system-verilog/compound_assignments/partial_windows.sv` | **REFUSE** | `unsupported` AssignmentExpression:compound-partial-range |
-| `SyntaxKind.LogicalOrExpression` | `Examples/system-verilog/division/context_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
+| `SyntaxKind.LogicalOrExpression` | `Examples/system-verilog/assoc_exists_cells/assoc_exists_cells.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalRightShiftAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalShiftLeftExpression` | `Examples/system-verilog/min_typ_max/composition.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalShiftRightExpression` | `Examples/system-verilog/shifts/shifts.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
@@ -562,13 +564,13 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22059 | 5298 | 16694 | 67 |
+| 22059 | 5301 | 16691 | 67 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 2852 |
-| `CallExpression` | 2739 |
+| `AssignmentExpression:target` | 2845 |
 | `ExpressionStatement:CallExpression` | 2739 |
+| `CallExpression` | 2731 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2223 |
 | `SubroutineSymbol:Subroutine` | 1634 |

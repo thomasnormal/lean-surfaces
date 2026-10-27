@@ -1862,6 +1862,37 @@ def _assoc_string_key(expression, symbol=None):
     return node.value
 
 
+def _assoc_exists_key(expression, symbol):
+    """Resolve a literal key used by ``array.exists(key)``."""
+    try:
+        index_type = symbol.type.canonicalType.indexType.canonicalType
+        if type(index_type).__name__ == "StringType":
+            return _assoc_string_key(expression)
+        if getattr(index_type, "isIntegral", False):
+            return _assoc_integral_key(expression)
+        return None
+    except Exception:
+        return None
+
+
+def _assoc_exists_call_key(expression, symbol):
+    """Return the literal key of one finite-array ``exists`` call."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "exists"):
+            return None
+        arguments = list(expression.arguments)
+        if (len(arguments) != 2
+                or type(arguments[0]).__name__ != "NamedValueExpression"
+                or getattr(arguments[0], "symbol", None) is not symbol):
+            return None
+        return _assoc_exists_key(arguments[1], symbol)
+    except Exception:
+        return None
+
+
 def _finite_string_assoc_cells(sm, symbol):
     """Collect a finite, literal-key string associative array.
 
@@ -1890,9 +1921,10 @@ def _finite_string_assoc_cells(sm, symbol):
         named_count = 0
         selected_count = 0
         invalid = False
+        exists_calls = 0
 
         def inspect(node):
-            nonlocal named_count, selected_count, invalid
+            nonlocal named_count, selected_count, invalid, exists_calls
             kind = type(node).__name__
             if kind == "ElementSelectExpression":
                 value = getattr(node, "value", None)
@@ -1903,12 +1935,21 @@ def _finite_string_assoc_cells(sm, symbol):
                         invalid = True
                     else:
                         keys.setdefault(key, None)
+            elif kind == "CallExpression":
+                key = _assoc_exists_call_key(node, symbol)
+                if key is not None:
+                    exists_calls += 1
+                    keys.setdefault(key, None)
+                elif (getattr(node, "subroutineName", None) == "exists"
+                      and any(getattr(argument, "symbol", None) is symbol
+                              for argument in getattr(node, "arguments", []))):
+                    invalid = True
             elif kind in ("NamedValueExpression", "HierarchicalValueExpression"):
                 if getattr(node, "symbol", None) is symbol:
                     named_count += 1
 
         instance.visit(inspect)
-        if invalid or not keys or named_count != selected_count:
+        if invalid or not keys or named_count != selected_count + exists_calls:
             return None
         base = _array_storage_name(symbol)
         cells = {}
@@ -1918,6 +1959,7 @@ def _finite_string_assoc_cells(sm, symbol):
                 "name": f"{base}[string:{encoded}]",
                 "width": width,
                 "two_state": two_state,
+                "presence": f"$assoc:present:{base}[string:{encoded}]",
             }
         _ASSOC_CELLS[symbol] = cells
         return cells
@@ -1933,12 +1975,22 @@ def _finite_string_assoc_decls(sm, symbol):
         return None
     width = next(iter(cells.values()))["width"]
     two_state = next(iter(cells.values()))["two_state"]
-    return [signed_metadata({
-        "kind": "Var", "span": sym_span(sm, symbol),
-        "name": cell["name"], "width": width,
-        "init": ({"kind": "Literal", "span": None, "width": width,
-                   "bits": "0" * width} if two_state else None),
-    }, symbol.type.elementType) for cell in cells.values()]
+    declarations = []
+    for cell in cells.values():
+        declarations.append(signed_metadata({
+            "kind": "Var", "span": sym_span(sm, symbol),
+            "name": cell["name"], "width": width,
+            "init": ({"kind": "Literal", "span": None, "width": width,
+                       "bits": "0" * width} if two_state else None),
+        }, symbol.type.elementType))
+        declarations.append({
+            "kind": "Var", "span": sym_span(sm, symbol),
+            "name": cell["presence"], "width": 1, "two_state": True,
+            "init": {"kind": "Literal", "span": None, "width": 1,
+                     "bits": "0"},
+            "assoc_presence": True,
+        })
+    return declarations
 
 
 def _finite_string_assoc_cell(sm, expression):
@@ -1998,9 +2050,10 @@ def _finite_integral_assoc_cells(sm, symbol):
         named_count = 0
         selected_count = 0
         invalid = False
+        exists_calls = 0
 
         def inspect(node):
-            nonlocal named_count, selected_count, invalid
+            nonlocal named_count, selected_count, invalid, exists_calls
             kind = type(node).__name__
             if kind == "ElementSelectExpression":
                 value = getattr(node, "value", None)
@@ -2011,12 +2064,21 @@ def _finite_integral_assoc_cells(sm, symbol):
                         invalid = True
                     else:
                         keys.setdefault(key, None)
+            elif kind == "CallExpression":
+                key = _assoc_exists_call_key(node, symbol)
+                if key is not None:
+                    exists_calls += 1
+                    keys.setdefault(key, None)
+                elif (getattr(node, "subroutineName", None) == "exists"
+                      and any(getattr(argument, "symbol", None) is symbol
+                              for argument in getattr(node, "arguments", []))):
+                    invalid = True
             elif kind in ("NamedValueExpression", "HierarchicalValueExpression"):
                 if getattr(node, "symbol", None) is symbol:
                     named_count += 1
 
         instance.visit(inspect)
-        if invalid or not keys or named_count != selected_count:
+        if invalid or not keys or named_count != selected_count + exists_calls:
             return None
         base = _array_storage_name(symbol)
         cells = {}
@@ -2025,6 +2087,7 @@ def _finite_integral_assoc_cells(sm, symbol):
                 "name": f"{base}[int:{key}]",
                 "width": width,
                 "two_state": two_state,
+                "presence": f"$assoc:present:{base}[int:{key}]",
             }
         _ASSOC_CELLS[symbol] = cells
         return cells
@@ -2038,13 +2101,23 @@ def _finite_integral_assoc_decls(sm, symbol):
         cells = _finite_integral_assoc_cells(sm, symbol)
     if cells is None:
         return None
-    return [signed_metadata({
-        "kind": "Var", "span": sym_span(sm, symbol),
-        "name": cell["name"], "width": cell["width"],
-        "init": ({"kind": "Literal", "span": None,
-                   "width": cell["width"], "bits": "0" * cell["width"]}
-                  if cell["two_state"] else None),
-    }, symbol.type.elementType) for cell in cells.values()]
+    declarations = []
+    for cell in cells.values():
+        declarations.append(signed_metadata({
+            "kind": "Var", "span": sym_span(sm, symbol),
+            "name": cell["name"], "width": cell["width"],
+            "init": ({"kind": "Literal", "span": None,
+                       "width": cell["width"], "bits": "0" * cell["width"]}
+                      if cell["two_state"] else None),
+        }, symbol.type.elementType))
+        declarations.append({
+            "kind": "Var", "span": sym_span(sm, symbol),
+            "name": cell["presence"], "width": 1, "two_state": True,
+            "init": {"kind": "Literal", "span": None, "width": 1,
+                     "bits": "0"},
+            "assoc_presence": True,
+        })
+    return declarations
 
 
 def _finite_integral_assoc_cell(sm, expression):
@@ -2063,6 +2136,45 @@ def _finite_integral_assoc_cell(sm, expression):
     if key not in cells:
         return None
     return cells[key]
+
+
+def _finite_assoc_exists_cell(sm, expression):
+    """Return the flat presence cell for a finite literal-key ``exists``."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "exists"):
+            return None
+        arguments = list(expression.arguments)
+        if len(arguments) != 2:
+            return None
+        receiver = arguments[0]
+        symbol = getattr(receiver, "symbol", None)
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or symbol is None
+                or type(receiver.type.canonicalType).__name__ !=
+                   "AssociativeArrayType"):
+            return None
+        cells = _ASSOC_CELLS.get(symbol)
+        if cells is None:
+            index_kind = type(symbol.type.canonicalType.indexType.canonicalType).__name__
+            cells = (_finite_string_assoc_cells(sm, symbol)
+                     if index_kind == "StringType"
+                     else _finite_integral_assoc_cells(sm, symbol))
+        if cells is None:
+            return None
+        key = _assoc_exists_key(arguments[1], symbol)
+        return cells.get(key) if key in cells else None
+    except Exception:
+        return None
+
+
+def _convert_assoc_exists(sm, expression, cell):
+    return {
+        "kind": "Ident", "span": node_span(sm, expression), "width": 1,
+        "name": cell["presence"], "assoc_exists": True,
+    }
 
 
 def _fixed_array_dimensions(array_type, max_cells=1024):
@@ -8398,6 +8510,9 @@ def _convert_shortrealtobits_literal(sm, expression):
 
 
 def _convert_legacy_call(sm, expression):
+    assoc_exists = _finite_assoc_exists_cell(sm, expression)
+    if assoc_exists is not None:
+        return _convert_assoc_exists(sm, expression, assoc_exists)
     # An empty zero-argument function returns its type's default value.  The
     # declaration has already been erased as metadata; materialize that
     # default at an expression use (all-zero for 2-state, all-x for 4-state).
@@ -16932,6 +17047,20 @@ def _convert_compound_assignment(sm, expression, span_node=None):
     if (width_of(value) != width or not _case_expression_ok([target, read, value])):
         return unsupported(sm, expression, "AssignmentExpression:compound-value")
     statements = prefix + [assign(target, value)] + suffix
+    if type(lhs).__name__ == "ElementSelectExpression":
+        cell = _finite_string_assoc_cell(sm, lhs)
+        if cell is None:
+            cell = _finite_integral_assoc_cell(sm, lhs)
+        if cell is not None and cell.get("presence"):
+            statements.append({
+                "kind": "BlockingAssign",
+                "span": span,
+                "target": {"kind": "Ident", "span": node_span(sm, lhs),
+                           "width": 1, "name": cell["presence"]},
+                "value": {"kind": "Literal", "span": span,
+                           "width": 1, "bits": "1"},
+                "assoc_presence_write": True,
+            })
     if len(statements) == 1:
         return dict(statements[0], compound_assignment_lowered=True)
     return {"kind": "Block", "span": span, "stmts": statements,
@@ -17307,6 +17436,24 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         "target": target,
         "value": value,
     }
+    if type(expr.left).__name__ == "ElementSelectExpression":
+        cell = _finite_string_assoc_cell(sm, expr.left)
+        if cell is None:
+            cell = _finite_integral_assoc_cell(sm, expr.left)
+        if cell is not None and cell.get("presence"):
+            result = {
+                "kind": "Block", "span": node_span(sm, span_node or expr),
+                "stmts": [result, {
+                    "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                    "span": node_span(sm, expr),
+                    "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                               "width": 1, "name": cell["presence"]},
+                    "value": {"kind": "Literal", "span": node_span(sm, expr),
+                               "width": 1, "bits": "1"},
+                    "assoc_presence_write": True,
+                }],
+                "assoc_presence_write": True,
+            }
     if mailbox_try_get_target is not None and mailbox_try_get_value is not None:
         return {
             "kind": "Block",

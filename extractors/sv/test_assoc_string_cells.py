@@ -51,7 +51,10 @@ class AssocStringCells(unittest.TestCase):
             'if (score["alice"] === 95 && score[""] === 7) '
             '$display("PASS"); end endmodule')
         module = design["modules"][0]
-        self.assertEqual([decl["kind"] for decl in module["decls"]], ["Var", "Var"])
+        self.assertEqual([decl["kind"] for decl in module["decls"]],
+                         ["Var", "Var", "Var", "Var"])
+        self.assertEqual(sum(decl.get("assoc_presence", False)
+                             for decl in module["decls"]), 2)
         names = [decl["name"] for decl in module["decls"]]
         self.assertTrue(any("string:616c696365" in name for name in names))
         self.assertTrue(any(name.endswith("[string:]") for name in names))

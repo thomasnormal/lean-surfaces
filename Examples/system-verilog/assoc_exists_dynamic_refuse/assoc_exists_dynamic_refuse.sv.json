@@ -1,0 +1,151 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/assoc_exists_dynamic_refuse/assoc_exists_dynamic_refuse.sv",
+  "source_sha256": "9f852e6784fec2c9d6ab470fbe437c08a8eb373f734fc46a6fc3b0e38355fe06",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 11,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 4,
+              "col": 17,
+              "end_line": 4,
+              "end_col": 30
+            },
+            "sv_kind": "VariableSymbol:type",
+            "text": "score[string]",
+            "static_local_storage": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 10,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 3,
+                "col": 11,
+                "end_line": 10,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 4,
+                    "col": 17,
+                    "end_line": 4,
+                    "end_col": 22
+                  }
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 5,
+                    "col": 12,
+                    "end_line": 5,
+                    "end_col": 15
+                  }
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 6,
+                    "col": 5,
+                    "end_line": 6,
+                    "end_col": 20
+                  },
+                  "string_literal_write_noop": true
+                },
+                {
+                  "kind": "Unsupported",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 21
+                  },
+                  "sv_kind": "AssignmentExpression:target",
+                  "text": "score[key] = 42;"
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 45
+                  },
+                  "cond": {
+                    "kind": "Unsupported",
+                    "span": {
+                      "line": 8,
+                      "col": 9,
+                      "end_line": 8,
+                      "end_col": 26
+                    },
+                    "sv_kind": "CallExpression",
+                    "text": "score.exists(key)"
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 8,
+                      "col": 28,
+                      "end_line": 8,
+                      "end_col": 45
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

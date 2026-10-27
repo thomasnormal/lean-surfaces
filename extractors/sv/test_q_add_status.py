@@ -55,12 +55,28 @@ class QAddStatus(unittest.TestCase):
             [node["q_add_status_lowered"] for node in nodes(design)
              if node.get("q_add_status_lowered") is not None], [0, 0, 1])
 
-    def test_symbolic_queue_id_remains_loud(self):
+    def test_named_queue_id_from_prior_literal_is_admitted(self):
         design = lower(
             """module top;
                integer q_id, status;
                initial begin
                  q_id = 5;
+                 $q_initialize(q_id, 1, 2, status);
+                 $q_add(q_id, 1, 0, status);
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+        self.assertEqual(
+            [node["q_add_status_lowered"] for node in nodes(design)
+             if node.get("q_add_status_lowered") is not None], [0])
+
+    def test_unassigned_symbolic_queue_id_remains_loud(self):
+        design = lower(
+            """module top;
+               integer q_id, status;
+               initial begin
                  $q_initialize(q_id, 1, 2, status);
                  $q_add(q_id, 1, 0, status);
                end

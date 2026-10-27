@@ -43,6 +43,25 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Named literal queue history for `$q_exam` — 2026-10-27
+
+Queue status calls now resolve a direct named operand from exactly one prior
+blocking literal assignment in the same source instance. This admits the
+sv-tests-2 `$q_exam` statistic-code shape: `q_id`, `job_id`, and `inform_id`
+are sampled before a literal FIFO/LIFO initialization, `$q_add` history is
+counted source-order, and statistic codes 1 and 3 write the current or maximum
+length followed by status 0. Unassigned, computed, timed, nonblocking, or
+reassigned operands, other statistic codes, removals, and value-position forms
+remain loud; queue payload storage is still not represented.
+
+The `q_exam_stat_codes` fixture supplies the named-history transcript, extractor
+regressions, Lean receipt, and differential row. The 22,059-path census moves
+**5,272 → 5,273 clean** and **16,720 → 16,719 partial** (67 include skips);
+`ExpressionStatement:CallExpression` falls **2,760 → 2,759** while
+`CallExpression` remains **2,750**. Differential coverage grows
+**299/294/0/5 → 300/295/0/5** with no disagreements; grammar remains
+**218/96/122**.
+
 ## Bounded dynamic `$dist_uniform` fixed-array writes — 2026-10-27
 
 The self-check surface now admits an assignment whose RHS is

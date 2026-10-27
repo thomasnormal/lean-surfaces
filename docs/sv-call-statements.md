@@ -188,6 +188,17 @@ delegates the same `SysCall` leaves to that executor after a delay or event
 wait, so no second call interpreter is introduced. The scheduler's existing
 region rule determines when output becomes observable.
 
+## Named literal queue history for `$q_exam` — 2026-10-27
+
+`$q_initialize`, `$q_add`, and `$q_exam` status writes may use a named queue,
+job, or inform operand when source order proves exactly one prior direct
+blocking literal assignment. The queue model still stores no payload: statistic
+codes 1 and 3 derive current and maximum length from successful adds, then
+write status 0. An unassigned, computed, timed, nonblocking, or reassigned
+operand, a removal, another statistic code, or a value-position call remains
+`Unsupported`. The `q_exam_stat_codes` fixture pins the two statistic codes and
+the named-history transcript.
+
 ## Refusal boundary
 
 All other statement-position calls remain `Unsupported` with their source
@@ -275,10 +286,11 @@ row and extractor/Lean receipts.
 ## Queue-add status — 2026-10-27
 
 Source-pure `$q_add` calls after one literal FIFO/LIFO initialization now lower
-to scalar status writes. Literal job and inform arguments publish status 0 while
-the queue has capacity and status 1 for the first add after it is full. Queue
-storage, symbolic IDs, payload expressions, additional queue operations, and
-value-position forms remain loud. The `q_add_status_0` and
+to scalar status writes. Literal or prior-written named job and inform
+arguments publish status 0 while the queue has capacity and status 1 for the
+first add after it is full. Queue storage, unresolved or recomputed IDs, payload
+expressions, additional queue operations, and value-position forms remain loud.
+The `q_add_status_0` and
 `q_add_status_1_when_full` fixtures supply the differential rows and
 extractor/Lean receipts.
 
@@ -295,9 +307,10 @@ differential rows and extractor/Lean receipts.
 
 Source-pure `$q_exam` calls with literal statistic code 1 or 3 now lower to a
 two-write block: the current or maximum length derived from preceding literal
-adds, followed by status 0. The count is clamped at the literal queue
-capacity. Removal, timing, symbolic IDs, other statistic codes, and
-value-position forms remain loud. The four `q_exam_*` fixtures supply the
+adds, followed by status 0. Queue IDs may be names with one prior direct
+literal assignment. The count is clamped at the literal queue capacity.
+Removal, timing, unresolved or recomputed IDs, other statistic codes, and
+value-position forms remain loud. The five `q_exam_*` fixtures supply the
 differential rows and Lean receipts.
 
 ## Queue-removal status — 2026-10-27

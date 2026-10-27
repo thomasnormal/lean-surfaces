@@ -2687,6 +2687,15 @@
       "expect": "match"
     },
     {
+      "name": "q_exam_stat_codes",
+      "file": "Examples/system-verilog/q_exam_stat_codes/q_exam_stat_codes.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "q_full_value_history",
       "file": "Examples/system-verilog/q_full_value_history/q_full_value_history.sv",
       "module": "top",

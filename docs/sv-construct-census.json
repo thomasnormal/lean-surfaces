@@ -20,7 +20,7 @@
    ],
    [
     "ExpressionStatement:CallExpression",
-    2760
+    2759
    ],
    [
     "CallExpression",
@@ -964,8 +964,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5272,
-   "partial": 16720,
+   "clean": 5273,
+   "partial": 16719,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1026,7 +1026,7 @@
     52
    ],
    "simulation": [
-    4575,
+    4576,
     18690
    ],
    "simulation elaboration": [
@@ -1391,9 +1391,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 355,
+    "clean": 356,
     "error": 0,
-    "partial": 470,
+    "partial": 469,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0

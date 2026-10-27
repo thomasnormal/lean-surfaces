@@ -25,6 +25,20 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Named literal queue history for `$q_exam` — 2026-10-27
+
+The queue status recognizers now resolve one direct named operand from a prior
+blocking literal assignment. The `q_exam_stat_codes` source uses that rule for
+`q_id`, `job_id`, and `inform_id`, then admits statistic codes 1 and 3 with
+source-ordered add history; unassigned or recomputed values and unsupported
+queue operations remain loud.
+
+The 22,059-path snapshot moves **5,272 → 5,273 clean** and **16,720 → 16,719
+partial** (67 include skips). `ExpressionStatement:CallExpression` falls
+**2,760 → 2,759**, `CallExpression` remains **2,750**, and differential
+coverage grows **299/294/0/5 → 300/295/0/5** with grammar unchanged at
+**218/96/122**.
+
 ## Bounded dynamic `$dist_uniform` fixed-array writes — 2026-10-27
 
 The self-check surface now admits an assignment whose RHS is

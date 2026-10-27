@@ -10985,7 +10985,63 @@ def _convert_mailbox_literal_state_call(sm, expression):
     }, expression.type)
 
 
-def _q_add_source_shape(expression):
+def _queue_history_literal(expression, instance, before):
+    """Resolve one named integral input from one prior literal write."""
+    value = _literal_integral_value(expression)
+    if value is not None:
+        return value
+    if type(expression).__name__ != "NamedValueExpression":
+        return None
+    symbol = getattr(expression, "symbol", None)
+    if symbol is None or getattr(symbol, "initializer", None) is not None:
+        return None
+    assignments = []
+    invalid = False
+
+    def inspect(node):
+        nonlocal invalid
+        if type(node).__name__ != "AssignmentExpression":
+            return
+        if getattr(getattr(node, "left", None), "symbol", None) is not symbol:
+            return
+        if (getattr(node, "op", None) is not None
+                or getattr(node, "timingControl", None) is not None
+                or getattr(node, "isNonBlocking", False)):
+            invalid = True
+            return
+        assigned = _literal_integral_value(getattr(node, "right", None))
+        if assigned is None:
+            invalid = True
+            return
+        start = getattr(getattr(getattr(node, "sourceRange", None),
+                                "start", None), "offset", -1)
+        assignments.append((start, assigned))
+
+    instance.visit(inspect)
+    prior = [value for position, value in assignments if position < before]
+    if invalid or len(assignments) != 1 or len(prior) != 1:
+        return None
+    return prior[0]
+
+
+def _q_add_output_shape(expression):
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "$q_add"
+                or len(expression.arguments) != 4):
+            return False
+        status = expression.arguments[3]
+        return (type(status).__name__ == "AssignmentExpression"
+                and status.op is None
+                and status.timingControl is None
+                and type(status.right).__name__ == "EmptyArgumentExpression")
+    except Exception:
+        return False
+
+
+def _q_add_source_shape(expression, instance=None):
     """Whether a queue add has only literal inputs and one output status.
 
     The self-check state has no queue payload object.  Keep this recognizer
@@ -10994,20 +11050,16 @@ def _q_add_source_shape(expression):
     spelling used by the system task.
     """
     try:
-        if (type(expression).__name__ != "CallExpression"
-                or getattr(expression, "bad", False)
-                or not expression.isSystemCall
-                or expression.subroutineName != "$q_add"
-                or len(expression.arguments) != 4):
+        if not _q_add_output_shape(expression):
             return False
         qid, job, inform, status = expression.arguments
-        if any(_literal_integral_value(argument) is None
-               for argument in (qid, job, inform)):
-            return False
-        return (type(status).__name__ == "AssignmentExpression"
-                and status.op is None
-                and status.timingControl is None
-                and type(status.right).__name__ == "EmptyArgumentExpression")
+        if instance is None:
+            return all(_literal_integral_value(argument) is not None
+                       for argument in (qid, job, inform))
+        before = getattr(getattr(getattr(expression, "sourceRange", None),
+                                 "start", None), "offset", -1)
+        return all(_queue_history_literal(argument, instance, before) is not None
+                   for argument in (qid, job, inform))
     except Exception:
         return False
 
@@ -11031,8 +11083,7 @@ def _q_full_source_shape(expression):
         return False
 
 
-def _q_exam_source_shape(expression):
-    """Whether a queue exam asks for a literal length statistic."""
+def _q_exam_output_shape(expression):
     try:
         if (type(expression).__name__ != "CallExpression"
                 or getattr(expression, "bad", False)
@@ -11040,15 +11091,29 @@ def _q_exam_source_shape(expression):
                 or expression.subroutineName != "$q_exam"
                 or len(expression.arguments) != 4):
             return False
-        qid, stat_code, stat_value, status = expression.arguments
-        if (_literal_integral_value(qid) is None
-                or _literal_integral_value(stat_code) not in (1, 3)):
+        _qid, stat_code, stat_value, status = expression.arguments
+        if (_literal_integral_value(stat_code) not in (1, 3)):
             return False
         return all(type(output).__name__ == "AssignmentExpression"
                    and output.op is None
                    and output.timingControl is None
                    and type(output.right).__name__ == "EmptyArgumentExpression"
                    for output in (stat_value, status))
+    except Exception:
+        return False
+
+
+def _q_exam_source_shape(expression, instance=None):
+    """Whether a queue exam asks for a literal or prior-written ID."""
+    try:
+        if not _q_exam_output_shape(expression):
+            return False
+        qid = expression.arguments[0]
+        if instance is None:
+            return _literal_integral_value(qid) is not None
+        before = getattr(getattr(getattr(expression, "sourceRange", None),
+                                 "start", None), "offset", -1)
+        return _queue_history_literal(qid, instance, before) is not None
     except Exception:
         return False
 
@@ -11168,11 +11233,11 @@ def _q_initialize_status_call(sm, expression):
                     return None
             elif first_name == "$q_initialize" and second_name in (
                     "$q_add", "$q_full", "$q_exam"):
-                shape_ok = (_q_add_source_shape(second)
+                shape_ok = (_q_add_source_shape(second, instance)
                             if second_name == "$q_add"
                             else (_q_full_source_shape(second)
                                   if second_name == "$q_full"
-                                  else _q_exam_source_shape(second)))
+                                  else _q_exam_source_shape(second, instance)))
                 if (not shape_ok
                         or _literal_integral_value(first.arguments[1]) not in (1, 2)
                         or (_literal_integral_value(first.arguments[2]) or 0) <= 0):
@@ -11198,11 +11263,11 @@ def _q_initialize_status_call(sm, expression):
             init = queue_calls[0]
             if (_literal_integral_value(init.arguments[1]) not in (1, 2)
                     or (_literal_integral_value(init.arguments[2]) or 0) <= 0
-                    or any((_q_add_source_shape(call)
+                    or any((_q_add_source_shape(call, instance)
                             if str(getattr(call, "subroutineName", "")) == "$q_add"
                             else (_q_full_source_shape(call)
                                   if str(getattr(call, "subroutineName", "")) == "$q_full"
-                                  else _q_exam_source_shape(call)))
+                                  else _q_exam_source_shape(call, instance)))
                            is False for call in queue_calls[1:])):
                 return None
         index = queue_calls.index(expression)
@@ -11244,12 +11309,9 @@ def _q_add_status_call(sm, expression):
     status 0 and the first addition after capacity publishes status 1.
     """
     try:
-        if not _q_add_source_shape(expression):
+        if not _q_add_output_shape(expression):
             return None
         qid, _job, _inform, status = expression.arguments
-        qid_value = _literal_integral_value(qid)
-        if qid_value is None:
-            return None
         status_target, admitted = legacy_blocking_target(sm, status.left, True)
         if not admitted:
             return None
@@ -11258,6 +11320,11 @@ def _q_add_status_call(sm, expression):
                                  "parentScope", None)
         instance = getattr(receiver_scope, "containingInstance", None)
         if instance is None:
+            return None
+        call_position = getattr(getattr(getattr(expression, "sourceRange", None),
+                                        "start", None), "offset", -1)
+        qid_value = _queue_history_literal(qid, instance, call_position)
+        if qid_value is None:
             return None
         queue_calls = []
 
@@ -11280,19 +11347,27 @@ def _q_add_status_call(sm, expression):
                for call in queue_calls[1:]):
             return None
         init = queue_calls[0]
+        init_position = getattr(getattr(getattr(init, "sourceRange", None),
+                                        "start", None), "offset", -1)
+        init_qid = _queue_history_literal(init.arguments[0], instance,
+                                           init_position)
         if (len(init.arguments) != 4
-                or _literal_integral_value(init.arguments[0]) != qid_value
+                or init_qid != qid_value
                 or _literal_integral_value(init.arguments[1]) not in (1, 2)
                 or (_literal_integral_value(init.arguments[2]) or 0) <= 0):
             return None
         def valid_queue_call(call):
             name = str(getattr(call, "subroutineName", ""))
-            shape = (_q_add_source_shape(call)
+            shape = (_q_add_source_shape(call, instance)
                      if name == "$q_add"
                      else (_q_full_source_shape(call)
                            if name == "$q_full"
-                           else _q_exam_source_shape(call)))
-            return shape and _literal_integral_value(call.arguments[0]) == qid_value
+                           else _q_exam_source_shape(call, instance)))
+            call_position = getattr(getattr(getattr(call, "sourceRange", None),
+                                             "start", None), "offset", -1)
+            call_qid = _queue_history_literal(call.arguments[0], instance,
+                                               call_position)
+            return shape and call_qid == qid_value
 
         if any(not valid_queue_call(call) for call in queue_calls[1:]):
             return None
@@ -11362,12 +11437,16 @@ def _q_full_status_value(sm, expression):
             return None
         def valid_queue_call(call):
             name = str(getattr(call, "subroutineName", ""))
-            shape = (_q_add_source_shape(call)
+            shape = (_q_add_source_shape(call, instance)
                      if name == "$q_add"
                      else (_q_full_source_shape(call)
                            if name == "$q_full"
-                           else _q_exam_source_shape(call)))
-            return shape and _literal_integral_value(call.arguments[0]) == qid_value
+                           else _q_exam_source_shape(call, instance)))
+            call_position = getattr(getattr(getattr(call, "sourceRange", None),
+                                             "start", None), "offset", -1)
+            call_qid = _queue_history_literal(call.arguments[0], instance,
+                                               call_position)
+            return shape and call_qid == qid_value
 
         if any(not valid_queue_call(call) for call in queue_calls[1:]):
             return None
@@ -11422,12 +11501,11 @@ def _q_exam_status_call(sm, expression):
     argument order and preserving the ordinary output-assignment semantics.
     """
     try:
-        if not _q_exam_source_shape(expression):
+        if not _q_exam_output_shape(expression):
             return None
         qid, stat_code, stat_value, status = expression.arguments
-        qid_value = _literal_integral_value(qid)
         stat_code_value = _literal_integral_value(stat_code)
-        if qid_value is None or stat_code_value not in (1, 3):
+        if stat_code_value not in (1, 3):
             return None
         stat_target, stat_admitted = legacy_blocking_target(sm, stat_value.left, True)
         status_target, status_admitted = legacy_blocking_target(sm, status.left, True)
@@ -11438,6 +11516,11 @@ def _q_exam_status_call(sm, expression):
                                  "parentScope", None)
         instance = getattr(receiver_scope, "containingInstance", None)
         if instance is None:
+            return None
+        expression_position = getattr(getattr(getattr(expression, "sourceRange", None),
+                                              "start", None), "offset", -1)
+        qid_value = _queue_history_literal(qid, instance, expression_position)
+        if qid_value is None:
             return None
         queue_calls = []
 
@@ -11459,17 +11542,25 @@ def _q_exam_status_call(sm, expression):
                 "$q_add", "$q_exam") for call in queue_calls[1:]):
             return None
         init = queue_calls[0]
+        init_position = getattr(getattr(getattr(init, "sourceRange", None),
+                                        "start", None), "offset", -1)
+        init_qid = _queue_history_literal(init.arguments[0], instance,
+                                           init_position)
         if (len(init.arguments) != 4
-                or _literal_integral_value(init.arguments[0]) != qid_value
+                or init_qid != qid_value
                 or _literal_integral_value(init.arguments[1]) not in (1, 2)
                 or (_literal_integral_value(init.arguments[2]) or 0) <= 0):
             return None
 
         def valid_queue_call(call):
             name = str(getattr(call, "subroutineName", ""))
-            shape = (_q_add_source_shape(call)
-                     if name == "$q_add" else _q_exam_source_shape(call))
-            return shape and _literal_integral_value(call.arguments[0]) == qid_value
+            shape = (_q_add_source_shape(call, instance)
+                     if name == "$q_add" else _q_exam_source_shape(call, instance))
+            call_position = getattr(getattr(getattr(call, "sourceRange", None),
+                                             "start", None), "offset", -1)
+            call_qid = _queue_history_literal(call.arguments[0], instance,
+                                               call_position)
+            return shape and call_qid == qid_value
 
         if any(not valid_queue_call(call) for call in queue_calls[1:]):
             return None

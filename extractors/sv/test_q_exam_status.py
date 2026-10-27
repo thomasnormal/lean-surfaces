@@ -104,6 +104,42 @@ class QExamStatus(unittest.TestCase):
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))
 
+    def test_named_id_and_payload_history_are_admitted(self):
+        design = lower(
+            """module top;
+               integer q_id, job_id, inform_id, stat_code, stat_value;
+               initial begin
+                 q_id = 1;
+                 $q_initialize(q_id, 1, 10, stat_code);
+                 job_id = 42;
+                 inform_id = 0;
+                 $q_add(q_id, job_id, inform_id, stat_code);
+                 $q_exam(q_id, 1, stat_value, stat_code);
+                 $q_exam(q_id, 3, stat_value, stat_code);
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+        self.assertEqual(
+            [node["q_exam_stat_value_lowered"] for node in nodes(design)
+             if node.get("q_exam_stat_value_lowered") is not None], [1, 1])
+
+    def test_reassigned_named_id_remains_loud(self):
+        design = lower(
+            """module top;
+               integer q_id, status, stat_value;
+               initial begin
+                 q_id = 1;
+                 q_id = q_id + 1;
+                 $q_initialize(q_id, 1, 10, status);
+                 $q_exam(q_id, 1, stat_value, status);
+               end
+               endmodule""")
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

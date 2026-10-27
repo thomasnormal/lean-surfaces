@@ -199,6 +199,21 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_dist_uniform_scalar_assignment_accepts_signed_literal_bounds(self):
+        design = extract_source(
+            "module top; integer seed; integer value; "
+            "initial begin seed = 42; "
+            "value = $dist_uniform(seed, -50, 50); "
+            "if (value >= -50 && value <= 50) $display(\"PASS\"); "
+            "end endmodule")
+        calls = [node for node in nodes(design)
+                 if node.get("kind") == "DistUniformAssign"]
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0]["low"], -50)
+        self.assertEqual(calls[0]["high"], 50)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_whole_array_copy_reuses_cells(self):
         design = extract_source(
             "module top; logic [7:0] source [0:1]; logic [7:0] value [0:1]; "

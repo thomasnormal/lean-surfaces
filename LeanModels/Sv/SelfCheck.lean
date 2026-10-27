@@ -282,7 +282,7 @@ inductive SStmt where
   | selectedNbaAssign (target : String) (width : Nat)
       (descending indexSigned twoState : Bool) (index value : SExpr)
   /-- One bounded `$dist_uniform` call, including its inout seed update. -/
-  | distUniformAssign (target seed : String) (low high : Nat) (twoState : Bool)
+  | distUniformAssign (target seed : String) (low high : Int) (twoState : Bool)
   | packedAssign (targets : List PackedTarget) (value : SExpr)
   | packedNbaAssign (targets : List PackedTarget) (value : SExpr)
   | scanf (input : SExpr) (format : List FormattedInput.Token)
@@ -378,15 +378,15 @@ def repeatCount (v : LVec) (signed : Bool) : Res Nat :=
 function slice. Keeping the recurrence here makes the seed mutation and
 returned value one auditable operation instead of pretending a random call is
 a pure literal. -/
-def distUniformValues (seed : LVec) (low high : Nat) : Option (LVec × LVec) :=
+def distUniformValues (seed : LVec) (low high : Int) : Option (LVec × LVec) :=
   if seed.width != 32 || low > high then
     none
   else do
     let current ← seed.toNat?
     let next := (69069 * current + 1) % (2 ^ 32)
     let span := high - low + 1
-    let value := low + ((next / 2) * span) / (2 ^ 31)
-    some (.ofNat 32 next, .ofNat 32 value)
+    let value := low + (((next / 2 : Nat) : Int) * span) / (2 ^ 31 : Int)
+    some (.ofNat 32 next, .ofInt 32 value)
 
 /-! ## Output collection -/
 
@@ -1100,6 +1100,11 @@ private def getNatF (j : Json) (name : String) : Except String Nat := do
   | .ok n => .ok n
   | .error _ => .error s!"field '{name}' is not a Nat"
 
+private def getIntF (j : Json) (name : String) : Except String Int := do
+  match (← getF j name).getInt? with
+  | .ok n => .ok n
+  | .error _ => .error s!"field '{name}' is not an Int"
+
 private def getArrF (j : Json) (name : String) : Except String (Array Json) := do
   match (← getF j name).getArr? with
   | .ok a => .ok a
@@ -1306,10 +1311,10 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
       else
         return .mkAssign false (← targetName target) (← parseSExpr (← getF j "value"))
   | "DistUniformAssign" =>
-      let low ← getNatF j "low"
-      let high ← getNatF j "high"
-      if high < low || high > 2147483647 then
-        throw "dist_uniform assignment bounds are outside the admitted nonnegative 32-bit slice"
+      let low ← getIntF j "low"
+      let high ← getIntF j "high"
+      if high < low || low < -2147483648 || high > 2147483647 then
+        throw "dist_uniform assignment bounds are outside the admitted signed 32-bit slice"
       return .distUniformAssign (← getStrF j "target") (← getStrF j "seed")
         low high (← getBoolF j "two_state")
   | "Scanf" =>

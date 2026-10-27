@@ -94,6 +94,22 @@ partial** (67 include skips); `CallExpression` falls **2,764 → 2,754** while
 `AssignmentExpression:target` remains **2,852**. Differential coverage grows
 **296/291/0/5 → 297/292/0/5**; grammar moves **218/95/123 → 218/96/122**.
 
+## Signed literal `$dist_uniform` scalar bounds — 2026-10-27
+
+The direct scalar assignment rung now accepts signed literal start/end pairs
+within the 32-bit integer range, including wholly negative and zero-crossing
+ranges. The explicit recurrence updates the inout seed and encodes the result
+with two's-complement bits before the existing signed comparisons observe it.
+Computed bounds, reversed or out-of-range pairs, nonblocking or timed forms,
+non-32-bit targets, and value-position calls remain loud. The
+`dist_uniform_signed_bounds` fixture covers both negative and crossing ranges;
+the two corresponding chapter-20 witnesses become clean.
+
+The 22,059-path census moves **5,268 → 5,270 clean** and **16,724 → 16,722
+partial** (67 include skips); `CallExpression` falls **2,754 → 2,752** while
+`AssignmentExpression:target` remains **2,852**. Differential coverage grows
+**297/292/0/5 → 298/293/0/5**; grammar remains **218/96/122**.
+
 ## Queue-removal status — 2026-10-27
 
 IEEE 1800-2023 §20.15.6 gives scalar statuses for queue removal without

@@ -2676,6 +2676,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "dist_uniform_signed_bounds",
+      "file": "Examples/system-verilog/dist_uniform_signed_bounds/dist_uniform_signed_bounds.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

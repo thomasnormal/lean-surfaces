@@ -62,6 +62,17 @@ non-32-bit targets, and value-position calls remain loud. The
 chapter-20 `$dist_uniform` files become clean while the negative-range witness
 stays outside this rung.
 
+## Signed literal `$dist_uniform` scalar bounds — 2026-10-27
+
+Direct scalar assignments now accept signed literal start/end pairs in the
+32-bit integer range, including negative-only and zero-crossing ranges. The
+seed recurrence is unchanged; the sampled integer is wrapped into a 32-bit
+two's-complement vector so the existing signed evaluator sees the correct
+value. Computed, reversed, or out-of-range bounds, nonblocking or timed forms,
+non-32-bit targets, and value-position calls remain loud. The
+`dist_uniform_signed_bounds` fixture checks both admitted ranges, and the two
+chapter-20 negative-bound witnesses become clean.
+
 ## Refusal boundary
 
 The residual expression calls need state or effects absent from that surface:

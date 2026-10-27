@@ -75,6 +75,21 @@ partial** (67 include skips); `CallExpression` falls **2,764 → 2,754** while
 `AssignmentExpression:target` remains **2,852**. Differential coverage grows
 **296/291/0/5 → 297/292/0/5**; grammar moves **218/95/123 → 218/96/122**.
 
+## Signed literal `$dist_uniform` scalar bounds — 2026-10-27
+
+Direct blocking assignments from `$dist_uniform` now accept signed literal
+start/end pairs in the 32-bit integer range. Negative-only and zero-crossing
+ranges update the seed and write a two's-complement result through the same
+scalar state path; computed, reversed, out-of-range, timed, nonblocking, and
+value-position forms remain loud. The `dist_uniform_signed_bounds` fixture
+and extractor regression pin both signed ranges, while the two matching
+chapter-20 witnesses become clean.
+
+The committed **22,059-path** snapshot moves **5,268 → 5,270 clean** and
+**16,724 → 16,722 partial** (67 include skips). `CallExpression` falls
+**2,754 → 2,752**, and differential coverage grows **297/292/0/5 →
+298/293/0/5** with grammar coverage unchanged at **218/96/122**.
+
 ## Queue-removal status — 2026-10-27
 
 Undefined literal queue IDs now lower `$q_remove` to status 2. A valid literal

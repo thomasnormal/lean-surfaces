@@ -282,6 +282,15 @@ value-position forms remain loud. The `q_add_status_0` and
 `q_add_status_1_when_full` fixtures supply the differential rows and
 extractor/Lean receipts.
 
+## Queue-full status — 2026-10-27
+
+Literal `$q_full` queries after one literal queue initialization now lower to
+scalar status 0 below capacity and 1 at capacity. Direct output statements and
+value-position queries with an unread status output are admitted; symbolic IDs,
+observed status writes, other queue operations, and payload expressions remain
+loud. The `q_full_status_0` and `q_full_status_1_when_full` fixtures supply the
+differential rows and extractor/Lean receipts.
+
 ## Queue-removal status — 2026-10-27
 
 Undefined literal queue IDs now lower `$q_remove` to status 2. A valid literal

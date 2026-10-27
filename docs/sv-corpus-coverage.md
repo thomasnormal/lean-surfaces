@@ -59,6 +59,23 @@ The committed **22,059-path** snapshot moves **5,243 → 5,245 clean** and
 **286/281/0/5 → 288/283/0/5** with no disagreements; grammar coverage remains
 **218/95/123**.
 
+## Queue-full status — 2026-10-27
+
+Source-pure `$q_full` queries now lower against a literal queue initialization
+and literal add history. The scalar result is 0 below capacity and 1 at or
+above capacity. Direct status-output statements and value-position queries with
+an unread status output are admitted; symbolic IDs, observed status effects,
+other queue operations, and payload expressions remain loud. The
+`q_full_status_0` and `q_full_status_1_when_full` fixtures supply the PASS
+transcripts and differential rows.
+
+The committed **22,059-path** snapshot moves **5,245 → 5,249 clean** and
+**16,747 → 16,743 partial** (67 include skips). The
+`ExpressionStatement:CallExpression` wall falls **2,770 → 2,764** and
+`AssignmentExpression:target` remains **2,853**. Differential coverage grows
+**288/283/0/5 → 290/285/0/5** with no disagreements; grammar coverage remains
+**218/95/123**.
+
 ## Duplicate queue-ID status — 2026-10-27
 
 Two source-pure `$q_initialize` calls with the same literal FIFO/LIFO type and

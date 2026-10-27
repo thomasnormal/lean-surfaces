@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 288 | 283 | 0 | 5 | sv-tests-2 declarations |
+| 290 | 285 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -179,6 +179,8 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `q_initialize_status` | `Examples/system-verilog/q_initialize_status/q_initialize_status.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_add_status_0` | `Examples/system-verilog/q_add_status_0/q_add_status_0.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_add_status_1_when_full` | `Examples/system-verilog/q_add_status_1_when_full/q_add_status_1_when_full.sv` | match | **MATCH** | `ok` | MATCH |
+| `q_full_status_0` | `Examples/system-verilog/q_full_status_0/q_full_status_0.sv` | match | **MATCH** | `ok` | MATCH |
+| `q_full_status_1_when_full` | `Examples/system-verilog/q_full_status_1_when_full/q_full_status_1_when_full.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_initialize_duplicate_status` | `Examples/system-verilog/q_initialize_duplicate_status/q_initialize_duplicate_status.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_remove_status_2` | `Examples/system-verilog/q_remove_status_2/q_remove_status_2.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_remove_status_3` | `Examples/system-verilog/q_remove_status_3/q_remove_status_3.sv` | match | **MATCH** | `ok` | MATCH |

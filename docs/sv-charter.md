@@ -78,6 +78,23 @@ partial** (67 include skips); `ExpressionStatement:CallExpression` falls
 Differential coverage grows **286/281/0/5 → 288/283/0/5**; grammar coverage
 remains **218/95/123**.
 
+## Queue-full status — 2026-10-27
+
+IEEE 1800-2023 §20.15.4 defines the scalar result of `$q_full`. A literal
+queue initialization with only literal adds and full queries now lowers each
+query to 0 while the count is below capacity and to 1 once capacity is
+reached. Both direct status-output statements and value-position queries with
+an unread status output are admitted; symbolic IDs, observed status side
+effects, other queue operations, and payload expressions remain loud.
+`q_full_status_0` and `q_full_status_1_when_full` supply the PASS transcripts,
+extractor regressions, and capped Lean receipts.
+
+The 22,059-path census moves **5,245 → 5,249 clean** and **16,747 → 16,743
+partial** (67 include skips); `ExpressionStatement:CallExpression` falls
+**2,770 → 2,764**, while `AssignmentExpression:target` remains **2,853**.
+Differential coverage grows **288/283/0/5 → 290/285/0/5**; grammar coverage
+remains **218/95/123**.
+
 ## Duplicate queue-ID status — 2026-10-27
 
 IEEE 1800-2023 §20.15.6 gives a duplicate queue ID status without exposing

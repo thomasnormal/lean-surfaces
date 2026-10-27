@@ -9,6 +9,12 @@ of this wall.
 
 ## Admitted statements
 
+Literal `$timeformat` configuration remains inert when no `%t` consumer
+exists. Its unit, precision, and width arguments may now be named integral
+values when source order proves direct blocking literal histories; a `%t`
+consumer, computed, control-dependent, timed, nonblocking, or dynamic form
+remains loud.
+
 `$assertcontrol` may use named integral arguments when source order proves
 that each declaration and earlier write is a direct blocking literal in the
 time-zero initial history. The self-check tier has no assertion-control

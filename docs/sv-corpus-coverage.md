@@ -25,6 +25,19 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Named literal-history `$timeformat` — 2026-10-27
+
+`$timeformat` now accepts named integral unit, precision, and width arguments
+after source order proves direct blocking literal histories, provided the
+source has no `%t` consumer. The self-check state has no time-format register,
+so this validated configuration call is erased; `%t` consumers, computed,
+control-dependent, timed, nonblocking, and dynamic forms remain loud. The
+`timeformat_named_history` fixture supplies the differential row. This
+root-level witness is outside the chapter-only census, which remains
+**22,065 files, 5,331 clean / 16,667 partial** with 67 include skips and
+`ExpressionStatement:CallExpression` at **2,718**. Differential coverage
+grows **328/322/0/6 → 329/323/0/6**; grammar remains **218/97/121**.
+
 ## Named literal-history `$assertcontrol` — 2026-10-27
 
 `$assertcontrol` now accepts integral arguments after source order proves that

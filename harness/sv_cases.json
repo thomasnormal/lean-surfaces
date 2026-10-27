@@ -2954,6 +2954,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "timeformat_named_history",
+      "file": "Examples/system-verilog/timeformat_named_history/timeformat_named_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

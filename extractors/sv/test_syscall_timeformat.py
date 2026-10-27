@@ -53,6 +53,27 @@ class TimeformatCalls(unittest.TestCase):
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))
 
+    def test_named_literal_history_without_percent_t_is_inert(self):
+        design = lower(
+            'module top; integer unit; integer precision; integer width; '
+            'initial begin unit = -9; precision = 2; width = 10; '
+            '$timeformat(unit, precision, " ns", width); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("pure_diagnostic") == "$timeformat"
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_computed_named_history_stays_loud(self):
+        design = lower(
+            'module top; integer unit; integer source; initial begin '
+            'source = -9; unit = source; $timeformat(unit, 2, " ns", 10); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

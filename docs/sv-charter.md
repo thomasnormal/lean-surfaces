@@ -43,6 +43,18 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Named literal-history `$timeformat` — 2026-10-27
+
+`$timeformat` now accepts source-pure named integral unit, precision, and
+width arguments when source order proves direct blocking literal histories
+and the source has no `%t` consumer. The self-check state carries no time
+format register, so the validated call remains inert; `%t` consumers,
+computed, control-dependent, timed, nonblocking, and dynamic forms remain
+loud. The `timeformat_named_history` fixture supplies the differential
+witness; coverage grows **328/322/0/6 → 329/323/0/6**, grammar remains
+**218/97/121**, and the chapter-only census remains **5,331 clean / 16,667
+partial** with 67 include skips.
+
 ## Named literal-history `$assertcontrol` — 2026-10-27
 
 `$assertcontrol` now accepts integral arguments established by direct

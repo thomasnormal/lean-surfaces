@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.75] — 2026-10-27
+
+`$timeformat` now accepts a source-pure named integral history for its unit,
+precision, and width arguments when no `%t` consumer exists. The call remains
+an inert configuration operation in the self-check state; a `%t` consumer,
+computed, control-dependent, timed, nonblocking, or dynamic argument remains
+loud. Differential coverage grows to **329 rows / 323 matches / 0
+disagreements / 6 recorded refusals**, with grammar coverage unchanged at
+**218 / 97 / 121**. The root-level witness is outside the chapter walk, so the
+census remains **5,331 clean / 16,667 partial** and the statement-call blocker
+remains **2,718**.
+
 ## [0.1.74] — 2026-10-27
 
 `$assertcontrol` now accepts named integral arguments when their declaration

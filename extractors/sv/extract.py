@@ -19269,10 +19269,10 @@ def _convert_syscall(sm, s, e):
         )
         literal_shape = (
             len(args) == 4
-            and type(args[0]).__name__ in ("IntegerLiteral", "UnaryExpression")
-            and type(args[1]).__name__ == "IntegerLiteral"
+            and _bit_query_statement_source_ok(args[0])
+            and _bit_query_statement_source_ok(args[1])
             and suffix_literal
-            and type(args[3]).__name__ == "IntegerLiteral"
+            and _bit_query_statement_source_ok(args[3])
             and not getattr(args[0], "bad", False)
             and not any(getattr(arg, "bad", False) for arg in args[1:])
         )

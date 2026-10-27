@@ -10624,6 +10624,30 @@ def _mailbox_literal_sequence(expression):
         position = getattr(position, "offset", None)
         if position is None or position < constructor.end():
             return None
+        # The scalar sequence recognizer is intentionally linear.  A method
+        # inside a procedural loop has path-dependent history and must be
+        # handled by the finite-loop unroller below (or remain loud).
+        instance = getattr(getattr(receiver, "symbol", None),
+                           "parentScope", None)
+        instance = getattr(instance, "containingInstance", None)
+        if instance is None:
+            return None
+        control_ranges = []
+        def inspect_control(node):
+            kind = type(node).__name__
+            if kind in ("ForLoopStatement", "WhileLoopStatement",
+                        "DoWhileLoopStatement", "RepeatLoopStatement",
+                        "ForeachLoopStatement", "ForeverLoopStatement",
+                        "ConditionalStatement", "CaseStatement"):
+                start = getattr(getattr(getattr(node, "sourceRange", None),
+                                        "start", None), "offset", None)
+                end = getattr(getattr(getattr(node, "sourceRange", None),
+                                      "end", None), "offset", None)
+                if start is not None and end is not None:
+                    control_ranges.append((start, end))
+        instance.visit(inspect_control)
+        if any(start < position < end for start, end in control_ranges):
+            return None
         methods = list(re.finditer(
             r"(?<![A-Za-z0-9_$])" + re.escape(name)
             + r"\s*\.\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*\(", source))
@@ -11066,6 +11090,255 @@ def _convert_mailbox_literal_state_call(sm, expression):
         "width": width, "bits": bits,
         "mailbox_literal_num": True,
     }, expression.type)
+
+
+def _mailbox_loop_integral(sm, expression, env):
+    """Evaluate the tiny integral expression subset used by mailbox loops."""
+    try:
+        kind = type(expression).__name__
+        if kind in ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
+            return _literal_integral_value(expression)
+        if kind == "ConversionExpression":
+            return _mailbox_loop_integral(sm, expression.operand, env)
+        if kind == "NamedValueExpression":
+            symbol = getattr(expression, "symbol", None)
+            return env.get(symbol)
+        if kind == "UnaryExpression":
+            value = _mailbox_loop_integral(sm, expression.operand, env)
+            if value is None:
+                return None
+            op = str(getattr(expression, "op", "")).split(".")[-1]
+            if op in ("Plus", "UnaryPlus"):
+                return value
+            if op in ("Minus", "UnaryMinus"):
+                return -value
+            return None
+        if kind != "BinaryExpression":
+            return None
+        left = _mailbox_loop_integral(sm, expression.left, env)
+        right = _mailbox_loop_integral(sm, expression.right, env)
+        if left is None or right is None:
+            return None
+        op = str(getattr(expression, "op", "")).split(".")[-1]
+        if op in ("Add", "Plus"):
+            return left + right
+        if op in ("Subtract", "Minus"):
+            return left - right
+        if op in ("Multiply", "Times"):
+            return left * right
+        if op in ("Divide", "Slash"):
+            return None if right == 0 else int(left / right)
+        if op in ("Mod", "Percent"):
+            return None if right == 0 else left % right
+        if op in ("LessThan", "Less"):
+            return int(left < right)
+        if op in ("LessEqual", "LessThanEqual"):
+            return int(left <= right)
+        if op in ("GreaterThan", "Greater"):
+            return int(left > right)
+        if op in ("GreaterEqual", "GreaterThanEqual"):
+            return int(left >= right)
+        if op in ("Equal", "Equals", "Equality"):
+            return int(left == right)
+        if op in ("NotEqual", "NotEquals", "Inequality"):
+            return int(left != right)
+        return None
+    except Exception:
+        return None
+
+
+def _mailbox_loop_literal(sm, expression, env):
+    """Convert an integral loop value to the flat literal vocabulary."""
+    value = _mailbox_loop_integral(sm, expression, env)
+    if value is None:
+        return None
+    width, two_state, reason = type_width_2s(expression.type)
+    if width is None or reason is not None or width <= 0:
+        return None
+    bits = format(value & ((1 << width) - 1), f"0{width}b")
+    result = {"kind": "Literal", "span": node_span(sm, expression),
+              "width": width, "bits": bits}
+    return squash2_wrap(result, width) if two_state else result
+
+
+def _convert_mailbox_literal_loop_block(sm, statement):
+    """Unroll a finite source-pure mailbox loop history in one block.
+
+    The flat self-check state has no mailbox object, so this recognizer keeps
+    the admission deliberately narrow: one direct unbounded mailbox handle,
+    statically bounded ``for`` loops with an integral iterator, and bodies
+    made only of scalar literal assignments, FIFO ``put``/``get``, and a
+    scalar conditional whose result is decided by the replayed snapshot.
+    """
+    try:
+        if _SYM is not None or type(statement).__name__ != "BlockStatement":
+            return None
+        if statement.blockKind != StatementBlockKind.Sequential:
+            return None
+        body = statement.body
+        if type(body).__name__ != "StatementList":
+            return None
+        items = list(body.list)
+        # pyslang wraps a block-scoped ``for (int i = …)`` in an extra
+        # sequential BlockStatement.  Flatten only the exact declaration plus
+        # loop shell; arbitrary nested blocks remain outside this recognizer.
+        normalized = []
+        for item in items:
+            if type(item).__name__ == "BlockStatement":
+                nested = getattr(item, "body", None)
+                nested_items = (list(nested.list)
+                                if type(nested).__name__ == "StatementList"
+                                else [])
+                if (len(nested_items) == 2
+                        and type(nested_items[0]).__name__ == "VariableDeclStatement"
+                        and type(nested_items[1]).__name__ == "ForLoopStatement"):
+                    normalized.append(nested_items[1])
+                    continue
+            normalized.append(item)
+        items = normalized
+        loops = [item for item in items if type(item).__name__ == "ForLoopStatement"]
+        if not loops:
+            return None
+        mailbox_symbols = []
+        for loop in loops:
+            for node in loop.body.body.list if (
+                    type(loop.body).__name__ == "BlockStatement"
+                    and type(loop.body.body).__name__ == "StatementList") else []:
+                node.visit(lambda n: mailbox_symbols.append(
+                    getattr(getattr(n, "thisClass", None), "symbol", None))
+                    if type(n).__name__ == "CallExpression" else None)
+        mailbox_symbols = [symbol for symbol in mailbox_symbols if symbol is not None]
+        if not mailbox_symbols or any(symbol != mailbox_symbols[0]
+                                      for symbol in mailbox_symbols):
+            return None
+        mailbox_symbol = mailbox_symbols[0]
+        mailbox_name = getattr(mailbox_symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        if not mailbox_name or not source or not re.search(
+                r"(?<![A-Za-z0-9_$])" + re.escape(mailbox_name)
+                + r"\s*=\s*new\s*\(\s*\)", source):
+            return None
+        queue = []
+        output = []
+        changed = False
+
+        def target_of(expr):
+            target, admitted = legacy_blocking_target(sm, expr, True)
+            return target if admitted and target.get("kind") == "Ident" else None
+
+        def loop_bounds(loop):
+            if (len(loop.loopVars) != 1 or len(loop.steps) != 1
+                    or type(loop.steps[0]).__name__ != "UnaryExpression"):
+                return None
+            variable = loop.loopVars[0]
+            init = _literal_integral_value(getattr(variable, "initializer", None))
+            if init is None:
+                return None
+            step_op = str(getattr(loop.steps[0], "op", "")).split(".")[-1]
+            if step_op not in ("Postincrement", "Preincrement"):
+                return None
+            stop = loop.stopExpr
+            if (type(stop).__name__ != "BinaryExpression"
+                    or str(getattr(stop, "op", "")).split(".")[-1]
+                    not in ("LessThan", "Less")):
+                return None
+            if getattr(stop.left, "symbol", None) is not variable:
+                return None
+            limit = _literal_integral_value(stop.right)
+            if limit is None or limit < init or limit - init > 128:
+                return None
+            return variable, init, limit
+
+        def emit_body(node, env):
+            nonlocal changed
+            kind = type(node).__name__
+            if kind == "ExpressionStatement":
+                expr = node.expr
+                if type(expr).__name__ == "AssignmentExpression":
+                    lhs = getattr(expr, "left", None)
+                    if (expr.op is not None or expr.isNonBlocking
+                            or expr.timingControl is not None):
+                        return None
+                    target = target_of(lhs)
+                    value = _mailbox_loop_literal(sm, expr.right, env)
+                    if target is None or value is None:
+                        return None
+                    symbol = getattr(lhs, "symbol", None)
+                    if symbol is not None:
+                        env[symbol] = _mailbox_loop_integral(sm, expr.right, env)
+                    return {"kind": "BlockingAssign", "span": node_span(sm, node),
+                            "target": target, "value": value}
+                if type(expr).__name__ == "CallExpression":
+                    receiver = getattr(expr, "thisClass", None)
+                    if (type(receiver).__name__ != "NamedValueExpression"
+                            or getattr(receiver, "symbol", None) != mailbox_symbol):
+                        return None
+                    method = str(getattr(expr, "subroutineName", ""))
+                    if method == "put" and len(expr.arguments) == 1:
+                        value = _mailbox_loop_literal(sm, expr.arguments[0], env)
+                        if value is None:
+                            return None
+                        queue.append((value, width_of(value),
+                                      _mailbox_loop_integral(sm,
+                                                              expr.arguments[0],
+                                                              env)))
+                        changed = True
+                        return {"kind": "Empty", "span": node_span(sm, node),
+                                "mailbox_literal_loop_put": True}
+                    if method == "get" and len(expr.arguments) == 1 and queue:
+                        target = target_of(expr.arguments[0])
+                        if target is None or width_of(target) != queue[0][1]:
+                            return None
+                        value, _width, runtime_value = queue.pop(0)
+                        target_symbol = getattr(expr.arguments[0], "symbol", None)
+                        if target_symbol is not None:
+                            env[target_symbol] = runtime_value
+                        changed = True
+                        return {"kind": "BlockingAssign", "span": node_span(sm, node),
+                                "target": target, "value": value,
+                                "mailbox_literal_loop_get": True}
+                    return None
+                return None
+            if kind == "ConditionalStatement":
+                if len(node.conditions) != 1 or node.conditions[0].pattern is not None:
+                    return None
+                condition = _mailbox_loop_integral(sm, node.conditions[0].expr, env)
+                if condition is None:
+                    return None
+                if condition:
+                    return emit_body(node.ifTrue, env)
+                return {"kind": "Empty", "span": node_span(sm, node),
+                        "mailbox_literal_loop_if_false": True}
+            return None
+
+        for item in items:
+            if type(item).__name__ != "ForLoopStatement":
+                converted = convert_stmt(sm, item)
+                if converted.get("kind") == "Unsupported":
+                    return None
+                output.append(converted)
+                continue
+            bounds = loop_bounds(item)
+            if bounds is None or type(item.body).__name__ != "BlockStatement":
+                return None
+            loop_body = item.body.body
+            if type(loop_body).__name__ != "StatementList":
+                return None
+            variable, init, limit = bounds
+            for value in range(init, limit):
+                env = {variable: value}
+                for node in loop_body.list:
+                    converted = emit_body(node, env)
+                    if converted is None:
+                        return None
+                    if converted.get("kind") != "Empty":
+                        output.append(converted)
+        if not changed:
+            return None
+        return {"kind": "Block", "span": node_span(sm, statement),
+                "stmts": output, "mailbox_literal_loop_lowered": True}
+    except Exception:
+        return None
 
 
 def _queue_history_literal(expression, instance, before):
@@ -15260,6 +15533,9 @@ def _convert_stmt(sm, s):
             return unsupported(
                 sm, s, "BlockStatement:" + str(s.blockKind).split(".")[-1]
             )
+        mailbox_loop = _convert_mailbox_literal_loop_block(sm, s)
+        if mailbox_loop is not None:
+            return mailbox_loop
         body = s.body
         if type(body).__name__ == "StatementList":
             stmts = [convert_stmt(sm, x) for x in body.list]

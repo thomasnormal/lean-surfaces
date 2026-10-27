@@ -9064,6 +9064,26 @@ The leading `ExpressionStatement:CallExpression` blocker falls
 **2,746 → 2,741**. Differential coverage grows **308/303/0/5 → 309/304/0/5**
 with no disagreements; grammar coverage remains **218/96/122**.
 
+## Finite literal mailbox FIFO loops — 2026-10-27
+
+The mailbox scalar snapshot now admits a finite source-pure pair of
+procedural `for` loops with one direct unbounded mailbox handle. Each loop has
+a literal nonnegative start, a literal upper bound, and a unit increment; its
+body is limited to scalar blocking literal assignments, FIFO `put()`/`get()`
+calls, and conditions decided from the replayed scalar environment. The
+extractor unrolls those iterations and carries the exact queue across the
+enclosing block, so the flat self-check state still has no mailbox object.
+Dynamic bounds, aliases, control-dependent writes, timing, nonintegral or
+aggregate messages, and other mailbox methods remain loud. The
+`mailbox_literal_loop_fifo` fixture and Lean receipt cover ten puts followed by
+ten FIFO gets.
+
+On the refreshed **22,059-path** sv-tests-2 census, clean files move
+**5,293 → 5,294** and partial files **16,699 → 16,698** (67 include skips).
+The `ExpressionStatement:CallExpression` blocker falls **2,740 → 2,739**.
+Differential coverage grows **310/305/0/5 → 311/306/0/5** with no
+disagreements; grammar coverage remains **218/96/122**.
+
 ## Fixed struct-array `sort` with packed tuple keys — 2026-10-27
 
 The same one-dimensional fixed unpacked struct-array lowering now admits a

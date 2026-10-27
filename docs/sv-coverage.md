@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 310 | 305 | 0 | 5 | sv-tests-2 declarations |
+| 311 | 306 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -218,6 +218,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `array_ordering_literals` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | match | **MATCH** | `ok` | MATCH |
 | `struct_array_ordering_with_field` | `Examples/system-verilog/struct_array_ordering_with_field/struct_array_ordering_with_field.sv` | match | **MATCH** | `ok` | MATCH |
 | `struct_array_ordering_with_tuple` | `Examples/system-verilog/struct_array_ordering_with_tuple/struct_array_ordering_with_tuple.sv` | match | **MATCH** | `ok` | MATCH |
+| `mailbox_literal_loop_fifo` | `Examples/system-verilog/mailbox_literal_loop_fifo/mailbox_literal_loop_fifo.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_string_cells` | `Examples/system-verilog/assoc_string_cells/assoc_string_cells.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_concat_subarrays` | `Examples/system-verilog/dynamic_array_concat_subarrays/dynamic_array_concat_subarrays.sv` | match | **MATCH** | `ok` | MATCH |
 | `mailbox_typed_fifo` | `Examples/system-verilog/mailbox_typed_fifo/mailbox_typed_fifo.sv` | match | **MATCH** | `ok` | MATCH |
@@ -372,7 +373,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.CaseInequalityExpression` | `Examples/system-verilog/case_equality/case_equality.sv` | **REFUSE** | `unsupported` non-initial process 'AlwaysPosedge:clk' (self-check tier runs initial-only designs) |
 | `SyntaxKind.CaseStatement` | `Examples/system-verilog/case_inside/array_widening.sv` | **REFUSE** | `unsupported` unsupported statement 'CaseStatement:pattern' |
 | `SyntaxKind.CastExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ClassName` | `Examples/system-verilog/mailbox_parameterized_packed_vector/mailbox_parameterized_packed_vector.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ClassName` | `Examples/system-verilog/mailbox_literal_loop_fifo/mailbox_literal_loop_fifo.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CompilationUnit` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.ConcatenationExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ConditionalExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
@@ -473,7 +474,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.NullLiteralExpression` | `Examples/system-verilog/event_triggered_false/event_triggered_false.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.OrAssignmentExpression` | `Examples/system-verilog/compound_assignments/partial_members.sv` | **REFUSE** | `unsupported` AssignmentExpression:compound-partial-range |
 | `SyntaxKind.OrderedArgument` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
-| `SyntaxKind.OrderedParamAssignment` | `Examples/system-verilog/mailbox_parameterized_packed_vector/mailbox_parameterized_packed_vector.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.OrderedParamAssignment` | `Examples/system-verilog/mailbox_literal_loop_fifo/mailbox_literal_loop_fifo.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.OrderedPortConnection` | `Examples/system-verilog/module_hierarchy/ports.sv` | **REFUSE** | `unsupported` non-initial process 'Hierarchy:ports' (self-check tier runs initial-only designs) |
 | `SyntaxKind.PackageDeclaration` | `Examples/system-verilog/elaborated_generate/imports.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.PackageExportDeclaration` | `Examples/system-verilog/package_storage/identity.sv` | **MATCH** | `ok`  |
@@ -560,13 +561,13 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22059 | 5293 | 16699 | 67 |
+| 22059 | 5294 | 16698 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2852 |
-| `ExpressionStatement:CallExpression` | 2740 |
 | `CallExpression` | 2739 |
+| `ExpressionStatement:CallExpression` | 2739 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2223 |
 | `SubroutineSymbol:Subroutine` | 1634 |

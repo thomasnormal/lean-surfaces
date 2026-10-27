@@ -1838,6 +1838,15 @@
       "expect": "match"
     },
     {
+      "name": "mailbox_literal_loop_fifo",
+      "file": "Examples/system-verilog/mailbox_literal_loop_fifo/mailbox_literal_loop_fifo.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "assoc_string_cells",
       "file": "Examples/system-verilog/assoc_string_cells/assoc_string_cells.sv",
       "module": "top",

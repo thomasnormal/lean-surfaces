@@ -27,6 +27,42 @@ def nodes(value):
 
 
 class VariableMailbox(unittest.TestCase):
+    def test_finite_literal_for_loops_replay_fifo_history(self):
+        design = lower(
+            """module top;
+               mailbox #(int) box = new();
+               int value, result, ok = 1;
+               initial begin
+                 for (int i = 0; i < 4; i++) begin
+                   value = i * 3;
+                   box.put(value);
+                 end
+                 for (int i = 0; i < 4; i++) begin
+                   box.get(result);
+                   if (result != i * 3) ok = 0;
+                 end
+               end
+               endmodule""")
+        self.assertTrue(any(node.get("mailbox_literal_loop_lowered")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_dynamic_mailbox_loop_bounds_stay_loud(self):
+        design = lower(
+            """module top;
+               mailbox box;
+               int n, value;
+               initial begin
+                 box = new();
+                 for (int i = 0; i < n; i++) box.put(i);
+               end
+               endmodule""")
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
     def test_pure_literal_scalar_write_can_feed_put(self):
         design = lower(
             """module top;

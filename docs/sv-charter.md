@@ -43,6 +43,22 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Fixed-size `$bits` operands — 2026-10-27
+
+`$bits(expr)` now reads the elaborated width of any fixed-size bitstream
+operand without evaluating or converting `expr`, as required by IEEE
+1800-2023 §20.6.2. Increments, assignments, function calls, and selected
+reads therefore remain metadata-only when their result type is fixed. The
+`bits_fixed_expr` fixture proves that a post-increment is not observed by the
+self-check state. Initialized dynamic strings, queues, associative arrays,
+and other runtime-sized or non-bitstream operands remain loud; the existing
+empty dynamic-array/string metadata cases are unchanged.
+
+The 22,059-path census remains **5,304 clean / 16,688 partial** (67 include
+skips), while `CallExpression` falls **2,729 → 2,672**. Differential coverage
+grows **318/312/0/6 → 319/313/0/6** with no disagreements; grammar remains
+**218/97/121**.
+
 ## Literal queue initializer `.size()` — 2026-10-27
 
 A 2-state queue initialized only by scalar literals now answers `.size()`

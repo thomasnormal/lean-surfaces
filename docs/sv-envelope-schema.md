@@ -938,17 +938,15 @@ for `$bits(expression)` or `$bits(data_type)` with fixed-size bitstream
 arguments (IEEE 1800-2023 §20.6.2). Their `bits` encode the bound type's
 `bitstreamWidth` modulo `2^32`, with `signed: true` and optional provenance
 `fixed_bits_query: true`. The argument is not evaluated or converted;
-pure metadata expressions and unsupported runtime types can be queried.
-Admission deliberately rejects effectful bound operand syntax, including
-calls other than nested admitted queries, assignments and increments.
-IEEE specifies no evaluation even for those operands, but this tier keeps
-them loud after a licensed reference disagreed on a direct increment.
-Context resizing retains this query literal rather than folding away its
-admission evidence. Dynamically sized and non-bitstream arguments remain
-`Unsupported`; a frontend error in a compilation containing an admitted
-query adds top-level `$bits:invalid-compilation`. Existing literal
-ingesters require no new constructor, and symbolic `sv-0.2` `SysCall`
-queries are unchanged.
+fixed-size bitstream operands remain eligible even when their source syntax
+contains a call, assignment,
+increment, decrement, or selected read. Context resizing retains this query
+literal rather than folding away its admission evidence. Dynamically sized and
+non-bitstream arguments remain `Unsupported` (apart from the existing empty
+dynamic-array/string metadata cases); a frontend error in a compilation
+containing an admitted query adds top-level `$bits:invalid-compilation`.
+Existing literal ingesters require no new constructor, and symbolic `sv-0.2`
+`SysCall` queries are unchanged.
 
 A zero-argument `$time` expression in the time-zero self-check slice is also
 folded to a 64-bit all-zero `Literal` with `time_zero: true` provenance. The

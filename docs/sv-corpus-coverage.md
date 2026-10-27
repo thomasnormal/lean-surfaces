@@ -25,6 +25,19 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Fixed-size `$bits` operands — 2026-10-27
+
+Fixed-size bitstream operands of `$bits(expr)` are now admitted from their
+elaborated type without evaluating the source expression. The `bits_fixed_expr`
+fixture covers a post-increment operand; initialized dynamic strings, queues,
+associative arrays, and other runtime-sized or non-bitstream operands remain
+loud.
+
+The 22,059-path snapshot remains **5,304 clean / 16,688 partial** (67 include
+skips), while `CallExpression` falls **2,729 → 2,672**. Differential coverage
+grows **318/312/0/6 → 319/313/0/6** with no disagreements; grammar remains
+**218/97/121**.
+
 ## Literal queue initializer `.size()` — 2026-10-27
 
 A 2-state queue initialized only by scalar literals now answers `.size()` with

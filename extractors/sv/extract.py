@@ -1051,9 +1051,12 @@ def _fixed_bits_query_width(expression):
         argument = expression.arguments[0]
         if (argument.bad or not argument.type.isFixedSize
                 or expression.type.bitWidth != 32
-                or not expression.type.isSigned
-                or not _bits_argument_source_ok(argument)):
+                or not expression.type.isSigned):
             return None
+        # IEEE 1800-2023 §20.6.2: `$bits` determines the size from the
+        # elaborated type and does not evaluate the enclosed expression. A
+        # fixed-width function call or post-increment is therefore safe here;
+        # dynamic-size containers remain outside this metadata-only path.
         if (argument.type.isBitstreamType()):
             return argument.type.bitstreamWidth
         # IEEE 1800 §6.24.3 defines real and shortreal as fixed-size types

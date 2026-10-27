@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.64] — 2026-10-27
+
+The self-check surface now has 319 differential rows: 313 matches, zero
+disagreements, and 6 recorded refusals. The grammar census remains at 218
+pyslang syntax witnesses: 97 MATCH and 121 REFUSE. The 22,059-path corpus
+remains at 5,304 clean files and 16,688 partial files with 67 include skips;
+`CallExpression` falls from 2,729 to 2,672. Fixed-size bitstream `$bits`
+operands are now admitted from their elaborated type without evaluating the
+source expression, including increments, assignments, calls, and selected
+reads; initialized dynamic-size operands remain loud.
+
 ## [0.1.63] — 2026-10-27
 
 The self-check surface now has 318 differential rows: 312 matches, zero

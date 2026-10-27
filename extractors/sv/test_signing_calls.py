@@ -110,11 +110,15 @@ class SigningCalls(unittest.TestCase):
             ("logic [7:0] value [2]; ", "$unsigned(value)"),
             ("logic [7:0] value; ", "$signed(value++)"),
             ("logic [7:0] value; ", "$unsigned((value = 1))"),
-            ("logic [7:0] value; ", "$bits($signed(value++))"),
         ):
             with self.subTest(expression=expression):
                 design = lower(query_source(expression, declaration), require_valid=False)
                 self.assertTrue(any(node.get("kind") == "Unsupported" for node in nodes(design)))
+        design = lower(query_source("$bits($signed(value++))",
+                                    "logic [7:0] value; "))
+        self.assertTrue([node for node in nodes(design)
+                         if node.get("fixed_bits_query")])
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
 
     def test_invalid_signatures_stay_loud(self):
         for expression in ("$signed()", "$unsigned(1, 2)", "$signed(undeclared)"):

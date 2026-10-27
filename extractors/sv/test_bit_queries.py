@@ -94,29 +94,32 @@ class FixedBitQueries(unittest.TestCase):
                   "$bits(HIGH)); end endmodule")
         self.assert_fixed_queries(source, [16, 5, 5])
 
-    def test_effectful_increment_and_assignment_arguments_stay_loud(self):
+    def test_fixed_size_effectful_arguments_are_metadata_only(self):
         expressions = ("subject++", "++subject", "subject--", "--subject",
                        "(subject = 8'd1)")
         for expression in expressions:
             with self.subTest(expression=expression):
-                self.assert_query_refused(query_source("$bits(" + expression + ")",
-                                                      "logic [7:0] subject; "))
+                design = self.assert_fixed_queries(
+                    query_source("$bits(" + expression + ")",
+                                 "logic [7:0] subject; "), [8])
+                self.assertFalse(any(node.get("kind") == "Unsupported"
+                                     for node in nodes(design)))
 
-    def test_other_calls_inside_query_arguments_stay_loud(self):
+    def test_fixed_size_calls_inside_query_arguments_are_not_evaluated(self):
         declarations = ("function automatic byte effect(); $display(\"CALLED\"); "
                         "effect=1; endfunction ")
-        self.assert_query_refused(query_source("$bits(effect())", declarations))
-        self.assert_query_refused(query_source("$bits($unsigned(subject++))",
-                                              "logic [7:0] subject; "))
+        self.assert_fixed_queries(query_source("$bits(effect())", declarations), [8])
+        self.assert_fixed_queries(query_source("$bits($unsigned(subject++))",
+                                               "logic [7:0] subject; "), [8])
 
-    def test_effectful_selected_read_indices_stay_loud(self):
+    def test_fixed_size_selected_reads_ignore_effectful_indices(self):
         declarations = "logic [7:0] subject; integer index; "
-        expressions = ("subject[index++]", "subject[index++ +: 3]",
-                       "subject[index++ -: 4]")
-        for expression in expressions:
+        expressions = {"subject[index++]": 1, "subject[index++ +: 3]": 3,
+                       "subject[index++ -: 4]": 4}
+        for expression, width in expressions.items():
             with self.subTest(expression=expression):
-                self.assert_query_refused(query_source("$bits(" + expression + ")",
-                                                      declarations))
+                self.assert_fixed_queries(
+                    query_source("$bits(" + expression + ")", declarations), [width])
 
     def test_pure_selected_read_metadata_queries(self):
         declarations = "logic [7:0] subject; integer index; "
@@ -141,23 +144,24 @@ class FixedBitQueries(unittest.TestCase):
         self.assertEqual(len([node for node in nodes(design) if node.get("case_lowered")]), 2)
         self.assertEqual(len(query_nodes(design)), 4)
 
-    def test_effectful_query_is_not_a_pure_case_leaf(self):
+    def test_effectful_query_is_a_pure_case_leaf(self):
         source = ("module top; logic [7:0] subject; initial begin "
                   "case ($bits(subject++)) 8:; endcase end endmodule")
         design = lower(source)
-        self.assertFalse(query_nodes(design))
-        self.assertIn("CaseStatement:subject", [node.get("sv_kind") for node in nodes(design)])
+        self.assertTrue(query_nodes(design))
+        self.assertTrue(any(node.get("case_lowered") for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
 
     def test_nested_query_has_integer_result_width(self):
         self.assert_fixed_queries(query_source("$bits($bits(bit))"), [32])
 
-    def test_nested_query_cannot_hide_effectful_operand(self):
+    def test_nested_query_keeps_metadata_only_effects(self):
         source = query_source("$bits($bits(subject++))", "logic [7:0] subject; ")
-        self.assert_query_refused(source)
+        self.assert_fixed_queries(source, [32])
 
-    def test_conversion_cannot_erase_effectful_query_refusal(self):
+    def test_conversion_retains_effectful_query_admission(self):
         source = query_source("64'($bits(subject++))", "logic [7:0] subject; ")
-        self.assert_query_refused(source)
+        self.assert_fixed_queries(source, [8])
 
     def test_conversion_context_preserves_signed_query_literal(self):
         expressions = ("64'($bits(byte))", "3'($bits(byte))", "$bits(byte) + 64'd1")
@@ -207,11 +211,19 @@ class FixedBitQueries(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
-    def test_effectful_real_conversion_operand_stays_loud(self):
+    def test_fixed_real_conversion_query_does_not_evaluate_operand(self):
         declarations = ("function automatic real effect(); $display(\"CALLED\"); "
                         "effect = 1.0; endfunction ")
-        self.assert_query_refused(query_source("$bits($realtobits(effect()))",
-                                              declarations))
+        self.assert_fixed_queries(query_source("$bits($realtobits(effect()))",
+                                               declarations), [64])
+
+    def test_initialized_dynamic_size_operands_stay_loud(self):
+        cases = (("$bits(value)", "string value = \"x\"; "),
+                 ("$bits(value)", "int value[$]; "),
+                 ("$bits(value)", "int value[int]; "))
+        for expression, declaration in cases:
+            with self.subTest(declaration=declaration):
+                self.assert_query_refused(query_source(expression, declaration))
 
     def test_unpacked_union_query_stays_loud(self):
         source = ("module top; initial begin "

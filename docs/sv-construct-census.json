@@ -24,7 +24,7 @@
    ],
    [
     "CallExpression",
-    2729
+    2672
    ],
    [
     "Hierarchy:ports",
@@ -671,6 +671,10 @@
     5
    ],
    [
+    "$bits:invalid-compilation",
+    5
+   ],
+   [
     "Package:GenericClassDef",
     5
    ],
@@ -716,10 +720,6 @@
    ],
    [
     "EmptyArgumentExpression",
-    4
-   ],
-   [
-    "$bits:invalid-compilation",
     4
    ],
    [

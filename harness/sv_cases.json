@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "bits_fixed_expr",
+      "file": "Examples/system-verilog/bits_fixed_expr/bits_fixed_expr.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "unobserved_queue_literal_write",
       "file": "Examples/system-verilog/unobserved_queue_literal_write/unobserved_queue_literal_write.sv",
       "module": "top",

@@ -43,6 +43,21 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Discarded literal `$sformatf` statements — 2026-10-27
+
+Statement-position `$sformatf` now reuses the admitted expression converter
+for one literal format and one pure integral operand, then erases the packed
+result. `%b/%h/%o/%d` and their uppercase aliases are covered; dynamic formats,
+extra arguments, unsupported conversions, real or aggregate operands, and
+other string state remain loud. The `sformatf_statement` fixture supplies the
+Lean receipt, extractor regression, and differential row.
+
+The 22,059-path corpus remains **5,287 clean / 16,705 partial** (67 include
+skips); `ExpressionStatement:CallExpression` remains **2,746** and
+`AssignmentExpression:target` remains **2,852**. Differential coverage grows
+**303/298/0/5 → 304/299/0/5** with no disagreements; grammar remains
+**218/96/122**.
+
 ## Literal zero-time `$q_exam` histories — 2026-10-27
 
 The self-check surface now replays a source-ordered literal FIFO/LIFO queue

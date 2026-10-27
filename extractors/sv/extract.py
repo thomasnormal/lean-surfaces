@@ -17081,6 +17081,16 @@ def _convert_syscall(sm, s, e):
         is_sys = bool(e.isSystemCall)
     except Exception:
         return unsupported(sm, s, "ExpressionStatement:CallExpression")
+    if is_sys and _SYM is None and name == "$sformatf":
+        # `$sformatf` is pure when its existing literal expression converter
+        # accepts the format and operand.  In statement position the packed
+        # result is discarded, so erase only that proven value; dynamic
+        # formats, unsupported conversions, and effectful operands remain
+        # loud through the same converter.
+        value = _convert_sformatf_call(sm, e)
+        if value is not None and value.get("kind") != "Unsupported":
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "sformatf_statement": True}
     if is_sys and _SYM is None and _enum_method_call(e, include_name=True):
         # Enum methods only read the current value and produce an unobserved
         # scalar in statement position. Reuse the value converter so receiver

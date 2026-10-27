@@ -27,6 +27,27 @@ def nodes(value):
 
 
 class SFormatfCalls(unittest.TestCase):
+    def test_discarded_literal_format_is_erased(self):
+        design = lower(
+            'module top; initial begin $sformatf("%H", 8\'hab); '
+            '$display("PASS"); end endmodule')
+        statements = [node for node in nodes(design)
+                      if node.get("sformatf_statement")]
+        self.assertEqual(len(statements), 1)
+        self.assertTrue(all(node.get("kind") == "Empty"
+                            for node in statements))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_discarded_dynamic_format_stays_loud(self):
+        design = lower(
+            'module top; string fmt; initial begin $sformatf(fmt, 8\'hab); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
     def test_literal_integral_formats_include_uppercase_aliases(self):
         design = lower(
             'module top; logic [7:0] v = 8\'hAB; '

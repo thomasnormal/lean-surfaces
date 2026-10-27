@@ -2723,6 +2723,15 @@
       "expect": "match"
     },
     {
+      "name": "sformatf_statement",
+      "file": "Examples/system-verilog/sformatf_statement/sformatf_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "q_remove_payload",
       "file": "Examples/system-verilog/q_remove_payload/q_remove_payload.sv",
       "module": "top",

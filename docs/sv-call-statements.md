@@ -9,6 +9,14 @@ of this wall.
 
 ## Admitted statements
 
+Discarded `$sformatf` calls are inert when the existing expression converter
+accepts one literal format and one pure integral operand. The `%b`, `%h`,
+`%o`, and `%d` conversions (including uppercase aliases) are evaluated only
+to establish that the call is pure, then erased because statement position
+does not observe the packed result. Dynamic formats, extra arguments,
+unsupported conversions, real or aggregate operands, and other string state
+remain loud.
+
 The legacy/self-check and scheduler-facing paths share one `SysCall` shape for
 the four calls whose effects are represented by the existing output and halt
 state:

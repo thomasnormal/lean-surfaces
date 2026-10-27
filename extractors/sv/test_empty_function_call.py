@@ -85,6 +85,28 @@ class EmptyFunctionCalls(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
+    def test_literal_return_accepts_named_literal_history_input(self):
+        design = lower(
+            'module top; bit selector; function bit [3:0] seven(input bit x); '
+            'return 4\'d7; endfunction initial begin '
+            'selector = 1\'b0; if (seven(selector) == 4\'d7) $display("PASS"); '
+            'selector = 1\'b1; if (seven(selector) == 4\'d7) $display("PASS"); '
+            'end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("literal_function_return")]
+        self.assertEqual(len(values), 2)
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_literal_return_rejects_computed_named_input_history(self):
+        design = lower(
+            'module top; bit selector; function bit [3:0] seven(input bit x); '
+            'return 4\'d7; endfunction initial begin '
+            'selector = 1\'b0; selector = selector ^ 1\'b1; '
+            'if (seven(selector) == 4\'d7) $display("PASS"); endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
     def test_literal_return_rejects_output_formal(self):
         design = lower(
             'module top; bit result; function bit [3:0] seven(output bit out); '

@@ -25,6 +25,16 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Named literal-history literal-return functions — 2026-10-27
+
+The self-check surface now accepts a named integral argument to a one-literal
+return function after source order proves direct blocking literal history.
+`literal_function_named_history` is a repository fixture outside the
+chapter-only walk, so the pinned **22,065-file** census remains **5,331 clean /
+16,667 partial** with 67 include skips and unchanged leading blockers.
+Differential coverage grows **329/323/0/6 → 330/324/0/6**; grammar coverage
+remains **218/97/121**.
+
 ## Named literal-history `$timeformat` — 2026-10-27
 
 `$timeformat` now accepts named integral unit, precision, and width arguments

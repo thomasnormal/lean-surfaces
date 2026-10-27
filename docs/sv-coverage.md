@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 329 | 323 | 0 | 6 | sv-tests-2 declarations |
+| 330 | 324 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -36,6 +36,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `realtobits_literal` | `Examples/system-verilog/realtobits_literal/realtobits_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `rtoi_literal` | `Examples/system-verilog/rtoi_literal/rtoi_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `literal_function_argument` | `Examples/system-verilog/literal_function_argument/literal_function_argument.sv` | match | **MATCH** | `ok` | MATCH |
+| `literal_function_named_history` | `Examples/system-verilog/literal_function_named_history/literal_function_named_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_oob_write` | `Examples/system-verilog/dynamic_array_oob_write/dynamic_array_oob_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_concat` | `Examples/system-verilog/dynamic_array_concat/dynamic_array_concat.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_concat_refuse` | `Examples/system-verilog/dynamic_array_concat_refuse/dynamic_array_concat_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |

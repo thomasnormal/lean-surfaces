@@ -8464,7 +8464,15 @@ def _literal_function_symbol(subroutine):
 
 
 def _literal_function_call(expression):
-    """Whether a literal-return function call has only inert literal inputs."""
+    """Whether a literal-return function call has only inert inputs.
+
+    A direct integral literal is already enough.  A named integral argument
+    is also safe when its declaration and every earlier write are the same
+    source-ordered blocking literal history used by the real-conversion
+    boundary.  The function body returns a literal without reading its input,
+    but the argument still has to be source-pure before the call can be
+    erased or materialized at the call site.
+    """
     try:
         if (type(expression).__name__ != "CallExpression"
                 or getattr(expression, "bad", False)
@@ -8475,7 +8483,11 @@ def _literal_function_call(expression):
         actuals = list(getattr(expression, "arguments", []))
         if not _literal_function_symbol(subroutine) or len(formals) != len(actuals):
             return False
-        return all(_literal_function_return(argument) for argument in actuals)
+        return all(
+            _literal_function_return(argument)
+            or (_bound_integral_value(argument) is not None
+                and _case_source_expression_ok(argument))
+            for argument in actuals)
     except Exception:
         return False
 

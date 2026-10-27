@@ -7191,6 +7191,24 @@ clean** and **17,166 → 17,165 partial / 66 include skips**;
 blockers remain unchanged. Differential coverage moves **122/118/0/4 →
 123/119/0/4**; the grammar census remains **214/83/131**.
 
+## Named literal-history literal-return function calls — 2026-10-27
+
+A function whose complete body returns one integral literal may now receive a
+named integral argument when source order proves that the declaration and all
+earlier writes are direct blocking literals in the time-zero initial history.
+The argument is still checked for source purity before the already-sized return
+literal is materialized, so no callable frame or input storage is introduced.
+Computed, control-dependent, timed, nonblocking, dynamic, output, inout, and
+reference arguments remain loud. The `literal_function_named_history` fixture
+and differential row cover two successive literal writes and two call sites;
+focused extractor tests cover the computed-history refusal.
+
+The chapter-only census remains **5,331 clean / 16,667 partial** over 22,065
+files with 67 include skips; its leading call blockers are unchanged because
+the fixture is a repository witness outside the corpus walk. Differential
+coverage grows **329/323/0/6 → 330/324/0/6**, with grammar coverage unchanged
+at **218/97/121**.
+
 ## Inert monitor toggles without registrations — 2026-10-24
 
 No-argument `$monitoron` and `$monitoroff` calls now lower to inert diagnostic

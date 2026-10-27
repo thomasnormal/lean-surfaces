@@ -1,5 +1,14 @@
 # SystemVerilog tier changelog
 
+## [0.1.76] — 2026-10-27
+
+Literal-return user functions now accept named integral arguments whose
+declaration and earlier writes are direct blocking literals in the time-zero
+initial history. Computed, control-dependent, timed, nonblocking, dynamic,
+output, inout, and reference arguments remain loud. Differential coverage is
+now **330 rows / 324 matches / 0 disagreements / 6 recorded refusals**; the
+chapter-only census remains **5,331 clean / 16,667 partial** over 22,065 files.
+
 ## [0.1.75] — 2026-10-27
 
 `$timeformat` now accepts a source-pure named integral history for its unit,

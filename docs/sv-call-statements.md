@@ -127,6 +127,14 @@ source-pure integral `with` expression. The returned queue is unobserved;
 dynamic, queue, associative, aggregate, effectful `with`, symbolic, and
 value-position forms remain loud.
 
+Literal-return user functions may also receive named integral arguments when
+source order proves each argument's declaration and earlier writes are direct
+blocking literals in the time-zero initial history. The function body must be
+one literal return and every formal must be input-only, so the call reuses the
+already-sized literal at the call site without creating a callable frame.
+Computed, control-dependent, timed, nonblocking, dynamic, output, inout, and
+reference arguments remain loud.
+
 Discarded fixed-array reductions (`sum`, `product`, `and`, `or`, and `xor`)
 reuse the balanced reduction lowering after its storage-shape, width, iterator,
 and purity checks. The existing empty-dynamic-array identity also permits

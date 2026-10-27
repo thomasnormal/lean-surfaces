@@ -200,6 +200,16 @@
       "expect": "match"
     },
     {
+      "name": "literal_function_named_history",
+      "file": "Examples/system-verilog/literal_function_named_history/literal_function_named_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "dynamic_array_oob_write",
       "file": "Examples/system-verilog/dynamic_array_oob_write/dynamic_array_oob_write.sv",
       "module": "top",

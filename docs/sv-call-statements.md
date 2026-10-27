@@ -9,6 +9,13 @@ of this wall.
 
 ## Admitted statements
 
+`$assertcontrol` may use named integral arguments when source order proves
+that each declaration and earlier write is a direct blocking literal in the
+time-zero initial history. The self-check tier has no assertion-control
+register, so the call lowers to `Empty` after source-purity validation.
+Computed, control-dependent, timed, nonblocking, and dynamic arguments remain
+loud.
+
 Discarded bit queries (`$countbits`, `$countones`, `$onehot`, `$onehot0`, and
 `$isunknown`) may read named integral operands when source order proves that
 their declaration and every earlier write is a direct blocking literal in the

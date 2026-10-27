@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.74] — 2026-10-27
+
+`$assertcontrol` now accepts named integral arguments when their declaration
+and earlier blocking writes are direct literals in the time-zero initial
+history. The self-check tier has no assertion-control register, so the
+validated call remains an inert `Empty`; computed, control-dependent, timed,
+nonblocking, and dynamic arguments remain loud. Differential coverage grows
+to **328 rows / 322 matches / 0 disagreements / 6 recorded refusals**, with
+grammar coverage unchanged at **218 / 97 / 121**. The root-level witness is
+outside the chapter walk, so the census remains **5,331 clean / 16,667 partial**
+and the statement-call blocker remains **2,718**.
+
 ## [0.1.73] — 2026-10-27
 
 Discarded `$countbits`, `$countones`, `$onehot`, `$onehot0`, and

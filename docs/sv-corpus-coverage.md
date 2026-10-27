@@ -25,6 +25,19 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Named literal-history `$assertcontrol` — 2026-10-27
+
+`$assertcontrol` now accepts integral arguments after source order proves that
+their declarations and all earlier writes are direct blocking literals in the
+time-zero initial history. The self-check envelope has no assertion-control
+register, so the validated call is erased; computed, control-dependent, timed,
+nonblocking, and dynamic arguments remain loud. The
+`assertcontrol_named_history` fixture supplies the differential row. This
+root-level witness is outside the chapter-only census, which remains
+**22,065 files, 5,331 clean / 16,667 partial** with 67 include skips and
+`ExpressionStatement:CallExpression` at **2,718**. Differential coverage
+grows **327/321/0/6 → 328/322/0/6**; grammar remains **218/97/121**.
+
 ## Discarded bit queries over named literal history — 2026-10-27
 
 The statement-position bit queries `$countbits`, `$countones`, `$onehot`,

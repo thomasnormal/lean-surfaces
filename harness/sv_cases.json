@@ -2945,6 +2945,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "assertcontrol_named_history",
+      "file": "Examples/system-verilog/assertcontrol_named_history/assertcontrol_named_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -19195,7 +19195,7 @@ def _convert_syscall(sm, s, e):
         # one-literal control form is inert; dynamic and extended forms stay
         # loud until that state is represented.
         if (name == "$assertcontrol" and all(
-                _integral_literal_source(argument) for argument in args)):
+                _bit_query_statement_source_ok(argument) for argument in args)):
             return {"kind": "Empty", "span": node_span(sm, s),
                     "pure_diagnostic": name}
     if is_sys and name in SYSCALL_MONITOR_CTRL:

@@ -61,6 +61,23 @@ class AssertionControlTasks(unittest.TestCase):
                              "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
+    def test_named_literal_history_is_inert(self):
+        design = lower(
+            'module top; int action; int scope; initial begin '
+            'action = 2; scope = 5; $assertcontrol(action, scope); '
+            'end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_computed_named_history_stays_loud(self):
+        design = lower(
+            'module top; int action; int source; initial begin '
+            'source = 2; action = source; $assertcontrol(action); '
+            'end endmodule')
+        self.assertIn("ExpressionStatement:CallExpression",
+                      [node.get("sv_kind") for node in nodes(design)])
+
 
 if __name__ == "__main__":
     unittest.main()

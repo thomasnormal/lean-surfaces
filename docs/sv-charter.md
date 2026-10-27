@@ -43,6 +43,18 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Named literal-history `$assertcontrol` — 2026-10-27
+
+`$assertcontrol` now accepts integral arguments established by direct
+blocking literals in the time-zero initial history. Assertion-control state is
+not represented in the self-check envelope, so the call remains an inert
+`Empty` after source-order validation. Computed, control-dependent, timed,
+nonblocking, and dynamic arguments remain loud. The
+`assertcontrol_named_history` fixture supplies the differential witness;
+coverage grows **327/321/0/6 → 328/322/0/6**, grammar remains **218/97/121**,
+and the chapter-only census remains **5,331 clean / 16,667 partial** with 67
+include skips.
+
 ## Discarded bit queries over named literal history — 2026-10-27
 
 Statement-position `$countbits`, `$countones`, `$onehot`, `$onehot0`, and

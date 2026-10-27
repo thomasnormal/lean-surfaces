@@ -8,6 +8,16 @@ the statement-call contract is separate in [call statements](sv-call-statements.
 
 ## Admitted calls
 
+### Source-pure named-real `$rtoi` — 2026-10-27
+
+`$rtoi(named_real)` now admits a finite real or short-real value when its
+declaration and every earlier direct blocking assignment are source literals.
+The exact decimal spelling is truncated toward zero before the signed 32-bit
+result is lowered, reusing the literal conversion path without adding real
+storage to the self-check state. Computed, control-dependent, nonblocking,
+timed, dynamic, and out-of-range histories remain loud;
+`rtoi_named_real_history` supplies the differential witness and Lean receipt.
+
 ### Mailbox `try_peek()` type mismatch — 2026-10-27
 
 An untyped mailbox containing one scalar integral literal now admits

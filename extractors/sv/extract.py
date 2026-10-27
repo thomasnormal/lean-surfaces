@@ -8553,7 +8553,7 @@ def _bound_real_decimal(expression):
 
 
 def _rtoi_literal_call(expression):
-    """Whether ``$rtoi`` has one finite literal real in value position."""
+    """Whether ``$rtoi`` has one finite source-pure real in value position."""
     try:
         if (_SYM is not None or type(expression).__name__ != "CallExpression"
                 or getattr(expression, "bad", False)
@@ -8563,7 +8563,11 @@ def _rtoi_literal_call(expression):
         arguments = list(expression.arguments)
         if len(arguments) != 1:
             return False
-        value = _literal_real_decimal(arguments[0])
+        # A named real is admissible only when its declaration and every
+        # earlier direct blocking assignment are finite literals.  The helper
+        # keeps real storage out of the flat state while preserving source
+        # order and rejecting control-dependent or dynamic histories.
+        value = _bound_real_decimal(arguments[0])
         return (value is not None and getattr(expression.type, "isIntegral", False)
                 and getattr(expression.type, "bitWidth", None) == 32)
     except Exception:
@@ -8625,7 +8629,7 @@ def _bitstoshortreal_literal_call(expression):
 def _convert_rtoi_literal(sm, expression):
     if not _rtoi_literal_call(expression):
         return unsupported(sm, expression, "CallExpression:$rtoi")
-    value = _literal_real_decimal(expression.arguments[0])
+    value = _bound_real_decimal(expression.arguments[0])
     truncated = int(value.to_integral_value(rounding=ROUND_DOWN))
     width = expression.type.bitWidth
     if truncated < -(1 << (width - 1)) or truncated >= (1 << (width - 1)):

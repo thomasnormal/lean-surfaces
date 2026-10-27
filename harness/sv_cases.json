@@ -2909,6 +2909,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "rtoi_named_real_history",
+      "file": "Examples/system-verilog/rtoi_named_real_history/rtoi_named_real_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

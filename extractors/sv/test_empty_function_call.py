@@ -209,6 +209,28 @@ class EmptyFunctionCalls(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
 
+    def test_rtoi_named_real_literal_history_is_exact(self):
+        design = lower(
+            'module top; real positive; real negative; initial begin '
+            'positive = 123.9; negative = -2.7; '
+            'if ($rtoi(positive) === 123 && $rtoi(negative) === -2) '
+            '$display("PASS"); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("rtoi_literal")]
+        self.assertEqual(len(values), 2)
+        self.assertEqual(values[0]["bits"], "0" * 24 + "01111011")
+        self.assertEqual(values[1]["bits"], "1" * 31 + "0")
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_rtoi_named_real_dynamic_history_stays_loud(self):
+        design = lower(
+            'module top; real value; real other; initial begin '
+            'value = 3.5; other = value; '
+            'if ($rtoi(other) === 3) $display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
     def test_rtoi_itor_dynamic_input_stays_loud(self):
         design = lower(
             'module top; integer value; initial if ($rtoi($itor(value)) === 0) '

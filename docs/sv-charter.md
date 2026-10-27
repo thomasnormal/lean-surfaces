@@ -43,6 +43,20 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Source-pure named-real `$rtoi` — 2026-10-27
+
+The expression tier now folds `$rtoi` over a finite named real or short-real
+when source order proves only direct literal assignments have occurred. The
+decimal conversion truncates toward zero into the existing signed 32-bit
+literal representation; computed, control-dependent, timed, nonblocking,
+dynamic, and out-of-range histories remain loud. The
+`rtoi_named_real_history` fixture supplies the differential witness and Lean
+receipt.
+
+The chapter-only census remains **5,327 clean / 16,670 partial** (67 include
+skips), while differential coverage grows **323/317/0/6 → 324/318/0/6** and
+grammar remains **218/97/121**.
+
 ## Mailbox `try_peek()` type mismatch — 2026-10-27
 
 The surface now admits an untyped mailbox containing one scalar integral

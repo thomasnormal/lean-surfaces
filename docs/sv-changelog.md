@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.69] — 2026-10-27
+
+The self-check surface now has 324 differential rows: 318 matches, zero
+disagreements, and 6 recorded refusals. The grammar census remains at 218
+pyslang syntax witnesses: 97 MATCH and 121 REFUSE. The chapter-only census
+remains at 5,327 clean files and 16,670 partial files with 67 include skips.
+`$rtoi` now folds a finite named real or short-real after source order proves
+only direct literal assignments, preserving exact decimal truncation toward
+zero; computed, control-dependent, timed, nonblocking, dynamic, and
+out-of-range histories remain loud.
+
 ## [0.1.68] — 2026-10-27
 
 The self-check surface now has 323 differential rows: 317 matches, zero

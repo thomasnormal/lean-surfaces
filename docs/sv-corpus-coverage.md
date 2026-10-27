@@ -25,6 +25,20 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Source-pure named-real `$rtoi` — 2026-10-27
+
+`$rtoi` now accepts a named real or short-real whose declaration and prior
+direct blocking assignments are all finite literals. Decimal truncation toward
+zero remains exact without modeling floating storage; computed, control-
+dependent, timed, nonblocking, dynamic, and out-of-range histories remain
+loud. The `rtoi_named_real_history` fixture supplies the differential row and
+Lean receipt.
+
+The chapter-only census snapshot remains **5,327 clean / 16,670 partial** (67
+include skips), because this witness is outside the committed corpus walk.
+Differential coverage grows **323/317/0/6 → 324/318/0/6** with no
+disagreements; grammar remains **218/97/121**.
+
 ## Mailbox `try_peek()` type mismatch — 2026-10-27
 
 An untyped mailbox with one scalar integral literal now admits

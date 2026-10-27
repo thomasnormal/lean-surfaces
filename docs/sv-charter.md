@@ -9482,3 +9482,18 @@ include skips because the external corpus checkout is unavailable; the
 committed `AssignmentExpression:target` count remains 2,847. Differential
 coverage grows **337/331/0/6 → 338/332/0/6** with no disagreements, and grammar
 coverage remains **218/97/121**.
+
+## Exact fixed-array blocking self-copies — 2026-10-27
+
+An exact whole-array blocking assignment to the same one-dimensional fixed
+unpacked integral array now lowers to `Empty`, since each source cell is
+already the corresponding destination cell. Sliced or overlapping copies,
+nonblocking and timed forms, dynamic or aggregate storage, and effectful
+sources remain loud; no aggregate snapshot or scheduler state is introduced.
+The `fixed_array_self_copy` fixture and Lean receipt cover `selfcopy 3 7`.
+
+The pinned 22,065-file census remains **5,401 clean / 16,597 partial** with 67
+include skips because the external corpus checkout is unavailable; the
+committed `AssignmentExpression:target` count remains 2,847. Differential
+coverage grows **338/332/0/6 → 339/333/0/6** with no disagreements, and grammar
+coverage remains **218/97/121**.

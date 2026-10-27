@@ -6502,10 +6502,20 @@ def _fixed_array_copy_assignment(sm, expr):
         if lhs_count != rhs_count or lhs_width != rhs_width:
             return None
         if lhs_name == rhs_name:
-            # Cell-by-cell lowering would expose an earlier destination write
-            # to a later RHS cell.  Keep every overlapping self-copy loud
-            # rather than inventing a temporary aggregate snapshot.
-            return None
+            # An exact whole-array blocking self-copy has no observable store:
+            # every RHS cell is already the corresponding destination cell.
+            # Slices, nonblocking forms, and any shape mismatch remain loud;
+            # overlapping copies still need a complete snapshot contract.
+            if (lhs_slice is not None or rhs_slice is not None
+                    or lhs_positions != rhs_positions
+                    or expr.isNonBlocking
+                    or not _case_source_expression_ok(rhs)):
+                return None
+            return {
+                "kind": "Empty",
+                "span": node_span(sm, expr),
+                "fixed_array_self_copy_noop": True,
+            }
         if not _case_source_expression_ok(rhs):
             return None
         stmts = []

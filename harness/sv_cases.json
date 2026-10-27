@@ -3046,6 +3046,15 @@
         "self 7 3"
       ],
       "expect": "match"
+    },
+    {
+      "name": "fixed_array_self_copy",
+      "file": "Examples/system-verilog/fixed_array_self_copy/fixed_array_self_copy.sv",
+      "module": "top",
+      "oracle": [
+        "selfcopy 3 7"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -120,6 +120,18 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertTrue(any(node.get("array_pattern_snapshot")
                             for node in nodes(design)))
 
+    def test_exact_blocking_self_copy_is_a_noop(self):
+        design = extract_source(
+            "module top; int value [0:1]; initial value = value; endmodule")
+        self.assertTrue(any(node.get("fixed_array_self_copy_noop")
+                            for node in nodes(design)))
+        for source in (
+                "module top; int value [0:1]; initial value <= value; endmodule",
+                "module top; int value [0:1]; initial value[0:1] = value[0:1]; endmodule"):
+            design = extract_source(source)
+            self.assertTrue(any(node.get("sv_kind") == "AssignmentExpression:target"
+                                for node in nodes(design)))
+
     def test_dynamic_index_is_bounded_over_cells(self):
         design = extract_source(
             "module top; logic [7:0] value [0:1]; int index; "

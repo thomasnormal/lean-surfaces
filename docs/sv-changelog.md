@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.85] — 2026-10-27
+
+Exact whole-array blocking self-copies for one-dimensional fixed unpacked
+integral arrays now lower to an `Empty` no-op. Sliced, overlapping, nonblocking,
+timed, dynamic, aggregate, and effectful copies remain loud. The
+`fixed_array_self_copy` fixture and Lean receipt supply `selfcopy 3 7`.
+Differential coverage is now **339 rows / 333 matches / 0 disagreements / 6
+recorded refusals**; grammar coverage remains **218 / 97 / 121**. The pinned
+22,065-file census remains **5,401 clean / 16,597 partial** with 67 include
+skips while the external corpus checkout is unavailable.
+
 ## [0.1.84] — 2026-10-27
 
 Whole assignments to a one-dimensional fixed unpacked integral array now admit

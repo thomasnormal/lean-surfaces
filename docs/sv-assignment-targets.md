@@ -602,3 +602,14 @@ object or runtime size diagnostic.
 partial**, while `AssignmentExpression:target` falls **2,845 → 2,844**.
 Differential coverage moves **317/311/0/6 → 318/312/0/6** with no
 disagreements; grammar coverage remains **218/97/121**.
+
+## Exact fixed-array blocking self-copies — 2026-10-27
+
+An exact whole-array blocking assignment to the same one-dimensional fixed
+unpacked integral array is now lowered to `Empty`: every source cell is already
+the corresponding destination cell, so the assignment has no observable
+effect. Sliced or overlapping copies, nonblocking and timed forms, dynamic or
+aggregate storage, and effectful sources remain at
+`AssignmentExpression:target`; no aggregate snapshot or scheduler state is
+introduced. The `fixed_array_self_copy` fixture supplies the `selfcopy 3 7`
+receipt.

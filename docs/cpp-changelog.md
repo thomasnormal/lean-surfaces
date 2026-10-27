@@ -5,6 +5,21 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.141] — 2026-10-27
+
+### Added
+
+- Added five callable statement witnesses for nonselected computed return and
+  assignment-return paths across standalone `switch` and its `default` arm.
+
+### Measured
+
+- The checked-in corpus now contains **863 differential rows**: **846 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.140] — 2026-10-27
 
 ### Added

@@ -61,6 +61,7 @@ load_program alias_lab from "Examples/python/alias_lab/alias_lab.json"
   .ok (.list #[.int 10, .int 11])
 #py_check alias_lab.dead_alias() = 0
 #py_check alias_lab.sorted_alias(Val.tuple #[.int 3, .int 1]) = [1, 3]
+#py_check alias_lab.max_alias(Val.tuple #[.int 3, .int 1]) = 3
 
 /-! ### the alias is NOT a value (the refusal direction, unchanged) -/
 

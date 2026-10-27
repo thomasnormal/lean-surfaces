@@ -5953,3 +5953,21 @@ loud.
 
 DECIDED: admit only the immediate local `sorted` alias call; retain loud
 failure for returned or general first-class callable values.
+
+## 2026-10-27-pycomplete-168 — admit the immediate local `max` alias
+
+The local-builtin alias rewrite now includes `max`: `f = max; return
+f(values)` lowers to the existing max worker. Tuple and list inputs retain
+their scalar maximum behavior. Returning `max` itself, shadowing it, and
+general first-class callable forms remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 2 cases: 0 failed, 2 matched on both interpreters |
+| Full executable differential | 3,705 cases: 0 failed, 44 whitelisted refusals, 3,661 matched |
+| Full proof differential | 3,705 cases: 0 failed, 153 refusals, 3,552 matched |
+| Lean runner build | `lake build leanmodels-run` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `max` alias call; retain loud failure
+for returned or general first-class callable values.

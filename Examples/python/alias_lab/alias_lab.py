@@ -46,3 +46,8 @@ def sorted_alias(values):
     f = sorted
     return f(values)
 
+
+def max_alias(values):
+    f = max
+    return f(values)
+

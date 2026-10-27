@@ -2918,6 +2918,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "itor_named_integral_history",
+      "file": "Examples/system-verilog/itor_named_integral_history/itor_named_integral_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

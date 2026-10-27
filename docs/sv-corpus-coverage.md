@@ -25,6 +25,20 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Source-pure named-integral `$itor` — 2026-10-27
+
+The exact real-conversion slices now accept `$itor(named_integral)` after a
+declaration or earlier direct blocking literal assignment. `$rtoi`,
+`$realtobits`, and `$shortrealtobits` consume the folded value without adding
+real storage; computed, control-dependent, timed, nonblocking, dynamic, and
+standalone real uses remain loud. The `itor_named_integral_history` fixture
+supplies the differential row and Lean receipt.
+
+The chapter-only census snapshot remains **5,327 clean / 16,670 partial** (67
+include skips), because this witness is outside the committed corpus walk.
+Differential coverage grows **324/318/0/6 → 325/319/0/6** with no
+disagreements; grammar remains **218/97/121**.
+
 ## Source-pure named-real `$rtoi` — 2026-10-27
 
 `$rtoi` now accepts a named real or short-real whose declaration and prior

@@ -8456,6 +8456,8 @@ def _literal_real_decimal(expression):
                     or type(node.type.canonicalType).__name__ != "FloatingType"):
                 return None
             integer = _literal_integral_value(arguments[0])
+            if integer is None:
+                integer = _bound_integral_value(arguments[0])
             return Decimal(integer) if integer is not None else None
         except (AttributeError, TypeError, ValueError, InvalidOperation):
             return None
@@ -8468,6 +8470,103 @@ def _literal_real_decimal(expression):
             return None
         return -value if op in ("Minus", "UnaryMinus") else value
     return None
+
+
+def _bound_integral_value(expression):
+    """Resolve a source-pure named integral to its exact scalar value.
+
+    This is the narrow history witness used by the literal ``$itor`` slice.
+    The flat state can represent integral storage, but the real conversion
+    must still be folded before it crosses the opaque floating boundary.  A
+    declaration initializer or one or more earlier direct blocking literal
+    assignments are accepted; control-dependent, timed, nonblocking,
+    compound, and computed writes remain loud.
+    """
+    try:
+        node = expression
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return None
+        if (type(node).__name__ != "NamedValueExpression"
+                or getattr(node, "bad", False)
+                or not getattr(node.type, "isIntegral", False)):
+            return None
+        symbol = getattr(node, "symbol", None)
+        if symbol is None:
+            return None
+        position = getattr(getattr(getattr(node, "sourceRange", None),
+                                   "start", None), "offset", None)
+        if position is None:
+            return None
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return None
+        controls = []
+        assignments = []
+
+        def direct_initial_write(assignment):
+            syntax = getattr(assignment, "syntax", None)
+            saw_initial = False
+            allowed = {
+                "SyntaxKind.AssignmentExpression",
+                "SyntaxKind.ExpressionStatement",
+                "SyntaxKind.SequentialBlockStatement",
+                "SyntaxKind.InitialBlock",
+                "SyntaxKind.ModuleDeclaration",
+            }
+            while syntax is not None:
+                kind = str(getattr(syntax, "kind", ""))
+                if kind not in allowed:
+                    return False
+                saw_initial = saw_initial or kind == "SyntaxKind.InitialBlock"
+                syntax = getattr(syntax, "parent", None)
+            return saw_initial
+
+        def inspect(item):
+            kind = type(item).__name__
+            if kind in ("ConditionalStatement", "ForLoopStatement",
+                        "WhileLoopStatement", "DoWhileLoopStatement",
+                        "RepeatLoopStatement", "ForeachLoopStatement",
+                        "CaseStatement", "CaseInsideStatement",
+                        "CasePatternStatement", "LoopStatement"):
+                controls.append(getattr(item, "sourceRange", None))
+            elif kind == "AssignmentExpression":
+                left = getattr(item, "left", None)
+                if (type(left).__name__ == "NamedValueExpression"
+                        and getattr(left, "symbol", None) is symbol):
+                    assignments.append(item)
+
+        instance.visit(inspect)
+        prior = []
+        for assignment in assignments:
+            start = getattr(getattr(assignment.sourceRange, "start", None),
+                            "offset", None)
+            end = getattr(getattr(assignment.sourceRange, "end", None),
+                          "offset", None)
+            if start is None or end is None or start >= position:
+                continue
+            prior.append(assignment)
+            if (assignment.op is not None
+                    or assignment.timingControl is not None
+                    or getattr(assignment, "isNonBlocking", False)
+                    or not direct_initial_write(assignment)
+                    or any(r is not None and r.start.offset <= start
+                           and end <= r.end.offset for r in controls)):
+                return None
+        value = _literal_integral_value(getattr(symbol, "initializer", None))
+        if getattr(symbol, "initializer", None) is not None and value is None:
+            return None
+        for assignment in sorted(prior,
+                                 key=lambda item: item.sourceRange.start.offset):
+            candidate = _literal_integral_value(getattr(assignment, "right", None))
+            if candidate is None:
+                return None
+            value = candidate
+        return value
+    except Exception:
+        return None
 
 
 def _bound_real_decimal(expression):

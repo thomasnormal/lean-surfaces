@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.70] — 2026-10-27
+
+The self-check surface now has 325 differential rows: 319 matches, zero
+disagreements, and 6 recorded refusals. The grammar census remains at 218
+pyslang syntax witnesses: 97 MATCH and 121 REFUSE. The chapter-only census
+remains at 5,327 clean files and 16,670 partial files with 67 include skips.
+The exact real-conversion slices now accept `$itor` over a source-pure named
+integral history, while computed, control-dependent, timed, nonblocking,
+dynamic, and standalone real-storage forms remain loud.
+
 ## [0.1.69] — 2026-10-27
 
 The self-check surface now has 324 differential rows: 318 matches, zero

@@ -8,6 +8,16 @@ the statement-call contract is separate in [call statements](sv-call-statements.
 
 ## Admitted calls
 
+### Source-pure named-integral `$itor` — 2026-10-27
+
+`$itor(named_integral)` now participates in the exact real-conversion slices
+when source order proves a declaration or earlier direct blocking literal
+assignment. The folded decimal is consumed only by the existing `$rtoi`,
+`$realtobits`, and `$shortrealtobits` lowerings, so no opaque real value enters
+the flat state. Computed, control-dependent, timed, nonblocking, dynamic, and
+standalone real-storage uses remain loud; `itor_named_integral_history`
+supplies the differential witness and Lean receipt.
+
 ### Source-pure named-real `$rtoi` — 2026-10-27
 
 `$rtoi(named_real)` now admits a finite real or short-real value when its

@@ -238,6 +238,26 @@ class EmptyFunctionCalls(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
+    def test_rtoi_itor_named_literal_history_is_exact(self):
+        design = lower(
+            'module top; integer value; initial begin value = -17; '
+            'if ($rtoi($itor(value)) === -17) $display("PASS"); '
+            'end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("rtoi_literal")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(values[0]["bits"], "1" * 27 + "01111")
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_rtoi_itor_named_control_write_stays_loud(self):
+        design = lower(
+            'module top; integer value; initial begin value = 1; '
+            'if (1) value = 2; if ($rtoi($itor(value)) === 2) '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
     def test_rtoi_dynamic_and_out_of_range_stay_loud(self):
         dynamic = lower(
             'module top; real x; initial if ($rtoi(x) === 0) '
@@ -274,6 +294,26 @@ class EmptyFunctionCalls(unittest.TestCase):
         design = lower(
             'module top; integer value; initial if ($realtobits($itor(value)) === 0) '
             '$display("PASS"); endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
+    def test_realtobits_itor_named_literal_history_is_exact(self):
+        design = lower(
+            'module top; integer value; initial begin value = -17; '
+            'if ($realtobits($itor(value)) === '
+            "64'hc031000000000000) $display(\"PASS\"); endmodule")
+        values = [node for node in nodes(design)
+                  if node.get("realtobits_literal")]
+        self.assertEqual(len(values), 1)
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_realtobits_itor_named_computed_history_stays_loud(self):
+        design = lower(
+            'module top; integer value; integer other; initial begin '
+            'value = 17; other = value; '
+            'if ($realtobits($itor(other)) === 0) $display("PASS"); '
+            'end endmodule')
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 

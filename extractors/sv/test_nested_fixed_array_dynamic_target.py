@@ -1,4 +1,4 @@
-"""One dynamic index through a finite multidimensional array lowers cellwise."""
+"""Dynamic indices through finite multidimensional arrays lower cellwise."""
 import unittest
 
 from pyslang.ast import Compilation
@@ -35,12 +35,14 @@ class NestedFixedArrayDynamicTarget(unittest.TestCase):
                              for node in nodes(design)))
         self.assertGreaterEqual(sum(node.get("kind") == "If" for node in nodes(design)), 1)
 
-    def test_two_dynamic_dimensions_stay_loud(self):
+    def test_two_dynamic_dimensions_lower(self):
         design = lower(
             'module top; int value [0:1][0:1]; integer i, j; '
             'initial begin i = 0; j = 1; value[i][j] = 8; end endmodule')
-        self.assertTrue(any(node.get("kind") == "Unsupported"
-                            and node.get("sv_kind") == "AssignmentExpression:target"
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("kind") == "Binary"
+                            and node.get("op") == "&&"
                             for node in nodes(design)))
 
     def test_one_dynamic_outer_dimension_also_lowers(self):

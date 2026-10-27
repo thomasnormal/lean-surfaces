@@ -3010,6 +3010,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "foreach_nested_fixed",
+      "file": "Examples/system-verilog/foreach_nested/foreach_nested.sv",
+      "module": "top",
+      "oracle": [
+        "sum=21"
+      ],
+      "expect": "match"
     }
   ]
 }

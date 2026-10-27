@@ -9416,3 +9416,19 @@ The refreshed 22,059-path census moves **5,303 → 5,304 clean** and
 `AssignmentExpression:target` wall falls **2,845 → 2,844**. Differential
 coverage is **318 rows / 312 matches / 0 disagreements / 6 recorded
 refusals**, and grammar coverage remains **218 / 97 / 121**.
+
+## Multidimensional fixed-array `foreach` — 2026-10-27
+
+Finite multidimensional unpacked integral arrays now admit `foreach` loops
+when every dimension is explicitly bound. The extractor lowers the loop to
+the existing ordinal `For` form and expands dynamic element reads and writes
+to mutually exclusive conditions over flat leaf cells. Incomplete dimensions,
+dynamic or queue arrays, aggregate leaves, and effectful selectors remain
+loud. The `foreach_nested` fixture and Lean receipt cover a two-by-three array
+sum and the dynamic selector path.
+
+The pinned 22,065-file census remains **5,401 clean / 16,597 partial** with 67
+include skips; the committed `ForeachLoopStatement:array` count remains 123
+because the unavailable corpus snapshot cannot be rerun here. Differential
+coverage grows **334/328/0/6 → 335/329/0/6** with no disagreements, and grammar
+coverage remains **218/97/121**.

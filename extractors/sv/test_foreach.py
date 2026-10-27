@@ -41,6 +41,27 @@ class Foreach(unittest.TestCase):
         d = lower("module top; int a[2]; initial repeat(2) foreach(a[i]) begin automatic int b[2]='{1,2}; a[i]=b[0]; end endmodule")
         self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(d)))
 
+    def test_multidimensional_fixed_array_binds_every_dimension(self):
+        d = lower(
+            "module top; bit [3:0] a[0:1][0:2]; int sum; "
+            "initial foreach(a[i,j]) sum += a[i][j]; endmodule")
+        loops_found = loops(d)
+        self.assertEqual(len(loops_found), 1)
+        self.assertEqual([(x["left"], x["right"])
+                          for x in loops_found[0]["foreach_dimensions"]],
+                         [(0, 1), (0, 2)])
+        self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(d)))
+
+    def test_multidimensional_dynamic_read_and_write_use_flat_cells(self):
+        d = lower(
+            "module top; bit [3:0] a[0:1][0:2]; int i, j; "
+            "initial begin i=1; j=2; a[i][j]=4; $display(\"%0d\",a[i][j]); end endmodule")
+        self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(d)))
+        self.assertTrue(any(n.get("op") == "&&" for n in nodes(d)
+                            if n.get("kind") == "Binary"))
+        self.assertGreaterEqual(
+            len([n for n in nodes(d) if n.get("kind") == "Ternary"]), 2)
+
     def test_static_scalar_body_storage_is_hoisted(self):
         d = lower("module top; int a[2]; initial foreach(a[i]) begin int value=0; value++; end endmodule")
         self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(d)))

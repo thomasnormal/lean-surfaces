@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.81] — 2026-10-27
+
+Finite multidimensional unpacked integral arrays now admit `foreach` loops
+when every dimension is explicitly bound. Dynamic reads and writes expand to
+mutually exclusive conditions over the existing flat leaf cells; incomplete,
+dynamic, queue, aggregate, and effectful forms remain loud. The
+`foreach_nested` fixture supplies the `sum=21` differential receipt.
+Differential coverage is now **335 rows / 329 matches / 0 disagreements / 6
+recorded refusals**; grammar coverage remains **218 / 97 / 121**. The pinned
+22,065-file census is unchanged at **5,401 clean / 16,597 partial** with 67
+include skips.
+
 ## [0.1.80] — 2026-10-27
 
 One-dimensional fixed integral arrays now render as `%p` diagnostic arguments

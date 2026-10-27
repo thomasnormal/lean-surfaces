@@ -2741,6 +2741,15 @@
       "expect": "match"
     },
     {
+      "name": "sformatf_zero_width",
+      "file": "Examples/system-verilog/sformatf_zero_width/sformatf_zero_width.sv",
+      "module": "top",
+      "oracle": [
+        "1010|a|42|012"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "q_remove_payload",
       "file": "Examples/system-verilog/q_remove_payload/q_remove_payload.sv",
       "module": "top",

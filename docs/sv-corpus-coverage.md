@@ -25,6 +25,19 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Literal integral zero-width `$sformatf` — 2026-10-27
+
+The literal integral `$sformatf` slice now accepts `%0b/%0h/%0o/%0d` and their
+uppercase aliases. Existing minimal-width renderers produce the packed text;
+dynamic formats, other field controls, and nonintegral operands remain loud.
+`sformatf_zero_width` supplies the differential row and extractor regression.
+
+The 22,059-path snapshot remains **5,287 clean / 16,705 partial** (67 include
+skips); `ExpressionStatement:CallExpression` remains **2,746** and
+`CallExpression` remains **2,739**. Differential coverage grows
+**305/300/0/5 → 306/301/0/5** with no disagreements; grammar remains
+**218/96/122**.
+
 ## Literal integral character `$sformatf` — 2026-10-27
 
 The literal integral `$sformatf` expression slice now includes `%c` and `%C`.

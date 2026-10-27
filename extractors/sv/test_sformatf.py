@@ -82,6 +82,19 @@ class SFormatfCalls(unittest.TestCase):
         self.assertEqual(len(formatted), 1)
         self.assertEqual(formatted[0]["format"], "%C")
 
+    def test_literal_integral_zero_width_formats(self):
+        design = lower(
+            'module top; initial begin $display("%s|%s|%s|%s", '
+            '$sformatf("%0b", 8\'b00001010), '
+            '$sformatf("%0h", 8\'h0A), '
+            '$sformatf("%0d", 8\'d42), '
+            '$sformatf("%0o", 8\'h0A)); end endmodule')
+        formatted = [node for node in nodes(design)
+                     if node.get("kind") == "SFormatF"]
+        self.assertEqual(len(formatted), 4)
+        self.assertEqual({node["format"] for node in formatted},
+                         {"%0b", "%0h", "%0d", "%0o"})
+
     def test_dynamic_format_stays_loud(self):
         design = lower(
             'module top; string fmt; logic [7:0] v; '

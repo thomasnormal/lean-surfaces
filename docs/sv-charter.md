@@ -43,6 +43,21 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Literal integral zero-width `$sformatf` — 2026-10-27
+
+Literal integral `$sformatf` expressions now accept `%0b/%0h/%0o/%0d` and
+their uppercase aliases. The existing renderer strips the leading binary and
+hexadecimal zeroes, keeps the packed octal width rule, and emits minimal
+decimal text. Dynamic formats, other field controls, and nonintegral operands
+remain loud. The `sformatf_zero_width` fixture supplies the extractor
+regression, Lean receipt, and differential row.
+
+The 22,059-path corpus remains **5,287 clean / 16,705 partial** (67 include
+skips); `ExpressionStatement:CallExpression` remains **2,746** and
+`CallExpression` remains **2,739**. Differential coverage grows
+**305/300/0/5 → 306/301/0/5** with no disagreements; grammar remains
+**218/96/122**.
+
 ## Literal integral character `$sformatf` — 2026-10-27
 
 Expression-position `$sformatf` now admits `%c` and `%C` for one literal

@@ -16,9 +16,19 @@ Unknown bits, dynamic formats, string or aggregate operands, and other
 conversion forms remain loud. The `sformatf_char` fixture checks the rendered
 character in a `$display` argument.
 
+### Literal integral zero-width `$sformatf` — 2026-10-27
+
+The same literal integral slice now accepts `%0b/%0h/%0o/%0d` and their
+uppercase aliases. The existing minimal-width binary, hexadecimal, decimal,
+and packed octal renderers provide the result without introducing string
+storage. Dynamic formats, field controls beyond this zero-width form, and
+nonintegral operands remain loud; `sformatf_zero_width` checks all four
+conversions.
+
 Literal one-integral-operand `$sformatf` expressions now lower to an ASCII
-packed value for `%b`, `%h`, `%o`, `%d`, and `%c`; `%B`, `%H`, `%O`, `%D`, and
-`%C` are their uppercase aliases. The renderer retains four-state unknown summaries and
+packed value for `%b`, `%h`, `%o`, `%d`, and `%c`, plus the corresponding
+zero-width forms; `%B`, `%H`, `%O`, `%D`, and `%C` are their uppercase aliases.
+The renderer retains four-state unknown summaries and
 the operand's signedness for decimal output. Dynamic formats, multiple
 arguments, unsupported conversions, aggregate or real operands, and dynamic
 string storage remain loud.

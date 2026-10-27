@@ -8530,7 +8530,9 @@ def _convert_sformatf_call(sm, expression):
             return unsupported(sm, expression, "CallExpression:$sformatf:format")
         if format_expr.value not in ("%b", "%B", "%h", "%H",
                                      "%o", "%O", "%d", "%D",
-                                     "%c", "%C"):
+                                     "%c", "%C", "%0b", "%0B",
+                                     "%0h", "%0H", "%0o", "%0O",
+                                     "%0d", "%0D"):
             return unsupported(sm, expression, "CallExpression:$sformatf:format")
         width, _two_state, reason = type_width_2s(operand.type)
         if width is None or reason is not None or width <= 0:

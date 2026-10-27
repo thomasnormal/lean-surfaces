@@ -55,10 +55,25 @@ class PackageStorage(unittest.TestCase):
     def test_unmodelled_package_members_are_not_erased(self):
         for item, wall in [('int a[0:1];', 'Package:storage-type'),
                            ('string a;', 'Package:storage-type'),
-                           ('class C; endclass', 'Package:ClassType'),
-                           ('function int f(); return 1; endfunction', 'Package:Subroutine')]:
+                           ('class C; endclass', 'Package:ClassType')]:
             d = lower('package P; '+item+' endpackage module top; endmodule')
             self.assertIn(wall, [n.get('sv_kind') for n in nodes(d)])
+        d = lower('package P; function int f(); return 1; endfunction '
+                  'endpackage module top; initial $display("%0d", P::f()); endmodule')
+        self.assertIn('Package:Subroutine', [n.get('sv_kind') for n in nodes(d)])
+
+    def test_unreferenced_package_subroutines_are_inert(self):
+        d = lower('package P; task automatic never_called(); $display("NO"); endtask '
+                  'function int also_unused(input int x); return x + 1; endfunction '
+                  'endpackage module top; initial $display("PASS"); endmodule')
+        self.assertNotIn('Package:Subroutine', [n.get('sv_kind') for n in nodes(d)])
+        self.assertEqual([], d['others'])
+
+    def test_imported_package_call_remains_loud(self):
+        d = lower('package P; function int f(); return 1; endfunction '
+                  'endpackage module top; import P::f; '
+                  'initial $display("%0d", f()); endmodule')
+        self.assertIn('Package:Subroutine', [n.get('sv_kind') for n in nodes(d)])
 
     def test_nonintegral_parameter_stays_loud(self):
         d = lower('package P; parameter string S="value"; endpackage module top; endmodule')
@@ -141,6 +156,9 @@ class PackageStorage(unittest.TestCase):
         for name in ('identity', 'defaults', 'packed', 'timers'):
             d = lower((root/(name+'.sv')).read_text())
             self.assertFalse(any(n.get('kind') == 'Unsupported' for n in nodes(d)), name)
+        d = lower((root.parent/'package_unused_subroutines' /
+                   'package_unused_subroutines.sv').read_text())
+        self.assertFalse(any(n.get('kind') == 'Unsupported' for n in nodes(d)))
 
 
 if __name__ == '__main__':

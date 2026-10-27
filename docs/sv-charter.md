@@ -9448,3 +9448,20 @@ include skips because the external corpus checkout is unavailable; the
 committed `SubroutineSymbol:Subroutine` count remains 1,634. Differential
 coverage grows **335/329/0/6 → 336/330/0/6** with no disagreements, and grammar
 coverage remains **218/97/121**.
+
+## Unreferenced package subroutine declarations — 2026-10-27
+
+Package functions and tasks with no elaborated `CallExpression.subroutine`
+target anywhere in the compilation are now erased as inert declarations. The
+identity scan covers calls from modules, imports, other packages and recursive
+bodies, so called and recursive package routines remain at the existing
+`Package:Subroutine` boundary. No package callable frame, constant-function
+evaluator, DPI ABI or scheduler state is introduced. The
+`package_unused_subroutines` fixture and Lean receipt cover an effectful task
+and function that are never called.
+
+The pinned 22,065-file census remains **5,401 clean / 16,597 partial** with 67
+include skips because the external corpus checkout is unavailable; the
+committed `SubroutineSymbol:Subroutine` count remains 1,634. Differential
+coverage grows **336/330/0/6 → 337/331/0/6** with no disagreements, and grammar
+coverage remains **218/97/121**.

@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.83] — 2026-10-27
+
+Unreferenced package functions and tasks are now erased after the elaborated
+call graph proves that no `CallExpression.subroutine` targets them. Calls from
+modules, imports, other packages and recursive bodies retain the existing
+`Package:Subroutine` boundary. The `package_unused_subroutines` fixture and Lean
+receipt supply the `PASS` evidence. Differential coverage is now **337 rows /
+331 matches / 0 disagreements / 6 recorded refusals**; grammar coverage
+remains **218 / 97 / 121**. The pinned 22,065-file census remains **5,401 clean
+/ 16,597 partial** with 67 include skips while the external corpus checkout is
+unavailable.
+
 ## [0.1.82] — 2026-10-27
 
 Unreferenced module-scope functions and tasks are now erased as inert

@@ -3028,6 +3028,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "package_unused_subroutines",
+      "file": "Examples/system-verilog/package_unused_subroutines/package_unused_subroutines.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

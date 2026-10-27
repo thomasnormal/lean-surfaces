@@ -21807,9 +21807,10 @@ def _let_order_barriers(sm, comp, scopes):
     return barriers
 
 
-def _convert_package(sm, package):
+def _convert_package(sm, package, reference_scope=None):
     """Compile a package's integral static store, preserving all other walls."""
     decls, others = [], []
+    reference_scope = package if reference_scope is None else reference_scope
     for member in package:
         kind = str(member.kind).split(".")[-1]
         if kind in ("ExplicitImport", "WildcardImport") and member.package in _PACKAGE_SCOPES:
@@ -21833,6 +21834,15 @@ def _convert_package(sm, package):
             declaration.update(package_storage=True, source_package=package.name,
                                source_name=member.name)
             decls.append(declaration)
+        elif kind == "Subroutine":
+            # A package declaration is inert until an elaborated call names
+            # it.  Scan the complete compilation root so calls from modules,
+            # other packages, and the declaration body itself all count.  The
+            # identity check avoids conflating same-spelled routines in
+            # different scopes; unresolved or exceptional walks stay loud.
+            if not _subroutine_is_referenced(reference_scope, member):
+                continue
+            others.append(unsupported(sm, member, "Package:" + kind))
         else:
             others.append(unsupported(sm, member, "Package:" + kind))
     return decls, others
@@ -21961,7 +21971,7 @@ def _convert_design(sm, comp, packages):
     package_decls = []
     for package in packages:
         try:
-            declarations, walls = _convert_package(sm, package)
+            declarations, walls = _convert_package(sm, package, comp.getRoot())
             package_decls.extend(declarations)
             others.extend(walls)
         except Exception as exc:

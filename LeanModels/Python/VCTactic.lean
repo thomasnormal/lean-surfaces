@@ -615,6 +615,9 @@ def interpUnfolds : List Name :=
    ``absVal, ``intCastArgs, ``intCastVal, ``boolCastArgs, ``divmodArgs,
    ``importErrorHandlerMatch, ``admittedBuiltinExc, ``builtinExcCatches,
    ``strOfVal, ``strOfValH, ``reprArgs, ``formatValueH, ``ordVal, ``chrVal, ``isBuiltinName,
+   ``markUnboundLocals, ``stmtHasUnboundLocal, ``stmtHasUnboundLocalList,
+   ``hasLateRaiseNames, ``directRaiseName, ``directAssignName,
+   ``hasDirectAssignAfter, ``markUnboundLocals_noop,
    ``enumStart, ``enumFrame, ``countArgs, ``genPlan, ``genBreak, ``genContinue,
    ``moduleGlobals, ``moduleInit, ``globalsFold, ``globalsStep, ``lookupG,
    ``globalsDirty, ``Stmt.g1Dirty, ``Stmt.g1Binds, ``Stmt.g1BindsList,
@@ -3240,149 +3243,9 @@ elab "py_vcgen" "[" progs:ident,+ "]" cls:pyVcgenClause* : tactic => do
 
 /-! ## Smoke tests
 
-A straight-line function (walker closes outright), a countdown loop in
-clause form, and the same loop in delayed-clause form; then the two `for`
-shapes — a whole-list fold and a `break`-carrying cutoff loop, both SYMBOLIC
-(every int list, not one). `#py_check` pins the concrete runs (non-vacuity).
-Heavier shapes (nested loops with break, env growth, calls) are exercised by
-the validation gallery. -/
+The executable walker is exercised by `LeanModels/Python/VCTests.lean` and the
+examples gallery. Keeping those proofs out of this implementation module keeps
+importing `py_vcgen` lightweight for the README quickstart. -/
 
-section SmokeTest
-
-private def vSp : Span := ⟨0, 0, 0, 0⟩
-
-/-- `def sl(x): y = x + 4 ⏎ return x * y` -/
-private def slFn : FunctionDefn where
-  name := "sl"
-  params := #[⟨"x", vSp, Option.none⟩]
-  argsOk := true
-  body := #[
-    .assign #[.name "y" vSp]
-      (.binOp (.name "x" vSp) .add (.constant (.int 4) vSp) vSp) vSp,
-    .ret (some (.binOp (.name "x" vSp) .mult (.name "y" vSp) vSp)) vSp]
-  span := vSp
-
-/-- `def cd(n): i = n ⏎ while 0 < i: i = i - 1 ⏎ return i` -/
-private def cdFn : FunctionDefn where
-  name := "cd"
-  params := #[⟨"n", vSp, Option.none⟩]
-  argsOk := true
-  body := #[
-    .assign #[.name "i" vSp] (.name "n" vSp) vSp,
-    .whileLoop (.compare (.constant (.int 0) vSp) #[.lt] #[.name "i" vSp] vSp)
-      #[.assign #[.name "i" vSp]
-          (.binOp (.name "i" vSp) .sub (.constant (.int 1) vSp) vSp) vSp]
-      #[] vSp,
-    .ret (some (.name "i" vSp)) vSp]
-  span := vSp
-
-/-- `def sm(xs): t = 0 ⏎ for x in xs: t = t + x ⏎ return t` -/
-private def smFn : FunctionDefn where
-  name := "sm"
-  params := #[⟨"xs", vSp, Option.none⟩]
-  argsOk := true
-  body := #[
-    .assign #[.name "t" vSp] (.constant (.int 0) vSp) vSp,
-    .forStmt (.name "x" vSp) (.name "xs" vSp)
-      #[.assign #[.name "t" vSp]
-          (.binOp (.name "t" vSp) .add (.name "x" vSp) vSp) vSp]
-      #[] vSp,
-    .ret (some (.name "t" vSp)) vSp]
-  span := vSp
-
-/-- `def ct(xs, g): b = 0 ⏎ for x in xs: b = b + x ⏎ if g <= b: break ⏎ return b` -/
-private def ctFn : FunctionDefn where
-  name := "ct"
-  params := #[⟨"xs", vSp, Option.none⟩, ⟨"g", vSp, Option.none⟩]
-  argsOk := true
-  body := #[
-    .assign #[.name "b" vSp] (.constant (.int 0) vSp) vSp,
-    .forStmt (.name "x" vSp) (.name "xs" vSp)
-      #[.assign #[.name "b" vSp]
-          (.binOp (.name "b" vSp) .add (.name "x" vSp) vSp) vSp,
-        .ifStmt (.compare (.name "g" vSp) #[.ltE] #[.name "b" vSp] vSp)
-          #[.brk vSp] #[] vSp]
-      #[] vSp,
-    .ret (some (.name "b" vSp)) vSp]
-  span := vSp
-
-private def vcgenM : Module :=
-  { functions := #[slFn, cdFn, smFn, ctFn], topLevel := #[] }
-
-/-- Spec-side fold, in the loop's own argument order (the `for` analogue of
-`cd`'s countdown: the model the theorem is proved AGAINST). -/
-private def sumFrom : List Int → Int → Int
-  | [], t => t
-  | x :: rest, t => sumFrom rest (t + x)
-
-/-- Spec-side fold with a fail-soft cutoff — the `break` shape. -/
-private def cutFrom (g : Int) : List Int → Int → Int
-  | [], b => b
-  | x :: rest, b => if g ≤ b + x then b + x else cutFrom g rest (b + x)
-
-#py_check vcgenM.sl(3) = 21
-#py_check vcgenM.cd(5) = 0
-#py_check vcgenM.sm(([1, 2, 3] : List PyInt)) = 6
-#py_check vcgenM.ct(([1, 2, 3] : List PyInt), 4) = 6
-#py_check vcgenM.ct(([5, 1] : List PyInt), 4) = 5
-#py_check vcgenM.ct(([1, 2] : List PyInt), 99) = 3
-
-/-- Straight-line: the walker closes the goal with no residuals. -/
-example : CallsTo vcgenM "sl" #[.int 3] (.int 21) := by
-  py_vcgen [vcgenM, slFn, cdFn, smFn, ctFn]
-
-/-- Clause form: only arithmetic residuals remain. -/
-example : CallsTo vcgenM "cd" #[.int 5] (.int 0) := by
-  py_vcgen [vcgenM, slFn, cdFn, smFn, ctFn] (inv := fun (i : Int) => 0 ≤ i)
-                    (dec := fun (i : Int) => i.toNat)
-  all_goals omega
-
-/-- Delayed-clause (mvcgen-style) form: the `inv1`/`dec1` goals carry the
-loop variable `i` as a named context binder (`i : Int ⊢ Prop` resp.
-`⊢ Nat`) — closed with a bare proposition/measure, no lambda — then the
-same residuals. -/
-example : CallsTo vcgenM "cd" #[.int 3] (.int 0) := by
-  py_vcgen [vcgenM, slFn, cdFn, smFn, ctFn]
-  case inv1 => exact 0 ≤ i
-  case dec1 => exact i.toNat
-  all_goals omega
-
-/-- The relational entry (round-3 regression): `∃ v, f(args) ==> v ∧ Φ v`
-with a marshalled (`PyInt`) binder — the surface elaboration puts
-`ToVal.toVal v` in the result slot — walks end-to-end, through a loop. -/
-example : ∃ v : PyInt, vcgenM.cd(5) ==> v ∧ 0 ≤ v := by
-  py_vcgen [vcgenM, slFn, cdFn, smFn, ctFn] (inv := fun (i : Int) => 0 ≤ i)
-                    (dec := fun (i : Int) => i.toNat)
-  all_goals omega
-
-/-- **`for`, symbolic**: for EVERY int list, `sm(xs)` folds it. The clause is
-an `inv` ALONE — no `dec`: a `for`'s element list is structurally
-decreasing, so there is no measure to invent. Its first binder is the
-REMAINING elements. -/
-example (xs : List PyInt) : vcgenM.sm(xs) ==> sumFrom xs 0 := by
-  py_vcgen [vcgenM, slFn, cdFn, smFn, ctFn]
-    (inv := fun (rest : List Int) (t : Int) => sumFrom xs 0 = sumFrom rest t)
-  all_goals grind [sumFrom]
-
-/-- **`for` with `break`**, symbolic: the fail-soft cutoff shape (sunfish's
-`bound` loop in miniature). A `break` makes the exit fact more than "the
-invariant at the empty remainder", so an `exit` clause is REQUIRED — the
-break site must establish it with its branch fact in scope. -/
-example (xs : List PyInt) (g : PyInt) : vcgenM.ct(xs, g) ==> cutFrom g xs 0 := by
-  py_vcgen [vcgenM, slFn, cdFn, smFn, ctFn]
-    (inv := fun (rest : List Int) (b : Int) => cutFrom g xs 0 = cutFrom g rest b)
-    (exit := fun (b : Int) => cutFrom g xs 0 = b)
-  all_goals grind [cutFrom]
-
-/-- Delayed-clause form for a `for`: only `inv1` is requested (no `dec1`),
-with the remaining-element list as the leading named binder `rest`; the
-`break` adds `exit1`. -/
-example (xs : List PyInt) (g : PyInt) : vcgenM.ct(xs, g) ==> cutFrom g xs 0 := by
-  py_vcgen [vcgenM, slFn, cdFn, smFn, ctFn]
-  case inv1 => exact cutFrom g xs 0 = cutFrom g rest b
-  case exit1 => exact cutFrom g xs 0 = b
-  all_goals grind [cutFrom]
-
-end SmokeTest
 
 end LeanModels.Python

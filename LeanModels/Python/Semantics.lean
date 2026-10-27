@@ -6754,25 +6754,29 @@ def annNoValueName (text : String) : Option String :=
   | [] => Option.none
 
 mutual
-  partial def stmtUnboundLocalNames : Stmt → List String
+  /-- Names that make a function-frame binding local before the first
+  runtime statement.  This is deliberately a structural walker (rather than
+  a `partial def` over `Array.map`): the kernel can unfold it on literal
+  bodies, which keeps proof-frame normalization cheap as well as making the
+  runtime census exact. -/
+  def stmtUnboundLocalNames : Stmt → List String
     | .unsupported "AnnAssign:no-value" text _ =>
         (annNoValueName text).toList
     | .delStmt names _ => names.toList
     | .whileLoop _ body orelse _ | .ifStmt _ body orelse _ =>
-        (body.toList.map stmtUnboundLocalNames).flatten
-          ++ (orelse.toList.map stmtUnboundLocalNames).flatten
+        stmtUnboundLocalNamesList body.toList
+          ++ stmtUnboundLocalNamesList orelse.toList
     | .forStmt _ _ body orelse _ =>
-        (body.toList.map stmtUnboundLocalNames).flatten
-          ++ (orelse.toList.map stmtUnboundLocalNames).flatten
+        stmtUnboundLocalNamesList body.toList
+          ++ stmtUnboundLocalNamesList orelse.toList
     | .tryStmt body _ handler _ _ =>
-        (body.toList.map stmtUnboundLocalNames).flatten
-          ++ (handler.toList.map stmtUnboundLocalNames).flatten
-    | .withStmt _ body _ _ =>
-        (body.toList.map stmtUnboundLocalNames).flatten
+        stmtUnboundLocalNamesList body.toList
+          ++ stmtUnboundLocalNamesList handler.toList
+    | .withStmt _ body _ _ => stmtUnboundLocalNamesList body.toList
     | .defStmt name .. => [name]
     | _ => []
 
-  partial def stmtUnboundLocalNamesList : List Stmt → List String
+  def stmtUnboundLocalNamesList : List Stmt → List String
     | [] => []
     | s :: ss => stmtUnboundLocalNames s ++ stmtUnboundLocalNamesList ss
 end
@@ -6801,9 +6805,47 @@ def lateRaiseNames : List Stmt → List String
           if hasDirectAssignAfter id rest then id :: tail else tail
       | none => tail
 
+mutual
+  /-- Cheap short-circuit census used by `markUnboundLocals`.  Keeping the
+  no-marker case separate is important to the proof layer: nearly every
+  admitted function has an ordinary body, and its call frame should reduce
+  directly to the parameter environment. -/
+  def stmtHasUnboundLocal : Stmt → Bool
+    | .unsupported "AnnAssign:no-value" _ _ => true
+    | .delStmt names _ => !names.isEmpty
+    | .whileLoop _ body orelse _ | .ifStmt _ body orelse _ =>
+        stmtHasUnboundLocalList body.toList || stmtHasUnboundLocalList orelse.toList
+    | .forStmt _ _ body orelse _ =>
+        stmtHasUnboundLocalList body.toList || stmtHasUnboundLocalList orelse.toList
+    | .tryStmt body _ handler _ _ =>
+        stmtHasUnboundLocalList body.toList || stmtHasUnboundLocalList handler.toList
+    | .withStmt _ body _ _ => stmtHasUnboundLocalList body.toList
+    | .defStmt .. => true
+    | _ => false
+
+  def stmtHasUnboundLocalList : List Stmt → Bool
+    | [] => false
+    | s :: ss => stmtHasUnboundLocal s || stmtHasUnboundLocalList ss
+end
+
+def hasLateRaiseNames : List Stmt → Bool
+  | [] => false
+  | stmt :: rest =>
+      match directRaiseName stmt with
+      | some id => hasDirectAssignAfter id rest || hasLateRaiseNames rest
+      | none => hasLateRaiseNames rest
+
 def markUnboundLocals (body : List Stmt) (env : Env) : Env :=
-  (stmtUnboundLocalNamesList body ++ lateRaiseNames body).foldl
-    (fun env id => Env.set env (unboundLocalMarker id) RVal.none) env
+  if stmtHasUnboundLocalList body || hasLateRaiseNames body then
+    (stmtUnboundLocalNamesList body ++ lateRaiseNames body).foldl
+      (fun env id => Env.set env (unboundLocalMarker id) RVal.none) env
+  else env
+
+theorem markUnboundLocals_noop {body : List Stmt} {env : Env}
+    (hbody : stmtHasUnboundLocalList body = false)
+    (hraise : hasLateRaiseNames body = false) :
+    markUnboundLocals body env = env := by
+  simp [markUnboundLocals, hbody, hraise]
 
 /-- Extract names from the extractor's retained `Unsupported Global` text.
 The declaration has no runtime action; its names are the compile-time scope

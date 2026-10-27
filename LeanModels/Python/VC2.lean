@@ -508,7 +508,7 @@ theorem EvalsTo.call {m : Module} {st : FrameState} {fname : String}
     (hnt : findNamedTuple m fname = Option.none := by rfl)
     (hm : m.heapFree = true := by rfl)
     (hv : Val.listFree v = true := by rfl)
-    (hstar : fname ≠ starArgBuiltinName := by rfl) :
+    (hstar : fname ≠ starArgBuiltinName := by decide) :
     EvalsTo m st (.call (.name fname sp) argEs #[] Option.none sp') (RVal.thaw v) := by
   obtain ⟨w, locals⟩ := st
   simp only at hworld hlocal hargs
@@ -555,7 +555,7 @@ theorem PyStmtTriple.call {m : Module} {P : FrameState → Prop} {Q : PyPost}
     (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl)
     (hnt : findNamedTuple m fname = Option.none := by rfl)
     (hm : m.heapFree = true := by rfl)
-    (hstar : fname ≠ starArgBuiltinName := by rfl) :
+    (hstar : fname ≠ starArgBuiltinName := by decide) :
     PyStmtTriple m P
       (.assign #[.name x spx] (.call (.name fname spf) argEs #[] Option.none spc) spa)
       Q :=
@@ -579,7 +579,7 @@ theorem PyTriple.call {m : Module} {P R : FrameState → Prop} {Q : PyPost}
     (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl)
     (hnt : findNamedTuple m fname = Option.none := by rfl)
     (hm : m.heapFree = true := by rfl)
-    (hstar : fname ≠ starArgBuiltinName := by rfl) :
+    (hstar : fname ≠ starArgBuiltinName := by decide) :
     PyTriple m P
       (.assign #[.name x spx] (.call (.name fname spf) argEs #[] Option.none spc) spa
         :: rest) Q :=

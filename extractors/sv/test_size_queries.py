@@ -250,10 +250,23 @@ class SizeQueries(unittest.TestCase):
         self.assertTrue(any(node.get("sv_kind") == "CallExpression"
                             for node in nodes(design)))
 
-    def test_initialized_queue_size_stays_loud(self):
+    def test_literal_initialized_queue_size_is_exact(self):
         design = lower(
-            'module top; int q[$] = {1}; initial $display("%0d", q.size()); endmodule')
-        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+            'module top; int q[$] = {1, 2, 3}; '
+            'initial $display("%0d", q.size()); endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("queue_literal_size_query")]
+        self.assertEqual([(node["width"], int(node["bits"], 2))
+                          for node in values], [(32, 3)])
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_dynamic_queue_initializer_size_stays_loud(self):
+        design = lower(
+            'module top; int value; int q[$] = {value}; '
+            'initial $display("%0d", q.size()); endmodule')
+        self.assertTrue(any(node.get("sv_kind") in (
+            "VariableSymbol:2state", "CallExpression")
                             for node in nodes(design)))
 
     def test_uninitialized_string_len_is_zero(self):

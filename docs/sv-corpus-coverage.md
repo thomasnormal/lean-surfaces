@@ -25,6 +25,20 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Literal queue initializer `.size()` — 2026-10-27
+
+A 2-state queue initialized only by scalar literals now answers `.size()` with
+its exact element count. Queue mutations, aliases, content reads, dynamic
+initializers, and value-position aggregate operations remain loud because the
+flat self-check state still carries no queue object. `queue_literal_size`
+supplies the differential row and Lean receipt.
+
+The 22,059-path snapshot remains **5,301 clean / 16,691 partial** (67 include
+skips); `VariableSymbol:2state` falls **2,223 → 2,118**, while
+`ExpressionStatement:CallExpression` remains **2,739**. Differential coverage
+grows **315/309/0/6 → 316/310/0/6** with no disagreements; grammar remains
+**218/97/121**.
+
 ## Literal ASCII string `$sformatf` — 2026-10-27
 
 An ASCII string literal is now admitted as the sole `%s`/`%S` operand of the

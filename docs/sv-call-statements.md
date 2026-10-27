@@ -348,3 +348,12 @@ buffer, which is outside the `PASS`/`FAIL` transcript; the argumented task and
 all other port-dump operations remain loud until that external stream is
 modeled. The `dumpportsflush_statement` fixture supplies the differential row
 and Lean receipt.
+
+## Literal queue initializer `.size()` — 2026-10-27
+
+A 2-state queue initialized by a scalar-literal concatenation or assignment
+pattern now answers `.size()` with the exact element count. The queue object
+itself remains outside the flat self-check state, so pushes, pops, deletes,
+aliases, content reads, dynamic initializers, and value-position aggregate
+operations remain loud. The `queue_literal_size` fixture supplies the
+differential row and Lean receipt.

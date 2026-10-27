@@ -43,6 +43,21 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Literal queue initializer `.size()` — 2026-10-27
+
+A 2-state queue initialized only by scalar literals now answers `.size()`
+with its exact compile-time element count. The declaration and query carry no
+queue object into the flat self-check state; pushes, pops, deletes, aliases,
+content reads, dynamic initializers, and value-position aggregate operations
+remain loud. `queue_literal_size` supplies the differential witness and Lean
+receipt.
+
+The 22,059-path census remains **5,301 clean / 16,691 partial** (67 include
+skips); `VariableSymbol:2state` falls **2,223 → 2,118**, while
+`ExpressionStatement:CallExpression` remains **2,739**. Differential coverage
+grows **315/309/0/6 → 316/310/0/6** with no disagreements; grammar remains
+**218/97/121**.
+
 ## Literal `unique case` subset — 2026-10-27
 
 The surface now admits `unique case` when each pattern is a direct integral

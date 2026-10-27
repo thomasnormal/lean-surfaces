@@ -639,10 +639,10 @@ def is_inert_2state_queue_decl(symbol):
     """Whether a 2-state queue declaration is only metadata.
 
     Queue reads, writes, methods, and aggregate values remain outside the
-    self-check state.  An uninitialized queue, or one initialized by the
-    empty queue pattern/concatenation, therefore has no represented value;
-    nonempty and effectful initializers remain a boundary because they create
-    a value that could matter.
+    self-check state.  An uninitialized queue, or one initialized by a
+    literal-only pattern/concatenation, therefore needs no represented value
+    when the only observation is a size query; dynamic and effectful
+    initializers remain a boundary.
     """
     if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
         return False
@@ -653,12 +653,7 @@ def is_inert_2state_queue_decl(symbol):
         initializer = getattr(symbol, "initializer", None)
         if initializer is None:
             return True
-        kind = type(initializer).__name__
-        if kind == "ConcatenationExpression":
-            return not list(getattr(initializer, "operands", ()))
-        if kind == "SimpleAssignmentPatternExpression":
-            return not list(getattr(initializer, "elements", ()))
-        return False
+        return _queue_literal_initializer_size(initializer) is not None
     except Exception:
         return False
 
@@ -9639,17 +9634,36 @@ def _string_literal_write(expr):
 
 def _empty_queue_literal(expr):
     """Whether *expr* is the zero-item queue literal ``{}``."""
+    return _queue_literal_initializer_size(expr) == 0
+
+
+def _queue_literal_initializer_size(expr):
+    """Return the element count of a pure literal queue initializer.
+
+    Queue storage is outside the flat state, but a literal-only initializer
+    fixes the result of ``size()`` without reading that storage.  Keep the
+    recognizer limited to scalar literals in the two frontend shapes used for
+    queue initializers; dynamic values and nested aggregate expressions stay
+    loud.
+    """
     node = expr
     while type(node).__name__ == "ConversionExpression":
         node = getattr(node, "operand", None)
         if node is None:
-            return False
-    if type(node).__name__ != "ConcatenationExpression":
-        return False
+            return None
+    kind = type(node).__name__
+    if kind == "ConcatenationExpression":
+        elements = list(getattr(node, "operands", ()))
+    elif kind == "SimpleAssignmentPatternExpression":
+        elements = list(getattr(node, "elements", ()))
+    else:
+        return None
     try:
-        return len(list(node.operands)) == 0
+        if not all(_queue_literal_element(element) for element in elements):
+            return None
+        return len(elements)
     except Exception:
-        return False
+        return None
 
 
 def _queue_literal_element(expr):
@@ -9757,10 +9771,16 @@ def _zero_size_method(expression):
         if not valid:
             return False
         initializer = getattr(symbol, "initializer", None)
-        if (initializer is not None
-                and not (canonical == "QueueType"
-                         and _empty_queue_literal(initializer))):
+        if canonical == "QueueType":
+            queue_size = (0 if initializer is None
+                          else _queue_literal_initializer_size(initializer))
+            if queue_size is None:
+                return False
+        elif initializer is not None:
+            queue_size = 0
             return False
+        else:
+            queue_size = 0
         name = getattr(symbol, "name", "")
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
         code_source = _sv_code_source(source)
@@ -9774,6 +9794,8 @@ def _zero_size_method(expression):
             if tail.startswith(suffix):
                 return True
             if canonical in ("QueueType", "DynamicArrayType"):
+                if canonical == "QueueType" and queue_size:
+                    return False
                 if re.match(r"\.delete\s*\(\s*\)", tail):
                     return True
                 if canonical == "QueueType" and re.match(
@@ -14373,13 +14395,24 @@ def _convert_string_literal_len_method(sm, expression):
 def _convert_zero_size_method(sm, expression):
     if not _zero_size_method(expression):
         return unsupported(sm, expression, "CallExpression:size")
+    receiver = expression.arguments[0]
+    canonical = type(receiver.type.canonicalType).__name__
+    initializer = getattr(getattr(receiver, "symbol", None),
+                          "initializer", None)
+    size = (0 if canonical != "QueueType" or initializer is None
+            else _queue_literal_initializer_size(initializer))
+    if size is None:
+        return unsupported(sm, expression, "CallExpression:size")
+    marker = ("queue_literal_size_query" if canonical == "QueueType" and size
+              else ("zero_size_query" if expression.subroutineName == "size"
+                    else "zero_string_length_query"))
     return {
         "kind": "Literal",
         "span": node_span(sm, expression),
         "width": expression.type.bitWidth,
-        "bits": "0" * expression.type.bitWidth,
-        ("zero_size_query" if expression.subroutineName == "size"
-         else "zero_string_length_query"): True,
+        "bits": format(size & ((1 << expression.type.bitWidth) - 1),
+                        f"0{expression.type.bitWidth}b"),
+        marker: True,
     }
 
 

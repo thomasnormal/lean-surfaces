@@ -1,4 +1,4 @@
-"""Declaration-only 2-state queues are inert; values remain loud."""
+"""Declaration-only literal queues are inert; dynamic values remain loud."""
 
 import unittest
 
@@ -35,11 +35,13 @@ class QueueDeclarations(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Var" and
                              node.get("name") == "values" for node in nodes(design)))
 
-    def test_initialized_queue_stays_loud(self):
+    def test_literal_initialized_queue_is_metadata(self):
         design = lower(
             "module top; bit values[$] = '{1, 2}; initial $finish; endmodule")
-        self.assertIn("VariableSymbol:2state",
-                      [node.get("sv_kind") for node in nodes(design)])
+        self.assertFalse(any(node.get("sv_kind") == "VariableSymbol:2state"
+                             for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Var" and
+                             node.get("name") == "values" for node in nodes(design)))
 
     def test_empty_queue_initializers_are_inert(self):
         for initializer in ("{}", "'{}"):

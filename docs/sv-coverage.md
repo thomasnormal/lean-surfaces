@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 309 | 304 | 0 | 5 | sv-tests-2 declarations |
+| 310 | 305 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -217,6 +217,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `dynamic_array_fixed_subarrays` | `Examples/system-verilog/dynamic_array_fixed_subarrays/dynamic_array_fixed_subarrays.sv` | match | **MATCH** | `ok` | MATCH |
 | `array_ordering_literals` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | match | **MATCH** | `ok` | MATCH |
 | `struct_array_ordering_with_field` | `Examples/system-verilog/struct_array_ordering_with_field/struct_array_ordering_with_field.sv` | match | **MATCH** | `ok` | MATCH |
+| `struct_array_ordering_with_tuple` | `Examples/system-verilog/struct_array_ordering_with_tuple/struct_array_ordering_with_tuple.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_string_cells` | `Examples/system-verilog/assoc_string_cells/assoc_string_cells.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_concat_subarrays` | `Examples/system-verilog/dynamic_array_concat_subarrays/dynamic_array_concat_subarrays.sv` | match | **MATCH** | `ok` | MATCH |
 | `mailbox_typed_fifo` | `Examples/system-verilog/mailbox_typed_fifo/mailbox_typed_fifo.sv` | match | **MATCH** | `ok` | MATCH |
@@ -559,12 +560,12 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22059 | 5292 | 16700 | 67 |
+| 22059 | 5293 | 16699 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2852 |
-| `ExpressionStatement:CallExpression` | 2741 |
+| `ExpressionStatement:CallExpression` | 2740 |
 | `CallExpression` | 2739 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2223 |

@@ -9051,7 +9051,7 @@ One-dimensional fixed unpacked arrays of shallow structs now lower `sort` and
 `rsort` calls with a direct scalar `item.field` key. The extractor replays
 source-ordered blocking literal pattern or field writes, orders complete
 records by the declared integral field, and emits flattened writes for every
-field, including repeated ordering calls. Tuple, computed, dynamic, queue,
+field, including repeated ordering calls. Computed, dynamic, queue,
 nested-aggregate, unknown, aliased, timed, and value-position forms remain
 loud because the self-check state has no general aggregate object or ordering
 oracle. The `struct_array_ordering_with_field` fixture and Lean receipt cover
@@ -9062,4 +9062,21 @@ On the refreshed **22,059-path** sv-tests-2 census, clean files move
 **5,287 → 5,292** and partial files **16,705 → 16,700** (67 include skips).
 The leading `ExpressionStatement:CallExpression` blocker falls
 **2,746 → 2,741**. Differential coverage grows **308/303/0/5 → 309/304/0/5**
+with no disagreements; grammar coverage remains **218/96/122**.
+
+## Fixed struct-array `sort` with packed tuple keys — 2026-10-27
+
+The same one-dimensional fixed unpacked struct-array lowering now admits a
+direct packed concatenation key with an explicit iterator, such as
+`values.sort(x) with ({x.blue, x.green})`. Each field's known raw bits forms
+one lexicographic component of the packed key, and complete records are
+replayed in source order before flattened writes are emitted. Computed,
+duplicate, dynamic, queue, nested-aggregate, unknown, aliased, timed, and
+value-position keys remain loud. The `struct_array_ordering_with_tuple`
+fixture and Lean receipt cover the ascending two-field order.
+
+On the refreshed **22,059-path** sv-tests-2 census, clean files move
+**5,292 → 5,293** and partial files **16,700 → 16,699** (67 include skips).
+The leading `ExpressionStatement:CallExpression` blocker falls
+**2,741 → 2,740**. Differential coverage grows **309/304/0/5 → 310/305/0/5**
 with no disagreements; grammar coverage remains **218/96/122**.

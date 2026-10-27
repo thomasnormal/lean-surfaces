@@ -275,21 +275,47 @@ class ArrayReverse(unittest.TestCase):
             [["00000101", "00001001", "00000011", "00000100",
               "00000001", "00000111"]])
 
-    def test_struct_array_sort_with_computed_or_tuple_key_stays_loud(self):
-        for key in ("item.red + 1", "{item.red, item.green}"):
-            design = lower(
-                f"""module top;
-                   typedef struct {{ byte red; byte green; }} color_t;
-                   color_t values[2];
-                   initial begin
-                     values[0] = '{{red: 1, green: 2}};
-                     values[1] = '{{red: 2, green: 1}};
-                     values.sort with ({key});
-                   end
-                   endmodule""")
-            self.assertTrue(any(node.get("sv_kind") ==
-                                "ExpressionStatement:CallExpression"
-                                for node in nodes(design)))
+    def test_struct_array_sort_with_computed_key_stays_loud(self):
+        design = lower(
+            """module top;
+               typedef struct { byte red; byte green; } color_t;
+               color_t values[2];
+               initial begin
+                 values[0] = '{red: 1, green: 2};
+                 values[1] = '{red: 2, green: 1};
+                 values.sort with (item.red + 1);
+               end
+               endmodule""")
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
+    def test_struct_array_sort_with_tuple_key_orders_lexicographically(self):
+        design = lower(
+            """module top;
+               typedef struct { byte red; byte green; } color_t;
+               color_t values[4];
+               initial begin
+                 values[0] = '{red: 1, green: 5};
+                 values[1] = '{red: 2, green: 3};
+                 values[2] = '{red: 3, green: 4};
+                 values[3] = '{red: 4, green: 1};
+                 values.sort(x) with ({x.green, x.red});
+               end
+               endmodule""")
+        lowered = [node for node in nodes(design)
+                   if node.get("fixed_struct_array_ordering_with_lowered")]
+        self.assertEqual([node["fixed_struct_array_ordering_with_lowered"]
+                          for node in lowered], ["sort"])
+        def bits(value):
+            while value.get("kind") == "Squash2":
+                value = value["operand"]
+            return value.get("bits")
+        self.assertEqual(
+            [[bits(write["value"]) for write in node["stmts"]]
+             for node in lowered],
+            [["00000100", "00000001", "00000010", "00000011",
+              "00000011", "00000100", "00000001", "00000101"]])
 
     def test_struct_array_repeated_order_requires_same_with_key(self):
         design = lower(

@@ -12801,9 +12801,10 @@ def _fixed_struct_array_ordering_with(sm, expression):
             field_info[field.name] = (width, two_state, field.type)
 
         # The with-expression is represented in the method syntax rather than
-        # as an argument of the CallExpression.  Require the exact direct
-        # ``item.<field>`` syntax and the corresponding iterator member node;
-        # this rejects tuples, arithmetic, calls, and conditional keys.
+        # as an argument of the CallExpression.  Require direct member syntax
+        # (or a packed concatenation of direct members) and the corresponding
+        # iterator member nodes; arithmetic, calls, and conditional keys stay
+        # loud.
         syntax = getattr(expression, "syntax", None)
         if syntax is None or getattr(syntax, "with_", None) is None:
             return None
@@ -12811,15 +12812,46 @@ def _fixed_struct_array_ordering_with(sm, expression):
         if args_syntax is None:
             return None
         syntax_data = json.loads(args_syntax.to_json())
+        full_syntax_data = json.loads(syntax.to_json())
         expressions = syntax_data.get("expressions", [])
         if len(expressions) != 1:
             return None
         key_syntax = expressions[0]
-        if key_syntax.get("kind") != "ScopedName":
+        method_data = full_syntax_data.get("method", {})
+        parameters = method_data.get("arguments", {}).get("parameters", [])
+        iterator_name = "item"
+        if parameters:
+            if len(parameters) != 1:
+                return None
+            iterator_expr = parameters[0].get("expr", {})
+            iterator_expr = iterator_expr.get("expr", iterator_expr)
+            iterator_expr = iterator_expr.get("expr", iterator_expr)
+            if (iterator_expr.get("kind") != "IdentifierName"
+                    or not iterator_expr.get("identifier", {}).get("text")):
+                return None
+            iterator_name = iterator_expr["identifier"]["text"]
+
+        if key_syntax.get("kind") == "ScopedName":
+            key_parts = [key_syntax]
+        elif key_syntax.get("kind") == "ConcatenationExpression":
+            raw_parts = key_syntax.get("expressions", [])
+            if (not raw_parts or len(raw_parts) % 2 == 0
+                    or any(part.get("kind") != "ScopedName"
+                           for part in raw_parts[::2])
+                    or any(part.get("kind") != "Comma"
+                           for part in raw_parts[1::2])):
+                return None
+            key_parts = raw_parts[::2]
+        else:
             return None
-        left = key_syntax.get("left", {}).get("identifier", {}).get("text")
-        field_name = key_syntax.get("right", {}).get("identifier", {}).get("text")
-        if left != "item" or field_name not in field_info:
+        key_fields = []
+        for key_part in key_parts:
+            left = key_part.get("left", {}).get("identifier", {}).get("text")
+            field_name = key_part.get("right", {}).get("identifier", {}).get("text")
+            if left != iterator_name or field_name not in field_info:
+                return None
+            key_fields.append(field_name)
+        if not key_fields or len(set(key_fields)) != len(key_fields):
             return None
         start = syntax.sourceRange.start.offset
         end = syntax.sourceRange.end.offset
@@ -12843,15 +12875,41 @@ def _fixed_struct_array_ordering_with(sm, expression):
                     and type(value).__name__ == "NamedValueExpression"
                     and str(getattr(iterator, "kind", "")).split(".")[-1]
                     == "Iterator"
-                    and getattr(node.member, "name", None) == field_name):
+                    and getattr(node.member, "name", None) in key_fields):
                 key_nodes.append(node)
 
         instance.visit(inspect_key)
-        if len(key_nodes) != 1:
+        if len(key_nodes) != len(key_fields):
             return None
 
+        def key_signature(data):
+            args = data.get("args", {})
+            exprs = args.get("expressions", [])
+            if len(exprs) != 1:
+                return None
+            expr = exprs[0]
+            if expr.get("kind") == "ScopedName":
+                parts = [expr]
+            elif expr.get("kind") == "ConcatenationExpression":
+                raw = expr.get("expressions", [])
+                if (not raw or len(raw) % 2 == 0
+                        or any(part.get("kind") != "ScopedName"
+                               for part in raw[::2])
+                        or any(part.get("kind") != "Comma"
+                               for part in raw[1::2])):
+                    return None
+                parts = raw[::2]
+            else:
+                return None
+            return [
+                (part.get("left", {}).get("identifier", {}).get("text"),
+                 part.get("right", {}).get("identifier", {}).get("text"))
+                for part in parts]
+
+        current_signature = [(iterator_name, name) for name in key_fields]
+
         def compatible_ordering_call(node):
-            """Accept only a preceding call with this exact one-field key."""
+            """Accept only a preceding call with this exact key."""
             previous_syntax = getattr(node, "syntax", None)
             if (previous_syntax is None
                     or getattr(previous_syntax, "with_", None) is None):
@@ -12861,14 +12919,7 @@ def _fixed_struct_array_ordering_with(sm, expression):
                 return False
             try:
                 previous_data = json.loads(previous_args.to_json())
-                previous_exprs = previous_data.get("expressions", [])
-                previous_key = previous_exprs[0] if len(previous_exprs) == 1 else {}
-                return (
-                    previous_key.get("kind") == "ScopedName"
-                    and previous_key.get("left", {}).get("identifier", {}).get("text")
-                        == "item"
-                    and previous_key.get("right", {}).get("identifier", {}).get("text")
-                        == field_name)
+                return key_signature(previous_data) == current_signature
             except Exception:
                 return False
 
@@ -13008,15 +13059,29 @@ def _fixed_struct_array_ordering_with(sm, expression):
         # when the last value remains statically known.
         state = {}
 
+        def state_key(position):
+            key = []
+            for key_field in key_fields:
+                key_value = state[cell_names[(position, key_field)]]
+                # A one-field key retains the declared signed ordering of the
+                # existing scalar lowering.  A packed concatenation is
+                # unsigned, so each component uses its raw bit-vector value;
+                # tuple comparison then matches concatenation ordering.
+                signed = (len(key_fields) == 1
+                          and bool(field_info[key_field][2].isSigned))
+                key_part = _literal_array_order_key(
+                    key_value, field_info[key_field][0], signed)
+                if key_part is None:
+                    return None
+                key.append(key_part)
+            return tuple(key)
+
         def reorder(order_name):
             if set(state) != set(cell_names.values()):
                 return False
             keyed = []
             for position in positions:
-                key_value = state[cell_names[(position, field_name)]]
-                key = _literal_array_order_key(
-                    key_value, field_info[field_name][0],
-                    bool(field_info[field_name][2].isSigned))
+                key = state_key(position)
                 if key is None:
                     return False
                 record = [state[cell_names[(position, field.name)]]
@@ -13039,12 +13104,9 @@ def _fixed_struct_array_ordering_with(sm, expression):
                 state[name] = value
         if set(state) != set(cell_names.values()):
             return None
-        key_width, key_two_state, key_type = field_info[field_name]
         keyed = []
         for position in positions:
-            key_value = state[cell_names[(position, field_name)]]
-            key = _literal_array_order_key(key_value, key_width,
-                                           bool(key_type.isSigned))
+            key = state_key(position)
             if key is None:
                 return None
             record = [state[cell_names[(position, field.name)]] for field in fields]

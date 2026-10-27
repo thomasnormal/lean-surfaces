@@ -3906,12 +3906,13 @@ def _dist_uniform_fixed_array_assignment(sm, expr):
 
 
 def _dist_uniform_scalar_assignment(sm, expr):
-    """Lower a bounded ``$dist_uniform`` call into one scalar cell.
+    """Lower a literal nonnegative ``$dist_uniform`` call into one cell.
 
     The inout seed and the returned value are represented by the same
     ``DistUniformAssign`` statement used for fixed-array cells.  Keep this
     first scalar rung deliberately narrow: a direct 32-bit variable seed,
-    literal bounds ``0`` and ``1000``, and a direct 32-bit integral target.
+    nonnegative literal bounds in the signed 32-bit range, and a direct
+    32-bit integral target.
     """
     try:
         if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
@@ -3956,7 +3957,8 @@ def _dist_uniform_scalar_assignment(sm, expr):
             return None
         low = _literal_integral_value(args[1])
         high = _literal_integral_value(args[2])
-        if low != 0 or high != 1000:
+        if (low is None or high is None or low < 0 or high < low
+                or high > (1 << 31) - 1):
             return None
         return {
             "kind": "DistUniformAssign",

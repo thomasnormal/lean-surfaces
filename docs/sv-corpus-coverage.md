@@ -61,6 +61,20 @@ partial** (67 include skips); `CallExpression` falls **2,768 → 2,764** while
 by one matching row; grammar coverage is regenerated with the current witness
 set.
 
+## Nonnegative literal `$dist_uniform` scalar bounds — 2026-10-27
+
+The direct scalar assignment rung now accepts any nonnegative literal
+`$dist_uniform` start/end pair up to the signed 32-bit maximum. The existing
+explicit recurrence supplies the inclusive result and seed update. Negative or
+computed bounds, nonblocking or timed forms, non-32-bit targets, and
+value-position calls remain loud. `dist_uniform_literal_bounds` supplies the
+source-bound differential row; ten additional chapter-20 files become clean.
+
+The 22,059-path census moves **5,258 → 5,268 clean** and **16,734 → 16,724
+partial** (67 include skips); `CallExpression` falls **2,764 → 2,754** while
+`AssignmentExpression:target` remains **2,852**. Differential coverage grows
+**296/291/0/5 → 297/292/0/5**; grammar moves **218/95/123 → 218/96/122**.
+
 ## Queue-removal status — 2026-10-27
 
 Undefined literal queue IDs now lower `$q_remove` to status 2. A valid literal

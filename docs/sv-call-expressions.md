@@ -52,6 +52,16 @@ nonblocking or timed forms, other bounds, computed seeds, non-32-bit targets,
 and value-position random calls remain loud. The `dist_uniform_scalar` fixture
 and the four chapter-20 repeatability/range witnesses cover this slice.
 
+## Nonnegative literal `$dist_uniform` scalar bounds — 2026-10-27
+
+The scalar assignment slice now accepts any nonnegative literal start/end pair
+within the signed 32-bit range, preserving the same inclusive scaling and
+inout-seed update. Negative or computed bounds, nonblocking or timed forms,
+non-32-bit targets, and value-position calls remain loud. The
+`dist_uniform_literal_bounds` fixture covers the generalized range; ten more
+chapter-20 `$dist_uniform` files become clean while the negative-range witness
+stays outside this rung.
+
 ## Refusal boundary
 
 The residual expression calls need state or effects absent from that surface:

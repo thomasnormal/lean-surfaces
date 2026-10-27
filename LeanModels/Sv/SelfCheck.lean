@@ -374,10 +374,10 @@ def repeatCount (v : LVec) (signed : Bool) : Res Nat :=
   else
     .ok (converted.toNat?.getD 0)
 
-/-- The bounded 32-bit seed step used by the first admitted random system
-function. The self-check surface admits only `$dist_uniform(seed, 0, 1000)`;
-keeping the recurrence here makes the seed mutation and returned value one
-auditable operation instead of pretending a random call is a pure literal. -/
+/-- The bounded 32-bit seed step used by the admitted literal random-system
+function slice. Keeping the recurrence here makes the seed mutation and
+returned value one auditable operation instead of pretending a random call is
+a pure literal. -/
 def distUniformValues (seed : LVec) (low high : Nat) : Option (LVec × LVec) :=
   if seed.width != 32 || low > high then
     none
@@ -1308,8 +1308,8 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
   | "DistUniformAssign" =>
       let low ← getNatF j "low"
       let high ← getNatF j "high"
-      if low != 0 || high != 1000 then
-        throw "dist_uniform assignment bounds are outside the admitted 0..1000 slice"
+      if high < low || high > 2147483647 then
+        throw "dist_uniform assignment bounds are outside the admitted nonnegative 32-bit slice"
       return .distUniformAssign (← getStrF j "target") (← getStrF j "seed")
         low high (← getBoolF j "two_state")
   | "Scanf" =>

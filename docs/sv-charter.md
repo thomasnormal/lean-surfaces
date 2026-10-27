@@ -80,6 +80,20 @@ partial** (67 include skips); `CallExpression` falls **2,768 → 2,764** while
 one matching row; grammar coverage is regenerated with the current witness
 set.
 
+## Nonnegative literal `$dist_uniform` scalar bounds — 2026-10-27
+
+IEEE 1800-2023 §20.14.2's inclusive start/end contract now covers any
+nonnegative literal pair within the signed 32-bit range for direct blocking
+assignments. The explicit recurrence retains the inout seed update; negative
+or computed bounds, nonblocking or timed forms, non-32-bit targets, and
+value-position calls remain loud. `dist_uniform_literal_bounds` supplies the
+fixture and ten additional chapter-20 witnesses become clean.
+
+The 22,059-path census moves **5,258 → 5,268 clean** and **16,734 → 16,724
+partial** (67 include skips); `CallExpression` falls **2,764 → 2,754** while
+`AssignmentExpression:target` remains **2,852**. Differential coverage grows
+**296/291/0/5 → 297/292/0/5**; grammar moves **218/95/123 → 218/96/122**.
+
 ## Queue-removal status — 2026-10-27
 
 IEEE 1800-2023 §20.15.6 gives scalar statuses for queue removal without

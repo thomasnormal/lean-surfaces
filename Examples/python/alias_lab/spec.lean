@@ -64,6 +64,7 @@ load_program alias_lab from "Examples/python/alias_lab/alias_lab.json"
 #py_check alias_lab.max_alias(Val.tuple #[.int 3, .int 1]) = 3
 #py_check alias_lab.min_alias(Val.tuple #[.int 3, .int 1]) = 1
 #py_check alias_lab.abs_alias(-7) = 7
+#py_check alias_lab.int_alias("12") = 12
 
 /-! ### the alias is NOT a value (the refusal direction, unchanged) -/
 

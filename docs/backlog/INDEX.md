@@ -16,11 +16,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**589 entries across 17 lanes.** Regenerate with
+**590 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-10-27-pycomplete-171` |  | admit the immediate local `int` alias | python-completeness |
 | `2026-10-27-pycomplete-170` |  | admit the immediate local `abs` alias | python-completeness |
 | `2026-10-27-pycomplete-169` |  | admit the immediate local `min` alias | python-completeness |
 | `2026-10-27-pycomplete-168` |  | admit the immediate local `max` alias | python-completeness |

@@ -6009,3 +6009,23 @@ and general first-class callable forms remain loud.
 DECIDED: admit only the immediate local `abs` alias call; retain loud failure
 for returned or general first-class callable values. Rebase and publish this
 item after the full measurements, then reread the inbox before the next gap.
+
+## 2026-10-27-pycomplete-171 — admit the immediate local `int` alias
+
+The local-builtin alias rewrite now includes `int`: `f = int; return
+f(value)` lowers to the existing integer-conversion worker. String, integer, and
+Boolean inputs preserve their current conversion and error semantics. Returning
+`int`, shadowing it, and general first-class callable forms remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 3 cases: 0 failed, 3 matched on both interpreters |
+| Full executable differential | 3,713 cases: 0 failed, 44 whitelisted refusals, 3,669 matched |
+| Full proof differential | 3,713 cases: 0 failed, 153 refusals, 3,560 matched |
+| Lean runner build | `lake build leanmodels-run` passed |
+| Focused surface | three `#py_check` rows passed with `LeanModels.Python.Surface` |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `int` alias call; retain loud failure
+for returned or general first-class callable values. Rebase and publish this
+item after the full measurements, then reread the inbox before the next gap.

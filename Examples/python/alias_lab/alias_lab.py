@@ -61,3 +61,8 @@ def abs_alias(value):
     f = abs
     return f(value)
 
+
+def int_alias(value):
+    f = int
+    return f(value)
+

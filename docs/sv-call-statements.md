@@ -110,6 +110,11 @@ are also inert. The receiver history is restricted to `delete()` and zero-size
 queries (plus empty queue pops); initialized, populated, aliased, effectful,
 and value-position aggregate operations remain loud.
 
+An untouched 2-state associative array admits the same discarded `delete()`
+no-op for the whole array or a source-pure integral/string key. Later `num()`
+and `size()` queries remain exact; initialized, four-state, effectful-key,
+aliased, and value-position forms remain loud.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument

@@ -9629,7 +9629,56 @@ def _associative_empty_query(expression):
             return False
         for occurrence in occurrences[1:]:
             tail = code_source[occurrence.end():].lstrip()
-            if re.match(r"\.(?:num|size)\s*\(\s*\)", tail):
+            if (re.match(r"\.(?:num|size)\s*\(\s*\)", tail)
+                    or re.match(r"\.delete\s*\(", tail)):
+                continue
+            return False
+        return True
+    except Exception:
+        return False
+
+
+def _associative_empty_delete_method(expression):
+    """Recognize a discarded delete on an untouched empty assoc array."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "delete"
+                or len(expression.arguments) not in (1, 2)):
+            return False
+        receiver = expression.arguments[0]
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "bad", False)
+                or receiver.type.isFourState
+                or type(receiver.type.canonicalType).__name__ !=
+                   "AssociativeArrayType"):
+            return False
+        if len(expression.arguments) == 2:
+            key = expression.arguments[1]
+            key_type = getattr(key.type, "canonicalType", key.type)
+            if (getattr(key, "bad", False)
+                    or (type(key_type).__name__ != "StringType"
+                        and not getattr(key.type, "isIntegral", False))
+                    or not _case_source_expression_ok(key)):
+                return False
+        symbol = getattr(receiver, "symbol", None)
+        if getattr(symbol, "initializer", None) is not None:
+            return False
+        name = getattr(symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        if not name or not source:
+            return False
+        code_source = _sv_code_source(source)
+        occurrences = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"(?![A-Za-z0-9_$])", code_source))
+        if not occurrences:
+            return False
+        for occurrence in occurrences[1:]:
+            tail = code_source[occurrence.end():].lstrip()
+            if (re.match(r"\.delete\s*\(", tail)
+                    or re.match(r"\.(?:num|size)\s*\(\s*\)", tail)):
                 continue
             return False
         return True
@@ -15980,6 +16029,12 @@ def _convert_syscall(sm, s, e):
         if value.get("kind") != "Unsupported":
             return {"kind": "Empty", "span": node_span(sm, s),
                     "associative_empty_query_statement": name}
+    if is_sys and _associative_empty_delete_method(e):
+        # Deleting an absent key, or all keys from an untouched empty
+        # associative array, has no represented state effect.  The helper
+        # checks source-pure keys and keeps later count queries exact.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "associative_empty_delete_statement": True}
     if is_sys and _associative_empty_endpoint(e):
         # On an untouched associative array, ``first``/``last`` return zero
         # without selecting an element.  The existing converter checks the

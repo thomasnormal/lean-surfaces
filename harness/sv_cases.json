@@ -2541,6 +2541,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "empty_associative_delete_statements",
+      "file": "Examples/system-verilog/empty_associative_delete_statements/empty_associative_delete_statements.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

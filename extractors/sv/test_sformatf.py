@@ -112,6 +112,27 @@ class SFormatfCalls(unittest.TestCase):
                             "CallExpression:$sformatf:operand"
                             for node in nodes(design)))
 
+    def test_assigned_ascii_string_operand_is_source_pure(self):
+        design = lower(
+            'module top; string value; initial begin value = "hello"; '
+            '$display("%s", $sformatf("%s", value)); end endmodule')
+        formatted = [node for node in nodes(design)
+                     if node.get("kind") == "SFormatF"]
+        self.assertEqual(len(formatted), 1)
+        self.assertEqual(formatted[0]["format"], "%s")
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "CallExpression:$sformatf:operand"
+                             for node in nodes(design)))
+
+    def test_nonliteral_string_history_stays_loud(self):
+        design = lower(
+            'module top; string value; string other; initial begin '
+            'value = other; $display("%s", $sformatf("%s", value)); '
+            'end endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "CallExpression:$sformatf:operand"
+                            for node in nodes(design)))
+
     def test_dynamic_format_stays_loud(self):
         design = lower(
             'module top; string fmt; logic [7:0] v; '

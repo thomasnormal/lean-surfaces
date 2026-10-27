@@ -33,6 +33,14 @@ can return the exact text without introducing dynamic string storage. Dynamic
 string variables, non-ASCII text, and aggregate operands remain loud;
 `sformatf_string_literal` checks the nested result in `$display`.
 
+### Source-pure named ASCII string `$sformatf` — 2026-10-27
+
+The same `%s`/`%S` slice now accepts a named `string` whose declaration or
+source-ordered blocking assignments are all ASCII literals. The extractor
+folds the latest proven bytes into the existing packed renderer; unassigned,
+dynamic, nonblocking, timed, non-ASCII, and aggregate histories remain loud.
+`sformatf_string_history` checks the assignment-before-format path.
+
 Literal one-integral-operand `$sformatf` expressions now lower to an ASCII
 packed value for `%b`, `%h`, `%o`, `%d`, and `%c`, plus the corresponding
 zero-width forms; `%B`, `%H`, `%O`, `%D`, and `%C` are their uppercase aliases.

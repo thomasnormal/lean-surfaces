@@ -2759,6 +2759,15 @@
       "expect": "match"
     },
     {
+      "name": "sformatf_string_history",
+      "file": "Examples/system-verilog/sformatf_string_history/sformatf_string_history.sv",
+      "module": "top",
+      "oracle": [
+        "hello"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "q_remove_payload",
       "file": "Examples/system-verilog/q_remove_payload/q_remove_payload.sv",
       "module": "top",

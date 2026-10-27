@@ -635,10 +635,6 @@
     6
    ],
    [
-    "CallExpression:$sformatf:format",
-    6
-   ],
-   [
     "SysCall:format",
     6
    ],
@@ -712,6 +708,10 @@
    ],
    [
     "RepeatLoopStatement:count",
+    4
+   ],
+   [
+    "CallExpression:$sformatf:format",
     4
    ],
    [

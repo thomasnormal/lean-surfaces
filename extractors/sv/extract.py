@@ -8512,9 +8512,10 @@ def _convert_sformatf_call(sm, expression):
     The self-check state represents the resulting text as an ASCII packed
     vector. Keep the format language deliberately small and literal: one
     conversion from the integral display inventory, or one ASCII string
-    literal for `%s`, already rendered by the self-check tier. Dynamic
-    formats, multiple arguments, aggregate/real operands, dynamic strings,
-    and every other conversion remain a loud call boundary.
+    literal/source-pure string history for `%s`, already rendered by the
+    self-check tier. Dynamic formats, multiple arguments, aggregate/real
+    operands, dynamic strings, and every other conversion remain a loud call
+    boundary.
     """
     try:
         if (type(expression).__name__ != "CallExpression"
@@ -8536,23 +8537,40 @@ def _convert_sformatf_call(sm, expression):
                                      "%0d", "%0D", "%s", "%S"):
             return unsupported(sm, expression, "CallExpression:$sformatf:format")
         string_format = format_expr.value in ("%s", "%S")
+        string_value = None
         if string_format:
-            if (type(operand).__name__ != "StringLiteral"
-                    or getattr(operand, "bad", False)
-                    or _contains_disputed_string_escape(operand)
-                    or any(ord(char) > 127 for char in operand.value)):
-                return unsupported(sm, expression, "CallExpression:$sformatf:operand")
-            width = getattr(operand.type, "bitWidth", None)
-            reason = None if width is not None else "type"
-            if width is None or width <= 0:
-                return unsupported(sm, expression, "CallExpression:$sformatf:operand")
+            if type(operand).__name__ == "StringLiteral":
+                if (getattr(operand, "bad", False)
+                        or _contains_disputed_string_escape(operand)
+                        or any(ord(char) > 127 for char in operand.value)):
+                    return unsupported(sm, expression, "CallExpression:$sformatf:operand")
+                string_value = operand.value
+            else:
+                string_value = _sformatf_literal_string_value(operand)
+                if string_value is None:
+                    return unsupported(sm, expression, "CallExpression:$sformatf:operand")
+            # ``StringType`` has no packed bit width in slang.  The recovered
+            # source value is the exact byte payload, so carry its width from
+            # the payload itself; the direct-literal path uses the same rule.
+            width = 8 * len(string_value) if string_value else 8
+            reason = None
         else:
             width, _two_state, reason = type_width_2s(operand.type)
             if width is None or reason is not None or width <= 0:
                 return unsupported(sm, expression, "CallExpression:$sformatf:operand")
         if not _case_source_expression_ok(operand):
             return unsupported(sm, expression, "CallExpression:$sformatf:operand")
-        converted = convert_expr(sm, operand)
+        if string_value is not None:
+            data = string_value.encode("ascii")
+            converted = {
+                "kind": "Literal",
+                "span": node_span(sm, operand),
+                "width": 8 * len(data) if data else 8,
+                "bits": "".join(format(byte, "08b") for byte in data)
+                        if data else "0" * 8,
+            }
+        else:
+            converted = convert_expr(sm, operand)
         if (converted is None or converted.get("kind") == "Unsupported"
                 or not _case_expression_ok(converted)):
             return unsupported(sm, expression, "CallExpression:$sformatf:operand")
@@ -13294,6 +13312,74 @@ def _string_literal_source_value(expression, method, receiver=None,
                 continue
             return None
         position = getattr(getattr(expression, "sourceRange", None), "start", None)
+        position = getattr(position, "offset", None)
+        if position is None:
+            return None
+        history = [(start, value) for start, value in assignments if start < position]
+        if initial_value is not None:
+            history.insert(0, (-1, initial_value))
+        return max(history, key=lambda item: item[0])[1] if history else None
+    except Exception:
+        return None
+
+
+def _sformatf_literal_string_value(operand):
+    """Return a source-pure ASCII value for one named string operand.
+
+    String storage is opaque in the flat self-check state.  A direct named
+    operand is nevertheless exact when its declaration has a literal
+    initializer or every assignment to it is one blocking ASCII literal.
+    Reject any other write, timing, or nonliteral history rather than
+    fabricating a runtime string value.
+    """
+    try:
+        if (type(operand).__name__ != "NamedValueExpression"
+                or getattr(operand, "bad", False)
+                or type(operand.type.canonicalType).__name__ != "StringType"):
+            return None
+        symbol = operand.symbol
+        initializer = getattr(symbol, "initializer", None)
+        while type(initializer).__name__ == "ConversionExpression":
+            initializer = getattr(initializer, "operand", None)
+        initial_value = (
+            getattr(initializer, "value", None)
+            if type(initializer).__name__ == "StringLiteral"
+            and not getattr(initializer, "bad", False) else None)
+        if (initial_value is not None
+                and (not isinstance(initial_value, str)
+                     or any(ord(char) == 0 or ord(char) > 127
+                            for char in initial_value))):
+            return None
+        assignments = []
+        invalid = False
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is not None:
+            def inspect(node):
+                nonlocal invalid
+                if (type(node).__name__ != "AssignmentExpression"
+                        or getattr(node, "left", None) is None
+                        or getattr(node.left, "symbol", None) is not symbol):
+                    return
+                value = node.right
+                while type(value).__name__ == "ConversionExpression":
+                    value = getattr(value, "operand", None)
+                if (getattr(node, "op", None) is not None
+                        or getattr(node, "timingControl", None) is not None
+                        or getattr(node, "isNonBlocking", False)
+                        or type(value).__name__ != "StringLiteral"
+                        or getattr(value, "bad", False)
+                        or not isinstance(getattr(value, "value", None), str)
+                        or any(ord(char) == 0 or ord(char) > 127
+                               for char in value.value)):
+                    invalid = True
+                    return
+                assignments.append((getattr(node.sourceRange.start, "offset", -1),
+                                    value.value))
+            instance.visit(inspect)
+        if invalid:
+            return None
+        position = getattr(getattr(operand, "sourceRange", None), "start", None)
         position = getattr(position, "offset", None)
         if position is None:
             return None

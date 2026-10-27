@@ -39,6 +39,22 @@ skips); `ExpressionStatement:CallExpression` remains **2,746** and
 **306/301/0/5 → 307/302/0/5** with no disagreements; grammar remains
 **218/96/122**.
 
+## Source-pure named ASCII string `$sformatf` — 2026-10-27
+
+A named `string` is now accepted as a `%s`/`%S` operand when its declaration
+and every source assignment are blocking ASCII literals. The latest proven
+bytes reuse the packed renderer; dynamic, unassigned, nonblocking, timed,
+non-ASCII, aggregate, and other histories remain loud.
+`sformatf_string_history` supplies the differential row and extractor
+regressions.
+
+The 22,059-path snapshot remains **5,287 clean / 16,705 partial** (67 include
+skips); `ExpressionStatement:CallExpression` remains **2,746** and
+`CallExpression` remains **2,739**; the residual
+`CallExpression:$sformatf:format` wall falls **6 → 4**. Differential coverage grows
+**307/302/0/5 → 308/303/0/5** with no disagreements; grammar remains
+**218/96/122**.
+
 ## Literal integral zero-width `$sformatf` — 2026-10-27
 
 The literal integral `$sformatf` slice now accepts `%0b/%0h/%0o/%0d` and their

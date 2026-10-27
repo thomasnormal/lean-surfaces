@@ -8,6 +8,17 @@ the statement-call contract is separate in [call statements](sv-call-statements.
 
 ## Admitted calls
 
+### Time-zero `$realtime` conversions — 2026-10-27
+
+The exact real-conversion paths now accept `$rtoi($realtime)`,
+`$realtobits($realtime)`, and `$shortrealtobits($realtime)` in an untimed
+`initial` process. At the self-check surface's only execution point the query
+is zero, so the existing signed 32-bit and IEEE-754 bit renderers produce
+exact zero literals without introducing real storage. Continuous assignments,
+`always` processes, delayed/event/waiting initials, direct real-storage reads,
+and other elapsed-time uses remain loud; `realtime_conversion_calls` supplies
+the differential witness and Lean receipt.
+
 ### Source-pure named-integral `$itor` — 2026-10-27
 
 `$itor(named_integral)` now participates in the exact real-conversion slices
@@ -178,8 +189,9 @@ The residual expression calls need state or effects absent from that surface:
   values and scheduler history;
 * `std::randomize` and unqualified `randomize` need constraint solving and a
   random oracle;
-* `$stime`, `$realtime`, `$timeunit`, and `$timeprecision` need an elapsed-time
-  and unit environment beyond the time-zero `$time` rule;
+* `$stime`, `$realtime` outside the untimed initial conversion slice,
+  `$timeunit`, and `$timeprecision` need an elapsed-time and unit environment
+  beyond the time-zero `$time` rule;
 * other real conversions, string formatting, file/system/coverage calls, and
   array methods require unsupported value types or external state; and
 * user functions, scope calls, and receiver methods need callable frames,

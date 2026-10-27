@@ -71,6 +71,41 @@ class TimeQueries(unittest.TestCase):
         self.assertIn("CallExpression",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_realtime_exact_conversions_are_zero_at_time_zero(self):
+        design = extract_source(
+            "module top; initial begin "
+            "if ($rtoi($realtime) !== 0) $display(\"FAIL\"); "
+            "if ($realtobits($realtime) !== 64'b0) $display(\"FAIL\"); "
+            "if ($shortrealtobits($realtime) !== 32'b0) $display(\"FAIL\"); "
+            "end endmodule")
+        values = [node for node in nodes(design)
+                  if node.get("rtoi_literal") or
+                  node.get("realtobits_literal") or
+                  node.get("shortrealtobits_literal")]
+        self.assertEqual(len(values), 3)
+        self.assertEqual([(node["width"], node["bits"]) for node in values], [
+            (32, "0" * 32),
+            (64, "0" * 64),
+            (32, "0" * 32),
+        ])
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
+    def test_realtime_conversion_after_delay_stays_loud(self):
+        design = extract_source(
+            "module top; initial begin #1; "
+            "if ($rtoi($realtime) === 1) $display(\"PASS\"); "
+            "end endmodule")
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
+    def test_realtime_conversion_outside_initial_stays_loud(self):
+        design = extract_source(
+            "module top; logic [31:0] out; "
+            "assign out = $rtoi($realtime); endmodule")
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

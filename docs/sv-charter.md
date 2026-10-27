@@ -43,6 +43,19 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Time-zero `$realtime` conversions — 2026-10-27
+
+The expression tier now folds `$rtoi($realtime)`, `$realtobits($realtime)`,
+and `$shortrealtobits($realtime)` to exact zero literals only inside an
+untimed `initial` process. Continuous assignments, `always` processes,
+delayed/event/waiting initials, direct real storage, and other elapsed-time
+uses remain loud. The `realtime_conversion_calls` fixture supplies the
+differential witness and Lean receipt.
+
+The chapter-only census remains **5,327 clean / 16,670 partial** (67 include
+skips); `CallExpression` falls **2,655 → 2,648**. Differential coverage grows
+**325/319/0/6 → 326/320/0/6** and grammar remains **218/97/121**.
+
 ## Source-pure named-integral `$itor` — 2026-10-27
 
 The expression tier now folds `$itor` over a named integral whose declaration

@@ -25,6 +25,21 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Time-zero `$realtime` conversions — 2026-10-27
+
+The exact real-conversion paths now fold `$rtoi($realtime)`,
+`$realtobits($realtime)`, and `$shortrealtobits($realtime)` to zero in an
+untimed `initial` process. Continuous, always, delayed/event/waiting, direct
+real-storage, and other elapsed-time forms remain loud. The
+`realtime_conversion_calls` fixture supplies the differential row and Lean
+receipt.
+
+The chapter-only census remains **5,327 clean / 16,670 partial** (67 include
+skips), while `CallExpression` falls **2,655 → 2,648**. The witness itself is
+outside the committed corpus walk.
+Differential coverage grows **325/319/0/6 → 326/320/0/6** with no
+disagreements; grammar remains **218/97/121**.
+
 ## Source-pure named-integral `$itor` — 2026-10-27
 
 The exact real-conversion slices now accept `$itor(named_integral)` after a

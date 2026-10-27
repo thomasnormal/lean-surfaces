@@ -1636,6 +1636,51 @@ def _realtime_call(expression):
         return False
 
 
+def _realtime_time_zero_call(expression):
+    """Whether ``$realtime`` is sampled in an untimed initial block.
+
+    The flat self-check runner has one execution point: the beginning of an
+    ``initial`` process at time zero.  A real-time query is therefore exactly
+    zero only in that context.  Keep the conversion helpers from accidentally
+    turning a continuous assignment, an ``always`` process, or a query after a
+    delay/event/wait into a constant by checking the enclosing syntax tree.
+    """
+    try:
+        if not _realtime_call(expression):
+            return False
+        syntax = getattr(expression, "syntax", None)
+        initial = None
+        while syntax is not None:
+            kind = str(getattr(syntax, "kind", "")).split(".")[-1]
+            if kind == "InitialBlock":
+                initial = syntax
+                break
+            if kind in ("AlwaysBlock", "AlwaysCombBlock", "AlwaysFFBlock",
+                        "AlwaysLatchBlock", "ProceduralBlock"):
+                return False
+            syntax = getattr(syntax, "parent", None)
+        if initial is None:
+            return False
+
+        # A timing construct anywhere in the enclosing initial process means
+        # that this source can observe elapsed time or a scheduler wake.  The
+        # conservative process-wide check preserves the loud boundary even
+        # when the query is textually before a later wait.
+        timed = False
+
+        def inspect(node):
+            nonlocal timed
+            kind = str(getattr(node, "kind", "")).split(".")[-1]
+            if any(word in kind for word in (
+                    "Timing", "Delay", "Event", "Wait", "Fork", "Join")):
+                timed = True
+
+        initial.visit(inspect)
+        return not timed
+    except Exception:
+        return False
+
+
 def _convert_time_call(sm, expression):
     if not _time_call(expression):
         return unsupported(sm, expression, "CallExpression:$time")
@@ -8442,6 +8487,13 @@ def _literal_real_decimal(expression):
             return value if value.is_finite() else None
         except (InvalidOperation, ValueError):
             return None
+    # The untimed initial-block self-check slice observes `$realtime` at
+    # time zero, where IEEE's real-valued query is exactly zero.  Keep the
+    # context check here so all exact real-conversion consumers share the
+    # same scheduled/continuous loud boundary.
+    if (type(node).__name__ == "CallExpression"
+            and _realtime_time_zero_call(node)):
+        return Decimal(0)
     # `$itor` is exact for a literal integral operand.  Keep this nested
     # conversion narrow: named values, computed expressions, and every other
     # real-producing call still require an opaque real value and stay loud.
@@ -8773,7 +8825,9 @@ def _realtobits_literal_call(expression):
                         and not getattr(node, "bad", False)
                         and getattr(node, "isSystemCall", False)
                         and getattr(node, "subroutineName", None) == "$itor")
-        return ((literal_operand or itor_operand)
+        realtime_operand = (type(node).__name__ == "CallExpression"
+                            and _realtime_time_zero_call(node))
+        return ((literal_operand or itor_operand or realtime_operand)
                 and not getattr(node, "bad", False)
                 and getattr(expression.type, "bitWidth", None) == 64
                 and getattr(expression.type, "isIntegral", False)
@@ -8841,7 +8895,9 @@ def _shortrealtobits_literal_call(expression):
                         and not getattr(node, "bad", False)
                         and getattr(node, "isSystemCall", False)
                         and getattr(node, "subroutineName", None) == "$itor")
-        return ((literal_operand or itor_operand)
+        realtime_operand = (type(node).__name__ == "CallExpression"
+                            and _realtime_time_zero_call(node))
+        return ((literal_operand or itor_operand or realtime_operand)
                 and not getattr(node, "bad", False)
                 and getattr(expression.type, "bitWidth", None) == 32
                 and getattr(expression.type, "isIntegral", False)
@@ -18789,7 +18845,7 @@ def _convert_syscall(sm, s, e):
         # effect; argumented and delayed forms remain on the time boundary.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "time_query_statement": name}
-    if is_sys and _realtime_call(e):
+    if is_sys and _realtime_time_zero_call(e):
         # A zero-argument real-time query at the time-zero boundary is an
         # unobserved zero value when used as a statement. The real value is
         # intentionally not represented; argumented and value forms stay

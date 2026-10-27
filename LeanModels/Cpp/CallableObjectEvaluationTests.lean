@@ -7618,6 +7618,40 @@ def callableLocalDoWhileInitializationAssignmentStatementFrameWitness : Bool :=
 
 #guard callableLocalDoWhileInitializationAssignmentStatementFrameWitness
 
+private def localDoWhileInitializationAssignmentReturnStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .binary ">"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 0, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let body := .block (.sequence
+    (automaticLiteral "0x11" 5)
+    (.sequence
+      (.assign (handle "0x10") {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType})
+      (.return_ {
+        expression := .parameter (handle "0x10")
+        sourceType := intType
+        type := intType})))
+  let function := {base with body := .block (.sequence
+    (.doWhile body condition)
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 64 .lp64 function [signed 1] with
+  | .ok (.ok value) => value == signed 5
+  | _ => false
+
+def callableLocalDoWhileInitializationAssignmentReturnStatementFrameWitness : Bool :=
+  localDoWhileInitializationAssignmentReturnStatementFrame
+
+#guard callableLocalDoWhileInitializationAssignmentReturnStatementFrameWitness
+
 private def localWhileComputedInitializationStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let condition : TypedCallableExpression := {

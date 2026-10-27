@@ -571,3 +571,19 @@ dynamic widths, aggregate cells, and effectful bases remain loud.
 `fixed_array_dynamic_packed_slice` is the differential witness; the current
 22,058-path census remains **5,227 clean / 16,764 partial** with
 `AssignmentExpression:target` at **2,857**.
+
+## Literal queue to fixed-array copies — 2026-10-27
+
+A whole fixed unpacked array with scalar integral leaves now accepts a
+blocking assignment from a queue whose initializer is an exact scalar-literal
+sequence of the same length. The queue elements are expanded left to right
+into the existing flat destination cells, matching §7.6's correspondence.
+Mismatched sizes, later queue uses, aliases, aggregate elements, timed forms,
+and nonblocking assignments remain loud because the flat state has no queue
+object or runtime size diagnostic.
+
+`queue_fixed_array_copy` is the differential witness and Lean receipt. The
+22,059-path census moves **5,303 → 5,304 clean** and **16,689 → 16,688
+partial**, while `AssignmentExpression:target` falls **2,845 → 2,844**.
+Differential coverage moves **317/311/0/6 → 318/312/0/6** with no
+disagreements; grammar coverage remains **218/97/121**.

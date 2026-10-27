@@ -6024,6 +6024,112 @@ def _fixed_array_pattern_lhs_assignment(sm, expr):
         return None
 
 
+def _fixed_array_queue_copy_assignment(sm, expr):
+    """Lower a whole fixed-array copy from an exact literal queue.
+
+    IEEE 1800-2023 §7.6 copies queue elements left to right when the source
+    and destination have the same number of elements.  Queue objects are not
+    represented by the flat self-check state, but a queue whose initializer
+    is a source-pure scalar literal sequence has a complete immutable value.
+    Expand that sequence into the destination's existing scalar cells.  A
+    mismatch, later queue use, aggregate element, alias, timed, or nonblocking
+    form stays on the ordinary loud whole-target boundary.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None or expr.isNonBlocking):
+            return None
+        lhs_shape = _fixed_array_shape(expr.left)
+        if lhs_shape is None:
+            return None
+        lhs_name, lhs_width, lhs_two, lhs_left, lhs_right = lhs_shape
+        lhs_step = 1 if lhs_right >= lhs_left else -1
+        positions = list(range(lhs_left, lhs_right + lhs_step, lhs_step))
+
+        rhs = expr.right
+        while type(rhs).__name__ == "ConversionExpression":
+            rhs = getattr(rhs, "operand", None)
+            if rhs is None:
+                return None
+        if type(rhs).__name__ != "NamedValueExpression":
+            return None
+        queue_symbol = getattr(rhs, "symbol", None)
+        queue_type = getattr(queue_symbol, "type", None)
+        queue_type = getattr(queue_type, "canonicalType", queue_type)
+        if (queue_symbol is None or type(queue_type).__name__ != "QueueType"
+                or getattr(queue_symbol, "initializer", None) is None):
+            return None
+        element_type = queue_type.elementType
+        element_width, _element_two, element_reason = type_width_2s(element_type)
+        if (element_width is None or element_reason is not None
+                or element_width != lhs_width):
+            return None
+
+        initializer = queue_symbol.initializer
+        while type(initializer).__name__ == "ConversionExpression":
+            initializer = getattr(initializer, "operand", None)
+            if initializer is None:
+                return None
+        if type(initializer).__name__ not in (
+                "ConcatenationExpression", "SimpleAssignmentPatternExpression"):
+            return None
+        elements = list(getattr(initializer, "operands",
+                                getattr(initializer, "elements", ())))
+        if (len(elements) != len(positions) or not elements
+                or any(not _queue_literal_element(element)
+                       for element in elements)):
+            return None
+
+        # The queue value is usable only while its literal initializer remains
+        # the complete source history.  Reject every later named use except
+        # this one RHS occurrence, covering writes, aliases, selectors, and
+        # method calls without inventing queue storage or identity.
+        instance = getattr(getattr(queue_symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return None
+        used_elsewhere = False
+        def inspect(node):
+            nonlocal used_elsewhere
+            if used_elsewhere or node is rhs:
+                return
+            if (type(node).__name__ in ("NamedValueExpression",
+                                        "HierarchicalValueExpression")
+                    and getattr(node, "symbol", None) is queue_symbol):
+                used_elsewhere = True
+        instance.visit(inspect)
+        if used_elsewhere:
+            return None
+
+        values = []
+        for element in elements:
+            if not _case_source_expression_ok(element, packed_members=True):
+                return None
+            value = convert_expr(sm, element)
+            if (value is None or value.get("kind") == "Unsupported"
+                    or width_of(value) != element_width
+                    or not _case_expression_ok(value)):
+                return None
+            if lhs_two:
+                value = squash2_wrap(value, lhs_width)
+            values.append(value)
+        return {
+            "kind": "Block",
+            "span": node_span(sm, expr),
+            "stmts": [{
+                "kind": "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                           "width": lhs_width,
+                           "name": f"{lhs_name}[{position}]"},
+                "value": value,
+            } for position, value in zip(positions, values)],
+            "queue_fixed_array_copy_lowered": True,
+        }
+    except Exception:
+        return None
+
+
 def _fixed_array_copy_assignment(sm, expr):
     """Lower a whole-array copy when both sides already have cell storage."""
     try:
@@ -17407,6 +17513,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         array_struct_pattern = _fixed_array_struct_pattern_assignment(sm, expr)
         if array_struct_pattern is not None:
             return array_struct_pattern
+        queue_array_copy = _fixed_array_queue_copy_assignment(sm, expr)
+        if queue_array_copy is not None:
+            return queue_array_copy
         array_nested_copy = _fixed_array_nested_copy_assignment(sm, expr)
         if array_nested_copy is not None:
             return array_nested_copy

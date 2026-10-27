@@ -9147,3 +9147,18 @@ On the refreshed **22,059-path** sv-tests-2 census, clean files move
 The leading `ExpressionStatement:CallExpression` blocker falls
 **2,741 → 2,740**. Differential coverage grows **309/304/0/5 → 310/305/0/5**
 with no disagreements; grammar coverage remains **218/96/122**.
+
+## Literal queue to fixed-array copies — 2026-10-27
+
+The assignment surface now expands a source-pure scalar-literal queue into a
+same-count fixed unpacked integral array, preserving left-to-right element
+correspondence through the existing flat cells. Queue mutations, aliases,
+aggregate elements, size mismatches, timed/nonblocking forms, and continuous
+driver resolution remain loud. The `queue_fixed_array_copy` fixture and Lean
+receipt provide the differential witness.
+
+The refreshed 22,059-path census moves **5,303 → 5,304 clean** and
+**16,689 → 16,688 partial** (67 include skips); the
+`AssignmentExpression:target` wall falls **2,845 → 2,844**. Differential
+coverage is **318 rows / 312 matches / 0 disagreements / 6 recorded
+refusals**, and grammar coverage remains **218 / 97 / 121**.

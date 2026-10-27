@@ -2855,6 +2855,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "queue_fixed_array_copy",
+      "file": "Examples/system-verilog/queue_fixed_array_copy/queue_fixed_array_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

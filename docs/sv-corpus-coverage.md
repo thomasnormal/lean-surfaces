@@ -5630,3 +5630,18 @@ clean** and **16,782 → 16,780 partial** (67 include skips); the
 `AssignmentExpression:target` blocker falls **2,861 → 2,860**. Differential
 coverage grows **238/233/0/5 → 239/234/0/5** with no disagreements; grammar
 coverage remains **217/90/127**.
+
+## Literal queue to fixed-array copies — 2026-10-27
+
+A blocking assignment from an exact scalar-literal queue to a same-count
+fixed unpacked integral array now expands queue elements into the destination
+cells in left-to-right order. Size mismatches, later queue uses, aliases,
+aggregate elements, timed forms, and nonblocking assignments remain loud.
+The `queue_fixed_array_copy` fixture supplies the differential row and Lean
+receipt.
+
+On the refreshed **22,059-path** census, clean files move **5,303 → 5,304**
+and partial files **16,689 → 16,688** (67 include skips). The
+`AssignmentExpression:target` blocker falls **2,845 → 2,844**. Differential
+coverage moves **317/311/0/6 → 318/312/0/6** with no disagreements; grammar
+coverage remains **218/97/121**.

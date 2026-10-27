@@ -2100,6 +2100,15 @@
       "expect": "match"
     },
     {
+      "name": "dist_uniform_array_target",
+      "file": "Examples/system-verilog/dist_uniform_array_target/dist_uniform_array_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "fixed_array_sort",
       "file": "Examples/system-verilog/fixed_array_sort/fixed_array_sort.sv",
       "module": "top",

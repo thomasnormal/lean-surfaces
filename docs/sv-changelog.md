@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.44] — 2026-10-27
+
+The self-check surface now has 295 differential rows: 290 matches, zero
+disagreements, and 5 recorded refusals. The grammar census remains at 218
+pyslang syntax witnesses: 95 MATCH and 123 REFUSE. The 22,059-path corpus
+moves to 5,254 clean files and 16,738 partial files, with
+`AssignmentExpression:target` at 2,852. A bounded `$dist_uniform(seed, 0,
+1000)` assignment now updates a 32-bit seed and one dynamic fixed-array cell;
+other random calls, bounds, storage, and effectful selectors remain loud.
+
 ## [0.1.43] — 2026-10-27
 
 The self-check surface now has 282 differential rows: 277 matches, zero

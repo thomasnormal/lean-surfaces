@@ -25,6 +25,26 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Bounded dynamic `$dist_uniform` fixed-array writes — 2026-10-27
+
+The self-check surface now admits an assignment whose RHS is
+`$dist_uniform(seed, 0, 1000)` and whose destination is a one-dimensional
+finite fixed-unpacked integral array selected by a pure integral index. The
+32-bit seed is updated and the selected flattened cell is written in the same
+branch; repeated seeds therefore produce the same sequence while the update
+remains explicit state rather than an invented random oracle. The admitted
+slice requires a direct 32-bit variable seed, literal bounds `0` and `1000`,
+and a 32-bit array element. Other bounds, seed expressions, aggregate or
+dynamic storage, effectful selectors, and value-position random calls remain
+loud.
+
+`dist_uniform_array_target` supplies the repeatability fixture, extractor
+regression, Lean receipt, and differential row. The 22,059-path census moves
+**5,253 → 5,254 clean** and **16,739 → 16,738 partial** (67 include skips);
+`AssignmentExpression:target` falls **2,853 → 2,852**. Differential coverage
+grows **294/289/0/5 → 295/290/0/5** with no disagreements; grammar coverage
+remains **218/95/123**.
+
 ## Queue-removal status — 2026-10-27
 
 Undefined literal queue IDs now lower `$q_remove` to status 2. A valid literal

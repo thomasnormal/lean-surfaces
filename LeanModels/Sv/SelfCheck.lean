@@ -281,6 +281,8 @@ inductive SStmt where
       (descending indexSigned twoState : Bool) (index value : SExpr)
   | selectedNbaAssign (target : String) (width : Nat)
       (descending indexSigned twoState : Bool) (index value : SExpr)
+  /-- One bounded `$dist_uniform` call, including its inout seed update. -/
+  | distUniformAssign (target seed : String) (low high : Nat) (twoState : Bool)
   | packedAssign (targets : List PackedTarget) (value : SExpr)
   | packedNbaAssign (targets : List PackedTarget) (value : SExpr)
   | scanf (input : SExpr) (format : List FormattedInput.Token)
@@ -371,6 +373,20 @@ def repeatCount (v : LVec) (signed : Bool) : Res Nat :=
     .ok 0
   else
     .ok (converted.toNat?.getD 0)
+
+/-- The bounded 32-bit seed step used by the first admitted random system
+function. The self-check surface admits only `$dist_uniform(seed, 0, 1000)`;
+keeping the recurrence here makes the seed mutation and returned value one
+auditable operation instead of pretending a random call is a pure literal. -/
+def distUniformValues (seed : LVec) (low high : Nat) : Option (LVec × LVec) :=
+  if seed.width != 32 || low > high then
+    none
+  else do
+    let current ← seed.toNat?
+    let next := (69069 * current + 1) % (2 ^ 32)
+    let span := high - low + 1
+    let value := low + ((next / 2) * span) / (2 ^ 31)
+    some (.ofNat 32 next, .ofNat 32 value)
 
 /-! ## Output collection -/
 
@@ -819,6 +835,22 @@ def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
           let nba' ← enqueueSelectedNba st nba target width descending indexSigned twoState
             position replacement
           return (st, nba', out)
+      | .distUniformAssign target seed low high twoState => do
+          let seedValue ← match SvState.lookup st seed with
+            | some value => pure value
+            | none => .unsupported s!"unknown dist_uniform seed '{seed}'"
+          let old ← match SvState.lookup st target with
+            | some value => pure value
+            | none => .unsupported s!"unknown dist_uniform target '{target}'"
+          if old.width != 32 then
+            .unsupported "dist_uniform target must be a 32-bit integral cell"
+          else
+            match distUniformValues seedValue low high with
+            | none => .unsupported "dist_uniform requires a known 32-bit seed"
+            | some (nextSeed, sampled) =>
+                let sampled := if twoState then squash2v sampled else sampled
+                return (SvState.set (SvState.set st seed nextSeed) target sampled,
+                  nba, out)
       | .packedNbaAssign targets value => do
           let replacement ← evalSExpr fuel st value
           let order := assignmentOrder targets.length
@@ -1273,6 +1305,13 @@ partial def parseSStmt (j : Json) : Except String SStmt := do
           (← parseSExpr (← getF j "value"))
       else
         return .mkAssign false (← targetName target) (← parseSExpr (← getF j "value"))
+  | "DistUniformAssign" =>
+      let low ← getNatF j "low"
+      let high ← getNatF j "high"
+      if low != 0 || high != 1000 then
+        throw "dist_uniform assignment bounds are outside the admitted 0..1000 slice"
+      return .distUniformAssign (← getStrF j "target") (← getStrF j "seed")
+        low high (← getBoolF j "two_state")
   | "Scanf" =>
       let format ← FormattedInput.parse (← getStrF j "format")
       let outputs ← (← getArrF j "outputs").toList.mapM parsePackedTargets

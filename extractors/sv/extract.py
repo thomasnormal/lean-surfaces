@@ -3808,6 +3808,103 @@ def _fixed_array_nested_dynamic_read(sm, expression):
         return None
 
 
+def _dist_uniform_fixed_array_assignment(sm, expr):
+    """Lower a bounded ``$dist_uniform`` write to flat array cells.
+
+    ``$dist_uniform`` is an inout system function: it advances its 32-bit
+    integer seed and returns a bounded integer.  The self-check state has no
+    aggregate slot, but a finite fixed array is already expanded into cells,
+    so the dynamic index can use the same guarded lowering as ordinary array
+    writes.  Keep the first admitted random family deliberately narrow: a
+    direct variable seed, literal bounds ``0`` and ``1000``, and an integral
+    one-dimensional fixed array destination.  Other random calls remain loud.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None
+                or type(expr.left).__name__ != "ElementSelectExpression"
+                ):
+            return None
+        call = expr.right
+        while type(call).__name__ == "ConversionExpression":
+            call = getattr(call, "operand", None)
+            if call is None:
+                return None
+        if (type(call).__name__ != "CallExpression"
+                or not call.isSystemCall
+                or call.subroutineName != "$dist_uniform"):
+            return None
+        args = list(call.arguments)
+        if len(args) != 3:
+            return None
+        seed_arg = args[0]
+        if (type(seed_arg).__name__ != "AssignmentExpression"
+                or seed_arg.op is not None
+                or type(seed_arg.left).__name__ != "NamedValueExpression"
+                or type(seed_arg.right).__name__ != "EmptyArgumentExpression"):
+            return None
+        seed_symbol = getattr(seed_arg.left, "symbol", None)
+        if (seed_symbol is None or str(getattr(seed_symbol, "kind", ""))
+                != "SymbolKind.Variable"):
+            return None
+        seed_width, _seed_two, seed_reason = type_width_2s(seed_arg.left.type)
+        if seed_width != 32 or seed_reason is not None:
+            return None
+        low = _literal_integral_value(args[1])
+        high = _literal_integral_value(args[2])
+        if low != 0 or high != 1000:
+            return None
+        shape = _fixed_array_shape(expr.left.value)
+        if shape is None:
+            return None
+        name, width, two_state, left, right = shape
+        index = expr.left.selector
+        if _constant_dimension_selector(index) is not None:
+            return None
+        index_width, _index_two, index_reason = type_width_2s(index.type)
+        if (index_width is None or index_reason is not None
+                or not _case_source_expression_ok(index)):
+            return None
+        converted_index = convert_expr(sm, index)
+        if (converted_index is None or not _case_expression_ok(converted_index)
+                or width_of(converted_index) != index_width
+                or width != expr.right.type.bitWidth):
+            return None
+        seed_name = _storage_name(seed_symbol)
+        result = None
+        step = 1 if right >= left else -1
+        mask = (1 << index_width) - 1
+        for position in reversed(list(range(left, right + step, step))):
+            literal = {
+                "kind": "Literal", "span": node_span(sm, index),
+                "width": index_width,
+                "bits": format(position & mask, f"0{index_width}b"),
+            }
+            branch = {
+                "kind": "DistUniformAssign",
+                "span": node_span(sm, expr),
+                "target": f"{name}[{position}]",
+                "seed": seed_name,
+                "low": low,
+                "high": high,
+                "two_state": two_state,
+            }
+            result = {
+                "kind": "If", "span": node_span(sm, expr),
+                "cond": {
+                    "kind": "Binary", "span": node_span(sm, index),
+                    "width": 1, "op": "===", "left": converted_index,
+                    "right": literal,
+                },
+                "then": branch, "else": result,
+            }
+        if result is not None:
+            result["dist_uniform_array_write_lowered"] = True
+        return result
+    except Exception:
+        return None
+
+
 def _fixed_array_dynamic_assignment(sm, expr):
     """Lower a dynamic write to mutually exclusive per-cell branches."""
     try:
@@ -15800,6 +15897,10 @@ def _convert_assignment_expr(sm, expr, span_node=None):
     if scan is not None:
         return scan
     if expr.op is None:
+        if _SYM is None:
+            dist_uniform_target = _dist_uniform_fixed_array_assignment(sm, expr)
+            if dist_uniform_target is not None:
+                return dist_uniform_target
         dynamic_streaming_target = (
             _dynamic_streaming_with_target_assignment(sm, expr)
             if _SYM is None else None)

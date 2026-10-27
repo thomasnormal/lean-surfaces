@@ -152,6 +152,22 @@ class UnpackedArrayAssignments(unittest.TestCase):
                              and node.get("sv_kind") == "AssignmentExpression:target"
                              for node in nodes(design)))
 
+    def test_dist_uniform_dynamic_index_updates_seed_and_cell(self):
+        design = extract_source(
+            "module top; integer seed; integer value[0:1]; int index; "
+            "initial begin seed = 9001; index = 0; "
+            "value[index] = $dist_uniform(seed, 0, 1000); "
+            "if (value[0] == 144) $display(\"PASS\"); end endmodule")
+        calls = [node for node in nodes(design)
+                 if node.get("kind") == "DistUniformAssign"]
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(calls[0]["target"], "value[0]")
+        self.assertEqual(calls[0]["seed"], "seed")
+        self.assertTrue(any(node.get("dist_uniform_array_write_lowered")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_whole_array_copy_reuses_cells(self):
         design = extract_source(
             "module top; logic [7:0] source [0:1]; logic [7:0] value [0:1]; "

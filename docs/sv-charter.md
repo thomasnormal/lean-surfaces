@@ -43,6 +43,22 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Explicit source-pure real-to-integral casts — 2026-10-27
+
+Explicit casts from a finite `real` or `shortreal` source to an integral
+target now fold to the nearest integer, with ties away from zero, before the
+existing target-width conversion. A direct literal or a source-ordered direct
+blocking literal history is sufficient; computed, control-dependent, timed,
+non-finite, and dynamic real sources remain loud because the flat self-check
+state does not model general floating storage. The `real_integral_cast`
+fixture supplies the differential witness and Lean receipt.
+
+The chapter-only census moves **5,359 clean / 16,639 partial → 5,384 clean /
+16,614 partial** over **22,065** files with 67 include skips;
+`ConversionExpression:Explicit` falls **34 → 9** and the leading blockers are
+unchanged. Differential coverage grows **331/325/0/6 → 332/326/0/6** with no
+disagreements, while grammar coverage remains **218/97/121**.
+
 ## Named literal-history `$timeformat` — 2026-10-27
 
 `$timeformat` now accepts source-pure named integral unit, precision, and

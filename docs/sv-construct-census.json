@@ -176,7 +176,7 @@
    ],
    [
     "StaticLocal:initializer",
-    140
+    138
    ],
    [
     "TypeAliasType:TypeAlias",
@@ -368,10 +368,6 @@
    ],
    [
     "NetType",
-    34
-   ],
-   [
-    "ConversionExpression:Explicit",
     34
    ],
    [
@@ -568,6 +564,10 @@
    ],
    [
     "CheckerSymbol:Checker",
+    9
+   ],
+   [
+    "ConversionExpression:Explicit",
     9
    ],
    [
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5359,
-   "partial": 16639,
+   "clean": 5384,
+   "partial": 16614,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4660,
+    4685,
     18701
    ],
    "simulation elaboration": [
@@ -1053,14 +1053,14 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 208,
-    "clean": 782,
-    "partial": 209,
+    "blocked_by_more": 202,
+    "clean": 788,
+    "partial": 203,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
       "VariableDeclStatement:2state",
-      92
+      87
      ],
      [
       "NamedValueExpression:2state",
@@ -1072,7 +1072,7 @@
      ],
      [
       "VariableSymbol:2state",
-      52
+      51
      ],
      [
       "SubroutineSymbol:Subroutine",
@@ -1127,15 +1127,15 @@
       6
      ],
      [
-      "ConversionExpression:Explicit",
-      6
-     ],
-     [
       "LetDeclSymbol:LetDecl",
       5
      ],
      [
       "BinaryExpression:LogicalImplication:source",
+      5
+     ],
+     [
+      "UnaryExpression:Postincrement",
       5
      ]
     ],
@@ -1231,9 +1231,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 495,
-    "clean": 552,
-    "partial": 496,
+    "blocked_by_more": 483,
+    "clean": 564,
+    "partial": 484,
     "simulation_tests": 1048,
     "top_residual_blockers": [
      [
@@ -1242,7 +1242,7 @@
      ],
      [
       "VariableSymbol:2state",
-      158
+      152
      ],
      [
       "TimedStatement:DelayControl",
@@ -1258,7 +1258,7 @@
      ],
      [
       "VariableDeclStatement:2state",
-      116
+      110
      ],
      [
       "CallExpression",
@@ -1274,7 +1274,7 @@
      ],
      [
       "RealLiteral",
-      50
+      47
      ],
      [
       "SubroutineSymbol:Subroutine",
@@ -1305,16 +1305,16 @@
       17
      ],
      [
-      "ConversionExpression:Explicit",
-      16
-     ],
-     [
       "SubroutineSymbol",
       15
      ],
      [
       "NetSymbol:TriReg",
       15
+     ],
+     [
+      "Call:$fatal",
+      14
      ]
     ],
     "unlockable": 1
@@ -1323,17 +1323,17 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 316,
+    "clean": 319,
     "error": 0,
-    "partial": 342,
+    "partial": 339,
     "skip_include": 0,
     "total": 658,
     "unlockable": 0
    },
    "chapter-11": {
-    "clean": 786,
+    "clean": 792,
     "error": 0,
-    "partial": 248,
+    "partial": 242,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 1
@@ -1403,9 +1403,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 377,
+    "clean": 380,
     "error": 0,
-    "partial": 448,
+    "partial": 445,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0
@@ -1587,17 +1587,17 @@
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 441,
+    "clean": 442,
     "error": 0,
-    "partial": 177,
+    "partial": 176,
     "skip_include": 0,
     "total": 618,
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 569,
+    "clean": 581,
     "error": 0,
-    "partial": 623,
+    "partial": 611,
     "skip_include": 0,
     "total": 1192,
     "unlockable": 2

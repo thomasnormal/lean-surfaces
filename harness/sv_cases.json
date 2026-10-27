@@ -2982,6 +2982,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "real_integral_cast",
+      "file": "Examples/system-verilog/real_integral_cast/real_integral_cast.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

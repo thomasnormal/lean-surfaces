@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 331 | 325 | 0 | 6 | sv-tests-2 declarations |
+| 332 | 326 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -345,6 +345,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `bit_query_named_history` | `Examples/system-verilog/bit_query_named_history/bit_query_named_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `assertcontrol_named_history` | `Examples/system-verilog/assertcontrol_named_history/assertcontrol_named_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `timeformat_named_history` | `Examples/system-verilog/timeformat_named_history/timeformat_named_history.sv` | match | **MATCH** | `ok` | MATCH |
+| `real_integral_cast` | `Examples/system-verilog/real_integral_cast/real_integral_cast.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 

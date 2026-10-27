@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.78] — 2026-10-27
+
+Explicit casts from a finite source-pure `real` or `shortreal` to an integral
+type now round to the nearest integer, with ties away from zero, before the
+ordinary target-width conversion. Direct literals and source-ordered direct
+blocking literal histories are admitted; computed, control-dependent, timed,
+non-finite, and dynamic real sources remain loud. Differential coverage is
+now **332 rows / 326 matches / 0 disagreements / 6 recorded refusals**; the
+chapter-only census moves from **5,359 clean / 16,639 partial** to **5,384
+clean / 16,614 partial** over 22,065 files, and
+`ConversionExpression:Explicit` falls **34 → 9**.
+
 ## [0.1.77] — 2026-10-27
 
 Static locals now preserve source order within a procedural scope, allowing a

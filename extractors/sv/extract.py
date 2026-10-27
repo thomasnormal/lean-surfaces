@@ -27,7 +27,7 @@ Requires python3.12 + pyslang 11.x.
 """
 
 import argparse
-from decimal import Decimal, InvalidOperation, ROUND_DOWN
+from decimal import Decimal, InvalidOperation, ROUND_DOWN, ROUND_HALF_UP
 import hashlib
 import json
 import math
@@ -6960,6 +6960,9 @@ def _convert_conversion_expr(sm, e):
     if kind == ConversionKind.StreamingConcat:
         return _convert_streaming_pack(sm, e)
     if kind == ConversionKind.Explicit:
+        real_cast = _convert_real_integral_cast(sm, e)
+        if real_cast is not None:
+            return real_cast
         return _convert_integral_cast(sm, e)
     if kind not in (ConversionKind.Implicit, ConversionKind.Propagated):
         return unsupported(sm, e, "ConversionExpression:" + str(kind).split(".")[-1])
@@ -7088,6 +7091,41 @@ def _streaming_left_parts(sm, expr, parts, source_width, slice_size):
             }
         chunks.append(chunk)
     return chunks
+
+
+def _convert_real_integral_cast(sm, expr):
+    """Fold a source-pure real-to-integral explicit cast.
+
+    IEEE 1800 rounds a real cast to the nearest integral value, with ties
+    away from zero.  Real storage is otherwise opaque in the flat state, so
+    only a direct literal or a source-ordered finite literal history is
+    admitted.  The resulting integral value is sized by the ordinary target
+    width rule; dynamic, computed, timed, and non-finite real sources remain
+    on the explicit-cast boundary.
+    """
+    try:
+        if (_SYM is not None
+                or type(expr).__name__ != "ConversionExpression"
+                or expr.conversionKind != ConversionKind.Explicit
+                or not getattr(expr.type, "isIntegral", False)):
+            return None
+        value = _bound_real_decimal(expr.operand)
+        if value is None:
+            return None
+        width, _two_state, reason = type_width_2s(expr.type)
+        if width is None or reason is not None or width <= 0:
+            return None
+        rounded = int(value.to_integral_value(rounding=ROUND_HALF_UP))
+        bits = format(rounded & ((1 << width) - 1), f"0{width}b")
+        return signed_metadata({
+            "kind": "Literal",
+            "span": node_span(sm, expr),
+            "width": width,
+            "bits": bits,
+            "real_integral_cast": True,
+        }, expr.type)
+    except (AttributeError, InvalidOperation, OverflowError, ValueError):
+        return None
 
 
 def _convert_integral_cast(sm, expr):
@@ -8509,7 +8547,13 @@ def _literal_real_decimal(expression):
         if getattr(node, "bad", False):
             return None
         try:
-            source = str(getattr(node, "syntax", "")).replace("_", "")
+            source = str(getattr(node, "syntax", "")).replace("_", "").strip()
+            # A real literal used as the operand of a type cast is wrapped by
+            # pyslang in a ParenthesizedExpression syntax node.  Peel only
+            # balanced outer parentheses; the literal spelling remains the
+            # source of truth for exact Decimal conversion.
+            while source.startswith("(") and source.endswith(")"):
+                source = source[1:-1].strip()
             value = Decimal(source)
             return value if value.is_finite() else None
         except (InvalidOperation, ValueError):
@@ -8692,7 +8736,7 @@ def _bound_real_decimal(expression):
             if kind in ("ConditionalStatement", "ForLoopStatement",
                         "WhileLoopStatement", "DoWhileLoopStatement",
                         "RepeatLoopStatement", "ForeachLoopStatement",
-                        "CaseStatement", "CaseInsideStatement",
+                        "CaseStatement", "CaseInsideStatement", "TimedStatement",
                         "CasePatternStatement", "LoopStatement"):
                 controls.append(getattr(node, "sourceRange", None))
             elif kind == "AssignmentExpression":

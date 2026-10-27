@@ -6906,6 +6906,51 @@ def callableLocalForSwitchDefaultShadowInitializationFallthroughAssignmentStatem
 
 #guard callableLocalForSwitchDefaultShadowInitializationFallthroughAssignmentStatementFrameWitness
 
+private def localForSwitchDefaultShadowInitializationFallthroughAssignmentFalseStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let initializer : CallableStatement := .assign (handle "0x10") {
+    expression := .integer 1
+    sourceType := intType
+    type := intType}
+  let condition : TypedCallableExpression := {
+    expression := .binary "<"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 2, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let step : CallableStatement := .expression {
+    expression := .increment "++" false (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let switchCondition : TypedCallableExpression := {
+    expression := .parameter (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let body := .block (.switch_ switchCondition [
+    {label := none, body := .block (.sequence
+      (automaticLiteral "0x13" 5)
+      (.assign (handle "0x11") {
+        expression := .parameter (handle "0x13")
+        sourceType := intType
+        type := intType}))},
+    {label := some 1, body := .break_}])
+  let function := {base with body := .block (.sequence
+    (automaticLiteral "0x11" 3)
+    (.sequence
+      (.forLoop initializer condition step body)
+      (.return_ {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType}))) }
+  match evaluateCallableObject 128 .lp64 function [signed 9] with
+  | .ok (.ok value) => value == signed 3
+  | _ => false
+
+def callableLocalForSwitchDefaultShadowInitializationFallthroughAssignmentFalseStatementFrameWitness : Bool :=
+  localForSwitchDefaultShadowInitializationFallthroughAssignmentFalseStatementFrame
+
+#guard callableLocalForSwitchDefaultShadowInitializationFallthroughAssignmentFalseStatementFrameWitness
+
 private def localForSwitchDefaultShadowInitializationAssignmentStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let initializer : CallableStatement := .assign (handle "0x10") {

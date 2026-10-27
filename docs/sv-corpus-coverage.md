@@ -45,6 +45,22 @@ regression, Lean receipt, and differential row. The 22,059-path census moves
 grows **294/289/0/5 → 295/290/0/5** with no disagreements; grammar coverage
 remains **218/95/123**.
 
+## Seeded bounded `$dist_uniform` scalar assignments — 2026-10-27
+
+Direct blocking assignments from `$dist_uniform(seed, 0, 1000)` now update
+the 32-bit inout seed and one scalar 32-bit integral destination through an
+explicit deterministic recurrence. The admitted slice requires a variable
+seed and literal bounds; other bounds, seed expressions, nonblocking or timed
+forms, non-32-bit targets, and value-position random calls remain loud. The
+`dist_uniform_scalar` fixture and four chapter-20 witnesses provide the
+repeatability and range checks.
+
+The 22,059-path census moves **5,254 → 5,258 clean** and **16,738 → 16,734
+partial** (67 include skips); `CallExpression` falls **2,768 → 2,764** while
+`AssignmentExpression:target` remains **2,852**. Differential coverage grows
+by one matching row; grammar coverage is regenerated with the current witness
+set.
+
 ## Queue-removal status — 2026-10-27
 
 Undefined literal queue IDs now lower `$q_remove` to status 2. A valid literal

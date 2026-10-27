@@ -168,6 +168,22 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_dist_uniform_scalar_assignment_updates_seed(self):
+        design = extract_source(
+            "module top; integer seed; integer value; "
+            "initial begin seed = 9001; "
+            "value = $dist_uniform(seed, 0, 1000); "
+            "if (value == 144 && seed != 9001) $display(\"PASS\"); "
+            "end endmodule")
+        calls = [node for node in nodes(design)
+                 if node.get("kind") == "DistUniformAssign"]
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0]["target"], "value")
+        self.assertEqual(calls[0]["seed"], "seed")
+        self.assertTrue(calls[0]["dist_uniform_scalar_write"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_whole_array_copy_reuses_cells(self):
         design = extract_source(
             "module top; logic [7:0] source [0:1]; logic [7:0] value [0:1]; "

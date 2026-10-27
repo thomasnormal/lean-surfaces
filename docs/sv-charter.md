@@ -63,6 +63,23 @@ regression, Lean receipt, and differential row. The 22,059-path census moves
 grows **294/289/0/5 → 295/290/0/5** with no disagreements; grammar coverage
 remains **218/95/123**.
 
+## Seeded bounded `$dist_uniform` scalar assignments — 2026-10-27
+
+IEEE 1800-2023 §20.14.2 permits a seeded distribution function to update its
+inout seed and return an integer in the inclusive bounds. The self-check slice
+now admits direct blocking assignments from `$dist_uniform(seed, 0, 1000)` to
+32-bit integral scalar cells, using the explicit deterministic recurrence and
+retaining the seed update. Computed seeds, other bounds, nonblocking or timed
+forms, non-32-bit targets, and value-position calls remain loud. The
+`dist_uniform_scalar` fixture and four chapter-20 witnesses supply the
+repeatability/range evidence.
+
+The 22,059-path census moves **5,254 → 5,258 clean** and **16,738 → 16,734
+partial** (67 include skips); `CallExpression` falls **2,768 → 2,764** while
+`AssignmentExpression:target` remains **2,852**. Differential coverage gains
+one matching row; grammar coverage is regenerated with the current witness
+set.
+
 ## Queue-removal status — 2026-10-27
 
 IEEE 1800-2023 §20.15.6 gives scalar statuses for queue removal without

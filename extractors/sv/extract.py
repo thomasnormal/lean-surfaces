@@ -3905,6 +3905,73 @@ def _dist_uniform_fixed_array_assignment(sm, expr):
         return None
 
 
+def _dist_uniform_scalar_assignment(sm, expr):
+    """Lower a bounded ``$dist_uniform`` call into one scalar cell.
+
+    The inout seed and the returned value are represented by the same
+    ``DistUniformAssign`` statement used for fixed-array cells.  Keep this
+    first scalar rung deliberately narrow: a direct 32-bit variable seed,
+    literal bounds ``0`` and ``1000``, and a direct 32-bit integral target.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None or expr.isNonBlocking
+                or type(expr.left).__name__ != "NamedValueExpression"):
+            return None
+        target_symbol = getattr(expr.left, "symbol", None)
+        if (target_symbol is None
+                or str(getattr(target_symbol, "kind", ""))
+                != "SymbolKind.Variable"):
+            return None
+        target_width, target_two_state, target_reason = type_width_2s(
+            expr.left.type)
+        if target_width != 32 or target_reason is not None:
+            return None
+        call = expr.right
+        while type(call).__name__ == "ConversionExpression":
+            call = getattr(call, "operand", None)
+            if call is None:
+                return None
+        if (type(call).__name__ != "CallExpression"
+                or not call.isSystemCall
+                or call.subroutineName != "$dist_uniform"):
+            return None
+        args = list(call.arguments)
+        if len(args) != 3:
+            return None
+        seed_arg = args[0]
+        if (type(seed_arg).__name__ != "AssignmentExpression"
+                or seed_arg.op is not None
+                or type(seed_arg.left).__name__ != "NamedValueExpression"
+                or type(seed_arg.right).__name__ != "EmptyArgumentExpression"):
+            return None
+        seed_symbol = getattr(seed_arg.left, "symbol", None)
+        if (seed_symbol is None
+                or str(getattr(seed_symbol, "kind", ""))
+                != "SymbolKind.Variable"):
+            return None
+        seed_width, _seed_two_state, seed_reason = type_width_2s(
+            seed_arg.left.type)
+        if seed_width != 32 or seed_reason is not None:
+            return None
+        low = _literal_integral_value(args[1])
+        high = _literal_integral_value(args[2])
+        if low != 0 or high != 1000:
+            return None
+        return {
+            "kind": "DistUniformAssign",
+            "span": node_span(sm, expr),
+            "target": _storage_name(target_symbol),
+            "seed": _storage_name(seed_symbol),
+            "low": low,
+            "high": high,
+            "two_state": target_two_state,
+            "dist_uniform_scalar_write": True,
+        }
+    except Exception:
+        return None
+
+
 def _fixed_array_dynamic_assignment(sm, expr):
     """Lower a dynamic write to mutually exclusive per-cell branches."""
     try:
@@ -15898,6 +15965,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         return scan
     if expr.op is None:
         if _SYM is None:
+            dist_uniform_scalar = _dist_uniform_scalar_assignment(sm, expr)
+            if dist_uniform_scalar is not None:
+                return dist_uniform_scalar
             dist_uniform_target = _dist_uniform_fixed_array_assignment(sm, expr)
             if dist_uniform_target is not None:
                 return dist_uniform_target

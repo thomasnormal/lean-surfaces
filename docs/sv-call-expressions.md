@@ -42,11 +42,22 @@ Enum `.name()` is also admitted as an exact declaration-spelling string value;
 unknown enum values return the standard empty string. Enum traversal remains
 integral, while string comparisons and dynamic string storage remain loud.
 
+## Seeded bounded `$dist_uniform` scalar assignments — 2026-10-27
+
+A direct blocking assignment from `$dist_uniform(seed, 0, 1000)` now updates
+the 32-bit inout seed and the scalar 32-bit integral destination together.
+The explicit recurrence makes equal seeds repeatable without introducing an
+implicit random oracle. Direct variable seeds and literal bounds are required;
+nonblocking or timed forms, other bounds, computed seeds, non-32-bit targets,
+and value-position random calls remain loud. The `dist_uniform_scalar` fixture
+and the four chapter-20 repeatability/range witnesses cover this slice.
+
 ## Refusal boundary
 
 The residual expression calls need state or effects absent from that surface:
 
-* `$random`, `$urandom`, `$urandom_range`, and the distribution calls mutate a
+* `$random`, `$urandom`, `$urandom_range`, and distribution calls outside the
+  admitted seeded `$dist_uniform(seed, 0, 1000)` assignment slice mutate a
   seed and require an explicit random oracle;
 * `$rose`, `$fell`, `$stable`, `$changed`, `$past`, and `$sampled` read sampled
   values and scheduler history;

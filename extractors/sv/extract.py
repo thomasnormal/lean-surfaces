@@ -8507,13 +8507,14 @@ def _convert_legacy_call(sm, expression):
 
 
 def _convert_sformatf_call(sm, expression):
-    """Lower the pure one-integral-argument `$sformatf` slice.
+    """Lower the pure one-literal-argument `$sformatf` slice.
 
     The self-check state represents the resulting text as an ASCII packed
     vector. Keep the format language deliberately small and literal: one
-    conversion from the integral display inventory already rendered by the
-    self-check tier. Dynamic formats, multiple arguments, aggregate/real
-    operands, and every other conversion remain a loud call boundary.
+    conversion from the integral display inventory, or one ASCII string
+    literal for `%s`, already rendered by the self-check tier. Dynamic
+    formats, multiple arguments, aggregate/real operands, dynamic strings,
+    and every other conversion remain a loud call boundary.
     """
     try:
         if (type(expression).__name__ != "CallExpression"
@@ -8532,11 +8533,23 @@ def _convert_sformatf_call(sm, expression):
                                      "%o", "%O", "%d", "%D",
                                      "%c", "%C", "%0b", "%0B",
                                      "%0h", "%0H", "%0o", "%0O",
-                                     "%0d", "%0D"):
+                                     "%0d", "%0D", "%s", "%S"):
             return unsupported(sm, expression, "CallExpression:$sformatf:format")
-        width, _two_state, reason = type_width_2s(operand.type)
-        if width is None or reason is not None or width <= 0:
-            return unsupported(sm, expression, "CallExpression:$sformatf:operand")
+        string_format = format_expr.value in ("%s", "%S")
+        if string_format:
+            if (type(operand).__name__ != "StringLiteral"
+                    or getattr(operand, "bad", False)
+                    or _contains_disputed_string_escape(operand)
+                    or any(ord(char) > 127 for char in operand.value)):
+                return unsupported(sm, expression, "CallExpression:$sformatf:operand")
+            width = getattr(operand.type, "bitWidth", None)
+            reason = None if width is not None else "type"
+            if width is None or width <= 0:
+                return unsupported(sm, expression, "CallExpression:$sformatf:operand")
+        else:
+            width, _two_state, reason = type_width_2s(operand.type)
+            if width is None or reason is not None or width <= 0:
+                return unsupported(sm, expression, "CallExpression:$sformatf:operand")
         if not _case_source_expression_ok(operand):
             return unsupported(sm, expression, "CallExpression:$sformatf:operand")
         converted = convert_expr(sm, operand)
@@ -8548,7 +8561,8 @@ def _convert_sformatf_call(sm, expression):
             "span": node_span(sm, expression),
             "format": format_expr.value,
             "operand": converted,
-            "signed": bool(getattr(operand.type, "isSigned", False)),
+            "signed": (False if string_format
+                       else bool(getattr(operand.type, "isSigned", False))),
         }
     except Exception:
         return unsupported(sm, expression, "CallExpression:$sformatf")

@@ -2750,6 +2750,15 @@
       "expect": "match"
     },
     {
+      "name": "sformatf_string_literal",
+      "file": "Examples/system-verilog/sformatf_string_literal/sformatf_string_literal.sv",
+      "module": "top",
+      "oracle": [
+        "hello"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "q_remove_payload",
       "file": "Examples/system-verilog/q_remove_payload/q_remove_payload.sv",
       "module": "top",

@@ -25,13 +25,22 @@ storage. Dynamic formats, field controls beyond this zero-width form, and
 nonintegral operands remain loud; `sformatf_zero_width` checks all four
 conversions.
 
+### Literal ASCII string `$sformatf` — 2026-10-27
+
+An ASCII `StringLiteral` is now accepted as the sole `%s`/`%S` operand. It is
+already represented as a packed byte vector, so the existing string renderer
+can return the exact text without introducing dynamic string storage. Dynamic
+string variables, non-ASCII text, and aggregate operands remain loud;
+`sformatf_string_literal` checks the nested result in `$display`.
+
 Literal one-integral-operand `$sformatf` expressions now lower to an ASCII
 packed value for `%b`, `%h`, `%o`, `%d`, and `%c`, plus the corresponding
 zero-width forms; `%B`, `%H`, `%O`, `%D`, and `%C` are their uppercase aliases.
 The renderer retains four-state unknown summaries and
 the operand's signedness for decimal output. Dynamic formats, multiple
 arguments, unsupported conversions, aggregate or real operands, and dynamic
-string storage remain loud.
+string storage remain loud; the literal `%s` slice above is the only string
+operand admitted here.
 
 Fixed `$bits`, `$high`, `$left`, `$right`, `$low`, `$increment`, `$size`,
 `$dimensions`, and `$unpacked_dimensions` queries fold from elaborated type

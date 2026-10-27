@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.54] — 2026-10-27
+
+The self-check surface now has 307 differential rows: 302 matches, zero
+disagreements, and 5 recorded refusals. The grammar census remains at 218
+pyslang syntax witnesses: 96 MATCH and 122 REFUSE. The 22,059-path corpus
+remains at 5,287 clean files and 16,705 partial files; the
+`ExpressionStatement:CallExpression` wall remains 2,746. Literal ASCII string
+operands are now admitted for `%s`/`%S` in `$sformatf`; dynamic string storage
+and non-ASCII operands remain loud.
+
 ## [0.1.53] — 2026-10-27
 
 The self-check surface now has 306 differential rows: 301 matches, zero

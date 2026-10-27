@@ -43,6 +43,20 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Literal ASCII string `$sformatf` — 2026-10-27
+
+The literal `$sformatf` expression slice now accepts an ASCII string literal
+as the sole `%s` or `%S` operand. Its packed bytes use the existing string
+renderer and remain pure; dynamic string variables, non-ASCII text, aggregates,
+and other string storage stay loud. The `sformatf_string_literal` fixture
+supplies the extractor regression, Lean receipt, and differential row.
+
+The 22,059-path corpus remains **5,287 clean / 16,705 partial** (67 include
+skips); `ExpressionStatement:CallExpression` remains **2,746** and
+`CallExpression` remains **2,739**. Differential coverage grows
+**306/301/0/5 → 307/302/0/5** with no disagreements; grammar remains
+**218/96/122**.
+
 ## Literal integral zero-width `$sformatf` — 2026-10-27
 
 Literal integral `$sformatf` expressions now accept `%0b/%0h/%0o/%0d` and

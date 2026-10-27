@@ -95,6 +95,23 @@ class SFormatfCalls(unittest.TestCase):
         self.assertEqual({node["format"] for node in formatted},
                          {"%0b", "%0h", "%0d", "%0o"})
 
+    def test_literal_ascii_string_format(self):
+        design = lower(
+            'module top; initial $display("%s", '
+            '$sformatf("%s", "hello")); endmodule')
+        formatted = [node for node in nodes(design)
+                     if node.get("kind") == "SFormatF"]
+        self.assertEqual(len(formatted), 1)
+        self.assertEqual(formatted[0]["format"], "%s")
+
+    def test_dynamic_string_operand_stays_loud(self):
+        design = lower(
+            'module top; string value; initial $display("%s", '
+            '$sformatf("%s", value)); endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "CallExpression:$sformatf:operand"
+                            for node in nodes(design)))
+
     def test_dynamic_format_stays_loud(self):
         design = lower(
             'module top; string fmt; logic [7:0] v; '

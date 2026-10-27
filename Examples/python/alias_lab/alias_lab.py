@@ -66,3 +66,8 @@ def int_alias(value):
     f = int
     return f(value)
 
+
+def float_alias(value):
+    f = float
+    return f(value)
+

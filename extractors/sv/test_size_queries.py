@@ -269,6 +269,17 @@ class SizeQueries(unittest.TestCase):
             "VariableSymbol:2state", "CallExpression")
                             for node in nodes(design)))
 
+    def test_literal_queue_empty_reassignment_size_is_zero(self):
+        design = lower(
+            'module top; int q[$] = {1, 2, 3}; initial begin '
+            'q = {}; if (q.size() == 0) $display("PASS"); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("zero_size_query")]
+        self.assertEqual([(node["width"], int(node["bits"], 2))
+                          for node in values], [(32, 0)])
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
     def test_uninitialized_string_len_is_zero(self):
         design = lower(
             'module top; string s; initial $display("%0d", s.len()); endmodule')

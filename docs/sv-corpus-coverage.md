@@ -39,6 +39,20 @@ skips); `VariableSymbol:2state` falls **2,223 → 2,118**, while
 grows **315/309/0/6 → 316/310/0/6** with no disagreements; grammar remains
 **218/97/121**.
 
+## Literal queue empty reassignment `.size()` — 2026-10-27
+
+A direct `q = {}` after a scalar-literal queue initializer now makes later
+`q.size()` queries return exact zero. Other queue mutations, aliases, content
+reads, dynamic or effectful assignments, and value-position aggregate
+operations remain loud. `queue_literal_size_after_empty_write` supplies the
+differential row and Lean receipt.
+
+The 22,059-path snapshot moves **5,301 → 5,303 clean / 16,691 → 16,689
+partial** (67 include skips); `CallExpression` falls **2,731 → 2,729** while
+`ExpressionStatement:CallExpression` remains **2,739**. Differential coverage
+grows **316/310/0/6 → 317/311/0/6** with no disagreements; grammar remains
+**218/97/121**.
+
 ## Literal ASCII string `$sformatf` — 2026-10-27
 
 An ASCII string literal is now admitted as the sole `%s`/`%S` operand of the

@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 316 | 310 | 0 | 6 | sv-tests-2 declarations |
+| 317 | 311 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -231,6 +231,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `mailbox_parameterized_packed_vector` | `Examples/system-verilog/mailbox_parameterized_packed_vector/mailbox_parameterized_packed_vector.sv` | match | **MATCH** | `ok` | MATCH |
 | `queue_empty_init` | `Examples/system-verilog/queue_empty_init/queue_empty_init.sv` | match | **MATCH** | `ok` | MATCH |
 | `queue_literal_size` | `Examples/system-verilog/queue_literal_size/queue_literal_size.sv` | match | **MATCH** | `ok` | MATCH |
+| `queue_literal_size_after_empty_write` | `Examples/system-verilog/queue_literal_size_after_empty_write/queue_literal_size_after_empty_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `queue_empty_pop` | `Examples/system-verilog/queue_empty_pop/queue_empty_pop.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_empty_num` | `Examples/system-verilog/assoc_empty_num/assoc_empty_num.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_empty_query_statement` | `Examples/system-verilog/assoc_empty_query_statement/assoc_empty_query_statement.sv` | match | **MATCH** | `ok` | MATCH |
@@ -566,13 +567,13 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22059 | 5301 | 16691 | 67 |
+| 22059 | 5303 | 16689 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2845 |
 | `ExpressionStatement:CallExpression` | 2739 |
-| `CallExpression` | 2731 |
+| `CallExpression` | 2729 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2118 |
 | `SubroutineSymbol:Subroutine` | 1634 |

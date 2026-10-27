@@ -357,3 +357,11 @@ itself remains outside the flat self-check state, so pushes, pops, deletes,
 aliases, content reads, dynamic initializers, and value-position aggregate
 operations remain loud. The `queue_literal_size` fixture supplies the
 differential row and Lean receipt.
+
+## Literal queue empty reassignment `.size()` — 2026-10-27
+
+A direct `q = {}` after a scalar-literal queue initializer now makes later
+`q.size()` queries return exact zero. Other queue mutations, aliases, content
+reads, dynamic or effectful assignments, and value-position aggregate
+operations remain loud. The existing queue object is still not represented in
+the flat self-check state.

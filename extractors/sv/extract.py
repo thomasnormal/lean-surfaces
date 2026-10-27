@@ -9744,6 +9744,53 @@ def _queue_literal_write_noop(expression):
         return False
 
 
+def _queue_literal_size_query_value(expression):
+    """Return the exact size of a literal queue at one query position.
+
+    A direct empty queue assignment is the one represented mutation: it
+    discards the literal contents and leaves a known empty queue.  The source
+    scan is conservative and accepts only more size queries or further empty
+    assignments (plus the existing empty-queue delete/pop no-ops).
+    """
+    try:
+        receiver = list(expression.arguments)[0]
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or type(receiver.type.canonicalType).__name__ != "QueueType"):
+            return None
+        symbol = receiver.symbol
+        initializer = getattr(symbol, "initializer", None)
+        size = (0 if initializer is None
+                else _queue_literal_initializer_size(initializer))
+        if size is None:
+            return None
+        name = getattr(symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        code_source = _sv_code_source(source)
+        occurrences = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"(?![A-Za-z0-9_$])", code_source))
+        if not occurrences:
+            return None
+        query_position = getattr(getattr(getattr(expression, "sourceRange", None),
+                                         "start", None), "offset", -1)
+        suffix = ".size"
+        for occurrence in occurrences[1:]:
+            tail = code_source[occurrence.end():].lstrip()
+            if tail.startswith(suffix):
+                continue
+            if re.match(r"=\s*'?\s*\{\s*\}", tail):
+                if occurrence.start() < query_position:
+                    size = 0
+                continue
+            if size == 0 and (re.match(r"\.delete\s*\(\s*\)", tail)
+                              or re.match(r"\.(?:pop_front|pop_back)\s*\(\s*\)", tail)):
+                continue
+            return None
+        return size
+    except Exception:
+        return None
+
+
 def _zero_size_method(expression):
     """Recognize a zero-valued ``size``/``len`` query on inert storage.
 
@@ -9751,7 +9798,8 @@ def _zero_size_method(expression):
     uninitialized aggregates and strings are nevertheless defined to have
     zero size. Every later source occurrence of the receiver must be this
     same read-only method; pushes, assignments, and other observations stay
-    loud.
+    loud. A direct empty assignment after a literal queue initializer is
+    folded to the exact zero size.
     """
     try:
         if (type(expression).__name__ != "CallExpression"
@@ -9770,17 +9818,11 @@ def _zero_size_method(expression):
                  or (canonical == "StringType" and method == "len"))
         if not valid:
             return False
-        initializer = getattr(symbol, "initializer", None)
         if canonical == "QueueType":
-            queue_size = (0 if initializer is None
-                          else _queue_literal_initializer_size(initializer))
-            if queue_size is None:
-                return False
-        elif initializer is not None:
-            queue_size = 0
+            return _queue_literal_size_query_value(expression) is not None
+        initializer = getattr(symbol, "initializer", None)
+        if initializer is not None:
             return False
-        else:
-            queue_size = 0
         name = getattr(symbol, "name", "")
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
         code_source = _sv_code_source(source)
@@ -9793,18 +9835,12 @@ def _zero_size_method(expression):
             tail = code_source[match.end():].lstrip()
             if tail.startswith(suffix):
                 return True
-            if canonical in ("QueueType", "DynamicArrayType"):
-                if canonical == "QueueType" and queue_size:
-                    return False
+            if canonical == "DynamicArrayType":
                 if re.match(r"\.delete\s*\(\s*\)", tail):
                     return True
-                if canonical == "QueueType" and re.match(
-                        r"\.(?:pop_front|pop_back)\s*\(\s*\)", tail):
-                    return True
                 return (re.match(r"=\s*\{\s*\}", tail) is not None
-                        or (canonical == "DynamicArrayType" and
-                            re.match(r"=\s*new\s*\[\s*0\s*\]", tail)
-                            is not None))
+                        or re.match(r"=\s*new\s*\[\s*0\s*\]", tail)
+                        is not None)
             return re.match(r'=\s*""', tail) is not None
         return all(inert_occurrence(m) for m in occurrences[1:])
     except Exception:
@@ -14397,10 +14433,10 @@ def _convert_zero_size_method(sm, expression):
         return unsupported(sm, expression, "CallExpression:size")
     receiver = expression.arguments[0]
     canonical = type(receiver.type.canonicalType).__name__
-    initializer = getattr(getattr(receiver, "symbol", None),
-                          "initializer", None)
-    size = (0 if canonical != "QueueType" or initializer is None
-            else _queue_literal_initializer_size(initializer))
+    if canonical == "QueueType":
+        size = _queue_literal_size_query_value(expression)
+    else:
+        size = 0
     if size is None:
         return unsupported(sm, expression, "CallExpression:size")
     marker = ("queue_literal_size_query" if canonical == "QueueType" and size

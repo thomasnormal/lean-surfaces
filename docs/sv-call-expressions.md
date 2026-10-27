@@ -8,6 +8,16 @@ the statement-call contract is separate in [call statements](sv-call-statements.
 
 ## Admitted calls
 
+### Source-pure variable bounds for `$dist_uniform` — 2026-10-27
+
+Direct blocking assignments from `$dist_uniform(seed, low, high)` now accept
+`low` and `high` when they are signed 32-bit variables with exactly one
+earlier direct blocking integral-literal assignment in the same initial
+process. The existing deterministic seed update and scalar result write are
+unchanged. Computed, reassigned, timed, nonblocking, non-32-bit, and
+value-position random forms remain loud; `dist_uniform_variable_bounds`
+supplies the bounded-loop differential witness and Lean receipt.
+
 ### Literal integral character `$sformatf` — 2026-10-27
 
 Literal one-integral-operand `$sformatf` now also admits `%c` and `%C`, using

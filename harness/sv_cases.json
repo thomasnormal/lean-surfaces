@@ -2234,6 +2234,15 @@
       "expect": "match"
     },
     {
+      "name": "dist_uniform_variable_bounds",
+      "file": "Examples/system-verilog/dist_uniform_variable_bounds/dist_uniform_variable_bounds.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "fixed_array_sort",
       "file": "Examples/system-verilog/fixed_array_sort/fixed_array_sort.sv",
       "module": "top",

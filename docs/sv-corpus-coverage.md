@@ -25,6 +25,22 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Source-pure variable bounds for `$dist_uniform` — 2026-10-27
+
+The scalar seeded distribution lowering now resolves each 32-bit signed bound
+from one earlier direct blocking literal assignment in the same initial
+process. This admits the root-level §18.13.3 bounded-loop witness without
+introducing mutable bound storage into the flat state. Computed, reassigned,
+timed, nonblocking, non-32-bit, and value-position random forms remain loud.
+The `dist_uniform_variable_bounds` fixture supplies the self-check and Lean
+receipt.
+
+The committed chapter-only 22,064-path census remains **5,326 clean / 16,671
+partial** (67 include skips); the witness is outside `chapter-*`, so the
+blocker counts remain `ExpressionStatement:CallExpression` **2,722** and
+`CallExpression` **2,656**. Differential coverage grows **321/315/0/6 →
+322/316/0/6** with no disagreements; grammar remains **218/97/121**.
+
 ## Literal queue-to-fixed-array size mismatch — 2026-10-27
 
 A direct scalar-literal queue copied to a differently sized fixed unpacked

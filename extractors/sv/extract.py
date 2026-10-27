@@ -4021,8 +4021,11 @@ def _dist_uniform_scalar_assignment(sm, expr):
     The inout seed and the returned value are represented by the same
     ``DistUniformAssign`` statement used for fixed-array cells.  Keep this
     first scalar rung deliberately narrow: a direct 32-bit variable seed,
-    literal bounds in the signed 32-bit range, and a direct
-    32-bit integral target.
+    literal or source-ordered immutable 32-bit bounds in the signed 32-bit
+    range, and a direct 32-bit integral target.  A named bound is accepted
+    only after one direct blocking literal assignment in the same initial
+    process; this preserves the value without introducing a general runtime
+    variable or random oracle.
     """
     try:
         if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
@@ -4065,8 +4068,92 @@ def _dist_uniform_scalar_assignment(sm, expr):
             seed_arg.left.type)
         if seed_width != 32 or seed_reason is not None:
             return None
-        low = _literal_integral_value(args[1])
-        high = _literal_integral_value(args[2])
+        call_position = getattr(
+            getattr(getattr(expr, "sourceRange", None), "start", None),
+            "offset", None)
+
+        def bound_value(argument):
+            literal = _literal_integral_value(argument)
+            if literal is not None:
+                return literal
+            if (type(argument).__name__ != "NamedValueExpression"
+                    or getattr(argument, "bad", False)):
+                return None
+            symbol = getattr(argument, "symbol", None)
+            if (symbol is None
+                    or str(getattr(symbol, "kind", "")).split(".")[-1]
+                    != "Variable"
+                    or getattr(symbol, "initializer", None) is not None
+                    or not getattr(argument.type, "isIntegral", False)
+                    or getattr(argument.type, "bitWidth", None) != 32
+                    or not getattr(argument.type, "isSigned", False)):
+                return None
+            instance = getattr(getattr(symbol, "parentScope", None),
+                               "containingInstance", None)
+            if instance is None or call_position is None:
+                return None
+            writes = []
+            invalid = False
+
+            def direct_initial_write(assignment):
+                syntax = getattr(assignment, "syntax", None)
+                saw_initial = False
+                allowed = {
+                    "SyntaxKind.AssignmentExpression",
+                    "SyntaxKind.ExpressionStatement",
+                    "SyntaxKind.SequentialBlockStatement",
+                    "SyntaxKind.InitialBlock",
+                    "SyntaxKind.ModuleDeclaration",
+                }
+                while syntax is not None:
+                    kind = str(getattr(syntax, "kind", ""))
+                    if kind not in allowed:
+                        return False
+                    saw_initial = saw_initial or kind == "SyntaxKind.InitialBlock"
+                    syntax = getattr(syntax, "parent", None)
+                return saw_initial
+
+            def inspect(node):
+                nonlocal invalid
+                if type(node).__name__ != "AssignmentExpression":
+                    return
+                left = getattr(node, "left", None)
+                if left is None:
+                    return
+                references = []
+
+                def inspect_left(child):
+                    if (type(child).__name__ in
+                            ("NamedValueExpression", "HierarchicalValueExpression")
+                            and getattr(child, "symbol", None) is symbol):
+                        references.append(child)
+
+                left.visit(inspect_left)
+                if not references:
+                    return
+                if (len(references) != 1 or references[0] is not left
+                        or getattr(node, "op", None) is not None
+                        or getattr(node, "timingControl", None) is not None
+                        or getattr(node, "isNonBlocking", False)
+                        or not direct_initial_write(node)):
+                    invalid = True
+                    return
+                start = getattr(
+                    getattr(getattr(node, "sourceRange", None), "start", None),
+                    "offset", None)
+                value = _literal_integral_value(getattr(node, "right", None))
+                if start is None or value is None or start >= call_position:
+                    invalid = True
+                    return
+                writes.append((start, value))
+
+            instance.visit(inspect)
+            if invalid or len(writes) != 1:
+                return None
+            return writes[0][1]
+
+        low = bound_value(args[1])
+        high = bound_value(args[2])
         if (low is None or high is None or high < low
                 or low < -(1 << 31) or high > (1 << 31) - 1):
             return None

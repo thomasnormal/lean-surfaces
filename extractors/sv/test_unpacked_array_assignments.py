@@ -214,6 +214,36 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_dist_uniform_scalar_assignment_accepts_immutable_literal_bound_history(self):
+        design = extract_source(
+            "module top; integer seed, value, low, high; "
+            "initial begin seed = 42; low = 1; high = 10; "
+            "value = $dist_uniform(seed, low, high); end endmodule")
+        calls = [node for node in nodes(design)
+                 if node.get("kind") == "DistUniformAssign"]
+        self.assertEqual(len(calls), 1)
+        self.assertEqual((calls[0]["low"], calls[0]["high"]), (1, 10))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_dist_uniform_scalar_assignment_rejects_reassigned_bound_history(self):
+        design = extract_source(
+            "module top; integer seed, value, low, high; "
+            "initial begin seed = 42; low = 1; high = 10; "
+            "low = 2; value = $dist_uniform(seed, low, high); end endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
+    def test_dist_uniform_scalar_assignment_rejects_bound_write_after_call(self):
+        design = extract_source(
+            "module top; integer seed, value, low, high; "
+            "initial begin seed = 42; low = 1; high = 10; "
+            "value = $dist_uniform(seed, low, high); low = 2; end endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
     def test_whole_array_copy_reuses_cells(self):
         design = extract_source(
             "module top; logic [7:0] source [0:1]; logic [7:0] value [0:1]; "

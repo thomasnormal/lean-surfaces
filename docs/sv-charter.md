@@ -43,6 +43,22 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Source-pure variable bounds for `$dist_uniform` — 2026-10-27
+
+Direct blocking scalar assignments from `$dist_uniform` now accept signed
+32-bit bound variables when each has exactly one earlier blocking assignment
+from an integral literal in the same initial process. The existing explicit
+seed recurrence and scalar cell write remain the semantics; declaration
+initializers, computed or reassigned bounds, nonblocking or timed writes,
+non-32-bit bounds, and value-position random calls remain loud. The
+`dist_uniform_variable_bounds` fixture mirrors the §18.13.3 bounded-loop shape
+and supplies the differential row and Lean receipt.
+
+The committed chapter-only census remains **5,326 clean / 16,671 partial**
+(67 include skips), because the upstream witness is a root-level file outside
+that walk. Differential coverage grows **321/315/0/6 → 322/316/0/6** with no
+disagreements; grammar remains **218/97/121**.
+
 ## Literal queue-to-fixed-array size mismatch — 2026-10-27
 
 The surface now recognizes a direct scalar-literal queue copied to a

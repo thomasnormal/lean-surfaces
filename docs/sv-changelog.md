@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.79] — 2026-10-27
+
+Source-pure string equality and relational comparisons now fold for direct
+ASCII literals and named strings with earlier unconditional blocking literal
+writes. Equality, case equality, inequality, and the four ordered comparisons
+produce exact one-bit literals; computed, control-dependent, timed,
+nonblocking, dynamic, and non-ASCII histories remain loud. Differential
+coverage is now **333 rows / 327 matches / 0 disagreements / 6 recorded
+refusals**; the chapter-only census moves from **5,384 clean / 16,614 partial**
+to **5,396 clean / 16,602 partial** over 22,065 files, and
+`NamedValueExpression:2state` falls **1,488 → 1,473**.
+
 ## [0.1.78] — 2026-10-27
 
 Explicit casts from a finite source-pure `real` or `shortreal` to an integral

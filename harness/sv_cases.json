@@ -2991,6 +2991,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "string_comparison_history",
+      "file": "Examples/system-verilog/string_comparison_history/string_comparison_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

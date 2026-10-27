@@ -7434,6 +7434,139 @@ def _binary_width_ok(sym, width, left_width, right_width):
     )
 
 
+_STRING_COMPARE_SYMS = {"==", "!=", "===", "!==", "<", "<=", ">", ">="}
+
+
+def _string_compare_source_value(operand, position):
+    """Resolve one source-pure ASCII string at a comparison position.
+
+    Strings have no flat self-check storage. A direct literal, or a named
+    string with only earlier unconditional blocking literal writes, is still
+    exact for a comparison. Computed, timed, nonblocking, and
+    control-dependent writes remain loud.
+    """
+    try:
+        node = operand
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return None
+        if type(node).__name__ == "StringLiteral":
+            value = getattr(node, "value", None)
+            return (value if isinstance(value, str)
+                    and not any(ord(char) == 0 or ord(char) > 127
+                                for char in value) else None)
+        if (type(node).__name__ != "NamedValueExpression"
+                or type(node.type.canonicalType).__name__ != "StringType"):
+            return None
+        symbol = node.symbol
+        initializer = getattr(symbol, "initializer", None)
+        while type(initializer).__name__ == "ConversionExpression":
+            initializer = getattr(initializer, "operand", None)
+        initial_value = (
+            getattr(initializer, "value", None)
+            if type(initializer).__name__ == "StringLiteral"
+            and not getattr(initializer, "bad", False) else None)
+        if (initial_value is not None
+                and (not isinstance(initial_value, str)
+                     or any(ord(char) == 0 or ord(char) > 127
+                            for char in initial_value))):
+            return None
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        assignments = []
+        controls = []
+        if instance is not None:
+            def inspect(tree_node):
+                kind = type(tree_node).__name__
+                if kind == "AssignmentExpression":
+                    left = getattr(tree_node, "left", None)
+                    if (type(left).__name__ != "NamedValueExpression"
+                            or getattr(left, "symbol", None) is not symbol):
+                        return
+                    assignments.append(tree_node)
+                elif kind in ("ConditionalStatement", "ForLoopStatement",
+                              "WhileLoopStatement", "DoWhileLoopStatement",
+                              "RepeatLoopStatement", "ForeachLoopStatement",
+                              "CaseStatement", "CaseInsideStatement",
+                              "CasePatternStatement", "LoopStatement",
+                              "TimedStatement"):
+                    controls.append(tree_node)
+            instance.visit(inspect)
+        history = []
+        if initial_value is not None:
+            history.append((-1, initial_value))
+        for assignment in assignments:
+            start = getattr(getattr(assignment, "sourceRange", None).start,
+                            "offset", -1)
+            if start >= position:
+                continue
+            value = assignment.right
+            while type(value).__name__ == "ConversionExpression":
+                value = getattr(value, "operand", None)
+            if (getattr(assignment, "op", None) is not None
+                    or getattr(assignment, "timingControl", None) is not None
+                    or getattr(assignment, "isNonBlocking", False)
+                    or type(value).__name__ != "StringLiteral"
+                    or getattr(value, "bad", False)
+                    or not isinstance(getattr(value, "value", None), str)
+                    or any(ord(char) == 0 or ord(char) > 127
+                           for char in value.value)):
+                return None
+            if any(control.sourceRange.start.offset <= start
+                   and start < control.sourceRange.end.offset
+                   for control in controls):
+                return None
+            history.append((start, value.value))
+        if not history:
+            return None
+        return max(history, key=lambda item: item[0])[1]
+    except Exception:
+        return None
+
+
+def _convert_string_compare(sm, expression, sym):
+    def is_string_operand(operand):
+        node = operand
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return False
+        return (type(node).__name__ == "StringLiteral"
+                or (type(node).__name__ == "NamedValueExpression"
+                    and type(node.type.canonicalType).__name__ == "StringType"))
+
+    if (_SYM is not None or sym not in _STRING_COMPARE_SYMS
+            or not is_string_operand(expression.left)
+            or not is_string_operand(expression.right)):
+        return None
+    position = getattr(getattr(expression.sourceRange, "start", None),
+                       "offset", None)
+    if position is None:
+        return None
+    left = _string_compare_source_value(expression.left, position)
+    right = _string_compare_source_value(expression.right, position)
+    if left is None or right is None:
+        return None
+    result = {
+        "==": left == right,
+        "!=": left != right,
+        "===": left == right,
+        "!==": left != right,
+        "<": left < right,
+        "<=": left <= right,
+        ">": left > right,
+        ">=": left >= right,
+    }[sym]
+    return {
+        "kind": "Literal",
+        "span": node_span(sm, expression),
+        "width": 1,
+        "bits": "1" if result else "0",
+        "string_compare": True,
+    }
+
+
 def _division_self_operand(sm, expression, operand):
     return {"kind": "SignedResize" if expression.type.isSigned else "Resize",
             "span": node_span(sm, expression), "width": expression.type.bitWidth,
@@ -7467,6 +7600,9 @@ def _convert_binary_expr(sm, e):
             }
     if sym is None:
         return unsupported(sm, e, "BinaryExpression:" + str(e.op).split(".")[-1])
+    string_compare = _convert_string_compare(sm, e, sym)
+    if string_compare is not None:
+        return string_compare
     if (_SYM is None and sym not in ("==", "!=", "===", "!==")
             and (_unpacked_union_shape(getattr(e.left, "type", None)) is not None
                  or _unpacked_union_shape(getattr(e.right, "type", None)) is not None)):

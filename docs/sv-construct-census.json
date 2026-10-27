@@ -40,7 +40,7 @@
    ],
    [
     "NamedValueExpression:2state",
-    1488
+    1473
    ],
    [
     "ConcurrentAssertionStatement",
@@ -67,10 +67,6 @@
     1018
    ],
    [
-    "ConversionExpression:width",
-    784
-   ],
-   [
     "HierarchicalValueExpression",
     752
    ],
@@ -81,6 +77,10 @@
    [
     "RealLiteral",
     706
+   ],
+   [
+    "ConversionExpression:width",
+    699
    ],
    [
     "CheckerSymbol",
@@ -355,10 +355,6 @@
     37
    ],
    [
-    "NamedValueExpression:Parameter",
-    36
-   ],
-   [
     "NetAliasSymbol:NetAlias",
     35
    ],
@@ -368,6 +364,10 @@
    ],
    [
     "NetType",
+    34
+   ],
+   [
+    "NamedValueExpression:Parameter",
     34
    ],
    [
@@ -976,13 +976,13 @@
    ]
   ],
   "by_status": {
-   "clean": 5384,
-   "partial": 16614,
+   "clean": 5396,
+   "partial": 16602,
    "skip_include": 67
   },
   "clean_by_type": {
    "(none)": [
-    489,
+    490,
     1390
    ],
    "compilation": [
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4685,
+    4696,
     18701
    ],
    "simulation elaboration": [
@@ -1053,30 +1053,30 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 202,
-    "clean": 788,
-    "partial": 203,
+    "blocked_by_more": 199,
+    "clean": 791,
+    "partial": 200,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
       "VariableDeclStatement:2state",
-      87
+      86
      ],
      [
       "NamedValueExpression:2state",
-      80
+      77
      ],
      [
       "AssignmentExpression:target",
       70
      ],
      [
-      "VariableSymbol:2state",
-      51
-     ],
-     [
       "SubroutineSymbol:Subroutine",
       50
+     ],
+     [
+      "VariableSymbol:2state",
+      49
      ],
      [
       "RealLiteral",
@@ -1088,7 +1088,7 @@
      ],
      [
       "ConversionExpression:width",
-      31
+      29
      ],
      [
       "TypeAliasType:TypeAlias",
@@ -1231,25 +1231,21 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 483,
-    "clean": 564,
-    "partial": 484,
+    "blocked_by_more": 477,
+    "clean": 570,
+    "partial": 478,
     "simulation_tests": 1048,
     "top_residual_blockers": [
      [
       "NamedValueExpression:2state",
-      164
+      157
      ],
      [
       "VariableSymbol:2state",
-      152
+      148
      ],
      [
       "TimedStatement:DelayControl",
-      126
-     ],
-     [
-      "ConversionExpression:width",
       126
      ],
      [
@@ -1258,7 +1254,11 @@
      ],
      [
       "VariableDeclStatement:2state",
-      110
+      108
+     ],
+     [
+      "ConversionExpression:width",
+      105
      ],
      [
       "CallExpression",
@@ -1331,9 +1331,9 @@
     "unlockable": 0
    },
    "chapter-11": {
-    "clean": 792,
+    "clean": 795,
     "error": 0,
-    "partial": 242,
+    "partial": 239,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 1
@@ -1419,9 +1419,9 @@
     "unlockable": 0
    },
    "chapter-22": {
-    "clean": 396,
+    "clean": 398,
     "error": 0,
-    "partial": 148,
+    "partial": 146,
     "skip_include": 28,
     "total": 572,
     "unlockable": 2
@@ -1587,17 +1587,17 @@
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 442,
+    "clean": 443,
     "error": 0,
-    "partial": 176,
+    "partial": 175,
     "skip_include": 0,
     "total": 618,
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 581,
+    "clean": 587,
     "error": 0,
-    "partial": 611,
+    "partial": 605,
     "skip_include": 0,
     "total": 1192,
     "unlockable": 2

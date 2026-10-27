@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 332 | 326 | 0 | 6 | sv-tests-2 declarations |
+| 333 | 327 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -346,6 +346,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `assertcontrol_named_history` | `Examples/system-verilog/assertcontrol_named_history/assertcontrol_named_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `timeformat_named_history` | `Examples/system-verilog/timeformat_named_history/timeformat_named_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `real_integral_cast` | `Examples/system-verilog/real_integral_cast/real_integral_cast.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_comparison_history` | `Examples/system-verilog/string_comparison_history/string_comparison_history.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -582,7 +583,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22065 | 5359 | 16639 | 67 |
+| 22065 | 5396 | 16602 | 67 |
 
 | blocker kind | files |
 |---|---:|
@@ -592,14 +593,14 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2118 |
 | `SubroutineSymbol:Subroutine` | 1634 |
-| `NamedValueExpression:2state` | 1488 |
+| `NamedValueExpression:2state` | 1473 |
 | `ConcurrentAssertionStatement` | 1359 |
 | `InvalidStatement` | 1330 |
 | `ClassType` | 1330 |
 | `Hierarchy:module-kind` | 1250 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1154 |
 | `MemberAccessExpression` | 1018 |
-| `ConversionExpression:width` | 784 |
 | `HierarchicalValueExpression` | 752 |
+| `CovergroupType:CovergroupType` | 725 |
 
 The committed census provenance identifies frontend family `pyslang-11` and corpus `sv-tests-2`. The corpus snapshot is not silently substituted when the external checkout is unavailable.

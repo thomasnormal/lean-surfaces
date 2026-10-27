@@ -43,6 +43,22 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Source-pure string equality and relational comparisons — 2026-10-27
+
+String `==`, `!=`, `===`, `!==`, `<`, `<=`, `>`, and `>=` now fold to exact
+one-bit literals for direct ASCII literals and named strings whose prior
+history contains only unconditional blocking ASCII literal writes. Computed,
+control-dependent, timed, nonblocking, dynamic, and non-ASCII histories stay
+loud because the flat self-check state does not store general strings. The
+`string_comparison_history` fixture supplies the differential witness and Lean
+receipt.
+
+The chapter-only census moves **5,384 clean / 16,614 partial → 5,396 clean /
+16,602 partial** over **22,065** files with 67 include skips;
+`NamedValueExpression:2state` falls **1,488 → 1,473** and the leading blockers
+are unchanged. Differential coverage grows **332/326/0/6 → 333/327/0/6** with
+no disagreements, while grammar coverage remains **218/97/121**.
+
 ## Explicit source-pure real-to-integral casts — 2026-10-27
 
 Explicit casts from a finite `real` or `shortreal` source to an integral

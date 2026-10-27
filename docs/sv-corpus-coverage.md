@@ -25,6 +25,21 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Source-pure string equality and relational comparisons — 2026-10-27
+
+String `==`, `!=`, `===`, `!==`, `<`, `<=`, `>`, and `>=` now lower to exact
+one-bit literals when both operands are direct ASCII literals or named strings
+whose earlier history contains only unconditional blocking ASCII literal
+writes. Computed, control-dependent, timed, nonblocking, dynamic, and
+non-ASCII histories remain loud. The `string_comparison_history` fixture
+supplies the differential row and Lean receipt.
+
+The chapter-only census moves **5,384 clean / 16,614 partial → 5,396 clean /
+16,602 partial** over **22,065** files with 67 include skips;
+`NamedValueExpression:2state` falls **1,488 → 1,473**, while the leading
+blockers remain unchanged. Differential coverage grows **332/326/0/6 →
+333/327/0/6** with no disagreements; grammar coverage remains **218/97/121**.
+
 ## Explicit source-pure real-to-integral casts — 2026-10-27
 
 Explicit casts from a finite real or short-real source to an integral target

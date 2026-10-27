@@ -25,6 +25,23 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Mailbox `try_peek()` type mismatch — 2026-10-27
+
+An untyped mailbox with one scalar integral literal now admits
+`try_peek(destination)` when the destination type is not equivalent to the
+message type. IEEE 1800-2023 §15.4.8 makes the result negative without
+consuming the mailbox or writing the destination, so this slice needs no
+mailbox object or scheduler state. Aliases, dynamic or multiple histories,
+equivalent types, and other mailbox methods remain loud. The
+`mailbox_try_peek_type_mismatch` fixture supplies the differential row and
+Lean receipt.
+
+The 22,064-path census moves **5,326 → 5,327 clean / 16,671 → 16,670
+partial** (67 include skips); `CallExpression` falls **2,656 → 2,655** while
+`ExpressionStatement:CallExpression` remains **2,722**. Differential coverage
+grows **322/316/0/6 → 323/317/0/6** with no disagreements; grammar remains
+**218/97/121**.
+
 ## Source-pure variable bounds for `$dist_uniform` — 2026-10-27
 
 The scalar seeded distribution lowering now resolves each 32-bit signed bound

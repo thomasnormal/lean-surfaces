@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 322 | 316 | 0 | 6 | sv-tests-2 declarations |
+| 323 | 317 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -241,6 +241,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `assoc_empty_endpoint` | `Examples/system-verilog/assoc_empty_endpoint/assoc_empty_endpoint.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_empty_endpoint_statement` | `Examples/system-verilog/assoc_empty_endpoint_statement/assoc_empty_endpoint_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `mailbox_type_mismatch` | `Examples/system-verilog/mailbox_type_mismatch/mailbox_type_mismatch.sv` | match | **MATCH** | `ok` | MATCH |
+| `mailbox_try_peek_type_mismatch` | `Examples/system-verilog/mailbox_try_peek_type_mismatch/mailbox_try_peek_type_mismatch.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_dynamic_bits` | `Examples/system-verilog/empty_dynamic_bits/empty_dynamic_bits.sv` | match | **MATCH** | `ok` | MATCH |
 | `semaphore_negative_try_get` | `Examples/system-verilog/semaphore_negative_try_get/semaphore_negative_try_get.sv` | match | **MATCH** | `ok` | MATCH |
 | `queue_empty_pop_struct_default` | `Examples/system-verilog/queue_empty_pop_struct_default/queue_empty_pop_struct_default.sv` | match | **MATCH** | `ok` | MATCH |
@@ -572,13 +573,13 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22064 | 5326 | 16671 | 67 |
+| 22064 | 5327 | 16670 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2842 |
 | `ExpressionStatement:CallExpression` | 2722 |
-| `CallExpression` | 2656 |
+| `CallExpression` | 2655 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2118 |
 | `SubroutineSymbol:Subroutine` | 1634 |

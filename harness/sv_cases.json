@@ -2043,6 +2043,15 @@
       "expect": "match"
     },
     {
+      "name": "mailbox_try_peek_type_mismatch",
+      "file": "Examples/system-verilog/mailbox_try_peek_type_mismatch/mailbox_try_peek_type_mismatch.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "empty_dynamic_bits",
       "file": "Examples/system-verilog/empty_dynamic_bits/empty_dynamic_bits.sv",
       "module": "top",

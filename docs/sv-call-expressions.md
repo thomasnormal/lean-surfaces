@@ -8,6 +8,17 @@ the statement-call contract is separate in [call statements](sv-call-statements.
 
 ## Admitted calls
 
+### Mailbox `try_peek()` type mismatch — 2026-10-27
+
+An untyped mailbox containing one scalar integral literal now admits
+`try_peek(destination)` when the destination type is not equivalent to the
+queued message type. IEEE 1800-2023 §15.4.8 requires a negative return, leaves
+the destination unchanged, and does not consume the mailbox; the lowering
+therefore needs no mailbox object or scheduler state. Aliases, dynamic or
+multiple histories, equivalent types, and all other mailbox methods remain
+loud. `mailbox_try_peek_type_mismatch` supplies the differential witness and
+Lean receipt.
+
 ### Source-pure variable bounds for `$dist_uniform` — 2026-10-27
 
 Direct blocking assignments from `$dist_uniform(seed, low, high)` now accept

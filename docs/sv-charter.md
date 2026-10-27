@@ -43,6 +43,23 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Mailbox `try_peek()` type mismatch — 2026-10-27
+
+The surface now admits an untyped mailbox containing one scalar integral
+literal when `try_peek()` receives a destination of a non-equivalent type.
+IEEE 1800-2023 §15.4.8 specifies a negative return and no destination write or
+FIFO consumption, so the flat self-check lowering carries no mailbox or
+scheduler state. Aliases, dynamic or multiple histories, equivalent types, and
+other mailbox operations remain loud. The
+`mailbox_try_peek_type_mismatch` fixture supplies the differential witness and
+Lean receipt.
+
+The 22,064-path census moves **5,326 → 5,327 clean / 16,671 → 16,670 partial**
+(67 include skips); `CallExpression` falls **2,656 → 2,655** while
+`ExpressionStatement:CallExpression` remains **2,722**. Differential coverage
+grows **322/316/0/6 → 323/317/0/6** with no disagreements; grammar remains
+**218/97/121**.
+
 ## Source-pure variable bounds for `$dist_uniform` — 2026-10-27
 
 Direct blocking scalar assignments from `$dist_uniform` now accept signed

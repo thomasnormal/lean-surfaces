@@ -8832,6 +8832,9 @@ def _convert_legacy_call(sm, expression):
     mailbox_mismatch = _convert_mailbox_type_mismatch_try_get(sm, expression)
     if mailbox_mismatch is not None:
         return mailbox_mismatch
+    mailbox_peek_mismatch = _convert_mailbox_type_mismatch_try_peek(sm, expression)
+    if mailbox_peek_mismatch is not None:
+        return mailbox_peek_mismatch
     if (_SYM is None and getattr(expression, "isSystemCall", False)
             and getattr(expression, "subroutineName", "") == "$q_full"):
         value = _q_full_value_call(sm, expression)
@@ -10894,20 +10897,21 @@ def _convert_mailbox_empty_try_method(sm, expression):
     }, expression.type)
 
 
-def _mailbox_type_mismatch_try_get(expression):
-    """Recognize the negative result of an untyped mailbox type mismatch.
+def _mailbox_type_mismatch_call(expression, method):
+    """Recognize a negative result of an untyped mailbox type mismatch.
 
     IEEE 1800-2023 §15.4.6 specifies a negative return when the destination
-    type is not equivalent to the queued message type.  This narrow lowering
-    models the source-pure ``new(); put(literal); try_get(named)`` shape.  It
-    does not publish a destination value and therefore leaves the flat state
-    unchanged; all other mailbox activity remains on the FIFO boundary.
+    type is not equivalent to the queued message type (the same rule is
+    stated for ``try_peek`` in §15.4.8).  This narrow lowering models the
+    source-pure ``new(); put(literal); <method>(named)`` shape.  It does not
+    publish a destination value and therefore leaves the flat state unchanged;
+    all other mailbox activity remains on the FIFO boundary.
     """
     try:
         if (type(expression).__name__ != "CallExpression"
                 or getattr(expression, "bad", False)
                 or expression.isSystemCall
-                or expression.subroutineName != "try_get"
+                or expression.subroutineName != method
                 or len(expression.arguments) != 1):
             return False
         receiver = getattr(expression, "thisClass", None)
@@ -10976,6 +10980,14 @@ def _mailbox_type_mismatch_try_get(expression):
         return False
 
 
+def _mailbox_type_mismatch_try_get(expression):
+    return _mailbox_type_mismatch_call(expression, "try_get")
+
+
+def _mailbox_type_mismatch_try_peek(expression):
+    return _mailbox_type_mismatch_call(expression, "try_peek")
+
+
 def _convert_mailbox_type_mismatch_try_get(sm, expression):
     if not _mailbox_type_mismatch_try_get(expression):
         return None
@@ -10983,6 +10995,16 @@ def _convert_mailbox_type_mismatch_try_get(sm, expression):
         "kind": "Literal", "span": node_span(sm, expression),
         "width": 32, "bits": "1" * 32,
         "mailbox_type_mismatch_try_get": True,
+    }, expression.type)
+
+
+def _convert_mailbox_type_mismatch_try_peek(sm, expression):
+    if not _mailbox_type_mismatch_try_peek(expression):
+        return None
+    return signed_metadata({
+        "kind": "Literal", "span": node_span(sm, expression),
+        "width": 32, "bits": "1" * 32,
+        "mailbox_type_mismatch_try_peek": True,
     }, expression.type)
 
 

@@ -211,6 +211,25 @@ class SizeQueries(unittest.TestCase):
         self.assertEqual(len(values), 1)
         self.assertEqual(values[0]["bits"], "1" * 32)
 
+    def test_mailbox_type_mismatch_try_peek_returns_negative(self):
+        design = lower(
+            'module top; mailbox box; string message; int result; initial begin '
+            'box = new(); box.put(42); result = box.try_peek(message); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("mailbox_type_mismatch_try_peek")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(values[0]["bits"], "1" * 32)
+
+    def test_mailbox_type_mismatch_try_peek_alias_stays_loud(self):
+        design = lower(
+            'module top; mailbox box, alias_box; string message; int result; initial begin '
+            'box = new(); alias_box = box; box.put(42); '
+            'result = alias_box.try_peek(message); end endmodule')
+        self.assertFalse(any(node.get("mailbox_type_mismatch_try_peek")
+                            for node in nodes(design)))
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
     def test_mailbox_type_mismatch_alias_stays_loud(self):
         design = lower(
             'module top; mailbox box, alias_box; string message; int result; initial begin '

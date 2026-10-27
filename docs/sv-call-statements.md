@@ -291,6 +291,15 @@ observed status writes, other queue operations, and payload expressions remain
 loud. The `q_full_status_0` and `q_full_status_1_when_full` fixtures supply the
 differential rows and extractor/Lean receipts.
 
+## Queue-exam length statistics — 2026-10-27
+
+Source-pure `$q_exam` calls with literal statistic code 1 or 3 now lower to a
+two-write block: the current or maximum length derived from preceding literal
+adds, followed by status 0. The count is clamped at the literal queue
+capacity. Removal, timing, symbolic IDs, other statistic codes, and
+value-position forms remain loud. The four `q_exam_*` fixtures supply the
+differential rows and Lean receipts.
+
 ## Queue-removal status — 2026-10-27
 
 Undefined literal queue IDs now lower `$q_remove` to status 2. A valid literal

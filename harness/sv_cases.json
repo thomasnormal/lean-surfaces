@@ -2613,6 +2613,42 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "q_exam_length",
+      "file": "Examples/system-verilog/q_exam_length/q_exam_length.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_exam_current_length",
+      "file": "Examples/system-verilog/q_exam_current_length/q_exam_current_length.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_exam_max_queue_length",
+      "file": "Examples/system-verilog/q_exam_max_queue_length/q_exam_max_queue_length.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_exam_stat_code_3_max_length_v3",
+      "file": "Examples/system-verilog/q_exam_stat_code_3_max_length_v3/q_exam_stat_code_3_max_length_v3.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -95,6 +95,24 @@ partial** (67 include skips); `ExpressionStatement:CallExpression` falls
 Differential coverage grows **288/283/0/5 → 290/285/0/5**; grammar coverage
 remains **218/95/123**.
 
+## Queue-exam length statistics — 2026-10-27
+
+IEEE 1800-2023 §20.15.5 Table 20-10 defines `$q_exam` statistic codes 1 and
+3 as the current and maximum queue lengths. A source-ordered literal
+`$q_initialize` followed only by literal `$q_add` history and these two
+statistics now writes the statistic value and then status 0. The flat model
+clamps successful additions at the literal capacity; removal, timing,
+symbolic IDs, other statistic codes, and value-position forms remain loud.
+`q_exam_length`, `q_exam_current_length`, `q_exam_max_queue_length`, and
+`q_exam_stat_code_3_max_length_v3` supply the PASS transcripts, extractor
+regressions, and capped Lean receipts.
+
+The 22,059-path census moves **5,249 → 5,253 clean** and **16,743 → 16,739
+partial** (67 include skips); `ExpressionStatement:CallExpression` falls
+**2,764 → 2,760**, while `AssignmentExpression:target` remains **2,853**.
+Differential coverage grows **290/285/0/5 → 294/289/0/5**; grammar coverage
+remains **218/95/123**.
+
 ## Duplicate queue-ID status — 2026-10-27
 
 IEEE 1800-2023 §20.15.6 gives a duplicate queue ID status without exposing

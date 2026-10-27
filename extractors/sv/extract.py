@@ -10865,6 +10865,28 @@ def _q_full_source_shape(expression):
         return False
 
 
+def _q_exam_source_shape(expression):
+    """Whether a queue exam asks for a literal length statistic."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "$q_exam"
+                or len(expression.arguments) != 4):
+            return False
+        qid, stat_code, stat_value, status = expression.arguments
+        if (_literal_integral_value(qid) is None
+                or _literal_integral_value(stat_code) not in (1, 3)):
+            return False
+        return all(type(output).__name__ == "AssignmentExpression"
+                   and output.op is None
+                   and output.timingControl is None
+                   and type(output.right).__name__ == "EmptyArgumentExpression"
+                   for output in (stat_value, status))
+    except Exception:
+        return False
+
+
 def _q_initialize_status_call(sm, expression):
     """Lower a state-free ``$q_initialize`` status result.
 
@@ -10978,10 +11000,13 @@ def _q_initialize_status_call(sm, expression):
                 if (_literal_integral_value(first.arguments[1]) not in (1, 2)
                         or (_literal_integral_value(first.arguments[2]) or 0) <= 0):
                     return None
-            elif first_name == "$q_initialize" and second_name in ("$q_add", "$q_full"):
+            elif first_name == "$q_initialize" and second_name in (
+                    "$q_add", "$q_full", "$q_exam"):
                 shape_ok = (_q_add_source_shape(second)
                             if second_name == "$q_add"
-                            else _q_full_source_shape(second))
+                            else (_q_full_source_shape(second)
+                                  if second_name == "$q_full"
+                                  else _q_exam_source_shape(second)))
                 if (not shape_ok
                         or _literal_integral_value(first.arguments[1]) not in (1, 2)
                         or (_literal_integral_value(first.arguments[2]) or 0) <= 0):
@@ -11000,7 +11025,8 @@ def _q_initialize_status_call(sm, expression):
         if len(queue_calls) > 2:
             if str(getattr(queue_calls[0], "subroutineName", "")) != "$q_initialize":
                 return None
-            if any(str(getattr(call, "subroutineName", "")) not in ("$q_add", "$q_full")
+            if any(str(getattr(call, "subroutineName", "")) not in (
+                    "$q_add", "$q_full", "$q_exam")
                    for call in queue_calls[1:]):
                 return None
             init = queue_calls[0]
@@ -11008,7 +11034,9 @@ def _q_initialize_status_call(sm, expression):
                     or (_literal_integral_value(init.arguments[2]) or 0) <= 0
                     or any((_q_add_source_shape(call)
                             if str(getattr(call, "subroutineName", "")) == "$q_add"
-                            else _q_full_source_shape(call))
+                            else (_q_full_source_shape(call)
+                                  if str(getattr(call, "subroutineName", "")) == "$q_full"
+                                  else _q_exam_source_shape(call)))
                            is False for call in queue_calls[1:])):
                 return None
         index = queue_calls.index(expression)
@@ -11081,7 +11109,8 @@ def _q_add_status_call(sm, expression):
             return None
         if str(getattr(queue_calls[0], "subroutineName", "")) != "$q_initialize":
             return None
-        if any(str(getattr(call, "subroutineName", "")) not in ("$q_add", "$q_full")
+        if any(str(getattr(call, "subroutineName", "")) not in (
+                "$q_add", "$q_full", "$q_exam")
                for call in queue_calls[1:]):
             return None
         init = queue_calls[0]
@@ -11093,7 +11122,10 @@ def _q_add_status_call(sm, expression):
         def valid_queue_call(call):
             name = str(getattr(call, "subroutineName", ""))
             shape = (_q_add_source_shape(call)
-                     if name == "$q_add" else _q_full_source_shape(call))
+                     if name == "$q_add"
+                     else (_q_full_source_shape(call)
+                           if name == "$q_full"
+                           else _q_exam_source_shape(call)))
             return shape and _literal_integral_value(call.arguments[0]) == qid_value
 
         if any(not valid_queue_call(call) for call in queue_calls[1:]):
@@ -11152,7 +11184,8 @@ def _q_full_status_value(sm, expression):
             return None
         if str(getattr(queue_calls[0], "subroutineName", "")) != "$q_initialize":
             return None
-        if any(str(getattr(call, "subroutineName", "")) not in ("$q_add", "$q_full")
+        if any(str(getattr(call, "subroutineName", "")) not in (
+                "$q_add", "$q_full", "$q_exam")
                for call in queue_calls[1:]):
             return None
         init = queue_calls[0]
@@ -11164,7 +11197,10 @@ def _q_full_status_value(sm, expression):
         def valid_queue_call(call):
             name = str(getattr(call, "subroutineName", ""))
             shape = (_q_add_source_shape(call)
-                     if name == "$q_add" else _q_full_source_shape(call))
+                     if name == "$q_add"
+                     else (_q_full_source_shape(call)
+                           if name == "$q_full"
+                           else _q_exam_source_shape(call)))
             return shape and _literal_integral_value(call.arguments[0]) == qid_value
 
         if any(not valid_queue_call(call) for call in queue_calls[1:]):
@@ -11205,6 +11241,116 @@ def _q_full_status_call(sm, expression):
         return {"kind": "BlockingAssign", "span": node_span(sm, expression),
                 "target": status_target, "value": value,
                 "q_full_status_lowered": status_value}
+    except Exception:
+        return None
+
+
+def _q_exam_status_call(sm, expression):
+    """Lower literal queue length statistics from a source-pure ``$q_exam``.
+
+    The admitted queue history contains one literal FIFO/LIFO initialization
+    followed only by literal ``$q_add`` and length-statistic ``$q_exam`` calls.
+    With no removal or timing operation, both current and maximum length are
+    the number of successful adds, clamped at the literal queue capacity.
+    The task writes the statistic first and then status 0, matching the
+    argument order and preserving the ordinary output-assignment semantics.
+    """
+    try:
+        if not _q_exam_source_shape(expression):
+            return None
+        qid, stat_code, stat_value, status = expression.arguments
+        qid_value = _literal_integral_value(qid)
+        stat_code_value = _literal_integral_value(stat_code)
+        if qid_value is None or stat_code_value not in (1, 3):
+            return None
+        stat_target, stat_admitted = legacy_blocking_target(sm, stat_value.left, True)
+        status_target, status_admitted = legacy_blocking_target(sm, status.left, True)
+        if not stat_admitted or not status_admitted:
+            return None
+
+        receiver_scope = getattr(getattr(stat_value.left, "symbol", None),
+                                 "parentScope", None)
+        instance = getattr(receiver_scope, "containingInstance", None)
+        if instance is None:
+            return None
+        queue_calls = []
+
+        def inspect(node):
+            if (type(node).__name__ == "CallExpression"
+                    and getattr(node, "isSystemCall", False)
+                    and str(getattr(node, "subroutineName", "")).startswith("$q_")):
+                queue_calls.append(node)
+
+        instance.visit(inspect)
+        queue_calls.sort(key=lambda node: getattr(
+            getattr(getattr(node, "sourceRange", None), "start", None),
+            "offset", -1))
+        if not queue_calls or expression not in queue_calls:
+            return None
+        if str(getattr(queue_calls[0], "subroutineName", "")) != "$q_initialize":
+            return None
+        if any(str(getattr(call, "subroutineName", "")) not in (
+                "$q_add", "$q_exam") for call in queue_calls[1:]):
+            return None
+        init = queue_calls[0]
+        if (len(init.arguments) != 4
+                or _literal_integral_value(init.arguments[0]) != qid_value
+                or _literal_integral_value(init.arguments[1]) not in (1, 2)
+                or (_literal_integral_value(init.arguments[2]) or 0) <= 0):
+            return None
+
+        def valid_queue_call(call):
+            name = str(getattr(call, "subroutineName", ""))
+            shape = (_q_add_source_shape(call)
+                     if name == "$q_add" else _q_exam_source_shape(call))
+            return shape and _literal_integral_value(call.arguments[0]) == qid_value
+
+        if any(not valid_queue_call(call) for call in queue_calls[1:]):
+            return None
+        index = queue_calls.index(expression)
+        if index == 0:
+            return None
+        capacity = _literal_integral_value(init.arguments[2])
+        if capacity is None or capacity <= 0:
+            return None
+        prior_adds = sum(
+            str(getattr(call, "subroutineName", "")) == "$q_add"
+            for call in queue_calls[1:index])
+        length = min(prior_adds, capacity)
+
+        stat_width, stat_two_state, stat_reason = type_width_2s(stat_value.left.type)
+        status_width, status_two_state, status_reason = type_width_2s(status.left.type)
+        if (stat_width is None or stat_reason is not None
+                or status_width is None or status_reason is not None):
+            return None
+        stat_literal = {"kind": "Literal", "span": node_span(sm, stat_value.left),
+                        "width": stat_width,
+                        "bits": format(length & ((1 << stat_width) - 1),
+                                       f"0{stat_width}b"),
+                        "q_exam_stat_value": length,
+                        "q_exam_stat_code": stat_code_value}
+        if stat_two_state:
+            stat_literal = squash2_wrap(stat_literal, stat_width)
+        status_literal = {"kind": "Literal", "span": node_span(sm, status.left),
+                          "width": status_width,
+                          "bits": format(0, f"0{status_width}b"),
+                          "q_exam_status": 0}
+        if status_two_state:
+            status_literal = squash2_wrap(status_literal, status_width)
+        return {
+            "kind": "Block", "span": node_span(sm, expression),
+            "stmts": [
+                {"kind": "BlockingAssign", "span": node_span(sm, expression),
+                 "target": stat_target, "value": stat_literal,
+                 "q_exam_stat_value_lowered": length},
+                {"kind": "BlockingAssign", "span": node_span(sm, expression),
+                 "target": status_target, "value": status_literal,
+                 "q_exam_status_lowered": 0},
+            ],
+            "q_exam_lowered": True,
+            "q_exam_stat_code": stat_code_value,
+            "q_exam_length": length,
+        }
     except Exception:
         return None
 
@@ -16358,6 +16504,10 @@ def _convert_syscall(sm, s, e):
             return status_assignment
     if _SYM is None and e.isSystemCall and e.subroutineName == "$q_full":
         status_assignment = _q_full_status_call(sm, e)
+        if status_assignment is not None:
+            return status_assignment
+    if _SYM is None and e.isSystemCall and e.subroutineName == "$q_exam":
+        status_assignment = _q_exam_status_call(sm, e)
         if status_assignment is not None:
             return status_assignment
     if _SYM is None and e.isSystemCall and e.subroutineName == "$q_remove":

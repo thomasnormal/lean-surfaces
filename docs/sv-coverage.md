@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 290 | 285 | 0 | 5 | sv-tests-2 declarations |
+| 294 | 289 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -304,6 +304,10 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `array_query_with_statements` | `Examples/system-verilog/array_query_with_statements/array_query_with_statements.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_aggregate_delete_statements` | `Examples/system-verilog/empty_aggregate_delete_statements/empty_aggregate_delete_statements.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_associative_delete_statements` | `Examples/system-verilog/empty_associative_delete_statements/empty_associative_delete_statements.sv` | match | **MATCH** | `ok` | MATCH |
+| `q_exam_length` | `Examples/system-verilog/q_exam_length/q_exam_length.sv` | match | **MATCH** | `ok` | MATCH |
+| `q_exam_current_length` | `Examples/system-verilog/q_exam_current_length/q_exam_current_length.sv` | match | **MATCH** | `ok` | MATCH |
+| `q_exam_max_queue_length` | `Examples/system-verilog/q_exam_max_queue_length/q_exam_max_queue_length.sv` | match | **MATCH** | `ok` | MATCH |
+| `q_exam_stat_code_3_max_length_v3` | `Examples/system-verilog/q_exam_stat_code_3_max_length_v3/q_exam_stat_code_3_max_length_v3.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -540,13 +544,13 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22059 | 5245 | 16747 | 67 |
+| 22059 | 5253 | 16739 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2853 |
-| `CallExpression` | 2771 |
-| `ExpressionStatement:CallExpression` | 2770 |
+| `CallExpression` | 2768 |
+| `ExpressionStatement:CallExpression` | 2760 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2223 |
 | `SubroutineSymbol:Subroutine` | 1634 |

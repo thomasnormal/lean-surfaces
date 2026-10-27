@@ -76,6 +76,22 @@ The committed **22,059-path** snapshot moves **5,245 → 5,249 clean** and
 **288/283/0/5 → 290/285/0/5** with no disagreements; grammar coverage remains
 **218/95/123**.
 
+## Queue-exam length statistics — 2026-10-27
+
+Source-pure `$q_exam` calls with literal statistic code 1 or 3 now lower after
+one literal queue initialization and literal add history. The current or
+maximum length is the successful-add count clamped at capacity, followed by
+status 0. Removal, timing, symbolic IDs, other statistic codes, and
+value-position forms remain loud. The four `q_exam_*` fixtures supply the
+PASS transcripts and differential rows.
+
+The committed **22,059-path** snapshot moves **5,249 → 5,253 clean** and
+**16,743 → 16,739 partial** (67 include skips). The
+`ExpressionStatement:CallExpression` wall falls **2,764 → 2,760** and
+`AssignmentExpression:target` remains **2,853**. Differential coverage grows
+**290/285/0/5 → 294/289/0/5** with no disagreements; grammar coverage remains
+**218/95/123**.
+
 ## Duplicate queue-ID status — 2026-10-27
 
 Two source-pure `$q_initialize` calls with the same literal FIFO/LIFO type and

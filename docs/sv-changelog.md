@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.65] — 2026-10-27
+
+The self-check surface now has 320 differential rows: 314 matches, zero
+disagreements, and 6 recorded refusals. The grammar census remains at 218
+pyslang syntax witnesses: 97 MATCH and 121 REFUSE. The 22,059-path corpus
+snapshot remains at 5,304 clean files and 16,688 partial files with 67 include
+skips. Source-ordered scalar-literal mailbox histories now admit `peek()` and
+`try_peek()`: both copy the FIFO head without consuming it, and `try_peek()`
+also reports the empty-queue result. Dynamic messages, aliases, branches,
+empty blocking peeks, and width mismatches remain loud.
+
 ## [0.1.64] — 2026-10-27
 
 The self-check surface now has 319 differential rows: 313 matches, zero

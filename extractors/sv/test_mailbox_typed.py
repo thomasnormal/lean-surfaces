@@ -100,9 +100,20 @@ class TypedMailbox(unittest.TestCase):
                    initial begin mbx = new(); mbx.try_put(value); end
                    endmodule""",
                 """module top; mailbox #(bit [7:0]) mbx; bit [7:0] value;
-                   initial begin mbx = new(); mbx.try_put(8'ha5);
-                   mbx.peek(value); end endmodule"""):
+                   initial begin mbx = new(); mbx.peek(value); end endmodule"""):
             design = lower(source)
             self.assertTrue(any(node.get("kind") == "Unsupported"
                                 for node in nodes(design)))
+
+    def test_parameterized_packed_literal_peek_preserves_width(self):
+        design = lower(
+            """module top; mailbox #(bit [7:0]) mbx; bit [7:0] value;
+               initial begin mbx = new(); mbx.put(8'ha5); mbx.peek(value);
+               end endmodule""")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        peeks = [node for node in nodes(design)
+                 if node.get("mailbox_literal_peek")]
+        self.assertEqual(len(peeks), 1)
+        self.assertEqual(peeks[0]["value"]["bits"], "10100101")
 

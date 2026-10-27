@@ -38,6 +38,19 @@ skips), while `CallExpression` falls **2,729 → 2,672**. Differential coverage
 grows **318/312/0/6 → 319/313/0/6** with no disagreements; grammar remains
 **218/97/121**.
 
+## Literal mailbox `peek()` and `try_peek()` — 2026-10-27
+
+Source-ordered scalar-literal mailbox histories now admit `peek()` and
+`try_peek()` without consuming the FIFO head. The latter also publishes its
+success flag and copied output value. Empty blocking peeks, dynamic messages,
+aliases, branches, and width mismatches remain loud because the flat
+self-check state has no mailbox object. `mailbox_literal_peek` supplies the
+differential row and Lean receipt.
+
+The committed 22,059-path snapshot remains **5,304 clean / 16,688 partial**
+(67 include skips). Differential coverage grows **319/313/0/6 → 320/314/0/6**
+with no disagreements; grammar remains **218/97/121**.
+
 ## Literal queue initializer `.size()` — 2026-10-27
 
 A 2-state queue initialized only by scalar literals now answers `.size()` with

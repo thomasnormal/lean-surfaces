@@ -659,6 +659,48 @@ class SizeQueries(unittest.TestCase):
                              "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
+    def test_mailbox_literal_peek_writes_without_consuming(self):
+        design = lower(
+            'module top; mailbox box; int first, second, third; initial begin '
+            'box = new(); box.put(10); box.put(20); box.peek(first); '
+            'box.get(second); box.get(third); '
+            'if (first == 10 && second == 10 && third == 20 && box.num() == 0) '
+            '$display("PASS"); end endmodule')
+        peeks = [node for node in nodes(design)
+                 if node.get("mailbox_literal_peek")]
+        self.assertEqual(len(peeks), 1)
+        self.assertEqual(peeks[0]["value"]["bits"], format(10, "032b"))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_mailbox_literal_try_peek_reports_and_preserves(self):
+        design = lower(
+            'module top; mailbox box; int first, second, ok; initial begin '
+            'box = new(); box.put(10); box.put(20); ok = box.try_peek(first); '
+            'box.get(second); if (ok == 1 && first == 10 && second == 10 && '
+            'box.num() == 1) $display("PASS"); end endmodule')
+        assignments = [node for node in nodes(design)
+                       if node.get("mailbox_literal_try_peek_assignment")]
+        self.assertEqual(len(assignments), 1)
+        self.assertEqual(assignments[0]["stmts"][0]["value"]["bits"],
+                         format(10, "032b"))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_mailbox_literal_peek_rejects_empty_or_dynamic_history(self):
+        for source in (
+                'module top; mailbox box; int result; initial begin box = new(); '
+                'box.peek(result); end endmodule',
+                'module top; mailbox box; int message, result; initial begin '
+                'box = new(); box.put(message); box.peek(result); end endmodule'):
+            with self.subTest(source=source):
+                design = lower(source)
+                self.assertTrue(any(node.get("sv_kind") ==
+                                    "ExpressionStatement:CallExpression"
+                                    for node in nodes(design)))
+
     def test_mailbox_literal_get_rejects_empty_or_dynamic_messages(self):
         for source in (
                 'module top; mailbox box; int result; initial begin box = new(); '

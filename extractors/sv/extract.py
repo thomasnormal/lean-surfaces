@@ -8666,6 +8666,8 @@ def _convert_legacy_call(sm, expression):
                     return value
     except Exception:
         pass
+    if _mailbox_empty_try_method(expression):
+        return _convert_mailbox_empty_try_method(sm, expression)
     mailbox_state = _convert_mailbox_literal_state_call(sm, expression)
     if mailbox_state is not None:
         return mailbox_state
@@ -10976,7 +10978,8 @@ def _mailbox_literal_get_state(sm, expression):
 
     An unbounded mailbox has no flat representation in the self-check state,
     but a linear sequence of literal integral ``put``/``try_put`` calls and
-    scalar output ``get``/``try_get`` calls is an exact queue snapshot.  Keep
+    scalar output ``get``/``try_get``/``peek``/``try_peek`` calls is an exact
+    queue snapshot.  Keep
     the scan source-ordered and reject aliases, bounded constructors, dynamic
     messages, empty gets, and every method outside the admitted FIFO surface.
     """
@@ -10985,7 +10988,8 @@ def _mailbox_literal_get_state(sm, expression):
                 or getattr(expression, "bad", False)
                 or expression.isSystemCall
                 or expression.subroutineName not in (
-                    "put", "get", "num", "try_put", "try_get")):
+                    "put", "get", "num", "peek", "try_put", "try_get",
+                    "try_peek")):
             return None
         receiver = getattr(expression, "thisClass", None)
         if (receiver is None or type(receiver).__name__ != "NamedValueExpression"
@@ -11104,7 +11108,8 @@ def _mailbox_literal_get_state(sm, expression):
         if not any(node is expression for _, node in calls):
             return None
         if any(getattr(node, "subroutineName", "") not in (
-                    "put", "get", "num", "try_put", "try_get")
+                    "put", "get", "num", "peek", "try_put", "try_get",
+                    "try_peek")
                for _, node in calls):
             return None
 
@@ -11199,9 +11204,9 @@ def _mailbox_literal_get_state(sm, expression):
                     return None
                 queue.append(message)
                 prior_activity = True
-            elif method in ("get", "try_get"):
+            elif method in ("get", "try_get", "peek", "try_peek"):
                 if len(arguments) != 1 or not queue:
-                    if method == "try_get" and len(arguments) == 1:
+                    if method in ("try_get", "try_peek") and len(arguments) == 1:
                         target, admitted = legacy_blocking_target(
                             sm, arguments[0], True)
                         if (not admitted or target.get("kind") != "Ident"
@@ -11232,7 +11237,8 @@ def _mailbox_literal_get_state(sm, expression):
                               and target_width != expected_width)))
                         or target_width != queue[0][1]):
                     return None
-                queue.pop(0)
+                if method in ("get", "try_get"):
+                    queue.pop(0)
                 prior_activity = True
             elif method == "num":
                 if arguments:
@@ -11277,7 +11283,7 @@ def _mailbox_literal_get_state(sm, expression):
                      or (source_target_width is None
                          and target_width != expected_width))):
             return None
-        if method == "try_get" and not available:
+        if method in ("try_get", "try_peek") and not available:
             return {"method": method, "target": target, "count": 0,
                     "activity": activity, "success": False}
         if not available:
@@ -11287,7 +11293,8 @@ def _mailbox_literal_get_state(sm, expression):
             return None
         return {"method": method, "target": target, "value": value,
                 "width": value_width, "count": len(available),
-                "activity": activity, "success": method == "try_get"}
+                "activity": activity,
+                "success": method in ("try_get", "try_peek")}
     except Exception:
         return None
 
@@ -11329,7 +11336,7 @@ def _convert_mailbox_literal_state_call(sm, expression):
     if state is None:
         return None
     method = expression.subroutineName
-    if method in ("try_put", "try_get"):
+    if method in ("try_put", "try_get", "try_peek"):
         width = getattr(expression.type, "bitWidth", None)
         if width is None or width <= 0:
             return unsupported(sm, expression, "CallExpression:mailbox-try-width")
@@ -11341,13 +11348,13 @@ def _convert_mailbox_literal_state_call(sm, expression):
             "mailbox_literal_try": method,
             "mailbox_try_success": bool(state.get("success", False)),
         }, expression.type)
-        # ``try_get`` is a function with an output argument.  Expression
+        # ``try_get`` and ``try_peek`` are functions with output arguments.  Expression
         # lowering carries the direct scalar store as metadata; assignment
         # conversion turns it into a preceding BlockingAssign so the output
         # update is not lost when the return value is assigned elsewhere.
-        if method == "try_get" and state.get("success", False):
-            converted["mailbox_literal_try_get_target"] = state["target"]
-            converted["mailbox_literal_try_get_value"] = state["value"]
+        if method in ("try_get", "try_peek") and state.get("success", False):
+            converted["mailbox_literal_{}_target".format(method)] = state["target"]
+            converted["mailbox_literal_{}_value".format(method)] = state["value"]
         return converted
     # ``num()`` is also meaningful immediately after construction: the
     # mailbox contains zero messages before the first put/get.  The state
@@ -17598,14 +17605,22 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and not _case_source_expression_ok(expr.right, packed_members=_SYM is None)):
         return unsupported(sm, span_node or expr, "AssignmentExpression:selected-effects")
     value = convert_expr(sm, expr.right)
-    mailbox_try_get_target = None
-    mailbox_try_get_value = None
-    if isinstance(value, dict) and value.get("mailbox_literal_try_get_target") is not None:
-        mailbox_try_get_target = value["mailbox_literal_try_get_target"]
-        mailbox_try_get_value = value.get("mailbox_literal_try_get_value")
+    mailbox_try_target = None
+    mailbox_try_value = None
+    mailbox_try_method = None
+    if isinstance(value, dict):
+        for candidate in ("try_get", "try_peek"):
+            target_key = "mailbox_literal_{}_target".format(candidate)
+            if value.get(target_key) is not None:
+                mailbox_try_target = value[target_key]
+                mailbox_try_value = value.get(
+                    "mailbox_literal_{}_value".format(candidate))
+                mailbox_try_method = candidate
+                break
+    if mailbox_try_method is not None:
         value = dict(value)
-        value.pop("mailbox_literal_try_get_target", None)
-        value.pop("mailbox_literal_try_get_value", None)
+        value.pop("mailbox_literal_{}_target".format(mailbox_try_method), None)
+        value.pop("mailbox_literal_{}_value".format(mailbox_try_method), None)
     try:
         if not expr.left.type.isFourState:
             value = squash2_wrap(value, expr.left.type.bitWidth)
@@ -17635,19 +17650,19 @@ def _convert_assignment_expr(sm, expr, span_node=None):
                 }],
                 "assoc_presence_write": True,
             }
-    if mailbox_try_get_target is not None and mailbox_try_get_value is not None:
+    if mailbox_try_target is not None and mailbox_try_value is not None:
         return {
             "kind": "Block",
             "span": node_span(sm, span_node or expr),
             "stmts": [
                 {"kind": "BlockingAssign",
                  "span": node_span(sm, expr.right),
-                 "target": mailbox_try_get_target,
-                 "value": mailbox_try_get_value,
-                 "mailbox_literal_try_get": True},
+                 "target": mailbox_try_target,
+                 "value": mailbox_try_value,
+                 "mailbox_literal_{}".format(mailbox_try_method): True},
                 result,
             ],
-            "mailbox_literal_try_get_assignment": True,
+            "mailbox_literal_{}_assignment".format(mailbox_try_method): True,
         }
     return result
 
@@ -18279,6 +18294,19 @@ def _convert_syscall(sm, s, e):
                         "target": mailbox_get["target"],
                         "value": mailbox_get["value"],
                         "mailbox_literal_try_get": True}
+            if name == "try_peek":
+                if not mailbox_get.get("success", False):
+                    return {"kind": "Empty", "span": node_span(sm, s),
+                            "mailbox_literal_try_peek": True}
+                return {"kind": "BlockingAssign", "span": node_span(sm, s),
+                        "target": mailbox_get["target"],
+                        "value": mailbox_get["value"],
+                        "mailbox_literal_try_peek": True}
+            if name == "peek":
+                return {"kind": "BlockingAssign", "span": node_span(sm, s),
+                        "target": mailbox_get["target"],
+                        "value": mailbox_get["value"],
+                        "mailbox_literal_peek": True}
             return {"kind": "BlockingAssign", "span": node_span(sm, s),
                     "target": mailbox_get["target"],
                     "value": mailbox_get["value"],

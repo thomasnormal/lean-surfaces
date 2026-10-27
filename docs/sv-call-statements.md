@@ -365,3 +365,14 @@ A direct `q = {}` after a scalar-literal queue initializer now makes later
 reads, dynamic or effectful assignments, and value-position aggregate
 operations remain loud. The existing queue object is still not represented in
 the flat self-check state.
+
+## Literal mailbox `peek()` and `try_peek()` — 2026-10-27
+
+One source-ordered mailbox history made from scalar literal `put()` calls now
+admits the statement forms `peek(target)` and `try_peek(target)`. `peek()`
+copies the FIFO head to the scalar target without consuming it. `try_peek()`
+does the same on a nonempty queue and also returns the success flag; an empty
+queue returns false and leaves the output unchanged. A blocking `peek()` on an
+empty queue, dynamic messages, aliases, branches, width mismatches, and
+value-position aggregate calls remain `Unsupported` because the flat
+self-check state does not model a mailbox object.

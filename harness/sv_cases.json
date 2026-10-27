@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "mailbox_literal_peek",
+      "file": "Examples/system-verilog/mailbox_literal_peek/mailbox_literal_peek.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "bits_fixed_expr",
       "file": "Examples/system-verilog/bits_fixed_expr/bits_fixed_expr.sv",
       "module": "top",

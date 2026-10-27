@@ -10820,8 +10820,11 @@ def _q_initialize_status_call(sm, expression):
     The queue model is outside the flat self-check state, but IEEE 1800-2023
     §20.15.6 defines the scalar status for a few argument errors.  A sole
     queue task with a literal type/capacity can therefore publish that status
-    directly to its output lvalue.  Any file that also performs another queue
-    operation remains on the ordinary loud boundary.
+    directly to its output lvalue.  A second source-ordered initialization of
+    the same literal queue ID is also admitted: the first valid creation
+    reports 0 and the duplicate reports 6, without exposing the queue object.
+    Any file that also performs another queue operation remains on the
+    ordinary loud boundary.
     """
     try:
         if (type(expression).__name__ != "CallExpression"
@@ -10843,13 +10846,6 @@ def _q_initialize_status_call(sm, expression):
         max_value = _literal_integral_value(max_length)
         if qtype_value is None or max_value is None:
             return None
-        if qtype_value in (1, 2) and max_value > 0:
-            status_value = 0
-        elif qtype_value not in (1, 2):
-            status_value = 4
-        else:
-            status_value = 5
-
         # Do not erase a status write in a file that relies on an unmodelled
         # queue object or a later operation.  Count semantic calls, not source
         # text, so comments and descriptions cannot affect the admission.
@@ -10867,8 +10863,79 @@ def _q_initialize_status_call(sm, expression):
                 queue_calls.append(node)
 
         instance.visit(inspect)
-        if len(queue_calls) != 1 or queue_calls[0] is not expression:
+        queue_calls.sort(key=lambda node: getattr(
+            getattr(getattr(node, "sourceRange", None), "start", None),
+            "offset", -1))
+        if len(queue_calls) not in (1, 2) or expression not in queue_calls:
             return None
+
+        # A named queue ID is admitted only after one direct literal blocking
+        # assignment before the calls.  This proves the duplicate-ID status
+        # without inventing a queue store; declaration initializers, computed
+        # or selected writes, and reassignment remain loud.
+        def qid_value(call):
+            argument = call.arguments[0]
+            literal = _literal_integral_value(argument)
+            if literal is not None:
+                return literal
+            if type(argument).__name__ != "NamedValueExpression":
+                return None
+            symbol = getattr(argument, "symbol", None)
+            if symbol is None or getattr(symbol, "initializer", None) is not None:
+                return None
+            assignments = []
+            invalid = False
+
+            def inspect_assignment(node):
+                nonlocal invalid
+                if type(node).__name__ != "AssignmentExpression":
+                    return
+                left = getattr(node, "left", None)
+                if getattr(left, "symbol", None) is not symbol:
+                    return
+                if (getattr(node, "op", None) is not None
+                        or getattr(node, "timingControl", None) is not None
+                        or getattr(node, "isNonBlocking", False)):
+                    invalid = True
+                    return
+                value = _literal_integral_value(getattr(node, "right", None))
+                if value is None:
+                    invalid = True
+                    return
+                start = getattr(getattr(getattr(node, "sourceRange", None),
+                                        "start", None), "offset", -1)
+                assignments.append((start, value))
+
+            instance.visit(inspect_assignment)
+            if invalid or len(assignments) != 1:
+                return None
+            start = getattr(getattr(getattr(call, "sourceRange", None),
+                                    "start", None), "offset", -1)
+            prior = [value for position, value in assignments if position < start]
+            return prior[0] if len(prior) == 1 else None
+
+        qids = [qid_value(call) for call in queue_calls]
+        if any(value is None for value in qids) or len(set(qids)) != 1:
+            return None
+        if len(queue_calls) == 2:
+            first, second = queue_calls
+            first_type = _literal_integral_value(first.arguments[1])
+            first_capacity = _literal_integral_value(first.arguments[2])
+            second_type = _literal_integral_value(second.arguments[1])
+            second_capacity = _literal_integral_value(second.arguments[2])
+            if (first_type not in (1, 2) or first_capacity is None
+                    or first_capacity <= 0 or first_type != second_type
+                    or first_capacity != second_capacity):
+                return None
+        index = queue_calls.index(expression)
+        if index == 1:
+            status_value = 6
+        elif qtype_value in (1, 2) and max_value > 0:
+            status_value = 0
+        elif qtype_value not in (1, 2):
+            status_value = 4
+        else:
+            status_value = 5
 
         target, admitted = legacy_blocking_target(sm, output.left, True)
         if not admitted:

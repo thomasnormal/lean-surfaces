@@ -43,6 +43,23 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Duplicate queue-ID status — 2026-10-27
+
+IEEE 1800-2023 §20.15.6 gives a duplicate queue ID status without exposing
+the queue contents. The legacy self-check surface now lowers two source-pure
+`$q_initialize` calls with the same literal FIFO/LIFO type and positive
+capacity to scalar writes: the first reports 0 and the duplicate reports 6.
+A named ID must have one direct literal assignment before the calls. Other
+queue operations, computed or reassigned IDs, invalid first creations, and
+value-position forms remain loud. `q_initialize_duplicate_status` supplies the
+PASS transcript, extractor regressions, and a capped Lean receipt.
+
+The 22,059-path census moves **5,240 → 5,241 clean** and **16,752 → 16,751
+partial** (67 include skips); `ExpressionStatement:CallExpression` falls
+**2,775 → 2,774**, while `AssignmentExpression:target` remains **2,853**.
+Differential coverage grows **283/278/0/5 → 284/279/0/5**; grammar coverage
+is regenerated with the current witness count.
+
 ## Discarded invalid literal `$fopen` modes — 2026-10-26
 
 An invalid literal mode in a discarded `$fopen(path, mode)` statement now

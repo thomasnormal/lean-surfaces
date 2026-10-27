@@ -25,6 +25,22 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Duplicate queue-ID status — 2026-10-27
+
+Two source-pure `$q_initialize` calls with the same literal FIFO/LIFO type and
+positive capacity now lower to scalar status writes: the first reports 0 and
+the duplicate reports 6. A named queue ID is admitted only after one direct
+literal assignment; other queue operations and computed or reassigned IDs stay
+loud. The `q_initialize_duplicate_status` fixture supplies the PASS transcript
+and differential row.
+
+The committed **22,059-path** snapshot moves **5,240 → 5,241 clean** and
+**16,752 → 16,751 partial** (67 include skips). The
+`ExpressionStatement:CallExpression` wall falls **2,775 → 2,774** and
+`AssignmentExpression:target` remains **2,853**. Differential coverage grows
+**283/278/0/5 → 284/279/0/5** with no disagreements; grammar coverage is
+regenerated with the current witness count.
+
 ## Discarded invalid literal `$fopen` modes — 2026-10-26
 
 An invalid literal mode in a discarded `$fopen(path, mode)` statement now

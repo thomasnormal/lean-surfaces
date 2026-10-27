@@ -75,6 +75,36 @@ class QInitializeStatus(unittest.TestCase):
         self.assertFalse(any(node.get("q_initialize_status_lowered") is not None
                              for node in nodes(design)))
 
+    def test_duplicate_literal_id_publishes_status_six(self):
+        design = lower(
+            """module top;
+               integer q_id, status;
+               initial begin
+                 q_id = 1;
+                 $q_initialize(q_id, 1, 10, status);
+                 $q_initialize(q_id, 1, 10, status);
+                 if (status === 6) $display("PASS");
+                 $finish;
+               end
+               endmodule""")
+        lowered = [node for node in nodes(design)
+                   if node.get("q_initialize_status_lowered") is not None]
+        self.assertEqual([node["q_initialize_status_lowered"] for node in lowered],
+                         [0, 6])
+
+    def test_duplicate_id_requires_valid_first_creation(self):
+        design = lower(
+            """module top;
+               integer status;
+               initial begin
+                 $q_initialize(1, 99, 10, status);
+                 $q_initialize(1, 99, 10, status);
+               end
+               endmodule""")
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

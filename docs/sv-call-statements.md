@@ -115,6 +115,13 @@ no-op for the whole array or a source-pure integral/string key. Later `num()`
 and `size()` queries remain exact; initialized, four-state, effectful-key,
 aliased, and value-position forms remain loud.
 
+Two source-pure `$q_initialize` calls for one queue ID are admitted when both
+use the same literal FIFO/LIFO type and positive capacity, and the ID is a
+single direct literal assignment when named. The first status is 0 and the
+duplicate status is 6; no queue object is exposed. Other queue tasks,
+invalid-first-creation duplicates, reassignment, computed IDs, and
+value-position forms remain loud.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument
@@ -248,3 +255,12 @@ an empty pop has no effect on the queue, so erasing the discarded result is
 exact in the flat self-check state. A queue with a push, alias, dynamic
 receiver, or other operation remains a loud `ExpressionStatement:CallExpression`;
 value-position pops continue to use their separate default-value lowering.
+
+## Duplicate queue-ID status — 2026-10-27
+
+Two source-pure `$q_initialize` calls for one queue ID now lower to scalar
+status writes: a valid first FIFO/LIFO creation returns 0 and the duplicate
+returns 6. A named ID is accepted only after one direct literal assignment;
+computed, reassigned, invalid-first-creation, and other queue operations remain
+loud. The `q_initialize_duplicate_status` fixture supplies the differential
+row and extractor/Lean receipts.

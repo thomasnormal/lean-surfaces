@@ -1468,6 +1468,15 @@
       "expect": "match"
     },
     {
+      "name": "q_initialize_duplicate_status",
+      "file": "Examples/system-verilog/q_initialize_duplicate_status/q_initialize_duplicate_status.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "unpacked_union_member",
       "file": "Examples/system-verilog/unpacked_union_member/unpacked_union_member.sv",
       "module": "top",

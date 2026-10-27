@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 314 | 308 | 0 | 6 | sv-tests-2 declarations |
+| 315 | 309 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -86,6 +86,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `exit_declaration` | `Examples/system-verilog/exit_decl/exit_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `vcd_setup` | `Examples/system-verilog/vcd_setup/vcd_setup.sv` | match | **MATCH** | `ok` | MATCH |
 | `vcd_control` | `Examples/system-verilog/vcd_control/vcd_control.sv` | match | **MATCH** | `ok` | MATCH |
+| `dumpportsflush_statement` | `Examples/system-verilog/dumpportsflush_statement/dumpportsflush_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_struct_copy` | `Examples/system-verilog/unpacked_struct_copy/unpacked_struct_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_struct_conditional` | `Examples/system-verilog/unpacked_struct_conditional/unpacked_struct_conditional.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_struct_nested_pattern` | `Examples/system-verilog/unpacked_struct_nested_pattern/unpacked_struct_nested_pattern.sv` | match | **MATCH** | `ok` | MATCH |

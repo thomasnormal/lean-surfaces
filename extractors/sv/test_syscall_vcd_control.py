@@ -35,6 +35,20 @@ class VcdControlTasks(unittest.TestCase):
                              "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
+    def test_dumpportsflush_is_inert(self):
+        design = lower(
+            'module top; initial begin $dumpportsflush(); '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_dumpportsflush_arguments_stay_loud(self):
+        design = lower(
+            'module top; initial $dumpportsflush("x"); endmodule')
+        self.assertIn("ExpressionStatement:CallExpression",
+                      [node.get("sv_kind") for node in nodes(design)])
+
     def test_dynamic_dump_limit_stays_loud(self):
         design = lower(
             'module top; int n; initial $dumplimit(n); endmodule')

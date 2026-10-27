@@ -339,3 +339,12 @@ status, preserving FIFO/LIFO order and capacity. Dynamic IDs or payloads,
 empty removals, branches, timing, other queue operations, and value-position
 forms remain loud. The `q_remove_payload` fixture supplies the differential
 row and Lean receipt.
+
+## Discarded `$dumpportsflush()` — 2026-10-27
+
+The no-argument `$dumpportsflush()` task is now erased as an inert VCD
+operation in the self-check state. It only flushes an external port-waveform
+buffer, which is outside the `PASS`/`FAIL` transcript; the argumented task and
+all other port-dump operations remain loud until that external stream is
+modeled. The `dumpportsflush_statement` fixture supplies the differential row
+and Lean receipt.

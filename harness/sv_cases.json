@@ -652,6 +652,15 @@
       "expect": "match"
     },
     {
+      "name": "dumpportsflush_statement",
+      "file": "Examples/system-verilog/dumpportsflush_statement/dumpportsflush_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "unpacked_struct_copy",
       "file": "Examples/system-verilog/unpacked_struct_copy/unpacked_struct_copy.sv",
       "module": "top",

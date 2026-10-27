@@ -137,7 +137,7 @@ SYSCALL_PURE_DIAGNOSTIC = ("$printtimescale", "$exit")
 # self-check oracle's observable state.  Their syntax is retained by the
 # frontend, while the tier erases the static setup calls below.
 SYSCALL_VCD = ("$dumpfile", "$dumpvars", "$dumpon", "$dumpoff",
-               "$dumpall", "$dumpflush", "$dumplimit")
+               "$dumpall", "$dumpflush", "$dumplimit", "$dumpportsflush")
 # Severity tasks only affect a simulator's diagnostic stream.  The public
 # self-check state has no diagnostic channel, so a pure literal call can be
 # erased while preserving control flow and all modeled state.  Calls with
@@ -18555,7 +18555,8 @@ def _convert_syscall(sm, s, e):
             args = list(e.arguments)
         except Exception:
             return unsupported(sm, s, "ExpressionStatement:CallExpression")
-        if name in ("$dumpon", "$dumpoff", "$dumpall", "$dumpflush"):
+        if name in ("$dumpon", "$dumpoff", "$dumpall", "$dumpflush",
+                    "$dumpportsflush"):
             if args:
                 return unsupported(sm, s, "ExpressionStatement:CallExpression")
         elif name == "$dumplimit":

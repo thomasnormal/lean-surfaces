@@ -43,6 +43,24 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Literal zero-time `$q_exam` histories — 2026-10-27
+
+The self-check surface now replays a source-ordered literal FIFO/LIFO queue
+through `$q_exam` and `$q_remove` without adding a runtime queue object. Code 1
+returns the exact current length after successful static removals, code 3
+continues to return the maximum length, and codes 2, 4, 5, and 6 return zero
+for a history with no delay or event control. The queue history requires
+literal IDs and payloads (or the existing single prior literal assignments),
+nonempty removals, and direct output lvalues. Timed, computed, empty, and
+other queue forms remain loud. `q_exam_static_history` supplies the
+extractor regression, Lean receipt, and differential row.
+
+The 22,059-path corpus moves **5,286 → 5,287 clean** and **16,706 → 16,705
+partial** (67 include skips); `ExpressionStatement:CallExpression` falls
+**2,747 → 2,746** while `AssignmentExpression:target` remains **2,852**.
+Differential coverage grows **302/297/0/5 → 303/298/0/5** with no
+disagreements; grammar remains **218/96/122**.
+
 ## Literal integral `$sformatf` expressions — 2026-10-27
 
 Expression-position `$sformatf` calls now admit one literal format and one

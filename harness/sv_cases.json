@@ -2660,6 +2660,15 @@
       "expect": "match"
     },
     {
+      "name": "q_exam_static_history",
+      "file": "Examples/system-verilog/q_exam_static_history/q_exam_static_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "q_exam_max_queue_length",
       "file": "Examples/system-verilog/q_exam_max_queue_length/q_exam_max_queue_length.sv",
       "module": "top",

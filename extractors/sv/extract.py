@@ -11140,7 +11140,11 @@ def _q_exam_output_shape(expression):
                 or len(expression.arguments) != 4):
             return False
         _qid, stat_code, stat_value, status = expression.arguments
-        if (_literal_integral_value(stat_code) not in (1, 3)):
+        # IEEE 1800-2023 §20.15.5 Table 20-10 assigns codes 1--6 to
+        # current/max length and timing statistics.  The flat self-check
+        # state can replay the length columns exactly; the timing columns
+        # are admitted only for a zero-time history below.
+        if (_literal_integral_value(stat_code) not in (1, 2, 3, 4, 5, 6)):
             return False
         return all(type(output).__name__ == "AssignmentExpression"
                    and output.op is None
@@ -11548,9 +11552,11 @@ def _q_exam_status_call(sm, expression):
     """Lower literal queue length statistics from a source-pure ``$q_exam``.
 
     The admitted queue history contains one literal FIFO/LIFO initialization
-    followed only by literal ``$q_add`` and length-statistic ``$q_exam`` calls.
-    With no removal or timing operation, both current and maximum length are
-    the number of successful adds, clamped at the literal queue capacity.
+    followed by literal ``$q_add``, nonempty ``$q_remove``, and statistic
+    ``$q_exam`` calls.  A small source-order replay retains only payload
+    occupancy, so current/max length remain exact without introducing a
+    runtime queue object.  The four time statistics are zero for a history
+    with no delay or event control; timed histories stay on the loud path.
     The task writes the statistic first and then status 0, matching the
     argument order and preserving the ordinary output-assignment semantics.
     """
@@ -11559,7 +11565,7 @@ def _q_exam_status_call(sm, expression):
             return None
         qid, stat_code, stat_value, status = expression.arguments
         stat_code_value = _literal_integral_value(stat_code)
-        if stat_code_value not in (1, 3):
+        if stat_code_value not in (1, 2, 3, 4, 5, 6):
             return None
         stat_target, stat_admitted = legacy_blocking_target(sm, stat_value.left, True)
         status_target, status_admitted = legacy_blocking_target(sm, status.left, True)
@@ -11570,6 +11576,23 @@ def _q_exam_status_call(sm, expression):
                                  "parentScope", None)
         instance = getattr(receiver_scope, "containingInstance", None)
         if instance is None:
+            return None
+
+        # The time columns (and, more generally, queue statistics) depend on
+        # simulator time.  The replay below is deliberately the time-zero
+        # slice; reject any delay/event/timing syntax in the enclosing
+        # instance rather than manufacturing a timestamp.
+        timed = False
+        def inspect_timing(node):
+            nonlocal timed
+            name = type(node).__name__
+            if (name in ("DelayControl", "TimedStatement", "TimingControl",
+                         "EventControl", "SignalEventControl",
+                         "CycleDelayControl", "ProceduralTimingControl")
+                    or getattr(node, "timingControl", None) is not None):
+                timed = True
+        instance.visit(inspect_timing)
+        if timed:
             return None
         expression_position = getattr(getattr(getattr(expression, "sourceRange", None),
                                               "start", None), "offset", -1)
@@ -11593,7 +11616,7 @@ def _q_exam_status_call(sm, expression):
         if str(getattr(queue_calls[0], "subroutineName", "")) != "$q_initialize":
             return None
         if any(str(getattr(call, "subroutineName", "")) not in (
-                "$q_add", "$q_exam") for call in queue_calls[1:]):
+                "$q_add", "$q_remove", "$q_exam") for call in queue_calls[1:]):
             return None
         init = queue_calls[0]
         init_position = getattr(getattr(getattr(init, "sourceRange", None),
@@ -11609,7 +11632,10 @@ def _q_exam_status_call(sm, expression):
         def valid_queue_call(call):
             name = str(getattr(call, "subroutineName", ""))
             shape = (_q_add_source_shape(call, instance)
-                     if name == "$q_add" else _q_exam_source_shape(call, instance))
+                     if name == "$q_add"
+                     else (_q_exam_source_shape(call, instance)
+                           if name == "$q_exam"
+                           else _q_remove_output_shape(call)))
             call_position = getattr(getattr(getattr(call, "sourceRange", None),
                                              "start", None), "offset", -1)
             call_qid = _queue_history_literal(call.arguments[0], instance,
@@ -11624,10 +11650,30 @@ def _q_exam_status_call(sm, expression):
         capacity = _literal_integral_value(init.arguments[2])
         if capacity is None or capacity <= 0:
             return None
-        prior_adds = sum(
-            str(getattr(call, "subroutineName", "")) == "$q_add"
-            for call in queue_calls[1:index])
-        length = min(prior_adds, capacity)
+
+        # Replay occupancy through the prefix.  A remove must be nonempty;
+        # the payload lowering for that call writes the popped scalars, while
+        # this recognizer needs only the queue length for the following exam.
+        queue = []
+        max_length = 0
+        fifo = _literal_integral_value(init.arguments[1]) == 1
+        for call in queue_calls[1:index]:
+            name = str(getattr(call, "subroutineName", ""))
+            if name == "$q_add":
+                if len(queue) < capacity:
+                    queue.append(None)
+                max_length = max(max_length, len(queue))
+            elif name == "$q_remove":
+                if not _q_remove_output_shape(call) or not queue:
+                    return None
+                queue.pop(0 if fifo else -1)
+            elif name == "$q_exam":
+                if not _q_exam_source_shape(call, instance):
+                    return None
+            else:
+                return None
+        length = len(queue) if stat_code_value == 1 else (
+            max_length if stat_code_value == 3 else 0)
 
         stat_width, stat_two_state, stat_reason = type_width_2s(stat_value.left.type)
         status_width, status_two_state, status_reason = type_width_2s(status.left.type)
@@ -11814,7 +11860,8 @@ def _q_remove_payload_call(sm, expression):
         if not queue_calls or expression not in queue_calls:
             return None
         if names[0] != "$q_initialize" or any(
-                name not in ("$q_add", "$q_remove") for name in names[1:]):
+                name not in ("$q_add", "$q_remove", "$q_exam")
+                for name in names[1:]):
             return None
         init = queue_calls[0]
         if (len(init.arguments) != 4
@@ -11866,6 +11913,13 @@ def _q_remove_payload_call(sm, expression):
                     return None
                 if len(queue) < capacity:
                     queue.append((job_value, inform_value))
+                continue
+            if name == "$q_exam":
+                # A statistic query has no queue payload effect.  Validate
+                # its source shape so this history cannot silently absorb a
+                # computed, timed, or unsupported query.
+                if not _q_exam_source_shape(call, instance):
+                    return None
                 continue
             if not _q_remove_output_shape(call):
                 return None

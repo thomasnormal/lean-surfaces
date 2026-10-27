@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 302 | 297 | 0 | 5 | sv-tests-2 declarations |
+| 303 | 298 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -309,6 +309,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `empty_associative_delete_statements` | `Examples/system-verilog/empty_associative_delete_statements/empty_associative_delete_statements.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_exam_length` | `Examples/system-verilog/q_exam_length/q_exam_length.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_exam_current_length` | `Examples/system-verilog/q_exam_current_length/q_exam_current_length.sv` | match | **MATCH** | `ok` | MATCH |
+| `q_exam_static_history` | `Examples/system-verilog/q_exam_static_history/q_exam_static_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_exam_max_queue_length` | `Examples/system-verilog/q_exam_max_queue_length/q_exam_max_queue_length.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_exam_stat_code_3_max_length_v3` | `Examples/system-verilog/q_exam_stat_code_3_max_length_v3/q_exam_stat_code_3_max_length_v3.sv` | match | **MATCH** | `ok` | MATCH |
 | `dist_uniform_signed_bounds` | `Examples/system-verilog/dist_uniform_signed_bounds/dist_uniform_signed_bounds.sv` | match | **MATCH** | `ok` | MATCH |
@@ -552,12 +553,12 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22059 | 5286 | 16706 | 67 |
+| 22059 | 5287 | 16705 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2852 |
-| `ExpressionStatement:CallExpression` | 2747 |
+| `ExpressionStatement:CallExpression` | 2746 |
 | `CallExpression` | 2739 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2223 |

@@ -5,6 +5,22 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+## [0.1.135] — 2026-10-27
+
+### Added
+
+- Added five callable statement witnesses for shadow-local assignments and
+  switch fallthrough nested under `for`, `while`, and `do while`, covering
+  default-arm transfers and case-to-default fallthrough.
+
+### Measured
+
+- The checked-in corpus now contains **831 differential rows**: **814 MATCH**,
+  **0 DIVERGE**, **7 REFUSE**, **0 TIMEOUT**, and **10 ORACLE**; the grammar
+  census remains **24 witnesses** with **0 MATCH / 0 DIVERGE / 24 REFUSE**.
+  Pinned Clang/LLVM 21.1.8 supplies the native witness results; the ten
+  explicit ORACLE rows are the unavailable TinyXML-2 source-call inputs.
+
 ## [0.1.134] — 2026-10-27
 
 ### Added

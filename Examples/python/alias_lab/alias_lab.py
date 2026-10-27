@@ -51,3 +51,8 @@ def max_alias(values):
     f = max
     return f(values)
 
+
+def min_alias(values):
+    f = min
+    return f(values)
+

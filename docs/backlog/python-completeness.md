@@ -5971,3 +5971,21 @@ general first-class callable forms remain loud.
 
 DECIDED: admit only the immediate local `max` alias call; retain loud failure
 for returned or general first-class callable values.
+
+## 2026-10-27-pycomplete-169 — admit the immediate local `min` alias
+
+The local-builtin alias rewrite now includes `min`: `f = min; return
+f(values)` lowers to the existing min worker. Tuple and list inputs retain
+their scalar minimum behavior. Returning `min` itself, shadowing it, and
+general first-class callable forms remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 2 cases: 0 failed, 2 matched on both interpreters |
+| Full executable differential | 3,707 cases: 0 failed, 44 whitelisted refusals, 3,663 matched |
+| Full proof differential | 3,707 cases: 0 failed, 153 refusals, 3,554 matched |
+| Lean runner build | `lake build leanmodels-run` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `min` alias call; retain loud failure
+for returned or general first-class callable values.

@@ -71,3 +71,8 @@ def float_alias(value):
     f = float
     return f(value)
 
+
+def all_alias(values):
+    f = all
+    return f(values)
+

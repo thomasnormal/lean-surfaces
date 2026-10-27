@@ -6049,3 +6049,23 @@ Boolean inputs preserve their current conversion and error semantics. Returning
 DECIDED: admit only the immediate local `float` alias call; retain loud failure
 for returned or general first-class callable values. Rebase and publish this
 item after the full measurements, then reread the inbox before the next gap.
+
+## 2026-10-27-pycomplete-173 — admit the immediate local `all` alias
+
+The local-builtin alias rewrite now includes `all`: `f = all; return
+f(values)` lowers to the existing short-circuit truth scan. Empty, all-true, and
+mixed Boolean iterables preserve their current results. Returning `all`,
+shadowing it, and general first-class callable forms remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 3 cases: 0 failed, 3 matched on both interpreters |
+| Full executable differential | 3,719 cases: 0 failed, 44 whitelisted refusals, 3,675 matched |
+| Full proof differential | 3,719 cases: 0 failed, 153 refusals, 3,566 matched |
+| Lean runner build | `lake build leanmodels-run` passed |
+| Focused surface | three `#py_check` rows passed with `LeanModels.Python.Surface` |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `all` alias call; retain loud failure
+for returned or general first-class callable values. Rebase and publish this
+item after the full measurements, then reread the inbox before the next gap.

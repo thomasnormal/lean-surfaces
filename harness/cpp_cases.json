@@ -8545,6 +8545,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-while-initialization-assignment-return",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalWhileInitializationAssignmentReturnStatementFrameWitness",
+    "cpp_source": "int local_while_initialization_assignment_return_statement_frame_witness(int value) { while (value > 0) { int local = 5; value = local; return value; } return value; } bool callable_witness() { return local_while_initialization_assignment_return_statement_frame_witness(1) == 5; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-frame-local-while-computed-initialization-direct",
     "kind": "statement",
     "corpus": "rung-4 witness",

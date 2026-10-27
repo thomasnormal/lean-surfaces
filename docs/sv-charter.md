@@ -9044,3 +9044,22 @@ The 22,058-path corpus remains **5,227 clean / 16,764 partial** with 67
 include skips and `AssignmentExpression:target` at **2,857**. Differential
 coverage moves **248/243/0/5 → 249/244/0/5** with no disagreements; grammar
 coverage remains **217/92/125**.
+
+## Fixed struct-array `sort`/`rsort` with `(item.field)` — 2026-10-27
+
+One-dimensional fixed unpacked arrays of shallow structs now lower `sort` and
+`rsort` calls with a direct scalar `item.field` key. The extractor replays
+source-ordered blocking literal pattern or field writes, orders complete
+records by the declared integral field, and emits flattened writes for every
+field, including repeated ordering calls. Tuple, computed, dynamic, queue,
+nested-aggregate, unknown, aliased, timed, and value-position forms remain
+loud because the self-check state has no general aggregate object or ordering
+oracle. The `struct_array_ordering_with_field` fixture and Lean receipt cover
+ascending and descending record order; extractor regressions pin the key and
+aggregate refusal edges.
+
+On the refreshed **22,059-path** sv-tests-2 census, clean files move
+**5,287 → 5,292** and partial files **16,705 → 16,700** (67 include skips).
+The leading `ExpressionStatement:CallExpression` blocker falls
+**2,746 → 2,741**. Differential coverage grows **308/303/0/5 → 309/304/0/5**
+with no disagreements; grammar coverage remains **218/96/122**.

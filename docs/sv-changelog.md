@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.56] — 2026-10-27
+
+The self-check surface now has 309 differential rows: 304 matches, zero
+disagreements, and 5 recorded refusals. The grammar census remains at 218
+pyslang syntax witnesses: 96 MATCH and 122 REFUSE. The 22,059-path corpus
+moves to 5,292 clean files and 16,700 partial files with 67 include skips;
+the `ExpressionStatement:CallExpression` wall falls to 2,741. Fixed
+one-dimensional unpacked struct arrays now admit literal `sort`/`rsort` with
+`(item.field)` ordering while computed and aggregate keys remain loud.
+
 ## [0.1.55] — 2026-10-27
 
 The self-check surface now has 308 differential rows: 303 matches, zero

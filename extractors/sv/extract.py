@@ -12753,6 +12753,325 @@ def _fixed_array_ordering_method(sm, expression):
         return None
 
 
+def _fixed_struct_array_ordering_with(sm, expression):
+    """Lower a one-field ``sort``/``rsort with (item.field)`` call.
+
+    The flat self-check state has no aggregate array slot.  A fixed array of
+    shallow unpacked structs can nevertheless be represented exactly by
+    replaying its literal field writes, sorting complete records by one known
+    integral field, and writing every flattened field cell in the new order.
+    Keep the recognizer intentionally narrow: dynamic/queue arrays, nested
+    aggregate fields, tuple or computed keys, aliases, and unknown values
+    remain at the ordinary call boundary.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName not in ("sort", "rsort")
+                or len(expression.arguments) != 1):
+            return None
+        receiver = expression.arguments[0]
+        if type(receiver).__name__ != "NamedValueExpression":
+            return None
+        symbol = getattr(receiver, "symbol", None)
+        if symbol is None:
+            return None
+        array_type = getattr(receiver.type, "canonicalType", receiver.type)
+        shape = _fixed_array_dimensions(array_type, max_cells=128)
+        if shape is None:
+            return None
+        dimensions, aggregate = shape
+        if (len(dimensions) != 1
+                or type(aggregate).__name__ != "UnpackedStructType"):
+            return None
+        fields = list(aggregate)
+        if not fields:
+            return None
+        field_info = {}
+        for field in fields:
+            leaf = field.type.canonicalType
+            width, two_state, reason = type_width_2s(field.type)
+            if (width is None or reason is not None
+                    or type(leaf).__name__ in (
+                        "FixedSizeUnpackedArrayType", "DynamicArrayType",
+                        "QueueType", "AssociativeArrayType",
+                        "UnpackedStructType", "UnpackedUnionType")):
+                return None
+            field_info[field.name] = (width, two_state, field.type)
+
+        # The with-expression is represented in the method syntax rather than
+        # as an argument of the CallExpression.  Require the exact direct
+        # ``item.<field>`` syntax and the corresponding iterator member node;
+        # this rejects tuples, arithmetic, calls, and conditional keys.
+        syntax = getattr(expression, "syntax", None)
+        if syntax is None or getattr(syntax, "with_", None) is None:
+            return None
+        args_syntax = getattr(syntax, "args", None)
+        if args_syntax is None:
+            return None
+        syntax_data = json.loads(args_syntax.to_json())
+        expressions = syntax_data.get("expressions", [])
+        if len(expressions) != 1:
+            return None
+        key_syntax = expressions[0]
+        if key_syntax.get("kind") != "ScopedName":
+            return None
+        left = key_syntax.get("left", {}).get("identifier", {}).get("text")
+        field_name = key_syntax.get("right", {}).get("identifier", {}).get("text")
+        if left != "item" or field_name not in field_info:
+            return None
+        start = syntax.sourceRange.start.offset
+        end = syntax.sourceRange.end.offset
+        key_nodes = []
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return None
+
+        def inspect_key(node):
+            if type(node).__name__ != "MemberAccessExpression":
+                return
+            node_start = getattr(getattr(node.sourceRange, "start", None),
+                                 "offset", None)
+            node_end = getattr(getattr(node.sourceRange, "end", None),
+                               "offset", None)
+            value = getattr(node, "value", None)
+            iterator = getattr(value, "symbol", None)
+            if (node_start is not None and node_end is not None
+                    and start <= node_start < node_end <= end
+                    and type(value).__name__ == "NamedValueExpression"
+                    and str(getattr(iterator, "kind", "")).split(".")[-1]
+                    == "Iterator"
+                    and getattr(node.member, "name", None) == field_name):
+                key_nodes.append(node)
+
+        instance.visit(inspect_key)
+        if len(key_nodes) != 1:
+            return None
+
+        def compatible_ordering_call(node):
+            """Accept only a preceding call with this exact one-field key."""
+            previous_syntax = getattr(node, "syntax", None)
+            if (previous_syntax is None
+                    or getattr(previous_syntax, "with_", None) is None):
+                return False
+            previous_args = getattr(previous_syntax, "args", None)
+            if previous_args is None:
+                return False
+            try:
+                previous_data = json.loads(previous_args.to_json())
+                previous_exprs = previous_data.get("expressions", [])
+                previous_key = previous_exprs[0] if len(previous_exprs) == 1 else {}
+                return (
+                    previous_key.get("kind") == "ScopedName"
+                    and previous_key.get("left", {}).get("identifier", {}).get("text")
+                        == "item"
+                    and previous_key.get("right", {}).get("identifier", {}).get("text")
+                        == field_name)
+            except Exception:
+                return False
+
+        root_name = _array_storage_name(symbol)
+        left, right = dimensions[0]
+        step = 1 if right >= left else -1
+        positions = list(range(left, right + step, step))
+        count = len(positions)
+        if count <= 0:
+            return None
+        cell_names = {
+            (position, field.name): f"{root_name}[{position}].{field.name}"
+            for position in positions for field in fields
+        }
+        call_start = start
+        valid = True
+        operations = []
+        control_ranges = []
+
+        def operation_for_assignment(node):
+            """Return a source-ordered flattened write operation."""
+            if (node.op is not None or node.isNonBlocking
+                    or node.timingControl is not None):
+                return None
+            lhs = node.left
+            lowered = _unpacked_struct_pattern_assignment(sm, node)
+            if lowered is not None:
+                writes = {}
+                for statement in lowered.get("stmts", []):
+                    target = statement.get("target", {})
+                    name = target.get("name")
+                    if name not in cell_names.values():
+                        return None
+                    value = statement.get("value")
+                    if (value is None or value.get("kind") == "Unsupported"
+                            or not _case_expression_ok(value)):
+                        return None
+                    writes[name] = value
+                if set(writes) != set(cell_names.values()):
+                    # A pattern for one array element is expected here; the
+                    # complete-array set check is performed by the caller.
+                    pattern_positions = set()
+                    prefix = root_name + "["
+                    for name in writes:
+                        if not name.startswith(prefix) or "]" not in name:
+                            return None
+                        text_position = name[len(prefix):].split("]", 1)[0]
+                        try:
+                            pattern_positions.add(int(text_position))
+                        except ValueError:
+                            return None
+                    if len(pattern_positions) != 1:
+                        return None
+                    pattern_position = next(iter(pattern_positions))
+                    expected = {
+                        cell_names[(pattern_position, field.name)]
+                        for field in fields
+                        if (pattern_position, field.name) in cell_names
+                    }
+                    if not expected or set(writes) != expected:
+                        return None
+                return writes
+            member = _unpacked_struct_member(sm, lhs)
+            if member is None or member["name"] not in cell_names.values():
+                return None
+            if not _case_source_expression_ok(node.right, packed_members=True):
+                return None
+            value = convert_expr(sm, node.right)
+            if (value is None or value.get("kind") == "Unsupported"
+                    or width_of(value) != member["width"]
+                    or not _case_expression_ok(value)):
+                return None
+            return {member["name"]: value}
+
+        def inspect(node):
+            nonlocal valid
+            kind = type(node).__name__
+            node_start = getattr(getattr(getattr(node, "sourceRange", None),
+                                         "start", None), "offset", None)
+            if node_start is None or node_start >= call_start:
+                return
+            if kind in ("ConditionalStatement", "ForLoopStatement",
+                        "WhileLoopStatement", "DoWhileLoopStatement",
+                        "ForeachLoopStatement", "RepeatLoopStatement",
+                        "CaseStatement"):
+                node_end = getattr(getattr(getattr(node, "sourceRange", None),
+                                           "end", None), "offset", None)
+                if node_end is not None and node_end > call_start:
+                    control_ranges.append((node_start, node_end))
+                return
+            if kind == "CallExpression":
+                arguments = getattr(node, "arguments", [])
+                if (len(arguments) == 1
+                        and type(arguments[0]).__name__ == "NamedValueExpression"
+                        and getattr(arguments[0], "symbol", None) is symbol):
+                    name = str(getattr(node, "subroutineName", ""))
+                    if (name in ("sort", "rsort")
+                            and compatible_ordering_call(node)):
+                        operations.append((node_start, "order", name))
+                    else:
+                        valid = False
+                    return VisitAction.Skip
+            if kind == "AssignmentExpression":
+                lhs = getattr(node, "left", None)
+                path = _unpacked_struct_path(lhs)
+                if path is not None and (
+                        path[0] == root_name
+                        or path[0].startswith(root_name + "[")):
+                    writes = operation_for_assignment(node)
+                    if writes is None:
+                        valid = False
+                    else:
+                        operations.append((node_start, writes))
+                    return VisitAction.Skip
+            if kind == "MemberAccessExpression":
+                member = _unpacked_struct_member(sm, node)
+                if member is not None and member["name"] in cell_names.values():
+                    return VisitAction.Skip
+            if kind == "ElementSelectExpression":
+                value = getattr(node, "value", None)
+                if (type(value).__name__ == "NamedValueExpression"
+                        and getattr(value, "symbol", None) is symbol):
+                    valid = False
+                    return VisitAction.Skip
+            if kind == "NamedValueExpression" and getattr(node, "symbol", None) is symbol:
+                valid = False
+
+        instance.visit(inspect)
+        if (not valid
+                or any(start <= operation[0] < end
+                       for operation in operations
+                       for start, end in control_ranges)):
+            return None
+
+        # Apply literal writes in source order.  Every flattened field must be
+        # known before the ordering call, and duplicate writes are allowed only
+        # when the last value remains statically known.
+        state = {}
+
+        def reorder(order_name):
+            if set(state) != set(cell_names.values()):
+                return False
+            keyed = []
+            for position in positions:
+                key_value = state[cell_names[(position, field_name)]]
+                key = _literal_array_order_key(
+                    key_value, field_info[field_name][0],
+                    bool(field_info[field_name][2].isSigned))
+                if key is None:
+                    return False
+                record = [state[cell_names[(position, field.name)]]
+                          for field in fields]
+                keyed.append((key, record))
+            keyed.sort(key=lambda item: item[0], reverse=order_name == "rsort")
+            state.clear()
+            for position, (_key, record) in zip(positions, keyed):
+                for field, value in zip(fields, record):
+                    state[cell_names[(position, field.name)]] = value
+            return True
+
+        for operation in sorted(operations, key=lambda item: item[0]):
+            if len(operation) == 3 and operation[1] == "order":
+                if not reorder(operation[2]):
+                    return None
+                continue
+            _offset, writes = operation
+            for name, value in writes.items():
+                state[name] = value
+        if set(state) != set(cell_names.values()):
+            return None
+        key_width, key_two_state, key_type = field_info[field_name]
+        keyed = []
+        for position in positions:
+            key_value = state[cell_names[(position, field_name)]]
+            key = _literal_array_order_key(key_value, key_width,
+                                           bool(key_type.isSigned))
+            if key is None:
+                return None
+            record = [state[cell_names[(position, field.name)]] for field in fields]
+            keyed.append((key, record))
+        keyed.sort(key=lambda item: item[0],
+                   reverse=expression.subroutineName == "rsort")
+        statements = []
+        for position, (_key, record) in zip(positions, keyed):
+            for field, value in zip(fields, record):
+                width, two_state, _field_type = field_info[field.name]
+                if two_state:
+                    value = squash2_wrap(value, width)
+                statements.append({
+                    "kind": "BlockingAssign",
+                    "span": node_span(sm, expression),
+                    "target": {"kind": "Ident", "span": node_span(sm, receiver),
+                               "width": width,
+                               "name": cell_names[(position, field.name)]},
+                    "value": value,
+                })
+        return {"kind": "Block", "span": node_span(sm, expression),
+                "stmts": statements,
+                "fixed_struct_array_ordering_with_lowered": expression.subroutineName}
+    except Exception:
+        return None
+
+
 def _literal_integral_value(expression):
     """Read a small literal integral expression without evaluating source code.
 
@@ -17166,6 +17485,9 @@ def _convert_syscall(sm, s, e):
         if reversed_array is not None:
             return reversed_array
     if _SYM is None and e.isSystemCall and e.subroutineName in ("sort", "rsort"):
+        struct_ordered_array = _fixed_struct_array_ordering_with(sm, e)
+        if struct_ordered_array is not None:
+            return struct_ordered_array
         ordered_array = _fixed_array_ordering_method(sm, e)
         if ordered_array is not None:
             return ordered_array

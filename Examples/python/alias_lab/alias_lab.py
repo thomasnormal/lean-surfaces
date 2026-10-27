@@ -56,3 +56,8 @@ def min_alias(values):
     f = min
     return f(values)
 
+
+def abs_alias(value):
+    f = abs
+    return f(value)
+

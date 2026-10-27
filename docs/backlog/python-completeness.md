@@ -5989,3 +5989,23 @@ general first-class callable forms remain loud.
 
 DECIDED: admit only the immediate local `min` alias call; retain loud failure
 for returned or general first-class callable values.
+
+## 2026-10-27-pycomplete-170 — admit the immediate local `abs` alias
+
+The local-builtin alias rewrite now includes `abs`: `f = abs; return
+f(value)` lowers to the existing scalar absolute-value worker. Integer, zero,
+and Boolean inputs preserve their current results. Returning `abs`, shadowing it,
+and general first-class callable forms remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 3 cases: 0 failed, 3 matched on both interpreters |
+| Full executable differential | 3,710 cases: 0 failed, 44 whitelisted refusals, 3,666 matched |
+| Full proof differential | 3,710 cases: 0 failed, 153 refusals, 3,557 matched |
+| Lean runner build | `lake build leanmodels-run` passed |
+| Focused surface | three `#py_check` rows passed with `LeanModels.Python.Surface` |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `abs` alias call; retain loud failure
+for returned or general first-class callable values. Rebase and publish this
+item after the full measurements, then reread the inbox before the next gap.

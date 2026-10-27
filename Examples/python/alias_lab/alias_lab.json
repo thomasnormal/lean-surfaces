@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/alias_lab/alias_lab.py",
-  "source_sha256": "72de2eaa573988418fa5acaf2992dd4ff8f9d3baa820dc54f9559e62fb8402be",
+  "source_sha256": "7161cd34f704b8e1611e436e1822c3cb271da813ccb3b49e427cfa02547307cd",
   "module": {
     "kind": "Module",
     "body": [
@@ -959,6 +959,104 @@
                     "end_col_offset": 19
                   },
                   "id": "values"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 60,
+          "col_offset": 0,
+          "end_lineno": 62,
+          "end_col_offset": 19
+        },
+        "name": "abs_alias",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 60,
+              "col_offset": 14,
+              "end_lineno": 60,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 61,
+              "col_offset": 4,
+              "end_lineno": 61,
+              "end_col_offset": 11
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 61,
+                  "col_offset": 4,
+                  "end_lineno": 61,
+                  "end_col_offset": 5
+                },
+                "id": "f"
+              }
+            ],
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 61,
+                "col_offset": 8,
+                "end_lineno": 61,
+                "end_col_offset": 11
+              },
+              "id": "abs"
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 62,
+              "col_offset": 4,
+              "end_lineno": 62,
+              "end_col_offset": 19
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 62,
+                "col_offset": 11,
+                "end_lineno": 62,
+                "end_col_offset": 19
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 62,
+                  "col_offset": 11,
+                  "end_lineno": 62,
+                  "end_col_offset": 12
+                },
+                "id": "f"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 62,
+                    "col_offset": 13,
+                    "end_lineno": 62,
+                    "end_col_offset": 18
+                  },
+                  "id": "value"
                 }
               ],
               "keywords": [],

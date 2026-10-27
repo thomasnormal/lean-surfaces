@@ -21363,6 +21363,29 @@ def _module_storage_collisions(ports, decls, processes, span):
     return others
 
 
+def _subroutine_is_referenced(scope, subroutine):
+    """Whether an elaborated subroutine has a call site in this scope.
+
+    A declaration is inert until called.  The frontend binds every ordinary
+    call to its target symbol, so an identity check is sufficient and avoids
+    guessing from source spelling (which can collide across scopes).  Calls
+    from the declaration body itself, including recursion, are included by
+    the walk and therefore keep that declaration loud.
+    """
+    referenced = False
+
+    def inspect(node):
+        nonlocal referenced
+        if type(node).__name__ == "CallExpression":
+            referenced = referenced or getattr(node, "subroutine", None) is subroutine
+
+    try:
+        scope.visit(inspect)
+    except Exception:
+        return True
+    return referenced
+
+
 def convert_module(sm, inst):
     if not getattr(inst, "isModule", False):
         kind = str(getattr(inst, "kind", "")).split(".")[-1]
@@ -21446,6 +21469,13 @@ def convert_module(sm, inst):
                 # metadata only.  Calls in statement position are erased by
                 # _convert_syscall; effectful signatures and bodies remain
                 # loud.
+                # A declaration with no elaborated call site is also inert:
+                # SystemVerilog does not execute a function/task body merely
+                # because it is declared.  Keep every referenced declaration
+                # (including recursive and DPI-linked calls) on the existing
+                # callable boundary.
+                if not _subroutine_is_referenced(inst, m):
+                    continue
                 body = getattr(m, "body", None)
                 formal_args = list(getattr(m, "arguments", []))
                 body_list = (list(body.list)

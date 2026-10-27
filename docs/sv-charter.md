@@ -9432,3 +9432,19 @@ include skips; the committed `ForeachLoopStatement:array` count remains 123
 because the unavailable corpus snapshot cannot be rerun here. Differential
 coverage grows **334/328/0/6 → 335/329/0/6** with no disagreements, and grammar
 coverage remains **218/97/121**.
+
+## Unreferenced subroutine declarations — 2026-10-27
+
+Module-scope functions and tasks with no elaborated `CallExpression.subroutine`
+reference are now erased as inert declarations. Their bodies cannot execute
+merely because they are declared, so this does not add callable frames or
+scheduler state. Referenced, recursive, receiver, DPI, and effectful-call
+subroutines remain loud. The `unused_subroutines` fixture and Lean receipt
+cover an uncalled effectful task and function; `docs/sv-subroutines.md` records
+the retained boundary.
+
+The pinned 22,065-file census remains **5,401 clean / 16,597 partial** with 67
+include skips because the external corpus checkout is unavailable; the
+committed `SubroutineSymbol:Subroutine` count remains 1,634. Differential
+coverage grows **335/329/0/6 → 336/330/0/6** with no disagreements, and grammar
+coverage remains **218/97/121**.

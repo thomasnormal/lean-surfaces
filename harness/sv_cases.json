@@ -3019,6 +3019,15 @@
         "sum=21"
       ],
       "expect": "match"
+    },
+    {
+      "name": "unused_subroutines",
+      "file": "Examples/system-verilog/unused_subroutines/unused_subroutines.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.82] — 2026-10-27
+
+Unreferenced module-scope functions and tasks are now erased as inert
+declarations after the elaborated call graph proves no `CallExpression`
+targets them. Referenced, recursive, receiver, DPI, and effectful-call
+declarations remain loud because callable frames and external effects are not
+represented. The `unused_subroutines` fixture supplies the `PASS` receipt.
+Differential coverage is now **336 rows / 330 matches / 0 disagreements / 6
+recorded refusals**; grammar coverage remains **218 / 97 / 121**. The pinned
+22,065-file census remains **5,401 clean / 16,597 partial** with 67 include
+skips while the external corpus checkout is unavailable.
+
 ## [0.1.81] — 2026-10-27
 
 Finite multidimensional unpacked integral arrays now admit `foreach` loops

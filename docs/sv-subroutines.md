@@ -1,10 +1,19 @@
 # Subroutines — repricing boundary
 
-The current public SystemVerilog envelope does not admit user `function`,
-`task`, or DPI subroutine declarations as ordinary module members. Such a
-declaration is retained as `SubroutineSymbol:Subroutine`. The existing
+The public SystemVerilog envelope retains referenced user `function`, `task`,
+and DPI subroutine declarations as `SubroutineSymbol:Subroutine`. A declaration
+with no elaborated call site is inert and is omitted: SystemVerilog does not
+execute a function or task merely because it is declared. The existing
 system-task and intrinsic query paths are separate contracts and do not make
 arbitrary user calls live.
+
+## Unreferenced declarations — 2026-10-27
+
+The extractor now walks elaborated `CallExpression.subroutine` bindings before
+retaining a declaration. Unreferenced functions and tasks, including bodies
+with effects, are erased because their bodies cannot execute. Recursive calls,
+ordinary calls, receiver calls, and DPI-linked calls keep their declarations
+loud; no callable frame, external ABI, or scheduler rule is inferred.
 
 ## Why declarations remain a boundary
 
@@ -26,8 +35,9 @@ The admitted surface therefore stays explicit:
 
 * fixed metadata queries, `$clog2`, dynamic integral `$cast`, `$display`,
   `$write`, `$finish` and `$stop` use their existing intrinsic contracts;
-* user functions, user tasks, and methods remain `SubroutineSymbol:Subroutine`
-  until callable frames and argument/return storage are represented; and
+* referenced user functions, user tasks, and methods remain
+  `SubroutineSymbol:Subroutine` until callable frames and argument/return
+  storage are represented; and
 * DPI imports, exported routines, timing tasks and other external calls remain
   loud rather than being treated as pure arithmetic or no-ops.
 

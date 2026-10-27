@@ -51,6 +51,23 @@ class EmptySubroutineCalls(unittest.TestCase):
         self.assertIn("SubroutineSymbol:Subroutine",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_unreferenced_effectful_subroutine_is_inert(self):
+        design = lower(
+            'module top; task automatic never_called(); $display("NO"); endtask '
+            'function int also_unused(input int x); return x + 1; endfunction '
+            'initial $display("PASS"); endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "SubroutineSymbol:Subroutine"
+                             for node in nodes(design)))
+        self.assertEqual([], design["modules"][0]["others"])
+
+    def test_recursive_subroutine_remains_loud(self):
+        design = lower(
+            'module top; function void recurse(); recurse(); endfunction '
+            'initial $display("PASS"); endmodule')
+        self.assertIn("SubroutineSymbol:Subroutine",
+                      [node.get("sv_kind") for node in nodes(design)])
+
 
 if __name__ == "__main__":
     unittest.main()

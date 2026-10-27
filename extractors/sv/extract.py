@@ -5567,12 +5567,13 @@ def _fixed_array_pattern_assignment(sm, expr):
                 return None
         target_name = lhs_name
         converted = []
+        reads_target_any = False
         for element in elements:
             if not _case_source_expression_ok(element, packed_members=True):
                 return None
-            # A pure read of the destination would see a different value
-            # after the first lowered cell write.  Reject that aliasing shape
-            # instead of silently changing aggregate-assignment semantics.
+            # A pure read of the destination must be captured before the
+            # first lowered cell write; otherwise a later element could see
+            # an earlier write rather than the source-level RHS snapshot.
             reads_target = False
             def inspect(node):
                 nonlocal reads_target
@@ -5587,8 +5588,7 @@ def _fixed_array_pattern_assignment(sm, expr):
                     except Exception:
                         reads_target = True
             _visit_selected_expression(element, inspect)
-            if reads_target:
-                return None
+            reads_target_any = reads_target_any or reads_target
             value = convert_expr(sm, element)
             if (value is None or value.get("kind") == "Unsupported"
                     or width_of(value) != element_width
@@ -5597,6 +5597,29 @@ def _fixed_array_pattern_assignment(sm, expr):
             if element_two:
                 value = squash2_wrap(value, element_width)
             converted.append(value)
+        prefix = []
+        if reads_target_any:
+            captured = []
+            for index, value in enumerate(converted):
+                name = _scoped_temp("$array_pattern:",
+                                    expr.sourceRange.start.offset,
+                                    f":{index}")
+                prefix.append({
+                    "kind": "LocalDecl",
+                    "span": node_span(sm, expr),
+                    "width": element_width,
+                    "name": name,
+                    "two_state": element_two,
+                    "init": value,
+                    "array_pattern_snapshot": True,
+                })
+                captured.append({
+                    "kind": "Ident",
+                    "span": node_span(sm, expr),
+                    "width": element_width,
+                    "name": name,
+                })
+            converted = captured
         step = 1 if right >= left else -1
         stmts = []
         for position, value in zip(range(left, right + step, step), converted):
@@ -5615,7 +5638,9 @@ def _fixed_array_pattern_assignment(sm, expr):
         return {
             "kind": "Block",
             "span": node_span(sm, expr),
-            "stmts": stmts,
+            "stmts": prefix + stmts,
+            **({"fixed_array_pattern_alias_lowered": True}
+               if reads_target_any else {}),
         }
     except Exception:
         return None
@@ -21360,6 +21385,10 @@ def _module_storage_collisions(ports, decls, processes, span):
         others.append({"kind": "Unsupported", "span": span,
                        "sv_kind": "LexicalBinding:storage-collision",
                        "text": "lexical storage collides with a source binding"})
+    if _generated_storage_collision(ports, decls, processes, "$array_pattern:"):
+        others.append({"kind": "Unsupported", "span": span,
+                       "sv_kind": "AssignmentExpression:pattern-storage-collision",
+                       "text": "generated assignment-pattern snapshot collides with a binding"})
     return others
 
 

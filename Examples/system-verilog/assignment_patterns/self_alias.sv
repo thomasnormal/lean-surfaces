@@ -5,4 +5,5 @@ module top;
     $display("self %0d %0d", values[0], values[1]);
     $finish;
   end
+  // expected self-check line: self 7 3
 endmodule

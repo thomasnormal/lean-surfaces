@@ -114,7 +114,13 @@ def fixtureReceipt : IO Unit := do
         world := next
       unless world.out.halted && world.out.flush == expected do
         throw (IO.userError s!"{name} complete transcript differs")
-  for name in ["effects", "multidim", "self_alias"] do
+  let selfText ← IO.FS.readFile
+    "Examples/system-verilog/assignment_patterns/self_alias.sv.json"
+  let .ok selfDesign := loadEnvelopeDesign selfText
+    | throw (IO.userError "self-alias pattern failed to load")
+  unless runSelfCheck selfDesign 32768 == .ok ["self 7 3"] do
+    throw (IO.userError "self-alias pattern snapshot disagrees")
+  for name in ["effects", "multidim"] do
     match loadEnvelopeDesign
         (← IO.FS.readFile s!"Examples/system-verilog/assignment_patterns/{name}.sv.json") with
     | .error _ => pure ()

@@ -6,7 +6,7 @@
     "family": "pyslang-11"
   },
   "source_file": "Examples/system-verilog/assignment_patterns/self_alias.sv",
-  "source_sha256": "6df6152b1b9d6f891132f065dab11dd084f6b1f347075a4801cb41cdc9ca88e7",
+  "source_sha256": "c8b7fb05827c567ac4e0eb4cbfc67325c4d698414c9f1752d1157071da6fa057",
   "design": {
     "kind": "Design",
     "modules": [
@@ -15,7 +15,7 @@
         "span": {
           "line": 1,
           "col": 1,
-          "end_line": 8,
+          "end_line": 9,
           "end_col": 10
         },
         "name": "top",
@@ -97,15 +97,138 @@
               },
               "stmts": [
                 {
-                  "kind": "Unsupported",
+                  "kind": "Block",
                   "span": {
                     "line": 4,
                     "col": 5,
                     "end_line": 4,
-                    "end_col": 38
+                    "end_col": 37
                   },
-                  "sv_kind": "AssignmentExpression:target",
-                  "text": "values = '{values[1], values[0]};"
+                  "stmts": [
+                    {
+                      "kind": "LocalDecl",
+                      "span": {
+                        "line": 4,
+                        "col": 5,
+                        "end_line": 4,
+                        "end_col": 37
+                      },
+                      "width": 32,
+                      "name": "$array_pattern:62:0",
+                      "two_state": true,
+                      "init": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 4,
+                            "col": 16,
+                            "end_line": 4,
+                            "end_col": 25
+                          },
+                          "width": 32,
+                          "name": "values[1]",
+                          "signed": true
+                        }
+                      },
+                      "array_pattern_snapshot": true
+                    },
+                    {
+                      "kind": "LocalDecl",
+                      "span": {
+                        "line": 4,
+                        "col": 5,
+                        "end_line": 4,
+                        "end_col": 37
+                      },
+                      "width": 32,
+                      "name": "$array_pattern:62:1",
+                      "two_state": true,
+                      "init": {
+                        "kind": "Squash2",
+                        "span": null,
+                        "width": 32,
+                        "operand": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 4,
+                            "col": 27,
+                            "end_line": 4,
+                            "end_col": 36
+                          },
+                          "width": 32,
+                          "name": "values[0]",
+                          "signed": true
+                        }
+                      },
+                      "array_pattern_snapshot": true
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 4,
+                        "col": 5,
+                        "end_line": 4,
+                        "end_col": 37
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 4,
+                          "col": 5,
+                          "end_line": 4,
+                          "end_col": 11
+                        },
+                        "width": 32,
+                        "name": "values[0]"
+                      },
+                      "value": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 4,
+                          "col": 5,
+                          "end_line": 4,
+                          "end_col": 37
+                        },
+                        "width": 32,
+                        "name": "$array_pattern:62:0"
+                      }
+                    },
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 4,
+                        "col": 5,
+                        "end_line": 4,
+                        "end_col": 37
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 4,
+                          "col": 5,
+                          "end_line": 4,
+                          "end_col": 11
+                        },
+                        "width": 32,
+                        "name": "values[1]"
+                      },
+                      "value": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 4,
+                          "col": 5,
+                          "end_line": 4,
+                          "end_col": 37
+                        },
+                        "width": 32,
+                        "name": "$array_pattern:62:1"
+                      }
+                    }
+                  ],
+                  "fixed_array_pattern_alias_lowered": true
                 },
                 {
                   "kind": "SysCall",

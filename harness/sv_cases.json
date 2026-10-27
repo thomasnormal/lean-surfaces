@@ -3037,6 +3037,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "assignment_pattern_self_alias",
+      "file": "Examples/system-verilog/assignment_patterns/self_alias.sv",
+      "module": "top",
+      "oracle": [
+        "self 7 3"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -83,13 +83,17 @@ class AssignmentPatterns(unittest.TestCase):
             self.assertFalse(walls(d))
             self.assertEqual([n['init']['bits'] for n in d['modules'][0]['decls']], expected)
 
-    def test_fixed_array_of_struct_patterns_and_existing_self_alias_boundary(self):
+    def test_fixed_array_of_struct_patterns_and_self_alias_snapshot(self):
         d = lower("module top; typedef struct packed{logic a;logic b;}T; T x[1:0];"
                   "initial x='{1:'{1'b1,1'b0},0:'{1'bx,1'bz}};endmodule")
         self.assertFalse(walls(d))
         self.assertEqual(len(patterns(d)), 2)
         d = lower("module top; int x[0:1];initial x='{x[1],x[0]};endmodule")
-        self.assertIn('AssignmentExpression:target', walls(d))
+        self.assertNotIn('AssignmentExpression:target', walls(d))
+        block = d['modules'][0]['processes'][0]['body']
+        self.assertTrue(block.get('fixed_array_pattern_alias_lowered'))
+        self.assertEqual([s['kind'] for s in block['stmts']],
+                         ['LocalDecl', 'LocalDecl', 'BlockingAssign', 'BlockingAssign'])
 
     def test_invalid_patterns_and_redefinitions_cannot_execute(self):
         for source in ("module top; logic[3:0]x='{1'b1,1'b0};endmodule",

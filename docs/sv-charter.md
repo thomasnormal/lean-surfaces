@@ -9465,3 +9465,20 @@ include skips because the external corpus checkout is unavailable; the
 committed `SubroutineSymbol:Subroutine` count remains 1,634. Differential
 coverage grows **336/330/0/6 → 337/331/0/6** with no disagreements, and grammar
 coverage remains **218/97/121**.
+
+## Fixed-array assignment-pattern self-alias snapshots — 2026-10-27
+
+The legacy assignment-pattern lowering now admits a one-dimensional fixed
+unpacked integral array whose pure positional RHS reads the same destination
+cells. It emits one `LocalDecl` snapshot per RHS element before any flattened
+cell store, so `values = '{values[1], values[0]}` produces the source-defined
+swap rather than observing an earlier lowered write. Nested arrays,
+dynamic/queue/associative storage, effectful expressions, width mismatches and
+other aggregate aliases remain loud. The existing `assignment_patterns/self_alias`
+fixture and Lean receipt cover `self 7 3`.
+
+The pinned 22,065-file census remains **5,401 clean / 16,597 partial** with 67
+include skips because the external corpus checkout is unavailable; the
+committed `AssignmentExpression:target` count remains 2,847. Differential
+coverage grows **337/331/0/6 → 338/332/0/6** with no disagreements, and grammar
+coverage remains **218/97/121**.

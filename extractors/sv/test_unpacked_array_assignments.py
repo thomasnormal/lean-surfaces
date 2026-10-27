@@ -111,12 +111,13 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             for node in nodes(design)))
 
-    def test_destination_alias_stays_loud(self):
+    def test_destination_alias_is_snapshotted(self):
         design = extract_source(
             "module top; logic [7:0] value [0:1]; "
             "initial value = '{value[1], 8'h34}; endmodule")
-        self.assertTrue(any(node.get("kind") == "Unsupported"
-                            and node.get("sv_kind") == "AssignmentExpression:target"
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("array_pattern_snapshot")
                             for node in nodes(design)))
 
     def test_dynamic_index_is_bounded_over_cells(self):

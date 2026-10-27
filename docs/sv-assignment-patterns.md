@@ -21,9 +21,12 @@ Every element retains its bound width and conversion. Ordinary concatenation
 packs the bits, including X/Z; existing sign propagation, resizing and
 two-state conversion apply. The expression reads live storage, without a
 constant snapshot. A whole packed assignment evaluates the complete RHS
-before its one store, so a packed struct can swap its own fields. Captured
-NBA values and delayed continuations use the existing execution rules. No
-storage primitive, evaluator or scheduler is added.
+before its one store, so a packed struct can swap its own fields. Split-cell
+fixed-array patterns that read their destination now capture each pure element
+in a local temporary before the flattened stores, preserving the same
+complete-RHS rule. Captured NBA values and delayed continuations use the
+existing execution rules. No storage primitive, evaluator or scheduler is
+added.
 
 Only pure source operands are admitted. Effectful calls, assignments and
 increments remain loud even if a frontend constant could otherwise erase
@@ -32,9 +35,9 @@ pattern design with frontend errors or declaration-redefinition conflicts is
 refused. Invalid correspondence and expansions over 1,024 elements per pattern
 are loud. Unpacked value results, union/tagged patterns, existing unsupported
 multidimensional packed storage and all existing expression/storage boundaries
-remain loud. Split-cell unpacked assignments retain their self-read refusal:
-they need a separate complete-RHS capture contract before writes may alias
-later reads. Ordinary replication expressions are a separate construct.
+remain loud. Nested, dynamic, queue, associative, effectful, and
+width-mismatched split-cell forms remain outside the capture slice. Ordinary
+replication expressions are a separate construct.
 
 The paired 22,035-path census gains 26 clean extractions without losses:
 4,037 clean, 17,932 partial, 66 include skips and zero extraction errors.
@@ -45,11 +48,12 @@ absence occurs. All 69 previously clean corpus sources containing pattern
 syntax retain identical extracted designs under a paired before/after check.
 The census includes negative and compile-only sources and measures extraction.
 
-Five authored sources match complete independent transcripts under both
-oracles; four also match the time-zero runner. They cover integer bit keys,
+Six authored sources match complete independent transcripts under both
+oracles; five also match the time-zero runner. They cover integer bit keys,
 both array directions, member/type/default priority, nested and signed
 structs, two-state conversion, live self-swaps, replicated groups, fixed
-arrays of packed structs, and NBA value capture. Three further sources
-preserve effect, multidimensional-storage and unpacked self-alias boundaries.
+arrays of packed structs, and NBA value capture. The self-alias source now
+matches through the explicit local snapshot; effectful and multidimensional
+storage sources preserve their refusal boundaries.
 Four source-bound kernel proofs certify the real keyed RHS's current-value
 read, blocking store, NBA capture, and visibility after the source changes.

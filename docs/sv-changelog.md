@@ -1,5 +1,18 @@
 # SystemVerilog tier changelog
 
+## [0.1.84] — 2026-10-27
+
+Whole assignments to a one-dimensional fixed unpacked integral array now admit
+source-pure RHS patterns that read the destination itself. The extractor first
+captures every RHS cell in local temporaries, then writes the flattened cells,
+preserving the complete-RHS-before-store rule. Nested, dynamic, aggregate,
+effectful, and width-mismatched aliasing remains loud. The existing
+`assignment_patterns/self_alias.sv` fixture now supplies the `self 7 3`
+receipt. Differential coverage is now **338 rows / 332 matches / 0
+disagreements / 6 recorded refusals**; grammar coverage remains **218 / 97 /
+121**. The pinned 22,065-file census remains **5,401 clean / 16,597 partial**
+with 67 include skips while the external corpus checkout is unavailable.
+
 ## [0.1.83] — 2026-10-27
 
 Unreferenced package functions and tasks are now erased after the elaborated

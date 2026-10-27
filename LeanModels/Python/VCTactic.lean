@@ -476,7 +476,7 @@ theorem PyTriple.exists_callsTo_arityOk {m : Module} {fname : String}
     (hgen : f.isGenerator = false)
     (harity : arityOk f.params args.size = true)
     (h : PyTriple m
-        (fun st => st = ⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩)
+        (fun st => st = ⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
         f.body.toList
         { next := fun _ => False
           ret := fun rv _ => ∃ v, rv = RVal.thaw v ∧ Φ v }) :
@@ -509,7 +509,7 @@ theorem PyTriple.exists_callsTo {m : Module} {fname : String}
     (hgen : f.isGenerator = false)
     (harity : args.size = f.params.size)
     (h : PyTriple m
-        (fun st => st = ⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩)
+        (fun st => st = ⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
         f.body.toList
         { next := fun _ => False
           ret := fun rv _ => ∃ v, rv = RVal.thaw v ∧ Φ v }) :
@@ -535,7 +535,7 @@ theorem PyTriple.exists_callsTo_toVal_arityOk {α : Type} [ToVal α]
     (hgen : f.isGenerator = false)
     (harity : arityOk f.params args.size = true)
     (h : PyTriple m
-        (fun st => st = ⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩)
+        (fun st => st = ⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
         f.body.toList
         { next := fun _ => False
           ret := fun rv _ => ∃ x : α, rv = RVal.thaw (ToVal.toVal x) ∧ Φ x }) :
@@ -560,7 +560,7 @@ theorem PyTriple.exists_callsTo_toVal {α : Type} [ToVal α] {m : Module}
     (hgen : f.isGenerator = false)
     (harity : args.size = f.params.size)
     (h : PyTriple m
-        (fun st => st = ⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩)
+        (fun st => st = ⟨initWorld m, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
         f.body.toList
         { next := fun _ => False
           ret := fun rv _ => ∃ x : α, rv = RVal.thaw (ToVal.toVal x) ∧ Φ x }) :

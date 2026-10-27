@@ -1994,8 +1994,10 @@ or collapse `$unit::` lookup and shadowing; see [parameter scope](sv-parameter-s
 
 `NamedValueExpression:2state` remains an explicit unsupported expression when
 an aggregate named value requires fixed-array concatenation, pattern context,
-literal conversion or range-aware iteration. The envelope does not treat an
-array name as a scalar; see [residual two-state named values](sv-namedvalue-2state.md).
+literal conversion, range-aware iteration, or a non-`%p` value context. A
+direct one-dimensional fixed integral array in a `%p` diagnostic is expanded
+through its existing flattened cells; the envelope still does not treat an
+array name as a scalar. See [residual two-state named values](sv-namedvalue-2state.md).
 
 ## Invalid enumerations
 

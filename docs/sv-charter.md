@@ -43,6 +43,20 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## One-dimensional fixed-array `%p` diagnostics — 2026-10-27
+
+The self-check surface now renders a direct one-dimensional fixed integral
+array in `%p` diagnostics by reading the existing flattened cells in declared
+index order. Nested, dynamic, effectful, and other-format aggregate arguments
+remain loud; no aggregate store is introduced. The `array_named_display`
+fixture supplies the differential witness and Lean receipt.
+
+The chapter-only census moves **5,396 clean / 16,602 partial → 5,401 clean /
+16,597 partial** over **22,065** files with 67 include skips;
+`NamedValueExpression:2state` falls **1,473 → 1,462**. Differential coverage
+grows **333/327/0/6 → 334/328/0/6** with no disagreements, while grammar
+coverage remains **218/97/121**.
+
 ## Source-pure string equality and relational comparisons — 2026-10-27
 
 String `==`, `!=`, `===`, `!==`, `<`, `<=`, `>`, and `>=` now fold to exact

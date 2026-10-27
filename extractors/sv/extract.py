@@ -3266,6 +3266,51 @@ def _fixed_array_assignment_shape(source):
     return name, width, two_state, list(range(left, right + step, step))
 
 
+def _fixed_array_display_expr(sm, expression):
+    """Render a one-dimensional fixed integral array through its flat cells.
+
+    The self-check state has no aggregate slot, but fixed unpacked arrays are
+    already represented by one vector cell per element.  A direct ``%p``
+    diagnostic can therefore read those cells in declared index order.  Keep
+    this helper strictly to one-dimensional fixed arrays; dynamic, nested,
+    effectful, and aggregate-element forms remain on the ordinary loud path.
+    """
+    try:
+        node = expression
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return None
+        array_type = expression.type.canonicalType
+        if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
+            return None
+        element_type = array_type.elementType.canonicalType
+        if type(element_type).__name__ in (
+                "FixedSizeUnpackedArrayType", "DynamicArrayType",
+                "QueueType", "AssociativeArrayType", "UnpackedStructType",
+                "UnpackedUnionType", "PackedStructType", "PackedUnionType"):
+            return None
+        width, _two_state, reason = type_width_2s(element_type)
+        if width is None or reason is not None:
+            return None
+        shape = _fixed_array_assignment_shape(node)
+        if shape is None:
+            return None
+        name, cell_width, _cell_two_state, positions = shape
+        if cell_width != width or not positions or len(positions) > 1024:
+            return None
+        signed = bool(getattr(element_type, "isSigned", False))
+        elements = [
+            {"kind": "Ident", "span": node_span(sm, expression),
+             "width": width, "name": f"{name}[{position}]"}
+            for position in positions
+        ]
+        return {"kind": "ArrayDisplay", "span": node_span(sm, expression),
+                "elements": elements, "element_signed": signed}
+    except Exception:
+        return None
+
+
 def _fixed_array_subarray_shape(source):
     """Return the flattened cells of a constant fixed-array subarray.
 
@@ -19645,8 +19690,19 @@ def _convert_syscall(sm, s, e):
     fmt = first.value
     conv = []
     signed = []
+    array_display_used = False
     for a in args[1:]:
-        conv.append(convert_expr(sm, a))
+        # A direct one-dimensional fixed-array value has no scalar expression
+        # width, but `%p` diagnostics can render its already-flattened cells
+        # without introducing aggregate storage.  Keep this exception tied to
+        # the exact format; every other aggregate value remains loud.
+        array_display = (_fixed_array_display_expr(sm, a)
+                         if fmt.count("%p") == 1 and "%p" in fmt else None)
+        if array_display is not None:
+            array_display_used = True
+            conv.append(array_display)
+        else:
+            conv.append(convert_expr(sm, a))
         try:
             signed.append(bool(a.type.isSigned))
         except Exception:
@@ -19655,7 +19711,10 @@ def _convert_syscall(sm, s, e):
         "kind": "SysCall",
         "span": span,
         "name": name,
-        "format": fmt,
+        # The array-display value is already rendered text.  Reuse the
+        # existing `%s` byte renderer after this exact `%p` lowering so a
+        # scalar `%p` call does not accidentally become admitted.
+        "format": fmt.replace("%p", "%s") if array_display_used else fmt,
         "args": conv,
         "arg_signed": signed,
     }

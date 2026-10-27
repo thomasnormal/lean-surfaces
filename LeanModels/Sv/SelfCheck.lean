@@ -218,6 +218,8 @@ inductive SExpr where
   formatted text is represented as an ASCII packed vector so ordinary string
   equality keeps the existing pure expression path. -/
   | sformatf (format : String) (operand : SExpr) (signed : Bool)
+  /-- One-dimensional fixed-array `%p` text assembled from flat cells. -/
+  | arrayDisplay (elements : Array (SExpr × Bool))
   /-- A declaration-order enum `.name()` result. The selected string keeps
   its exact byte width, so `%s` does not inherit padding from another member. -/
   | enumName (subject : SExpr) (cases : Array (LVec × String)) (default : String)
@@ -535,6 +537,11 @@ def renderChr (v : LVec) : Res String :=
   | some n => .ok (String.singleton (Char.ofNat n))
   | none => .unsupported "x/z bits under %c"
 
+def renderArrayDisplay (values : List (LVec × Bool)) : Res String := do
+  let rendered ← values.mapM fun (value, signed) =>
+    renderDec value signed true
+  return "'{" ++ String.intercalate ", " rendered ++ "}"
+
 /-- One conversion spec applied to one argument. `zero` is the `%0` flag. -/
 def renderSpec (c : Char) (zero : Bool) (v : LVec) (signed : Bool) : Res String :=
   match c.toLower with
@@ -624,6 +631,9 @@ def evalSExpr (fuel : Nat) (st : SvState) (e : SExpr) : Res LVec :=
         let value ← evalSExpr fuel st operand
         let text ← renderFmt format.toList [(value, signed)]
         return asciiVec text
+    | .arrayDisplay elements => do
+        let values ← evalSExprPairs fuel st elements.toList
+        return asciiVec (← renderArrayDisplay values)
     | .enumName subject cases default => do
         let value ← evalSExpr fuel st subject
         let text := (cases.toList.find? (fun entry =>
@@ -656,6 +666,18 @@ def evalSExprs (fuel : Nat) (st : SvState) (es : List SExpr) : Res (List LVec) :
         let v ← evalSExpr fuel st e
         let vs ← evalSExprs fuel st rest
         return v :: vs
+
+def evalSExprPairs (fuel : Nat) (st : SvState)
+    (es : List (SExpr × Bool)) : Res (List (LVec × Bool)) :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match es with
+    | [] => .ok []
+    | (e, signed) :: rest => do
+        let value ← evalSExpr fuel st e
+        let values ← evalSExprPairs fuel st rest
+        return (value, signed) :: values
 
 /-- `(value, signed)` pairs for `$display` args. -/
 def evalArgs (fuel : Nat) (st : SvState) (args : List (SExpr × Bool)) :
@@ -1252,6 +1274,10 @@ partial def parseSExpr (j : Json) : Except String SExpr := do
   | "SFormatF" =>
       return .sformatf (← getStrF j "format")
         (← parseSExpr (← getF j "operand")) (← getBoolF j "signed")
+  | "ArrayDisplay" =>
+      let elements ← (← getArrF j "elements").mapM parseSExpr
+      let signed ← getBoolF j "element_signed"
+      return .arrayDisplay (elements.map (fun element => (element, signed)))
   | "MinTypMax" =>
       let choice ← getStrF j "choice"
       if choice != "min" && choice != "typ" && choice != "max" then

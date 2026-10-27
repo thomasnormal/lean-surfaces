@@ -3000,6 +3000,16 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "array_named_display",
+      "file": "Examples/system-verilog/array_named_display/array_named_display.sv",
+      "module": "top",
+      "oracle": [
+        "ARRAY '{1, 2, 3}",
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

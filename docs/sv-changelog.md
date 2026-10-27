@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.80] — 2026-10-27
+
+One-dimensional fixed integral arrays now render as `%p` diagnostic arguments
+through their existing flattened cells. Declared index order and signed
+element rendering are preserved; nested, dynamic, effectful, and non-`%p`
+aggregate values remain loud. The `array_named_display` fixture covers the
+rendered transcript and the nested-array refusal. Differential coverage is now
+**334 rows / 328 matches / 0 disagreements / 6 recorded refusals**; the
+chapter-only census moves from **5,396 clean / 16,602 partial** to **5,401
+clean / 16,597 partial** over 22,065 files, and
+`NamedValueExpression:2state` falls **1,473 → 1,462**.
+
 ## [0.1.79] — 2026-10-27
 
 Source-pure string equality and relational comparisons now fold for direct

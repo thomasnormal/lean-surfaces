@@ -25,6 +25,21 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## One-dimensional fixed-array `%p` diagnostics — 2026-10-27
+
+Direct one-dimensional fixed integral arrays can now be passed to `%p`
+diagnostics. The extractor expands the value to the existing flattened cells
+in declared index order, and the self-check renderer emits the aggregate text
+without adding aggregate storage. Nested, dynamic, effectful, and other-format
+aggregate values remain loud. The `array_named_display` fixture supplies the
+differential row and Lean receipt.
+
+The chapter-only census moves **5,396 clean / 16,602 partial → 5,401 clean /
+16,597 partial** over **22,065** files with 67 include skips;
+`NamedValueExpression:2state` falls **1,473 → 1,462**. Differential coverage
+grows **333/327/0/6 → 334/328/0/6** with no disagreements; grammar coverage
+remains **218/97/121**.
+
 ## Source-pure string equality and relational comparisons — 2026-10-27
 
 String `==`, `!=`, `===`, `!==`, `<`, `<=`, `>`, and `>=` now lower to exact

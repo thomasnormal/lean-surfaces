@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 281 | 276 | 0 | 5 | sv-tests-2 declarations |
+| 282 | 277 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -295,6 +295,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `string_transform_statements` | `Examples/system-verilog/string_transform_statements/string_transform_statements.sv` | match | **MATCH** | `ok` | MATCH |
 | `array_query_statements` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | match | **MATCH** | `ok` | MATCH |
 | `array_query_with_statements` | `Examples/system-verilog/array_query_with_statements/array_query_with_statements.sv` | match | **MATCH** | `ok` | MATCH |
+| `empty_aggregate_delete_statements` | `Examples/system-verilog/empty_aggregate_delete_statements/empty_aggregate_delete_statements.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -366,7 +367,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ElementSelect` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ElseClause` | `Examples/system-verilog/array_oob_reads/array_oob_reads.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EmptyIdentifierName` | `Examples/system-verilog/foreach/values.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.EmptyQueueExpression` | `Examples/system-verilog/empty_dynamic_array_write/empty_dynamic_array_write.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.EmptyQueueExpression` | `Examples/system-verilog/empty_aggregate_delete_statements/empty_aggregate_delete_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EmptyStatement` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.EnumType` | `Examples/system-verilog/array_oob_reads/array_oob_reads.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EqualityExpression` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
@@ -464,7 +465,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.PowerExpression` | `Examples/system-verilog/power/context_power.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ProgramDeclaration` | `Examples/system-verilog/let_expressions/program.sv` | **REFUSE** | `unsupported` non-initial process 'Hierarchy:module-kind' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ProgramHeader` | `Examples/system-verilog/let_expressions/program.sv` | **REFUSE** | `unsupported` non-initial process 'Hierarchy:module-kind' (self-check tier runs initial-only designs) |
-| `SyntaxKind.QueueDimensionSpecifier` | `Examples/system-verilog/empty_queue_decl/empty_queue_decl.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.QueueDimensionSpecifier` | `Examples/system-verilog/empty_aggregate_delete_statements/empty_aggregate_delete_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RangeDimensionSpecifier` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.RangeList` | `Examples/system-verilog/case_inside/array_widening.sv` | **REFUSE** | `unsupported` unsupported statement 'CaseStatement:pattern' |
 | `SyntaxKind.RealLiteralExpression` | `Examples/system-verilog/floating_literal_write/floating_literal_write.sv` | **MATCH** | `ok`  |

@@ -9405,6 +9405,8 @@ def _zero_size_method(expression):
             if tail.startswith(suffix):
                 return True
             if canonical in ("QueueType", "DynamicArrayType"):
+                if re.match(r"\.delete\s*\(\s*\)", tail):
+                    return True
                 if canonical == "QueueType" and re.match(
                         r"\.(?:pop_front|pop_back)\s*\(\s*\)", tail):
                     return True
@@ -9467,6 +9469,61 @@ def _queue_empty_pop_method(expression, allow_struct=False):
         for occurrence in occurrences[1:]:
             tail = code_source[occurrence.end():].lstrip()
             if re.match(r"\.(?:pop_front|pop_back|size)\s*\(\s*\)", tail):
+                continue
+            return False
+        return True
+    except Exception:
+        return False
+
+
+def _empty_aggregate_delete_method(expression):
+    """Recognize ``delete()`` on source-pure empty queue/dynamic storage.
+
+    Queue ``delete`` is a no-op for an already empty queue.  An uninitialized
+    dynamic array is likewise already empty, so deleting it changes no
+    represented state.  Keep the receiver's complete source history limited
+    to the delete and zero-size queries; initialized, populated, aliased, or
+    effectful aggregate operations remain on the loud call boundary.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "delete"
+                or len(expression.arguments) != 1):
+            return False
+        receiver = expression.arguments[0]
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "bad", False)):
+            return False
+        canonical = type(receiver.type.canonicalType).__name__
+        if canonical not in ("QueueType", "DynamicArrayType"):
+            return False
+        symbol = getattr(receiver, "symbol", None)
+        initializer = getattr(symbol, "initializer", None)
+        if canonical == "QueueType":
+            if initializer is not None and not _empty_queue_literal(initializer):
+                return False
+        elif initializer is not None:
+            return False
+        name = getattr(symbol, "name", "")
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        if not name or not source:
+            return False
+        code_source = _sv_code_source(source)
+        occurrences = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"(?![A-Za-z0-9_$])", code_source))
+        if not occurrences:
+            return False
+        for occurrence in occurrences[1:]:
+            tail = code_source[occurrence.end():].lstrip()
+            if re.match(r"\.delete\s*\(\s*\)", tail):
+                continue
+            if re.match(r"\.size\s*\(\s*\)", tail):
+                continue
+            if (canonical == "QueueType"
+                    and re.match(r"\.(?:pop_front|pop_back)\s*\(\s*\)", tail)):
                 continue
             return False
         return True
@@ -15704,6 +15761,13 @@ def _convert_syscall(sm, s, e):
         # by value-position empty pops while erasing only this void statement.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "queue_empty_pop_statement": e.subroutineName}
+    if _SYM is None and _empty_aggregate_delete_method(e):
+        # Deleting an already-empty queue or an uninitialized dynamic array
+        # has no represented state effect. Keep the source-history and
+        # zero-size checks in the recognizer; populated or effectful storage
+        # remains on the ordinary call boundary.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "empty_aggregate_delete_statement": True}
     if _SYM is None and e.isSystemCall and e.subroutineName in ("$sformat", "$swrite"):
         constant_assignment = _constant_formatted_integral_assignment(sm, e)
         if constant_assignment is not None:

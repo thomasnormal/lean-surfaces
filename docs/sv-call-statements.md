@@ -105,6 +105,11 @@ and purity checks. The existing empty-dynamic-array identity also permits
 discarded `sum` and `product`; other dynamic storage, effectful `with`
 expressions, and value-position reductions remain loud.
 
+Discarded `delete()` calls on an empty queue or an uninitialized dynamic array
+are also inert. The receiver history is restricted to `delete()` and zero-size
+queries (plus empty queue pops); initialized, populated, aliased, effectful,
+and value-position aggregate operations remain loud.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument
@@ -174,7 +179,8 @@ text. The boundary is intentional:
 * `$fatal`, `$error`, `$warning`, and `$info` require a diagnostic channel,
   severity and termination/status semantics that `Out` does not represent;
 * queue tasks, array methods, and PLA tasks mutate aggregate or modeled device
-  state not present in the scalar/packed/fixed-cell store;
+  state not present in the scalar/packed/fixed-cell store, except for the
+  source-pure empty aggregate deletions admitted above;
 * dump, file, memory, string-format, SDF, and timescale tasks perform external
   I/O or simulator configuration;
 * `std::randomize` is nondeterministic and needs an explicit random oracle;

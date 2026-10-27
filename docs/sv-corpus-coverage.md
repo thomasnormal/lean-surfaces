@@ -204,6 +204,20 @@ and `ExpressionStatement:CallExpression` at **2,775**. Differential coverage
 grows **280/275/0/5 → 281/276/0/5** with no disagreements, and grammar
 coverage grows **218/93/125 → 218/95/123**.
 
+## Discarded empty aggregate deletes — 2026-10-27
+
+`delete()` on a source-pure empty queue or uninitialized dynamic array now
+erases as an inert statement. Initialized, populated, aliased, effectful, and
+symbolic aggregate forms remain loud. The `empty_aggregate_delete_statements`
+fixture supplies the differential row and Lean receipt; the pinned self-check
+oracle agrees with its `PASS` transcript.
+
+The committed **22,059-path** snapshot remains **5,240 clean / 16,752
+partial** (67 include skips), with `AssignmentExpression:target` at **2,853**
+and `ExpressionStatement:CallExpression` at **2,775**. Differential coverage
+grows **281/276/0/5 → 282/277/0/5** with no disagreements, and grammar
+coverage remains **218/95/123**.
+
 ## Discarded fixed-array reductions — 2026-10-26
 
 Discarded fixed-array reductions (`sum`, `product`, `and`, `or`, and `xor`)

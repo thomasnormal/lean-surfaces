@@ -1,5 +1,18 @@
 # SystemVerilog tier changelog
 
+## [0.1.73] — 2026-10-27
+
+Discarded `$countbits`, `$countones`, `$onehot`, `$onehot0`, and
+`$isunknown` calls now accept named integral operands whose declaration and
+earlier blocking writes are direct literals in the time-zero initial history.
+The result is unobserved, so the envelope erases the call after the shared
+source-order check; computed, control-dependent, timed, nonblocking, and
+dynamic histories remain loud. Differential coverage grows to **327 rows / 321
+matches / 0 disagreements / 6 recorded refusals**, with grammar coverage at
+**218 / 97 / 121**. The witness is outside the chapter-only corpus walk, so
+its **5,331 clean / 16,667 partial** counts and the **2,718** statement-call
+blocker are unchanged.
+
 ## [0.1.72] — 2026-10-27
 
 The four timed sv-tests-2 `$q_exam` witnesses now lower through a

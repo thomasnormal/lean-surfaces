@@ -43,6 +43,19 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Discarded bit queries over named literal history — 2026-10-27
+
+Statement-position `$countbits`, `$countones`, `$onehot`, `$onehot0`, and
+`$isunknown` calls now accept named integral operands when source order proves
+that each declaration and earlier write is a direct blocking literal in the
+time-zero initial history. Their scalar result is discarded, so no query
+state is added to the self-check envelope. Computed, control-dependent,
+timed, nonblocking, and dynamic histories remain loud. The
+`bit_query_named_history` fixture supplies the differential witness; coverage
+grows **326/320/0/6 → 327/321/0/6**, while grammar coverage remains
+**218/97/121** and the chapter-only census remains **5,331 clean / 16,667
+partial** with 67 include skips.
+
 ## Time-zero `$realtime` conversions — 2026-10-27
 
 The expression tier now folds `$rtoi($realtime)`, `$realtobits($realtime)`,

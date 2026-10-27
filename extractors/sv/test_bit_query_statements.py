@@ -47,6 +47,27 @@ class BitQueryStatements(unittest.TestCase):
         self.assertIn("ExpressionStatement:CallExpression",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_named_literal_history_is_inert(self):
+        design = extract_source(
+            "module top; logic [3:0] value; logic [0:0] mask; "
+            "initial begin value = 4'b1010; mask = 1'b1; "
+            "$countbits(value, mask, 1'bx); $countones(value); "
+            "$onehot(value); $onehot0(value); $isunknown(value); "
+            "end endmodule")
+        marks = [node.get("bit_query_statement") for node in nodes(design)
+                 if node.get("bit_query_statement")]
+        self.assertEqual(marks,
+                         ["$countbits", "$countones", "$onehot",
+                          "$onehot0", "$isunknown"])
+
+    def test_computed_named_history_stays_loud(self):
+        design = extract_source(
+            "module top; logic [3:0] value; logic [3:0] source; "
+            "initial begin source = 4'b1010; value = source; "
+            "$countones(value); end endmodule")
+        self.assertIn("ExpressionStatement:CallExpression",
+                      [node.get("sv_kind") for node in nodes(design)])
+
 
 if __name__ == "__main__":
     unittest.main()

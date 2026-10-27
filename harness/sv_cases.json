@@ -2936,6 +2936,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "bit_query_named_history",
+      "file": "Examples/system-verilog/bit_query_named_history/bit_query_named_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

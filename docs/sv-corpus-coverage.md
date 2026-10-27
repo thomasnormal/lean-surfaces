@@ -25,6 +25,20 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Discarded bit queries over named literal history — 2026-10-27
+
+The statement-position bit queries `$countbits`, `$countones`, `$onehot`,
+`$onehot0`, and `$isunknown` now accept named integral operands after the
+extractor proves a declaration and all earlier writes are direct blocking
+literal assignments in the time-zero initial history. Their discarded results
+are erased; computed, control-dependent, timed, nonblocking, and dynamic
+histories remain loud. The `bit_query_named_history` fixture supplies the
+differential row. The witness is outside the chapter-only corpus walk, so the
+current **22,065-file** snapshot remains **5,331 clean / 16,667 partial** with
+67 include skips and `ExpressionStatement:CallExpression` at **2,718**.
+Differential coverage grows **326/320/0/6 → 327/321/0/6**; grammar coverage
+remains **218/97/121**.
+
 ## Timed literal `$q_exam` statistics — 2026-10-27
 
 The extractor now replays a single straight-line initial process with literal

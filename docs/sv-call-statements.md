@@ -9,6 +9,13 @@ of this wall.
 
 ## Admitted statements
 
+Discarded bit queries (`$countbits`, `$countones`, `$onehot`, `$onehot0`, and
+`$isunknown`) may read named integral operands when source order proves that
+their declaration and every earlier write is a direct blocking literal in the
+time-zero initial history. The scalar result is unobserved, so the call lowers
+to `Empty` after the common source-purity check. Computed, control-dependent,
+timed, nonblocking, and dynamic histories remain loud.
+
 Discarded `$sformatf` calls are inert when the existing expression converter
 accepts one literal format and one pure integral operand. The `%b`, `%h`,
 `%o`, and `%d` conversions (including uppercase aliases) are evaluated only

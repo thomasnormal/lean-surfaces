@@ -1436,6 +1436,21 @@ def _bit_query_call(expression):
         return False
 
 
+def _bit_query_statement_source_ok(expression):
+    """Whether a discarded bit query has only source-pure integral inputs.
+
+    Statement-position bit queries do not expose their scalar result.  A
+    direct literal is already safe; a named integral is safe when its
+    declaration and all earlier writes are the literal-only, blocking
+    time-zero history accepted by ``_bound_integral_value``.  The latter
+    keeps computed, control-dependent, timed, nonblocking, and dynamic
+    storage on the ordinary call boundary.
+    """
+    if _integral_literal_source(expression):
+        return True
+    return _bound_integral_value(expression) is not None
+
+
 def _clog2_call(expression):
     try:
         return (type(expression).__name__ == "CallExpression"
@@ -19042,12 +19057,15 @@ def _convert_syscall(sm, s, e):
         except Exception:
             return unsupported(sm, s, "ExpressionStatement:CallExpression")
     if is_sys and _bit_query_call(e):
-        # Literal bit queries are pure and their discarded result is
-        # unobservable. Dynamic operands remain ordinary calls because the
-        # query must evaluate them before producing its result.
+        # Source-pure bit queries are pure and their discarded result is
+        # unobservable. Direct literals and named integral histories whose
+        # value is established by literal blocking writes are safe; computed,
+        # control-dependent, timed, nonblocking, and dynamic operands remain
+        # ordinary calls because the query must evaluate them first.
         try:
             args = list(e.arguments)
-            if args and all(_integral_literal_source(argument) for argument in args):
+            if args and all(_bit_query_statement_source_ok(argument)
+                            for argument in args):
                 return {"kind": "Empty", "span": node_span(sm, s),
                         "bit_query_statement": name}
         except Exception:

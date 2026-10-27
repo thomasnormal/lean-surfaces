@@ -25,6 +25,24 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Literal integral `$sformatf` expressions — 2026-10-27
+
+Expression-position `$sformatf` now admits one literal format and one pure
+integral operand for the `%b`, `%h`, `%o`, and `%d` display conversions. The
+uppercase `%B`, `%H`, `%O`, and `%D` spellings use the same renderer, as
+required by IEEE 1800-2023 §21.2.1.1. The result is an ASCII packed value, so
+ordinary string equality observes the exact formatted bytes without adding a
+dynamic string store. Dynamic formats, multiple arguments, unsupported
+conversion characters, aggregate or real operands, and other value contexts
+remain loud. `sformatf_uppercase` supplies the differential row and the
+extractor regression pins the refusal boundaries.
+
+The 22,059-path snapshot moves **5,273 → 5,274 clean** and **16,719 → 16,718
+partial** (67 include skips). `ExpressionStatement:CallExpression` remains
+**2,759**, while `CallExpression` falls **2,750 → 2,739** as the literal
+format family is admitted. Differential coverage grows **300/295/0/5 →
+301/296/0/5** with no disagreements; grammar remains **218/96/122**.
+
 ## Named literal queue history for `$q_exam` — 2026-10-27
 
 The queue status recognizers now resolve one direct named operand from a prior

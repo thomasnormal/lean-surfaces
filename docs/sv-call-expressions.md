@@ -8,6 +8,13 @@ the statement-call contract is separate in [call statements](sv-call-statements.
 
 ## Admitted calls
 
+Literal one-integral-operand `$sformatf` expressions now lower to an ASCII
+packed value for `%b`, `%h`, `%o`, and `%d`; `%B`, `%H`, `%O`, and `%D` are
+their uppercase aliases. The renderer retains four-state unknown summaries and
+the operand's signedness for decimal output. Dynamic formats, multiple
+arguments, unsupported conversions, aggregate or real operands, and dynamic
+string storage remain loud.
+
 Fixed `$bits`, `$high`, `$left`, `$right`, `$low`, `$increment`, `$size`,
 `$dimensions`, and `$unpacked_dimensions` queries fold from elaborated type
 metadata. `$bits(real)` and `$bits(shortreal)` now use the same metadata-only

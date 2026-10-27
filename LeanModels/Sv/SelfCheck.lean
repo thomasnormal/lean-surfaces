@@ -214,6 +214,10 @@ inductive SExpr where
   | compoundRead (width : Nat) (descending indexSigned : Bool) (value index : SExpr)
   | bitQuery (query : BitQuery) (operand : SExpr) (controls : Array SExpr)
   | clog2 (operand : SExpr)
+  /-- `$sformatf` with one literal format and one integral operand. The
+  formatted text is represented as an ASCII packed vector so ordinary string
+  equality keeps the existing pure expression path. -/
+  | sformatf (format : String) (operand : SExpr) (signed : Bool)
   /-- A declaration-order enum `.name()` result. The selected string keeps
   its exact byte width, so `%s` does not inherit padding from another member. -/
   | enumName (subject : SExpr) (cases : Array (LVec × String)) (default : String)
@@ -477,6 +481,26 @@ def renderHex0 (v : LVec) : String :=
   let s := (renderHex v).toList.dropWhile (· == '0')
   if s.isEmpty then "0" else String.ofList s
 
+/-- One octal digit from up to three bits. Unknown summaries follow the
+same display convention as `%h`/`%b`. -/
+def octDigit (bits : Array Logic) : Char :=
+  if bits.all Logic.isKnown then
+    let n := bits.foldr (fun b acc => 2 * acc + (if b == .l1 then 1 else 0)) 0
+    (Nat.toDigits 8 n).headD '0'
+  else if bits.all (· == .lx) then 'x'
+  else if bits.all (· == .lz) then 'z'
+  else if bits.any (· == .lx) then 'X'
+  else 'Z'
+
+/-- `%o`: ceil(w/3) MSB-first octal digits (top digit zero-padded). -/
+def renderOct (v : LVec) : String :=
+  let ndig := (v.width + 2) / 3
+  let chars := (List.range ndig).reverse.map fun i =>
+    octDigit (v.bits.extract (3 * i) (min (3 * i + 3) v.width))
+  String.ofList chars
+
+#guard renderOct (.ofNat 8 0xab) == "253"
+
 /-- `%d`/`%0d`. Unknown bits render as the summary char. Fully known
 signed values use two's-complement decimal; unsigned values use natural
 decimal. The field width comes from the argument's type. -/
@@ -517,6 +541,7 @@ def renderSpec (c : Char) (zero : Bool) (v : LVec) (signed : Bool) : Res String 
   | 'b' => .ok (if zero then renderBin0 v else renderBin v)
   | 'h' => .ok (if zero then renderHex0 v else renderHex v)
   | 'x' => .ok (if zero then renderHex0 v else renderHex v)
+  | 'o' => .ok (renderOct v)
   | 'd' => renderDec v signed zero
   | 's' => renderStr v
   | 'c' => renderChr v
@@ -595,6 +620,10 @@ def evalSExpr (fuel : Nat) (st : SvState) (e : SExpr) : Res LVec :=
         return evalBitQuery query value selected
     | .clog2 operand => do
         evalClog2 (← evalSExpr fuel st operand)
+    | .sformatf format operand signed => do
+        let value ← evalSExpr fuel st operand
+        let text ← renderFmt format.toList [(value, signed)]
+        return asciiVec text
     | .enumName subject cases default => do
         let value ← evalSExpr fuel st subject
         let text := (cases.toList.find? (fun entry =>
@@ -1220,6 +1249,9 @@ partial def parseSExpr (j : Json) : Except String SExpr := do
       if (← getNatF j "width") != 32 || !(← getBoolF j "signed") then
         throw "clog2 result must be a signed 32-bit int"
       return .clog2 (← parseSExpr (← getF j "operand"))
+  | "SFormatF" =>
+      return .sformatf (← getStrF j "format")
+        (← parseSExpr (← getF j "operand")) (← getBoolF j "signed")
   | "MinTypMax" =>
       let choice ← getStrF j "choice"
       if choice != "min" && choice != "typ" && choice != "max" then

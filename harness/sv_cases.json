@@ -2703,6 +2703,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "sformatf_uppercase",
+      "file": "Examples/system-verilog/sformatf_uppercase/sformatf_uppercase.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -43,6 +43,23 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Literal integral `$sformatf` expressions — 2026-10-27
+
+Expression-position `$sformatf` calls now admit one literal format and one
+pure integral operand for `%b/%h/%o/%d`, with `%B/%H/%O/%D` sharing the same
+renderer. The returned text is an ASCII packed value in the self-check state,
+so existing equality and four-state rendering rules remain the semantic core.
+Dynamic formats, extra arguments, unsupported conversions, real or aggregate
+operands, and dynamic string storage remain loud. The `sformatf_uppercase`
+fixture and extractor regressions pin both the accepted aliases and the
+refusal boundaries.
+
+The 22,059-path corpus moves **5,273 → 5,274 clean** and **16,719 → 16,718
+partial** (67 include skips); `ExpressionStatement:CallExpression` remains
+**2,759** and `CallExpression` falls **2,750 → 2,739**. Differential coverage
+grows **300/295/0/5 → 301/296/0/5** with no disagreements; grammar remains
+**218/96/122**.
+
 ## Named literal queue history for `$q_exam` — 2026-10-27
 
 Queue status calls now resolve a direct named operand from exactly one prior

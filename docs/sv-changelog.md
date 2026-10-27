@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.86] — 2026-10-27
+
+Declarations initialized by `new[0]` or an empty assignment pattern now lower
+to inert metadata for both 2-state and 4-state dynamic arrays. Nonzero
+allocations and later dynamic-array operations remain loud. Differential
+coverage is **340 rows / 334 matches / 0 disagreements / 6 recorded refusals**;
+grammar coverage remains **218 / 97 / 121**. The pinned 22,065-file census is
+unchanged at **5,401 clean / 16,597 partial** with 67 include skips while the
+external corpus checkout is unavailable.
+
 ## [0.1.85] — 2026-10-27
 
 Exact whole-array blocking self-copies for one-dimensional fixed unpacked

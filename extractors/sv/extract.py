@@ -672,6 +672,39 @@ def is_inert_2state_dynamic_array_decl(symbol):
         return False
 
 
+def is_inert_empty_dynamic_array_decl(symbol):
+    """Whether a zero-size dynamic-array initializer has no flat state.
+
+    ``new[0]`` and an empty positional assignment pattern both create an
+    empty array before any process starts.  There are no cells to materialize,
+    for either 2-state or 4-state elements, so the declaration is metadata in
+    the self-check representation.  Nonzero allocations and every effectful
+    or aggregate initializer continue through the ordinary type boundary.
+    """
+    if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
+        return False
+    try:
+        if type(symbol.type.canonicalType).__name__ != "DynamicArrayType":
+            return False
+        initializer = getattr(symbol, "initializer", None)
+        while type(initializer).__name__ == "ConversionExpression":
+            initializer = getattr(initializer, "operand", None)
+        if type(initializer).__name__ == "NewArrayExpression":
+            if getattr(initializer, "initExpr", None) is not None:
+                return False
+            size = getattr(initializer, "sizeExpr", None)
+            return (type(size).__name__ == "IntegerLiteral"
+                    and not getattr(size, "bad", False)
+                    and int(getattr(size, "value", -1)) == 0)
+        if type(initializer).__name__ in (
+                "SimpleAssignmentPatternExpression",
+                "StructuredAssignmentPatternExpression"):
+            return not _pattern_source_elements(initializer)
+        return False
+    except Exception:
+        return False
+
+
 def is_inert_2state_associative_array_decl(symbol):
     """Whether an uninitialized 2-state associative array is declaration-only."""
     if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
@@ -20658,6 +20691,8 @@ def convert_var(sm, m):
         return array_decls
     if _SYM is None and is_inert_2state_queue_decl(m):
         return {"kind": "Empty", "span": sym_span(sm, m)}
+    if _SYM is None and is_inert_empty_dynamic_array_decl(m):
+        return {"kind": "Empty", "span": sym_span(sm, m)}
     if _SYM is None and is_inert_2state_dynamic_array_decl(m):
         return {"kind": "Empty", "span": sym_span(sm, m)}
     if _SYM is None and is_inert_2state_associative_array_decl(m):
@@ -21477,6 +21512,7 @@ def convert_module(sm, inst):
                             or is_module_virtual_interface_null_decl(m)
                             or is_string_decl(m)
                             or is_inert_2state_queue_decl(m)
+                            or is_inert_empty_dynamic_array_decl(m)
                             or is_inert_2state_dynamic_array_decl(m)
                             or is_inert_2state_associative_array_decl(m)):
                         continue

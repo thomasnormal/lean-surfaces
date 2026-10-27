@@ -89,6 +89,19 @@ class DynamicArrayDeclarations(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "VariableSymbol:2state"
                              for node in nodes(design)))
 
+    def test_zero_size_dynamic_array_initializers_are_inert(self):
+        for element_type, initializer in (("bit", "new[0]"),
+                                           ("logic", "new[0]"),
+                                           ("bit", "'{}"),
+                                           ("logic", "'{}")):
+            design = lower(
+                f'module top; {element_type} values[] = {initializer}; '
+                'initial $display("PASS"); endmodule')
+            self.assertFalse(any(node.get("kind") == "Unsupported"
+                                 for node in nodes(design)))
+            self.assertFalse(any(node.get("kind") == "Var"
+                                 for node in nodes(design)))
+
     def test_literal_initialized_dynamic_array_is_flattened(self):
         design = lower(
             "module top; bit values[] = '{1, 2}; initial $finish; endmodule")

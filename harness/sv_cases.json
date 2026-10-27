@@ -534,6 +534,15 @@
       "expect": "match"
     },
     {
+      "name": "dynamic_array_empty_declaration",
+      "file": "Examples/system-verilog/dynamic_array_empty_decl/dynamic_array_empty_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "dynamic_array_four_state",
       "file": "Examples/system-verilog/dynamic_array_four_state/dynamic_array_four_state.sv",
       "module": "top",

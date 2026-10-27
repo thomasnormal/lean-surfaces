@@ -9497,3 +9497,19 @@ include skips because the external corpus checkout is unavailable; the
 committed `AssignmentExpression:target` count remains 2,847. Differential
 coverage grows **338/332/0/6 → 339/333/0/6** with no disagreements, and grammar
 coverage remains **218/97/121**.
+
+## Zero-size dynamic-array declarations — 2026-10-27
+
+Module and procedural declarations initialized by `new[0]` or an empty
+assignment pattern now lower to inert metadata for both 2-state and 4-state
+element types. An empty dynamic array has no flat cells to initialize, so this
+uses the existing `Empty` self-check node without inventing dynamic storage.
+Nonzero allocations, effectful initializers, later resizes, and element reads or
+writes remain loud. The `dynamic_array_empty_decl` fixture and Lean receipt
+cover all four admitted declaration forms.
+
+The pinned 22,065-file census remains **5,401 clean / 16,597 partial** with 67
+include skips because the external corpus checkout is unavailable; the committed
+`VariableSymbol:2state` count remains 2,118. Differential coverage grows
+**339/333/0/6 → 340/334/0/6** with no disagreements, and grammar coverage
+remains **218/97/121**.

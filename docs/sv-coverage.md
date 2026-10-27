@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 311 | 306 | 0 | 5 | sv-tests-2 declarations |
+| 312 | 307 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -219,6 +219,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `struct_array_ordering_with_field` | `Examples/system-verilog/struct_array_ordering_with_field/struct_array_ordering_with_field.sv` | match | **MATCH** | `ok` | MATCH |
 | `struct_array_ordering_with_tuple` | `Examples/system-verilog/struct_array_ordering_with_tuple/struct_array_ordering_with_tuple.sv` | match | **MATCH** | `ok` | MATCH |
 | `mailbox_literal_loop_fifo` | `Examples/system-verilog/mailbox_literal_loop_fifo/mailbox_literal_loop_fifo.sv` | match | **MATCH** | `ok` | MATCH |
+| `unique_case_complete` | `Examples/system-verilog/unique_case_complete/unique_case_complete.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_string_cells` | `Examples/system-verilog/assoc_string_cells/assoc_string_cells.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_concat_subarrays` | `Examples/system-verilog/dynamic_array_concat_subarrays/dynamic_array_concat_subarrays.sv` | match | **MATCH** | `ok` | MATCH |
 | `mailbox_typed_fifo` | `Examples/system-verilog/mailbox_typed_fifo/mailbox_typed_fifo.sv` | match | **MATCH** | `ok` | MATCH |
@@ -561,7 +562,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22059 | 5294 | 16698 | 67 |
+| 22059 | 5298 | 16694 | 67 |
 
 | blocker kind | files |
 |---|---:|

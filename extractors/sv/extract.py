@@ -16422,9 +16422,37 @@ def _case_expression_ok(node):
 
 def _convert_ordinary_case(sm, stmt):
     """Pure IEEE 12.5/12.5.1/12.5.4 cases, with whole-case sizing."""
-    if stmt.check != UniquePriorityCheck.None_:
-        return unsupported(sm, stmt, "CaseStatement:" + str(stmt.check).split(".")[-1])
+    check_name = str(stmt.check).split(".")[-1]
+    if stmt.check not in (UniquePriorityCheck.None_, UniquePriorityCheck.Unique):
+        return unsupported(sm, stmt, "CaseStatement:" + check_name)
     condition = str(stmt.condition).split(".")[-1]
+    # ``unique case`` has a diagnostic side effect on overlap or on a missing
+    # match.  A literal, duplicate-free pattern list with a default arm has
+    # neither condition, so it is equivalent to an ordinary case in the flat
+    # self-check state.  Keep priority and all dynamic/overlapping forms loud.
+    if stmt.check == UniquePriorityCheck.Unique:
+        if condition != "Normal":
+            return unsupported(sm, stmt, "CaseStatement:Unique")
+        width, two_state, _reason = type_width_2s(stmt.expr.type)
+        seen = set()
+        for item in stmt.items:
+            for expression in item.expressions:
+                value = _literal_integral_value(expression)
+                if value is None:
+                    return unsupported(sm, stmt, "CaseStatement:Unique")
+                if width is not None and width > 0:
+                    # Case patterns are compared after whole-case sizing;
+                    # normalize signed spellings to their subject bit pattern
+                    # so aliases such as 4'd15 and 4'sd-1 count as a duplicate.
+                    value %= 1 << width
+                if value in seen:
+                    return unsupported(sm, stmt, "CaseStatement:Unique")
+                seen.add(value)
+        complete = (two_state and width is not None and 0 < width <= 8
+                    and len(seen) == (1 << width)
+                    and seen == set(range(1 << width)))
+        if stmt.defaultCase is None and not complete:
+            return unsupported(sm, stmt, "CaseStatement:Unique")
     modes = {"Normal": None, "WildcardJustZ": "casez", "WildcardXOrZ": "casex"}
     if condition not in modes and condition != "Inside":
         return unsupported(sm, stmt, "CaseStatement:" + condition)

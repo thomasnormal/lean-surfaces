@@ -43,6 +43,23 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Literal `unique case` subset — 2026-10-27
+
+The surface now admits `unique case` when each pattern is a direct integral
+literal, patterns are duplicate-free, and either a default arm handles every
+other value or the patterns cover all values of a subject no wider than eight
+bits on a two-state subject. This removes the diagnostic side effect for the
+admitted forms while keeping dynamic, duplicate, incomplete, wildcard,
+four-state complete-without-default, `unique0`, and `priority` cases loud.
+The `unique_case_complete` fixture supplies a complete two-bit case, with
+extractor regressions for the default, duplicate, and incomplete boundaries.
+
+The 22,059-path corpus moves **5,294 → 5,298 clean / 16,698 → 16,694
+partial** (67 include skips); `CaseStatement:Unique` falls **45 → 41** while
+`ExpressionStatement:CallExpression` remains **2,739**. Differential coverage
+grows **311 rows / 306 matches / 0 disagreements / 5 refusals → 312 / 307 /
+0 / 5** with no disagreements; grammar remains **218/96/122**.
+
 ## Literal ASCII string `$sformatf` — 2026-10-27
 
 The literal `$sformatf` expression slice now accepts an ASCII string literal

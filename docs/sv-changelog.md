@@ -1,5 +1,18 @@
 # SystemVerilog tier changelog
 
+## [0.1.59] — 2026-10-27
+
+The self-check surface now has 312 differential rows: 307 matches, zero
+disagreements, and 5 recorded refusals. The grammar census remains at 218
+pyslang syntax witnesses: 96 MATCH and 122 REFUSE. The 22,059-path corpus
+moves to 5,298 clean files and 16,694 partial files with 67 include skips;
+the `CaseStatement:Unique` wall falls from 45 to 41 files. A sound literal
+subset of `unique case` is now admitted: duplicate-free integral patterns
+with a default arm, or complete coverage of every value for subjects up to
+8 bits on a two-state subject. Dynamic, duplicate, incomplete, wildcard,
+four-state complete-without-default, `unique0`, and priority forms remain
+loud.
+
 ## [0.1.58] — 2026-10-27
 
 The self-check surface now has 311 differential rows: 306 matches, zero

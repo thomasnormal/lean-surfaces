@@ -299,10 +299,6 @@
     45
    ],
    [
-    "CaseStatement:Unique",
-    45
-   ],
-   [
     "DisableStatement",
     45
    ],
@@ -317,6 +313,10 @@
    [
     "VariableSymbol:type",
     43
+   ],
+   [
+    "CaseStatement:Unique",
+    41
    ],
    [
     "Package:initializer",
@@ -972,13 +972,13 @@
    ]
   ],
   "by_status": {
-   "clean": 5294,
-   "partial": 16698,
+   "clean": 5298,
+   "partial": 16694,
    "skip_include": 67
   },
   "clean_by_type": {
    "(none)": [
-    488,
+    489,
     1390
    ],
    "compilation": [
@@ -1034,7 +1034,7 @@
     52
    ],
    "simulation": [
-    4597,
+    4600,
     18690
    ],
    "simulation elaboration": [
@@ -1335,9 +1335,9 @@
     "unlockable": 9
    },
    "chapter-12": {
-    "clean": 301,
+    "clean": 304,
     "error": 0,
-    "partial": 326,
+    "partial": 323,
     "skip_include": 0,
     "total": 627,
     "unlockable": 1
@@ -1543,9 +1543,9 @@
     "unlockable": 0
    },
    "chapter-37": {
-    "clean": 155,
+    "clean": 156,
     "error": 0,
-    "partial": 263,
+    "partial": 262,
     "skip_include": 0,
     "total": 418,
     "unlockable": 0

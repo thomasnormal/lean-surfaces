@@ -32,8 +32,8 @@ def nodes(value):
             yield from nodes(child)
 
 
-def case_source(body):
-    return "module top; logic [3:0] subject; initial begin " + body + " end endmodule"
+def case_source(body, declaration="logic [3:0] subject"):
+    return "module top; " + declaration + "; initial begin " + body + " end endmodule"
 
 
 class OrdinaryCases(unittest.TestCase):
@@ -91,6 +91,48 @@ class OrdinaryCases(unittest.TestCase):
             with self.subTest(qualifier=qualifier):
                 self.assert_refused(qualifier + " case(subject) 4'd1:; endcase",
                                     "CaseStatement:" + qualifier.capitalize())
+
+    def test_unique_complete_literal_case_is_admitted(self):
+        design = lower(case_source(
+            "unique case (subject) 4'd0:; 4'd1:; 4'd2:; 4'd3:; "
+            "4'd4:; 4'd5:; 4'd6:; 4'd7:; "
+            "4'd8:; 4'd9:; 4'd10:; 4'd11:; "
+            "4'd12:; 4'd13:; 4'd14:; 4'd15:; endcase",
+            "bit [3:0] subject"))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("case_lowered") for node in nodes(design)))
+
+    def test_unique_default_literal_case_is_admitted(self):
+        design = lower(case_source(
+            "unique case (subject) 4'd1:; 4'd2:; default:; endcase"))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_unique_duplicate_literal_case_stays_loud(self):
+        self.assert_refused(
+            "unique case (subject) 4'd1:; 4'd1:; default:; endcase",
+            "CaseStatement:Unique")
+        self.assert_refused(
+            "unique case (subject) 4'd15:; -4'sd1:; default:; endcase",
+            "CaseStatement:Unique")
+
+    def test_unique_incomplete_literal_case_without_default_stays_loud(self):
+        self.assert_refused(
+            "unique case (subject) 4'd1:; 4'd2:; endcase",
+            "CaseStatement:Unique")
+
+    def test_unique_wildcard_case_stays_loud(self):
+        self.assert_refused(
+            "unique casez (subject) 4'b0001:; default:; endcase",
+            "CaseStatement:Unique")
+
+    def test_unique_complete_four_state_case_stays_loud(self):
+        self.assert_refused(
+            "unique case (subject) 4'd0:; 4'd1:; 4'd2:; 4'd3:; "
+            "4'd4:; 4'd5:; 4'd6:; 4'd7:; 4'd8:; 4'd9:; 4'd10:; "
+            "4'd11:; 4'd12:; 4'd13:; 4'd14:; 4'd15:; endcase",
+            "CaseStatement:Unique")
 
     def test_inside_uses_existing_membership_comparison(self):
         design = lower(case_source("case(subject) inside 4'd1:; endcase"))

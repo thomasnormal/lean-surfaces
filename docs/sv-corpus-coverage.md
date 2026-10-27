@@ -25,6 +25,20 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Literal integral character `$sformatf` — 2026-10-27
+
+The literal integral `$sformatf` expression slice now includes `%c` and `%C`.
+The formatter renders the low byte as an ASCII packed character, and the
+result can flow through an existing `$display` argument. Unknown bits, dynamic
+formats, string or aggregate operands, and other conversion forms remain
+loud. `sformatf_char` supplies the differential row and extractor regression.
+
+The 22,059-path snapshot remains **5,287 clean / 16,705 partial** (67 include
+skips); `ExpressionStatement:CallExpression` remains **2,746** and
+`CallExpression` remains **2,739**. Differential coverage grows
+**304/299/0/5 → 305/300/0/5** with no disagreements; grammar remains
+**218/96/122**.
+
 ## Discarded literal `$sformatf` statements — 2026-10-27
 
 Statement-position calls now erase a `$sformatf` result after the existing

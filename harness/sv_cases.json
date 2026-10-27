@@ -2732,6 +2732,15 @@
       "expect": "match"
     },
     {
+      "name": "sformatf_char",
+      "file": "Examples/system-verilog/sformatf_char/sformatf_char.sv",
+      "module": "top",
+      "oracle": [
+        "A"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "q_remove_payload",
       "file": "Examples/system-verilog/q_remove_payload/q_remove_payload.sv",
       "module": "top",

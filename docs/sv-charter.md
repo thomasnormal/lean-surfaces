@@ -43,6 +43,21 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Literal integral character `$sformatf` — 2026-10-27
+
+Expression-position `$sformatf` now admits `%c` and `%C` for one literal
+integral operand. The low byte renders as an ASCII packed character through
+the existing formatter, including when the result is passed to `$display`.
+Unknown bits, dynamic formats, string or aggregate operands, and other
+conversion forms remain loud. The `sformatf_char` fixture supplies the
+extractor regression, Lean receipt, and differential row.
+
+The 22,059-path corpus remains **5,287 clean / 16,705 partial** (67 include
+skips); `ExpressionStatement:CallExpression` remains **2,746** and
+`CallExpression` remains **2,739**. Differential coverage grows
+**304/299/0/5 → 305/300/0/5** with no disagreements; grammar remains
+**218/96/122**.
+
 ## Discarded literal `$sformatf` statements — 2026-10-27
 
 Statement-position `$sformatf` now reuses the admitted expression converter

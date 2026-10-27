@@ -8529,7 +8529,8 @@ def _convert_sformatf_call(sm, expression):
                 or _contains_disputed_string_escape(format_expr)):
             return unsupported(sm, expression, "CallExpression:$sformatf:format")
         if format_expr.value not in ("%b", "%B", "%h", "%H",
-                                     "%o", "%O", "%d", "%D"):
+                                     "%o", "%O", "%d", "%D",
+                                     "%c", "%C"):
             return unsupported(sm, expression, "CallExpression:$sformatf:format")
         width, _two_state, reason = type_width_2s(operand.type)
         if width is None or reason is not None or width <= 0:

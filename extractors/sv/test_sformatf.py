@@ -64,6 +64,24 @@ class SFormatfCalls(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
 
+    def test_literal_integral_character_format(self):
+        design = lower(
+            'module top; initial $display("%s", '
+            '$sformatf("%c", 8\'h41)); endmodule')
+        formatted = [node for node in nodes(design)
+                     if node.get("kind") == "SFormatF"]
+        self.assertEqual(len(formatted), 1)
+        self.assertEqual(formatted[0]["format"], "%c")
+
+    def test_literal_integral_character_uppercase_alias(self):
+        design = lower(
+            'module top; initial $display("%s", '
+            '$sformatf("%C", 8\'h41)); endmodule')
+        formatted = [node for node in nodes(design)
+                     if node.get("kind") == "SFormatF"]
+        self.assertEqual(len(formatted), 1)
+        self.assertEqual(formatted[0]["format"], "%C")
+
     def test_dynamic_format_stays_loud(self):
         design = lower(
             'module top; string fmt; logic [7:0] v; '

@@ -8,9 +8,17 @@ the statement-call contract is separate in [call statements](sv-call-statements.
 
 ## Admitted calls
 
+### Literal integral character `$sformatf` — 2026-10-27
+
+Literal one-integral-operand `$sformatf` now also admits `%c` and `%C`, using
+the low byte as the ASCII character through the existing packed renderer.
+Unknown bits, dynamic formats, string or aggregate operands, and other
+conversion forms remain loud. The `sformatf_char` fixture checks the rendered
+character in a `$display` argument.
+
 Literal one-integral-operand `$sformatf` expressions now lower to an ASCII
-packed value for `%b`, `%h`, `%o`, and `%d`; `%B`, `%H`, `%O`, and `%D` are
-their uppercase aliases. The renderer retains four-state unknown summaries and
+packed value for `%b`, `%h`, `%o`, `%d`, and `%c`; `%B`, `%H`, `%O`, `%D`, and
+`%C` are their uppercase aliases. The renderer retains four-state unknown summaries and
 the operand's signedness for decimal output. Dynamic formats, multiple
 arguments, unsupported conversions, aggregate or real operands, and dynamic
 string storage remain loud.

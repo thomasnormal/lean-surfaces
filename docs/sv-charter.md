@@ -60,6 +60,23 @@ partial** (67 include skips); `ExpressionStatement:CallExpression` remains
 grows **300/295/0/5 → 301/296/0/5** with no disagreements; grammar remains
 **218/96/122**.
 
+## Literal FIFO/LIFO queue payload removal — 2026-10-27
+
+The self-check surface now admits a source-ordered queue history containing
+one literal FIFO or LIFO `$q_initialize`, literal `$q_add` entries, and
+nonempty `$q_remove` calls. Each removal is lowered to ordinary scalar writes
+for the returned job, inform, and status values, preserving queue order and
+capacity without introducing a runtime queue object. Computed payloads,
+empty removals, timing, branches, other queue tasks, and value-position forms
+remain loud. The `q_remove_payload` fixture and extractor regressions pin the
+FIFO boundary.
+
+The 22,059-path corpus moves **5,274 → 5,286 clean** and **16,718 → 16,706
+partial** (67 include skips); `ExpressionStatement:CallExpression` falls
+**2,759 → 2,747** while `AssignmentExpression:target` remains **2,852**.
+Differential coverage grows **301/296/0/5 → 302/297/0/5** with no
+disagreements; grammar remains **218/96/122**.
+
 ## Named literal queue history for `$q_exam` — 2026-10-27
 
 Queue status calls now resolve a direct named operand from exactly one prior

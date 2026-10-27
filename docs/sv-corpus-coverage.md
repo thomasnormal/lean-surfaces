@@ -16,7 +16,7 @@ python3.12 extractors/sv/census.py --corpus /path/to/tests --recheck  # determin
 
 Machine-readable results: `harness/sv/conformance/census.json`
 (per-file records + this document's aggregates). The current committed summary
-is the **2026-10-26** snapshot below, measured with Python 3.9 and pyslang 11;
+is the **2026-10-27** snapshot below, measured with Python 3.9 and pyslang 11;
 the dated sections retain their original measurement denominators.
 
 The committed summary uses a portable corpus-layout placeholder, not a
@@ -42,6 +42,22 @@ partial** (67 include skips). `ExpressionStatement:CallExpression` remains
 **2,759**, while `CallExpression` falls **2,750 → 2,739** as the literal
 format family is admitted. Differential coverage grows **300/295/0/5 →
 301/296/0/5** with no disagreements; grammar remains **218/96/122**.
+
+## Literal FIFO/LIFO queue payload removal — 2026-10-27
+
+One source-pure queue history may now contain a literal FIFO or LIFO
+`$q_initialize`, literal `$q_add` entries, and nonempty `$q_remove` calls.
+The extractor snapshots each removed pair and emits scalar assignments for the
+job, inform, and status outputs, so the existing flat self-check state keeps
+the exact observable values and ordering. Dynamic or computed payloads,
+empty removals, timing, branches, other queue tasks, and value-position forms
+remain loud. `q_remove_payload` supplies the differential row and Lean receipt.
+
+The 22,059-path snapshot moves **5,274 → 5,286 clean** and **16,718 → 16,706
+partial** (67 include skips). `ExpressionStatement:CallExpression` falls
+**2,759 → 2,747**, while `AssignmentExpression:target` remains **2,852**.
+Differential coverage grows **301/296/0/5 → 302/297/0/5** with no
+disagreements; grammar remains **218/96/122**.
 
 ## Named literal queue history for `$q_exam` — 2026-10-27
 

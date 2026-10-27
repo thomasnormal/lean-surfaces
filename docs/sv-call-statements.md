@@ -321,3 +321,13 @@ lowers the initialization to status 0 and the removal to status 3. Job and
 inform outputs must be unread; populated, payload-observing, computed, and
 additional queue forms remain loud. The `q_remove_status_2` and
 `q_remove_status_3` fixtures supply the differential rows and Lean receipts.
+
+## Queue-removal payload — 2026-10-27
+
+One source-ordered literal FIFO or LIFO queue may now add literal job/inform
+pairs and remove a nonempty entry. The extractor snapshots the queue history
+and lowers each removal to scalar writes for the returned job, inform, and
+status, preserving FIFO/LIFO order and capacity. Dynamic IDs or payloads,
+empty removals, branches, timing, other queue operations, and value-position
+forms remain loud. The `q_remove_payload` fixture supplies the differential
+row and Lean receipt.

@@ -11280,12 +11280,14 @@ def _q_initialize_status_call(sm, expression):
                         or (_literal_integral_value(first.arguments[2]) or 0) <= 0):
                     return None
             elif first_name == "$q_initialize" and second_name in (
-                    "$q_add", "$q_full", "$q_exam"):
+                    "$q_add", "$q_full", "$q_exam", "$q_remove"):
                 shape_ok = (_q_add_source_shape(second, instance)
                             if second_name == "$q_add"
                             else (_q_full_source_shape(second)
                                   if second_name == "$q_full"
-                                  else _q_exam_source_shape(second, instance)))
+                                  else (_q_exam_source_shape(second, instance)
+                                        if second_name == "$q_exam"
+                                        else _q_remove_output_shape(second))))
                 if (not shape_ok
                         or _literal_integral_value(first.arguments[1]) not in (1, 2)
                         or (_literal_integral_value(first.arguments[2]) or 0) <= 0):
@@ -11305,7 +11307,7 @@ def _q_initialize_status_call(sm, expression):
             if str(getattr(queue_calls[0], "subroutineName", "")) != "$q_initialize":
                 return None
             if any(str(getattr(call, "subroutineName", "")) not in (
-                    "$q_add", "$q_full", "$q_exam")
+                    "$q_add", "$q_full", "$q_exam", "$q_remove")
                    for call in queue_calls[1:]):
                 return None
             init = queue_calls[0]
@@ -11315,7 +11317,9 @@ def _q_initialize_status_call(sm, expression):
                             if str(getattr(call, "subroutineName", "")) == "$q_add"
                             else (_q_full_source_shape(call)
                                   if str(getattr(call, "subroutineName", "")) == "$q_full"
-                                  else _q_exam_source_shape(call, instance)))
+                                  else (_q_exam_source_shape(call, instance)
+                                        if str(getattr(call, "subroutineName", "")) == "$q_exam"
+                                        else _q_remove_output_shape(call))))
                            is False for call in queue_calls[1:])):
                 return None
         index = queue_calls.index(expression)
@@ -11391,7 +11395,7 @@ def _q_add_status_call(sm, expression):
         if str(getattr(queue_calls[0], "subroutineName", "")) != "$q_initialize":
             return None
         if any(str(getattr(call, "subroutineName", "")) not in (
-                "$q_add", "$q_full", "$q_exam")
+                "$q_add", "$q_full", "$q_exam", "$q_remove")
                for call in queue_calls[1:]):
             return None
         init = queue_calls[0]
@@ -11410,7 +11414,9 @@ def _q_add_status_call(sm, expression):
                      if name == "$q_add"
                      else (_q_full_source_shape(call)
                            if name == "$q_full"
-                           else _q_exam_source_shape(call, instance)))
+                           else (_q_exam_source_shape(call, instance)
+                                 if name == "$q_exam"
+                                 else _q_remove_output_shape(call))))
             call_position = getattr(getattr(getattr(call, "sourceRange", None),
                                              "start", None), "offset", -1)
             call_qid = _queue_history_literal(call.arguments[0], instance,
@@ -11738,6 +11744,156 @@ def _q_full_value_call(sm, expression):
         if two_state:
             value = squash2_wrap(value, width)
         return value
+    except Exception:
+        return None
+
+
+def _q_remove_output_shape(expression):
+    """Whether a queue removal has the ordinary three output lvalues."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "$q_remove"
+                or len(expression.arguments) != 4):
+            return False
+        _qid, job, inform, status = expression.arguments
+        return (
+            type(job).__name__ == "NamedValueExpression"
+            and type(inform).__name__ == "AssignmentExpression"
+            and inform.op is None
+            and inform.timingControl is None
+            and type(inform.right).__name__ == "EmptyArgumentExpression"
+            and type(status).__name__ == "AssignmentExpression"
+            and status.op is None
+            and status.timingControl is None
+            and type(status.right).__name__ == "EmptyArgumentExpression")
+    except Exception:
+        return False
+
+
+def _q_remove_payload_call(sm, expression):
+    """Lower a literal FIFO/LIFO queue add/remove history cellwise.
+
+    The self-check state has no queue object, but a source-ordered history of
+    literal adds and removes can be snapshot exactly: each removal becomes
+    ordinary scalar writes to its job, inform, and status outputs.  The
+    recognizer refuses branches, timing, computed payloads, capacity
+    overflow, empty removals, and every other queue operation, so no dynamic
+    queue semantics is guessed.
+    """
+    try:
+        if not _q_remove_output_shape(expression):
+            return None
+        qid, job, inform, status = expression.arguments
+        status_target, status_ok = legacy_blocking_target(sm, status.left, True)
+        job_target, job_ok = legacy_blocking_target(sm, job, True)
+        inform_target, inform_ok = legacy_blocking_target(sm, inform.left, True)
+        if (not status_ok or not job_ok or not inform_ok
+                or job_target.get("kind") != "Ident"
+                or inform_target.get("kind") != "Ident"):
+            return None
+        receiver_scope = getattr(getattr(status.left, "symbol", None),
+                                 "parentScope", None)
+        instance = getattr(receiver_scope, "containingInstance", None)
+        if instance is None:
+            return None
+        queue_calls = []
+
+        def inspect(node):
+            if (type(node).__name__ == "CallExpression"
+                    and getattr(node, "isSystemCall", False)
+                    and str(getattr(node, "subroutineName", "")).startswith("$q_")):
+                queue_calls.append(node)
+
+        instance.visit(inspect)
+        queue_calls.sort(key=lambda node: getattr(
+            getattr(getattr(node, "sourceRange", None), "start", None),
+            "offset", -1))
+        names = [str(getattr(node, "subroutineName", "")) for node in queue_calls]
+        if not queue_calls or expression not in queue_calls:
+            return None
+        if names[0] != "$q_initialize" or any(
+                name not in ("$q_add", "$q_remove") for name in names[1:]):
+            return None
+        init = queue_calls[0]
+        if (len(init.arguments) != 4
+                or type(init.arguments[3]).__name__ != "AssignmentExpression"
+                or _literal_integral_value(init.arguments[1]) not in (1, 2)):
+            return None
+        capacity = _literal_integral_value(init.arguments[2])
+        if capacity is None or capacity <= 0:
+            return None
+
+        def position(node):
+            return getattr(getattr(getattr(node, "sourceRange", None),
+                                   "start", None), "offset", -1)
+
+        qid_value = _queue_history_literal(qid, instance, position(expression))
+        init_qid = _queue_history_literal(init.arguments[0], instance, position(init))
+        if qid_value is None or init_qid != qid_value:
+            return None
+
+        def value_for(node, before):
+            return _queue_history_literal(node, instance, before)
+
+        def scalar_literal(node, value, marker):
+            width, two_state, reason = type_width_2s(node.type)
+            if width is None or reason is not None:
+                return None
+            literal = {"kind": "Literal", "span": node_span(sm, node),
+                       "width": width,
+                       "bits": format(value & ((1 << width) - 1), f"0{width}b"),
+                       marker: value}
+            return squash2_wrap(literal, width) if two_state else literal
+
+        queue = []
+        target_result = None
+        for call in queue_calls:
+            name = str(getattr(call, "subroutineName", ""))
+            call_pos = position(call)
+            call_qid = _queue_history_literal(call.arguments[0], instance, call_pos)
+            if call_qid != qid_value:
+                return None
+            if name == "$q_initialize":
+                continue
+            if name == "$q_add":
+                if not _q_add_source_shape(call, instance):
+                    return None
+                job_value = value_for(call.arguments[1], call_pos)
+                inform_value = value_for(call.arguments[2], call_pos)
+                if job_value is None or inform_value is None:
+                    return None
+                if len(queue) < capacity:
+                    queue.append((job_value, inform_value))
+                continue
+            if not _q_remove_output_shape(call):
+                return None
+            remove_job, remove_inform, remove_status = call.arguments[1:]
+            if not queue:
+                return None
+            item = queue.pop(0 if _literal_integral_value(init.arguments[1]) == 1 else -1)
+            if call is not expression:
+                continue
+            job_value, inform_value = item
+            job_lit = scalar_literal(remove_job, job_value, "q_remove_job")
+            inform_lit = scalar_literal(remove_inform.left, inform_value, "q_remove_inform")
+            status_lit = scalar_literal(remove_status.left, 0, "q_remove_status")
+            if job_lit is None or inform_lit is None or status_lit is None:
+                return None
+            target_result = {
+                "kind": "Block", "span": node_span(sm, expression),
+                "stmts": [
+                    {"kind": "BlockingAssign", "span": node_span(sm, expression),
+                     "target": job_target, "value": job_lit},
+                    {"kind": "BlockingAssign", "span": node_span(sm, expression),
+                     "target": inform_target, "value": inform_lit},
+                    {"kind": "BlockingAssign", "span": node_span(sm, expression),
+                     "target": status_target, "value": status_lit},
+                ],
+                "q_remove_payload_lowered": True,
+            }
+        return target_result
     except Exception:
         return None
 
@@ -16842,6 +16998,9 @@ def _convert_syscall(sm, s, e):
         if status_assignment is not None:
             return status_assignment
     if _SYM is None and e.isSystemCall and e.subroutineName == "$q_remove":
+        payload_assignment = _q_remove_payload_call(sm, e)
+        if payload_assignment is not None:
+            return payload_assignment
         status_assignment = _q_remove_status_call(sm, e)
         if status_assignment is not None:
             return status_assignment

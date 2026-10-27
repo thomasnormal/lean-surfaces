@@ -27,6 +27,46 @@ def nodes(value):
 
 
 class QRemoveStatus(unittest.TestCase):
+    def test_fifo_payload_is_lowered_to_scalar_outputs(self):
+        design = lower(
+            """module top;
+               integer status, job, info;
+               initial begin
+                 $q_initialize(2, 1, 10, status);
+                 $q_add(2, 42, 99, status);
+                 $q_remove(2, job, info, status);
+                 if (status === 0 && job === 42 && info === 99)
+                   $display("PASS");
+               end
+               endmodule""")
+        lowered = [node for node in nodes(design)
+                   if node.get("q_remove_payload_lowered")]
+        self.assertEqual(len(lowered), 1)
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_lifo_payload_uses_last_added_entry(self):
+        design = lower(
+            """module top;
+               integer status, job, info;
+               initial begin
+                 $q_initialize(2, 2, 10, status);
+                 $q_add(2, 10, 100, status);
+                 $q_add(2, 20, 200, status);
+                 $q_remove(2, job, info, status);
+                 if (status === 0 && job === 20 && info === 200)
+                   $display("PASS");
+               end
+               endmodule""")
+        blocks = [node for node in nodes(design)
+                  if node.get("q_remove_payload_lowered")]
+        self.assertEqual(len(blocks), 1)
+        values = [node.get("q_remove_job")
+                  for node in nodes(blocks[0])
+                  if node.get("q_remove_job") is not None]
+        self.assertEqual(values, [20])
+
     def test_undefined_id_publishes_status_two(self):
         design = lower(
             """module top;

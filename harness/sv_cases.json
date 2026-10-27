@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "queue_fixed_size_mismatch",
+      "file": "Examples/system-verilog/queue_fixed_size_mismatch/queue_fixed_size_mismatch.sv",
+      "module": "top",
+      "oracle": [
+        "BEFORE"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "mailbox_literal_peek",
       "file": "Examples/system-verilog/mailbox_literal_peek/mailbox_literal_peek.sv",
       "module": "top",

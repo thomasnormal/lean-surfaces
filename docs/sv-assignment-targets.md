@@ -42,8 +42,8 @@ The target conversion stays loud for destinations that need a representation
 the public tier does not have:
 
 * dynamic, unbounded-associative, queue, multidimensional, or otherwise
-  unpacked aggregate storage (finite literal-key associative cells are the
-  narrow exception below);
+  unpacked aggregate storage (finite literal-key associative cells and the
+  literal queue size-mismatch halt below are narrow exceptions);
 * keyed/default/replicated aggregate patterns outside the admitted fixed-cell
   lowering, and whole aggregate copies without a cellwise snapshot rule;
 * nested, unpacked, tagged, class, interface, or hierarchical members outside
@@ -59,6 +59,21 @@ No target family is admitted by manufacturing an aggregate store or by adding
 a second scheduler. A future target rung must first supply the missing storage
 or the scheduler-facing continuous-assignment rule, then add a source-bound
 fixture and an independent simulator comparison.
+
+## Literal queue-to-fixed-array size mismatch — 2026-10-27
+
+When a direct queue declaration has only scalar literal elements and a blocking
+copy targets a fixed unpacked integral array with a different element count,
+the extractor lowers the §7.6 run-time error to the existing immediate
+`$finish`. Earlier scalar output is retained and no queue or aggregate storage
+is introduced. Equal-size copies use the existing left-to-right cellwise
+lowering; dynamic, aliased, mutated, aggregate, timed, and nonblocking forms
+remain `AssignmentExpression:target`.
+
+The `queue_fixed_size_mismatch` fixture supplies the `BEFORE` differential
+transcript and Lean receipt. The current 22,064-path census moves **5,325 →
+5,326 clean / 16,672 → 16,671 partial** (67 include skips), while the target
+wall falls **2,844 → 2,842**.
 
 ## Finite associative-cell presence — 2026-10-27
 

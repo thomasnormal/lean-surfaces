@@ -41,11 +41,13 @@ class QueueFixedArrayCopy(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
                              for node in nodes(design)))
 
-    def test_size_mismatch_stays_loud(self):
+    def test_size_mismatch_is_runtime_halt(self):
         design = lower(
             "module top; int dst [0:1]; int q[$] = '{10, 20, 30}; "
             "initial dst = q; endmodule")
-        self.assertTrue(any(node.get("sv_kind") == "AssignmentExpression:target"
+        self.assertTrue(any(node.get("queue_fixed_size_mismatch")
+                            and node.get("kind") == "SysCall"
+                            and node.get("name") == "$finish"
                             for node in nodes(design)))
 
     def test_later_queue_use_stays_loud(self):
@@ -53,6 +55,29 @@ class QueueFixedArrayCopy(unittest.TestCase):
             "module top; int dst [0:1]; int q[$] = '{10, 20}; "
             "initial begin dst = q; $display(\"%0d\", q.size()); end endmodule")
         self.assertTrue(any(node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
+    def test_mismatched_literal_queue_copy_is_runtime_halt(self):
+        design = lower(
+            "module top; int dst [0:1]; int q[$] = '{10, 20, 30}; "
+            "initial begin $display(\"BEFORE\"); dst = q; "
+            "$display(\"UNREACHED\"); end endmodule")
+        halts = [node for node in nodes(design)
+                 if node.get("queue_fixed_size_mismatch")]
+        self.assertEqual(len(halts), 1)
+        self.assertEqual(halts[0].get("name"), "$finish")
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_mismatched_literal_queue_copy_rejects_dynamic_initializer(self):
+        design = lower(
+            "module top; int dst [0:1]; int q[$]; int n; "
+            "initial begin q = '{n, 20, 30}; dst = q; end endmodule")
+        self.assertFalse(any(node.get("queue_fixed_size_mismatch")
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "AssignmentExpression:target"
                             for node in nodes(design)))
 
 

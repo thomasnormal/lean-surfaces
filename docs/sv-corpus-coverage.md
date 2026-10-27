@@ -25,6 +25,21 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Literal queue-to-fixed-array size mismatch — 2026-10-27
+
+A direct scalar-literal queue copied to a differently sized fixed unpacked
+integral array now lowers the §7.6 run-time mismatch to an immediate `$finish`.
+Earlier output remains visible and no partial aggregate copy is fabricated.
+Equal-size copies, dynamic or effectful queue histories, aliases, mutations,
+timed forms, and nonblocking assignments remain loud. The
+`queue_fixed_size_mismatch` fixture supplies the differential row and Lean
+receipt.
+
+The current 22,064-path census moves **5,325 → 5,326 clean / 16,672 → 16,671
+partial** (67 include skips); `AssignmentExpression:target` falls **2,844 →
+2,842**. Differential coverage grows **320/314/0/6 → 321/315/0/6** with no
+disagreements; grammar remains **218/97/121**.
+
 ## Fixed-size `$bits` operands — 2026-10-27
 
 Fixed-size bitstream operands of `$bits(expr)` are now admitted from their

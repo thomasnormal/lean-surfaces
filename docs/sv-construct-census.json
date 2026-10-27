@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22059,
+  "corpus_files": 22064,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -8,7 +8,7 @@
    "name": "pyslang"
   },
   "platform": "linux-x86_64",
-  "python": "3.12",
+  "python": "3.9",
   "walk": "chapter-* only"
  },
  "schema": "sv-census-1",
@@ -16,15 +16,15 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    2844
+    2842
    ],
    [
     "ExpressionStatement:CallExpression",
-    2739
+    2722
    ],
    [
     "CallExpression",
-    2672
+    2656
    ],
    [
     "Hierarchy:ports",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5304,
-   "partial": 16688,
+   "clean": 5326,
+   "partial": 16671,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1026,7 +1026,7 @@
     15
    ],
    "runtime_diagnostic": [
-    2,
+    3,
     22
    ],
    "runtime_error": [
@@ -1038,8 +1038,8 @@
     52
    ],
    "simulation": [
-    4606,
-    18690
+    4627,
+    18695
    ],
    "simulation elaboration": [
     2,
@@ -1232,9 +1232,9 @@
    },
    "chapter-6": {
     "blocked_by_more": 503,
-    "clean": 538,
+    "clean": 543,
     "partial": 505,
-    "simulation_tests": 1043,
+    "simulation_tests": 1048,
     "top_residual_blockers": [
      [
       "NamedValueExpression:2state",
@@ -1363,9 +1363,9 @@
     "unlockable": 0
    },
    "chapter-15": {
-    "clean": 71,
+    "clean": 86,
     "error": 0,
-    "partial": 481,
+    "partial": 466,
     "skip_include": 0,
     "total": 552,
     "unlockable": 0
@@ -1451,9 +1451,9 @@
     "unlockable": 0
    },
    "chapter-26": {
-    "clean": 179,
+    "clean": 180,
     "error": 0,
-    "partial": 386,
+    "partial": 385,
     "skip_include": 0,
     "total": 565,
     "unlockable": 0
@@ -1595,17 +1595,17 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 555,
+    "clean": 560,
     "error": 0,
     "partial": 632,
     "skip_include": 0,
-    "total": 1187,
+    "total": 1192,
     "unlockable": 3
    },
    "chapter-7": {
-    "clean": 295,
+    "clean": 296,
     "error": 0,
-    "partial": 501,
+    "partial": 500,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.66] — 2026-10-27
+
+The self-check surface now has 321 differential rows: 315 matches, zero
+disagreements, and 6 recorded refusals. The grammar census remains at 218
+pyslang syntax witnesses: 97 MATCH and 121 REFUSE. The current 22,064-path
+corpus census has 5,326 clean files and 16,671 partial files with 67 include
+skips; `AssignmentExpression:target` falls from 2,844 to 2,842. A direct
+scalar-literal queue copied to a differently sized fixed array now lowers the
+IEEE 1800-2023 §7.6 run-time mismatch to an immediate `$finish`, preserving
+earlier output and preventing a partial copy. Equal-size copies and dynamic,
+aliased, or effectful queue histories remain loud.
+
 ## [0.1.65] — 2026-10-27
 
 The self-check surface now has 320 differential rows: 314 matches, zero

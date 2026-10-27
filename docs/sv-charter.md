@@ -43,6 +43,22 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Literal queue-to-fixed-array size mismatch — 2026-10-27
+
+The surface now recognizes a direct scalar-literal queue copied to a
+differently sized fixed unpacked integral array. IEEE 1800-2023 §7.6 makes the
+copy a run-time error with no partial update; the flat self-check lowering
+therefore emits the existing immediate `$finish` after any earlier output.
+Equal-size queue copies continue through the cellwise lowering, while dynamic,
+aliased, mutated, aggregate, timed, and nonblocking histories remain loud. The
+`queue_fixed_size_mismatch` fixture supplies the `BEFORE` transcript and Lean
+receipt.
+
+The current 22,064-path census moves **5,325 → 5,326 clean / 16,672 → 16,671
+partial** (67 include skips); `AssignmentExpression:target` falls **2,844 →
+2,842**. Differential coverage grows **320/314/0/6 → 321/315/0/6** with no
+disagreements; grammar remains **218/97/121**.
+
 ## Fixed-size `$bits` operands — 2026-10-27
 
 `$bits(expr)` now reads the elaborated width of any fixed-size bitstream

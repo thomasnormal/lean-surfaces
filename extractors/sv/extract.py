@@ -4806,6 +4806,77 @@ def _dynamic_fixed_size_mismatch(sm, expression):
         return None
 
 
+def _queue_fixed_size_mismatch(sm, expression):
+    """Recognize a literal queue copied to a differently sized fixed array.
+
+    IEEE 1800-2023 §7.6 requires a run-time error, with no partial copy, when
+    an unpacked queue and fixed array have different element counts.  The
+    flat self-check state has no queue object or diagnostic channel, so the
+    exact observable boundary is an immediate ``$finish`` after any earlier
+    output.  Admit only a direct named queue whose declaration is a complete
+    scalar-literal initializer; later queue mutation, aliases, or effectful
+    source expressions remain on the ordinary target wall.
+    """
+    try:
+        if (type(expression).__name__ != "AssignmentExpression"
+                or expression.op is not None
+                or expression.timingControl is not None
+                or expression.isNonBlocking):
+            return None
+        lhs_shape = _fixed_array_shape(expression.left)
+        if lhs_shape is None:
+            return None
+        lhs_width = lhs_shape[1]
+        lhs_left, lhs_right = lhs_shape[3], lhs_shape[4]
+        lhs_count = abs(lhs_left - lhs_right) + 1
+
+        rhs = expression.right
+        while type(rhs).__name__ == "ConversionExpression":
+            rhs = getattr(rhs, "operand", None)
+            if rhs is None:
+                return None
+        if type(rhs).__name__ != "NamedValueExpression":
+            return None
+        queue_symbol = getattr(rhs, "symbol", None)
+        queue_type = getattr(queue_symbol, "type", None)
+        queue_type = getattr(queue_type, "canonicalType", queue_type)
+        if (queue_symbol is None or type(queue_type).__name__ != "QueueType"
+                or getattr(queue_symbol, "initializer", None) is None):
+            return None
+        element_width, _element_two, element_reason = type_width_2s(
+            queue_type.elementType)
+        if (element_width is None or element_reason is not None
+                or element_width != lhs_width):
+            return None
+        queue_count = _queue_literal_initializer_size(queue_symbol.initializer)
+        if queue_count is None or queue_count == lhs_count:
+            return None
+
+        # The mismatch aborts at this assignment, but reject a queue that has
+        # an earlier or competing source use rather than erasing its history.
+        instance = getattr(getattr(queue_symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return None
+        used_elsewhere = False
+        def inspect(node):
+            nonlocal used_elsewhere
+            if used_elsewhere or node is rhs:
+                return
+            if (type(node).__name__ in ("NamedValueExpression",
+                                        "HierarchicalValueExpression")
+                    and getattr(node, "symbol", None) is queue_symbol):
+                used_elsewhere = True
+        instance.visit(inspect)
+        if used_elsewhere:
+            return None
+        return {"kind": "SysCall", "span": node_span(sm, expression),
+                "name": "$finish", "format": None, "args": [],
+                "arg_signed": [], "queue_fixed_size_mismatch": True}
+    except Exception:
+        return None
+
+
 def _fixed_array_indexed_slice_info(sm, expression):
     """Describe a runtime indexed slice over a one-dimensional fixed array.
 
@@ -17472,6 +17543,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         dynamic_fixed_mismatch = _dynamic_fixed_size_mismatch(sm, expr)
         if dynamic_fixed_mismatch is not None:
             return dynamic_fixed_mismatch
+        queue_fixed_mismatch = _queue_fixed_size_mismatch(sm, expr)
+        if queue_fixed_mismatch is not None:
+            return queue_fixed_mismatch
         queue_struct_pop = _queue_empty_pop_struct_assignment(sm, expr)
         if queue_struct_pop is not None:
             return queue_struct_pop

@@ -11,13 +11,27 @@ own evaluation and ordering contract.
 ## Why residual `StaticLocal:initializer` remains a boundary
 
 The procedural-lifetime tier preserves static storage and retains the value on
-re-entry, but its closed-initializer admission deliberately rejects these
-nonclosed expressions. Evaluating them as zero, dropping them, or running them
-as an ordinary process would change before-entry visibility and can reorder
-effects or random draws. The current envelope has no ordered pre-process
-initializer evaluator, random/environment oracle, macro-expanded dependency
-graph or general conversion context. No residual initializer is admitted and
-no second scheduler is introduced.
+re-entry. It admits a source-ordered dependency only when both declarations
+are in the same procedural scope and every initializer is already a closed
+pure value. Runtime reads, effects, random or environment calls, package or
+qualified dependencies, and cross-scope ordering remain outside the envelope.
+Evaluating those forms as zero, dropping them, or running them as an ordinary
+process would change before-entry visibility and can reorder effects or random
+draws. No second scheduler is introduced.
+
+## 2026-10-27 — source-ordered pure dependencies
+
+Static locals now retain source order within each procedural scope. A later
+initializer may read an earlier static declaration after the existing purity
+and expression checks pass; declarations in another scope and pre-process
+module initializers still produce `StaticLocal:initializer-order`. The
+`static_dependency_initializer` fixture checks a four-state value read by a
+zero-shift result and its Lean self-check receipt.
+
+The capped 22,065-file chapter census moves from **5,331 clean / 16,667
+partial** to **5,359 clean / 16,639 partial** with 67 include skips;
+`StaticLocal:initializer` falls **168 → 140**. The remaining 140 files still
+need runtime, effect, cross-scope, or ordering contracts.
 
 ## 2026-10-22 census and decision
 

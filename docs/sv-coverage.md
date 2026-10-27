@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 330 | 324 | 0 | 6 | sv-tests-2 declarations |
+| 331 | 325 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -37,6 +37,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `rtoi_literal` | `Examples/system-verilog/rtoi_literal/rtoi_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `literal_function_argument` | `Examples/system-verilog/literal_function_argument/literal_function_argument.sv` | match | **MATCH** | `ok` | MATCH |
 | `literal_function_named_history` | `Examples/system-verilog/literal_function_named_history/literal_function_named_history.sv` | match | **MATCH** | `ok` | MATCH |
+| `static_dependency_initializer` | `Examples/system-verilog/static_dependency_initializer/static_dependency_initializer.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_oob_write` | `Examples/system-verilog/dynamic_array_oob_write/dynamic_array_oob_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_concat` | `Examples/system-verilog/dynamic_array_concat/dynamic_array_concat.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_concat_refuse` | `Examples/system-verilog/dynamic_array_concat_refuse/dynamic_array_concat_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
@@ -580,7 +581,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22065 | 5331 | 16667 | 67 |
+| 22065 | 5359 | 16639 | 67 |
 
 | blocker kind | files |
 |---|---:|

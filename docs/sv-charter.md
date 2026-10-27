@@ -7191,6 +7191,21 @@ clean** and **17,166 → 17,165 partial / 66 include skips**;
 blockers remain unchanged. Differential coverage moves **122/118/0/4 →
 123/119/0/4**; the grammar census remains **214/83/131**.
 
+## Source-ordered pure static dependencies — 2026-10-27
+
+Static locals preserve source order within each procedural scope. A later
+initializer may read an earlier static declaration when the existing
+closed-pure checks pass, and the hoisted `Var` declarations retain that order.
+Runtime, effectful, random, environment, cross-scope, and pre-process module
+initializers remain loud. The `static_dependency_initializer` fixture and
+extractor lifetime tests cover the admitted dependency and the retained
+barrier.
+
+The differential matrix grows **330/324/0/6 → 331/325/0/6**, with grammar
+coverage unchanged at **218/97/121**. The chapter-only census moves
+**5,331 clean / 16,667 partial → 5,359 clean / 16,639 partial** over 22,065
+files with 67 include skips; `StaticLocal:initializer` falls **168 → 140**.
+
 ## Named literal-history literal-return function calls — 2026-10-27
 
 A function whose complete body returns one integral literal may now receive a

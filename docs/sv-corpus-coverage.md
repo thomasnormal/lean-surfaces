@@ -25,6 +25,16 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Source-ordered pure static dependencies — 2026-10-27
+
+Static locals now preserve declaration order within one procedural scope, so a
+later closed pure initializer may read an earlier static declaration. The
+`static_dependency_initializer` fixture supplies the differential row. The
+chapter-only census moves **5,331 clean / 16,667 partial → 5,359 clean /
+16,639 partial** over **22,065** files with 67 include skips;
+`StaticLocal:initializer` falls **168 → 140** while the leading blockers stay
+unchanged.
+
 ## Named literal-history literal-return functions — 2026-10-27
 
 The self-check surface now accepts a named integral argument to a one-literal

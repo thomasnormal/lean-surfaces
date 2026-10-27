@@ -210,6 +210,15 @@
       "expect": "match"
     },
     {
+      "name": "static_dependency_initializer",
+      "file": "Examples/system-verilog/static_dependency_initializer/static_dependency_initializer.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "dynamic_array_oob_write",
       "file": "Examples/system-verilog/dynamic_array_oob_write/dynamic_array_oob_write.sv",
       "module": "top",

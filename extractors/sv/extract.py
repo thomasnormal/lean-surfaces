@@ -20775,8 +20775,14 @@ def _procedural_variables(members):
         if (not isinstance(member, dict) and str(member.kind) in (
                 "SymbolKind.ProceduralBlock", "SymbolKind.StatementBlock")):
             member.visit(collect)
+    # Static initialization follows declaration order within one procedural
+    # scope.  Sorting by storage name put `result` before an earlier `value`
+    # declaration and made a pure dependency look like an ordering cycle.
+    # Keep the source location first; the buffer/name tie-breakers retain
+    # deterministic output for elaborated symbols without a source offset.
     return sorted(symbols, key=lambda symbol: (
-        _storage_name(symbol), symbol.location.buffer.id, symbol.location.offset))
+        symbol.location.buffer.id, symbol.location.offset,
+        _storage_name(symbol)))
 
 
 def _automatic_default_gap(symbol):
@@ -20791,12 +20797,28 @@ def _automatic_default_gap(symbol):
                         for token in declaration.modifiers))
 
 
-def _static_initializer_closed(expression, declarations):
+def _static_initializer_closed(expression, declarations, available_names=()):
     if expression is not None and not _case_source_expression_ok(expression, packed_members=True):
         return False
-    return all(not _converted_ident_names(node.get("init"))
+    available_names = set(available_names)
+    return all(_converted_ident_names(node.get("init")) <= available_names
                and not _node_marker(node.get("init"), "plusargs_lowered")
                and _case_expression_ok(node) for node in declarations)
+
+
+def _static_scope_key(symbol):
+    """Stable source identity for the procedural scope owning a static local."""
+    node = getattr(symbol, "syntax", None)
+    while node is not None:
+        if str(getattr(node, "kind", "")).split(".")[-1] in (
+                "SequentialBlockStatement", "InitialBlock", "AlwaysBlock"):
+            start = getattr(getattr(node, "sourceRange", None), "start", None)
+            end = getattr(getattr(node, "sourceRange", None), "end", None)
+            if start is not None and end is not None:
+                return (getattr(getattr(start, "buffer", None), "id", None),
+                        start.offset, end.offset)
+        node = getattr(node, "parent", None)
+    return (None, _storage_name(symbol))
 
 
 def _convert_static_procedural_storage(sm, members):
@@ -20804,6 +20826,11 @@ def _convert_static_procedural_storage(sm, members):
     _ELAB_HIER_VALUES.update(symbol for symbol in symbols
                             if str(symbol.lifetime) == "VariableLifetime.Static")
     declarations = []
+    # A static initializer may read a prior declaration in the same
+    # procedural scope when that declaration is itself closed and pure.  Do
+    # not let one initial block silently establish another block's storage:
+    # cross-scope ordering remains an explicit boundary.
+    available_by_scope = {}
     for symbol in symbols:
         if _automatic_default_gap(symbol):
             declarations.append(unsupported(sm, symbol, "AutomaticLocal:default-lifetime",
@@ -20818,10 +20845,15 @@ def _convert_static_procedural_storage(sm, members):
             continue
         converted = convert_var(sm, symbol)
         values = converted if isinstance(converted, list) else [converted]
+        scope_key = _static_scope_key(symbol)
+        available = available_by_scope.setdefault(scope_key, set())
         if (all(value.get("kind") == "Var" for value in values)
-                and not _static_initializer_closed(symbol.initializer, values)):
+                and not _static_initializer_closed(symbol.initializer, values,
+                                                    available)):
             values = [unsupported(sm, symbol, "StaticLocal:initializer",
                                   "static initialization needs closed pure values; ordering/effects are unmodelled")]
+        elif all(value.get("kind") == "Var" for value in values):
+            available.update(value.get("name") for value in values)
         for value in values:
             value["static_local_storage"] = True
             declarations.append(value)
@@ -20834,7 +20866,8 @@ def _static_initialization_barriers(sm, declarations, ports):
     return [unsupported(sm, None, "StaticLocal:initializer-order",
                         "a pre-process initializer reads procedural static storage")
             for node in declarations + ports
-            if _converted_ident_names(node.get("init")) & names]
+            if not node.get("static_local_storage")
+            and _converted_ident_names(node.get("init")) & names]
 
 
 def _generated_storage_collision(ports, decls, processes, prefix):

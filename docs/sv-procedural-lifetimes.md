@@ -9,13 +9,16 @@ the current value. Named-block hierarchical reads and writes use the original
 bound storage identity. Same-spelled declarations remain distinct.
 
 Closed pure initializers and default values use the existing pre-process
-`Var` initialization. Runtime reads, environment queries and effects refuse as
-`StaticLocal:initializer`; another pre-process initializer reading that storage
-refuses as `StaticLocal:initializer-order`. This tier does not choose an order
-for dependent static initialization. Unsupported types and invalid/redefined
-source remain loud. The shared declaration census includes unsupported bodies,
-so their hidden initializers cannot silently disappear. Fixed arrays now use
-this same census rather than a separate statement-marker hoist.
+`Var` initialization. A static declaration may read an earlier closed pure
+static declaration in the same procedural scope; source order is retained in
+the hoisted declarations so the dependency is evaluated after its source.
+Runtime reads, environment queries and effects refuse as
+`StaticLocal:initializer`; a pre-process initializer outside that scope that
+reads procedural storage refuses as `StaticLocal:initializer-order`.
+Unsupported types and invalid/redefined source remain loud. The shared
+declaration census includes unsupported bodies, so their hidden initializers
+cannot silently disappear. Fixed arrays now use this same census rather than
+a separate statement-marker hoist.
 
 Actual automatic scalar declarations retain `LocalDecl` entry behavior. Each
 fresh sequential block/loop entry evaluates its initializer, while an existing

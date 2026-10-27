@@ -77,6 +77,21 @@ class ProceduralLifetimes(unittest.TestCase):
         d=lower('module top;parameter int P=3;initial begin static int x=P+2;static int n=$bits(int);end endmodule')
         self.assertFalse(walls(d))
 
+    def test_static_initializer_may_read_prior_pure_static(self):
+        d=lower('module top; initial begin '
+                "logic [3:0] value = 4'b10xz; "
+                'logic [3:0] result = value << 0; '
+                'if (result === value) $display("PASS"); '
+                '$finish; end endmodule')
+        self.assertFalse(walls(d))
+        names = [n['name'] for n in nodes(d)
+                 if n.get('kind') == 'Var' and n.get('static_local_storage')]
+        self.assertEqual(names, ['value', 'result'])
+        result = next(n for n in nodes(d)
+                      if n.get('name') == 'result'
+                      and n.get('static_local_storage'))
+        self.assertEqual(result['init']['left']['name'], 'value')
+
     def test_unqualified_environment_query_is_not_a_closed_initializer(self):
         d=lower('module top;initial begin static int x=$test$plusargs("flag");end endmodule')
         self.assertIn('StaticLocal:initializer',walls(d))

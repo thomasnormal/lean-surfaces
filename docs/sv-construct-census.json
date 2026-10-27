@@ -8,7 +8,7 @@
    "name": "pyslang"
   },
   "platform": "linux-x86_64",
-  "python": "3.9",
+  "python": "3.12",
   "walk": "chapter-* only"
  },
  "schema": "sv-census-1",
@@ -159,10 +159,6 @@
     169
    ],
    [
-    "StaticLocal:initializer",
-    168
-   ],
-   [
     "NamedValueExpression:ClockVar",
     166
    ],
@@ -177,6 +173,10 @@
    [
     "TimedStatement:CycleDelayControl",
     145
+   ],
+   [
+    "StaticLocal:initializer",
+    140
    ],
    [
     "TypeAliasType:TypeAlias",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5331,
-   "partial": 16667,
+   "clean": 5359,
+   "partial": 16639,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4632,
+    4660,
     18701
    ],
    "simulation elaboration": [
@@ -1053,14 +1053,14 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 211,
-    "clean": 771,
-    "partial": 220,
+    "blocked_by_more": 208,
+    "clean": 782,
+    "partial": 209,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
       "VariableDeclStatement:2state",
-      95
+      92
      ],
      [
       "NamedValueExpression:2state",
@@ -1139,7 +1139,7 @@
       5
      ]
     ],
-    "unlockable": 9
+    "unlockable": 1
    },
    "chapter-4": {
     "blocked_by_more": 214,
@@ -1231,9 +1231,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 503,
-    "clean": 543,
-    "partial": 505,
+    "blocked_by_more": 495,
+    "clean": 552,
+    "partial": 496,
     "simulation_tests": 1048,
     "top_residual_blockers": [
      [
@@ -1253,12 +1253,12 @@
       126
      ],
      [
-      "VariableDeclStatement:2state",
-      124
-     ],
-     [
       "AssignmentExpression:target",
       123
+     ],
+     [
+      "VariableDeclStatement:2state",
+      116
      ],
      [
       "CallExpression",
@@ -1266,7 +1266,7 @@
      ],
      [
       "TypeAliasType:TypeAlias",
-      66
+      61
      ],
      [
       "InstanceSymbol:Instance",
@@ -1281,15 +1281,15 @@
       37
      ],
      [
-      "TransparentMemberSymbol:TransparentMember",
-      34
-     ],
-     [
       "MemberAccessExpression",
       30
      ],
      [
       "NullLiteral",
+      30
+     ],
+     [
+      "TransparentMemberSymbol:TransparentMember",
       30
      ],
      [
@@ -1317,7 +1317,7 @@
       15
      ]
     ],
-    "unlockable": 2
+    "unlockable": 1
    }
   },
   "extractor_internal_files": [],
@@ -1331,12 +1331,12 @@
     "unlockable": 0
    },
    "chapter-11": {
-    "clean": 775,
+    "clean": 786,
     "error": 0,
-    "partial": 259,
+    "partial": 248,
     "skip_include": 0,
     "total": 1034,
-    "unlockable": 9
+    "unlockable": 1
    },
    "chapter-12": {
     "clean": 304,
@@ -1403,9 +1403,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 373,
+    "clean": 377,
     "error": 0,
-    "partial": 452,
+    "partial": 448,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0
@@ -1419,9 +1419,9 @@
     "unlockable": 0
    },
    "chapter-22": {
-    "clean": 395,
+    "clean": 396,
     "error": 0,
-    "partial": 149,
+    "partial": 148,
     "skip_include": 28,
     "total": 572,
     "unlockable": 2
@@ -1587,25 +1587,25 @@
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 439,
+    "clean": 441,
     "error": 0,
-    "partial": 179,
+    "partial": 177,
     "skip_include": 0,
     "total": 618,
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 560,
+    "clean": 569,
     "error": 0,
-    "partial": 632,
+    "partial": 623,
     "skip_include": 0,
     "total": 1192,
-    "unlockable": 3
+    "unlockable": 2
    },
    "chapter-7": {
-    "clean": 296,
+    "clean": 297,
     "error": 0,
-    "partial": 500,
+    "partial": 499,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0
@@ -1628,7 +1628,7 @@
    }
   },
   "seed": 20260721,
-  "unlockable_simulation": 17,
-  "unlockable_total": 24
+  "unlockable_simulation": 8,
+  "unlockable_total": 15
  }
 }

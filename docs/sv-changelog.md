@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.77] — 2026-10-27
+
+Static locals now preserve source order within a procedural scope, allowing a
+later closed pure initializer to read an earlier static declaration. Runtime,
+effectful, random, environment, cross-scope, and pre-process ordering cases
+remain loud. Differential coverage is now **331 rows / 325 matches / 0
+disagreements / 6 recorded refusals**. The chapter-only census moves from
+**5,331 clean / 16,667 partial** to **5,359 clean / 16,639 partial** over
+22,065 files; `StaticLocal:initializer` falls **168 → 140**.
+
 ## [0.1.76] — 2026-10-27
 
 Literal-return user functions now accept named integral arguments whose

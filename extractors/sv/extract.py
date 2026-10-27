@@ -10919,16 +10919,25 @@ def _q_initialize_status_call(sm, expression):
             return None
         if len(queue_calls) == 2:
             first, second = queue_calls
-            first_type = _literal_integral_value(first.arguments[1])
-            first_capacity = _literal_integral_value(first.arguments[2])
-            second_type = _literal_integral_value(second.arguments[1])
-            second_capacity = _literal_integral_value(second.arguments[2])
-            if (first_type not in (1, 2) or first_capacity is None
-                    or first_capacity <= 0 or first_type != second_type
-                    or first_capacity != second_capacity):
-                return None
+            first_name = str(getattr(first, "subroutineName", ""))
+            second_name = str(getattr(second, "subroutineName", ""))
+            if first_name == "$q_initialize" and second_name == "$q_remove":
+                if (_literal_integral_value(first.arguments[1]) not in (1, 2)
+                        or (_literal_integral_value(first.arguments[2]) or 0) <= 0):
+                    return None
+            else:
+                first_type = _literal_integral_value(first.arguments[1])
+                first_capacity = _literal_integral_value(first.arguments[2])
+                second_type = _literal_integral_value(second.arguments[1])
+                second_capacity = _literal_integral_value(second.arguments[2])
+                if (first_name != "$q_initialize"
+                        or second_name != "$q_initialize"
+                        or first_type not in (1, 2) or first_capacity is None
+                        or first_capacity <= 0 or first_type != second_type
+                        or first_capacity != second_capacity):
+                    return None
         index = queue_calls.index(expression)
-        if index == 1:
+        if index == 1 and str(getattr(queue_calls[1], "subroutineName", "")) == "$q_initialize":
             status_value = 6
         elif qtype_value in (1, 2) and max_value > 0:
             status_value = 0
@@ -10952,6 +10961,145 @@ def _q_initialize_status_call(sm, expression):
         return {"kind": "BlockingAssign", "span": node_span(sm, expression),
                 "target": target, "value": value,
                 "q_initialize_status_lowered": status_value}
+    except Exception:
+        return None
+
+
+def _q_remove_status_call(sm, expression):
+    """Lower queue-removal status codes with no represented queue payload.
+
+    IEEE 1800-2023 §20.15.6 reports status 2 for an undefined queue ID and
+    status 3 when a valid, newly initialized queue is empty.  The self-check
+    state can retain that scalar status while leaving the job and inform
+    outputs opaque, provided neither output is read later and no add/remove
+    operation exposes queue contents.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "$q_remove"
+                or len(expression.arguments) != 4):
+            return None
+        qid, job, inform, status = expression.arguments
+        if (type(inform).__name__ != "AssignmentExpression"
+                or inform.op is not None
+                or inform.timingControl is not None
+                or type(inform.right).__name__ != "EmptyArgumentExpression"
+                or type(status).__name__ != "AssignmentExpression"
+                or status.op is not None
+                or status.timingControl is not None
+                or type(status.right).__name__ != "EmptyArgumentExpression"):
+            return None
+        if not _case_source_expression_ok(qid):
+            return None
+        status_target, admitted = legacy_blocking_target(sm, status.left, True)
+        if not admitted:
+            return None
+        job_target, job_admitted = legacy_blocking_target(sm, job, True)
+        inform_target, inform_admitted = legacy_blocking_target(sm, inform.left, True)
+        if (not job_admitted or not inform_admitted
+                or job_target.get("kind") != "Ident"
+                or inform_target.get("kind") != "Ident"):
+            return None
+
+        receiver_scope = getattr(getattr(status.left, "symbol", None),
+                                 "parentScope", None)
+        instance = getattr(receiver_scope, "containingInstance", None)
+        if instance is None:
+            return None
+        queue_calls = []
+        def inspect(node):
+            if (type(node).__name__ == "CallExpression"
+                    and getattr(node, "isSystemCall", False)
+                    and str(getattr(node, "subroutineName", "")).startswith("$q_")):
+                queue_calls.append(node)
+        instance.visit(inspect)
+        queue_calls.sort(key=lambda node: getattr(
+            getattr(getattr(node, "sourceRange", None), "start", None),
+            "offset", -1))
+        names = [str(getattr(node, "subroutineName", "")) for node in queue_calls]
+        if names == ["$q_remove"]:
+            status_value = 2
+            qid_value = _literal_integral_value(qid)
+            if qid_value is None:
+                return None
+        elif names == ["$q_initialize", "$q_remove"]:
+            init = queue_calls[0]
+            init_qid = init.arguments[0]
+            init_value = _literal_integral_value(init_qid)
+            if init_value is None and type(init_qid).__name__ == "NamedValueExpression":
+                symbol = getattr(init_qid, "symbol", None)
+                if symbol is None or getattr(symbol, "initializer", None) is not None:
+                    return None
+                assignments = []
+                invalid = False
+                def inspect_assignment(node):
+                    nonlocal invalid
+                    if type(node).__name__ != "AssignmentExpression":
+                        return
+                    left = getattr(node, "left", None)
+                    if getattr(left, "symbol", None) is not symbol:
+                        return
+                    if (getattr(node, "op", None) is not None
+                            or getattr(node, "timingControl", None) is not None
+                            or getattr(node, "isNonBlocking", False)):
+                        invalid = True
+                        return
+                    value = _literal_integral_value(getattr(node, "right", None))
+                    if value is None:
+                        invalid = True
+                        return
+                    assignments.append((getattr(getattr(getattr(node, "sourceRange", None),
+                                                        "start", None), "offset", -1), value))
+                instance.visit(inspect_assignment)
+                if invalid or len(assignments) != 1:
+                    return None
+                init_pos = getattr(getattr(getattr(init, "sourceRange", None),
+                                           "start", None), "offset", -1)
+                prior = [value for position, value in assignments if position < init_pos]
+                init_value = prior[0] if len(prior) == 1 else None
+            remove_value = _literal_integral_value(qid)
+            if remove_value is None and type(qid).__name__ == "NamedValueExpression":
+                remove_value = init_value
+            if (init_value is None or remove_value != init_value
+                    or _literal_integral_value(init.arguments[1]) not in (1, 2)
+                    or (_literal_integral_value(init.arguments[2]) or 0) <= 0):
+                return None
+            status_value = 3
+        else:
+            return None
+
+        # Job and inform are intentionally opaque, but stale reads would make
+        # a status-only lowering unsound.  Permit only their output positions.
+        observed = {getattr(job, "symbol", None), getattr(inform.left, "symbol", None)}
+        def span(node):
+            source_range = getattr(node, "sourceRange", None)
+            start = getattr(getattr(source_range, "start", None), "offset", None)
+            end = getattr(getattr(source_range, "end", None), "offset", None)
+            return (start, end)
+        allowed_spans = {span(job), span(inform.left)}
+        unsafe = False
+        def inspect_reads(node):
+            nonlocal unsafe
+            if (type(node).__name__ == "NamedValueExpression"
+                    and getattr(node, "symbol", None) in observed
+                    and span(node) not in allowed_spans):
+                unsafe = True
+        instance.visit(inspect_reads)
+        if unsafe:
+            return None
+        width, two_state, reason = type_width_2s(status.left.type)
+        if width is None or reason is not None:
+            return None
+        value = {"kind": "Literal", "span": node_span(sm, status.left),
+                 "width": width, "bits": format(status_value & ((1 << width) - 1), f"0{width}b"),
+                 "q_remove_status": status_value}
+        if two_state:
+            value = squash2_wrap(value, width)
+        return {"kind": "BlockingAssign", "span": node_span(sm, expression),
+                "target": status_target, "value": value,
+                "q_remove_status_lowered": status_value}
     except Exception:
         return None
 
@@ -15895,6 +16043,10 @@ def _convert_syscall(sm, s, e):
             return default_radix_assignment
     if _SYM is None and e.isSystemCall and e.subroutineName == "$q_initialize":
         status_assignment = _q_initialize_status_call(sm, e)
+        if status_assignment is not None:
+            return status_assignment
+    if _SYM is None and e.isSystemCall and e.subroutineName == "$q_remove":
+        status_assignment = _q_remove_status_call(sm, e)
         if status_assignment is not None:
             return status_assignment
     if _SYM is None and e.isSystemCall and e.subroutineName == "reverse":

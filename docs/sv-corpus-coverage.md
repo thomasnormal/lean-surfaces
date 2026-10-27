@@ -25,6 +25,23 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Queue-removal status — 2026-10-27
+
+Undefined literal queue IDs now lower `$q_remove` to status 2. A valid literal
+FIFO/LIFO initialization followed by one removal from the still-empty queue
+lowers the initialization to 0 and the removal to status 3. Named IDs require
+one direct literal assignment, and job/inform outputs must remain unread;
+populated, payload-observing, computed, and additional queue forms stay loud.
+The `q_remove_status_2` and `q_remove_status_3` fixtures supply the PASS
+transcripts and differential rows.
+
+The committed **22,059-path** snapshot moves **5,241 → 5,243 clean** and
+**16,751 → 16,749 partial** (67 include skips). The
+`ExpressionStatement:CallExpression` wall falls **2,774 → 2,772** and
+`AssignmentExpression:target` remains **2,853**. Differential coverage grows
+**284/279/0/5 → 286/281/0/5** with no disagreements; grammar coverage is
+regenerated with the current witness count.
+
 ## Duplicate queue-ID status — 2026-10-27
 
 Two source-pure `$q_initialize` calls with the same literal FIFO/LIFO type and

@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 284 | 279 | 0 | 5 | sv-tests-2 declarations |
+| 286 | 281 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -178,6 +178,8 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `array_reverse_procedural` | `Examples/system-verilog/array_reverse_procedural/array_reverse_procedural.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_initialize_status` | `Examples/system-verilog/q_initialize_status/q_initialize_status.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_initialize_duplicate_status` | `Examples/system-verilog/q_initialize_duplicate_status/q_initialize_duplicate_status.sv` | match | **MATCH** | `ok` | MATCH |
+| `q_remove_status_2` | `Examples/system-verilog/q_remove_status_2/q_remove_status_2.sv` | match | **MATCH** | `ok` | MATCH |
+| `q_remove_status_3` | `Examples/system-verilog/q_remove_status_3/q_remove_status_3.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_union_member` | `Examples/system-verilog/unpacked_union_member/unpacked_union_member.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_union_copy` | `Examples/system-verilog/unpacked_union_copy/unpacked_union_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `unpacked_union_equality` | `Examples/system-verilog/unpacked_union_equality/unpacked_union_equality.sv` | match | **MATCH** | `ok` | MATCH |
@@ -534,12 +536,12 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22059 | 5241 | 16751 | 67 |
+| 22059 | 5243 | 16749 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2853 |
-| `ExpressionStatement:CallExpression` | 2774 |
+| `ExpressionStatement:CallExpression` | 2772 |
 | `CallExpression` | 2771 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2223 |

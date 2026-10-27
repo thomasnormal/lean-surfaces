@@ -122,6 +122,13 @@ duplicate status is 6; no queue object is exposed. Other queue tasks,
 invalid-first-creation duplicates, reassignment, computed IDs, and
 value-position forms remain loud.
 
+`$q_remove` status-only calls are admitted for an uninitialized literal queue
+ID (status 2) or for a newly initialized, still-empty FIFO/LIFO queue (status
+3). Job and inform outputs must remain unread, and the queue ID may be named
+only after one direct literal assignment. Populated queues, payload reads,
+additional queue operations, computed IDs, and value-position forms remain
+loud.
+
 A zero-argument user function whose complete body is one integral literal
 `return` is also admitted in statement position by erasing the discarded
 result. The literal-only body has no storage, timing, diagnostic, or argument
@@ -264,3 +271,12 @@ returns 6. A named ID is accepted only after one direct literal assignment;
 computed, reassigned, invalid-first-creation, and other queue operations remain
 loud. The `q_initialize_duplicate_status` fixture supplies the differential
 row and extractor/Lean receipts.
+
+## Queue-removal status — 2026-10-27
+
+Undefined literal queue IDs now lower `$q_remove` to status 2. A valid literal
+FIFO/LIFO initialization followed by one removal from the still-empty queue
+lowers the initialization to status 0 and the removal to status 3. Job and
+inform outputs must be unread; populated, payload-observing, computed, and
+additional queue forms remain loud. The `q_remove_status_2` and
+`q_remove_status_3` fixtures supply the differential rows and Lean receipts.

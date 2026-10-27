@@ -1477,6 +1477,24 @@
       "expect": "match"
     },
     {
+      "name": "q_remove_status_2",
+      "file": "Examples/system-verilog/q_remove_status_2/q_remove_status_2.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_remove_status_3",
+      "file": "Examples/system-verilog/q_remove_status_3/q_remove_status_3.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "unpacked_union_member",
       "file": "Examples/system-verilog/unpacked_union_member/unpacked_union_member.sv",
       "module": "top",

@@ -43,6 +43,24 @@ The executable self-check and grammar baseline is generated in
 `harness/sv_coverage_page.py`; its differential rows are pinned to the
 self-check declarations and its grammar rows name one pyslang witness each.
 
+## Queue-removal status — 2026-10-27
+
+IEEE 1800-2023 §20.15.6 gives scalar statuses for queue removal without
+requiring queue payload storage in the self-check state. An uninitialized
+literal queue ID now lowers `$q_remove` to status 2. A valid literal FIFO/LIFO
+initialization followed by one removal from the still-empty queue lowers the
+initialization to 0 and the removal to status 3. Named IDs require one direct
+literal assignment, and job/inform outputs must remain unread. Populated,
+payload-observing, computed, and additional queue operations remain loud.
+`q_remove_status_2` and `q_remove_status_3` supply the PASS transcripts,
+extractor regressions, and capped Lean receipts.
+
+The 22,059-path census moves **5,241 → 5,243 clean** and **16,751 → 16,749
+partial** (67 include skips); `ExpressionStatement:CallExpression` falls
+**2,774 → 2,772**, while `AssignmentExpression:target` remains **2,853**.
+Differential coverage grows **284/279/0/5 → 286/281/0/5**; grammar coverage
+is regenerated with the current witness count.
+
 ## Duplicate queue-ID status — 2026-10-27
 
 IEEE 1800-2023 §20.15.6 gives a duplicate queue ID status without exposing

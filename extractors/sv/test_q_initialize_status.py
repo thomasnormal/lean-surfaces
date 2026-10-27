@@ -60,7 +60,7 @@ class QInitializeStatus(unittest.TestCase):
             [node["q_initialize_status_lowered"] for node in nodes(design)
              if node.get("q_initialize_status_lowered") is not None], [0])
 
-    def test_queue_operations_remain_loud(self):
+    def test_literal_queue_add_status_is_admitted(self):
         design = lower(
             """module top;
                integer status;
@@ -69,11 +69,25 @@ class QInitializeStatus(unittest.TestCase):
                  $q_add(20, 1, 1, status);
                end
                endmodule""")
+        self.assertEqual(
+            [node["q_initialize_status_lowered"] for node in nodes(design)
+             if node.get("q_initialize_status_lowered") is not None], [0])
+        self.assertEqual(
+            [node["q_add_status_lowered"] for node in nodes(design)
+             if node.get("q_add_status_lowered") is not None], [0])
+
+    def test_other_queue_operation_remains_loud(self):
+        design = lower(
+            """module top;
+               integer status, job, info;
+               initial begin
+                 $q_initialize(20, 1, 10, status);
+                 $q_add(20, job, 1, status);
+               end
+               endmodule""")
         self.assertTrue(any(node.get("sv_kind") ==
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))
-        self.assertFalse(any(node.get("q_initialize_status_lowered") is not None
-                             for node in nodes(design)))
 
     def test_duplicate_literal_id_publishes_status_six(self):
         design = lower(

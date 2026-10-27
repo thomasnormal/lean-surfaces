@@ -272,6 +272,16 @@ computed, reassigned, invalid-first-creation, and other queue operations remain
 loud. The `q_initialize_duplicate_status` fixture supplies the differential
 row and extractor/Lean receipts.
 
+## Queue-add status — 2026-10-27
+
+Source-pure `$q_add` calls after one literal FIFO/LIFO initialization now lower
+to scalar status writes. Literal job and inform arguments publish status 0 while
+the queue has capacity and status 1 for the first add after it is full. Queue
+storage, symbolic IDs, payload expressions, additional queue operations, and
+value-position forms remain loud. The `q_add_status_0` and
+`q_add_status_1_when_full` fixtures supply the differential rows and
+extractor/Lean receipts.
+
 ## Queue-removal status — 2026-10-27
 
 Undefined literal queue IDs now lower `$q_remove` to status 2. A valid literal

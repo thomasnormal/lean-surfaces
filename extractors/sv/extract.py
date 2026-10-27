@@ -10814,6 +10814,33 @@ def _convert_mailbox_literal_state_call(sm, expression):
     }, expression.type)
 
 
+def _q_add_source_shape(expression):
+    """Whether a queue add has only literal inputs and one output status.
+
+    The self-check state has no queue payload object.  Keep this recognizer
+    deliberately source-pure: queue ID, job, and inform are direct integral
+    literals, while the final argument is the ordinary output-assignment
+    spelling used by the system task.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "$q_add"
+                or len(expression.arguments) != 4):
+            return False
+        qid, job, inform, status = expression.arguments
+        if any(_literal_integral_value(argument) is None
+               for argument in (qid, job, inform)):
+            return False
+        return (type(status).__name__ == "AssignmentExpression"
+                and status.op is None
+                and status.timingControl is None
+                and type(status.right).__name__ == "EmptyArgumentExpression")
+    except Exception:
+        return False
+
+
 def _q_initialize_status_call(sm, expression):
     """Lower a state-free ``$q_initialize`` status result.
 
@@ -10823,8 +10850,10 @@ def _q_initialize_status_call(sm, expression):
     directly to its output lvalue.  A second source-ordered initialization of
     the same literal queue ID is also admitted: the first valid creation
     reports 0 and the duplicate reports 6, without exposing the queue object.
-    Any file that also performs another queue operation remains on the
-    ordinary loud boundary.
+    A source-ordered sequence of literal ``$q_add`` calls is also admitted;
+    those calls retain only their scalar status and are handled by
+    ``_q_add_status_call``.  Any other queue operation remains on the ordinary
+    loud boundary.
     """
     try:
         if (type(expression).__name__ != "CallExpression"
@@ -10866,7 +10895,7 @@ def _q_initialize_status_call(sm, expression):
         queue_calls.sort(key=lambda node: getattr(
             getattr(getattr(node, "sourceRange", None), "start", None),
             "offset", -1))
-        if len(queue_calls) not in (1, 2) or expression not in queue_calls:
+        if not queue_calls or expression not in queue_calls:
             return None
 
         # A named queue ID is admitted only after one direct literal blocking
@@ -10925,6 +10954,11 @@ def _q_initialize_status_call(sm, expression):
                 if (_literal_integral_value(first.arguments[1]) not in (1, 2)
                         or (_literal_integral_value(first.arguments[2]) or 0) <= 0):
                     return None
+            elif first_name == "$q_initialize" and second_name == "$q_add":
+                if (not _q_add_source_shape(second)
+                        or _literal_integral_value(first.arguments[1]) not in (1, 2)
+                        or (_literal_integral_value(first.arguments[2]) or 0) <= 0):
+                    return None
             else:
                 first_type = _literal_integral_value(first.arguments[1])
                 first_capacity = _literal_integral_value(first.arguments[2])
@@ -10936,6 +10970,17 @@ def _q_initialize_status_call(sm, expression):
                         or first_capacity <= 0 or first_type != second_type
                         or first_capacity != second_capacity):
                     return None
+        if len(queue_calls) > 2:
+            if str(getattr(queue_calls[0], "subroutineName", "")) != "$q_initialize":
+                return None
+            if any(str(getattr(call, "subroutineName", "")) != "$q_add"
+                   for call in queue_calls[1:]):
+                return None
+            init = queue_calls[0]
+            if (_literal_integral_value(init.arguments[1]) not in (1, 2)
+                    or (_literal_integral_value(init.arguments[2]) or 0) <= 0
+                    or any(not _q_add_source_shape(call) for call in queue_calls[1:])):
+                return None
         index = queue_calls.index(expression)
         if index == 1 and str(getattr(queue_calls[1], "subroutineName", "")) == "$q_initialize":
             status_value = 6
@@ -10961,6 +11006,82 @@ def _q_initialize_status_call(sm, expression):
         return {"kind": "BlockingAssign", "span": node_span(sm, expression),
                 "target": target, "value": value,
                 "q_initialize_status_lowered": status_value}
+    except Exception:
+        return None
+
+
+def _q_add_status_call(sm, expression):
+    """Lower the scalar status from a source-pure ``$q_add`` call.
+
+    Only a literal queue ID and literal job/inform values are admitted.  The
+    surrounding process must contain one valid literal ``$q_initialize`` and
+    only source-ordered ``$q_add`` calls for that ID.  The flat self-check
+    state then needs only the capacity counter: successful additions publish
+    status 0 and the first addition after capacity publishes status 1.
+    """
+    try:
+        if not _q_add_source_shape(expression):
+            return None
+        qid, _job, _inform, status = expression.arguments
+        qid_value = _literal_integral_value(qid)
+        if qid_value is None:
+            return None
+        status_target, admitted = legacy_blocking_target(sm, status.left, True)
+        if not admitted:
+            return None
+
+        receiver_scope = getattr(getattr(status.left, "symbol", None),
+                                 "parentScope", None)
+        instance = getattr(receiver_scope, "containingInstance", None)
+        if instance is None:
+            return None
+        queue_calls = []
+
+        def inspect(node):
+            if (type(node).__name__ == "CallExpression"
+                    and getattr(node, "isSystemCall", False)
+                    and str(getattr(node, "subroutineName", "")).startswith("$q_")):
+                queue_calls.append(node)
+
+        instance.visit(inspect)
+        queue_calls.sort(key=lambda node: getattr(
+            getattr(getattr(node, "sourceRange", None), "start", None),
+            "offset", -1))
+        if not queue_calls or expression not in queue_calls:
+            return None
+        if str(getattr(queue_calls[0], "subroutineName", "")) != "$q_initialize":
+            return None
+        if any(str(getattr(call, "subroutineName", "")) != "$q_add"
+               for call in queue_calls[1:]):
+            return None
+        init = queue_calls[0]
+        if (len(init.arguments) != 4
+                or _literal_integral_value(init.arguments[0]) != qid_value
+                or _literal_integral_value(init.arguments[1]) not in (1, 2)
+                or (_literal_integral_value(init.arguments[2]) or 0) <= 0):
+            return None
+        if any(not _q_add_source_shape(call)
+               or _literal_integral_value(call.arguments[0]) != qid_value
+               for call in queue_calls[1:]):
+            return None
+        index = queue_calls.index(expression)
+        if index == 0:
+            return None
+        capacity = _literal_integral_value(init.arguments[2])
+        prior_adds = index - 1
+        status_value = 0 if prior_adds < capacity else 1
+        width, two_state, reason = type_width_2s(status.left.type)
+        if width is None or reason is not None:
+            return None
+        value = {"kind": "Literal", "span": node_span(sm, status.left),
+                 "width": width,
+                 "bits": format(status_value & ((1 << width) - 1), f"0{width}b"),
+                 "q_add_status": status_value}
+        if two_state:
+            value = squash2_wrap(value, width)
+        return {"kind": "BlockingAssign", "span": node_span(sm, expression),
+                "target": status_target, "value": value,
+                "q_add_status_lowered": status_value}
     except Exception:
         return None
 
@@ -16043,6 +16164,10 @@ def _convert_syscall(sm, s, e):
             return default_radix_assignment
     if _SYM is None and e.isSystemCall and e.subroutineName == "$q_initialize":
         status_assignment = _q_initialize_status_call(sm, e)
+        if status_assignment is not None:
+            return status_assignment
+    if _SYM is None and e.isSystemCall and e.subroutineName == "$q_add":
+        status_assignment = _q_add_status_call(sm, e)
         if status_assignment is not None:
             return status_assignment
     if _SYM is None and e.isSystemCall and e.subroutineName == "$q_remove":

@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 286 | 281 | 0 | 5 | sv-tests-2 declarations |
+| 288 | 283 | 0 | 5 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -177,6 +177,8 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `array_reverse` | `Examples/system-verilog/array_reverse/array_reverse.sv` | match | **MATCH** | `ok` | MATCH |
 | `array_reverse_procedural` | `Examples/system-verilog/array_reverse_procedural/array_reverse_procedural.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_initialize_status` | `Examples/system-verilog/q_initialize_status/q_initialize_status.sv` | match | **MATCH** | `ok` | MATCH |
+| `q_add_status_0` | `Examples/system-verilog/q_add_status_0/q_add_status_0.sv` | match | **MATCH** | `ok` | MATCH |
+| `q_add_status_1_when_full` | `Examples/system-verilog/q_add_status_1_when_full/q_add_status_1_when_full.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_initialize_duplicate_status` | `Examples/system-verilog/q_initialize_duplicate_status/q_initialize_duplicate_status.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_remove_status_2` | `Examples/system-verilog/q_remove_status_2/q_remove_status_2.sv` | match | **MATCH** | `ok` | MATCH |
 | `q_remove_status_3` | `Examples/system-verilog/q_remove_status_3/q_remove_status_3.sv` | match | **MATCH** | `ok` | MATCH |
@@ -536,13 +538,13 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22059 | 5243 | 16749 | 67 |
+| 22059 | 5245 | 16747 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2853 |
-| `ExpressionStatement:CallExpression` | 2772 |
 | `CallExpression` | 2771 |
+| `ExpressionStatement:CallExpression` | 2770 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2223 |
 | `SubroutineSymbol:Subroutine` | 1634 |

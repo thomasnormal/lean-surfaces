@@ -61,6 +61,23 @@ partial** (67 include skips); `ExpressionStatement:CallExpression` falls
 Differential coverage grows **284/279/0/5 → 286/281/0/5**; grammar coverage
 is regenerated with the current witness count.
 
+## Queue-add status — 2026-10-27
+
+IEEE 1800-2023 §20.15.2 defines scalar status results for `$q_add`. A
+source-ordered literal `$q_initialize` followed by literal FIFO/LIFO adds now
+retains only the status output: successful additions report 0, and the first
+addition after the positive capacity reports 1. Queue IDs, job and inform
+arguments must be integral literals, and no other queue operation is admitted;
+symbolic IDs, payload expressions, populated observations, and value-position
+forms remain loud. `q_add_status_0` and `q_add_status_1_when_full` supply the
+PASS transcripts, extractor regressions, and capped Lean receipts.
+
+The 22,059-path census moves **5,243 → 5,245 clean** and **16,749 → 16,747
+partial** (67 include skips); `ExpressionStatement:CallExpression` falls
+**2,772 → 2,770**, while `AssignmentExpression:target` remains **2,853**.
+Differential coverage grows **286/281/0/5 → 288/283/0/5**; grammar coverage
+remains **218/95/123**.
+
 ## Duplicate queue-ID status — 2026-10-27
 
 IEEE 1800-2023 §20.15.6 gives a duplicate queue ID status without exposing

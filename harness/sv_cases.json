@@ -1468,6 +1468,24 @@
       "expect": "match"
     },
     {
+      "name": "q_add_status_0",
+      "file": "Examples/system-verilog/q_add_status_0/q_add_status_0.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "q_add_status_1_when_full",
+      "file": "Examples/system-verilog/q_add_status_1_when_full/q_add_status_1_when_full.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "q_initialize_duplicate_status",
       "file": "Examples/system-verilog/q_initialize_duplicate_status/q_initialize_duplicate_status.sv",
       "module": "top",

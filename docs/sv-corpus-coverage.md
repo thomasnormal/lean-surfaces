@@ -42,6 +42,23 @@ The committed **22,059-path** snapshot moves **5,241 → 5,243 clean** and
 **284/279/0/5 → 286/281/0/5** with no disagreements; grammar coverage is
 regenerated with the current witness count.
 
+## Queue-add status — 2026-10-27
+
+Source-pure `$q_add` calls now retain their scalar status after a literal
+FIFO/LIFO initialization. Successful literal additions report 0, and an
+addition after the positive capacity reports 1. Queue ID, job, and inform
+arguments must be integral literals; symbolic IDs, payload expressions,
+additional queue operations, and value-position forms remain loud. The
+`q_add_status_0` and `q_add_status_1_when_full` fixtures supply the PASS
+transcripts and differential rows.
+
+The committed **22,059-path** snapshot moves **5,243 → 5,245 clean** and
+**16,749 → 16,747 partial** (67 include skips). The
+`ExpressionStatement:CallExpression` wall falls **2,772 → 2,770** and
+`AssignmentExpression:target` remains **2,853**. Differential coverage grows
+**286/281/0/5 → 288/283/0/5** with no disagreements; grammar coverage remains
+**218/95/123**.
+
 ## Duplicate queue-ID status — 2026-10-27
 
 Two source-pure `$q_initialize` calls with the same literal FIFO/LIFO type and

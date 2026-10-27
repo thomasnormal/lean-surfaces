@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.46] — 2026-10-27
+
+The self-check surface now has 299 differential rows: 294 matches, zero
+disagreements, and 5 recorded refusals. The grammar census remains at 218
+pyslang syntax witnesses: 96 MATCH and 122 REFUSE. The 22,059-path corpus
+moves to 5,272 clean files and 16,720 partial files; `CallExpression` falls
+to 2,750. Value-position `$q_full` now follows source-pure literal queue
+history when prior status checks precede the first query; later status reads
+and queue payload operations remain loud.
+
 ## [0.1.45] — 2026-10-27
 
 The self-check surface now has 298 differential rows: 293 matches, zero

@@ -72,6 +72,37 @@ class QFullStatus(unittest.TestCase):
                   if node.get("kind") == "BlockingAssign"]
         self.assertIn(0, values)
 
+    def test_value_position_query_allows_prior_status_check(self):
+        design = lower(
+            """module top;
+               integer status, full;
+               initial begin
+                 $q_initialize(1, 1, 2, status);
+                 if (status !== 0) $display(\"FAIL\");
+                 full = $q_full(1, status);
+                 if (full === 0) $display(\"PASS\");
+               end
+               endmodule""")
+        values = [node.get("value", {}).get("q_full_value")
+                  for node in nodes(design)
+                  if node.get("kind") == "BlockingAssign"]
+        self.assertIn(0, values)
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "CallExpression" for node in nodes(design)))
+
+    def test_value_position_query_rejects_later_status_read(self):
+        design = lower(
+            """module top;
+               integer status, full;
+               initial begin
+                 $q_initialize(1, 1, 2, status);
+                 full = $q_full(1, status);
+                 if (status !== 0) $display(\"FAIL\");
+               end
+               endmodule""")
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)))
+
     def test_dynamic_id_remains_loud(self):
         design = lower(
             """module top;

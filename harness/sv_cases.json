@@ -2685,6 +2685,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "q_full_value_history",
+      "file": "Examples/system-verilog/q_full_value_history/q_full_value_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

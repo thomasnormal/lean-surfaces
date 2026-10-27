@@ -110,6 +110,23 @@ partial** (67 include skips); `CallExpression` falls **2,754 → 2,752** while
 `AssignmentExpression:target` remains **2,852**. Differential coverage grows
 **297/292/0/5 → 298/293/0/5**; grammar remains **218/96/122**.
 
+## `$q_full` value calls after prior status checks — 2026-10-27
+
+Value-position `$q_full` now retains the existing literal queue-history model
+when the separate status output has only been read before the first query.
+Initialization and literal-add statuses remain represented scalar writes, while
+the query value is derived from the source-ordered capacity counter. Reads of
+an unmodeled `$q_full` status after the first query, symbolic IDs, payload
+observations, removals, and other queue operations remain loud. The
+`q_full_value_history` fixture supplies the two query results and the
+source-order status check.
+
+The 22,059-path census moves **5,270 → 5,272 clean** and **16,722 → 16,720
+partial** (67 include skips); `CallExpression` falls **2,752 → 2,750** while
+`ExpressionStatement:CallExpression` and `AssignmentExpression:target` remain
+**2,760** and **2,852**. Differential coverage grows **298/293/0/5 →
+299/294/0/5**; grammar remains **218/96/122**.
+
 ## Queue-removal status — 2026-10-27
 
 IEEE 1800-2023 §20.15.6 gives scalar statuses for queue removal without

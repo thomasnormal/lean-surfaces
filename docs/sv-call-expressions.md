@@ -73,6 +73,17 @@ non-32-bit targets, and value-position calls remain loud. The
 `dist_uniform_signed_bounds` fixture checks both admitted ranges, and the two
 chapter-20 negative-bound witnesses become clean.
 
+## `$q_full` value calls after prior status checks — 2026-10-27
+
+Value-position `$q_full` calls now remain admitted when a literal queue was
+initialized and any status read occurred before the first query. The query
+value follows the existing literal capacity/add history, and the status output
+is left unobserved after that point. A later status read, symbolic queue ID,
+payload observation, removal, or other queue operation remains loud. The
+`q_full_value_history` fixture covers the empty and full results plus the
+source-ordered initialization check; two chapter-20 value-query witnesses
+become clean.
+
 ## Refusal boundary
 
 The residual expression calls need state or effects absent from that surface:

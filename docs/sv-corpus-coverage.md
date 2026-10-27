@@ -90,6 +90,20 @@ The committed **22,059-path** snapshot moves **5,268 → 5,270 clean** and
 **2,754 → 2,752**, and differential coverage grows **297/292/0/5 →
 298/293/0/5** with grammar coverage unchanged at **218/96/122**.
 
+## `$q_full` value calls after prior status checks — 2026-10-27
+
+Value-position `$q_full` calls now use the source-pure literal queue history
+when the status output has only been read before the first query. The existing
+capacity counter supplies the query result; later status reads, symbolic IDs,
+payload observations, removals, and other queue operations remain loud. The
+`q_full_value_history` fixture and extractor regression pin the empty/full
+sequence, and the two matching chapter-20 witnesses become clean.
+
+The committed **22,059-path** snapshot moves **5,270 → 5,272 clean** and
+**16,722 → 16,720 partial** (67 include skips). `CallExpression` falls
+**2,752 → 2,750**, and differential coverage grows **298/293/0/5 →
+299/294/0/5** with grammar coverage unchanged at **218/96/122**.
+
 ## Queue-removal status — 2026-10-27
 
 Undefined literal queue IDs now lower `$q_remove` to status 2. A valid literal

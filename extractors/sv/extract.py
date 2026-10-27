@@ -11556,6 +11556,17 @@ def _q_full_value_call(sm, expression):
                     ))
 
         instance.visit(collect_outputs)
+        q_full_offsets = []
+        def collect_q_full(node):
+            if (type(node).__name__ == "CallExpression"
+                    and getattr(node, "isSystemCall", False)
+                    and getattr(node, "subroutineName", "") == "$q_full"):
+                source_range = getattr(node, "sourceRange", None)
+                q_full_offsets.append(
+                    getattr(getattr(source_range, "start", None), "offset", None))
+        instance.visit(collect_q_full)
+        first_q_full = min((offset for offset in q_full_offsets
+                            if offset is not None), default=None)
         observed = False
 
         def inspect(node):
@@ -11567,7 +11578,15 @@ def _q_full_value_call(sm, expression):
                     getattr(getattr(node_range, "start", None), "offset", None),
                     getattr(getattr(node_range, "end", None), "offset", None),
                 )
-                if span not in allowed:
+                # The status output of q_full itself is intentionally not
+                # represented by the value-position literal.  Reads before
+                # the first q_full still observe the represented initializer
+                # or add status, while any later read would observe an
+                # unmodeled q_full status and must remain loud.
+                before_first_q_full = (first_q_full is not None
+                                       and span[0] is not None
+                                       and span[0] < first_q_full)
+                if span not in allowed and not before_first_q_full:
                     observed = True
 
         instance.visit(inspect)

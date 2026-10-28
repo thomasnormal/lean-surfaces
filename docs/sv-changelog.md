@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.117] — 2026-10-28
+
+Blocking conditional assignments over multidimensional fixed unpacked integral
+arrays now lower each ordinal cell to a source-preserving ternary, including
+arrays with differing declared bounds but equal shapes. Nonblocking self-alias
+branches remain loud. The new fixture and Lean receipt pass; differential
+coverage grows **373 rows / 367 matches / 0 disagreements / 6 refusals → 374 /
+368 / 0 / 6**, while the committed census remains **5,602 clean / 16,390
+partial** because the shape is absent from the unavailable external checkout.
+
 ## [0.1.116] — 2026-10-28
 
 Exact blocking self-copies of multidimensional fixed unpacked integral arrays

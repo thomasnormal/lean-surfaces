@@ -3361,6 +3361,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "fixed_array_nested_conditional_self_alias",
+      "file": "Examples/system-verilog/fixed_array_nested_conditional_self_alias/fixed_array_nested_conditional_self_alias.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

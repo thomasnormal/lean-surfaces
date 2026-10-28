@@ -9,6 +9,20 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Multidimensional fixed-array conditional self-aliases — 2026-10-28
+
+A blocking conditional assignment over a multidimensional fixed unpacked
+integral array may read the destination in one branch. The legacy extractor
+now lowers each ordinal cell to a source-preserving ternary, including arrays
+whose declared bounds differ but whose shapes have the same cell count.
+Nonblocking self-alias branches remain `AssignmentExpression:target` because
+publication is scheduler-visible.
+
+`fixed_array_nested_conditional_self_alias` supplies the differential `PASS`
+witness and Lean receipt. The committed corpus snapshot remains **5,602 clean /
+16,390 partial** with 67 include skips because this fixture shape is absent
+from the unavailable external checkout.
+
 ## Multidimensional fixed-array self-copies — 2026-10-28
 
 An exact blocking self-copy of a multidimensional fixed unpacked integral array

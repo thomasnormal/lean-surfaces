@@ -6891,6 +6891,118 @@ def _fixed_array_nested_copy_assignment(sm, expr):
         return None
 
 
+def _fixed_array_nested_conditional_assignment(sm, expr):
+    """Lower a pure conditional assignment over a nested fixed array.
+
+    The array is already represented by independent flattened cells.  A
+    blocking conditional can therefore select each corresponding source cell
+    independently, including a self-alias branch; nonblocking self-aliases
+    remain loud because their publication cannot be erased.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
+                or expr.timingControl is not None):
+            return None
+        lhs = expr.left
+        conditional = expr.right
+        if (not _storage_expression(lhs)
+                or type(conditional).__name__ != "ConditionalExpression"
+                or len(conditional.conditions) != 1
+                or conditional.conditions[0].pattern is not None):
+            return None
+        lhs_shape = _fixed_array_dimensions(lhs.type)
+        then_shape = _fixed_array_dimensions(conditional.left.type)
+        else_shape = _fixed_array_dimensions(conditional.right.type)
+        if lhs_shape is None or then_shape is None or else_shape is None:
+            return None
+        lhs_dims, lhs_leaf = lhs_shape
+        then_dims, then_leaf = then_shape
+        else_dims, else_leaf = else_shape
+        if (len(lhs_dims) <= 1 or len(lhs_dims) != len(then_dims)
+                or len(lhs_dims) != len(else_dims)
+                or type(lhs_leaf).__name__ in (
+                    "FixedSizeUnpackedArrayType", "UnpackedStructType",
+                    "UnpackedUnionType", "DynamicArrayType", "QueueType",
+                    "AssociativeArrayType")
+                or type(then_leaf).__name__ != type(lhs_leaf).__name__
+                or type(else_leaf).__name__ != type(lhs_leaf).__name__):
+            return None
+        lhs_width, lhs_two, lhs_reason = type_width_2s(lhs_leaf)
+        then_width, _then_two, then_reason = type_width_2s(then_leaf)
+        else_width, _else_two, else_reason = type_width_2s(else_leaf)
+        if (lhs_width is None or then_width is None or else_width is None
+                or lhs_reason is not None or then_reason is not None
+                or else_reason is not None
+                or lhs_width != then_width or lhs_width != else_width):
+            return None
+        if not _case_source_expression_ok(conditional.conditions[0].expr):
+            return None
+        if (not _case_source_expression_ok(conditional.left)
+                or not _case_source_expression_ok(conditional.right)):
+            return None
+        lhs_root = _array_storage_name(lhs.symbol)
+        then_root = _array_storage_name(conditional.left.symbol)
+        else_root = _array_storage_name(conditional.right.symbol)
+        if not lhs_root or not then_root or not else_root:
+            return None
+        if expr.isNonBlocking and lhs_root in (then_root, else_root):
+            return None
+        condition = convert_expr(sm, conditional.conditions[0].expr)
+        if condition is None or not _case_expression_ok(condition):
+            return None
+
+        def positions(dimensions):
+            result = [()]
+            for left, right in dimensions:
+                step = 1 if right >= left else -1
+                result = [prefix + (position,)
+                          for prefix in result
+                          for position in range(left, right + step, step)]
+            return result
+
+        lhs_positions = positions(lhs_dims)
+        then_positions = positions(then_dims)
+        else_positions = positions(else_dims)
+        if (len(lhs_positions) != len(then_positions)
+                or len(lhs_positions) != len(else_positions)):
+            return None
+
+        def cell(root, indexes):
+            return root + "".join(f"[{position}]" for position in indexes)
+
+        statements = []
+        for lhs_indexes, then_indexes, else_indexes in zip(
+                lhs_positions, then_positions, else_positions):
+            value = {
+                "kind": "Ternary",
+                "span": node_span(sm, conditional),
+                "width": lhs_width,
+                "cond": condition,
+                "then": {"kind": "Ident", "span": node_span(sm, conditional.left),
+                          "width": then_width,
+                          "name": cell(then_root, then_indexes)},
+                "else": {"kind": "Ident", "span": node_span(sm, conditional.right),
+                          "width": else_width,
+                          "name": cell(else_root, else_indexes)},
+            }
+            if lhs_two:
+                value = squash2_wrap(value, lhs_width)
+            statements.append({
+                "kind": "NonblockingAssign" if expr.isNonBlocking
+                else "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {"kind": "Ident", "span": node_span(sm, lhs),
+                           "width": lhs_width,
+                           "name": cell(lhs_root, lhs_indexes)},
+                "value": value,
+            })
+        return {"kind": "Block", "span": node_span(sm, expr),
+                "stmts": statements,
+                "fixed_array_nested_conditional_lowered": True}
+    except Exception:
+        return None
+
+
 def _fixed_array_conditional_assignment(sm, expr):
     """Lower a pure conditional whole-array assignment cell by cell."""
     try:
@@ -19562,6 +19674,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         queue_array_copy = _fixed_array_queue_copy_assignment(sm, expr)
         if queue_array_copy is not None:
             return queue_array_copy
+        array_nested_conditional = _fixed_array_nested_conditional_assignment(sm, expr)
+        if array_nested_conditional is not None:
+            return array_nested_conditional
         array_nested_copy = _fixed_array_nested_copy_assignment(sm, expr)
         if array_nested_copy is not None:
             return array_nested_copy

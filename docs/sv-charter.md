@@ -1,5 +1,23 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Finite associative-array compound assignment histories — 2026-10-28
+
+Source-pure finite associative arrays now admit IEEE 1800-2023 §10.4.1
+compound assignments (`+=`, `<<=`, and the other ordinary arithmetic and bit
+operators) at literal selectors or immutable literal-key bindings. The
+existing flat-cell lowering captures the selected value and marks presence;
+`num()` and `size()` replay those writes and report the exact distinct-key
+count. Dynamic selectors, aliases, controls, timing, and unsupported operators
+remain loud. The `assoc_compound_history` fixture, extractor regressions, and
+Lean receipt pass.
+
+The fresh **22,065-path** census moves **5,668 → 5,670 clean** and
+**16,330 → 16,328 partial** with 67 include skips. The
+`AssignmentExpression:target` blocker remains **2,706**,
+`ExpressionStatement:CallExpression` remains **2,696**, and `CallExpression`
+falls **2,619 → 2,617**. Differential coverage grows **385/379/0/6 →
+386/380/0/6**; grammar coverage moves **218/99/119 → 218/100/118**.
+
 ## Finite associative-array `next()`/`prev()` histories — 2026-10-28
 
 Integral-key finite associative arrays now lower `next(index)` and

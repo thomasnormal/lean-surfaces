@@ -88,6 +88,17 @@ class AssocStringCells(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_num_and_size_replay_compound_key_writes(self):
+        design = extract_source(
+            'module top; initial begin int score[string]; '
+            'string key = "beta"; score["alpha"] = 3; score[key] = 10; '
+            'score[key] += 5; score["alpha"] <<= 2; '
+            'if (score.num() == 2 && score.size() == 2 && '
+            'score["alpha"] == 12 && score[key] == 15) $display("PASS"); '
+            'end endmodule')
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_dynamic_count_history_stays_loud(self):
         design = extract_source(
             'module top; int score[string]; string key; initial begin '

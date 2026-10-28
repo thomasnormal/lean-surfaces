@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.129] — 2026-10-28
+
+Finite source-pure associative arrays now replay compound assignments at
+literal selectors and immutable literal-key bindings. Their flat cells retain
+the read-modify-write value and presence, so later `num()`/`size()` calls see
+the exact distinct-key count. Dynamic or controlled selectors, aliases, timing,
+and unsupported operators remain loud. The fixture, extractor regressions, and
+Lean receipt pass. Differential coverage grows **385 rows / 379 matches /
+0 disagreements / 6 recorded refusals → 386 / 380 / 0 / 6**. The fresh
+22,065-path census moves **5,668 → 5,670 clean / 16,330 → 16,328 partial**;
+`CallExpression` falls **2,619 → 2,617**.
+
 ## [0.1.128] — 2026-10-28
 
 Integral-key finite associative arrays now lower source-pure `next(index)` and

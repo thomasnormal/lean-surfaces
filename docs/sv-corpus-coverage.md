@@ -1,5 +1,19 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Finite associative-array compound assignment histories — 2026-10-28
+
+The legacy extractor now replays source-pure finite associative-array compound
+assignments at literal selectors and immutable literal-key bindings. Flat-cell
+read-modify-write lowering preserves the resulting values and presence bits;
+later `num()` and `size()` queries count the distinct keys exactly. Dynamic or
+controlled selectors, aliases, timing, and unsupported operators remain loud.
+The `assoc_compound_history` fixture supplies the differential row and Lean
+receipt. The fresh 22,065-path census moves **5,668 → 5,670 clean / 16,330 →
+16,328 partial** with 67 include skips; `AssignmentExpression:target` remains
+2,706, `ExpressionStatement:CallExpression` remains 2,696, and `CallExpression`
+falls **2,619 → 2,617**. Differential coverage grows **385/379/0/6 →
+386/380/0/6**.
+
 ## Finite associative-array `next()`/`prev()` histories — 2026-10-28
 
 The legacy extractor now replays source-pure integral associative-array

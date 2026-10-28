@@ -12471,11 +12471,18 @@ def _associative_count_query(expression):
                        else _assoc_integral_key(key_expr, symbol))
                 if start >= position:
                     return
+                op = getattr(node, "op", None)
+                rhs = (getattr(node, "right", None)
+                       if op is None else _compound_rhs(getattr(node, "right", None)))
+                compound_ok = (op is not None
+                               and BINARY_OPS.get(op) in (
+                                   "+", "-", "*", "/", "%", "&", "|", "^",
+                                   "<<", ">>", "<<<", ">>>"))
                 if (key not in cells
-                        or getattr(node, "op", None) is not None
+                        or (op is not None and not compound_ok)
                         or getattr(node, "timingControl", None) is not None
                         or getattr(node, "isNonBlocking", False)
-                        or not _case_source_expression_ok(getattr(node, "right", None))
+                        or not _case_source_expression_ok(rhs)
                         or any(control is not None
                                and getattr(getattr(control, "start", None), "offset", 10**18) <= start
                                and start < getattr(getattr(control, "end", None), "offset", -1)

@@ -3481,6 +3481,16 @@
         "PASS5"
       ],
       "expect": "match"
+    },
+    {
+      "name": "assoc_compound_history",
+      "file": "Examples/system-verilog/assoc_compound_history/assoc_compound_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS1",
+        "PASS2"
+      ],
+      "expect": "match"
     }
   ]
 }

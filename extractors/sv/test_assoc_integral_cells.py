@@ -87,6 +87,16 @@ class AssocIntegralCells(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_num_and_size_replay_compound_key_writes(self):
+        design = extract_source(
+            'module top; int score[int]; initial begin '
+            'score[1] = 3; score[2] = 10; score[2] += 5; score[1] <<= 2; '
+            'if (score.num() == 2 && score.size() == 2 && '
+            'score[1] == 12 && score[2] == 15) $display("PASS"); '
+            'end endmodule')
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_literal_key_delete_updates_presence_value_and_count(self):
         design = extract_source(
             'module top; int score[int]; initial begin '

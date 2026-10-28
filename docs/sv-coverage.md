@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 385 | 379 | 0 | 6 | sv-tests-2 declarations |
+| 386 | 380 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -399,6 +399,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `assoc_endpoint_statement_history` | `Examples/system-verilog/assoc_endpoint_statement_history/assoc_endpoint_statement_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `streaming_assoc_sorted` | `Examples/system-verilog/streaming_assoc_sorted/streaming_assoc_sorted.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_next_prev_history` | `Examples/system-verilog/assoc_next_prev_history/assoc_next_prev_history.sv` | match | **MATCH** | `ok` | MATCH |
+| `assoc_compound_history` | `Examples/system-verilog/assoc_compound_history/assoc_compound_history.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -406,7 +407,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 218 | 99 | 119 | pyslang SyntaxKind |
+| 218 | 100 | 118 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -521,7 +522,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.LogicType` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.LogicalAndExpression` | `Examples/system-verilog/array_named_display/array_named_display.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalImplicationExpression` | `Examples/system-verilog/implication/implication.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
-| `SyntaxKind.LogicalLeftShiftAssignmentExpression` | `Examples/system-verilog/compound_assignments/partial_windows.sv` | **REFUSE** | `unsupported` AssignmentExpression:compound-partial-range |
+| `SyntaxKind.LogicalLeftShiftAssignmentExpression` | `Examples/system-verilog/assoc_compound_history/assoc_compound_history.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalOrExpression` | `Examples/system-verilog/assoc_count_history/assoc_count_history.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalRightShiftAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalShiftLeftExpression` | `Examples/system-verilog/min_typ_max/composition.sv` | **MATCH** | `ok`  |
@@ -635,13 +636,13 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22065 | 5668 | 16330 | 67 |
+| 22065 | 5670 | 16328 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2706 |
 | `ExpressionStatement:CallExpression` | 2696 |
-| `CallExpression` | 2619 |
+| `CallExpression` | 2617 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2112 |
 | `SubroutineSymbol:Subroutine` | 1469 |

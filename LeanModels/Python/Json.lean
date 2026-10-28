@@ -1644,6 +1644,7 @@ private def immediateBuiltinAlias (name : String) : Bool :=
     || name == "sorted" || name == "max" || name == "min" || name == "abs"
     || name == "int" || name == "float" || name == "all" || name == "any"
     || name == "str" || name == "sum" || name == "tuple" || name == "list"
+    || name == "ord"
 
 private def rewriteImmediateBuiltinAlias (outer : List String)
     (params : Array Param) (body : Array Stmt) : Array Stmt :=

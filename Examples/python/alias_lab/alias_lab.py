@@ -101,3 +101,8 @@ def list_alias(value):
     f = list
     return f(value)
 
+
+def ord_alias(value):
+    f = ord
+    return f(value)
+

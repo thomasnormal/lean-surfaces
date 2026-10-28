@@ -80,6 +80,8 @@ load_program alias_lab from "Examples/python/alias_lab/alias_lab.json"
 #py_check alias_lab.tuple_alias("ab") = ("a", "b")
 #py_check alias_lab.list_alias((1, 2)) = [1, 2]
 #py_check alias_lab.list_alias("ab") = ["a", "b"]
+#py_check alias_lab.ord_alias("A") = 65
+#py_check alias_lab.ord_alias("z") = 122
 
 /-! ### the alias is NOT a value (the refusal direction, unchanged) -/
 

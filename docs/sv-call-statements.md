@@ -461,3 +461,12 @@ checked through the shared floating purity walk before their opaque bit pattern
 is erased; exact unsigned widths remain 64 and 32 bits respectively. Effectful
 or unsupported operands and value-position conversions remain loud. The
 `discarded_pure_real_to_bits` fixture supplies the transcript and receipt.
+
+## Discarded pure `$rtoi` conversions — 2026-10-28
+
+Discarded `$rtoi` calls now admit source-pure real operands through the shared
+floating purity walk. Read-only real names, literals, and nested pure math calls
+are evaluated at the source boundary and then erased; the signed 32-bit return
+shape remains checked. Effectful or unsupported operands and value-position
+calls remain loud. The `discarded_pure_rtoi` fixture supplies the transcript and
+receipt.

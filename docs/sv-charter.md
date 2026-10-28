@@ -10540,3 +10540,12 @@ calls while retaining the exact 64-bit and 32-bit unsigned result boundaries.
 Effectful, timed, unsupported, and value-position forms remain loud. The
 `discarded_pure_real_to_bits` fixture and extractor regressions are the
 acceptance evidence.
+
+## Discarded pure `$rtoi` conversions — 2026-10-28
+
+The legacy self-check tier now erases discarded `$rtoi` calls with source-pure
+real operands. The shared floating expression walk admits reads, literals, and
+nested pure math calls while preserving the signed 32-bit conversion boundary.
+Effectful, timed, unsupported, and value-position forms remain loud. The
+`discarded_pure_rtoi` fixture and extractor regressions are the acceptance
+evidence.

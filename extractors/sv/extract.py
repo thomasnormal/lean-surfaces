@@ -12356,6 +12356,25 @@ def _shortrealtobits_pure_statement_call(expression):
     return _floating_bits_statement_call(expression, "$shortrealtobits", 32)
 
 
+def _rtoi_pure_statement_call(expression):
+    """Whether discarded ``$rtoi`` has a source-pure real operand."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "$rtoi"
+                or len(expression.arguments) != 1
+                or getattr(expression.type, "bitWidth", None) != 32
+                or not getattr(expression.type, "isIntegral", False)
+                or not getattr(expression.type, "isSigned", False)):
+            return False
+        argument = expression.arguments[0]
+        return (type(argument.type.canonicalType).__name__ == "FloatingType"
+                and _floating_pure_operand(argument))
+    except Exception:
+        return False
+
+
 def _floating_math_statement_call(expression):
     """Whether a discarded real math call has only source-pure operands."""
     try:
@@ -22675,6 +22694,12 @@ def _convert_syscall(sm, s, e):
         # reused so the literal/range boundary cannot drift between forms.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "rtoi_literal_statement": True}
+    if is_sys and _rtoi_pure_statement_call(e):
+        # `$rtoi`'s integer result is discarded here. Preserve the signed
+        # 32-bit return boundary and erase only after the real source passes
+        # the shared purity walk.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "rtoi_pure_statement": True}
     if is_sys and _realtobits_literal_call(e):
         return {"kind": "Empty", "span": node_span(sm, s),
                 "realtobits_literal_statement": True}

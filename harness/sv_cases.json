@@ -3784,6 +3784,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "discarded_pure_rtoi",
+      "file": "Examples/system-verilog/discarded_pure_rtoi/discarded_pure_rtoi.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

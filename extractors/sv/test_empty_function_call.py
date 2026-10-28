@@ -387,6 +387,34 @@ class EmptyFunctionCalls(unittest.TestCase):
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))
 
+    def test_rtoi_pure_operand_statement_is_inert(self):
+        design = lower(
+            'module top; real value; initial begin $rtoi(value); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("rtoi_pure_statement")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_rtoi_nested_pure_math_statement_is_inert(self):
+        design = lower(
+            'module top; initial begin $rtoi($sqrt(16.0)); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("rtoi_pure_statement")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_rtoi_effectful_operand_stays_loud(self):
+        design = lower(
+            'module top; integer value; initial begin '
+            '$rtoi($sqrt(value++)); $display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
     def test_rtoi_literal_itor_conversion_is_exact(self):
         design = lower(
             'module top; initial if ($rtoi($itor(-17)) === -17) '

@@ -96,3 +96,8 @@ def tuple_alias(value):
     f = tuple
     return f(value)
 
+
+def list_alias(value):
+    f = list
+    return f(value)
+

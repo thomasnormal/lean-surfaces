@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 396 | 390 | 0 | 6 | sv-tests-2 declarations |
+| 397 | 391 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -393,6 +393,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `fixed_array_nested_conditional_self_alias` | `Examples/system-verilog/fixed_array_nested_conditional_self_alias/fixed_array_nested_conditional_self_alias.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_nested_subarray_copy` | `Examples/system-verilog/fixed_array_nested_subarray_copy/fixed_array_nested_subarray_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_typename_assignment` | `Examples/system-verilog/string_typename_assignment/string_typename_assignment.sv` | match | **MATCH** | `ok` | MATCH |
+| `typename_comparison` | `Examples/system-verilog/typename_comparison/typename_comparison.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_scope_assignment` | `Examples/system-verilog/string_sformatf_scope_assignment/string_sformatf_scope_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_scope_wrapper_assignment` | `Examples/system-verilog/string_sformatf_scope_wrapper_assignment/string_sformatf_scope_wrapper_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_putc_history` | `Examples/system-verilog/string_putc_history/string_putc_history.sv` | match | **MATCH** | `ok` | MATCH |
@@ -646,13 +647,13 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22065 | 5723 | 16275 | 67 |
+| 22065 | 5727 | 16271 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2695 |
 | `ExpressionStatement:CallExpression` | 2677 |
-| `CallExpression` | 2613 |
+| `CallExpression` | 2606 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2112 |
 | `SubroutineSymbol:Subroutine` | 1469 |

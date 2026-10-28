@@ -3417,6 +3417,15 @@
       "expect": "match"
     },
     {
+      "name": "typename_comparison",
+      "file": "Examples/system-verilog/typename_comparison/typename_comparison.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "string_sformatf_scope_assignment",
       "file": "Examples/system-verilog/string_sformatf_scope_assignment/string_sformatf_scope_assignment.sv",
       "module": "top",

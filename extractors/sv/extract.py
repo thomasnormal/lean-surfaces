@@ -8189,6 +8189,30 @@ def _size_assoc_exists_operand(operand, other, span):
 _STRING_COMPARE_SYMS = {"==", "!=", "===", "!==", "<", "<=", ">", ">="}
 
 
+def _sv_symbols_equal(left, right):
+    """Compare frontend symbol wrappers for one logical declaration.
+
+    pyslang may materialize a fresh Python wrapper each time a symbol is read
+    from an AST node.  Object identity is therefore not stable across a
+    history walk.  The hierarchical path plus declaration location is stable
+    and also keeps same-named symbols in different scopes distinct.
+    """
+    if left is right:
+        return True
+    if left is None or right is None:
+        return False
+    try:
+        left_path = getattr(left, "hierarchicalPath", None)
+        right_path = getattr(right, "hierarchicalPath", None)
+        left_location = getattr(left, "location", None)
+        right_location = getattr(right, "location", None)
+        return (left_path is not None and left_path == right_path
+                and left_location is not None
+                and left_location == right_location)
+    except Exception:
+        return False
+
+
 def _string_compare_source_value(operand, position):
     """Resolve one source-pure ASCII string at a comparison position.
 
@@ -8213,9 +8237,12 @@ def _string_compare_source_value(operand, position):
                                 for char in value) else None)
         if (type(node).__name__ == "CallExpression"
                 and getattr(node, "isSystemCall", False)
-                and getattr(node, "subroutineName", "") in ("toupper", "tolower")
+                and getattr(node, "subroutineName", "") in
+                    ("toupper", "tolower", "$typename")
                 and len(getattr(node, "arguments", ())) == 1):
-            return _string_source_value(node, position)
+            return (_typename_source_value(node)
+                    if node.subroutineName == "$typename"
+                    else _string_source_value(node, position))
         if (type(node).__name__ != "NamedValueExpression"
                 or type(node.type.canonicalType).__name__ != "StringType"):
             return None
@@ -8457,7 +8484,8 @@ def _string_literal_history_before(receiver, position):
                     return
                 if (kind != "AssignmentExpression"
                         or getattr(tree_node, "left", None) is None
-                        or getattr(tree_node.left, "symbol", None) is not symbol):
+                        or not _sv_symbols_equal(
+                            getattr(tree_node.left, "symbol", None), symbol)):
                     return
                 start = getattr(getattr(getattr(tree_node, "sourceRange", None),
                                         "start", None), "offset", -1)
@@ -8626,8 +8654,9 @@ def _string_putc_operation(expression):
                     and len(getattr(index_expr, "arguments", ())) == 1
                     and type(getattr(index_expr, "arguments", ())[0]).__name__
                     == "NamedValueExpression"
-                    and getattr(index_expr, "arguments", ())[0].symbol
-                    is getattr(receiver, "symbol", None)):
+                    and _sv_symbols_equal(
+                        getattr(index_expr, "arguments", ())[0].symbol,
+                        getattr(receiver, "symbol", None))):
                 position = getattr(
                     getattr(getattr(expression, "sourceRange", None),
                             "start", None), "offset", None)
@@ -8676,7 +8705,8 @@ def _string_putc_history_event(node, symbol, controls):
         arguments = list(getattr(node, "arguments", ()))
         receiver = arguments[0] if arguments else None
         if (type(receiver).__name__ != "NamedValueExpression"
-                or getattr(receiver, "symbol", None) is not symbol):
+                or not _sv_symbols_equal(getattr(receiver, "symbol", None),
+                                          symbol)):
             return None
         operation = _string_putc_operation(node)
         start = getattr(getattr(getattr(node, "sourceRange", None),
@@ -8750,7 +8780,8 @@ def _string_integer_conversion_history_event(node, symbol, controls):
         arguments = list(getattr(node, "arguments", ()))
         receiver = arguments[0] if arguments else None
         if (type(receiver).__name__ != "NamedValueExpression"
-                or getattr(receiver, "symbol", None) is not symbol):
+                or not _sv_symbols_equal(getattr(receiver, "symbol", None),
+                                          symbol)):
             return None
         start = getattr(getattr(getattr(node, "sourceRange", None),
                                 "start", None), "offset", -1)
@@ -9132,12 +9163,14 @@ def _string_transform_history_value(expression, position):
                     return
                 left_kind = type(left).__name__
                 is_whole = (left_kind == "NamedValueExpression"
-                            and getattr(left, "symbol", None) is symbol)
+                            and _sv_symbols_equal(getattr(left, "symbol", None),
+                                                  symbol))
                 is_byte = False
                 if left_kind == "ElementSelectExpression":
                     receiver = getattr(left, "value", None)
                     is_byte = (type(receiver).__name__ == "NamedValueExpression"
-                               and getattr(receiver, "symbol", None) is symbol)
+                               and _sv_symbols_equal(
+                                   getattr(receiver, "symbol", None), symbol))
                 if not (is_whole or is_byte):
                     return
                 start = getattr(getattr(getattr(tree_node, "sourceRange", None),
@@ -9290,7 +9323,8 @@ def _convert_string_compare(sm, expression, sym):
         return (type(node).__name__ == "StringLiteral"
                 or (type(node).__name__ == "CallExpression"
                     and getattr(node, "isSystemCall", False)
-                    and getattr(node, "subroutineName", "") in ("toupper", "tolower")
+                    and getattr(node, "subroutineName", "") in
+                        ("toupper", "tolower", "$typename")
                     and len(getattr(node, "arguments", ())) == 1)
                 or (type(node).__name__ == "NamedValueExpression"
                     and type(node.type.canonicalType).__name__ == "StringType"))
@@ -10924,6 +10958,19 @@ def _convert_legacy_call(sm, expression):
     assoc_exists = _finite_assoc_exists_cell(sm, expression)
     if assoc_exists is not None:
         return _convert_assoc_exists(sm, expression, assoc_exists)
+    if (_SYM is None and getattr(expression, "isSystemCall", False)
+            and getattr(expression, "subroutineName", "") == "$typename"):
+        text = _typename_source_value(expression)
+        if text is not None:
+            data = text.encode("ascii")
+            return {
+                "kind": "Literal",
+                "span": node_span(sm, expression),
+                "width": 8 * len(data) if data else 8,
+                "bits": "".join(format(byte, "08b") for byte in data)
+                        if data else "0" * 8,
+                "typename_lowered": True,
+            }
     # An empty zero-argument function returns its type's default value.  The
     # declaration has already been erased as metadata; materialize that
     # default at an expression use (all-zero for 2-state, all-x for 4-state).
@@ -17229,21 +17276,31 @@ def _string_literal_len_method(expression):
             def inspect(node):
                 if (type(node).__name__ != "AssignmentExpression"
                         or getattr(node, "left", None) is None
-                        or getattr(node.left, "symbol", None) is not symbol
+                        or not _sv_symbols_equal(
+                            getattr(node.left, "symbol", None), symbol)
                         or getattr(node, "op", None) is not None
                         or getattr(node, "timingControl", None) is not None):
                     return
                 value = node.right
                 while type(value).__name__ == "ConversionExpression":
                     value = getattr(value, "operand", None)
-                if (type(value).__name__ != "StringLiteral"
-                        or getattr(value, "bad", False)
-                        or not isinstance(getattr(value, "value", None), str)
-                        or any(ord(char) == 0 or ord(char) > 127
-                               for char in value.value)):
+                if type(value).__name__ == "StringLiteral":
+                    if (getattr(value, "bad", False)
+                            or not isinstance(getattr(value, "value", None), str)
+                            or any(ord(char) == 0 or ord(char) > 127
+                                   for char in value.value)):
+                        return
+                    text = value.value
+                elif (type(value).__name__ == "CallExpression"
+                      and getattr(value, "isSystemCall", False)
+                      and getattr(value, "subroutineName", "") == "$typename"):
+                    text = _typename_source_value(value)
+                    if text is None:
+                        return
+                else:
                     return
                 assignments.append((getattr(node.left.sourceRange.start, "offset", -1),
-                                    getattr(value, "value", "")))
+                                    text))
             instance.visit(inspect)
         name = getattr(receiver.symbol, "name", "")
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
@@ -17695,7 +17752,8 @@ def _convert_string_literal_len_method(sm, expression):
             nonlocal value
             if (type(node).__name__ != "AssignmentExpression"
                     or getattr(node, "left", None) is None
-                    or getattr(node.left, "symbol", None) is not symbol
+                    or not _sv_symbols_equal(
+                        getattr(node.left, "symbol", None), symbol)
                     or getattr(node, "op", None) is not None
                     or getattr(node, "timingControl", None) is not None
                     or node.sourceRange.start.offset >= position):
@@ -17705,6 +17763,14 @@ def _convert_string_literal_len_method(sm, expression):
                 candidate = getattr(candidate, "operand", None)
             if type(candidate).__name__ == "StringLiteral":
                 value = candidate.value
+            elif (type(candidate).__name__ == "CallExpression"
+                  and getattr(candidate, "isSystemCall", False)
+                  and getattr(candidate, "subroutineName", "") == "$typename"):
+                value = _typename_source_value(candidate)
+                if value is None:
+                    return
+            else:
+                return
         instance.visit(inspect)
     return {
         "kind": "Literal",

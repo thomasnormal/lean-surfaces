@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.140] — 2026-10-28
+
+Source-pure `$typename` queries now lower to ASCII packed strings for direct
+comparisons and for blocking assignments observed by `.len()`. Effectful and
+non-ASCII type-name sources remain loud. The `typename_comparison` fixture,
+extractor regression, differential row, and Lean receipt pass. Differential
+coverage grows **396 rows / 390 matches / 0 disagreements / 6 recorded
+refusals → 397 / 391 / 0 / 6**; the fresh 22,065-path census moves **5,723 →
+5,727 clean / 16,275 → 16,271 partial** and `CallExpression` falls **2,613 →
+2,606**.
+
 ## [0.1.46] — 2026-10-28
 
 The SystemVerilog self-check prerelease now has 395 differential rows: 389

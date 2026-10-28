@@ -39,6 +39,14 @@ class TypenameStatement(unittest.TestCase):
         self.assertNotIn("AssignmentExpression:target",
                          [node.get("sv_kind") for node in statements])
 
+    def test_type_name_assignment_supports_length_query(self):
+        design = extract_source(
+            'module top; string s; initial begin '
+            's = $typename(int); if (s.len() == 3) $display("PASS"); '
+            'end endmodule')
+        self.assertNotIn("CallExpression",
+                         [node.get("sv_kind") for node in nodes(design)])
+
     def test_expression_type_name_assignment_stays_loud(self):
         design = extract_source(
             'module top; string s; int counter; initial begin '

@@ -1,5 +1,20 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## `$typename` string comparisons — 2026-10-28
+
+The self-check tier now lowers source-pure `$typename` queries to ASCII packed
+strings. Direct comparisons and blocking assignments followed by `.len()` use
+the frontend's resolved type spelling; effectful or non-ASCII sources remain
+loud. The `typename_comparison` fixture exercises both forms, with extractor
+regression, differential row, and Lean receipt.
+
+The fresh **22,065-path** census moves **5,723 → 5,727 clean** and
+**16,275 → 16,271 partial** with 67 include skips. `CallExpression` falls
+**2,613 → 2,606**; the top `AssignmentExpression:target` and
+`ExpressionStatement:CallExpression` blockers remain **2,695** and **2,677**.
+Differential coverage grows **396/390/0/6 → 397/391/0/6**; grammar coverage
+remains **218/100/118**.
+
 ## String case-conversion comparisons — 2026-10-28
 
 The self-check tier now compares source-pure literal-history

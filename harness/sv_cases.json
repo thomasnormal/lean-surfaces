@@ -47,6 +47,15 @@
       "expect": "match"
     },
     {
+      "name": "string_sformatf_ascii_codes_assignment",
+      "file": "Examples/system-verilog/string_sformatf_ascii_codes_assignment/string_sformatf_ascii_codes_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "string_sformatf_char_assignment",
       "file": "Examples/system-verilog/string_sformatf_char_assignment/string_sformatf_char_assignment.sv",
       "module": "top",

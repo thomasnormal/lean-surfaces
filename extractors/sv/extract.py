@@ -8193,6 +8193,18 @@ def _sformatf_literal_source_value(expression, position=None):
                         or not isinstance(value, str)
                         or not all(0 < ord(char) <= 127 for char in value)):
                     return None
+            elif type(node).__name__ in ("IntegerLiteral",
+                                         "UnbasedUnsizedIntegerLiteral"):
+                if string_marker not in ("%s", "%S", "%0s", "%0S"):
+                    return None
+                bits = svint_bits(node.value)
+                if not bits or len(bits) % 8:
+                    return None
+                chars = [chr(int(bits[offset:offset + 8], 2))
+                         for offset in range(0, len(bits), 8)]
+                if not all(0 < ord(char) <= 127 for char in chars):
+                    return None
+                value = "".join(chars)
             else:
                 value = _string_source_value(node, position)
             if value is None:

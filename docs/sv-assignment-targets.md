@@ -9,6 +9,19 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Integral ASCII-code `$sformatf` string assignments — 2026-10-28
+
+Blocking assignments of `%s`/`%S` `$sformatf` results now replay the packed
+8-bit ASCII sequence from a known integral literal when its width is a
+multiple of eight and every byte is printable. Unknown, non-byte-width,
+NUL/control, dynamic, timed, and nonblocking forms remain
+`AssignmentExpression:target`.
+
+`string_sformatf_ascii_codes_assignment` supplies the differential `PASS`
+witness and Lean receipt. The fresh 22,059-path census moves **5,599 → 5,600
+clean / 16,393 → 16,392 partial** with 67 include skips, and
+`AssignmentExpression:target` falls **2,785 → 2,784**.
+
 ## Literal-prefix/suffix integral `$sformatf` assignments — 2026-10-28
 
 Blocking assignments of a `$sformatf` result with one integral conversion and

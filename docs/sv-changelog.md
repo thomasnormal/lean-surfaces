@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.109] — 2026-10-28
+
+Integral literal operands of `%s`/`%S` `$sformatf` assignments now replay as
+packed printable ASCII bytes when the width is a multiple of eight. Unknown,
+non-byte-width, NUL/control, dynamic, timed, and nonblocking forms remain
+loud. The new fixture and Lean receipt pass; differential coverage grows **365
+rows / 359 matches / 0 disagreements / 6 refusals → 366 / 360 / 0 / 6**, and
+the fresh census moves **5,599 → 5,600 clean / 16,393 → 16,392 partial** with
+`AssignmentExpression:target` at **2,784**.
+
 ## [0.1.108] — 2026-10-28
 
 Literal-prefix/suffix `$sformatf` results with one integral conversion now

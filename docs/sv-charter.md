@@ -38,6 +38,15 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Integral ASCII-code `$sformatf` string assignments — 2026-10-28
+
+Blocking assignments from `%s`/`%S` `$sformatf` forms now use the source-pure
+string-history path for known integral literals whose packed bytes are all
+printable ASCII. Unknown, non-byte-width, NUL/control, dynamic, timed, and
+nonblocking forms remain loud. The `string_sformatf_ascii_codes_assignment`
+fixture and Lean receipt supply the `PASS` evidence; differential coverage
+grows **365/359/0/6 → 366/360/0/6**.
+
 ## Literal-prefix/suffix integral `$sformatf` assignments — 2026-10-28
 
 Blocking assignments from `$sformatf` forms with one integral conversion and

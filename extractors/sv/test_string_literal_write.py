@@ -58,6 +58,38 @@ class LiteralStringWrites(unittest.TestCase):
             5,
         )
 
+    def test_literal_sformatf_string_assignment_replays_integral_ascii_codes(self):
+        design = lower(
+            'module top; string pair, character; initial begin '
+            'pair = $sformatf("%s", 16\'h4869); '
+            'character = $sformatf("%S", 8\'d65); '
+            'if (pair != "Hi" || character != "A") $display("FAIL"); '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False) for node in nodes(design)),
+            2,
+        )
+
+    def test_unknown_or_nonprintable_sformatf_string_integral_operand_stays_loud(self):
+        for source in (
+                'module top; string value; int x; initial begin '
+                'value = $sformatf("%s", x); end endmodule',
+                'module top; string value; initial begin '
+                'value = $sformatf("%s", 12\'h0041); end endmodule',
+                'module top; string value; initial begin '
+                'value = $sformatf("%s", 12\'h410A); end endmodule',
+                'module top; string value; initial begin '
+                'value <= $sformatf("%S", 8\'h41); end endmodule'):
+            design = lower(source)
+            self.assertFalse(any(node.get("string_source_write_noop")
+                                 for node in nodes(design)))
+            self.assertTrue(any(node.get("kind") in ("Unsupported", "Invalid")
+                                or node.get("sv_kind") ==
+                                "AssignmentExpression:target"
+                                for node in nodes(design)))
+
     def test_dynamic_or_multi_format_integral_wrapper_assignment_stays_loud(self):
         for source in (
                 'module top; string value; int x; initial begin '
@@ -435,6 +467,24 @@ class LiteralStringWrites(unittest.TestCase):
                                  for node in nodes(design)))
             self.assertTrue(any(node.get("string_source_write_noop")
                                 for node in nodes(design)))
+
+    def test_corpus_literal_sformatf_string_integral_ascii_assignment_is_admitted(self):
+        import os
+        from pathlib import Path
+        corpus = os.environ.get("SV_TESTS_ROOT")
+        if not corpus:
+            self.skipTest("SV_TESTS_ROOT is unavailable")
+        source = Path(corpus) / "chapter-21" / \
+            "21.2.1.7--string-format-ascii-codes.sv"
+        if not source.exists():
+            self.skipTest("sv-tests-2 checkout is unavailable")
+        design = lower(source.read_text())
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False) for node in nodes(design)),
+            2,
+        )
 
     def test_nonzero_or_dynamic_string_character_writes_stay_loud(self):
         for source in (

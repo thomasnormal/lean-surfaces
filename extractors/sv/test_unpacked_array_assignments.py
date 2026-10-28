@@ -776,10 +776,19 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
-    def test_fixed_array_of_structs_self_copy_stays_loud(self):
+    def test_fixed_array_of_structs_self_copy_is_a_noop(self):
         design = extract_source(
             "module top; typedef struct { int id; int value; } item_t; "
             "item_t source [0:1]; initial source = source; endmodule")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("fixed_array_struct_self_copy_noop")
+                            for node in nodes(design)))
+
+    def test_nonblocking_fixed_array_of_structs_self_copy_stays_loud(self):
+        design = extract_source(
+            "module top; typedef struct { int id; int value; } item_t; "
+            "item_t source [0:1]; initial source <= source; endmodule")
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))

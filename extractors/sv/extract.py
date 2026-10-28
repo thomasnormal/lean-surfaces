@@ -7051,7 +7051,15 @@ def _fixed_array_struct_copy_assignment(sm, expr):
             return None
         lhs_root = _array_storage_name(lhs.symbol)
         rhs_root = _array_storage_name(rhs.symbol)
-        if lhs_root == rhs_root or not _case_source_expression_ok(rhs):
+        if lhs_root == rhs_root:
+            if (expr.isNonBlocking or not _case_source_expression_ok(rhs)):
+                return None
+            return {
+                "kind": "Empty",
+                "span": node_span(sm, expr),
+                "fixed_array_struct_self_copy_noop": True,
+            }
+        if not _case_source_expression_ok(rhs):
             return None
         positions = [()]
         for left, right in lhs_dims:

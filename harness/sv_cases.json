@@ -3318,6 +3318,15 @@
       "expect": "match"
     },
     {
+      "name": "unpacked_struct_conditional_self_alias",
+      "file": "Examples/system-verilog/unpacked_struct_conditional_self_alias/unpacked_struct_conditional_self_alias.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "invalid_packed_dimension_decl",
       "file": "Examples/system-verilog/invalid_packed_dimension_decl/invalid_packed_dimension_decl.sv",
       "module": "top",

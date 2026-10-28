@@ -38,6 +38,15 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Conditional unpacked-struct self-aliases — 2026-10-28
+
+A blocking whole-struct conditional assignment may read the destination in one
+branch; each integral field now lowers to a source-preserving ternary.
+Nonblocking self-alias branches remain loud because publication is
+scheduler-visible. The `unpacked_struct_conditional_self_alias` fixture and
+Lean receipt supply the `PASS` evidence; differential coverage grows
+**370/364/0/6 → 371/365/0/6**.
+
 ## Unpacked-struct self-copies — 2026-10-28
 
 An exact blocking self-copy of a flattened integral unpacked struct now lowers

@@ -6163,8 +6163,9 @@ def _unpacked_struct_conditional_assignment(sm, expr):
         then_name, then_type = then_path
         else_name, else_type = else_path
         if (type(then_type).__name__ != "UnpackedStructType"
-                or type(else_type).__name__ != "UnpackedStructType"
-                or lhs_name in (then_name, else_name)):
+                or type(else_type).__name__ != "UnpackedStructType"):
+            return None
+        if expr.isNonBlocking and lhs_name in (then_name, else_name):
             return None
         lhs_cells = _unpacked_struct_field_cells(lhs_name, lhs_type,
                                                  node_span(sm, expr))

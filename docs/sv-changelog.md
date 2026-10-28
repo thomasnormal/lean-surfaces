@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.114] — 2026-10-28
+
+Blocking conditional whole-struct assignments with a self-alias branch now
+lower each integral field to a source-preserving ternary. Nonblocking
+self-alias branches remain loud because publication is scheduler-visible. The
+new fixture and Lean receipt pass; differential coverage grows **370 rows / 364
+matches / 0 disagreements / 6 refusals → 371 / 365 / 0 / 6**. The committed
+census is unchanged at **5,602 clean / 16,390 partial** because this fixture
+shape is absent from the unavailable external checkout.
+
 ## [0.1.113] — 2026-10-28
 
 Exact blocking self-copies of flattened integral unpacked structs now lower to

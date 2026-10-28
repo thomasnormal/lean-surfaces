@@ -9,6 +9,18 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Conditional unpacked-struct self-aliases — 2026-10-28
+
+A blocking whole-struct conditional assignment may read the destination in one
+branch. The extractor now lowers each integral field to a ternary, preserving
+the source value before its store. Nonblocking self-alias branches remain
+`AssignmentExpression:target` because publication is scheduler-visible.
+
+`unpacked_struct_conditional_self_alias` supplies the differential `PASS`
+witness and Lean receipt. The committed corpus snapshot remains **5,602 clean /
+16,390 partial** with 67 include skips; the target count is unchanged because
+this fixture shape is not present in the unavailable external checkout.
+
 ## Unpacked-struct self-copies — 2026-10-28
 
 An exact blocking self-copy of a flattened integral unpacked struct now lowers

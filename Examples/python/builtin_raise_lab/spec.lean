@@ -111,7 +111,8 @@ load_program builtin_raise_namedtuple from "Examples/python/builtin_raise_lab/bu
 #py_check builtin_raise_namedtuple.handler_retained_state() =
   (Val.list #[.int 0, .int 1, .int 3])
 
-#guard callFunction builtin_raise_lab "late_shadow" #[] 4096 matches .unsupported _
+#guard callFunction builtin_raise_lab "late_shadow" #[] 4096 matches
+  .exn (.unboundLocalError "ValueError")
 
 #py_check builtin_raise_lab.raised_instance() raises (.builtinException "ValueError")
 

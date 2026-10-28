@@ -9517,6 +9517,18 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-do-while-switch-default-shadow-initialization-assignment-break-false",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalDoWhileSwitchDefaultShadowInitializationAssignmentBreakFalseStatementFrameWitness",
+    "cpp_source": "int local_do_while_switch_default_shadow_initialization_assignment_break_false_statement_frame_witness(int value) { int outer = 3; do { switch (value) { case 0: break; default: { int local = 5; outer = local; break; } } break; } while (value < 2); return outer; } bool callable_witness() { return local_do_while_switch_default_shadow_initialization_assignment_break_false_statement_frame_witness(0) == 3; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-frame-local-do-while-switch-default-shadow-computed-initialization-assignment-break-false",
     "kind": "statement",
     "corpus": "rung-4 witness",

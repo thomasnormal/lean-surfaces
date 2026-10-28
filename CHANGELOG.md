@@ -228,6 +228,28 @@ change is listed here under **Changed** or **Removed**.
 - A single bare `except:` now catches every represented exception; multiple
   handlers, tuple patterns, and observed exception bindings remain loud.
 
+## [0.1.16] — 2026-10-28
+
+### Added
+
+- Immediate local aliases of supported builtins now preserve CPython's
+  name-resolution and call behavior for `abs`, `all`, `any`, `ascii`, `bin`,
+  `chr`, `float`, `format`, `hex`, `int`, `len`, `list`, `max`, `min`, `next`,
+  `oct`, `ord`, `pow`, `print`, `range`, `repr`, `round`, `sorted`, `str`,
+  `sum`, and `tuple`; returned and first-class callable aliases remain loud.
+- Flat starred `for` targets, safe generator yields under `try`, and the
+  measured decimal conversion boundary now follow CPython with faithful
+  errors and evaluation order.
+
+### Fixed
+
+- Proof-side frames for marked locals and the cached-small-integer identity
+  regression guard now match the admitted semantics. The Python differential
+  suite has **3,756 rows**, with **3,712 matches / 44 recorded refusals** in
+  the executable runner and **3,603 matches / 153 refusals** in the proof
+  interpreter; the grammar census has **145 witnesses, 136 MATCH and 9
+  REFUSE**.
+
 ## [0.1.15] — 2026-10-26
 
 ### Added

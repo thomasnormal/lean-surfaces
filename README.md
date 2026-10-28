@@ -10,7 +10,7 @@ tractable.
 
 ## Python release status
 
-The Python prerelease is **v0.1.15 (2026-10-26)**. Its Git tag identifies the
+The Python prerelease is **v0.1.16 (2026-10-28)**. Its Git tag identifies the
 release commit on `master`. The earlier `v0.1.2` through `v0.1.6` entries
 record source releases whose local Git tags remain unpublished.
 See [CHANGELOG.md](CHANGELOG.md) for the version history.
@@ -20,8 +20,10 @@ statements unchanged. First-proof and tutorial builds stay within Python depende
 exception control flow, starred calls and assignments, and measured float and
 string boundaries now follow CPython. Unread admitted class and function values
 are erased at ingestion. Flat starred assignments allocate the middle slice as
-a fresh list, and bare-name list deletion follows CPython's index rules. Native
-dictionary iterators now
+a fresh list, and bare-name list deletion follows CPython's index rules.
+Immediate local aliases of supported builtins preserve the same call and
+shadowing rules; first-class callable aliases remain loud. Native dictionary
+iterators now
 retain resize failures without changing
 ordinary generator closure behavior. ASCII strings and bytes now admit
 integer parsing in bases 2–36 and base zero, with prefix detection, underscore
@@ -79,9 +81,9 @@ non-finite division, float keys, and identity-dependent NaN operations remain
 loud coverage gaps, not scope exclusions. `PyFloat` provides typed marshalling;
 downstream exhaustive matches must handle the new value/operator/error
 constructors and rebuild their Lean artifacts. See [the float model](docs/python-floats.md).
-The executable differential suite has 3,695 cases: 3,651 agree with CPython and
+The executable differential suite has 3,756 cases: 3,712 agree with CPython and
 44 refuse loudly (**98.8% complete**). The narrower proof interpreter agrees on
-3,542 cases and refuses 153 (**95.9% complete**); neither run has a mismatch in
+3,603 cases and refuses 153 (**95.9% complete**); neither run has a mismatch in
 the recorded suite. The grammar census has 145 witnesses, with 136 MATCH and 9
 REFUSE. These are measured
 examples, not a claim of complete language support; remaining gaps stay in scope.

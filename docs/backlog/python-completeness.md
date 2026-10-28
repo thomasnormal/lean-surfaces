@@ -6454,3 +6454,22 @@ existing zero lemma; the statement and the runtime semantics are unchanged.
 
 DECIDED: commit this proof repair, regenerate/check the backlog index, then
 rebase and publish it before taking the next hosted Python proof failure.
+
+## 2026-10-28-pycomplete-194 — repair the exception-handler proof normalization
+
+The hosted proof for `exc_handlers_lab` had become stale as the interpreter's
+exception, starred-call, heap-freedom, generator-allocation, and boundary
+freezing guards evolved. Its two total-correctness theorems now expose the
+current guard walkers and retained `Run` combinators to `py_simp`; the first
+handler theorem closes the final public freeze definitionally and the tuple
+handler theorem normalizes directly. Runtime semantics and the theorem
+statements are unchanged.
+
+| Measurement | Result |
+|---|---|
+| Focused proof | `lake env lean Examples/python/exc_handlers_lab/proof.lean` passes; no `sorryAx` in the theorem axioms |
+| Scope | Two existing exception-handler theorems; no runtime or harness changes |
+| Formatting | `git diff --check` passes |
+
+DECIDED: publish this proof repair, inspect exact-SHA CI, then reread the
+inbox before taking the next hosted Python proof failure.

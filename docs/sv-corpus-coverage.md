@@ -25,6 +25,20 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Power self-check differential rows — 2026-10-28
+
+The unsigned, signed, and zero-to-negative integral power fixtures are now
+included in the executable differential matrix. Each matches its committed
+`PASS` declaration. The zero-to-negative fixture retains the documented
+IEEE 1800-2023 §11.4.3 Table 11-4 and Icarus all-x result, while the separate
+reference run returns zero; this is recorded as a divergence rather than a
+reference confirmation.
+
+The external sv-tests-2 checkout is unavailable, so the committed census
+remains **5,401 clean / 16,597 partial** over 22,065 paths with 67 include
+skips; no unverified census delta is claimed. Differential coverage grows
+**348/342/0/6 → 351/345/0/6**, while grammar coverage remains **218/97/121**.
+
 ## Fixed-array subarray self-copies — 2026-10-28
 
 An exact blocking self-copy of one constant subarray of a fixed

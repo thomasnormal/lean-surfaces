@@ -2,6 +2,33 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "power_unsigned",
+      "file": "harness/sv/power/unsigned.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "power_signed",
+      "file": "harness/sv/power/signed.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "power_zero_negative",
+      "file": "harness/sv/power/zero_negative.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "string_null_character",
       "file": "Examples/system-verilog/string_null_character/string_null_character.sv",
       "module": "top",

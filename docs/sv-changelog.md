@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.95] — 2026-10-28
+
+The integral power family now has unsigned, signed, and zero-to-negative
+self-check rows in the executable differential matrix. All three match their
+committed `PASS` declarations. The zero-to-negative case remains a documented
+IEEE 1800-2023 §11.4.3 Table 11-4 / Icarus divergence from the separate
+reference run. Differential coverage is **351 rows / 345 matches / 0
+disagreements / 6 recorded refusals**; grammar coverage remains **218 / 97 /
+121**.
+
 ## [0.1.94] — 2026-10-28
 
 Exact blocking self-copies of constant subarrays now lower to an `Empty`

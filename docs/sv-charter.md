@@ -38,6 +38,20 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Power self-check differential rows — 2026-10-28
+
+The integral power family is now registered in the executable differential
+matrix with its unsigned, signed, and zero-to-negative self-check fixtures.
+All three rows match the committed `PASS` declarations. The zero-to-negative
+row continues to record the IEEE 1800-2023 §11.4.3 Table 11-4 and Icarus
+all-x result as a documented divergence from the separate reference run; it
+is not treated as a reference confirmation.
+
+Differential coverage grows **348/342/0/6 → 351/345/0/6** with no
+disagreements; grammar coverage remains **218/97/121**. The external corpus
+snapshot remains unavailable, so the committed **5,401 clean / 16,597 partial**
+counts and 67 include skips are unchanged.
+
 ## Fixed-array subarray self-copies — 2026-10-28
 
 An exact blocking self-copy of one constant subarray of a fixed

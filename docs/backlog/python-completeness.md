@@ -6492,3 +6492,22 @@ final public run after one explicit rewrite and definitional reduction.
 
 DECIDED: publish this proof repair, inspect exact-SHA CI, then reread the
 inbox before taking the next hosted Python proof failure.
+
+## 2026-10-28-pycomplete-196 — repair the exception-ancestor proof
+
+The hosted proof for `exc_ancestors_lab` had fallen back to the generic
+`py_prove` recipe and now timed out while normalizing the expanded exception
+and builtin-resolution guards. Its arithmetic-ancestor theorem now uses the
+explicit `callIn`/`py_simp` route with the current handler matching,
+heap/generator guard, local-analysis, synthetic builtin, and retained-state
+normalizers. The theorem statement and runtime semantics are unchanged.
+
+| Measurement | Result |
+|---|---|
+| Focused proof | `lake env lean Examples/python/exc_ancestors_lab/proof.lean` passes; no `sorryAx` |
+| Scope | One existing exception-ancestor theorem; no runtime or harness changes |
+| Formatting | `git diff --check` passes |
+
+DECIDED: commit and publish this proof repair after the current exact-SHA CI
+reaches a terminal result, then inspect the new run and continue with its first
+remaining Python failure.

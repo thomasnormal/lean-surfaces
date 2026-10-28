@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 397 | 391 | 0 | 6 | sv-tests-2 declarations |
+| 398 | 392 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -394,6 +394,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `fixed_array_nested_subarray_copy` | `Examples/system-verilog/fixed_array_nested_subarray_copy/fixed_array_nested_subarray_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_typename_assignment` | `Examples/system-verilog/string_typename_assignment/string_typename_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `typename_comparison` | `Examples/system-verilog/typename_comparison/typename_comparison.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_concat_comparison` | `Examples/system-verilog/string_concat_comparison/string_concat_comparison.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_scope_assignment` | `Examples/system-verilog/string_sformatf_scope_assignment/string_sformatf_scope_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_scope_wrapper_assignment` | `Examples/system-verilog/string_sformatf_scope_wrapper_assignment/string_sformatf_scope_wrapper_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_putc_history` | `Examples/system-verilog/string_putc_history/string_putc_history.sv` | match | **MATCH** | `ok` | MATCH |
@@ -647,7 +648,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22065 | 5727 | 16271 | 67 |
+| 22065 | 5738 | 16260 | 67 |
 
 | blocker kind | files |
 |---|---:|
@@ -660,7 +661,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 | `ConcurrentAssertionStatement` | 1359 |
 | `InvalidStatement` | 1330 |
 | `ClassType` | 1330 |
-| `NamedValueExpression:2state` | 1293 |
+| `NamedValueExpression:2state` | 1269 |
 | `Hierarchy:module-kind` | 1250 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1154 |
 | `MemberAccessExpression` | 1018 |

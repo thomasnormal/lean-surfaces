@@ -1,5 +1,18 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Source-pure named string concatenation observations — 2026-10-28
+
+The legacy extractor now reconstructs source-pure ASCII values from
+multi-operand string concatenations for equality and `%s` display. Replications
+of named literal histories are replayed exactly; direct one-operand packed
+shells, dynamic, controlled, timed, and non-ASCII histories remain loud. The
+`string_concat_comparison` fixture supplies the differential row and Lean
+receipt. The fresh 22,065-path census moves **5,727 → 5,738 clean / 16,271 →
+16,260 partial** with 67 include skips; the two top blockers remain
+`AssignmentExpression:target` (**2,695**) and `ExpressionStatement:CallExpression`
+(**2,677**), while `NamedValueExpression:2state` falls **1,293 → 1,269**.
+Differential coverage grows **397/391/0/6 → 398/392/0/6**.
+
 ## `$typename` string comparisons — 2026-10-28
 
 The legacy extractor now lowers source-pure `$typename` queries to ASCII

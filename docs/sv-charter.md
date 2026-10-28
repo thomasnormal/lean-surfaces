@@ -1,5 +1,21 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Source-pure named string concatenation observations — 2026-10-28
+
+The self-check tier now reconstructs source-pure ASCII string values through
+multi-operand concatenations for equality and `%s` display. A source-pure
+replication of a named string is also replayed exactly, while direct
+one-operand packed shells, dynamic, controlled, timed, and non-ASCII histories
+remain loud. The `string_concat_comparison` fixture exercises equality and
+display, with extractor regression, differential row, and Lean receipt.
+
+The fresh **22,065-path** census moves **5,727 → 5,738 clean** and
+**16,271 → 16,260 partial** with 67 include skips. `AssignmentExpression:target`
+and `ExpressionStatement:CallExpression` remain **2,695** and **2,677**;
+`CallExpression` remains **2,606**, while `NamedValueExpression:2state` falls
+**1,293 → 1,269**. Differential coverage grows **397/391/0/6 →
+398/392/0/6**; grammar coverage remains **218/100/118**.
+
 ## `$typename` string comparisons — 2026-10-28
 
 The self-check tier now lowers source-pure `$typename` queries to ASCII packed

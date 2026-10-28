@@ -52,7 +52,7 @@
    ],
    [
     "NamedValueExpression:2state",
-    1293
+    1269
    ],
    [
     "Hierarchy:module-kind",
@@ -980,8 +980,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5727,
-   "partial": 16271,
+   "clean": 5738,
+   "partial": 16260,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1042,7 +1042,7 @@
     52
    ],
    "simulation": [
-    4950,
+    4961,
     18701
    ],
    "simulation elaboration": [
@@ -1057,18 +1057,18 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 188,
-    "clean": 802,
-    "partial": 189,
+    "blocked_by_more": 183,
+    "clean": 807,
+    "partial": 184,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
       "VariableDeclStatement:2state",
-      82
+      81
      ],
      [
       "NamedValueExpression:2state",
-      71
+      66
      ],
      [
       "AssignmentExpression:target",
@@ -1083,12 +1083,12 @@
       44
      ],
      [
-      "VariableSymbol:2state",
-      42
-     ],
-     [
       "CallExpression",
       41
+     ],
+     [
+      "VariableSymbol:2state",
+      38
      ],
      [
       "TypeAliasType:TypeAlias",
@@ -1235,22 +1235,22 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 422,
-    "clean": 625,
-    "partial": 423,
+    "blocked_by_more": 416,
+    "clean": 631,
+    "partial": 417,
     "simulation_tests": 1048,
     "top_residual_blockers": [
-     [
-      "VariableSymbol:2state",
-      127
-     ],
      [
       "TimedStatement:DelayControl",
       125
      ],
      [
+      "VariableSymbol:2state",
+      121
+     ],
+     [
       "NamedValueExpression:2state",
-      122
+      114
      ],
      [
       "AssignmentExpression:target",
@@ -1335,9 +1335,9 @@
     "unlockable": 0
    },
    "chapter-11": {
-    "clean": 806,
+    "clean": 811,
     "error": 0,
-    "partial": 228,
+    "partial": 223,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 1
@@ -1599,9 +1599,9 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 643,
+    "clean": 649,
     "error": 0,
-    "partial": 549,
+    "partial": 543,
     "skip_include": 0,
     "total": 1192,
     "unlockable": 2

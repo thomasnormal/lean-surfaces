@@ -3426,6 +3426,15 @@
       "expect": "match"
     },
     {
+      "name": "string_concat_comparison",
+      "file": "Examples/system-verilog/string_concat_comparison/string_concat_comparison.sv",
+      "module": "top",
+      "oracle": [
+        "Hello World"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "string_sformatf_scope_assignment",
       "file": "Examples/system-verilog/string_sformatf_scope_assignment/string_sformatf_scope_assignment.sv",
       "module": "top",

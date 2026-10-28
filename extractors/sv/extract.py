@@ -8225,6 +8225,12 @@ def _string_compare_source_value(operand, position):
         resolved = _string_transform_history_value(operand, position)
         if resolved is not None:
             return resolved
+        # Concatenation and replication histories use the more general
+        # source-value walker.  They remain exact only for ASCII literals and
+        # source-pure named histories, so dynamic string storage stays loud.
+        resolved = _string_source_value(operand, position)
+        if resolved is not None:
+            return resolved
         node = operand
         while type(node).__name__ == "ConversionExpression":
             node = getattr(node, "operand", None)
@@ -8429,6 +8435,11 @@ def _string_source_value(expression, position=None, active=()):
                            if value is not None)
             return max(history, key=lambda item: item[0])[1] if history else None
         if type(node).__name__ == "ConcatenationExpression":
+            # A one-operand concatenation is slang's packed-expression shell,
+            # not the multi-string concatenation form whose source value is
+            # reconstructed here.  Keep that ambiguous conversion loud.
+            if len(getattr(node, "operands", ())) < 2:
+                return None
             values = [_string_source_value(operand, position, active)
                       for operand in node.operands]
             return "".join(values) if values and all(
@@ -8437,8 +8448,16 @@ def _string_source_value(expression, position=None, active=()):
             count = _constant_dimension_selector(getattr(node, "count", None))
             if count is None or count < 0 or count > 1024:
                 return None
-            value = _string_source_value(getattr(node, "concat", None),
-                                         position, active)
+            concat = getattr(node, "concat", None)
+            # pyslang wraps the repeated operand in a one-operand
+            # ConcatenationExpression.  That wrapper is a packed-expression
+            # shell when it appears directly (and remains deliberately loud
+            # there), but inside a replication it is the operand whose value
+            # is repeated.  Peel only this exact shell before recursing.
+            if (type(concat).__name__ == "ConcatenationExpression"
+                    and len(getattr(concat, "operands", ())) == 1):
+                concat = concat.operands[0]
+            value = _string_source_value(concat, position, active)
             return value * count if value is not None else None
         return None
     except Exception:
@@ -8776,6 +8795,8 @@ def _string_integer_conversion_history_event(node, symbol, controls):
     """Recognize one source-pure integer-to-string history event."""
     try:
         if type(node).__name__ != "CallExpression":
+            return None
+        if getattr(node, "subroutineName", "") not in _STRING_INTEGER_CONVERSION_BASES:
             return None
         arguments = list(getattr(node, "arguments", ()))
         receiver = arguments[0] if arguments else None

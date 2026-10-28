@@ -35,6 +35,19 @@ class StringComparisons(unittest.TestCase):
                   if node.get("string_compare")]
         self.assertEqual([value["bits"] for value in values], ["1", "1"])
 
+    def test_named_string_concatenation_replays_comparison_and_display(self):
+        design = lower(
+            'module top; string a, b, result; initial begin '
+            'a = "Hello"; b = " World"; result = {a, b}; '
+            'if (result == "Hello World") $display("%s", result); '
+            'end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("string_compare")]
+        self.assertEqual([value["bits"] for value in values], ["1"])
+        displays = [node for node in nodes(design)
+                    if node.get("string_source_display")]
+        self.assertEqual(len(displays), 1)
+
     def test_computed_controlled_and_timed_histories_stay_loud(self):
         for source in (
                 'module top; string a, b; initial begin '

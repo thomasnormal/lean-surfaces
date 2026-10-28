@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.141] — 2026-10-28
+
+Source-pure ASCII string values now replay through multi-operand
+concatenations for equality and `%s` display, including replication of named
+literal histories. Direct one-operand packed shells, dynamic, controlled,
+timed, and non-ASCII histories remain loud. The `string_concat_comparison`
+fixture, extractor regression, differential row, and Lean receipt pass.
+Differential coverage grows **397 rows / 391 matches / 0 disagreements /
+6 recorded refusals → 398 / 392 / 0 / 6**; the fresh 22,065-path census moves
+**5,727 → 5,738 clean / 16,271 → 16,260 partial** and
+`NamedValueExpression:2state` falls **1,293 → 1,269**.
+
 ## [0.1.140] — 2026-10-28
 
 Source-pure `$typename` queries now lower to ASCII packed strings for direct

@@ -1,5 +1,14 @@
 # SystemVerilog tier changelog
 
+## [0.1.105] — 2026-10-28
+
+Literal integral decimal `$sformatf` results (`%d`, `%D`, `%0d`, `%0D`) assigned
+to strings now replay exact decimal text. Unknown or dynamic operands, timed
+forms, and nonblocking writes remain loud. The new fixture and Lean receipt
+pass; differential coverage is **362 rows / 356 matches / 0 disagreements / 6
+recorded refusals**, and the census remains **5,584 clean / 16,414 partial**
+with `AssignmentExpression:target` at **2,810**.
+
 ## [0.1.104] — 2026-10-28
 
 Literal integral `$sformatf("%o", ...)` and `$sformatf("%O", ...)` results

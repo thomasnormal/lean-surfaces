@@ -8210,6 +8210,16 @@ def _sformatf_literal_source_value(expression, position=None):
             if not bits or any(bit not in "01" for bit in bits):
                 return None
             return format(int(bits, 2), "o")
+        if fmt in ("%d", "%D", "%0d", "%0D"):
+            node = operand
+            while type(node).__name__ == "ConversionExpression":
+                node = getattr(node, "operand", None)
+                if node is None:
+                    return None
+            if type(node).__name__ not in ("IntegerLiteral",
+                                           "UnbasedUnsizedIntegerLiteral"):
+                return None
+            return _format_literal_integral_text("%d", [node])
         if fmt not in ("%h", "%H", "%0h", "%0H"):
             return None
         node = operand

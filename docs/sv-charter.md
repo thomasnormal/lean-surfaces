@@ -12,6 +12,18 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Literal concatenated format strings — 2026-10-28
+
+The legacy self-check output surface folds a concatenation of string literals
+used as a `$display`/`$write`/`$strobe`/`$fdisplay`/`$fwrite` or quiet-task
+format into the existing output node. Dynamic, integral, and aggregate format
+expressions remain loud; no new output or scheduler state is introduced.
+The `literal_format_concat` fixture, extractor regressions, generated
+envelope, Lean receipt, and differential row cover the admission.
+
+Differential coverage grows **421/415/0/6 → 422/416/0/6**; grammar coverage
+remains **218/107/111**.
+
 ## Dynamic outer-array assignment targets — 2026-10-28
 
 The legacy self-check tier now lowers blocking assignments through a dynamic

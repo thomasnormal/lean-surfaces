@@ -1,3 +1,11 @@
+## [0.1.167] — 2026-10-28
+
+Literal concatenations are now accepted as format arguments for the legacy
+output and quiet severity tasks. Only source-pure string pieces are folded;
+dynamic and non-string formats remain loud. The `literal_format_concat`
+fixture, extractor regressions, Lean receipt, and differential row cover the
+boundary. Differential coverage grows **421/415/0/6 → 422/416/0/6**.
+
 ## [0.1.166] — 2026-10-28
 
 Direct blocking copies between untagged packed structs and packed unions now

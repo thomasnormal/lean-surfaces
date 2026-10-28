@@ -22198,6 +22198,36 @@ def _severity_argument_source_ok(expression):
         return False
 
 
+def _literal_format_string(expression):
+    """Return a source-pure literal format string, if one is present.
+
+    A format argument may be a concatenation of string literals.  Keep this
+    recognizer deliberately separate from the packed-value converter: an
+    integral concatenation is a value, not a format string, and remains loud
+    at the output-task boundary.  Propagated string conversions are harmless
+    wrappers around the same literal spelling.
+    """
+    kind = type(expression).__name__
+    if kind == "StringLiteral":
+        if getattr(expression, "bad", False):
+            return None
+        return expression.value
+    if kind == "ConversionExpression":
+        try:
+            if type(expression.type.canonicalType).__name__ != "StringType":
+                return None
+        except Exception:
+            return None
+        return _literal_format_string(getattr(expression, "operand", None))
+    if kind == "ConcatenationExpression":
+        pieces = [_literal_format_string(operand)
+                  for operand in getattr(expression, "operands", [])]
+        if not pieces or any(piece is None for piece in pieces):
+            return None
+        return "".join(pieces)
+    return None
+
+
 def _convert_syscall(sm, s, e):
     """`$display`/`$write`/`$finish`/`$stop` in statement position ->
     `SysCall` node (self-check tier §f). `$display`/`$write` require the
@@ -22866,7 +22896,8 @@ def _convert_syscall(sm, s, e):
                     "name": name, "format": None, "args": [],
                     "arg_signed": []}
         first = args[0]
-        if type(first).__name__ != "StringLiteral":
+        fmt = _literal_format_string(first)
+        if fmt is None:
             return unsupported(sm, s, "CallExpression:format")
         converted = [convert_expr(sm, arg) for arg in args[1:]]
         if any(value is None or value.get("kind") == "Unsupported"
@@ -22880,7 +22911,7 @@ def _convert_syscall(sm, s, e):
             except Exception:
                 signed.append(True)
         return {"kind": "SysCall", "span": node_span(sm, s),
-                "name": name, "format": first.value, "args": converted,
+                "name": name, "format": fmt, "args": converted,
                 "arg_signed": signed}
     if is_sys and name in SYSCALL_FILE_FMT:
         try:
@@ -22902,7 +22933,8 @@ def _convert_syscall(sm, s, e):
         if fd_value not in (1, 0x80000001):
             return unsupported(sm, s, "ExpressionStatement:CallExpression")
         first = args[1]
-        if type(first).__name__ != "StringLiteral":
+        fmt = _literal_format_string(first)
+        if fmt is None:
             return unsupported(sm, s, "CallExpression:format")
         converted = [convert_expr(sm, arg) for arg in args[2:]]
         signed = []
@@ -22915,7 +22947,7 @@ def _convert_syscall(sm, s, e):
                 signed.append(True)
         return {"kind": "SysCall", "span": node_span(sm, s),
                 "name": "$display" if name == "$fdisplay" else "$write",
-                "format": first.value,
+                "format": fmt,
                 "args": converted, "arg_signed": signed,
                 "stdout_file_descriptor": fd_value}
     if is_sys and name in SYSCALL_VCD:
@@ -22976,7 +23008,8 @@ def _convert_syscall(sm, s, e):
             # Severity tasks report a diagnostic but do not alter the
             # self-check state. Keep the format literal while evaluating the
             # ordinary pure expressions used as display-style arguments.
-            if not args or type(args[0]).__name__ != "StringLiteral":
+            fmt = _literal_format_string(args[0]) if args else None
+            if fmt is None:
                 return unsupported(sm, s, "ExpressionStatement:CallExpression")
             converted = [convert_expr(sm, arg) for arg in args[1:]]
             if any(node is None or node.get("kind") == "Unsupported"
@@ -22998,7 +23031,7 @@ def _convert_syscall(sm, s, e):
                 except Exception:
                     signed.append(True)
             return {"kind": "SysCall", "span": node_span(sm, s),
-                    "name": name, "format": args[0].value,
+                    "name": name, "format": fmt,
                     "args": converted, "arg_signed": signed}
         return unsupported(sm, s, "ExpressionStatement:CallExpression")
     span = node_span(sm, s)
@@ -23025,9 +23058,9 @@ def _convert_syscall(sm, s, e):
             "arg_signed": [],
         }
     first = args[0]
-    if type(first).__name__ != "StringLiteral":
+    fmt = _literal_format_string(first)
+    if fmt is None:
         return unsupported(sm, s, "SysCall:format")
-    fmt = first.value
     conv = []
     signed = []
     array_display_used = False

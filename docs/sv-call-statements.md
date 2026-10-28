@@ -1,5 +1,14 @@
 # Call statements — admitted boundary
 
+## Literal concatenated format strings — 2026-10-28
+
+`$display`, `$write`, `$strobe`, `$fdisplay`, `$fwrite`, and the quiet severity
+tasks now accept a format argument formed by concatenating string literals.
+The extractor folds only those source-pure pieces into the existing
+`SysCall.format` field; a variable, integral, aggregate, or otherwise dynamic
+format remains loud. `literal_format_concat` pins the `$display` case and its
+dynamic-format negative control.
+
 ## Pure computed arguments to literal-return functions
 
 Discarded calls to source-declared literal-return functions may use compile-time

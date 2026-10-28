@@ -3811,6 +3811,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "literal_format_concat",
+      "file": "Examples/system-verilog/literal_format_concat/literal_format_concat.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -2073,7 +2073,7 @@ def _assoc_endpoint_call_valid(expression, symbol):
         if (type(expression).__name__ != "CallExpression"
                 or getattr(expression, "bad", False)
                 or not expression.isSystemCall
-                or expression.subroutineName not in ("first", "last")):
+                or expression.subroutineName not in ("first", "last", "next", "prev")):
             return False
         arguments = list(expression.arguments)
         if (len(arguments) != 2
@@ -12773,7 +12773,7 @@ def _associative_empty_endpoint(expression):
         if (type(expression).__name__ != "CallExpression"
                 or getattr(expression, "bad", False)
                 or not expression.isSystemCall
-                or expression.subroutineName not in ("first", "last")
+                or expression.subroutineName not in ("first", "last", "next", "prev")
                 or len(expression.arguments) != 2):
             return False
         receiver, index = expression.arguments
@@ -20165,7 +20165,8 @@ def _associative_endpoint_assignment(sm, expression):
         if not getattr(call, "isSystemCall", False):
             return None
         arguments = list(getattr(call, "arguments", ()))
-        if (getattr(call, "subroutineName", None) not in ("first", "last")
+        if (getattr(call, "subroutineName", None) not in
+                ("first", "last", "next", "prev")
                 or len(arguments) != 2
                 or type(arguments[0]).__name__ != "NamedValueExpression"
                 or type(arguments[1]).__name__ != "NamedValueExpression"):
@@ -20212,6 +20213,39 @@ def _associative_endpoint_assignment(sm, expression):
         zero = literal(0, result_width, expression.left.type, result_two_state)
         branches = {"kind": "BlockingAssign", "span": span,
                     "target": target, "value": zero}
+        current = index_target
+        if call.subroutineName in ("next", "prev"):
+            direction = ">" if call.subroutineName == "next" else "<"
+            candidate_order = (ordered if call.subroutineName == "next"
+                               else list(reversed(ordered)))
+            branches = {"kind": "BlockingAssign", "span": span,
+                        "target": target, "value": zero}
+            for key in reversed(candidate_order):
+                cell = cells[key]
+                set_index = {"kind": "BlockingAssign", "span": span,
+                             "target": index_target,
+                             "value": literal(key, index_width, index.type,
+                                               index_two_state)}
+                set_result = {"kind": "BlockingAssign", "span": span,
+                              "target": target, "value": one}
+                branches = {
+                    "kind": "If", "span": span,
+                    "cond": {"kind": "Binary", "span": span, "width": 1,
+                             "op": "&&",
+                             "left": {"kind": "Ident", "span": span,
+                                      "width": 1, "name": cell["presence"],
+                                      "assoc_exists": True},
+                             "right": {"kind": "Binary", "span": span,
+                                       "width": 1, "op": direction,
+                                       "left": literal(key, index_width,
+                                                       index.type, index_two_state),
+                                       "right": current}},
+                    "then": {"kind": "Block", "span": span,
+                             "stmts": [set_index, set_result]},
+                    "else": branches,
+                }
+            branches["associative_endpoint_lowered"] = True
+            return branches
         for key in reversed(ordered):
             cell = cells[key]
             set_index = {"kind": "BlockingAssign", "span": span,
@@ -20276,6 +20310,28 @@ def _associative_endpoint_statement(sm, expression):
             return squash2_wrap(node, index_width) if index_two_state else node
 
         chain = {"kind": "Empty", "span": span}
+        if expression.subroutineName in ("next", "prev"):
+            direction = ">" if expression.subroutineName == "next" else "<"
+            candidate_order = (ordered if expression.subroutineName == "next"
+                               else list(reversed(ordered)))
+            for key in reversed(candidate_order):
+                chain = {
+                    "kind": "If", "span": span,
+                    "cond": {"kind": "Binary", "span": span, "width": 1,
+                             "op": "&&",
+                             "left": {"kind": "Ident", "span": span,
+                                      "width": 1, "name": cells[key]["presence"],
+                                      "assoc_exists": True},
+                             "right": {"kind": "Binary", "span": span,
+                                       "width": 1, "op": direction,
+                                       "left": literal(key),
+                                       "right": index_target}},
+                    "then": {"kind": "BlockingAssign", "span": span,
+                              "target": index_target, "value": literal(key)},
+                    "else": chain,
+                }
+            chain["associative_endpoint_statement"] = expression.subroutineName
+            return chain
         for key in reversed(ordered):
             chain = {
                 "kind": "If", "span": span,
@@ -21498,7 +21554,8 @@ def _convert_syscall(sm, s, e):
         # checks source-pure keys and keeps later count queries exact.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "associative_empty_delete_statement": True}
-    if is_sys and _SYM is None and getattr(e, "subroutineName", None) in ("first", "last"):
+    if is_sys and _SYM is None and getattr(e, "subroutineName", None) in (
+            "first", "last", "next", "prev"):
         lowered = _associative_endpoint_statement(sm, e)
         if lowered is not None:
             return lowered

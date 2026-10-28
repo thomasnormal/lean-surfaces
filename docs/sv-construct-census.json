@@ -16,15 +16,15 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    2721
+    2706
    ],
    [
     "ExpressionStatement:CallExpression",
-    2700
+    2696
    ],
    [
     "CallExpression",
-    2624
+    2619
    ],
    [
     "Hierarchy:ports",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5661,
-   "partial": 16337,
+   "clean": 5668,
+   "partial": 16330,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4885,
+    4892,
     18701
    ],
    "simulation elaboration": [
@@ -1603,9 +1603,9 @@
     "unlockable": 2
    },
    "chapter-7": {
-    "clean": 319,
+    "clean": 326,
     "error": 0,
-    "partial": 477,
+    "partial": 470,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

@@ -1,5 +1,19 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Finite associative-array `next()`/`prev()` histories — 2026-10-28
+
+The legacy extractor now replays source-pure integral associative-array
+`next(index)` and `prev(index)` calls through the finite presence cells. The
+nearest present key strictly above or below the input is selected; a miss
+returns zero and leaves the index unchanged. Dynamic keys, aliases, and
+timed/control-dependent histories remain loud. The `assoc_next_prev_history`
+fixture supplies the differential row and Lean receipt. The fresh 22,065-path
+census moves **5,661 → 5,668 clean / 16,337 → 16,330 partial** with 67
+include skips; `AssignmentExpression:target` falls **2,721 → 2,706**, while
+`ExpressionStatement:CallExpression` falls **2,700 → 2,696** and
+`CallExpression` falls **2,624 → 2,619**. Differential coverage grows
+**384/378/0/6 → 385/379/0/6**.
+
 ## Sorted finite associative-array streaming — 2026-10-28
 
 The legacy extractor now packs a finite source-pure integral-key associative

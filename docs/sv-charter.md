@@ -1,5 +1,22 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Finite associative-array `next()`/`prev()` histories — 2026-10-28
+
+Integral-key finite associative arrays now lower `next(index)` and
+`prev(index)` in source-pure histories. The result is one and the index moves
+to the nearest present key strictly above or below its input; a failed lookup
+returns zero and leaves the index unchanged. Dynamic keys, string outputs,
+aliases, and timed or control-dependent histories remain loud. The
+`assoc_next_prev_history` fixture, extractor regressions, and Lean receipt
+pass.
+
+The fresh **22,065-path** census moves **5,661 → 5,668 clean** and
+**16,337 → 16,330 partial** with 67 include skips. The
+`AssignmentExpression:target` blocker falls **2,721 → 2,706**,
+`ExpressionStatement:CallExpression` falls **2,700 → 2,696**, and
+`CallExpression` falls **2,624 → 2,619**. Differential coverage grows
+**384/378/0/6 → 385/379/0/6**, and grammar coverage remains **218/97/121**.
+
 ## Sorted finite associative-array streaming — 2026-10-28
 
 Right streaming now admits a finite integral-key associative array whose

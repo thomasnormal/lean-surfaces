@@ -3468,6 +3468,19 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "assoc_next_prev_history",
+      "file": "Examples/system-verilog/assoc_next_prev_history/assoc_next_prev_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS1",
+        "PASS2",
+        "PASS3",
+        "PASS4",
+        "PASS5"
+      ],
+      "expect": "match"
     }
   ]
 }

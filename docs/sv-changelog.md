@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.128] — 2026-10-28
+
+Integral-key finite associative arrays now lower source-pure `next(index)` and
+`prev(index)` histories, selecting the nearest present key on the requested
+side and preserving the zero/unchanged-index miss behavior. Dynamic keys,
+aliases, and timed or control-dependent histories remain loud. The new fixture,
+extractor regressions, and Lean receipt pass. Differential coverage grows
+**384 rows / 378 matches / 0 disagreements / 6 recorded refusals → 385 / 379 /
+0 / 6**. The fresh 22,065-path census moves **5,661 → 5,668 clean /
+16,337 → 16,330 partial**; `AssignmentExpression:target` falls **2,721 →
+2,706**.
+
 ## [0.1.127] — 2026-10-28
 
 Right streaming now admits finite source-pure integral-key associative arrays

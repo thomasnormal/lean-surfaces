@@ -6473,3 +6473,22 @@ statements are unchanged.
 
 DECIDED: publish this proof repair, inspect exact-SHA CI, then reread the
 inbox before taking the next hosted Python proof failure.
+
+## 2026-10-28-pycomplete-195 — repair the decimal-render proof
+
+The hosted check's decimal-render theorem had become stale after builtin-name
+resolution grew synthetic guards and function-frame local analysis. Its proof
+now supplies the current late-raise/unbound-local walkers, synthetic builtin
+names, starred-call marker equalities, and value/heap string rendering
+normalization. The bounded `intDecimal` witness is retained and closes the
+final public run after one explicit rewrite and definitional reduction.
+
+| Measurement | Result |
+|---|---|
+| Focused proof | `lake build Examples.python.decimal_render.proof` passed; theorem has no `sorryAx` |
+| Example surface | `lake env lean Examples/python/decimal_render/spec.lean` passed |
+| Scope | Existing scalar decimal theorem only; runtime semantics unchanged |
+| Formatting | `git diff --check` passed |
+
+DECIDED: publish this proof repair, inspect exact-SHA CI, then reread the
+inbox before taking the next hosted Python proof failure.

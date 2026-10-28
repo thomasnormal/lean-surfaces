@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.96] — 2026-10-28
+
+Blocking literal queue writes followed by an empty queue concatenation now
+remain admissible when the only later observation is `.size()`. The
+`queue_literal_then_empty_concat` fixture and Lean receipt cover the exact
+zero-size history; dynamic or nonliteral writes and queue element observations
+remain loud. Differential coverage is **352 rows / 346 matches / 0
+disagreements / 6 recorded refusals**; grammar coverage remains **218 / 97 /
+121**.
+
 ## [0.1.95] — 2026-10-28
 
 The integral power family now has unsigned, signed, and zero-to-negative

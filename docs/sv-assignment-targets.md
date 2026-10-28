@@ -9,6 +9,20 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Literal queue write followed by empty concatenation — 2026-10-28
+
+A blocking literal queue write followed by an empty queue concatenation is
+admitted when the only later observation is `.size()`. The first opaque write
+is erased because the empty assignment replaces it before the query, and the
+existing queue-history converter supplies the exact zero size. Dynamic or
+nonliteral queue writes, element reads, pushes, and other observations remain
+`AssignmentExpression:target`.
+
+`queue_literal_then_empty_concat` supplies the differential `PASS` witness
+and Lean receipt. Differential coverage grows **351/345/0/6 → 352/346/0/6**;
+the unavailable external census snapshot remains **5,401 clean / 16,597
+partial** with 67 include skips.
+
 ## Fixed-array subarray self-copies — 2026-10-28
 
 An exact blocking self-copy of one constant subarray of a fixed

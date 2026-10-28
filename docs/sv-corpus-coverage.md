@@ -25,6 +25,20 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Literal queue write followed by empty concatenation — 2026-10-28
+
+A blocking literal queue write followed by an empty queue concatenation is now
+admitted when the only later observation is `.size()`. The earlier opaque
+write is erased because the empty assignment replaces it before the query;
+dynamic or nonliteral writes, element reads, pushes, and other observations
+remain loud. The `queue_literal_then_empty_concat` fixture supplies the
+differential row and Lean receipt.
+
+The external sv-tests-2 checkout is unavailable, so the committed census
+remains **5,401 clean / 16,597 partial** over 22,065 paths with 67 include
+skips; no unverified census delta is claimed. Differential coverage grows
+**351/345/0/6 → 352/346/0/6**, while grammar coverage remains **218/97/121**.
+
 ## Power self-check differential rows — 2026-10-28
 
 The unsigned, signed, and zero-to-negative integral power fixtures are now

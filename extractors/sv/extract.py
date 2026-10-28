@@ -10858,6 +10858,21 @@ def _queue_literal_initializer_size(expr):
         return None
 
 
+def _queue_literal_assignment_size(expression):
+    """Return the sampled size of a plain literal queue assignment."""
+    if (type(expression).__name__ != "AssignmentExpression"
+            or getattr(expression, "op", None) is not None
+            or getattr(expression, "timingControl", None) is not None
+            or getattr(expression, "isNonBlocking", False)):
+        return None
+    rhs = getattr(expression, "right", None)
+    while type(rhs).__name__ == "ConversionExpression":
+        rhs = getattr(rhs, "operand", None)
+        if rhs is None:
+            return None
+    return _queue_literal_initializer_size(rhs)
+
+
 def _queue_literal_element(expr):
     """Whether an expression is a scalar literal usable in a queue write."""
     node = expr
@@ -10920,6 +10935,26 @@ def _queue_literal_write_noop(expression):
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
         if not name or not source:
             return False
+        assignment_position = getattr(
+            getattr(getattr(expression, "sourceRange", None), "start", None),
+            "offset", -1)
+        instance = getattr(getattr(expression.left.symbol, "parentScope", None),
+                           "containingInstance", None)
+        empty_assignments = set()
+        if instance is not None:
+            def inspect_assignment(node):
+                if (type(node).__name__ != "AssignmentExpression"
+                        or getattr(node, "left", None) is None
+                        or getattr(node.left, "symbol", None)
+                        is not expression.left.symbol):
+                    return
+                size = _queue_literal_assignment_size(node)
+                position = getattr(
+                    getattr(getattr(node, "sourceRange", None), "start", None),
+                    "offset", -1)
+                if size == 0 and position > assignment_position:
+                    empty_assignments.add(position)
+            instance.visit(inspect_assignment)
         occurrences = list(re.finditer(r"(?<![A-Za-z0-9_$])" + re.escape(name)
                                        + r"(?![A-Za-z0-9_$])", source))
         assignment_seen = False
@@ -10927,8 +10962,19 @@ def _queue_literal_write_noop(expression):
             tail = source[match.end():].lstrip()
             if tail.startswith("[$]") or tail.startswith(";"):
                 continue  # declaration-only occurrence
-            if tail.startswith("="):
+            if match.start() == assignment_position:
                 assignment_seen = True
+                continue
+            if match.start() < assignment_position:
+                return False
+            if tail.startswith("="):
+                if match.start() in empty_assignments:
+                    continue
+                return False
+            if tail.startswith(".size"):
+                if not any(position < match.start()
+                           for position in empty_assignments):
+                    return False
                 continue
             return False
         return assignment_seen
@@ -10965,10 +11011,34 @@ def _queue_literal_size_query_value(expression):
             return None
         query_position = getattr(getattr(getattr(expression, "sourceRange", None),
                                          "start", None), "offset", -1)
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        prior_assignments = []
+        if instance is not None:
+            def inspect_assignment(node):
+                if (type(node).__name__ != "AssignmentExpression"
+                        or getattr(node, "left", None) is None
+                        or getattr(node.left, "symbol", None) is not symbol):
+                    return
+                position = getattr(
+                    getattr(getattr(node, "sourceRange", None), "start", None),
+                    "offset", -1)
+                if position < query_position:
+                    prior_assignments.append(
+                        (position, _queue_literal_assignment_size(node)))
+            instance.visit(inspect_assignment)
+        for _position, prior_size in sorted(prior_assignments):
+            if prior_size is None:
+                return None
+            size = prior_size
         suffix = ".size"
         for occurrence in occurrences[1:]:
             tail = code_source[occurrence.end():].lstrip()
             if tail.startswith(suffix):
+                continue
+            if occurrence.start() < query_position and tail.startswith("="):
+                # Plain literal assignments before this query were checked
+                # through the elaborated AST above and update the sampled size.
                 continue
             if re.match(r"=\s*'?\s*\{\s*\}", tail):
                 if occurrence.start() < query_position:

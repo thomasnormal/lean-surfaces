@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "queue_literal_then_empty_concat",
+      "file": "Examples/system-verilog/queue_literal_then_empty_concat/queue_literal_then_empty_concat.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "power_unsigned",
       "file": "harness/sv/power/unsigned.sv",
       "module": "top",

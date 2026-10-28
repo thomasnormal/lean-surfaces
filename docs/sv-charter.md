@@ -38,6 +38,20 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Literal queue write followed by empty concatenation — 2026-10-28
+
+A blocking literal queue write followed by an empty queue concatenation is now
+admitted when the only later observation is `.size()`. The earlier opaque
+write is erased because the empty assignment replaces it before the query;
+dynamic or nonliteral writes, element reads, pushes, and other observations
+remain loud. The `queue_literal_then_empty_concat` fixture supplies the
+differential `PASS` row and Lean receipt.
+
+Differential coverage grows **351/345/0/6 → 352/346/0/6** with no
+disagreements; grammar coverage remains **218/97/121**. The external corpus
+snapshot remains unavailable, so the committed **5,401 clean / 16,597 partial**
+counts and 67 include skips are unchanged.
+
 ## Power self-check differential rows — 2026-10-28
 
 The integral power family is now registered in the executable differential

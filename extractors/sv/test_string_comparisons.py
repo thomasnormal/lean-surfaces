@@ -24,6 +24,17 @@ class StringComparisons(unittest.TestCase):
                   if node.get("string_compare")]
         self.assertEqual([value["bits"] for value in values], ["1", "1"])
 
+    def test_case_transform_comparison_replays_literal_history(self):
+        design = lower(
+            'module top; string text; initial begin '
+            'text = "A1_b-?Z"; '
+            'if (text.toupper() == "A1_B-?Z" && '
+            'text.tolower() == "a1_b-?z") $display("PASS"); '
+            'end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("string_compare")]
+        self.assertEqual([value["bits"] for value in values], ["1", "1"])
+
     def test_computed_controlled_and_timed_histories_stay_loud(self):
         for source in (
                 'module top; string a, b; initial begin '

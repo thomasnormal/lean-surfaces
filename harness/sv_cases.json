@@ -2406,6 +2406,15 @@
       "expect": "match"
     },
     {
+      "name": "string_case_comparison",
+      "file": "Examples/system-verilog/string_case_comparison/string_case_comparison.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "enum_name_statement",
       "file": "Examples/system-verilog/enum_name_statement/enum_name_statement.sv",
       "module": "top",

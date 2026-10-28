@@ -1,5 +1,18 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## String case-conversion comparisons — 2026-10-28
+
+The legacy extractor now resolves source-pure literal-history
+`string.toupper()` and `string.tolower()` calls in comparison expressions,
+preserving exact ASCII bytes and nonalphabetic characters. Dynamic, controlled,
+timed, and non-ASCII histories remain loud. The `string_case_comparison`
+fixture supplies the differential row and Lean receipt. The fresh 22,065-path
+census moves **5,719 → 5,723 clean / 16,279 → 16,275 partial** with 67 include
+skips; `CallExpression` falls **2,617 → 2,613**, while
+`AssignmentExpression:target` remains **2,695** and
+`ExpressionStatement:CallExpression` remains **2,677**. Differential coverage
+grows **395/389/0/6 → 396/390/0/6**.
+
 ## Enum `.name()` comparisons — 2026-10-28
 
 The legacy extractor now preserves ASCII string literals through slang's

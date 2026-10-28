@@ -24,7 +24,7 @@
    ],
    [
     "CallExpression",
-    2617
+    2613
    ],
    [
     "Hierarchy:ports",
@@ -980,8 +980,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5719,
-   "partial": 16279,
+   "clean": 5723,
+   "partial": 16275,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1042,7 +1042,7 @@
     52
    ],
    "simulation": [
-    4942,
+    4946,
     18701
    ],
    "simulation elaboration": [
@@ -1057,9 +1057,9 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 189,
-    "clean": 801,
-    "partial": 190,
+    "blocked_by_more": 188,
+    "clean": 802,
+    "partial": 189,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
@@ -1084,11 +1084,11 @@
      ],
      [
       "VariableSymbol:2state",
-      43
+      42
      ],
      [
       "CallExpression",
-      42
+      41
      ],
      [
       "TypeAliasType:TypeAlias",
@@ -1235,14 +1235,14 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 428,
-    "clean": 619,
-    "partial": 429,
+    "blocked_by_more": 425,
+    "clean": 622,
+    "partial": 426,
     "simulation_tests": 1048,
     "top_residual_blockers": [
      [
       "VariableSymbol:2state",
-      130
+      127
      ],
      [
       "TimedStatement:DelayControl",
@@ -1257,12 +1257,12 @@
       98
      ],
      [
-      "CallExpression",
-      89
-     ],
-     [
       "VariableDeclStatement:2state",
       88
+     ],
+     [
+      "CallExpression",
+      86
      ],
      [
       "InstanceSymbol:Instance",
@@ -1335,9 +1335,9 @@
     "unlockable": 0
    },
    "chapter-11": {
-    "clean": 805,
+    "clean": 806,
     "error": 0,
-    "partial": 229,
+    "partial": 228,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 1
@@ -1599,9 +1599,9 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 637,
+    "clean": 640,
     "error": 0,
-    "partial": 555,
+    "partial": 552,
     "skip_include": 0,
     "total": 1192,
     "unlockable": 2

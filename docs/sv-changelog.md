@@ -11,6 +11,17 @@ for enum `.name()` comparisons, the string-length `putc` boundary, unsigned
 packed associative-array endpoints, context-sized associative `exists`
 comparisons, and their fixtures, extractor regressions, and Lean receipts.
 
+## [0.1.139] — 2026-10-28
+
+Literal-history `string.toupper()` and `string.tolower()` results now compare
+through the existing exact ASCII string path, including preservation of
+nonalphabetic characters. Dynamic, controlled, timed, and non-ASCII string
+histories remain loud. The fixture, extractor regression, and Lean receipt
+pass. Differential coverage grows **395 rows / 389 matches / 0 disagreements /
+6 recorded refusals → 396 / 390 / 0 / 6**; the fresh 22,065-path census moves
+**5,719 → 5,723 clean / 16,279 → 16,275 partial** and `CallExpression` falls
+**2,617 → 2,613**.
+
 ## [0.1.138] — 2026-10-28
 
 Enum `.name()` comparisons now accept the elaborated propagated conversion

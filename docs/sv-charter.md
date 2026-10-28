@@ -1,5 +1,21 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## String case-conversion comparisons — 2026-10-28
+
+The self-check tier now compares source-pure literal-history
+`string.toupper()` and `string.tolower()` results with exact ASCII string
+operands. IEEE 1800-2023 §§6.16.4–6.16.5 leave nonalphabetic characters
+unchanged, which the `string_case_comparison` fixture exercises alongside
+both case transformations. Dynamic, controlled, timed, and non-ASCII histories
+remain loud; the extractor regression and Lean receipt pass.
+
+The fresh **22,065-path** census moves **5,719 → 5,723 clean** and
+**16,279 → 16,275 partial** with 67 include skips. `CallExpression` falls
+**2,617 → 2,613**; the top `AssignmentExpression:target` and
+`ExpressionStatement:CallExpression` blockers remain **2,695** and **2,677**.
+Differential coverage grows **395/389/0/6 → 396/390/0/6**; grammar coverage
+remains **218/100/118**.
+
 ## Enum `.name()` comparisons — 2026-10-28
 
 The self-check tier now preserves the packed bytes of ASCII string literals

@@ -8211,6 +8211,11 @@ def _string_compare_source_value(operand, position):
             return (value if isinstance(value, str)
                     and not any(ord(char) == 0 or ord(char) > 127
                                 for char in value) else None)
+        if (type(node).__name__ == "CallExpression"
+                and getattr(node, "isSystemCall", False)
+                and getattr(node, "subroutineName", "") in ("toupper", "tolower")
+                and len(getattr(node, "arguments", ())) == 1):
+            return _string_source_value(node, position)
         if (type(node).__name__ != "NamedValueExpression"
                 or type(node.type.canonicalType).__name__ != "StringType"):
             return None
@@ -9283,6 +9288,10 @@ def _convert_string_compare(sm, expression, sym):
             if node is None:
                 return False
         return (type(node).__name__ == "StringLiteral"
+                or (type(node).__name__ == "CallExpression"
+                    and getattr(node, "isSystemCall", False)
+                    and getattr(node, "subroutineName", "") in ("toupper", "tolower")
+                    and len(getattr(node, "arguments", ())) == 1)
                 or (type(node).__name__ == "NamedValueExpression"
                     and type(node.type.canonicalType).__name__ == "StringType"))
 

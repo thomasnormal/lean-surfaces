@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 395 | 389 | 0 | 6 | sv-tests-2 declarations |
+| 396 | 390 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -281,6 +281,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `dynamic_array_size_property` | `Examples/system-verilog/dynamic_array_size_property/dynamic_array_size_property.sv` | match | **MATCH** | `ok` | MATCH |
 | `enum_name_method` | `Examples/system-verilog/enum_name_method/enum_name_method.sv` | match | **MATCH** | `ok` | MATCH |
 | `enum_name_comparison` | `Examples/system-verilog/enum_name_comparison/enum_name_comparison.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_case_comparison` | `Examples/system-verilog/string_case_comparison/string_case_comparison.sv` | match | **MATCH** | `ok` | MATCH |
 | `enum_name_statement` | `Examples/system-verilog/enum_name_statement/enum_name_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `enum_numeric_statement` | `Examples/system-verilog/enum_numeric_statement/enum_numeric_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `array_reduction_statements` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | match | **MATCH** | `ok` | MATCH |
@@ -645,13 +646,13 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22065 | 5719 | 16279 | 67 |
+| 22065 | 5723 | 16275 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2695 |
 | `ExpressionStatement:CallExpression` | 2677 |
-| `CallExpression` | 2617 |
+| `CallExpression` | 2613 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2112 |
 | `SubroutineSymbol:Subroutine` | 1469 |

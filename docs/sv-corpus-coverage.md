@@ -1,5 +1,17 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Source-pure `string.putc` history — 2026-10-28
+
+The legacy extractor now replays blocking `string.putc(index, character)`
+calls through ASCII string history. Literal indices and ASCII or low-byte
+integral characters are admitted; zero, negative, and out-of-range writes are
+unchanged. Dynamic, timed, control-dependent, aliased, and non-ASCII forms
+remain loud. The `string_putc_history` fixture supplies the differential row
+and Lean receipt. The fresh 22,065-path census moves **5,629 → 5,637 clean /
+16,369 → 16,361 partial** with 67 include skips; `ExpressionStatement:CallExpression`
+falls **2,722 → 2,710**, and `AssignmentExpression:target` remains **2,751**.
+Differential coverage grows **378/372/0/6 → 379/373/0/6**.
+
 Axis-1/2 coverage of the M0 tier (`docs/sv-design-m0.md`, envelope schema
 `sv-0.1`) measured on real code: every `.sv` file under
 `<corpus>/tests/chapter-*/`

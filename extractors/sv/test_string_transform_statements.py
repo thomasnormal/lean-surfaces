@@ -63,6 +63,51 @@ class StringTransformStatements(unittest.TestCase):
                             for node in nodes(design)
                             if node.get("kind") == "Unsupported"))
 
+    def test_putc_replays_ascii_and_low_byte_history(self):
+        source = (
+            'module top; string s; initial begin s = "abc"; '
+            's.putc(1, "X"); if (s == "aXc" && s.getc(1) == 8\'h58) '
+            '$display("PASS"); end endmodule'
+        )
+        design = lower(source)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        source = (
+            'module top; string s; initial begin s = "abc"; '
+            's.putc(1, 32\'h144); if (s == "aDc") $display("PASS"); '
+            'end endmodule'
+        )
+        design = lower(source)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_putc_ignored_and_out_of_range_history(self):
+        source = (
+            'module top; string s; initial begin s = "abc"; '
+            's.putc(1, 0); s.putc(3, "X"); s.putc(-1, "Y"); '
+            'if (s == "abc") $display("PASS"); end endmodule'
+        )
+        design = lower(source)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_putc_dynamic_timed_and_non_ascii_forms_stay_loud(self):
+        sources = (
+            'module top; string s; int i; initial begin s = "abc"; '
+            's.putc(i, "X"); end endmodule',
+            'module top; string s; initial begin s = "abc"; '
+            '#1 s.putc(1, "X"); end endmodule',
+            'module top; string s; initial begin s = "abc"; '
+            's.putc(1, "é"); end endmodule',
+        )
+        for source in sources:
+            with self.subTest(source=source):
+                design = lower(source)
+                self.assertTrue(any(
+                    node.get("sv_kind") == "ExpressionStatement:CallExpression"
+                    for node in nodes(design)
+                    if node.get("kind") == "Unsupported"))
+
     def test_symbolic_mode_stays_loud(self):
         design = symbolic(
             'module divider; string s = "abc"; '

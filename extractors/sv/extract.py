@@ -8347,6 +8347,149 @@ def _string_transform_value(expression, method, position=None):
         return None
 
 
+def _string_putc_integral_history(value, position):
+    """Resolve a named integral character from literal blocking history."""
+    try:
+        node = value
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return None
+        direct = _literal_integral_value(node)
+        if direct is not None:
+            return direct
+        if (type(node).__name__ != "NamedValueExpression"
+                or not getattr(node.type, "isIntegral", False)):
+            return None
+        symbol = node.symbol
+        initializer = getattr(symbol, "initializer", None)
+        initial = _literal_integral_value(initializer)
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        values = []
+        invalid = False
+        controls = []
+        if instance is not None:
+            def inspect(tree_node):
+                nonlocal invalid
+                kind = type(tree_node).__name__
+                if kind in ("ConditionalStatement", "ForLoopStatement",
+                            "WhileLoopStatement", "DoWhileLoopStatement",
+                            "RepeatLoopStatement", "ForeachLoopStatement",
+                            "CaseStatement", "CaseInsideStatement",
+                            "CasePatternStatement", "LoopStatement",
+                            "TimedStatement"):
+                    controls.append(getattr(tree_node, "sourceRange", None))
+                    return
+                if (kind != "AssignmentExpression"
+                        or getattr(tree_node, "left", None) is None
+                        or getattr(tree_node.left, "symbol", None) is not symbol):
+                    return
+                start = getattr(getattr(getattr(tree_node, "sourceRange", None),
+                                        "start", None), "offset", -1)
+                literal = _literal_integral_value(tree_node.right)
+                if (getattr(tree_node, "op", None) is not None
+                        or getattr(tree_node, "timingControl", None) is not None
+                        or getattr(tree_node, "isNonBlocking", False)
+                        or literal is None
+                        or any(control is not None
+                               and control.start.offset <= start
+                               and start < control.end.offset
+                               for control in controls)):
+                    invalid = True
+                    return
+                values.append((start, literal))
+            instance.visit(inspect)
+        if invalid:
+            return None
+        history = values
+        if initial is not None:
+            history.append((-1, initial))
+        earlier = [item for item in history if item[0] < position]
+        return max(earlier, key=lambda item: item[0])[1] if earlier else None
+    except Exception:
+        return None
+
+
+def _string_putc_operation(expression):
+    """Return the source-pure byte operation represented by ``string.putc``.
+
+    The self-check state has no string slot, so a putc call is replayed only
+    when its index and character are literals.  Integral characters use the
+    IEEE low-order-byte rule; zero and nonpositive/out-of-range indices are
+    handled by the history replay.  Values outside the ASCII slice remain
+    loud rather than inventing a printable string.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not getattr(expression, "isSystemCall", False)
+                or getattr(expression, "subroutineName", "") != "putc"):
+            return None
+        arguments = list(getattr(expression, "arguments", ()))
+        if len(arguments) != 3:
+            return None
+        receiver = arguments[0]
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or type(receiver.type.canonicalType).__name__ != "StringType"):
+            return None
+        index = _literal_integral_value(arguments[1])
+        if index is None:
+            return None
+        value = arguments[2]
+        while type(value).__name__ == "ConversionExpression":
+            value = getattr(value, "operand", None)
+            if value is None:
+                return None
+        if type(value).__name__ == "StringLiteral":
+            text = getattr(value, "value", None)
+            if getattr(value, "bad", False) or not isinstance(text, str):
+                return None
+            if text == "\x00":
+                return (index, None)
+            if len(text) != 1 or not (0 < ord(text) <= 127):
+                return None
+            return (index, text)
+        position = getattr(getattr(getattr(expression, "sourceRange", None),
+                                   "start", None), "offset", None)
+        character = (_string_putc_integral_history(value, position)
+                     if position is not None else _literal_integral_value(value))
+        if character is None:
+            return None
+        byte = character & 0xff
+        if byte == 0:
+            return (index, None)
+        if byte > 127:
+            return None
+        return (index, chr(byte))
+    except Exception:
+        return None
+
+
+def _string_putc_history_event(node, symbol, controls):
+    """Recognize one direct putc call while collecting string history."""
+    try:
+        if (type(node).__name__ != "CallExpression"
+                or getattr(node, "subroutineName", "") != "putc"):
+            return None
+        arguments = list(getattr(node, "arguments", ()))
+        receiver = arguments[0] if arguments else None
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "symbol", None) is not symbol):
+            return None
+        operation = _string_putc_operation(node)
+        start = getattr(getattr(getattr(node, "sourceRange", None),
+                                "start", None), "offset", -1)
+        if operation is None or any(control is not None
+                                    and control.start.offset <= start
+                                    and start < control.end.offset
+                                    for control in controls):
+            return (start, None, True)
+        return (start, ("putc", operation[0], operation[1]), False)
+    except Exception:
+        return None
+
+
 def _sformatf_literal_source_value(expression, position=None):
     """Resolve one integral-literal `$sformatf` result as ASCII text.
 
@@ -8694,6 +8837,12 @@ def _string_transform_history_value(expression, position):
                             "TimedStatement"):
                     controls.append(getattr(tree_node, "sourceRange", None))
                     return
+                putc = _string_putc_history_event(tree_node, symbol, controls)
+                if putc is not None:
+                    start, value, invalid = putc
+                    if start < position:
+                        assignments.append((start, value, invalid))
+                    return
                 if kind != "AssignmentExpression":
                     return
                 left = getattr(tree_node, "left", None)
@@ -8785,6 +8934,14 @@ def _string_transform_history_value(expression, position):
             elif value[0] == "noop":
                 if current is None:
                     return None
+            elif value[0] == "putc":
+                if current is None:
+                    return None
+                index, character = value[1], value[2]
+                if character is not None and 0 <= index < len(current):
+                    chars = list(current)
+                    chars[index] = character
+                    current = "".join(chars)
             else:
                 return None
             history.append((start, current))
@@ -16172,6 +16329,33 @@ def _string_literal_case_method(expression):
         return False
 
 
+def _string_literal_putc_method(expression):
+    """Recognize a source-pure blocking ``string.putc`` statement."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "putc"
+                or len(expression.arguments) != 3):
+            return False
+        receiver = expression.arguments[0]
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or type(receiver.type.canonicalType).__name__ != "StringType"):
+            return False
+        if _string_putc_operation(expression) is None:
+            return False
+        position = getattr(getattr(getattr(expression, "sourceRange", None),
+                                   "start", None), "offset", None)
+        return (position is not None
+                # Include this call in the replay so a surrounding timed,
+                # conditional, or loop statement is rejected by the history
+                # control check rather than treated as an inert write.
+                and _string_transform_history_value(receiver, position + 1)
+                is not None)
+    except Exception:
+        return False
+
+
 def _string_literal_substr_method(expression):
     """Recognize ``substr`` on a proven ASCII string and literal bounds."""
     try:
@@ -16390,6 +16574,8 @@ def _string_literal_len_method(expression):
             # history recognizer unsafe.
             if tail.startswith(".getc"):
                 return True
+            if tail.startswith(".putc"):
+                return True
             if tail.startswith("="):
                 # The source spelling must be a literal assignment.  AST
                 # offsets include trivia differently from the raw source
@@ -16444,10 +16630,37 @@ def _string_literal_source_value(expression, method, receiver=None,
             return None
         instance = getattr(getattr(symbol, "parentScope", None),
                            "containingInstance", None)
-        assignments = []
+        events = []
+        controls = []
         if instance is not None:
             def inspect(node):
-                if (type(node).__name__ != "AssignmentExpression"
+                kind = type(node).__name__
+                if kind in ("ConditionalStatement", "ForLoopStatement",
+                            "WhileLoopStatement", "DoWhileLoopStatement",
+                            "RepeatLoopStatement", "ForeachLoopStatement",
+                            "CaseStatement", "CaseInsideStatement",
+                            "CasePatternStatement", "LoopStatement",
+                            "TimedStatement"):
+                    controls.append(getattr(node, "sourceRange", None))
+                    return
+                if kind == "CallExpression":
+                    call_arguments = list(getattr(node, "arguments", ()))
+                    call_receiver = call_arguments[0] if call_arguments else None
+                    if (getattr(node, "subroutineName", "") == "putc"
+                            and type(call_receiver).__name__ == "NamedValueExpression"
+                            and getattr(call_receiver, "symbol", None) is symbol):
+                        start = getattr(getattr(getattr(node, "sourceRange", None),
+                                                "start", None), "offset", -1)
+                        operation = _string_putc_operation(node)
+                        inside = any(control is not None
+                                     and control.start.offset <= start
+                                     and start < control.end.offset
+                                     for control in controls)
+                        event = ("putc", operation[0], operation[1]) \
+                            if operation is not None else None
+                        events.append((start, event, inside or operation is None))
+                    return
+                if (kind != "AssignmentExpression"
                         or getattr(node, "left", None) is None
                         or getattr(node.left, "symbol", None) is not symbol
                         or getattr(node, "op", None) is not None
@@ -16462,8 +16675,8 @@ def _string_literal_source_value(expression, method, receiver=None,
                         or any(ord(char) == 0 or ord(char) > 127
                                for char in value.value)):
                     return
-                assignments.append((getattr(node.sourceRange.start, "offset", -1),
-                                    value.value))
+                events.append((getattr(node.sourceRange.start, "offset", -1),
+                               ("whole", value.value), False))
             instance.visit(inspect)
         name = getattr(symbol, "name", "")
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
@@ -16481,6 +16694,8 @@ def _string_literal_source_value(expression, method, receiver=None,
             if (tail.startswith("." + method)
                     or (method in ("len", "getc")
                         and tail.startswith((".len", ".getc")))
+                    or tail.startswith(".putc")
+                    or tail.startswith(("==", "!=", "===", "!=="))
                     or (method in ("compare", "icompare")
                         and tail.startswith((".compare", ".icompare")))
                     or (method in ("toupper", "tolower", "substr")
@@ -16496,18 +16711,38 @@ def _string_literal_source_value(expression, method, receiver=None,
             method_pattern = (r'(?:compare|icompare)'
                               if method in ("compare", "icompare")
                               else re.escape(method))
+            statement_start = source.rfind(";", 0, match.start()) + 1
+            if re.search(r'\$(?:display|write)\s*\([^;]*$',
+                         source[statement_start:match.start()]):
+                continue
             if re.search(r'\.' + method_pattern
-                         + r'\s*\([^;]*$', source[:match.start()]):
+                         + r'\s*\([^;]*$',
+                         source[statement_start:match.start()]):
                 continue
             return None
         position = getattr(getattr(expression, "sourceRange", None), "start", None)
         position = getattr(position, "offset", None)
         if position is None:
             return None
-        history = [(start, value) for start, value in assignments if start < position]
-        if initial_value is not None:
-            history.insert(0, (-1, initial_value))
-        return max(history, key=lambda item: item[0])[1] if history else None
+        current = initial_value
+        relevant = sorted((event for event in events if event[0] < position),
+                          key=lambda event: event[0])
+        for _start, operation, invalid in relevant:
+            if invalid:
+                return None
+            if operation[0] == "whole":
+                current = operation[1]
+            elif operation[0] == "putc":
+                if current is None:
+                    return None
+                index, character = operation[1], operation[2]
+                if character is not None and 0 <= index < len(current):
+                    chars = list(current)
+                    chars[index] = character
+                    current = "".join(chars)
+            else:
+                return None
+        return current
     except Exception:
         return None
 
@@ -20672,6 +20907,12 @@ def _convert_syscall(sm, s, e):
             # source-pure ASCII history is the only represented fact needed.
             return {"kind": "Empty", "span": node_span(sm, s),
                     "string_case_statement": name}
+        if _SYM is None and _string_literal_putc_method(e):
+            # ``putc`` mutates the opaque string, so retain its source event
+            # for later literal-history queries while erasing the statement
+            # itself from the flat self-check state.
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "string_putc_statement": name}
         if _SYM is None and _string_literal_substr_method(e):
             # ``substr`` has no observable effect in statement position once
             # the receiver and both inclusive bounds are source-pure literals.

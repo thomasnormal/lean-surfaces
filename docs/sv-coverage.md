@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 378 | 372 | 0 | 6 | sv-tests-2 declarations |
+| 379 | 373 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -392,6 +392,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `string_typename_assignment` | `Examples/system-verilog/string_typename_assignment/string_typename_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_scope_assignment` | `Examples/system-verilog/string_sformatf_scope_assignment/string_sformatf_scope_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_scope_wrapper_assignment` | `Examples/system-verilog/string_sformatf_scope_wrapper_assignment/string_sformatf_scope_wrapper_assignment.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_putc_history` | `Examples/system-verilog/string_putc_history/string_putc_history.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -628,20 +629,20 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22065 | 5622 | 16376 | 67 |
+| 22065 | 5637 | 16361 | 67 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 2757 |
-| `ExpressionStatement:CallExpression` | 2722 |
-| `CallExpression` | 2653 |
+| `AssignmentExpression:target` | 2751 |
+| `ExpressionStatement:CallExpression` | 2710 |
+| `CallExpression` | 2645 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2116 |
 | `SubroutineSymbol:Subroutine` | 1469 |
 | `ConcurrentAssertionStatement` | 1359 |
 | `InvalidStatement` | 1330 |
 | `ClassType` | 1330 |
-| `NamedValueExpression:2state` | 1307 |
+| `NamedValueExpression:2state` | 1305 |
 | `Hierarchy:module-kind` | 1250 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1154 |
 | `MemberAccessExpression` | 1018 |

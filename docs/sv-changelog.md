@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.122] — 2026-10-28
+
+Blocking `string.putc(index, character)` calls now replay through source-pure
+ASCII string history, including low-byte integral characters and ignored or
+out-of-range writes. Dynamic, timed, control-dependent, aliased, and
+non-ASCII forms remain loud. The new fixture and Lean receipt pass;
+differential coverage grows **378 rows / 372 matches / 0 disagreements / 6
+recorded refusals → 379 / 373 / 0 / 6**. The fresh 22,065-path census moves
+**5,629 → 5,637 clean / 16,369 → 16,361 partial** with 67 include skips;
+`ExpressionStatement:CallExpression` falls **2,722 → 2,710** and
+`AssignmentExpression:target` remains **2,751**.
+
 ## [0.1.121] — 2026-10-28
 
 Blocking assignments from literal text wrapped around the metadata-only

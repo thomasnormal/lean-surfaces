@@ -3406,6 +3406,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "string_putc_history",
+      "file": "Examples/system-verilog/string_putc_history/string_putc_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

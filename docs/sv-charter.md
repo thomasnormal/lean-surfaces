@@ -1,5 +1,20 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Source-pure `string.putc` history — 2026-10-28
+
+Blocking `string.putc(index, character)` calls now replay through the existing
+ASCII string history. Constant indices and one-byte ASCII or literal integral
+characters are admitted, including IEEE low-byte conversion; zero, negative,
+and out-of-range writes leave the value unchanged. Dynamic indices or
+characters, timed or control-dependent calls, aliases, and non-ASCII values
+remain loud. The `string_putc_history` fixture and Lean receipt pass.
+
+The fresh 22,065-path census moves **5,629 → 5,637 clean / 16,369 → 16,361
+partial** with 67 include skips; `ExpressionStatement:CallExpression` falls
+**2,722 → 2,710**, while `AssignmentExpression:target` remains **2,751**.
+Differential coverage grows **378/372/0/6 → 379/373/0/6**, and grammar coverage
+remains **218/97/121**.
+
 **Status: the workstream's founding document.** The owner chartered the
 language-family programme with *"System Verilog also has a spec, that we
 can similarly follow"* — versioned surfaces, spec-mirror as the general

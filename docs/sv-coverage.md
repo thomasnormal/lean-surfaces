@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 375 | 369 | 0 | 6 | sv-tests-2 declarations |
+| 376 | 370 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -389,6 +389,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `fixed_array_nested_self_copy` | `Examples/system-verilog/fixed_array_nested_self_copy/fixed_array_nested_self_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_nested_conditional_self_alias` | `Examples/system-verilog/fixed_array_nested_conditional_self_alias/fixed_array_nested_conditional_self_alias.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_nested_subarray_copy` | `Examples/system-verilog/fixed_array_nested_subarray_copy/fixed_array_nested_subarray_copy.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_typename_assignment` | `Examples/system-verilog/string_typename_assignment/string_typename_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -625,20 +626,20 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22065 | 5611 | 16387 | 67 |
+| 22065 | 5622 | 16376 | 67 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 2782 |
+| `AssignmentExpression:target` | 2757 |
 | `ExpressionStatement:CallExpression` | 2722 |
 | `CallExpression` | 2653 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2116 |
 | `SubroutineSymbol:Subroutine` | 1469 |
 | `ConcurrentAssertionStatement` | 1359 |
-| `NamedValueExpression:2state` | 1332 |
 | `InvalidStatement` | 1330 |
 | `ClassType` | 1330 |
+| `NamedValueExpression:2state` | 1307 |
 | `Hierarchy:module-kind` | 1250 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1154 |
 | `MemberAccessExpression` | 1018 |

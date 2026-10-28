@@ -9,6 +9,18 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Metadata-only `$typename` string assignments — 2026-10-28
+
+A blocking assignment of `$typename` applied to a resolved data type or a
+named value now replays the ASCII type spelling through the source-pure string
+history. Effectful arguments, dynamic forms, timed writes, and nonblocking
+publication remain `AssignmentExpression:target`.
+
+`string_typename_assignment` supplies the differential `PASS` witness and
+Lean receipt. The fresh 22,065-path census moves **5,611 → 5,622 clean /
+16,387 → 16,376 partial** with 67 include skips, and
+`AssignmentExpression:target` falls **2,782 → 2,757**.
+
 ## Multidimensional fixed-array subarray copies — 2026-10-28
 
 A constant subarray reference such as `source[1]` can fill a multidimensional

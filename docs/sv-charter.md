@@ -17,6 +17,16 @@ access rather than a decision.
 
 ---
 
+## Metadata-only `$typename` string assignments — 2026-10-28
+
+Blocking assignments of `$typename` results now replay the resolved ASCII
+type spelling through the source-pure string history. Data-type and named-value
+queries are admitted; effectful, dynamic, timed, and nonblocking forms remain
+loud. The `string_typename_assignment` fixture and Lean receipt pass, and the
+differential matrix grows **375/369/0/6 → 376/370/0/6**. The fresh corpus
+census moves **5,611 → 5,622 clean / 16,387 → 16,376 partial** and lowers the
+`AssignmentExpression:target` wall **2,782 → 2,757**.
+
 ## 2026-10-09 RESTART — surface and kernel ownership
 
 The lane resumes against `e565769`. The dated measurements below are

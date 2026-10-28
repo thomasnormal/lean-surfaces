@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.119] — 2026-10-28
+
+Blocking assignments from metadata-only `$typename` queries now replay the
+resolved ASCII type spelling through source-pure string history. Effectful,
+dynamic, timed, and nonblocking forms remain loud. The new fixture and Lean
+receipt pass; differential coverage grows **375 rows / 369 matches / 0
+disagreements / 6 refusals → 376 / 370 / 0 / 6**. The fresh 22,065-path census
+reports **5,622 clean / 16,376 partial** with 67 include skips, and
+`AssignmentExpression:target` falls **2,782 → 2,757**.
+
 ## [0.1.118] — 2026-10-28
 
 Constant nested subarray references now copy into multidimensional fixed

@@ -25,6 +25,17 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Metadata-only `$typename` string assignments — 2026-10-28
+
+The legacy extractor now replays a blocking assignment from a resolved
+`$typename` query through the source-pure string history. Data-type and
+named-value queries are metadata-only; effectful arguments, dynamic forms,
+timed writes, and nonblocking publication remain loud. The
+`string_typename_assignment` fixture supplies the differential row and Lean
+receipt. A fresh run reports **5,622 clean / 16,376 partial** over 22,065
+paths with 67 include skips; `AssignmentExpression:target` falls
+**2,782 → 2,757**. Differential coverage grows **375/369/0/6 → 376/370/0/6**.
+
 ## Multidimensional fixed-array subarray copies — 2026-10-28
 
 The legacy extractor now lowers a constant nested subarray reference into a

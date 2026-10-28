@@ -3379,6 +3379,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "string_typename_assignment",
+      "file": "Examples/system-verilog/string_typename_assignment/string_typename_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -8145,6 +8145,8 @@ def _string_source_value(expression, position=None, active=()):
                 return None
             method = getattr(node, "subroutineName", "")
             arguments = list(getattr(node, "arguments", ()))
+            if method == "$typename":
+                return _typename_source_value(node)
             if method == "$sformatf":
                 return _sformatf_literal_source_value(node, position)
             if method in ("toupper", "tolower"):
@@ -8585,6 +8587,41 @@ def _sformatf_literal_source_value(expression, position=None):
         return None
 
 
+def _typename_source_value(expression):
+    """Resolve a metadata-only ``$typename`` call to an ASCII type name.
+
+    The self-check surface has no string slot, but a type-name query is pure
+    metadata and can be replayed by the existing source-history machinery.
+    Restrict this helper to a single well-formed argument and the frontend's
+    resolved type spelling; calls and other effectful expression forms stay
+    on the ordinary loud boundary.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not getattr(expression, "isSystemCall", False)
+                or getattr(expression, "subroutineName", "") != "$typename"):
+            return None
+        arguments = list(getattr(expression, "arguments", ()))
+        if len(arguments) != 1:
+            return None
+        argument = arguments[0]
+        if (getattr(argument, "bad", False)
+                or type(argument).__name__ not in (
+                    "DataTypeExpression", "NamedValueExpression")):
+            return None
+        typ = getattr(argument, "type", None)
+        if typ is None:
+            return None
+        value = str(typ)
+        if (not value or any(ord(char) == 0 or ord(char) > 127
+                             for char in value)):
+            return None
+        return value
+    except Exception:
+        return None
+
+
 def _string_transform_history_value(expression, position):
     """Resolve a named string history containing only pure writes.
 
@@ -8701,6 +8738,8 @@ def _string_transform_history_value(expression, position):
                                                                start)
                     elif method == "$sformatf":
                         transformed = _sformatf_literal_source_value(value, start)
+                    elif method == "$typename":
+                        transformed = _typename_source_value(value)
                 assignments.append((start,
                                     ("whole", transformed) if transformed is not None
                                     else None,

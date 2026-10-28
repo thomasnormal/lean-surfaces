@@ -106,3 +106,8 @@ def ord_alias(value):
     f = ord
     return f(value)
 
+
+def chr_alias(value):
+    f = chr
+    return f(value)
+

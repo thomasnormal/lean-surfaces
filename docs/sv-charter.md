@@ -38,6 +38,15 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Source-pure string `$sformatf` assignments — 2026-10-28
+
+Blocking assignments from `$sformatf("%s", ...)` and `$sformatf("%S", ...)` now
+use the existing source-pure ASCII string-history path when the operand is a
+literal or an earlier direct ASCII string history. Dynamic operands,
+unsupported formats, timed forms, and nonblocking writes remain loud. The
+`string_sformatf_string_assignment` fixture and Lean receipt supply the
+`PASS` evidence; differential coverage grows **357/351/0/6 → 358/352/0/6**.
+
 ## Literal `$sformatf` string assignments — 2026-10-28
 
 The existing literal formatter now supplies source-pure ASCII history for

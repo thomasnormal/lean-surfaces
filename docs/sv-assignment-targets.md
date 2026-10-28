@@ -9,6 +9,19 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Source-pure string `$sformatf` assignments — 2026-10-28
+
+Blocking assignments of `$sformatf("%s", ...)` and `$sformatf("%S", ...)` to a
+string now replay exact ASCII text when the operand is a direct literal or an
+earlier source-pure ASCII string history. Later string comparisons observe the
+same value without adding string storage. Dynamic operands, unsupported formats,
+timed forms, and nonblocking writes remain `AssignmentExpression:target`.
+
+`string_sformatf_string_assignment` supplies the differential `PASS` witness
+and Lean receipt. Differential coverage grows **357/351/0/6 → 358/352/0/6**;
+the corpus snapshot remains **5,584 clean / 16,414 partial** with 67 include
+skips and `AssignmentExpression:target` at **2,810**.
+
 ## Literal `$sformatf` string assignments — 2026-10-28
 
 The existing literal `$sformatf` formatter now supplies source-pure ASCII

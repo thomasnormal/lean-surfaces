@@ -8141,8 +8141,9 @@ def _sformatf_literal_source_value(expression, position=None):
 
     The self-check state already renders these formats for packed values.  A
     string target can therefore replay the same literal value without adding
-    string storage.  Keep this helper to the direct integral-literal shape;
-    dynamic operands, strings, and unsupported format details remain loud.
+    string storage.  The string conversion is also exact when its operand is
+    a direct ASCII literal or a source-pure named-string history.  Dynamic
+    operands and unsupported format details remain loud.
     """
     try:
         if (type(expression).__name__ != "CallExpression"
@@ -8157,6 +8158,19 @@ def _sformatf_literal_source_value(expression, position=None):
                 or getattr(format_expr, "bad", False)):
             return None
         fmt = getattr(format_expr, "value", "")
+        if fmt in ("%s", "%S"):
+            node = operand
+            while type(node).__name__ == "ConversionExpression":
+                node = getattr(node, "operand", None)
+                if node is None:
+                    return None
+            if type(node).__name__ == "StringLiteral":
+                value = getattr(node, "value", None)
+                return (value if (not getattr(node, "bad", False)
+                                  and isinstance(value, str)
+                                  and all(0 < ord(char) <= 127
+                                          for char in value)) else None)
+            return _string_source_value(node, position)
         if fmt not in ("%h", "%H", "%0h", "%0H"):
             return None
         node = operand

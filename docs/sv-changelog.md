@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.101] — 2026-10-28
+
+Source-pure ASCII `$sformatf("%s", ...)` and `$sformatf("%S", ...)` results
+assigned to strings now replay exact text from literal operands or earlier
+literal string history. Dynamic operands, unsupported formats, timed forms, and
+nonblocking writes remain loud. The new fixture and Lean receipt pass;
+differential coverage is **358 rows / 352 matches / 0 disagreements / 6
+recorded refusals**, and the census remains **5,584 clean / 16,414 partial**
+with `AssignmentExpression:target` at **2,810**.
+
 ## [0.1.100] — 2026-10-28
 
 Literal `$sformatf("%h", ...)` and `$sformatf("%H", ...)` results from

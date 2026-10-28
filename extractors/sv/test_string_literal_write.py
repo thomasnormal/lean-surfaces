@@ -40,6 +40,36 @@ class LiteralStringWrites(unittest.TestCase):
             2,
         )
 
+    def test_literal_sformatf_string_assignment_replays_ascii_text(self):
+        design = lower(
+            'module top; string source, copy, upper; initial begin '
+            'source = "Hello"; copy = $sformatf("%s", source); '
+            'upper = $sformatf("%S", "World"); '
+            'if (copy != "Hello" || upper != "World") $display("FAIL"); '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False) for node in nodes(design)),
+            2,
+        )
+
+    def test_dynamic_or_unsupported_sformatf_string_assignment_stays_loud(self):
+        for source in (
+                'module top; string value; string source; initial begin '
+                'value = $sformatf("%s", source); end endmodule',
+                'module top; string value; initial begin '
+                'value = $sformatf("%d", "hello"); end endmodule',
+                'module top; string value; initial begin '
+                'value <= $sformatf("%s", "hello"); end endmodule'):
+            design = lower(source)
+            self.assertFalse(any(node.get("string_source_write_noop")
+                                 for node in nodes(design)))
+            self.assertTrue(any(node.get("kind") in ("Unsupported", "Invalid")
+                                or node.get("sv_kind") ==
+                                "AssignmentExpression:target"
+                                for node in nodes(design)))
+
     def test_dynamic_sformatf_string_assignment_stays_loud(self):
         design = lower(
             'module top; string value; int x; initial begin '

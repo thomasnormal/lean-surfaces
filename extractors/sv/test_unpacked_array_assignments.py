@@ -662,10 +662,19 @@ class UnpackedArrayAssignments(unittest.TestCase):
                             node.get("oob_write_noop")
                             for node in nodes(design)))
 
-    def test_overlapping_subarray_copy_stays_loud(self):
+    def test_subarray_self_copy_is_a_noop(self):
         design = extract_source(
             "module top; int value [0:1][0:2]; "
             "initial value[0] = value[0]; endmodule")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("fixed_array_subarray_self_copy_noop")
+                            for node in nodes(design)))
+
+    def test_nonblocking_subarray_self_copy_stays_loud(self):
+        design = extract_source(
+            "module top; int value [0:1][0:2]; "
+            "initial value[0] <= value[0]; endmodule")
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))

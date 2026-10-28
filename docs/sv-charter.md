@@ -38,6 +38,20 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Fixed-array subarray self-copies — 2026-10-28
+
+An exact blocking self-copy of one constant subarray of a fixed
+multidimensional integral array now lowers to `Empty`, since every source
+cell is already the matching destination cell. Nonblocking, overlapping,
+dynamic, timed, and nonintegral forms remain loud. The
+`fixed_array_subarray_self_copy` fixture supplies the differential `PASS`
+row and Lean receipt.
+
+Differential coverage grows **347/341/0/6 → 348/342/0/6** with no
+disagreements; grammar coverage remains **218/97/121**. The external corpus
+snapshot remains unavailable, so the committed **5,401 clean / 16,597 partial**
+counts and 67 include skips are unchanged.
+
 ## Disjoint fixed-array subarray copies — 2026-10-28
 
 A blocking copy between two constant subarrays of one fixed multidimensional

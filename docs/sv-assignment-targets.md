@@ -9,6 +9,19 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Fixed-array subarray self-copies — 2026-10-28
+
+An exact blocking self-copy of one constant subarray of a fixed
+multidimensional integral array now lowers to `Empty`, because every source
+cell is already the corresponding destination cell. Nonblocking, overlapping,
+dynamic, timed, and nonintegral forms remain `AssignmentExpression:target`;
+publication timing and unsupported storage cannot be erased.
+
+`fixed_array_subarray_self_copy` supplies the differential `PASS` witness
+and Lean receipt. Differential coverage grows **347/341/0/6 → 348/342/0/6**;
+the unavailable external census snapshot remains **5,401 clean / 16,597
+partial** with 67 include skips.
+
 ## Disjoint fixed-array subarray copies — 2026-10-28
 
 A blocking copy between two constant subarrays of one fixed multidimensional

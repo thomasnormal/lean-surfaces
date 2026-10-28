@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.94] — 2026-10-28
+
+Exact blocking self-copies of constant subarrays now lower to an `Empty`
+no-op, matching the existing whole-array self-copy rule. Nonblocking,
+overlapping, dynamic, and nonintegral forms remain loud because their
+publication or storage behavior is not erased. The
+`fixed_array_subarray_self_copy` fixture and Lean receipt supply the
+`PASS` evidence. Differential coverage is now **348 rows / 342 matches / 0
+disagreements / 6 recorded refusals**; grammar coverage remains **218 / 97 /
+121** and the committed census remains **5,401 clean / 16,597 partial** with
+67 include skips.
+
 ## [0.1.93] — 2026-10-28
 
 Blocking copies between two disjoint constant subarrays of one fixed

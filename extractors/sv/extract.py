@@ -3487,6 +3487,15 @@ def _fixed_array_subarray_copy_assignment(sm, expr):
         if lhs_subarray is not None and rhs_shape is not None:
             lhs_root, lhs_cells, lhs_width, lhs_two = lhs_subarray
             rhs_root, rhs_cells, rhs_width, _rhs_two = rhs_shape
+            if (lhs_root == rhs_root and lhs_cells == rhs_cells):
+                if (expr.isNonBlocking
+                        or not _case_source_expression_ok(expr.right)):
+                    return None
+                return {
+                    "kind": "Empty",
+                    "span": node_span(sm, expr),
+                    "fixed_array_subarray_self_copy_noop": True,
+                }
             aliasing = (lhs_root == rhs_root
                         and bool(set(lhs_cells) & set(rhs_cells)))
             if (len(lhs_cells) != len(rhs_cells) or lhs_width != rhs_width

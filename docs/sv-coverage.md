@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 347 | 341 | 0 | 6 | sv-tests-2 declarations |
+| 348 | 342 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -305,6 +305,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `fixed_array_nested_copy` | `Examples/system-verilog/fixed_array_nested_copy/fixed_array_nested_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_subarray_copy` | `Examples/system-verilog/fixed_array_subarray_copy/fixed_array_subarray_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_disjoint_subarray_copy` | `Examples/system-verilog/fixed_array_disjoint_subarray_copy/fixed_array_disjoint_subarray_copy.sv` | match | **MATCH** | `ok` | MATCH |
+| `fixed_array_subarray_self_copy` | `Examples/system-verilog/fixed_array_subarray_self_copy/fixed_array_subarray_self_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_reinitialization` | `Examples/system-verilog/dynamic_array_reinitialization/dynamic_array_reinitialization.sv` | match | **MATCH** | `ok` | MATCH |
 | `array_oob_reads` | `Examples/system-verilog/array_oob_reads/array_oob_reads.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_index` | `Examples/system-verilog/string_index/string_index.sv` | match | **MATCH** | `ok` | MATCH |

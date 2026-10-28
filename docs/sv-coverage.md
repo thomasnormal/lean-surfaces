@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 362 | 356 | 0 | 6 | sv-tests-2 declarations |
+| 363 | 357 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -21,6 +21,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `string_sformatf_binary_assignment` | `Examples/system-verilog/string_sformatf_binary_assignment/string_sformatf_binary_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_octal_assignment` | `Examples/system-verilog/string_sformatf_octal_assignment/string_sformatf_octal_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_decimal_assignment` | `Examples/system-verilog/string_sformatf_decimal_assignment/string_sformatf_decimal_assignment.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_sformatf_zero_width_assignment` | `Examples/system-verilog/string_sformatf_zero_width_assignment/string_sformatf_zero_width_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `queue_literal_then_empty_concat` | `Examples/system-verilog/queue_literal_then_empty_concat/queue_literal_then_empty_concat.sv` | match | **MATCH** | `ok` | MATCH |
 | `power_unsigned` | `harness/sv/power/unsigned.sv` | match | **MATCH** | `ok` | MATCH |
 | `power_signed` | `harness/sv/power/signed.sv` | match | **MATCH** | `ok` | MATCH |

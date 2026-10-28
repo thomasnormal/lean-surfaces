@@ -8185,7 +8185,7 @@ def _sformatf_literal_source_value(expression, position=None):
                 return None
             byte = int(bits, 2) & 0xff
             return chr(byte) if 0 < byte <= 127 else None
-        if fmt in ("%b", "%B"):
+        if fmt in ("%b", "%B", "%0b", "%0B"):
             node = operand
             while type(node).__name__ == "ConversionExpression":
                 node = getattr(node, "operand", None)
@@ -8195,9 +8195,12 @@ def _sformatf_literal_source_value(expression, position=None):
                                            "UnbasedUnsizedIntegerLiteral"):
                 return None
             bits = svint_bits(node.value)
-            return (bits if bits and all(bit in "01" for bit in bits)
-                    else None)
-        if fmt in ("%o", "%O"):
+            if not bits or any(bit not in "01" for bit in bits):
+                return None
+            if fmt in ("%0b", "%0B"):
+                return bits.lstrip("0") or "0"
+            return bits
+        if fmt in ("%o", "%O", "%0o", "%0O"):
             node = operand
             while type(node).__name__ == "ConversionExpression":
                 node = getattr(node, "operand", None)

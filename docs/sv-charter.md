@@ -38,6 +38,15 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Zero-width binary and octal `$sformatf` string assignments — 2026-10-28
+
+Blocking assignments from `%0b/%0B` and `%0o/%0O` `$sformatf` forms now use the
+existing source-history path for known 0/1 integral literals, stripping binary
+leading zeroes and retaining minimal octal text. Unknown or dynamic operands,
+timed forms, and nonblocking writes remain loud. The
+`string_sformatf_zero_width_assignment` fixture and Lean receipt supply the
+`PASS` evidence; differential coverage grows **362/356/0/6 → 363/357/0/6**.
+
 ## Literal decimal `$sformatf` string assignments — 2026-10-28
 
 Blocking assignments from decimal `$sformatf` forms (`%d`, `%D`, `%0d`, and

@@ -193,6 +193,39 @@ class LiteralStringWrites(unittest.TestCase):
                                 "AssignmentExpression:target"
                                 for node in nodes(design)))
 
+    def test_literal_sformatf_zero_width_binary_octal_assignment_replays_text(self):
+        design = lower(
+            'module top; string binary, binary_zero, octal, octal_zero; '
+            'initial begin binary = $sformatf("%0b", 8\'b00001010); '
+            'binary_zero = $sformatf("%0B", 8\'b00000000); '
+            'octal = $sformatf("%0o", 8\'h0A); '
+            'octal_zero = $sformatf("%0O", 8\'h00); '
+            'if (binary != "1010" || binary_zero != "0" || '
+            'octal != "12" || octal_zero != "0") $display("FAIL"); '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False) for node in nodes(design)),
+            4,
+        )
+
+    def test_unknown_or_dynamic_zero_width_sformatf_assignment_stays_loud(self):
+        for source in (
+                'module top; string value; int x; initial begin '
+                'value = $sformatf("%0b", x); end endmodule',
+                'module top; string value; initial begin '
+                'value = $sformatf("%0O", 4\'bx101); end endmodule',
+                'module top; string value; initial begin '
+                'value <= $sformatf("%0b", 4\'b1010); end endmodule'):
+            design = lower(source)
+            self.assertFalse(any(node.get("string_source_write_noop")
+                                 for node in nodes(design)))
+            self.assertTrue(any(node.get("kind") in ("Unsupported", "Invalid")
+                                or node.get("sv_kind") ==
+                                "AssignmentExpression:target"
+                                for node in nodes(design)))
+
     def test_dynamic_sformatf_string_assignment_stays_loud(self):
         design = lower(
             'module top; string value; int x; initial begin '

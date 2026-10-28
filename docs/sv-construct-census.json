@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    2814
+    2812
    ],
    [
     "ExpressionStatement:CallExpression",
@@ -40,7 +40,7 @@
    ],
    [
     "NamedValueExpression:2state",
-    1367
+    1362
    ],
    [
     "ConcurrentAssertionStatement",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5580,
-   "partial": 16418,
+   "clean": 5582,
+   "partial": 16416,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4806,
+    4808,
     18701
    ],
    "simulation elaboration": [
@@ -1231,18 +1231,18 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 467,
-    "clean": 580,
-    "partial": 468,
+    "blocked_by_more": 465,
+    "clean": 582,
+    "partial": 466,
     "simulation_tests": 1048,
     "top_residual_blockers": [
      [
       "NamedValueExpression:2state",
-      149
+      147
      ],
      [
       "VariableSymbol:2state",
-      144
+      142
      ],
      [
       "TimedStatement:DelayControl",
@@ -1253,12 +1253,12 @@
       103
      ],
      [
-      "AssignmentExpression:target",
-      101
-     ],
-     [
       "ConversionExpression:width",
       100
+     ],
+     [
+      "AssignmentExpression:target",
+      99
      ],
      [
       "CallExpression",
@@ -1595,9 +1595,9 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 598,
+    "clean": 600,
     "error": 0,
-    "partial": 594,
+    "partial": 592,
     "skip_include": 0,
     "total": 1192,
     "unlockable": 2

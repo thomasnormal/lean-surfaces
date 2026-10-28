@@ -7918,6 +7918,11 @@ def _string_source_value(expression, position=None, active=()):
                                        "start", None), "offset", None)
         if position is None:
             return None
+        if (type(node).__name__ == "NamedValueExpression"
+                and type(node.type.canonicalType).__name__ == "StringType"):
+            replayed = _string_transform_history_value(node, position)
+            if replayed is not None:
+                return replayed
         if type(node).__name__ == "StringLiteral":
             value = getattr(node, "value", None)
             if (not isinstance(value, str) or getattr(node, "bad", False)
@@ -8130,7 +8135,15 @@ def _string_transform_value(expression, method, position=None):
 
 
 def _string_transform_history_value(expression, position):
-    """Resolve a named string history containing only literal/transform writes."""
+    """Resolve a named string history containing only pure writes.
+
+    In addition to whole-string literals and the existing case/substr
+    transformations, a constant-index byte write from a one-byte ASCII
+    literal is replayed in source order.  The flat self-check state still has
+    no string storage; this is only a proof of the value needed by a later
+    scalar comparison.  Dynamic, timed, nonblocking, control-dependent, and
+    nonliteral writes remain outside the slice.
+    """
     try:
         node = expression
         while type(node).__name__ == "ConversionExpression":
@@ -8168,9 +8181,20 @@ def _string_transform_history_value(expression, position):
                             "TimedStatement"):
                     controls.append(getattr(tree_node, "sourceRange", None))
                     return
-                if (kind != "AssignmentExpression"
-                        or getattr(tree_node, "left", None) is None
-                        or getattr(tree_node.left, "symbol", None) is not symbol):
+                if kind != "AssignmentExpression":
+                    return
+                left = getattr(tree_node, "left", None)
+                if left is None:
+                    return
+                left_kind = type(left).__name__
+                is_whole = (left_kind == "NamedValueExpression"
+                            and getattr(left, "symbol", None) is symbol)
+                is_byte = False
+                if left_kind == "ElementSelectExpression":
+                    receiver = getattr(left, "value", None)
+                    is_byte = (type(receiver).__name__ == "NamedValueExpression"
+                               and getattr(receiver, "symbol", None) is symbol)
+                if not (is_whole or is_byte):
                     return
                 start = getattr(getattr(getattr(tree_node, "sourceRange", None),
                                         "start", None), "offset", -1)
@@ -8190,12 +8214,33 @@ def _string_transform_history_value(expression, position):
                 value = getattr(tree_node, "right", None)
                 while type(value).__name__ == "ConversionExpression":
                     value = getattr(value, "operand", None)
+                if is_byte:
+                    index = _literal_integral_value(getattr(left, "selector", None))
+                    if index is None or index < 0:
+                        assignments.append((start, None, True))
+                        return
+                    if (type(value).__name__ == "StringLiteral"
+                            and not getattr(value, "bad", False)
+                            and isinstance(getattr(value, "value", None), str)):
+                        text = value.value
+                        if text == "\x00":
+                            assignments.append((start, ("noop", None), False))
+                        elif (len(text) == 1 and 0 < ord(text) <= 127):
+                            assignments.append((start, ("byte", index, text), False))
+                        else:
+                            assignments.append((start, None, True))
+                        return
+                    if _literal_integral_value(value) == 0:
+                        assignments.append((start, ("noop", None), False))
+                    else:
+                        assignments.append((start, None, True))
+                    return
                 if (type(value).__name__ == "StringLiteral"
                         and not getattr(value, "bad", False)
                         and isinstance(getattr(value, "value", None), str)
                         and not any(ord(char) == 0 or ord(char) > 127
                                     for char in value.value)):
-                    assignments.append((start, value.value, False))
+                    assignments.append((start, ("whole", value.value), False))
                     return
                 transformed = None
                 if type(value).__name__ == "CallExpression":
@@ -8203,15 +8248,71 @@ def _string_transform_history_value(expression, position):
                     if method in ("toupper", "tolower", "substr"):
                         transformed = _string_transform_value(value, method,
                                                                start)
-                assignments.append((start, transformed, transformed is None))
+                assignments.append((start,
+                                    ("whole", transformed) if transformed is not None
+                                    else None,
+                                    transformed is None))
             instance.visit(inspect)
+        current = history[-1][1] if history else None
         for start, value, invalid in sorted(assignments):
             if invalid:
                 return None
-            history.append((start, value))
-        return max(history, key=lambda item: item[0])[1] if history else None
+            if value[0] == "whole":
+                current = value[1]
+            elif value[0] == "byte":
+                if current is None or value[1] >= len(current):
+                    return None
+                chars = list(current)
+                chars[value[1]] = value[2]
+                current = "".join(chars)
+            elif value[0] == "noop":
+                if current is None:
+                    return None
+            else:
+                return None
+            history.append((start, current))
+        return current if current is not None else None
     except Exception:
         return None
+
+
+def _string_index_literal_write(sm, expression):
+    """Recognize a pure constant-index string-byte literal assignment."""
+    try:
+        if (type(expression).__name__ != "AssignmentExpression"
+                or expression.op is not None
+                or expression.timingControl is not None
+                or expression.isNonBlocking
+                or type(expression.left).__name__ != "ElementSelectExpression"):
+            return False
+        receiver = getattr(expression.left, "value", None)
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or type(receiver.type.canonicalType).__name__ != "StringType"):
+            return False
+        index = _literal_integral_value(getattr(expression.left, "selector", None))
+        if index is None or index < 0:
+            return False
+        position = getattr(getattr(getattr(expression, "sourceRange", None),
+                                   "start", None), "offset", None)
+        if position is None:
+            return False
+        before = _string_transform_history_value(receiver, position)
+        if before is None or index >= len(before):
+            return False
+        value = getattr(expression, "right", None)
+        while type(value).__name__ == "ConversionExpression":
+            value = getattr(value, "operand", None)
+            if value is None:
+                return False
+        if _literal_integral_value(value) == 0:
+            return False
+        return (type(value).__name__ == "StringLiteral"
+                and not getattr(value, "bad", False)
+                and isinstance(getattr(value, "value", None), str)
+                and len(value.value) == 1
+                and 0 < ord(value.value) <= 127)
+    except Exception:
+        return False
 
 
 def _string_source_literal(sm, expression, value, marker):
@@ -19061,6 +19162,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         if source_string is not None:
             return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                     "string_source_write_noop": True}
+    if _SYM is None and _string_index_literal_write(sm, expr):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "string_index_literal_write_noop": True}
     # An empty queue literal likewise carries no state in the flat self-check
     # store. Keep nonempty queue construction and observations loud.
     if (_SYM is None and _queue_literal_write_noop(expr)):
@@ -20549,7 +20653,7 @@ def _convert_syscall(sm, s, e):
         else:
             value = convert_expr(sm, a)
             if (value is not None and value.get("kind") == "Unsupported"
-                    and "%s" in fmt):
+                    and ("%s" in fmt or "%0s" in fmt)):
                 string_value = _string_source_value(a)
                 if string_value is not None:
                     value = _string_source_literal(

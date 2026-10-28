@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.99] — 2026-10-28
+
+Constant-index string-byte assignments from one-byte ASCII literals now replay
+the source-pure string history, so later comparisons and `%0s` diagnostics
+observe the updated character. Dynamic, out-of-range, multi-byte, timed, and
+nonblocking forms remain loud. The `string_index_literal_character` fixture and
+Lean receipt supply the `PASS` evidence; differential coverage is **356 rows /
+350 matches / 0 disagreements / 6 recorded refusals**, and the fresh census is
+**5,582 clean / 16,416 partial** with `AssignmentExpression:target` at
+**2,812**.
+
 ## [0.1.98] — 2026-10-28
 
 Blocking assignment of the one-byte NUL string literal to a constant-indexed

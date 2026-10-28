@@ -27,6 +27,34 @@ def nodes(value):
 
 
 class LiteralStringWrites(unittest.TestCase):
+    def test_literal_string_index_assignment_replays_history(self):
+        design = lower(
+            'module top; string value; initial begin value = "hello"; '
+            'value[0] = "h"; if (value != "hello") $display("FAIL"); '
+            'value[0] = "H"; if (value != "Hello") $display("FAIL"); '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            [node.get("string_index_literal_write_noop") for node in nodes(design)
+             if node.get("string_index_literal_write_noop")],
+            [True, True],
+        )
+
+    def test_dynamic_or_invalid_string_index_writes_stay_loud(self):
+        for source in (
+                'module top; string value; int i; initial value[i] = "H"; endmodule',
+                'module top; string value; initial value[4] = "H"; endmodule',
+                'module top; string value; initial value[0] = "hi"; endmodule',
+                'module top; string value; initial value[0] <= "H"; endmodule'):
+            design = lower(source)
+            self.assertFalse(any(node.get("string_index_literal_write_noop")
+                                 for node in nodes(design)))
+            self.assertTrue(any(node.get("kind") in ("Unsupported", "Invalid")
+                                or node.get("sv_kind") ==
+                                "AssignmentExpression:target"
+                                for node in nodes(design)))
+
     def test_zero_string_character_assignment_is_ignored(self):
         design = lower(
             'module top; string value; initial begin value = "hello"; '
@@ -60,6 +88,25 @@ class LiteralStringWrites(unittest.TestCase):
                              for node in nodes(design)))
         self.assertTrue(any(node.get("string_null_char_write_noop")
                             for node in nodes(design)))
+
+    def test_corpus_literal_string_index_assignment_is_admitted(self):
+        import os
+        from pathlib import Path
+        corpus = os.environ.get("SV_TESTS_ROOT")
+        if not corpus:
+            self.skipTest("SV_TESTS_ROOT is unavailable")
+        source = Path(corpus) / "chapter-6" / \
+            "6.16--string-index-assign-from-literal.sv"
+        if not source.exists():
+            self.skipTest("sv-tests-2 checkout is unavailable")
+        design = lower(source.read_text())
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            [node.get("string_index_literal_write_noop") for node in nodes(design)
+             if node.get("string_index_literal_write_noop")],
+            [True, True],
+        )
 
     def test_nonzero_or_dynamic_string_character_writes_stay_loud(self):
         for source in (

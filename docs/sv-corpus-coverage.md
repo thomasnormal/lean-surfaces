@@ -25,6 +25,20 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Literal string-index character assignments — 2026-10-28
+
+The legacy extractor now replays a constant-index string-byte assignment from
+a one-byte ASCII literal through the receiver's direct literal history. Later
+comparisons and `%0s` diagnostics see the updated value; dynamic, out-of-range,
+multi-byte, timed, and nonblocking forms remain loud. The
+`string_index_literal_character` fixture supplies the differential row and
+Lean receipt.
+
+The fresh 22,065-path census moves **5,580 → 5,582 clean / 16,418 → 16,416
+partial** with 67 include skips; `AssignmentExpression:target` falls
+**2,814 → 2,812**. Differential coverage grows **355/349/0/6 → 356/350/0/6**
+with no disagreements; grammar coverage remains **218/97/121**.
+
 ## NUL string-literal character assignments — 2026-10-28
 
 The legacy extractor now erases a blocking assignment of the one-byte NUL

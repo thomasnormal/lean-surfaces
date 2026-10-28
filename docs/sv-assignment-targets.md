@@ -9,6 +9,21 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Literal string-index character assignments — 2026-10-28
+
+IEEE 1800-2023 §6.16 permits a constant-index string byte to receive a
+one-byte ASCII literal. The legacy extractor replays direct literal whole
+string and byte histories in source order, so later comparisons and `%0s`
+diagnostics see the exact updated value. Dynamic or out-of-range indices,
+multi-byte or non-ASCII literals, timed forms, and nonblocking writes remain
+`AssignmentExpression:target`.
+
+`string_index_literal_character` supplies the differential `PASS` witness and
+Lean receipt; `6.16--string-index-assign-from-literal.sv` is the corpus
+witness. Differential coverage grows **355/349/0/6 → 356/350/0/6**. The fresh
+census moves **5,580 → 5,582 clean / 16,418 → 16,416 partial** with 67 include
+skips, while `AssignmentExpression:target` falls **2,814 → 2,812**.
+
 ## NUL string-literal character assignments — 2026-10-28
 
 IEEE 1800-2023 §6.16 treats assigning the one-byte NUL string literal

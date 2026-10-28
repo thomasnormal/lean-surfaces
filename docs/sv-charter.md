@@ -38,6 +38,20 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Literal string-index character assignments — 2026-10-28
+
+IEEE 1800-2023 §6.16 permits a constant-index string byte to receive a
+one-byte ASCII literal. The legacy extractor now replays direct literal whole
+string and byte histories in source order, preserving later comparisons and
+`%0s` diagnostics while leaving dynamic, out-of-range, multi-byte, timed, and
+nonblocking writes loud. The `string_index_literal_character` fixture supplies
+the `PASS` differential row and Lean receipt.
+
+The fresh census moves **5,580 → 5,582 clean / 16,418 → 16,416 partial** with
+67 include skips, and `AssignmentExpression:target` falls **2,814 → 2,812**.
+Differential coverage grows **355/349/0/6 → 356/350/0/6**; grammar coverage
+remains **218/97/121**.
+
 ## NUL string-literal character assignments — 2026-10-28
 
 IEEE 1800-2023 §6.16 says a string cannot contain the special NUL character,

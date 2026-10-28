@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 355 | 349 | 0 | 6 | sv-tests-2 declarations |
+| 356 | 350 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -22,6 +22,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `power_zero_negative` | `harness/sv/power/zero_negative.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_null_character` | `Examples/system-verilog/string_null_character/string_null_character.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_null_literal_character` | `Examples/system-verilog/string_null_literal_character/string_null_literal_character.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_index_literal_character` | `Examples/system-verilog/string_index_literal_character/string_index_literal_character.sv` | match | **MATCH** | `ok` | MATCH |
 | `static_fixed_array_continuous_copy` | `Examples/system-verilog/static_fixed_array_continuous_copy/static_fixed_array_continuous_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `queue_fixed_size_mismatch` | `Examples/system-verilog/queue_fixed_size_mismatch/queue_fixed_size_mismatch.sv` | match | **MATCH** | `ok` | MATCH |
 | `mailbox_literal_peek` | `Examples/system-verilog/mailbox_literal_peek/mailbox_literal_peek.sv` | match | **MATCH** | `ok` | MATCH |
@@ -605,17 +606,17 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22065 | 5580 | 16418 | 67 |
+| 22065 | 5582 | 16416 | 67 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 2814 |
+| `AssignmentExpression:target` | 2812 |
 | `ExpressionStatement:CallExpression` | 2722 |
 | `CallExpression` | 2653 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2116 |
 | `SubroutineSymbol:Subroutine` | 1469 |
-| `NamedValueExpression:2state` | 1367 |
+| `NamedValueExpression:2state` | 1362 |
 | `ConcurrentAssertionStatement` | 1359 |
 | `InvalidStatement` | 1330 |
 | `ClassType` | 1330 |

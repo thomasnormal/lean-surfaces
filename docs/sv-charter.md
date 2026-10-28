@@ -1,5 +1,24 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Static implicit function returns — 2026-10-28
+
+A static function with one pure literal assignment to its implicit return
+variable now lowers exactly at expression and discarded-statement call sites.
+This covers an untyped function's implicit `logic` return and an explicitly
+typed function using its implicit variable. Automatic implicit-return functions,
+effectful or multi-statement bodies, output formals, and nonliteral histories
+remain loud; explicit-return automatic literal functions retain their existing
+admission. The `implicit_function_return` fixture exercises both forms, with
+extractor regression, differential row, and Lean receipt.
+
+The external sv-tests-2 checkout gained two paths during this measurement: the
+fresh **22,067-path** census is **5,789 clean / 16,211 partial** with 67 include
+skips, versus **5,785 / 16,213** on the prior 22,065-path snapshot. After
+accounting for those external additions, this item moves **5,785 → 5,787 clean**
+and **16,213 → 16,211 partial**; `CallExpression` falls **2,567 → 2,565**.
+Differential coverage grows **404/398/0/6 → 405/399/0/6**; grammar coverage
+remains **218/100/118**.
+
 ## Procedural event declarations for pure type queries — 2026-10-28
 
 Procedural `event` declarations now lower to inert metadata in the legacy

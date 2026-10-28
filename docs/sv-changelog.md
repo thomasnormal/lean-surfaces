@@ -1,5 +1,21 @@
 # SystemVerilog tier changelog
 
+## [0.1.148] — 2026-10-28
+
+Static functions with a single literal assignment to their implicit return
+variable now lower at the call site, including an untyped function whose return
+type is implicitly `logic`. Discarded calls use the same lowering. Automatic
+implicit-return functions, effectful bodies, and nonliteral histories remain
+loud; explicit-return automatic literal functions retain their existing path.
+The `implicit_function_return` fixture, extractor regressions, differential row,
+and Lean receipt pass. Differential coverage grows **404 rows / 398 matches /
+0 disagreements / 6 recorded refusals → 405 / 399 / 0 / 6**. The external
+sv-tests-2 checkout gained two paths during measurement, so the fresh snapshot
+is **22,067 paths: 5,789 clean / 16,211 partial / 67 include skips** versus
+**22,065: 5,785 / 16,213 / 67** previously; after accounting for those two
+new clean paths, this item contributes **+2 clean / -2 partial**, and
+`CallExpression` falls **2,567 → 2,565**.
+
 ## [0.1.147] — 2026-10-28
 
 Procedural `event` declarations are now inert metadata for the time-zero

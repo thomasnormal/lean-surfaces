@@ -3259,8 +3259,8 @@ def _dynamic_array_constant_extent(symbol):
                         total += nested
                     return total if total > 0 else None
                 if (kind == "CallExpression"
-                        and _literal_function_call(node,
-                                                   allow_implicit=True)):
+                        and _literal_function_call(
+                            node, allow_implicit=True, allow_automatic=True)):
                     width, _two, reason = type_width_2s(node.type)
                     return 1 if width is not None and reason is None else None
                 if kind == "NamedValueExpression":
@@ -5279,8 +5279,8 @@ def _dynamic_array_concat_assignment(sm, expr):
             if reads_destination:
                 return False
             if (type(node).__name__ == "CallExpression"
-                    and _literal_function_call(node,
-                                               allow_implicit=True)):
+                    and _literal_function_call(
+                        node, allow_implicit=True, allow_automatic=True)):
                 returned = _literal_function_result(node.subroutine,
                                                      allow_implicit=True)
                 value = convert_expr(sm, returned)
@@ -10524,7 +10524,8 @@ def _literal_function_result(subroutine, *, allow_implicit=True):
     return None
 
 
-def _literal_function_symbol(subroutine, *, allow_implicit=True):
+def _literal_function_symbol(subroutine, *, allow_implicit=True,
+                             allow_automatic=False):
     """Whether a function declaration is erased after literal call lowering.
 
     Input formals are harmless metadata when the complete body returns a
@@ -10546,7 +10547,8 @@ def _literal_function_symbol(subroutine, *, allow_implicit=True):
         return False
 
 
-def _literal_function_call(expression, *, allow_implicit=False):
+def _literal_function_call(expression, *, allow_implicit=False,
+                           allow_automatic=False):
     """Whether a literal-return function call has only inert inputs.
 
     A direct integral literal is already enough.  A named integral argument
@@ -10562,10 +10564,17 @@ def _literal_function_call(expression, *, allow_implicit=False):
                 or getattr(expression, "isSystemCall", False)):
             return False
         subroutine = getattr(expression, "subroutine", None)
+        if (not allow_automatic
+                and str(getattr(subroutine, "defaultLifetime", "")).split(".")[-1]
+                == "Automatic"
+                and type(getattr(subroutine, "body", None)).__name__
+                == "ExpressionStatement"):
+            return False
         formals = list(getattr(subroutine, "arguments", []))
         actuals = list(getattr(expression, "arguments", []))
-        if (not _literal_function_symbol(subroutine,
-                                         allow_implicit=allow_implicit)
+        if (not _literal_function_symbol(
+                subroutine, allow_implicit=allow_implicit,
+                allow_automatic=allow_automatic)
                 or len(formals) != len(actuals)):
             return False
         return all(
@@ -11100,7 +11109,8 @@ def _convert_legacy_call(sm, expression):
         # deliberately narrower than general constant-function evaluation:
         # names, operators, nested calls, and multi-statement bodies remain
         # ordinary unsupported calls rather than silently erasing effects.
-        if not opaque_method_call and _literal_function_call(expression):
+        if (_SYM is None and not opaque_method_call
+                and _literal_function_call(expression, allow_implicit=True)):
             returned = _literal_function_result(subroutine)
             if (returned is not None and _literal_function_return(returned)
                     and _case_source_expression_ok(returned)):
@@ -20096,7 +20106,8 @@ def _case_source_expression_ok(expression, *, packed_members=False,
         if kind == "CallExpression" and _fixed_bits_query_width(node) is not None:
             return VisitAction.Skip
         if (allow_literal_function_calls and kind == "CallExpression"
-                and _literal_function_call(node, allow_implicit=True)):
+                and _literal_function_call(
+                    node, allow_implicit=True, allow_automatic=True)):
             pure = pure and all(
                 _case_source_expression_ok(argument,
                                             packed_members=packed_members,
@@ -22024,7 +22035,7 @@ def _convert_syscall(sm, s, e):
         # the expression-position recognizer so statement and value calls
         # share exactly the same narrow literal boundary.
         if (_SYM is None and subroutine is not None and kind == "Function"
-                and _literal_function_call(e)):
+                and _literal_function_call(e, allow_implicit=True)):
             return {"kind": "Empty", "span": node_span(sm, s),
                     "literal_function_statement": name}
     if is_sys and _dynamic_array_literal_size_method(e):

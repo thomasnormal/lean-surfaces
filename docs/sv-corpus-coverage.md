@@ -1,5 +1,18 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Static implicit function returns — 2026-10-28
+
+The legacy extractor now lowers pure literal assignments to static implicit
+function return variables at value and discarded-call sites. Automatic implicit
+returns and effectful bodies remain loud; explicit-return automatic literal
+functions retain their existing path. The `implicit_function_return` fixture
+supplies the differential row and Lean receipt. The external sv-tests-2 checkout
+gained two paths during measurement: the fresh **22,067-path** census is
+**5,789 clean / 16,211 partial / 67 include skips**, versus **5,785 / 16,213 /
+67** on the prior 22,065-path snapshot. After accounting for those additions,
+this item contributes **+2 clean / -2 partial**; `CallExpression` falls
+**2,567 → 2,565**. Differential coverage grows **404/398/0/6 → 405/399/0/6**.
+
 ## Procedural event declarations for pure type queries — 2026-10-28
 
 The legacy extractor now treats procedural `event` declarations as inert

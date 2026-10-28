@@ -1,5 +1,17 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Unique0 case labels — 2026-10-28
+
+The legacy extractor now lowers ordinary `unique0 case` chains with distinct
+integral literal labels after whole-case sizing. Because `unique0` permits no
+match, an explicit `default` is unnecessary. Wildcard, `inside`, duplicate,
+dynamic, effectful, and scheduler-facing forms remain loud. The
+`unique0_case` fixture covers both a matching branch and the allowed no-match
+path. Differential coverage grows **412/406/0/6 → 413/407/0/6**; grammar
+coverage is regenerated below. The committed external corpus snapshot remains
+**5,804 clean / 16,196 partial / 67 include skips** because the sv-tests-2
+checkout is unavailable in this worktree.
+
 ## Priority case fallbacks — 2026-10-28
 
 The legacy extractor now lowers `priority case` and `priority casez` chains

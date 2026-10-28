@@ -1,5 +1,14 @@
 # SystemVerilog tier changelog
 
+## [0.1.158] — 2026-10-28
+
+Ordinary `unique0 case` chains with distinct integral literal labels now lower
+through the first-match case representation. The qualifier's allowed no-match
+path means an explicit `default` is unnecessary. Wildcard, `inside`, duplicate,
+dynamic, effectful, and scheduler-facing forms remain loud. The `unique0_case`
+fixture, extractor regressions, generated envelope, Lean receipt, and
+differential row cover the admitted subset.
+
 ## [0.1.157] — 2026-10-28
 
 `priority case` and `priority casez` chains with an explicit `default` now

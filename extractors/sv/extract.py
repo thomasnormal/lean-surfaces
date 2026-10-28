@@ -20256,7 +20256,8 @@ def _convert_ordinary_case(sm, stmt):
     check_name = str(stmt.check).split(".")[-1]
     priority_fallback = (stmt.check == UniquePriorityCheck.Priority
                          and stmt.defaultCase is not None)
-    if (stmt.check not in (UniquePriorityCheck.None_, UniquePriorityCheck.Unique)
+    if (stmt.check not in (UniquePriorityCheck.None_, UniquePriorityCheck.Unique,
+                           UniquePriorityCheck.Unique0)
             and not priority_fallback):
         return unsupported(sm, stmt, "CaseStatement:" + check_name)
     condition = str(stmt.condition).split(".")[-1]
@@ -20264,29 +20265,30 @@ def _convert_ordinary_case(sm, stmt):
     # match.  A literal, duplicate-free pattern list with a default arm has
     # neither condition, so it is equivalent to an ordinary case in the flat
     # self-check state.  Keep priority and all dynamic/overlapping forms loud.
-    if stmt.check == UniquePriorityCheck.Unique:
+    if stmt.check in (UniquePriorityCheck.Unique, UniquePriorityCheck.Unique0):
         if condition != "Normal":
-            return unsupported(sm, stmt, "CaseStatement:Unique")
+            return unsupported(sm, stmt, "CaseStatement:" + check_name)
         width, two_state, _reason = type_width_2s(stmt.expr.type)
         seen = set()
         for item in stmt.items:
             for expression in item.expressions:
                 value = _literal_integral_value(expression)
                 if value is None:
-                    return unsupported(sm, stmt, "CaseStatement:Unique")
+                    return unsupported(sm, stmt, "CaseStatement:" + check_name)
                 if width is not None and width > 0:
                     # Case patterns are compared after whole-case sizing;
                     # normalize signed spellings to their subject bit pattern
                     # so aliases such as 4'd15 and 4'sd-1 count as a duplicate.
                     value %= 1 << width
                 if value in seen:
-                    return unsupported(sm, stmt, "CaseStatement:Unique")
+                    return unsupported(sm, stmt, "CaseStatement:" + check_name)
                 seen.add(value)
-        complete = (two_state and width is not None and 0 < width <= 8
-                    and len(seen) == (1 << width)
-                    and seen == set(range(1 << width)))
-        if stmt.defaultCase is None and not complete:
-            return unsupported(sm, stmt, "CaseStatement:Unique")
+        if stmt.check == UniquePriorityCheck.Unique:
+            complete = (two_state and width is not None and 0 < width <= 8
+                        and len(seen) == (1 << width)
+                        and seen == set(range(1 << width)))
+            if stmt.defaultCase is None and not complete:
+                return unsupported(sm, stmt, "CaseStatement:Unique")
     modes = {"Normal": None, "WildcardJustZ": "casez", "WildcardXOrZ": "casex"}
     if condition not in modes and condition != "Inside":
         return unsupported(sm, stmt, "CaseStatement:" + condition)

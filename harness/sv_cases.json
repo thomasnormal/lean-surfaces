@@ -3730,6 +3730,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "unique0_case",
+      "file": "Examples/system-verilog/unique0_case/unique0_case.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

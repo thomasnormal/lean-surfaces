@@ -1,5 +1,16 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Unique0 case labels — 2026-10-28
+
+The legacy self-check tier now lowers ordinary `unique0 case` chains whose
+labels are distinct integral literals after whole-case sizing. `unique0` allows
+the no-match path, so no `default` is required; the ordinary first-match case
+chain therefore preserves both matching and no-match execution. Wildcard,
+`inside`, duplicate, dynamic, effectful, and scheduler-facing forms remain
+loud. The `unique0_case` fixture, extractor regressions, generated envelope,
+Lean receipt, and differential row cover a matching path and an allowed
+no-match path without adding overlap-diagnostic or scheduler state.
+
 ## Priority case fallbacks — 2026-10-28
 
 The legacy self-check tier now lowers `priority case` and `priority casez`

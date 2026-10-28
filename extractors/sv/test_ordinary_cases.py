@@ -87,10 +87,30 @@ class OrdinaryCases(unittest.TestCase):
                             "CaseStatement:pattern")
 
     def test_qualifiers_stay_loud(self):
-        for qualifier in ("unique", "unique0", "priority"):
+        for qualifier in ("unique", "priority"):
             with self.subTest(qualifier=qualifier):
                 self.assert_refused(qualifier + " case(subject) 4'd1:; endcase",
                                     "CaseStatement:" + qualifier.capitalize())
+
+    def test_unique0_literal_case_is_admitted_without_default(self):
+        design = lower(case_source(
+            "unique0 case (subject) 4'd1:; 4'd2:; endcase"))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("case_lowered") for node in nodes(design)))
+
+    def test_unique0_duplicate_literal_case_stays_loud(self):
+        self.assert_refused(
+            "unique0 case (subject) 4'd1:; 4'd1:; endcase",
+            "CaseStatement:Unique0")
+        self.assert_refused(
+            "unique0 case (subject) 4'd15:; -4'sd1:; endcase",
+            "CaseStatement:Unique0")
+
+    def test_unique0_wildcard_case_stays_loud(self):
+        self.assert_refused(
+            "unique0 casez (subject) 4'b0001:; endcase",
+            "CaseStatement:Unique0")
 
     def test_unique_complete_literal_case_is_admitted(self):
         design = lower(case_source(

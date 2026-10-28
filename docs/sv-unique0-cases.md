@@ -1,27 +1,27 @@
-# Unique0 case statements — repricing boundary
+# Unique0 case statements
 
 IEEE 1800-2023 §12.5.3 gives `unique0 case` first-match selection and a
 violation report when more than one case item expression matches. Unlike
 `unique case`, no match is permitted and does not report a violation. The
 qualifier composes with `casez`, `casex` and `case inside`.
 
-## Why unique0 cases remain a boundary
+## Admitted subset
 
-The ordinary case lowering can preserve a first-match chain, but it has no
-all-item overlap check or unique0 status distinguishing an allowed no-match
-from a unique-case violation. Erasing the qualifier would silently discard a
-multiple-match diagnostic; treating it like `unique` would fabricate a
-no-match violation that IEEE explicitly excludes.
+The legacy self-check tier lowers an ordinary `unique0 case` when every label
+is an integral literal and labels are distinct after whole-case sizing. The
+ordinary first-match chain preserves matching and the allowed no-match path;
+an explicit `default` is optional. This admits no overlap-diagnostic state and
+does not add a scheduler.
 
-The public tier therefore keeps every `CaseStatement:Unique0` span loud. It
-does not erase the qualifier, select a fixed arm, invent diagnostic text, or
-add a case scheduler. Wildcard and `inside` operands retain their own value
-boundaries.
+The following remain loud: wildcard and `inside` matching, duplicate labels,
+dynamic or non-integral labels, effectful subjects or patterns,
+scheduler-facing bodies, and any other unsupported case expression. The
+qualifier is not erased for those forms, and no diagnostic text is invented.
 
 ## 2026-10-22 census and decision
 
-The fresh 22,044-path census records `CaseStatement:Unique0` in **8** files,
-all unique0-case-only. Repricing finds **10** spans:
+The committed 22,044-path census records `CaseStatement:Unique0` in **8**
+files, all unique0-case-only. Repricing finds **10** spans:
 
 | source shape | spans | files |
 |---|---:|---:|
@@ -36,7 +36,9 @@ all unique0-case-only. Repricing finds **10** spans:
 | `casez` | 1 | 1 |
 | multiple-match violation row | 1 | 1 |
 
-Rows overlap. Reproduce the measurement with:
+The admitted fixture `Examples/system-verilog/unique0_case` exercises both a
+matching label and an allowed no-match path. Rows overlap. Reproduce the
+source-shape measurement with:
 
 ```text
 python3.9 extractors/sv/unique0_case_reprice.py \

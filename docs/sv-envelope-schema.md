@@ -285,11 +285,13 @@ envelope does not carry portable diagnostic text, status, source-location
 footer or coverage-observation state. Repricing details are in
 `extractors/sv/immediate_assert_error_reprice.py`.
 
-Qualified `unique0 case` statements remain explicit
-`CaseStatement:Unique0` unsupported nodes. The ordinary case lowering has no
-all-item overlap check or unique0 status, while treating no-match as an error
-would contradict the qualifier's semantics. See [the unique0-case boundary](sv-unique0-cases.md)
-and `extractors/sv/unique0_case_reprice.py`.
+Qualified `unique0 case` statements with ordinary matching and distinct
+integral literal labels lower through the ordinary first-match case
+representation. Since `unique0` permits no match, an explicit `default` is not
+required. Wildcard, `inside`, duplicate, dynamic, effectful, and
+scheduler-facing forms remain explicit `CaseStatement:Unique0` unsupported
+nodes. See [the unique0-case boundary](sv-unique0-cases.md) and
+`extractors/sv/unique0_case_reprice.py`.
 
 Qualified priority `if` statements remain explicit
 `ConditionalStatement:Priority` unsupported nodes unless the chain has an

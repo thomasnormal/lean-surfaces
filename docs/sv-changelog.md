@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.144] — 2026-10-28
+
+Source-pure literal and query histories now replay exact scalar
+`string.compare()` and `string.icompare()` results. Direct named-string
+aliases, dynamic or effectful histories, and non-ASCII values remain loud. The
+`string_compare_observations` fixture, extractor regression, differential row,
+and Lean receipt pass. Differential coverage grows **400 rows / 394 matches /
+0 disagreements / 6 recorded refusals → 401 / 395 / 0 / 6**; the fresh
+22,065-path census remains **5,779 clean / 16,219 partial**.
+
 ## [0.1.143] — 2026-10-28
 
 Direct scalar `.len()` and `.substr()` observations now replay exact ASCII

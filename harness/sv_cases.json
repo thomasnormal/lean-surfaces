@@ -3453,6 +3453,15 @@
       "expect": "match"
     },
     {
+      "name": "string_compare_observations",
+      "file": "Examples/system-verilog/string_compare_observations/string_compare_observations.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "string_sformatf_scope_assignment",
       "file": "Examples/system-verilog/string_sformatf_scope_assignment/string_sformatf_scope_assignment.sv",
       "module": "top",

@@ -1,5 +1,16 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Source-pure string compare observations — 2026-10-28
+
+The legacy extractor now replays exact scalar `string.compare()` and
+`string.icompare()` results from literal and source-pure query histories.
+Direct named-string aliases, dynamic or effectful histories, and non-ASCII
+values remain loud. The `string_compare_observations` fixture supplies the
+differential row and Lean receipt. The fresh 22,065-path census remains
+**5,779 clean / 16,219 partial** with 67 include skips; the top assignment and
+call blockers remain **2,694**, **2,677**, and **2,572**. Differential coverage
+grows **400/394/0/6 → 401/395/0/6**.
+
 ## Source-pure string query observations — 2026-10-28
 
 The legacy extractor now replays exact ASCII scalar observations from literal

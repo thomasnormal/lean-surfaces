@@ -17558,10 +17558,27 @@ def _string_literal_source_value(expression, method, receiver=None,
                     or tail.startswith(("==", "!=", "===", "!=="))
                     or (method in ("compare", "icompare")
                         and tail.startswith((".compare", ".icompare")))
-                    or (method in ("toupper", "tolower", "substr")
-                        and tail.startswith((".toupper", ".tolower", ".substr")))
+                    or tail.startswith((".toupper", ".tolower", ".substr"))
                     or re.match(r'=\s*"', tail)):
                 continue
+            if tail.startswith("="):
+                # A source-pure query write has the same exact value as a
+                # literal write, but its spelling is not a string literal.
+                # Match it to the replayed event so a direct named-string
+                # alias does not get admitted through this shortcut.
+                if any(start >= 0 and not invalid
+                       and abs(start - match.start()) <= 8
+                       for start, _operation, invalid in events):
+                    continue
+                # Declaration initializers are not visited as assignment
+                # events.  Accept one only when the declaration itself is a
+                # source-pure query and the occurrence is in its statement.
+                statement_start = source.rfind(";", 0, match.start()) + 1
+                prefix = source[statement_start:match.start()]
+                if (re.search(r'\bstring\b[^;]*$', prefix)
+                        and _string_source_decl_initializer(
+                            getattr(symbol, "initializer", None))):
+                    continue
             if (permit_argument is not None
                     and type(permit_argument).__name__ == "NamedValueExpression"
                     and abs(match.start()

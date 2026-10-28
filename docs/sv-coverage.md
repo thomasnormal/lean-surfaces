@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 400 | 394 | 0 | 6 | sv-tests-2 declarations |
+| 401 | 395 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -397,6 +397,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `string_concat_comparison` | `Examples/system-verilog/string_concat_comparison/string_concat_comparison.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_query_initializers` | `Examples/system-verilog/string_query_initializers/string_query_initializers.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_query_observations` | `Examples/system-verilog/string_query_observations/string_query_observations.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_compare_observations` | `Examples/system-verilog/string_compare_observations/string_compare_observations.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_scope_assignment` | `Examples/system-verilog/string_sformatf_scope_assignment/string_sformatf_scope_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_scope_wrapper_assignment` | `Examples/system-verilog/string_sformatf_scope_wrapper_assignment/string_sformatf_scope_wrapper_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_putc_history` | `Examples/system-verilog/string_putc_history/string_putc_history.sv` | match | **MATCH** | `ok` | MATCH |

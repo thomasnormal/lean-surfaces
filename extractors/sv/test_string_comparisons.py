@@ -80,6 +80,31 @@ class StringComparisons(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
 
+    def test_source_pure_string_compare_queries_replay_history(self):
+        design = lower(
+            'module top; initial begin '
+            'string source = "Abc"; string type_name = $typename(int); '
+            'string upper; upper = source.toupper(); '
+            'if (type_name.compare("int") == 0 && '
+            'upper.icompare("abc") == 0 && source.compare("Abc") == 0) '
+            '$display("PASS"); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("string_literal_compare")
+                  or node.get("string_literal_icompare")]
+        self.assertEqual(len(values), 3)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_direct_string_alias_stays_loud_for_compare_queries(self):
+        design = lower(
+            'module top; string source = "abc"; string copy; '
+            'initial begin copy = source; '
+            'if (copy.compare("abc") == 0) $display("PASS"); '
+            'end endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)
+                            if node.get("kind") == "Unsupported"))
+
     def test_computed_controlled_and_timed_histories_stay_loud(self):
         for source in (
                 'module top; string a, b; initial begin '

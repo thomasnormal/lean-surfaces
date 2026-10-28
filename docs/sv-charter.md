@@ -1,5 +1,20 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Source-pure string compare observations — 2026-10-28
+
+Source-pure literal and query histories now feed exact scalar
+`string.compare()` and `string.icompare()` results. Direct named-string aliases,
+dynamic or effectful histories, and non-ASCII values remain loud. The
+`string_compare_observations` fixture exercises a `$typename` initializer, a
+case transform assignment, and both comparison methods, with extractor
+regression, differential row, and Lean receipt.
+
+The fresh **22,065-path** census remains **5,779 clean / 16,219 partial** with
+67 include skips; `AssignmentExpression:target`,
+`ExpressionStatement:CallExpression`, and `CallExpression` remain **2,694**,
+**2,677**, and **2,572**. Differential coverage grows **400/394/0/6 →
+401/395/0/6**; grammar coverage remains **218/100/118**.
+
 ## Source-pure string query observations — 2026-10-28
 
 Direct scalar `.len()` and `.substr()` observations now replay exact ASCII

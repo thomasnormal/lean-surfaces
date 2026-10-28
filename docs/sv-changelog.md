@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.134] — 2026-10-28
+
+Source-pure `itoa`, `bintoa`, `octtoa`, and `hextoa` calls now replay literal
+integral arguments as exact unpadded ASCII decimal, binary, octal, and
+lower-case hexadecimal string replacements, including signed renderings.
+Dynamic, unknown, aliased, control-dependent, and unsupported forms remain
+loud. The fixture, extractor regressions, and Lean receipt pass. Differential
+coverage grows **390 rows / 384 matches / 0 disagreements / 6 recorded
+refusals → 391 / 385 / 0 / 6**; the fresh 22,065-path census moves **5,684 →
+5,697 clean / 16,314 → 16,301 partial** and
+`ExpressionStatement:CallExpression` falls **2,694 → 2,679**.
+
 ## [0.1.45] — 2026-10-28
 
 The SystemVerilog self-check surface now has 390 differential rows: 384

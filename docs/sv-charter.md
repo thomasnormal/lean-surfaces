@@ -1,5 +1,22 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Scalar string integer-conversion histories — 2026-10-28
+
+The self-check tier now replays source-pure `itoa`, `bintoa`, `octtoa`, and
+`hextoa` calls on opaque strings. Literal integral arguments replace the string
+with exact unpadded ASCII decimal, binary, octal, or lower-case hexadecimal
+text, including signed decimal/base renderings. Dynamic arguments, unknown
+values, aliases, control-dependent calls, and unsupported signatures remain
+loud. The `string_integer_conversion` fixture, extractor regressions, and Lean
+receipt pass.
+
+The fresh **22,065-path** census moves **5,684 → 5,697 clean** and
+**16,314 → 16,301 partial** with 67 include skips. The
+`ExpressionStatement:CallExpression` blocker falls **2,694 → 2,679**;
+`AssignmentExpression:target` remains **2,695** and `CallExpression` remains
+**2,617**. Differential coverage grows **390/384/0/6 → 391/385/0/6**; grammar
+coverage remains **218/100/118**.
+
 ## Discarded finite associative-array `exists` — 2026-10-28
 
 The self-check tier now erases a discarded `exists(index)` call when the

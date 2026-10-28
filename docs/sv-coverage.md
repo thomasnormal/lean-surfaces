@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 390 | 384 | 0 | 6 | sv-tests-2 declarations |
+| 391 | 385 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -227,6 +227,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `mailbox_literal_fifo` | `Examples/system-verilog/mailbox_literal_fifo/mailbox_literal_fifo.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_len_assignment` | `Examples/system-verilog/string_len_assignment/string_len_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_atoi_literal` | `Examples/system-verilog/string_atoi_literal/string_atoi_literal.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_integer_conversion` | `Examples/system-verilog/string_integer_conversion/string_integer_conversion.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_compare_literal` | `Examples/system-verilog/string_compare_literal/string_compare_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `semaphore_literal_try_get` | `Examples/system-verilog/semaphore_literal_try_get/semaphore_literal_try_get.sv` | match | **MATCH** | `ok` | MATCH |
 | `std_semaphore_try_get` | `Examples/system-verilog/std_semaphore_try_get/std_semaphore_try_get.sv` | match | **MATCH** | `ok` | MATCH |
@@ -640,12 +641,12 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22065 | 5684 | 16314 | 67 |
+| 22065 | 5697 | 16301 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2695 |
-| `ExpressionStatement:CallExpression` | 2694 |
+| `ExpressionStatement:CallExpression` | 2679 |
 | `CallExpression` | 2617 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2112 |
@@ -653,7 +654,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 | `ConcurrentAssertionStatement` | 1359 |
 | `InvalidStatement` | 1330 |
 | `ClassType` | 1330 |
-| `NamedValueExpression:2state` | 1305 |
+| `NamedValueExpression:2state` | 1293 |
 | `Hierarchy:module-kind` | 1250 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1154 |
 | `MemberAccessExpression` | 1018 |

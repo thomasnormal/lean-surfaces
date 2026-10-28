@@ -1,5 +1,18 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Scalar string integer-conversion histories — 2026-10-28
+
+Source-pure `itoa`, `bintoa`, `octtoa`, and `hextoa` calls now replay literal
+integral arguments as exact unpadded ASCII decimal, binary, octal, and
+lower-case hexadecimal replacements in opaque string history. Signed literal
+renderings are included; dynamic, unknown, aliased, control-dependent, and
+unsupported forms remain loud. The `string_integer_conversion` fixture supplies
+the differential row and Lean receipt. The fresh 22,065-path census moves
+**5,684 → 5,697 clean / 16,314 → 16,301 partial** with 67 include skips;
+`ExpressionStatement:CallExpression` falls **2,694 → 2,679** while
+`AssignmentExpression:target` remains **2,695** and `CallExpression` remains
+**2,617**. Differential coverage grows **390/384/0/6 → 391/385/0/6**.
+
 ## Discarded finite associative-array `exists` — 2026-10-28
 
 Discarded `exists(index)` calls on finite literal-key associative arrays now

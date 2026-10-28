@@ -20,7 +20,7 @@
    ],
    [
     "ExpressionStatement:CallExpression",
-    2694
+    2679
    ],
    [
     "CallExpression",
@@ -52,7 +52,7 @@
    ],
    [
     "NamedValueExpression:2state",
-    1305
+    1293
    ],
    [
     "Hierarchy:module-kind",
@@ -80,7 +80,7 @@
    ],
    [
     "ConversionExpression:width",
-    649
+    637
    ],
    [
     "CheckerSymbol",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5684,
-   "partial": 16314,
+   "clean": 5697,
+   "partial": 16301,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4907,
+    4920,
     18701
    ],
    "simulation elaboration": [
@@ -1231,38 +1231,38 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 453,
-    "clean": 594,
-    "partial": 454,
+    "blocked_by_more": 440,
+    "clean": 607,
+    "partial": 441,
     "simulation_tests": 1048,
     "top_residual_blockers": [
      [
-      "NamedValueExpression:2state",
-      136
-     ],
-     [
       "VariableSymbol:2state",
-      134
+      130
      ],
      [
       "TimedStatement:DelayControl",
       125
      ],
      [
-      "VariableDeclStatement:2state",
-      100
-     ],
-     [
-      "ConversionExpression:width",
-      99
+      "NamedValueExpression:2state",
+      123
      ],
      [
       "AssignmentExpression:target",
       98
      ],
      [
+      "VariableDeclStatement:2state",
+      91
+     ],
+     [
       "CallExpression",
       89
+     ],
+     [
+      "ConversionExpression:width",
+      87
      ],
      [
       "TypeAliasType:TypeAlias",
@@ -1595,9 +1595,9 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 612,
+    "clean": 625,
     "error": 0,
-    "partial": 580,
+    "partial": 567,
     "skip_include": 0,
     "total": 1192,
     "unlockable": 2

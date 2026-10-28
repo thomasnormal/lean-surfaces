@@ -456,6 +456,40 @@ class SizeQueries(unittest.TestCase):
             self.assertTrue(any(str(node.get("sv_kind", "")).startswith("CallExpression")
                                 for node in nodes(design)))
 
+    def test_string_integer_conversion_methods_replay_literal_history(self):
+        design = lower(
+            'module top; string s; initial begin s = ""; '
+            's.itoa(255); if (s != "255") $display("FAIL"); '
+            's.bintoa(10); if (s != "1010") $display("FAIL"); '
+            's.octtoa(8); if (s != "10") $display("FAIL"); '
+            's.hextoa(255); if (s != "ff") $display("FAIL"); '
+            'end endmodule')
+        methods = [node for node in nodes(design)
+                   if node.get("string_integer_conversion_statement")]
+        self.assertEqual([node["string_integer_conversion_statement"]
+                          for node in methods],
+                         ["itoa", "bintoa", "octtoa", "hextoa"])
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+        compares = [node for node in nodes(design) if node.get("string_compare")]
+        self.assertEqual(len(compares), 4)
+        self.assertTrue(all(node["bits"] == "0" for node in compares))
+
+    def test_string_integer_conversion_dynamic_and_controlled_stay_loud(self):
+        for source in (
+                'module top; string s; int value; initial begin s = ""; '
+                's.itoa(value); end endmodule',
+                'module top; string s; initial begin s = ""; '
+                'if (1) s.itoa(2); end endmodule'):
+            with self.subTest(source=source):
+                design = lower(source)
+                self.assertFalse(any(node.get(
+                    "string_integer_conversion_statement") for node in nodes(design)))
+                self.assertTrue(any(node.get("sv_kind") ==
+                                    "ExpressionStatement:CallExpression"
+                                    for node in nodes(design)))
+
     def test_literal_string_compare_and_icompare_are_normalized(self):
         design = lower(
             'module top; string a; string b; initial begin a = "Alpha"; '

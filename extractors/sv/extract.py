@@ -8623,6 +8623,80 @@ def _string_putc_history_event(node, symbol, controls):
         return None
 
 
+_STRING_INTEGER_CONVERSION_BASES = {
+    "itoa": 10,
+    "bintoa": 2,
+    "octtoa": 8,
+    "hextoa": 16,
+}
+
+
+def _string_integer_conversion_value(expression):
+    """Resolve one literal ``string`` integer-conversion method.
+
+    The method replaces the receiver with an unpadded ASCII rendering of its
+    integral argument.  The self-check state has no string slot, so the call
+    is admitted only for a named string receiver and a source-level integral
+    literal; dynamic values, X/Z digits, and unsupported method signatures
+    remain on the ordinary loud call boundary.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not getattr(expression, "isSystemCall", False)):
+            return None
+        method = getattr(expression, "subroutineName", "")
+        base = _STRING_INTEGER_CONVERSION_BASES.get(method)
+        arguments = list(getattr(expression, "arguments", ()))
+        if (base is None or len(arguments) != 2
+                or type(arguments[0]).__name__ != "NamedValueExpression"
+                or type(arguments[0].type.canonicalType).__name__ != "StringType"):
+            return None
+        value = _literal_integral_value(arguments[1])
+        if value is None:
+            return None
+        sign = "-" if value < 0 else ""
+        magnitude = abs(value)
+        if base == 10:
+            digits = str(magnitude)
+        else:
+            alphabet = "0123456789abcdef"
+            if magnitude == 0:
+                digits = "0"
+            else:
+                encoded = []
+                while magnitude:
+                    encoded.append(alphabet[magnitude % base])
+                    magnitude //= base
+                digits = "".join(reversed(encoded))
+        return sign + digits
+    except Exception:
+        return None
+
+
+def _string_integer_conversion_history_event(node, symbol, controls):
+    """Recognize one source-pure integer-to-string history event."""
+    try:
+        if type(node).__name__ != "CallExpression":
+            return None
+        arguments = list(getattr(node, "arguments", ()))
+        receiver = arguments[0] if arguments else None
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "symbol", None) is not symbol):
+            return None
+        start = getattr(getattr(getattr(node, "sourceRange", None),
+                                "start", None), "offset", -1)
+        value = _string_integer_conversion_value(node)
+        invalid = (value is None or any(
+            control is not None
+            and control.start.offset <= start
+            and start < control.end.offset
+            for control in controls))
+        return start, ("whole", value) if not invalid else None, invalid
+    except Exception:
+        return None
+
+
 def _sformatf_literal_source_value(expression, position=None):
     """Resolve one integral-literal `$sformatf` result as ASCII text.
 
@@ -8973,6 +9047,13 @@ def _string_transform_history_value(expression, position):
                 putc = _string_putc_history_event(tree_node, symbol, controls)
                 if putc is not None:
                     start, value, invalid = putc
+                    if start < position:
+                        assignments.append((start, value, invalid))
+                    return
+                integer_conversion = _string_integer_conversion_history_event(
+                    tree_node, symbol, controls)
+                if integer_conversion is not None:
+                    start, value, invalid = integer_conversion
                     if start < position:
                         assignments.append((start, value, invalid))
                     return
@@ -16839,6 +16920,74 @@ def _string_literal_substr_method(expression):
         return False
 
 
+def _string_literal_integer_conversion_method(expression):
+    """Recognize one source-pure string integer-conversion statement."""
+    try:
+        if _string_integer_conversion_value(expression) is None:
+            return False
+        receiver = list(expression.arguments)[0]
+        position = getattr(getattr(getattr(expression, "sourceRange", None),
+                                   "start", None), "offset", None)
+        if position is None:
+            return False
+        instance = getattr(getattr(receiver.symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is not None:
+            controlled = False
+            def inspect(node):
+                nonlocal controlled
+                kind = type(node).__name__
+                if kind not in (
+                        "ConditionalStatement", "ForLoopStatement",
+                        "WhileLoopStatement", "DoWhileLoopStatement",
+                        "RepeatLoopStatement", "ForeachLoopStatement",
+                        "CaseStatement", "CaseInsideStatement",
+                        "CasePatternStatement", "LoopStatement",
+                        "TimedStatement"):
+                    return
+                span = getattr(node, "sourceRange", None)
+                controlled = controlled or (span is not None
+                    and span.start.offset <= position
+                    and position < span.end.offset)
+            instance.visit(inspect)
+            if controlled:
+                return False
+        # A conversion replaces the complete string, so an uninitialized
+        # receiver is also exact.  If there is a prior write or method call,
+        # however, require the existing replay to validate that history rather
+        # than allowing an opaque effect to disappear at this boundary.
+        if _string_transform_history_value(receiver, position) is not None:
+            return True
+        instance = getattr(getattr(receiver.symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return False
+        prior_effect = False
+        def inspect_prior(node):
+            nonlocal prior_effect
+            start = getattr(getattr(getattr(node, "sourceRange", None),
+                                    "start", None), "offset", -1)
+            if start < 0 or start >= position:
+                return
+            kind = type(node).__name__
+            if kind == "AssignmentExpression":
+                left = getattr(node, "left", None)
+                if (getattr(left, "symbol", None) is receiver.symbol
+                        or (type(left).__name__ == "ElementSelectExpression"
+                            and getattr(getattr(left, "value", None),
+                                        "symbol", None) is receiver.symbol)):
+                    prior_effect = True
+            elif kind == "CallExpression":
+                args = list(getattr(node, "arguments", ()))
+                if (args and getattr(args[0], "symbol", None)
+                        is receiver.symbol):
+                    prior_effect = True
+        instance.visit(inspect_prior)
+        return not prior_effect
+    except Exception:
+        return False
+
+
 def _string_literal_index_value(expression):
     """Return the byte selected from a source-pure ASCII string.
 
@@ -21617,6 +21766,13 @@ def _convert_syscall(sm, s, e):
             # itself from the flat self-check state.
             return {"kind": "Empty", "span": node_span(sm, s),
                     "string_putc_statement": name}
+        if _SYM is None and _string_literal_integer_conversion_method(e):
+            # Integer-to-string methods replace the opaque string with an
+            # exact ASCII rendering.  The source-history replay records the
+            # replacement for later comparisons while this discarded call
+            # remains an ordinary no-op in the flat self-check state.
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "string_integer_conversion_statement": name}
         if _SYM is None and _string_literal_substr_method(e):
             # ``substr`` has no observable effect in statement position once
             # the receiver and both inclusive bounds are source-pure literals.

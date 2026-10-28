@@ -1919,6 +1919,15 @@
       "expect": "match"
     },
     {
+      "name": "string_integer_conversion",
+      "file": "Examples/system-verilog/string_integer_conversion/string_integer_conversion.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "string_compare_literal",
       "file": "Examples/system-verilog/string_compare_literal/string_compare_literal.sv",
       "module": "top",

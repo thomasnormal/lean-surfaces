@@ -150,6 +150,26 @@ class AssocIntegralCells(unittest.TestCase):
                             for node in nodes(design)
                             if node.get("kind") == "Unsupported"))
 
+    def test_discarded_literal_exists_call_is_admitted(self):
+        design = extract_source(
+            'module top; int score[int]; initial begin '
+            'score[1] = 10; score.exists(1); end endmodule')
+        self.assertTrue(any(node.get("associative_exists_statement")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_discarded_dynamic_exists_call_stays_loud(self):
+        design = extract_source(
+            'module top; int score[int]; int key; initial begin '
+            'score.exists(key); end endmodule')
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

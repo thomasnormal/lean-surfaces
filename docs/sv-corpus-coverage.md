@@ -1,5 +1,17 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Discarded finite associative-array `exists` — 2026-10-28
+
+Discarded `exists(index)` calls on finite literal-key associative arrays now
+lower to pure no-ops after the exact presence-cell check. Dynamic keys,
+aliases, controls, timing, and other aggregate uses remain loud. The
+`assoc_exists_statement` fixture supplies the differential row and Lean
+receipt. The fresh 22,065-path census remains **5,684 clean / 16,314 partial**
+with 67 include skips; the top three blocker counts remain **2,695**
+(`AssignmentExpression:target`), **2,694** (`ExpressionStatement:CallExpression`),
+and **2,617** (`CallExpression`). Differential coverage grows **389/383/0/6 →
+390/384/0/6**.
+
 ## Empty associative-array low/high bounds — 2026-10-28
 
 The legacy extractor now lowers `$low` and `$high` on an untouched integral-key

@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.133] — 2026-10-28
+
+Discarded finite associative-array `exists(index)` calls now erase as pure
+presence observations after the literal-key finite-cell validator succeeds.
+Dynamic keys, aliases, controls, timing, and other aggregate uses remain
+loud. The fixture, extractor regressions, and Lean receipt pass. Differential
+coverage grows **389 rows / 383 matches / 0 disagreements / 6 recorded
+refusals → 390 / 384 / 0 / 6**; the fresh 22,065-path census remains **5,684
+clean / 16,314 partial** with 67 include skips.
+
 ## [0.1.132] — 2026-10-28
 
 Untouched integral-key associative arrays now return all-`x` values from

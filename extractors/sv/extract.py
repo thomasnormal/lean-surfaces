@@ -21650,6 +21650,15 @@ def _convert_syscall(sm, s, e):
     if is_sys and _associative_count_query(e) is not None:
         return {"kind": "Empty", "span": node_span(sm, s),
                 "associative_count_statement": name}
+    if is_sys and _SYM is None and name == "exists":
+        # ``exists(key)`` is a pure presence observation.  In statement
+        # position its one-bit result is discarded, so erase only a finite
+        # literal-key call that already lowers to a represented presence
+        # cell.  Dynamic keys and aggregate aliases remain loud through the
+        # ordinary ExpressionStatement:CallExpression wall.
+        if _finite_assoc_exists_cell(sm, e) is not None:
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "associative_exists_statement": True}
     if is_sys and _SYM is None and getattr(e, "subroutineName", None) == "delete":
         lowered = _associative_delete(sm, e)
         if lowered is not None:

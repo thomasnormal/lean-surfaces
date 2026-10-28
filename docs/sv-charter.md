@@ -1,5 +1,20 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Discarded finite associative-array `exists` — 2026-10-28
+
+The self-check tier now erases a discarded `exists(index)` call when the
+receiver is a finite literal-key associative array represented by flat value
+and presence cells. The result is a pure one-bit observation and has no
+represented state effect. Dynamic keys, aliases, controls, timing, and other
+aggregate uses remain loud. The `assoc_exists_statement` fixture, extractor
+regressions, and Lean receipt pass.
+
+The fresh **22,065-path** census remains **5,684 clean** and **16,314
+partial** with 67 include skips; the top `AssignmentExpression:target`,
+`ExpressionStatement:CallExpression`, and `CallExpression` counts remain
+**2,695**, **2,694**, and **2,617**. Differential coverage grows **389/383/0/6
+→ 390/384/0/6**; grammar coverage remains **218/100/118**.
+
 ## Empty associative-array low/high bounds — 2026-10-28
 
 Untouched integral-key associative arrays now lower `$low` and `$high` as

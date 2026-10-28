@@ -3521,6 +3521,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "assoc_exists_statement",
+      "file": "Examples/system-verilog/assoc_exists_statement/assoc_exists_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

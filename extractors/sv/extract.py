@@ -3484,6 +3484,41 @@ def _fixed_array_subarray_copy_assignment(sm, expr):
                 return None
         rhs_is_net = (str(getattr(getattr(rhs_source, "symbol", None), "kind", ""))
                       == "SymbolKind.Net")
+        if lhs_subarray is not None and rhs_shape is not None:
+            lhs_root, lhs_cells, lhs_width, lhs_two = lhs_subarray
+            rhs_root, rhs_cells, rhs_width, _rhs_two = rhs_shape
+            aliasing = (lhs_root == rhs_root
+                        and bool(set(lhs_cells) & set(rhs_cells)))
+            if (len(lhs_cells) != len(rhs_cells) or lhs_width != rhs_width
+                    or aliasing or not _case_source_expression_ok(expr.right)):
+                return None
+            stmts = []
+            for lhs_name, rhs_name in zip(lhs_cells, rhs_cells):
+                value = {
+                    "kind": "Ident",
+                    "span": node_span(sm, expr.right),
+                    "width": rhs_width,
+                    "name": rhs_name,
+                }
+                if lhs_two:
+                    value = squash2_wrap(value, lhs_width)
+                stmts.append({
+                    "kind": "NonblockingAssign" if expr.isNonBlocking else "BlockingAssign",
+                    "span": node_span(sm, expr),
+                    "target": {
+                        "kind": "Ident",
+                        "span": node_span(sm, expr.left),
+                        "width": lhs_width,
+                        "name": lhs_name,
+                    },
+                    "value": value,
+                })
+            result = {"kind": "Block", "span": node_span(sm, expr),
+                      "stmts": stmts,
+                      "fixed_array_subarray_copy_lowered": True}
+            if rhs_is_net:
+                result["fixed_array_net_copy_lowered"] = True
+            return result
         if lhs_subarray is not None and rhs_shape is None and rhs_array is not None:
             lhs_root, lhs_cells, lhs_width, lhs_two = lhs_subarray
             rhs_root, rhs_width, _rhs_two, rhs_positions = rhs_array

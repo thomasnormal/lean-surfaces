@@ -9,6 +9,20 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Disjoint fixed-array subarray copies — 2026-10-28
+
+A blocking copy between two constant subarrays of one fixed multidimensional
+integral array is admitted when the flattened source and destination cell sets
+are disjoint and have equal widths and lengths. The extractor emits one
+cellwise write per source row position, preserving the source snapshot because
+no write can affect a later source read. Overlapping, dynamic, timed,
+nonblocking, and nonintegral forms remain `AssignmentExpression:target`.
+
+`fixed_array_disjoint_subarray_copy` supplies the differential `PASS`
+witness and Lean receipt. Differential coverage grows **346/340/0/6 →
+347/341/0/6**; the unavailable external census snapshot remains **5,401
+clean / 16,597 partial** with 67 include skips.
+
 ## Literal-return function operands in dynamic-array concatenations — 2026-10-28
 
 An unpacked concatenation assigned to a scalar-integral dynamic array may

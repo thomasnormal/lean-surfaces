@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.93] — 2026-10-28
+
+Blocking copies between two disjoint constant subarrays of one fixed
+multidimensional integral array now lower to cellwise writes. The extractor
+checks that the source and destination cell sets do not overlap, preserving
+the complete source snapshot; overlapping, dynamic, timed, and nonblocking
+forms remain loud. The `fixed_array_disjoint_subarray_copy` fixture and Lean
+receipt supply the `PASS` evidence. Differential coverage is now **347 rows /
+341 matches / 0 disagreements / 6 recorded refusals**; grammar coverage
+remains **218 / 97 / 121** and the committed census remains **5,401 clean /
+16,597 partial** with 67 include skips.
+
 ## [0.1.92] — 2026-10-28
 
 Unpacked concatenations assigned to scalar-integral dynamic arrays now admit a

@@ -38,6 +38,22 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Disjoint fixed-array subarray copies — 2026-10-28
+
+A blocking copy between two constant subarrays of one fixed multidimensional
+integral array is admitted when their flattened source and destination cell
+sets are disjoint and have equal widths and lengths. The extractor lowers the
+copy to cellwise writes, which preserves the complete source snapshot because
+no destination write can change a later source read. Overlapping, dynamic,
+timed, nonblocking, and nonintegral forms remain loud. The
+`fixed_array_disjoint_subarray_copy` fixture supplies the differential
+`PASS` row and Lean receipt.
+
+Differential coverage grows **346/340/0/6 → 347/341/0/6** with no
+disagreements; grammar coverage remains **218/97/121**. The external corpus
+snapshot remains unavailable, so the committed **5,401 clean / 16,597 partial**
+counts and 67 include skips are unchanged.
+
 ## Literal-return function operands in dynamic-array concatenations — 2026-10-28
 
 An unpacked concatenation assigned to a scalar-integral dynamic array may

@@ -25,6 +25,21 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Disjoint fixed-array subarray copies — 2026-10-28
+
+A blocking copy between two constant subarrays of one fixed multidimensional
+integral array is admitted when the flattened source and destination cell
+sets are disjoint and have equal widths and lengths. The extractor lowers the
+copy to cellwise writes while preserving the complete source snapshot;
+overlapping, dynamic, timed, nonblocking, and nonintegral forms remain loud.
+The `fixed_array_disjoint_subarray_copy` fixture supplies the differential
+row and Lean receipt.
+
+The external sv-tests-2 checkout is unavailable, so the committed census
+remains **5,401 clean / 16,597 partial** over 22,065 paths with 67 include
+skips; no unverified census delta is claimed. Differential coverage grows
+**346/340/0/6 → 347/341/0/6**, while grammar coverage remains **218/97/121**.
+
 ## Literal-return function operands in dynamic-array concatenations — 2026-10-28
 
 An unpacked concatenation assigned to a scalar-integral dynamic array may now

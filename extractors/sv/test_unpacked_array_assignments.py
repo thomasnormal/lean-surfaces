@@ -662,13 +662,29 @@ class UnpackedArrayAssignments(unittest.TestCase):
                             node.get("oob_write_noop")
                             for node in nodes(design)))
 
-    def test_subarray_self_copy_stays_loud(self):
+    def test_overlapping_subarray_copy_stays_loud(self):
         design = extract_source(
             "module top; int value [0:1][0:2]; "
-            "initial value[0] = value[1]; endmodule")
+            "initial value[0] = value[0]; endmodule")
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))
+
+    def test_disjoint_subarray_copy_snapshots_distinct_rows(self):
+        design = extract_source(
+            "module top; int value [0:1][0:2]; "
+            "initial begin value[0] = '{1, 2, 3}; "
+            "value[1] = '{4, 5, 6}; value[0] = value[1]; "
+            "if (value[0][0] == 4 && value[0][2] == 6) "
+            "$display(\"PASS\"); end endmodule")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        lowered = [node for node in nodes(design)
+                   if node.get("fixed_array_subarray_copy_lowered")]
+        self.assertEqual(len(lowered), 1)
+        self.assertEqual(
+            [stmt["target"]["name"] for stmt in lowered[0]["stmts"]],
+            ["value[0][0]", "value[0][1]", "value[0][2]"])
 
     def test_packed_slice_inside_array_cells_copies_window(self):
         design = extract_source(

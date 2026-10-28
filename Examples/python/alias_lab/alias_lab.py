@@ -121,3 +121,8 @@ def round_alias(value):
     f = round
     return f(value)
 
+
+def ascii_alias(value):
+    f = ascii
+    return f(value)
+

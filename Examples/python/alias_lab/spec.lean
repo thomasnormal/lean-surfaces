@@ -88,6 +88,8 @@ load_program alias_lab from "Examples/python/alias_lab/alias_lab.json"
 #py_check alias_lab.pow_alias(5, 0) = 1
 #py_check alias_lab.round_alias(7) = 7
 #py_check alias_lab.round_alias(true) = 1
+#py_check alias_lab.ascii_alias(3) = "3"
+#py_check alias_lab.ascii_alias("héllo") = "'h\\xe9llo'"
 
 /-! ### the alias is NOT a value (the refusal direction, unchanged) -/
 

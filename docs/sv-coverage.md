@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 391 | 385 | 0 | 6 | sv-tests-2 declarations |
+| 392 | 386 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -394,6 +394,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `string_sformatf_scope_assignment` | `Examples/system-verilog/string_sformatf_scope_assignment/string_sformatf_scope_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_scope_wrapper_assignment` | `Examples/system-verilog/string_sformatf_scope_wrapper_assignment/string_sformatf_scope_wrapper_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_putc_history` | `Examples/system-verilog/string_putc_history/string_putc_history.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_putc_length_index` | `Examples/system-verilog/string_putc_length_index/string_putc_length_index.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_count_history` | `Examples/system-verilog/assoc_count_history/assoc_count_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_delete_history` | `Examples/system-verilog/assoc_delete_history/assoc_delete_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_endpoint_history` | `Examples/system-verilog/assoc_endpoint_history/assoc_endpoint_history.sv` | match | **MATCH** | `ok` | MATCH |
@@ -641,12 +642,12 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22065 | 5697 | 16301 | 67 |
+| 22065 | 5698 | 16300 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2695 |
-| `ExpressionStatement:CallExpression` | 2679 |
+| `ExpressionStatement:CallExpression` | 2678 |
 | `CallExpression` | 2617 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2112 |

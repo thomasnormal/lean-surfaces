@@ -1,5 +1,21 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## `string.putc` at the string length — 2026-10-28
+
+The self-check tier now admits the source-pure `s.putc(s.len(), "X")` form.
+IEEE 1800-2023 §6.16.2 defines an index equal to the current string length as
+out of range, so the literal string history remains unchanged. Dynamic or
+aliased length expressions, controls, timing, and non-ASCII values remain
+loud. The `string_putc_length_index` fixture, extractor regression, and Lean
+receipt pass.
+
+The fresh **22,065-path** census moves **5,697 → 5,698 clean** and
+**16,301 → 16,300 partial** with 67 include skips.
+`ExpressionStatement:CallExpression` falls **2,679 → 2,678**;
+`AssignmentExpression:target` remains **2,695** and `CallExpression` remains
+**2,617**. Differential coverage grows **391/385/0/6 → 392/386/0/6**;
+grammar coverage remains **218/100/118**.
+
 ## Scalar string integer-conversion histories — 2026-10-28
 
 The self-check tier now replays source-pure `itoa`, `bintoa`, `octtoa`, and

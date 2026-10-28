@@ -8568,6 +8568,28 @@ def _string_putc_operation(expression):
             return None
         index = _literal_integral_value(arguments[1])
         if index is None:
+            # ``s.len()`` is a source-pure index when the receiver has a
+            # literal string history.  IEEE 1800-2023 §6.16.2 specifies that
+            # an index equal to the current length is out of range and leaves
+            # the string unchanged.  Resolve only this exact read-only form;
+            # dynamic length expressions and aliases stay loud.
+            index_expr = arguments[1]
+            if (type(index_expr).__name__ == "CallExpression"
+                    and getattr(index_expr, "isSystemCall", False)
+                    and getattr(index_expr, "subroutineName", "") == "len"
+                    and len(getattr(index_expr, "arguments", ())) == 1
+                    and type(getattr(index_expr, "arguments", ())[0]).__name__
+                    == "NamedValueExpression"
+                    and getattr(index_expr, "arguments", ())[0].symbol
+                    is getattr(receiver, "symbol", None)):
+                position = getattr(
+                    getattr(getattr(expression, "sourceRange", None),
+                            "start", None), "offset", None)
+                if position is not None:
+                    history = _string_literal_history_before(receiver, position)
+                    if history is not None:
+                        index = len(history)
+        if index is None:
             return None
         value = arguments[2]
         while type(value).__name__ == "ConversionExpression":

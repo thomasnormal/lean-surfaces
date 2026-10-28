@@ -91,6 +91,16 @@ class StringTransformStatements(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_putc_length_index_is_the_defined_out_of_range_noop(self):
+        source = (
+            'module top; string s; initial begin s = "abc"; '
+            's.putc(s.len(), "X"); if (s == "abc") $display("PASS"); '
+            'end endmodule'
+        )
+        design = lower(source)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_putc_dynamic_timed_and_non_ascii_forms_stay_loud(self):
         sources = (
             'module top; string s; int i; initial begin s = "abc"; '

@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.135] — 2026-10-28
+
+Source-pure `string.putc` calls whose index is the receiver's literal
+`s.len()` now replay as the IEEE 1800-2023 §6.16.2 out-of-range no-op. Dynamic,
+aliased, controlled, timed, and non-ASCII forms remain loud. The fixture,
+extractor regression, and Lean receipt pass. Differential coverage grows
+**391 rows / 385 matches / 0 disagreements / 6 recorded refusals → 392 / 386 /
+0 / 6**; the fresh 22,065-path census moves **5,697 → 5,698 clean /
+16,301 → 16,300 partial** and `ExpressionStatement:CallExpression` falls
+**2,679 → 2,678**.
+
 ## [0.1.134] — 2026-10-28
 
 Source-pure `itoa`, `bintoa`, `octtoa`, and `hextoa` calls now replay literal

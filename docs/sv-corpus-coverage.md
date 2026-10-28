@@ -1,5 +1,18 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## `string.putc` at the string length — 2026-10-28
+
+The legacy extractor now resolves a source-pure `s.len()` index in
+`s.putc(s.len(), "X")`. Since the index equals the current literal string
+length, IEEE 1800-2023 §6.16.2 requires the write to leave the string
+unchanged. Dynamic, aliased, controlled, timed, and non-ASCII forms remain
+loud. The `string_putc_length_index` fixture supplies the differential row and
+Lean receipt. The fresh 22,065-path census moves **5,697 → 5,698 clean /
+16,301 → 16,300 partial** with 67 include skips;
+`ExpressionStatement:CallExpression` falls **2,679 → 2,678** while
+`AssignmentExpression:target` remains **2,695** and `CallExpression` remains
+**2,617**. Differential coverage grows **391/385/0/6 → 392/386/0/6**.
+
 ## Scalar string integer-conversion histories — 2026-10-28
 
 Source-pure `itoa`, `bintoa`, `octtoa`, and `hextoa` calls now replay literal

@@ -218,6 +218,26 @@ class SizeQueries(unittest.TestCase):
         self.assertFalse(any(node.get("associative_empty_endpoint")
                              for node in nodes(design)))
 
+    def test_finite_integral_endpoints_update_index_and_result(self):
+        design = lower(
+            'module top; int values[int]; int key; int result; initial begin '
+            'values[3] = 30; values[-2] = 20; values[7] = 70; '
+            'result = values.first(key); values.delete(-2); '
+            'result = values.first(key); result = values.last(key); '
+            'values.delete(); key = 99; result = values.first(key); end endmodule')
+        self.assertEqual(sum(node.get("associative_endpoint_lowered", False)
+                             for node in nodes(design)), 4)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_string_key_endpoint_history_stays_loud(self):
+        design = lower(
+            'module top; int values[string]; string key; int result; initial begin '
+            'values["a"] = 1; result = values.first(key); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
+                            for node in nodes(design)
+                            if node.get("kind") == "Unsupported"))
+
     def test_mailbox_type_mismatch_try_get_returns_negative(self):
         design = lower(
             'module top; mailbox box; string message; int result; initial begin '

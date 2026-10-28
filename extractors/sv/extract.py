@@ -2067,6 +2067,28 @@ def _assoc_delete_call_key(expression, symbol):
         return False, None
 
 
+def _assoc_endpoint_call_valid(expression, symbol):
+    """Whether ``first``/``last`` has one direct writable index argument."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName not in ("first", "last")):
+            return False
+        arguments = list(expression.arguments)
+        if (len(arguments) != 2
+                or type(arguments[0]).__name__ != "NamedValueExpression"
+                or getattr(arguments[0], "symbol", None) is not symbol
+                or type(arguments[1]).__name__ != "NamedValueExpression"
+                or getattr(arguments[1], "bad", False)):
+            return False
+        index_type = getattr(arguments[1].type, "canonicalType", arguments[1].type)
+        return (type(index_type).__name__ == "StringType"
+                or getattr(arguments[1].type, "isIntegral", False))
+    except Exception:
+        return False
+
+
 def _finite_string_assoc_cells(sm, symbol):
     """Collect a finite, literal-key string associative array.
 
@@ -2130,6 +2152,8 @@ def _finite_string_assoc_cells(sm, symbol):
                       and any(getattr(argument, "symbol", None) is symbol
                               for argument in getattr(node, "arguments", []))):
                     invalid = True
+                elif (_assoc_endpoint_call_valid(node, symbol)):
+                    return VisitAction.Skip
                 elif (getattr(node, "subroutineName", None) == "exists"
                       and any(getattr(argument, "symbol", None) is symbol
                               for argument in getattr(node, "arguments", []))):
@@ -2275,6 +2299,8 @@ def _finite_integral_assoc_cells(sm, symbol):
                       and any(getattr(argument, "symbol", None) is symbol
                               for argument in getattr(node, "arguments", []))):
                     invalid = True
+                elif (_assoc_endpoint_call_valid(node, symbol)):
+                    return VisitAction.Skip
                 elif (getattr(node, "subroutineName", None) == "exists"
                       and any(getattr(argument, "symbol", None) is symbol
                               for argument in getattr(node, "arguments", []))):
@@ -12438,6 +12464,8 @@ def _associative_count_query(expression):
                     return
                 if getattr(node, "subroutineName", None) in ("num", "size", "exists"):
                     return
+                if (_assoc_endpoint_call_valid(node, symbol)):
+                    return
                 if getattr(node, "subroutineName", None) == "delete":
                     valid, key = _assoc_delete_call_key(node, symbol)
                     start = getattr(getattr(getattr(node, "sourceRange", None),
@@ -12566,6 +12594,8 @@ def _associative_delete(sm, expression):
                         invalid = True
                     return
                 if name in ("num", "size", "exists"):
+                    return
+                if _assoc_endpoint_call_valid(node, symbol):
                     return
                 invalid = True
 
@@ -20056,10 +20086,103 @@ def _convert_compound_assignment(sm, expression, span_node=None):
             "compound_assignment_lowered": True}
 
 
+def _associative_endpoint_assignment(sm, expression):
+    """Lower an integral associative ``first``/``last`` assignment.
+
+    The endpoint method returns a success bit and writes its index argument.
+    Finite literal-key cells make both effects ordinary flat assignments: a
+    priority chain selects the first/last present key, leaves the index
+    untouched on an empty array, and writes one to the result target when a
+    key is found. String-key endpoints remain loud because the flat state has
+    no string scalar slot for the output index.
+    """
+    try:
+        if (type(expression).__name__ != "AssignmentExpression"
+                or expression.op is not None
+                or expression.isNonBlocking
+                or expression.timingControl is not None
+                or type(expression.right).__name__ != "CallExpression"):
+            return None
+        call = expression.right
+        if not getattr(call, "isSystemCall", False):
+            return None
+        arguments = list(getattr(call, "arguments", ()))
+        if (getattr(call, "subroutineName", None) not in ("first", "last")
+                or len(arguments) != 2
+                or type(arguments[0]).__name__ != "NamedValueExpression"
+                or type(arguments[1]).__name__ != "NamedValueExpression"):
+            return None
+        receiver, index = arguments
+        symbol = getattr(receiver, "symbol", None)
+        if (symbol is None
+                or type(receiver.type.canonicalType).__name__ != "AssociativeArrayType"
+                or type(symbol.type.canonicalType.indexType.canonicalType).__name__
+                != "PredefinedIntegerType"
+                or not getattr(index.type, "isIntegral", False)):
+            return None
+        index_type = getattr(index.type, "canonicalType", index.type)
+        if type(index_type).__name__ == "StringType":
+            return None
+        cells = _finite_integral_assoc_cells(sm, symbol)
+        if cells is None or not cells:
+            return None
+        target, target_ok = legacy_blocking_target(sm, expression.left)
+        index_target, index_ok = legacy_blocking_target(sm, index)
+        if (not target_ok or not index_ok
+                or target.get("kind") != "Ident"
+                or index_target.get("kind") != "Ident"
+                or getattr(expression.left, "symbol", None) is getattr(index, "symbol", None)):
+            return None
+        index_width, index_two_state, index_reason = type_width_2s(index.type)
+        result_width, result_two_state, result_reason = type_width_2s(expression.left.type)
+        if (index_width is None or result_width is None
+                or index_reason is not None or result_reason is not None
+                or index_width <= 0 or result_width <= 0):
+            return None
+        ordered = sorted(cells)
+        if call.subroutineName == "last":
+            ordered.reverse()
+        span = node_span(sm, expression)
+
+        def literal(value, width, sv_type, two_state):
+            bits = format(value & ((1 << width) - 1), f"0{width}b")
+            node = signed_metadata({"kind": "Literal", "span": span,
+                                    "width": width, "bits": bits}, sv_type)
+            return squash2_wrap(node, width) if two_state else node
+
+        one = literal(1, result_width, expression.left.type, result_two_state)
+        zero = literal(0, result_width, expression.left.type, result_two_state)
+        branches = {"kind": "BlockingAssign", "span": span,
+                    "target": target, "value": zero}
+        for key in reversed(ordered):
+            cell = cells[key]
+            set_index = {"kind": "BlockingAssign", "span": span,
+                         "target": index_target,
+                         "value": literal(key, index_width, index.type,
+                                           index_two_state)}
+            set_result = {"kind": "BlockingAssign", "span": span,
+                          "target": target, "value": one}
+            branches = {
+                "kind": "If", "span": span,
+                "cond": {"kind": "Ident", "span": span, "width": 1,
+                         "name": cell["presence"], "assoc_exists": True},
+                "then": {"kind": "Block", "span": span,
+                         "stmts": [set_index, set_result]},
+                "else": branches,
+            }
+        branches["associative_endpoint_lowered"] = True
+        return branches
+    except Exception:
+        return None
+
+
 def _convert_assignment_expr(sm, expr, span_node=None):
     if type(expr).__name__ != "AssignmentExpression":
         return unsupported(sm, span_node or expr,
                            "AssignmentExpression:" + type(expr).__name__)
+    endpoint = _associative_endpoint_assignment(sm, expr)
+    if endpoint is not None:
+        return endpoint
     if _SYM is None and (expr.isNonBlocking or expr.timingControl is not None):
         lhs_type = getattr(expr.left, "type", None)
         union_lhs = _unpacked_union_shape(lhs_type) is not None

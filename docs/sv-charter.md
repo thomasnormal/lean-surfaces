@@ -1,5 +1,20 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Finite associative-array `first()`/`last()` histories — 2026-10-28
+
+Blocking assignments from integral-key associative-array `first(index)` and
+`last(index)` now lower to a presence-priority chain. They return one and
+update the index variable to the least or greatest present literal key; an
+empty array returns zero and leaves the index unchanged. String-key endpoint
+outputs and dynamic or unsupported histories remain loud. The
+`assoc_endpoint_history` fixture and Lean receipt pass.
+
+The committed 22,065-path census remains **5,646 clean / 16,352 partial** with
+67 include skips; `AssignmentExpression:target` remains **2,744**,
+`ExpressionStatement:CallExpression` **2,710**, and `CallExpression` **2,635**.
+Differential coverage grows **381/375/0/6 → 382/376/0/6**, and grammar coverage
+remains **218/97/121**.
+
 ## Finite associative-array delete histories — 2026-10-28
 
 Blocking `delete(key)` and whole-array `delete()` calls now replay through

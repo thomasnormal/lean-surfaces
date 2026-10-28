@@ -1,5 +1,19 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Finite associative-array `first()`/`last()` histories — 2026-10-28
+
+The legacy extractor now lowers blocking assignments from integral-key
+associative-array `first(index)` and `last(index)` to a presence-priority
+chain. They return one and update the index variable to the least or greatest
+present literal key; empty arrays return zero and leave the index unchanged.
+String-key endpoint outputs and dynamic or unsupported histories remain loud.
+The `assoc_endpoint_history` fixture supplies the differential row and Lean
+receipt. The committed 22,065-path census remains **5,646 clean / 16,352
+partial** with 67 include skips; `AssignmentExpression:target` remains
+**2,744**, `ExpressionStatement:CallExpression` **2,710**, and
+`CallExpression` **2,635**. Differential coverage grows
+**381/375/0/6 → 382/376/0/6**.
+
 ## Finite associative-array delete histories — 2026-10-28
 
 The legacy extractor now replays blocking `delete(key)` and whole-array

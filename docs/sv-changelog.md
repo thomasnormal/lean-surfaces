@@ -1,5 +1,19 @@
 # SystemVerilog tier changelog
 
+## [0.1.125] — 2026-10-28
+
+Blocking assignments from integral-key associative-array `first(index)` and
+`last(index)` now use a presence-priority chain. They return one and update
+the index variable to the least or greatest present literal key; empty arrays
+return zero and leave the index unchanged. String-key endpoint outputs and
+dynamic or unsupported histories remain loud. The new fixture and Lean receipt
+pass. Differential coverage grows **381 rows / 375 matches / 0 disagreements /
+6 recorded refusals → 382 / 376 / 0 / 6**. The committed 22,065-path census
+remains **5,646 clean / 16,352 partial** with 67 include skips;
+`AssignmentExpression:target` remains **2,744**,
+`ExpressionStatement:CallExpression` **2,710**, and `CallExpression` **2,635**.
+Grammar coverage remains **218 / 97 / 121**.
+
 ## [0.1.124] — 2026-10-28
 
 Blocking associative-array `delete(key)` and whole-array `delete()` calls now

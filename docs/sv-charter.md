@@ -1,5 +1,21 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Source-pure conditional string assignments — 2026-10-28
+
+A blocking assignment from a conditional string expression now lowers to the
+existing opaque-string no-op when its single condition is proven as a source
+ordered 0/1 integral literal history and the selected branch is reconstructible
+ASCII history. Unknown, computed, pattern, timed, nonblocking, and direct
+aliased forms remain loud. The `conditional_string_assignment` fixture covers
+both branch choices, with extractor regression, differential row, and Lean
+receipt.
+
+The fresh **22,067-path** census is **5,792 clean / 16,208 partial / 67 include
+skips**, compared with **5,791 / 16,209 / 67** previously;
+`AssignmentExpression:target` falls **2,694 → 2,693** and
+`NamedValueExpression:2state` falls **1,270 → 1,269**. Differential coverage
+grows **407/401/0/6 → 408/402/0/6**; grammar coverage remains **218/101/117**.
+
 ## Empty input-only task calls — 2026-10-28
 
 An empty automatic task whose formals are all required `input` values now

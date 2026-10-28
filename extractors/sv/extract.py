@@ -8418,6 +8418,24 @@ def _string_source_value(expression, position=None, active=()):
                            for char in value)):
                 return None
             return value
+        if type(node).__name__ == "ConditionalExpression":
+            # A conditional string expression is source-pure when its single
+            # condition is already a known 0/1 integral history. Do not merge
+            # unknown branches or evaluate patterns/computed conditions: those
+            # require the real string value and four-state conditional rules,
+            # which the opaque self-check state does not represent.
+            conditions = list(getattr(node, "conditions", ()))
+            if (len(conditions) != 1
+                    or getattr(conditions[0], "pattern", None) is not None):
+                return None
+            condition = getattr(conditions[0], "expr", None)
+            selected = _literal_integral_value(condition)
+            if selected is None:
+                selected = _bound_integral_value(condition)
+            if selected is None or selected not in (0, 1):
+                return None
+            branch = node.left if selected else node.right
+            return _string_source_value(branch, position, active)
         if type(node).__name__ == "CallExpression":
             if (getattr(node, "bad", False)
                     or not getattr(node, "isSystemCall", False)):

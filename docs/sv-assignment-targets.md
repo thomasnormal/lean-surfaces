@@ -9,6 +9,17 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Source-pure conditional string assignments — 2026-10-28
+
+A blocking assignment to an opaque string target is erased when its conditional
+RHS has one ordinary condition whose value is proven as a source-ordered 0/1
+integral literal history and the selected branch is reconstructible ASCII
+history. The selected value is used by the existing string observation replay;
+no string slot or alias is added. Unknown, computed, pattern, timed,
+nonblocking, and direct named-string-copy forms remain at the target boundary.
+The `conditional_string_assignment` fixture covers both branch choices and the
+unknown-condition refusal.
+
 ## Metadata-only `$typename` string assignments — 2026-10-28
 
 A blocking assignment of `$typename` applied to a resolved data type or a

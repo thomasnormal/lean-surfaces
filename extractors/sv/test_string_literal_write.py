@@ -650,6 +650,25 @@ class LiteralStringWrites(unittest.TestCase):
             self.assertIn("AssignmentExpression:target",
                           [node.get("sv_kind") for node in nodes(design)])
 
+    def test_source_pure_conditional_string_assignment_replays_branch(self):
+        design = lower(
+            'module top; string value; bit choose; initial begin '
+            'choose = 1; value = choose ? "left" : "right"; '
+            'choose = 0; value = choose ? "left" : "right"; end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False)
+                for node in nodes(design)), 2)
+
+    def test_conditional_string_assignment_requires_known_condition(self):
+        design = lower(
+            'module top; string value; bit choose; initial begin '
+            'value = choose ? "left" : "right"; end endmodule')
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
+
 
 if __name__ == "__main__":
     unittest.main()

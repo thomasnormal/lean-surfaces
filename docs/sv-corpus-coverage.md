@@ -1,5 +1,18 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Source-pure conditional string assignments — 2026-10-28
+
+The legacy extractor now erases blocking assignments from a conditional string
+expression when the condition is proven as a source-ordered 0/1 integral literal
+history and the selected branch is reconstructible ASCII. Unknown, computed,
+pattern, timed, nonblocking, and direct aliased forms remain loud. The
+`conditional_string_assignment` fixture supplies the differential row and Lean
+receipt. The fresh **22,067-path** census is **5,792 clean / 16,208 partial / 67
+include skips**, versus **5,791 / 16,209 / 67** previously;
+`AssignmentExpression:target` falls **2,694 → 2,693** and
+`NamedValueExpression:2state` falls **1,270 → 1,269**. Differential coverage
+grows **407/401/0/6 → 408/402/0/6**.
+
 ## Empty input-only task calls — 2026-10-28
 
 The legacy extractor now erases calls to empty automatic tasks with required

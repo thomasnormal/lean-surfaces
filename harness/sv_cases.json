@@ -3685,6 +3685,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "conditional_string_assignment",
+      "file": "Examples/system-verilog/conditional_string_assignment/conditional_string_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

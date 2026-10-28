@@ -1,5 +1,18 @@
 # SystemVerilog tier changelog
 
+## [0.1.152] — 2026-10-28
+
+Blocking assignments from a source-pure conditional string expression now erase
+after the selected ASCII branch is reconstructed and its condition is proven
+as a 0/1 literal history. Unknown, computed, timed, nonblocking, and aliased
+forms remain loud. The `conditional_string_assignment` fixture, extractor
+regressions, differential row, and Lean receipt pass. Differential coverage
+grows **407 rows / 401 matches / 0 disagreements / 6 recorded refusals → 408 /
+402 / 0 / 6**; grammar coverage remains **218/101/117**. The fresh 22,067-path
+census moves **5,791 → 5,792 clean / 16,209 → 16,208 partial / 67 include
+skips**; `AssignmentExpression:target` falls **2,694 → 2,693** and
+`NamedValueExpression:2state` falls **1,270 → 1,269**.
+
 ## [0.1.151] — 2026-10-28
 
 Empty automatic tasks with input-only formals now erase at the call site after

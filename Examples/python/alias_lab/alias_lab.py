@@ -150,3 +150,8 @@ def format_alias(value):
 def range_alias(value):
     f = range
     return f(value)
+
+
+def next_alias(value):
+    f = next
+    return f((x for x in range(value)), -1)

@@ -100,6 +100,8 @@ load_program alias_lab from "Examples/python/alias_lab/alias_lab.json"
 #py_check alias_lab.format_alias(true) = "True"
 #guard callFunction alias_lab "range_alias" #[.int 3] 4096 ==
   .ok (.range (.int 0) (.int 3) (.int 1))
+#py_check alias_lab.next_alias(3) = 0
+#py_check alias_lab.next_alias(0) = -1
 
 /-! ### the alias is NOT a value (the refusal direction, unchanged) -/
 

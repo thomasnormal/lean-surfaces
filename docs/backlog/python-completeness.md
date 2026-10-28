@@ -6353,3 +6353,24 @@ DECIDED: admit only the immediate local `format` alias call; retain loud
 failure for returned or general first-class callable values. Rebase and publish
 this item after the full measurements, then reread the inbox before the next
 gap.
+
+## 2026-10-28-pycomplete-188 — admit the immediate local `range` alias
+
+The local-builtin alias rewrite now includes `range`: `f = range; return
+f(value)` lowers to the existing immediate range constructor. Positive and
+empty integer stops preserve their current `Val.range` results. Returning
+`range`, shadowing it, and general first-class callable forms remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 2 cases: 0 failed, 2 matched on both interpreters |
+| Full executable differential | 3,752 cases: 0 failed, 44 whitelisted refusals, 3,708 matched |
+| Full proof differential | 3,752 cases: 0 failed, 153 refusals, 3,599 matched |
+| Lean runner build | `lake build leanmodels-run` passed |
+| Coverage freshness | `python3 harness/coverage_page.py` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `range` alias call; retain loud
+failure for returned or general first-class callable values. Rebase and publish
+this item after the full measurements, then reread the inbox before the next
+gap.

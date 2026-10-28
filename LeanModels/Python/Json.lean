@@ -1645,7 +1645,7 @@ private def immediateBuiltinAlias (name : String) : Bool :=
     || name == "int" || name == "float" || name == "all" || name == "any"
     || name == "str" || name == "sum" || name == "tuple" || name == "list"
     || name == "ord" || name == "chr" || name == "pow" || name == "round"
-    || name == "ascii" || name == "hex" || name == "oct" || name == "bin" || name == "format"
+    || name == "ascii" || name == "hex" || name == "oct" || name == "bin" || name == "format" || name == "range"
 
 private def rewriteImmediateBuiltinAlias (outer : List String)
     (params : Array Param) (body : Array Stmt) : Array Stmt :=

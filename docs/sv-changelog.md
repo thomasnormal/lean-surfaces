@@ -1,5 +1,18 @@
 # SystemVerilog tier changelog
 
+## [0.1.130] — 2026-10-28
+
+`$size` now observes source-pure finite integral-key associative-array
+histories through the same presence replay as `.num()` and `.size()`, including
+compound writes and `delete`. Untouched and cleared arrays return zero; fixed
+array queries keep their declared-dimension path, and dynamic or string-key
+forms remain loud. The fixture, extractor regression, and Lean receipt pass.
+Differential coverage grows **386 rows / 380 matches / 0 disagreements / 6
+recorded refusals → 387 / 381 / 0 / 6**. The fresh 22,065-path census moves
+**5,670 → 5,674 clean / 16,328 → 16,324 partial**; `AssignmentExpression:target`
+falls **2,706 → 2,702** and `CallExpression:dimension:argument` falls **48 →
+44**.
+
 ## [0.1.129] — 2026-10-28
 
 Finite source-pure associative arrays now replay compound assignments at

@@ -1,5 +1,20 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## System `$size` on finite associative-array histories — 2026-10-28
+
+The legacy extractor now routes `$size` on source-pure finite integral-key
+associative arrays through the exact presence history used by `.num()` and
+`.size()`. Literal writes, compound writes, and `delete` are reflected in the
+allocated-key count; untouched and cleared arrays return zero. Fixed-array
+queries retain their declared-dimension behavior, while string-key arrays,
+dynamic selectors, aliases, and timed or controlled histories remain loud. The
+`assoc_system_size_history` fixture supplies the differential row and Lean
+receipt. The fresh 22,065-path census moves **5,670 → 5,674 clean / 16,328 →
+16,324 partial** with 67 include skips; `AssignmentExpression:target` falls
+**2,706 → 2,702**, `ExpressionStatement:CallExpression` falls **2,696 →
+2,695**, and `CallExpression:dimension:argument` falls **48 → 44**.
+Differential coverage grows **386/380/0/6 → 387/381/0/6**.
+
 ## Finite associative-array compound assignment histories — 2026-10-28
 
 The legacy extractor now replays source-pure finite associative-array compound

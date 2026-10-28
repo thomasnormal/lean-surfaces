@@ -3491,6 +3491,17 @@
         "PASS2"
       ],
       "expect": "match"
+    },
+    {
+      "name": "assoc_system_size_history",
+      "file": "Examples/system-verilog/assoc_system_size_history/assoc_system_size_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS1",
+        "PASS2",
+        "PASS3"
+      ],
+      "expect": "match"
     }
   ]
 }

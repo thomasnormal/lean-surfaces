@@ -1,5 +1,23 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## System `$size` on finite associative-array histories — 2026-10-28
+
+The self-check tier now routes `$size` on a source-pure finite integral-key
+associative array through the existing presence replay. It returns the exact
+allocated-key count across literal writes, compound writes, and `delete`,
+including zero for an untouched or cleared array. Fixed-array `$size` keeps its
+declared-dimension path; string-key arrays, dynamic selectors, aliases,
+controls, and timing remain loud. The `assoc_system_size_history` fixture,
+extractor regression, and Lean receipt pass.
+
+The fresh **22,065-path** census moves **5,670 → 5,674 clean** and
+**16,328 → 16,324 partial** with 67 include skips. `AssignmentExpression:target`
+falls **2,706 → 2,702**, `ExpressionStatement:CallExpression` falls
+**2,696 → 2,695**, and `CallExpression` remains **2,617**. The
+`CallExpression:dimension:argument` blocker falls **48 → 44**. Differential
+coverage grows **386/380/0/6 → 387/381/0/6**; grammar coverage moves
+**218/100/118 → 218/101/117**.
+
 ## Finite associative-array compound assignment histories — 2026-10-28
 
 Source-pure finite associative arrays now admit IEEE 1800-2023 §10.4.1

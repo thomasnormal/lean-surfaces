@@ -2146,7 +2146,7 @@ def _finite_string_assoc_cells(sm, symbol):
                 if key is not None:
                     exists_calls += 1
                     keys.setdefault(key, None)
-                elif (getattr(node, "subroutineName", None) in ("num", "size")
+                elif (getattr(node, "subroutineName", None) in ("num", "size", "$size")
                       and getattr(getattr(node, "arguments", [None])[0],
                                   "symbol", None) is symbol):
                     return VisitAction.Skip
@@ -2298,7 +2298,7 @@ def _finite_integral_assoc_cells(sm, symbol):
                 if key is not None:
                     exists_calls += 1
                     keys.setdefault(key, None)
-                elif (getattr(node, "subroutineName", None) in ("num", "size")
+                elif (getattr(node, "subroutineName", None) in ("num", "size", "$size")
                       and getattr(getattr(node, "arguments", [None])[0],
                                   "symbol", None) is symbol):
                     return VisitAction.Skip
@@ -7408,6 +7408,18 @@ def _convert_dimension_query(sm, expression):
         arguments = list(expression.arguments)
     except Exception:
         return unsupported(sm, expression, "CallExpression:dimension:signature")
+    # `$size` on an integral-key finite associative array is the same
+    # allocated-key count as the array's `.size()`/`.num()` methods.  Let the
+    # finite history replay answer that narrow source-pure case before the
+    # fixed-dimension metadata path below; ordinary fixed arrays continue to
+    # use their declared dimension shape.
+    if expression.subroutineName == "$size":
+        associative = _convert_associative_count_query(sm, expression)
+        if associative.get("kind") != "Unsupported":
+            return associative
+        empty_associative = _convert_associative_empty_query(sm, expression)
+        if empty_associative.get("kind") != "Unsupported":
+            return empty_associative
     count_query = expression.subroutineName in ("$dimensions", "$unpacked_dimensions")
     if len(arguments) not in ((1,) if count_query else (1, 2)):
         return unsupported(sm, expression, "CallExpression:dimension:arity")
@@ -12418,7 +12430,7 @@ def _associative_count_query(expression):
         if (type(expression).__name__ != "CallExpression"
                 or getattr(expression, "bad", False)
                 or not expression.isSystemCall
-                or expression.subroutineName not in ("num", "size")
+                or expression.subroutineName not in ("num", "size", "$size")
                 or len(expression.arguments) != 1):
             return None
         receiver = expression.arguments[0]
@@ -12495,7 +12507,7 @@ def _associative_count_query(expression):
                 call_receiver = call_arguments[0] if call_arguments else None
                 if getattr(call_receiver, "symbol", None) is not symbol:
                     return
-                if getattr(node, "subroutineName", None) in ("num", "size", "exists"):
+                if getattr(node, "subroutineName", None) in ("num", "size", "$size", "exists"):
                     return
                 if (_assoc_endpoint_call_valid(node, symbol)):
                     return
@@ -12626,7 +12638,7 @@ def _associative_delete(sm, expression):
                     elif call_key is not None and call_key not in cells:
                         invalid = True
                     return
-                if name in ("num", "size", "exists"):
+                if name in ("num", "size", "$size", "exists"):
                     return
                 if _assoc_endpoint_call_valid(node, symbol):
                     return
@@ -12669,7 +12681,7 @@ def _associative_empty_query(expression):
         if (type(expression).__name__ != "CallExpression"
                 or getattr(expression, "bad", False)
                 or not expression.isSystemCall
-                or expression.subroutineName not in ("num", "size")
+                or expression.subroutineName not in ("num", "size", "$size")
                 or len(expression.arguments) != 1):
             return False
         receiver = expression.arguments[0]
@@ -12697,6 +12709,8 @@ def _associative_empty_query(expression):
         for occurrence in occurrences[1:]:
             tail = code_source[occurrence.end():].lstrip()
             if (re.match(r"\.(?:num|size)\s*\(\s*\)", tail)
+                    or re.match(r"\$size\s*\(\s*$",
+                                 code_source[max(0, occurrence.start() - 32):occurrence.start()])
                     or re.match(r"\.delete\s*\(", tail)):
                 continue
             return False

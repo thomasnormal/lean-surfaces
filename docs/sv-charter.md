@@ -1,5 +1,20 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Source-pure string queries over concatenations — 2026-10-28
+
+Scalar string observations now replay source-pure concatenation and replication
+histories. `.len()`, `.substr()`, and `.compare()` see the exact joined or
+repeated ASCII value; dynamic and direct aliased histories remain loud. The
+`string_concat_query_observations` fixture exercises both forms, with extractor
+regression, differential row, and Lean receipt.
+
+The fresh **22,065-path** census moves **5,779 → 5,782 clean** and **16,219 →
+16,216 partial** with 67 include skips. `CallExpression` falls **2,572 →
+2,569** while `AssignmentExpression:target` and
+`ExpressionStatement:CallExpression` remain **2,694** and **2,677**.
+Differential coverage grows **401/395/0/6 → 402/396/0/6**; grammar coverage
+remains **218/100/118**.
+
 ## Source-pure string compare observations — 2026-10-28
 
 Source-pure literal and query histories now feed exact scalar

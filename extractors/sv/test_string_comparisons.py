@@ -105,6 +105,23 @@ class StringComparisons(unittest.TestCase):
                             for node in nodes(design)
                             if node.get("kind") == "Unsupported"))
 
+    def test_string_query_observations_replay_concat_and_replication(self):
+        design = lower(
+            'module top; initial begin '
+            'string left = "Hi"; string right = "!"; string joined; '
+            'string repeated; joined = {left, right}; repeated = {2{left}}; '
+            'if (joined.len() == 3 && joined.substr(0, 1) == "Hi" && '
+            'repeated.len() == 4 && repeated.compare("HiHi") == 0) '
+            '$display("PASS"); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("string_compare")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(
+            len([node for node in nodes(design)
+                 if node.get("string_literal_length_query")]), 2)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_computed_controlled_and_timed_histories_stay_loud(self):
         for source in (
                 'module top; string a, b; initial begin '

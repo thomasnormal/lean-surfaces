@@ -1,0 +1,304 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/string_concat_query_observations/string_concat_query_observations.sv",
+  "source_sha256": "5b9269753010dbc270de639d277859ead3bfa0b1ef018533920be0c8e74c3c18",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 17,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 16,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 3,
+                "col": 11,
+                "end_line": 16,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 4,
+                    "col": 12,
+                    "end_line": 4,
+                    "end_col": 16
+                  }
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 5,
+                    "col": 12,
+                    "end_line": 5,
+                    "end_col": 17
+                  }
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 6,
+                    "col": 12,
+                    "end_line": 6,
+                    "end_col": 18
+                  }
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 7,
+                    "col": 12,
+                    "end_line": 7,
+                    "end_col": 20
+                  }
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
+                    "end_col": 28
+                  },
+                  "string_source_write_noop": true
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 9,
+                    "end_col": 26
+                  },
+                  "string_source_write_noop": true
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 10,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 24
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 10,
+                      "col": 9,
+                      "end_line": 11,
+                      "end_col": 61
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 10,
+                        "col": 9,
+                        "end_line": 11,
+                        "end_col": 28
+                      },
+                      "width": 1,
+                      "op": "&&",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 10,
+                          "col": 9,
+                          "end_line": 10,
+                          "end_col": 57
+                        },
+                        "width": 1,
+                        "op": "&&",
+                        "left": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 10,
+                            "col": 9,
+                            "end_line": 10,
+                            "end_col": 26
+                          },
+                          "width": 1,
+                          "op": "==",
+                          "left": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 10,
+                              "col": 9,
+                              "end_line": 10,
+                              "end_col": 21
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000011",
+                            "string_literal_length_query": true
+                          },
+                          "right": {
+                            "kind": "Literal",
+                            "span": {
+                              "line": 10,
+                              "col": 25,
+                              "end_line": 10,
+                              "end_col": 26
+                            },
+                            "width": 32,
+                            "bits": "00000000000000000000000000000011"
+                          }
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 10,
+                            "col": 30,
+                            "end_line": 10,
+                            "end_col": 57
+                          },
+                          "width": 1,
+                          "bits": "1",
+                          "string_compare": true
+                        }
+                      },
+                      "right": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 11,
+                          "col": 9,
+                          "end_line": 11,
+                          "end_col": 28
+                        },
+                        "width": 1,
+                        "op": "==",
+                        "left": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 11,
+                            "col": 9,
+                            "end_line": 11,
+                            "end_col": 23
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000100",
+                          "string_literal_length_query": true
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 11,
+                            "col": 27,
+                            "end_line": 11,
+                            "end_col": 28
+                          },
+                          "width": 32,
+                          "bits": "00000000000000000000000000000100"
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 11,
+                        "col": 32,
+                        "end_line": 11,
+                        "end_col": 61
+                      },
+                      "width": 1,
+                      "op": "==",
+                      "left": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 11,
+                          "col": 32,
+                          "end_line": 11,
+                          "end_col": 56
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000",
+                        "string_literal_compare": true,
+                        "signed": true
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 11,
+                          "col": 60,
+                          "end_line": 11,
+                          "end_col": 61
+                        },
+                        "width": 32,
+                        "bits": "00000000000000000000000000000000"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 12,
+                      "col": 7,
+                      "end_line": 12,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 14,
+                      "col": 7,
+                      "end_line": 14,
+                      "end_col": 24
+                    },
+                    "name": "$display",
+                    "format": "FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

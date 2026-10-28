@@ -1,5 +1,16 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Source-pure string queries over concatenations — 2026-10-28
+
+The legacy extractor now replays `.len()`, `.substr()`, and `.compare()` over
+source-pure string concatenation and replication histories. Dynamic and direct
+aliased histories remain loud. The `string_concat_query_observations` fixture
+supplies the differential row and Lean receipt. The fresh 22,065-path census
+moves **5,779 → 5,782 clean / 16,219 → 16,216 partial** with 67 include skips;
+`CallExpression` falls **2,572 → 2,569**, while the two top assignment/call
+blockers remain **2,694** and **2,677**. Differential coverage grows
+**401/395/0/6 → 402/396/0/6**.
+
 ## Source-pure string compare observations — 2026-10-28
 
 The legacy extractor now replays exact scalar `string.compare()` and

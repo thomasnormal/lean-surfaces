@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.145] — 2026-10-28
+
+Scalar string `.len()`, `.substr()`, and `.compare()` observations now replay
+source-pure concatenation and replication histories. Dynamic and direct aliased
+histories remain loud. The `string_concat_query_observations` fixture,
+extractor regression, differential row, and Lean receipt pass. Differential
+coverage grows **401 rows / 395 matches / 0 disagreements / 6 recorded
+refusals → 402 / 396 / 0 / 6**; the fresh 22,065-path census moves **5,779 →
+5,782 clean / 16,219 → 16,216 partial**, with `CallExpression` falling
+**2,572 → 2,569**.
+
 ## [0.1.144] — 2026-10-28
 
 Source-pure literal and query histories now replay exact scalar

@@ -3462,6 +3462,15 @@
       "expect": "match"
     },
     {
+      "name": "string_concat_query_observations",
+      "file": "Examples/system-verilog/string_concat_query_observations/string_concat_query_observations.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "string_sformatf_scope_assignment",
       "file": "Examples/system-verilog/string_sformatf_scope_assignment/string_sformatf_scope_assignment.sv",
       "module": "top",

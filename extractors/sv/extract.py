@@ -17387,6 +17387,8 @@ def _string_literal_len_method(expression):
                 return True
             if tail.startswith(".putc"):
                 return True
+            if tail.startswith((".compare", ".icompare")):
+                return True
             if tail.startswith(("==", "!=", "===", "!==")):
                 return True
             if tail.startswith("="):
@@ -17465,7 +17467,10 @@ def _string_literal_event_value(expression, position):
                 and getattr(node, "subroutineName", "") in
                     ("toupper", "tolower", "substr", "$sformatf", "$typename")):
             return _string_source_value(node, position)
-        return None
+        # Concatenation and replication are source-pure string writes when
+        # every operand is itself replayable.  The assignment helper keeps a
+        # direct named-string copy outside this path.
+        return _string_source_assignment_value(node, position)
     except Exception:
         return None
 
@@ -17552,12 +17557,10 @@ def _string_literal_source_value(expression, method, receiver=None,
         for match in occurrences[1:]:
             tail = source[match.end():].lstrip()
             if (tail.startswith("." + method)
-                    or (method in ("len", "getc", "substr")
-                        and tail.startswith((".len", ".getc", ".substr")))
+                    or tail.startswith((".len", ".getc", ".substr"))
                     or tail.startswith(".putc")
                     or tail.startswith(("==", "!=", "===", "!=="))
-                    or (method in ("compare", "icompare")
-                        and tail.startswith((".compare", ".icompare")))
+                    or tail.startswith((".compare", ".icompare"))
                     or tail.startswith((".toupper", ".tolower", ".substr"))
                     or re.match(r'=\s*"', tail)):
                 continue
@@ -17883,19 +17886,11 @@ def _convert_string_literal_len_method(sm, expression):
                     or getattr(node, "timingControl", None) is not None
                     or node.sourceRange.start.offset >= position):
                 return
-            candidate = node.right
-            while type(candidate).__name__ == "ConversionExpression":
-                candidate = getattr(candidate, "operand", None)
-            if type(candidate).__name__ == "StringLiteral":
-                value = candidate.value
-            elif (type(candidate).__name__ == "CallExpression"
-                  and getattr(candidate, "isSystemCall", False)
-                  and getattr(candidate, "subroutineName", "") == "$typename"):
-                value = _typename_source_value(candidate)
-                if value is None:
-                    return
-            else:
+            candidate = _string_literal_event_value(
+                node.right, node.sourceRange.start.offset)
+            if candidate is None:
                 return
+            value = candidate
         instance.visit(inspect)
     return {
         "kind": "Literal",

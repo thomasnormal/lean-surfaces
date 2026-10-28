@@ -6511,3 +6511,23 @@ normalizers. The theorem statement and runtime semantics are unchanged.
 DECIDED: commit and publish this proof repair after the current exact-SHA CI
 reaches a terminal result, then inspect the new run and continue with its first
 remaining Python failure.
+
+## 2026-10-28-pycomplete-197 — repair the Boolean conversion proofs
+
+The hosted check's two `bool_lab` theorems had outgrown the generic
+`py_prove` recipe: the module now contains allocation-producing classes,
+generators, and mutation examples, so the recipe left the Boolean conversion
+state unresolved. Both symbolic theorems now use the explicit `callIn` route
+and normalize the current builtin marker, local-analysis, heap/generator,
+starred-call, and retained-state paths. Statements and runtime semantics are
+unchanged.
+
+| Measurement | Result |
+|---|---|
+| Focused proof | `lake env lean Examples/python/bool_lab/proof.lean` passes; no `sorryAx` |
+| Scope | Two existing Boolean conversion theorems; no runtime or harness changes |
+| Formatting | `git diff --check` passes |
+
+DECIDED: commit and publish this proof repair after the current exact-SHA run
+settles, then inspect the resulting CI and continue with its first remaining
+Python failure.

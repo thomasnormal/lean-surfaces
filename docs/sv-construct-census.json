@@ -8,7 +8,7 @@
    "name": "pyslang"
   },
   "platform": "linux-x86_64",
-  "python": "3.9",
+  "python": "3.12",
   "walk": "chapter-* only"
  },
  "schema": "sv-census-1",
@@ -16,11 +16,11 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    2847
+    2814
    ],
    [
     "ExpressionStatement:CallExpression",
-    2718
+    2722
    ],
    [
     "CallExpression",
@@ -32,15 +32,15 @@
    ],
    [
     "VariableSymbol:2state",
-    2118
+    2116
    ],
    [
     "SubroutineSymbol:Subroutine",
-    1634
+    1469
    ],
    [
     "NamedValueExpression:2state",
-    1462
+    1367
    ],
    [
     "ConcurrentAssertionStatement",
@@ -80,7 +80,7 @@
    ],
    [
     "ConversionExpression:width",
-    699
+    690
    ],
    [
     "CheckerSymbol",
@@ -100,7 +100,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    473
+    474
    ],
    [
     "PropertySymbol:Property",
@@ -136,7 +136,7 @@
    ],
    [
     "NullLiteral",
-    267
+    269
    ],
    [
     "BlockStatement:JoinNone",
@@ -152,7 +152,7 @@
    ],
    [
     "Package:Subroutine",
-    194
+    175
    ],
    [
     "TimedStatement:DelayControl:expression",
@@ -187,10 +187,6 @@
     124
    ],
    [
-    "ForeachLoopStatement:array",
-    123
-   ],
-   [
     "ProceduralAssignStatement",
     112
    ],
@@ -209,6 +205,10 @@
    [
     "Parameter:integral-value",
     93
+   ],
+   [
+    "ForeachLoopStatement:array",
+    90
    ],
    [
     "ProceduralBlockSymbol:Final",
@@ -260,7 +260,7 @@
    ],
    [
     "DynamicCast:type-or-effects",
-    55
+    56
    ],
    [
     "WhileLoopStatement:condition",
@@ -315,11 +315,11 @@
     43
    ],
    [
-    "CaseStatement:Unique",
-    41
+    "Package:initializer",
+    42
    ],
    [
-    "Package:initializer",
+    "CaseStatement:Unique",
     41
    ],
    [
@@ -368,7 +368,7 @@
    ],
    [
     "NamedValueExpression:Parameter",
-    34
+    31
    ],
    [
     "InsideExpression:source",
@@ -392,7 +392,7 @@
    ],
    [
     "ExpressionStatement:UnaryExpression-target",
-    22
+    23
    ],
    [
     "NetSymbol:Tri0",
@@ -411,6 +411,10 @@
     20
    ],
    [
+    "AssignmentExpression:compound-source",
+    19
+   ],
+   [
     "CaseStatement:subject",
     19
    ],
@@ -421,10 +425,6 @@
    [
     "ForwardingTypedefSymbol",
     18
-   ],
-   [
-    "AssignmentExpression:compound-source",
-    17
    ],
    [
     "NetSymbol:range",
@@ -543,10 +543,6 @@
     10
    ],
    [
-    "Package:multiple-modules",
-    10
-   ],
-   [
     "Plusargs:integral-format",
     10
    ],
@@ -556,6 +552,10 @@
    ],
    [
     "NetSymbol:type",
+    9
+   ],
+   [
+    "Package:multiple-modules",
     9
    ],
    [
@@ -976,13 +976,13 @@
    ]
   ],
   "by_status": {
-   "clean": 5401,
-   "partial": 16597,
+   "clean": 5580,
+   "partial": 16418,
    "skip_include": 67
   },
   "clean_by_type": {
    "(none)": [
-    490,
+    520,
     1390
    ],
    "compilation": [
@@ -998,11 +998,11 @@
     10
    ],
    "compile_diagnostic": [
-    4,
+    7,
     25
    ],
    "compile_error": [
-    128,
+    166,
     1745
    ],
    "compile_fail": [
@@ -1026,7 +1026,7 @@
     15
    ],
    "runtime_diagnostic": [
-    3,
+    6,
     22
    ],
    "runtime_error": [
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4701,
+    4806,
     18701
    ],
    "simulation elaboration": [
@@ -1053,30 +1053,30 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 199,
-    "clean": 791,
-    "partial": 200,
+    "blocked_by_more": 194,
+    "clean": 796,
+    "partial": 195,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
       "VariableDeclStatement:2state",
-      86
+      85
      ],
      [
       "NamedValueExpression:2state",
-      77
+      73
      ],
      [
       "AssignmentExpression:target",
-      70
+      64
      ],
      [
       "SubroutineSymbol:Subroutine",
-      50
+      49
      ],
      [
       "VariableSymbol:2state",
-      49
+      45
      ],
      [
       "RealLiteral",
@@ -1088,7 +1088,7 @@
      ],
      [
       "ConversionExpression:width",
-      29
+      26
      ],
      [
       "TypeAliasType:TypeAlias",
@@ -1231,34 +1231,34 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 477,
-    "clean": 570,
-    "partial": 478,
+    "blocked_by_more": 467,
+    "clean": 580,
+    "partial": 468,
     "simulation_tests": 1048,
     "top_residual_blockers": [
      [
       "NamedValueExpression:2state",
-      157
+      149
      ],
      [
       "VariableSymbol:2state",
-      148
+      144
      ],
      [
       "TimedStatement:DelayControl",
-      126
-     ],
-     [
-      "AssignmentExpression:target",
-      123
+      125
      ],
      [
       "VariableDeclStatement:2state",
-      108
+      103
+     ],
+     [
+      "AssignmentExpression:target",
+      101
      ],
      [
       "ConversionExpression:width",
-      105
+      100
      ],
      [
       "CallExpression",
@@ -1266,7 +1266,7 @@
      ],
      [
       "TypeAliasType:TypeAlias",
-      61
+      60
      ],
      [
       "InstanceSymbol:Instance",
@@ -1278,7 +1278,7 @@
      ],
      [
       "SubroutineSymbol:Subroutine",
-      37
+      36
      ],
      [
       "MemberAccessExpression",
@@ -1289,11 +1289,11 @@
       30
      ],
      [
-      "TransparentMemberSymbol:TransparentMember",
-      30
+      "ElementSelectExpression:source-type",
+      29
      ],
      [
-      "ElementSelectExpression:source-type",
+      "TransparentMemberSymbol:TransparentMember",
       29
      ],
      [
@@ -1323,33 +1323,33 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 322,
+    "clean": 323,
     "error": 0,
-    "partial": 336,
+    "partial": 335,
     "skip_include": 0,
     "total": 658,
     "unlockable": 0
    },
    "chapter-11": {
-    "clean": 795,
+    "clean": 800,
     "error": 0,
-    "partial": 239,
+    "partial": 234,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 1
    },
    "chapter-12": {
-    "clean": 305,
+    "clean": 322,
     "error": 0,
-    "partial": 322,
+    "partial": 305,
     "skip_include": 0,
     "total": 627,
     "unlockable": 1
    },
    "chapter-13": {
-    "clean": 4,
+    "clean": 14,
     "error": 0,
-    "partial": 594,
+    "partial": 584,
     "skip_include": 0,
     "total": 598,
     "unlockable": 0
@@ -1371,9 +1371,9 @@
     "unlockable": 0
    },
    "chapter-16": {
-    "clean": 64,
+    "clean": 66,
     "error": 0,
-    "partial": 1485,
+    "partial": 1483,
     "skip_include": 0,
     "total": 1549,
     "unlockable": 0
@@ -1419,17 +1419,17 @@
     "unlockable": 0
    },
    "chapter-22": {
-    "clean": 398,
+    "clean": 427,
     "error": 0,
-    "partial": 146,
+    "partial": 117,
     "skip_include": 28,
     "total": 572,
     "unlockable": 2
    },
    "chapter-23": {
-    "clean": 179,
+    "clean": 180,
     "error": 0,
-    "partial": 674,
+    "partial": 673,
     "skip_include": 0,
     "total": 853,
     "unlockable": 0
@@ -1451,17 +1451,17 @@
     "unlockable": 0
    },
    "chapter-26": {
-    "clean": 180,
+    "clean": 190,
     "error": 0,
-    "partial": 385,
+    "partial": 375,
     "skip_include": 0,
     "total": 565,
     "unlockable": 0
    },
    "chapter-27": {
-    "clean": 193,
+    "clean": 197,
     "error": 0,
-    "partial": 161,
+    "partial": 157,
     "skip_include": 0,
     "total": 354,
     "unlockable": 0
@@ -1523,17 +1523,17 @@
     "unlockable": 0
    },
    "chapter-34": {
-    "clean": 124,
+    "clean": 137,
     "error": 0,
-    "partial": 103,
+    "partial": 90,
     "skip_include": 1,
     "total": 228,
     "unlockable": 0
    },
    "chapter-35": {
-    "clean": 32,
+    "clean": 65,
     "error": 0,
-    "partial": 227,
+    "partial": 194,
     "skip_include": 0,
     "total": 259,
     "unlockable": 0
@@ -1547,17 +1547,17 @@
     "unlockable": 0
    },
    "chapter-37": {
-    "clean": 156,
+    "clean": 174,
     "error": 0,
-    "partial": 262,
+    "partial": 244,
     "skip_include": 0,
     "total": 418,
     "unlockable": 0
    },
    "chapter-38": {
-    "clean": 238,
+    "clean": 246,
     "error": 0,
-    "partial": 102,
+    "partial": 94,
     "skip_include": 1,
     "total": 341,
     "unlockable": 0
@@ -1587,25 +1587,25 @@
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 444,
+    "clean": 456,
     "error": 0,
-    "partial": 174,
+    "partial": 162,
     "skip_include": 0,
     "total": 618,
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 587,
+    "clean": 598,
     "error": 0,
-    "partial": 605,
+    "partial": 594,
     "skip_include": 0,
     "total": 1192,
     "unlockable": 2
    },
    "chapter-7": {
-    "clean": 297,
+    "clean": 301,
     "error": 0,
-    "partial": 499,
+    "partial": 495,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0
@@ -1619,9 +1619,9 @@
     "unlockable": 0
    },
    "chapter-9": {
-    "clean": 119,
+    "clean": 120,
     "error": 0,
-    "partial": 470,
+    "partial": 469,
     "skip_include": 0,
     "total": 589,
     "unlockable": 0

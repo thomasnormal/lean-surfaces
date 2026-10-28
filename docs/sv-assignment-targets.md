@@ -9,6 +9,23 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## NUL string-literal character assignments — 2026-10-28
+
+IEEE 1800-2023 §6.16 treats assigning the one-byte NUL string literal
+(`"\\0"`) to a selected string character exactly like assigning integral zero:
+the write is ignored. The legacy extractor now lowers this blocking no-op when
+the receiver and index are otherwise in the existing constant string-byte
+slice. Dynamic indices, nonzero bytes, timed forms, and nonblocking writes
+remain `AssignmentExpression:target`.
+
+`string_null_literal_character` supplies the differential `PASS` witness and
+Lean receipt; `6.16--string-assign-zero-char-ignored-v3.sv` is the corpus
+witness. Differential coverage grows **354/348/0/6 → 355/349/0/6**. The
+fresh corpus moves **5,579 → 5,580 clean / 16,419 → 16,418 partial** with 67
+include skips, while `AssignmentExpression:target` falls **2,815 → 2,814**.
+The target-only repricer moves **9 → 8** files; the five remaining
+multi-driver files stay scheduler-owned.
+
 ## Literal queue write followed by empty concatenation — 2026-10-28
 
 A blocking literal queue write followed by an empty queue concatenation is

@@ -36,6 +36,31 @@ class LiteralStringWrites(unittest.TestCase):
         self.assertTrue(any(node.get("string_null_char_write_noop")
                             for node in nodes(design)))
 
+    def test_nul_string_character_assignment_is_ignored(self):
+        design = lower(
+            'module top; string value; initial begin value = "hello"; '
+            'value[1] = "\\0"; $display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("string_null_char_write_noop")
+                            for node in nodes(design)))
+
+    def test_corpus_nul_string_character_assignment_is_ignored(self):
+        import os
+        from pathlib import Path
+        corpus = os.environ.get("SV_TESTS_ROOT")
+        if not corpus:
+            self.skipTest("SV_TESTS_ROOT is unavailable")
+        source = Path(corpus) / "chapter-6" / \
+            "6.16--string-assign-zero-char-ignored-v3.sv"
+        if not source.exists():
+            self.skipTest("sv-tests-2 checkout is unavailable")
+        design = lower(source.read_text())
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("string_null_char_write_noop")
+                            for node in nodes(design)))
+
     def test_nonzero_or_dynamic_string_character_writes_stay_loud(self):
         for source in (
                 'module top; string value; initial value[1] = 65; endmodule',

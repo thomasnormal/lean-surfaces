@@ -16,7 +16,7 @@ python3.12 extractors/sv/census.py --corpus /path/to/tests --recheck  # determin
 
 Machine-readable results: `harness/sv/conformance/census.json`
 (per-file records + this document's aggregates). The current committed summary
-is the **2026-10-27** snapshot below, measured with Python 3.9 and pyslang 11;
+is the **2026-10-28** snapshot below, measured with Python 3.12 and pyslang 11;
 the dated sections retain their original measurement denominators.
 
 The committed summary uses a portable corpus-layout placeholder, not a
@@ -24,6 +24,20 @@ host-local checkout path. Supply the actual test directory explicitly.
 
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
+
+## NUL string-literal character assignments — 2026-10-28
+
+The legacy extractor now erases a blocking assignment of the one-byte NUL
+string literal (`"\\0"`) to a constant-indexed string byte, matching the
+existing integral-zero rule in IEEE 1800-2023 §6.16. Dynamic indices, nonzero
+bytes, timed forms, and nonblocking writes remain loud. The
+`string_null_literal_character` fixture supplies the differential row and
+Lean receipt.
+
+The fresh 22,065-path census moves **5,579 → 5,580 clean / 16,419 → 16,418
+partial** with 67 include skips; `AssignmentExpression:target` falls
+**2,815 → 2,814**. Differential coverage grows **354/348/0/6 → 355/349/0/6**
+with no disagreements; grammar coverage remains **218/97/121**.
 
 ## Literal queue write followed by empty concatenation — 2026-10-28
 

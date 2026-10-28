@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.98] — 2026-10-28
+
+Blocking assignment of the one-byte NUL string literal to a constant-indexed
+string character now lowers to the existing §6.16 ignored-write rule. Dynamic,
+nonzero, timed, and nonblocking forms remain loud. The
+`string_null_literal_character` fixture and Lean receipt supply the `PASS`
+evidence; differential coverage is **355 rows / 349 matches / 0 disagreements
+/ 6 recorded refusals**, and the fresh corpus census is **5,580 clean / 16,418
+partial** with `AssignmentExpression:target` at **2,814**.
+
 ## [0.1.97] — 2026-10-28
 
 Source-pure `string.toupper()`, `string.tolower()`, and bounded `substr()`

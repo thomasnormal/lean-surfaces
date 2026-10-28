@@ -38,6 +38,20 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## NUL string-literal character assignments — 2026-10-28
+
+IEEE 1800-2023 §6.16 says a string cannot contain the special NUL character,
+so a blocking `s[i] = "\\0"` write is ignored just like `s[i] = 0`. The
+legacy self-check extractor now admits the literal form for a constant index
+while retaining the existing loud boundary for dynamic, nonzero, timed, and
+nonblocking writes. The `string_null_literal_character` fixture supplies the
+`PASS` differential row and Lean receipt.
+
+The corpus census moves **5,579 → 5,580 clean / 16,419 → 16,418 partial**
+with 67 include skips, and `AssignmentExpression:target` falls
+**2,815 → 2,814**. Differential coverage grows **354/348/0/6 → 355/349/0/6**;
+grammar coverage remains **218/97/121**.
+
 ## Literal queue write followed by empty concatenation — 2026-10-28
 
 A blocking literal queue write followed by an empty queue concatenation is now

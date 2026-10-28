@@ -11013,8 +11013,9 @@ def _string_null_char_write_noop(expr):
     assigning the integral value zero to a selected byte is ignored.  The
     self-check state has no string storage, so erase only a blocking write
     whose receiver is a string, whose index is a constant integral value,
-    and whose RHS is the direct known-zero literal.  Dynamic indices,
-    nonzero values, timing, and nonblocking forms retain the ordinary target
+    and whose RHS is either the direct known-zero integral literal or the
+    equivalent one-byte ``"\\0"`` string literal.  Dynamic indices, nonzero
+    values, timing, and nonblocking forms retain the ordinary target
     boundary.
     """
     try:
@@ -11029,7 +11030,17 @@ def _string_null_char_write_noop(expr):
                 or _literal_integral_value(getattr(expr.left, "selector", None))
                 is None):
             return False
-        return _literal_integral_value(expr.right) == 0
+        if _literal_integral_value(expr.right) == 0:
+            return True
+        value_node = expr.right
+        while type(value_node).__name__ == "ConversionExpression":
+            value_node = getattr(value_node, "operand", None)
+            if value_node is None:
+                return False
+        value = getattr(value_node, "value", None)
+        return (type(value_node).__name__ == "StringLiteral"
+                and not getattr(value_node, "bad", False)
+                and value == "\x00")
     except Exception:
         return False
 

@@ -1,5 +1,21 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Enum `.name()` comparisons — 2026-10-28
+
+The self-check tier now preserves the packed bytes of ASCII string literals
+through slang's propagated conversion to `string`, so equality expressions can
+compare them with declaration-order `enum.name()` results. Direct names,
+`first()`/`last()` chains, and the empty result for invalid values are covered
+by the `enum_name_comparison` fixture, extractor regression, and Lean receipt;
+dynamic string storage and symbolic-mode enum calls remain loud.
+
+The fresh **22,065-path** census moves **5,703 → 5,719 clean** and
+**16,295 → 16,279 partial** with 67 include skips. The top
+`AssignmentExpression:target`, `ExpressionStatement:CallExpression`, and
+`CallExpression` blockers remain **2,695**, **2,677**, and **2,617**.
+Differential coverage grows **394/388/0/6 → 395/389/0/6**; grammar coverage
+remains **218/100/118**.
+
 ## Context-sized associative-array `exists` comparisons — 2026-10-28
 
 The self-check tier now admits finite literal-key associative-array

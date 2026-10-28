@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.138] — 2026-10-28
+
+Enum `.name()` comparisons now accept the elaborated propagated conversion
+around ASCII string literals, preserving their packed bytes for the existing
+self-check equality path. Direct names, `first()`/`last()` chains, and the
+empty result for an invalid enum value are covered by the fixture, extractor
+regression, and Lean receipt. Differential coverage grows **394 rows / 388
+matches / 0 disagreements / 6 recorded refusals → 395 / 389 / 0 / 6**; the
+fresh 22,065-path census moves **5,703 → 5,719 clean / 16,295 → 16,279
+partial**.
+
 ## [0.1.137] — 2026-10-28
 
 Finite literal-key associative-array `exists(index)` results now participate in

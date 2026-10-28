@@ -90,10 +90,10 @@ class EnumNumericMethods(unittest.TestCase):
             self.assertFalse(methods(design))
             self.assertTrue(any(n.get("sv_kind") == "EnumMethod:source" for n in nodes(design)))
 
-    def test_name_and_symbolic_mode_stay_loud_through_constant_conversion(self):
+    def test_name_comparison_survives_constant_conversion(self):
         for call in ('64\'(A.name() == "A")', '64\'(value.name() == "A")'):
             design = lower(source(call, target="count"))
-            self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))
+            self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(design)))
         design = symbolic("module divider; " + DECL + " initial count=64'(value.num()); endmodule")
         self.assertFalse(methods(design))
         self.assertTrue(any(n.get("kind") == "Unsupported" for n in nodes(design)))

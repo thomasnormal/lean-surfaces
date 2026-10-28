@@ -79,10 +79,6 @@
     706
    ],
    [
-    "ConversionExpression:width",
-    637
-   ],
-   [
     "CheckerSymbol",
     565
    ],
@@ -229,6 +225,10 @@
    [
     "RandSequenceStatement",
     72
+   ],
+   [
+    "ConversionExpression:width",
+    70
    ],
    [
     "TypeAliasType",
@@ -567,10 +567,6 @@
     9
    ],
    [
-    "ConversionExpression:Explicit",
-    9
-   ],
-   [
     "UnaryExpression:Postincrement",
     8
    ],
@@ -612,6 +608,10 @@
    ],
    [
     "Package:TypeAlias",
+    7
+   ],
+   [
+    "ConversionExpression:Explicit",
     7
    ],
    [
@@ -767,6 +767,10 @@
     3
    ],
    [
+    "ConditionalExpression:width",
+    3
+   ],
+   [
     "WaitOrderStatement",
     3
    ],
@@ -812,6 +816,10 @@
    ],
    [
     "TimedStatement:OneStepDelayControl",
+    2
+   ],
+   [
+    "BinaryExpression:width",
     2
    ],
    [
@@ -972,8 +980,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5703,
-   "partial": 16295,
+   "clean": 5719,
+   "partial": 16279,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1034,7 +1042,7 @@
     52
    ],
    "simulation": [
-    4926,
+    4942,
     18701
    ],
    "simulation elaboration": [
@@ -1083,12 +1091,12 @@
       42
      ],
      [
-      "ConversionExpression:width",
-      25
-     ],
-     [
       "TypeAliasType:TypeAlias",
       15
+     ],
+     [
+      "ConversionExpression:width",
+      14
      ],
      [
       "TimedStatement:DelayControl",
@@ -1227,9 +1235,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 439,
-    "clean": 608,
-    "partial": 440,
+    "blocked_by_more": 428,
+    "clean": 619,
+    "partial": 429,
     "simulation_tests": 1048,
     "top_residual_blockers": [
      [
@@ -1249,24 +1257,20 @@
       98
      ],
      [
-      "VariableDeclStatement:2state",
-      90
-     ],
-     [
       "CallExpression",
       89
      ],
      [
-      "ConversionExpression:width",
-      86
-     ],
-     [
-      "TypeAliasType:TypeAlias",
-      60
+      "VariableDeclStatement:2state",
+      88
      ],
      [
       "InstanceSymbol:Instance",
       54
+     ],
+     [
+      "TypeAliasType:TypeAlias",
+      51
      ],
      [
       "RealLiteral",
@@ -1289,12 +1293,12 @@
       29
      ],
      [
-      "TransparentMemberSymbol:TransparentMember",
-      29
-     ],
-     [
       "ClassType:ClassType",
       21
+     ],
+     [
+      "TransparentMemberSymbol:TransparentMember",
+      20
      ],
      [
       "ClassType",
@@ -1310,6 +1314,10 @@
      ],
      [
       "Call:$fatal",
+      14
+     ],
+     [
+      "EventTriggerStatement",
       14
      ]
     ],
@@ -1407,9 +1415,9 @@
     "unlockable": 0
    },
    "chapter-21": {
-    "clean": 156,
+    "clean": 161,
     "error": 0,
-    "partial": 747,
+    "partial": 742,
     "skip_include": 0,
     "total": 903,
     "unlockable": 0
@@ -1591,9 +1599,9 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 626,
+    "clean": 637,
     "error": 0,
-    "partial": 566,
+    "partial": 555,
     "skip_include": 0,
     "total": 1192,
     "unlockable": 2

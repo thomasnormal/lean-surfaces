@@ -7678,6 +7678,16 @@ def _convert_conversion_expr(sm, e):
         return _convert_integral_cast(sm, e)
     if kind not in (ConversionKind.Implicit, ConversionKind.Propagated):
         return unsupported(sm, e, "ConversionExpression:" + str(kind).split(".")[-1])
+    # Slang wraps an ASCII string literal in a propagated conversion to the
+    # dynamic ``string`` type when it is compared with ``enum.name()``.  The
+    # self-check surface represents strings as their packed byte vector, so
+    # this conversion has no runtime operation: keep the literal's exact
+    # bytes and let the ordinary packed equality path compare them.  Restrict
+    # the shortcut to literal sources; dynamic string storage remains outside
+    # the flat-state tier and must continue to refuse loudly.
+    if (type(getattr(e, "type", None).canonicalType).__name__ == "StringType"
+            and type(getattr(e, "operand", None)).__name__ == "StringLiteral"):
+        return _convert_expr(sm, e.operand)
     corrected = _convert_unsized_based_widening(sm, e)
     if corrected is not None:
         return corrected

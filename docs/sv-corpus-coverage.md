@@ -1,5 +1,18 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Enum `.name()` comparisons — 2026-10-28
+
+The legacy extractor now preserves ASCII string literals through slang's
+propagated conversion to `string`, allowing equality expressions to compare
+them with declaration-order `enum.name()` results. Direct names,
+`first()`/`last()` chains, and invalid values returning the empty string are
+covered by the `enum_name_comparison` fixture and Lean receipt; dynamic string
+storage remains loud. The fresh 22,065-path census moves **5,703 → 5,719
+clean / 16,295 → 16,279 partial** with 67 include skips; the top
+`AssignmentExpression:target` remains **2,695**, `ExpressionStatement:CallExpression`
+remains **2,677**, and `CallExpression` remains **2,617**. Differential
+coverage grows **394/388/0/6 → 395/389/0/6**.
+
 ## Context-sized associative-array `exists` comparisons — 2026-10-28
 
 The legacy extractor now zero-extends finite literal-key associative-array

@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "qualified_if_fallback",
+      "file": "Examples/system-verilog/qualified_if_fallback/qualified_if_fallback.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "string_case_assignment",
       "file": "Examples/system-verilog/string_case_assignment/string_case_assignment.sv",
       "module": "top",

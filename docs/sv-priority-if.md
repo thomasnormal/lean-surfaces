@@ -7,18 +7,17 @@ earlier true condition. When the chain has no true condition and no explicit
 handles the no-match case. The qualifier applies to the complete
 `if`/`else-if` series, not to a later `else` arm.
 
-## Why priority-if remains a boundary
+## The admitted fallback subset
 
-The ordinary conditional envelope can preserve a first-match chain, but it has
-no listed-order status or no-match diagnostic channel. Erasing the qualifier
-would silently turn a required violation into ordinary fallthrough and would
-make a chain without `else` equivalent to one with a fallback. A retained
-process also needs the priority check to stay associated with its activation
-when a selected body waits or an `always_comb` process is rescheduled.
+The ordinary conditional envelope preserves listed-order, first-match
+selection. A `priority if` chain with an explicit final `else` has no possible
+no-match diagnostic, so the legacy self-check tier lowers that subset to an
+ordinary `If`. Indexed and dynamic conditions, missing fallbacks, invalid
+qualifier placement, and scheduler-facing forms remain loud because their
+priority behavior is still observable.
 
-The public tier therefore keeps every `ConditionalStatement:Priority` span
-loud. It does not erase the qualifier, select a fixed branch, fabricate a
-diagnostic, repair an invalid `priority` after `else`, or add a scheduler.
+The public tier does not select a fixed branch, fabricate a diagnostic, or add a
+scheduler.
 
 ## 2026-10-22 census and decision
 

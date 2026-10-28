@@ -1,5 +1,24 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Qualified `if` fallbacks — 2026-10-28
+
+The legacy self-check tier now lowers a qualified `priority if` chain when it
+has an explicit final `else`, because every no-match path is covered and the
+qualifier adds no observable diagnostic. It also lowers a `unique if` chain only
+when each condition is a distinct literal equality over the same integral
+variable and the final `else` covers the no-match path, proving that no two
+named conditions can overlap. Dynamic, potentially overlapping, qualified, and
+missing-fallback forms remain loud; this item adds no diagnostic state or
+scheduler behavior. The `qualified_if_fallback` fixture, extractor tests,
+generated envelope, Lean receipt, and differential case cover both admitted
+forms.
+
+The fresh **22,067-path** census moves **5,794 → 5,804 clean / 16,206 →
+16,196 partial / 67 include skips**; `ConditionalStatement:Unique` falls
+**20 → 17** and `ConditionalStatement:Priority` falls **11 → 4**. Differential
+coverage grows **410/404/0/6 → 411/405/0/6**; grammar coverage remains
+**218/101/117**.
+
 ## Signed 2-state symbolic declarations — 2026-10-28
 
 The symbolic `sv-0.2` tier now admits signed scalar and packed-vector

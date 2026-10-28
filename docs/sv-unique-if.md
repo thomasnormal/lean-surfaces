@@ -13,19 +13,17 @@ event control, and an `always_comb` reschedule flushes reports from transient
 active-region evaluation. A loop can create one check per iteration, tied to
 the same retained process activation.
 
-## Why unique-if remains a boundary
+## The admitted fallback subset
 
 The legacy envelope can represent an ordinary `if` chain, but it has no
-uniqueness status or diagnostic channel, no record of all-condition
-evaluation, and no pending-report state tied to a retained process. Lowering
-`unique if` to an ordinary first-match `If` would silently lose overlap and
-no-match observations. Selecting only the first condition would miss a
-required violation.
-
-The public tier therefore keeps every `ConditionalStatement:Unique` span
-loud. It does not erase the qualifier, choose a fixed arm, invent diagnostic
-text, or add a scheduler. The invalid placement of `unique` after an `else`
-remains a frontend diagnostic rather than a repaired chain.
+uniqueness status or diagnostic channel. A `unique if` chain is therefore
+admitted only when every condition is a distinct literal equality over one
+integral variable and an explicit final `else` covers no-match. Those
+conditions cannot overlap, and the fallback removes the no-match diagnostic, so
+the chain lowers soundly to an ordinary first-match `If`. Dynamic conditions,
+possibly overlapping values, missing fallbacks, Observed-region behavior, and
+invalid qualifier placement remain loud. No diagnostic text or scheduler is
+invented.
 
 ## 2026-10-22 census and decision
 

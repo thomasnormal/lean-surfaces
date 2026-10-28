@@ -19448,7 +19448,9 @@ def _convert_stmt(sm, s):
         }
 
     if cname == "ConditionalStatement":
-        if s.check != UniquePriorityCheck.None_:
+        qualified_fallback = _qualified_if_fallback_safe(s)
+        if (s.check != UniquePriorityCheck.None_
+                and not qualified_fallback):
             return unsupported(
                 sm, s, "ConditionalStatement:" + str(s.check).split(".")[-1]
             )
@@ -19457,13 +19459,16 @@ def _convert_stmt(sm, s):
             return unsupported(sm, s, "ConditionalStatement:multi")
         if conds[0].pattern is not None:
             return unsupported(sm, s, "ConditionalStatement:pattern")
-        return {
+        result = {
             "kind": "If",
             "span": node_span(sm, s),
             "cond": convert_expr(sm, conds[0].expr),
             "then": convert_stmt(sm, s.ifTrue),
             "else": convert_stmt(sm, s.ifFalse) if s.ifFalse is not None else None,
         }
+        if qualified_fallback:
+            result["qualified_fallback_lowered"] = str(s.check).split(".")[-1]
+        return result
 
     if cname == "TimedStatement":  # nested timing control (#10, @(...), ...)
         if _SYM is None and type(s.timing).__name__ == "DelayControl":
@@ -20340,6 +20345,80 @@ def _convert_test_loop(sm, statement, kind):
         return unsupported(sm, statement, kind + ":body-lifetime")
     return {"kind": "While" if kind == "WhileLoopStatement" else "DoWhile",
             "span": node_span(sm, statement), "condition": condition, "body": body}
+
+
+def _qualified_if_fallback_safe(statement):
+    """Whether a qualified ``if`` has no runtime diagnostic path.
+
+    ``priority if`` only reports when every condition is false, so an
+    explicit final ``else`` makes its execution identical to an ordinary
+    first-match chain.  ``unique if`` additionally reports when two named
+    conditions are true; admit the same fallback shape only when every named
+    condition is a literal equality against the same variable and the values
+    are distinct after the variable's declared sizing.  This keeps the
+    self-check surface free of qualifier diagnostics while retaining the
+    ordinary conditional execution order.
+    """
+    if type(statement).__name__ != "ConditionalStatement":
+        return False
+    qualifier = statement.check
+    if qualifier not in (UniquePriorityCheck.Unique, UniquePriorityCheck.Priority):
+        return False
+
+    conditions = []
+    current = statement
+    final_else = False
+    while type(current).__name__ == "ConditionalStatement":
+        if current.check not in (UniquePriorityCheck.None_, qualifier):
+            return False
+        if len(current.conditions) != 1 or current.conditions[0].pattern is not None:
+            return False
+        conditions.append(current.conditions[0].expr)
+        tail = current.ifFalse
+        if tail is None:
+            break
+        if (type(tail).__name__ == "ConditionalStatement"
+                and tail.check == UniquePriorityCheck.None_):
+            current = tail
+            continue
+        # A qualified ``else if`` is a syntax/diagnostic boundary of its own;
+        # only an ordinary final statement counts as the explicit fallback.
+        final_else = type(tail).__name__ != "ConditionalStatement"
+        break
+    if not final_else:
+        return False
+    if qualifier == UniquePriorityCheck.Priority:
+        return True
+
+    seen = set()
+    subject_symbol = None
+    subject_width = None
+    for condition in conditions:
+        if (type(condition).__name__ != "BinaryExpression"
+                or condition.op != BinaryOperator.Equality):
+            return False
+        left, right = condition.left, condition.right
+        if type(left).__name__ == "NamedValueExpression":
+            candidate, literal = left, right
+        elif type(right).__name__ == "NamedValueExpression":
+            candidate, literal = right, left
+        else:
+            return False
+        value = _literal_integral_value(literal)
+        if value is None or getattr(candidate, "symbol", None) is None:
+            return False
+        if subject_symbol is None:
+            subject_symbol = candidate.symbol
+            subject_width, _two_state, reason = type_width_2s(candidate.type)
+            if subject_width is None or reason is not None or subject_width <= 0:
+                return False
+        elif candidate.symbol is not subject_symbol:
+            return False
+        normalized = value % (1 << subject_width)
+        if normalized in seen:
+            return False
+        seen.add(normalized)
+    return bool(conditions)
 
 
 def _convert_foreach_loop(sm, statement):

@@ -403,10 +403,6 @@
     21
    ],
    [
-    "ConditionalStatement:Unique",
-    20
-   ],
-   [
     "NetSymbol:Tri1",
     20
    ],
@@ -425,6 +421,10 @@
    [
     "ForwardingTypedefSymbol",
     18
+   ],
+   [
+    "ConditionalStatement:Unique",
+    17
    ],
    [
     "NetSymbol:range",
@@ -520,10 +520,6 @@
    ],
    [
     "ConversionExpression:BitstreamCast",
-    11
-   ],
-   [
-    "ConditionalStatement:Priority",
     11
    ],
    [
@@ -700,6 +696,10 @@
    ],
    [
     "UnaryExpression:Postdecrement",
+    4
+   ],
+   [
+    "ConditionalStatement:Priority",
     4
    ],
    [
@@ -976,13 +976,13 @@
    ]
   ],
   "by_status": {
-   "clean": 5794,
-   "partial": 16206,
+   "clean": 5804,
+   "partial": 16196,
    "skip_include": 67
   },
   "clean_by_type": {
    "(none)": [
-    527,
+    528,
     1390
    ],
    "compilation": [
@@ -1002,7 +1002,7 @@
     25
    ],
    "compile_error": [
-    166,
+    167,
     1745
    ],
    "compile_fail": [
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    5013,
+    5021,
     18703
    ],
    "simulation elaboration": [
@@ -1339,9 +1339,9 @@
     "unlockable": 1
    },
    "chapter-12": {
-    "clean": 322,
+    "clean": 331,
     "error": 0,
-    "partial": 305,
+    "partial": 296,
     "skip_include": 0,
     "total": 627,
     "unlockable": 1
@@ -1579,9 +1579,9 @@
     "unlockable": 0
    },
    "chapter-40": {
-    "clean": 45,
+    "clean": 46,
     "error": 0,
-    "partial": 42,
+    "partial": 41,
     "skip_include": 0,
     "total": 87,
     "unlockable": 0

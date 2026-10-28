@@ -1,5 +1,20 @@
 # SystemVerilog tier changelog
 
+## [0.1.156] — 2026-10-28
+
+Qualified `priority if` chains with an explicit final `else` now lower to the
+ordinary first-match conditional because the qualifier has no no-match diagnostic
+path. A `unique if` chain is admitted only when its conditions are distinct
+literal equalities over one integral variable and the final `else` covers the
+no-match path; dynamic, overlapping, and missing-fallback forms remain loud.
+The `qualified_if_fallback` fixture, extractor regressions, generated envelope,
+Lean receipt, and differential row cover the new subset. Differential coverage
+grows **410 rows / 404 matches / 0 disagreements / 6 recorded refusals → 411 /
+405 / 0 / 6**; grammar coverage remains **218/101/117**. The fresh 22,067-path
+census moves **5,794 → 5,804 clean / 16,206 → 16,196 partial / 67 include
+skips**; `ConditionalStatement:Unique` falls **20 → 17** and
+`ConditionalStatement:Priority` falls **11 → 4**.
+
 ## [0.1.155] — 2026-10-28
 
 The symbolic `sv-0.2` tier now admits signed scalar and packed-vector

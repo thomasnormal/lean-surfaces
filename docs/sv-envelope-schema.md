@@ -292,11 +292,11 @@ would contradict the qualifier's semantics. See [the unique0-case boundary](sv-u
 and `extractors/sv/unique0_case_reprice.py`.
 
 Qualified priority `if` statements remain explicit
-`ConditionalStatement:Priority` unsupported nodes. The ordinary conditional
-lowering can preserve first-match selection but has no listed-order priority
-status, no-match diagnostic channel or retained check state for a waiting
-body. See [the priority-if boundary](sv-priority-if.md) and
-`extractors/sv/priority_if_reprice.py`.
+`ConditionalStatement:Priority` unsupported nodes unless the chain has an
+explicit final `else`. That admitted subset has no possible no-match diagnostic
+and lowers to the ordinary first-match `If`; indexed, dynamic, missing-fallback,
+and scheduler-facing forms remain loud. See [the priority-if boundary](sv-priority-if.md)
+and `extractors/sv/priority_if_reprice.py`.
 
 Qualified priority case statements remain explicit
 `CaseStatement:Priority` unsupported nodes. The ordinary case lowering can
@@ -306,10 +306,11 @@ See [the priority-case boundary](sv-priority-cases.md) and
 `extractors/sv/priority_case_reprice.py`.
 
 Qualified `unique if` statements remain explicit
-`ConditionalStatement:Unique` unsupported nodes. The ordinary `If` lowering
-retains first-match behavior but has no all-condition uniqueness check,
-no-match/overlap diagnostic channel, Observed-region report state, or pending
-report flush tied to a retained process. See [the unique-if boundary](sv-unique-if.md)
+`ConditionalStatement:Unique` unsupported nodes unless every condition is a
+distinct literal equality over one integral variable and an explicit final
+`else` covers no-match. That admitted subset cannot overlap and has no
+no-match diagnostic; dynamic, overlapping, missing-fallback, and
+Observed-region forms remain loud. See [the unique-if boundary](sv-unique-if.md)
 and `extractors/sv/unique_if_reprice.py`.
 
 Deferred `#0` and `final` assertions remain explicit

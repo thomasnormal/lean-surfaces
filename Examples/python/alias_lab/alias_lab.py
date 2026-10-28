@@ -81,3 +81,8 @@ def any_alias(values):
     f = any
     return f(values)
 
+
+def str_alias(value):
+    f = str
+    return f(value)
+

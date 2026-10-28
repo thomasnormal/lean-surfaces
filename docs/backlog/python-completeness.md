@@ -6089,3 +6089,24 @@ shadowing it, and general first-class callable forms remain loud.
 DECIDED: admit only the immediate local `any` alias call; retain loud failure
 for returned or general first-class callable values. Rebase and publish this
 item after the full measurements, then reread the inbox before the next gap.
+
+## 2026-10-28-pycomplete-175 — admit the immediate local `str` alias
+
+The local-builtin alias rewrite now includes `str`: `f = str; return
+f(value)` lowers to the existing string conversion worker. Integer, Boolean,
+and string inputs preserve their current rendering behavior. Returning `str`,
+shadowing it, and general first-class callable forms remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 3 cases: 0 failed, 3 matched on both interpreters |
+| Full executable differential | 3,725 cases: 0 failed, 44 whitelisted refusals, 3,681 matched |
+| Full proof differential | 3,725 cases: 0 failed, 153 refusals, 3,572 matched |
+| Lean runner build | `lake build leanmodels-run` passed |
+| Focused surface | three `#py_check` rows passed with `LeanModels.Python.Surface` |
+| Coverage freshness | `python3 harness/coverage_page.py` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `str` alias call; retain loud failure
+for returned or general first-class callable values. Rebase and publish this
+item after the full measurements, then reread the inbox before the next gap.

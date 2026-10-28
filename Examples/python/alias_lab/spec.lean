@@ -70,6 +70,9 @@ load_program alias_lab from "Examples/python/alias_lab/alias_lab.json"
 #py_check alias_lab.any_alias(Val.list #[.bool false, .bool true]) = true
 #py_check alias_lab.any_alias(Val.list #[]) = false
 #py_check alias_lab.any_alias(Val.list #[.bool false, .bool false]) = false
+#py_check alias_lab.str_alias(17) = "17"
+#py_check alias_lab.str_alias(true) = "True"
+#py_check alias_lab.str_alias("quoted") = "quoted"
 
 /-! ### the alias is NOT a value (the refusal direction, unchanged) -/
 

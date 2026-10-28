@@ -1,5 +1,18 @@
 # SystemVerilog tier changelog
 
+## [0.1.126] — 2026-10-28
+
+Discarded integral-key associative-array `first(index)` and `last(index)` calls
+now preserve their output-index side effect through a presence-priority chain.
+Empty arrays leave the index unchanged; string-key outputs and dynamic
+histories remain loud. The new fixture and Lean receipt pass. Differential
+coverage grows **382 rows / 376 matches / 0 disagreements / 6 recorded
+refusals → 383 / 377 / 0 / 6**. The committed 22,065-path census remains
+**5,646 clean / 16,352 partial** with 67 include skips;
+`AssignmentExpression:target` remains **2,744**,
+`ExpressionStatement:CallExpression` **2,710**, and `CallExpression` **2,635**.
+Grammar coverage remains **218 / 97 / 121**.
+
 ## [0.1.125] — 2026-10-28
 
 Blocking assignments from integral-key associative-array `first(index)` and

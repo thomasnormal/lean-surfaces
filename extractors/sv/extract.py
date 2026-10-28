@@ -20176,6 +20176,63 @@ def _associative_endpoint_assignment(sm, expression):
         return None
 
 
+def _associative_endpoint_statement(sm, expression):
+    """Lower a discarded integral associative ``first``/``last`` call.
+
+    Although the return bit is discarded, the index argument is an output
+    argument.  Preserve that side effect with the same priority chain used by
+    assignment-position endpoints; an empty array leaves the index unchanged.
+    """
+    try:
+        if not _assoc_endpoint_call_valid(
+                expression, getattr(getattr(expression, "arguments", [None])[0],
+                                    "symbol", None)):
+            return None
+        receiver, index = list(expression.arguments)
+        symbol = getattr(receiver, "symbol", None)
+        if (symbol is None
+                or type(symbol.type.canonicalType.indexType.canonicalType).__name__
+                != "PredefinedIntegerType"
+                or not getattr(index.type, "isIntegral", False)):
+            return None
+        cells = _finite_integral_assoc_cells(sm, symbol)
+        if cells is None or not cells:
+            return None
+        index_target, index_ok = legacy_blocking_target(sm, index)
+        index_width, index_two_state, index_reason = type_width_2s(index.type)
+        if (not index_ok or index_target.get("kind") != "Ident"
+                or index_width is None or index_reason is not None
+                or index_width <= 0):
+            return None
+        span = node_span(sm, expression)
+        ordered = sorted(cells)
+        if expression.subroutineName == "last":
+            ordered.reverse()
+
+        def literal(value):
+            bits = format(value & ((1 << index_width) - 1),
+                          f"0{index_width}b")
+            node = signed_metadata({"kind": "Literal", "span": span,
+                                    "width": index_width, "bits": bits},
+                                   index.type)
+            return squash2_wrap(node, index_width) if index_two_state else node
+
+        chain = {"kind": "Empty", "span": span}
+        for key in reversed(ordered):
+            chain = {
+                "kind": "If", "span": span,
+                "cond": {"kind": "Ident", "span": span, "width": 1,
+                         "name": cells[key]["presence"], "assoc_exists": True},
+                "then": {"kind": "BlockingAssign", "span": span,
+                          "target": index_target, "value": literal(key)},
+                "else": chain,
+            }
+        chain["associative_endpoint_statement"] = expression.subroutineName
+        return chain
+    except Exception:
+        return None
+
+
 def _convert_assignment_expr(sm, expr, span_node=None):
     if type(expr).__name__ != "AssignmentExpression":
         return unsupported(sm, span_node or expr,
@@ -21383,6 +21440,10 @@ def _convert_syscall(sm, s, e):
         # checks source-pure keys and keeps later count queries exact.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "associative_empty_delete_statement": True}
+    if is_sys and _SYM is None and getattr(e, "subroutineName", None) in ("first", "last"):
+        lowered = _associative_endpoint_statement(sm, e)
+        if lowered is not None:
+            return lowered
     if is_sys and _associative_empty_endpoint(e):
         # On an untouched associative array, ``first``/``last`` return zero
         # without selecting an element.  The existing converter checks the

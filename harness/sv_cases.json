@@ -3442,9 +3442,21 @@
       "module": "top",
       "oracle": [
         "PASS",
+        "PASS5",
         "PASS2",
         "PASS3",
         "PASS4"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "assoc_endpoint_statement_history",
+      "file": "Examples/system-verilog/assoc_endpoint_statement_history/assoc_endpoint_statement_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "PASS2",
+        "PASS3"
       ],
       "expect": "match"
     }

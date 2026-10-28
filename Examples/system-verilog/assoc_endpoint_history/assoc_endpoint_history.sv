@@ -17,6 +17,11 @@ module top;
       $display("PASS");
     else
       $display("FAIL1");
+    values.last(key);
+    if (key == 7)
+      $display("PASS5");
+    else
+      $display("FAIL5");
 
     values.delete(-2);
     result = values.first(key);

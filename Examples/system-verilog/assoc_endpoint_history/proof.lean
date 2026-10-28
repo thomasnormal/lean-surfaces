@@ -11,7 +11,7 @@ def fixtureReceipt : IO Unit := do
     "Examples/system-verilog/assoc_endpoint_history/assoc_endpoint_history.sv.json"
   let .ok design := SelfCheck.loadEnvelopeDesign text
     | throw (IO.userError "associative-endpoint-history fixture failed to load")
-  unless SelfCheck.runSelfCheck design 8192 == .ok ["PASS", "PASS2", "PASS3", "PASS4"] do
+  unless SelfCheck.runSelfCheck design 8192 == .ok ["PASS", "PASS5", "PASS2", "PASS3", "PASS4"] do
     throw (IO.userError "associative-endpoint-history fixture disagrees")
 
 #eval fixtureReceipt

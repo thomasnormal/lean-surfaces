@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22065,
+  "corpus_files": 22059,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    2810
+    2787
    ],
    [
     "ExpressionStatement:CallExpression",
@@ -24,7 +24,7 @@
    ],
    [
     "CallExpression",
-    2653
+    2648
    ],
    [
     "Hierarchy:ports",
@@ -39,12 +39,12 @@
     1469
    ],
    [
-    "NamedValueExpression:2state",
-    1360
-   ],
-   [
     "ConcurrentAssertionStatement",
     1359
+   ],
+   [
+    "NamedValueExpression:2state",
+    1339
    ],
    [
     "InvalidStatement",
@@ -56,7 +56,7 @@
    ],
    [
     "Hierarchy:module-kind",
-    1250
+    1249
    ],
    [
     "PrimitiveInstanceSymbol:PrimitiveInstance",
@@ -64,11 +64,11 @@
    ],
    [
     "MemberAccessExpression",
-    1018
+    1017
    ],
    [
     "HierarchicalValueExpression",
-    752
+    751
    ],
    [
     "CovergroupType:CovergroupType",
@@ -80,7 +80,7 @@
    ],
    [
     "ConversionExpression:width",
-    689
+    671
    ],
    [
     "CheckerSymbol",
@@ -100,7 +100,7 @@
    ],
    [
     "ElementSelectExpression:source-type",
-    474
+    473
    ],
    [
     "PropertySymbol:Property",
@@ -148,7 +148,7 @@
    ],
    [
     "StaticLocal:invalid-compilation",
-    217
+    215
    ],
    [
     "Package:Subroutine",
@@ -976,13 +976,13 @@
    ]
   ],
   "by_status": {
-   "clean": 5584,
-   "partial": 16414,
+   "clean": 5597,
+   "partial": 16395,
    "skip_include": 67
   },
   "clean_by_type": {
    "(none)": [
-    520,
+    522,
     1390
    ],
    "compilation": [
@@ -1003,7 +1003,7 @@
    ],
    "compile_error": [
     166,
-    1745
+    1750
    ],
    "compile_fail": [
     0,
@@ -1038,8 +1038,8 @@
     52
    ],
    "simulation": [
-    4810,
-    18701
+    4821,
+    18690
    ],
    "simulation elaboration": [
     2,
@@ -1053,9 +1053,9 @@
   "corpus": "<corpus>",
   "deep_dive": {
    "chapter-11": {
-    "blocked_by_more": 194,
-    "clean": 796,
-    "partial": 195,
+    "blocked_by_more": 193,
+    "clean": 797,
+    "partial": 194,
     "simulation_tests": 991,
     "top_residual_blockers": [
      [
@@ -1064,22 +1064,22 @@
      ],
      [
       "NamedValueExpression:2state",
-      73
+      72
      ],
      [
       "AssignmentExpression:target",
-      64
+      63
      ],
      [
       "SubroutineSymbol:Subroutine",
       49
      ],
      [
-      "VariableSymbol:2state",
-      45
+      "RealLiteral",
+      44
      ],
      [
-      "RealLiteral",
+      "VariableSymbol:2state",
       44
      ],
      [
@@ -1088,7 +1088,7 @@
      ],
      [
       "ConversionExpression:width",
-      26
+      25
      ],
      [
       "TypeAliasType:TypeAlias",
@@ -1232,9 +1232,9 @@
    },
    "chapter-6": {
     "blocked_by_more": 465,
-    "clean": 582,
+    "clean": 577,
     "partial": 466,
-    "simulation_tests": 1048,
+    "simulation_tests": 1043,
     "top_residual_blockers": [
      [
       "NamedValueExpression:2state",
@@ -1331,9 +1331,9 @@
     "unlockable": 0
    },
    "chapter-11": {
-    "clean": 800,
+    "clean": 801,
     "error": 0,
-    "partial": 234,
+    "partial": 233,
     "skip_include": 0,
     "total": 1034,
     "unlockable": 1
@@ -1411,9 +1411,9 @@
     "unlockable": 0
    },
    "chapter-21": {
-    "clean": 131,
+    "clean": 148,
     "error": 0,
-    "partial": 772,
+    "partial": 755,
     "skip_include": 0,
     "total": 903,
     "unlockable": 0
@@ -1445,9 +1445,9 @@
    "chapter-25": {
     "clean": 8,
     "error": 0,
-    "partial": 474,
+    "partial": 473,
     "skip_include": 0,
-    "total": 482,
+    "total": 481,
     "unlockable": 0
    },
    "chapter-26": {
@@ -1595,11 +1595,11 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 600,
+    "clean": 595,
     "error": 0,
     "partial": 592,
     "skip_include": 0,
-    "total": 1192,
+    "total": 1187,
     "unlockable": 2
    },
    "chapter-7": {

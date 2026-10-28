@@ -25,6 +25,18 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Zero-width string `$sformatf` assignments — 2026-10-28
+
+The legacy extractor now replays `%0s/%0S` `$sformatf` assignments into
+strings for ASCII literals and source-pure string histories, retaining one
+literal prefix and suffix around the conversion. Dynamic or non-ASCII
+operands, additional conversions, timed forms, and nonblocking writes remain
+loud. The `string_sformatf_zero_width_string_assignment` fixture supplies the
+differential row and Lean receipt. The fresh 22,059-path census moves **5,596
+→ 5,597 clean / 16,396 → 16,395 partial** with 67 include skips and
+`AssignmentExpression:target` falls **2,788 → 2,787**; differential coverage
+grows **363/357/0/6 → 364/358/0/6**.
+
 ## Zero-width binary and octal `$sformatf` string assignments — 2026-10-28
 
 The legacy extractor now replays `%0b/%0B` and `%0o/%0O` `$sformatf`

@@ -8158,7 +8158,15 @@ def _sformatf_literal_source_value(expression, position=None):
                 or getattr(format_expr, "bad", False)):
             return None
         fmt = getattr(format_expr, "value", "")
-        if fmt in ("%s", "%S"):
+        string_marker = None
+        if fmt in ("%s", "%S", "%0s", "%0S"):
+            string_marker = fmt
+        elif fmt.count("%") == 1:
+            for marker in ("%0s", "%0S"):
+                if marker in fmt:
+                    string_marker = marker
+                    break
+        if string_marker is not None:
             node = operand
             while type(node).__name__ == "ConversionExpression":
                 node = getattr(node, "operand", None)
@@ -8166,11 +8174,22 @@ def _sformatf_literal_source_value(expression, position=None):
                     return None
             if type(node).__name__ == "StringLiteral":
                 value = getattr(node, "value", None)
-                return (value if (not getattr(node, "bad", False)
-                                  and isinstance(value, str)
-                                  and all(0 < ord(char) <= 127
-                                          for char in value)) else None)
-            return _string_source_value(node, position)
+                if (getattr(node, "bad", False)
+                        or not isinstance(value, str)
+                        or not all(0 < ord(char) <= 127 for char in value)):
+                    return None
+            else:
+                value = _string_source_value(node, position)
+            if value is None:
+                return None
+            if fmt == string_marker:
+                return value
+            prefix, suffix = fmt.split(string_marker, 1)
+            if ("%" in prefix or "%" in suffix
+                    or not all(0 < ord(char) <= 127
+                               for char in prefix + suffix)):
+                return None
+            return prefix + value + suffix
         if fmt in ("%c", "%C"):
             node = operand
             while type(node).__name__ == "ConversionExpression":

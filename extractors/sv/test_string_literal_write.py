@@ -54,6 +54,23 @@ class LiteralStringWrites(unittest.TestCase):
             2,
         )
 
+    def test_literal_sformatf_zero_width_string_assignment_replays_ascii_text(self):
+        design = lower(
+            'module top; string source, exact, empty, history; initial begin '
+            'source = "Hello"; '
+            'exact = $sformatf("%0s", "abc"); '
+            'empty = $sformatf("<%0s>", ""); '
+            'history = $sformatf("[%0S]", source); '
+            'if (exact != "abc" || empty != "<>" || history != "[Hello]") '
+            '$display("FAIL"); '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False) for node in nodes(design)),
+            3,
+        )
+
     def test_dynamic_or_unsupported_sformatf_string_assignment_stays_loud(self):
         for source in (
                 'module top; string value; string source; initial begin '
@@ -62,6 +79,20 @@ class LiteralStringWrites(unittest.TestCase):
                 'value = $sformatf("%d", "hello"); end endmodule',
                 'module top; string value; initial begin '
                 'value <= $sformatf("%s", "hello"); end endmodule'):
+            design = lower(source)
+            self.assertFalse(any(node.get("string_source_write_noop")
+                                 for node in nodes(design)))
+            self.assertTrue(any(node.get("kind") in ("Unsupported", "Invalid")
+                                or node.get("sv_kind") ==
+                                "AssignmentExpression:target"
+                                for node in nodes(design)))
+
+    def test_dynamic_zero_width_sformatf_string_assignment_stays_loud(self):
+        for source in (
+                'module top; string value, source; initial begin '
+                'value = $sformatf("%0s", source); end endmodule',
+                'module top; string value; initial begin '
+                'value <= $sformatf("%0S", "hello"); end endmodule'):
             design = lower(source)
             self.assertFalse(any(node.get("string_source_write_noop")
                                  for node in nodes(design)))
@@ -322,6 +353,24 @@ class LiteralStringWrites(unittest.TestCase):
             self.skipTest("SV_TESTS_ROOT is unavailable")
         source = Path(corpus) / "chapter-21" / \
             "21.2.1.1--format-H-same-as-h.sv"
+        if not source.exists():
+            self.skipTest("sv-tests-2 checkout is unavailable")
+        design = lower(source.read_text())
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False) for node in nodes(design)),
+            2,
+        )
+
+    def test_corpus_zero_width_sformatf_string_assignment_is_admitted(self):
+        import os
+        from pathlib import Path
+        corpus = os.environ.get("SV_TESTS_ROOT")
+        if not corpus:
+            self.skipTest("SV_TESTS_ROOT is unavailable")
+        source = Path(corpus) / "chapter-21" / \
+            "21.2.1.7--format-s-zero-width-minimum.sv"
         if not source.exists():
             self.skipTest("sv-tests-2 checkout is unavailable")
         design = lower(source.read_text())

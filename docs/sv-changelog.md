@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.107] — 2026-10-28
+
+Zero-width string `$sformatf` results (`%0s`/`%0S`) assigned to strings now
+replay exact ASCII text for literal operands and source-pure string history,
+including one literal prefix and suffix around the conversion. Dynamic or
+non-ASCII operands, additional conversions, timed forms, and nonblocking
+writes remain loud. The new fixture and Lean receipt pass; differential
+coverage grows **363 rows / 357 matches / 0 disagreements / 6 refusals → 364 /
+358 / 0 / 6**, and the fresh 22,059-path census moves **5,596 → 5,597 clean /
+16,396 → 16,395 partial** with `AssignmentExpression:target` at **2,787**.
+
 ## [0.1.106] — 2026-10-28
 
 Zero-width binary and octal `$sformatf` results (`%0b/%0B` and `%0o/%0O`)

@@ -9,6 +9,20 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Zero-width string `$sformatf` assignments — 2026-10-28
+
+Blocking assignments of `$sformatf("%0s", ...)` and `$sformatf("%0S", ...)`
+results to a string now replay exact ASCII text from a literal or earlier
+source-pure string history. A single literal prefix and suffix around the
+conversion are retained, so the IEEE witness `"<%0s>"` is covered as well.
+Dynamic operands, additional conversions, non-ASCII text, timed forms, and
+nonblocking writes remain `AssignmentExpression:target`.
+
+`string_sformatf_zero_width_string_assignment` supplies the differential
+`PASS` witness and Lean receipt. The fresh 22,059-path census moves **5,596 →
+5,597 clean / 16,396 → 16,395 partial** with 67 include skips, and
+`AssignmentExpression:target` falls **2,788 → 2,787**.
+
 ## Zero-width binary and octal `$sformatf` string assignments — 2026-10-28
 
 Blocking assignments of `%0b/%0B` and `%0o/%0O` `$sformatf` results to a string

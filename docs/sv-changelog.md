@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.108] — 2026-10-28
+
+Literal-prefix/suffix `$sformatf` results with one integral conversion now
+replay exact ASCII text when assigned to strings. Decimal, hexadecimal,
+binary, octal, and character forms are covered; dynamic operands, multiple
+conversions, escaped-percent formats, timed forms, and nonblocking writes
+remain loud. The new fixture and Lean receipt pass; differential coverage
+grows **364 rows / 358 matches / 0 disagreements / 6 refusals → 365 / 359 / 0 /
+6**, and the fresh census moves **5,597 → 5,599 clean / 16,395 → 16,393
+partial** with `AssignmentExpression:target` at **2,785**.
+
 ## [0.1.107] — 2026-10-28
 
 Zero-width string `$sformatf` results (`%0s`/`%0S`) assigned to strings now

@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    2787
+    2785
    ],
    [
     "ExpressionStatement:CallExpression",
@@ -44,7 +44,7 @@
    ],
    [
     "NamedValueExpression:2state",
-    1339
+    1337
    ],
    [
     "InvalidStatement",
@@ -80,7 +80,7 @@
    ],
    [
     "ConversionExpression:width",
-    671
+    669
    ],
    [
     "CheckerSymbol",
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5597,
-   "partial": 16395,
+   "clean": 5599,
+   "partial": 16393,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4821,
+    4823,
     18690
    ],
    "simulation elaboration": [
@@ -1411,9 +1411,9 @@
     "unlockable": 0
    },
    "chapter-21": {
-    "clean": 148,
+    "clean": 150,
     "error": 0,
-    "partial": 755,
+    "partial": 753,
     "skip_include": 0,
     "total": 903,
     "unlockable": 0

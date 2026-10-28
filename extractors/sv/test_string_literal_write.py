@@ -40,6 +40,42 @@ class LiteralStringWrites(unittest.TestCase):
             2,
         )
 
+    def test_literal_sformatf_integral_wrapper_assignment_replays_text(self):
+        design = lower(
+            'module top; string decimal, hexa, binary, octal, character; '
+            'initial begin decimal = $sformatf("v=%0d", 8\'d42); '
+            'hexa = $sformatf("<%h>", 8\'hAB); '
+            'binary = $sformatf("b=%B", 4\'b1010); '
+            'octal = $sformatf("o=%0O", 6\'o17); '
+            'character = $sformatf("c=%C", 8\'h41); '
+            'if (decimal != "v=42" || hexa != "<ab>" || '
+            'binary != "b=1010" || octal != "o=17" || character != "c=A") '
+            '$display("FAIL"); $display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False) for node in nodes(design)),
+            5,
+        )
+
+    def test_dynamic_or_multi_format_integral_wrapper_assignment_stays_loud(self):
+        for source in (
+                'module top; string value; int x; initial begin '
+                'value = $sformatf("v=%0d", x); end endmodule',
+                'module top; string value; initial begin '
+                'value = $sformatf("v=%0d:%0h", 7, 8\'hA); end endmodule',
+                'module top; string value; initial begin '
+                'value = $sformatf("load=100%% value=%0d", 7); end endmodule',
+                'module top; string value; initial begin '
+                'value <= $sformatf("v=%0d", 7); end endmodule'):
+            design = lower(source)
+            self.assertFalse(any(node.get("string_source_write_noop")
+                                 for node in nodes(design)))
+            self.assertTrue(any(node.get("kind") in ("Unsupported", "Invalid")
+                                or node.get("sv_kind") ==
+                                "AssignmentExpression:target"
+                                for node in nodes(design)))
+
     def test_literal_sformatf_string_assignment_replays_ascii_text(self):
         design = lower(
             'module top; string source, copy, upper; initial begin '
@@ -380,6 +416,25 @@ class LiteralStringWrites(unittest.TestCase):
             sum(node.get("string_source_write_noop", False) for node in nodes(design)),
             2,
         )
+
+    def test_corpus_literal_sformatf_integral_wrapper_assignments_are_admitted(self):
+        import os
+        from pathlib import Path
+        corpus = os.environ.get("SV_TESTS_ROOT")
+        if not corpus:
+            self.skipTest("SV_TESTS_ROOT is unavailable")
+        for filename in (
+                "21.3.3--sformatf-returns-implicit-string-v4.sv",
+                "21.3.3--sformatf-returns-string-v5.sv"):
+            source = Path(corpus) / "chapter-21" / filename
+            if not source.exists():
+                self.skipTest("sv-tests-2 checkout is unavailable")
+            design = lower(source.read_text())
+            self.assertFalse(any(node.get("sv_kind") ==
+                                 "AssignmentExpression:target"
+                                 for node in nodes(design)))
+            self.assertTrue(any(node.get("string_source_write_noop")
+                                for node in nodes(design)))
 
     def test_nonzero_or_dynamic_string_character_writes_stay_loud(self):
         for source in (

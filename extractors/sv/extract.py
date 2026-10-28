@@ -8158,6 +8158,21 @@ def _sformatf_literal_source_value(expression, position=None):
                 or getattr(format_expr, "bad", False)):
             return None
         fmt = getattr(format_expr, "value", "")
+        integral_prefix = ""
+        integral_suffix = ""
+        if fmt.count("%") == 1:
+            for marker in (
+                    "%c", "%C", "%b", "%B", "%0b", "%0B",
+                    "%o", "%O", "%0o", "%0O", "%d", "%D",
+                    "%0d", "%0D", "%h", "%H", "%0h", "%0H"):
+                if marker not in fmt:
+                    continue
+                prefix, suffix = fmt.split(marker, 1)
+                if (all(0 < ord(char) <= 127 for char in prefix + suffix)
+                        and "%" not in prefix + suffix):
+                    integral_prefix, integral_suffix = prefix, suffix
+                    fmt = marker
+                    break
         string_marker = None
         if fmt in ("%s", "%S", "%0s", "%0S"):
             string_marker = fmt
@@ -8203,7 +8218,9 @@ def _sformatf_literal_source_value(expression, position=None):
             if not bits or any(bit not in "01" for bit in bits):
                 return None
             byte = int(bits, 2) & 0xff
-            return chr(byte) if 0 < byte <= 127 else None
+            text = chr(byte) if 0 < byte <= 127 else None
+            return (integral_prefix + text + integral_suffix
+                    if text is not None else None)
         if fmt in ("%b", "%B", "%0b", "%0B"):
             node = operand
             while type(node).__name__ == "ConversionExpression":
@@ -8217,8 +8234,10 @@ def _sformatf_literal_source_value(expression, position=None):
             if not bits or any(bit not in "01" for bit in bits):
                 return None
             if fmt in ("%0b", "%0B"):
-                return bits.lstrip("0") or "0"
-            return bits
+                text = bits.lstrip("0") or "0"
+            else:
+                text = bits
+            return integral_prefix + text + integral_suffix
         if fmt in ("%o", "%O", "%0o", "%0O"):
             node = operand
             while type(node).__name__ == "ConversionExpression":
@@ -8231,7 +8250,7 @@ def _sformatf_literal_source_value(expression, position=None):
             bits = svint_bits(node.value)
             if not bits or any(bit not in "01" for bit in bits):
                 return None
-            return format(int(bits, 2), "o")
+            return integral_prefix + format(int(bits, 2), "o") + integral_suffix
         if fmt in ("%d", "%D", "%0d", "%0D"):
             node = operand
             while type(node).__name__ == "ConversionExpression":
@@ -8241,7 +8260,9 @@ def _sformatf_literal_source_value(expression, position=None):
             if type(node).__name__ not in ("IntegerLiteral",
                                            "UnbasedUnsizedIntegerLiteral"):
                 return None
-            return _format_literal_integral_text("%d", [node])
+            return (integral_prefix
+                    + _format_literal_integral_text("%d", [node])
+                    + integral_suffix)
         if fmt not in ("%h", "%H", "%0h", "%0H"):
             return None
         node = operand
@@ -8259,7 +8280,7 @@ def _sformatf_literal_source_value(expression, position=None):
         text = format(value, "0{}x".format(digits))
         if fmt in ("%0h", "%0H"):
             text = text.lstrip("0") or "0"
-        return text
+        return integral_prefix + text + integral_suffix
     except Exception:
         return None
 

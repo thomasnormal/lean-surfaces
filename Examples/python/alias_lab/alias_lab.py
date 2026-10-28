@@ -86,3 +86,8 @@ def str_alias(value):
     f = str
     return f(value)
 
+
+def sum_alias(values, start=0):
+    f = sum
+    return f(values, start)
+

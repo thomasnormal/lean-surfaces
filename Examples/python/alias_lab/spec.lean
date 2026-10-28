@@ -73,6 +73,9 @@ load_program alias_lab from "Examples/python/alias_lab/alias_lab.json"
 #py_check alias_lab.str_alias(17) = "17"
 #py_check alias_lab.str_alias(true) = "True"
 #py_check alias_lab.str_alias("quoted") = "quoted"
+#py_check alias_lab.sum_alias(Val.list #[1, 2, 3]) = 6
+#py_check alias_lab.sum_alias(Val.list #[], 5) = 5
+#py_check alias_lab.sum_alias(Val.list #[true, false]) = 1
 
 /-! ### the alias is NOT a value (the refusal direction, unchanged) -/
 

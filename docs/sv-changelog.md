@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.127] — 2026-10-28
+
+Right streaming now admits finite source-pure integral-key associative arrays
+in ascending index order, using the existing flat scalar cells. Dynamic keys,
+non-integral aggregates, and other whole-array forms remain loud. The new
+fixture, extractor regressions, and Lean receipt pass. Differential coverage
+grows **383 rows / 377 matches / 0 disagreements / 6 recorded refusals → 384 /
+378 / 0 / 6**. The fresh 22,065-path census moves **5,646 → 5,661 clean /
+16,352 → 16,337 partial**; `AssignmentExpression:target` falls **2,744 →
+2,721**.
+
 ## [0.1.126] — 2026-10-28
 
 Discarded integral-key associative-array `first(index)` and `last(index)` calls

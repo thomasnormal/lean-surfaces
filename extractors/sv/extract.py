@@ -2124,7 +2124,15 @@ def _finite_string_assoc_cells(sm, symbol):
         def inspect(node):
             nonlocal named_count, selected_count, invalid, exists_calls
             kind = type(node).__name__
-            if kind == "ElementSelectExpression":
+            if kind == "StreamingConcatenationExpression":
+                # A whole finite associative array is meaningful only as a
+                # streaming source.  The stream lowering expands its known
+                # cells in sorted index order, so do not mistake this one
+                # aggregate reference for an unsupported ordinary use.
+                if any(getattr(getattr(stream, "operand", None), "symbol", None)
+                       is symbol for stream in getattr(node, "streams", [])):
+                    return VisitAction.Skip
+            elif kind == "ElementSelectExpression":
                 value = getattr(node, "value", None)
                 if getattr(value, "symbol", None) is symbol:
                     selected_count += 1
@@ -2163,7 +2171,8 @@ def _finite_string_assoc_cells(sm, symbol):
                     named_count += 1
 
         instance.visit(inspect)
-        if invalid or not keys or named_count != selected_count + exists_calls:
+        if (invalid or not keys
+                or named_count != selected_count + exists_calls):
             return None
         base = _array_storage_name(symbol)
         cells = {}
@@ -2271,7 +2280,11 @@ def _finite_integral_assoc_cells(sm, symbol):
         def inspect(node):
             nonlocal named_count, selected_count, invalid, exists_calls
             kind = type(node).__name__
-            if kind == "ElementSelectExpression":
+            if kind == "StreamingConcatenationExpression":
+                if any(getattr(getattr(stream, "operand", None), "symbol", None)
+                       is symbol for stream in getattr(node, "streams", [])):
+                    return VisitAction.Skip
+            elif kind == "ElementSelectExpression":
                 value = getattr(node, "value", None)
                 if getattr(value, "symbol", None) is symbol:
                     selected_count += 1
@@ -2310,7 +2323,8 @@ def _finite_integral_assoc_cells(sm, symbol):
                     named_count += 1
 
         instance.visit(inspect)
-        if invalid or not keys or named_count != selected_count + exists_calls:
+        if (invalid or not keys
+                or named_count != selected_count + exists_calls):
             return None
         base = _array_storage_name(symbol)
         cells = {}
@@ -7686,10 +7700,12 @@ def _convert_streaming_pack(sm, expr):
     """IEEE 1800 §11.4.14: pure packed source streams, padded at right."""
     source = expr.operand
     token = getattr(getattr(expr, "syntax", None), "operatorToken", None)
+    if token is None:
+        token = getattr(getattr(source, "syntax", None), "operatorToken", None)
     operator = str(getattr(token, "kind", "")).split(".")[-1]
     target_width, two_state, reason = type_width_2s(expr.type)
     if (type(source).__name__ != "StreamingConcatenationExpression"
-            or operator not in ("RightShift", "LeftShift") or not source.isFixedSize
+            or operator not in ("RightShift", "LeftShift")
             or reason is not None or target_width is None or target_width <= 0):
         return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
     # The padding below has a fixed width. Do not freeze a symbolic family's
@@ -7698,22 +7714,32 @@ def _convert_streaming_pack(sm, expr):
             type(member).__name__ in ("ParameterSymbol", "TypeParameterSymbol")
             and not getattr(member, "isLocalParam", False) for member in _SYM.scope)):
         return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
-    parts = []
-    source_width = 0
-    for stream in source.streams:
-        operand = stream.operand
-        width, _, reason = type_width_2s(operand.type)
-        if (stream.withExpr is not None or reason is not None
-                or width is None or width <= 0
-                or not _case_source_expression_ok(operand)):
+    aggregate_value = _convert_streaming_source(sm, source)
+    if aggregate_value is not None:
+        parts = list(aggregate_value.get("parts", []))
+        source_width = width_of(aggregate_value)
+        if source_width is None:
             return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
-        part = _convert_expr(sm, operand)
-        if width_of(part) != width or not _case_expression_ok(part):
+    elif not source.isFixedSize:
+        return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
+    else:
+        parts = []
+        source_width = 0
+        for stream in source.streams:
+            operand = stream.operand
+            width, _, reason = type_width_2s(operand.type)
+            if (stream.withExpr is not None or reason is not None
+                    or width is None or width <= 0
+                    or not _case_source_expression_ok(operand)):
+                return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
+            part = _convert_expr(sm, operand)
+            if width_of(part) != width or not _case_expression_ok(part):
+                return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
+            parts.append(part)
+            source_width += width
+        if source_width != source.bitstreamWidth:
             return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
-        parts.append(part)
-        source_width += width
-    if (not parts or source_width != source.bitstreamWidth
-            or source_width > target_width):
+    if not parts or source_width > target_width:
         return unsupported(sm, expr, "ConversionExpression:StreamingConcat")
     if operator == "LeftShift":
         if source.sliceSize <= 0:
@@ -18263,16 +18289,48 @@ def _convert_streaming_source(sm, expression):
     try:
         if type(expression).__name__ != "StreamingConcatenationExpression":
             return None
-        token = getattr(getattr(expression, "syntax", None), "operatorToken", None)
-        if str(getattr(token, "kind", "")).split(".")[-1] != "RightShift":
+        syntax = getattr(expression, "syntax", None)
+        token = getattr(syntax, "operatorToken", None)
+        # Pyslang omits the expression syntax for an unsized stream nested in
+        # a conversion; that spelling is the ordinary right stream.
+        if (syntax is not None
+                and str(getattr(token, "kind", "")).split(".")[-1] != "RightShift"):
             return None
-        if _streaming_has_slice_size(expression):
+        if syntax is not None and _streaming_has_slice_size(expression):
             return None
         parts = []
+        aggregate_source = False
         for stream in expression.streams:
             operand = getattr(stream, "operand", None)
             if operand is None or getattr(stream, "withExpr", None) is not None:
                 return None
+            # A finite literal-key associative array is represented by one
+            # ordinary scalar cell per observed key.  IEEE right streaming
+            # visits associative elements in ascending index order, so expose
+            # those cells as the packed source in that order.  The cell
+            # discovery rejects every other aggregate use and therefore keeps
+            # this lowering source-pure and finite.
+            assoc_symbol = getattr(operand, "symbol", None)
+            if (assoc_symbol is not None
+                    and type(assoc_symbol.type.canonicalType).__name__ ==
+                    "AssociativeArrayType"):
+                index_kind = type(assoc_symbol.type.canonicalType.indexType.canonicalType).__name__
+                cells = (_finite_string_assoc_cells(sm, assoc_symbol)
+                         if index_kind == "StringType"
+                         else _finite_integral_assoc_cells(sm, assoc_symbol))
+                if cells is None or not cells:
+                    return None
+                aggregate_source = True
+                if index_kind == "StringType":
+                    ordered = sorted(cells.items(), key=lambda item: item[0])
+                else:
+                    ordered = sorted(cells.items(), key=lambda item: item[0])
+                parts.extend({
+                    "kind": "Ident", "span": node_span(sm, operand),
+                    "width": cell["width"], "name": cell["name"],
+                    **({"two_state": True} if cell["two_state"] else {}),
+                } for _key, cell in ordered)
+                continue
             part = _streaming_struct_source(sm, operand)
             if part is None:
                 width, _two_state, reason = type_width_2s(operand.type)
@@ -18286,7 +18344,7 @@ def _convert_streaming_source(sm, expression):
         if not parts:
             return None
         width = sum(width_of(part) for part in parts)
-        if width != expression.bitstreamWidth:
+        if not aggregate_source and width != expression.bitstreamWidth:
             return None
         return {"kind": "Concat", "span": node_span(sm, expression),
                 "width": width, "parts": parts}

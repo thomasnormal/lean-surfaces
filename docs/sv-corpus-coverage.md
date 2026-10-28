@@ -1,5 +1,18 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Sorted finite associative-array streaming — 2026-10-28
+
+The legacy extractor now packs a finite source-pure integral-key associative
+array through right streaming in ascending key order, reusing one flat scalar
+cell per observed key. Dynamic keys, non-integral aggregates, and other
+whole-array uses remain loud. The `streaming_assoc_sorted` fixture supplies
+the differential row and Lean receipt. The fresh 22,065-path census moves
+**5,646 → 5,661 clean / 16,352 → 16,337 partial** with 67 include skips;
+`AssignmentExpression:target` falls **2,744 → 2,721**, while
+`ExpressionStatement:CallExpression` falls **2,710 → 2,700** and
+`CallExpression` falls **2,635 → 2,624**. Differential coverage grows
+**383/377/0/6 → 384/378/0/6**.
+
 ## Discarded finite associative-array endpoint histories — 2026-10-28
 
 Discarded integral-key associative-array `first(index)` and `last(index)` calls

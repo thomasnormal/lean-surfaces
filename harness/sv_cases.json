@@ -3459,6 +3459,15 @@
         "PASS3"
       ],
       "expect": "match"
+    },
+    {
+      "name": "streaming_assoc_sorted",
+      "file": "Examples/system-verilog/streaming_assoc_sorted/streaming_assoc_sorted.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

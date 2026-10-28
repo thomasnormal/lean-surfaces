@@ -1,5 +1,21 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Sorted finite associative-array streaming — 2026-10-28
+
+Right streaming now admits a finite integral-key associative array whose
+observed keys and values are source-pure literals. The flat lowering expands
+one scalar cell per key in ascending index order, matching IEEE 1800-2023
+§11.4.14.1; dynamic keys, non-integral aggregates, and other whole-array uses
+remain loud. The `streaming_assoc_sorted` fixture, extractor regressions, and
+Lean receipt pass.
+
+The fresh **22,065-path** census moves **5,646 → 5,661 clean** and
+**16,352 → 16,337 partial** with 67 include skips. The
+`AssignmentExpression:target` blocker falls **2,744 → 2,721**,
+`ExpressionStatement:CallExpression` falls **2,710 → 2,700**, and
+`CallExpression` falls **2,635 → 2,624**. Differential coverage grows
+**383/377/0/6 → 384/378/0/6**, and grammar coverage remains **218/97/121**.
+
 ## Discarded finite associative-array endpoint histories — 2026-10-28
 
 Discarded integral-key associative-array `first(index)` and `last(index)`

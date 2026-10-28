@@ -25,6 +25,16 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Top-level `$sformatf("%m")` string assignments — 2026-10-28
+
+The legacy extractor now replays a blocking assignment from the metadata-only
+top-level `$sformatf("%m")` query through source-pure string history. Nested
+hierarchy, functions, generated scopes, and other dynamic format forms remain
+loud. The `string_sformatf_scope_assignment` fixture supplies the differential
+row and Lean receipt. The committed 22,065-path census remains **5,622 clean /
+16,376 partial** with 67 include skips and `AssignmentExpression:target` at
+**2,757**; differential coverage grows **376/370/0/6 → 377/371/0/6**.
+
 ## Metadata-only `$typename` string assignments — 2026-10-28
 
 The legacy extractor now replays a blocking assignment from a resolved

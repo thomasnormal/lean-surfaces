@@ -27,6 +27,30 @@ def nodes(value):
 
 
 class LiteralStringWrites(unittest.TestCase):
+    def test_top_level_sformatf_percent_m_assignment_replays_scope(self):
+        design = lower(
+            'module top; string scope_name; initial begin '
+            'scope_name = $sformatf("%m"); '
+            'if (scope_name != "top") $display("FAIL"); '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False) for node in nodes(design)),
+            1,
+        )
+
+    def test_nested_sformatf_percent_m_assignment_stays_loud(self):
+        design = lower(
+            'module top; string scope_name; function void f(); '
+            'scope_name = $sformatf("%m"); endfunction '
+            'initial begin f(); end endmodule')
+        self.assertFalse(any(node.get("string_source_write_noop", False)
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("kind") in ("Unsupported", "Invalid")
+                            or node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
     def test_literal_sformatf_hex_assignment_replays_text(self):
         design = lower(
             'module top; string lower, upper; initial begin '

@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.120] — 2026-10-28
+
+Blocking assignments from the metadata-only top-level `$sformatf("%m")` query
+now replay the module scope through source-pure string history. Nested
+hierarchy, functions, generated scopes, and other dynamic format forms remain
+loud. The new fixture and Lean receipt pass; differential coverage grows
+**376 rows / 370 matches / 0 disagreements / 6 refusals → 377 / 371 / 0 / 6**.
+The committed 22,065-path census remains **5,622 clean / 16,376 partial** with
+67 include skips, and `AssignmentExpression:target` remains **2,757**.
+
 ## [0.1.119] — 2026-10-28
 
 Blocking assignments from metadata-only `$typename` queries now replay the

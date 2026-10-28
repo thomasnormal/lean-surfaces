@@ -17,6 +17,16 @@ access rather than a decision.
 
 ---
 
+## Top-level `$sformatf("%m")` string assignments — 2026-10-28
+
+Blocking assignments from the metadata-only top-level `$sformatf("%m")` query
+now replay the module scope through source-pure string history. Nested
+hierarchy, functions, generated scopes, and other dynamic format forms remain
+loud. The `string_sformatf_scope_assignment` fixture and Lean receipt pass;
+differential coverage grows **376/370/0/6 → 377/371/0/6**. The committed
+22,065-path census remains **5,622 clean / 16,376 partial** with 67 include
+skips and `AssignmentExpression:target` at **2,757**.
+
 ## Metadata-only `$typename` string assignments — 2026-10-28
 
 Blocking assignments of `$typename` results now replay the resolved ASCII

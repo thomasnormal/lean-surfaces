@@ -8362,6 +8362,25 @@ def _sformatf_literal_source_value(expression, position=None):
                 or getattr(expression, "subroutineName", "") != "$sformatf"):
             return None
         arguments = list(getattr(expression, "arguments", ()))
+        # ``%m`` is a metadata-only query for the current hierarchical scope.
+        # The flat self-check state has no hierarchy object, but the narrow
+        # single-module case is exact from the source envelope itself.  Keep
+        # this deliberately out of nested functions/instances: those scopes
+        # require hierarchy elaboration and remain loud until represented.
+        if (len(arguments) == 1
+                and type(arguments[0]).__name__ == "StringLiteral"
+                and not getattr(arguments[0], "bad", False)
+                and arguments[0].value == "%m"):
+            source = (_SOURCE_BYTES.decode("utf-8", errors="replace")
+                      if _SOURCE_BYTES else "")
+            code = _sv_code_source(source)
+            modules = re.findall(
+                r"(?<![A-Za-z0-9_$])module\s+([A-Za-z_$][A-Za-z0-9_$]*)",
+                code)
+            if (len(modules) != 1 or re.search(r"\b(?:function|task)\b", code)
+                    or re.search(r"\b(?:generate|begin)\s*:\s*", code)):
+                return None
+            return modules[0]
         if len(arguments) < 2:
             return None
         format_expr = arguments[0]

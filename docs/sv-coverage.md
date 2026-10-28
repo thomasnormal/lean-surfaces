@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 376 | 370 | 0 | 6 | sv-tests-2 declarations |
+| 377 | 371 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -390,6 +390,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `fixed_array_nested_conditional_self_alias` | `Examples/system-verilog/fixed_array_nested_conditional_self_alias/fixed_array_nested_conditional_self_alias.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_nested_subarray_copy` | `Examples/system-verilog/fixed_array_nested_subarray_copy/fixed_array_nested_subarray_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_typename_assignment` | `Examples/system-verilog/string_typename_assignment/string_typename_assignment.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_sformatf_scope_assignment` | `Examples/system-verilog/string_sformatf_scope_assignment/string_sformatf_scope_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 

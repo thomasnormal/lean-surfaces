@@ -47,6 +47,15 @@
       "expect": "match"
     },
     {
+      "name": "string_sformatf_octal_assignment",
+      "file": "Examples/system-verilog/string_sformatf_octal_assignment/string_sformatf_octal_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "queue_literal_then_empty_concat",
       "file": "Examples/system-verilog/queue_literal_then_empty_concat/queue_literal_then_empty_concat.sv",
       "module": "top",

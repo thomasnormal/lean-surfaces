@@ -132,6 +132,36 @@ class LiteralStringWrites(unittest.TestCase):
                                 "AssignmentExpression:target"
                                 for node in nodes(design)))
 
+    def test_literal_sformatf_octal_assignment_replays_lowercase_text(self):
+        design = lower(
+            'module top; string lower, upper; initial begin '
+            'lower = $sformatf("%o", 8\'h0A); '
+            'upper = $sformatf("%O", 4\'b1010); '
+            'if (lower != "12" || upper != "12") $display("FAIL"); '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False) for node in nodes(design)),
+            2,
+        )
+
+    def test_unknown_or_dynamic_sformatf_octal_assignment_stays_loud(self):
+        for source in (
+                'module top; string value; int x; initial begin '
+                'value = $sformatf("%o", x); end endmodule',
+                'module top; string value; initial begin '
+                'value = $sformatf("%o", 4\'bx101); end endmodule',
+                'module top; string value; initial begin '
+                'value <= $sformatf("%O", 4\'b1010); end endmodule'):
+            design = lower(source)
+            self.assertFalse(any(node.get("string_source_write_noop")
+                                 for node in nodes(design)))
+            self.assertTrue(any(node.get("kind") in ("Unsupported", "Invalid")
+                                or node.get("sv_kind") ==
+                                "AssignmentExpression:target"
+                                for node in nodes(design)))
+
     def test_dynamic_sformatf_string_assignment_stays_loud(self):
         design = lower(
             'module top; string value; int x; initial begin '

@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.97] — 2026-10-28
+
+Source-pure `string.toupper()`, `string.tolower()`, and bounded `substr()`
+assignments now use ASCII literal history and fold subsequent comparisons.
+Dynamic, aliased, timed, nonblocking, and non-ASCII forms remain loud. The
+`string_case_assignment` and `string_substr_assignment` fixtures and Lean
+receipts supply the `PASS` evidence; differential coverage is **354 rows / 348
+matches / 0 disagreements / 6 recorded refusals** and grammar coverage remains
+**218 / 97 / 121**.
+
 ## [0.1.96] — 2026-10-28
 
 Blocking literal queue writes followed by an empty queue concatenation now

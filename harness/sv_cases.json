@@ -2,6 +2,24 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "string_case_assignment",
+      "file": "Examples/system-verilog/string_case_assignment/string_case_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
+      "name": "string_substr_assignment",
+      "file": "Examples/system-verilog/string_substr_assignment/string_substr_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "queue_literal_then_empty_concat",
       "file": "Examples/system-verilog/queue_literal_then_empty_concat/queue_literal_then_empty_concat.sv",
       "module": "top",

@@ -23,6 +23,21 @@ and Lean receipt. Differential coverage grows **351/345/0/6 → 352/346/0/6**;
 the unavailable external census snapshot remains **5,401 clean / 16,597
 partial** with 67 include skips.
 
+## Source-pure string transformation assignments — 2026-10-28
+
+A blocking assignment from `string.toupper()`, `string.tolower()`, or
+`string.substr(i, j)` is now admitted when the receiver's earlier history is a
+direct ASCII literal and substring bounds are integral literals. The extractor
+evaluates the pure transformation in its source-order string history, erases
+the opaque target write, and folds later ASCII comparisons. Dynamic, aliased,
+timed, nonblocking, and non-ASCII forms remain
+`AssignmentExpression:target` or the existing string-value boundary.
+
+`string_case_assignment` and `string_substr_assignment` supply differential
+`PASS` witnesses and Lean receipts. Differential coverage grows
+**352/346/0/6 → 354/348/0/6**; the unavailable external census snapshot
+remains **5,401 clean / 16,597 partial** with 67 include skips.
+
 ## Fixed-array subarray self-copies — 2026-10-28
 
 An exact blocking self-copy of one constant subarray of a fixed

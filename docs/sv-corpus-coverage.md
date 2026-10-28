@@ -39,6 +39,19 @@ remains **5,401 clean / 16,597 partial** over 22,065 paths with 67 include
 skips; no unverified census delta is claimed. Differential coverage grows
 **351/345/0/6 → 352/346/0/6**, while grammar coverage remains **218/97/121**.
 
+## Source-pure string transformation assignments — 2026-10-28
+
+Blocking `string.toupper()`, `string.tolower()`, and bounded `string.substr()`
+assignments are now admitted from a direct ASCII literal history, with the
+transformed value used by later string comparisons. Dynamic, aliased, timed,
+nonblocking, and non-ASCII forms remain loud. The `string_case_assignment` and
+`string_substr_assignment` fixtures supply differential rows and Lean receipts.
+
+The external sv-tests-2 checkout is unavailable, so the committed census
+remains **5,401 clean / 16,597 partial** over 22,065 paths with 67 include
+skips; no unverified census delta is claimed. Differential coverage grows
+**352/346/0/6 → 354/348/0/6**, while grammar coverage remains **218/97/121**.
+
 ## Power self-check differential rows — 2026-10-28
 
 The unsigned, signed, and zero-to-negative integral power fixtures are now

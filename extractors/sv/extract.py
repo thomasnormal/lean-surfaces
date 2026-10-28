@@ -7816,6 +7816,9 @@ def _string_compare_source_value(operand, position):
     control-dependent writes remain loud.
     """
     try:
+        resolved = _string_transform_history_value(operand, position)
+        if resolved is not None:
+            return resolved
         node = operand
         while type(node).__name__ == "ConversionExpression":
             node = getattr(node, "operand", None)
@@ -7922,6 +7925,21 @@ def _string_source_value(expression, position=None, active=()):
                            for char in value)):
                 return None
             return value
+        if type(node).__name__ == "CallExpression":
+            if (getattr(node, "bad", False)
+                    or not getattr(node, "isSystemCall", False)):
+                return None
+            method = getattr(node, "subroutineName", "")
+            arguments = list(getattr(node, "arguments", ()))
+            if method in ("toupper", "tolower"):
+                if len(arguments) != 1:
+                    return None
+                return _string_transform_value(node, method, position)
+            if method == "substr":
+                if len(arguments) != 3:
+                    return None
+                return _string_transform_value(node, method, position)
+            return None
         if (type(node).__name__ == "NamedValueExpression"
                 and type(node.type.canonicalType).__name__ == "StringType"):
             symbol = node.symbol
@@ -8000,6 +8018,198 @@ def _string_source_value(expression, position=None, active=()):
                                          position, active)
             return value * count if value is not None else None
         return None
+    except Exception:
+        return None
+
+
+def _string_literal_history_before(receiver, position):
+    """Resolve a string's direct literal history before one assignment."""
+    try:
+        node = receiver
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+        if (type(node).__name__ != "NamedValueExpression"
+                or type(node.type.canonicalType).__name__ != "StringType"):
+            return None
+        symbol = node.symbol
+        initializer = getattr(symbol, "initializer", None)
+        while type(initializer).__name__ == "ConversionExpression":
+            initializer = getattr(initializer, "operand", None)
+        history = []
+        if initializer is not None:
+            if (type(initializer).__name__ != "StringLiteral"
+                    or getattr(initializer, "bad", False)
+                    or not isinstance(getattr(initializer, "value", None), str)
+                    or any(ord(char) == 0 or ord(char) > 127
+                           for char in initializer.value)):
+                return None
+            history.append((-1, initializer.value))
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        controls = []
+        assignments = []
+        if instance is not None:
+            def inspect(tree_node):
+                kind = type(tree_node).__name__
+                if kind in ("ConditionalStatement", "ForLoopStatement",
+                            "WhileLoopStatement", "DoWhileLoopStatement",
+                            "RepeatLoopStatement", "ForeachLoopStatement",
+                            "CaseStatement", "CaseInsideStatement",
+                            "CasePatternStatement", "LoopStatement",
+                            "TimedStatement"):
+                    controls.append(getattr(tree_node, "sourceRange", None))
+                    return
+                if (kind != "AssignmentExpression"
+                        or getattr(tree_node, "left", None) is None
+                        or getattr(tree_node.left, "symbol", None) is not symbol):
+                    return
+                start = getattr(getattr(getattr(tree_node, "sourceRange", None),
+                                        "start", None), "offset", -1)
+                if start >= position:
+                    return
+                value = getattr(tree_node, "right", None)
+                while type(value).__name__ == "ConversionExpression":
+                    value = getattr(value, "operand", None)
+                assignments.append((start, value))
+            instance.visit(inspect)
+        for start, value in sorted(assignments):
+            if (any(control is not None
+                    and control.start.offset <= start
+                    and start < control.end.offset
+                    for control in controls)
+                    or getattr(value, "bad", False)
+                    or type(value).__name__ != "StringLiteral"
+                    or not isinstance(getattr(value, "value", None), str)
+                    or any(ord(char) == 0 or ord(char) > 127
+                           for char in value.value)):
+                return None
+            history.append((start, value.value))
+        return max(history, key=lambda item: item[0])[1] if history else None
+    except Exception:
+        return None
+
+
+def _string_transform_value(expression, method, position=None):
+    """Resolve one pure string transformation from direct literal history."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not getattr(expression, "isSystemCall", False)
+                or getattr(expression, "subroutineName", "") != method):
+            return None
+        arguments = list(getattr(expression, "arguments", ()))
+        if method in ("toupper", "tolower"):
+            if len(arguments) != 1:
+                return None
+            receiver = arguments[0]
+            if position is None:
+                position = getattr(getattr(getattr(expression, "sourceRange", None),
+                                           "start", None), "offset", -1)
+            value = _string_literal_history_before(receiver, position)
+            if value is None:
+                return None
+            return value.upper() if method == "toupper" else value.lower()
+        if method == "substr":
+            if len(arguments) != 3:
+                return None
+            receiver = arguments[0]
+            if position is None:
+                position = getattr(getattr(getattr(expression, "sourceRange", None),
+                                           "start", None), "offset", -1)
+            value = _string_literal_history_before(receiver, position)
+            first = _literal_integral_value(arguments[1])
+            last = _literal_integral_value(arguments[2])
+            if value is None or first is None or last is None:
+                return None
+            if first < 0 or last < first or first >= len(value):
+                return ""
+            return value[first:min(last, len(value) - 1) + 1]
+        return None
+    except Exception:
+        return None
+
+
+def _string_transform_history_value(expression, position):
+    """Resolve a named string history containing only literal/transform writes."""
+    try:
+        node = expression
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return None
+        if (type(node).__name__ != "NamedValueExpression"
+                or type(node.type.canonicalType).__name__ != "StringType"):
+            return None
+        symbol = node.symbol
+        initializer = getattr(symbol, "initializer", None)
+        while type(initializer).__name__ == "ConversionExpression":
+            initializer = getattr(initializer, "operand", None)
+        history = []
+        if initializer is not None:
+            if (type(initializer).__name__ != "StringLiteral"
+                    or getattr(initializer, "bad", False)
+                    or not isinstance(getattr(initializer, "value", None), str)
+                    or any(ord(char) == 0 or ord(char) > 127
+                           for char in initializer.value)):
+                return None
+            history.append((-1, initializer.value))
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        assignments = []
+        controls = []
+        if instance is not None:
+            def inspect(tree_node):
+                kind = type(tree_node).__name__
+                if kind in ("ConditionalStatement", "ForLoopStatement",
+                            "WhileLoopStatement", "DoWhileLoopStatement",
+                            "RepeatLoopStatement", "ForeachLoopStatement",
+                            "CaseStatement", "CaseInsideStatement",
+                            "CasePatternStatement", "LoopStatement",
+                            "TimedStatement"):
+                    controls.append(getattr(tree_node, "sourceRange", None))
+                    return
+                if (kind != "AssignmentExpression"
+                        or getattr(tree_node, "left", None) is None
+                        or getattr(tree_node.left, "symbol", None) is not symbol):
+                    return
+                start = getattr(getattr(getattr(tree_node, "sourceRange", None),
+                                        "start", None), "offset", -1)
+                if start >= position:
+                    return
+                if any(control is not None
+                       and control.start.offset <= start
+                       and start < control.end.offset
+                       for control in controls):
+                    assignments.append((start, None, True))
+                    return
+                if (getattr(tree_node, "op", None) is not None
+                        or getattr(tree_node, "timingControl", None) is not None
+                        or getattr(tree_node, "isNonBlocking", False)):
+                    assignments.append((start, None, True))
+                    return
+                value = getattr(tree_node, "right", None)
+                while type(value).__name__ == "ConversionExpression":
+                    value = getattr(value, "operand", None)
+                if (type(value).__name__ == "StringLiteral"
+                        and not getattr(value, "bad", False)
+                        and isinstance(getattr(value, "value", None), str)
+                        and not any(ord(char) == 0 or ord(char) > 127
+                                    for char in value.value)):
+                    assignments.append((start, value.value, False))
+                    return
+                transformed = None
+                if type(value).__name__ == "CallExpression":
+                    method = getattr(value, "subroutineName", "")
+                    if method in ("toupper", "tolower", "substr"):
+                        transformed = _string_transform_value(value, method,
+                                                               start)
+                assignments.append((start, transformed, transformed is None))
+            instance.visit(inspect)
+        for start, value, invalid in sorted(assignments):
+            if invalid:
+                return None
+            history.append((start, value))
+        return max(history, key=lambda item: item[0])[1] if history else None
     except Exception:
         return None
 

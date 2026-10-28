@@ -42,10 +42,21 @@ class StringTransformStatements(unittest.TestCase):
                  if node.get("kind") == "Unsupported"]
         self.assertGreaterEqual(walls.count("ExpressionStatement:CallExpression"), 2)
 
-    def test_value_position_stays_loud(self):
+    def test_literal_case_value_position_is_reconstructed(self):
         source = (
             'module top; string s = "abc"; string out; '
-            'initial begin out = s.toupper(); end endmodule'
+            'initial begin out = s.toupper(); '
+            'if (out == "ABC") $display("PASS"); end endmodule'
+        )
+        design = lower(source)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_dynamic_case_value_position_stays_loud(self):
+        source = (
+            'module top; string s, other, out; '
+            'initial begin other = "abc"; s = other; '
+            'out = s.toupper(); end endmodule'
         )
         design = lower(source)
         self.assertTrue(any(node.get("sv_kind") == "AssignmentExpression:target"

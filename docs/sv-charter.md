@@ -52,6 +52,19 @@ disagreements; grammar coverage remains **218/97/121**. The external corpus
 snapshot remains unavailable, so the committed **5,401 clean / 16,597 partial**
 counts and 67 include skips are unchanged.
 
+## Source-pure string transformation assignments — 2026-10-28
+
+Blocking assignments from `string.toupper()`, `string.tolower()`, and literal
+bounded `string.substr(i, j)` now use the existing ASCII source-history path
+when their receiver has only an earlier direct literal write. The opaque string
+store is erased and later comparisons are folded from the transformed value;
+dynamic, aliased, timed, nonblocking, and non-ASCII histories remain loud.
+
+Differential coverage grows **352/346/0/6 → 354/348/0/6** with no
+disagreements; grammar coverage remains **218/97/121**. The external corpus
+snapshot remains unavailable, so the committed **5,401 clean / 16,597 partial**
+counts and 67 include skips are unchanged.
+
 ## Power self-check differential rows — 2026-10-28
 
 The integral power family is now registered in the executable differential

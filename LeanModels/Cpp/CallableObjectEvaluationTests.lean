@@ -4794,6 +4794,46 @@ def callableLocalDoWhileComputedInitializationStatementFrameWitness : Bool :=
 
 #guard callableLocalDoWhileComputedInitializationStatementFrameWitness
 
+private def localDoWhileComputedInitializationFalseStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .binary "<"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 2, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let localInitializer : Expression :=
+    .binary .add (.read (handle "0x11")) (.literal (signed 1))
+  let body := .block (.sequence
+    (.automatic {
+      statement := .declare (handle "0x13") intType intType localInitializer
+      declarations := [handle "0x13"]})
+    (.sequence
+      (.assign (handle "0x11") {
+        expression := .parameter (handle "0x13")
+        sourceType := intType
+        type := intType})
+      (.compoundAssign "+=" (handle "0x10") {
+        expression := .integer 1
+        sourceType := intType
+        type := intType})))
+  let function := {base with body := .block (.sequence
+    (automaticLiteral "0x11" 3)
+    (.sequence
+      (.doWhile body condition)
+      (.return_ {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType}))) }
+  match evaluateCallableObject 128 .lp64 function [signed 2] with
+  | .ok (.ok value) => value == signed 4
+  | _ => false
+
+def callableLocalDoWhileComputedInitializationFalseStatementFrameWitness : Bool :=
+  localDoWhileComputedInitializationFalseStatementFrame
+
+#guard callableLocalDoWhileComputedInitializationFalseStatementFrameWitness
+
 private def localDoWhileSingleComputedInitializationStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let condition : TypedCallableExpression := {

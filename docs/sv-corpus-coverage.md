@@ -25,6 +25,22 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Source-pure fixed-array continuous copies — 2026-10-28
+
+The legacy extractor now lowers a whole-array continuous assignment from a
+one-dimensional fixed-unpacked variable with a complete literal declaration
+initializer and no later writes. It expands the source snapshot into the
+existing flat destination cells, retaining ordinal correspondence across
+opposite range directions. Mutable, net, sliced, dynamic, timed, and
+nonblocking sources remain at the continuous-driver boundary. The
+`static_fixed_array_continuous_copy` fixture supplies the differential row and
+Lean receipt.
+
+The external sv-tests-2 checkout is unavailable, so the committed census
+remains **5,401 clean / 16,597 partial** over 22,065 paths with 67 include
+skips; no unverified corpus delta is claimed. Differential coverage grows
+**342/336/0/6 → 343/337/0/6**, while grammar coverage remains **218/97/121**.
+
 ## One-dimensional fixed-array `%p` diagnostics — 2026-10-27
 
 Direct one-dimensional fixed integral arrays can now be passed to `%p`

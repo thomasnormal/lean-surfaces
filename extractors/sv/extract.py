@@ -6632,6 +6632,107 @@ def _fixed_array_copy_assignment(sm, expr):
         return None
 
 
+def _fixed_array_static_continuous_copy(sm, expr):
+    """Lower a source-pure whole-array continuous assignment.
+
+    The legacy state has one cell per fixed-unpacked leaf and no aggregate
+    driver object.  A variable array with a complete literal declaration
+    initializer and no later writes is therefore a constant continuous
+    source: expanding the assignment to one time-zero write per destination
+    cell preserves every value the initial-only runner can observe.  Sources
+    without that immutable history, net sources, slices, and nonblocking or
+    timed forms remain on the live continuous-driver boundary.
+    """
+    try:
+        if (_SYM is not None or type(expr).__name__ != "AssignmentExpression"
+                or expr.op is not None or expr.timingControl is not None
+                or expr.isNonBlocking):
+            return None
+        lhs_shape = _fixed_array_shape(expr.left)
+        rhs_shape = _fixed_array_shape(expr.right)
+        if lhs_shape is None or rhs_shape is None:
+            return None
+        lhs_name, lhs_width, lhs_two, lhs_left, lhs_right = lhs_shape
+        rhs_name, rhs_width, _rhs_two, rhs_left, rhs_right = rhs_shape
+        if (lhs_width != rhs_width
+                or abs(lhs_left - lhs_right) != abs(rhs_left - rhs_right)):
+            return None
+
+        source = expr.right
+        while type(source).__name__ == "ConversionExpression":
+            source = getattr(source, "operand", None)
+            if source is None:
+                return None
+        if type(source).__name__ != "NamedValueExpression":
+            return None
+        symbol = getattr(source, "symbol", None)
+        if (symbol is None
+                or str(getattr(symbol, "kind", "")).split(".")[-1]
+                != "Variable"):
+            return None
+        initializer = getattr(symbol, "initializer", None)
+        if initializer is None:
+            return None
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return None
+
+        # The declaration initializer is the only source of the aggregate
+        # snapshot.  Any later assignment to a cell or to the whole array
+        # would require a live continuous driver.
+        invalid_write = False
+        def inspect(node):
+            nonlocal invalid_write
+            if invalid_write or type(node).__name__ != "AssignmentExpression":
+                return
+            left = getattr(node, "left", None)
+            if left is None:
+                return
+            shape = _fixed_array_assignment_shape(left)
+            if shape is not None and shape[0] == rhs_name:
+                invalid_write = True
+                return
+            current = left
+            while type(current).__name__ == "ElementSelectExpression":
+                current = getattr(current, "value", None)
+            if (_storage_expression(current)
+                    and _array_storage_name(current.symbol) == rhs_name):
+                invalid_write = True
+        instance.visit(inspect)
+        if invalid_write:
+            return None
+
+        count = abs(rhs_left - rhs_right) + 1
+        values = _fixed_array_initializer_values(
+            sm, initializer, rhs_name, rhs_width, count)
+        if values is None or len(values) != count or any(v is None for v in values):
+            return None
+        lhs_step = 1 if lhs_right >= lhs_left else -1
+        statements = []
+        for position, value in zip(
+                range(lhs_left, lhs_right + lhs_step, lhs_step), values):
+            if lhs_two:
+                value = squash2_wrap(value, lhs_width)
+            statements.append({
+                "kind": "BlockingAssign",
+                "span": node_span(sm, expr),
+                "target": {"kind": "Ident", "span": node_span(sm, expr.left),
+                           "width": lhs_width,
+                           "name": f"{lhs_name}[{position}]"},
+                "value": value,
+            })
+        return {
+            "kind": "Initial",
+            "span": node_span(sm, expr),
+            "body": {"kind": "Block", "span": node_span(sm, expr),
+                     "stmts": statements},
+            "continuous_fixed_array_copy_lowered": True,
+        }
+    except Exception:
+        return None
+
+
 def _fixed_array_nested_copy_assignment(sm, expr):
     """Lower a whole bounded multidimensional fixed-array copy.
 
@@ -20534,6 +20635,9 @@ def convert_continuous_assign(sm, m):
             "body": {"kind": "Empty", "span": node_span(sm, e)},
             "dynamic_array_continuous_target_rejected": True,
         }
+    static_array_copy = _fixed_array_static_continuous_copy(sm, e)
+    if static_array_copy is not None:
+        return static_array_copy
     streaming = type(e.left).__name__ == "StreamingConcatenationExpression"
     legacy_streaming = _SYM is None and streaming
     symbolic_streaming = _SYM is not None and streaming

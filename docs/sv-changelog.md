@@ -1,5 +1,18 @@
 # SystemVerilog tier changelog
 
+## [0.1.89] — 2026-10-28
+
+Whole-array continuous assignment now admits a one-dimensional fixed-unpacked
+variable source with a complete literal declaration initializer and no later
+writes. The extractor expands that immutable source into ordinal per-cell
+time-zero writes, including opposite source and destination range directions;
+mutable, net, sliced, dynamic, timed, and nonblocking forms remain loud. The
+`static_fixed_array_continuous_copy` fixture and Lean receipt supply the
+`PASS` evidence. Differential coverage is now **343 rows / 337 matches / 0
+disagreements / 6 recorded refusals**; grammar coverage remains **218 / 97 /
+121**. The external census snapshot remains **5,401 clean / 16,597 partial**
+with 67 include skips.
+
 ## [0.1.88] — 2026-10-28
 
 Malformed integral packed-dimension declarations with a direct literal

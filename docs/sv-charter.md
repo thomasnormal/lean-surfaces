@@ -69,6 +69,23 @@ disagreements; grammar coverage remains **218/97/121**. The external corpus
 snapshot remains unavailable, so the committed **5,401 clean / 16,597
 partial** counts and 67 include skips are unchanged.
 
+## Source-pure fixed-array continuous copies — 2026-10-28
+
+The legacy self-check extractor now admits a whole-array continuous assignment
+when its one-dimensional fixed-unpacked variable source has a complete literal
+declaration initializer and no later writes. The aggregate is expanded into
+one time-zero write per destination cell, preserving ordinal correspondence
+even when the source and destination ranges run in opposite directions. A
+mutable source, net source, slice, dynamic array, timed or nonblocking form
+remains loud because those cases need a live continuous-driver state. The
+`static_fixed_array_continuous_copy` fixture supplies the differential `PASS`
+row and Lean receipt.
+
+Differential coverage grows **342/336/0/6 → 343/337/0/6** with no
+disagreements; grammar coverage remains **218/97/121**. The external corpus
+checkout is unavailable, so the committed **5,401 clean / 16,597 partial**
+snapshot and 67 include skips are unchanged.
+
 The executable self-check and grammar baseline is generated in
 [`docs/sv-coverage.md`](sv-coverage.md) by
 `harness/sv_coverage_page.py`; its differential rows are pinned to the

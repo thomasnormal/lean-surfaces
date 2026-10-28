@@ -9,6 +9,23 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Source-pure fixed-array continuous copies — 2026-10-28
+
+An assignment such as `assign driven = source` is admitted when both sides
+are one-dimensional fixed-unpacked integral arrays, the source is a variable
+with a complete literal declaration initializer, and no later assignment
+touches the source array. The extractor snapshots the initializer and emits
+one blocking write per destination cell in ordinal order, so opposite index
+directions still map correctly through the existing flat state. Net sources,
+mutable sources, slices, dynamic arrays, timed forms, and nonblocking forms
+remain `AssignmentExpression:target`; those cases require live continuous
+driver state or a separate aggregate representation.
+
+`static_fixed_array_continuous_copy` supplies the differential `PASS` witness
+and Lean receipt. Differential coverage grows **342/336/0/6 → 343/337/0/6**;
+the unavailable external corpus snapshot remains **5,401 clean / 16,597
+partial** with 67 include skips.
+
 ## Admitted representations
 
 The legacy path admits a whole identifier, a packed bit or part select over an

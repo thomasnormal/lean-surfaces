@@ -26,6 +26,31 @@ def nodes(value):
 
 
 class FixedArrayNetCopy(unittest.TestCase):
+    def test_static_variable_array_source_drives_wire_cells(self):
+        design = lower(
+            "module top; logic [7:0] source [0:1] = '{8'h12, 8'h34}; "
+            "wire [7:0] driven [1:0]; assign driven = source; endmodule")
+        processes = design["modules"][0]["processes"]
+        self.assertEqual([process["kind"] for process in processes], ["Initial"])
+        process = processes[0]
+        self.assertTrue(process.get("continuous_fixed_array_copy_lowered"))
+        self.assertEqual(
+            [stmt["target"]["name"] for stmt in process["body"]["stmts"]],
+            ["driven[1]", "driven[0]"])
+        self.assertEqual(
+            [stmt["value"]["bits"] for stmt in process["body"]["stmts"]],
+            ["00010010", "00110100"])
+
+    def test_mutated_variable_array_source_stays_loud(self):
+        design = lower(
+            "module top; logic [7:0] source [0:1] = '{8'h12, 8'h34}; "
+            "wire [7:0] driven [0:1]; assign driven = source; "
+            "initial source[0] = 8'h55; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") ==
+                            "AssignmentExpression:target"
+                            for node in nodes(design)))
+
     def test_wire_array_source_copies_cells(self):
         design = lower(
             'module top; logic [7:0] value [0:1]; '

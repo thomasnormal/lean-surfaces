@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "static_fixed_array_continuous_copy",
+      "file": "Examples/system-verilog/static_fixed_array_continuous_copy/static_fixed_array_continuous_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "queue_fixed_size_mismatch",
       "file": "Examples/system-verilog/queue_fixed_size_mismatch/queue_fixed_size_mismatch.sv",
       "module": "top",

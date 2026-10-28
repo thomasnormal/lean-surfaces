@@ -42,20 +42,22 @@ class LiteralStringWrites(unittest.TestCase):
 
     def test_literal_sformatf_integral_wrapper_assignment_replays_text(self):
         design = lower(
-            'module top; string decimal, hexa, binary, octal, character; '
+            'module top; string decimal, hexa, binary, octal, character, percent; '
             'initial begin decimal = $sformatf("v=%0d", 8\'d42); '
             'hexa = $sformatf("<%h>", 8\'hAB); '
             'binary = $sformatf("b=%B", 4\'b1010); '
             'octal = $sformatf("o=%0O", 6\'o17); '
             'character = $sformatf("c=%C", 8\'h41); '
+            'percent = $sformatf("load=100%% value=%0d", 7); '
             'if (decimal != "v=42" || hexa != "<ab>" || '
-            'binary != "b=1010" || octal != "o=17" || character != "c=A") '
+            'binary != "b=1010" || octal != "o=17" || character != "c=A" || '
+            'percent != "load=100% value=7") '
             '$display("FAIL"); $display("PASS"); end endmodule')
         self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
                              for node in nodes(design)))
         self.assertEqual(
             sum(node.get("string_source_write_noop", False) for node in nodes(design)),
-            5,
+            6,
         )
 
     def test_literal_sformatf_string_assignment_replays_integral_ascii_codes(self):
@@ -96,8 +98,6 @@ class LiteralStringWrites(unittest.TestCase):
                 'value = $sformatf("v=%0d", x); end endmodule',
                 'module top; string value; initial begin '
                 'value = $sformatf("v=%0d:%0h", 7, 8\'hA); end endmodule',
-                'module top; string value; initial begin '
-                'value = $sformatf("load=100%% value=%0d", 7); end endmodule',
                 'module top; string value; initial begin '
                 'value <= $sformatf("v=%0d", 7); end endmodule'):
             design = lower(source)

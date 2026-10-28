@@ -8160,16 +8160,25 @@ def _sformatf_literal_source_value(expression, position=None):
         fmt = getattr(format_expr, "value", "")
         integral_prefix = ""
         integral_suffix = ""
-        if fmt.count("%") == 1:
+        wrapper_fmt = fmt
+        if fmt.count("%%") == 1:
+            wrapper_fmt = fmt.replace("%%", "\x00", 1)
+        if wrapper_fmt.count("%") == 1:
             for marker in (
                     "%c", "%C", "%b", "%B", "%0b", "%0B",
                     "%o", "%O", "%0o", "%0O", "%d", "%D",
                     "%0d", "%0D", "%h", "%H", "%0h", "%0H"):
-                if marker not in fmt:
+                if marker not in wrapper_fmt:
                     continue
-                prefix, suffix = fmt.split(marker, 1)
-                if (all(0 < ord(char) <= 127 for char in prefix + suffix)
-                        and "%" not in prefix + suffix):
+                raw_prefix, raw_suffix = wrapper_fmt.split(marker, 1)
+                if ("%" in raw_prefix + raw_suffix
+                        or not all(0 < ord(char) <= 127
+                                   for char in raw_prefix + raw_suffix
+                                   if char != "\x00")):
+                    continue
+                prefix = raw_prefix.replace("\x00", "%")
+                suffix = raw_suffix.replace("\x00", "%")
+                if all(0 < ord(char) <= 127 for char in prefix + suffix):
                     integral_prefix, integral_suffix = prefix, suffix
                     fmt = marker
                     break

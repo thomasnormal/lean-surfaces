@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.110] — 2026-10-28
+
+Literal escaped-percent `$sformatf` results with one integral conversion now
+replay exact ASCII text when assigned to strings. Multiple conversions or
+escaped percents, dynamic operands, timed forms, and nonblocking writes remain
+loud. The new fixture and Lean receipt pass; differential coverage grows **366
+rows / 360 matches / 0 disagreements / 6 refusals → 367 / 361 / 0 / 6**, and
+the fresh census moves **5,600 → 5,601 clean / 16,392 → 16,391 partial** with
+`AssignmentExpression:target` at **2,783**.
+
 ## [0.1.109] — 2026-10-28
 
 Integral literal operands of `%s`/`%S` `$sformatf` assignments now replay as

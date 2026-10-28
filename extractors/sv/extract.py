@@ -613,7 +613,9 @@ def is_string_decl(symbol):
 
     A missing initializer or a pure string-literal initializer has no
     observable effect on the time-zero self-check path and can be omitted from
-    the flat state.  Any other initializer remains a value boundary.
+    the flat state.  The source-pure string query calls admitted by
+    ``_string_source_decl_initializer`` are likewise exact for later scalar
+    observations; any other initializer remains a value boundary.
     """
     if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
         return False
@@ -628,10 +630,12 @@ def is_string_decl(symbol):
             return True
         if type(initializer).__name__ == "StringLiteral":
             return not getattr(initializer, "bad", False)
-        return (type(initializer).__name__ == "ConversionExpression"
+        if (type(initializer).__name__ == "ConversionExpression"
                 and type(getattr(initializer, "operand", None)).__name__ == "StringLiteral"
                 and not getattr(initializer, "bad", False)
-                and not getattr(initializer.operand, "bad", False))
+                and not getattr(initializer.operand, "bad", False)):
+            return True
+        return _string_source_decl_initializer(initializer)
     except Exception:
         return False
 
@@ -8316,6 +8320,33 @@ def _string_compare_source_value(operand, position):
         return max(history, key=lambda item: item[0])[1]
     except Exception:
         return None
+
+
+def _string_source_decl_initializer(expression):
+    """Whether a string declaration initializer has an exact source value.
+
+    The flat self-check state has no string slot, so a declaration initializer
+    is erased only for the pure query calls whose ASCII result is replayable by
+    ``_string_source_value``.  A direct named-string copy remains loud even
+    when its current history happens to be literal: admitting that shape would
+    turn the existing opaque-storage boundary into an implicit alias model.
+    """
+    try:
+        node = expression
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return False
+        if type(node).__name__ != "CallExpression":
+            return False
+        method = getattr(node, "subroutineName", "")
+        if method not in ("toupper", "tolower", "substr", "$sformatf", "$typename"):
+            return False
+        position = getattr(getattr(getattr(node, "sourceRange", None),
+                                   "start", None), "offset", None)
+        return position is not None and _string_source_value(node, position) is not None
+    except Exception:
+        return False
 
 
 def _string_source_value(expression, position=None, active=()):

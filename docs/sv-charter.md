@@ -1,5 +1,20 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Source-pure string query declaration initializers — 2026-10-28
+
+Local string declarations now replay exact ASCII results for source-pure
+`toupper()`, `tolower()`, `substr()`, `$sformatf`, and `$typename` query
+initializers. The `string_query_initializers` fixture checks case conversion,
+substring extraction, and formatting through scalar comparisons. Named copies,
+dynamic arguments, effectful histories, and non-ASCII results remain loud.
+
+The fresh **22,065-path** census moves **5,738 → 5,743 clean** and
+**16,260 → 16,255 partial** with 67 include skips. `VariableSymbol:2state`
+falls **2,112 → 2,105**; `AssignmentExpression:target`,
+`ExpressionStatement:CallExpression`, and `CallExpression` remain **2,695**,
+**2,677**, and **2,606**. Differential coverage grows **398/392/0/6 →
+399/393/0/6**; grammar coverage remains **218/100/118**.
+
 ## Source-pure named string concatenation observations — 2026-10-28
 
 The self-check tier now reconstructs source-pure ASCII string values through

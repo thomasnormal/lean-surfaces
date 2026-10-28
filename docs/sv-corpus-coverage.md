@@ -1,5 +1,17 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Source-pure string query declaration initializers — 2026-10-28
+
+The legacy extractor now replays exact ASCII values for local string
+initializers built from source-pure `toupper()`, `tolower()`, `substr()`,
+`$sformatf`, and `$typename` queries. Named copies, dynamic arguments,
+effectful histories, and non-ASCII results remain loud. The
+`string_query_initializers` fixture supplies the differential row and Lean
+receipt. The fresh 22,065-path census moves **5,738 → 5,743 clean / 16,260 →
+16,255 partial** with 67 include skips; `VariableSymbol:2state` falls **2,112 →
+2,105** while the top assignment/call blockers remain **2,695**, **2,677**, and
+**2,606**. Differential coverage grows **398/392/0/6 → 399/393/0/6**.
+
 ## Source-pure named string concatenation observations — 2026-10-28
 
 The legacy extractor now reconstructs source-pure ASCII values from

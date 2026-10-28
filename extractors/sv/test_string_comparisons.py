@@ -48,6 +48,24 @@ class StringComparisons(unittest.TestCase):
                     if node.get("string_source_display")]
         self.assertEqual(len(displays), 1)
 
+    def test_source_pure_string_query_initializers_replay_comparisons(self):
+        design = lower(
+            'module top; initial begin '
+            'string source = "Hello"; '
+            'string upper = source.toupper(); '
+            'string lower = source.tolower(); '
+            'string middle = source.substr(1, 3); '
+            'string formatted = $sformatf("Value: %0d", 42); '
+            'if (upper == "HELLO" && lower == "hello" && '
+            'middle == "ell" && formatted == "Value: 42") '
+            '$display("PASS"); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("string_compare")]
+        self.assertEqual(len(values), 4)
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "VariableSymbol:2state"
+                             for node in nodes(design)))
+
     def test_computed_controlled_and_timed_histories_stay_loud(self):
         for source in (
                 'module top; string a, b; initial begin '

@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.142] — 2026-10-28
+
+Local string declarations now replay exact ASCII values from source-pure
+`toupper()`, `tolower()`, `substr()`, `$sformatf`, and `$typename` query
+initializers. Named copies, dynamic arguments, effectful histories, and
+non-ASCII results remain loud. The `string_query_initializers` fixture,
+extractor regression, differential row, and Lean receipt pass. Differential
+coverage grows **398 rows / 392 matches / 0 disagreements / 6 recorded
+refusals → 399 / 393 / 0 / 6**; the fresh 22,065-path census moves **5,738 →
+5,743 clean / 16,260 → 16,255 partial** and `VariableSymbol:2state` falls
+**2,112 → 2,105**.
+
 ## [0.1.141] — 2026-10-28
 
 Source-pure ASCII string values now replay through multi-operand

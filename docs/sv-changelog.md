@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.44] — 2026-10-28
+
+The SystemVerilog self-check surface now has 372 differential rows: 366
+matches, zero disagreements, and 6 recorded refusals. The grammar census has
+218 pyslang syntax witnesses: 97 MATCH and 121 REFUSE. The 22,059-path
+committed corpus snapshot has 5,602 clean files and 16,390 partial files, with
+67 include skips. The latest rungs cover multiple literal integral
+`$sformatf` conversions and blocking self-aliasing in unpacked structs and
+one-dimensional fixed arrays; nonblocking publication and scheduler-owned
+forms remain loud.
+
 ## [0.1.115] — 2026-10-28
 
 Blocking conditional whole-array assignments with a self-alias branch now

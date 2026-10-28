@@ -20,7 +20,7 @@
    ],
    [
     "ExpressionStatement:CallExpression",
-    2677
+    2675
    ],
    [
     "CallExpression",
@@ -36,7 +36,7 @@
    ],
    [
     "SubroutineSymbol:Subroutine",
-    1469
+    1466
    ],
    [
     "ConcurrentAssertionStatement",
@@ -976,13 +976,13 @@
    ]
   ],
   "by_status": {
-   "clean": 5790,
-   "partial": 16210,
+   "clean": 5791,
+   "partial": 16209,
    "skip_include": 67
   },
   "clean_by_type": {
    "(none)": [
-    526,
+    527,
     1390
    ],
    "compilation": [
@@ -1547,9 +1547,9 @@
     "unlockable": 0
    },
    "chapter-37": {
-    "clean": 175,
+    "clean": 176,
     "error": 0,
-    "partial": 243,
+    "partial": 242,
     "skip_include": 0,
     "total": 418,
     "unlockable": 0

@@ -1,5 +1,22 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Empty input-only task calls — 2026-10-28
+
+An empty automatic task whose formals are all required `input` values now
+lowers to an ordinary `Empty` statement after each actual passes the existing
+pure-expression boundary. The declaration is removed from the legacy runtime
+view because it has no body, timing, diagnostic, state, or copy-out effect.
+Effectful actuals, output/inout/ref or defaulted formals, and nonempty tasks
+remain loud. The `empty_input_task` fixture exercises literal and named pure
+actuals, with extractor regressions, a differential row, and a Lean receipt.
+
+The fresh **22,067-path** census is **5,791 clean / 16,209 partial / 67 include
+skips**, compared with **5,790 / 16,210 / 67** previously;
+`ExpressionStatement:CallExpression` falls **2,677 → 2,675** and
+`SubroutineSymbol:Subroutine` falls **1,469 → 1,466**, while `CallExpression`
+stays at **2,564**. Differential coverage grows **406/400/0/6 → 407/401/0/6**;
+grammar coverage changes **218/100/118 → 218/101/117**.
+
 ## Automatic static implicit function returns — 2026-10-28
 
 An automatic function with input-only formals and one pure literal assignment

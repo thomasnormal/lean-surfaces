@@ -1,5 +1,17 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Empty input-only task calls — 2026-10-28
+
+The legacy extractor now erases calls to empty automatic tasks with required
+input-only formals after checking each actual as a pure expression. Effectful
+actuals, output/inout/ref or defaulted formals, and nonempty tasks remain loud.
+The `empty_input_task` fixture supplies the differential row and Lean receipt.
+The fresh **22,067-path** census is **5,791 clean / 16,209 partial / 67 include
+skips**, versus **5,790 / 16,210 / 67** previously;
+`ExpressionStatement:CallExpression` falls **2,677 → 2,675** and
+`SubroutineSymbol:Subroutine` falls **1,469 → 1,466**, while `CallExpression`
+stays at **2,564**. Differential coverage grows **406/400/0/6 → 407/401/0/6**.
+
 ## Automatic implicit function returns — 2026-10-28
 
 The legacy extractor now lowers pure literal assignments to automatic implicit

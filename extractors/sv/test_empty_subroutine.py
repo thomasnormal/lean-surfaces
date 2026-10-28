@@ -44,10 +44,34 @@ class EmptySubroutineCalls(unittest.TestCase):
         self.assertIn("SubroutineSymbol:Subroutine",
                       [node.get("sv_kind") for node in nodes(design)])
 
-    def test_argumented_empty_subroutine_stays_loud(self):
+    def test_empty_input_task_with_pure_argument_is_inert(self):
         design = lower(
             'module top; task automatic noop(input logic x); endtask '
             'initial begin noop(1\'b0); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+        self.assertEqual([], design["modules"][0]["others"])
+
+    def test_empty_input_task_with_pure_named_argument_is_inert(self):
+        design = lower(
+            'module top; logic x; task automatic noop(input logic y); endtask '
+            'initial begin noop(x); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_empty_input_task_with_effectful_argument_stays_loud(self):
+        design = lower(
+            'module top; logic x; task automatic noop(input logic y); endtask '
+            'initial begin noop($urandom()); end endmodule')
+        self.assertIn("ExpressionStatement:CallExpression",
+                      [node.get("sv_kind") for node in nodes(design)])
+
+    def test_empty_task_with_output_formal_stays_loud(self):
+        design = lower(
+            'module top; task automatic noop(output logic y); endtask '
+            'initial begin logic x; noop(x); end endmodule')
         self.assertIn("SubroutineSymbol:Subroutine",
                       [node.get("sv_kind") for node in nodes(design)])
 

@@ -3676,6 +3676,15 @@
         "PASS2"
       ],
       "expect": "match"
+    },
+    {
+      "name": "empty_input_task",
+      "file": "Examples/system-verilog/empty_input_task/empty_input_task.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -1,5 +1,18 @@
 # SystemVerilog tier changelog
 
+## [0.1.151] — 2026-10-28
+
+Empty automatic tasks with input-only formals now erase at the call site after
+their actuals pass the pure-expression boundary. Effectful actuals, output,
+inout, ref, defaulted, and nonempty task forms remain loud. The
+`empty_input_task` fixture, extractor regressions, differential row, and Lean
+receipt pass. Differential coverage grows **406 rows / 400 matches / 0
+disagreements / 6 recorded refusals → 407 / 401 / 0 / 6**; grammar coverage
+changes **218/100/118 → 218/101/117**. The fresh 22,067-path census moves
+**5,790 → 5,791 clean / 16,210 → 16,209 partial / 67 include skips**;
+`ExpressionStatement:CallExpression` falls **2,677 → 2,675** and
+`SubroutineSymbol:Subroutine` falls **1,469 → 1,466**.
+
 ## [0.1.150] — 2026-10-28
 
 The symbolic `sv-0.2` tier now admits unsigned integral 2-state scalar and

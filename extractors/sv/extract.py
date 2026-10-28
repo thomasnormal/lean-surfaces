@@ -10586,6 +10586,47 @@ def _literal_function_call(expression, *, allow_implicit=False,
         return False
 
 
+def _empty_input_task_call(expression):
+    """Whether a task call has an empty input-only body.
+
+    An empty task with input-only formals has no state, timing, diagnostic, or
+    copy-out effect.  Keep defaulted formals and every output/inout/ref formal
+    loud: evaluating a default or publishing an argument would need a call
+    frame rather than an erased statement.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or getattr(expression, "isSystemCall", False)):
+            return False
+        subroutine = getattr(expression, "subroutine", None)
+        if (str(getattr(subroutine, "subroutineKind", "")).split(".")[-1]
+                != "Task"):
+            return False
+        # Pyslang represents built-in semaphore/mailbox methods as empty task
+        # symbols too.  Their bodies are hidden because the methods carry
+        # state, blocking, or copy-out effects; only source-declared tasks can
+        # be erased by this admission.
+        if getattr(subroutine, "syntax", None) is None:
+            return False
+        if str(getattr(subroutine, "flags", "")).split(".")[-1] != "None_":
+            return False
+        formals = list(getattr(subroutine, "arguments", []))
+        actuals = list(getattr(expression, "arguments", []))
+        if len(formals) != len(actuals):
+            return False
+        if any(str(getattr(formal, "direction", "")).split(".")[-1] != "In"
+               or getattr(formal, "initializer", None) is not None
+               for formal in formals):
+            return False
+        body = getattr(subroutine, "body", None)
+        body_list = (list(body.list)
+                     if type(body).__name__ == "StatementList" else None)
+        return body_list == []
+    except Exception:
+        return False
+
+
 def _literal_real_decimal(expression):
     """Read a source-real literal without going through binary ``float``.
 
@@ -21943,6 +21984,20 @@ def _convert_syscall(sm, s, e):
             return {"kind": "Empty", "span": node_span(sm, s),
                     "array_reduction_statement": name}
     if not is_sys:
+        if _empty_input_task_call(e):
+            # Input-only empty tasks have no represented result or effect.
+            # Evaluate their actuals through the ordinary pure expression
+            # boundary before erasing the call; output/inout/ref and defaulted
+            # formals stay on the callable-frame boundary.
+            converted = [convert_expr(sm, argument)
+                         for argument in getattr(e, "arguments", [])]
+            if all(value is not None
+                   and value.get("kind") != "Unsupported"
+                   and _case_expression_ok(value)
+                   and _case_source_expression_ok(argument)
+                   for argument, value in zip(e.arguments, converted)):
+                return {"kind": "Empty", "span": node_span(sm, s),
+                        "empty_input_task_call": e.subroutineName}
         if _semaphore_zero_method(e):
             # A zero-key semaphore method has no represented state effect;
             # retain the call's sequencing position as an ordinary no-op.
@@ -24360,8 +24415,17 @@ def convert_module(sm, inst):
                 formal_args = list(getattr(m, "arguments", []))
                 body_list = (list(body.list)
                              if type(body).__name__ == "StatementList" else None)
-                if (formal_args == [] and body_list == []) or \
-                        _literal_function_symbol(m):
+                empty_input_task = (
+                    str(getattr(m, "subroutineKind", "")).split(".")[-1]
+                    == "Task"
+                    and body_list == []
+                    and all(
+                        str(getattr(argument, "direction", "")).split(".")[-1]
+                        == "In"
+                        and getattr(argument, "initializer", None) is None
+                        for argument in formal_args))
+                if (formal_args == [] and body_list == []) \
+                        or empty_input_task or _literal_function_symbol(m):
                     # The declaration has no runtime node at all; keeping an
                     # Empty in Module.others would make the self-check runner
                     # classify it as a non-initial process.

@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 406 | 400 | 0 | 6 | sv-tests-2 declarations |
+| 407 | 401 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -420,6 +420,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `typename_event_declaration` | `Examples/system-verilog/typename_event_declaration/typename_event_declaration.sv` | match | **MATCH** | `ok` | MATCH |
 | `implicit_function_return` | `Examples/system-verilog/implicit_function_return/implicit_function_return.sv` | match | **MATCH** | `ok` | MATCH |
 | `automatic_implicit_function_return` | `Examples/system-verilog/automatic_implicit_function_return/automatic_implicit_function_return.sv` | match | **MATCH** | `ok` | MATCH |
+| `empty_input_task` | `Examples/system-verilog/empty_input_task/empty_input_task.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -427,7 +428,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 218 | 100 | 118 | pyslang SyntaxKind |
+| 218 | 101 | 117 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -506,7 +507,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ForeachLoopStatement` | `Examples/system-verilog/foreach/indices.sv` | **REFUSE** | `unsupported` unsupported expression 'ElementSelectExpression:source-type' |
 | `SyntaxKind.ForeverStatement` | `Examples/system-verilog/forever_loops/timers.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.FunctionDeclaration` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
-| `SyntaxKind.FunctionPort` | `Examples/system-verilog/let_expressions/call.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
+| `SyntaxKind.FunctionPort` | `Examples/system-verilog/empty_input_task/empty_input_task.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.FunctionPortList` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
 | `SyntaxKind.FunctionPrototype` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
 | `SyntaxKind.GenerateBlock` | `Examples/system-verilog/elaborated_generate/captures.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
@@ -618,7 +619,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.SubtractAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.SubtractExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.SystemName` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
-| `SyntaxKind.TaskDeclaration` | `Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.TaskDeclaration` | `Examples/system-verilog/empty_input_task/empty_input_task.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.TimeType` | `Examples/system-verilog/fixed_array_struct_pattern/fixed_array_struct_pattern.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.TimeUnitsDeclaration` | `Examples/system-verilog/intra_assignment/capture.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.TimingControlExpression` | `Examples/system-verilog/elaborated_generate/captures.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
@@ -656,16 +657,16 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22067 | 5790 | 16210 | 67 |
+| 22067 | 5791 | 16209 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2694 |
-| `ExpressionStatement:CallExpression` | 2677 |
+| `ExpressionStatement:CallExpression` | 2675 |
 | `CallExpression` | 2564 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2101 |
-| `SubroutineSymbol:Subroutine` | 1469 |
+| `SubroutineSymbol:Subroutine` | 1466 |
 | `ConcurrentAssertionStatement` | 1359 |
 | `InvalidStatement` | 1330 |
 | `ClassType` | 1330 |

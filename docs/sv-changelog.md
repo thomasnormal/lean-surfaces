@@ -1,5 +1,18 @@
 # SystemVerilog tier changelog
 
+## [0.1.88] — 2026-10-28
+
+Malformed integral packed-dimension declarations with a direct literal
+initializer now follow the same compile-time rejection path as uninitialized
+declarations. The initializer is recovered only from the declaration spelling
+when pyslang has replaced it with `InvalidExpression`; calls and other
+effectful initializers remain loud. The `invalid_packed_dimension_literal`
+fixture and Lean receipt supply the `PASS` evidence. Differential coverage is
+now **342 rows / 336 matches / 0 disagreements / 6 recorded refusals**;
+grammar coverage remains **218 / 97 / 121**. The external census snapshot is
+still unavailable in this checkout and remains **5,401 clean / 16,597 partial**
+with 67 include skips.
+
 ## [0.1.87] — 2026-10-28
 
 Declaration-only integral variables whose packed dimension is rejected during

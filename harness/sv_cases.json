@@ -3073,6 +3073,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "invalid_packed_dimension_literal",
+      "file": "Examples/system-verilog/invalid_packed_dimension_literal/invalid_packed_dimension_literal.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

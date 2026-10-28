@@ -55,6 +55,20 @@ disagreements; grammar coverage remains **218/97/121**. The external
 22,065-file corpus is unavailable in this checkout, so its prior census
 **5,401 clean / 16,597 partial** snapshot and 67 include skips are retained.
 
+## Literal-initialized invalid packed dimensions — 2026-10-28
+
+The same compile-time declaration admission now covers a direct integral
+literal initializer. Pyslang exposes the initializer as `InvalidExpression`
+because the type is already rejected, so the extractor checks the original
+declaration spelling before erasing it. Calls and other effectful
+initializers remain loud. The `invalid_packed_dimension_literal` fixture adds
+the differential `PASS` row and Lean receipt.
+
+Differential coverage grows **341/335/0/6 → 342/336/0/6** with no
+disagreements; grammar coverage remains **218/97/121**. The external corpus
+snapshot remains unavailable, so the committed **5,401 clean / 16,597
+partial** counts and 67 include skips are unchanged.
+
 The executable self-check and grammar baseline is generated in
 [`docs/sv-coverage.md`](sv-coverage.md) by
 `harness/sv_coverage_page.py`; its differential rows are pinned to the

@@ -711,17 +711,42 @@ def is_invalid_packed_dimension_decl(symbol):
     Slang represents declarations such as ``bit [3] x`` and ``bit [3:x] x``
     with an ``ErrorType`` and reports the compile-time diagnostic on the
     declaration.  There is no legal object to initialize or execute in this
-    case.  Keep the admission narrow: only an uninitialized variable whose
-    declared type is an integer type syntax containing a packed dimension is
-    erased.  Ordinary 2-state values and every expression/use of the bad
-    declaration continue to be reported by their existing walls.
+    case.  Keep the admission narrow: only a variable whose declared type is
+    an integer type syntax containing a packed dimension and whose initializer
+    is absent or a direct integral literal is erased.  Ordinary 2-state values
+    and every expression/use of the bad declaration continue to be reported by
+    their existing walls.
     """
     if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
         return False
     try:
-        if (type(symbol.type.canonicalType).__name__ != "ErrorType"
-                or getattr(symbol, "initializer", None) is not None):
+        if type(symbol.type.canonicalType).__name__ != "ErrorType":
             return False
+        initializer = getattr(symbol, "initializer", None)
+        if initializer is not None:
+            while type(initializer).__name__ == "ConversionExpression":
+                initializer = getattr(initializer, "operand", None)
+            literal = (type(initializer).__name__ in
+                       ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral")
+                       and not getattr(initializer, "bad", False))
+            if not literal and type(initializer).__name__ == "InvalidExpression":
+                # An invalid type causes slang to replace even a literal
+                # initializer with InvalidExpression. Recover only the
+                # declaration spelling, and only for a direct integral
+                # literal; calls and other effects stay loud.
+                parent = getattr(getattr(symbol, "syntax", None), "parent", None)
+                start = getattr(getattr(getattr(parent, "sourceRange", None),
+                                        "start", None), "offset", None)
+                end = getattr(getattr(getattr(parent, "sourceRange", None),
+                                      "end", None), "offset", None)
+                spelling = (_SOURCE_BYTES[start:end].decode("utf-8", errors="replace")
+                            if _SOURCE_BYTES is not None and start is not None
+                            and end is not None else "")
+                literal = bool(re.search(
+                    r"=\s*(?:\d+|'[01xXzZ?]+|\d+['sSbBoOdDhHxXzZ][0-9a-fA-F_xXzZ?]*)\s*;",
+                    spelling))
+            if not literal:
+                return False
         declared = getattr(getattr(symbol, "declaredType", None),
                            "typeSyntax", None)
         if type(declared).__name__ != "IntegerTypeSyntax":

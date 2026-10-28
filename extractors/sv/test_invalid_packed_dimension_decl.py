@@ -48,9 +48,16 @@ class InvalidPackedDimensionDeclarations(unittest.TestCase):
                             and node.get("name") == "value"
                             for node in nodes(design)))
 
-    def test_invalid_initializer_is_not_erased(self):
+    def test_literal_initializer_is_also_inert_after_rejection(self):
         design = lower(
             'module top; bit [3:x] bad_range = 1\'b0; endmodule')
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_effectful_initializer_is_not_erased(self):
+        design = lower(
+            'module top; bit [3:x] bad_range = f(); '
+            'function bit f(); return 1\'b0; endfunction endmodule')
         self.assertTrue(any(node.get("sv_kind") == "VariableSymbol:2state"
                             for node in nodes(design)))
 

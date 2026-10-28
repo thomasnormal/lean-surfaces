@@ -1,5 +1,13 @@
 # SystemVerilog tier changelog
 
+## [0.1.162] — 2026-10-28
+
+Discarded pure floating math calls now lower through the existing source-
+purity boundary. `$sqrt`, `$pow`, `$sin`, and nested pure calls are admitted;
+effectful, timed, unsupported, and value-position forms remain loud. The
+`discarded_pure_floating_math` fixture, extractor regressions, generated
+envelope, Lean receipt, and differential row cover the change.
+
 ## [0.1.161] — 2026-10-28
 
 Discarded `$itor`, `$bitstoreal`, and `$bitstoshortreal` calls now admit

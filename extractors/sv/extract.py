@@ -12324,6 +12324,27 @@ def _floating_pure_call(expr):
         return False
 
 
+def _floating_math_statement_call(expression):
+    """Whether a discarded real math call has only source-pure operands."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName not in _PURE_FLOATING_CALLS):
+            return False
+        # Conversion calls have their own exact-width and source checks below;
+        # keep this marker for the mathematical calls only so their narrower
+        # boundaries remain visible in the envelope.
+        if expression.subroutineName in (
+                "$itor", "$bitstoreal", "$bitstoshortreal"):
+            return False
+        if type(expression.type.canonicalType).__name__ != "FloatingType":
+            return False
+        return _floating_pure_call(expression)
+    except Exception:
+        return False
+
+
 def _null_literal(expr):
     """Whether pyslang's conversion shell contains the null literal."""
     node = expr
@@ -22374,6 +22395,13 @@ def _convert_syscall(sm, s, e):
             # outside this boundary.
             return {"kind": "Empty", "span": node_span(sm, s),
                     "floating_string_atoreal_statement": name}
+        if _floating_math_statement_call(e):
+            # A pure mathematical result is opaque and discarded. Reuse the
+            # real-write purity walk so nested math calls and literal/read-only
+            # operands are admitted while updates, timing, and unsupported
+            # argument expressions remain loud.
+            return {"kind": "Empty", "span": node_span(sm, s),
+                    "floating_math_statement": name}
     if is_sys and _event_triggered_false(e):
         # Before any trigger, an untouched event's one-bit ``triggered`` query
         # is exactly false. Reuse the value converter's event-history check

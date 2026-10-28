@@ -98,6 +98,36 @@ class FloatingLocalDeclarations(unittest.TestCase):
         self.assertIn("AssignmentExpression:target",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_discarded_pure_math_call_is_inert(self):
+        design = lower(
+            'module top; initial begin $sqrt(16.0); $pow(2.0, 3.0); '
+            '$display("PASS"); end endmodule')
+        self.assertEqual(
+            {node.get("floating_math_statement") for node in nodes(design)
+             if node.get("floating_math_statement")},
+            {"$sqrt", "$pow"})
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_discarded_nested_pure_math_call_is_inert(self):
+        design = lower(
+            'module top; initial begin $sin($sqrt(4.0)); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("floating_math_statement") == "$sin"
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_discarded_effectful_math_call_stays_loud(self):
+        design = lower(
+            'module top; int index; initial begin $sqrt(index++); '
+            '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
     def test_time_zero_realtime_write_is_inert(self):
         design = lower(
             'module top; real value; initial begin value = $realtime; '

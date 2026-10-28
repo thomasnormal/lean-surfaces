@@ -10521,3 +10521,12 @@ aggregates, and value-position calls remain loud. The
 acceptance evidence. Differential coverage grows **415/409/0/6 →
 416/410/0/6** with no disagreements, and grammar coverage grows
 **218/106/112 → 218/107/111**.
+
+## Discarded pure floating math — 2026-10-28
+
+The legacy self-check tier admits discarded calls in the pure IEEE floating
+math family. It reuses the established operand purity checker, so literals,
+read-only names, and nested math calls have no represented state after their
+opaque real result is discarded. Effectful, timed, unsupported, and
+value-position forms remain loud. The `discarded_pure_floating_math` fixture
+is the acceptance witness.

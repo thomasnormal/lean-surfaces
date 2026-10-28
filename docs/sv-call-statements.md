@@ -444,3 +444,11 @@ unsupported expressions, and wrong-width sources remain loud. The
 transcript and receipt. Differential coverage grows **415/409/0/6 →
 416/410/0/6** with no disagreements, and grammar coverage grows
 **218/106/112 → 218/107/111**.
+
+## Discarded pure floating math — 2026-10-28
+
+Discarded real-valued math calls such as `$sqrt`, `$pow`, and `$sin` now use
+the existing source-purity walk and lower to an inert statement when every
+operand is read-only or literal. Nested pure math calls are included; updates,
+timing, unsupported operands, and value-position calls remain loud. The
+`discarded_pure_floating_math` fixture supplies the transcript and receipt.

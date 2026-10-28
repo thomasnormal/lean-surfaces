@@ -3766,6 +3766,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "discarded_pure_floating_math",
+      "file": "Examples/system-verilog/discarded_pure_floating_math/discarded_pure_floating_math.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

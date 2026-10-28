@@ -11110,7 +11110,8 @@ def _convert_legacy_call(sm, expression):
         # names, operators, nested calls, and multi-statement bodies remain
         # ordinary unsupported calls rather than silently erasing effects.
         if (_SYM is None and not opaque_method_call
-                and _literal_function_call(expression, allow_implicit=True)):
+                and _literal_function_call(
+                    expression, allow_implicit=True, allow_automatic=True)):
             returned = _literal_function_result(subroutine)
             if (returned is not None and _literal_function_return(returned)
                     and _case_source_expression_ok(returned)):
@@ -22035,7 +22036,8 @@ def _convert_syscall(sm, s, e):
         # the expression-position recognizer so statement and value calls
         # share exactly the same narrow literal boundary.
         if (_SYM is None and subroutine is not None and kind == "Function"
-                and _literal_function_call(e, allow_implicit=True)):
+                and _literal_function_call(
+                    e, allow_implicit=True, allow_automatic=True)):
             return {"kind": "Empty", "span": node_span(sm, s),
                     "literal_function_statement": name}
     if is_sys and _dynamic_array_literal_size_method(e):

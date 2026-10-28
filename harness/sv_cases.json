@@ -3666,6 +3666,16 @@
         "PASS2"
       ],
       "expect": "match"
+    },
+    {
+      "name": "automatic_implicit_function_return",
+      "file": "Examples/system-verilog/automatic_implicit_function_return/automatic_implicit_function_return.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "PASS2"
+      ],
+      "expect": "match"
     }
   ]
 }

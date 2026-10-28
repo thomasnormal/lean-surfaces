@@ -1,5 +1,20 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Automatic static implicit function returns — 2026-10-28
+
+An automatic function with input-only formals and one pure literal assignment
+to its implicit scalar return variable now lowers exactly at value and
+discarded-call sites. Automatic functions with reads, effects, output formals,
+or nonliteral histories remain loud. The
+`automatic_implicit_function_return` fixture exercises both an untyped implicit
+`logic` return and an explicitly typed automatic return, with extractor
+regression, differential row, and Lean receipt.
+
+The fresh **22,067-path** census is **5,790 clean / 16,210 partial / 67 include
+skips**, compared with **5,789 / 16,211 / 67** for the previous snapshot;
+`CallExpression` falls **2,565 → 2,564**. Differential coverage grows
+**405/399/0/6 → 406/400/0/6**; grammar coverage remains **218/100/118**.
+
 ## Static implicit function returns — 2026-10-28
 
 A static function with one pure literal assignment to its implicit return

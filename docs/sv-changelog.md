@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.149] — 2026-10-28
+
+Automatic functions with a single pure literal assignment to their implicit
+scalar return variable now lower at the call site, including discarded calls.
+Effectful bodies, nonliteral histories, and output or aliasing formals remain
+loud. The `automatic_implicit_function_return` fixture, extractor regressions,
+differential row, and Lean receipt pass. Differential coverage grows **405 rows
+/ 399 matches / 0 disagreements / 6 recorded refusals → 406 / 400 / 0 / 6**.
+The fresh 22,067-path census moves **5,789 → 5,790 clean / 16,211 → 16,210
+partial / 67 include skips**; `CallExpression` falls **2,565 → 2,564**.
+
 ## [0.1.148] — 2026-10-28
 
 Static functions with a single literal assignment to their implicit return

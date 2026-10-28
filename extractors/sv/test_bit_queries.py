@@ -244,7 +244,12 @@ class FixedBitQueries(unittest.TestCase):
         self.assert_query_refused(query_source("$ln(subject)",
                                               "logic [7:0] subject; "))
         declarations = "function automatic int fixed_value(); fixed_value=4; endfunction "
-        self.assert_query_refused(query_source("fixed_value()", declarations))
+        design = lower(query_source("fixed_value()", declarations))
+        values = [node for node in nodes(design)
+                  if node.get("literal_function_return")]
+        self.assertEqual([int(node["bits"], 2) for node in values], [4])
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
 
     def test_constant_clog2_is_folded_to_signed_int(self):
         source = ("module top; logic [31:0] a, b, c, d, e; "

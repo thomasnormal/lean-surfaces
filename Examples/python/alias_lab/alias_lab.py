@@ -76,3 +76,8 @@ def all_alias(values):
     f = all
     return f(values)
 
+
+def any_alias(values):
+    f = any
+    return f(values)
+

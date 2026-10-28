@@ -6069,3 +6069,23 @@ shadowing it, and general first-class callable forms remain loud.
 DECIDED: admit only the immediate local `all` alias call; retain loud failure
 for returned or general first-class callable values. Rebase and publish this
 item after the full measurements, then reread the inbox before the next gap.
+
+## 2026-10-28-pycomplete-174 — admit the immediate local `any` alias
+
+The local-builtin alias rewrite now includes `any`: `f = any; return
+f(values)` lowers to the existing short-circuit truth scan. Mixed, empty, and
+all-false Boolean iterables preserve their current results. Returning `any`,
+shadowing it, and general first-class callable forms remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 3 cases: 0 failed, 3 matched on both interpreters |
+| Full executable differential | 3,722 cases: 0 failed, 44 whitelisted refusals, 3,678 matched |
+| Full proof differential | 3,722 cases: 0 failed, 153 refusals, 3,569 matched |
+| Lean runner build | `lake build leanmodels-run` passed |
+| Focused surface | three `#py_check` rows passed with `LeanModels.Python.Surface` |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `any` alias call; retain loud failure
+for returned or general first-class callable values. Rebase and publish this
+item after the full measurements, then reread the inbox before the next gap.

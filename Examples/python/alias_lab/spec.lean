@@ -67,6 +67,9 @@ load_program alias_lab from "Examples/python/alias_lab/alias_lab.json"
 #py_check alias_lab.int_alias("12") = 12
 #py_check alias_lab.float_alias("1.5") = Float64.ofBits 0x3ff8000000000000
 #py_check alias_lab.all_alias(Val.list #[.bool true, .bool false]) = false
+#py_check alias_lab.any_alias(Val.list #[.bool false, .bool true]) = true
+#py_check alias_lab.any_alias(Val.list #[]) = false
+#py_check alias_lab.any_alias(Val.list #[.bool false, .bool false]) = false
 
 /-! ### the alias is NOT a value (the refusal direction, unchanged) -/
 

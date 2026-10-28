@@ -793,6 +793,7 @@
   {"file": "Examples/python/alias_lab/alias_lab.py", "function": "pow_alias", "args": [[2, 10], [5, 0]], "expect": "match", "note": "The exact local-alias-then-call shape lowers to the admitted pow builtin."},
   {"file": "Examples/python/alias_lab/alias_lab.py", "function": "round_alias", "args": [[7], [true]], "expect": "match", "note": "The exact local-alias-then-call shape lowers to the admitted round builtin."},
   {"file": "Examples/python/alias_lab/alias_lab.py", "function": "ascii_alias", "args": [[3], [{"t": "str", "v": "héllo"}]], "expect": "match", "note": "The exact local-alias-then-call shape lowers to the admitted ascii builtin."},
+  {"file": "Examples/python/alias_lab/alias_lab.py", "function": "hex_alias", "args": [[15], [-16]], "expect": "match", "note": "The exact local-alias-then-call shape lowers to the admitted hex builtin."},
   {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_at", "args": [[0, 9], [1, 9], [3, 9], [100, 9], [-1, 9], [-3, 9], [-100, 9], [{"t": "bool", "v": true}, 9], [2, {"t": "str", "v": "m"}]], "expect": "match"},
   {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_empty", "args": [[7], [{"t": "str", "v": "only"}]], "expect": "match"},
   {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_alias", "args": [[5], [0]], "expect": "match"},

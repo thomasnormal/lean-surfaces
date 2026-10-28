@@ -126,3 +126,8 @@ def ascii_alias(value):
     f = ascii
     return f(value)
 
+
+def hex_alias(value):
+    f = hex
+    return f(value)
+

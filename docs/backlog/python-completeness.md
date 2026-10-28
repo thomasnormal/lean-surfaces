@@ -6272,3 +6272,23 @@ shadowing it, and general first-class callable forms remain loud.
 DECIDED: admit only the immediate local `ascii` alias call; retain loud failure
 for returned or general first-class callable values. Rebase and publish this
 item after the full measurements, then reread the inbox before the next gap.
+
+## 2026-10-28-pycomplete-184 — admit the immediate local `hex` alias
+
+The local-builtin alias rewrite now includes `hex`: `f = hex; return f(value)`
+lowers to the existing integer hexadecimal renderer. Positive and negative
+integer inputs preserve their current results. Returning `hex`, shadowing it,
+and general first-class callable forms remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 2 cases: 0 failed, 2 matched on both interpreters |
+| Full executable differential | 3,744 cases: 0 failed, 44 whitelisted refusals, 3,700 matched |
+| Full proof differential | 3,744 cases: 0 failed, 153 refusals, 3,591 matched |
+| Lean runner build | `lake build leanmodels-run` passed |
+| Coverage freshness | `python3 harness/coverage_page.py` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `hex` alias call; retain loud failure
+for returned or general first-class callable values. Rebase and publish this
+item after the full measurements, then reread the inbox before the next gap.

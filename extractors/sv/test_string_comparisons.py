@@ -66,6 +66,20 @@ class StringComparisons(unittest.TestCase):
                              "VariableSymbol:2state"
                              for node in nodes(design)))
 
+    def test_source_pure_string_query_observations_replay_len_and_substr(self):
+        design = lower(
+            'module top; initial begin '
+            'string source = "Hello"; string type_name; '
+            'type_name = $typename(int); '
+            'if (source.len() == 5 && source.substr(1, 3) == "ell" && '
+            'type_name.len() == 3 && type_name.substr(0, 2) == "int") '
+            '$display("PASS"); end endmodule')
+        values = [node for node in nodes(design)
+                  if node.get("string_compare")]
+        self.assertEqual(len(values), 2)
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
     def test_computed_controlled_and_timed_histories_stay_loud(self):
         for source in (
                 'module top; string a, b; initial begin '

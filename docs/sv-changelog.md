@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.143] — 2026-10-28
+
+Direct scalar `.len()` and `.substr()` observations now replay exact ASCII
+values from literal and source-pure string query histories. Direct named-string
+copies, dynamic or effectful histories, and non-ASCII values remain loud. The
+`string_query_observations` fixture, extractor regression, differential row,
+and Lean receipt pass. Differential coverage grows **399 rows / 393 matches /
+0 disagreements / 6 recorded refusals → 400 / 394 / 0 / 6**; the fresh
+22,065-path census moves **5,743 → 5,779 clean / 16,255 → 16,219 partial**,
+with `CallExpression` falling **2,606 → 2,572**.
+
 ## [0.1.142] — 2026-10-28
 
 Local string declarations now replay exact ASCII values from source-pure

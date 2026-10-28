@@ -1,5 +1,20 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Source-pure string query observations — 2026-10-28
+
+Direct scalar `.len()` and `.substr()` observations now replay exact ASCII
+values from literal and source-pure string query histories. Direct named-string
+copies, dynamic or effectful histories, and non-ASCII values remain loud. The
+`string_query_observations` fixture exercises both queries on a literal and a
+`$typename` history, with extractor regression, differential row, and Lean
+receipt.
+
+The fresh **22,065-path** census moves **5,743 → 5,779 clean** and
+**16,255 → 16,219 partial** with 67 include skips. `CallExpression` falls
+**2,606 → 2,572** and `AssignmentExpression:target` falls **2,695 → 2,694**;
+`ExpressionStatement:CallExpression` remains **2,677**. Differential coverage
+grows **399/393/0/6 → 400/394/0/6**; grammar coverage remains **218/100/118**.
+
 ## Source-pure string query declaration initializers — 2026-10-28
 
 Local string declarations now replay exact ASCII results for source-pure

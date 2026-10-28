@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 399 | 393 | 0 | 6 | sv-tests-2 declarations |
+| 400 | 394 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -396,6 +396,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `typename_comparison` | `Examples/system-verilog/typename_comparison/typename_comparison.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_concat_comparison` | `Examples/system-verilog/string_concat_comparison/string_concat_comparison.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_query_initializers` | `Examples/system-verilog/string_query_initializers/string_query_initializers.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_query_observations` | `Examples/system-verilog/string_query_observations/string_query_observations.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_scope_assignment` | `Examples/system-verilog/string_sformatf_scope_assignment/string_sformatf_scope_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_scope_wrapper_assignment` | `Examples/system-verilog/string_sformatf_scope_wrapper_assignment/string_sformatf_scope_wrapper_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_putc_history` | `Examples/system-verilog/string_putc_history/string_putc_history.sv` | match | **MATCH** | `ok` | MATCH |
@@ -649,20 +650,20 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22065 | 5743 | 16255 | 67 |
+| 22065 | 5779 | 16219 | 67 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 2695 |
+| `AssignmentExpression:target` | 2694 |
 | `ExpressionStatement:CallExpression` | 2677 |
-| `CallExpression` | 2606 |
+| `CallExpression` | 2572 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2105 |
 | `SubroutineSymbol:Subroutine` | 1469 |
 | `ConcurrentAssertionStatement` | 1359 |
 | `InvalidStatement` | 1330 |
 | `ClassType` | 1330 |
-| `NamedValueExpression:2state` | 1269 |
+| `NamedValueExpression:2state` | 1270 |
 | `Hierarchy:module-kind` | 1250 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1154 |
 | `MemberAccessExpression` | 1018 |

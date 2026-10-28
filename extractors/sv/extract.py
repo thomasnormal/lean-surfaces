@@ -8349,6 +8349,28 @@ def _string_source_decl_initializer(expression):
         return False
 
 
+def _string_source_assignment_value(expression, position, active=()):
+    """Resolve an assignment RHS while preserving the direct-copy boundary.
+
+    A source-pure query call can produce an exact string result, but a direct
+    ``dst = src`` write would require representing string aliasing in the
+    flat self-check state.  Keep that shape loud even when ``src`` currently
+    has a replayable literal history.
+    """
+    try:
+        node = expression
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return None
+        if (type(node).__name__ == "NamedValueExpression"
+                and type(node.type.canonicalType).__name__ == "StringType"):
+            return None
+        return _string_source_value(node, position, active)
+    except Exception:
+        return None
+
+
 def _string_source_value(expression, position=None, active=()):
     """Resolve a source-pure ASCII string expression at one source position.
 
@@ -8407,7 +8429,7 @@ def _string_source_value(expression, position=None, active=()):
             if marker in active:
                 return None
             initializer = getattr(symbol, "initializer", None)
-            initial_value = _string_source_value(
+            initial_value = _string_source_assignment_value(
                 initializer, position, active + (marker,)) \
                 if initializer is not None else None
             if initializer is not None and initial_value is None:
@@ -8437,7 +8459,7 @@ def _string_source_value(expression, position=None, active=()):
                                 or getattr(tree_node, "isNonBlocking", False)):
                             assignments.append((start, None, True))
                             return
-                        value = _string_source_value(
+                        value = _string_source_assignment_value(
                             getattr(tree_node, "right", None), start,
                             active + (marker,))
                         assignments.append((start, value, value is None))
@@ -8579,7 +8601,7 @@ def _string_transform_value(expression, method, position=None):
             if position is None:
                 position = getattr(getattr(getattr(expression, "sourceRange", None),
                                            "start", None), "offset", -1)
-            value = _string_literal_history_before(receiver, position)
+            value = _string_source_value(receiver, position)
             if value is None:
                 return None
             return value.upper() if method == "toupper" else value.lower()
@@ -8590,7 +8612,7 @@ def _string_transform_value(expression, method, position=None):
             if position is None:
                 position = getattr(getattr(getattr(expression, "sourceRange", None),
                                            "start", None), "offset", -1)
-            value = _string_literal_history_before(receiver, position)
+            value = _string_source_value(receiver, position)
             first = _literal_integral_value(arguments[1])
             last = _literal_integral_value(arguments[2])
             if value is None or first is None or last is None:
@@ -9372,12 +9394,17 @@ def _convert_string_compare(sm, expression, sym):
             node = getattr(node, "operand", None)
             if node is None:
                 return False
+        if type(node).__name__ == "CallExpression":
+            if not getattr(node, "isSystemCall", False):
+                return False
+            method = getattr(node, "subroutineName", "")
+            arity = len(getattr(node, "arguments", ()))
+            valid_arity = ((method in ("toupper", "tolower", "$typename")
+                            and arity == 1)
+                           or (method == "substr" and arity == 3)
+                           or (method == "$sformatf" and arity >= 1))
+            return valid_arity
         return (type(node).__name__ == "StringLiteral"
-                or (type(node).__name__ == "CallExpression"
-                    and getattr(node, "isSystemCall", False)
-                    and getattr(node, "subroutineName", "") in
-                        ("toupper", "tolower", "$typename")
-                    and len(getattr(node, "arguments", ())) == 1)
                 or (type(node).__name__ == "NamedValueExpression"
                     and type(node.type.canonicalType).__name__ == "StringType"))
 
@@ -17311,12 +17338,7 @@ def _string_literal_len_method(expression):
         if type(receiver.type.canonicalType).__name__ != "StringType":
             return False
         symbol = receiver.symbol
-        initializer = getattr(symbol, "initializer", None)
-        while type(initializer).__name__ == "ConversionExpression":
-            initializer = getattr(initializer, "operand", None)
-        initial_value = (getattr(initializer, "value", None)
-                         if type(initializer).__name__ == "StringLiteral"
-                         and not getattr(initializer, "bad", False) else None)
+        initial_value = _string_literal_initial_value(symbol)
         if (initial_value is not None and
                 (not isinstance(initial_value, str)
                  or any(ord(char) == 0 or ord(char) > 127 for char in initial_value))):
@@ -17333,23 +17355,10 @@ def _string_literal_len_method(expression):
                         or getattr(node, "op", None) is not None
                         or getattr(node, "timingControl", None) is not None):
                     return
-                value = node.right
-                while type(value).__name__ == "ConversionExpression":
-                    value = getattr(value, "operand", None)
-                if type(value).__name__ == "StringLiteral":
-                    if (getattr(value, "bad", False)
-                            or not isinstance(getattr(value, "value", None), str)
-                            or any(ord(char) == 0 or ord(char) > 127
-                                   for char in value.value)):
-                        return
-                    text = value.value
-                elif (type(value).__name__ == "CallExpression"
-                      and getattr(value, "isSystemCall", False)
-                      and getattr(value, "subroutineName", "") == "$typename"):
-                    text = _typename_source_value(value)
-                    if text is None:
-                        return
-                else:
+                text = _string_literal_event_value(
+                    node.right,
+                    getattr(node.sourceRange.start, "offset", -1))
+                if text is None:
                     return
                 assignments.append((getattr(node.left.sourceRange.start, "offset", -1),
                                     text))
@@ -17368,6 +17377,8 @@ def _string_literal_len_method(expression):
             tail = source[match.end():].lstrip()
             if tail.startswith(".len"):
                 return True
+            if tail.startswith(".substr"):
+                return True
             # ``len`` and ``getc`` are both scalar observations of the same
             # proven literal.  A source may use either query (the conformance
             # tests intentionally combine them), so neither makes the other
@@ -17375,6 +17386,8 @@ def _string_literal_len_method(expression):
             if tail.startswith(".getc"):
                 return True
             if tail.startswith(".putc"):
+                return True
+            if tail.startswith(("==", "!=", "===", "!==")):
                 return True
             if tail.startswith("="):
                 # The source spelling must be a literal assignment.  AST
@@ -17386,6 +17399,10 @@ def _string_literal_len_method(expression):
                     return True
                 return any(start >= 0 and abs(start - match.start()) <= 8
                            for start, _ in assignments)
+            statement_start = source.rfind(";", 0, match.start()) + 1
+            if re.search(r'\$(?:display|write)\s*\([^;]*$',
+                         source[statement_start:match.start()]):
+                return True
             return False
         if not all(inert_occurrence(match) for match in occurrences[1:]):
             return False
@@ -17399,6 +17416,58 @@ def _string_literal_len_method(expression):
         return bool(history)
     except Exception:
         return False
+
+
+def _string_literal_initial_value(symbol):
+    """Resolve a string declaration's exact ASCII initializer, if any."""
+    try:
+        initializer = getattr(symbol, "initializer", None)
+        node = initializer
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return None
+        if type(node).__name__ == "StringLiteral":
+            value = getattr(node, "value", None)
+            return (value if (not getattr(node, "bad", False)
+                              and isinstance(value, str)
+                              and all(0 < ord(char) <= 127 for char in value))
+                    else None)
+        if type(node).__name__ != "CallExpression":
+            return None
+        method = getattr(node, "subroutineName", "")
+        if method not in ("toupper", "tolower", "substr", "$sformatf", "$typename"):
+            return None
+        position = getattr(getattr(getattr(node, "sourceRange", None),
+                                   "start", None), "offset", None)
+        return (_string_source_value(node, position)
+                if position is not None else None)
+    except Exception:
+        return None
+
+
+def _string_literal_event_value(expression, position):
+    """Resolve one source-pure string write used by a scalar query."""
+    try:
+        node = expression
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return None
+        if type(node).__name__ == "StringLiteral":
+            value = getattr(node, "value", None)
+            return (value if (not getattr(node, "bad", False)
+                              and isinstance(value, str)
+                              and all(0 < ord(char) <= 127 for char in value))
+                    else None)
+        if (type(node).__name__ == "CallExpression"
+                and getattr(node, "isSystemCall", False)
+                and getattr(node, "subroutineName", "") in
+                    ("toupper", "tolower", "substr", "$sformatf", "$typename")):
+            return _string_source_value(node, position)
+        return None
+    except Exception:
+        return None
 
 
 def _string_literal_source_value(expression, method, receiver=None,
@@ -17418,12 +17487,7 @@ def _string_literal_source_value(expression, method, receiver=None,
         if type(receiver.type.canonicalType).__name__ != "StringType":
             return None
         symbol = receiver.symbol
-        initializer = getattr(symbol, "initializer", None)
-        while type(initializer).__name__ == "ConversionExpression":
-            initializer = getattr(initializer, "operand", None)
-        initial_value = (getattr(initializer, "value", None)
-                         if type(initializer).__name__ == "StringLiteral"
-                         and not getattr(initializer, "bad", False) else None)
+        initial_value = _string_literal_initial_value(symbol)
         if (initial_value is not None and
                 (not isinstance(initial_value, str)
                  or any(ord(char) == 0 or ord(char) > 127 for char in initial_value))):
@@ -17466,17 +17530,13 @@ def _string_literal_source_value(expression, method, receiver=None,
                         or getattr(node, "op", None) is not None
                         or getattr(node, "timingControl", None) is not None):
                     return
-                value = node.right
-                while type(value).__name__ == "ConversionExpression":
-                    value = getattr(value, "operand", None)
-                if (type(value).__name__ != "StringLiteral"
-                        or getattr(value, "bad", False)
-                        or not isinstance(getattr(value, "value", None), str)
-                        or any(ord(char) == 0 or ord(char) > 127
-                               for char in value.value)):
+                value = _string_literal_event_value(
+                    node.right,
+                    getattr(node.sourceRange.start, "offset", -1))
+                if value is None:
                     return
                 events.append((getattr(node.sourceRange.start, "offset", -1),
-                               ("whole", value.value), False))
+                               ("whole", value), False))
             instance.visit(inspect)
         name = getattr(symbol, "name", "")
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
@@ -17492,8 +17552,8 @@ def _string_literal_source_value(expression, method, receiver=None,
         for match in occurrences[1:]:
             tail = source[match.end():].lstrip()
             if (tail.startswith("." + method)
-                    or (method in ("len", "getc")
-                        and tail.startswith((".len", ".getc")))
+                    or (method in ("len", "getc", "substr")
+                        and tail.startswith((".len", ".getc", ".substr")))
                     or tail.startswith(".putc")
                     or tail.startswith(("==", "!=", "===", "!=="))
                     or (method in ("compare", "icompare")
@@ -17791,11 +17851,7 @@ def _convert_string_literal_len_method(sm, expression):
         return unsupported(sm, expression, "CallExpression:string-len")
     receiver = expression.arguments[0]
     symbol = receiver.symbol
-    initializer = getattr(symbol, "initializer", None)
-    while type(initializer).__name__ == "ConversionExpression":
-        initializer = initializer.operand
-    value = (initializer.value if type(initializer).__name__ == "StringLiteral"
-             else "")
+    value = _string_literal_initial_value(symbol) or ""
     instance = getattr(getattr(symbol, "parentScope", None),
                        "containingInstance", None)
     position = expression.sourceRange.start.offset

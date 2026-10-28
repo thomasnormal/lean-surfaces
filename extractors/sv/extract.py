@@ -10954,6 +10954,63 @@ def _itor_literal_call(expression):
         return False
 
 
+def _pure_integral_conversion_statement(expression, name, width):
+    """Whether a discarded real conversion has one pure integral operand.
+
+    ``$itor``/``$bitstoreal``/``$bitstoshortreal`` return an opaque real value.
+    In statement position the value is discarded, so no floating storage or
+    bit-pattern result needs to be represented.  The operand still executes;
+    require the existing source-purity walk and the exact integral width that
+    each IEEE conversion specifies.  Calls, writes, timing controls, and
+    unsupported aggregate expressions therefore remain on the ordinary loud
+    call boundary.
+    """
+    try:
+        if (_SYM is not None or type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != name):
+            return False
+        arguments = list(expression.arguments)
+        if (len(arguments) != 1
+                or type(expression.type.canonicalType).__name__ != "FloatingType"):
+            return False
+        argument = arguments[0]
+        source = argument
+        # Pyslang inserts an outer implicit conversion to the system-call
+        # formal width. Check the expression before that adapter so a
+        # 32-bit signal passed to `$bitstoreal` is not mistaken for a native
+        # 64-bit operand. Propagated conversions inside a computed expression
+        # are part of that expression's elaborated width and remain visible.
+        while (type(source).__name__ == "ConversionExpression"
+               and str(getattr(source, "conversionKind", "")).split(".")[-1]
+               == "Implicit"):
+            source = getattr(source, "operand", None)
+            if source is None:
+                return False
+        return (getattr(argument.type, "isIntegral", False)
+                and (width is None or getattr(source.type, "bitWidth", None) == width)
+                and _case_source_expression_ok(argument))
+    except Exception:
+        return False
+
+
+def _itor_pure_statement_call(expression):
+    """Whether discarded ``$itor`` has a source-pure integral operand."""
+    return _pure_integral_conversion_statement(expression, "$itor", None)
+
+
+def _bitstoreal_pure_statement_call(expression):
+    """Whether discarded ``$bitstoreal`` has a source-pure 64-bit operand."""
+    return _pure_integral_conversion_statement(expression, "$bitstoreal", 64)
+
+
+def _bitstoshortreal_pure_statement_call(expression):
+    """Whether discarded ``$bitstoshortreal`` has a source-pure 32-bit operand."""
+    return _pure_integral_conversion_statement(
+        expression, "$bitstoshortreal", 32)
+
+
 def _bitstoreal_literal_call(expression):
     """Whether discarded ``$bitstoreal`` has one known 64-bit literal."""
     try:
@@ -22522,17 +22579,36 @@ def _convert_syscall(sm, s, e):
         # keep dynamic and computed operands on the ordinary loud boundary.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "itor_literal_statement": True}
+    if is_sys and _itor_pure_statement_call(e):
+        # A source-pure computed integral operand still has no represented
+        # effect once `$itor`'s opaque real result is discarded. Preserve the
+        # existing source-purity boundary so reads and pure operators are
+        # admitted while calls, writes, and timing remain loud.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "itor_pure_statement": True}
     if is_sys and _bitstoreal_literal_call(e):
         # `$bitstoreal` only produces an opaque real value. With a known
         # literal bit pattern and a discarded result, it has no modeled state
         # effect; dynamic or unknown patterns remain loud.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "bitstoreal_literal_statement": True}
+    if is_sys and _bitstoreal_pure_statement_call(e):
+        # A source-pure 64-bit operand has no observable effect when the
+        # `$bitstoreal` result is discarded; dynamic and effectful operands
+        # remain on the ordinary call boundary.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "bitstoreal_pure_statement": True}
     if is_sys and _bitstoshortreal_literal_call(e):
         # `$bitstoshortreal` is the single-precision counterpart: a known
         # literal pattern with a discarded result has no modeled state effect.
         return {"kind": "Empty", "span": node_span(sm, s),
                 "bitstoshortreal_literal_statement": True}
+    if is_sys and _bitstoshortreal_pure_statement_call(e):
+        # A source-pure 32-bit operand likewise disappears with the discarded
+        # single-precision result; unsupported or effectful operands stay
+        # loud.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "bitstoshortreal_pure_statement": True}
     if is_sys and _rtoi_literal_call(e):
         # `$rtoi` is a pure conversion in statement position when its result
         # is discarded.  The value-position converter above is deliberately

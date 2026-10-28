@@ -230,10 +230,27 @@ class EmptyFunctionCalls(unittest.TestCase):
                              "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
-    def test_itor_dynamic_statement_stays_loud(self):
+    def test_itor_dynamic_statement_is_inert(self):
         design = lower(
             'module top; integer value; initial begin $itor(value); '
             '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("itor_pure_statement")
+                            for node in nodes(design)))
+
+    def test_itor_pure_computed_statement_is_inert(self):
+        design = lower(
+            'module top; integer value; initial begin value = 3; '
+            '$itor(value + 2); $display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("itor_pure_statement")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_itor_effectful_computed_statement_stays_loud(self):
+        design = lower(
+            'module top; integer value; initial begin '
+            '$itor(value++); $display("PASS"); end endmodule')
         self.assertTrue(any(node.get("sv_kind") ==
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))
@@ -248,10 +265,35 @@ class EmptyFunctionCalls(unittest.TestCase):
                              "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
-    def test_bitstoreal_dynamic_statement_stays_loud(self):
+    def test_bitstoreal_dynamic_statement_is_inert(self):
         design = lower(
             'module top; logic [63:0] bits; initial begin $bitstoreal(bits); '
             '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("bitstoreal_pure_statement")
+                            for node in nodes(design)))
+
+    def test_bitstoreal_pure_computed_statement_is_inert(self):
+        design = lower(
+            'module top; logic [63:0] bits; initial begin bits = 64\'h1; '
+            '$bitstoreal(bits | 64\'h2); $display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("bitstoreal_pure_statement")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_bitstoreal_wrong_width_stays_loud(self):
+        design = lower(
+            'module top; logic [31:0] bits; initial begin '
+            '$bitstoreal(bits); $display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
+    def test_bitstoreal_effectful_statement_stays_loud(self):
+        design = lower(
+            'module top; logic [63:0] bits; initial begin '
+            '$bitstoreal(bits++); $display("PASS"); end endmodule')
         self.assertTrue(any(node.get("sv_kind") ==
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))
@@ -266,10 +308,35 @@ class EmptyFunctionCalls(unittest.TestCase):
                              "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
-    def test_bitstoshortreal_dynamic_statement_stays_loud(self):
+    def test_bitstoshortreal_dynamic_statement_is_inert(self):
         design = lower(
             'module top; logic [31:0] bits; initial begin $bitstoshortreal(bits); '
             '$display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("bitstoshortreal_pure_statement")
+                            for node in nodes(design)))
+
+    def test_bitstoshortreal_pure_computed_statement_is_inert(self):
+        design = lower(
+            'module top; logic [31:0] bits; initial begin bits = 32\'h1; '
+            '$bitstoshortreal(bits | 32\'h2); $display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("bitstoshortreal_pure_statement")
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
+    def test_bitstoshortreal_wrong_width_stays_loud(self):
+        design = lower(
+            'module top; logic [63:0] bits; initial begin '
+            '$bitstoshortreal(bits); $display("PASS"); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
+    def test_bitstoshortreal_effectful_statement_stays_loud(self):
+        design = lower(
+            'module top; logic [31:0] bits; initial begin '
+            '$bitstoshortreal(bits++); $display("PASS"); end endmodule')
         self.assertTrue(any(node.get("sv_kind") ==
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))

@@ -3757,6 +3757,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "pure_integral_real_conversions",
+      "file": "Examples/system-verilog/pure_integral_real_conversions/pure_integral_real_conversions.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

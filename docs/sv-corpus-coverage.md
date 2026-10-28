@@ -6757,3 +6757,15 @@ and partial files **16,689 → 16,688** (67 include skips). The
 `AssignmentExpression:target` blocker falls **2,845 → 2,844**. Differential
 coverage moves **317/311/0/6 → 318/312/0/6** with no disagreements; grammar
 coverage remains **218/97/121**.
+
+## Discarded pure integral real conversions — 2026-10-28
+
+The legacy call boundary now admits source-pure integral operands for discarded
+`$itor`, `$bitstoreal`, and `$bitstoshortreal` calls. The dedicated fixture
+covers computed reads for all three conversions and rejects effectful or
+wrong-width operands in extractor tests. The pinned external corpus snapshot
+remains **5,814 clean / 16,186 partial / 67 include skips** because the
+sv-tests-2 checkout is unavailable in this worktree; no unverifiable corpus
+delta is claimed. Differential coverage is regenerated from the committed
+corpus by the item checks: **415/409/0/6 → 416/410/0/6**, with no
+disagreements. Grammar coverage grows **218/106/112 → 218/107/111**.

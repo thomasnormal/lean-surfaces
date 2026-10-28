@@ -10506,3 +10506,18 @@ include skips because the external corpus checkout is unavailable; the committed
 `VariableSymbol:2state` count remains 2,118. Differential coverage grows
 **339/333/0/6 → 340/334/0/6** with no disagreements, and grammar coverage
 remains **218/97/121**.
+
+## Discarded pure integral operands for real conversions — 2026-10-28
+
+The legacy self-check tier now admits discarded `$itor`, `$bitstoreal`, and
+`$bitstoshortreal` calls when their integral operands are source-pure. A read,
+literal, or pure integral expression still has to be evaluated, but its opaque
+real result has no represented state once discarded. `$bitstoreal` accepts only
+64-bit source expressions and `$bitstoshortreal` only 32-bit expressions;
+pyslang's implicit formal conversion is not allowed to hide a wrong-width
+source. Incrementing or other effectful operands, timing, unsupported
+aggregates, and value-position calls remain loud. The
+`pure_integral_real_conversions` fixture and extractor regressions are the
+acceptance evidence. Differential coverage grows **415/409/0/6 →
+416/410/0/6** with no disagreements, and grammar coverage grows
+**218/106/112 → 218/107/111**.

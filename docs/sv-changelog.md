@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.161] — 2026-10-28
+
+Discarded `$itor`, `$bitstoreal`, and `$bitstoshortreal` calls now admit
+source-pure integral operands. Read-only names and pure integral expressions
+are evaluated and then erased; writes, timing, unsupported expressions, and
+wrong-width sources remain loud. The `pure_integral_real_conversions` fixture,
+extractor regressions, generated envelope, Lean receipt, and differential row
+cover the admitted subset. Differential coverage grows **415/409/0/6 →
+416/410/0/6**, and grammar coverage grows **218/106/112 → 218/107/111**.
+
 ## [0.1.160] — 2026-10-28
 
 Fixed unpacked integral arrays used as legacy `case (...) inside` labels now

@@ -430,3 +430,17 @@ queue returns false and leaves the output unchanged. A blocking `peek()` on an
 empty queue, dynamic messages, aliases, branches, width mismatches, and
 value-position aggregate calls remain `Unsupported` because the flat
 self-check state does not model a mailbox object.
+
+## Discarded pure integral real conversions — 2026-10-28
+
+Discarded `$itor`, `$bitstoreal`, and `$bitstoshortreal` calls now admit
+source-pure integral operands. Read-only names, literals, and pure integral
+operators are evaluated through the existing expression boundary and then
+erased because the opaque real result is discarded. `$bitstoreal` requires a
+64-bit source expression and `$bitstoshortreal` requires 32 bits; the extractor
+checks through pyslang's outer implicit call conversion. Writes, timing,
+unsupported expressions, and wrong-width sources remain loud. The
+`pure_integral_real_conversions` fixture supplies the three-conversion
+transcript and receipt. Differential coverage grows **415/409/0/6 →
+416/410/0/6** with no disagreements, and grammar coverage grows
+**218/106/112 → 218/107/111**.

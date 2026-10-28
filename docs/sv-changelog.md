@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.46] — 2026-10-28
+
+The SystemVerilog self-check prerelease now has 395 differential rows: 389
+matches, zero disagreements, and 6 recorded refusals. The grammar census has
+218 pyslang syntax witnesses: 100 MATCH and 118 REFUSE. The 22,065-path
+committed corpus snapshot has 5,719 clean files and 16,279 partial files, with
+67 include skips. Since `sv-v0.1.45`, the tier added literal string conversion
+for enum `.name()` comparisons, the string-length `putc` boundary, unsigned
+packed associative-array endpoints, context-sized associative `exists`
+comparisons, and their fixtures, extractor regressions, and Lean receipts.
+
 ## [0.1.138] — 2026-10-28
 
 Enum `.name()` comparisons now accept the elaborated propagated conversion

@@ -1,5 +1,20 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Finite associative-array `num()`/`size()` histories — 2026-10-28
+
+Blocking `num()` and `size()` queries on source-pure associative arrays now
+replay the number of distinct literal integral or ASCII string keys written
+before the query. Repeated writes do not increase the count. Dynamic keys,
+aliases, deletes, whole-array operations, timed/control-dependent writes, and
+other aggregate methods remain loud. The `assoc_count_history` fixture and
+Lean receipt pass.
+
+The fresh 22,065-path census moves **5,637 → 5,646 clean / 16,361 → 16,352
+partial** with 67 include skips; `AssignmentExpression:target` falls
+**2,751 → 2,744**, `ExpressionStatement:CallExpression` remains **2,710**, and
+`CallExpression` falls **2,645 → 2,635**. Differential coverage grows
+**379/373/0/6 → 380/374/0/6**, and grammar coverage remains **218/97/121**.
+
 ## Source-pure `string.putc` history — 2026-10-28
 
 Blocking `string.putc(index, character)` calls now replay through the existing

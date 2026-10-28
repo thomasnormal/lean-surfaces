@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 379 | 373 | 0 | 6 | sv-tests-2 declarations |
+| 380 | 374 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -393,6 +393,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `string_sformatf_scope_assignment` | `Examples/system-verilog/string_sformatf_scope_assignment/string_sformatf_scope_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_scope_wrapper_assignment` | `Examples/system-verilog/string_sformatf_scope_wrapper_assignment/string_sformatf_scope_wrapper_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_putc_history` | `Examples/system-verilog/string_putc_history/string_putc_history.sv` | match | **MATCH** | `ok` | MATCH |
+| `assoc_count_history` | `Examples/system-verilog/assoc_count_history/assoc_count_history.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -400,7 +401,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 218 | 97 | 121 | pyslang SyntaxKind |
+| 218 | 98 | 120 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -438,7 +439,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.CHandleType` | `Examples/system-verilog/chandle_decl/chandle_decl.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseEqualityExpression` | `Examples/system-verilog/array_oob_reads/array_oob_reads.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseGenerate` | `Examples/system-verilog/elaborated_generate/choices.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.CaseInequalityExpression` | `Examples/system-verilog/case_equality/case_equality.sv` | **REFUSE** | `unsupported` non-initial process 'AlwaysPosedge:clk' (self-check tier runs initial-only designs) |
+| `SyntaxKind.CaseInequalityExpression` | `Examples/system-verilog/assoc_count_history/assoc_count_history.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CaseStatement` | `Examples/system-verilog/case_inside/array_widening.sv` | **REFUSE** | `unsupported` unsupported statement 'CaseStatement:pattern' |
 | `SyntaxKind.CastExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ClassName` | `Examples/system-verilog/mailbox_literal_loop_fifo/mailbox_literal_loop_fifo.sv` | **MATCH** | `ok`  |
@@ -516,7 +517,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.LogicalAndExpression` | `Examples/system-verilog/array_named_display/array_named_display.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalImplicationExpression` | `Examples/system-verilog/implication/implication.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.LogicalLeftShiftAssignmentExpression` | `Examples/system-verilog/compound_assignments/partial_windows.sv` | **REFUSE** | `unsupported` AssignmentExpression:compound-partial-range |
-| `SyntaxKind.LogicalOrExpression` | `Examples/system-verilog/assoc_exists_cells/assoc_exists_cells.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.LogicalOrExpression` | `Examples/system-verilog/assoc_count_history/assoc_count_history.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalRightShiftAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalShiftLeftExpression` | `Examples/system-verilog/min_typ_max/composition.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalShiftRightExpression` | `Examples/system-verilog/shifts/shifts.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
@@ -629,15 +630,15 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22065 | 5637 | 16361 | 67 |
+| 22065 | 5646 | 16352 | 67 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 2751 |
+| `AssignmentExpression:target` | 2744 |
 | `ExpressionStatement:CallExpression` | 2710 |
-| `CallExpression` | 2645 |
+| `CallExpression` | 2635 |
 | `Hierarchy:ports` | 2400 |
-| `VariableSymbol:2state` | 2116 |
+| `VariableSymbol:2state` | 2112 |
 | `SubroutineSymbol:Subroutine` | 1469 |
 | `ConcurrentAssertionStatement` | 1359 |
 | `InvalidStatement` | 1330 |

@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    2751
+    2744
    ],
    [
     "ExpressionStatement:CallExpression",
@@ -24,7 +24,7 @@
    ],
    [
     "CallExpression",
-    2645
+    2635
    ],
    [
     "Hierarchy:ports",
@@ -32,7 +32,7 @@
    ],
    [
     "VariableSymbol:2state",
-    2116
+    2112
    ],
    [
     "SubroutineSymbol:Subroutine",
@@ -99,12 +99,12 @@
     510
    ],
    [
-    "ElementSelectExpression:source-type",
-    474
-   ],
-   [
     "PropertySymbol:Property",
     471
+   ],
+   [
+    "ElementSelectExpression:source-type",
+    469
    ],
    [
     "PrimitiveSymbol",
@@ -392,7 +392,7 @@
    ],
    [
     "ExpressionStatement:UnaryExpression-target",
-    23
+    22
    ],
    [
     "NetSymbol:Tri0",
@@ -699,10 +699,6 @@
     4
    ],
    [
-    "AssignmentExpression:compound-target",
-    4
-   ],
-   [
     "UnaryExpression:Postdecrement",
     4
    ],
@@ -788,6 +784,10 @@
    ],
    [
     "IntraAssignment:delay:expression",
+    2
+   ],
+   [
+    "AssignmentExpression:compound-target",
     2
    ],
    [
@@ -976,8 +976,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5637,
-   "partial": 16361,
+   "clean": 5646,
+   "partial": 16352,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4861,
+    4870,
     18701
    ],
    "simulation elaboration": [
@@ -1587,9 +1587,9 @@
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 459,
+    "clean": 462,
     "error": 0,
-    "partial": 159,
+    "partial": 156,
     "skip_include": 0,
     "total": 618,
     "unlockable": 1
@@ -1603,9 +1603,9 @@
     "unlockable": 2
    },
    "chapter-7": {
-    "clean": 302,
+    "clean": 308,
     "error": 0,
-    "partial": 494,
+    "partial": 488,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

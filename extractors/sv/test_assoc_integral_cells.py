@@ -78,6 +78,15 @@ class AssocIntegralCells(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in design["modules"][0]["processes"][0]["body"]["stmts"]))
 
+    def test_num_and_size_replay_literal_key_presence(self):
+        design = extract_source(
+            'module top; int score[int]; initial begin '
+            'score[1] = 1; score[2] = 2; score[1] = 3; '
+            'if (score.num() == 2 && score.size() == 2) $display("PASS"); '
+            'end endmodule')
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

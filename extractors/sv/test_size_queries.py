@@ -172,8 +172,11 @@ class SizeQueries(unittest.TestCase):
             'end endmodule')
         self.assertFalse(any(node.get("associative_empty_query")
                              for node in nodes(design)))
-        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
-                            for node in nodes(design)))
+        counts = [node for node in nodes(design)
+                  if node.get("associative_count_query")]
+        self.assertEqual([node["bits"] for node in counts], ["0" * 31 + "1"])
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
 
     def test_empty_associative_first_and_last_return_zero(self):
         design = lower(

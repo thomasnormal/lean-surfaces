@@ -3415,6 +3415,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "assoc_count_history",
+      "file": "Examples/system-verilog/assoc_count_history/assoc_count_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

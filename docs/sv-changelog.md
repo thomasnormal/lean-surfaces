@@ -1,5 +1,19 @@
 # SystemVerilog tier changelog
 
+## [0.1.123] — 2026-10-28
+
+Blocking associative-array `num()` and `size()` queries now replay the number
+of distinct literal integral or ASCII string keys written before the query.
+Repeated writes do not increase the count; dynamic keys, aliases, deletes,
+whole-array operations, timed/control-dependent writes, and other aggregate
+methods remain loud. The new fixture and Lean receipt pass. Differential
+coverage grows **379 rows / 373 matches / 0 disagreements / 6 recorded
+refusals → 380 / 374 / 0 / 6**. The fresh 22,065-path census moves **5,637 →
+5,646 clean / 16,361 → 16,352 partial** with 67 include skips;
+`AssignmentExpression:target` falls **2,751 → 2,744**, while
+`ExpressionStatement:CallExpression` remains **2,710** and `CallExpression`
+falls **2,645 → 2,635**. Grammar coverage remains **218 / 97 / 121**.
+
 ## [0.1.122] — 2026-10-28
 
 Blocking `string.putc(index, character)` calls now replay through source-pure

@@ -78,6 +78,25 @@ class AssocStringCells(unittest.TestCase):
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in design["modules"][0]["processes"][0]["body"]["stmts"]))
 
+    def test_num_and_size_replay_literal_key_presence(self):
+        design = extract_source(
+            'module top; int score[string]; initial begin '
+            'if (score.num() !== 0 || score.size() !== 0) $display("FAIL"); '
+            'score["a"] = 1; score["b"] = 2; score["a"] = 3; '
+            'if (score.num() == 2 && score.size() == 2) $display("PASS"); '
+            'end endmodule')
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_dynamic_count_history_stays_loud(self):
+        design = extract_source(
+            'module top; int score[string]; string key; initial begin '
+            'score[key] = 1; if (score.num() == 1) $display("PASS"); '
+            'end endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)
+                            if node.get("kind") == "Unsupported"))
+
 
 if __name__ == "__main__":
     unittest.main()

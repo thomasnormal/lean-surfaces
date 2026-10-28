@@ -1,5 +1,20 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Finite associative-array `num()`/`size()` histories — 2026-10-28
+
+The legacy extractor now replays blocking `num()` and `size()` queries over
+source-pure associative arrays with finite literal integral or ASCII string
+keys. The result is the number of distinct keys written before the query;
+repeated writes do not increase it. Dynamic keys, aliases, deletes,
+whole-array operations, timed/control-dependent writes, and other aggregate
+methods remain loud. The `assoc_count_history` fixture supplies the
+differential row and Lean receipt. The fresh 22,065-path census moves
+**5,637 → 5,646 clean / 16,361 → 16,352 partial** with 67 include skips;
+`AssignmentExpression:target` falls **2,751 → 2,744**, while
+`ExpressionStatement:CallExpression` remains **2,710** and `CallExpression`
+falls **2,645 → 2,635**. Differential coverage grows
+**379/373/0/6 → 380/374/0/6**.
+
 ## Source-pure `string.putc` history — 2026-10-28
 
 The legacy extractor now replays blocking `string.putc(index, character)`

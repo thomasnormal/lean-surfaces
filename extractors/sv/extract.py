@@ -2047,6 +2047,8 @@ def _finite_string_assoc_cells(sm, symbol):
     declaration so the fallback remains loud.
     """
     try:
+        if symbol in _ASSOC_CELLS:
+            return _ASSOC_CELLS[symbol]
         if (str(getattr(symbol, "kind", "")) != "SymbolKind.Variable"
                 or type(symbol.type.canonicalType).__name__ != "AssociativeArrayType"):
             return None
@@ -2084,6 +2086,10 @@ def _finite_string_assoc_cells(sm, symbol):
                 if key is not None:
                     exists_calls += 1
                     keys.setdefault(key, None)
+                elif (getattr(node, "subroutineName", None) in ("num", "size")
+                      and getattr(getattr(node, "arguments", [None])[0],
+                                  "symbol", None) is symbol):
+                    return VisitAction.Skip
                 elif (getattr(node, "subroutineName", None) == "exists"
                       and any(getattr(argument, "symbol", None) is symbol
                               for argument in getattr(node, "arguments", []))):
@@ -2176,6 +2182,8 @@ def _finite_integral_assoc_cells(sm, symbol):
     other aggregate elements stay loud.
     """
     try:
+        if symbol in _ASSOC_CELLS:
+            return _ASSOC_CELLS[symbol]
         if (str(getattr(symbol, "kind", "")) != "SymbolKind.Variable"
                 or type(symbol.type.canonicalType).__name__ != "AssociativeArrayType"):
             return None
@@ -2213,6 +2221,10 @@ def _finite_integral_assoc_cells(sm, symbol):
                 if key is not None:
                     exists_calls += 1
                     keys.setdefault(key, None)
+                elif (getattr(node, "subroutineName", None) in ("num", "size")
+                      and getattr(getattr(node, "arguments", [None])[0],
+                                  "symbol", None) is symbol):
+                    return VisitAction.Skip
                 elif (getattr(node, "subroutineName", None) == "exists"
                       and any(getattr(argument, "symbol", None) is symbol
                               for argument in getattr(node, "arguments", []))):
@@ -8393,8 +8405,9 @@ def _string_putc_integral_history(value, position):
                         or getattr(tree_node, "isNonBlocking", False)
                         or literal is None
                         or any(control is not None
-                               and control.start.offset <= start
-                               and start < control.end.offset
+                               and getattr(getattr(control, "start", None), "offset", 10**18)
+                               <= start
+                               and start < getattr(getattr(control, "end", None), "offset", -1)
                                for control in controls)):
                     invalid = True
                     return
@@ -10731,6 +10744,7 @@ def _convert_legacy_call(sm, expression):
                        and e.subroutineName == "num",
              _convert_mailbox_literal_num),
             (_queue_empty_pop_method, _convert_queue_empty_pop),
+            (_associative_count_query, _convert_associative_count_query),
             (_associative_empty_query, _convert_associative_empty_query),
             (_associative_empty_endpoint, _convert_associative_empty_endpoint),
             (_zero_size_method, _convert_zero_size_method),
@@ -12294,6 +12308,112 @@ def _queue_empty_pop_struct_assignment(sm, expr):
                 "queue_empty_struct_pop_lowered": True}
     except Exception:
         return None
+
+
+def _associative_count_query(expression):
+    """Resolve ``num``/``size`` after finite literal-key writes."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName not in ("num", "size")
+                or len(expression.arguments) != 1):
+            return None
+        receiver = expression.arguments[0]
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "bad", False)
+                or type(receiver.type.canonicalType).__name__ !=
+                   "AssociativeArrayType"):
+            return None
+        symbol = getattr(receiver, "symbol", None)
+        if symbol is None:
+            return None
+        index_kind = type(symbol.type.canonicalType.indexType.canonicalType).__name__
+        cells = (_finite_string_assoc_cells(None, symbol)
+                 if index_kind == "StringType"
+                 else _finite_integral_assoc_cells(None, symbol))
+        if cells is None:
+            return None
+        position = getattr(getattr(getattr(expression, "sourceRange", None),
+                                   "start", None), "offset", None)
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        if position is None or instance is None:
+            return None
+        writes = []
+        controls = []
+        invalid = False
+
+        def inspect(node):
+            nonlocal invalid
+            kind = type(node).__name__
+            if kind in ("ConditionalStatement", "ForLoopStatement",
+                        "WhileLoopStatement", "DoWhileLoopStatement",
+                        "RepeatLoopStatement", "ForeachLoopStatement",
+                        "CaseStatement", "CaseInsideStatement",
+                        "CasePatternStatement", "LoopStatement",
+                        "TimedStatement"):
+                controls.append(getattr(node, "sourceRange", None))
+                return
+            if kind == "AssignmentExpression":
+                left = getattr(node, "left", None)
+                value = getattr(left, "value", None)
+                if (type(left).__name__ != "ElementSelectExpression"
+                        or getattr(value, "symbol", None) is not symbol):
+                    return
+                start = getattr(getattr(getattr(node, "sourceRange", None),
+                                        "start", None), "offset", -1)
+                key_expr = getattr(left, "selector", None)
+                key = (_assoc_string_key(key_expr, symbol)
+                       if index_kind == "StringType"
+                       else _assoc_integral_key(key_expr, symbol))
+                if start >= position:
+                    return
+                if (key not in cells
+                        or getattr(node, "op", None) is not None
+                        or getattr(node, "timingControl", None) is not None
+                        or getattr(node, "isNonBlocking", False)
+                        or not _case_source_expression_ok(getattr(node, "right", None))
+                        or any(control is not None
+                               and getattr(getattr(control, "start", None), "offset", 10**18) <= start
+                               and start < getattr(getattr(control, "end", None), "offset", -1)
+                               for control in controls)):
+                    invalid = True
+                    return
+                writes.append((start, key))
+            elif kind == "CallExpression":
+                call_arguments = list(getattr(node, "arguments", ()))
+                call_receiver = call_arguments[0] if call_arguments else None
+                if getattr(call_receiver, "symbol", None) is not symbol:
+                    return
+                if getattr(node, "subroutineName", None) in ("num", "size", "exists"):
+                    return
+                invalid = True
+
+        instance.visit(inspect)
+        if invalid:
+            return None
+        present = set()
+        for start, key in sorted(writes):
+            present.add(key)
+        width, _two_state, reason = type_width_2s(expression.type)
+        if width is None or reason is not None or width <= 0:
+            return None
+        return width, len(present)
+    except Exception:
+        return None
+
+
+def _convert_associative_count_query(sm, expression):
+    result = _associative_count_query(expression)
+    if result is None:
+        return unsupported(sm, expression, "CallExpression:associative-count")
+    width, count = result
+    return signed_metadata({
+        "kind": "Literal", "span": node_span(sm, expression),
+        "width": width, "bits": format(count, f"0{width}b"),
+        "associative_count_query": expression.subroutineName,
+    }, expression.type)
 
 
 def _associative_empty_query(expression):
@@ -20943,6 +21063,9 @@ def _convert_syscall(sm, s, e):
         if value.get("kind") != "Unsupported":
             return {"kind": "Empty", "span": node_span(sm, s),
                     "associative_empty_query_statement": name}
+    if is_sys and _associative_count_query(e) is not None:
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "associative_count_statement": name}
     if is_sys and _associative_empty_delete_method(e):
         # Deleting an absent key, or all keys from an untouched empty
         # associative array, has no represented state effect.  The helper

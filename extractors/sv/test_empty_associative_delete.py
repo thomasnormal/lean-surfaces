@@ -22,19 +22,26 @@ class EmptyAssociativeDelete(unittest.TestCase):
                              "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
-    def test_initialized_mutated_effectful_and_four_state_forms_stay_loud(self):
-        sources = (
-            "module top; int a[int]; initial begin a[1] = 2; "
-            "a.delete(1); end endmodule",
+    def test_dynamic_key_delete_stays_loud(self):
+        design = lower(
             "module top; int a[int]; int key; initial a.delete(key++); endmodule",
-            "module top; logic [3:0] a[int]; initial a.delete(1); endmodule",
-        )
-        for source in sources:
+            require_valid=False)
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
+    def test_initialized_and_four_state_deletes_are_admitted(self):
+        for source in (
+                "module top; int a[int]; initial begin a[1] = 2; "
+                "a.delete(1); if (a.num() == 0 && a[1] == 0) "
+                "$display(\"PASS\"); end endmodule",
+                "module top; logic [3:0] a[int]; initial begin a[1] = 4'hf; "
+                "a.delete(1); if (a.num() == 0 && a[1] === 4'hx) "
+                "$display(\"PASS\"); end endmodule"):
             with self.subTest(source=source):
-                design = lower(source, require_valid=False)
-                self.assertTrue(any(node.get("sv_kind") ==
-                                    "ExpressionStatement:CallExpression"
-                                    for node in nodes(design)))
+                design = lower(source)
+                self.assertFalse(any(node.get("kind") == "Unsupported"
+                                     for node in nodes(design)))
 
     def test_symbolic_mode_stays_loud(self):
         design = symbolic(

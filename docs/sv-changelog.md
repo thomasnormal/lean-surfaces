@@ -1,5 +1,19 @@
 # SystemVerilog tier changelog
 
+## [0.1.124] — 2026-10-28
+
+Blocking associative-array `delete(key)` and whole-array `delete()` calls now
+replay finite literal-key history. Key deletes restore element defaults and
+clear presence; whole-array deletes clear every known cell, so later reads,
+`exists`, and `num()`/`size()` queries observe the deletion. Dynamic keys,
+aliases, timed/control-dependent calls, and unknown aggregate operations remain
+loud. The new fixture and Lean receipt pass. Differential coverage grows
+**380 rows / 374 matches / 0 disagreements / 6 recorded refusals → 381 / 375 /
+0 / 6**. The committed 22,065-path census remains **5,646 clean / 16,352
+partial** with 67 include skips; `AssignmentExpression:target` remains
+**2,744**, `ExpressionStatement:CallExpression` **2,710**, and
+`CallExpression` **2,635**. Grammar coverage remains **218 / 97 / 121**.
+
 ## [0.1.123] — 2026-10-28
 
 Blocking associative-array `num()` and `size()` queries now replay the number

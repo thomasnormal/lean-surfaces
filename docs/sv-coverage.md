@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 380 | 374 | 0 | 6 | sv-tests-2 declarations |
+| 381 | 375 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -394,6 +394,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `string_sformatf_scope_wrapper_assignment` | `Examples/system-verilog/string_sformatf_scope_wrapper_assignment/string_sformatf_scope_wrapper_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_putc_history` | `Examples/system-verilog/string_putc_history/string_putc_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_count_history` | `Examples/system-verilog/assoc_count_history/assoc_count_history.sv` | match | **MATCH** | `ok` | MATCH |
+| `assoc_delete_history` | `Examples/system-verilog/assoc_delete_history/assoc_delete_history.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -401,7 +402,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 218 | 98 | 120 | pyslang SyntaxKind |
+| 218 | 99 | 119 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -605,7 +606,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.UnaryBitwiseOrExpression` | `Examples/system-verilog/reductions/reductions.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.UnaryBitwiseXnorExpression` | `Examples/system-verilog/reductions/reductions.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.UnaryBitwiseXorExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
-| `SyntaxKind.UnaryLogicalNotExpression` | `Examples/system-verilog/division/context_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
+| `SyntaxKind.UnaryLogicalNotExpression` | `Examples/system-verilog/assoc_delete_history/assoc_delete_history.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryMinusExpression` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryPlusExpression` | `Examples/system-verilog/unary_plus/arithmetic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.UnaryPredecrementExpression` | `Examples/system-verilog/increment/incdec.sv` | **MATCH** | `ok`  |

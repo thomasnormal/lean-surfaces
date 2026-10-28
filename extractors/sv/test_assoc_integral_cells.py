@@ -87,6 +87,28 @@ class AssocIntegralCells(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_literal_key_delete_updates_presence_value_and_count(self):
+        design = extract_source(
+            'module top; int score[int]; initial begin '
+            'score[1] = 10; score[2] = 20; score.delete(1); '
+            'if (score.num() == 1 && !score.exists(1) && score.exists(2) && '
+            'score[1] == 0) $display("PASS"); score.delete(); '
+            'if (score.size() == 0 && score[2] == 0) $display("PASS2"); '
+            'end endmodule')
+        self.assertEqual(sum(node.get("associative_delete_lowered", False)
+                             for node in nodes(design)), 2)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_dynamic_delete_stays_loud(self):
+        design = extract_source(
+            'module top; int score[int]; int key; initial begin '
+            'score[1] = 10; score.delete(key); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)
+                            if node.get("kind") == "Unsupported"))
+
 
 if __name__ == "__main__":
     unittest.main()

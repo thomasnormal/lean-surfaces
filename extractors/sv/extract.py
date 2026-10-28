@@ -2037,6 +2037,36 @@ def _assoc_exists_call_key(expression, symbol):
         return None
 
 
+def _assoc_delete_call_key(expression, symbol):
+    """Resolve one finite-array ``delete`` call.
+
+    The result is ``(True, None)`` for a whole-array delete, ``(True, key)``
+    for a literal-key delete, and ``(False, None)`` for a malformed or
+    dynamic call.  Keeping the whole-delete marker distinct from failure is
+    important because ``None`` is also the operation that clears every flat
+    cell in the finite representation.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "delete"):
+            return False, None
+        arguments = list(expression.arguments)
+        if (not arguments
+                or type(arguments[0]).__name__ != "NamedValueExpression"
+                or getattr(arguments[0], "symbol", None) is not symbol):
+            return False, None
+        if len(arguments) == 1:
+            return True, None
+        if len(arguments) != 2:
+            return False, None
+        key = _assoc_exists_key(arguments[1], symbol)
+        return (True, key) if key is not None else (False, None)
+    except Exception:
+        return False, None
+
+
 def _finite_string_assoc_cells(sm, symbol):
     """Collect a finite, literal-key string associative array.
 
@@ -2090,6 +2120,16 @@ def _finite_string_assoc_cells(sm, symbol):
                       and getattr(getattr(node, "arguments", [None])[0],
                                   "symbol", None) is symbol):
                     return VisitAction.Skip
+                elif (getattr(node, "subroutineName", None) == "delete"
+                      and _assoc_delete_call_key(node, symbol)[0]):
+                    key = _assoc_delete_call_key(node, symbol)[1]
+                    if key is not None:
+                        keys.setdefault(key, None)
+                    return VisitAction.Skip
+                elif (getattr(node, "subroutineName", None) == "delete"
+                      and any(getattr(argument, "symbol", None) is symbol
+                              for argument in getattr(node, "arguments", []))):
+                    invalid = True
                 elif (getattr(node, "subroutineName", None) == "exists"
                       and any(getattr(argument, "symbol", None) is symbol
                               for argument in getattr(node, "arguments", []))):
@@ -2225,6 +2265,16 @@ def _finite_integral_assoc_cells(sm, symbol):
                       and getattr(getattr(node, "arguments", [None])[0],
                                   "symbol", None) is symbol):
                     return VisitAction.Skip
+                elif (getattr(node, "subroutineName", None) == "delete"
+                      and _assoc_delete_call_key(node, symbol)[0]):
+                    key = _assoc_delete_call_key(node, symbol)[1]
+                    if key is not None:
+                        keys.setdefault(key, None)
+                    return VisitAction.Skip
+                elif (getattr(node, "subroutineName", None) == "delete"
+                      and any(getattr(argument, "symbol", None) is symbol
+                              for argument in getattr(node, "arguments", []))):
+                    invalid = True
                 elif (getattr(node, "subroutineName", None) == "exists"
                       and any(getattr(argument, "symbol", None) is symbol
                               for argument in getattr(node, "arguments", []))):
@@ -12340,7 +12390,7 @@ def _associative_count_query(expression):
                            "containingInstance", None)
         if position is None or instance is None:
             return None
-        writes = []
+        events = []
         controls = []
         invalid = False
 
@@ -12380,7 +12430,7 @@ def _associative_count_query(expression):
                                for control in controls)):
                     invalid = True
                     return
-                writes.append((start, key))
+                events.append((start, "write", key))
             elif kind == "CallExpression":
                 call_arguments = list(getattr(node, "arguments", ()))
                 call_receiver = call_arguments[0] if call_arguments else None
@@ -12388,14 +12438,33 @@ def _associative_count_query(expression):
                     return
                 if getattr(node, "subroutineName", None) in ("num", "size", "exists"):
                     return
+                if getattr(node, "subroutineName", None) == "delete":
+                    valid, key = _assoc_delete_call_key(node, symbol)
+                    start = getattr(getattr(getattr(node, "sourceRange", None),
+                                            "start", None), "offset", -1)
+                    if (not valid
+                            or any(control is not None
+                                   and getattr(getattr(control, "start", None), "offset", 10**18)
+                                   <= start
+                                   and start < getattr(getattr(control, "end", None), "offset", -1)
+                                   for control in controls)):
+                        invalid = True
+                    elif start < position:
+                        events.append((start, "delete", key))
+                    return
                 invalid = True
 
         instance.visit(inspect)
         if invalid:
             return None
         present = set()
-        for start, key in sorted(writes):
-            present.add(key)
+        for _start, kind, key in sorted(events):
+            if kind == "write":
+                present.add(key)
+            elif key is None:
+                present.clear()
+            else:
+                present.discard(key)
         width, _two_state, reason = type_width_2s(expression.type)
         if width is None or reason is not None or width <= 0:
             return None
@@ -12414,6 +12483,121 @@ def _convert_associative_count_query(sm, expression):
         "width": width, "bits": format(count, f"0{width}b"),
         "associative_count_query": expression.subroutineName,
     }, expression.type)
+
+
+def _associative_delete(sm, expression):
+    """Lower a source-pure finite associative-array delete operation.
+
+    The flat state stores one value and one presence bit per observed literal
+    key.  Deleting a key therefore restores the element default and clears its
+    presence bit; deleting the whole array applies that pair to every known
+    cell.  Dynamic keys and deletes under control or timing constructs stay
+    loud because they would require aggregate storage and scheduler state.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != "delete"):
+            return None
+        arguments = list(expression.arguments)
+        if not arguments or type(arguments[0]).__name__ != "NamedValueExpression":
+            return None
+        receiver = arguments[0]
+        symbol = getattr(receiver, "symbol", None)
+        if (symbol is None
+                or type(receiver.type.canonicalType).__name__ != "AssociativeArrayType"):
+            return None
+        valid, key = _assoc_delete_call_key(expression, symbol)
+        if not valid:
+            return None
+        index_kind = type(symbol.type.canonicalType.indexType.canonicalType).__name__
+        cells = (_finite_string_assoc_cells(None, symbol)
+                 if index_kind == "StringType"
+                 else _finite_integral_assoc_cells(None, symbol))
+        if cells is None or (key is not None and key not in cells):
+            return None
+        position = getattr(getattr(getattr(expression, "sourceRange", None),
+                                   "start", None), "offset", None)
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        if position is None or instance is None:
+            return None
+        controls = []
+        invalid = False
+        has_write = False
+
+        def inspect(node):
+            nonlocal invalid, has_write
+            kind = type(node).__name__
+            if kind in ("ConditionalStatement", "ForLoopStatement",
+                        "WhileLoopStatement", "DoWhileLoopStatement",
+                        "RepeatLoopStatement", "ForeachLoopStatement",
+                        "CaseStatement", "CaseInsideStatement",
+                        "CasePatternStatement", "LoopStatement",
+                        "TimedStatement"):
+                controls.append(getattr(node, "sourceRange", None))
+                return
+            if kind == "AssignmentExpression":
+                left = getattr(node, "left", None)
+                value = getattr(left, "value", None)
+                if (type(left).__name__ == "ElementSelectExpression"
+                        and getattr(value, "symbol", None) is symbol):
+                    has_write = True
+                return
+            if kind == "CallExpression":
+                call_arguments = list(getattr(node, "arguments", ()))
+                call_receiver = call_arguments[0] if call_arguments else None
+                if getattr(call_receiver, "symbol", None) is not symbol:
+                    return
+                name = getattr(node, "subroutineName", None)
+                if name == "delete":
+                    call_valid, call_key = _assoc_delete_call_key(node, symbol)
+                    start = getattr(getattr(getattr(node, "sourceRange", None),
+                                            "start", None), "offset", -1)
+                    if (not call_valid
+                            or any(control is not None
+                                   and getattr(getattr(control, "start", None), "offset", 10**18)
+                                   <= start
+                                   and start < getattr(getattr(control, "end", None), "offset", -1)
+                                   for control in controls)):
+                        invalid = True
+                    elif call_key is not None and call_key not in cells:
+                        invalid = True
+                    return
+                if name in ("num", "size", "exists"):
+                    return
+                invalid = True
+
+        instance.visit(inspect)
+        if invalid or not has_write:
+            return None
+        targets = list(cells.values()) if key is None else [cells[key]]
+        if not targets:
+            return None
+        span = node_span(sm, expression)
+        stmts = []
+        for cell in targets:
+            width = cell["width"]
+            default = {"kind": "Literal", "span": span, "width": width,
+                       "bits": ("0" if cell["two_state"] else "x") * width}
+            stmts.extend((
+                {"kind": "BlockingAssign", "span": span,
+                 "target": {"kind": "Ident", "span": span,
+                            "width": width, "name": cell["name"]},
+                 "value": default, "associative_delete_value": True},
+                {"kind": "BlockingAssign", "span": span,
+                 "target": {"kind": "Ident", "span": span,
+                            "width": 1, "name": cell["presence"]},
+                 "value": {"kind": "Literal", "span": span,
+                           "width": 1, "bits": "0"},
+                 "assoc_presence_write": True,
+                 "associative_delete_presence": True},
+            ))
+        return {"kind": "Block", "span": span, "stmts": stmts,
+                "associative_delete_lowered": True}
+    except Exception:
+        return None
 
 
 def _associative_empty_query(expression):
@@ -21066,6 +21250,10 @@ def _convert_syscall(sm, s, e):
     if is_sys and _associative_count_query(e) is not None:
         return {"kind": "Empty", "span": node_span(sm, s),
                 "associative_count_statement": name}
+    if is_sys and _SYM is None and getattr(e, "subroutineName", None) == "delete":
+        lowered = _associative_delete(sm, e)
+        if lowered is not None:
+            return lowered
     if is_sys and _associative_empty_delete_method(e):
         # Deleting an absent key, or all keys from an untouched empty
         # associative array, has no represented state effect.  The helper

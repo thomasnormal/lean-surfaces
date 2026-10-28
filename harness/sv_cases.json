@@ -3424,6 +3424,17 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "assoc_delete_history",
+      "file": "Examples/system-verilog/assoc_delete_history/assoc_delete_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "PASS2",
+        "PASS3"
+      ],
+      "expect": "match"
     }
   ]
 }

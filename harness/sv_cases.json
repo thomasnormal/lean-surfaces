@@ -3477,6 +3477,15 @@
       "expect": "match"
     },
     {
+      "name": "assoc_exists_sized_comparison",
+      "file": "Examples/system-verilog/assoc_exists_sized_comparison/assoc_exists_sized_comparison.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "assoc_endpoint_statement_history",
       "file": "Examples/system-verilog/assoc_endpoint_statement_history/assoc_endpoint_statement_history.sv",
       "module": "top",

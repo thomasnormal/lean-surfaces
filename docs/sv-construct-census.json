@@ -731,10 +731,6 @@
     4
    ],
    [
-    "BinaryExpression:width",
-    4
-   ],
-   [
     "Replication:effects",
     3
    ],
@@ -976,8 +972,8 @@
    ]
   ],
   "by_status": {
-   "clean": 5699,
-   "partial": 16299,
+   "clean": 5703,
+   "partial": 16295,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1038,7 +1034,7 @@
     52
    ],
    "simulation": [
-    4922,
+    4926,
     18701
    ],
    "simulation elaboration": [
@@ -1603,9 +1599,9 @@
     "unlockable": 2
    },
    "chapter-7": {
-    "clean": 330,
+    "clean": 334,
     "error": 0,
-    "partial": 466,
+    "partial": 462,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0

@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 393 | 387 | 0 | 6 | sv-tests-2 declarations |
+| 394 | 388 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -399,6 +399,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `assoc_delete_history` | `Examples/system-verilog/assoc_delete_history/assoc_delete_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_endpoint_history` | `Examples/system-verilog/assoc_endpoint_history/assoc_endpoint_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_unsigned_endpoint_history` | `Examples/system-verilog/assoc_unsigned_endpoint_history/assoc_unsigned_endpoint_history.sv` | match | **MATCH** | `ok` | MATCH |
+| `assoc_exists_sized_comparison` | `Examples/system-verilog/assoc_exists_sized_comparison/assoc_exists_sized_comparison.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_endpoint_statement_history` | `Examples/system-verilog/assoc_endpoint_statement_history/assoc_endpoint_statement_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `streaming_assoc_sorted` | `Examples/system-verilog/streaming_assoc_sorted/streaming_assoc_sorted.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_next_prev_history` | `Examples/system-verilog/assoc_next_prev_history/assoc_next_prev_history.sv` | match | **MATCH** | `ok` | MATCH |
@@ -643,7 +644,7 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22065 | 5699 | 16299 | 67 |
+| 22065 | 5703 | 16295 | 67 |
 
 | blocker kind | files |
 |---|---:|

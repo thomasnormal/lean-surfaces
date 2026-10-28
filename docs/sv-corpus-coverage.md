@@ -1,5 +1,18 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Context-sized associative-array `exists` comparisons — 2026-10-28
+
+The legacy extractor now zero-extends finite literal-key associative-array
+`exists(index)` presence bits to the larger operand in equality and
+case-equality expressions, as required by IEEE 1800-2023 §7.9.3 context
+sizing. Dynamic keys, aliases, and aggregate histories remain loud. The
+`assoc_exists_sized_comparison` fixture supplies the differential row and Lean
+receipt. The fresh 22,065-path census moves **5,699 → 5,703 clean / 16,299 →
+16,295 partial** with 67 include skips; all four `BinaryExpression:width`
+blockers are removed while `AssignmentExpression:target` remains **2,695**,
+`ExpressionStatement:CallExpression` remains **2,677**, and `CallExpression`
+remains **2,617**. Differential coverage grows **393/387/0/6 → 394/388/0/6**.
+
 ## Unsigned packed integral associative-array endpoints — 2026-10-28
 
 The legacy extractor now replays source-pure finite associative arrays whose

@@ -270,6 +270,20 @@ class SizeQueries(unittest.TestCase):
                             "ExpressionStatement:CallExpression"
                             for node in nodes(design)))
 
+    def test_associative_exists_is_context_sized_in_equality(self):
+        design = lower(
+            'module top; int values[int]; int named[string]; initial begin '
+            'values[5] = 100; named["answer"] = 42; '
+            'if (values.exists(5) == 1 && values.exists(99) == 0 && '
+            'named.exists("answer") === 1 && named.exists("missing") === 0) '
+            '$display("PASS"); end endmodule')
+        sized = [node for node in nodes(design)
+                 if node.get("assoc_exists_sized")]
+        self.assertEqual(len(sized), 4)
+        self.assertTrue(all(node["width"] == 32 for node in sized))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_mailbox_type_mismatch_try_get_returns_negative(self):
         design = lower(
             'module top; mailbox box; string message; int result; initial begin '

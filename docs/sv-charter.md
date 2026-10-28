@@ -1,5 +1,23 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Context-sized associative-array `exists` comparisons — 2026-10-28
+
+The self-check tier now admits finite literal-key associative-array
+`exists(index)` results in equality and case-equality expressions. IEEE
+1800-2023 §7.9.3 returns an unsigned one-bit presence result, and equality
+context sizing zero-extends it to the larger operand width before comparison.
+Dynamic keys, aliases, and aggregate histories remain loud. The
+`assoc_exists_sized_comparison` fixture, extractor regression, and Lean receipt
+pass.
+
+The fresh **22,065-path** census moves **5,699 → 5,703 clean** and
+**16,299 → 16,295 partial** with 67 include skips. The four
+`BinaryExpression:width` blockers are removed; the top
+`AssignmentExpression:target`, `ExpressionStatement:CallExpression`, and
+`CallExpression` counts remain **2,695**, **2,677**, and **2,617**.
+Differential coverage grows **393/387/0/6 → 394/388/0/6**; grammar coverage
+remains **218/100/118**.
+
 ## Unsigned packed integral associative-array endpoints — 2026-10-28
 
 The self-check tier now admits source-pure finite associative arrays whose

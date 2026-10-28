@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.137] — 2026-10-28
+
+Finite literal-key associative-array `exists(index)` results now participate in
+equality and case-equality expressions with IEEE 1800-2023 §7.9.3 context
+sizing: the unsigned one-bit presence result is zero-extended to the larger
+operand. Dynamic keys, aliases, and aggregate histories remain loud. The
+fixture, extractor regression, and Lean receipt pass. Differential coverage
+grows **393 rows / 387 matches / 0 disagreements / 6 recorded refusals → 394 /
+388 / 0 / 6**; the fresh 22,065-path census moves **5,699 → 5,703 clean /
+16,299 → 16,295 partial**, removing four `BinaryExpression:width` blockers.
+
 ## [0.1.136] — 2026-10-28
 
 Source-pure finite associative arrays with unsigned packed integral index

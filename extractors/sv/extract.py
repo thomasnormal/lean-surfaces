@@ -8158,6 +8158,24 @@ def _binary_width_ok(sym, width, left_width, right_width):
     )
 
 
+def _size_assoc_exists_operand(operand, other, span):
+    """Apply equality context sizing to a finite ``exists`` presence bit.
+
+    IEEE 1800-2023 sizes equality operands to the larger operand width. The
+    finite associative representation exposes ``exists`` as an unsigned
+    one-bit presence cell, so widen that bit with zero extension when its
+    comparison partner is wider. Other operands retain the ordinary strict
+    width checks and remain loud when their source is not represented.
+    """
+    if not operand.get("assoc_exists"):
+        return operand
+    other_width = width_of(other)
+    if other_width is None or other_width <= width_of(operand):
+        return operand
+    return {"kind": "Resize", "span": span, "width": other_width,
+            "operand": operand, "assoc_exists_sized": True}
+
+
 _STRING_COMPARE_SYMS = {"==", "!=", "===", "!==", "<", "<=", ">", ">="}
 
 
@@ -9339,6 +9357,10 @@ def _convert_binary_expr(sm, e):
     else:
         left = _convert_expr(sm, e.left)
         right = _convert_expr(sm, e.right)
+    if sym in ("==", "!=", "===", "!=="):
+        span = node_span(sm, e)
+        left = _size_assoc_exists_operand(left, right, span)
+        right = _size_assoc_exists_operand(right, left, span)
     if _DIV_CONTEXT and not _SYM.symctx and sym in (
             "==", "!=", "==?", "!=?", "<", "<=", ">", ">=", "&&", "||"):
         left = _division_self_operand(sm, e.left, left)

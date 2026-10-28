@@ -9,6 +9,18 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Conditional fixed-array self-aliases — 2026-10-28
+
+A blocking whole-array conditional assignment may read the destination in one
+branch. Each one-dimensional fixed-array cell now lowers to a source-preserving
+ternary. Nonblocking self-alias branches remain `AssignmentExpression:target`
+because publication is scheduler-visible.
+
+`fixed_array_conditional_self_alias` supplies the differential `PASS` witness
+and Lean receipt. The committed corpus snapshot remains **5,602 clean / 16,390
+partial** with 67 include skips; the target count is unchanged because this
+fixture shape is not present in the unavailable external checkout.
+
 ## Conditional unpacked-struct self-aliases — 2026-10-28
 
 A blocking whole-struct conditional assignment may read the destination in one

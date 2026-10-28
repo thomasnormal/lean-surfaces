@@ -3309,6 +3309,15 @@
       "expect": "match"
     },
     {
+      "name": "fixed_array_conditional_self_alias",
+      "file": "Examples/system-verilog/fixed_array_conditional_self_alias/fixed_array_conditional_self_alias.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "unpacked_struct_self_copy",
       "file": "Examples/system-verilog/unpacked_struct_self_copy/unpacked_struct_self_copy.sv",
       "module": "top",

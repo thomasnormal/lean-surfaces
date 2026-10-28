@@ -6902,7 +6902,8 @@ def _fixed_array_conditional_assignment(sm, expr):
                 or lhs_count != len(else_positions)
                 or lhs_width != then_width or lhs_width != else_width):
             return None
-        if lhs_name in (then_name, else_name):
+        if (lhs_name in (then_name, else_name)
+                and expr.isNonBlocking):
             return None
         source_cond = cond_expr.conditions[0].expr
         if not _case_source_expression_ok(source_cond):

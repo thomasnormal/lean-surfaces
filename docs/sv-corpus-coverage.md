@@ -25,6 +25,17 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Conditional fixed-array self-aliases — 2026-10-28
+
+The legacy extractor now lowers a blocking whole-array conditional assignment
+with a destination self-alias branch to one source-preserving ternary per
+fixed-array cell. Nonblocking self-alias branches remain loud because
+publication is scheduler-visible. The `fixed_array_conditional_self_alias`
+fixture supplies the differential row and Lean receipt. The external corpus
+checkout is unavailable, so the committed snapshot remains **5,602 clean /
+16,390 partial** over 22,059 paths with 67 include skips; differential coverage
+grows **371/365/0/6 → 372/366/0/6**.
+
 ## Conditional unpacked-struct self-aliases — 2026-10-28
 
 The legacy extractor now lowers a blocking whole-struct conditional assignment

@@ -38,6 +38,15 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Conditional fixed-array self-aliases — 2026-10-28
+
+A blocking whole-array conditional assignment may read the destination in one
+branch; each fixed-array cell now lowers to a source-preserving ternary.
+Nonblocking self-alias branches remain loud because publication is
+scheduler-visible. The `fixed_array_conditional_self_alias` fixture and Lean
+receipt supply the `PASS` evidence; differential coverage grows **371/365/0/6
+→ 372/366/0/6**.
+
 ## Conditional unpacked-struct self-aliases — 2026-10-28
 
 A blocking whole-struct conditional assignment may read the destination in one

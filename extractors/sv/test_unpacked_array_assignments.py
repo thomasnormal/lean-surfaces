@@ -332,6 +332,24 @@ class UnpackedArrayAssignments(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_conditional_array_self_alias_merges_cells(self):
+        design = extract_source(
+            "module top; logic [7:0] source [0:1]; logic [7:0] value [0:1]; "
+            "logic choose; initial begin value = choose ? value : source; "
+            "end endmodule")
+        values = [node for node in nodes(design) if node.get("kind") == "Ternary"]
+        self.assertEqual(len(values), 2)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_conditional_array_self_alias_nonblocking_stays_loud(self):
+        design = extract_source(
+            "module top; logic [7:0] source [0:1]; logic [7:0] value [0:1]; "
+            "logic choose; initial value <= choose ? value : source; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
     def test_constant_slice_pattern_writes_selected_cells(self):
         design = extract_source(
             "module top; logic [7:0] value [0:3]; "

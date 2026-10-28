@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.115] — 2026-10-28
+
+Blocking conditional whole-array assignments with a self-alias branch now
+lower each fixed-array cell to a source-preserving ternary. Nonblocking
+self-alias branches remain loud because publication is scheduler-visible. The
+new fixture and Lean receipt pass; differential coverage grows **371 rows / 365
+matches / 0 disagreements / 6 refusals → 372 / 366 / 0 / 6**. The committed
+census is unchanged at **5,602 clean / 16,390 partial** because this fixture
+shape is absent from the unavailable external checkout.
+
 ## [0.1.114] — 2026-10-28
 
 Blocking conditional whole-struct assignments with a self-alias branch now

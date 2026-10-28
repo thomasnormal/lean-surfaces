@@ -12395,12 +12395,10 @@ private def localDoWhileSwitchShadowInitializationFallthroughAssignmentReturnSta
     (.switch_ switchCondition [
       {label := some 0, body := .block (.sequence
         (automaticLiteral "0x13" 5)
-        (.sequence
-          (.assign (handle "0x11") {
-            expression := .parameter (handle "0x13")
-            sourceType := intType
-            type := intType})
-          .break_))},
+        (.assign (handle "0x11") {
+          expression := .parameter (handle "0x13")
+          sourceType := intType
+          type := intType}))},
       {label := none, body := .break_}])
     (.compoundAssign "+=" (handle "0x10") {
       expression := .integer 1
@@ -12439,12 +12437,10 @@ private def localDoWhileSwitchShadowInitializationFallthroughAssignmentReturnFal
     (.switch_ switchCondition [
       {label := some 0, body := .block (.sequence
         (automaticLiteral "0x13" 5)
-        (.sequence
-          (.assign (handle "0x11") {
-            expression := .parameter (handle "0x13")
-            sourceType := intType
-            type := intType})
-          .break_))},
+        (.assign (handle "0x11") {
+          expression := .parameter (handle "0x13")
+          sourceType := intType
+          type := intType}))},
       {label := none, body := .break_}])
     (.compoundAssign "+=" (handle "0x10") {
       expression := .integer 1

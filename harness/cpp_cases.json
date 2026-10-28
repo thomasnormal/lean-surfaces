@@ -9775,7 +9775,7 @@
     "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
     "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
     "lean_expression": "callableLocalDoWhileSwitchShadowInitializationFallthroughAssignmentReturnStatementFrameWitness",
-    "cpp_source": "int local_do_while_switch_shadow_initialization_fallthrough_assignment_return_statement_frame_witness(int value) { int outer = 3; do { switch (value) { case 0: { int local = 5; outer = local; break; } default: break; } ++value; } while (value < 2); return outer; } bool callable_witness() { return local_do_while_switch_shadow_initialization_fallthrough_assignment_return_statement_frame_witness(0) == 5; }",
+    "cpp_source": "int local_do_while_switch_shadow_initialization_fallthrough_assignment_return_statement_frame_witness(int value) { int outer = 3; do { switch (value) { case 0: { int local = 5; outer = local; } default: break; } ++value; } while (value < 2); return outer; } bool callable_witness() { return local_do_while_switch_shadow_initialization_fallthrough_assignment_return_statement_frame_witness(0) == 5; }",
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 4
@@ -9787,7 +9787,7 @@
     "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
     "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
     "lean_expression": "callableLocalDoWhileSwitchShadowInitializationFallthroughAssignmentReturnFalseStatementFrameWitness",
-    "cpp_source": "int local_do_while_switch_shadow_initialization_fallthrough_assignment_return_false_statement_frame_witness(int value) { int outer = 3; do { switch (value) { case 0: { int local = 5; outer = local; break; } default: break; } ++value; } while (value < 2); return outer; } bool callable_witness() { return local_do_while_switch_shadow_initialization_fallthrough_assignment_return_false_statement_frame_witness(1) == 3; }",
+    "cpp_source": "int local_do_while_switch_shadow_initialization_fallthrough_assignment_return_false_statement_frame_witness(int value) { int outer = 3; do { switch (value) { case 0: { int local = 5; outer = local; } default: break; } ++value; } while (value < 2); return outer; } bool callable_witness() { return local_do_while_switch_shadow_initialization_fallthrough_assignment_return_false_statement_frame_witness(1) == 3; }",
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 4

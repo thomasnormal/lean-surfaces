@@ -10522,6 +10522,32 @@ def _literal_function_return(expression):
     return False
 
 
+def _literal_function_argument(expression):
+    """Recognize a compile-time pure integral argument expression.
+
+    Literal-return functions do not inspect their input formals.  A composed
+    literal expression is therefore as inert as one literal, provided it has
+    no named reads, calls, or other source state.  Keep this helper narrower
+    than the general expression-purity walk so a discarded call cannot erase
+    an unmodeled argument effect.
+    """
+    kind = type(expression).__name__
+    if kind in ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
+        return not getattr(expression, "bad", False)
+    if kind in ("ConversionExpression", "ParenthesizedExpression"):
+        return _literal_function_argument(getattr(expression, "operand", None))
+    if kind == "UnaryExpression":
+        op = str(getattr(expression, "op", "")).split(".")[-1]
+        return (op in UNARY_OPS or op in REDUCE_OPS) and \
+            _literal_function_argument(getattr(expression, "operand", None))
+    if kind == "BinaryExpression":
+        op = getattr(expression, "op", None)
+        return (op in BINARY_OPS or op == BinaryOperator.LogicalImplication) and \
+            _literal_function_argument(getattr(expression, "left", None)) and \
+            _literal_function_argument(getattr(expression, "right", None))
+    return False
+
+
 def _literal_function_result(subroutine, *, allow_implicit=True):
     """Return the literal result expression of either SV return spelling."""
     body = getattr(subroutine, "body", None)
@@ -10598,6 +10624,8 @@ def _literal_function_call(expression, *, allow_implicit=False,
             _literal_function_return(argument)
             or (_bound_integral_value(argument) is not None
                 and _case_source_expression_ok(argument))
+            or (_literal_function_argument(argument)
+                and getattr(getattr(argument, "type", None), "isIntegral", False))
             for argument in actuals)
     except Exception:
         return False

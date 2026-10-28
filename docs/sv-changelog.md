@@ -1,5 +1,14 @@
 # SystemVerilog tier changelog
 
+## [0.1.159] — 2026-10-28
+
+Discarded calls to source-declared literal-return functions now accept
+compile-time pure integral argument expressions, including unary and binary
+literal combinations. Dynamic, effectful, named-state, copy-out, and
+unsupported arguments remain loud. The
+`literal_function_computed_statement` fixture, extractor regression, generated
+envelope, Lean receipt, and differential row cover the admitted subset.
+
 ## [0.1.158] — 2026-10-28
 
 Ordinary `unique0 case` chains with distinct integral literal labels now lower

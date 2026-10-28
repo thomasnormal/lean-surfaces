@@ -179,6 +179,16 @@ class EmptyFunctionCalls(unittest.TestCase):
                              "ExpressionStatement:CallExpression"
                              for node in nodes(design)))
 
+    def test_literal_return_statement_accepts_pure_computed_input(self):
+        design = lower(
+            'module top; function bit [3:0] seven(input bit x); '
+            'return 4\'d7; endfunction initial seven(1\'b1 + 1\'b0); endmodule')
+        self.assertTrue(any(node.get("literal_function_statement") == "seven"
+                            for node in nodes(design)))
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "ExpressionStatement:CallExpression"
+                             for node in nodes(design)))
+
     def test_literal_return_statement_with_argument_stays_loud(self):
         design = lower(
             'module top; bit x; function bit [3:0] seven(input bit x); '

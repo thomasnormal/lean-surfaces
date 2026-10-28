@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 413 | 407 | 0 | 6 | sv-tests-2 declarations |
+| 414 | 408 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -427,6 +427,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `floating_integral_write` | `Examples/system-verilog/floating_integral_write/floating_integral_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `priority_case_fallback` | `Examples/system-verilog/priority_case_fallback/priority_case_fallback.sv` | match | **MATCH** | `ok` | MATCH |
 | `unique0_case` | `Examples/system-verilog/unique0_case/unique0_case.sv` | match | **MATCH** | `ok` | MATCH |
+| `literal_function_computed_statement` | `Examples/system-verilog/literal_function_computed_statement/literal_function_computed_statement.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -434,7 +435,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 218 | 101 | 117 | pyslang SyntaxKind |
+| 218 | 102 | 116 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -465,7 +466,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.BinaryAndExpression` | `Examples/system-verilog/sem2/alu_div/cv32e40p_alu_div.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.BinaryEventExpression` | `Examples/system-verilog/sem2/alu_div/cv32e40p_alu_div.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.BinaryOrExpression` | `Examples/system-verilog/sem2/alu_div/cv32e40p_alu_div.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
-| `SyntaxKind.BinaryXorExpression` | `Examples/system-verilog/sem2/alu_div/cv32e40p_alu_div.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
+| `SyntaxKind.BinaryXorExpression` | `Examples/system-verilog/literal_function_computed_statement/literal_function_computed_statement.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.BitSelect` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.BitType` | `Examples/system-verilog/array_oob_reads/array_oob_reads.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ByteType` | `Examples/system-verilog/dynamic_array_reductions/dynamic_array_reductions.sv` | **MATCH** | `ok`  |

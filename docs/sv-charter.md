@@ -1,5 +1,16 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Pure computed arguments to discarded literal-return functions — 2026-10-28
+
+Discarded calls to source-declared literal-return functions now accept
+compile-time pure integral argument expressions, including unary and binary
+literal combinations. The function body returns a literal and has only input
+formals, so the call has no represented state or scheduler effect. Dynamic,
+effectful, named-state, copy-out, and unsupported arguments remain loud. The
+`literal_function_computed_statement` fixture, extractor regression, generated
+envelope, Lean receipt, and differential row cover the new call-statement
+subset.
+
 ## Unique0 case labels — 2026-10-28
 
 The legacy self-check tier now lowers ordinary `unique0 case` chains whose

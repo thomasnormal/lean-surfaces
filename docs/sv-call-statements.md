@@ -1,5 +1,13 @@
 # Call statements — admitted boundary
 
+## Pure computed arguments to literal-return functions
+
+Discarded calls to source-declared literal-return functions may use compile-time
+pure integral argument expressions. Unary and binary combinations of literals
+are evaluated only to establish purity; the function returns its declared
+literal without reading its input. Named state, dynamic or effectful
+arguments, copy-out formals, and unsupported expressions remain loud.
+
 This document fixes the public boundary for statement-position calls in the
 SystemVerilog envelope. A statement call is an effectful operation: the
 surface must describe its state, output, scheduling, and termination effects,

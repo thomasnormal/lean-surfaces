@@ -3739,6 +3739,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "literal_function_computed_statement",
+      "file": "Examples/system-verilog/literal_function_computed_statement/literal_function_computed_statement.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

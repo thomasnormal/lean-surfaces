@@ -1,5 +1,18 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Pure computed arguments to discarded literal-return functions — 2026-10-28
+
+Discarded calls to source-declared literal-return functions now accept
+compile-time pure integral argument expressions, including unary and binary
+literal combinations. Dynamic, effectful, named-state, copy-out, and
+unsupported arguments remain loud. The
+`literal_function_computed_statement` fixture covers the admitted call shape.
+Differential coverage grows **413/407/0/6 → 414/408/0/6**; grammar coverage
+grows **218/101/117 → 218/102/116** because the pure binary argument witness
+also exercises an admitted expression shape. The committed external corpus snapshot remains
+**5,804 clean / 16,196 partial / 67 include skips** because the sv-tests-2
+checkout is unavailable in this worktree.
+
 ## Unique0 case labels — 2026-10-28
 
 The legacy extractor now lowers ordinary `unique0 case` chains with distinct

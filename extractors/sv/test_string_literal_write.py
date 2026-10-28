@@ -27,6 +27,26 @@ def nodes(value):
 
 
 class LiteralStringWrites(unittest.TestCase):
+    def test_literal_sformatf_hex_assignment_replays_text(self):
+        design = lower(
+            'module top; string lower, upper; initial begin '
+            'lower = $sformatf("%h", 32\'hDEAD_BEEF); '
+            'upper = $sformatf("%H", 32\'hDEAD_BEEF); '
+            'if (lower != upper) $display("FAIL"); $display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False) for node in nodes(design)),
+            2,
+        )
+
+    def test_dynamic_sformatf_string_assignment_stays_loud(self):
+        design = lower(
+            'module top; string value; int x; initial begin '
+            'value = $sformatf("%h", x); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") == "AssignmentExpression:target"
+                            for node in nodes(design)))
+
     def test_literal_string_index_assignment_replays_history(self):
         design = lower(
             'module top; string value; initial begin value = "hello"; '
@@ -106,6 +126,24 @@ class LiteralStringWrites(unittest.TestCase):
             [node.get("string_index_literal_write_noop") for node in nodes(design)
              if node.get("string_index_literal_write_noop")],
             [True, True],
+        )
+
+    def test_corpus_literal_sformatf_string_assignment_is_admitted(self):
+        import os
+        from pathlib import Path
+        corpus = os.environ.get("SV_TESTS_ROOT")
+        if not corpus:
+            self.skipTest("SV_TESTS_ROOT is unavailable")
+        source = Path(corpus) / "chapter-21" / \
+            "21.2.1.1--format-H-same-as-h.sv"
+        if not source.exists():
+            self.skipTest("sv-tests-2 checkout is unavailable")
+        design = lower(source.read_text())
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False) for node in nodes(design)),
+            2,
         )
 
     def test_nonzero_or_dynamic_string_character_writes_stay_loud(self):

@@ -9,6 +9,20 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Literal `$sformatf` string assignments — 2026-10-28
+
+The existing literal `$sformatf` formatter now supplies source-pure ASCII
+history for blocking string assignments of `%h`/`%H` results from an integral
+literal. Later string comparisons and `%s`/`%0s` diagnostics observe the exact
+hexadecimal text. Dynamic operands, other formatting, timed forms, and
+nonblocking writes remain `AssignmentExpression:target`.
+
+`string_sformatf_literal_assignment` supplies the differential `PASS` witness
+and Lean receipt; `21.2.1.1--format-H-same-as-h.sv` is the corpus witness.
+Differential coverage grows **356/350/0/6 → 357/351/0/6**. The fresh census
+moves **5,582 → 5,584 clean / 16,416 → 16,414 partial** with 67 include
+skips, while `AssignmentExpression:target` falls **2,812 → 2,810**.
+
 ## Literal string-index character assignments — 2026-10-28
 
 IEEE 1800-2023 §6.16 permits a constant-index string byte to receive a

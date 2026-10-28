@@ -7936,6 +7936,8 @@ def _string_source_value(expression, position=None, active=()):
                 return None
             method = getattr(node, "subroutineName", "")
             arguments = list(getattr(node, "arguments", ()))
+            if method == "$sformatf":
+                return _sformatf_literal_source_value(node, position)
             if method in ("toupper", "tolower"):
                 if len(arguments) != 1:
                     return None
@@ -8134,6 +8136,49 @@ def _string_transform_value(expression, method, position=None):
         return None
 
 
+def _sformatf_literal_source_value(expression, position=None):
+    """Resolve one integral-literal `$sformatf` result as ASCII text.
+
+    The self-check state already renders these formats for packed values.  A
+    string target can therefore replay the same literal value without adding
+    string storage.  Keep this helper to the direct integral-literal shape;
+    dynamic operands, strings, and unsupported format details remain loud.
+    """
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or not getattr(expression, "isSystemCall", False)
+                or getattr(expression, "subroutineName", "") != "$sformatf"):
+            return None
+        arguments = list(getattr(expression, "arguments", ()))
+        if len(arguments) != 2:
+            return None
+        format_expr, operand = arguments
+        if (type(format_expr).__name__ != "StringLiteral"
+                or getattr(format_expr, "bad", False)):
+            return None
+        fmt = getattr(format_expr, "value", "")
+        if fmt not in ("%h", "%H", "%0h", "%0H"):
+            return None
+        node = operand
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return None
+        if type(node).__name__ not in ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
+            return None
+        bits = svint_bits(node.value)
+        if not bits or any(bit not in "01" for bit in bits):
+            return None
+        value = int(bits, 2)
+        digits = (len(bits) + 3) // 4
+        text = format(value, "0{}x".format(digits))
+        if fmt in ("%0h", "%0H"):
+            text = text.lstrip("0") or "0"
+        return text
+    except Exception:
+        return None
+
+
 def _string_transform_history_value(expression, position):
     """Resolve a named string history containing only pure writes.
 
@@ -8248,6 +8293,8 @@ def _string_transform_history_value(expression, position):
                     if method in ("toupper", "tolower", "substr"):
                         transformed = _string_transform_value(value, method,
                                                                start)
+                    elif method == "$sformatf":
+                        transformed = _sformatf_literal_source_value(value, start)
                 assignments.append((start,
                                     ("whole", transformed) if transformed is not None
                                     else None,

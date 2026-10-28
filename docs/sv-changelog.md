@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.100] — 2026-10-28
+
+Literal `$sformatf("%h", ...)` and `$sformatf("%H", ...)` results from
+integral literals now replay as source-pure ASCII string assignments. Later
+comparisons and diagnostics see the exact hexadecimal value; dynamic operands,
+other formats, timed forms, and nonblocking writes remain loud. The
+`string_sformatf_literal_assignment` fixture and Lean receipt supply the `PASS`
+evidence; differential coverage is **357 rows / 351 matches / 0 disagreements
+/ 6 recorded refusals**, and the fresh census is **5,584 clean / 16,414
+partial** with `AssignmentExpression:target` at **2,810**.
+
 ## [0.1.99] — 2026-10-28
 
 Constant-index string-byte assignments from one-byte ASCII literals now replay

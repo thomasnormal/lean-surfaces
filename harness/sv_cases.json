@@ -83,6 +83,15 @@
       "expect": "match"
     },
     {
+      "name": "string_sformatf_literal_assignment",
+      "file": "Examples/system-verilog/string_sformatf_literal_assignment/string_sformatf_literal_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "static_fixed_array_continuous_copy",
       "file": "Examples/system-verilog/static_fixed_array_continuous_copy/static_fixed_array_continuous_copy.sv",
       "module": "top",

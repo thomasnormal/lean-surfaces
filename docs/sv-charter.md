@@ -38,6 +38,20 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Literal `$sformatf` string assignments — 2026-10-28
+
+The existing literal formatter now supplies source-pure ASCII history for
+blocking string assignments of `%h`/`%H` results from integral literals. Later
+string comparisons and diagnostics observe the exact hexadecimal text;
+dynamic operands, other formats, timed forms, and nonblocking writes remain
+loud. The `string_sformatf_literal_assignment` fixture supplies the `PASS`
+differential row and Lean receipt.
+
+The fresh census moves **5,582 → 5,584 clean / 16,416 → 16,414 partial** with
+67 include skips, and `AssignmentExpression:target` falls **2,812 → 2,810**.
+Differential coverage grows **356/350/0/6 → 357/351/0/6**; grammar coverage
+remains **218/97/121**.
+
 ## Literal string-index character assignments — 2026-10-28
 
 IEEE 1800-2023 §6.16 permits a constant-index string byte to receive a

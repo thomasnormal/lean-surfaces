@@ -1,5 +1,20 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## System associative-array dimension bounds — 2026-10-28
+
+The legacy extractor now replays source-pure finite integral-key associative
+array dimension queries: `$left`, `$right`, `$low`, `$high`, `$increment`, and
+`$size`. Literal writes, compound writes, and `delete` determine exact
+populated bounds and counts; fixed integral-index metadata is constant. Dynamic
+selectors, aliases, timing, controls, string-key arrays, and empty low/high
+unknown-result cases remain loud. The `assoc_system_bounds_history` fixture
+supplies the differential row and Lean receipt. The fresh 22,065-path census
+moves **5,674 → 5,681 clean / 16,324 → 16,317 partial** with 67 include skips;
+`AssignmentExpression:target` falls **2,702 → 2,695**,
+`ExpressionStatement:CallExpression` falls **2,695 → 2,694**, and
+`CallExpression:dimension:argument` falls **44 → 37**. Differential coverage
+grows **387/381/0/6 → 388/382/0/6**.
+
 ## System `$size` on finite associative-array histories — 2026-10-28
 
 The legacy extractor now routes `$size` on source-pure finite integral-key

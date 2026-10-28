@@ -1,5 +1,23 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## System associative-array dimension bounds — 2026-10-28
+
+System queries `$left`, `$right`, `$low`, `$high`, `$increment`, and `$size`
+now observe source-pure finite integral-key associative-array histories. The
+flat presence replay returns the populated low/high keys, fixed integral-index
+metadata, and exact count after literal writes, compound writes, and `delete`.
+Dynamic selectors, aliases, controls, timing, string-key arrays, and empty
+`$low`/`$high` unknown-result cases remain loud. The
+`assoc_system_bounds_history` fixture, extractor regression, and Lean receipt
+pass.
+
+The fresh **22,065-path** census moves **5,674 → 5,681 clean** and
+**16,324 → 16,317 partial** with 67 include skips. `AssignmentExpression:target`
+falls **2,702 → 2,695**, `ExpressionStatement:CallExpression` falls
+**2,695 → 2,694**, and `CallExpression` remains **2,617**. The
+`CallExpression:dimension:argument` blocker falls **44 → 37**. Differential
+coverage grows **387/381/0/6 → 388/382/0/6**.
+
 ## System `$size` on finite associative-array histories — 2026-10-28
 
 The self-check tier now routes `$size` on a source-pure finite integral-key

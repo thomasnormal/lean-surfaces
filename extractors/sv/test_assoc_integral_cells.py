@@ -108,6 +108,17 @@ class AssocIntegralCells(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_system_bounds_replay_finite_history(self):
+        design = extract_source(
+            'module top; initial begin int score[int]; '
+            'score[-3] = 11; score[7] = 22; score[2] = 33; '
+            'if ($left(score) == 0 && $low(score) == -3 && '
+            '$high(score) == 7 && $right(score) == 2147483647 && '
+            '$increment(score) == -1) $display("PASS"); '
+            'end endmodule')
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_literal_key_delete_updates_presence_value_and_count(self):
         design = extract_source(
             'module top; int score[int]; initial begin '

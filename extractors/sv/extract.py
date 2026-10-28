@@ -2146,7 +2146,9 @@ def _finite_string_assoc_cells(sm, symbol):
                 if key is not None:
                     exists_calls += 1
                     keys.setdefault(key, None)
-                elif (getattr(node, "subroutineName", None) in ("num", "size", "$size")
+                elif (getattr(node, "subroutineName", None) in
+                      ("num", "size", "$size", "$left", "$right",
+                       "$low", "$high", "$increment")
                       and getattr(getattr(node, "arguments", [None])[0],
                                   "symbol", None) is symbol):
                     return VisitAction.Skip
@@ -2298,7 +2300,9 @@ def _finite_integral_assoc_cells(sm, symbol):
                 if key is not None:
                     exists_calls += 1
                     keys.setdefault(key, None)
-                elif (getattr(node, "subroutineName", None) in ("num", "size", "$size")
+                elif (getattr(node, "subroutineName", None) in
+                      ("num", "size", "$size", "$left", "$right",
+                       "$low", "$high", "$increment")
                       and getattr(getattr(node, "arguments", [None])[0],
                                   "symbol", None) is symbol):
                     return VisitAction.Skip
@@ -7413,13 +7417,15 @@ def _convert_dimension_query(sm, expression):
     # finite history replay answer that narrow source-pure case before the
     # fixed-dimension metadata path below; ordinary fixed arrays continue to
     # use their declared dimension shape.
-    if expression.subroutineName == "$size":
+    if expression.subroutineName in (
+            "$size", "$left", "$right", "$low", "$high", "$increment"):
         associative = _convert_associative_count_query(sm, expression)
         if associative.get("kind") != "Unsupported":
             return associative
-        empty_associative = _convert_associative_empty_query(sm, expression)
-        if empty_associative.get("kind") != "Unsupported":
-            return empty_associative
+        if expression.subroutineName == "$size":
+            empty_associative = _convert_associative_empty_query(sm, expression)
+            if empty_associative.get("kind") != "Unsupported":
+                return empty_associative
     count_query = expression.subroutineName in ("$dimensions", "$unpacked_dimensions")
     if len(arguments) not in ((1,) if count_query else (1, 2)):
         return unsupported(sm, expression, "CallExpression:dimension:arity")
@@ -12425,12 +12431,14 @@ def _queue_empty_pop_struct_assignment(sm, expr):
 
 
 def _associative_count_query(expression):
-    """Resolve ``num``/``size`` after finite literal-key writes."""
+    """Resolve finite associative observations after literal-key history."""
     try:
         if (type(expression).__name__ != "CallExpression"
                 or getattr(expression, "bad", False)
                 or not expression.isSystemCall
-                or expression.subroutineName not in ("num", "size", "$size")
+                or expression.subroutineName not in (
+                    "num", "size", "$size", "$left", "$right", "$low",
+                    "$high", "$increment")
                 or len(expression.arguments) != 1):
             return None
         receiver = expression.arguments[0]
@@ -12443,6 +12451,11 @@ def _associative_count_query(expression):
         if symbol is None:
             return None
         index_kind = type(symbol.type.canonicalType.indexType.canonicalType).__name__
+        query = expression.subroutineName
+        # System dimension queries are defined for integral associative keys;
+        # string-key arrays retain the frontend's ordinary diagnostic.
+        if query.startswith("$") and index_kind == "StringType":
+            return None
         cells = (_finite_string_assoc_cells(None, symbol)
                  if index_kind == "StringType"
                  else _finite_integral_assoc_cells(None, symbol))
@@ -12507,7 +12520,9 @@ def _associative_count_query(expression):
                 call_receiver = call_arguments[0] if call_arguments else None
                 if getattr(call_receiver, "symbol", None) is not symbol:
                     return
-                if getattr(node, "subroutineName", None) in ("num", "size", "$size", "exists"):
+                if getattr(node, "subroutineName", None) in (
+                        "num", "size", "$size", "$left", "$right",
+                        "$low", "$high", "$increment", "exists"):
                     return
                 if (_assoc_endpoint_call_valid(node, symbol)):
                     return
@@ -12541,7 +12556,22 @@ def _associative_count_query(expression):
         width, _two_state, reason = type_width_2s(expression.type)
         if width is None or reason is not None or width <= 0:
             return None
-        return width, len(present)
+        if query in ("num", "size", "$size"):
+            value = len(present)
+        elif query == "$increment":
+            value = -1
+        elif query == "$left":
+            value = 0
+        elif query == "$right":
+            index_type = symbol.type.canonicalType.indexType.canonicalType
+            index_width = index_type.bitWidth
+            value = ((1 << (index_width - 1)) - 1
+                     if index_type.isSigned else (1 << index_width) - 1)
+        elif query == "$low":
+            value = min(present) if present else None
+        else:  # `$high`
+            value = max(present) if present else None
+        return width, value
     except Exception:
         return None
 
@@ -12553,7 +12583,9 @@ def _convert_associative_count_query(sm, expression):
     width, count = result
     return signed_metadata({
         "kind": "Literal", "span": node_span(sm, expression),
-        "width": width, "bits": format(count, f"0{width}b"),
+        "width": width,
+        "bits": ("x" * width if count is None
+                 else format(count & ((1 << width) - 1), f"0{width}b")),
         "associative_count_query": expression.subroutineName,
     }, expression.type)
 
@@ -12638,7 +12670,8 @@ def _associative_delete(sm, expression):
                     elif call_key is not None and call_key not in cells:
                         invalid = True
                     return
-                if name in ("num", "size", "$size", "exists"):
+                if name in ("num", "size", "$size", "$left", "$right",
+                            "$low", "$high", "$increment", "exists"):
                     return
                 if _assoc_endpoint_call_valid(node, symbol):
                     return
@@ -12709,7 +12742,7 @@ def _associative_empty_query(expression):
         for occurrence in occurrences[1:]:
             tail = code_source[occurrence.end():].lstrip()
             if (re.match(r"\.(?:num|size)\s*\(\s*\)", tail)
-                    or re.match(r"\$size\s*\(\s*$",
+                    or re.match(r"\$(?:size|left|right|low|high|increment)\s*\(\s*$",
                                  code_source[max(0, occurrence.start() - 32):occurrence.start()])
                     or re.match(r"\.delete\s*\(", tail)):
                 continue

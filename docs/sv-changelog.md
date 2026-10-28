@@ -1,5 +1,18 @@
 # SystemVerilog tier changelog
 
+## [0.1.131] — 2026-10-28
+
+System associative-array dimension queries now replay source-pure finite
+integral-key histories: `$left`, `$right`, `$low`, `$high`, `$increment`, and
+`$size` report populated bounds, integral-index metadata, and exact counts after
+writes and deletes. Dynamic, string-key, controlled, timed, and empty low/high
+forms remain loud. The fixture, extractor regression, and Lean receipt pass.
+Differential coverage grows **387 rows / 381 matches / 0 disagreements / 6
+recorded refusals → 388 / 382 / 0 / 6**. The fresh 22,065-path census moves
+**5,674 → 5,681 clean / 16,324 → 16,317 partial**; `AssignmentExpression:target`
+falls **2,702 → 2,695** and `CallExpression:dimension:argument` falls **44 →
+37**.
+
 ## [0.1.130] — 2026-10-28
 
 `$size` now observes source-pure finite integral-key associative-array

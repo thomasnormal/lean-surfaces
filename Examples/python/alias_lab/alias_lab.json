@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/alias_lab/alias_lab.py",
-  "source_sha256": "70642254111e7f0cf87ddbf1b1d9f31393e511f1a3a69e449d9419e270976f58",
+  "source_sha256": "7deb60168307434373787505c5620d087dd40234533b97ab1b51b04d5c622ee4",
   "module": {
     "kind": "Module",
     "body": [
@@ -2468,6 +2468,104 @@
                     "lineno": 132,
                     "col_offset": 13,
                     "end_lineno": 132,
+                    "end_col_offset": 18
+                  },
+                  "id": "value"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 135,
+          "col_offset": 0,
+          "end_lineno": 137,
+          "end_col_offset": 19
+        },
+        "name": "oct_alias",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 135,
+              "col_offset": 14,
+              "end_lineno": 135,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 136,
+              "col_offset": 4,
+              "end_lineno": 136,
+              "end_col_offset": 11
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 136,
+                  "col_offset": 4,
+                  "end_lineno": 136,
+                  "end_col_offset": 5
+                },
+                "id": "f"
+              }
+            ],
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 136,
+                "col_offset": 8,
+                "end_lineno": 136,
+                "end_col_offset": 11
+              },
+              "id": "oct"
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 137,
+              "col_offset": 4,
+              "end_lineno": 137,
+              "end_col_offset": 19
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 137,
+                "col_offset": 11,
+                "end_lineno": 137,
+                "end_col_offset": 19
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 137,
+                  "col_offset": 11,
+                  "end_lineno": 137,
+                  "end_col_offset": 12
+                },
+                "id": "f"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 137,
+                    "col_offset": 13,
+                    "end_lineno": 137,
                     "end_col_offset": 18
                   },
                   "id": "value"

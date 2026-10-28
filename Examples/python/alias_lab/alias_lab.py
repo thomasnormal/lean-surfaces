@@ -131,3 +131,8 @@ def hex_alias(value):
     f = hex
     return f(value)
 
+
+def oct_alias(value):
+    f = oct
+    return f(value)
+

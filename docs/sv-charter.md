@@ -1,5 +1,21 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Empty associative-array low/high bounds — 2026-10-28
+
+Untouched integral-key associative arrays now lower `$low` and `$high` as
+all-`x` index results, as required by IEEE 1800-2023 §20.7. The result composes
+with `$isunknown` and the exact zero `$size` query. Populated, dynamic, aliased,
+controlled, and timed histories remain loud. The
+`assoc_system_empty_bounds_history` fixture, extractor regression, and Lean
+receipt pass.
+
+The fresh **22,065-path** census moves **5,681 → 5,684 clean** and
+**16,317 → 16,314 partial** with 67 include skips. The
+`CallExpression:dimension:argument` blocker falls **37 → 34**; the top
+`AssignmentExpression:target` and `ExpressionStatement:CallExpression`
+counts remain **2,695** and **2,694**. Differential coverage grows
+**388/382/0/6 → 389/383/0/6**.
+
 ## System associative-array dimension bounds — 2026-10-28
 
 System queries `$left`, `$right`, `$low`, `$high`, `$increment`, and `$size`

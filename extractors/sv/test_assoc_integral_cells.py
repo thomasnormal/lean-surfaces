@@ -119,6 +119,15 @@ class AssocIntegralCells(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_system_empty_low_high_are_unknown(self):
+        design = extract_source(
+            'module top; int score[int]; logic [31:0] lo, hi; '
+            'initial begin lo = $low(score); hi = $high(score); '
+            'if ($isunknown(lo) && $isunknown(hi) && $size(score) == 0) '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_literal_key_delete_updates_presence_value_and_count(self):
         design = extract_source(
             'module top; int score[int]; initial begin '

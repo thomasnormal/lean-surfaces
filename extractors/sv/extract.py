@@ -12460,6 +12460,10 @@ def _associative_count_query(expression):
                  if index_kind == "StringType"
                  else _finite_integral_assoc_cells(None, symbol))
         if cells is None:
+            if query in ("$low", "$high"):
+                empty = _associative_empty_dimension_query(expression)
+                if empty is not None:
+                    return empty
             return None
         position = getattr(getattr(getattr(expression, "sourceRange", None),
                                    "start", None), "offset", None)
@@ -12742,7 +12746,7 @@ def _associative_empty_query(expression):
         for occurrence in occurrences[1:]:
             tail = code_source[occurrence.end():].lstrip()
             if (re.match(r"\.(?:num|size)\s*\(\s*\)", tail)
-                    or re.match(r"\$(?:size|left|right|low|high|increment)\s*\(\s*$",
+                    or re.search(r"\$(?:size|left|right|low|high|increment)\s*\(\s*$",
                                  code_source[max(0, occurrence.start() - 32):occurrence.start()])
                     or re.match(r"\.delete\s*\(", tail)):
                 continue
@@ -12750,6 +12754,54 @@ def _associative_empty_query(expression):
         return True
     except Exception:
         return False
+
+
+def _associative_empty_dimension_query(expression):
+    """Resolve `$low`/`$high` as all-x on an untouched integral assoc array."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName not in ("$low", "$high")
+                or len(expression.arguments) != 1):
+            return None
+        receiver = expression.arguments[0]
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or getattr(receiver, "bad", False)
+                or type(receiver.type.canonicalType).__name__
+                != "AssociativeArrayType"):
+            return None
+        symbol = getattr(receiver, "symbol", None)
+        index_type = symbol.type.canonicalType.indexType.canonicalType
+        if (symbol is None or not getattr(index_type, "isIntegral", False)
+                or getattr(symbol, "initializer", None) is not None):
+            return None
+        width, _two_state, reason = type_width_2s(expression.type)
+        if width is None or reason is not None:
+            return None
+        source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
+        name = getattr(symbol, "name", "")
+        if not source or not name:
+            return None
+        code_source = _sv_code_source(source)
+        occurrences = list(re.finditer(
+            r"(?<![A-Za-z0-9_$])" + re.escape(name)
+            + r"(?![A-Za-z0-9_$])", code_source))
+        if not occurrences:
+            return None
+        allowed = re.compile(
+            r"\$(?:size|left|right|low|high|increment)\s*\(\s*$")
+        for occurrence in occurrences[1:]:
+            tail = code_source[occurrence.end():].lstrip()
+            prefix = code_source[max(0, occurrence.start() - 32):occurrence.start()]
+            if (allowed.search(prefix)
+                    or re.match(r"\.(?:num|size)\s*\(\s*\)", tail)
+                    or re.match(r"\.delete\s*\(", tail)):
+                continue
+            return None
+        return width, None
+    except Exception:
+        return None
 
 
 def _associative_empty_delete_method(expression):

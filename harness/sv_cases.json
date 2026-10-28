@@ -3512,6 +3512,15 @@
         "PASS2"
       ],
       "expect": "match"
+    },
+    {
+      "name": "assoc_system_empty_bounds_history",
+      "file": "Examples/system-verilog/assoc_system_empty_bounds_history/assoc_system_empty_bounds_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

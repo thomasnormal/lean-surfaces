@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.132] — 2026-10-28
+
+Untouched integral-key associative arrays now return all-`x` values from
+`$low` and `$high`, matching IEEE 1800-2023 §20.7 and composing with
+`$isunknown` and zero `$size`. Populated, dynamic, aliased, controlled, and
+timed histories remain loud. The fixture, extractor regression, and Lean
+receipt pass. Differential coverage grows **388 rows / 382 matches / 0
+disagreements / 6 recorded refusals → 389 / 383 / 0 / 6**. The fresh
+22,065-path census moves **5,681 → 5,684 clean / 16,317 → 16,314 partial**;
+`CallExpression:dimension:argument` falls **37 → 34**.
+
 ## [0.1.131] — 2026-10-28
 
 System associative-array dimension queries now replay source-pure finite

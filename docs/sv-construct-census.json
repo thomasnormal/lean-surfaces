@@ -351,10 +351,6 @@
     37
    ],
    [
-    "CallExpression:dimension:argument",
-    37
-   ],
-   [
     "NetAliasSymbol:NetAlias",
     35
    ],
@@ -364,6 +360,10 @@
    ],
    [
     "NetType",
+    34
+   ],
+   [
+    "CallExpression:dimension:argument",
     34
    ],
    [
@@ -976,13 +976,13 @@
    ]
   ],
   "by_status": {
-   "clean": 5681,
-   "partial": 16317,
+   "clean": 5684,
+   "partial": 16314,
    "skip_include": 67
   },
   "clean_by_type": {
    "(none)": [
-    522,
+    523,
     1390
    ],
    "compilation": [
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    4905,
+    4907,
     18701
    ],
    "simulation elaboration": [
@@ -1403,9 +1403,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 400,
+    "clean": 403,
     "error": 0,
-    "partial": 425,
+    "partial": 422,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0

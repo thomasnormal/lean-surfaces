@@ -26,6 +26,20 @@ and Lean receipt. Differential coverage grows **342/336/0/6 → 343/337/0/6**;
 the unavailable external corpus snapshot remains **5,401 clean / 16,597
 partial** with 67 include skips.
 
+## Ignored string null-character assignments — 2026-10-28
+
+IEEE 1800-2023 §6.16 ignores a blocking write of integral zero to a selected
+string byte. The legacy extractor admits only a direct known-zero literal and
+a constant index, lowering the write to `Empty`; the receiver has no modeled
+string storage and the write has no observable effect. Dynamic indices,
+nonzero values, timed forms, and nonblocking writes remain
+`AssignmentExpression:target`.
+
+`string_null_character` supplies the differential `PASS` witness and Lean
+receipt. Differential coverage grows **343/337/0/6 → 344/338/0/6**; the
+unavailable external census snapshot remains **5,401 clean / 16,597 partial**
+with 67 include skips.
+
 ## Admitted representations
 
 The legacy path admits a whole identifier, a packed bit or part select over an

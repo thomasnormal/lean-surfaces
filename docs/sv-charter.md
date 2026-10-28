@@ -86,6 +86,21 @@ disagreements; grammar coverage remains **218/97/121**. The external corpus
 checkout is unavailable, so the committed **5,401 clean / 16,597 partial**
 snapshot and 67 include skips are unchanged.
 
+## Ignored string null-character assignments — 2026-10-28
+
+The legacy self-check extractor now admits the IEEE §6.16 rule that assigning
+integral zero to a selected string byte is ignored. The narrow lowering accepts
+only a blocking literal-zero write with a constant index and emits `Empty`,
+which is exact because the self-check state carries no string storage. Dynamic
+indices, nonzero values, timed and nonblocking writes remain loud. The
+`string_null_character` fixture supplies the differential `PASS` row and Lean
+receipt.
+
+Differential coverage grows **343/337/0/6 → 344/338/0/6** with no
+disagreements; grammar coverage remains **218/97/121**. The external corpus
+checkout is unavailable, so the committed **5,401 clean / 16,597 partial**
+snapshot and 67 include skips are unchanged.
+
 The executable self-check and grammar baseline is generated in
 [`docs/sv-coverage.md`](sv-coverage.md) by
 `harness/sv_coverage_page.py`; its differential rows are pinned to the

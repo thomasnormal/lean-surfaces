@@ -41,6 +41,20 @@ remains **5,401 clean / 16,597 partial** over 22,065 paths with 67 include
 skips; no unverified corpus delta is claimed. Differential coverage grows
 **342/336/0/6 → 343/337/0/6**, while grammar coverage remains **218/97/121**.
 
+## Ignored string null-character assignments — 2026-10-28
+
+The legacy extractor now lowers a blocking assignment of literal integral
+zero to a constant-indexed string byte to `Empty`, matching IEEE 1800-2023
+§6.16's rule that strings cannot contain the special null character. Dynamic
+indices, nonzero values, timed forms, and nonblocking writes remain at
+`AssignmentExpression:target`. The `string_null_character` fixture supplies
+the differential row and Lean receipt.
+
+The external sv-tests-2 checkout is unavailable, so the committed census
+remains **5,401 clean / 16,597 partial** over 22,065 paths with 67 include
+skips; no unverified corpus delta is claimed. Differential coverage grows
+**343/337/0/6 → 344/338/0/6**, while grammar coverage remains **218/97/121**.
+
 ## One-dimensional fixed-array `%p` diagnostics — 2026-10-27
 
 Direct one-dimensional fixed integral arrays can now be passed to `%p`

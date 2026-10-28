@@ -27,6 +27,28 @@ def nodes(value):
 
 
 class LiteralStringWrites(unittest.TestCase):
+    def test_zero_string_character_assignment_is_ignored(self):
+        design = lower(
+            'module top; string value; initial begin value = "hello"; '
+            'value[1] = 0; $display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("string_null_char_write_noop")
+                            for node in nodes(design)))
+
+    def test_nonzero_or_dynamic_string_character_writes_stay_loud(self):
+        for source in (
+                'module top; string value; initial value[1] = 65; endmodule',
+                'module top; string value; int i; initial value[i] = 0; endmodule',
+                'module top; string value; initial value <= 0; endmodule'):
+            design = lower(source)
+            self.assertFalse(any(node.get("string_null_char_write_noop")
+                                 for node in nodes(design)))
+            self.assertTrue(any(node.get("kind") in ("Unsupported", "Invalid")
+                                or node.get("sv_kind") ==
+                                "AssignmentExpression:target"
+                                for node in nodes(design)))
+
     def test_literal_concatenation_write_is_inert(self):
         design = lower(
             'module top; string value; initial begin '

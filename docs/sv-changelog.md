@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.90] — 2026-10-28
+
+Blocking assignments of literal integral zero to a constant-indexed string
+byte now lower to `Empty`, matching IEEE 1800-2023 §6.16's ignored
+null-character rule. Dynamic indices, nonzero values, timed forms, and
+nonblocking writes remain loud. The `string_null_character` fixture and Lean
+receipt supply the `PASS` evidence. Differential coverage is now **344 rows /
+338 matches / 0 disagreements / 6 recorded refusals**; grammar coverage
+remains **218 / 97 / 121**. The external census snapshot remains **5,401
+clean / 16,597 partial** with 67 include skips.
+
 ## [0.1.89] — 2026-10-28
 
 Whole-array continuous assignment now admits a one-dimensional fixed-unpacked

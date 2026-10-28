@@ -10578,6 +10578,34 @@ def _string_literal_write(expr):
                                   for operand in operands)
 
 
+def _string_null_char_write_noop(expr):
+    """Recognize the §6.16 ignored NUL-character assignment.
+
+    SystemVerilog strings cannot contain the special character ``\0``;
+    assigning the integral value zero to a selected byte is ignored.  The
+    self-check state has no string storage, so erase only a blocking write
+    whose receiver is a string, whose index is a constant integral value,
+    and whose RHS is the direct known-zero literal.  Dynamic indices,
+    nonzero values, timing, and nonblocking forms retain the ordinary target
+    boundary.
+    """
+    try:
+        if (type(expr).__name__ != "AssignmentExpression"
+                or expr.op is not None or expr.timingControl is not None
+                or expr.isNonBlocking
+                or type(expr.left).__name__ != "ElementSelectExpression"):
+            return False
+        receiver = getattr(expr.left, "value", None)
+        if (type(receiver).__name__ != "NamedValueExpression"
+                or type(receiver.type.canonicalType).__name__ != "StringType"
+                or _literal_integral_value(getattr(expr.left, "selector", None))
+                is None):
+            return False
+        return _literal_integral_value(expr.right) == 0
+    except Exception:
+        return False
+
+
 def _empty_queue_literal(expr):
     """Whether *expr* is the zero-item queue literal ``{}``."""
     return _queue_literal_initializer_size(expr) == 0
@@ -18516,6 +18544,9 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and _empty_queue_literal(expr.right)):
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "empty_dynamic_array_write_noop": True}
+    if _SYM is None and _string_null_char_write_noop(expr):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "string_null_char_write_noop": True}
     if expr.timingControl is not None:
         return _convert_intra_assignment(sm, expr)
     scan = _convert_scan_assignment(sm, expr)

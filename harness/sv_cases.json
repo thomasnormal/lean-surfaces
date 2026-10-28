@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "string_null_character",
+      "file": "Examples/system-verilog/string_null_character/string_null_character.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "static_fixed_array_continuous_copy",
       "file": "Examples/system-verilog/static_fixed_array_continuous_copy/static_fixed_array_continuous_copy.sv",
       "module": "top",

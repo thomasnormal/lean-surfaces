@@ -109,6 +109,25 @@ class OrdinaryCases(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_priority_default_case_is_admitted(self):
+        design = lower(case_source(
+            "priority case (subject) 4'd1:; 4'd2:; default:; endcase"))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("case_lowered") for node in nodes(design)))
+
+    def test_priority_default_casez_is_admitted(self):
+        design = lower(case_source(
+            "priority casez (subject) 4'b1???:; default:; endcase"))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("case_lowered") for node in nodes(design)))
+
+    def test_priority_case_without_default_stays_loud(self):
+        self.assert_refused(
+            "priority case (subject) 4'd1:; 4'd2:; endcase",
+            "CaseStatement:Priority")
+
     def test_unique_duplicate_literal_case_stays_loud(self):
         self.assert_refused(
             "unique case (subject) 4'd1:; 4'd1:; default:; endcase",

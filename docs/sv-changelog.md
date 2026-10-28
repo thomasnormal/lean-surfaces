@@ -1,5 +1,14 @@
 # SystemVerilog tier changelog
 
+## [0.1.157] — 2026-10-28
+
+`priority case` and `priority casez` chains with an explicit `default` now
+lower through the ordinary first-match case representation because no no-match
+diagnostic can occur. Cases without a fallback and effectful, unsupported, or
+scheduler-facing forms remain loud. The `priority_case_fallback` fixture,
+extractor regressions, generated envelope, Lean receipt, and differential row
+cover the admitted subset.
+
 ## [0.1.156] — 2026-10-28
 
 Qualified `priority if` chains with an explicit final `else` now lower to the

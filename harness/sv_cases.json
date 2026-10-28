@@ -3721,6 +3721,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "priority_case_fallback",
+      "file": "Examples/system-verilog/priority_case_fallback/priority_case_fallback.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

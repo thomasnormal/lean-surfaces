@@ -20254,7 +20254,10 @@ def _case_expression_ok(node):
 def _convert_ordinary_case(sm, stmt):
     """Pure IEEE 12.5/12.5.1/12.5.4 cases, with whole-case sizing."""
     check_name = str(stmt.check).split(".")[-1]
-    if stmt.check not in (UniquePriorityCheck.None_, UniquePriorityCheck.Unique):
+    priority_fallback = (stmt.check == UniquePriorityCheck.Priority
+                         and stmt.defaultCase is not None)
+    if (stmt.check not in (UniquePriorityCheck.None_, UniquePriorityCheck.Unique)
+            and not priority_fallback):
         return unsupported(sm, stmt, "CaseStatement:" + check_name)
     condition = str(stmt.condition).split(".")[-1]
     # ``unique case`` has a diagnostic side effect on overlap or on a missing

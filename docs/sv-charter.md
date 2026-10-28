@@ -1,5 +1,15 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Priority case fallbacks — 2026-10-28
+
+The legacy self-check tier now lowers `priority case` and `priority casez`
+chains when an explicit `default` covers the qualifier's no-match path. The
+existing ordinary case subject, pattern, and first-match lowering supplies the
+execution semantics; missing fallbacks, effectful or unsupported expressions,
+and scheduler-facing bodies remain loud. The `priority_case_fallback` fixture,
+extractor tests, generated envelope, Lean receipt, and differential row cover
+the normal and wildcard forms without adding diagnostic state or a scheduler.
+
 ## Qualified `if` fallbacks — 2026-10-28
 
 The legacy self-check tier now lowers a qualified `priority if` chain when it

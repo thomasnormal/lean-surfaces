@@ -298,11 +298,11 @@ and lowers to the ordinary first-match `If`; indexed, dynamic, missing-fallback,
 and scheduler-facing forms remain loud. See [the priority-if boundary](sv-priority-if.md)
 and `extractors/sv/priority_if_reprice.py`.
 
-Qualified priority case statements remain explicit
-`CaseStatement:Priority` unsupported nodes. The ordinary case lowering can
-preserve first-match selection but has no priority status or no-match
-diagnostic channel, and no retained priority-check state for a waiting body.
-See [the priority-case boundary](sv-priority-cases.md) and
+Qualified priority case statements with an explicit `default` lower through
+the ordinary first-match case representation because no no-match diagnostic
+can occur. Cases without a fallback, unsupported matching or source effects,
+and scheduler-facing bodies remain explicit `CaseStatement:Priority`
+unsupported nodes. See [the priority-case boundary](sv-priority-cases.md) and
 `extractors/sv/priority_case_reprice.py`.
 
 Qualified `unique if` statements remain explicit

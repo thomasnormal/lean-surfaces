@@ -1,4 +1,4 @@
-# Priority case statements — repricing boundary
+# Priority case statements — admitted fallback boundary
 
 IEEE 1800-2023 §12.5.3 gives `priority case` source-order, first-match
 selection. A later item is not selected after an earlier match, even when
@@ -6,20 +6,20 @@ the item predicates overlap. When no item matches and there is no `default`,
 the construct reports a priority violation; an explicit `default` supplies
 the fallback. The qualifier composes with `casez` and `case inside`.
 
-## Why priority cases remain a boundary
+## The admitted fallback subset
 
-The ordinary case lowering can preserve a first-match chain and its selected
-body, but it has no priority status or no-match diagnostic channel. Erasing
-the qualifier would silently turn a required violation into normal fallthrough
-and would make a source with no default appear equivalent to one with a
-default. The envelope also has no retained priority-check state for a body
-that waits or for a process that is rescheduled.
+The ordinary case lowering preserves a first-match chain and its selected body.
+When a `priority case` has an explicit `default`, every no-match path is
+covered, so the qualifier adds no observable diagnostic. The legacy self-check
+tier lowers that subset, including the existing `casez` matching mode, after
+the ordinary subject and pattern purity checks pass.
 
-The public tier therefore keeps every `CaseStatement:Priority` span loud. It
-does not erase the qualifier, select a fixed arm, fabricate a diagnostic, or
-add a scheduler. Wildcard and `inside` operands retain their own value
-boundaries, and nonblocking selected bodies retain the scheduler-owned
-publication boundary.
+Cases without a fallback, dynamic or effectful subjects/patterns, unsupported
+matching modes, and scheduler-facing bodies remain loud. No diagnostic state or
+second scheduler is introduced.
+
+`priority_case_fallback` supplies normal and `casez` differential PASS rows,
+extractor regressions, and a Lean receipt.
 
 ## 2026-10-22 census and decision
 

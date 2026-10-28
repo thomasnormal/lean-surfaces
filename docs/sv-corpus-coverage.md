@@ -1,5 +1,17 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Priority case fallbacks — 2026-10-28
+
+The legacy extractor now lowers `priority case` and `priority casez` chains
+with an explicit `default`, because the fallback removes the qualifier's
+no-match diagnostic. Missing fallbacks, effectful or unsupported subjects and
+patterns, and scheduler-facing bodies remain loud. The `priority_case_fallback`
+fixture supplies the normal and wildcard PASS paths, extractor regressions, and
+Lean receipt. Differential coverage grows **411/405/0/6 → 412/406/0/6**;
+grammar coverage remains **218/101/117**. The committed external corpus
+snapshot remains **5,804 clean / 16,196 partial / 67 include skips** because
+the sv-tests-2 checkout is unavailable in this worktree.
+
 ## Pure integral-to-real writes — 2026-10-28
 
 Blocking writes from pure integral expressions into named `real` or

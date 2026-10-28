@@ -9,11 +9,13 @@ matches only when the result is definite one; zero and X advance the search.
 The legacy/self-check extractor reuses the pure membership helpers and the
 ordinary first-match case chain. Scalar labels lower to `==?`, ranges to
 `>= && <=` with common signedness, and supported fixed-array labels to their
-flattened scalar elements in source order. Array elements must have the same
-width as the propagated subject. The frontend's whole-case width and sign
-conversions precede comparison. The first matching body runs once; default
-is the final fallback regardless of its source position. Exhaustion without
-default does nothing.
+flattened scalar elements in source order. A fixed integral array cell may be
+narrower than the propagated subject; it is widened at the case comparison
+using the case-context signedness (sign extension for signed cells, zero
+extension otherwise). A cell wider than the subject cannot be truncated. The
+frontend's whole-case width and sign conversions precede comparison. The first
+matching body runs once; default is the final fallback regardless of its source
+position. Exhaustion without default does nothing.
 
 Subject and label operands must belong to the admitted pure integral fragment.
 The bound source is checked before folding, so calls or increments cannot
@@ -24,9 +26,10 @@ Later visits read the current operands. No evaluator, storage or scheduler
 rule changes.
 
 Qualifiers with diagnostic obligations, tolerance ranges, nonintegral or
-unsupported storage, default-only cases, dollar endpoints in case labels and
-array-element widening remain loud. Independent observations distinguish
-signed narrow array labels from scalar membership; no conversion is guessed.
+unsupported storage, default-only cases, dollar endpoints, dynamic or nested
+arrays, and cells wider than the subject remain loud. Narrow fixed integral
+cells use the case-context conversion above; no unrelated conversion is
+guessed.
 The ordinary `inside` expression keeps its existing dollar and array-widening
 rules. The existing symbolic `Case` path retains its own structural vocabulary
 and compiler boundaries.
@@ -37,4 +40,6 @@ ranges, common-width arrays/slices, first/default/no-match, nesting and delayed
 arm retention with live changed operands. Three kernel theorems bind to exact
 compiled source subtrees: the scalar equality bridge, skipping an ambiguous
 item before a definite match, and inclusive signed range evaluation. A separate
-array-widening source retains the unresolved conversion seam as a refusal.
+array-widening source checks signed and unsigned narrow cells in a complete
+self-check transcript; over-wide and effectful variants retain the conversion
+seam as refusals.

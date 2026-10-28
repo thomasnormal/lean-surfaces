@@ -3748,6 +3748,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "case_array_widening",
+      "file": "Examples/system-verilog/case_array_widening/case_array_widening.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

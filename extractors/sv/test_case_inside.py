@@ -49,10 +49,17 @@ class CaseInside(unittest.TestCase):
         self.assertEqual([n["kind"] for n in reads], ["Ident"] * 2)
         self.assertEqual([n["name"] for n in reads], ["cells[1]", "cells[0]"])
 
-    def test_array_widening_needs_case_specific_conversion(self):
-        for signed in ("", "signed"):
-            design = lower(source("cells:;", "logic signed [7:0] subject; logic " + signed + " [3:0] cells[2:0];"))
-            self.assertIn("CaseStatement:pattern", [n.get("sv_kind") for n in nodes(design)])
+    def test_array_widening_resizes_each_case_item_in_case_context(self):
+        for signed, expected_resize in (("", "Resize"),
+                                        ("signed", "SignedResize")):
+            design = lower(source(
+                "cells:;",
+                "logic signed [7:0] subject; logic " + signed + " [3:0] cells[2:0];"))
+            reads = [n["right"] for n in comparisons(design)]
+            self.assertEqual([node["kind"] for node in reads],
+                             [expected_resize] * 3)
+            self.assertFalse(any(n.get("kind") == "Unsupported"
+                                 for n in nodes(design)))
 
     def test_effectful_sources_cannot_be_folded_away(self):
         declarations = "int subject, lo; function int f(); lo++; return 1; endfunction"
@@ -92,9 +99,6 @@ class CaseInside(unittest.TestCase):
         root = Path(__file__).resolve().parents[2] / "Examples/system-verilog/case_inside"
         for path in root.glob("*.sv"):
             design = lower(path.read_text())
-            if path.stem == "array_widening":
-                self.assertIn("CaseStatement:pattern", [n.get("sv_kind") for n in nodes(design)])
-                continue
             self.assertTrue(comparisons(design))
             self.assertFalse(any(n.get("kind") == "Unsupported" for n in nodes(design)))
 

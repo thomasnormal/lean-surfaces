@@ -1,5 +1,22 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Fixed-array case-inside widening — 2026-10-28
+
+The legacy self-check tier now admits a fixed unpacked integral array as a
+`case (...) inside` label when every cell is no wider than the case subject.
+Each cell is converted at the case boundary with the propagated signedness,
+then compared through the existing source-order membership chain. Dynamic or
+nested arrays, effectful elements, nonintegral storage, and over-wide cells
+remain loud. The updated `case_inside/array_widening` receipt and the new
+`case_array_widening` fixture provide complete transcripts and a differential
+row; no evaluator or scheduler rule changes.
+
+Differential coverage grows **414/408/0/6 → 415/409/0/6**, and grammar coverage
+grows **218/102/116 → 218/106/112** as the new fixture supplies the first
+witness for several case-item syntax kinds. The committed external corpus
+snapshot is **5,814 clean / 16,186 partial / 67 include skips**;
+the sv-tests-2 checkout is unavailable in this worktree.
+
 ## Pure computed arguments to discarded literal-return functions — 2026-10-28
 
 Discarded calls to source-declared literal-return functions now accept
@@ -6032,8 +6049,9 @@ wildcard equality; colon ranges use inclusive signed/unsigned comparisons.
 Only definite one selects an arm. Common-width fixed arrays/slices retain
 source-order elements, and delayed selected arms retain their own continuation.
 No evaluator, storage or scheduler changed. Effects, qualifiers, tolerance
-syntax, unsupported types/storage, dollar case endpoints and array-element
-widening remain loud. The symbolic structural case path is unchanged.
+syntax, unsupported types/storage, dollar case endpoints, dynamic or nested
+arrays, and over-wide cells remain loud. The symbolic structural case path is
+unchanged.
 See [the contract](sv-case-inside.md).
 
 The paired **22,035**-path census gains **21 clean files** without losses:
@@ -6042,8 +6060,8 @@ zero extraction errors. All twenty-one gains match complete independent
 transcripts under both source and reverse schedule oracles. Three authored
 sources also match complete transcripts, including all 256 pairs of two-bit
 four-state operands, type/range/array contexts and delayed live-value changes.
-A fourth source explicitly preserves the case-array widening discrepancy as
-a refusal; it is not a runtime match. Three fixture-bound kernel theorems prove
+A fourth source now checks narrow case-array widening as a runtime match. Three
+fixture-bound kernel theorems prove
 the scalar equality bridge, ambiguous-item skip with retained selected body,
 and inclusive signed interval guard.
 

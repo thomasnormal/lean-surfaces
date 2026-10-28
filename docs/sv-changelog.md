@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.160] — 2026-10-28
+
+Fixed unpacked integral arrays used as legacy `case (...) inside` labels now
+admit cells no wider than the subject. Narrow cells receive the case-context
+signed or unsigned extension before source-order membership checks. Dynamic or
+nested arrays, effectful elements, nonintegral cells, and over-wide cells remain
+loud. The existing array-widening receipt, new standalone fixture, extractor
+regressions, generated envelopes, and differential row cover the boundary;
+differential coverage grows **414/408/0/6 → 415/409/0/6**, and grammar coverage
+grows **218/102/116 → 218/106/112**.
+
 ## [0.1.159] — 2026-10-28
 
 Discarded calls to source-declared literal-return functions now accept

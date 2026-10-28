@@ -483,10 +483,6 @@
     12
    ],
    [
-    "CaseStatement:Priority",
-    12
-   ],
-   [
     "DoWhileLoopStatement:condition",
     12
    ],
@@ -567,10 +563,6 @@
     8
    ],
    [
-    "CaseStatement:Unique0",
-    8
-   ],
-   [
     "Package:ProceduralBlock",
     8
    ],
@@ -612,6 +604,10 @@
    ],
    [
     "BinaryExpression:Divide-type",
+    6
+   ],
+   [
+    "CaseStatement:Priority",
     6
    ],
    [
@@ -704,6 +700,10 @@
    ],
    [
     "ConditionalStatement:Unique0",
+    4
+   ],
+   [
+    "CaseStatement:Unique0",
     4
    ],
    [
@@ -976,13 +976,13 @@
    ]
   ],
   "by_status": {
-   "clean": 5804,
-   "partial": 16196,
+   "clean": 5814,
+   "partial": 16186,
    "skip_include": 67
   },
   "clean_by_type": {
    "(none)": [
-    528,
+    529,
     1390
    ],
    "compilation": [
@@ -1038,7 +1038,7 @@
     52
    ],
    "simulation": [
-    5021,
+    5030,
     18703
    ],
    "simulation elaboration": [
@@ -1339,9 +1339,9 @@
     "unlockable": 1
    },
    "chapter-12": {
-    "clean": 331,
+    "clean": 340,
     "error": 0,
-    "partial": 296,
+    "partial": 287,
     "skip_include": 0,
     "total": 627,
     "unlockable": 1
@@ -1579,9 +1579,9 @@
     "unlockable": 0
    },
    "chapter-40": {
-    "clean": 46,
+    "clean": 47,
     "error": 0,
-    "partial": 41,
+    "partial": 40,
     "skip_include": 0,
     "total": 87,
     "unlockable": 0

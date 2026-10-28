@@ -9,15 +9,14 @@ first-match case chain:
   reversed ranges, common-width arrays/slices, default, nesting and first match.
 - `timers.sv`: a selected wildcard/range body retains its continuation while
   subjects/endpoints change; a later case reads the new values.
-- `array_widening.sv`: a deliberate refusal preserving the unresolved
-  difference between signed case-array widening and scalar membership.
+- `array_widening.sv`: signed case-array elements widen to the subject width
+  before membership, including mixed-width arrays and scalar labels.
 
 Complete outputs were independently observed on 2026-10-20. The first three
 match both source and reverse schedule oracles; the time-zero fixtures also
 match `runSelfCheck`. Source hashes are recorded in their envelopes and
 `proof.lean`. The proof receipt binds exact compiled wildcard and interval
-subtrees, checks the complete accepted transcripts and preserves loudness on
-the array-widening source. It does not count that source as runtime agreement.
+subtrees and checks the complete accepted transcripts.
 
 ```sh
 python3 extractors/sv/extract.py Examples/system-verilog/case_inside/*.sv
@@ -25,6 +24,8 @@ LEAN_NUM_THREADS=2 prlimit --as=17179869184 lake env lean -j2 Examples/system-ve
 ```
 
 No evaluator or scheduler changed. Effects, qualifiers, unsupported storage,
-tolerance syntax, dollar case endpoints and case-array widening remain loud.
+tolerance syntax and dollar case endpoints remain loud. Case-array elements
+are admitted only when their fixed integral cells can be widened to the
+subject width without changing source order.
 Ordinary `inside` expressions and the existing symbolic structural case path
 retain their separate admission contracts.

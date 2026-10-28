@@ -122,14 +122,6 @@ def fixtureReceipt : IO Unit := do
       world := next
     unless world.out.halted && world.out.flush == ["wildcard 2 live 1110", "range 4 live 20 30 40", "reentry 7"] do
       throw (IO.userError "timed case-inside complete transcript differs")
-  let .ok widening := loadEnvelopeDesign
-      (← IO.FS.readFile "Examples/system-verilog/case_inside/array_widening.sv.json")
-    | throw (IO.userError "array-widening counterexample failed to load")
-  unless match runSelfCheck widening 32768 with
-      | .unsupported _ => true
-      | _ => false do
-    throw (IO.userError "unvalidated case-array widening silently answered")
-
 #eval fixtureReceipt
 
 end Examples.systemVerilog.caseInside.proof

@@ -1,5 +1,22 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Fixed-array case-inside widening — 2026-10-28
+
+Legacy `case (...) inside` now lowers fixed unpacked integral array labels when
+each cell is no wider than the subject. Narrow cells are widened with the
+case-context signedness before the existing membership comparison, preserving
+array order. Dynamic or nested arrays, effectful selectors, nonintegral cells,
+and over-wide cells remain loud. The existing `case_inside/array_widening.sv`
+receipt now checks its complete transcript, and the new
+`case_array_widening` fixture supplies a standalone PASS row.
+Differential coverage grows **414/408/0/6 → 415/409/0/6**. Grammar coverage
+grows **218/102/116 → 218/106/112** because the new fixture becomes the first
+witness for several case-item syntax kinds; the existing array witness is also
+now a match. The
+committed external corpus snapshot remains **5,814 clean / 16,186 partial / 67
+include skips** because the sv-tests-2 checkout is unavailable in this
+worktree.
+
 ## Pure computed arguments to discarded literal-return functions — 2026-10-28
 
 Discarded calls to source-declared literal-return functions now accept

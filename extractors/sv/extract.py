@@ -20335,7 +20335,7 @@ def _convert_ordinary_case(sm, stmt):
             if condition == "Inside":
                 comparisons = _inside_item(
                     sm, expression, subject, width, stmt.expr.type.isSigned,
-                    allow_unbounded=False, allow_array_widening=False)
+                    allow_unbounded=False, allow_array_widening=True)
                 if not comparisons:
                     return unsupported(sm, stmt, "CaseStatement:pattern")
             else:

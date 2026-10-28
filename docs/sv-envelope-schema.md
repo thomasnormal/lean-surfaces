@@ -337,9 +337,12 @@ on either side, and `casex` also ignores X on either side. These conditions
 enter `SelfCheck.SExpr.caseMatch`, not the M0 or symbolic expression loader.
 Unqualified `case … inside` also uses this chain: scalar labels use `Binary`
 `==?`, inclusive ranges use `>= && <=` (signed variants when appropriate),
-and common-width fixed-array labels expand to their scalar elements. A guard
-must return definite one to select its body; unknown guards advance the search.
-Dollar case endpoints and array-element widening remain loud. These reuse the
+and fixed integral array labels expand to their scalar elements. A cell narrower
+than the propagated subject is represented by `Resize` or `SignedResize`,
+chosen from the case-context signedness; a cell wider than the subject is
+rejected rather than truncated. A guard must return definite one to select its
+body; unknown guards advance the search. Dollar endpoints, dynamic or nested
+arrays, effectful elements, and over-wide cells remain loud. These reuse the
 existing membership helpers and do not extend the symbolic `Case` path.
 `unique` case qualifiers remain explicit `CaseStatement:Unique` unsupported
 members; see [the unique-case boundary](sv-unique-cases.md). The ordinary

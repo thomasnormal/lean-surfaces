@@ -12297,31 +12297,63 @@ def _floating_pure_call(expr):
                 or not expr.isSystemCall
                 or expr.subroutineName not in _PURE_FLOATING_CALLS):
             return False
-        pure = True
-
-        def inspect(node):
-            nonlocal pure
-            kind = type(node).__name__
-            if kind == "CallExpression":
-                pure = pure and _floating_pure_call(node)
-                return VisitAction.Skip
-            if kind == "UnaryExpression":
-                op = str(getattr(node, "op", None)).split(".")[-1]
-                pure = pure and op not in (
-                    "Preincrement", "Postincrement", "Predecrement",
-                    "Postdecrement")
-            elif kind not in (
-                    "RealLiteral", "IntegerLiteral", "UnbasedUnsizedIntegerLiteral",
-                    "TimeLiteral", "NamedValueExpression", "ConversionExpression",
-                    "UnaryExpression", "BinaryExpression", "ConditionalExpression",
-                    "ConcatenationExpression", "MinTypMaxExpression"):
-                pure = False
-
-        for argument in expr.arguments:
-            argument.visit(inspect)
-        return pure
+        return all(_floating_pure_operand(argument)
+                   for argument in expr.arguments)
     except Exception:
         return False
+
+
+def _floating_pure_operand(expr):
+    """Whether an expression reads only represented, source-pure values."""
+    pure = True
+
+    def inspect(node):
+        nonlocal pure
+        kind = type(node).__name__
+        if kind == "CallExpression":
+            pure = pure and _floating_pure_call(node)
+            return VisitAction.Skip
+        if kind == "UnaryExpression":
+            op = str(getattr(node, "op", None)).split(".")[-1]
+            pure = pure and op not in (
+                "Preincrement", "Postincrement", "Predecrement",
+                "Postdecrement")
+        elif kind not in (
+                "RealLiteral", "IntegerLiteral", "UnbasedUnsizedIntegerLiteral",
+                "TimeLiteral", "NamedValueExpression", "ConversionExpression",
+                "UnaryExpression", "BinaryExpression", "ConditionalExpression",
+                "ConcatenationExpression", "MinTypMaxExpression"):
+            pure = False
+
+    expr.visit(inspect)
+    return pure
+
+
+def _floating_bits_statement_call(expression, name, width):
+    """Whether a discarded real-to-bits conversion has a pure real operand."""
+    try:
+        if (type(expression).__name__ != "CallExpression"
+                or getattr(expression, "bad", False)
+                or not expression.isSystemCall
+                or expression.subroutineName != name
+                or len(expression.arguments) != 1
+                or getattr(expression.type, "bitWidth", None) != width
+                or not getattr(expression.type, "isIntegral", False)
+                or getattr(expression.type, "isSigned", True)):
+            return False
+        argument = expression.arguments[0]
+        return (type(argument.type.canonicalType).__name__ == "FloatingType"
+                and _floating_pure_operand(argument))
+    except Exception:
+        return False
+
+
+def _realtobits_pure_statement_call(expression):
+    return _floating_bits_statement_call(expression, "$realtobits", 64)
+
+
+def _shortrealtobits_pure_statement_call(expression):
+    return _floating_bits_statement_call(expression, "$shortrealtobits", 32)
 
 
 def _floating_math_statement_call(expression):
@@ -22646,9 +22678,21 @@ def _convert_syscall(sm, s, e):
     if is_sys and _realtobits_literal_call(e):
         return {"kind": "Empty", "span": node_span(sm, s),
                 "realtobits_literal_statement": True}
+    if is_sys and _realtobits_pure_statement_call(e):
+        # A source-pure real operand has no represented state to preserve
+        # once `$realtobits`'s discarded bit pattern is gone. Keep the
+        # conversion's exact 64-bit unsigned result boundary and reject
+        # effectful or unsupported operands through the shared purity walk.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "realtobits_pure_statement": True}
     if is_sys and _shortrealtobits_literal_call(e):
         return {"kind": "Empty", "span": node_span(sm, s),
                 "shortrealtobits_literal_statement": True}
+    if is_sys and _shortrealtobits_pure_statement_call(e):
+        # The single-precision conversion follows the same erased-result rule
+        # with its exact 32-bit unsigned result width.
+        return {"kind": "Empty", "span": node_span(sm, s),
+                "shortrealtobits_pure_statement": True}
     if is_sys and name in SYSCALL_ASSERT_CTRL:
         try:
             args = list(e.arguments)

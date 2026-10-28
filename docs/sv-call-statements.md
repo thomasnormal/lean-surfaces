@@ -452,3 +452,12 @@ the existing source-purity walk and lower to an inert statement when every
 operand is read-only or literal. Nested pure math calls are included; updates,
 timing, unsupported operands, and value-position calls remain loud. The
 `discarded_pure_floating_math` fixture supplies the transcript and receipt.
+
+## Discarded pure real-to-bits conversions — 2026-10-28
+
+Discarded `$realtobits` and `$shortrealtobits` calls now admit source-pure
+real operands. Read-only real names, literals, and nested pure math calls are
+checked through the shared floating purity walk before their opaque bit pattern
+is erased; exact unsigned widths remain 64 and 32 bits respectively. Effectful
+or unsupported operands and value-position conversions remain loud. The
+`discarded_pure_real_to_bits` fixture supplies the transcript and receipt.

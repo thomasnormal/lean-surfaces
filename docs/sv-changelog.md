@@ -1,5 +1,14 @@
 # SystemVerilog tier changelog
 
+## [0.1.163] — 2026-10-28
+
+Discarded pure `$realtobits` and `$shortrealtobits` calls now lower through
+the shared floating source-purity boundary. Read-only real names, literals,
+and nested pure math calls are admitted; effectful, timed, unsupported, and
+value-position forms remain loud. The `discarded_pure_real_to_bits` fixture,
+extractor regressions, generated envelope, Lean receipt, and differential row
+cover the change.
+
 ## [0.1.162] — 2026-10-28
 
 Discarded pure floating math calls now lower through the existing source-

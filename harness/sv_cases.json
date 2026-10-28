@@ -3775,6 +3775,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "discarded_pure_real_to_bits",
+      "file": "Examples/system-verilog/discarded_pure_real_to_bits/discarded_pure_real_to_bits.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

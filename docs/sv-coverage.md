@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 417 | 411 | 0 | 6 | sv-tests-2 declarations |
+| 418 | 412 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -431,6 +431,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `case_array_widening` | `Examples/system-verilog/case_array_widening/case_array_widening.sv` | match | **MATCH** | `ok` | MATCH |
 | `pure_integral_real_conversions` | `Examples/system-verilog/pure_integral_real_conversions/pure_integral_real_conversions.sv` | match | **MATCH** | `ok` | MATCH |
 | `discarded_pure_floating_math` | `Examples/system-verilog/discarded_pure_floating_math/discarded_pure_floating_math.sv` | match | **MATCH** | `ok` | MATCH |
+| `discarded_pure_real_to_bits` | `Examples/system-verilog/discarded_pure_real_to_bits/discarded_pure_real_to_bits.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -604,7 +605,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.RangeDimensionSpecifier` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.RangeList` | `Examples/system-verilog/case_inside/array_widening.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RealLiteralExpression` | `Examples/system-verilog/discarded_pure_floating_math/discarded_pure_floating_math.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.RealType` | `Examples/system-verilog/floating_bits_query/floating_bits_query.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.RealType` | `Examples/system-verilog/discarded_pure_real_to_bits/discarded_pure_real_to_bits.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RepeatedEventControl` | `Examples/system-verilog/intra_assignment/counts.sv` | **REFUSE** | `unsupported` @(event): the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.ReplicatedAssignmentPattern` | `Examples/system-verilog/assignment_patterns/replicated.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ReturnStatement` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |

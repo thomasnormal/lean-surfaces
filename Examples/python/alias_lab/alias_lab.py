@@ -141,3 +141,7 @@ def bin_alias(value):
     f = bin
     return f(value)
 
+
+def format_alias(value):
+    f = format
+    return f(value)

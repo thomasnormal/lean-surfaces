@@ -10873,6 +10873,24 @@ def _queue_literal_assignment_size(expression):
     return _queue_literal_initializer_size(rhs)
 
 
+def _queue_assignment_source_position(expression, source, name):
+    """Find the source occurrence for a queue assignment.
+
+    Some pyslang AST source ranges begin at the RHS brace when the statement
+    is followed by an inline comment.  Match the elaborated queue name and
+    equals token in the original source instead of depending on that range's
+    left edge.
+    """
+    position = getattr(
+        getattr(getattr(expression, "sourceRange", None), "start", None),
+        "offset", -1)
+    matches = list(re.finditer(
+        r"(?<![A-Za-z0-9_$])" + re.escape(name) + r"\s*=", source))
+    if not matches:
+        return position
+    return min(matches, key=lambda match: abs(match.start() - position)).start()
+
+
 def _queue_literal_element(expr):
     """Whether an expression is a scalar literal usable in a queue write."""
     node = expr
@@ -10935,9 +10953,8 @@ def _queue_literal_write_noop(expression):
         source = _SOURCE_BYTES.decode("utf-8", errors="replace") if _SOURCE_BYTES else ""
         if not name or not source:
             return False
-        assignment_position = getattr(
-            getattr(getattr(expression, "sourceRange", None), "start", None),
-            "offset", -1)
+        assignment_position = _queue_assignment_source_position(
+            expression, source, name)
         instance = getattr(getattr(expression.left.symbol, "parentScope", None),
                            "containingInstance", None)
         empty_assignments = set()
@@ -10949,9 +10966,7 @@ def _queue_literal_write_noop(expression):
                         is not expression.left.symbol):
                     return
                 size = _queue_literal_assignment_size(node)
-                position = getattr(
-                    getattr(getattr(node, "sourceRange", None), "start", None),
-                    "offset", -1)
+                position = _queue_assignment_source_position(node, source, name)
                 if size == 0 and position > assignment_position:
                     empty_assignments.add(position)
             instance.visit(inspect_assignment)

@@ -54,6 +54,19 @@ class SizeQueries(unittest.TestCase):
         self.assertEqual([(node["width"], node["bits"]) for node in values],
                          [(32, "0" * 32)])
 
+    def test_literal_queue_replaced_by_empty_concat_with_inline_comment(self):
+        design = lower(
+            'module top; int q[$]; initial begin q = {1, 2, 3}; '
+            'q = {}; // empty queue replacement\n'
+            'if (q.size() == 0) $display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+        values = [node for node in nodes(design)
+                  if node.get("zero_size_query")]
+        self.assertEqual([(node["width"], node["bits"]) for node in values],
+                         [(32, "0" * 32)])
+
     def test_empty_queue_pop_front_returns_default_and_keeps_size(self):
         design = lower(
             'module top; initial begin int q[$]; int result; '

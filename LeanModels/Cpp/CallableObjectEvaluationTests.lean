@@ -6486,6 +6486,33 @@ def callableLocalSwitchDefaultShadowInitializationStatementFrameWitness : Bool :
 
 #guard callableLocalSwitchDefaultShadowInitializationStatementFrameWitness
 
+private def localSwitchDefaultShadowInitializationFalseStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .parameter (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let function := {base with body := .block (.sequence
+    (automaticLiteral "0x11" 3)
+    (.sequence
+      (.switch_ condition [
+        {label := some 1, body := .break_},
+        {label := none, body := .block (.sequence
+          (automaticLiteral "0x13" 5)
+          .break_)}])
+      (.return_ {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType}))) }
+  match evaluateCallableObject 128 .lp64 function [signed 1] with
+  | .ok (.ok value) => value == signed 3
+  | _ => false
+
+def callableLocalSwitchDefaultShadowInitializationFalseStatementFrameWitness : Bool :=
+  localSwitchDefaultShadowInitializationFalseStatementFrame
+
+#guard callableLocalSwitchDefaultShadowInitializationFalseStatementFrameWitness
+
 private def localSwitchDefaultShadowInitializationAssignmentStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let condition : TypedCallableExpression := {

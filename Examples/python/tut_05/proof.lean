@@ -7,6 +7,7 @@ spec side is `:= by proofs`, which resolves `Examples.python.tut_05.proof.<decl>
 typechecks the duplication.
 -/
 import LeanModels.Python.LoopTactic
+import LeanModels.Python.VCTactic
 import LeanModels.Python.Delab
 
 namespace Examples.python.tut_05.proof
@@ -18,7 +19,7 @@ load_program tut_05 from "Examples/python/tut_05/tut_05.json"
 /-- A raise as specified behavior: `py_prove` closes `==>!` goals for
 loop-free bodies just like `==>` ones. -/
 theorem pymod_zero_raises (a : PyInt) : tut_05.pymod(a, 0) ==>! .zeroDivisionError := by
-  py_prove [tut_05]
+  py_prove [tut_05, PyVCGen.binOpBeqBitAnd]
 
 /-- Total correctness of the countdown for `n ≥ 0` — a single-clause
 loop proof. The theorem binder `n` shadows the mutated Python variable

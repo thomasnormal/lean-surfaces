@@ -116,3 +116,8 @@ def pow_alias(base, exponent):
     f = pow
     return f(base, exponent)
 
+
+def round_alias(value):
+    f = round
+    return f(value)
+

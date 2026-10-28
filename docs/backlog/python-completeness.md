@@ -6232,3 +6232,23 @@ loud.
 DECIDED: admit only the immediate local `pow` alias call; retain loud failure
 for returned or general first-class callable values. Rebase and publish this
 item after the full measurements, then reread the inbox before the next gap.
+
+## 2026-10-28-pycomplete-182 — admit the immediate local `round` alias
+
+The local-builtin alias rewrite now includes `round`: `f = round; return
+f(value)` lowers to the existing integer/Boolean rounding worker. Integer and
+Boolean inputs preserve their current results. Returning `round`, shadowing it,
+and general first-class callable forms remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 2 cases: 0 failed, 2 matched on both interpreters |
+| Full executable differential | 3,740 cases: 0 failed, 44 whitelisted refusals, 3,696 matched |
+| Full proof differential | 3,740 cases: 0 failed, 153 refusals, 3,587 matched |
+| Lean runner build | `lake build leanmodels-run` passed |
+| Coverage freshness | `python3 harness/coverage_page.py` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `round` alias call; retain loud failure
+for returned or general first-class callable values. Rebase and publish this
+item after the full measurements, then reread the inbox before the next gap.

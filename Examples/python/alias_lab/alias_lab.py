@@ -111,3 +111,8 @@ def chr_alias(value):
     f = chr
     return f(value)
 
+
+def pow_alias(base, exponent):
+    f = pow
+    return f(base, exponent)
+

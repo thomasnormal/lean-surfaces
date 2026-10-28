@@ -84,6 +84,8 @@ load_program alias_lab from "Examples/python/alias_lab/alias_lab.json"
 #py_check alias_lab.ord_alias("z") = 122
 #py_check alias_lab.chr_alias(65) = "A"
 #py_check alias_lab.chr_alias(122) = "z"
+#py_check alias_lab.pow_alias(2, 10) = 1024
+#py_check alias_lab.pow_alias(5, 0) = 1
 
 /-! ### the alias is NOT a value (the refusal direction, unchanged) -/
 

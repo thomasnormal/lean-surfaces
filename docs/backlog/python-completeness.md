@@ -6211,3 +6211,24 @@ general first-class callable forms remain loud.
 DECIDED: admit only the immediate local `chr` alias call; retain loud failure
 for returned or general first-class callable values. Rebase and publish this
 item after the full measurements, then reread the inbox before the next gap.
+
+## 2026-10-28-pycomplete-181 — admit the immediate local `pow` alias
+
+The local-builtin alias rewrite now includes `pow`: `f = pow; return
+f(base, exponent)` lowers to the existing power worker. Ordinary positive
+integer exponents and the zero exponent preserve their current results.
+Returning `pow`, shadowing it, and general first-class callable forms remain
+loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 2 cases: 0 failed, 2 matched on both interpreters |
+| Full executable differential | 3,738 cases: 0 failed, 44 whitelisted refusals, 3,694 matched |
+| Full proof differential | 3,738 cases: 0 failed, 153 refusals, 3,585 matched |
+| Lean runner build | `lake build leanmodels-run` passed |
+| Coverage freshness | `python3 harness/coverage_page.py` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `pow` alias call; retain loud failure
+for returned or general first-class callable values. Rebase and publish this
+item after the full measurements, then reread the inbox before the next gap.

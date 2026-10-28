@@ -1,5 +1,18 @@
 # SystemVerilog tier changelog
 
+## [0.1.165] — 2026-10-28
+
+The legacy self-check tier now lowers blocking assignments through a finite
+sampled dynamic outer unpacked array when its elements have fixed unpacked
+integral dimensions. Dynamic selectors expand over the existing flattened
+cells; unsampled, nested-dynamic, aggregate, effectful, and scheduled forms
+remain loud. The `nested_dynamic_array_target` fixture, extractor tests,
+generated envelope, Lean receipt, and differential row cover the boundary.
+Differential coverage grows **419/413/0/6 → 420/414/0/6**; grammar coverage
+remains **218/107/111**. The sv-tests-2 checkout is unavailable, so the
+committed corpus snapshot remains **5,814 clean / 16,186 partial / 67 include
+skips**.
+
 ## [0.1.164] — 2026-10-28
 
 Discarded pure `$rtoi` calls now lower through the shared floating

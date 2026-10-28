@@ -1,5 +1,21 @@
 # Assignment targets — admitted boundary
 
+## Dynamic outer-array assignment targets — 2026-10-28
+
+A blocking write such as `value[i][j] = x` is admitted when `value` has one
+sampled finite dynamic outer extent and fixed unpacked integral inner
+dimensions. The extractor enumerates the finite outer and inner positions,
+then guards each flattened-cell write with the source selector comparisons.
+The existing state therefore observes the same selected cell without adding a
+nested aggregate object. Unsampled or resized arrays, nested dynamic inner
+dimensions, aggregate leaves, effectful selectors or RHS expressions, and
+scheduled forms remain `AssignmentExpression:target`.
+
+`nested_dynamic_array_target` is the differential PASS witness and its Lean
+receipt checks the complete transcript. Differential coverage grows
+**419/413/0/6 → 420/414/0/6**; the unavailable external corpus snapshot is
+unchanged at **5,814 clean / 16,186 partial / 67 include skips**.
+
 ## Pure integral-to-real writes — 2026-10-28
 
 Blocking writes from pure integral expressions into named `real` or

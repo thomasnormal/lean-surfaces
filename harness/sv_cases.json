@@ -3793,6 +3793,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "nested_dynamic_array_target",
+      "file": "Examples/system-verilog/nested_dynamic_array_target/nested_dynamic_array_target.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

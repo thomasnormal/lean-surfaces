@@ -1,5 +1,22 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Dynamic outer-array assignment targets — 2026-10-28
+
+The legacy self-check tier now lowers blocking assignments through a dynamic
+outer unpacked array when the sampled `new[N]` extent is finite and each
+element has only fixed unpacked integral dimensions. Dynamic selectors are
+expanded to mutually exclusive writes over the existing flattened cells;
+constant selectors continue to use the ordinary cell path. Unsampled arrays,
+nested dynamic dimensions, aggregate leaves, and effectful or unsupported
+forms remain loud. The `nested_dynamic_array_target` fixture, extractor tests,
+generated envelope, Lean receipt, and differential row cover the new target
+family without adding aggregate storage or scheduler behavior.
+
+Differential coverage grows **419/413/0/6 → 420/414/0/6**; grammar coverage
+remains **218/107/111**. The committed external corpus snapshot remains
+**5,814 clean / 16,186 partial / 67 include skips** because sv-tests-2 is
+unavailable in this worktree; no unverifiable census delta is claimed.
+
 ## Fixed-array case-inside widening — 2026-10-28
 
 The legacy self-check tier now admits a fixed unpacked integral array as a

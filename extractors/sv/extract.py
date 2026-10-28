@@ -2493,6 +2493,41 @@ def _fixed_array_dimensions(array_type, max_cells=1024):
         return None
 
 
+def _nested_dynamic_array_dimensions(source, max_cells=1024):
+    """Return a sampled dynamic outer dimension followed by fixed dimensions.
+
+    The legacy state flattens a constant ``new[N]`` dynamic array into named
+    cells.  The same representation works when each element is itself a
+    bounded fixed unpacked array; expose that shape to the dynamic-selector
+    lowering without admitting nested dynamic or aggregate storage.
+    """
+    try:
+        if not _storage_expression(source):
+            return None
+        symbol = getattr(source, "symbol", None)
+        if symbol is None:
+            return None
+        array_type = source.type.canonicalType
+        if type(array_type).__name__ != "DynamicArrayType":
+            return None
+        count = _dynamic_array_constant_extent(symbol)
+        if count is None:
+            return None
+        inner = _dynamic_array_element_shape(array_type.elementType)
+        if inner is None:
+            return None
+        inner_dimensions, leaf_type, _width, _two_state = inner
+        dimensions = [(0, count - 1)] + inner_dimensions
+        total = count
+        for left, right in inner_dimensions:
+            total *= abs(left - right) + 1
+        if max_cells is not None and total > max_cells:
+            return None
+        return dimensions, leaf_type
+    except Exception:
+        return None
+
+
 def _dynamic_array_element_shape(element_type):
     """Return nested fixed dimensions and an integral leaf for one element.
 
@@ -4751,6 +4786,11 @@ def _fixed_array_nested_dynamic_assignment(sm, expr):
         if not _storage_expression(current):
             return None
         shape = _fixed_array_dimensions(current.type, max_cells=1024)
+        if shape is None:
+            # A sampled dynamic outer dimension with fixed inner dimensions
+            # has the same flattened-cell geometry as a fixed array.  Keep
+            # nested dynamic/aggregate elements outside this helper.
+            shape = _nested_dynamic_array_dimensions(current, max_cells=1024)
         if shape is None:
             return None
         dimensions, leaf_type = shape

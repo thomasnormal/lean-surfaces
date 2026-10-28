@@ -1,5 +1,18 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Dynamic outer-array assignment targets — 2026-10-28
+
+The legacy self-check tier now lowers blocking assignments through a finite
+sampled dynamic outer unpacked array when its elements have fixed unpacked
+integral dimensions. Dynamic selectors expand over the existing flattened
+cells; unsampled, nested-dynamic, aggregate, effectful, and scheduled forms
+remain loud. The `nested_dynamic_array_target` fixture, extractor tests,
+generated envelope, Lean receipt, and differential row cover the boundary.
+Differential coverage grows **419/413/0/6 → 420/414/0/6**; grammar coverage
+remains **218/107/111**. The sv-tests-2 checkout is unavailable, so the
+committed corpus snapshot remains **5,814 clean / 16,186 partial / 67 include
+skips**.
+
 ## Fixed-array case-inside widening — 2026-10-28
 
 Legacy `case (...) inside` now lowers fixed unpacked integral array labels when

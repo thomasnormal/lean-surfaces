@@ -38,6 +38,15 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Multiple integral `$sformatf` string assignments — 2026-10-28
+
+Blocking assignments from `$sformatf` forms with at least two integral
+conversions and literal ASCII text now use the source-pure string-history path
+for known integral literals. Dynamic or nested operands, unsupported markers,
+timed forms, and nonblocking writes remain loud. The
+`string_sformatf_multiple_integral_assignment` fixture and Lean receipt supply
+the `PASS` evidence; differential coverage grows **367/361/0/6 → 368/362/0/6**.
+
 ## Escaped-percent integral `$sformatf` string assignments — 2026-10-28
 
 Blocking assignments from `$sformatf` forms with one escaped percent (`%%`),

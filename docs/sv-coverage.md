@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 367 | 361 | 0 | 6 | sv-tests-2 declarations |
+| 368 | 362 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -21,6 +21,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `string_sformatf_integral_wrapper_assignment` | `Examples/system-verilog/string_sformatf_integral_wrapper_assignment/string_sformatf_integral_wrapper_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_ascii_codes_assignment` | `Examples/system-verilog/string_sformatf_ascii_codes_assignment/string_sformatf_ascii_codes_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_percent_literal_assignment` | `Examples/system-verilog/string_sformatf_percent_literal_assignment/string_sformatf_percent_literal_assignment.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_sformatf_multiple_integral_assignment` | `Examples/system-verilog/string_sformatf_multiple_integral_assignment/string_sformatf_multiple_integral_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_char_assignment` | `Examples/system-verilog/string_sformatf_char_assignment/string_sformatf_char_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_binary_assignment` | `Examples/system-verilog/string_sformatf_binary_assignment/string_sformatf_binary_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_octal_assignment` | `Examples/system-verilog/string_sformatf_octal_assignment/string_sformatf_octal_assignment.sv` | match | **MATCH** | `ok` | MATCH |
@@ -617,11 +618,11 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22059 | 5601 | 16391 | 67 |
+| 22059 | 5602 | 16390 | 67 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 2783 |
+| `AssignmentExpression:target` | 2782 |
 | `ExpressionStatement:CallExpression` | 2722 |
 | `CallExpression` | 2648 |
 | `Hierarchy:ports` | 2400 |

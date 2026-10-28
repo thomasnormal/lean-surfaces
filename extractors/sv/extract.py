@@ -8151,13 +8151,83 @@ def _sformatf_literal_source_value(expression, position=None):
                 or getattr(expression, "subroutineName", "") != "$sformatf"):
             return None
         arguments = list(getattr(expression, "arguments", ()))
-        if len(arguments) != 2:
+        if len(arguments) < 2:
             return None
-        format_expr, operand = arguments
+        format_expr = arguments[0]
+        operand = arguments[1]
         if (type(format_expr).__name__ != "StringLiteral"
                 or getattr(format_expr, "bad", False)):
             return None
         fmt = getattr(format_expr, "value", "")
+
+        if len(arguments) > 2:
+            markers = (
+                "%0b", "%0B", "%0o", "%0O", "%0d", "%0D", "%0h", "%0H",
+                "%c", "%C", "%b", "%B", "%o", "%O", "%d", "%D",
+                "%h", "%H")
+
+            def render_integral(marker, operand):
+                node = operand
+                while type(node).__name__ == "ConversionExpression":
+                    node = getattr(node, "operand", None)
+                    if node is None:
+                        return None
+                if type(node).__name__ not in (
+                        "IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
+                    return None
+                bits = svint_bits(node.value)
+                if not bits or any(bit not in "01" for bit in bits):
+                    return None
+                if marker in ("%c", "%C"):
+                    byte = int(bits, 2) & 0xff
+                    return chr(byte) if 0 < byte <= 127 else None
+                if marker in ("%b", "%B", "%0b", "%0B"):
+                    text = bits
+                    if marker in ("%0b", "%0B"):
+                        text = text.lstrip("0") or "0"
+                    return text
+                if marker in ("%o", "%O", "%0o", "%0O"):
+                    return format(int(bits, 2), "o")
+                if marker in ("%d", "%D", "%0d", "%0D"):
+                    return _format_literal_integral_text("%d", [node])
+                value = int(bits, 2)
+                digits = (len(bits) + 3) // 4
+                text = format(value, "0{}x".format(digits))
+                if marker in ("%0h", "%0H"):
+                    text = text.lstrip("0") or "0"
+                return text
+
+            pieces = []
+            used = []
+            offset = 0
+            while offset < len(fmt):
+                if fmt[offset] != "%":
+                    if not (0 < ord(fmt[offset]) <= 127):
+                        return None
+                    pieces.append(fmt[offset])
+                    offset += 1
+                    continue
+                marker = next((candidate for candidate in markers
+                               if fmt.startswith(candidate, offset)), None)
+                if marker is None:
+                    return None
+                pieces.append(("__CONVERSION__", len(used)))
+                used.append(marker)
+                offset += len(marker)
+            if len(used) < 2 or len(used) != len(arguments) - 1:
+                return None
+            rendered = [render_integral(marker, operand)
+                        for marker, operand in zip(used, arguments[1:])]
+            if any(text is None for text in rendered):
+                return None
+            output = []
+            for piece in pieces:
+                if isinstance(piece, tuple):
+                    output.append(rendered[piece[1]])
+                else:
+                    output.append(piece)
+            return "".join(output)
+
         integral_prefix = ""
         integral_suffix = ""
         wrapper_fmt = fmt

@@ -74,6 +74,36 @@ class LiteralStringWrites(unittest.TestCase):
             2,
         )
 
+    def test_literal_sformatf_multiple_integral_assignments_replay_text(self):
+        design = lower(
+            'module top; string chars, mixed; initial begin '
+            'chars = $sformatf("%c%c", 8\'h41, 8\'h5A); '
+            'mixed = $sformatf("v=%0d h=%0H", 7, 8\'hAB); '
+            'if (chars != "AZ" || mixed != "v=7 h=ab") $display("FAIL"); '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False) for node in nodes(design)),
+            2,
+        )
+
+    def test_dynamic_or_nested_multiple_sformatf_integral_assignment_stays_loud(self):
+        for source in (
+                'module top; string value; int x; initial begin '
+                'value = $sformatf("%c%c", 8\'h41, x); end endmodule',
+                'module top; string value; initial begin '
+                'value = $sformatf("%c%c", 8\'h41, $itor(2)); end endmodule',
+                'module top; string value; initial begin '
+                'value <= $sformatf("%c%c", 8\'h41, 8\'h5A); end endmodule'):
+            design = lower(source)
+            self.assertFalse(any(node.get("string_source_write_noop")
+                                 for node in nodes(design)))
+            self.assertTrue(any(node.get("kind") in ("Unsupported", "Invalid")
+                                or node.get("sv_kind") ==
+                                "AssignmentExpression:target"
+                                for node in nodes(design)))
+
     def test_unknown_or_nonprintable_sformatf_string_integral_operand_stays_loud(self):
         for source in (
                 'module top; string value; int x; initial begin '
@@ -92,12 +122,12 @@ class LiteralStringWrites(unittest.TestCase):
                                 "AssignmentExpression:target"
                                 for node in nodes(design)))
 
-    def test_dynamic_or_multi_format_integral_wrapper_assignment_stays_loud(self):
+    def test_dynamic_or_unsupported_multi_format_integral_wrapper_assignment_stays_loud(self):
         for source in (
                 'module top; string value; int x; initial begin '
                 'value = $sformatf("v=%0d", x); end endmodule',
                 'module top; string value; initial begin '
-                'value = $sformatf("v=%0d:%0h", 7, 8\'hA); end endmodule',
+                'value = $sformatf("v=%0d:%s", 7, "x"); end endmodule',
                 'module top; string value; initial begin '
                 'value <= $sformatf("v=%0d", 7); end endmodule'):
             design = lower(source)
@@ -485,6 +515,22 @@ class LiteralStringWrites(unittest.TestCase):
             sum(node.get("string_source_write_noop", False) for node in nodes(design)),
             2,
         )
+
+    def test_corpus_literal_sformatf_multiple_integral_assignment_is_admitted(self):
+        import os
+        from pathlib import Path
+        corpus = os.environ.get("SV_TESTS_ROOT")
+        if not corpus:
+            self.skipTest("SV_TESTS_ROOT is unavailable")
+        source = Path(corpus) / "chapter-21" / \
+            "21.3.3--sformatf-char-format.sv"
+        if not source.exists():
+            self.skipTest("sv-tests-2 checkout is unavailable")
+        design = lower(source.read_text())
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("string_source_write_noop")
+                            for node in nodes(design)))
 
     def test_nonzero_or_dynamic_string_character_writes_stay_loud(self):
         for source in (

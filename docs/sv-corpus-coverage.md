@@ -25,6 +25,17 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Multiple integral `$sformatf` string assignments — 2026-10-28
+
+The legacy extractor now replays a `$sformatf` assignment containing at least
+two integral conversions and only literal ASCII text. Dynamic or nested
+operands, unsupported conversion markers, timed forms, and nonblocking writes
+remain loud. The `string_sformatf_multiple_integral_assignment` fixture
+supplies the differential row and Lean receipt. The fresh 22,059-path census
+moves **5,601 → 5,602 clean / 16,391 → 16,390 partial** with 67 include skips
+and `AssignmentExpression:target` falls **2,783 → 2,782**; differential
+coverage grows **367/361/0/6 → 368/362/0/6**.
+
 ## Escaped-percent integral `$sformatf` string assignments — 2026-10-28
 
 The legacy extractor now replays a `$sformatf` assignment containing one

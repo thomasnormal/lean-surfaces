@@ -40,6 +40,21 @@ receipt. Differential coverage grows **343/337/0/6 → 344/338/0/6**; the
 unavailable external census snapshot remains **5,401 clean / 16,597 partial**
 with 67 include skips.
 
+## Source-pure string replication writes — 2026-10-28
+
+A blocking assignment to a string may now use a constant replication or
+concatenation whose named-string operands have only earlier unconditional
+blocking ASCII literal history. The extractor resolves that history, erases
+the opaque string store, and packs the resulting bytes for a matching `%s`
+diagnostic. Uninitialized, computed, control-dependent, nonblocking, timed,
+and non-ASCII histories remain `AssignmentExpression:target` or the existing
+string-value boundary.
+
+The `replication/dynamic_string` fixture supplies the `dynamic abab`
+differential witness and Lean receipt. Differential coverage grows
+**344/338/0/6 → 345/339/0/6**; the unavailable external census snapshot
+remains **5,401 clean / 16,597 partial** with 67 include skips.
+
 ## Admitted representations
 
 The legacy path admits a whole identifier, a packed bit or part select over an

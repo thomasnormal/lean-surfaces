@@ -1,4 +1,5 @@
 module top;
+  // dynamic abab
   string text;
   string repeated;
   initial begin

@@ -935,6 +935,15 @@
       "expect": "match"
     },
     {
+      "name": "string_replication_history",
+      "file": "Examples/system-verilog/replication/dynamic_string.sv",
+      "module": "top",
+      "oracle": [
+        "dynamic abab"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "empty_queue_write",
       "file": "Examples/system-verilog/empty_queue_write/empty_queue_write.sv",
       "module": "top",

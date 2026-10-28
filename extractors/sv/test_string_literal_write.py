@@ -88,6 +88,35 @@ class LiteralStringWrites(unittest.TestCase):
         self.assertIn("AssignmentExpression:target",
                       [node.get("sv_kind") for node in nodes(design)])
 
+    def test_source_pure_string_replication_write_and_display(self):
+        design = lower(
+            'module top; string source; string value; initial begin '
+            'source = "ab"; value = {2{source}}; '
+            '$display("%s", value); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("string_source_write_noop")
+                            for node in nodes(design)))
+        displays = [node for node in nodes(design)
+                    if node.get("kind") == "SysCall"
+                    and node.get("name") == "$display"]
+        self.assertEqual(len(displays), 1)
+        self.assertEqual(displays[0]["args"][0]["bits"],
+                         "01100001011000100110000101100010")
+
+    def test_source_pure_string_replication_requires_literal_history(self):
+        for source in (
+                'module top; string source; string value; initial begin '
+                'value = {2{source}}; end endmodule',
+                'module top; string source; string value; initial begin '
+                'source <= "ab"; value = {2{source}}; end endmodule',
+                'module top; string source; string value; bit c; initial begin '
+                'if (c) source = "ab"; value = {2{source}}; end endmodule'):
+            design = lower(source)
+            self.assertIn("AssignmentExpression:target",
+                          [node.get("sv_kind") for node in nodes(design)])
+
 
 if __name__ == "__main__":
     unittest.main()

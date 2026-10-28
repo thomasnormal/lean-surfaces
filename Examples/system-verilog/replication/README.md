@@ -12,7 +12,7 @@ based-literal rule of §5.7.1 through the existing concatenation and process rul
 | `runtime.sv` | `before xzxzxz`, `after xzxzxz 101010` | Live reads, delay and captured NBA |
 | `composition.sv` | `composed a xzxz a a` | Patterns, cases and fixed-array cells |
 | `effects.sv` | `effects 1 a` | Deliberate effectful-group refusal, including count zero |
-| `dynamic_string.sv` | `dynamic abab` | Deliberate dynamic-string refusal |
+| `dynamic_string.sv` | `dynamic abab` | Source-pure string history through replication |
 | `based.sv` | `based xxxxxxxxxxxxxxxxxxxxxx zzzzzzzzzzzzzzzzzzzzzz xxxxxxxxxxxxxxxxxxxxx1`, `contexts 00000000000000xxxxxxxx xxxxxxxxxxxxxxxxxxxxxx 00000000000000xxxxxxxx 0000000000000000000000` | Unsized X/Z context fill versus sized literals and variables |
 | `constant_based.sv` | `constant xxxxxxxxxxxxxxxxxxxxxx` | Deliberate frontend elaboration-constant refusal |
 

@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.91] — 2026-10-28
+
+Source-pure ASCII string history now flows through constant replication and
+concatenation writes. A named string with only earlier unconditional blocking
+literal writes can be reconstructed for a blocking target and a matching `%s`
+diagnostic; computed, control-dependent, timed, nonblocking, and non-ASCII
+forms remain loud. The existing `replication/dynamic_string` fixture now
+matches `dynamic abab`. Differential coverage is **345 rows / 339 matches / 0
+disagreements / 6 recorded refusals**; grammar coverage remains **218 / 97 /
+121** and the committed census is unchanged at **5,401 clean / 16,597
+partial** with 67 include skips.
+
 ## [0.1.90] — 2026-10-28
 
 Blocking assignments of literal integral zero to a constant-indexed string

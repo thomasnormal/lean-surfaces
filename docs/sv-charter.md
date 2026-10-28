@@ -101,6 +101,21 @@ disagreements; grammar coverage remains **218/97/121**. The external corpus
 checkout is unavailable, so the committed **5,401 clean / 16,597 partial**
 snapshot and 67 include skips are unchanged.
 
+## Source-pure string replication writes — 2026-10-28
+
+The legacy self-check extractor now resolves constant string replications and
+concatenations when each named-string operand has only earlier unconditional
+blocking ASCII literal history. The opaque string target is erased, while a
+matching `%s` diagnostic receives the exact packed bytes. Uninitialized,
+computed, control-dependent, timed, nonblocking, and non-ASCII histories stay
+loud. The existing `replication/dynamic_string` fixture supplies the
+`dynamic abab` differential `PASS` row and Lean receipt.
+
+Differential coverage grows **344/338/0/6 → 345/339/0/6** with no
+disagreements; grammar coverage remains **218/97/121**. The external corpus
+checkout is unavailable, so the committed **5,401 clean / 16,597 partial**
+snapshot and 67 include skips are unchanged.
+
 The executable self-check and grammar baseline is generated in
 [`docs/sv-coverage.md`](sv-coverage.md) by
 `harness/sv_coverage_page.py`; its differential rows are pinned to the

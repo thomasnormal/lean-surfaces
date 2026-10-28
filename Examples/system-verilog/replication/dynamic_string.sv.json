@@ -6,7 +6,7 @@
     "family": "pyslang-11"
   },
   "source_file": "Examples/system-verilog/replication/dynamic_string.sv",
-  "source_sha256": "97dcf8b72b43cef6c039b9dcf80d1964ab3175c1f8890ce45dc4eb5464972433",
+  "source_sha256": "0a0c353132b7a1b138b565a6731dbe3d1ef11fbab7d16db05fabb4b484889a7e",
   "design": {
     "kind": "Design",
     "modules": [
@@ -15,96 +15,72 @@
         "span": {
           "line": 1,
           "col": 1,
-          "end_line": 10,
+          "end_line": 11,
           "end_col": 10
         },
         "name": "top",
         "ports": [],
-        "decls": [
-          {
-            "kind": "Unsupported",
-            "span": {
-              "line": 2,
-              "col": 10,
-              "end_line": 2,
-              "end_col": 14
-            },
-            "sv_kind": "VariableSymbol:2state",
-            "text": "text"
-          },
-          {
-            "kind": "Unsupported",
-            "span": {
-              "line": 3,
-              "col": 10,
-              "end_line": 3,
-              "end_col": 18
-            },
-            "sv_kind": "VariableSymbol:2state",
-            "text": "repeated"
-          }
-        ],
+        "decls": [],
         "processes": [
           {
             "kind": "Initial",
             "span": {
-              "line": 4,
+              "line": 5,
               "col": 3,
-              "end_line": 9,
+              "end_line": 10,
               "end_col": 6
             },
             "body": {
               "kind": "Block",
               "span": {
-                "line": 4,
+                "line": 5,
                 "col": 11,
-                "end_line": 9,
+                "end_line": 10,
                 "end_col": 6
               },
               "stmts": [
                 {
-                  "kind": "Unsupported",
-                  "span": {
-                    "line": 5,
-                    "col": 5,
-                    "end_line": 5,
-                    "end_col": 17
-                  },
-                  "sv_kind": "AssignmentExpression:target",
-                  "text": "text = \"ab\";"
-                },
-                {
-                  "kind": "Unsupported",
+                  "kind": "Empty",
                   "span": {
                     "line": 6,
                     "col": 5,
                     "end_line": 6,
-                    "end_col": 26
+                    "end_col": 17
                   },
-                  "sv_kind": "AssignmentExpression:target",
-                  "text": "repeated = {2{text}};"
+                  "string_literal_write_noop": true
                 },
                 {
-                  "kind": "SysCall",
+                  "kind": "Empty",
                   "span": {
                     "line": 7,
                     "col": 5,
                     "end_line": 7,
+                    "end_col": 26
+                  },
+                  "string_source_write_noop": true
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 8,
+                    "col": 5,
+                    "end_line": 8,
                     "end_col": 38
                   },
                   "name": "$display",
                   "format": "dynamic %s",
                   "args": [
                     {
-                      "kind": "Unsupported",
+                      "kind": "Literal",
                       "span": {
-                        "line": 7,
+                        "line": 8,
                         "col": 28,
-                        "end_line": 7,
+                        "end_line": 8,
                         "end_col": 36
                       },
-                      "sv_kind": "NamedValueExpression:2state",
-                      "text": "repeated"
+                      "width": 32,
+                      "bits": "01100001011000100110000101100010",
+                      "string_source_display": true
                     }
                   ],
                   "arg_signed": [
@@ -114,9 +90,9 @@
                 {
                   "kind": "SysCall",
                   "span": {
-                    "line": 8,
+                    "line": 9,
                     "col": 5,
-                    "end_line": 8,
+                    "end_line": 9,
                     "end_col": 13
                   },
                   "name": "$finish",

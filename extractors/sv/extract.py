@@ -7833,6 +7833,124 @@ def _string_compare_source_value(operand, position):
         return None
 
 
+def _string_source_value(expression, position=None, active=()):
+    """Resolve a source-pure ASCII string expression at one source position.
+
+    The legacy self-check state has no string slot, but a named string whose
+    earlier writes are all blocking ASCII literals still has an exact value.
+    Keep this resolver deliberately small: literals, concatenations,
+    constant replications, and named-string history are the only shapes that
+    can be reconstructed without adding string storage or scheduling.
+    """
+    try:
+        node = expression
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return None
+        if position is None:
+            position = getattr(getattr(getattr(node, "sourceRange", None),
+                                       "start", None), "offset", None)
+        if position is None:
+            return None
+        if type(node).__name__ == "StringLiteral":
+            value = getattr(node, "value", None)
+            if (not isinstance(value, str) or getattr(node, "bad", False)
+                    or any(ord(char) == 0 or ord(char) > 127
+                           for char in value)):
+                return None
+            return value
+        if (type(node).__name__ == "NamedValueExpression"
+                and type(node.type.canonicalType).__name__ == "StringType"):
+            symbol = node.symbol
+            marker = id(symbol)
+            if marker in active:
+                return None
+            initializer = getattr(symbol, "initializer", None)
+            initial_value = _string_source_value(
+                initializer, position, active + (marker,)) \
+                if initializer is not None else None
+            if initializer is not None and initial_value is None:
+                # An initializer exists but is outside the reconstructible
+                # literal slice; do not silently treat it as an empty string.
+                return None
+            instance = getattr(getattr(symbol, "parentScope", None),
+                               "containingInstance", None)
+            assignments = []
+            controls = []
+            if instance is not None:
+                def inspect(tree_node):
+                    kind = type(tree_node).__name__
+                    if kind == "AssignmentExpression":
+                        left = getattr(tree_node, "left", None)
+                        if (type(left).__name__ != "NamedValueExpression"
+                                or getattr(left, "symbol", None) is not symbol):
+                            return
+                        start = getattr(getattr(getattr(tree_node,
+                            "sourceRange", None), "start", None),
+                                        "offset", -1)
+                        if start < 0 or start >= position:
+                            return
+                        if (getattr(tree_node, "op", None) is not None
+                                or getattr(tree_node, "timingControl", None)
+                                is not None
+                                or getattr(tree_node, "isNonBlocking", False)):
+                            assignments.append((start, None, True))
+                            return
+                        value = _string_source_value(
+                            getattr(tree_node, "right", None), start,
+                            active + (marker,))
+                        assignments.append((start, value, value is None))
+                    elif kind in ("ConditionalStatement", "ForLoopStatement",
+                                  "WhileLoopStatement", "DoWhileLoopStatement",
+                                  "RepeatLoopStatement", "ForeachLoopStatement",
+                                  "CaseStatement", "CaseInsideStatement",
+                                  "CasePatternStatement", "LoopStatement",
+                                  "TimedStatement"):
+                        controls.append(tree_node)
+                instance.visit(inspect)
+            for start, value, invalid in assignments:
+                if invalid or any(
+                        getattr(getattr(control, "sourceRange", None),
+                               "start", None).offset <= start
+                        and start < getattr(getattr(control, "sourceRange", None),
+                                            "end", None).offset
+                        for control in controls):
+                    return None
+                if value is not None:
+                    continue
+            history = []
+            if initial_value is not None:
+                history.append((-1, initial_value))
+            history.extend((start, value) for start, value, _ in assignments
+                           if value is not None)
+            return max(history, key=lambda item: item[0])[1] if history else None
+        if type(node).__name__ == "ConcatenationExpression":
+            values = [_string_source_value(operand, position, active)
+                      for operand in node.operands]
+            return "".join(values) if values and all(
+                value is not None for value in values) else None
+        if type(node).__name__ == "ReplicationExpression":
+            count = _constant_dimension_selector(getattr(node, "count", None))
+            if count is None or count < 0 or count > 1024:
+                return None
+            value = _string_source_value(getattr(node, "concat", None),
+                                         position, active)
+            return value * count if value is not None else None
+        return None
+    except Exception:
+        return None
+
+
+def _string_source_literal(sm, expression, value, marker):
+    """Pack one resolved ASCII string for the existing display renderer."""
+    data = value.encode("latin-1")
+    width = 8 * len(data) if data else 8
+    bits = "".join(format(byte, "08b") for byte in data) if data else "0" * 8
+    return {"kind": "Literal", "span": node_span(sm, expression),
+            "width": width, "bits": bits, marker: True}
+
+
 def _convert_string_compare(sm, expression, sym):
     def is_string_operand(operand):
         node = operand
@@ -10576,6 +10694,25 @@ def _string_literal_write(expr):
         return False
     return bool(operands) and all(_string_literal_write(operand)
                                   for operand in operands)
+
+
+def _string_source_write(sm, expr):
+    """Whether a string target receives a reconstructible source value."""
+    try:
+        if (type(expr).__name__ != "AssignmentExpression"
+                or expr.op is not None or expr.timingControl is not None
+                or expr.isNonBlocking
+                or type(expr.left).__name__ != "NamedValueExpression"
+                or type(expr.left.type.canonicalType).__name__ != "StringType"):
+            return None
+        position = getattr(getattr(getattr(expr, "sourceRange", None),
+                                   "start", None), "offset", None)
+        if position is None:
+            return None
+        value = _string_source_value(expr.right, position)
+        return value if value is not None else None
+    except Exception:
+        return None
 
 
 def _string_null_char_write_noop(expr):
@@ -18523,6 +18660,11 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and _string_literal_write(expr.right)):
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "string_literal_replication_write_noop": True}
+    if _SYM is None:
+        source_string = _string_source_write(sm, expr)
+        if source_string is not None:
+            return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                    "string_source_write_noop": True}
     # An empty queue literal likewise carries no state in the flat self-check
     # store. Keep nonempty queue construction and observations loud.
     if (_SYM is None and _queue_literal_write_noop(expr)):
@@ -20009,7 +20151,14 @@ def _convert_syscall(sm, s, e):
             array_display_used = True
             conv.append(array_display)
         else:
-            conv.append(convert_expr(sm, a))
+            value = convert_expr(sm, a)
+            if (value is not None and value.get("kind") == "Unsupported"
+                    and "%s" in fmt):
+                string_value = _string_source_value(a)
+                if string_value is not None:
+                    value = _string_source_literal(
+                        sm, a, string_value, "string_source_display")
+            conv.append(value)
         try:
             signed.append(bool(a.type.isSigned))
         except Exception:

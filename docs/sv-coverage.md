@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 344 | 338 | 0 | 6 | sv-tests-2 declarations |
+| 345 | 339 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -117,6 +117,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `realtime_write` | `Examples/system-verilog/realtime_write/realtime_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_concat_write` | `Examples/system-verilog/string_concat_write/string_concat_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_replication_write` | `Examples/system-verilog/string_replication_write/string_replication_write.sv` | match | **MATCH** | `ok` | MATCH |
+| `string_replication_history` | `Examples/system-verilog/replication/dynamic_string.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_queue_write` | `Examples/system-verilog/empty_queue_write/empty_queue_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_dynamic_array_write` | `Examples/system-verilog/empty_dynamic_array_write/empty_dynamic_array_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_subroutine_call` | `Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv` | match | **MATCH** | `ok` | MATCH |

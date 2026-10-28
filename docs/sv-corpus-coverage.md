@@ -55,6 +55,21 @@ remains **5,401 clean / 16,597 partial** over 22,065 paths with 67 include
 skips; no unverified corpus delta is claimed. Differential coverage grows
 **343/337/0/6 → 344/338/0/6**, while grammar coverage remains **218/97/121**.
 
+## Source-pure string replication writes — 2026-10-28
+
+Constant string replications and concatenations now resolve named-string
+operands whose earlier history consists only of unconditional blocking ASCII
+literal writes. The opaque string target is erased, and a matching `%s`
+diagnostic receives the exact packed bytes. Uninitialized, computed,
+control-dependent, timed, nonblocking, and non-ASCII histories remain loud.
+The existing `replication/dynamic_string` fixture supplies the differential
+row and Lean receipt.
+
+The external sv-tests-2 checkout is unavailable, so the committed census
+remains **5,401 clean / 16,597 partial** over 22,065 paths with 67 include
+skips; no unverified corpus delta is claimed. Differential coverage grows
+**344/338/0/6 → 345/339/0/6**, while grammar coverage remains **218/97/121**.
+
 ## One-dimensional fixed-array `%p` diagnostics — 2026-10-27
 
 Direct one-dimensional fixed integral arrays can now be passed to `%p`

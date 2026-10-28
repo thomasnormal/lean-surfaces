@@ -1,3 +1,12 @@
+## [0.1.168] — 2026-10-28
+
+Direct whole-net aliases now share one legacy flat storage cell when their
+module-scope integral nets have equal width and four-state status. Selected,
+concatenated, non-net, mismatched, and symbolic alias graphs remain loud. The
+`net_alias` fixture, extractor tests, Lean receipt, and differential row cover
+the admission. Differential coverage grows **422/416/0/6 → 423/417/0/6**;
+grammar coverage grows **218/107/111 → 219/108/111**.
+
 ## [0.1.167] — 2026-10-28
 
 Literal concatenations are now accepted as format arguments for the legacy

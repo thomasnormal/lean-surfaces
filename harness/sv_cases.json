@@ -3820,6 +3820,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "net_alias",
+      "file": "Examples/system-verilog/net_alias/net_alias.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

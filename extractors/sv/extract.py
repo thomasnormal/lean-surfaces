@@ -1938,12 +1938,18 @@ _ELAB_CURRENT_SCOPE = ""
 _ARRAY_REDUCTION_VALUES = {}
 _ARRAY_REDUCTION_INDICES = {}
 _ASSOC_CELLS = {}
+_LEGACY_NET_ALIASES = {}
+_LEGACY_NET_ALIAS_NODES = set()
+_LEGACY_NET_ALIAS_SYMBOLS = set()
 
 
 def _storage_name(symbol):
     """Use the original package declaration even through imports/reexports."""
     if _SYM is not None:
         return symbol.name
+    alias_name = _LEGACY_NET_ALIASES.get(id(symbol))
+    if alias_name is not None:
+        return alias_name
     return _ELAB_BINDINGS.get(symbol, _PACKAGE_BINDINGS.get(symbol, symbol.name))
 
 
@@ -24658,6 +24664,57 @@ def _register_elaborated_bindings(members, module_name):
         member.visit(register)
 
 
+def _register_legacy_net_aliases(members):
+    """Canonicalize direct whole-net aliases in the legacy flat state.
+
+    A direct alias between equal-width integral nets is only a second spelling
+    for one four-state vector cell.  Selected, concatenated, mismatched, and
+    non-net references retain the explicit ``NetAliasSymbol`` boundary because
+    they need topology or window state that the flat store does not carry.
+    """
+    global _LEGACY_NET_ALIASES, _LEGACY_NET_ALIAS_NODES, _LEGACY_NET_ALIAS_SYMBOLS
+    _LEGACY_NET_ALIASES = {}
+    _LEGACY_NET_ALIAS_NODES = set()
+    _LEGACY_NET_ALIAS_SYMBOLS = set()
+    if _SYM is not None:
+        return
+    for member, route in members:
+        if route or str(getattr(member, "kind", "")).split(".")[-1] != "NetAlias":
+            continue
+        try:
+            refs = list(member.netReferences)
+        except Exception:
+            continue
+        if len(refs) < 2 or any(type(ref).__name__ != "NamedValueExpression"
+                                for ref in refs):
+            continue
+        symbols = [ref.symbol for ref in refs]
+        if any(str(getattr(symbol, "kind", "")).split(".")[-1] != "Net"
+               for symbol in symbols):
+            continue
+        if any(getattr(symbol, "parentScope", None) is not member.parentScope
+               for symbol in symbols):
+            continue
+        widths = []
+        states = []
+        valid = True
+        for symbol in symbols:
+            width, _two_state, reason = type_width_2s(symbol.type)
+            if width is None or reason is not None:
+                valid = False
+                break
+            widths.append(width)
+            states.append(bool(symbol.type.isFourState))
+        if not valid or len(set(widths)) != 1 or len(set(states)) != 1:
+            continue
+        root = _LEGACY_NET_ALIASES.get(id(symbols[0]), symbols[0].name)
+        _LEGACY_NET_ALIAS_NODES.add(id(member))
+        for symbol in symbols:
+            if symbol.name != root:
+                _LEGACY_NET_ALIAS_SYMBOLS.add(id(symbol))
+            _LEGACY_NET_ALIASES[id(symbol)] = root
+
+
 def _module_storage_collisions(ports, decls, processes, span):
     others = []
     if _generated_storage_collision(ports, decls, processes, "$intra:"):
@@ -24743,6 +24800,7 @@ def convert_module(sm, inst):
     hierarchy = {"instances": 0, "seen": False, "timescale": str(body.definition.timeScale)}
     members = list(_elaborated_members(sm, body, context=hierarchy))
     _register_elaborated_bindings(members, inst.name)
+    _register_legacy_net_aliases(members)
     elaborated = any(str(m.kind) in (
         "SymbolKind.GenerateBlock", "SymbolKind.GenerateBlockArray",
         "SymbolKind.Parameter", "SymbolKind.Genvar") for m in body)
@@ -24768,6 +24826,8 @@ def convert_module(sm, inst):
             if k == "Port":
                 ports.append(convert_port(sm, m))
             elif k in ("Variable", "Net"):
+                if id(m) in _LEGACY_NET_ALIAS_SYMBOLS:
+                    continue
                 # Skip the internal symbol backing an ANSI port (same name).
                 if not route and m.name in port_names:
                     continue
@@ -24799,6 +24859,9 @@ def convert_module(sm, inst):
                         decls.extend(converted)
                     else:
                         decls.append(converted)
+            elif k == "NetAlias":
+                if id(m) not in _LEGACY_NET_ALIAS_NODES:
+                    others.append(unsupported(sm, m, "NetAliasSymbol:NetAlias"))
             elif k == "ProceduralBlock":
                 processes.append(convert_procedural_block(sm, m))
             elif k == "ContinuousAssign":

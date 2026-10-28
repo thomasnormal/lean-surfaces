@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Direct whole-net aliases — 2026-10-28
+
+The legacy self-check tier now admits a module-scope `alias left = right`
+when both references are integral nets with equal width and equal four-state
+status. All spellings lower to one flat storage cell, so a constant driver
+through one name is visible through the other. Selected, concatenated,
+non-net, and mismatched aliases remain loud; symbolic `sv-0.2` alias graphs
+remain outside this legacy admission.
+
+The `net_alias` fixture, extractor regressions, generated envelope, Lean
+receipt, and differential row cover direct and chained aliases plus the
+refusal boundaries. Differential coverage grows **422/416/0/6 → 423/417/0/6**;
+grammar coverage grows **218/107/111 → 219/108/111**.
+
 ## Literal concatenated format strings — 2026-10-28
 
 The legacy self-check output surface folds a concatenation of string literals

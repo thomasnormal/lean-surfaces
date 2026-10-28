@@ -1,0 +1,190 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/net_alias/net_alias.sv",
+  "source_sha256": "869dedc3eab1b6636bf84d41a4a294128fcb0310f4122cd17b6b29395f4ae6e3",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 19,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Net",
+            "span": {
+              "line": 8,
+              "col": 8,
+              "end_line": 8,
+              "end_col": 14
+            },
+            "name": "source",
+            "width": 1,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 11,
+              "col": 10,
+              "end_line": 11,
+              "end_col": 23
+            },
+            "body": {
+              "kind": "BlockingAssign",
+              "span": {
+                "line": 11,
+                "col": 10,
+                "end_line": 11,
+                "end_col": 23
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 11,
+                  "col": 10,
+                  "end_line": 11,
+                  "end_col": 16
+                },
+                "width": 1,
+                "name": "source"
+              },
+              "value": {
+                "kind": "Literal",
+                "span": {
+                  "line": 11,
+                  "col": 19,
+                  "end_line": 11,
+                  "end_col": 23
+                },
+                "width": 1,
+                "bits": "1"
+              },
+              "continuous_constant_lowered": true,
+              "continuous_strength": false
+            },
+            "continuous_constant_lowered": true,
+            "continuous_strength": false
+          },
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 13,
+              "col": 3,
+              "end_line": 18,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 13,
+                "col": 11,
+                "end_line": 18,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 15,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 27
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 15,
+                      "col": 9,
+                      "end_line": 15,
+                      "end_col": 22
+                    },
+                    "width": 1,
+                    "op": "===",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 15,
+                        "col": 9,
+                        "end_line": 15,
+                        "end_col": 13
+                      },
+                      "width": 1,
+                      "name": "source"
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 15,
+                        "col": 18,
+                        "end_line": 15,
+                        "end_col": 22
+                      },
+                      "width": 1,
+                      "bits": "1"
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 15,
+                      "col": 24,
+                      "end_line": 15,
+                      "end_col": 41
+                    },
+                    "name": "$display",
+                    "format": "PASS",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 16,
+                      "col": 10,
+                      "end_line": 16,
+                      "end_col": 27
+                    },
+                    "name": "$display",
+                    "format": "FAIL",
+                    "args": [],
+                    "arg_signed": []
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 17,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

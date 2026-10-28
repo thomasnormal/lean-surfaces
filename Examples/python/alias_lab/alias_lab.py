@@ -155,3 +155,8 @@ def range_alias(value):
 def next_alias(value):
     f = next
     return f((x for x in range(value)), -1)
+
+
+def print_alias(value):
+    f = print
+    return f(value)

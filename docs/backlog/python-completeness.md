@@ -6396,3 +6396,24 @@ tier as before.
 DECIDED: admit only the immediate local `next` alias call; retain loud failure
 for returned or general first-class callable values. Rebase and publish this
 item after the full measurements, then reread the inbox before the next gap.
+
+## 2026-10-28-pycomplete-190 — admit the immediate local `print` alias
+
+The local-builtin alias rewrite now includes `print`: `f = print; return
+f(value)` lowers to the ordinary stdout builtin. Integer and Boolean arguments
+preserve the existing `None` return; stdout remains observable on stateful
+script/call surfaces. Returning `print`, shadowing it, and general first-class
+callable forms remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 2 cases: 0 failed, 2 matched on both interpreters |
+| Full executable differential | 3,756 cases: 0 failed, 44 whitelisted refusals, 3,712 matched |
+| Full proof differential | 3,756 cases: 0 failed, 153 refusals, 3,603 matched |
+| Lean runner build | `lake build leanmodels-run` passed |
+| Coverage freshness | `python3 harness/coverage_page.py` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `print` alias call; retain loud failure
+for returned or general first-class callable values. Rebase and publish this
+item after the full measurements, then reread the inbox before the next gap.

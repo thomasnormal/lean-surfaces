@@ -95,15 +95,16 @@ class StringComparisons(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
-    def test_direct_string_alias_stays_loud_for_compare_queries(self):
+    def test_source_pure_string_alias_replays_compare_queries(self):
         design = lower(
             'module top; string source = "abc"; string copy; '
             'initial begin copy = source; '
             'if (copy.compare("abc") == 0) $display("PASS"); '
             'end endmodule')
-        self.assertTrue(any(node.get("sv_kind") == "CallExpression"
-                            for node in nodes(design)
-                            if node.get("kind") == "Unsupported"))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("string_literal_compare")
+                            for node in nodes(design)))
 
     def test_string_query_observations_replay_concat_and_replication(self):
         design = lower(

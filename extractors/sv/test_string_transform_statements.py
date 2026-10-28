@@ -52,16 +52,15 @@ class StringTransformStatements(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
-    def test_dynamic_case_value_position_stays_loud(self):
+    def test_source_pure_case_value_position_replays_copy(self):
         source = (
             'module top; string s, other, out; '
             'initial begin other = "abc"; s = other; '
-            'out = s.toupper(); end endmodule'
+            'out = s.toupper(); if (out == "ABC") $display("PASS"); end endmodule'
         )
         design = lower(source)
-        self.assertTrue(any(node.get("sv_kind") == "AssignmentExpression:target"
-                            for node in nodes(design)
-                            if node.get("kind") == "Unsupported"))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
 
     def test_putc_replays_ascii_and_low_byte_history(self):
         source = (

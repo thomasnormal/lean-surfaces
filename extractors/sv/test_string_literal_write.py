@@ -445,6 +445,21 @@ class LiteralStringWrites(unittest.TestCase):
         self.assertTrue(any(node.get("string_null_char_write_noop")
                             for node in nodes(design)))
 
+    def test_corpus_named_string_copy_is_admitted(self):
+        import os
+        from pathlib import Path
+        corpus = os.environ.get("SV_TESTS_ROOT")
+        if not corpus:
+            self.skipTest("SV_TESTS_ROOT is unavailable")
+        source = Path(corpus) / "chapter-6" / \
+            "6.16--string-assignment-from-literal.sv"
+        if not source.exists():
+            self.skipTest("sv-tests-2 checkout is unavailable")
+        design = lower(source.read_text())
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+
     def test_corpus_nul_string_character_assignment_is_ignored(self):
         import os
         from pathlib import Path
@@ -669,6 +684,37 @@ class LiteralStringWrites(unittest.TestCase):
         self.assertIn("AssignmentExpression:target",
                       [node.get("sv_kind") for node in nodes(design)])
 
+
+    def test_source_pure_named_string_copy_samples_value(self):
+        design = lower(
+            'module top; string source, copy; initial begin '
+            'source = "hello"; copy = source; source = "world"; '
+            'if (copy != "hello" || source != "world") $display("FAIL"); '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False) for node in nodes(design)),
+            1,
+        )
+        self.assertEqual(
+            sum(node.get("string_literal_write_noop", False) for node in nodes(design)),
+            2,
+        )
+
+    def test_unknown_timed_and_nonblocking_named_string_copies_stay_loud(self):
+        for source in (
+                'module top; string source, copy; initial begin '
+                'copy = source; end endmodule',
+                'module top; string source, copy; initial begin '
+                '#1 copy = source; end endmodule',
+                'module top; string source, copy; initial begin '
+                'copy <= source; end endmodule'):
+            design = lower(source)
+            self.assertTrue(any(node.get("sv_kind") ==
+                                "AssignmentExpression:target"
+                                for node in nodes(design)
+                                if node.get("kind") == "Unsupported"))
 
 if __name__ == "__main__":
     unittest.main()

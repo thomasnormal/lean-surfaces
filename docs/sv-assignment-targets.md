@@ -1,5 +1,22 @@
 # Assignment targets — admitted boundary
 
+## Source-pure named-string copies — 2026-10-28
+
+A blocking assignment from a named string is admitted when the source history is
+reconstructible ASCII at the assignment point. The resolver samples the copied
+value, so later writes to the source do not alias the destination. Unknown,
+computed, timed, nonblocking, and non-ASCII copies remain
+`AssignmentExpression:target`.
+
+`string_direct_copy` supplies the differential PASS witness and Lean receipt; the
+sv-tests-2 `6.16--string-assignment-from-literal.sv` witness is clean as well.
+Differential coverage grows **408/402/0/6 → 409/403/0/6**; grammar coverage
+remains **218/101/117**. The fresh 22,065-path census moves **5,790 → 5,792
+clean / 16,208 → 16,206 partial** with 67 include skips;
+`AssignmentExpression:target` remains **2,693** because the admitted files have
+other residual blockers in the prior snapshot.
+
+
 This document fixes the public boundary for SystemVerilog assignment left-hand
 sides (`AssignmentExpression:target`). It applies to the legacy/self-check
 envelope and to the symbolic `sv-0.2` envelope. The rule follows the IEEE
@@ -16,7 +33,7 @@ RHS has one ordinary condition whose value is proven as a source-ordered 0/1
 integral literal history and the selected branch is reconstructible ASCII
 history. The selected value is used by the existing string observation replay;
 no string slot or alias is added. Unknown, computed, pattern, timed,
-nonblocking, and direct named-string-copy forms remain at the target boundary.
+nonblocking, and non-reconstructible named-string-copy forms remain at the target boundary.
 The `conditional_string_assignment` fixture covers both branch choices and the
 unknown-condition refusal.
 

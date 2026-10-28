@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22067,
+  "corpus_files": 22065,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -24,7 +24,7 @@
    ],
    [
     "CallExpression",
-    2564
+    2563
    ],
    [
     "Hierarchy:ports",
@@ -52,7 +52,7 @@
    ],
    [
     "NamedValueExpression:2state",
-    1269
+    1267
    ],
    [
     "Hierarchy:module-kind",
@@ -977,7 +977,7 @@
   ],
   "by_status": {
    "clean": 5792,
-   "partial": 16208,
+   "partial": 16206,
    "skip_include": 67
   },
   "clean_by_type": {
@@ -1039,7 +1039,7 @@
    ],
    "simulation": [
     5011,
-    18703
+    18701
    ],
    "simulation elaboration": [
     2,
@@ -1231,9 +1231,9 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 403,
-    "clean": 644,
-    "partial": 404,
+    "blocked_by_more": 401,
+    "clean": 646,
+    "partial": 402,
     "simulation_tests": 1048,
     "top_residual_blockers": [
      [
@@ -1242,11 +1242,11 @@
      ],
      [
       "VariableSymbol:2state",
-      115
+      114
      ],
      [
       "NamedValueExpression:2state",
-      105
+      103
      ],
      [
       "AssignmentExpression:target",
@@ -1254,11 +1254,11 @@
      ],
      [
       "VariableDeclStatement:2state",
-      79
+      78
      ],
      [
       "CallExpression",
-      70
+      69
      ],
      [
       "InstanceSymbol:Instance",
@@ -1323,11 +1323,11 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 326,
+    "clean": 324,
     "error": 0,
     "partial": 334,
     "skip_include": 0,
-    "total": 660,
+    "total": 658,
     "unlockable": 0
    },
    "chapter-11": {
@@ -1595,9 +1595,9 @@
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 662,
+    "clean": 664,
     "error": 0,
-    "partial": 530,
+    "partial": 528,
     "skip_include": 0,
     "total": 1192,
     "unlockable": 2

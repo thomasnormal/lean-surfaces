@@ -8342,9 +8342,9 @@ def _string_source_decl_initializer(expression):
 
     The flat self-check state has no string slot, so a declaration initializer
     is erased only for the pure query calls whose ASCII result is replayable by
-    ``_string_source_value``.  A direct named-string copy remains loud even
-    when its current history happens to be literal: admitting that shape would
-    turn the existing opaque-storage boundary into an implicit alias model.
+    ``_string_source_value``.  A direct named-string copy is admitted only
+    when its source history is reconstructible at the assignment point; the
+    resolver samples a value rather than introducing an alias.
     """
     try:
         node = expression
@@ -8365,12 +8365,14 @@ def _string_source_decl_initializer(expression):
 
 
 def _string_source_assignment_value(expression, position, active=()):
-    """Resolve an assignment RHS while preserving the direct-copy boundary.
+    """Resolve an assignment RHS at its source-order copy point.
 
-    A source-pure query call can produce an exact string result, but a direct
-    ``dst = src`` write would require representing string aliasing in the
-    flat self-check state.  Keep that shape loud even when ``src`` currently
-    has a replayable literal history.
+    A direct ``dst = src`` write is sound when ``src`` has a reconstructible
+    ASCII history: the resolver samples that value at the assignment and the
+    destination history then retains the copied text.  This is a value copy,
+    not an alias, so later writes to ``src`` cannot affect ``dst``.  Unknown,
+    effectful, timed, nonblocking, and non-ASCII sources still return ``None``
+    and stay at the ordinary target boundary.
     """
     try:
         node = expression
@@ -8378,9 +8380,6 @@ def _string_source_assignment_value(expression, position, active=()):
             node = getattr(node, "operand", None)
             if node is None:
                 return None
-        if (type(node).__name__ == "NamedValueExpression"
-                and type(node.type.canonicalType).__name__ == "StringType"):
-            return None
         return _string_source_value(node, position, active)
     except Exception:
         return None
@@ -17563,9 +17562,8 @@ def _string_literal_event_value(expression, position):
                 and getattr(node, "subroutineName", "") in
                     ("toupper", "tolower", "substr", "$sformatf", "$typename")):
             return _string_source_value(node, position)
-        # Concatenation and replication are source-pure string writes when
-        # every operand is itself replayable.  The assignment helper keeps a
-        # direct named-string copy outside this path.
+        # Concatenation, replication, and direct named-string copies are
+        # source-pure when every operand is replayable at this position.
         return _string_source_assignment_value(node, position)
     except Exception:
         return None

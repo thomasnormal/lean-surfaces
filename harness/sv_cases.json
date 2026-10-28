@@ -3694,6 +3694,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "string_direct_copy",
+      "file": "Examples/system-verilog/string_direct_copy/string_direct_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

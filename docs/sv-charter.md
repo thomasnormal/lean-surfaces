@@ -1,12 +1,30 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Source-pure named-string copies — 2026-10-28
+
+Blocking assignments from a named string now sample the source-pure ASCII history at
+the assignment point and erase the opaque destination write. The destination keeps
+the copied value when the source is subsequently changed; unknown, computed,
+timed, nonblocking, and non-ASCII forms remain loud. The
+`string_direct_copy` fixture, extractor regressions, sv-tests-2
+`6.16--string-assignment-from-literal.sv` receipt, differential row, and Lean
+receipt cover the value-copy rule. Differential coverage grows **408 rows / 402
+matches / 0 disagreements / 6 recorded refusals → 409 / 403 / 0 / 6**; grammar
+coverage remains **218/101/117**. The fresh **22,065-path** census moves **5,790
+→ 5,792 clean / 16,208 → 16,206 partial / 67 include skips**;
+`CallExpression` falls **2,564 → 2,563** and `NamedValueExpression:2state` falls
+**1,269 → 1,267**. The global `AssignmentExpression:target` count remains
+**2,693** because these two files also carried other residual blockers in the
+previous snapshot.
+
+
 ## Source-pure conditional string assignments — 2026-10-28
 
 A blocking assignment from a conditional string expression now lowers to the
 existing opaque-string no-op when its single condition is proven as a source
 ordered 0/1 integral literal history and the selected branch is reconstructible
-ASCII history. Unknown, computed, pattern, timed, nonblocking, and direct
-aliased forms remain loud. The `conditional_string_assignment` fixture covers
+ASCII history. Unknown, computed, pattern, timed, nonblocking, and non-reconstructible
+named-string copies remain loud. The `conditional_string_assignment` fixture covers
 both branch choices, with extractor regression, differential row, and Lean
 receipt.
 

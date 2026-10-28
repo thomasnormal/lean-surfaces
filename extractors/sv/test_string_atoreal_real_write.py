@@ -38,16 +38,22 @@ class StringAtorealRealWrite(unittest.TestCase):
         self.assertTrue(any(node.get("floating_string_atoreal_write_noop")
                             for node in all_nodes))
 
-    def test_dynamic_or_aliased_string_stays_loud(self):
-        for source in (
-                'module top; string text, source; real value; initial begin '
-                'source = "3.14"; text = source; value = text.atoreal(); end endmodule',
-                'module top; string text, other; real value; initial begin '
-                'text = "3.14"; other = text; value = text.atoreal(); end endmodule'):
-            design = lower(source)
-            kinds = [node.get("sv_kind") for node in nodes(design)]
-            self.assertTrue("AssignmentExpression:target" in kinds
-                            or "IntraAssignment:type-or-effects" in kinds)
+    def test_source_pure_alias_and_unknown_string_stay_distinct(self):
+        source = ('module top; string text, source; real value; initial begin '
+                  'source = "3.14"; text = source; value = text.atoreal(); end endmodule')
+        design = lower(source)
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        source = ('module top; string text, other; real value; initial begin '
+                  'text = "3.14"; other = text; value = other.atoreal(); end endmodule')
+        design = lower(source)
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        source = ('module top; string text, source; real value; initial begin '
+                  'text = source; value = text.atoreal(); end endmodule')
+        design = lower(source)
+        kinds = [node.get("sv_kind") for node in nodes(design)]
+        self.assertIn("AssignmentExpression:target", kinds)
 
     def test_non_ascii_and_observed_real_stay_loud(self):
         for source in (

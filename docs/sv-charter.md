@@ -1,5 +1,18 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Signed 2-state symbolic declarations — 2026-10-28
+
+The symbolic `sv-0.2` tier now admits signed scalar and packed-vector
+declarations when their storage is 2-state. `PDecl.isSigned` survives JSON
+ingestion and parameter instantiation alongside `twoState`; signed comparison
+operators already emitted by the extractor therefore run through the semantic
+tier's two's-complement rule. Signed four-state declarations, enums, arrays,
+aggregates, and all scheduler-facing behavior remain loud. The
+`symbolic_signed_2state` fixture, extractor regressions, generated envelope,
+and Lean receipt cover the metadata and a signed comparison. This symbolic-only
+item leaves the self-check differential table and legacy corpus census
+unchanged.
+
 ## Pure integral-to-real writes — 2026-10-28
 
 The legacy self-check extractor now erases blocking writes from pure integral

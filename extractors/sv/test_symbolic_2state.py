@@ -37,6 +37,27 @@ class SymbolicTwoState(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in walk(design)))
 
+    def test_signed_bit_scalar_and_packed_declarations_are_admitted(self):
+        design = symbolic(
+            "module divider #(parameter W = 4) ("
+            "input bit signed [W-1:0] a, "
+            "output bit signed [W-1:0] y); "
+            "assign y = a; endmodule"
+        )
+        module = design["modules"][0]
+        self.assertTrue(all(port.get("signed") and port.get("two_state")
+                            for port in module["ports"]))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in walk(design)))
+
+    def test_signed_four_state_declarations_remain_loud(self):
+        design = symbolic(
+            "module divider(input logic signed [3:0] a, "
+            "output logic signed [3:0] y); assign y = a; endmodule"
+        )
+        self.assertTrue(any(node.get("sv_kind") == "PortSymbol:signed"
+                            for node in walk(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

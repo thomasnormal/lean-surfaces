@@ -25750,10 +25750,14 @@ def _syntax_packed_dims(sm, type_syntax):
 def _dtype_sym(sm, t, type_syntax):
     """(dtype-node, None) or (None, reason-tag) for a declared type in
     symbolic mode: TypeRef for enums, PackedType (symbolic dims primary,
-    resolved secondary) for unsigned 4-state scalars/packed vectors."""
+    resolved secondary) for integral scalars/packed vectors. Signed
+    declarations are admitted only for 2-state storage; signed 4-state and
+    aggregate forms retain their loud boundary."""
     try:
         ct = t.canonicalType
         if type(ct).__name__ == "EnumType":
+            if t.isSigned:
+                return None, "signed"
             name, pkg = register_enum(sm, t)
             return {
                 "kind": "TypeRef",
@@ -25761,11 +25765,14 @@ def _dtype_sym(sm, t, type_syntax):
                 "from_package": pkg,
                 "resolved": ct.bitWidth,
             }, None
-        if t.isSigned:
+        if t.isSigned and t.isFourState:
             return None, "signed"
         cname = type(ct).__name__
         if cname == "ScalarType":
             return {"kind": "PackedType", "packed": [], "resolved": 1}, None
+        if cname == "PredefinedIntegerType":
+            return {"kind": "PackedType", "packed": [],
+                    "resolved": ct.bitWidth}, None
         if cname == "PackedArrayType":
             ndims = 0
             cur = ct
@@ -25776,7 +25783,7 @@ def _dtype_sym(sm, t, type_syntax):
                 return None, "type"
             packed = None
             if type_syntax is not None and type_syntax.kind in (
-                    SyntaxKind.LogicType, SyntaxKind.RegType):
+                    SyntaxKind.BitType, SyntaxKind.LogicType, SyntaxKind.RegType):
                 packed = _syntax_packed_dims(sm, type_syntax)
                 if packed is not None and len(packed) != ndims:
                     packed = None
@@ -25825,7 +25832,7 @@ def convert_port_sym(sm, m):
     dtype, reason = _dtype_sym(sm, m.type, tsyn)
     if dtype is None:
         return unsupported(sm, m, "PortSymbol:" + reason)
-    return {
+    result = {
         "kind": "Port",
         "span": sym_span(sm, m),
         "name": m.name,
@@ -25833,6 +25840,9 @@ def convert_port_sym(sm, m):
         "width": dtype,
         **({"two_state": True} if not m.type.isFourState else {}),
     }
+    if m.type.isSigned:
+        result["signed"] = True
+    return result
 
 
 def convert_var_sym(sm, m):
@@ -25845,7 +25855,7 @@ def convert_var_sym(sm, m):
     if dtype is None:
         return unsupported(sm, m, "VariableSymbol:" + reason)
     init = m.initializer
-    return {
+    result = {
         "kind": "Var",
         "span": sym_span(sm, m),
         "name": m.name,
@@ -25853,6 +25863,9 @@ def convert_var_sym(sm, m):
         **({"two_state": True} if not m.type.isFourState else {}),
         "init": convert_expr(sm, init) if init is not None else None,
     }
+    if m.type.isSigned:
+        result["signed"] = True
+    return result
 
 
 def convert_fixed_array_vars_sym(sm, m):
@@ -25872,7 +25885,8 @@ def convert_fixed_array_vars_sym(sm, m):
         if dimensions_shape is not None and len(dimensions_shape[0]) > 1:
             dimensions, leaf_type = dimensions_shape
             width, two, reason = type_width_2s(leaf_type)
-            if width is None or reason is not None:
+            if (width is None or reason is not None
+                    or getattr(leaf_type, "isSigned", False)):
                 return None
             if getattr(m, "initializer", None) is not None:
                 return None
@@ -25917,7 +25931,8 @@ def convert_fixed_array_vars_sym(sm, m):
             return None
         element_kind = type(element_type.canonicalType).__name__
         width, two, reason = type_width_2s(element_type)
-        if width is None or reason is not None:
+        if (width is None or reason is not None
+                or getattr(element_type, "isSigned", False)):
             return None
         # ``VariableSymbol.declaredType.typeSyntax`` describes the packed
         # element type even when the symbol itself has an unpacked suffix;
@@ -26044,7 +26059,7 @@ def convert_net_sym(sm, m):
     if dtype is None:
         return unsupported(sm, m, "NetSymbol:" + reason)
     init = m.initializer
-    return {
+    result = {
         "kind": "Net",
         "span": sym_span(sm, m),
         "name": m.name,
@@ -26052,6 +26067,9 @@ def convert_net_sym(sm, m):
         **({"two_state": True} if not m.type.isFourState else {}),
         "init": convert_expr(sm, init) if init is not None else None,
     }
+    if m.type.isSigned:
+        result["signed"] = True
+    return result
 
 
 def _param_width_type(sm, m):

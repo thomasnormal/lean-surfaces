@@ -1228,6 +1228,10 @@ Key order: `kind`, `span`, `name`, `imports`, `params`, `types`, `ports`,
 Symbolic-mode changes to existing nodes: `Port`/`Var`/`Net` carry their
 declared type object (`PackedType` or `TypeRef`) in the `width` field
 (instead of an integer); enum-typed ports/vars/idents are in-vocabulary;
+integral scalar and packed declarations may carry `signed: true` and
+`two_state: true` together; signed declarations remain restricted to 2-state
+storage in this symbolic slice, while signed four-state, enum, and aggregate
+forms stay loud;
 multi-dimensional packed vectors of 4-state unsigned scalars are
 in-vocabulary (`packed` lists one `{msb, lsb}` per dimension, outermost
 first). In **symbolic expression positions only** (parameter defaults,

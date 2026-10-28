@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.155] — 2026-10-28
+
+The symbolic `sv-0.2` tier now admits signed scalar and packed-vector
+declarations when their storage is 2-state. Signedness survives `PDecl`
+ingestion and parameter instantiation, while signed comparison expressions use
+the existing semantic-tier two's-complement rule. Signed four-state declarations,
+enums, arrays, aggregates, and scheduler behavior remain loud. The
+`symbolic_signed_2state` fixture, extractor regressions, generated envelope, and
+Lean receipt pass; the self-check differential table and legacy corpus census
+are unchanged because this is symbolic-mode-only.
+
 ## [0.1.154] — 2026-10-28
 
 Blocking writes from pure integral expressions into named `real` or `shortreal`

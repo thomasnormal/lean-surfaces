@@ -312,6 +312,8 @@ order. -/
 structure PDecl where
   name : String
   type : PType
+  /-- Declared signedness, retained for symbolic scalar/vector declarations. -/
+  isSigned : Bool := false
   twoState : Bool := false
   isInput : Bool := false
   isOutput : Bool := false
@@ -892,13 +894,13 @@ def instDecl (env : IEnv) (pd : PDecl) : Res Decl :=
   | .ok w =>
       match pd.init with
       | none =>
-          .ok { name := pd.name, width := w, isSigned := false,
+          .ok { name := pd.name, width := w, isSigned := pd.isSigned,
                 twoState := pd.twoState,
                 isInput := pd.isInput, isOutput := pd.isOutput }
       | some ie =>
           match instExpr env (some w) ie with
           | .lit v =>
-              .ok { name := pd.name, width := w, isSigned := false,
+              .ok { name := pd.name, width := w, isSigned := pd.isSigned,
                     twoState := pd.twoState,
                     isInput := pd.isInput, isOutput := pd.isOutput, init := some v }
           | _ =>

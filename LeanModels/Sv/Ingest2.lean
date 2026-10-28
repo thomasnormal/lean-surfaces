@@ -435,20 +435,23 @@ def parsePDecl (j : Json) : Except String PDecl := do
     let name ← getStrField j "name"
     withCtx name.quote do
       let ty ← parsePType (← getField j "width")
+      let isSigned := match getOptField j "signed" with
+        | none => false
+        | some value => value.getBool?.toOption.getD false
       let twoState := match getOptField j "two_state" with
         | none => false
         | some value => value.getBool?.toOption.getD false
       match kind with
       | "Port" =>
           match ← getStrField j "dir" with
-          | "in" => return { name, type := ty, twoState, isInput := true }
-          | "out" => return { name, type := ty, twoState, isOutput := true }
+          | "in" => return { name, type := ty, isSigned, twoState, isInput := true }
+          | "out" => return { name, type := ty, isSigned, twoState, isOutput := true }
           | d => throw s!"unknown port dir {d.quote}"
       | "Var" | "Net" =>
           let init ← match getOptField j "init" with
             | none => pure none
             | some ji => pure (some (← withCtx "init" (parsePExpr ji)))
-          return { name, type := ty, twoState, isNet := kind == "Net", init }
+          return { name, type := ty, isSigned, twoState, isNet := kind == "Net", init }
       | other => throw s!"unknown declaration kind {other.quote}"
 
 /-- Parse the sv-0.2 `Module` payload into a `PDesign`. `Unsupported`

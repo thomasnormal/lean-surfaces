@@ -38,6 +38,21 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Literal-return function operands in dynamic-array concatenations — 2026-10-28
+
+An unpacked concatenation assigned to a scalar-integral dynamic array may
+contain a zero-argument function whose complete body assigns one integral
+literal through the implicit function name. The call is sampled as one scalar
+cell after the extractor checks the declaration has no copy-out or reference
+arguments. State-dependent, effectful, and otherwise unsupported function
+operands remain loud. The `dynamic_array_concat_literal_function` fixture
+supplies the differential `PASS` row and Lean receipt.
+
+Differential coverage grows **345/339/0/6 → 346/340/0/6** with no
+disagreements; grammar coverage remains **218/97/121**. The external corpus
+snapshot remains unavailable, so the committed **5,401 clean / 16,597 partial**
+counts and 67 include skips are unchanged.
+
 ## Invalid packed-dimension declarations — 2026-10-28
 
 Declaration-only integral variables whose elaborated type is pyslang

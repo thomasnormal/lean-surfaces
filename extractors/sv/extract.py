@@ -3120,6 +3120,11 @@ def _dynamic_array_constant_extent(symbol):
                             return None
                         total += nested
                     return total if total > 0 else None
+                if (kind == "CallExpression"
+                        and _literal_function_call(node,
+                                                   allow_implicit=True)):
+                    width, _two, reason = type_width_2s(node.type)
+                    return 1 if width is not None and reason is None else None
                 if kind == "NamedValueExpression":
                     # An unpacked fixed-array operand contributes each of its
                     # scalar cells to an unpacked concatenation.  A scalar
@@ -5004,7 +5009,9 @@ def _dynamic_array_concat_assignment(sm, expr):
         values = []
 
         def append_scalar(node):
-            if not _case_source_expression_ok(node, packed_members=True):
+            if not _case_source_expression_ok(
+                    node, packed_members=True,
+                    allow_literal_function_calls=True):
                 return False
             reads_destination = False
 
@@ -5022,7 +5029,18 @@ def _dynamic_array_concat_assignment(sm, expr):
             _visit_selected_expression(node, inspect)
             if reads_destination:
                 return False
-            value = convert_expr(sm, node)
+            if (type(node).__name__ == "CallExpression"
+                    and _literal_function_call(node,
+                                               allow_implicit=True)):
+                returned = _literal_function_result(node.subroutine,
+                                                     allow_implicit=True)
+                value = convert_expr(sm, returned)
+                if value is not None and value.get("kind") != "Unsupported":
+                    value = signed_metadata(value, node.type)
+                    value["literal_function_return"] = True
+                    value["span"] = node_span(sm, node)
+            else:
+                value = convert_expr(sm, node)
             if (value is None or value.get("kind") == "Unsupported"
                     or width_of(value) != width or not _case_expression_ok(value)):
                 return False
@@ -9040,7 +9058,26 @@ def _literal_function_return(expression):
     return False
 
 
-def _literal_function_symbol(subroutine):
+def _literal_function_result(subroutine, *, allow_implicit=True):
+    """Return the literal result expression of either SV return spelling."""
+    body = getattr(subroutine, "body", None)
+    if type(body).__name__ == "ReturnStatement":
+        return getattr(body, "expr", None)
+    if allow_implicit and type(body).__name__ == "ExpressionStatement":
+        assignment = getattr(body, "expr", None)
+        left = getattr(assignment, "left", None)
+        if (type(assignment).__name__ == "AssignmentExpression"
+                and getattr(assignment, "op", None) is None
+                and getattr(assignment, "timingControl", None) is None
+                and not getattr(assignment, "isNonBlocking", False)
+                and type(left).__name__ == "NamedValueExpression"
+                and getattr(left.symbol, "name", None)
+                == getattr(subroutine, "name", None)):
+            return getattr(assignment, "right", None)
+    return None
+
+
+def _literal_function_symbol(subroutine, *, allow_implicit=True):
     """Whether a function declaration is erased after literal call lowering.
 
     Input formals are harmless metadata when the complete body returns a
@@ -9055,15 +9092,14 @@ def _literal_function_symbol(subroutine):
         if any(str(getattr(argument, "direction", "")).split(".")[-1] != "In"
                for argument in getattr(subroutine, "arguments", [])):
             return False
-        body = getattr(subroutine, "body", None)
-        returned = (getattr(body, "expr", None)
-                    if type(body).__name__ == "ReturnStatement" else None)
+        returned = _literal_function_result(subroutine,
+                                            allow_implicit=allow_implicit)
         return returned is not None and _literal_function_return(returned)
     except Exception:
         return False
 
 
-def _literal_function_call(expression):
+def _literal_function_call(expression, *, allow_implicit=False):
     """Whether a literal-return function call has only inert inputs.
 
     A direct integral literal is already enough.  A named integral argument
@@ -9081,7 +9117,9 @@ def _literal_function_call(expression):
         subroutine = getattr(expression, "subroutine", None)
         formals = list(getattr(subroutine, "arguments", []))
         actuals = list(getattr(expression, "arguments", []))
-        if not _literal_function_symbol(subroutine) or len(formals) != len(actuals):
+        if (not _literal_function_symbol(subroutine,
+                                         allow_implicit=allow_implicit)
+                or len(formals) != len(actuals)):
             return False
         return all(
             _literal_function_return(argument)
@@ -9602,9 +9640,8 @@ def _convert_legacy_call(sm, expression):
         # deliberately narrower than general constant-function evaluation:
         # names, operators, nested calls, and multi-statement bodies remain
         # ordinary unsupported calls rather than silently erasing effects.
-        if (not opaque_method_call and _literal_function_call(expression)
-                and type(body).__name__ == "ReturnStatement"):
-            returned = getattr(body, "expr", None)
+        if not opaque_method_call and _literal_function_call(expression):
+            returned = _literal_function_result(subroutine)
             if (returned is not None and _literal_function_return(returned)
                     and _case_source_expression_ok(returned)):
                 value = convert_expr(sm, returned)
@@ -17889,7 +17926,8 @@ def _case_skip_call_purity(node, packed_members):
     return None
 
 
-def _case_source_expression_ok(expression, *, packed_members=False):
+def _case_source_expression_ok(expression, *, packed_members=False,
+                               allow_literal_function_calls=False):
     """Check bound source operands before constant folding can erase effects."""
     pure = True
 
@@ -17907,6 +17945,14 @@ def _case_source_expression_ok(expression, *, packed_members=False):
                 and node.subroutineName == "$test$plusargs"):
             return VisitAction.Skip
         if kind == "CallExpression" and _fixed_bits_query_width(node) is not None:
+            return VisitAction.Skip
+        if (allow_literal_function_calls and kind == "CallExpression"
+                and _literal_function_call(node, allow_implicit=True)):
+            pure = pure and all(
+                _case_source_expression_ok(argument,
+                                            packed_members=packed_members,
+                                            allow_literal_function_calls=True)
+                for argument in node.arguments)
             return VisitAction.Skip
         if kind == "CallExpression" and _bit_query_call(node):
             pure = pure and all(type_width_2s(argument.type)[0] is not None

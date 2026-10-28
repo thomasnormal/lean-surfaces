@@ -176,6 +176,44 @@ class DynamicArrayDeclarations(unittest.TestCase):
             [stmt["target"]["name"] for stmt in concat_blocks[0]["stmts"]],
             [f"values[{index}]" for index in range(6)])
 
+    def test_unpacked_concat_accepts_implicit_literal_function_operand(self):
+        design = lower(
+            """module top;
+               function automatic int get_value();
+                 get_value = 20;
+               endfunction
+               initial begin
+                 int values[];
+                 values = {10, get_value(), 30};
+                 if (values.size() == 3 && values[1] == 20)
+                   $display("PASS");
+               end
+               endmodule""")
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        concat_blocks = [node for node in nodes(design)
+                         if node.get("dynamic_array_concat_lowered")]
+        self.assertEqual(len(concat_blocks), 1)
+        self.assertEqual(
+            [stmt["target"]["name"].split(":")[-1]
+             for stmt in concat_blocks[0]["stmts"]],
+            ["values[0]", "values[1]", "values[2]"])
+
+    def test_unpacked_concat_keeps_nonliteral_function_operand_loud(self):
+        design = lower(
+            """module top;
+               int source;
+               function automatic int get_value();
+                 get_value = source;
+               endfunction
+               initial begin
+                 int values[];
+                 values = {10, get_value(), 30};
+               end
+               endmodule""")
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
+
     def test_dynamic_to_fixed_size_mismatch_is_runtime_halt(self):
         design = lower(
             """module top;

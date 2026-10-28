@@ -25,6 +25,20 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Literal-return function operands in dynamic-array concatenations — 2026-10-28
+
+An unpacked concatenation assigned to a scalar-integral dynamic array may now
+contain a zero-argument function whose complete body assigns one integral
+literal through the implicit function name. The call is materialized as one
+sampled cell; state-dependent, effectful, and otherwise unsupported function
+operands remain loud. The `dynamic_array_concat_literal_function` fixture
+supplies the differential row and Lean receipt.
+
+The external sv-tests-2 checkout is unavailable, so the committed census
+remains **5,401 clean / 16,597 partial** over 22,065 paths with 67 include
+skips; no unverified census delta is claimed. Differential coverage grows
+**345/339/0/6 → 346/340/0/6**, while grammar coverage remains **218/97/121**.
+
 ## Source-pure fixed-array continuous copies — 2026-10-28
 
 The legacy extractor now lowers a whole-array continuous assignment from a

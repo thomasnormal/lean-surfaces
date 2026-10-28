@@ -9,6 +9,22 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Literal-return function operands in dynamic-array concatenations — 2026-10-28
+
+An unpacked concatenation assigned to a scalar-integral dynamic array may
+contain a zero-argument function whose complete body assigns one integral
+literal through the implicit function name. The extractor materializes the
+call as one scalar cell after checking the function declaration has no
+copy-out or reference arguments. Function calls whose result depends on state,
+has effects, or has another unsupported body remain
+`AssignmentExpression:target`; the general literal-function boundary is not
+expanded by this rule.
+
+`dynamic_array_concat_literal_function` supplies the differential `PASS`
+witness and Lean receipt. Differential coverage grows **345/339/0/6 →
+346/340/0/6**; the unavailable external census snapshot remains **5,401
+clean / 16,597 partial** with 67 include skips.
+
 ## Source-pure fixed-array continuous copies — 2026-10-28
 
 An assignment such as `assign driven = source` is admitted when both sides

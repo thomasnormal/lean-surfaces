@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.92] — 2026-10-28
+
+Unpacked concatenations assigned to scalar-integral dynamic arrays now admit a
+zero-argument function whose complete body assigns one integral literal through
+the implicit function name. The call is materialized as one sampled cell while
+effectful or state-dependent function operands remain loud. The
+`dynamic_array_concat_literal_function` fixture and Lean receipt supply the
+`PASS` evidence. Differential coverage is now **346 rows / 340 matches / 0
+disagreements / 6 recorded refusals**; grammar coverage remains **218 / 97 /
+121** and the committed census remains **5,401 clean / 16,597 partial** with
+67 include skips.
+
 ## [0.1.91] — 2026-10-28
 
 Source-pure ASCII string history now flows through constant replication and

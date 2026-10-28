@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 345 | 339 | 0 | 6 | sv-tests-2 declarations |
+| 346 | 340 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -42,6 +42,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `static_dependency_initializer` | `Examples/system-verilog/static_dependency_initializer/static_dependency_initializer.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_oob_write` | `Examples/system-verilog/dynamic_array_oob_write/dynamic_array_oob_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_concat` | `Examples/system-verilog/dynamic_array_concat/dynamic_array_concat.sv` | match | **MATCH** | `ok` | MATCH |
+| `dynamic_array_concat_literal_function` | `Examples/system-verilog/dynamic_array_concat_literal_function/dynamic_array_concat_literal_function.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_array_concat_refuse` | `Examples/system-verilog/dynamic_array_concat_refuse/dynamic_array_concat_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `dynamic_array_pattern` | `Examples/system-verilog/dynamic_array_pattern/dynamic_array_pattern.sv` | match | **MATCH** | `ok` | MATCH |
 | `system_null` | `Examples/system-verilog/system_null/system_null.sv` | match | **MATCH** | `ok` | MATCH |

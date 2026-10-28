@@ -255,6 +255,15 @@
       "expect": "match"
     },
     {
+      "name": "dynamic_array_concat_literal_function",
+      "file": "Examples/system-verilog/dynamic_array_concat_literal_function/dynamic_array_concat_literal_function.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "dynamic_array_concat_refuse",
       "file": "Examples/system-verilog/dynamic_array_concat_refuse/dynamic_array_concat_refuse.sv",
       "module": "top",

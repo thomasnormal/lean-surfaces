@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.45] — 2026-10-28
+
+The SystemVerilog self-check surface now has 390 differential rows: 384
+matches, zero disagreements, and 6 recorded refusals. The grammar census has
+218 pyslang syntax witnesses: 100 MATCH and 118 REFUSE. The 22,065-path
+committed corpus snapshot has 5,684 clean files and 16,314 partial files, with
+67 include skips. The latest rungs extend finite associative-array presence,
+endpoint, streaming, compound-assignment, and dimension-history observations;
+dynamic, scheduler-owned, and aggregate forms outside the flat representation
+remain loud.
+
 ## [0.1.133] — 2026-10-28
 
 Discarded finite associative-array `exists(index)` calls now erase as pure

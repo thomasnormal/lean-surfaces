@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.147] — 2026-10-28
+
+Procedural `event` declarations are now inert metadata for the time-zero
+self-check state, so a pure `$typename(event)` string query can run while event
+waits and triggers remain loud. The `typename_event_declaration` fixture,
+extractor regression, differential row, and Lean receipt pass. Differential
+coverage grows **403 rows / 397 matches / 0 disagreements / 6 recorded refusals
+→ 404 / 398 / 0 / 6**; the fresh 22,065-path census moves **5,784 → 5,785
+clean / 16,214 → 16,213 partial**, with `VariableSymbol:2state` falling
+**2,105 → 2,101**.
+
 ## [0.1.146] — 2026-10-28
 
 Scalar string `.len()` and `.compare()` observations now ignore IEEE

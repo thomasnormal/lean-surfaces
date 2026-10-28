@@ -478,6 +478,21 @@ def is_module_event_decl(symbol):
         return False
 
 
+def is_inert_event_decl(symbol):
+    """Whether a procedural event declaration is metadata-only.
+
+    The time-zero self-check state has no event-object slot. A local event
+    declaration therefore contributes no runtime state by itself; event waits
+    and triggers remain represented by their existing loud boundaries.
+    """
+    if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
+        return False
+    try:
+        return type(symbol.type.canonicalType).__name__ == "EventType"
+    except Exception:
+        return False
+
+
 def is_module_floating_decl(symbol):
     """Whether a module-scope real/shortreal declaration is inert metadata."""
     if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
@@ -21362,6 +21377,8 @@ def _convert_local_decl(sm, stmt):
                 "opaque_semaphore_literal_new_write": True}
     if _SYM is None and is_string_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
+    if _SYM is None and is_inert_event_decl(symbol):
+        return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None and is_inert_2state_floating_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None and is_inert_2state_queue_decl(symbol):
@@ -23973,6 +23990,7 @@ def _convert_static_procedural_storage(sm, members):
         if str(symbol.lifetime) != "VariableLifetime.Static":
             continue
         if (is_chandle_decl(symbol) or is_string_decl(symbol)
+                or is_inert_event_decl(symbol)
                 or is_inert_2state_floating_decl(symbol)
                 or is_inert_class_handle_decl(symbol)
                 or is_literal_semaphore_decl(symbol)):
@@ -24584,6 +24602,7 @@ def _declaration_only(member):
             or is_flat_unpacked_struct_alias(member)
             or is_bound_enum_member(member)
             or is_module_event_decl(member)
+            or is_inert_event_decl(member)
             or is_module_floating_decl(member)
             or is_chandle_decl(member)
             or is_module_virtual_interface_null_decl(member)

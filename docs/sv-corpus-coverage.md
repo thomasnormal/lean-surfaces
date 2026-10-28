@@ -1,5 +1,16 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Procedural event declarations for pure type queries — 2026-10-28
+
+The legacy extractor now treats procedural `event` declarations as inert
+metadata, allowing the pure `$typename(event)` query to return `event` while
+waits and triggers remain loud. The `typename_event_declaration` fixture supplies
+the differential row and Lean receipt. The fresh 22,065-path census moves
+**5,784 → 5,785 clean / 16,214 → 16,213 partial** with 67 include skips;
+`VariableSymbol:2state` falls **2,105 → 2,101**, while the top assignment and
+call blockers remain **2,694**, **2,677**, and **2,567**. Differential coverage
+grows **403/397/0/6 → 404/398/0/6**.
+
 ## Scalar string observations after NUL writes — 2026-10-28
 
 The legacy extractor now preserves scalar string `.len()` and `.compare()`

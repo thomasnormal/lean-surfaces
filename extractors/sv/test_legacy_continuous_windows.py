@@ -198,6 +198,17 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertTrue(any(item.get("kind") == "Unsupported"
                             for item in module["processes"][0]["body"]["stmts"]))
 
+    def test_procedural_event_declaration_is_inert_for_typename(self):
+        envelope = self.extract(
+            "module top; initial begin event named_ev; string s; "
+            "s = $typename(named_ev); if (s == \"event\") "
+            "$display(\"PASS\"); end endmodule")
+        module = envelope["design"]["modules"][0]
+        self.assertFalse(any(item.get("sv_kind") == "VariableSymbol:2state"
+                             for item in self._walk(envelope)))
+        self.assertFalse(any(item.get("kind") == "Unsupported"
+                             for item in self._walk(module)))
+
     def test_module_real_declaration_is_inert_on_time_zero_path(self):
         envelope = self.extract(
             "module top; real rr; initial begin $display(\"PASS\"); "

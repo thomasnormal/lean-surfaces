@@ -1,5 +1,20 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Procedural event declarations for pure type queries — 2026-10-28
+
+Procedural `event` declarations now lower to inert metadata in the legacy
+self-check state, which has no event-object slot. A pure `$typename(event)`
+query therefore returns the exact ASCII spelling `event`; event waits and
+triggers remain loud. The `typename_event_declaration` fixture exercises the
+query with extractor regression, differential row, and Lean receipt.
+
+The fresh **22,065-path** census moves **5,784 → 5,785 clean** and **16,214 →
+16,213 partial** with 67 include skips. `VariableSymbol:2state` falls
+**2,105 → 2,101**; `AssignmentExpression:target`,
+`ExpressionStatement:CallExpression`, and `CallExpression` remain **2,694**,
+**2,677**, and **2,567**. Differential coverage grows **403/397/0/6 →
+404/398/0/6**; grammar coverage remains **218/100/118**.
+
 ## Scalar string observations after NUL writes — 2026-10-28
 
 Scalar string `.len()` and `.compare()` observations now preserve the exact

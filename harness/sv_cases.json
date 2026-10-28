@@ -3647,6 +3647,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "typename_event_declaration",
+      "file": "Examples/system-verilog/typename_event_declaration/typename_event_declaration.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

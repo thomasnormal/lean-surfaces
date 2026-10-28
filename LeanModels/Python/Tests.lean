@@ -283,7 +283,7 @@ between non-None values is implementation-defined → loud. -/
 #guard ev (cmp1 (iL 0) .isNot noneL) == .ok (.bool true)
 #guard ev (cmp1 noneL .isNot noneL) == .ok (.bool false)
 #guard ev (cmp1 noneL .isNot (iL 3)) == .ok (.bool true)
-#guard isUnsupported (ev (cmp1 (iL 1) .is (iL 1)))          -- small-int identity
+#guard ev (cmp1 (iL 1) .is (iL 1)) == .ok (.bool true)   -- cached small-int identity
 #guard isUnsupported (ev (cmp1 (sL "a") .isNot (sL "a")))   -- str interning
 -- Left operand evaluation order still applies (errors before the identity):
 #guard ev (cmp1 boom .is noneL) == .exn .zeroDivisionError

@@ -6417,3 +6417,20 @@ callable forms remain loud.
 DECIDED: admit only the immediate local `print` alias call; retain loud failure
 for returned or general first-class callable values. Rebase and publish this
 item after the full measurements, then reread the inbox before the next gap.
+
+## 2026-10-28-pycomplete-191 — repair the cached-identity regression guard
+
+The Python full check had a stale guard left behind by the cached immediate
+identity tier: `1 is 1` is now a decided CPython 3.9 small-integer identity,
+not an `Unsupported` result. Updated `LeanModels/Python/Tests.lean` to assert
+`.ok (.bool true)` while preserving the loud guard for implementation-dependent
+string identity.
+
+| Measurement | Result |
+|---|---|
+| Focused Lean test | `lake env lean LeanModels/Python/Tests.lean` passed |
+| Scope | One stale regression guard; no runtime or coverage changes |
+| Formatting | `git diff --check` passed |
+
+DECIDED: publish this CI repair, verify the hosted full check, then perform the
+overdue fifth-turn Python release pass before selecting another construct.

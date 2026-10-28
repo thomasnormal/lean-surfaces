@@ -9,6 +9,18 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Literal binary `$sformatf` string assignments — 2026-10-28
+
+Blocking assignments of `$sformatf("%b", ...)` and `$sformatf("%B", ...)` to a
+string now replay the exact packed 0/1 text for a known integral literal,
+including its literal width. Unknown or dynamic operands, timed forms, and
+nonblocking writes remain `AssignmentExpression:target`.
+
+`string_sformatf_binary_assignment` supplies the differential `PASS` witness
+and Lean receipt. Differential coverage grows **359/353/0/6 → 360/354/0/6**;
+the corpus snapshot remains **5,584 clean / 16,414 partial** with 67 include
+skips and `AssignmentExpression:target` at **2,810**.
+
 ## Literal character `$sformatf` string assignments — 2026-10-28
 
 Blocking assignments of `$sformatf("%c", ...)` and `$sformatf("%C", ...)` to a

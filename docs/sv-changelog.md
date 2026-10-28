@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.103] — 2026-10-28
+
+Literal integral `$sformatf("%b", ...)` and `$sformatf("%B", ...)` results
+assigned to strings now replay their exact packed 0/1 text, retaining literal
+width. Unknown or dynamic operands, timed forms, and nonblocking writes remain
+loud. The new fixture and Lean receipt pass; differential coverage is **360
+rows / 354 matches / 0 disagreements / 6 recorded refusals**, and the census
+remains **5,584 clean / 16,414 partial** with `AssignmentExpression:target` at
+**2,810**.
+
 ## [0.1.102] — 2026-10-28
 
 Literal integral `$sformatf("%c", ...)` and `$sformatf("%C", ...)` results

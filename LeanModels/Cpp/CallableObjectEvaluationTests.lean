@@ -9602,6 +9602,48 @@ def callableLocalWhileSwitchShadowInitializationFallthroughAssignmentReturnState
   localWhileSwitchShadowInitializationFallthroughAssignmentReturnStatementFrame
 
 #guard callableLocalWhileSwitchShadowInitializationFallthroughAssignmentReturnStatementFrameWitness
+
+private def localWhileSwitchShadowInitializationFallthroughAssignmentReturnFalseStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .binary "<"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 2, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let switchCondition : TypedCallableExpression := {
+    expression := .parameter (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let body := .block (.sequence
+    (.switch_ switchCondition [
+      {label := some 0, body := .block (.sequence
+        (automaticLiteral "0x13" 5)
+        (.assign (handle "0x11") {
+          expression := .parameter (handle "0x13")
+          sourceType := intType
+          type := intType}))},
+      {label := none, body := .break_}])
+    (.compoundAssign "+=" (handle "0x10") {
+      expression := .integer 1
+      sourceType := intType
+      type := intType}))
+  let function := {base with body := .block (.sequence
+    (automaticLiteral "0x11" 3)
+    (.sequence
+      (.whileLoop condition body)
+      (.return_ {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType}))) }
+  match evaluateCallableObject 128 .lp64 function [signed 1] with
+  | .ok (.ok value) => value == signed 3
+  | _ => false
+
+def callableLocalWhileSwitchShadowInitializationFallthroughAssignmentReturnFalseStatementFrameWitness : Bool :=
+  localWhileSwitchShadowInitializationFallthroughAssignmentReturnFalseStatementFrame
+
+#guard callableLocalWhileSwitchShadowInitializationFallthroughAssignmentReturnFalseStatementFrameWitness
 private def localWhileSwitchDefaultShadowInitializationFallthroughAssignmentStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let condition : TypedCallableExpression := {

@@ -3397,6 +3397,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "string_sformatf_scope_wrapper_assignment",
+      "file": "Examples/system-verilog/string_sformatf_scope_wrapper_assignment/string_sformatf_scope_wrapper_assignment.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

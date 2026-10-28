@@ -40,6 +40,19 @@ class LiteralStringWrites(unittest.TestCase):
             1,
         )
 
+    def test_top_level_sformatf_percent_m_with_literal_wrapper_replays_scope(self):
+        design = lower(
+            'module top; string scope_name; initial begin '
+            'scope_name = $sformatf("hier: %m"); '
+            'if (scope_name != "hier: top") $display("FAIL"); '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False) for node in nodes(design)),
+            1,
+        )
+
     def test_nested_sformatf_percent_m_assignment_stays_loud(self):
         design = lower(
             'module top; string scope_name; function void f(); '

@@ -17,6 +17,17 @@ access rather than a decision.
 
 ---
 
+## Wrapped top-level `$sformatf("%m")` string assignments — 2026-10-28
+
+Blocking assignments from literal text wrapped around the metadata-only
+top-level `$sformatf("%m")` query now replay through source-pure string history.
+Nested hierarchy, functions, generated scopes, dynamic formats, timed writes,
+and nonblocking publication remain loud. The
+`string_sformatf_scope_wrapper_assignment` fixture and Lean receipt pass;
+differential coverage grows **377/371/0/6 → 378/372/0/6**. The committed
+22,065-path census remains **5,622 clean / 16,376 partial** with 67 include
+skips and `AssignmentExpression:target` at **2,757**.
+
 ## Top-level `$sformatf("%m")` string assignments — 2026-10-28
 
 Blocking assignments from the metadata-only top-level `$sformatf("%m")` query

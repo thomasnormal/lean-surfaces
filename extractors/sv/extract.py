@@ -8369,8 +8369,8 @@ def _sformatf_literal_source_value(expression, position=None):
         # require hierarchy elaboration and remain loud until represented.
         if (len(arguments) == 1
                 and type(arguments[0]).__name__ == "StringLiteral"
-                and not getattr(arguments[0], "bad", False)
-                and arguments[0].value == "%m"):
+                and not getattr(arguments[0], "bad", False)):
+            fmt = arguments[0].value
             source = (_SOURCE_BYTES.decode("utf-8", errors="replace")
                       if _SOURCE_BYTES else "")
             code = _sv_code_source(source)
@@ -8380,7 +8380,13 @@ def _sformatf_literal_source_value(expression, position=None):
             if (len(modules) != 1 or re.search(r"\b(?:function|task)\b", code)
                     or re.search(r"\b(?:generate|begin)\s*:\s*", code)):
                 return None
-            return modules[0]
+            if (fmt == "%m" or (fmt.count("%m") == 1
+                                 and fmt.count("%") == 1
+                                 and all(0 < ord(char) <= 127
+                                         for char in fmt))):
+                prefix, suffix = fmt.split("%m", 1)
+                return prefix + modules[0] + suffix
+            return None
         if len(arguments) < 2:
             return None
         format_expr = arguments[0]

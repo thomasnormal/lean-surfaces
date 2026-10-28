@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.121] — 2026-10-28
+
+Blocking assignments from literal text wrapped around the metadata-only
+top-level `$sformatf("%m")` query now replay through source-pure string
+history. Nested hierarchy, functions, generated scopes, dynamic formats,
+timed writes, and nonblocking publication remain loud. The new fixture and
+Lean receipt pass; differential coverage grows **377 rows / 371 matches / 0
+disagreements / 6 refusals → 378 / 372 / 0 / 6**. The committed 22,065-path
+census remains **5,622 clean / 16,376 partial** with 67 include skips, and
+`AssignmentExpression:target` remains **2,757**.
+
 ## [0.1.120] — 2026-10-28
 
 Blocking assignments from the metadata-only top-level `$sformatf("%m")` query

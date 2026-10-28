@@ -178,6 +178,32 @@ class PackedAssignmentTargets(unittest.TestCase):
         self.assertEqual([part["name"] for part in target["parts"]],
                          ["first", "second"])
 
+    def test_whole_packed_struct_and_union_targets_use_vector_state(self):
+        design = extract_source(
+            "module top; typedef struct packed { logic [3:0] hi; logic [3:0] lo; } S; "
+            "typedef union packed { logic [7:0] raw; S word; } U; "
+            "S source, target; U usource, utarget; "
+            "initial begin source = '{4'ha, 4'h5}; target = source; "
+            "usource.raw = 8'h3c; utarget = usource; end endmodule")
+        assigns = [node for node in nodes(design)
+                   if node.get("kind") == "BlockingAssign"]
+        self.assertEqual([assign["target"]["kind"] for assign in assigns],
+                         ["Ident", "Ident", "SelectTarget", "Ident"])
+        self.assertEqual([assign["target"].get("name") for assign in assigns
+                          if assign["target"]["kind"] == "Ident"],
+                         ["source", "target", "utarget"])
+
+    def test_tagged_or_effectful_whole_aggregate_copies_stay_loud(self):
+        for declaration in (
+                "typedef union tagged packed { logic [7:0] word; } U; U source, target;",
+                "typedef struct packed { logic [7:0] word; } S; S source, target;"):
+            with self.subTest(declaration=declaration):
+                rhs = "source" if "tagged" in declaration else "$urandom()"
+                design = extract_source("module top; " + declaration +
+                    " initial target = " + rhs + "; endmodule")
+                self.assertTrue(any(node.get("kind") == "Unsupported"
+                                    for node in nodes(design)))
+
     def test_nonblocking_nested_concat_keeps_selected_leaves(self):
         design = extract_source("module top; logic [1:0] first, second; "
                                 "initial {first[0], {second[1], second[0]}} "

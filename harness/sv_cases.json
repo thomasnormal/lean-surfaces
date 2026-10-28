@@ -3802,6 +3802,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "packed_aggregate_copy",
+      "file": "Examples/system-verilog/packed_aggregate_copy/packed_aggregate_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

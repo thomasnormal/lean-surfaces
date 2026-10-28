@@ -1,3 +1,17 @@
+## Whole packed-aggregate copies — 2026-10-28
+
+Direct blocking copies between untagged packed structs or packed unions now use
+the existing flat vector state. Their elaborated aggregate width is already
+represented by one vector cell, so the target lowers as an ordinary `Ident`
+and preserves the existing right-hand-side conversion and two-state rules.
+Tagged aggregates, effectful or unsupported sources, and aggregate shapes that
+need unpacked storage remain loud. The `packed_aggregate_copy` fixture covers
+both a packed struct and a packed union, with extractor regressions and a Lean
+receipt.
+
+Differential coverage grows **420/414/0/6 → 421/415/0/6**; the committed
+external corpus snapshot is unchanged because the checkout is unavailable.
+
 # Assignment targets — admitted boundary
 
 ## Dynamic outer-array assignment targets — 2026-10-28

@@ -1,3 +1,12 @@
+## [0.1.166] — 2026-10-28
+
+Direct blocking copies between untagged packed structs and packed unions now
+use the existing flat vector target state. Tagged aggregates and effectful or
+unsupported sources remain loud. The `packed_aggregate_copy` fixture, extractor
+regressions, generated envelope, Lean receipt, and differential row cover the
+boundary. Differential coverage grows **420/414/0/6 → 421/415/0/6**; the
+external corpus snapshot is unchanged because its checkout is unavailable.
+
 # SystemVerilog tier changelog
 
 ## [0.1.165] — 2026-10-28

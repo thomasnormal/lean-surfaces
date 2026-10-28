@@ -18522,7 +18522,8 @@ def legacy_blocking_target(sm, lhs, concat_leaf=False):
     canonical_kind = type(lhs.value.type.canonicalType).__name__
     canonical_select = _canonical_packed_select_source(lhs.value.type)
     if (not admitted or source_reason is not None or source_width is None
-            or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType")):
+            or canonical_kind not in ("PredefinedIntegerType", "PackedArrayType",
+                                      "PackedStructType", "PackedUnionType")):
         return unsupported(sm, lhs, expression_kind + ":target-source"), False
     descending = False
     if expression_kind == "ElementSelectExpression":

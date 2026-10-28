@@ -1,3 +1,15 @@
+## Whole packed-aggregate copies — 2026-10-28
+
+The legacy self-check tier now lowers direct blocking copies between untagged
+packed structs and packed unions through their existing flat vector cells.
+Tagged aggregates and effectful or unsupported sources remain loud; no aggregate
+heap or scheduler rule is added. The `packed_aggregate_copy` fixture, extractor
+regressions, generated envelope, Lean receipt, and differential row cover the
+new target family.
+
+Differential coverage grows **420/414/0/6 → 421/415/0/6**; the committed
+external corpus snapshot is unchanged because the checkout is unavailable.
+
 # The SystemVerilog tier: FOUNDING CHARTER
 
 ## Dynamic outer-array assignment targets — 2026-10-28

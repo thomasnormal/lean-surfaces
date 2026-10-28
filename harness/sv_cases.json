@@ -3468,6 +3468,15 @@
       "expect": "match"
     },
     {
+      "name": "assoc_unsigned_endpoint_history",
+      "file": "Examples/system-verilog/assoc_unsigned_endpoint_history/assoc_unsigned_endpoint_history.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "assoc_endpoint_statement_history",
       "file": "Examples/system-verilog/assoc_endpoint_statement_history/assoc_endpoint_statement_history.sv",
       "module": "top",

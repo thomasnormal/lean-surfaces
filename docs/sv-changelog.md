@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.136] — 2026-10-28
+
+Source-pure finite associative arrays with unsigned packed integral index
+aliases now replay `first` and `last` endpoint history according to IEEE
+1800-2023 §7.8.4's unsigned ordering. Dynamic keys, controls, timing, and
+aggregate forms remain loud. The fixture, extractor regression, and Lean
+receipt pass. Differential coverage grows **392 rows / 386 matches / 0
+disagreements / 6 recorded refusals → 393 / 387 / 0 / 6**; the fresh
+22,065-path census moves **5,698 → 5,699 clean / 16,300 → 16,299 partial**
+and `ExpressionStatement:CallExpression` falls **2,678 → 2,677**.
+
 ## [0.1.135] — 2026-10-28
 
 Source-pure `string.putc` calls whose index is the receiver's literal

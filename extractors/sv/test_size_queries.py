@@ -248,6 +248,28 @@ class SizeQueries(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_unsigned_packed_integral_endpoint_history(self):
+        design = lower(
+            'module top; typedef bit [3:0] U4; int values[U4]; U4 key; '
+            'initial begin values[4\'hF] = 10; values[4\'h0] = 20; '
+            'values[4\'h8] = 30; values.first(key); values.last(key); '
+            'end endmodule')
+        endpoints = [node for node in nodes(design)
+                     if node.get("associative_endpoint_statement")]
+        self.assertEqual([node["associative_endpoint_statement"]
+                          for node in endpoints], ["first", "last"])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_signed_packed_integral_endpoint_history_stays_loud(self):
+        design = lower(
+            'module top; typedef logic signed [3:0] S4; int values[S4]; '
+            'S4 key; initial begin values[4\'hF] = 10; '
+            'values.first(key); end endmodule')
+        self.assertTrue(any(node.get("sv_kind") ==
+                            "ExpressionStatement:CallExpression"
+                            for node in nodes(design)))
+
     def test_mailbox_type_mismatch_try_get_returns_negative(self):
         design = lower(
             'module top; mailbox box; string message; int result; initial begin '

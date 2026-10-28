@@ -1,5 +1,21 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Unsigned packed integral associative-array endpoints — 2026-10-28
+
+The self-check tier now admits source-pure finite associative arrays whose
+integral index is an unsigned packed alias. IEEE 1800-2023 §7.8.4 orders keys
+according to that index type's signedness, so `first` and `last` select `0` and
+`15` from the keys `0`, `8`, and `15`. Dynamic keys, controls, timing, and
+aggregate forms remain loud. The `assoc_unsigned_endpoint_history` fixture,
+extractor regression, and Lean receipt pass.
+
+The fresh **22,065-path** census moves **5,698 → 5,699 clean** and
+**16,300 → 16,299 partial** with 67 include skips.
+`ExpressionStatement:CallExpression` falls **2,678 → 2,677**;
+`AssignmentExpression:target` remains **2,695** and `CallExpression` remains
+**2,617**. Differential coverage grows **392/386/0/6 → 393/387/0/6**;
+grammar coverage remains **218/100/118**.
+
 ## `string.putc` at the string length — 2026-10-28
 
 The self-check tier now admits the source-pure `s.putc(s.len(), "X")` form.

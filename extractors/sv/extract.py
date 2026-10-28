@@ -2089,6 +2089,19 @@ def _assoc_endpoint_call_valid(expression, symbol):
         return False
 
 
+def _assoc_endpoint_index_type_ok(index_type):
+    """Whether finite endpoint replay has the index ordering it models.
+
+    Predefined integer types retain the existing signed path.  Packed aliases
+    are admitted only when unsigned: their literal keys already have the
+    unsigned numerical order used by the flat history.  Signed packed aliases
+    need a cast-aware key normalization and therefore stay loud.
+    """
+    return (type(index_type).__name__ == "PredefinedIntegerType"
+            or (getattr(index_type, "isIntegral", False)
+                and not getattr(index_type, "isSigned", False)))
+
+
 def _finite_string_assoc_cells(sm, symbol):
     """Collect a finite, literal-key string associative array.
 
@@ -20450,10 +20463,11 @@ def _associative_endpoint_assignment(sm, expression):
             return None
         receiver, index = arguments
         symbol = getattr(receiver, "symbol", None)
+        assoc_index_type = (symbol.type.canonicalType.indexType.canonicalType
+                            if symbol is not None else None)
         if (symbol is None
                 or type(receiver.type.canonicalType).__name__ != "AssociativeArrayType"
-                or type(symbol.type.canonicalType.indexType.canonicalType).__name__
-                != "PredefinedIntegerType"
+                or not _assoc_endpoint_index_type_ok(assoc_index_type)
                 or not getattr(index.type, "isIntegral", False)):
             return None
         index_type = getattr(index.type, "canonicalType", index.type)
@@ -20559,9 +20573,10 @@ def _associative_endpoint_statement(sm, expression):
             return None
         receiver, index = list(expression.arguments)
         symbol = getattr(receiver, "symbol", None)
+        assoc_index_type = (symbol.type.canonicalType.indexType.canonicalType
+                            if symbol is not None else None)
         if (symbol is None
-                or type(symbol.type.canonicalType.indexType.canonicalType).__name__
-                != "PredefinedIntegerType"
+                or not _assoc_endpoint_index_type_ok(assoc_index_type)
                 or not getattr(index.type, "isIntegral", False)):
             return None
         cells = _finite_integral_assoc_cells(sm, symbol)

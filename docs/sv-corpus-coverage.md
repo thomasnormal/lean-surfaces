@@ -1,5 +1,18 @@
 # SV corpus coverage census — sv-tests-2 vs the M0 extractor
 
+## Unsigned packed integral associative-array endpoints — 2026-10-28
+
+The legacy extractor now replays source-pure finite associative arrays whose
+integral index is an unsigned packed alias. IEEE 1800-2023 §7.8.4 orders the
+literal keys by unsigned numerical value, so `first` and `last` update the
+output index to `0` and `15`. Dynamic keys, controls, timing, and aggregate
+forms remain loud. The `assoc_unsigned_endpoint_history` fixture supplies the
+differential row and Lean receipt. The fresh 22,065-path census moves **5,698 →
+5,699 clean / 16,300 → 16,299 partial** with 67 include skips;
+`ExpressionStatement:CallExpression` falls **2,678 → 2,677** while
+`AssignmentExpression:target` remains **2,695** and `CallExpression` remains
+**2,617**. Differential coverage grows **392/386/0/6 → 393/387/0/6**.
+
 ## `string.putc` at the string length — 2026-10-28
 
 The legacy extractor now resolves a source-pure `s.len()` index in

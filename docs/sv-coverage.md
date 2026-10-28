@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 392 | 386 | 0 | 6 | sv-tests-2 declarations |
+| 393 | 387 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -398,6 +398,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `assoc_count_history` | `Examples/system-verilog/assoc_count_history/assoc_count_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_delete_history` | `Examples/system-verilog/assoc_delete_history/assoc_delete_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_endpoint_history` | `Examples/system-verilog/assoc_endpoint_history/assoc_endpoint_history.sv` | match | **MATCH** | `ok` | MATCH |
+| `assoc_unsigned_endpoint_history` | `Examples/system-verilog/assoc_unsigned_endpoint_history/assoc_unsigned_endpoint_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_endpoint_statement_history` | `Examples/system-verilog/assoc_endpoint_statement_history/assoc_endpoint_statement_history.sv` | match | **MATCH** | `ok` | MATCH |
 | `streaming_assoc_sorted` | `Examples/system-verilog/streaming_assoc_sorted/streaming_assoc_sorted.sv` | match | **MATCH** | `ok` | MATCH |
 | `assoc_next_prev_history` | `Examples/system-verilog/assoc_next_prev_history/assoc_next_prev_history.sv` | match | **MATCH** | `ok` | MATCH |
@@ -629,7 +630,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.VariableDimension` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.VariablePortHeader` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.VirtualInterfaceType` | `Examples/system-verilog/opaque_virtual_interface_null_write/opaque_virtual_interface_null_write.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.VoidCastedCallStatement` | `Examples/system-verilog/queue_empty_pop_discarded/queue_empty_pop_discarded.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.VoidCastedCallStatement` | `Examples/system-verilog/assoc_unsigned_endpoint_history/assoc_unsigned_endpoint_history.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.VoidType` | `Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.WildcardEqualityExpression` | `Examples/system-verilog/wildcard_equality/values.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.WildcardInequalityExpression` | `Examples/system-verilog/wildcard_equality/values.sv` | **MATCH** | `ok`  |
@@ -642,12 +643,12 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22065 | 5698 | 16300 | 67 |
+| 22065 | 5699 | 16299 | 67 |
 
 | blocker kind | files |
 |---|---:|
 | `AssignmentExpression:target` | 2695 |
-| `ExpressionStatement:CallExpression` | 2678 |
+| `ExpressionStatement:CallExpression` | 2677 |
 | `CallExpression` | 2617 |
 | `Hierarchy:ports` | 2400 |
 | `VariableSymbol:2state` | 2112 |

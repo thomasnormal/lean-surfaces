@@ -17346,8 +17346,16 @@ def _string_literal_len_method(expression):
         instance = getattr(getattr(symbol, "parentScope", None),
                            "containingInstance", None)
         assignments = []
+        noop_writes = []
         if instance is not None:
             def inspect(node):
+                if (_string_null_char_write_noop(node)
+                        and type(getattr(node.left, "value", None)).__name__
+                        == "NamedValueExpression"
+                        and _sv_symbols_equal(
+                            getattr(node.left.value, "symbol", None), symbol)):
+                    noop_writes.append(node.sourceRange.start.offset)
+                    return
                 if (type(node).__name__ != "AssignmentExpression"
                         or getattr(node, "left", None) is None
                         or not _sv_symbols_equal(
@@ -17389,6 +17397,9 @@ def _string_literal_len_method(expression):
                 return True
             if tail.startswith((".compare", ".icompare")):
                 return True
+            if tail.startswith("["):
+                return any(abs(start - match.start()) <= 8
+                           for start in noop_writes)
             if tail.startswith(("==", "!=", "===", "!==")):
                 return True
             if tail.startswith("="):
@@ -17500,6 +17511,7 @@ def _string_literal_source_value(expression, method, receiver=None,
         instance = getattr(getattr(symbol, "parentScope", None),
                            "containingInstance", None)
         events = []
+        noop_writes = []
         controls = []
         if instance is not None:
             def inspect(node):
@@ -17511,6 +17523,13 @@ def _string_literal_source_value(expression, method, receiver=None,
                             "CasePatternStatement", "LoopStatement",
                             "TimedStatement"):
                     controls.append(getattr(node, "sourceRange", None))
+                    return
+                if (_string_null_char_write_noop(node)
+                        and type(getattr(node.left, "value", None)).__name__
+                        == "NamedValueExpression"
+                        and _sv_symbols_equal(
+                            getattr(node.left.value, "symbol", None), symbol)):
+                    noop_writes.append(node.sourceRange.start.offset)
                     return
                 if kind == "CallExpression":
                     call_arguments = list(getattr(node, "arguments", ()))
@@ -17563,6 +17582,9 @@ def _string_literal_source_value(expression, method, receiver=None,
                     or tail.startswith((".compare", ".icompare"))
                     or tail.startswith((".toupper", ".tolower", ".substr"))
                     or re.match(r'=\s*"', tail)):
+                continue
+            if tail.startswith("[") and any(
+                    abs(start - match.start()) <= 8 for start in noop_writes):
                 continue
             if tail.startswith("="):
                 # A source-pure query write has the same exact value as a

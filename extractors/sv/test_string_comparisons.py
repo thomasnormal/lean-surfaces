@@ -122,6 +122,21 @@ class StringComparisons(unittest.TestCase):
         self.assertFalse(any(node.get("kind") == "Unsupported"
                              for node in nodes(design)))
 
+    def test_string_query_observations_ignore_nul_character_writes(self):
+        design = lower(
+            'module top; initial begin string text = "abc"; '
+            'text[1] = 0; '
+            'if (text.len() == 3 && text.compare("abc") == 0) '
+            '$display("PASS"); end endmodule')
+        self.assertEqual(
+            len([node for node in nodes(design)
+                 if node.get("string_literal_length_query")]), 1)
+        self.assertEqual(
+            len([node for node in nodes(design)
+                 if node.get("string_literal_compare")]), 1)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
     def test_computed_controlled_and_timed_histories_stay_loud(self):
         for source in (
                 'module top; string a, b; initial begin '

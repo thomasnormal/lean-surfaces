@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.146] — 2026-10-28
+
+Scalar string `.len()` and `.compare()` observations now ignore IEEE
+1800-2023 §6.16 NUL-character writes, which leave the string unchanged.
+Nonzero indexed writes and dynamic or aliased histories remain loud. The
+`string_null_query_observations` fixture, extractor regression, differential row,
+and Lean receipt pass. Differential coverage grows **402 rows / 396 matches /
+0 disagreements / 6 recorded refusals → 403 / 397 / 0 / 6**; the fresh
+22,065-path census moves **5,782 → 5,784 clean / 16,216 → 16,214 partial**,
+with `CallExpression` falling **2,569 → 2,567**.
+
 ## [0.1.145] — 2026-10-28
 
 Scalar string `.len()`, `.substr()`, and `.compare()` observations now replay

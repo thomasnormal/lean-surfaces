@@ -1,5 +1,20 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Scalar string observations after NUL writes — 2026-10-28
+
+Scalar string `.len()` and `.compare()` observations now preserve the exact
+ASCII value after an IEEE 1800-2023 §6.16 assignment of integral zero to a
+string character. Nonzero indexed writes, dynamic histories, and direct aliases
+remain loud. The `string_null_query_observations` fixture exercises both
+queries, with extractor regression, differential row, and Lean receipt.
+
+The fresh **22,065-path** census moves **5,782 → 5,784 clean** and **16,216 →
+16,214 partial** with 67 include skips. `CallExpression` falls **2,569 →
+2,567** while `AssignmentExpression:target` and
+`ExpressionStatement:CallExpression` remain **2,694** and **2,677**.
+Differential coverage grows **402/396/0/6 → 403/397/0/6**; grammar coverage
+remains **218/100/118**.
+
 ## Source-pure string queries over concatenations — 2026-10-28
 
 Scalar string observations now replay source-pure concatenation and replication

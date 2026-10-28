@@ -8171,6 +8171,20 @@ def _sformatf_literal_source_value(expression, position=None):
                                   and all(0 < ord(char) <= 127
                                           for char in value)) else None)
             return _string_source_value(node, position)
+        if fmt in ("%c", "%C"):
+            node = operand
+            while type(node).__name__ == "ConversionExpression":
+                node = getattr(node, "operand", None)
+                if node is None:
+                    return None
+            if type(node).__name__ not in ("IntegerLiteral",
+                                           "UnbasedUnsizedIntegerLiteral"):
+                return None
+            bits = svint_bits(node.value)
+            if not bits or any(bit not in "01" for bit in bits):
+                return None
+            byte = int(bits, 2) & 0xff
+            return chr(byte) if 0 < byte <= 127 else None
         if fmt not in ("%h", "%H", "%0h", "%0H"):
             return None
         node = operand

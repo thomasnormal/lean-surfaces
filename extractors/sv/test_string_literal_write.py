@@ -70,6 +70,38 @@ class LiteralStringWrites(unittest.TestCase):
                                 "AssignmentExpression:target"
                                 for node in nodes(design)))
 
+    def test_literal_sformatf_character_assignment_replays_low_byte(self):
+        design = lower(
+            'module top; string lower, upper; initial begin '
+            'lower = $sformatf("%c", 8\'h41); '
+            'upper = $sformatf("%C", 8\'h42); '
+            'if (lower != "A" || upper != "B") $display("FAIL"); '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") == "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("string_source_write_noop", False) for node in nodes(design)),
+            2,
+        )
+
+    def test_dynamic_or_non_ascii_sformatf_character_assignment_stays_loud(self):
+        for source in (
+                'module top; string value; int x; initial begin '
+                'value = $sformatf("%c", x); end endmodule',
+                'module top; string value; initial begin '
+                'value = $sformatf("%c", 8\'h00); end endmodule',
+                'module top; string value; initial begin '
+                'value = $sformatf("%c", 9\'h100); end endmodule',
+                'module top; string value; initial begin '
+                'value <= $sformatf("%c", 8\'h41); end endmodule'):
+            design = lower(source)
+            self.assertFalse(any(node.get("string_source_write_noop")
+                                 for node in nodes(design)))
+            self.assertTrue(any(node.get("kind") in ("Unsupported", "Invalid")
+                                or node.get("sv_kind") ==
+                                "AssignmentExpression:target"
+                                for node in nodes(design)))
+
     def test_dynamic_sformatf_string_assignment_stays_loud(self):
         design = lower(
             'module top; string value; int x; initial begin '

@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.102] — 2026-10-28
+
+Literal integral `$sformatf("%c", ...)` and `$sformatf("%C", ...)` results
+assigned to strings now replay their low-byte ASCII character. Unknown, zero,
+non-ASCII/control, dynamic, timed, and nonblocking forms remain loud. The new
+fixture and Lean receipt pass; differential coverage is **359 rows / 353
+matches / 0 disagreements / 6 recorded refusals**, and the census remains
+**5,584 clean / 16,414 partial** with `AssignmentExpression:target` at
+**2,810**.
+
 ## [0.1.101] — 2026-10-28
 
 Source-pure ASCII `$sformatf("%s", ...)` and `$sformatf("%S", ...)` results

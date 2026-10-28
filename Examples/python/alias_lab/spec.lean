@@ -94,6 +94,8 @@ load_program alias_lab from "Examples/python/alias_lab/alias_lab.json"
 #py_check alias_lab.hex_alias(-16) = "-0x10"
 #py_check alias_lab.oct_alias(9) = "0o11"
 #py_check alias_lab.oct_alias(-8) = "-0o10"
+#py_check alias_lab.bin_alias(5) = "0b101"
+#py_check alias_lab.bin_alias(-4) = "-0b100"
 
 /-! ### the alias is NOT a value (the refusal direction, unchanged) -/
 

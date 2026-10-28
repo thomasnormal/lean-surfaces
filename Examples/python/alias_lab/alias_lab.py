@@ -136,3 +136,8 @@ def oct_alias(value):
     f = oct
     return f(value)
 
+
+def bin_alias(value):
+    f = bin
+    return f(value)
+

@@ -91,3 +91,8 @@ def sum_alias(values, start=0):
     f = sum
     return f(values, start)
 
+
+def tuple_alias(value):
+    f = tuple
+    return f(value)
+

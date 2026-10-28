@@ -1643,7 +1643,7 @@ private def immediateBuiltinAlias (name : String) : Bool :=
   name == "bool" || name == "divmod" || name == "repr" || name == "len"
     || name == "sorted" || name == "max" || name == "min" || name == "abs"
     || name == "int" || name == "float" || name == "all" || name == "any"
-    || name == "str" || name == "sum"
+    || name == "str" || name == "sum" || name == "tuple"
 
 private def rewriteImmediateBuiltinAlias (outer : List String)
     (params : Array Param) (body : Array Stmt) : Array Stmt :=

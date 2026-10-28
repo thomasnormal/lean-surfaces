@@ -786,6 +786,7 @@
   {"file": "Examples/python/alias_lab/alias_lab.py", "function": "any_alias", "args": [[[false, true]], [[]], [[false, false]]], "expect": "match", "note": "The exact local-alias-then-call shape lowers to the admitted any builtin."},
   {"file": "Examples/python/alias_lab/alias_lab.py", "function": "str_alias", "args": [[17], [{"t": "bool", "v": true}], [{"t": "str", "v": "quoted"}]], "expect": "match", "note": "The exact local-alias-then-call shape lowers to the admitted str builtin."},
   {"file": "Examples/python/alias_lab/alias_lab.py", "function": "sum_alias", "args": [[[1, 2, 3]], [[0], 5], [[true, false]]], "expect": "match", "note": "The exact local-alias-then-call shape lowers to the admitted sum builtin."},
+  {"file": "Examples/python/alias_lab/alias_lab.py", "function": "tuple_alias", "args": [[{"t": "list", "v": [1, 2]}], [{"t": "str", "v": "ab"}]], "expect": "match", "note": "The exact local-alias-then-call shape lowers to the admitted tuple builtin."},
   {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_at", "args": [[0, 9], [1, 9], [3, 9], [100, 9], [-1, 9], [-3, 9], [-100, 9], [{"t": "bool", "v": true}, 9], [2, {"t": "str", "v": "m"}]], "expect": "match"},
   {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_empty", "args": [[7], [{"t": "str", "v": "only"}]], "expect": "match"},
   {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_alias", "args": [[5], [0]], "expect": "match"},

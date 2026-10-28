@@ -6131,3 +6131,23 @@ remain loud.
 DECIDED: admit only the immediate local `sum` alias call; retain loud failure
 for returned or general first-class callable values. Rebase and publish this
 item after the full measurements, then reread the inbox before the next gap.
+
+## 2026-10-28-pycomplete-177 — admit the immediate local `tuple` alias
+
+The local-builtin alias rewrite now includes `tuple`: `f = tuple; return
+f(value)` lowers to the existing tuple conversion worker. List and string
+inputs preserve their current immutable sequence results. Returning `tuple`,
+shadowing it, and general first-class callable forms remain loud.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 2 cases: 0 failed, 2 matched on both interpreters |
+| Full executable differential | 3,730 cases: 0 failed, 44 whitelisted refusals, 3,686 matched |
+| Full proof differential | 3,730 cases: 0 failed, 153 refusals, 3,577 matched |
+| Lean runner build | `lake build leanmodels-run` passed |
+| Coverage freshness | `python3 harness/coverage_page.py` passed |
+| Formatting | `git diff --check` passed |
+
+DECIDED: admit only the immediate local `tuple` alias call; retain loud failure
+for returned or general first-class callable values. Rebase and publish this
+item after the full measurements, then reread the inbox before the next gap.

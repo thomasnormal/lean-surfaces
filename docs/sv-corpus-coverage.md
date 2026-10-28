@@ -25,6 +25,17 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Multidimensional fixed-array self-copies — 2026-10-28
+
+An exact blocking self-copy of a multidimensional fixed unpacked integral array
+now erases through the existing flattened-cell representation. Nonblocking,
+partial, dynamic, and effectful copies remain loud because they need a
+publication or aggregate-store contract. The `fixed_array_nested_self_copy`
+fixture supplies the differential row and Lean receipt. The external corpus
+checkout is unavailable, so the committed snapshot remains **5,602 clean /
+16,390 partial** over 22,059 paths with 67 include skips; differential coverage
+grows **372/366/0/6 → 373/367/0/6**.
+
 ## Conditional fixed-array self-aliases — 2026-10-28
 
 The legacy extractor now lowers a blocking whole-array conditional assignment

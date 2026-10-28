@@ -6840,8 +6840,20 @@ def _fixed_array_nested_copy_assignment(sm, expr):
             return None
         lhs_root = _array_storage_name(lhs.symbol)
         rhs_root = _array_storage_name(rhs.symbol)
-        if not lhs_root or not rhs_root or lhs_root == rhs_root:
+        if not lhs_root or not rhs_root:
             return None
+        if lhs_root == rhs_root:
+            # A complete blocking self-copy already has the source value in
+            # every flattened leaf.  Erasing it preserves the aggregate
+            # snapshot without inventing a second multidimensional store;
+            # nonblocking publication remains scheduler-visible.
+            if expr.isNonBlocking or not _case_source_expression_ok(rhs):
+                return None
+            return {
+                "kind": "Empty",
+                "span": node_span(sm, expr),
+                "fixed_array_nested_self_copy_noop": True,
+            }
         if not _case_source_expression_ok(rhs):
             return None
 

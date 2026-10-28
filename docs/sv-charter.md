@@ -38,6 +38,15 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Multidimensional fixed-array self-copies — 2026-10-28
+
+An exact blocking self-copy of a multidimensional fixed unpacked integral array
+now lowers to the existing flattened-cell `Empty` path. Nonblocking, partial,
+dynamic, and effectful copies remain loud because their publication or storage
+semantics are not represented. The `fixed_array_nested_self_copy` fixture and
+Lean receipt supply the `PASS` evidence; differential coverage grows
+**372/366/0/6 → 373/367/0/6**.
+
 ## Conditional fixed-array self-aliases — 2026-10-28
 
 A blocking whole-array conditional assignment may read the destination in one

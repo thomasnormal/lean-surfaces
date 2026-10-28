@@ -57,10 +57,15 @@ class FixedArrayNestedCopy(unittest.TestCase):
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             for node in nodes(design)))
 
-    def test_nested_self_copy_stays_loud(self):
+    def test_nested_blocking_self_copy_is_a_noop(self):
         design = lower(
             "module top; logic [3:0] value [0:1][0:1]; "
             "initial value = value; endmodule")
+        self.assertTrue(any(node.get("fixed_array_nested_self_copy_noop")
+                            for node in nodes(design)))
+        design = lower(
+            "module top; logic [3:0] value [0:1][0:1]; "
+            "initial value <= value; endmodule")
         self.assertTrue(any(node.get("kind") == "Unsupported"
                             and node.get("sv_kind") == "AssignmentExpression:target"
                             for node in nodes(design)))

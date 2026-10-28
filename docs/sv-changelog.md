@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.116] — 2026-10-28
+
+Exact blocking self-copies of multidimensional fixed unpacked integral arrays
+now lower to an inert `Empty` path over the flattened cells. Nonblocking,
+partial, dynamic, and effectful copies remain loud. The new fixture and Lean
+receipt pass; differential coverage grows **372 rows / 366 matches / 0
+disagreements / 6 refusals → 373 / 367 / 0 / 6**, while the committed census
+remains **5,602 clean / 16,390 partial** because the shape is absent from the
+unavailable external checkout.
+
 ## [0.1.44] — 2026-10-28
 
 The SystemVerilog self-check surface now has 372 differential rows: 366

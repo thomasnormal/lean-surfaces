@@ -56,7 +56,7 @@ set_option exponentiation.threshold 4300
   .typeError "repr() takes no keyword arguments"
 #guard callFunction repr_lab "first_class" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "instance" #[] 4096 matches .unsupported _
-#guard callFunction repr_lab "custom" #[] 4096 matches .unsupported _
+#guard callFunction repr_lab "custom" #[] 4096 == .ok (.str "custom")
 #guard callFunction repr_lab "closure" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "generator" #[] 4096 matches .unsupported _
 #guard callFunction repr_lab "large_length" #[.int 4301] 4096 ==

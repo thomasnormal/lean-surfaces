@@ -6531,3 +6531,24 @@ unchanged.
 DECIDED: commit and publish this proof repair after the current exact-SHA run
 settles, then inspect the resulting CI and continue with its first remaining
 Python failure.
+
+## 2026-10-28-pycomplete-198 — repair the repr proof and stale custom guard
+
+The hosted check's `repr_lab` proof had become stale after the renderer and
+literal `__repr__` path grew additional heap, generator, builtin, and retained
+state normalization. Both symbolic repr theorems now use a staged
+`callIn`/`py_simp` recipe that exposes those walkers and closes the decimal
+overflow and public-freeze paths. The same semantic change had left one stale
+spec guard expecting `custom()` to refuse; it now checks the admitted
+`"custom"` result. Runtime semantics and theorem statements are unchanged.
+
+| Measurement | Result |
+|---|---|
+| Focused proof | `lake env lean Examples/python/repr_lab/proof.lean` passed; `lake build Examples.python.repr_lab.proof` passed |
+| Example surface | `lake env lean Examples/python/repr_lab/spec.lean` passed |
+| Axioms | both theorem outputs have no `sorryAx` |
+| Hygiene | `git diff --check` passed |
+
+DECIDED: commit this proof/spec repair, regenerate/check the backlog index,
+then rebase and publish it before inspecting the new exact-SHA CI and taking
+the next hosted Python failure.

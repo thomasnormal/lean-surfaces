@@ -323,7 +323,8 @@ def instExpr2 (env : IEnv) (elems : List (String × Nat)) (ctx : Option Nat) :
       -- envelope's `w` is defaults-elaborated metadata, used only when
       -- no context width is known).
       .resize (ctx.getD w) (instExpr2 env elems (selfWidth2 env elems a) a)
-  | .squash2 .. => .unsupported "Squash2" "2-state squash outside the value core"
+  | .squash2 _ operand =>
+      .squash2 (instExpr2 env elems (selfWidth2 env elems operand) operand)
   | .signedResize width operand =>
       .resizeSigned (ctx.getD width) (instExpr2 env elems (selfWidth2 env elems operand) operand)
   | .sysCall fn a =>

@@ -312,6 +312,7 @@ order. -/
 structure PDecl where
   name : String
   type : PType
+  twoState : Bool := false
   isInput : Bool := false
   isOutput : Bool := false
   isNet : Bool := false
@@ -892,11 +893,13 @@ def instDecl (env : IEnv) (pd : PDecl) : Res Decl :=
       match pd.init with
       | none =>
           .ok { name := pd.name, width := w, isSigned := false,
+                twoState := pd.twoState,
                 isInput := pd.isInput, isOutput := pd.isOutput }
       | some ie =>
           match instExpr env (some w) ie with
           | .lit v =>
               .ok { name := pd.name, width := w, isSigned := false,
+                    twoState := pd.twoState,
                     isInput := pd.isInput, isOutput := pd.isOutput, init := some v }
           | _ =>
               .unsupported s!"decl '{pd.name}': non-literal initializer outside the M0 tier"

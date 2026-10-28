@@ -1,5 +1,16 @@
 # SystemVerilog tier changelog
 
+## [0.1.150] — 2026-10-28
+
+The symbolic `sv-0.2` tier now admits unsigned integral 2-state scalar and
+packed-vector declarations. `PDecl.twoState` survives ingestion,
+`Design2` applies zero startup and x/z-to-zero input conversion, and
+`Expr2.squash2` evaluates assignment-boundary conversions. Aggregate,
+object, string/real, handle, event, and signed symbolic forms remain loud.
+The `symbolic_two_state` envelope, semantic-tier proof receipt, and extractor
+regressions cover the new path. The self-check differential table and legacy
+corpus census are unchanged because this item is symbolic-mode-only.
+
 ## [0.1.149] — 2026-10-28
 
 Automatic functions with a single pure literal assignment to their implicit

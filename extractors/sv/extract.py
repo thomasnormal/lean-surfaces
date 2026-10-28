@@ -25641,8 +25641,6 @@ def _dtype_sym(sm, t, type_syntax):
     try:
         ct = t.canonicalType
         if type(ct).__name__ == "EnumType":
-            if not ct.isFourState:
-                return None, "2state"
             name, pkg = register_enum(sm, t)
             return {
                 "kind": "TypeRef",
@@ -25650,8 +25648,6 @@ def _dtype_sym(sm, t, type_syntax):
                 "from_package": pkg,
                 "resolved": ct.bitWidth,
             }, None
-        if not t.isFourState:
-            return None, "2state"
         if t.isSigned:
             return None, "signed"
         cname = type(ct).__name__
@@ -25722,6 +25718,7 @@ def convert_port_sym(sm, m):
         "name": m.name,
         "dir": direction,
         "width": dtype,
+        **({"two_state": True} if not m.type.isFourState else {}),
     }
 
 
@@ -25740,6 +25737,7 @@ def convert_var_sym(sm, m):
         "span": sym_span(sm, m),
         "name": m.name,
         "width": dtype,
+        **({"two_state": True} if not m.type.isFourState else {}),
         "init": convert_expr(sm, init) if init is not None else None,
     }
 
@@ -25798,7 +25796,7 @@ def convert_fixed_array_vars_sym(sm, m):
                 decls.append({
                     "kind": "Var", "span": sym_span(sm, m),
                     "name": m.name + "".join(f"[{position}]" for position in indexes),
-                    "width": dtype, "init": init,
+                    "width": dtype, "two_state": two, "init": init,
                 })
             return decls
         element_type = array_type.elementType
@@ -25915,6 +25913,7 @@ def convert_fixed_array_vars_sym(sm, m):
                 "span": sym_span(sm, m),
                 "name": f"{m.name}[{position}]",
                 "width": dtype,
+                "two_state": two,
                 "init": init,
             })
         return decls
@@ -25937,6 +25936,7 @@ def convert_net_sym(sm, m):
         "span": sym_span(sm, m),
         "name": m.name,
         "width": dtype,
+        **({"two_state": True} if not m.type.isFourState else {}),
         "init": convert_expr(sm, init) if init is not None else None,
     }
 

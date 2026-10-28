@@ -230,7 +230,7 @@ partial def parsePExpr (j : Json) : Except String PExpr := do
     | "Squash2" =>
         -- 4-state → 2-state squash (2-state parameter/localparam types,
         -- e.g. `parameter int unsigned`): value-preserving in the constant
-        -- tier, loud in value positions (`instExpr*`'s Squash2 arm).
+        -- tier and retained by the semantic-tier evaluator.
         return .squash2 (← getNatField j "width") (← parsePExpr (← getField j "operand"))
     | "BitSel" =>
         return .bitSel (← parsePExpr (← getField j "value"))
@@ -435,17 +435,20 @@ def parsePDecl (j : Json) : Except String PDecl := do
     let name ← getStrField j "name"
     withCtx name.quote do
       let ty ← parsePType (← getField j "width")
+      let twoState := match getOptField j "two_state" with
+        | none => false
+        | some value => value.getBool?.toOption.getD false
       match kind with
       | "Port" =>
           match ← getStrField j "dir" with
-          | "in" => return { name, type := ty, isInput := true }
-          | "out" => return { name, type := ty, isOutput := true }
+          | "in" => return { name, type := ty, twoState, isInput := true }
+          | "out" => return { name, type := ty, twoState, isOutput := true }
           | d => throw s!"unknown port dir {d.quote}"
       | "Var" | "Net" =>
           let init ← match getOptField j "init" with
             | none => pure none
             | some ji => pure (some (← withCtx "init" (parsePExpr ji)))
-          return { name, type := ty, isNet := kind == "Net", init }
+          return { name, type := ty, twoState, isNet := kind == "Net", init }
       | other => throw s!"unknown declaration kind {other.quote}"
 
 /-- Parse the sv-0.2 `Module` payload into a `PDesign`. `Unsupported`

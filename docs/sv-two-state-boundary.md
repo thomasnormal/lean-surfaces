@@ -132,14 +132,18 @@ string methods remain unsupported because no mutable string representation is
 present in the self-check state. `literal_string_getc` exercises these bounds.
 
 The public representation has no aggregate heap, queue, object, string, real,
-handle, or event scheduler. The symbolic `PDecl`/`PType` representation also
-does not carry a two-state bit, and symbolic `Squash2` is intentionally loud.
-Adding a boolean to the declaration record would therefore accept programs
-whose storage and operations still have no semantics, or would silently erase
-an event/object boundary. The tier keeps those declarations and every use that
-depends on them as `Unsupported`; the scalar/packed behavior and the bounded
-fixed-array cell slice above are the complete admitted forms for this census
-item.
+handle, or event scheduler. The symbolic `PDecl` representation now carries a
+declaration-level `twoState` bit for the same unsigned integral scalar and
+packed-vector shapes already represented by the semantic tier. Symbolic
+assignment conversions lower to `Expr2.squash2`; startup and input
+application also apply the bit-to-zero rule. Aggregate, object, string/real,
+handle, event, and symbolic signed forms remain loud.
+
+`Examples/system-verilog/symbolic_two_state/` is the focused sv-0.2 fixture:
+the extracted `bit` input and output retain their metadata, an x input is
+squashed at the assignment boundary, and the semantic-tier run returns zero.
+The extractor regression covers both ports and an internal bit variable. This
+slice adds no aggregate storage or scheduler behavior.
 
 This is a scope decision, not a claim that the language lacks those types.
 Any future aggregate, object, string/real, handle, or event rung must introduce

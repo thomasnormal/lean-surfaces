@@ -146,6 +146,8 @@ are signed (§11.8.1); `$signed` casts at equal width change no bits and
 vanish at instantiation. -/
 inductive Expr2 where
   | resizeSigned (width : Nat) (operand : Expr2)
+  /-- Convert x/z bits to zero at a 2-state storage boundary (§6.3.1). -/
+  | squash2 (operand : Expr2)
   | lit (value : LVec)
   | ident (name : String)
   | unary (op : UnaryOp) (arg : Expr2)
@@ -252,7 +254,8 @@ where
   exprHas : Expr2 → Bool
     | .unsupported _ _ => true
     | .lit _ | .ident _ => false
-    | .unary _ a | .repl _ a | .reduce _ a | .resize _ a | .resizeSigned _ a => exprHas a
+    | .unary _ a | .repl _ a | .reduce _ a | .resize _ a
+    | .resizeSigned _ a | .squash2 a => exprHas a
     | .binary _ a b | .scmp _ a b | .logical _ a b => exprHas a || exprHas b
     | .ternary c a b => exprHas c || exprHas a || exprHas b
     | .slice a _ _ => exprHas a
@@ -321,6 +324,8 @@ def evalExpr2 (fuel : Nat) (st : SvState) (e : Expr2) : Res LVec :=
         return evalUnaryOp op (← evalExpr2 fuel st a)
     | .resizeSigned width operand => do
         return (← evalExpr2 fuel st operand).resizeSigned width
+    | .squash2 operand => do
+        return (← evalExpr2 fuel st operand).toTwoState
     | .binary op l r => do
         let a ← evalExpr2 fuel st l
         let b ← evalExpr2 fuel st r
@@ -662,15 +667,20 @@ def edgePass2 (d : Design2) (fuel : Nat) (st : SvState) (nba : NbaQueue2) :
 /-! ## The cycle -/
 
 def applyInputs2 (d : Design2) (inputs : SvState) (st : SvState) : SvState :=
-  d.inputNames.foldl
-    (fun s name =>
-      match SvState.lookup inputs name with
-      | some v => SvState.set s name v
-      | none => s)
+  d.decls.foldl
+    (fun s declaration =>
+      if declaration.isInput then
+        match SvState.lookup inputs declaration.name with
+        | some v => SvState.set s declaration.name
+            (if declaration.twoState then v.toTwoState else v)
+        | none => s
+      else s)
     st
 
 def initState2 (d : Design2) : SvState :=
-  d.decls.toList.map fun dc => (dc.name, dc.init.getD (LVec.xVec dc.width))
+  d.decls.toList.map fun dc =>
+    let value := dc.init.getD (LVec.xVec dc.width)
+    (dc.name, if dc.twoState then value.toTwoState else value)
 
 /-- One clock cycle of the semantic tier — the M0 five sub-steps with the
 reset-event phase inserted between the input settle and the posedge:

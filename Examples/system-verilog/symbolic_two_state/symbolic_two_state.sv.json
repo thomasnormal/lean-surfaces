@@ -1,0 +1,114 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "symbolic_two_state",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/symbolic_two_state/symbolic_two_state.sv",
+      "sha256": "7110c5bee053ce923f7263c0d8ecadd8ac630c144852429e1de586cb8946e3e3"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 3,
+          "end_col": 10
+        },
+        "name": "symbolic_two_state",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 37,
+              "end_line": 1,
+              "end_col": 38
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "two_state": true
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 51,
+              "end_line": 1,
+              "end_col": 52
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "two_state": true
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 2,
+              "col": 10,
+              "end_line": 2,
+              "end_col": 15
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 2,
+                "col": 10,
+                "end_line": 2,
+                "end_col": 11
+              },
+              "width": 1,
+              "name": "y"
+            },
+            "value": {
+              "kind": "Squash2",
+              "span": null,
+              "width": 1,
+              "operand": {
+                "kind": "Ident",
+                "span": {
+                  "line": 2,
+                  "col": 14,
+                  "end_line": 2,
+                  "end_col": 15
+                },
+                "width": 1,
+                "name": "a"
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

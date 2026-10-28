@@ -2738,7 +2738,7 @@ sign extension, mixed port types and output conversion. Its proof validates
 the complete AST against the real envelope before proving input conversion
 precedes its first assignment and conversion is idempotent. Width-parametric
 startup theorems cover both state counts. Two-state nets, noncanonical packed
-ranges, aggregates, and symbolic signed/two-state declarations remain loud.
+ranges, aggregates, and symbolic signed declarations remain loud.
 Port defaults and variable initializers are retained rather than silently
 dropped. The time-zero runner evaluates them through ordinary declaration
 initialization; the connected cycle boundary ignores input defaults and
@@ -2763,10 +2763,11 @@ and untagged packed-struct/union two-state variables, with zero startup and
 tag is the remaining mix of unpacked/dynamic/queue/object/event/real/string
 declarations and uses. It occurs in 5,744 files, but is the sole refusal in 28;
 the common companions are other storage, call, class, and selected-access
-boundaries. The symbolic `PDecl`/`PType` surface has no two-state metadata and
-keeps `Squash2` loud, so a blanket declaration flag would fabricate semantics
-for representations the tier does not have. The complete admitted slice and
-the measured refusal rationale are recorded in
+boundaries. The symbolic `PDecl` surface now carries `twoState` for the same
+unsigned integral scalar and packed-vector shapes, and `Expr2.squash2` applies
+the four-state-to-two-state conversion at assignment boundaries. Aggregate,
+object, string/real, handle, event, and symbolic signed forms remain loud. The
+complete admitted slice and the measured refusal rationale are recorded in
 [`sv-two-state-boundary.md`](sv-two-state-boundary.md). No dynamic aggregate,
 object, string/real, handle, or event scheduler is smuggled into this rung.
 

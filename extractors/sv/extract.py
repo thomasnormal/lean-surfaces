@@ -11834,6 +11834,27 @@ def _floating_literal(expr):
     return False
 
 
+def _floating_integral_source(expr):
+    """Whether *expr* is a pure integral source for opaque real storage.
+
+    A blocking assignment from an integral expression to a named real or
+    shortreal variable has no represented state effect in the flat
+    self-check model.  Peel only elaboration's conversion shells, require an
+    integral result, and reuse the ordinary source-purity walk so increments,
+    calls, and other effectful operands remain loud.
+    """
+    node = expr
+    while type(node).__name__ == "ConversionExpression":
+        node = getattr(node, "operand", None)
+        if node is None:
+            return False
+    try:
+        return (getattr(node.type, "isIntegral", False)
+                and _case_source_expression_ok(node))
+    except Exception:
+        return False
+
+
 def _integral_literal_source(expr):
     """Whether an expression is syntactically a pure integral literal.
 
@@ -21066,6 +21087,18 @@ def _convert_assignment_expr(sm, expr, span_node=None):
             and _floating_literal(expr.right)):
         return {"kind": "Empty", "span": node_span(sm, span_node or expr),
                 "floating_literal_write_noop": True}
+    # Integral-to-real conversion is likewise an opaque write in the
+    # self-check state.  Restrict the admission to a named destination and a
+    # pure integral source; member stores, calls, increments, and scheduled
+    # forms retain the ordinary target boundary.
+    if (_SYM is None and expr.op is None and expr.timingControl is None
+            and not expr.isNonBlocking
+            and type(expr.left).__name__ == "NamedValueExpression"
+            and type(getattr(expr.left.type, "canonicalType", None)).__name__
+            == "FloatingType"
+            and _floating_integral_source(expr.right)):
+        return {"kind": "Empty", "span": node_span(sm, span_node or expr),
+                "floating_integral_write_noop": True}
     # The same opaque boundary applies to a side-effect-free IEEE math or
     # real-conversion system call.  Keep named storage only; selectors and
     # effectful arguments retain their ordinary target boundary.

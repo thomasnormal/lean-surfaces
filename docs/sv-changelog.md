@@ -1,5 +1,17 @@
 # SystemVerilog tier changelog
 
+## [0.1.154] — 2026-10-28
+
+Blocking writes from pure integral expressions into named `real` or `shortreal`
+variables now erase into the existing opaque floating-storage boundary.
+Effectful sources, member stores, timed writes, and nonblocking publication
+remain loud. The `floating_integral_write` fixture, extractor regressions,
+differential row, and Lean receipt pass. Differential coverage grows **409 rows
+/ 403 matches / 0 disagreements / 6 recorded refusals → 410 / 404 / 0 / 6**;
+grammar coverage remains **218/101/117**. The fresh 22,067-path census moves
+**5,792 → 5,794 clean / 16,208 → 16,206 partial / 67 include skips**;
+`AssignmentExpression:target` falls **2,693 → 2,679**.
+
 ## [0.1.153] — 2026-10-28
 
 Blocking assignments from a named string now sample the source-pure ASCII history at

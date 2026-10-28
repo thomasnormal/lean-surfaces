@@ -70,6 +70,27 @@ class FloatingLocalDeclarations(unittest.TestCase):
         self.assertTrue(any(node.get("floating_pure_call_write_noop")
                             for node in nodes(design)))
 
+    def test_pure_integral_write_is_inert(self):
+        design = lower(
+            'module top; int source; real value; shortreal short_value; '
+            'initial begin source = 42; value = source; '
+            'value = real\'(source); short_value = source; '
+            'short_value = shortreal\'(source); '
+            '$display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+        self.assertEqual(
+            sum(node.get("floating_integral_write_noop", False)
+                for node in nodes(design)), 4)
+
+    def test_effectful_integral_write_stays_loud(self):
+        design = lower(
+            'module top; int source; real value; initial begin '
+            'value = source++; end endmodule')
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
+
     def test_effectful_math_operand_stays_loud(self):
         design = lower(
             'module top; real value; int index; initial begin '

@@ -1,5 +1,19 @@
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Pure integral-to-real writes — 2026-10-28
+
+The legacy self-check extractor now erases blocking writes from pure integral
+expressions into named `real` and `shortreal` storage. Floating storage remains
+opaque and floating reads remain loud; source-purity checks keep calls,
+increments, member stores, timed writes, and nonblocking publication at the
+`AssignmentExpression:target` boundary. The `floating_integral_write` fixture
+provides the differential PASS witness, extractor regressions, and Lean receipt.
+
+The fresh **22,067-path** census is **5,794 clean / 16,206 partial / 67 include
+skips**, with `AssignmentExpression:target` falling **2,693 → 2,679**.
+Differential coverage is **410/404/0/6** and grammar coverage remains
+**218/101/117**.
+
 ## Source-pure named-string copies — 2026-10-28
 
 Blocking assignments from a named string now sample the source-pure ASCII history at

@@ -3703,6 +3703,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "floating_integral_write",
+      "file": "Examples/system-verilog/floating_integral_write/floating_integral_write.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

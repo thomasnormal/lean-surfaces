@@ -1,5 +1,19 @@
 # Assignment targets — admitted boundary
 
+## Pure integral-to-real writes — 2026-10-28
+
+Blocking writes from pure integral expressions into named `real` or
+`shortreal` variables now erase into the existing opaque floating-storage
+boundary. The RHS is checked through the ordinary source-purity walk after
+conversion shells are removed, so increments, calls, member stores, timed
+writes, and nonblocking publication remain `AssignmentExpression:target`.
+
+`floating_integral_write` supplies the differential PASS witness, extractor
+regressions, and Lean receipt. Differential coverage grows **409/403/0/6 →
+410/404/0/6**; grammar coverage remains **218/101/117**. The fresh 22,067-path
+census moves **5,792 → 5,794 clean / 16,208 → 16,206 partial** with 67 include
+skips; `AssignmentExpression:target` falls **2,693 → 2,679**.
+
 ## Source-pure named-string copies — 2026-10-28
 
 A blocking assignment from a named string is admitted when the source history is

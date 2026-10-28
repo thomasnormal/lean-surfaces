@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22065,
+  "corpus_files": 22067,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -16,7 +16,7 @@
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    2693
+    2679
    ],
    [
     "ExpressionStatement:CallExpression",
@@ -976,7 +976,7 @@
    ]
   ],
   "by_status": {
-   "clean": 5792,
+   "clean": 5794,
    "partial": 16206,
    "skip_include": 67
   },
@@ -1038,8 +1038,8 @@
     52
    ],
    "simulation": [
-    5011,
-    18701
+    5013,
+    18703
    ],
    "simulation elaboration": [
     2,
@@ -1068,7 +1068,7 @@
      ],
      [
       "AssignmentExpression:target",
-      59
+      57
      ],
      [
       "SubroutineSymbol:Subroutine",
@@ -1250,7 +1250,7 @@
      ],
      [
       "AssignmentExpression:target",
-      97
+      90
      ],
      [
       "VariableDeclStatement:2state",
@@ -1323,11 +1323,11 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 324,
+    "clean": 326,
     "error": 0,
     "partial": 334,
     "skip_include": 0,
-    "total": 658,
+    "total": 660,
     "unlockable": 0
    },
    "chapter-11": {

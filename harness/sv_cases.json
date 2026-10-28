@@ -3064,6 +3064,15 @@
         "selfcopy 3 7"
       ],
       "expect": "match"
+    },
+    {
+      "name": "invalid_packed_dimension_decl",
+      "file": "Examples/system-verilog/invalid_packed_dimension_decl/invalid_packed_dimension_decl.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

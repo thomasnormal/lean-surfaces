@@ -705,6 +705,33 @@ def is_inert_empty_dynamic_array_decl(symbol):
         return False
 
 
+def is_invalid_packed_dimension_decl(symbol):
+    """Whether an invalid integral packed dimension has no runtime state.
+
+    Slang represents declarations such as ``bit [3] x`` and ``bit [3:x] x``
+    with an ``ErrorType`` and reports the compile-time diagnostic on the
+    declaration.  There is no legal object to initialize or execute in this
+    case.  Keep the admission narrow: only an uninitialized variable whose
+    declared type is an integer type syntax containing a packed dimension is
+    erased.  Ordinary 2-state values and every expression/use of the bad
+    declaration continue to be reported by their existing walls.
+    """
+    if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
+        return False
+    try:
+        if (type(symbol.type.canonicalType).__name__ != "ErrorType"
+                or getattr(symbol, "initializer", None) is not None):
+            return False
+        declared = getattr(getattr(symbol, "declaredType", None),
+                           "typeSyntax", None)
+        if type(declared).__name__ != "IntegerTypeSyntax":
+            return False
+        spelling = str(declared)
+        return "[" in spelling and "]" in spelling
+    except Exception:
+        return False
+
+
 def is_inert_2state_associative_array_decl(symbol):
     """Whether an uninitialized 2-state associative array is declaration-only."""
     if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
@@ -18618,6 +18645,9 @@ def _convert_expression_stmt(sm, stmt):
 
 def _convert_local_decl(sm, stmt):
     symbol = stmt.symbol
+    if _SYM is None and is_invalid_packed_dimension_decl(symbol):
+        return {"kind": "Empty", "span": node_span(sm, stmt),
+                "invalid_packed_dimension_decl": True}
     if _SYM is None and _automatic_default_gap(symbol):
         return unsupported(sm, stmt, "AutomaticLocal:default-lifetime",
                            "implicit procedural lifetime in an automatic module is not qualified")
@@ -20674,6 +20704,9 @@ def convert_port(sm, m):
 
 
 def convert_var(sm, m):
+    if _SYM is None and is_invalid_packed_dimension_decl(m):
+        return {"kind": "Empty", "span": sym_span(sm, m),
+                "invalid_packed_dimension_decl": True}
     struct_decls = _unpacked_struct_decls(sm, m)
     if struct_decls is not None:
         return struct_decls
@@ -21511,6 +21544,7 @@ def convert_module(sm, inst):
                             or is_literal_semaphore_decl(m)
                             or is_module_virtual_interface_null_decl(m)
                             or is_string_decl(m)
+                            or is_invalid_packed_dimension_decl(m)
                             or is_inert_2state_queue_decl(m)
                             or is_inert_empty_dynamic_array_decl(m)
                             or is_inert_2state_dynamic_array_decl(m)

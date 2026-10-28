@@ -1,5 +1,18 @@
 # SystemVerilog tier changelog
 
+## [0.1.87] — 2026-10-28
+
+Declaration-only integral variables whose packed dimension is rejected during
+elaboration now disappear as inert metadata. The narrow `ErrorType` slice
+covers malformed ranges such as `bit [3:x]` and `bit [3]`; ordinary 2-state
+variables, initialized malformed declarations, and invalid uses remain loud.
+The `invalid_packed_dimension_decl` compile-error fixture and Lean receipt
+supply the `PASS` evidence. Differential coverage is now **341 rows / 335
+matches / 0 disagreements / 6 recorded refusals**; grammar coverage remains
+**218 / 97 / 121**. The committed 22,065-file snapshot is externally
+unavailable; its prior **5,401 clean / 16,597 partial** counts are unchanged
+in this checkout, with 67 include skips.
+
 ## [0.1.86] — 2026-10-27
 
 Declarations initialized by `new[0]` or an empty assignment pattern now lower

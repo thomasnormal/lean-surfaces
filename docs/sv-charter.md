@@ -38,6 +38,23 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Invalid packed-dimension declarations — 2026-10-28
+
+Declaration-only integral variables whose elaborated type is pyslang
+`ErrorType` because of a malformed packed dimension now lower to no
+declaration in the legacy self-check envelope. A rejected declaration has no
+runtime object, so this preserves the compile-time error boundary without
+inventing storage. The admission is limited to uninitialized integer type
+syntax containing a packed dimension; ordinary 2-state declarations,
+initialized malformed declarations, symbolic declarations, and references
+remain loud. The `invalid_packed_dimension_decl` fixture supplies two malformed
+declarations, a differential `PASS` row, and a direct Lean receipt.
+
+Differential coverage grows **340/334/0/6 → 341/335/0/6** with no
+disagreements; grammar coverage remains **218/97/121**. The external
+22,065-file corpus is unavailable in this checkout, so its prior census
+**5,401 clean / 16,597 partial** snapshot and 67 include skips are retained.
+
 The executable self-check and grammar baseline is generated in
 [`docs/sv-coverage.md`](sv-coverage.md) by
 `harness/sv_coverage_page.py`; its differential rows are pinned to the

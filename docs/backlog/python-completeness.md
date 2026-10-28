@@ -6434,3 +6434,23 @@ string identity.
 
 DECIDED: publish this CI repair, verify the hosted full check, then perform the
 overdue fifth-turn Python release pass before selecting another construct.
+
+## 2026-10-28-pycomplete-193 — repair the Boolean range-render proof
+
+The hosted full check exposed a stale symbolic proof in
+`Examples/python/range_render/proof.lean` after the range renderer began
+retaining Boolean constructor fields. The theorem's `py_simp` recipe now
+reduces the heap-freedom and builtin-dispatch guards explicitly, evaluates the
+bounded `range(0, bool)` rendering path, and closes the structural boundary
+freeze for the resulting string. A small `intDecimal 1` lemma complements the
+existing zero lemma; the statement and the runtime semantics are unchanged.
+
+| Measurement | Result |
+|---|---|
+| Focused proof | `lake env lean Examples/python/range_render/proof.lean` passes; no `sorryAx` in `#print axioms` |
+| Example surface | `lake env lean Examples/python/range_render/spec.lean` passes |
+| Differential scope | unchanged: 3,756 native rows and 3,756 proof rows, previously 0 failed |
+| Formatting | `git diff --check` passes |
+
+DECIDED: commit this proof repair, regenerate/check the backlog index, then
+rebase and publish it before taking the next hosted Python proof failure.

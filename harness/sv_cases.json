@@ -3370,6 +3370,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "fixed_array_nested_subarray_copy",
+      "file": "Examples/system-verilog/fixed_array_nested_subarray_copy/fixed_array_nested_subarray_copy.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

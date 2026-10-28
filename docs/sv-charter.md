@@ -38,6 +38,15 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Multidimensional fixed-array subarray copies — 2026-10-28
+
+A constant subarray reference such as `source[1]` now lowers into a
+multidimensional fixed unpacked integral destination by pairing ordinal leaf
+cells. Same-root overlap, dynamic selections, and effectful sources remain
+loud because they need a source snapshot or aggregate storage. The
+`fixed_array_nested_subarray_copy` fixture and Lean receipt supply the `PASS`
+evidence; differential coverage grows **374/368/0/6 → 375/369/0/6**.
+
 ## Multidimensional fixed-array conditional self-aliases — 2026-10-28
 
 A blocking conditional assignment over a multidimensional fixed unpacked

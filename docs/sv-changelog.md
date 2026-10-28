@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.118] — 2026-10-28
+
+Constant nested subarray references now copy into multidimensional fixed
+unpacked integral destinations by ordinal leaf cell. Same-root overlap, dynamic
+selections, and effectful sources remain loud. The new fixture and Lean receipt
+pass; differential coverage grows **374 rows / 368 matches / 0 disagreements /
+6 refusals → 375 / 369 / 0 / 6**. A fresh 22,065-path census reports **5,611
+clean / 16,387 partial** with 67 include skips; the target wall remains 2,782
+after the corpus revision added six paths.
+
 ## [0.1.117] — 2026-10-28
 
 Blocking conditional assignments over multidimensional fixed unpacked integral

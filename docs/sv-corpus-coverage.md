@@ -25,6 +25,17 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Multidimensional fixed-array subarray copies — 2026-10-28
+
+The legacy extractor now lowers a constant nested subarray reference into a
+multidimensional fixed unpacked integral destination by pairing ordinal leaf
+cells. Same-root overlap, dynamic selections, and effectful sources remain
+loud. The `fixed_array_nested_subarray_copy` fixture supplies the differential
+row and Lean receipt. A fresh corpus run has **5,611 clean / 16,387 partial**
+over 22,065 paths with 67 include skips; `AssignmentExpression:target` remains
+**2,782** because the corpus revision added six paths while this target-only
+case became clean. Differential coverage grows **374/368/0/6 → 375/369/0/6**.
+
 ## Multidimensional fixed-array conditional self-aliases — 2026-10-28
 
 The legacy extractor now lowers a blocking conditional assignment over a

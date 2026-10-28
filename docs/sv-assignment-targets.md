@@ -9,6 +9,20 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Multidimensional fixed-array subarray copies — 2026-10-28
+
+A constant subarray reference such as `source[1]` can fill a multidimensional
+fixed unpacked integral destination when the corresponding unpacked dimensions
+have the same shape. The legacy extractor now pairs the flattened leaf cells
+by declaration order. Same-root overlap, dynamic selections, and effectful
+sources remain `AssignmentExpression:target`.
+
+`fixed_array_nested_subarray_copy` supplies the differential `PASS` witness and
+Lean receipt. The fresh 22,065-path census has **5,611 clean / 16,387 partial**
+files with 67 include skips; `AssignmentExpression:target` remains **2,782**
+because the corpus revision added six paths while this target-only case became
+clean.
+
 ## Multidimensional fixed-array conditional self-aliases — 2026-10-28
 
 A blocking conditional assignment over a multidimensional fixed unpacked

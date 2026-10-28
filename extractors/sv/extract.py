@@ -5879,7 +5879,8 @@ def _unpacked_struct_copy_assignment(sm, expr):
 
     The legacy state stores each scalar/packed field as its own vector cell,
     so a copy can be expanded field by field while sampling the source before
-    any destination update. Aggregate fields and self-copies stay loud.
+    any destination update. Aggregate fields stay loud; an exact blocking
+    self-copy is an observable no-op.
     """
     try:
         if (type(expr).__name__ != "AssignmentExpression" or expr.op is not None
@@ -5892,9 +5893,16 @@ def _unpacked_struct_copy_assignment(sm, expr):
         lhs_name, lhs_type = lhs_path
         rhs_name, rhs_type = rhs_path
         if (type(lhs_type).__name__ != "UnpackedStructType"
-                or type(rhs_type).__name__ != "UnpackedStructType"
-                or lhs_name == rhs_name):
+                or type(rhs_type).__name__ != "UnpackedStructType"):
             return None
+        if lhs_name == rhs_name:
+            if expr.isNonBlocking or not _case_source_expression_ok(expr.right):
+                return None
+            return {
+                "kind": "Empty",
+                "span": node_span(sm, expr),
+                "unpacked_struct_self_copy_noop": True,
+            }
         lhs_cells = _unpacked_struct_field_cells(lhs_name, lhs_type,
                                                  node_span(sm, expr))
         rhs_cells = _unpacked_struct_field_cells(rhs_name, rhs_type,

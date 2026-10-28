@@ -1,5 +1,15 @@
 # SystemVerilog tier changelog
 
+## [0.1.113] — 2026-10-28
+
+Exact blocking self-copies of flattened integral unpacked structs now lower to
+an inert `Empty` path. Nonblocking self-copies remain loud because publication
+is scheduler-visible. The new fixture and Lean receipt pass; differential
+coverage grows **369 rows / 363 matches / 0 disagreements / 6 refusals → 370 /
+364 / 0 / 6**. The committed census is unchanged at **5,602 clean / 16,390
+partial** because this fixture shape is absent from the unavailable external
+checkout.
+
 ## [0.1.112] — 2026-10-28
 
 Exact blocking self-copies of one-dimensional fixed unpacked arrays of

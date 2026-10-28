@@ -34,6 +34,22 @@ class UnpackedStructCopy(unittest.TestCase):
         self.assertTrue(any(node.get("unpacked_struct_copy_lowered")
                             for node in nodes(design)))
 
+    def test_integral_struct_self_copy_is_a_noop(self):
+        design = lower(
+            'typedef struct { int a; bit [3:0] b; } T; '
+            'module top; T x; initial x = x; endmodule')
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("unpacked_struct_self_copy_noop")
+                            for node in nodes(design)))
+
+    def test_nonblocking_integral_struct_self_copy_stays_loud(self):
+        design = lower(
+            'typedef struct { int a; bit [3:0] b; } T; '
+            'module top; T x; initial x <= x; endmodule')
+        self.assertIn("AssignmentExpression:target",
+                      [node.get("sv_kind") for node in nodes(design)])
+
     def test_aggregate_struct_copy_stays_loud(self):
         design = lower(
             'typedef struct { int a; string b; } T; '

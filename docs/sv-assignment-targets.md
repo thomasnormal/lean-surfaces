@@ -9,6 +9,18 @@ owning execution path. A target is admitted only when its destination can be
 represented by the existing scalar, packed-vector, or expanded fixed-cell
 state.
 
+## Unpacked-struct self-copies — 2026-10-28
+
+An exact blocking self-copy of a flattened integral unpacked struct now lowers
+to `Empty`: every field cell already contains the source value. Nonblocking
+self-copies remain `AssignmentExpression:target` because publication is
+scheduler-visible.
+
+`unpacked_struct_self_copy` supplies the differential `PASS` witness and Lean
+receipt. The committed corpus snapshot remains **5,602 clean / 16,390
+partial** with 67 include skips; the target count is unchanged because this
+fixture shape is not present in the unavailable external checkout.
+
 ## Fixed-array unpacked-struct self-copies — 2026-10-28
 
 An exact blocking self-copy of a one-dimensional fixed unpacked array whose

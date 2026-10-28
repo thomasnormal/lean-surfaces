@@ -38,6 +38,14 @@ M0 envelope has no `Unsupported` nodes: it does not establish Lean
 admission, simulator agreement, valid elaboration, or live execution.
 The symbolic `sv-0.2` tier requires its own coverage measurement.
 
+## Unpacked-struct self-copies — 2026-10-28
+
+An exact blocking self-copy of a flattened integral unpacked struct now lowers
+to the existing flat-cell `Empty` path. Nonblocking self-copies remain loud
+because their publication is scheduler-visible. The
+`unpacked_struct_self_copy` fixture and Lean receipt supply the `PASS`
+evidence; differential coverage grows **369/363/0/6 → 370/364/0/6**.
+
 ## Fixed-array unpacked-struct self-copies — 2026-10-28
 
 An exact blocking self-copy of a one-dimensional fixed unpacked array of

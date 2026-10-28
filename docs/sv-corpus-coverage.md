@@ -25,6 +25,16 @@ host-local checkout path. Supply the actual test directory explicitly.
 The executable self-check differential matrix and pyslang grammar census are
 published separately in [`docs/sv-coverage.md`](sv-coverage.md).
 
+## Unpacked-struct self-copies — 2026-10-28
+
+The legacy extractor now erases an exact blocking self-copy of a flattened
+integral unpacked struct. Nonblocking self-copies remain loud because
+publication is scheduler-visible. The `unpacked_struct_self_copy` fixture
+supplies the differential row and Lean receipt. The external corpus checkout
+is unavailable, so the committed snapshot remains **5,602 clean / 16,390
+partial** over 22,059 paths with 67 include skips; differential coverage grows
+**369/363/0/6 → 370/364/0/6**.
+
 ## Fixed-array unpacked-struct self-copies — 2026-10-28
 
 The legacy extractor now erases an exact blocking self-copy of a

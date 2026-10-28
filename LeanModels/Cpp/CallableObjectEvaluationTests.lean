@@ -12707,6 +12707,34 @@ def callableLocalSwitchDefaultInitializationReturnStatementFrameWitness : Bool :
 
 #guard callableLocalSwitchDefaultInitializationReturnStatementFrameWitness
 
+private def localSwitchDefaultInitializationReturnFalseStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .parameter (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let function := {base with body := .block (.sequence
+    (.switch_ condition [
+      {label := some 1, body := .break_},
+      {label := none, body := .block (.sequence
+        (automaticLiteral "0x11" 5)
+        (.return_ {
+          expression := .parameter (handle "0x11")
+          sourceType := intType
+          type := intType}))}])
+    (.return_ {
+      expression := .parameter (handle "0x10")
+      sourceType := intType
+      type := intType}))}
+  match evaluateCallableObject 64 .lp64 function [signed 1] with
+  | .ok (.ok value) => value == signed 1
+  | _ => false
+
+def callableLocalSwitchDefaultInitializationReturnFalseStatementFrameWitness : Bool :=
+  localSwitchDefaultInitializationReturnFalseStatementFrame
+
+#guard callableLocalSwitchDefaultInitializationReturnFalseStatementFrameWitness
+
 private def localSwitchInitializationAssignmentStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let condition : TypedCallableExpression := {

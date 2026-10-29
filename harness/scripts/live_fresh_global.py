@@ -7,7 +7,7 @@ absent from an always-analysable static table, so a call would have raised
 a FAKE `NameError`, and `suffixConsistent` refused the file to avoid it.
 Now the name is statically absent by construction and the absent arm
 consults the live globals: it resolves exactly once the statement binding
-it has run — and a call made BEFORE that still raises the genuine
+it has run. A direct call made BEFORE a definition raises the genuine
 `NameError` (`call_before_def.py` is the ordering row).
 """
 

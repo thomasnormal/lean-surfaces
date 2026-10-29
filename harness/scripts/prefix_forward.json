@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "harness/scripts/prefix_forward.py",
-  "source_sha256": "4a7019e30a7011477e0bb161e576a39e933ca8fe513763bf9820275865070e86",
+  "source_sha256": "187248bee3563ede6805d1f3a3c9efe62240bb3ad1567a88397ef7b403694678",
   "module": {
     "kind": "Module",
     "body": [
@@ -15,7 +15,7 @@
         "span": {
           "lineno": 1,
           "col_offset": 0,
-          "end_lineno": 11,
+          "end_lineno": 6,
           "end_col_offset": 3
         },
         "value": {
@@ -23,30 +23,30 @@
           "span": {
             "lineno": 1,
             "col_offset": 0,
-            "end_lineno": 11,
+            "end_lineno": 6,
             "end_col_offset": 3
           },
           "value": {
             "type": "str",
-            "value": "leanpy corpus: the FORWARD REFERENCE FROM THE G1 PREFIX \u2014 the second\nhole the ordered admission closes.\n\n`x = f()` is a plain bind, so it belongs to the G1-faithful prefix that\nmodule initialization folds (and, when the fold refuses, executes) rather\nthan to the live suffix. The old rule only compared definition positions\nagainst LIVE statements, so this file was admitted and the model happily\ncalled `f` \u2014 CPython raises `NameError` and exits 1. `defsBoundBefore`\nchecks every top-level statement, prefix included, so the model now\nrefuses loudly instead of answering `1`.\n"
+            "value": "leanpy corpus: the forward reference from a direct top-level assignment.\n\n`x = f()` is evaluated at its source position.  CPython and leanpy both\nraise the faithful `NameError` before the later definition is bound; the\nscript executor checks this direct expression/assignment at runtime.\n"
           }
         }
       },
       {
         "kind": "Assign",
         "span": {
-          "lineno": 12,
+          "lineno": 7,
           "col_offset": 0,
-          "end_lineno": 12,
+          "end_lineno": 7,
           "end_col_offset": 7
         },
         "targets": [
           {
             "kind": "Name",
             "span": {
-              "lineno": 12,
+              "lineno": 7,
               "col_offset": 0,
-              "end_lineno": 12,
+              "end_lineno": 7,
               "end_col_offset": 1
             },
             "id": "x"
@@ -55,17 +55,17 @@
         "value": {
           "kind": "Call",
           "span": {
-            "lineno": 12,
+            "lineno": 7,
             "col_offset": 4,
-            "end_lineno": 12,
+            "end_lineno": 7,
             "end_col_offset": 7
           },
           "func": {
             "kind": "Name",
             "span": {
-              "lineno": 12,
+              "lineno": 7,
               "col_offset": 4,
-              "end_lineno": 12,
+              "end_lineno": 7,
               "end_col_offset": 5
             },
             "id": "f"
@@ -78,9 +78,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 15,
+          "lineno": 10,
           "col_offset": 0,
-          "end_lineno": 16,
+          "end_lineno": 11,
           "end_col_offset": 12
         },
         "name": "f",
@@ -91,17 +91,17 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 16,
+              "lineno": 11,
               "col_offset": 4,
-              "end_lineno": 16,
+              "end_lineno": 11,
               "end_col_offset": 12
             },
             "value": {
               "kind": "Constant",
               "span": {
-                "lineno": 16,
+                "lineno": 11,
                 "col_offset": 11,
-                "end_lineno": 16,
+                "end_lineno": 11,
                 "end_col_offset": 12
               },
               "value": {
@@ -115,25 +115,25 @@
       {
         "kind": "Expr",
         "span": {
-          "lineno": 19,
+          "lineno": 14,
           "col_offset": 0,
-          "end_lineno": 19,
+          "end_lineno": 14,
           "end_col_offset": 8
         },
         "value": {
           "kind": "Call",
           "span": {
-            "lineno": 19,
+            "lineno": 14,
             "col_offset": 0,
-            "end_lineno": 19,
+            "end_lineno": 14,
             "end_col_offset": 8
           },
           "func": {
             "kind": "Name",
             "span": {
-              "lineno": 19,
+              "lineno": 14,
               "col_offset": 0,
-              "end_lineno": 19,
+              "end_lineno": 14,
               "end_col_offset": 5
             },
             "id": "print"
@@ -142,9 +142,9 @@
             {
               "kind": "Name",
               "span": {
-                "lineno": 19,
+                "lineno": 14,
                 "col_offset": 6,
-                "end_lineno": 19,
+                "end_lineno": 14,
                 "end_col_offset": 7
               },
               "id": "x"

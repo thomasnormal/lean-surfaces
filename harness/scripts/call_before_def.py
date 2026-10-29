@@ -1,6 +1,8 @@
-"""leanpy v0 corpus: the genuinely order-sensitive interleaving — a call
-site textually before the def. CPython: NameError; leanpy: loud refusal
-(the static function table would bind it early — silently wrong)."""
+"""leanpy v0 corpus: a call site textually before the def.
+
+CPython and leanpy both raise the faithful ``NameError`` at the call: the
+script executor checks direct references at their source position even though
+the ingested function table is position-independent."""
 print(f())
 
 

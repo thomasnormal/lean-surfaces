@@ -1,7 +1,7 @@
-"""Alias BEFORE the def: CPython raises NameError at the alias line; the
-census rejects the candidate (target def ends later) and the ordered
-admission (defsBoundBefore) refuses the script loudly — never a
-position-independent dispatch CPython would contradict."""
+"""Alias BEFORE the def: CPython and leanpy raise NameError at the alias
+line.  The ingestion pass cannot admit a target definition that ends later,
+so this remains an ordinary assignment and the script executor reports the
+runtime error at its source position."""
 
 early = late_def
 

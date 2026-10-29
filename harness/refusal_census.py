@@ -1045,11 +1045,8 @@ WHITELIST_CLASS = {
 SCRIPT_CLASS = {
     "nan_floor_script": "float.nan-payload",
     "nan_division_script": "float.nan-payload",
-    "call_before_def": "script.definition-order",
     "cls_effect_script": "class.creation-effect",
-    "prefix_forward": "script.definition-order",
     "import_not_top_level": "import.position",
-    "alias_before_def": "alias.admission",
     "ann_module_script": "annassign.module-scope",
     "ann_module_effect_script": "annassign.module-scope",
     "exc_handlers_rebound_script": "exc.handler",

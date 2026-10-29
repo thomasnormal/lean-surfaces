@@ -21,7 +21,8 @@ compound whose bindings a function body might read stale — and it is kept here
 # THE ADMISSION MACHINERY IS REUSED WHOLE
 
 Everything above the trunk's executor is PURE and is imported, not rebuilt:
-`classesCreationAdmissible`, `defsBoundBefore`, `scriptFlushCoherent`, `scriptView`,
+`classesCreationAdmissible`, `scriptForwardName`, `scriptCompoundDefsBoundBefore`,
+`scriptFlushCoherent`, `scriptView`,
 `publishScriptGlobals`, `scriptRebindMsg`, `benignImportBinds`,
 `benignImportNames`, `dunderShaped`. That is roughly 530 of the trunk's 893
 script lines. The rebuild owns the ~320 lines of CONTROL, exactly as it owns
@@ -112,7 +113,14 @@ enclosing shell; `return` is the top-level refusal. -/
 def scriptStmtsAt (S : SKont) (m : Module) : List Stmt → SemF RFlow
   | [] => pure .next
   | s :: rest => do
-      let flow ← S.one s
+      -- Direct top-level expression/assignment references are decided at
+      -- their source position.  The static function table may already know
+      -- a later definition, but CPython raises NameError until that def has
+      -- executed; preserve that runtime result instead of refusing the file.
+      let flow ←
+        match scriptForwardName m s with
+        | some n => raisePy (.nameError n)
+        | Option.none => S.one s
       publishM m
       match flow with
       | .next => S.stmts rest
@@ -444,8 +452,8 @@ def runScriptClockMono (m : Module) (clock : List Int) (fuel : Nat) :
     Run World Unit :=
   if !classesCreationAdmissible m then
     .unsupported "a class whose CREATION is outside the executable class-body slice (bases, metaclass keywords, decorators, or unsupported class-body statements)"
-  else if !defsBoundBefore m m.topLevel.toList then
-    .unsupported "a top-level statement mentions a name this module defines LATER (`def`/`class`/namedtuple): CPython would raise NameError there, and the model's definition tables are position-independent, so leanpy refuses rather than run a definition that does not exist yet"
+  else if !scriptCompoundDefsBoundBefore m m.topLevel.toList then
+    .unsupported "a compound top-level statement mentions a name this module defines LATER (`def`/`class`/namedtuple): its branch-sensitive test or iterable needs a control-shell admission before the model can decide the faithful runtime NameError"
   else if !scriptFlushCoherent m then
     .unsupported "a compound top-level statement the executor does not run through a control shell (a 'for … else') binds a name some function body reads: top-level bindings become module globals only when the statement ENDS, so a call made from inside it would read that name stale — a control shell for the statement is the recorded fix, as `if`/`while`/`while … else`/`try`/`for` each got"
   else

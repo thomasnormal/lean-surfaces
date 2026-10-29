@@ -37,7 +37,7 @@
   },
   {
     "file": "harness/scripts/call_before_def.py",
-    "expect": "unsupported"
+    "expect": "match"
   },
   {
     "file": "harness/scripts/list_script.py",
@@ -98,7 +98,7 @@
   },
   {
     "file": "harness/scripts/prefix_forward.py",
-    "expect": "unsupported"
+    "expect": "match"
   },
   {
     "file": "harness/scripts/main_guard_script.py",
@@ -214,7 +214,7 @@
   },
   {
     "file": "harness/scripts/alias_before_def.py",
-    "expect": "unsupported"
+    "expect": "match"
   },
   {
     "file": "harness/scripts/alias_rebound.py",

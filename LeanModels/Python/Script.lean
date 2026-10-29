@@ -328,6 +328,42 @@ def defsBoundBefore (m : Module) (stmts : List Stmt) : Bool :=
         | some e => decide (e < ln)
         | Option.none => true
 
+/-- A direct top-level forward reference is a real runtime `NameError`, not an
+    admission failure.  The module tables remain position-independent for
+    calls made after a definition, so the script executor checks the names of
+    each simple expression/assignment at the point where it is about to run.
+    Compound statements retain the conservative admission guard below: their
+    branch-sensitive execution needs a control shell before this check can be
+    made without over-approximating a dead branch. -/
+def scriptForwardName (m : Module) (s : Stmt) : Option String :=
+  let reads :=
+    match s with
+    | .exprStmt e _ => e.allNames
+    | .assign tgts v _ =>
+        (tgts.toList.map (fun (t : Expr) =>
+          t.allNames.filter (fun n => !(targetBoundNames t).contains n))).flatten
+          ++ v.allNames
+    | .unpackAssign _ _ _ v _ => v.allNames
+    | .augAssign t _ v _ => t.allNames ++ v.allNames
+    | _ => []
+  let ln := (scriptStmtSpan s).lineno
+  reads.find? fun n =>
+    !n.startsWith "<" &&
+      match defBindEnd m n with
+      | some e => !(e < ln)
+      | Option.none => false
+
+/-- Compound statements evaluate a test/iterable before their shell can run
+    its child statements.  Keep those branch-sensitive forward references
+    loud until the corresponding control shell can decide them at runtime;
+    simple expression/assignment statements use `scriptForwardName` instead. -/
+def scriptCompoundDefsBoundBefore (m : Module) (stmts : List Stmt) : Bool :=
+  stmts.all fun s =>
+    match s with
+    | .ifStmt .. | .whileLoop .. | .forStmt .. | .tryStmt .. | .withStmt .. =>
+        defsBoundBefore m [s]
+    | _ => true
+
 /-- `__name__ = "__main__"` — the RUNNER-SUPPLIED global (docs/memory-model.md
 §effects: the same family as `argv`, marshalled in at world initialization).
 
@@ -480,8 +516,10 @@ statement has run), which is what the module-init pipeline's
 per-statement prefix views had to imitate by hand.
 
 `m.functions`/`m.classes`/`m.namedtuples` are UNTOUCHED: definitions stay
-position-independent tables and `defsBoundBefore` is what makes that
-agree with CPython's sequential binding. -/
+position-independent tables.  Direct expression and assignment statements
+are checked by `scriptForwardName` at their source position, so a call before
+its definition raises the same `NameError` as CPython; compound statements
+remain subject to the script-shell admission guards. -/
 def scriptView (m : Module) : Module :=
   { m with topLevel :=
       (scriptNameBinding :: scriptViewMarker ::
@@ -639,7 +677,10 @@ mutual
       match fuel with
       | 0 => .timeout
       | fuel + 1 =>
-        Run.bind (execScriptOne m fuel st s) fun st flow =>
+        match scriptForwardName m s with
+        | some n => .exn st (.nameError n)
+        | Option.none =>
+          Run.bind (execScriptOne m fuel st s) fun st flow =>
         match publishScriptGlobals m st with
         | some st =>
           (match flow with
@@ -1003,8 +1044,8 @@ docs/memory-model.md §the trace clock) — the script-mode counterpart of
 def runScriptClock (m : Module) (clock : List Int) (fuel : Nat) : Run World Unit :=
   if !classesCreationAdmissible m then
     .unsupported "a class whose CREATION is outside the executable class-body slice (bases, metaclass keywords, decorators, or unsupported class-body statements)"
-  else if !defsBoundBefore m m.topLevel.toList then
-    .unsupported "a top-level statement mentions a name this module defines LATER (`def`/`class`/namedtuple): CPython would raise NameError there, and the model's definition tables are position-independent, so leanpy refuses rather than run a definition that does not exist yet"
+  else if !scriptCompoundDefsBoundBefore m m.topLevel.toList then
+    .unsupported "a compound top-level statement mentions a name this module defines LATER (`def`/`class`/namedtuple): its branch-sensitive test or iterable needs a control-shell admission before the model can decide the faithful runtime NameError"
   else if !scriptFlushCoherent m then
     .unsupported "a compound top-level statement the executor does not run through a control shell (a 'for … else') binds a name some function body reads: top-level bindings become module globals only when the statement ENDS, so a call made from inside it would read that name stale — a control shell for the statement is the recorded fix, as `if`/`while`/`while … else`/`try`/`for` each got"
   else

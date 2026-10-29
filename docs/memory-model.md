@@ -3170,23 +3170,22 @@ NOW, so it is a field, not a refactor:
 `leanpy` v0 (post-H1-core): module-level execution of current-tier
 scripts, first-unsupported-construct reporting, stdout diff vs python3.9,
 wired into the harness as a script-corpus mode. `Module`'s
-functions/topLevel split loses `def`/assignment interleaving — v0 must
-detect and refuse interleaving-sensitive scripts loudly.
+functions/topLevel split loses `def`/assignment interleaving, so the
+executor keeps definition tables position-independent and handles the
+observable direct cases at runtime.
 
-**RESOLVED 2026-08-12 without changing the representation** (`Script.lean`
-`defsBoundBefore`): the split loses ORDER, but order is only observable
-through a REFERENCE, so the admission is per statement and per name — a
-top-level statement may mention a name the module binds by
-`def`/`class`/namedtuple only if that definition ends before the statement
-begins. Under that condition the position-independent tables and CPython's
-sequential binding agree on every reference made, and a genuine forward
-reference (CPython: `NameError`) refuses loudly. The check covers the G1
-prefix too, where the old blanket rule never looked: `x = f()` above
-`def f` was executed by module init and answered `1` where CPython exits 1.
-The ordered `ModuleItem` representation remains the fix for what this does
-NOT buy — running a `def` as a statement, rebinding a name between two
-definitions — but it is no longer what stands between leanpy and real
-files (docs/backlog.md, the measured ladder).
+**DIRECT FORWARD REFERENCES ARE RUNTIME ERRORS** (2026-10-29,
+`scriptForwardName`): a top-level expression or assignment is checked at its
+source line before execution.  If it mentions a later `def`/`class`/
+namedtuple binding, leanpy raises the same `NameError` CPython raises there;
+it no longer turns the whole file into a loud admission refusal.  This covers
+both `print(f())` and the former G1-prefix hole `x = f()`, as well as an alias
+assignment whose target definition has not ended.  The monadic runner and the
+trunk executor share this check.  Compound statements retain their existing
+script-shell admission guards until their branch-sensitive forward-reference
+checks are added.  The `ModuleItem` representation remains the fix for
+running definitions as statements and for source-order rebinding between
+definitions.
 
 ## Module initialization (decision)
 
@@ -5039,9 +5038,9 @@ names, including a keyword-argument row — the kwargs merge reads the
 copied params — and a generator-def alias drained by `list`),
 alias-of-alias, and the two-step chain via a split chained assignment.
 Scripts (scripts.json, oracled against the pinned family):
-`alias_script.py` (happy path, MATCH), `alias_before_def.py` (REFUSE —
-the ordered admission), `alias_rebound.py` (MATCH — an ordinary later
-assignment shadows the alias),
+`alias_script.py` (happy path, MATCH), `alias_before_def.py` (MATCH —
+both sides raise the runtime `NameError` before the target definition),
+`alias_rebound.py` (MATCH — an ordinary later assignment shadows the alias),
 `alias_bisect_shape.py` (the bisect shape verbatim: defs, guarded
 `from _zzz_nomod import *` fallback, aliases, alias calls printing —
 MATCH). Acceptance: the sweep's `bisect` row REFUSE→MATCH.

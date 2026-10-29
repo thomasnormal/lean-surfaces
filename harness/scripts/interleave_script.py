@@ -4,9 +4,9 @@ of the ordered admission (docs/backlog.md, `defsBoundBefore`).
 Every reference here comes textually after the definition it names, which
 is the exact condition under which the model's position-independent
 definition tables and CPython's sequential binding agree. The blanket
-"every def precedes all live code" rule refused this file; the per-name
-rule runs it, while `call_before_def.py` — the same file with one
-reference moved above its def — still refuses loudly.
+"every def precedes all live code" rule used to refuse this file; the
+per-name rule runs it. `call_before_def.py` is the complementary direct
+forward-reference row: both runtimes raise `NameError` at the call.
 
 The class is deliberately defined AFTER live output too: its creation is
 pure (methods only), so CPython's `class` statement prints nothing and the

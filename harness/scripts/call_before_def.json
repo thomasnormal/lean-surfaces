@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "harness/scripts/call_before_def.py",
-  "source_sha256": "b8fc09d822378e30c3076456cfbfb3998bc1eeb584777bd272864bd084272620",
+  "source_sha256": "4926731851c14ef1d39e256e465d4d70e4f65d474b242f4611d9d409ce30f063",
   "module": {
     "kind": "Module",
     "body": [
@@ -15,45 +15,45 @@
         "span": {
           "lineno": 1,
           "col_offset": 0,
-          "end_lineno": 3,
-          "end_col_offset": 70
+          "end_lineno": 5,
+          "end_col_offset": 55
         },
         "value": {
           "kind": "Constant",
           "span": {
             "lineno": 1,
             "col_offset": 0,
-            "end_lineno": 3,
-            "end_col_offset": 70
+            "end_lineno": 5,
+            "end_col_offset": 55
           },
           "value": {
             "type": "str",
-            "value": "leanpy v0 corpus: the genuinely order-sensitive interleaving \u2014 a call\nsite textually before the def. CPython: NameError; leanpy: loud refusal\n(the static function table would bind it early \u2014 silently wrong)."
+            "value": "leanpy v0 corpus: a call site textually before the def.\n\nCPython and leanpy both raise the faithful ``NameError`` at the call: the\nscript executor checks direct references at their source position even though\nthe ingested function table is position-independent."
           }
         }
       },
       {
         "kind": "Expr",
         "span": {
-          "lineno": 4,
+          "lineno": 6,
           "col_offset": 0,
-          "end_lineno": 4,
+          "end_lineno": 6,
           "end_col_offset": 10
         },
         "value": {
           "kind": "Call",
           "span": {
-            "lineno": 4,
+            "lineno": 6,
             "col_offset": 0,
-            "end_lineno": 4,
+            "end_lineno": 6,
             "end_col_offset": 10
           },
           "func": {
             "kind": "Name",
             "span": {
-              "lineno": 4,
+              "lineno": 6,
               "col_offset": 0,
-              "end_lineno": 4,
+              "end_lineno": 6,
               "end_col_offset": 5
             },
             "id": "print"
@@ -62,17 +62,17 @@
             {
               "kind": "Call",
               "span": {
-                "lineno": 4,
+                "lineno": 6,
                 "col_offset": 6,
-                "end_lineno": 4,
+                "end_lineno": 6,
                 "end_col_offset": 9
               },
               "func": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 4,
+                  "lineno": 6,
                   "col_offset": 6,
-                  "end_lineno": 4,
+                  "end_lineno": 6,
                   "end_col_offset": 7
                 },
                 "id": "f"
@@ -89,9 +89,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 7,
+          "lineno": 9,
           "col_offset": 0,
-          "end_lineno": 8,
+          "end_lineno": 10,
           "end_col_offset": 12
         },
         "name": "f",
@@ -102,17 +102,17 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 8,
+              "lineno": 10,
               "col_offset": 4,
-              "end_lineno": 8,
+              "end_lineno": 10,
               "end_col_offset": 12
             },
             "value": {
               "kind": "Constant",
               "span": {
-                "lineno": 8,
+                "lineno": 10,
                 "col_offset": 11,
-                "end_lineno": 8,
+                "end_lineno": 10,
                 "end_col_offset": 12
               },
               "value": {

@@ -24,9 +24,10 @@ The claims worth naming:
   `isGenerator` flag makes the alias call allocate the H4 object), and
   **call-site keywords bind through the copied params** (`use_kw`).
 * The alias never exists as a VALUE: reading `scale2` outside call
-  position keeps the loud function-as-value refusal (script rows
-  `alias_before_def.py` / `alias_rebound.py` pin the census's refusal
-  directions).
+  position keeps the loud function-as-value refusal.  The script rows
+  `alias_before_def.py` / `alias_rebound.py` pin the source-order behavior
+  around an alias (a forward target raises `NameError`; a later ordinary
+  assignment shadows an admitted alias).
 
 No `proof.lean`: checks-only, like `drain_lab`/`kw_lab`.
 -/

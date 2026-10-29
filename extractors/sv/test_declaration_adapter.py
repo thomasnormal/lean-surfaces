@@ -182,6 +182,25 @@ class DeclarationAdapter(unittest.TestCase):
             '$size(value++); $display("PASS"); end endmodule')
         self.assertIn("Call:$size", residual)
 
+    def test_discarded_pure_string_queries_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; string len_text, getc_text, atoi_text, radix_text; '
+                'string left, rhs; initial begin '
+                'len_text = "hello"; getc_text = "101"; '
+                'atoi_text = "101"; radix_text = "101"; '
+                'left = "101"; rhs = "101"; '
+                'len_text.len(); getc_text.getc(0); atoi_text.atoi(); '
+                'radix_text.atobin(); left.compare(rhs); left.icompare(rhs); '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_dynamic_string_query_remains_loud(self):
+        residual = blockers(
+            'module top; string text, other; initial begin '
+            'text = other; text.len(); $display("PASS"); end endmodule')
+        self.assertIn("Call:len", residual)
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

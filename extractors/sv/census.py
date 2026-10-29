@@ -125,6 +125,7 @@ ADAPTER_PURE_STATEMENT_MARKERS = (
     "bit_query_statement",
     "dimension_query_statement",
     "array_query_statement", "array_reduction_statement",
+    "string_query_statement",
     "itor_literal_statement", "itor_pure_statement",
     "bitstoreal_literal_statement", "bitstoreal_pure_statement",
     "bitstoshortreal_literal_statement", "bitstoshortreal_pure_statement",

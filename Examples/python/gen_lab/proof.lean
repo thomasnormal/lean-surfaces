@@ -1193,7 +1193,7 @@ theorem two_phase_body_triple (w : World) (N : Nat) (hN : 2 ≤ N) :
   · rintro st rfl
     rw [hretE]
     refine EvalsTo.of_eval (fuel := 8) ?_
-    py_simp [tpEnv]
+    py_simp [tpEnv, evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult]
   · rintro st rfl
     rfl
 

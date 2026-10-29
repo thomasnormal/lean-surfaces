@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 428 | 422 | 0 | 6 | sv-tests-2 declarations |
+| 429 | 423 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -442,6 +442,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `wired_net` | `Examples/system-verilog/wired_net/wired_net.sv` | match | **MATCH** | `ok` | MATCH |
 | `pull_net` | `Examples/system-verilog/pull_net/pull_net.sv` | match | **MATCH** | `ok` | MATCH |
 | `trireg_net` | `Examples/system-verilog/trireg_net/trireg_net.sv` | match | **MATCH** | `ok` | MATCH |
+| `user_nettype` | `Examples/system-verilog/user_nettype/user_nettype.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -449,7 +450,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 219 | 108 | 111 | pyslang SyntaxKind |
+| 220 | 109 | 111 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -586,6 +587,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.NamedType` | `Examples/system-verilog/array_named_display/array_named_display.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NetAlias` | `Examples/system-verilog/net_alias/net_alias.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NetDeclaration` | `Examples/system-verilog/constant_expression_net_driver/constant_expression_net_driver.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.NetTypeDeclaration` | `Examples/system-verilog/user_nettype/user_nettype.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NewArrayExpression` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NewClassExpression` | `Examples/system-verilog/literal_semaphore_constructor/literal_semaphore_constructor.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NonblockingAssignmentExpression` | `Examples/system-verilog/array_reductions/timing.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |

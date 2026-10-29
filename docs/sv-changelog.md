@@ -1,3 +1,13 @@
+## [0.1.174] — 2026-10-29
+
+Plain, un-driven user-defined nettypes with four-state integral scalar or
+packed-vector data now lower to high-impedance flat cells in the legacy
+self-check tier. Resolution functions, continuous drivers, and unsupported
+data shapes remain loud. The `user_nettype` fixture, extractor tests, Lean
+receipt, and differential row cover the admission and boundaries. Differential
+coverage grows **428/422/0/6 → 429/423/0/6**; grammar coverage grows
+**219/108/111 → 220/109/111** with a `SyntaxKind.NetTypeDeclaration` witness.
+
 ## [0.1.173] — 2026-10-29
 
 Plain, un-driven `trireg` scalar and packed-vector declarations now lower to

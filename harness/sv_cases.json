@@ -3874,6 +3874,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "user_nettype",
+      "file": "Examples/system-verilog/user_nettype/user_nettype.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

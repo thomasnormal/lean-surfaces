@@ -24369,8 +24369,50 @@ def _net_has_no_continuous_drivers(m):
         return False
 
 
+def _plain_user_nettype(member):
+    """Whether a user-defined nettype is inert type metadata in M0.
+
+    A user-defined nettype without a resolution function is just a named
+    four-state integral net shape.  Its declaration allocates no runtime
+    storage; declarations using it are admitted separately by ``convert_net``
+    only in the un-driven flat subset.
+    """
+    try:
+        if str(member.kind).split(".")[-1] != "NetType":
+            return False
+        if str(member.netKind).split(".")[-1] != "UserDefined":
+            return False
+        if member.resolutionFunction is not None:
+            return False
+        width, reason = type_width(member.declaredType.type)
+        return width is not None and reason is None
+    except Exception:
+        return False
+
+
 def convert_net(sm, m):
     nk = str(m.netType.netKind).split(".")[-1]
+    if nk == "UserDefined":
+        try:
+            resolution = m.netType.resolutionFunction
+        except (AttributeError, TypeError):
+            resolution = object()
+        if (resolution is not None
+                or getattr(m, "delay", None) is not None
+                or getattr(m, "initializer", None) is not None
+                or not _net_has_no_continuous_drivers(m)):
+            return unsupported(sm, m, "NetSymbol:UserDefined")
+        w, reason = type_width(m.type)
+        if w is None:
+            return unsupported(sm, m, "NetSymbol:" + reason)
+        return signed_metadata({
+            "kind": "Net",
+            "span": sym_span(sm, m),
+            "name": _storage_name(m),
+            "width": w,
+            "init": {"kind": "Literal", "span": sym_span(sm, m),
+                      "width": w, "bits": "z" * w},
+        }, m.type)
     if nk == "TriReg":
         # A plain, un-driven trireg starts at high impedance just like an
         # ordinary resolved net.  Charge strength, decay/delay, and any
@@ -25270,7 +25312,8 @@ def _declaration_only(member):
             or is_string_decl(member)
             or is_inert_2state_queue_decl(member)
             or is_inert_2state_dynamic_array_decl(member)
-            or is_inert_2state_associative_array_decl(member))
+            or is_inert_2state_associative_array_decl(member)
+            or _plain_user_nettype(member))
 
 
 def _let_compilation_barriers(sm, comp):

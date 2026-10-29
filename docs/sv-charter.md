@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Plain user-defined nettypes — 2026-10-29
+
+The legacy self-check tier now lowers an un-driven user-defined nettype with a
+four-state integral scalar or packed-vector data type and no resolution
+function to a high-impedance flat cell. The nettype declaration is compile-time
+metadata; resolution functions, continuous drivers, and unsupported data
+shapes remain loud. The `user_nettype` fixture, extractor regressions,
+generated envelope, Lean receipt, and differential row cover scalar and vector
+observations.
+
+Differential coverage grows **428/422/0/6 → 429/423/0/6**; grammar coverage
+grows **219/108/111 → 220/109/111** with a `SyntaxKind.NetTypeDeclaration`
+witness.
+
 ## Plain un-driven `trireg` nets — 2026-10-29
 
 The legacy self-check tier now lowers a plain, un-driven `trireg` scalar or

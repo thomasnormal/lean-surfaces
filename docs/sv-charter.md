@@ -12,6 +12,15 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Side-effecting `let` expansion refusal fixture — 2026-10-29
+
+The differential corpus now pins the existing loud boundary for a `let`
+template whose actual expands to side-effecting postfix increments. The
+extractor retains `UnaryExpression:Postincrement` rather than inventing an
+expression-order lowering; the row is a recorded refusal and protects that
+decision. Differential coverage grows **490/484/0/6 → 491/484/0/7**; grammar
+coverage remains **235/113/122**.
+
 ## Plain task-selected radix writes in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's marked flat-write

@@ -4449,6 +4449,13 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "let_effects_refuse",
+      "file": "Examples/system-verilog/let_expressions/effects.sv",
+      "module": "top",
+      "oracle": "refuse",
+      "expect": "refuse"
     }
   ]
 }

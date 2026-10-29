@@ -1,3 +1,10 @@
+# [0.1.228] — 2026-10-29
+
+The differential corpus now records the existing loud refusal for a
+side-effecting `let` expansion (`UnaryExpression:Postincrement`). This keeps
+the unsupported expression-order boundary explicit without fabricating a
+lowering; coverage grows **490/484/0/6 → 491/484/0/7**.
+
 # [0.1.227] — 2026-10-29
 
 The legacy adapter census now follows the extractor's marked flat-write

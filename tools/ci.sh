@@ -657,8 +657,11 @@ step  "cpp-ci-wiring-tests" python3 tools/test_cpp_ci.py
 step  "xcelium-probe-tests" python3 harness/sv/test_xcelium_probe.py
 step  "xcelium-golden-tests" python3 harness/sv/test_xcelium_golden.py
 step  "xcelium-compare-tests" python3 harness/sv/test_xcelium_compare.py
+step  "sv-refusals-tests" python3 tools/test_gen_sv_refusals.py
+step  "sv-refusals-register" python3 tools/gen_sv_refusals.py --check
 step  "sv-oracle-admission-tests" python3 harness/sv/test_oracle_admission.py
 step  "sv-oracle-disagreement-tests" python3 harness/sv/test_oracle_disagreements.py
+step  "sv-alias-battery-tests" python3 harness/sv/test_alias_battery.py
 step  "ci-oracle-admission-tests" python3 harness/sv/test_ci_oracle_admission.py
 step  "spectre-probe-tests" python3 harness/spice/test_spectre_probe.py
 step  "tool-self-tests" selftests

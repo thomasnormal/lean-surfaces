@@ -1,3 +1,12 @@
+## [0.1.176] — 2026-10-29
+
+`$display` and `$write` now accept no-format calls whose arguments are
+represented integral values or source-pure ASCII strings, using the IEEE
+default decimal or character representation. Unpacked, opaque, and dynamic
+values remain loud. The `default_display_format` fixture, extractor tests,
+Lean receipt, and differential row cover the new family. Differential coverage
+grows **430/424/0/6 → 431/425/0/6**.
+
 ## [0.1.175] — 2026-10-29
 
 Scalar and descending packed `wire bit` nets now lower in the legacy

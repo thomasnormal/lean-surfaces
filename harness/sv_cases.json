@@ -2,6 +2,17 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "default_display_format",
+      "file": "Examples/system-verilog/default_display_format/default_display_format.sv",
+      "module": "top",
+      "oracle": [
+        "175",
+        "175",
+        "hello"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "qualified_if_fallback",
       "file": "Examples/system-verilog/qualified_if_fallback/qualified_if_fallback.sv",
       "module": "top",

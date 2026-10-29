@@ -12,6 +12,23 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Default output formatting — 2026-10-29
+
+The legacy self-check tier now admits `$display` and `$write` calls without a
+format string when every argument is a represented integral expression or a
+source-pure ASCII string. Integral arguments use the existing decimal
+renderer, including the type's default field width and signedness; strings use
+the character renderer. Unpacked values, opaque real values, and dynamic
+string histories remain loud. The `default_display_format` fixture,
+extractor regressions, generated envelope, Lean receipt, and differential row
+cover both accepted defaults and the dynamic-string refusal.
+
+The refreshed all-directory 22,516-path census moves **5,965 → 5,968 clean**
+and **16,483 → 16,480 partial** (68 include skips). The leading blocker table
+is otherwise unchanged because these three newly clean files had no remaining
+top-five blocker after the call admission. Differential coverage grows
+**430/424/0/6 → 431/425/0/6**; grammar coverage remains **220/109/111**.
+
 ## Two-state ordinary wire nets — 2026-10-29
 
 The legacy self-check tier now admits scalar and descending packed `wire bit`

@@ -1,5 +1,15 @@
 # Call statements — admitted boundary
 
+## Default formatting without a format string — 2026-10-29
+
+`$display` and `$write` now admit arguments without a format string when each
+argument is either a represented integral expression or a source-pure ASCII
+string. Integral arguments are lowered to `%d`, preserving the existing
+signedness and default field width; strings are lowered to `%s` from their
+source-ordered literal history. Unpacked aggregates, real values, handles,
+and dynamic or effectful strings remain loud. `default_display_format` pins
+the decimal and character cases.
+
 ## Literal concatenated format strings — 2026-10-28
 
 `$display`, `$write`, `$strobe`, `$fdisplay`, `$fwrite`, and the quiet severity
@@ -63,9 +73,11 @@ state:
 * `$finish` and `$stop` halt the current run while retaining prior state,
   queued nonblocking work, and collected output.
 
-`$display` and `$write` require a literal format string when arguments are
-present; the remaining arguments are pure admitted integral expressions with
-parallel signedness metadata. A bare output call is an empty write or line.
+`$display` and `$write` use a literal format string when one is present; the
+remaining arguments are pure admitted integral expressions with parallel
+signedness metadata. Without a format string, the default-format admission
+above lowers integral and source-pure ASCII string arguments to `%d`/`%s`.
+A bare output call is an empty write or line.
 The ordinary `$cast` statement has its own dynamic-cast lowering and therefore
 does not rely on the generic call-statement admission.
 

@@ -22234,6 +22234,39 @@ def _literal_format_string(expression):
     return None
 
 
+def _default_display_argument(sm, expression):
+    """Lower one no-format display argument to the IEEE default format.
+
+    §21.2.1.1 uses decimal output for integral expressions and character
+    output for strings when no format specification consumes the argument.
+    The legacy state has no string slot, so a string is admitted only when
+    the existing source-history resolver can reconstruct its pure ASCII
+    value.  Other unpacked values and opaque real/handle values stay loud.
+    """
+    try:
+        canonical = type(expression.type.canonicalType).__name__
+    except Exception:
+        return None
+    if canonical == "StringType":
+        value = _string_source_value(expression)
+        if value is None:
+            return None
+        return "%s", _string_source_literal(
+            sm, expression, value, "string_source_default_display")
+    try:
+        width, _two_state, reason = type_width_2s(expression.type)
+    except Exception:
+        return None
+    if (width is None or reason is not None
+            or not getattr(expression.type, "isIntegral", False)):
+        return None
+    converted = convert_expr(sm, expression)
+    if (converted is None or converted.get("kind") == "Unsupported"
+            or not _case_expression_ok(converted)):
+        return None
+    return "%d", converted
+
+
 def _convert_syscall(sm, s, e):
     """`$display`/`$write`/`$finish`/`$stop` in statement position ->
     `SysCall` node (self-check tier §f). `$display`/`$write` require the
@@ -23066,7 +23099,30 @@ def _convert_syscall(sm, s, e):
     first = args[0]
     fmt = _literal_format_string(first)
     if fmt is None:
-        return unsupported(sm, s, "SysCall:format")
+        # §21.2.1.1: without a format string each integral argument uses the
+        # default decimal conversion, while a string argument uses `%s`.
+        # Construct an ordinary format string so the existing self-check
+        # renderer supplies the standard field width and signedness rules.
+        defaults = [_default_display_argument(sm, arg) for arg in args]
+        if any(item is None for item in defaults):
+            return unsupported(sm, s, "SysCall:format")
+        fmt = "".join(item[0] for item in defaults)
+        conv = [item[1] for item in defaults]
+        signed = []
+        for arg in args:
+            try:
+                signed.append(bool(arg.type.isSigned))
+            except Exception:
+                signed.append(True)
+        return {
+            "kind": "SysCall",
+            "span": span,
+            "name": name,
+            "format": fmt,
+            "args": conv,
+            "arg_signed": signed,
+            "default_format": True,
+        }
     conv = []
     signed = []
     array_display_used = False

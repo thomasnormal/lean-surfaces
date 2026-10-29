@@ -8689,6 +8689,30 @@
     "rung": 4
   },
   {
+    "id": "statement.callable-frame-local-for-switch-shadow-initialization-fallthrough-assignment-return",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalForSwitchShadowInitializationFallthroughAssignmentReturnStatementFrameWitness",
+    "cpp_source": "int local_for_switch_shadow_initialization_fallthrough_assignment_return_statement_frame_witness(int value) { int outer = 3; for (value = 0; value < 2; ++value) { switch (value) { case 0: { int local = 5; outer = local; } default: break; } return outer; } return outer; } bool callable_witness() { return local_for_switch_shadow_initialization_fallthrough_assignment_return_statement_frame_witness(9) == 5; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
+    "id": "statement.callable-frame-local-for-switch-shadow-initialization-fallthrough-assignment-return-false",
+    "kind": "statement",
+    "corpus": "rung-4 witness",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableLocalForSwitchShadowInitializationFallthroughAssignmentReturnFalseStatementFrameWitness",
+    "cpp_source": "int local_for_switch_shadow_initialization_fallthrough_assignment_return_false_statement_frame_witness(int value) { int outer = 3; for (value = 1; value < 2; ++value) { switch (value) { case 0: { int local = 5; outer = local; } default: break; } return outer; } return outer; } bool callable_witness() { return local_for_switch_shadow_initialization_fallthrough_assignment_return_false_statement_frame_witness(9) == 3; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 4
+  },
+  {
     "id": "statement.callable-frame-local-for-switch-default-shadow-initialization-fallthrough-assignment",
     "kind": "statement",
     "corpus": "rung-4 witness",

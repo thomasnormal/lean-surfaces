@@ -1,0 +1,155 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/empty_dynamic_decl_adapter/empty_dynamic_decl_adapter.sv",
+  "source_sha256": "759d08c5939beb407e613fd6f4b4dbe609ea17356192bad0d02f5cd373ebd661",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 16,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Empty",
+            "span": {
+              "line": 9,
+              "col": 9,
+              "end_line": 9,
+              "end_col": 33
+            },
+            "static_local_storage": true
+          },
+          {
+            "kind": "Empty",
+            "span": {
+              "line": 10,
+              "col": 11,
+              "end_line": 10,
+              "end_col": 36
+            },
+            "static_local_storage": true
+          },
+          {
+            "kind": "Empty",
+            "span": {
+              "line": 11,
+              "col": 9,
+              "end_line": 11,
+              "end_col": 34
+            },
+            "static_local_storage": true
+          },
+          {
+            "kind": "Empty",
+            "span": {
+              "line": 12,
+              "col": 11,
+              "end_line": 12,
+              "end_col": 37
+            },
+            "static_local_storage": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 8,
+              "col": 3,
+              "end_line": 15,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 8,
+                "col": 11,
+                "end_line": 15,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 9,
+                    "col": 9,
+                    "end_line": 9,
+                    "end_col": 22
+                  }
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 10,
+                    "col": 11,
+                    "end_line": 10,
+                    "end_col": 25
+                  }
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 11,
+                    "col": 9,
+                    "end_line": 11,
+                    "end_col": 26
+                  }
+                },
+                {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 12,
+                    "col": 11,
+                    "end_line": 12,
+                    "end_col": 29
+                  }
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 22
+                  },
+                  "name": "$display",
+                  "format": "PASS",
+                  "args": [],
+                  "arg_signed": []
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

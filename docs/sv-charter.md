@@ -12,6 +12,19 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Empty dynamic-array declarations in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's declaration-only path
+for zero-size dynamic-array declarations. `new[0]` and empty assignment
+patterns create no flat self-check cells, while nonzero allocations and later
+value uses remain loud. The `empty_dynamic_decl_adapter` fixture, adapter
+regression, generated envelope, Lean receipt, and differential row cover the
+family.
+
+Differential coverage grows **461/455/0/6 → 462/456/0/6**; grammar coverage
+remains **235/113/122**. The checked-in 936-file SystemVerilog example sweep
+remains at **20** `VariableDeclStatement:type` residuals.
+
 ## Associative-array declarations in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's static associative-array

@@ -198,6 +198,11 @@ def _adapter_erased_decl(symbol):
                 # later occurrence is a dimension query.  Initializers and
                 # value uses remain ordinary loud array boundaries.
                 or extract.is_inert_2state_mixed_array_decl(symbol)
+                # A zero-size dynamic-array initializer creates no cells in
+                # the extractor's flat self-check state.  Match that exact
+                # declaration-only route; nonzero allocations and later
+                # value uses remain ordinary loud boundaries.
+                or extract.is_inert_empty_dynamic_array_decl(symbol)
                 or extract.is_string_decl(symbol)
                 or extract.is_fixed_string_array_decl(symbol))
     except Exception:

@@ -32,6 +32,19 @@ class DeclarationAdapter(unittest.TestCase):
             '$display("PASS"); end endmodule')
         self.assertIn("AssignmentExpression:target", residual)
 
+    def test_empty_dynamic_array_declarations_are_metadata(self):
+        self.assertEqual(
+            blockers(
+                'module top; initial begin bit a[] = new[0]; '
+                "logic b[] = '{}; $display(\"PASS\"); end endmodule"),
+            [])
+
+    def test_nonempty_dynamic_array_allocation_remains_loud(self):
+        residual = blockers(
+            'module top; initial begin bit a[] = new[1]; '
+            '$display("PASS"); end endmodule')
+        self.assertIn("VariableDeclStatement:type", residual)
+
 
 if __name__ == "__main__":
     unittest.main()

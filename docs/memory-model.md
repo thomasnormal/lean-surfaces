@@ -2129,11 +2129,16 @@ iterates a range, a generator or a tuple, and none iterated a dict.
 
 **Two boundaries here are the LOWERING's, not the cursor's, and confusing them
 is the trap.** A genexp may capture a parameter the body never assigns (the
-flagship captures `self`); it may not capture a body-assigned local, because
-the by-value snapshot could go stale, and it may not be BOUND to a name first,
-for the same reason. `dict_lab::genexp_next_key` and
-`dict_lab::genexp_local_capture_still_loud` are the same construct either side
-of that line, and only the second refuses.
+flagship captures `self`). A body-assigned local is also admitted when a
+one-argument `next` consumes the fresh generator immediately: no enclosing
+statement can run between creation and its first step, so the by-value
+snapshot is exact. `dict_lab::genexp_next_key` and
+`dict_lab::genexp_local_capture` witness the two admitted capture shapes.
+The two-argument `next` form remains conservative because its default is
+evaluated before the generator steps; `dict_lab::genexp_local_capture_default_still_loud`
+pins a rebinding default. A genexp bound to a name remains admitted only for
+captures that satisfy the older strict rule, so a body-assigned capture still
+refuses there.
 
 **AND THE CURSOR IS BUILT AT CONSTRUCTION, as PEP 289 requires.** The
 outermost iterable of a genexp is evaluated *and its iterator created* when the

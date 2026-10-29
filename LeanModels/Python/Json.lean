@@ -1223,9 +1223,10 @@ private structure LowerCtx where
   assigned : List String
   /-- Targets of ENCLOSING genexps whose elt we are lowering (pass 3 —
   sunfish's K_END nests a genexp inside a genexp's elt). Admissible as
-  by-value captures ONLY in immediately-drained position (`drainOk`):
-  the drain completes within one elt evaluation, before the enclosing
-  target can advance, so by-value equals CPython's by-reference. -/
+  by-value captures ONLY in immediately-consumed position (`drainOk`):
+  a drain completes within one elt evaluation, and one-argument `next`
+  steps before the enclosing frame can run again, so by-value equals
+  CPython's by-reference. -/
   genTargets : List String := []
   /-- Names bound by a DIRECT CHILD of the enclosing body (single-target
   assigns, nested defs) with their line numbers (pass 4,
@@ -1342,9 +1343,12 @@ mutual
     | .boolOp op vs sp => return .boolOp op (← lowerExprs ctx vs) sp
     | .compare l ops cs sp => return .compare (← lowerExpr ctx l) ops (← lowerExprs ctx cs) sp
     | .call f args kwargs cu sp =>
-        -- pass 3: a genexp passed DIRECTLY to a draining builtin may
-        -- capture enclosing-genexp targets (`drainOk` — see LowerCtx)
+        -- pass 3: a genexp passed DIRECTLY to a consumer may capture
+        -- enclosing-genexp targets (`drainOk` — see LowerCtx). `next` is
+        -- admitted only in its one-argument form: Python evaluates a
+        -- two-argument default before stepping, leaving a rebinding window.
         let drainOk := match f with
+          | .name "next" _ => args.size == 1
           | .name d _ => drainingBuiltins.contains d
           | _ => false
         -- A direct `len(sequence * count)` is compiled by CPython as a

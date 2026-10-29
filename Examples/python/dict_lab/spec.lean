@@ -111,6 +111,9 @@ is depth-first left to right on both the store and the read path. -/
 #py_check dict_lab.dict_eq_mixed() =
   (Val.tuple #[.bool true, .bool false, .bool true])
 #py_check dict_lab.mate_style() = 69290
+#py_check dict_lab.genexp_local_capture(7) = 2
+#guard callFunction dict_lab "genexp_local_capture_default_still_loud" #[.int 7] 4096
+  matches .unsupported _
 # The key-view intersection is a monadic heap operation.  The proof
 # interpreter deliberately keeps dictionary-view allocation outside its
 # value-side tier; the executable differential row covers the behavior.

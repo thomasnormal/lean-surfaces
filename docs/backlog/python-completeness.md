@@ -3144,13 +3144,14 @@ body-assigned local could go stale, so the lowering refuses it unless the
 genexp is immediately drained. The two rows are filed together for exactly that
 reason.
 
-**And the refusal is CONSERVATIVE rather than principled**, which is worth
-saying because it names a separable inch. `next` is not in `drainingBuiltins`,
-but a genexp in directly-passed argument position to `next` has a lifetime
-strictly SHORTER than a drained one — one step, with no user code between
-creation and step — so the snapshot cannot go stale. Admitting it is one line
-and its own census; this inch does not take it, because the flagship does not
-need it and a shared admission gate has a blast radius across every genexp.
+**And the refusal was CONSERVATIVE rather than principled**, which is worth
+saying because it names a separable inch. `next` was not in
+`drainingBuiltins`, but a one-argument genexp passed directly to `next` has a
+lifetime strictly SHORTER than a drained one — one step, with no user code
+between creation and step — so the snapshot cannot go stale. The two-argument
+form is different: its default is evaluated before the step and can rebind the
+captured local. `pycomplete-199` admits only the one-argument form and keeps a
+walrus-default witness loud.
 
 ### THE CLAIM WAS FALSE, AND THE CLAIM IS EXACTLY WHY I DID NOT LOOK
 
@@ -6552,3 +6553,22 @@ spec guard expecting `custom()` to refuse; it now checks the admitted
 DECIDED: commit this proof/spec repair, regenerate/check the backlog index,
 then rebase and publish it before inspecting the new exact-SHA CI and taking
 the next hosted Python failure.
+
+## 2026-10-29-pycomplete-199 — admit body-local captures in one-argument `next`
+
+The generator-expression capture gate now treats a genexp passed as the sole
+argument to `next` as immediately consumed. A body-assigned local captured by
+the synthesized generator is therefore observed before the enclosing frame can
+run again, making the existing by-value lowering exact. The two-argument form
+stays loud: Python evaluates its default before resuming the generator, so a
+default-side walrus can make a by-value snapshot stale.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 13 cases: 12 matches and 1 whitelisted refusal; all neighboring dict/genexp cursor rows unchanged |
+| Proof interpreter | 13 refusals, 0 failures; this remains a runner-only admission until the proof interpreter's generator tier is widened |
+| Refusal census | 44 rows in 12 classes; the old local-capture row left `genexp.lowering-admission`, and the walrus-default witness replaces it |
+| Lean validation | `lake build LeanModels.Python` and `lake build leanmodels-run` pass; `git diff --check` passes |
+
+DECIDED: admit only the one-argument `next` capture shape; retain the
+two-argument default witness and all escaping/rebound captures as loud.

@@ -824,8 +824,9 @@ def iter_sentinel_still_loud(a):
 #
 # The capture rule is what separates the two rows at the bottom from the rest,
 # and it is NOT about dicts at all: a genexp may capture a PARAMETER the body
-# never assigns (the flagship captures `self`), and may not capture a
-# body-assigned local, because the by-value snapshot could go stale.
+# never assigns (the flagship captures `self`), and may capture a body-assigned
+# local when a one-argument `next` consumes it immediately. The one-step call
+# leaves no opportunity for the by-value snapshot to go stale.
 
 
 def genexp_next_key(a, root):
@@ -860,15 +861,24 @@ def genexp_flagship(a, root):
     return len(d)
 
 
-def genexp_local_capture_still_loud(a):
-    # THE CAPTURE BOUNDARY, falsifiable: CPython answers 2. `root` is
-    # body-ASSIGNED, so the by-value snapshot is not licensed and ingestion
-    # leaves the genexp un-lowered. Nothing about dicts is refused here --
-    # genexp_next_key is the same construct with `root` a PARAMETER, and it
-    # matches. A conservative admission, sound but not tight.
+def genexp_local_capture(a):
+    # THE CAPTURE INCH, falsifiable: CPython answers 2. `root` is
+    # body-ASSIGNED, but one-argument `next` steps the fresh generator before
+    # any enclosing statement can run, so the by-value snapshot is exact.
+    # Nothing about dicts is special here -- genexp_next_key is the same
+    # construct with `root` a PARAMETER, and it matches too.
     root = 1
     d = {1: a, 2: 5}
     return next(k for k in d if k != root)
+
+
+def genexp_local_capture_default_still_loud(a):
+    # A two-argument next evaluates its default before stepping. The walrus
+    # therefore rebinds `root` in the enclosing frame while the generator is
+    # suspended; a by-value capture would be stale, so this remains loud.
+    root = 1
+    d = {1: a, 2: 5}
+    return next((k for k in d if k != root), (root := 2))
 
 
 def genexp_bound_still_loud(a, root):

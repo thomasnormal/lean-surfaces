@@ -981,6 +981,7 @@ WHITELIST_CLASS = {
     "gen_lab::gen_assigned_lazy": "genexp.lowering-admission",
     "gen_lab::drain_unbound": "genexp.lowering-admission",
     "gen_lab::yf_leak_drive": "genexp.lowering-admission",
+    "dict_lab::genexp_local_capture_default_still_loud": "genexp.lowering-admission",
     "exc_lab::time_live": "clock.underrun",
     # §except-builtin: the FRONTIER. `except_builtin`/`except_exception` LEFT
     # this table when builtin classes became matchable; this row is what keeps
@@ -1024,12 +1025,6 @@ WHITELIST_CLASS = {
     # The sentinel form's non-callable TypeError is now admitted; callable
     # iterator construction remains outside the tier and is not in this
     # non-callable witness census.
-    # §genexp: the CAPTURE admission, not the dict cursor -- `genexp_next_key`
-    # is the same construct with the captured name a PARAMETER and it MATCHES,
-    # so what refuses here is a conservative by-value-snapshot rule, sound but
-    # not tight. Its intended pair, `genexp_bound_still_loud`, turned out to
-    # MATCH: binding is not what refuses, and the gate caught the mislabel.
-    "dict_lab::genexp_local_capture_still_loud": "genexp.lowering-admission",
 }
 
 # The two-model window is CLOSED. `MONO_OPENED` listed rows the trunk refused

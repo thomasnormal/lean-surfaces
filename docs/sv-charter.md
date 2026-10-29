@@ -12,6 +12,22 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Discarded pure fixed dimension queries in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's
+`dimension_query_statement` marker for discarded fixed packed and unpacked
+dimension queries: `$size`, `$high`, `$left`, `$right`, `$low`, `$increment`,
+`$dimensions`, and `$unpacked_dimensions`. Dynamic, selected, and effectful
+operands remain loud. The `pure_dimension_query_statements_adapter` fixture,
+adapter regressions, generated envelope, Lean receipt, and differential row
+cover the admitted forms.
+
+Differential coverage grows **472/466/0/6 → 473/467/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in 985-file SystemVerilog example
+sweep (984 files before this witness), the adapter census moves **740 clean /
+244 partial → 742 clean / 243 partial** and the eight discarded dimension-query
+call residuals fall to zero.
+
 ## Discarded pure fixed-array queries in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's `array_query_statement`

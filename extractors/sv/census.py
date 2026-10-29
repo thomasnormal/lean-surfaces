@@ -123,6 +123,7 @@ ADAPTER_LOWERED_METHOD_MARKERS = (
 )
 ADAPTER_PURE_STATEMENT_MARKERS = (
     "bit_query_statement",
+    "dimension_query_statement",
     "array_query_statement", "array_reduction_statement",
     "itor_literal_statement", "itor_pure_statement",
     "bitstoreal_literal_statement", "bitstoreal_pure_statement",

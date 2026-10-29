@@ -167,6 +167,21 @@ class DeclarationAdapter(unittest.TestCase):
             '$countones(value + 1); $display("PASS"); end endmodule')
         self.assertIn("Call:$countones", residual)
 
+    def test_discarded_fixed_dimension_queries_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; logic [7:0] value; initial begin '
+                '$size(value); $high(value); $left(value); $right(value); '
+                '$low(value); $increment(value); $dimensions(value); '
+                '$unpacked_dimensions(value); $display("PASS"); end endmodule'),
+            [])
+
+    def test_effectful_dimension_query_remains_loud(self):
+        residual = blockers(
+            'module top; logic [7:0] value; initial begin '
+            '$size(value++); $display("PASS"); end endmodule')
+        self.assertIn("Call:$size", residual)
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

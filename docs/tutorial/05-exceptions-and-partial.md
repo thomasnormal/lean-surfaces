@@ -48,7 +48,7 @@ And the real proofs, from `proof.lean`:
 ```lean
 -- Examples/python/tut_05/proof.lean (header comment and docstrings elided)
 theorem pymod_zero_raises (a : PyInt) : tut_05.pymod(a, 0) ==>! .zeroDivisionError := by
-  py_prove [tut_05]
+  py_prove [tut_05, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH]
 
 theorem countdown_total (n : PyInt) (hn : 0 ≤ n) : tut_05.countdown(n) ==> (0 : Int) := by
   py_begin [tut_05]

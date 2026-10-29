@@ -63,7 +63,7 @@ open LeanModels LeanModels.Python
 load_program tut_02 from "Examples/python/tut_02/tut_02.json"
 
 theorem square_total (x : PyInt) : tut_02.square(x) ==> x * x := by
-  py_prove [tut_02]
+  py_prove [tut_02, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH]
 
 theorem square_result (x r : PyInt) (h : tut_02.square(x) ⇓ r) : r = x * x :=
   CallsTo.typed_int_eq h (square_total x)

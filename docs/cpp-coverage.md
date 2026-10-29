@@ -8,7 +8,7 @@ This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.js
 
 | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|
-| 960 | 943 | 0 | 7 | 0 | 10 |
+| 961 | 944 | 0 | 7 | 0 | 10 |
 
 Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.
 
@@ -850,6 +850,7 @@ Each row compares a Lean result with the native call. `ORACLE` is an environment
 | `statement.callable-frame-local-while-switch-shadow-computed-initialization-assignment-false` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-frame-local-while-switch-shadow-computed-initialization-fallthrough-assignment` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-frame-local-while-switch-shadow-computed-initialization-fallthrough-assignment-false` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
+| `statement.callable-frame-local-while-switch-shadow-computed-initialization-fallthrough-assignment-return` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-frame-local-while-switch-shadow-computed-initialization-assignment-continue` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-frame-local-while-switch-shadow-computed-initialization-assignment-continue-false` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |
 | `statement.callable-frame-local-while-switch-shadow-computed-initialization-assignment-break` | 4 | `ok` | `NATIVE` | **MATCH** | Lean admission and Clang compilation agree |

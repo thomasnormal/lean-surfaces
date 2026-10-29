@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Opaque declaration erasure in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's existing erasure rules
+for declaration-only `real`, `realtime`, `shortreal`, `chandle`, and `event`
+objects. These objects have no self-check state slot, so their declarations
+are omitted while reads, writes, triggers, and waits remain loud at their
+existing boundaries. The `opaque_declarations` fixture, adapter regressions,
+generated envelope, Lean receipt, and differential row cover the family.
+
+Differential coverage grows **440/434/0/6 → 441/435/0/6**; grammar coverage
+grows **220/111/109 → 221/112/109**. The temporary public sv-tests audit
+remains **364 clean / 437 partial / 111 include skips**; the sole declaration
+rows for these opaque types have no adapter residuals.
+
 ## Source-pure string concatenation and replication in the adapter — 2026-10-29
 
 The legacy adapter census now uses the same source-history proof as the

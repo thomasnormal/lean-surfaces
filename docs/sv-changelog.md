@@ -1,3 +1,14 @@
+## [0.1.186] — 2026-10-29
+
+The legacy adapter census now follows the extractor's existing erasure rules
+for declaration-only `real`, `realtime`, `shortreal`, `chandle`, and `event`
+objects. These opaque declarations have no self-check state slot, while reads,
+writes, triggers, and waits remain loud at their existing boundaries. The
+`opaque_declarations` fixture, adapter regressions, generated envelope, Lean
+receipt, and differential row cover the family. Differential coverage grows
+**440/434/0/6 → 441/435/0/6**; grammar coverage grows **220/111/109 →
+221/112/109**.
+
 ## [0.1.185] — 2026-10-29
 
 The legacy adapter now recognizes source-pure ASCII string histories while

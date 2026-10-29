@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "opaque_declarations",
+      "file": "Examples/system-verilog/opaque_declarations/opaque_declarations.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "string_concat_replication_ops",
       "file": "Examples/system-verilog/string_concat_replication_ops/string_concat_replication_ops.sv",
       "module": "top",

@@ -156,6 +156,20 @@ def _minus_string(kinds):
     return [k for k in kinds if k != "StringLiteral"]
 
 
+def _adapter_erased_decl(symbol):
+    """Whether the legacy converter intentionally drops this declaration."""
+    try:
+        return (extract.is_module_event_decl(symbol)
+                or extract.is_module_floating_decl(symbol)
+                or extract.is_inert_event_decl(symbol)
+                or extract.is_inert_2state_floating_decl(symbol)
+                or extract.is_chandle_decl(symbol)
+                or extract.is_string_decl(symbol)
+                or extract.is_fixed_string_array_decl(symbol))
+    except Exception:
+        return False
+
+
 def adapter_expr(sm, e):
     # Strings have no flat self-check slot, but the extractor already has an
     # exact source-history resolver for unconditional ASCII literals,
@@ -203,6 +217,8 @@ def adapter_stmt(sm, s):
 
     if cn == "VariableDeclStatement":
         sym = s.symbol
+        if _adapter_erased_decl(sym):
+            return []
         w, reason = extract.type_width(sym.type)
         out = [] if w is not None else ["VariableDeclStatement:" + reason]
         init = getattr(sym, "initializer", None)
@@ -299,9 +315,7 @@ def adapter_design_blockers(sm, comp):
                     elif k in ("Variable", "Net"):
                         if m.name in port_names:
                             continue
-                        if (k == "Variable"
-                                and (extract.is_string_decl(m)
-                                     or extract.is_fixed_string_array_decl(m))):
+                        if k == "Variable" and _adapter_erased_decl(m):
                             # These declarations are intentionally erased by
                             # the legacy converter; their source-pure values
                             # are replayed at query sites instead of stored.

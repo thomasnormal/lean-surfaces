@@ -36,6 +36,20 @@ class StringAdapterHistory(unittest.TestCase):
             'str = source; $display("%s", str); end endmodule')
         self.assertIn("NamedValueExpression:2state", residual)
 
+    def test_opaque_declarations_follow_converter_erasure(self):
+        self.assertEqual(
+            blockers(
+                'module top; real r = 0.5; realtime rt = 0.5; '
+                'shortreal sr = 0.5; chandle h; event ev; '
+                'initial $display("PASS"); endmodule'),
+            [])
+
+    def test_opaque_uses_remain_loud(self):
+        residual = blockers(
+            'module top; real r = 0.5; initial begin '
+            '$display("%0d", r); end endmodule')
+        self.assertIn("NamedValueExpression:2state", residual)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -10,10 +10,11 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 440 | 434 | 0 | 6 | sv-tests-2 declarations |
+| 441 | 435 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
+| `opaque_declarations` | `Examples/system-verilog/opaque_declarations/opaque_declarations.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_concat_replication_ops` | `Examples/system-verilog/string_concat_replication_ops/string_concat_replication_ops.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_string_array_loops` | `Examples/system-verilog/fixed_string_array_loops/fixed_string_array_loops.sv` | match | **MATCH** | `ok` | MATCH |
 | `severity_default_format` | `Examples/system-verilog/severity_default_format/severity_default_format.sv` | match | **MATCH** | `ok` | MATCH |
@@ -461,7 +462,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 220 | 111 | 109 | pyslang SyntaxKind |
+| 221 | 112 | 109 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -629,6 +630,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.RangeDimensionSpecifier` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.RangeList` | `Examples/system-verilog/case_inside/array_widening.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RealLiteralExpression` | `Examples/system-verilog/discarded_pure_floating_math/discarded_pure_floating_math.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.RealTimeType` | `Examples/system-verilog/opaque_declarations/opaque_declarations.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RealType` | `Examples/system-verilog/discarded_pure_real_to_bits/discarded_pure_real_to_bits.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RepeatedEventControl` | `Examples/system-verilog/intra_assignment/counts.sv` | **REFUSE** | `unsupported` @(event): the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.ReplicatedAssignmentPattern` | `Examples/system-verilog/assignment_patterns/replicated.sv` | **MATCH** | `ok`  |

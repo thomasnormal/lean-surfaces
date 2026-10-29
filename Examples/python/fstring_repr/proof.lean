@@ -11,18 +11,26 @@ set_option exponentiation.threshold 4300
 
 theorem boolean_field (value : PyBool) :
     fstring_repr.repr_field(value) ==> ("[" ++ (if value then "True" else "False") ++ "]") := by
-  py_prove [fstring_repr, reprVal]
+  py_prove [fstring_repr, reprVal, formatValueH, reprArgsH, strOfValH,
+    decimalOverflowValH, decimalOverflowValsH, decimalOverflowEntriesH,
+    PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult]
 
 theorem integer_field (value : PyInt) (valueBound : value.natAbs < 10 ^ 4300) :
     fstring_repr.repr_field(value) ==> ("[" ++ toString value ++ "]") := by
   have rendered : intDecimal value = some (toString value) := by
     unfold intDecimal
     exact if_pos valueBound
-  py_prove [fstring_repr, reprVal, rendered]
+  have noOverflow : decimalOverflowImmediate (.int value) = false := by
+    simp [decimalOverflowImmediate, rendered]
+  py_prove [fstring_repr, reprVal, rendered, noOverflow, formatValueH,
+    reprArgsH, strOfValH, decimalOverflowValH, decimalOverflowValsH,
+    decimalOverflowEntriesH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult]
 
 theorem unicode_str_field (value : PyStr) :
     fstring_repr.str_field(value) ==> ("[" ++ value ++ "]") := by
-  py_prove [fstring_repr]
+  py_prove [fstring_repr, formatValueH, reprArgsH, strOfValH,
+    decimalOverflowValH, decimalOverflowValsH, decimalOverflowEntriesH,
+    PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult]
 
 #print axioms boolean_field
 #print axioms integer_field

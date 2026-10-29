@@ -481,7 +481,7 @@
    "trigger": "H: always_comb begin y=0; for (int i=0;i<4;i++) y[i]=a[i]; end",
    "why": "No procedural-loop semantics in the symbolic tier; needs a bounded unroll or an induction rule per parameter point.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: loop semantics in Sem2 / Comb2Proc (elaboration-time unroll of statically bounded loops), driven by the popcount task",
    "plan": "LOOPS",
    "kinds": {
@@ -498,7 +498,8 @@
    "evidence": "svgolf/tests/_example/attacks/README.md (for_counter_*); svgolf/PLAN.md task ladder; docs/sv-loops.md (M0 tier); 11 svgolf/score/tests/*.sv",
    "verified_by_run": true,
    "value_rank": 1,
-   "value_note": "popcount, carry chains and parity trees written as loops (task ladder: popcount)"
+   "value_note": "popcount, carry chains and parity trees written as loops (task ladder: popcount)",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-while",
@@ -510,7 +511,7 @@
    "trigger": "H: always_comb begin int i; y=0; i=0; while (i<4) begin y[i]=a[i]; i=i+1; end end (and do..while)",
    "why": "Same as for loops; a data-dependent trip count is additionally not combinational hardware.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: as ForLoopStatement, statically bounded forms only",
    "plan": "LOOPS",
    "kinds": {
@@ -526,7 +527,8 @@
    ],
    "evidence": "docs/sv-loops.md",
    "verified_by_run": true,
-   "notes": "An unbounded data-dependent while is never (P-SYNTHESIZABLE, proposed)."
+   "notes": "An unbounded data-dependent while is never (P-SYNTHESIZABLE, proposed).",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-repeat",
@@ -538,7 +540,7 @@
    "trigger": "H: always_comb begin y=0; repeat (2) y = y + a; end",
    "why": "No loop semantics in the symbolic tier.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: as ForLoopStatement, constant repeat count",
    "plan": "LOOPS",
    "kinds": {
@@ -552,7 +554,8 @@
      "fn": "_convert_stmt"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-forever",
@@ -564,7 +567,7 @@
    "trigger": "H: initial forever #5 y = a;",
    "why": "A non-terminating process is a time construct, not combinational logic.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "the full scheduler (initial, # delays) of ruling 6.4",
    "plan": "R1",
    "svgolf": {
@@ -583,7 +586,8 @@
      "fn": "_convert_stmt"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-foreach",
@@ -595,7 +599,7 @@
    "trigger": "H: logic [3:0] m [0:3]; always_comb begin y=0; foreach (m[i]) m[i]=a[3:0]; y=m[0]; end",
    "why": "Iteration over unpacked arrays; no loop semantics in the symbolic tier.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: loop semantics plus run-time-indexed unpacked arrays (AGGR)",
    "plan": "LOOPS",
    "kinds": {
@@ -609,7 +613,8 @@
      "fn": "_convert_foreach_loop"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-wait",
@@ -621,7 +626,7 @@
    "trigger": "H: initial begin wait (c) y = a; end",
    "why": "Level-sensitive wait is a time / scheduling construct.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "the scheduler (R1)",
    "plan": "R1",
    "svgolf": {
@@ -641,7 +646,8 @@
     }
    ],
    "evidence": "docs/sv-wait-statements.md",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-disable",
@@ -653,7 +659,7 @@
    "trigger": "H: always_comb begin : blk y=a; disable blk; end",
    "why": "Early exit from a named block needs control flow the Sem2 statement model does not have.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: an early-exit (named block / disable) control-flow model in the Sem2 statement model",
    "kinds": {
     "extractor": [
@@ -667,7 +673,8 @@
     }
    ],
    "evidence": "docs/sv-disable.md (M0 tier)",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-event-trigger",
@@ -679,7 +686,7 @@
    "trigger": "H: event e; always_comb begin y=a; -> e; end",
    "why": "Named events are simulation synchronisation objects.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "the scheduler (R1): events are region objects",
    "plan": "R1",
    "svgolf": {
@@ -698,7 +705,8 @@
      "fn": "_convert_stmt"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-randcase",
@@ -710,7 +718,7 @@
    "trigger": "H: always_comb begin randcase 1: y=a; 1: y=b; endcase end",
    "why": "Randomised branch choice: not deterministic hardware.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "constrained randomization of the verification tier",
    "plan": "VERIF",
    "svgolf": {
@@ -730,7 +738,8 @@
     }
    ],
    "evidence": "docs/sv-randcase.md (M0 tier)",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-pattern-case",
@@ -742,7 +751,7 @@
    "trigger": "H: always_comb begin case (a) matches 8'd1: y=1; default: y=0; endcase end",
    "why": "Tagged-union / pattern matching has no model in Sem2; whether Yosys reads tagged-union patterns was not established.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: tagged unions in the symbolic tier",
    "plan": "AGGR",
    "kinds": {
@@ -757,7 +766,8 @@
     }
    ],
    "evidence": "docs/sv-pattern-conditions.md (M0 tier)",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-cond-qual",
@@ -800,7 +810,7 @@
    "trigger": "H: always_comb begin if (c &&& b[0]) y=1; else y=0; end  /  if (a matches 8'd1) ...",
    "why": "&&& conditions and `matches` patterns belong to tagged-union pattern matching, not modelled.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: tagged unions in the symbolic tier",
    "plan": "AGGR",
    "kinds": {
@@ -824,7 +834,8 @@
    ],
    "evidence": "docs/sv-pattern-conditions.md",
    "unverified": true,
-   "notes": "Statement forms verified by a run; the expression-position forms ran without an Unsupported node, so that refusal is unverified."
+   "notes": "Statement forms verified by a run; the expression-position forms ran without an Unsupported node, so that refusal is unverified.",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-casez",
@@ -836,7 +847,7 @@
    "trigger": "H: always_comb begin casez (a) 8'b1???_????: y=1; default: y=0; endcase end",
    "why": "Wildcard case matching is not in Sem2's case model (normal and inside only); wildcard digits interact with the fourstate stage.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: wildcard case semantics in Sem2 plus a fourstate rule for wildcard digits",
    "plan": "CASEFEAT",
    "kinds": {
@@ -853,7 +864,8 @@
    "evidence": "svgolf/score/srcgate.py (the gate admits casez item wildcards); docs/sv-wildcard-cases.md",
    "verified_by_run": true,
    "value_rank": 6,
-   "value_note": "leading-zero count and priority encoders use casez wildcards (task ladder)"
+   "value_note": "leading-zero count and priority encoders use casez wildcards (task ladder)",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-casex",
@@ -865,7 +877,7 @@
    "trigger": "H: always_comb begin casex (a) 8'b1xxx_xxxx: y=1; default: y=0; endcase end",
    "why": "As casez, and an x in the SELECTOR also becomes a wildcard, which is the hazardous reading.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: as casez; item-only wildcard use first",
    "plan": "CASEFEAT",
    "kinds": {
@@ -880,7 +892,8 @@
     }
    ],
    "evidence": "svgolf/tests/_example/attacks/README.md casex_item.sv",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-compound",
@@ -892,7 +905,7 @@
    "trigger": "H: always_comb begin y=a; y += b; end",
    "why": "Read-modify-write desugaring exists only on the M0 path.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: symbolic read-modify-write lowering (sizes and signedness per point)",
    "plan": "OPS",
    "kinds": {
@@ -909,7 +922,8 @@
    "evidence": "docs/sv-compound-assignments.md; svgolf banlist treats compound assignments as operators",
    "verified_by_run": true,
    "value_rank": 17,
-   "value_note": "`y += a` and friends in procedural code"
+   "value_note": "`y += a` and friends in procedural code",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-incdec-expr",
@@ -921,7 +935,7 @@
    "trigger": "H: logic [7:0] k; always_comb begin k=a; y=(k++); end",
    "why": "Side-effecting operators inside expressions are not modelled (statement-position `y++;` is admitted and lowered to a blocking assignment).",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: expression-level side effects",
    "plan": "OPS",
    "kinds": {
@@ -935,7 +949,8 @@
      "fn": "_convert_unary_expr"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-incdec-target",
@@ -947,7 +962,7 @@
    "trigger": "H: logic [7:0] m [0:1]; always_comb begin y=a; m[0]=0; m[a[0]]++; end",
    "why": "++ / -- only on a plain integral identifier.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: select targets for ++ / --",
    "plan": "OPS",
    "kinds": {
@@ -962,7 +977,8 @@
      "fn": "_convert_incdec"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-assign-expr",
@@ -974,7 +990,7 @@
    "trigger": "H: always_comb begin y = (a = b); end",
    "why": "An assignment inside an expression is a side effect in expression position.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: expression-level side effects",
    "plan": "OPS",
    "kinds": {
@@ -993,7 +1009,8 @@
      "fn": "_convert_assignment_expr"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-assign-target",
@@ -1005,7 +1022,7 @@
    "trigger": "H: logic [7:0] m [0:3]; always_comb begin m[k]=a; ... end  /  always_comb {y,z}=a;  /  y[b[2:0] +: 2] = ...",
    "why": "The target is not an identifier, constant select or admitted concatenation leaf set; a split RHS needs a single sample and disjoint windows.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: run-time-indexed targets and general concatenation targets in Sem2",
    "plan": "SELFEAT",
    "kinds": {
@@ -1024,7 +1041,8 @@
     }
    ],
    "evidence": "docs/sv-assignment-targets.md; docs/sv-envelope-schema.md Recorded refusals (concatenation targets)",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-overlap-drivers",
@@ -1036,7 +1054,7 @@
    "trigger": "H: assign y = a; assign y = b;  /  assign y[3:0]=a[3:0]; assign y[5:2]=b[3:0];",
    "why": "Two continuous drivers on overlapping bits of a net: the one-driver rule (F3) refuses; resolution functions are not modelled.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: a resolved-net / strength model (the Yosys netlist would also have to resolve)",
    "plan": "NETRES",
    "match": [
@@ -1052,7 +1070,8 @@
     }
    ],
    "evidence": "svgolf/PLAN.md F3; docs/sv-oracle-disagreements.md",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-selected-effects",
@@ -1089,7 +1108,7 @@
    "trigger": "H: always_comb begin y = #1 a; end  /  always_ff @(posedge c) y <= #1 a;",
    "why": "Intra-assignment delays are time constructs.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "the scheduler (R1)",
    "plan": "R1",
    "svgolf": {
@@ -1109,7 +1128,8 @@
     }
    ],
    "evidence": "docs/sv-intra-assignment.md (M0 tier)",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-invalid",
@@ -1147,7 +1167,7 @@
    "trigger": "H: always_comb begin y=a; assert (c); end  /  assert #0 (c);",
    "why": "Assertions (with action blocks that print) have no symbolic-tier semantics.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "assertions of the verification tier",
    "plan": "VERIF",
    "kinds": {
@@ -1162,7 +1182,8 @@
     }
    ],
    "evidence": "docs/sv-immediate-assertions.md (M0 tier)",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-scanf",
@@ -1174,7 +1195,7 @@
    "trigger": "H: int n, v; always_comb begin y=a; n = $sscanf(\"12\",\"%d\",v); end",
    "why": "String / file formatted input; M0 handles only literal forms.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "strings and formatted input of the verification tier",
    "plan": "VERIF",
    "svgolf": {
@@ -1194,7 +1215,8 @@
     }
    ],
    "evidence": "docs/sv-formatted-input.md",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-fork-join",
@@ -1206,7 +1228,7 @@
    "trigger": "H: initial begin fork y = a; join end  (join_none likewise)",
    "why": "fork / join: parallel processes with scheduling-dependent results.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "the scheduler (R1) with the determinism boundary",
    "plan": "R1",
    "svgolf": {
@@ -1227,7 +1249,8 @@
    ],
    "evidence": "docs/sv-fork-join.md",
    "verified_by_run": true,
-   "notes": "fork/join is named in the lead's P-SYNTHESIZABLE list; JoinAny was not run."
+   "notes": "fork/join is named in the lead's P-SYNTHESIZABLE list; JoinAny was not run.",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-local-decl",
@@ -1239,7 +1262,7 @@
    "trigger": "H: always_comb begin real r; y=a; end  /  logic [7:0] m [0:1]; as a block-local",
    "why": "Block-local declarations of non-4-state or non-packed types (block-local packed 4-state variables are admitted by the extractor, see loader gates).",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: 2-state declared types and unpacked arrays in the symbolic tier",
    "plan": "AGGR",
    "svgolf": {
@@ -1260,7 +1283,8 @@
    ],
    "evidence": "docs/sv-procedural-lifetimes.md; docs/sv-two-state-boundary.md",
    "verified_by_run": true,
-   "notes": "Never (svGolf) applies to real / string / dynamic types only."
+   "notes": "Never (svGolf) applies to real / string / dynamic types only.",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "st-cont-form",
@@ -1297,7 +1321,7 @@
    "trigger": "H: assign #1 y = a;  /  wire #1 w = a;",
    "why": "Net and continuous-assign delays are time.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "the scheduler (R1)",
    "plan": "R1",
    "svgolf": {
@@ -1322,7 +1346,8 @@
     }
    ],
    "evidence": "docs/sv-continuous-assign-delays.md; docs/sv-net-delays.md",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "pr-delay",
@@ -1334,7 +1359,7 @@
    "trigger": "H: initial begin #1 y = a; end (inside always_comb the source is a slang error: InvalidStatement)",
    "why": "Delays are time.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "the scheduler (R1)",
    "plan": "R1",
    "svgolf": {
@@ -1358,7 +1383,8 @@
     }
    ],
    "evidence": "docs/sv-delay.md (M0 tier)",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "pr-nested-wait",
@@ -1397,7 +1423,7 @@
    "trigger": "H: always @(a or b) y = a;  /  always_ff @(posedge clk or posedge rst) ...  /  a three-event list",
    "why": "Only the two-event `posedge clk or negedge rst_n` list is modelled (via _sym_areset_process).",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "the sequential layer (generic sensitivity lists)",
    "plan": "SEQ",
    "kinds": {
@@ -1412,7 +1438,8 @@
     }
    ],
    "evidence": "docs/sv-event-lists.md",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "pr-implicit-event",
@@ -1424,7 +1451,7 @@
    "trigger": "H: always @* y = a;",
    "why": "A level-sensitive block that can infer a latch with no proc error in Yosys; its initial-x behaviour differs between tools.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "a 4-state rule for the initial x of a level-sensitive block in score/fourstate.py before ls-sv runs it",
    "plan": "LATCH4",
    "kinds": {
@@ -1439,7 +1466,8 @@
     }
    ],
    "evidence": "svgolf/tests/_example/attacks/README.md latch_star.sv; docs/sv-implicit-events.md",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "pr-edge-other",
@@ -1451,7 +1479,7 @@
    "trigger": "H: always_ff @(negedge c) y <= a;  /  @(edge c)  /  always @(c) ...",
    "why": "Only posedge (and the posedge + negedge reset list) is modelled.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "the sequential layer",
    "plan": "SEQ",
    "kinds": {
@@ -1469,7 +1497,8 @@
      "fn": "_convert_event_wait"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "pr-edge-iff",
@@ -1481,7 +1510,7 @@
    "trigger": "H: always_ff @(posedge c iff b[0]) y <= a;",
    "why": "Conditional event controls are not modelled.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "the sequential layer",
    "plan": "SEQ",
    "kinds": {
@@ -1496,7 +1525,8 @@
     }
    ],
    "evidence": "docs/sv-event-iff.md",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "pr-clock-wide",
@@ -1508,7 +1538,7 @@
    "trigger": "H: always_ff @(posedge a) y <= b;   (8-bit clock)",
    "why": "The clock must be a 1-bit identifier; the envelope has no sampled-value register for the LSB rule.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "the sequential layer",
    "plan": "SEQ",
    "kinds": {
@@ -1522,7 +1552,8 @@
      "fn": "convert_procedural_block"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "pr-always-nocontrol",
@@ -1560,7 +1591,7 @@
    "trigger": "module-level `assert property (...)` or `cover property (...)` (slang reports them as procedural blocks)",
    "why": "Concurrent assertions have no process model.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "assertions of the verification tier",
    "plan": "VERIF",
    "kinds": {
@@ -1575,7 +1606,8 @@
     }
    ],
    "evidence": "docs/sv-concurrent-assertions.md",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "pr-always-latch",
@@ -1587,7 +1619,7 @@
    "trigger": "H: always_latch if (c) y = a;",
    "why": "A latch's initial value is x in IEEE but Yosys resolves a never-loaded latch to 0 (measured), so a 4-state rule is needed first.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "a 4-state rule for a latch's initial x in score/fourstate.py before ls-sv models always_latch",
    "plan": "LATCH4",
    "kinds": {
@@ -1602,7 +1634,8 @@
     }
    ],
    "evidence": "svgolf/tests/_example/attacks/README.md latch_never.sv; docs/sv-always-latch.md",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "pr-final",
@@ -1614,7 +1647,7 @@
    "trigger": "H: final $display(\"x\");",
    "why": "final blocks run at simulation end only.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "the scheduler (R1)",
    "plan": "R1",
    "svgolf": {
@@ -1634,7 +1667,8 @@
     }
    ],
    "evidence": "docs/sv-final.md",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "pr-init-var",
@@ -1675,7 +1709,7 @@
    "trigger": "H: assign y = (a inside {1,2,3}) ? a : b;  /  case (a) inside 8'd1, [8'd3:8'd5]: ...",
    "why": "The `inside` operator and range items [lo:hi] are lowered only in the M0 path; plain `case inside` items are admitted.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: range patterns in PStmt.caseStmt / Expr2 and a symbolic lowering of `inside`",
    "plan": "CASEFEAT",
    "kinds": {
@@ -1692,7 +1726,8 @@
    "evidence": "docs/sv-case-inside.md; extract.py L7295",
    "verified_by_run": true,
    "value_rank": 13,
-   "value_note": "range checks (`a inside {[3:5]}`) in decoders"
+   "value_note": "range checks (`a inside {[3:5]}`) in decoders",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ex-real",
@@ -1704,7 +1739,7 @@
    "trigger": "H: assign y = a < 1.5 ...",
    "why": "Real numbers are not hardware.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "reals of the verification tier",
    "plan": "VERIF",
    "svgolf": {
@@ -1724,7 +1759,8 @@
     }
    ],
    "evidence": "docs/sv-two-state-boundary.md",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ex-hier-ref",
@@ -1736,7 +1772,7 @@
    "trigger": "a child instance output read as `u.y`; a generate-block signal `g[7].w`; an interface member `i.d`",
    "why": "Hierarchical references are not modelled.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: hierarchical names in Hier2 flattening",
    "plan": "HIERFEAT",
    "kinds": {
@@ -1751,7 +1787,8 @@
     }
    ],
    "evidence": "docs/sv-module-hierarchy.md (M0)",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ex-assign-pattern",
@@ -1763,7 +1800,7 @@
    "trigger": "logic [7:0] k; assign k = '{default: 1'b1};  /  parameter int A[2] = '{1,2}",
    "why": "Assignment patterns are lowered only in the M0 path.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: symbolic assignment patterns (default:, keyed, replicated)",
    "plan": "AGGR",
    "kinds": {
@@ -1780,7 +1817,8 @@
    "evidence": "docs/sv-assignment-patterns.md",
    "verified_by_run": true,
    "value_rank": 12,
-   "value_note": "lookup tables and constants written as `'{...}` patterns"
+   "value_note": "lookup tables and constants written as `'{...}` patterns",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ex-xnor",
@@ -1792,7 +1830,7 @@
    "trigger": "H: assign y = a ~^ b;",
    "why": "The operator is absent from the symbolic BINARY_OPS (the unary reduction ~^ is admitted).",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: add the operator to the symbolic set (cheap)",
    "plan": "OPS",
    "kinds": {
@@ -1809,7 +1847,8 @@
    "evidence": "docs/sv-xnor.md (the M0 tier admits it)",
    "verified_by_run": true,
    "value_rank": 4,
-   "value_note": "xnor is a native gate: golfers write `~^` to save an inverter"
+   "value_note": "xnor is a native gate: golfers write `~^` to save an inverter",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ex-equiv",
@@ -1821,7 +1860,7 @@
    "trigger": "H: assign y = c <-> b[0];",
    "why": "Operator absent from BINARY_OPS (implication `->` is handled separately).",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: operator set extension",
    "plan": "OPS",
    "kinds": {
@@ -1835,7 +1874,8 @@
      "fn": "_convert_binary_expr"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ex-real-ops",
@@ -1847,7 +1887,7 @@
    "trigger": "H: assign y = a / 1.5;  a ** 1.5",
    "why": "Non-integral operand of a division, modulo, power or shift (the node is replaced by the enclosing ConversionExpression:width, so the tag may never reach the envelope).",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "reals of the verification tier",
    "plan": "VERIF",
    "svgolf": {
@@ -1870,7 +1910,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ex-defensive-width",
@@ -1936,9 +1977,9 @@
    "trigger": "function automatic logic [7:0] f(input logic [7:0] x); return x; endfunction  assign y = f(a);",
    "why": "No user function calls in the symbolic tier; any call outside $clog2 / $bits / $high / $size / $signed / $unsigned falls through here.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "user functions with a 4-state rule (score/fourstate.py) for unassigned locals BEFORE ls-sv models them",
-   "decided_by": "svgolf/README.md Rules (rule first, then the construct)",
+   "decided_by": "svgolf/README.md Rules (rule first, then the construct); Thomas 2026-10-29: approved the refused-now and later classifications of the register",
    "plan": "USERFN",
    "kinds": {
     "extractor": [
@@ -1966,7 +2007,7 @@
    "trigger": "assign y = $countones(a);  /  $onehot(a)  /  m.sum()  /  a.next()",
    "why": "Only $clog2 / $bits / $high / $size / $signed / $unsigned are symbolic; other built-ins need per-point semantics.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: per-built-in lowering ($countones first)",
    "plan": "OPS",
    "kinds": {
@@ -1983,7 +2024,8 @@
    "evidence": "svgolf/score/tests/bad_countones.sv",
    "verified_by_run": true,
    "value_rank": 5,
-   "value_note": "$countones for the popcount task (the banlist already treats it as +)"
+   "value_note": "$countones for the popcount task (the banlist already treats it as +)",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ex-random-time-io",
@@ -1995,7 +2037,7 @@
    "trigger": "assign y = $urandom;  /  $random  /  $time  /  int fd = $fopen(\"f\",\"r\")",
    "why": "Randomness, simulation time and file I/O in a combinational design.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "randomization, time and file I/O of the verification tier / R1",
    "plan": "VERIF",
    "svgolf": {
@@ -2017,7 +2059,8 @@
    ],
    "evidence": "docs/sv-call-expressions.md (M0 tier)",
    "verified_by_run": true,
-   "notes": "$urandom / $random are P-DETERMINISM, $fopen P-SYNTHESIZABLE, $time P-NO-TIME."
+   "notes": "$urandom / $random are P-DETERMINISM, $fopen P-SYNTHESIZABLE, $time P-NO-TIME.",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ex-dim-query",
@@ -2029,7 +2072,7 @@
    "trigger": "H: (N parametric) always_comb begin y=a; void'($left(a)); end",
    "why": "Dimension queries of a range that moves with the parameter fold the default point; only $high / $size of a declared signal are carried per point.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: per-point dimension queries",
    "plan": "FOLDS",
    "kinds": {
@@ -2050,7 +2093,8 @@
     }
    ],
    "verified_by_run": true,
-   "notes": "The tag is swallowed by the caller (it reports ExpressionStatement:CallExpression or a plain CallExpression), so it is never visible in the envelope."
+   "notes": "The tag is swallowed by the caller (it reports ExpressionStatement:CallExpression or a plain CallExpression), so it is never visible in the envelope.",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ex-clog2-args",
@@ -2089,7 +2133,7 @@
    "trigger": "string, associative-array, event and queue method calls",
    "why": "Statically live in the symbolic path but the types that route here are refused earlier (VariableSymbol:2state); no run reaches them.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "strings, queues and events of the verification tier",
    "plan": "VERIF",
    "svgolf": {
@@ -2125,7 +2169,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ex-invalid",
@@ -2213,7 +2258,7 @@
    "trigger": "H: assign y = $clog2(a);  /  assign y = $signed(a4) into 8 bits",
    "why": "A signed (or exotic) operand whose width changes (sign extension / truncation) cannot be emitted as an unsigned Resize; the default-point width would be baked in.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: symbolic SignedResize for signed operands (FOLDS lane)",
    "plan": "SIGNED",
    "kinds": {
@@ -2232,7 +2277,8 @@
     }
    ],
    "evidence": "docs/sv-envelope-schema.md Default-point folds; svgolf/PLAN.md FOLDS 'sign extension (11.8.2)'",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "cv-explicit",
@@ -2244,7 +2290,7 @@
    "trigger": "H: assign y = 8'(a + b);  /  signed'(a)  /  int'(a)",
    "why": "Symbolic casts stay loud: the size or signedness may depend on the parameter point and slang binds the size away.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: per-point cast lowering (Resize with symbolic size)",
    "plan": "FOLDS",
    "kinds": {
@@ -2261,7 +2307,8 @@
    "evidence": "docs/sv-explicit-casts.md",
    "verified_by_run": true,
    "value_rank": 9,
-   "value_note": "size casts such as `8'(a + b)` are common in golf code"
+   "value_note": "size casts such as `8'(a + b)` are common in golf code",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "cv-streaming",
@@ -2273,7 +2320,7 @@
    "trigger": "module t #(parameter int P=4)(...); assign y = {<<P{a}}; endmodule",
    "why": "Streaming over a parametric or generate-dependent shape would freeze the default point (the literal-slice form is admitted).",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: width terms for parametric streams",
    "plan": "FOLDS",
    "kinds": {
@@ -2287,7 +2334,8 @@
      "fn": "_convert_streaming_pack"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "cv-other-kind",
@@ -2299,7 +2347,7 @@
    "trigger": "a struct bit-stream cast (the probe was refused at the declaration instead)",
    "why": "Only Implicit / Propagated / Explicit / StreamingConcat kinds are handled.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: aggregate casts",
    "plan": "AGGR",
    "kinds": {
@@ -2314,7 +2362,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "cv-default-point",
@@ -2326,7 +2375,7 @@
    "trigger": "localparam int X1 = M'(255) with parameter M; or $left(v) of a parametric vector in a constant",
    "why": "slang folds the operand at the DEFAULT parameter point; emitting that literal is silently wrong elsewhere.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: emit the symbolic operand instead of slang's fold",
    "plan": "FOLDS",
    "kinds": {
@@ -2341,7 +2390,8 @@
     }
    ],
    "evidence": "docs/sv-envelope-schema.md Default-point folds rounds 3 and 7; Examples/system-verilog/sem2/fold_szc, fold_lrq",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "cv-signed-const",
@@ -2353,7 +2403,7 @@
    "trigger": "module #(N=7) ... [N+1:0] o; assign o = (3 > 2) ? -1 : 2;",
    "why": "A signed constant outside the INT-class vocabulary is a default-point value in a parametric family.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: symbolic signed constants",
    "plan": "FOLDS",
    "kinds": {
@@ -2372,7 +2422,8 @@
     }
    ],
    "evidence": "Examples/system-verilog/sem2/int_const_loud",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "lit-unsized-xz",
@@ -2428,7 +2479,7 @@
    "trigger": "an unsized signed based literal ('sd5) in a parametric context or a declaration initializer",
    "why": "Its width is the context width, a default-point fold at other points.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: symbolic signed fill",
    "plan": "FOLDS",
    "kinds": {
@@ -2447,7 +2498,8 @@
     }
    ],
    "evidence": "Examples/system-verilog/sem2/pi_unsized_signed",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "lit-init-default-point",
@@ -2459,7 +2511,7 @@
    "trigger": "a declaration initializer literal whose width depends on the point (not isolated)",
    "why": "As the other initializer folds.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: symbolic initializer widths",
    "plan": "FOLDS",
    "kinds": {
@@ -2474,7 +2526,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "lit-string",
@@ -2514,7 +2567,7 @@
    "trigger": "H: assign y = a + 1ns;  (reaches ConversionExpression:width first)",
    "why": "Time literals are integral only when finite and non-negative.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "the scheduler (R1)",
    "plan": "R1",
    "svgolf": {
@@ -2534,7 +2587,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "sy-user-task-call",
@@ -2546,7 +2600,7 @@
    "trigger": "H: task automatic tk(input logic [7:0] x); endtask  always_comb begin y=a; tk(a); end   /   void'(f(a));",
    "why": "No user subroutine calls in the symbolic tier; any statement-position call other than the admitted system tasks falls through here.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "user functions / tasks with the 4-state rule for unassigned locals",
    "plan": "USERFN",
    "kinds": {
@@ -2566,7 +2620,8 @@
     }
    ],
    "evidence": "svgolf/tests/_example/attacks/README.md fn_uninit.sv",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "sy-system-task",
@@ -2578,7 +2633,7 @@
    "trigger": "H: always_comb begin y=a; $monitor(\"x %d\", a); end;  initial $readmemh(\"f.hex\", mem);  $sformat(s,\"x\");  void'($urandom);  q.push_back(a);  void'($countones(a))",
    "why": "Admitted at statement level: $display / $write / $strobe / $finish / $stop / $fatal / $error / $warning / $info / $timeformat / $printtimescale / $assertoff and similar (emitted as SysCall nodes, see the loader gate). Everything else is loud.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "system tasks, file I/O, randomization and queue / string methods of the verification tier",
    "plan": "VERIF",
    "svgolf": {
@@ -2599,7 +2654,8 @@
    ],
    "evidence": "docs/sv-call-statements.md",
    "verified_by_run": true,
-   "notes": "svGolf never: file / IO / simulator control is P-SYNTHESIZABLE, $urandom is P-DETERMINISM."
+   "notes": "svGolf never: file / IO / simulator control is P-SYNTHESIZABLE, $urandom is P-DETERMINISM.",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "sy-syscall-format",
@@ -2712,7 +2768,7 @@
    "trigger": "H: input logic [3:0] k; assign y = a[$signed(k) +: 2];",
    "why": "A signed run-time base has no agreed extension rule in the dynamic part-select tier.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: a signed-base rule (sign extension of the base) agreed across the tools",
    "plan": "SELFEAT",
    "kinds": {
@@ -2726,7 +2782,8 @@
      "fn": "_sym_dynamic_part_select"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "sel-dyn-indexed",
@@ -2738,7 +2795,7 @@
    "trigger": "input logic [0:7] a; assign y = a[k +: 2];  (ascending range, multi-dim, after an element select, parameter root)",
    "why": "Run-time bases are covered only for descending 1-D variable roots through ArraySel.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: extend ArraySel run-time bases",
    "plan": "SELFEAT",
    "kinds": {
@@ -2752,7 +2809,8 @@
      "fn": "_convert_sym_select_expr"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "sel-range-labels",
@@ -2764,7 +2822,7 @@
    "trigger": "logic [8:1] v: v[10] (range), v[10:7] (range), v[a[2:0]] (dynamic-range)",
    "why": "Out-of-range or non-canonical-range labels cannot use the legacy offset encoding.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: route through ArraySel; the constant-base partly-out-of-range case is the round-6 Select:partial-overhang refusal",
    "plan": "SELFEAT",
    "kinds": {
@@ -2788,7 +2846,8 @@
    ],
    "evidence": "docs/sv-envelope-schema.md lines 1485, 1642-1698",
    "verified_by_run": true,
-   "notes": "`direction` is unverified (reversed ranges are slang errors)."
+   "notes": "`direction` is unverified (reversed ranges are slang errors).",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "sel-member",
@@ -2800,7 +2859,7 @@
    "trigger": "typedef struct packed {logic [7:0] f; logic [7:0] g;} s_t; s.f[a[0]]  /  s.f[a[1:0] +: 4]  /  s.f[9:6]",
    "why": "Selects into a packed-struct member are admitted only with literal in-range labels.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: member selects with run-time or out-of-range labels",
    "plan": "SELFEAT",
    "kinds": {
@@ -2822,7 +2881,8 @@
      "fn": "_convert_selected_read"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "sel-param-root",
@@ -2834,7 +2894,7 @@
    "trigger": "module t #(parameter logic [8:1] K=...)(...); K[4:2]  (non-canonical declared range or chained)",
    "why": "Parameter-root selects are emitted only where the offset reading is exact at every point.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: per-point offset arithmetic for parameter roots",
    "plan": "SELFEAT",
    "kinds": {
@@ -2849,7 +2909,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "sel-nested",
@@ -2861,7 +2922,7 @@
    "trigger": "logic [1:0][1:0][1:0] m; m[k[0]][k[1]][k[2]]; labels using $bits / $high / $size of a signal",
    "why": "The legacy nested encoding sizes inner elements as bits, exact for two dimensions only; value queries in labels are default-point widths.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: dimension-aware nested selects",
    "plan": "SELFEAT",
    "kinds": {
@@ -2882,7 +2943,8 @@
     }
    ],
    "evidence": "docs/sv-envelope-schema.md lines 1480-1490; sem2/high_label",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "sel-default-point-index",
@@ -2894,7 +2956,7 @@
    "trigger": "a fixed-array cell whose index is a genvar / parameter expression",
    "why": "A fixed unpacked array cell index that moves with the family point would read the default cell everywhere.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: symbolic cell indices",
    "plan": "FOLDS",
    "kinds": {
@@ -2909,7 +2971,8 @@
     }
    ],
    "evidence": "Examples/system-verilog/sem2/cell_genvar",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "sel-stream-target",
@@ -2921,7 +2984,7 @@
    "trigger": "a streaming-concatenation or select target the legacy blocking-target lowering cannot express",
    "why": "The target shape is outside the admitted select / concat leaf set.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: general target shapes (see AssignmentExpression:target)",
    "plan": "SELFEAT",
    "kinds": {
@@ -2945,7 +3008,8 @@
    ],
    "unverified": true,
    "verified_by_run": false,
-   "notes": "Statically live through _streaming_target_assignment; no probe reached these tags."
+   "notes": "Statically live through _streaming_target_assignment; no probe reached these tags.",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "sel-partial-overhang-legacy",
@@ -3059,7 +3123,7 @@
    "trigger": "a run-time part-select base of more than 32 bits; a dynamic base after an element select, ascending, multi-dimensional, or on a TARGET",
    "why": "(a) wide base: the tools split. (b), (c): no run-time-offset window in the write tier or the shift lowering. Mostly pre-refused by the extractor, so the Lean arms are largely defensive.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: run-time-offset write windows and ascending / multi-dimensional shift lowering",
    "plan": "SELFEAT",
    "kinds": {
@@ -3083,7 +3147,8 @@
    ],
    "unverified": true,
    "verified_by_run": false,
-   "notes": "The wide-base part (a) is refused by P-NO-SILENT-PICK and stays refused while the tools split."
+   "notes": "The wide-base part (a) is refused by P-NO-SILENT-PICK and stays refused while the tools split.",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "sel-array-misc",
@@ -3124,7 +3189,7 @@
    "trigger": "H: logic [N-1:0] v; assign o = v[s];  at N=0",
    "why": "A legacy-encoded select of a declaration whose packed range at the point is not [m:0] with m>=0: the extractor folds label to offset at the default point, but at N=0 the range is ascending and label 1 is out of range.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: lower every select through the dimension-aware ArraySel path so the guard is unnecessary",
    "plan": "SELFEAT",
    "kinds": {
@@ -3147,7 +3212,8 @@
     }
    ],
    "evidence": "rows fold_vsel_n0, fold_vsel_nm1; sem2/fold_vsel",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "sel-lean-bases",
@@ -3159,7 +3225,7 @@
    "trigger": "a select of a non-signal base (parenthesised arithmetic) or with a negative / non-constant label",
    "why": "No static element width or window for the base.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: select-of-expression lowering (shift / mask) with width inference",
    "plan": "SELFEAT",
    "kinds": {
@@ -3177,7 +3243,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "dc-2state",
@@ -3189,7 +3256,7 @@
    "trigger": "input bit [7:0] a;  int k;  byte;  real r;  string s;  event e;  chandle;  mailbox;  semaphore;  virtual interface",
    "why": "`:2state` is the catch-all reason for any declared type that is not 4-state: bit / int / byte (2-state integrals) and non-hardware types alike.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: 2-state declared types in the value tier (Squash2 positions) for bit / int / byte",
    "plan": "AGGR",
    "svgolf": {
@@ -3227,7 +3294,8 @@
    "verified_by_run": true,
    "notes": "Never (svGolf) applies to real / string / event / chandle / mailbox / semaphore / class handles only; bit / int / byte stay later.",
    "value_rank": 10,
-   "value_note": "`int` / `bit` declared types for loop variables and flags"
+   "value_note": "`int` / `bit` declared types for loop variables and flags",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "dc-signed",
@@ -3239,7 +3307,7 @@
    "trigger": "input logic signed [7:0] a;  integer k;  wire signed [3:0] w;",
    "why": "Declared signedness is not carried by the symbolic PackedType.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: signed declarations (signed Resize, signed compare) in Param2 / Sem2",
    "plan": "SIGNED",
    "kinds": {
@@ -3266,7 +3334,8 @@
    "evidence": "docs/sv-envelope-schema.md lines 1941-1942",
    "verified_by_run": true,
    "value_rank": 11,
-   "value_note": "signed arithmetic and comparisons"
+   "value_note": "signed arithmetic and comparisons",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "dc-unpacked",
@@ -3278,7 +3347,7 @@
    "trigger": "input logic [7:0] a [2];  logic [7:0] q[$];  q[];  q[int];  an unpacked struct variable;  a tagged union;  a RUN-TIME-indexed read m[k] of a fixed unpacked array",
    "why": "Unpacked ports, dynamic / queue / associative types and unpacked structs are outside the declared-type vocabulary; constant-index reads of fixed unpacked arrays are admitted.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: unpacked ports / structs / run-time-indexed fixed arrays",
    "plan": "AGGR",
    "svgolf": {
@@ -3309,7 +3378,8 @@
    ],
    "evidence": "docs/sv-variable-types.md",
    "verified_by_run": true,
-   "notes": "Never (svGolf) applies to queue / dynamic / associative arrays only (dynamic memory)."
+   "notes": "Never (svGolf) applies to queue / dynamic / associative arrays only (dynamic memory).",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "dc-tagged-struct",
@@ -3321,7 +3391,7 @@
    "trigger": "a packed tagged union variable (the probe reported VariableSymbol:type instead)",
    "why": "Tagged unions are not modelled.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: tagged unions in the symbolic tier",
    "plan": "AGGR",
    "match": [
@@ -3337,7 +3407,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "dc-net-z",
@@ -3349,7 +3420,7 @@
    "trigger": "module t(input logic a, output wire y);  /  output wire logic [7:0] y;  /  an internal `wire w;`",
    "why": "A net's undriven bits read z, the semantic tier initialises every declaration to x, and whether every bit has a driver is not decided in the extractor.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: driver-coverage analysis (z vs x) or the x-taint feature",
    "plan": "NETRES",
    "kinds": {
@@ -3374,7 +3445,8 @@
    ],
    "evidence": "docs/sv-envelope-schema.md lines 1482-1550",
    "verified_by_run": true,
-   "notes": "An implicit-packed `output wire [7:0] y` is emitted with packed:null and refused by the Lean gate (`unrecoverable packed dimensions`)."
+   "notes": "An implicit-packed `output wire [7:0] y` is emitted with packed:null and refused by the Lean gate (`unrecoverable packed dimensions`).",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "dc-port-init",
@@ -3413,7 +3485,7 @@
    "trigger": "tri w;  wand w;  wor w;  tri0 / tri1 / triand / trior / trireg / uwire;  supply0 gnd;  supply1 vcc;  interconnect ic;",
    "why": "Explicitly typed nets need driver-set resolution and strength; the explicit-net refusal is a recorded round-2 decision.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: a resolved-net model; supply0 / supply1 (constants) are the cheap first step",
    "plan": "NETRES",
    "svgolf": {
@@ -3434,7 +3506,8 @@
    ],
    "evidence": "svgolf/PLAN.md Round 2; docs/sv-net-types.md",
    "verified_by_run": true,
-   "notes": "Never (svGolf) applies to trireg and interconnect (not gate logic)."
+   "notes": "Never (svGolf) applies to trireg and interconnect (not gate logic).",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "dc-named-value",
@@ -3446,7 +3519,7 @@
    "trigger": "specparam SP = 3; assign y = SP;",
    "why": "Only variables, nets, parameters and enum members are named values; a specparam is a timing-annotation parameter.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "specify blocks and timing of the scheduler (R1)",
    "plan": "R1",
    "svgolf": {
@@ -3465,7 +3538,8 @@
      "fn": "_convert_named_value_expr"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "dc-member-kinds",
@@ -3477,7 +3551,7 @@
    "trigger": "typedef real r_t;  class C; endclass  covergroup cg ...  clocking cb ...  specify ... endspecify  parameter type T=...  let l(x)=x+1;  alias a=y;  defparam u.P=2;  function ... endfunction",
    "why": "Member kinds outside the vocabulary are routed to Module.others and stay loud, even when never used. Integral / enum / packed-struct typedefs and imports are admitted as metadata.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: per member kind: let, defparam, alias, unpacked-struct typedefs, type parameters, user subroutines (USERFN)",
    "plan": "HIERFEAT",
    "svgolf": {
@@ -3498,7 +3572,8 @@
    ],
    "evidence": "docs/sv-classes.md, sv-covergroups.md, sv-clocking-blocks.md, sv-specify.md, sv-let-expressions.md, sv-net-alias.md, sv-defparam.md, sv-subroutines.md",
    "verified_by_run": true,
-   "notes": "Never (svGolf) applies to classes, covergroups, clocking blocks and specify blocks."
+   "notes": "Never (svGolf) applies to classes, covergroups, clocking blocks and specify blocks.",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "dc-let",
@@ -3560,7 +3635,7 @@
    "trigger": "interface ifc; logic [7:0] d; endinterface  ifc ii();",
    "why": "Interface instances and ports are not modelled.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: interface elaboration in Hier2",
    "plan": "HIERFEAT",
    "kinds": {
@@ -3575,7 +3650,8 @@
     }
    ],
    "evidence": "docs/sv-hierarchy-kinds.md",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "hi-type-param",
@@ -3587,7 +3663,7 @@
    "trigger": "sub #(.T(logic [7:0])) u(...) with parameter type T",
    "why": "Type-parameter overrides are not modelled.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: type substitution in Hier2",
    "plan": "HIERFEAT",
    "kinds": {
@@ -3602,7 +3678,8 @@
     }
    ],
    "evidence": "docs/sv-type-parameters.md",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "hi-instance-names",
@@ -3669,7 +3746,7 @@
    "trigger": "sub u [1:0] (.i(a), .o(y));",
    "why": "Instance arrays are not modelled.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: instance-array elaboration (equivalent to generate-for of instances)",
    "plan": "HIERFEAT",
    "kinds": {
@@ -3683,7 +3760,8 @@
      "fn": "_convert_member_sym"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "hi-primitive",
@@ -3695,7 +3773,7 @@
    "trigger": "and g1(y, a, b);  /  a user-defined primitive (UDP) instance",
    "why": "Gate primitives and UDPs are not modelled.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: built-in gate primitives first; UDP tables have no recorded plan",
    "plan": "HIERFEAT",
    "kinds": {
@@ -3712,7 +3790,8 @@
    "evidence": "docs/sv-primitives.md; docs/sv-udp.md",
    "verified_by_run": true,
    "value_rank": 15,
-   "value_note": "built-in gate primitives (`and g1(y, a, b)`) for gate-level golf"
+   "value_note": "built-in gate primitives (`and g1(y, a, b)`) for gate-level golf",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "hi-uninstantiated",
@@ -3751,7 +3830,7 @@
    "trigger": "module sub #(parameter int P)(...); instantiated as sub #(.P(1)) u(...)",
    "why": "A child with a parameter that has no default cannot be elaborated alone, so its definition is absent and the instance is loud.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: per-instance definition extraction at the instance's overrides",
    "plan": "HIERFEAT",
    "match": [
@@ -3766,7 +3845,8 @@
      "fn": "_sym_instance_definitions"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "hi-port-direction",
@@ -3778,7 +3858,7 @@
    "trigger": "inout wire io on a child; an interface-typed child port",
    "why": "Bidirectional and interface ports are not modelled (inout needs a z / tri-state model).",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: inout needs a tri-state model (NETRES); ref ports are not hardware",
    "plan": "HIERFEAT",
    "svgolf": {
@@ -3799,7 +3879,8 @@
    ],
    "evidence": "docs/sv-inout-ports.md",
    "verified_by_run": true,
-   "notes": "`ref` ports are never (svGolf)."
+   "notes": "`ref` ports are never (svGolf).",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "hi-port-default",
@@ -3811,7 +3892,7 @@
    "trigger": "module sub(input logic [7:0] i = 8'd5, ...); sub u(.o(y));",
    "why": "slang substitutes the port default bound in the CHILD scope; not modelled.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: port defaults",
    "plan": "HIERFEAT",
    "kinds": {
@@ -3826,7 +3907,8 @@
     }
    ],
    "evidence": "docs/sv-envelope-schema.md lines 1905, 1974-1980",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "hi-port-int-width",
@@ -3838,7 +3920,7 @@
    "trigger": "localparam longint L = 64'sd1 << 40; sub u(.i(L), ...) into a 64-bit port",
    "why": "slang binds the actual already converted to the default-point port width; a wider integer actual would freeze that width.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: per-point port actual widths",
    "plan": "FOLDS",
    "kinds": {
@@ -3856,7 +3938,8 @@
      "fn": "_sym_port_conn"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "hi-init-driver",
@@ -3932,7 +4015,7 @@
    "trigger": "generate begin : g assign y = a; end endgenerate  /  a case-generate arm",
    "why": "Only generate-if and generate-for have structural nodes; bare blocks and case-generate arms do not.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: a GenerateCase node or desugaring to generate-if chains",
    "kinds": {
     "extractor": [
@@ -3950,7 +4033,8 @@
     }
    ],
    "evidence": "docs/sv-elaborated-generate.md",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ge-no-template",
@@ -3962,7 +4046,7 @@
    "trigger": "module t #(parameter int N=0)(...); for (genvar i=0;i<N;i++) begin : g assign y[i]=a[i]; end",
    "why": "The template is bound from the first elaborated instance; a loop with zero instances at the defaults has none.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: bind the template without an elaborated instance",
    "match": [
     {
@@ -3976,7 +4060,8 @@
      "fn": "convert_generate_for"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ge-noloopvar",
@@ -4013,7 +4098,7 @@
    "trigger": "an enum whose member values depend on a parameter, or unsized-literal members, used as a value",
    "why": "Member values are slang's default-point constants.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: symbolic enum member values",
    "plan": "FOLDS",
    "kinds": {
@@ -4029,7 +4114,8 @@
     }
    ],
    "evidence": "sem2/fold_enm, fold_enw",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "pa-aggregate-point",
@@ -4041,7 +4127,7 @@
    "trigger": "logic [7:0] mem [0:K-1] with parameter K; a packed struct whose member width names a parameter",
    "why": "The layout is slang's default-point shape (one decl per default cell, fixed member offsets).",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: parametric aggregate layout",
    "plan": "AGGR",
    "kinds": {
@@ -4063,7 +4149,8 @@
     }
    ],
    "evidence": "sem2/array_point, aggregate_point",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "pa-syntax-recovery",
@@ -4075,7 +4162,7 @@
    "trigger": "a packed dimension recovered from syntax: [f(N)-1:0] with a user function, [$high(a):0], [$bits(logic[N-1:0])-1:0]",
    "why": "slang folds declared dimensions without keeping a bound expression, so they are re-read from syntax; unsupported syntax degrades to Unsupported with the resolved width kept.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: richer syntax recovery",
    "plan": "FOLDS",
    "match": [
@@ -4095,7 +4182,8 @@
     }
    ],
    "evidence": "docs/sv-envelope-schema.md lines 1170-1190",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "me-dynamic-kind",
@@ -4388,7 +4476,7 @@
    "trigger": "a child clock port connected to a non-bare expression (`.ck(clk & en)`); a child flop clocked by a child-internal signal; `assign g = clk & en; child u(.ck(g))`",
    "why": "Sem2 runs every edge process once per cycle whatever its clock (single-clock cycle semantics); a derived or gated clock would fire while its enable is 0.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "multi-clock / sequential layer (a clock-domain check on Design2)",
    "plan": "SEQ",
    "kinds": {
@@ -4408,7 +4496,8 @@
    ],
    "evidence": "docs/sv-charter.md 'Single-clock gap, recorded (2026-10-28)'; Hier2.lean #guards",
    "verified_by_run": true,
-   "notes": "A TOP-level always_ff on a derived clock is admitted by the flat tier (known gap); svGolf closes it with `Unclocked`."
+   "notes": "A TOP-level always_ff on a derived clock is admitted by the flat tier (known gap); svGolf closes it with `Unclocked`.",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-driver-multi",
@@ -4421,7 +4510,7 @@
    "trigger": "for (genvar i=0;i<4;i++) assign y[i/2] = a[i];   (also assigns, instance outputs, generate-loop drivers after flattening)",
    "why": "Sem2 gives several writers of one bit process order (last wins); IEEE net resolution (28.12) is outside the tier, so the winner would be a silent pick.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: a net-resolution / strength model (28.12), which the scored Yosys netlist would also have to resolve; no combinational task needs it",
    "plan": "NETRES",
    "kinds": {
@@ -4452,7 +4541,8 @@
     }
    ],
    "evidence": "8 cases2 refusal rows drv_*; Examples/system-verilog/sem2/drv_*; Hier2.lean #guards",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-driver-mixed",
@@ -4560,7 +4650,7 @@
    "trigger": "an instance of a definition absent from the library (the extractor drops a child whose parameter has no default)",
    "why": "No definition to flatten; dropping the instance would be silent.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: the extractor elaborates a child definition per override point (see ModuleDefinition:elaboration)",
    "plan": "HIERFEAT",
    "match": [
@@ -4580,7 +4670,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-override-unknown",
@@ -4618,7 +4709,7 @@
    "trigger": "an override of an UNTYPED child parameter by an expression outside the INT class (`child #(.P(3'd5))`)",
    "why": "The parameter would take the override's type (IEEE 6.20.2); the constant tier carries integers and would lose it.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: typed override values (a type with each override) in PInst.given / atPoint",
    "plan": "FOLDS",
    "match": [
@@ -4634,7 +4725,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-no-default",
@@ -4846,7 +4938,7 @@
    "trigger": "a generate-for whose init fails constant evaluation or whose step is not `g++` / `g--` of the loop genvar (the extractor emits only those)",
    "why": "The genvar sequence cannot be computed by genvarSeq.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: more step forms (g += k) in stepDelta; today defensive",
    "match": [
     {
@@ -4873,7 +4965,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-generate-genvar-step",
@@ -4885,7 +4978,7 @@
    "trigger": "for (genvar i=0; i<N; i=i+1) ...   (i++ is accepted)",
    "why": "The extractor refuses the step spelled as an assignment; the task READMEs call it 'an ls-sv gap, not a rule'.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: the extractor / loader accepts the `i = i + 1` (and presumably `i += k`) genvar step",
    "where": [
     {
@@ -4896,7 +4989,8 @@
    "evidence": "svgolf/tasks/mul/README.md; svgolf/tasks/add/README.md",
    "verified_by_run": true,
    "value_rank": 18,
-   "value_note": "genvar loops written `i = i + 1` (README promises them, ls-sv refuses them)"
+   "value_note": "genvar loops written `i = i + 1` (README promises them, ls-sv refuses them)",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-generate-bound",
@@ -5065,7 +5159,7 @@
    "trigger": "a value-position read of an UNTYPED parameter whose default has another type than an int, at a point where an integer override retypes it (IEEE 6.20.2)",
    "why": "The envelope's value-tier tree was typed at the default's type, not the override's.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: per-point typed trees (probe re-extraction at the point) or retyping in the value tier",
    "plan": "FOLDS",
    "kinds": {
@@ -5084,7 +5178,8 @@
     }
    ],
    "evidence": "rows fold_uwovr, fold_sho_n31; docs/sv-oracle-disagreements.md",
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-param-package",
@@ -5096,7 +5191,7 @@
    "trigger": "a package-scoped parameter reference `pkg::P`",
    "why": "No package parameter table in IEnv.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: package parameter / enum tables in IEnv",
    "kinds": {
     "lean": [
@@ -5110,7 +5205,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-param-unbound",
@@ -5149,7 +5245,7 @@
    "trigger": "division / modulo by zero; a negative right operand; `'**'` above 4096; `'>>'` of a negative constant; `~` or a bitwise op on a negative constant; vector operators",
    "why": "The constant tier is exact integer arithmetic; a result that would be x, depends on an unknown width or exceeds the bound is refused instead of guessed.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: width-exact INT-class evaluation for ~, signed shifts and bitwise ops on negatives (division by zero stays refused: the value is x)",
    "plan": "FOLDS",
    "match": [
@@ -5178,7 +5274,8 @@
    ],
    "evidence": "rows fold_sqd_n4_u15, fold_sqd_n7_u127, fold_sqd_n8_u255",
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-const-context",
@@ -5190,9 +5287,9 @@
    "trigger": "a parameter default, localparam, generate bound, dimension bound, select label or override containing a signal, an x/z literal, a concatenation, a replication, a reduction or a fill",
    "why": "Elaboration constants must be known integers; signals are run-time values; x/z literals and width-dependent forms have no integer value here.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "x/z constants need the x-taint feature; concatenation / replication / reduction in constants need vector-valued constant folding (a proposal)",
-   "decided_by": "Thomas: x/z literals kept in v0, x-taint later (the vector-folding part is a proposal)",
+   "decided_by": "Thomas: x/z literals kept in v0, x-taint later (the vector-folding part is a proposal); Thomas 2026-10-29: approved the refused-now and later classifications of the register",
    "plan": "XTAINT",
    "match": [
     {
@@ -5468,7 +5565,7 @@
    "trigger": "case (a) inside 4: ...  where an item is wider than the subject at the instantiated point",
    "why": "case...inside compares pairwise (==?); one common width is exact only if no item is wider; there is no Icarus oracle for the construct.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: pairwise inside comparison at differing widths plus an oracle that runs the construct",
    "plan": "CASEFEAT",
    "kinds": {
@@ -5483,7 +5580,8 @@
     }
    ],
    "evidence": "row case_inside_width; sem2/case_inside_width",
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-resize-signed",
@@ -5495,7 +5593,7 @@
    "trigger": "a $signed(...) rigid operand that a parameter point widens where slang's default-point tree has no conversion for it",
    "why": "Sign extension happens exactly when the whole expression is signed, which is not decidable from this node.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: propagate the context signedness to the node",
    "plan": "SIGNED",
    "kinds": {
@@ -5510,7 +5608,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-fill-width",
@@ -5551,7 +5650,7 @@
    "trigger": "H: assign y1 = (a === b);   and !==",
    "why": "Case equality is not lowered by the sv-0.2 value tier (Ingest2 maps it to ceq / cne; instExpr2 has no arm): the node becomes Expr2.unsupported. No sv-0.2 fixture uses it.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: add .ceq / .cne arms to instExpr2; x/z-sensitive, so decide with the x-taint / fourstate story",
    "plan": "OPS",
    "kinds": {
@@ -5570,7 +5669,8 @@
     }
    ],
    "verified_by_run": true,
-   "notes": "Found by the register authors: the extractor emits Binary op '===' and Lean refuses it."
+   "notes": "Found by the register authors: the extractor emits Binary op '===' and Lean refuses it.",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-incdec-value",
@@ -5582,7 +5682,7 @@
    "trigger": "++ / -- as a value expression outside a generate step",
    "why": "Side-effecting expression; no statement-level increment in the tier.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: procedural loops and side-effect expressions",
    "plan": "OPS",
    "kinds": {
@@ -5601,7 +5701,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-squash2",
@@ -5613,7 +5714,7 @@
    "trigger": "a 4-state to 2-state squash node in a VALUE position (2-state parameter types are fine in the constant tier)",
    "why": "2-state variables squash x/z to 0; the value core is 4-state.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: 2-state variable semantics in the value tier",
    "plan": "AGGR",
    "kinds": {
@@ -5630,7 +5731,8 @@
    ],
    "unverified": true,
    "verified_by_run": false,
-   "notes": "Squash2:context (Param2.lean instExpr2, 2026-10-29): a 2-state target narrower than its context-directed operand at the default point is refused where a wider context at another parameter point would change the operand's width (IEEE 1800-2023 11.8.2); docs/sv-two-state-boundary.md."
+   "notes": "Squash2:context (Param2.lean instExpr2, 2026-10-29): a 2-state target narrower than its context-directed operand at the default point is refused where a wider context at another parameter point would change the operand's width (IEEE 1800-2023 11.8.2); docs/sv-two-state-boundary.md.",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-syscall",
@@ -5672,7 +5774,7 @@
    "trigger": "undeclared target, negative constant index, bad part-select bounds, nested or empty concatenation target, a leaf that overhangs its vector, dynamic indexed part-select target",
    "why": "The write window cannot be fixed; concat targets must write exactly each leaf's declared width or the split of the RHS would shift.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: nested concat targets and window clipping with a recorded reading",
    "plan": "SELFEAT",
    "kinds": {
@@ -5700,7 +5802,8 @@
    ],
    "unverified": true,
    "verified_by_run": false,
-   "notes": "Undeclared / negative-index reasons are defensive refused-now."
+   "notes": "Undeclared / negative-index reasons are defensive refused-now.",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-assign-undeclared",
@@ -5712,7 +5815,7 @@
    "trigger": "a generate body declaring `logic t` then `assign t = a[i]` (the target is an undeclared module-level name)",
    "why": "Per-instance scoping of generate-local declarations is not modelled.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: generate-local declaration scoping (see GenerateDecl)",
    "kinds": {
     "lean": [
@@ -5725,7 +5828,8 @@
      "fn": "instProcess2"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-generate-decl",
@@ -5737,7 +5841,7 @@
    "trigger": "a Var, Net, LocalParam or ParameterDecl inside a generate body: for (genvar i...) begin : g logic t; localparam int K = i+1; ... end",
    "why": "Generate-local declarations need per-instance scoping and hoisting; a loud item, not an envelope parse failure.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: hoist generate-local declarations as `<path>.<name>` like instance signals (Hier2 already hoists)",
    "kinds": {
     "lean": [
@@ -5751,7 +5855,8 @@
     }
    ],
    "evidence": "Ingest2.lean #guard (GenerateDecl:LocalParam)",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "le-m0-boundary",
@@ -5899,7 +6004,7 @@
    "trigger": "always_comb y <= a;",
    "why": "The comb phase has no NBA region; a queued update has no commit point inside the settle loop. Not refused at load: run2 returns unsupported on the first cycle.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "an NBA queue inside the comb settle loop, or a decision to refuse at instantiation like the other guards",
    "plan": "SEQ",
    "match": [
@@ -5914,7 +6019,8 @@
      "fn": "runCombProcess2"
     }
    ],
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "gu-comb-loop",
@@ -5989,7 +6095,7 @@
    "trigger": "a read or write of a name absent from the state; a NONBLOCKING assign to a concat target",
    "why": "Unreachable after instantiation (defensive), except the NBA-to-concat-target case: the NBA queue has no split of one sampled RHS over statically sized windows.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "concat targets in the NBA queue and dynamic-leaf windows (part of SEQ)",
    "plan": "SEQ",
    "match": [
@@ -6013,7 +6119,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ld-localdecl",
@@ -6025,7 +6132,7 @@
    "trigger": "H: always_comb begin logic [1:0] t; t = a; y = t; end",
    "why": "The extractor emits LocalDecl but Ingest2 has no arm, so the WHOLE envelope is rejected at load. Declare the temporary at module level instead.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: a LocalDecl statement (scoped temporaries) in Stmt2 / PStmt",
    "plan": "AGGR",
    "match": [
@@ -6047,7 +6154,8 @@
    "evidence": "measured by the register authors with the extractor (LocalDecl in the envelope); Comb2Proc docstring",
    "verified_by_run": true,
    "value_rank": 3,
-   "value_note": "block-local temporaries in always_comb (today the whole envelope is rejected at load)"
+   "value_note": "block-local temporaries in always_comb (today the whole envelope is rejected at load)",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ld-initial-syscall",
@@ -6059,7 +6167,7 @@
    "trigger": "H: initial begin y = a; end   /   always_comb begin y = a; $display(\"x\"); end",
    "why": "The extractor emits an Initial process and statement-position SysCall nodes, but Ingest2 has no arm for them: the whole envelope is rejected at load.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "the scheduler (R1) models initial; $display and friends are inert for a combinational task but the loader must still parse them (no plan item)",
    "plan": "R1",
    "svgolf": {
@@ -6084,7 +6192,8 @@
     }
    ],
    "verified_by_run": true,
-   "notes": "Envelope shape verified with the extractor; the Lean rejection is read from parsePProcess / parsePStmt, not run."
+   "notes": "Envelope shape verified with the extractor; the Lean rejection is read from parsePProcess / parsePStmt, not run.",
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ld-unknown-kind",
@@ -6190,7 +6299,7 @@
    "trigger": "H: logic [1:0] t = a;   /   a struct, typedef or enum-array whose layout depends on a parameter",
    "why": "Initial values come from a literal; an expression initializer has no defined time of evaluation. Without a symbolic dimension list there is no width or select geometry at other points.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: initializers through the value tier with a recorded time-0 evaluation order; symbolic struct / typedef layout in the envelope",
    "plan": "FOLDS",
    "match": [
@@ -6218,7 +6327,8 @@
     }
    ],
    "evidence": "5 rows pi_*; 8 rows aggregate_param, fold_tdw*",
-   "verified_by_run": true
+   "verified_by_run": true,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ld-vacuous",
@@ -6293,7 +6403,7 @@
    "trigger": "v[(N*N) >> 30 +: 4] at N = 65536",
    "why": "Exact 32-bit `int` constants build a different design than the unbounded fast path; the proof-facing family would describe a circuit no simulator builds.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: a 32-bit-exact constant tier for the proof-facing family",
    "plan": "FOLDS",
    "match": [
@@ -6313,7 +6423,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "ld-promoted",
@@ -6489,7 +6600,7 @@
    "trigger": "y <= a; y[i] = ... with a run-time i; {c, s} = a + b; always_ff processes",
    "why": "Design2.lowerComb returns none, so the always_comb settle theorem does not apply: the lowering needs a static write window per blocking assignment.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: dynamic-window and concat-target symbolic execution (no recorded plan); edge processes follow the sequential layer",
    "plan": "WINDOWS",
    "where": [
@@ -6511,7 +6622,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "tl-lowercomb-windows",
@@ -6523,7 +6635,7 @@
    "trigger": "a whole read of a partly written signal; a window read that straddles a written window; `y[0] = a; y = b;`; branches writing overlapping but different windows",
    "why": "The symbolic state keeps disjoint windows; these shapes have no single equation per window.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: windows with partial overlap in the symbolic state",
    "plan": "WINDOWS",
    "where": [
@@ -6541,7 +6653,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "tl-lowercomb-selfread",
@@ -6553,7 +6666,7 @@
    "trigger": "a body whose equations read a window the body itself writes (latches, `y = t; t = a;`)",
    "why": "One run must be its own fixpoint (runCombProcess2_alwaysComb_idem) for the settle theorem to carry over; a different test from CombGuard2, which admits latches.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "none recorded; proposed prerequisite: a window-level rank and latch support in the lowering",
    "plan": "WINDOWS",
    "where": [
@@ -6567,7 +6680,8 @@
     }
    ],
    "unverified": true,
-   "verified_by_run": false
+   "verified_by_run": false,
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
    "id": "tl-sv-structure-fragment",
@@ -6579,9 +6693,9 @@
    "trigger": "declaration initializer, localparams, enums, out-of-tier members, non-affine indexes or bounds, unary / ?: / replication / reduction / arithmetic operators, part-select or concat targets, always_* processes, nested generate loops deeper than two, conditional generate, instances",
    "why": "The v1 recognizer covers the gate-level assign fragment of the adder and array multiplier with affine geometry; anything else cannot be summarized soundly. Reported as `sv_structure: outside the supported fragment`.",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "stage-2 lanes: localparams via the parameter stage, deeper arrays, part-select / concat targets, nested loops, instances; arithmetic and always_comb are separate lanes (comb2 lowering, sv_equations)",
-   "decided_by": "Thomas 2026-10-29: build the tactic (the fragment extension itself is the lead's plan)",
+   "decided_by": "Thomas 2026-10-29: build the tactic (the fragment extension itself is the lead's plan); Thomas 2026-10-29: approved the refused-now and later classifications of the register",
    "plan": "STAGE2",
    "where": [
     {
@@ -6648,9 +6762,9 @@
    "trigger": "an expression with mismatched operand widths, a dynamic index, / % **, signed forms, wildcard equalities, an unsupported node, or an x literal",
    "why": "Outside the x-free fragment the knownness theorem simply does not apply: their Boolean equations are not written yet, or they can produce x from known inputs (division by zero, out-of-range dynamic index).",
    "category": "later",
-   "proposed": true,
+   "proposed": false,
    "prerequisite": "extend xfWidth with signed forms, wildcards and dynamic-index guards; x literals need the x-taint feature",
-   "decided_by": "Thomas: x/z literals and the fourstate stage kept in v0, x-taint later",
+   "decided_by": "Thomas: x/z literals and the fourstate stage kept in v0, x-taint later; Thomas 2026-10-29: approved the refused-now and later classifications of the register",
    "plan": "XTAINT",
    "where": [
     {
@@ -6921,7 +7035,7 @@
     "trigger": "`` `define W 4 `` with a use of `` `W ``; `` `undef FOO ``; a conditional on a user macro",
     "why": "The gate hands the canonical text UNEXPANDED to slang, the extractor and Yosys, so it cannot show that three preprocessors expand a user macro identically.",
     "category": "later",
-    "proposed": true,
+    "proposed": false,
     "prerequisite": "none recorded; proposed prerequisite: the gate expands user macros itself and hands ONE preprocessed text to every consumer (SYNTHESIS / YOSYS conditions stay refused)",
     "plan": "MACROS",
     "match": [
@@ -6937,7 +7051,8 @@
      }
     ],
     "evidence": "svgolf/score/srcgate.py docstring item 1",
-    "verified_by_run": true
+    "verified_by_run": true,
+    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
    },
    {
     "id": "sg-include",
@@ -6949,7 +7064,7 @@
     "trigger": "`` `include \"foo.vh\" ``",
     "why": "The included file is a second source the gate, the staging directory, the hash record and the proof never see; include paths differ per tool.",
     "category": "later",
-    "proposed": true,
+    "proposed": false,
     "prerequisite": "none recorded; proposed prerequisite: multi-file designs with every included file gated, staged and hashed",
     "plan": "MULTIFILE",
     "match": [
@@ -6965,7 +7080,8 @@
      }
     ],
     "evidence": "svgolf/README.md Checker v0 limits (One file, one design)",
-    "verified_by_run": true
+    "verified_by_run": true,
+    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
    },
    {
     "id": "sg-pragma-dir",
@@ -7522,7 +7638,7 @@
     "trigger": "always_comb begin for (int k = 0; k < N; k++) y[k] = a[k] & b[k]; end",
     "why": "Documented gap: ls-sv does not load procedural loops today, and a PR that admits them should teach this rule loop bounds. The generate-for twin passes.",
     "category": "later",
-    "proposed": true,
+    "proposed": false,
     "prerequisite": "none recorded; proposed prerequisite: ls-sv loads procedural loops AND rule (d) learns loop bounds",
     "plan": "LOOPS",
     "match": [
@@ -7537,7 +7653,8 @@
       "fn": "XCheck._check_select"
      }
     ],
-    "verified_by_run": true
+    "verified_by_run": true,
+    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
    },
    {
     "id": "sg-fs-shape",
@@ -7640,7 +7757,7 @@
     "trigger": "always_comb begin if (en) y = a; end   (an output not assigned on every path)",
     "why": "A variable an always_comb block reads before it assigns it on every path holds x; Yosys `proc` refuses it ('Latch inferred ... from always_comb').",
     "category": "later",
-    "proposed": true,
+    "proposed": false,
     "prerequisite": "the sequential layer (tasks stay combinational), latch semantics in ls-sv and a latch price in score/ge.json",
     "plan": "SEQ",
     "match": [
@@ -7655,7 +7772,8 @@
       "fn": "yosys_check"
      }
     ],
-    "verified_by_run": true
+    "verified_by_run": true,
+    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
    },
    {
     "id": "sg-fs-unreadable",
@@ -7881,7 +7999,7 @@
     "trigger": "import MyHelpers",
     "why": "One file in v0: there is no module the checker could stage or hash for a second file.",
     "category": "later",
-    "proposed": true,
+    "proposed": false,
     "prerequisite": "none recorded; proposed prerequisite: multi-file staging, hashing and an integrity snapshot of every player file",
     "plan": "MULTIFILE",
     "match": [
@@ -7896,7 +8014,8 @@
       "fn": "check"
      }
     ],
-    "verified_by_run": true
+    "verified_by_run": true,
+    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
    },
    {
     "id": "sg-design-import",
@@ -8130,7 +8249,7 @@
     "trigger": "(not expressible: CombTask.sem takes one Nat)",
     "why": "The statement type is one-parameter.",
     "category": "later",
-    "proposed": true,
+    "proposed": false,
     "prerequisite": "none recorded; proposed prerequisite: a multi-parameter CombTask (sem over a tuple) and its Comb.lean reduction",
     "plan": "MULTIPARAM",
     "match": [
@@ -8146,7 +8265,8 @@
      }
     ],
     "unverified": true,
-    "verified_by_run": false
+    "verified_by_run": false,
+    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
    },
    {
     "id": "sg-no-theorem",
@@ -8543,7 +8663,7 @@
     "trigger": "tests/_example/attacks/fn_uninit.sv, latch_never.sv, latch_star.sv",
     "why": "x in IEEE, resolved freely by Yosys (to 1 or 0). ls-sv has no user function calls, no AlwaysLatch, no always @*, so no static rule sees it and the postsynth stage is the only line today; it fails closed.",
     "category": "later",
-    "proposed": true,
+    "proposed": false,
     "prerequisite": "a 4-state rule in score/fourstate.py MUST land BEFORE ls-sv models the construct",
     "plan": "LATCH4",
     "match": [
@@ -8568,7 +8688,8 @@
      "_example/fn_uninit",
      "_example/latch_never",
      "_example/latch_star"
-    ]
+    ],
+    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
    },
    {
     "id": "sg-ps-failclosed",
@@ -8651,7 +8772,7 @@
     "trigger": "\"banlist\": {\"operators\": [\"<<\"]}",
     "why": "Only the six arithmetic operators have a Yosys cell map and a slang operator map. The CLI `banlist.py --ban '<<'` dies with a KeyError traceback instead of the clean message.",
     "category": "later",
-    "proposed": true,
+    "proposed": false,
     "prerequisite": "none recorded; proposed prerequisite: a task that needs it (barrel shifter bans << >> <<< >>>; a comparator bans < > <= >=), then OP_CELLS and _binop_symbol extended with $shl $shr $sshl $sshr $lt $le $gt $ge",
     "plan": "BANOPS",
     "match": [
@@ -8666,7 +8787,8 @@
       "fn": "task_banlist"
      }
     ],
-    "verified_by_run": true
+    "verified_by_run": true,
+    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
    },
    {
     "id": "sg-task-keys",

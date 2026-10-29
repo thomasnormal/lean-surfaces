@@ -5315,6 +5315,43 @@ def setIntersectionKeys (left right : List RVal) : List RVal :=
   left.foldr (init := []) fun value acc =>
     if setKeyMember value right then value :: acc else acc
 
+def heapListRepeatOperandH (h : Heap) (op : BinOp) (addr : Addr) (count : RVal) :
+    Res (Heap × RVal) :=
+      match Heap.get? h addr with
+      | some (.list xs) =>
+        match asInt count with
+        | some n => heapListRepeat h xs n
+        | none => .exn (.typeError s!"can't multiply sequence by non-int of type '{RVal.typeNameH h count}'")
+      | _ =>
+        match evalBinOp op (.ref addr) count with
+        | .ok value => .ok (h, value)
+        | .exn e => .exn e
+        | .timeout => .timeout
+        | .unsupported msg => .unsupported msg
+def heapListRepeatOperandRightH (h : Heap) (op : BinOp) (count : RVal) (addr : Addr) :
+    Res (Heap × RVal) :=
+      match Heap.get? h addr with
+      | some (.list xs) =>
+        match asInt count with
+        | some n => heapListRepeat h xs n
+        | none => .exn (.typeError s!"can't multiply sequence by non-int of type '{RVal.typeNameH h count}'")
+      | _ =>
+        match evalBinOp op count (.ref addr) with
+        | .ok value => .ok (h, value)
+        | .exn e => .exn e
+        | .timeout => .timeout
+        | .unsupported msg => .unsupported msg
+def evalBinOpMultH (h : Heap) (op : BinOp) (a b : RVal) : Res (Heap × RVal) :=
+  match a, b with
+  | .ref addr, count => heapListRepeatOperandH h op addr count
+  | count, .ref addr => heapListRepeatOperandRightH h op count addr
+  | _, _ =>
+      match evalBinOp op a b with
+      | .ok value => .ok (h, value)
+      | .exn e => .exn e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg
+
 def evalBinOpH (h : Heap) (op : BinOp) (a b : RVal) : Res (Heap × RVal) :=
   if op == .bitAnd && setLikeRefH h a && setLikeRefH h b then
     let left := setLikeElemsH h a
@@ -5326,38 +5363,7 @@ def evalBinOpH (h : Heap) (op : BinOp) (a b : RVal) : Res (Heap × RVal) :=
     | .unsupported msg, _ | _, .unsupported msg => .unsupported msg
     | .timeout, _ | _, .timeout => .timeout
     | .exn e, _ | _, .exn e => .exn e
-  else if op == .mult then
-    match a, b with
-    | .ref addr, count =>
-      match Heap.get? h addr with
-      | some (.list xs) =>
-        match asInt count with
-        | some n => heapListRepeat h xs n
-        | none => .exn (.typeError s!"can't multiply sequence by non-int of type '{RVal.typeNameH h count}'")
-      | _ =>
-        match evalBinOp op a b with
-        | .ok value => .ok (h, value)
-        | .exn e => .exn e
-        | .timeout => .timeout
-        | .unsupported msg => .unsupported msg
-    | count, .ref addr =>
-      match Heap.get? h addr with
-      | some (.list xs) =>
-        match asInt count with
-        | some n => heapListRepeat h xs n
-        | none => .exn (.typeError s!"can't multiply sequence by non-int of type '{RVal.typeNameH h count}'")
-      | _ =>
-        match evalBinOp op a b with
-        | .ok value => .ok (h, value)
-        | .exn e => .exn e
-        | .timeout => .timeout
-        | .unsupported msg => .unsupported msg
-    | _, _ =>
-      match evalBinOp op a b with
-      | .ok value => .ok (h, value)
-      | .exn e => .exn e
-      | .timeout => .timeout
-      | .unsupported msg => .unsupported msg
+  else if op == .mult then evalBinOpMultH h op a b
   else
     match evalBinOp op a b with
     | .ok value => .ok (h, value)

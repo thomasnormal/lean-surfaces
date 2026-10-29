@@ -590,6 +590,7 @@ def interpUnfolds : List Name :=
    ``RVal.freezeList, ``RVal.freezeB, ``RVal.freezeListB,
    ``valEq, ``valEqList,
    ``intCmp, ``strCmp, ``evalCompareOp, ``evalCompareOpH, ``evalBinOp,
+   ``evalBinOpMultH, ``heapListRepeatOperandH, ``heapListRepeatOperandRightH,
    ``strFormat,
    ``evalUnaryOp, ``evalUnaryOpH,
    ``lenVal, ``lenValH, ``sortedVal, ``asIntList, ``normIndex, ``indexVal,

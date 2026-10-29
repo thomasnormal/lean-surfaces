@@ -41,7 +41,10 @@ theorem repeat_right_total (text : PyStr) (count : PyInt)
     (outputBound : text.length * count.toNat ≤ 1048576) :
     string_repeat.repeat_right(text, count) ==>
       String.ofList ((List.replicate count.toNat text.toList).flatten) := by
-  py_prove [string_repeat, lowerLenRepeatPairs, sequenceMult, sequenceMultLength, lenMultBuiltinName, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd,
+  py_prove [string_repeat, lowerLenRepeatPairs, flattenStarRun, flattenStarCallArgs,
+    sequenceMult, sequenceMultLength, lenMultBuiltinName, starArgBuiltinName,
+    fstringFormatBuiltinName, hasUnboundLocal, unboundLocalMarker,
+    isLoweredBuiltinName, funsHeapFree, evalBinOpH, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd,
     strRepeat_of_bounds text count countBound outputBound]
 
 theorem repeat_left_total (text : PyStr) (count : PyInt)
@@ -49,7 +52,10 @@ theorem repeat_left_total (text : PyStr) (count : PyInt)
     (outputBound : text.length * count.toNat ≤ 1048576) :
     string_repeat.repeat_left(count, text) ==>
       String.ofList ((List.replicate count.toNat text.toList).flatten) := by
-  py_prove [string_repeat, lowerLenRepeatPairs, sequenceMult, sequenceMultLength, lenMultBuiltinName, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd,
+  py_prove [string_repeat, lowerLenRepeatPairs, flattenStarRun, flattenStarCallArgs,
+    sequenceMult, sequenceMultLength, lenMultBuiltinName, starArgBuiltinName,
+    fstringFormatBuiltinName, hasUnboundLocal, unboundLocalMarker,
+    isLoweredBuiltinName, funsHeapFree, evalBinOpH, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd,
     strRepeat_of_bounds text count countBound outputBound]
 
 theorem decorated_total (text : PyStr) (count : PyInt)
@@ -57,12 +63,18 @@ theorem decorated_total (text : PyStr) (count : PyInt)
     (outputBound : text.length * count.toNat ≤ 1048576) :
     string_repeat.decorated(text, count) ==>
       ("[" ++ String.ofList ((List.replicate count.toNat text.toList).flatten) ++ "]") := by
-  py_prove [string_repeat, lowerLenRepeatPairs, sequenceMult, sequenceMultLength, lenMultBuiltinName, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd,
+  py_prove [string_repeat, lowerLenRepeatPairs, flattenStarRun, flattenStarCallArgs,
+    sequenceMult, sequenceMultLength, lenMultBuiltinName, starArgBuiltinName,
+    fstringFormatBuiltinName, hasUnboundLocal, unboundLocalMarker,
+    isLoweredBuiltinName, funsHeapFree, evalBinOpH, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd,
     strRepeat_of_bounds text count countBound outputBound]
 
 theorem width_offset_total (offset : PyInt) :
     string_repeat.width_offset(offset) ==> 6 + offset := by
-  py_prove [string_repeat, lowerLenRepeatPairs, sequenceMult, sequenceMultLength, seqIndexBudget, lenMultBuiltinName, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd, tripled_ab,
+  py_prove [string_repeat, lowerLenRepeatPairs, flattenStarRun, flattenStarCallArgs,
+    sequenceMult, sequenceMultLength, seqIndexBudget, lenMultBuiltinName, starArgBuiltinName,
+    fstringFormatBuiltinName, hasUnboundLocal, unboundLocalMarker,
+    isLoweredBuiltinName, funsHeapFree, evalBinOpH, sequenceRepeat, mult_ne_bitAnd, add_ne_bitAnd, tripled_ab,
     tripled_ab_length]
   decide
 

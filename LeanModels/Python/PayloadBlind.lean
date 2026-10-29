@@ -1754,6 +1754,58 @@ theorem heapListAugAssign_slot (hslot : Heap.get? h pa = some o₀)
                 | unsupported msg => simp [hev] at hw
             | _ => simp [hget] at hw
 
+theorem heapListRepeatUpdate_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (b : Addr) (hb : b ≠ pa)
+    (xs : Array RVal) (count : Int) :
+    heapListRepeatUpdate (Heap.swapAt h pa o) b xs count =
+      Res.mapOk (fun h' => Heap.swapAt h' pa o)
+        (heapListRepeatUpdate h b xs count) := by
+  simp only [heapListRepeatUpdate]
+  split
+  · rfl
+  · split
+    · cases hu : Heap.update h b (.list #[]) with
+      | none =>
+          rw [Heap.update_swapAt_ne hb, hu]
+          rfl
+      | some h' =>
+          rw [Heap.update_swapAt_ne hb, hu]
+          rfl
+    · split
+      · cases hu : Heap.update h b (.list ((List.replicate count.toNat xs.toList).flatten.toArray)) with
+        | none =>
+            rw [Heap.update_swapAt_ne hb, hu]
+            rfl
+        | some h' =>
+            rw [Heap.update_swapAt_ne hb, hu]
+            rfl
+      · rfl
+
+theorem heapListRepeatUpdate_slot (hslot : Heap.get? h pa = some o₀)
+    (b : Addr) (hb : b ≠ pa) (xs : Array RVal) (count : Int)
+    {h' : Heap} (hw : heapListRepeatUpdate h b xs count = .ok h') :
+    Heap.get? h' pa = some o₀ := by
+  simp only [heapListRepeatUpdate] at hw
+  split at hw
+  · cases hw
+  · split at hw
+    · cases hu : Heap.update h b (.list #[]) with
+      | none => simp [hu] at hw
+      | some h'' =>
+          simp only [hu] at hw
+          injection hw with hh
+          subst h'
+          exact Heap.get?_update_ne hu (Ne.symm hb) |>.trans hslot
+    · split at hw
+      · cases hu : Heap.update h b (.list ((List.replicate count.toNat xs.toList).flatten.toArray)) with
+        | none => simp [hu] at hw
+        | some h'' =>
+            simp only [hu] at hw
+            injection hw with hh
+            subst h'
+            exact Heap.get?_update_ne hu (Ne.symm hb) |>.trans hslot
+      · cases hw
+
 theorem setLikeRefH_swapAt (hslot : Heap.get? h pa = some o₀)
     (htwin : PayloadTwin o₀ o) (v : RVal) :
     setLikeRefH (Heap.swapAt h pa o) v = setLikeRefH h v := by
@@ -1782,24 +1834,427 @@ theorem setLikeElemsH_swapAt (hslot : Heap.get? h pa = some o₀)
       · simp [setLikeElemsH, hb0, hb1, dictViewEntries_swapAt hslot htwin]
   | _ => rfl
 
+theorem heapListRepeat_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (xs : Array RVal) (count : Int) :
+    heapListRepeat (Heap.swapAt h pa o) xs count =
+      Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+        (heapListRepeat h xs count) := by
+  unfold heapListRepeat
+  split
+  · rfl
+  · split
+    · simp [Res.mapOk, Heap.swapAt_push (Heap.lt_size_of_get? hslot),
+        Heap.size_swapAt]
+    · split
+      · simp [Res.mapOk, Heap.swapAt_push (Heap.lt_size_of_get? hslot),
+          Heap.size_swapAt]
+      · rfl
+
+theorem heapListRepeatOperand_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (op : BinOp) (addr : Addr) (count : RVal) :
+    (match (Heap.swapAt h pa o).get? addr with
+     | some (.list xs) =>
+         match asInt count with
+         | some n => heapListRepeat (Heap.swapAt h pa o) xs n
+         | none => .exn (.typeError
+             s!"can't multiply sequence by non-int of type '{RVal.typeNameH (Heap.swapAt h pa o) count}'")
+     | _ =>
+         match evalBinOp op (.ref addr) count with
+         | .ok value => .ok (Heap.swapAt h pa o, value)
+         | .exn e => .exn e
+         | .timeout => .timeout
+         | .unsupported msg => .unsupported msg) =
+      Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+        (match h.get? addr with
+         | some (.list xs) =>
+             match asInt count with
+             | some n => heapListRepeat h xs n
+             | none => .exn (.typeError
+                 s!"can't multiply sequence by non-int of type '{RVal.typeNameH h count}'")
+         | _ =>
+             match evalBinOp op (.ref addr) count with
+             | .ok value => .ok (h, value)
+             | .exn e => .exn e
+             | .timeout => .timeout
+             | .unsupported msg => .unsupported msg) := by
+  have hthread (r : Res RVal) :
+      (match r with
+       | .ok value => .ok (Heap.swapAt h pa o, value)
+       | .exn e => .exn e
+       | .timeout => .timeout
+       | .unsupported msg => .unsupported msg) =
+        Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+          (match r with
+           | .ok value => .ok (h, value)
+           | .exn e => .exn e
+           | .timeout => .timeout
+           | .unsupported msg => .unsupported msg) := by
+    cases r <;> rfl
+  by_cases hba : addr = pa
+  · subst addr
+    obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+    simp only [hslot, Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot)]
+    exact hthread (evalBinOp op (.ref pa) count)
+  · simp only [Heap.get?_swapAt_ne hba]
+    cases hget : h.get? addr with
+    | none =>
+        simp only [hget]
+        exact hthread (evalBinOp op (.ref addr) count)
+    | some obj =>
+        cases obj with
+        | list xs =>
+            cases hac : asInt count with
+            | some n => simp [hget, hac, heapListRepeat_swapAt hslot htwin,
+                Res.mapOk]
+            | none => simp [hget, hac, RVal.typeNameH_swapAt hslot htwin, Res.mapOk]
+        | _ =>
+            simp only [hget]
+            exact hthread (evalBinOp op (.ref addr) count)
+
+theorem heapListRepeatOperandRight_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (op : BinOp) (count : RVal) (addr : Addr) :
+    (match (Heap.swapAt h pa o).get? addr with
+     | some (.list xs) =>
+         match asInt count with
+         | some n => heapListRepeat (Heap.swapAt h pa o) xs n
+         | none => .exn (.typeError
+             s!"can't multiply sequence by non-int of type '{RVal.typeNameH (Heap.swapAt h pa o) count}'")
+     | _ =>
+         match evalBinOp op count (.ref addr) with
+         | .ok value => .ok (Heap.swapAt h pa o, value)
+         | .exn e => .exn e
+         | .timeout => .timeout
+         | .unsupported msg => .unsupported msg) =
+      Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+        (match h.get? addr with
+         | some (.list xs) =>
+             match asInt count with
+             | some n => heapListRepeat h xs n
+             | none => .exn (.typeError
+                 s!"can't multiply sequence by non-int of type '{RVal.typeNameH h count}'")
+         | _ =>
+             match evalBinOp op count (.ref addr) with
+             | .ok value => .ok (h, value)
+             | .exn e => .exn e
+             | .timeout => .timeout
+             | .unsupported msg => .unsupported msg) := by
+  have hthread (r : Res RVal) :
+      (match r with
+       | .ok value => .ok (Heap.swapAt h pa o, value)
+       | .exn e => .exn e
+       | .timeout => .timeout
+       | .unsupported msg => .unsupported msg) =
+        Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+          (match r with
+           | .ok value => .ok (h, value)
+           | .exn e => .exn e
+           | .timeout => .timeout
+           | .unsupported msg => .unsupported msg) := by
+    cases r <;> rfl
+  by_cases hba : addr = pa
+  · subst addr
+    obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+    simp only [hslot, Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot)]
+    exact hthread (evalBinOp op count (.ref pa))
+  · simp only [Heap.get?_swapAt_ne hba]
+    cases hget : h.get? addr with
+    | none =>
+        simp only [hget]
+        exact hthread (evalBinOp op count (.ref addr))
+    | some obj =>
+        cases obj with
+        | list xs =>
+            cases hac : asInt count with
+            | some n => simp [hget, hac, heapListRepeat_swapAt hslot htwin,
+                Res.mapOk]
+            | none => simp [hget, hac, RVal.typeNameH_swapAt hslot htwin, Res.mapOk]
+        | _ =>
+            simp only [hget]
+            exact hthread (evalBinOp op count (.ref addr))
+
+theorem heapListRepeatOperandH_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (op : BinOp) (addr : Addr) (count : RVal) :
+    heapListRepeatOperandH (Heap.swapAt h pa o) op addr count =
+      Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+        (heapListRepeatOperandH h op addr count) := by
+  unfold heapListRepeatOperandH
+  have hthread (r : Res RVal) :
+      (match r with
+       | .ok value => .ok (Heap.swapAt h pa o, value)
+       | .exn e => .exn e
+       | .timeout => .timeout
+       | .unsupported msg => .unsupported msg) =
+        Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+          (match r with
+           | .ok value => .ok (h, value)
+           | .exn e => .exn e
+           | .timeout => .timeout
+           | .unsupported msg => .unsupported msg) := by
+    cases r <;> rfl
+  by_cases hba : addr = pa
+  · subst addr
+    obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+    simp only [hslot, Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot)]
+    exact hthread (evalBinOp op (.ref pa) count)
+  · simp only [Heap.get?_swapAt_ne hba]
+    cases hget : h.get? addr with
+    | none =>
+        simp only [hget]
+        exact hthread (evalBinOp op (.ref addr) count)
+    | some obj =>
+        cases obj with
+        | list xs =>
+            cases hac : asInt count with
+            | some n => simp [hget, hac, heapListRepeat_swapAt hslot htwin, Res.mapOk]
+            | none => simp [hget, hac, RVal.typeNameH_swapAt hslot htwin, Res.mapOk]
+        | _ =>
+            simp only [hget]
+            exact hthread (evalBinOp op (.ref addr) count)
+
+theorem heapListRepeatOperandRightH_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (op : BinOp) (count : RVal) (addr : Addr) :
+    heapListRepeatOperandRightH (Heap.swapAt h pa o) op count addr =
+      Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+        (heapListRepeatOperandRightH h op count addr) := by
+  unfold heapListRepeatOperandRightH
+  have hthread (r : Res RVal) :
+      (match r with
+       | .ok value => .ok (Heap.swapAt h pa o, value)
+       | .exn e => .exn e
+       | .timeout => .timeout
+       | .unsupported msg => .unsupported msg) =
+        Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+          (match r with
+           | .ok value => .ok (h, value)
+           | .exn e => .exn e
+           | .timeout => .timeout
+           | .unsupported msg => .unsupported msg) := by
+    cases r <;> rfl
+  by_cases hba : addr = pa
+  · subst addr
+    obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+    simp only [hslot, Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot)]
+    exact hthread (evalBinOp op count (.ref pa))
+  · simp only [Heap.get?_swapAt_ne hba]
+    cases hget : h.get? addr with
+    | none =>
+        simp only [hget]
+        exact hthread (evalBinOp op count (.ref addr))
+    | some obj =>
+        cases obj with
+        | list xs =>
+            cases hac : asInt count with
+            | some n => simp [hget, hac, heapListRepeat_swapAt hslot htwin, Res.mapOk]
+            | none => simp [hget, hac, RVal.typeNameH_swapAt hslot htwin, Res.mapOk]
+        | _ =>
+            simp only [hget]
+            exact hthread (evalBinOp op count (.ref addr))
+
+theorem heapListRepeat_slot (hslot : Heap.get? h pa = some o₀)
+    {xs : Array RVal} {n : Int} {p : Heap × RVal}
+    (hw : heapListRepeat h xs n = .ok p) : Heap.get? p.1 pa = some o₀ := by
+  unfold heapListRepeat at hw
+  split at hw
+  · cases hw
+  · split at hw
+    · cases hw
+      exact Heap.get?_push_of_get? _ hslot
+    · split at hw
+      · cases hw
+        exact Heap.get?_push_of_get? _ hslot
+      · cases hw
+
+theorem pureRes_slot (hslot : Heap.get? h pa = some o₀)
+    {r : Res RVal} {p : Heap × RVal}
+    (hw : (match r with
+      | .ok value => .ok (h, value)
+      | .exn e => .exn e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg : Res (Heap × RVal)) =
+        (.ok p : Res (Heap × RVal))) : Heap.get? p.1 pa = some o₀ := by
+  cases r with
+  | ok value => cases hw; exact hslot
+  | exn e => simp at hw
+  | timeout => simp at hw
+  | unsupported msg => simp at hw
+
+theorem heapListRepeatOperandH_slot (hslot : Heap.get? h pa = some o₀)
+    {op : BinOp} {addr : Addr} {count : RVal} {p : Heap × RVal}
+    (hw : heapListRepeatOperandH h op addr count = .ok p) :
+      Heap.get? p.1 pa = some o₀ := by
+  unfold heapListRepeatOperandH at hw
+  cases hget : h.get? addr with
+  | none =>
+      simp only [hget] at hw
+      exact pureRes_slot hslot hw
+  | some obj =>
+      cases obj with
+      | list xs =>
+          cases hac : asInt count with
+          | some n =>
+              simp only [hget, hac] at hw
+              exact heapListRepeat_slot hslot hw
+          | none =>
+              simp only [hget, hac] at hw
+              cases hw
+      | dict entries ver =>
+          simp only [hget] at hw
+          exact pureRes_slot hslot hw
+      | dictView da kind =>
+          simp only [hget] at hw
+          exact pureRes_slot hslot hw
+      | «instance» cls attrs =>
+          simp only [hget] at hw
+          exact pureRes_slot hslot hw
+      | generator qname locals cont status =>
+          simp only [hget] at hw
+          exact pureRes_slot hslot hw
+      | closure name params argsOk localsOk hasGlobal isGenerator body captured =>
+          simp only [hget] at hw
+          exact pureRes_slot hslot hw
+      | pyset xs =>
+          simp only [hget] at hw
+          exact pureRes_slot hslot hw
+      | cell value =>
+          simp only [hget] at hw
+          exact pureRes_slot hslot hw
+
+theorem heapListRepeatOperandRightH_slot (hslot : Heap.get? h pa = some o₀)
+    {op : BinOp} {count : RVal} {addr : Addr} {p : Heap × RVal}
+    (hw : heapListRepeatOperandRightH h op count addr = .ok p) :
+      Heap.get? p.1 pa = some o₀ := by
+  unfold heapListRepeatOperandRightH at hw
+  cases hget : h.get? addr with
+  | none =>
+      simp only [hget] at hw
+      exact pureRes_slot hslot hw
+  | some obj =>
+      cases obj with
+      | list xs =>
+          cases hac : asInt count with
+          | some n =>
+              simp only [hget, hac] at hw
+              exact heapListRepeat_slot hslot hw
+          | none =>
+              simp only [hget, hac] at hw
+              cases hw
+      | dict entries ver =>
+          simp only [hget] at hw
+          exact pureRes_slot hslot hw
+      | dictView da kind =>
+          simp only [hget] at hw
+          exact pureRes_slot hslot hw
+      | «instance» cls attrs =>
+          simp only [hget] at hw
+          exact pureRes_slot hslot hw
+      | generator qname locals cont status =>
+          simp only [hget] at hw
+          exact pureRes_slot hslot hw
+      | closure name params argsOk localsOk hasGlobal isGenerator body captured =>
+          simp only [hget] at hw
+          exact pureRes_slot hslot hw
+      | pyset xs =>
+          simp only [hget] at hw
+          exact pureRes_slot hslot hw
+      | cell value =>
+          simp only [hget] at hw
+          exact pureRes_slot hslot hw
+
+theorem evalBinOpMultH_slot (hslot : Heap.get? h pa = some o₀)
+    {op : BinOp} {a b : RVal} {p : Heap × RVal}
+    (hw : evalBinOpMultH h op a b = .ok p) : Heap.get? p.1 pa = some o₀ := by
+  have pureSlot (r : Res RVal) {q : Heap × RVal}
+      (hr : (match r with
+        | .ok value => .ok (h, value)
+        | .exn e => .exn e
+        | .timeout => .timeout
+        | .unsupported msg => .unsupported msg : Res (Heap × RVal)) =
+          (.ok q : Res (Heap × RVal))) : Heap.get? q.1 pa = some o₀ := by
+    cases r with
+    | ok value => cases hr; exact hslot
+    | exn e => simp at hr
+    | timeout => simp at hr
+    | unsupported msg => simp at hr
+  cases a <;> cases b <;> simp only [evalBinOpMultH] at hw
+  all_goals try exact heapListRepeatOperandH_slot hslot hw
+  all_goals try exact heapListRepeatOperandRightH_slot hslot hw
+  all_goals try exact pureSlot (evalBinOp op _ _) hw
+
+theorem evalBinOpMultH_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (op : BinOp) (a b : RVal) :
+    evalBinOpMultH (Heap.swapAt h pa o) op a b =
+      Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+        (evalBinOpMultH h op a b) := by
+  have hthread (r : Res RVal) :
+      (match r with
+       | .ok value => .ok (Heap.swapAt h pa o, value)
+       | .exn e => .exn e
+       | .timeout => .timeout
+       | .unsupported msg => .unsupported msg) =
+        Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+          (match r with
+           | .ok value => .ok (h, value)
+           | .exn e => .exn e
+           | .timeout => .timeout
+           | .unsupported msg => .unsupported msg) := by
+    cases r <;> rfl
+  cases a <;> cases b <;> simp only [evalBinOpMultH]
+  all_goals try exact hthread (evalBinOp op _ _)
+  all_goals try exact heapListRepeatOperandH_swapAt hslot htwin op _ _
+  all_goals try exact heapListRepeatOperandRightH_swapAt hslot htwin op _ _
+
 theorem evalBinOpH_swapAt (hslot : Heap.get? h pa = some o₀)
     (htwin : PayloadTwin o₀ o) (op : BinOp) (a b : RVal) :
     evalBinOpH (Heap.swapAt h pa o) op a b =
       Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2)) (evalBinOpH h op a b) := by
+  have hthread (r : Res RVal) :
+      (match r with
+       | .ok value => .ok (Heap.swapAt h pa o, value)
+       | .exn e => .exn e
+       | .timeout => .timeout
+       | .unsupported msg => .unsupported msg) =
+        Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+          (match r with
+           | .ok value => .ok (h, value)
+           | .exn e => .exn e
+           | .timeout => .timeout
+           | .unsupported msg => .unsupported msg) := by
+    cases r <;> rfl
   by_cases hop : op == .bitAnd
   · simp only [evalBinOpH, hop, setLikeRefH_swapAt hslot htwin,
       setLikeElemsH_swapAt hslot htwin]
+    have hnm : (op == .mult) = false := by
+      cases op <;> try rfl
+      have hf := hop
+      change false = true at hf
+      cases hf
     split
     · cases hleft : setLikeElemsH h a <;> cases hright : setLikeElemsH h b <;>
         simp [hleft, hright, Res.mapOk,
           Heap.swapAt_push (Heap.lt_size_of_get? hslot), Heap.size_swapAt]
-    · cases hev : evalBinOp op a b <;> simp [hev, Res.mapOk]
-  · simp only [evalBinOpH, hop]
-    cases hev : evalBinOp op a b <;> simp [hev, Res.mapOk]
+    · simp only [hnm]
+      exact hthread (evalBinOp op a b)
+  · simp only [evalBinOpH, hop, Bool.false_and, Bool.false_eq_true, if_false]
+    split
+    · exact evalBinOpMultH_swapAt hslot htwin op a b
+    · exact hthread (evalBinOp op a b)
 
 theorem evalBinOpH_slot (hslot : Heap.get? h pa = some o₀)
     {op : BinOp} {a b : RVal} {p : Heap × RVal}
     (hw : evalBinOpH h op a b = .ok p) : Heap.get? p.1 pa = some o₀ := by
+  have pureSlot (r : Res RVal) {q : Heap × RVal}
+      (hr : (match r with
+        | .ok value => .ok (h, value)
+        | .exn e => .exn e
+        | .timeout => .timeout
+        | .unsupported msg => .unsupported msg : Res (Heap × RVal)) =
+          (.ok q : Res (Heap × RVal))) :
+      Heap.get? q.1 pa = some o₀ := by
+    cases r with
+    | ok value => cases hr; exact hslot
+    | exn e => simp at hr
+    | timeout => simp at hr
+    | unsupported msg => simp at hr
   by_cases hop : op == .bitAnd
   · simp only [evalBinOpH, hop] at hw
     split at hw
@@ -1808,15 +2263,23 @@ theorem evalBinOpH_slot (hslot : Heap.get? h pa = some o₀)
       · cases hw
         exact Heap.get?_push_of_get? _ hslot
       all_goals cases hw
-    · cases hev : evalBinOp op a b <;> simp [hev] at hw
+    · have hnm : (op == .mult) = false := by
+        cases op <;> try rfl
+        have hf := hop
+        change false = true at hf
+        cases hf
+      simp only [hnm] at hw
+      cases hev : evalBinOp op a b <;> simp only [hev, Res.mapOk] at hw
       · cases hw
         exact hslot
       all_goals cases hw
-  · simp only [evalBinOpH, hop] at hw
-    cases hev : evalBinOp op a b <;> simp only [hev, Res.mapOk] at hw
-    · cases hw
-      exact hslot
-    all_goals cases hw
+  · simp only [evalBinOpH, hop, Bool.false_and, Bool.false_eq_true, if_false] at hw
+    split at hw
+    · exact evalBinOpMultH_slot hslot hw
+    · cases hev : evalBinOp op a b <;> simp only [hev, Res.mapOk] at hw
+      · cases hw
+        exact hslot
+      all_goals cases hw
 
 /-- The module-aware slot wrapper is payload-blind for the same reason as
 `heapAttrStore`: the perturbation is a running generator, so a slot-store
@@ -3467,7 +3930,53 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
           | some old =>
               cases old with
               | listV _ => exact PBF.unsupported
-              | ref _ => exact PBF.unsupported
+              | ref a2 =>
+                  refine PBF.ite (fun _ => ?_) (fun _ => PBF.unsupported)
+                  · cases hobj : Heap.get? st.world.heap a2 with
+                    | none => exact PBF.unsupported
+                    | some obj =>
+                        cases obj with
+                        | list xs =>
+                            have htw := htwin
+                            rcases htw with ⟨q, l₀, c₀, l₁, c₁, h0, h1⟩
+                            have hslotGen :
+                                st.world.heap.get? pa =
+                                  some (Obj.generator q l₀ c₀ .running) := by
+                              rw [← h0]
+                              exact hslot
+                            have hne : a2 ≠ pa := by
+                              intro heq
+                              subst a2
+                              have hbad :
+                                  Obj.generator q l₀ c₀ .running = Obj.list xs :=
+                                Option.some.inj (hslotGen.symm.trans hobj)
+                              cases hbad
+                            simp only [hobj, Heap.get?_swapAt_ne hne]
+                            refine PBF.bind (ihE m st value hslot)
+                              (fun s2 v _ hs2 => ?_)
+                            cases hav : asInt v with
+                            | none =>
+                                simp only [hav, FrameState.swapAt_world,
+                                  World.swapAt_heap,
+                                  RVal.typeNameH_swapAt hs2 htwin]
+                                exact PBF.exn hs2 _
+                            | some n =>
+                                cases hpost : Heap.get? s2.world.heap a2 with
+                                | none =>
+                                    simp only [hpost]
+                                    exact PBF.unsupported
+                                | some obj2 =>
+                                    cases obj2 with
+                                    | list xs' =>
+                                        simp only [hpost, Heap.get?_swapAt_ne hne,
+                                          FrameState.swapAt_world,
+                                          World.swapAt_heap,
+                                          heapListRepeatUpdate_swapAt hs2 htwin a2 hne xs' n]
+                                        refine PBF.liftMapOk hs2 (fun h' hw => ?_)
+                                        exact PBF.okWrite
+                                          (heapListRepeatUpdate_slot hs2 a2 hne xs' n hw) _
+                                    | _ => exact PBF.unsupported
+                        | _ => exact PBF.unsupported
               | _ =>
                   refine PBF.bind (ihE m st value hslot) fun s1 v _ hs1 => ?_
                   refine PBF.bind (PBF.liftRes hs1 _) fun s2 r _ hs2 => ?_
@@ -3963,7 +4472,16 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
       refine PBF.bind (ihE m st l hslot) fun s1 a _ hs1 => ?_
       refine PBF.bind (ihE m s1 r hs1) fun s2 b _ hs2 => ?_
       cases hop : op == .bitAnd with
-      | false => exact PBF.liftRes hs2 _
+      | false =>
+          cases hmult : op == .mult with
+          | false => simp only [hop, hmult, Bool.false_or, if_false]; exact PBF.liftRes hs2 _
+          | true =>
+              simp only [hop, hmult, Bool.false_or, if_true,
+                FrameState.swapAt_world, World.swapAt_heap,
+                evalBinOpH_swapAt hs2 htwin]
+              refine PBF.liftMapOk hs2 (fun hr hw => ?_)
+              obtain ⟨h', r⟩ := hr
+              exact PBF.okWrite (evalBinOpH_slot hs2 hw) _
       | true =>
           simp only [FrameState.swapAt_world, World.swapAt_heap,
             evalBinOpH_swapAt hs2 htwin]
@@ -5202,9 +5720,52 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                           | cons v rest =>
                               cases rest with
                               | nil =>
-                                  simp only [FrameState.swapAt_world, World.swapAt_heap]
-                                  rw [strJoinH_swapAt hs2 htwin]
-                                  exact PBF.liftRes hs2 _
+                                  cases v with
+                                  | ref a =>
+                                      rcases Heap.get?_swapAt_twin (b := a) hs2 htwin with
+                                        heq | ⟨_, _, _, _, _, h1, h2⟩
+                                      · simp only [FrameState.swapAt_world, World.swapAt_heap, heq]
+                                        cases hget : Heap.get? s2.world.heap a with
+                                        | none =>
+                                            simp only [hget, strJoinH_swapAt hs2 htwin]
+                                            exact PBF.liftRes hs2 _
+                                        | some obj =>
+                                            cases obj with
+                                            | generator qn l c status =>
+                                                by_cases hg : moduleGenFree m = true
+                                                · simp only [hg, if_pos]
+                                                  exact PBF.unsupported
+                                                · simp only [hg, if_neg]
+                                                  refine PBF.bind (PBW.withLocals (ihDrain m s2.world a hs2))
+                                                    (fun s3 vals _ hs3 => ?_)
+                                                  exact PBF.liftRes hs3 _
+                                            | _ =>
+                                                simp only [hget, strJoinH_swapAt hs2 htwin]
+                                                exact PBF.liftRes hs2 _
+                                      · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
+                                        cases hget : Heap.get? s2.world.heap a with
+                                        | some obj =>
+                                            cases obj with
+                                            | generator qn l c status =>
+                                                by_cases hg : moduleGenFree m = true
+                                                · simp only [hg, if_pos]
+                                                  exact PBF.unsupported
+                                                · simp only [hg, if_neg]
+                                                  refine PBF.bind (PBW.withLocals (ihDrain m s2.world a hs2))
+                                                    (fun s3 vals _ hs3 => ?_)
+                                                  exact PBF.liftRes hs3 _
+                                            | _ =>
+                                                exact False.elim (by
+                                                  have hbad := hget ▸ h1
+                                                  cases hbad)
+                                        | none =>
+                                            exact False.elim (by
+                                              have hbad := hget ▸ h1
+                                              cases hbad)
+                                  | _ =>
+                                      simp only [FrameState.swapAt_world, World.swapAt_heap,
+                                        strJoinH_swapAt hs2 htwin]
+                                      exact PBF.liftRes hs2 _
                               | cons _ _ => exact PBF.exn hs2 _
                   | float fv =>
                       simp only []

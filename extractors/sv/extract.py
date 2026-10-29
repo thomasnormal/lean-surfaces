@@ -25924,6 +25924,14 @@ def convert_design(sm, comp):
         comp.options.minTypMax]
     _ELAB_BINDINGS, _ELAB_PARAMETERS, _ELAB_HIER_VALUES, _ELAB_CURRENT_SCOPE = {}, set(), set(), ""
     _ASSOC_CELLS = {}
+    # Compilation-unit parameters are elaboration constants, not runtime
+    # storage.  Register their declaration identities before module bodies
+    # are converted so a reference in a legacy self-check expression follows
+    # the same literal path as a module parameter reference.
+    for unit in comp.getCompilationUnits():
+        for member in unit:
+            if str(getattr(member, "kind", "")) == "SymbolKind.Parameter":
+                _ELAB_PARAMETERS.add(member)
     packages = [member for unit in comp.getCompilationUnits() for member in unit
                 if str(member.kind) == "SymbolKind.Package"]
     _PACKAGE_SCOPES = set(packages)
@@ -26009,6 +26017,10 @@ def _convert_design(sm, comp, packages):
                     continue
                 if (str(m.kind) in ("SymbolKind.ExplicitImport", "SymbolKind.WildcardImport")
                         and m.package in _PACKAGE_SCOPES):
+                    continue
+                if str(m.kind) == "SymbolKind.Parameter":
+                    # A compilation-unit parameter contributes only elaborated
+                    # constants and type bounds; it has no self-check storage.
                     continue
                 if _declaration_only(m):
                     continue

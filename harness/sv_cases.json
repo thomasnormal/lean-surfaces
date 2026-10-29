@@ -3957,6 +3957,17 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "compilation_unit_parameter",
+      "file": "Examples/system-verilog/compilation_unit_parameter/compilation_unit_parameter.sv",
+      "module": "top",
+      "oracle": [
+        "8",
+        "a5",
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

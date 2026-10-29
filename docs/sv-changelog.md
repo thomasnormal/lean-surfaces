@@ -1,3 +1,13 @@
+## [0.1.183] — 2026-10-29
+
+Compilation-unit `parameter` declarations now lower as elaboration metadata in
+the legacy self-check tier. Their references use exact elaborated constants,
+including packed widths, while compilation-unit variables and unsupported
+parameter expressions remain loud. The `compilation_unit_parameter` fixture,
+extractor regression, generated envelope, Lean receipt, and differential row
+cover the new family. Differential coverage grows **437/431/0/6 → 438/432/0/6**;
+grammar coverage is unchanged.
+
 ## [0.1.182] — 2026-10-29
 
 Finite fixed unpacked arrays of untagged integral structs now accept complete

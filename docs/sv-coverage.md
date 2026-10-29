@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 437 | 431 | 0 | 6 | sv-tests-2 declarations |
+| 438 | 432 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -451,6 +451,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `fixed_array_unpacked_union` | `Examples/system-verilog/fixed_array_unpacked_union/fixed_array_unpacked_union.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_string_initializer` | `Examples/system-verilog/fixed_array_string_initializer/fixed_array_string_initializer.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_struct_initializer` | `Examples/system-verilog/fixed_array_struct_initializer/fixed_array_struct_initializer.sv` | match | **MATCH** | `ok` | MATCH |
+| `compilation_unit_parameter` | `Examples/system-verilog/compilation_unit_parameter/compilation_unit_parameter.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -649,7 +650,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.StructUnionMember` | `Examples/system-verilog/array_reductions/structure.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.StructuredAssignmentPattern` | `Examples/system-verilog/assignment_patterns/arrays.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.SubtractAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.SubtractExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.SubtractExpression` | `Examples/system-verilog/compilation_unit_parameter/compilation_unit_parameter.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.SystemName` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.TaskDeclaration` | `Examples/system-verilog/empty_input_task/empty_input_task.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.TimeType` | `Examples/system-verilog/fixed_array_struct_pattern/fixed_array_struct_pattern.sv` | **MATCH** | `ok`  |

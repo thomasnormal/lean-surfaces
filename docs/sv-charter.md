@@ -12,6 +12,21 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Compilation-unit parameters — 2026-10-29
+
+Compilation-unit `parameter` declarations now lower as elaboration metadata in
+the legacy self-check tier. Their bound identities are registered before module
+conversion, so references become the same exact constants already used for
+module parameters; packed widths may depend on them without creating runtime
+cells. Compilation-unit variables and unsupported parameter expression uses
+remain loud. The `compilation_unit_parameter` fixture, extractor regression,
+generated envelope, Lean receipt, and differential row cover the admitted
+family.
+
+Differential coverage grows **437/431/0/6 → 438/432/0/6**; grammar coverage is
+unchanged. The external sv-tests-2 checkout is unavailable for a fresh corpus
+delta in this item.
+
 ## Fixed arrays of initialized unpacked structs — 2026-10-29
 
 Finite fixed unpacked arrays whose leaf is an untagged integral struct now

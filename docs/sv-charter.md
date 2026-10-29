@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Clean elaborated generate scopes in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's elaboration flattening
+for generate scopes whose generated processes remain in the existing
+self-check vocabulary. Generated bodies that contain an unsupported delay or
+other boundary remain loud with that nested construct. The `generate_adapter`
+fixture, adapter regressions, generated envelope, Lean receipt, and
+differential row cover the family.
+
+Differential coverage grows **456/450/0/6 → 457/451/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in 931-file SystemVerilog example
+sweep, adapter unlockables rise **4 → 5**, while the remaining generate and
+hierarchy boundaries stay loud.
+
 ## Fixed-array ordering methods in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's assignment-block

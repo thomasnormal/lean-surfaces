@@ -4141,6 +4141,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "generate_adapter",
+      "file": "Examples/system-verilog/generate_adapter/generate_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

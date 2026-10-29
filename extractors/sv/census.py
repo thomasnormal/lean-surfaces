@@ -430,10 +430,34 @@ def adapter_proc_blockers(sm, m):
     return ["ProceduralBlockSymbol:" + str(pk).split(".")[-1]]
 
 
-def _adapter_design_blockers_impl(sm, comp):
+def _adapter_generated_scope_blockers(sm, symbol):
+    """Adapter blockers from procedural bodies nested below a generate symbol."""
+    blockers = []
+
+    def inspect(node):
+        if node is symbol:
+            return
+        if str(getattr(node, "kind", "")).split(".")[-1] == "ProceduralBlock":
+            blockers.extend(adapter_proc_blockers(sm, node))
+
+    try:
+        symbol.visit(inspect)
+    except Exception:
+        return ["ExtractorInternal:GenerateScope"]
+    return blockers
+
+
+def _adapter_design_blockers_impl(sm, comp, design=None):
     """Pass 2: residual blockers with the adapter tier treated as
     supported. Mirrors extract.convert_module's member routing."""
     out = []
+    converted_modules = {}
+    if isinstance(design, dict):
+        converted_modules = {
+            module.get("name"): module
+            for module in design.get("modules", [])
+            if isinstance(module, dict)
+        }
     packages = {
         m for unit in comp.getCompilationUnits() for m in unit
         if str(getattr(m, "kind", "")).split(".")[-1] == "Package"
@@ -441,6 +465,11 @@ def _adapter_design_blockers_impl(sm, comp):
     for inst in comp.getRoot().topInstances:
         try:
             body = inst.body
+            converted_module = converted_modules.get(getattr(inst, "name", None))
+            generated_metadata_base = (
+                isinstance(converted_module, dict)
+                and converted_module.get("elaboration_lowered") is True
+                and not kinds_in(converted_module))
             port_names = set()
             for m in body:
                 if str(m.kind) == "SymbolKind.Port":
@@ -464,6 +493,16 @@ def _adapter_design_blockers_impl(sm, comp):
                         out.extend(_minus_string(
                             kinds_in(extract.convert_continuous_assign(sm, m))))
                     elif k == "StatementBlock":
+                        continue
+                    elif (k in ("GenerateBlock", "GenerateBlockArray", "Genvar")
+                          and generated_metadata_base):
+                        # The ordinary converter has already elaborated this
+                        # clean generated scope into the module's processes
+                        # and declarations. Do not report its source symbol as
+                        # a second adapter-only state; replay any nested
+                        # procedural boundary when the generated body is not
+                        # itself in the adapter tier.
+                        out.extend(_adapter_generated_scope_blockers(sm, m))
                         continue
                     elif (k == "Subroutine"
                           and not extract._subroutine_is_referenced(inst, m)):
@@ -505,8 +544,10 @@ def _adapter_design_blockers_impl(sm, comp):
     return sorted(set(out))
 
 
-def adapter_design_blockers(sm, comp):
+def adapter_design_blockers(sm, comp, design=None):
     """Run the adapter walk with the converter's elaborated parameter scope."""
+    if design is None:
+        design = extract.convert_design(sm, comp)
     previous = getattr(extract, "_ELAB_PARAMETERS", set())
     parameters = set()
 
@@ -520,7 +561,7 @@ def adapter_design_blockers(sm, comp):
         parameters = set()
     extract._ELAB_PARAMETERS = set(previous) | parameters
     try:
-        return _adapter_design_blockers_impl(sm, comp)
+        return _adapter_design_blockers_impl(sm, comp, design)
     finally:
         extract._ELAB_PARAMETERS = previous
 
@@ -585,7 +626,7 @@ def classify(relpath):
             1 for m in design["modules"] if m.get("kind") == "Module")
         rec["kinds"] = sorted(set(kinds_in(design)))
         rec["status"] = "clean" if not rec["kinds"] else "partial"
-        rec["adapter_blockers"] = adapter_design_blockers(sm, comp)
+        rec["adapter_blockers"] = adapter_design_blockers(sm, comp, design)
     except FileTimeout as exc:
         rec["status"] = "error"
         rec["error"] = "Timeout: %s" % exc

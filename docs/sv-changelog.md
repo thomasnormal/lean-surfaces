@@ -2234,6 +2234,15 @@ regressions, generated envelope, Lean receipt, and differential row cover the
 family. Differential coverage grows **454/448/0/6 → 455/449/0/6**; grammar
 coverage remains **235/113/122**. The temporary public sv-tests audit remains
 **380 clean / 421 partial / 111 include skips**.
+## [0.1.202] — 2026-10-29
+
+The legacy adapter census now follows extractor elaboration flattening for
+clean generated scopes. Generated processes remain in the ordinary self-check
+vocabulary, while generated bodies containing delays or other unsupported
+constructs stay loud at the nested boundary. The `generate_adapter` fixture,
+adapter regressions, generated envelope, Lean receipt, and differential row
+cover the family. Differential coverage grows **456/450/0/6 → 457/451/0/6**;
+grammar coverage remains **235/113/122**.
 ## [0.1.201] — 2026-10-29
 
 The legacy adapter census now follows the extractor's assignment-block

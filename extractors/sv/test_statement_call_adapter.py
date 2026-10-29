@@ -60,6 +60,21 @@ class StatementCallAdapter(unittest.TestCase):
             'module top; int values [0:3]; initial values.sort(); endmodule')
         self.assertIn("Call:sort", residual)
 
+    def test_clean_elaborated_generate_metadata_follows_converter(self):
+        self.assertEqual(
+            blockers(
+                'module top; logic value; if (1) begin : live '
+                'initial value = 1\'b1; end '
+                'initial begin if (value) $display("PASS"); '
+                '$finish; end endmodule'),
+            [])
+
+    def test_unsupported_elaborated_generate_stays_loud(self):
+        residual = blockers(
+            'module top; if (1) begin : live initial #1; end '
+            'initial $display("PASS"); endmodule')
+        self.assertIn("TimedStatement:DelayControl", residual)
+
     def test_inert_pure_diagnostics_follow_converter_erasure(self):
         self.assertEqual(
             blockers(

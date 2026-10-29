@@ -1,5 +1,13 @@
 # Call statements — admitted boundary
 
+## Clean elaborated generate scopes in the adapter — 2026-10-29
+
+The legacy adapter now follows the extractor's elaboration flattening for
+generate scopes whose generated processes remain in the existing self-check
+vocabulary. A generated body that contains an unsupported delay or other
+boundary remains loud with that nested construct. `generate_adapter` pins the
+clean generated-process case.
+
 ## Fixed-array ordering methods in the adapter — 2026-10-29
 
 The legacy adapter now follows the extractor's assignment-block lowering for

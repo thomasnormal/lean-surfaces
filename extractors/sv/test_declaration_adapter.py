@@ -167,6 +167,24 @@ class DeclarationAdapter(unittest.TestCase):
             '$countones(value + 1); $display("PASS"); end endmodule')
         self.assertIn("Call:$countones", residual)
 
+    def test_discarded_pure_array_queries_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; logic [7:0] values [2]; '
+                'initial begin values[0] = 1; values[1] = 2; '
+                'values.min(); values.max(); values.unique(); '
+                'values.unique_index(); values.sum(); values.product(); '
+                'values.and(); values.or(); values.xor(); '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_effectful_array_reduction_remains_loud(self):
+        residual = blockers(
+            'module top; int values [2]; int item; initial begin '
+            'item = 0; values.sum(x) with (x + item++); '
+            '$display("PASS"); end endmodule')
+        self.assertIn("Call:sum", residual)
+
 
 if __name__ == "__main__":
     unittest.main()

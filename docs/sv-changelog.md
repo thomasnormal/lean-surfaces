@@ -1,3 +1,17 @@
+## [0.1.205] — 2026-10-29
+
+The legacy adapter census now follows the extractor's `array_query_statement`
+and `array_reduction_statement` markers for discarded fixed-array `min`,
+`max`, `unique`, `unique_index`, `sum`, `product`, `and`, `or`, and `xor`
+calls, including source-pure `with` clauses. Dynamic or effectful histories
+and clauses remain loud. The `pure_array_query_statements_adapter` fixture,
+adapter regressions, generated envelope, Lean receipt, and differential row
+cover the admitted forms. Differential coverage grows **471/465/0/6 →
+472/466/0/6**; grammar coverage remains **235/113/122**. On the checked-in
+984-file SystemVerilog example sweep (983 files before this witness), the
+adapter census moves **736 clean / 247 partial → 740 clean / 244 partial** and
+the 13 discarded array-query call residuals fall to zero.
+
 ## [0.1.204] — 2026-10-29
 
 The legacy adapter census now follows the extractor's `bit_query_statement`

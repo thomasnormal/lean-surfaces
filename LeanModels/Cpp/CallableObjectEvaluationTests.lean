@@ -11365,6 +11365,92 @@ def callableLocalWhileSwitchDefaultShadowComputedInitializationFallthroughAssign
 
 #guard callableLocalWhileSwitchDefaultShadowComputedInitializationFallthroughAssignmentContinueFalseStatementFrameWitness
 
+private def localWhileSwitchDefaultShadowComputedInitializationFallthroughAssignmentBreakStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .binary "<"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 2, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let switchCondition : TypedCallableExpression := {
+    expression := .parameter (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let localInitializer : Expression :=
+    .binary .add (.read (handle "0x11")) (.literal (signed 2))
+  let body := .block (.sequence
+    (.switch_ switchCondition [
+      {label := none, body := .block (.sequence
+        (.automatic {
+          statement := .declare (handle "0x13") intType intType localInitializer
+          declarations := [handle "0x13"]})
+        (.assign (handle "0x11") {
+          expression := .parameter (handle "0x13")
+          sourceType := intType
+          type := intType}))},
+      {label := some 1, body := .break_}])
+    .break_)
+  let function := {base with body := .block (.sequence
+    (automaticLiteral "0x11" 3)
+    (.sequence
+      (.whileLoop condition body)
+      (.return_ {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType}))) }
+  match evaluateCallableObject 128 .lp64 function [signed 0] with
+  | .ok (.ok value) => value == signed 5
+  | _ => false
+
+def callableLocalWhileSwitchDefaultShadowComputedInitializationFallthroughAssignmentBreakStatementFrameWitness : Bool :=
+  localWhileSwitchDefaultShadowComputedInitializationFallthroughAssignmentBreakStatementFrame
+
+#guard callableLocalWhileSwitchDefaultShadowComputedInitializationFallthroughAssignmentBreakStatementFrameWitness
+
+private def localWhileSwitchDefaultShadowComputedInitializationFallthroughAssignmentBreakFalseStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .binary "<"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 2, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let switchCondition : TypedCallableExpression := {
+    expression := .parameter (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let localInitializer : Expression :=
+    .binary .add (.read (handle "0x11")) (.literal (signed 2))
+  let body := .block (.sequence
+    (.switch_ switchCondition [
+      {label := none, body := .block (.sequence
+        (.automatic {
+          statement := .declare (handle "0x13") intType intType localInitializer
+          declarations := [handle "0x13"]})
+        (.assign (handle "0x11") {
+          expression := .parameter (handle "0x13")
+          sourceType := intType
+          type := intType}))},
+      {label := some 1, body := .break_}])
+    .break_)
+  let function := {base with body := .block (.sequence
+    (automaticLiteral "0x11" 3)
+    (.sequence
+      (.whileLoop condition body)
+      (.return_ {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType}))) }
+  match evaluateCallableObject 128 .lp64 function [signed 1] with
+  | .ok (.ok value) => value == signed 3
+  | _ => false
+
+def callableLocalWhileSwitchDefaultShadowComputedInitializationFallthroughAssignmentBreakFalseStatementFrameWitness : Bool :=
+  localWhileSwitchDefaultShadowComputedInitializationFallthroughAssignmentBreakFalseStatementFrame
+
+#guard callableLocalWhileSwitchDefaultShadowComputedInitializationFallthroughAssignmentBreakFalseStatementFrameWitness
+
 private def localWhileSwitchDefaultShadowComputedInitializationAssignmentContinueStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let condition : TypedCallableExpression := {

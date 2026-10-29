@@ -122,6 +122,7 @@ ADAPTER_LOWERED_METHOD_MARKERS = (
     "fixed_struct_array_ordering_with_lowered",
 )
 ADAPTER_PURE_STATEMENT_MARKERS = (
+    "bit_query_statement",
     "itor_literal_statement", "itor_pure_statement",
     "bitstoreal_literal_statement", "bitstoreal_pure_statement",
     "bitstoshortreal_literal_statement", "bitstoshortreal_pure_statement",

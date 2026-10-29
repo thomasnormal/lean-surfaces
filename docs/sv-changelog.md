@@ -1,3 +1,17 @@
+## [0.1.204] — 2026-10-29
+
+The legacy adapter census now follows the extractor's `bit_query_statement`
+marker for discarded literal and source-pure named-history calls to
+`$countbits`, `$countones`, `$onehot`, `$onehot0`, and `$isunknown`. Computed,
+dynamic, and effectful operands remain loud. The
+`pure_bit_query_statements_adapter` fixture, adapter regressions, generated
+envelope, Lean receipt, and differential row cover the admitted forms.
+Differential coverage grows **470/464/0/6 → 471/465/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in 983-file SystemVerilog example
+sweep (982 files before this witness), the adapter census moves **733 clean /
+249 partial → 736 clean / 247 partial** and the ten discarded bit-query call
+residuals fall to zero.
+
 ## [0.1.203] — 2026-10-29
 
 The legacy adapter census now follows the extractor's existing source-pure

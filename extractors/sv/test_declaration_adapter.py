@@ -150,6 +150,23 @@ class DeclarationAdapter(unittest.TestCase):
             '$itor(x++); $display("PASS"); end endmodule')
         self.assertIn("Call:$itor", residual)
 
+    def test_discarded_pure_bit_queries_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; logic [3:0] value; initial begin '
+                'value = 4\'b1010; '
+                '$countbits(4\'b1010, 1\'b1, 1\'bx); '
+                '$countones(value); $onehot(4\'b0001); '
+                '$onehot0(value); $isunknown(4\'b10x0); '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_computed_bit_query_remains_loud(self):
+        residual = blockers(
+            'module top; integer value; initial begin value = 1; '
+            '$countones(value + 1); $display("PASS"); end endmodule')
+        self.assertIn("Call:$countones", residual)
+
 
 if __name__ == "__main__":
     unittest.main()

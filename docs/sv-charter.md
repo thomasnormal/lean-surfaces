@@ -12,6 +12,21 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Finite associative endpoint and delete statements in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's
+`associative_endpoint_statement` and `associative_delete_lowered` markers for
+finite integral associative-array `first`/`last` statements and literal-key or
+whole-array `delete` operations. Dynamic keys and effectful histories remain
+loud. The `pure_associative_endpoint_delete_statements_adapter` fixture,
+adapter regression, generated envelope, Lean receipt, and differential row
+cover the admitted forms.
+
+Differential coverage grows **483/477/0/6 → 484/478/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in **996-file** SystemVerilog example
+sweep (**995 files before this witness**), the adapter census moves **775 clean
+/ 220 partial → 786 clean / 210 partial**.
+
 ## Pure literal-return function values in the adapter — 2026-10-29
 
 The legacy adapter census now recognizes pure literal-return function calls:

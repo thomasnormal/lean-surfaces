@@ -4384,6 +4384,17 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "pure_associative_endpoint_delete_statements_adapter",
+      "file": "Examples/system-verilog/pure_associative_endpoint_delete_statements_adapter/pure_associative_endpoint_delete_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS",
+        "PASS2",
+        "PASS3"
+      ],
+      "expect": "match"
     }
   ]
 }

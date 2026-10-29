@@ -120,6 +120,7 @@ ADAPTER_LOWERED_METHOD_MARKERS = (
     "fixed_array_reverse_lowered",
     "fixed_array_ordering_lowered",
     "fixed_struct_array_ordering_with_lowered",
+    "associative_delete_lowered",
 )
 ADAPTER_PURE_STATEMENT_MARKERS = (
     "bit_query_statement",
@@ -430,6 +431,9 @@ def adapter_stmt(sm, s):
                     and converted.get("kind") == "Block"
                     and any(converted.get(marker) is not None
                             for marker in ADAPTER_LOWERED_METHOD_MARKERS)):
+                return []
+            if (isinstance(converted, dict)
+                    and converted.get("associative_endpoint_statement") is not None):
                 return []
             if name in ADAPTER_SEVERITY or name == ADAPTER_FATAL:
                 # The converter has already checked the complete argument

@@ -343,6 +343,15 @@ class DeclarationAdapter(unittest.TestCase):
             'end endmodule')
         self.assertIn("SubroutineSymbol:Subroutine", residual)
 
+    def test_finite_associative_endpoint_and_delete_statements_are_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; int values[int]; int key; initial begin '
+                'values[2] = 20; values[5] = 50; values.last(key); '
+                'values.delete(5); values.first(key); values.delete(); '
+                '$display("PASS"); end endmodule'),
+            [])
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

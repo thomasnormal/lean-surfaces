@@ -2,6 +2,20 @@
 
 The model continues to implement IEEE 1800. Both complete observed traces
 are checked on every run, and changed or resolved discrepancies fail.
+
+A declaration names the departing simulator in `sim`: `"iverilog"` (the
+original and still the common case) or `"xcelium"` (round 6, 2026-10-29: the
+reference simulator itself departs from an explicit IEEE 1800-2023 sentence,
+and the departure cannot be refused statically -- the run-time-base partial
+out-of-range part-select, docs/sv-oracle-disagreements.md). Xcelium is not
+available everywhere, so an Xcelium declaration is checked in two places: by
+a LIVE `xrun` run exactly like an Icarus one (`oracle_disagreement`, where the
+harness's simulator name `xrun` and the declaration's name `xcelium` are the
+same simulator), and against the PINNED trace of
+`harness/sv/xcelium_golden.json` (`golden_disagreement`, used by
+`diff_test2.py --golden`), where the pin plays the simulator. Either way both
+complete traces are compared with the recorded ones; a resolved or a changed
+departure is a hard failure.
 """
 
 import hashlib
@@ -83,11 +97,9 @@ class SimulatorError(HarnessError):
         self.stderr = result.stderr
 
 
-def _check_bindings(case, row, source, envelope, tb_text):
-    for field in ("id", "declared", "reference", "observed", "retirement_condition"):
-        if not isinstance(row.get(field), str) or not row[field].strip():
-            raise HarnessError("oracle declaration missing %s" % field)
-    inputs = {
+def binding_inputs(case, source, envelope, tb_text):
+    """The four byte strings a declaration is bound to (docs/sv-oracle-disagreements.md)."""
+    return {
         "source": source,
         "envelope": envelope,
         "case": json.dumps({k: v for k, v in case.items()
@@ -95,7 +107,21 @@ def _check_bindings(case, row, source, envelope, tb_text):
                            sort_keys=True, separators=(",", ":")).encode(),
         "testbench": tb_text.encode(),
     }
-    for label, data in inputs.items():
+
+
+def binding_digests(case, source, envelope, tb_text):
+    """`{source_sha256, envelope_sha256, case_sha256, testbench_sha256}` of a
+    declaration's inputs: what `_check_bindings` compares. Used to write a
+    declaration (`harness/sv/declare_disagreement.py`)."""
+    return {label + "_sha256": hashlib.sha256(data).hexdigest()
+            for label, data in binding_inputs(case, source, envelope, tb_text).items()}
+
+
+def _check_bindings(case, row, source, envelope, tb_text):
+    for field in ("id", "declared", "reference", "observed", "retirement_condition"):
+        if not isinstance(row.get(field), str) or not row[field].strip():
+            raise HarnessError("oracle declaration missing %s" % field)
+    for label, data in binding_inputs(case, source, envelope, tb_text).items():
         if hashlib.sha256(data).hexdigest() != row.get(label + "_sha256"):
             raise HarnessError("%s: changed %s; review the oracle declaration"
                                % (row["id"], label))
@@ -121,19 +147,31 @@ def oracle_unavailability(case, source, envelope, tb_text, source_path, error):
     return row["id"]
 
 
+# The simulators a declaration may name, by the name the declaration uses. The
+# harness calls Xcelium `xrun` (its binary); a declaration calls it `xcelium`.
+DECLARABLE_SIMULATORS = ("iverilog", "xcelium")
+
+
+def declaration_simulator(sim):
+    """The declaration-side name of a harness simulator name."""
+    return "xcelium" if sim == "xrun" else sim
+
+
 def oracle_disagreement(case, sim, source, envelope, tb_text,
                         sim_trace, lean_by_sigma):
     """Check an exact simulator discrepancy, including its retirement alarm.
 
     This records a simulator's departure from the standard, not permission
     for the model to depart from it. No trace is normalized or projected.
+    `sim` is the harness's simulator name (`iverilog`, `xrun`) or the
+    declaration's (`xcelium`).
     """
     row = case.get("oracle_disagreement")
     if row is None:
         return None
-    if not isinstance(row, dict) or row.get("sim") != "iverilog":
+    if not isinstance(row, dict) or row.get("sim") not in DECLARABLE_SIMULATORS:
         raise HarnessError("invalid oracle_disagreement declaration")
-    if sim != row["sim"]:
+    if declaration_simulator(sim) != row["sim"]:
         return None
     _check_bindings(case, row, source, envelope, tb_text)
     identity = row["id"]
@@ -148,6 +186,37 @@ def oracle_disagreement(case, sim, source, envelope, tb_text,
         raise HarnessError("%s: unexpected trace; disagreement has changed"
                            % identity)
     return identity
+
+
+def check_declaration_bindings(case, source, envelope, tb_text):
+    """The input bindings of a declaration alone (source, envelope, case,
+    testbench digests); raises `HarnessError` on any change. None when the
+    case declares nothing."""
+    row = case.get("oracle_disagreement")
+    if row is None:
+        return None
+    if not isinstance(row, dict) or row.get("sim") not in DECLARABLE_SIMULATORS:
+        raise HarnessError("invalid oracle_disagreement declaration")
+    _check_bindings(case, row, source, envelope, tb_text)
+    return row["id"]
+
+
+def golden_disagreement(case, source, envelope, tb_text, pinned_trace, lean_by_sigma):
+    """The pinned-Xcelium twin of `oracle_disagreement`: the PIN plays the
+    simulator (`harness/sv/xcelium_golden.json`, docs/sv-xcelium-reference.md).
+
+    Returns the declaration id when the case declares an `xcelium` departure
+    and the pinned trace and the model trace are exactly the recorded ones;
+    None when the case declares nothing about Xcelium (an Icarus declaration
+    is not this function's business); raises `HarnessError` when the
+    departure is resolved (the pin equals the model) or has changed (either
+    trace differs from the recorded one) or an input binding changed.
+    """
+    row = case.get("oracle_disagreement")
+    if not isinstance(row, dict) or row.get("sim") != "xcelium":
+        return None
+    return oracle_disagreement(case, "xcelium", source, envelope, tb_text,
+                               pinned_trace, lean_by_sigma)
 
 
 def report_annotation(message, level="warning", title="SV oracle coverage"):

@@ -33,9 +33,17 @@ environment `instantiate2` builds). Route: `Gen2`'s
 `GenItem.expand2_genFor_ascending_processes` for the loop.
 
 Differential rows (`harness/sv/cases2.json`): `partsel` (N=4, W=3),
-`partsel_n2_w5`, `partsel_n6_w2`, `partsel_n5_w1`, `partsel_n1_w4`, every
-one `run2` = Icarus 12.0 on every printed signal, including the
-out-of-range reads and writes and x/z run-time bases.
+`partsel_n2_w5`, `partsel_n6_w2`, `partsel_n5_w1`, `partsel_n1_w4`. They were
+`run2` = Icarus 12.0 on every printed signal, including the out-of-range
+reads and writes and x/z run-time bases. Since round 6 (2026-10-29) they are
+LOUD-REFUSAL rows: `ov_hi = a[N*W-2 +: 4]` leaves the vector PARTLY at every
+parameter point, and a part select that is partly out of range is refused
+(`ArraySel:partial-overhang`, `Param2.lean`) because Xcelium 24.03 reads it
+all x and drops an overhanging write where IEEE 1800-2023 §11.5.1 (and
+Icarus, Yosys, slang) read x in the out-of-range bits only
+(`docs/sv-xcelium-audit.md` clusters P1/P3). The lane-reversal theorems
+below are about the generate block and are untouched; the pinned nodes at
+the end now state which selects of this design are loud and which are not.
 -/
 
 namespace Examples.«system-verilog».partsel.gen
@@ -270,7 +278,11 @@ Nine static processes then two cells per lane; nothing loud at any of the
 differential rows' parameter points. -/
 
 #guard (partsel.sem 4 3).processes.size == 9 + 2 * 4
-#guard [(4, 3), (2, 5), (6, 2), (5, 1), (1, 4)].all fun (n, w) => !(partsel.sem n w).hasUnsupported
+-- Round 6 (2026-10-29): `ov_hi = a[N*W-2 +: 4]` (labels N*W-2 .. N*W+1 of
+-- `[N*W-1:0]`) leaves the vector partly at EVERY parameter point, so the
+-- design is loud at all five differential points; the lane-reversal block
+-- (processes 9 ..) is exactly what it was.
+#guard [(4, 3), (2, 5), (6, 2), (5, 1), (1, 4)].all fun (n, w) => (partsel.sem n w).hasUnsupported
 
 /-- Process `k` of `partsel` at `(N, W)` as a continuous assign, if it is one. -/
 private def assignAt (N W k : Nat) : Option (Lhs2 × Expr2) :=
@@ -289,20 +301,39 @@ private def combTargetAt (N W k : Nat) : Option Lhs2 :=
 
 -- `top = a[N*W-1 -: N]` at (4, 3): the 4-bit window at 8.
 #guard assignAt 4 3 0 == some (.ident "top", .slice (.ident "a") 8 4)
--- `ov_lo = a[W-2 -: 4]` at W = 3: two in-range bits over two x bits.
-#guard assignAt 4 3 2 == some (.ident "ov_lo",
-  .concat #[.slice (.ident "a") 0 2, .lit (LVec.xVec 2)])
+-- `ov_lo = a[W-2 -: 4]` at W = 3 (labels -2 .. 1) leaves the vector below its
+-- lsb: loud since round 6 (it was two in-range bits over two x bits); at
+-- W = 5 (labels 0 .. 3) it is the in-range window.
+#guard match assignAt 4 3 2 with
+  | some (.ident "ov_lo", .unsupported "ArraySel:partial-overhang" _) => true
+  | _ => false
+#guard assignAt 2 5 2 == some (.ident "ov_lo", .slice (.ident "a") 0 4)
 -- `dyn_lane = a[sel*W +: W]`: the run-time base keeps its 32-bit product,
 -- read as a two's-complement `int` (what Icarus and Yosys do with a 32-bit
 -- index: `dynPartRead32`).
 #guard assignAt 4 3 6 == some (.ident "dyn_lane",
   dynPartRead32 "a" 3 0 12 (.binary .mul (.resize 32 (.ident "sel")) (.lit (LVec.ofInt 32 3))))
--- `w_hi[N+3 +: 4] = b` at N = 4: the msb overhang clips to bit 7;
--- `w_lo[N-3 -: 4] = b` at N = 4: the lsb overhang is a concat whose low
--- leaf is the sink past bit 7 (writes nothing).
-#guard combTargetAt 4 3 7 == some (.slice "w_hi" 7 1)
-#guard combTargetAt 4 3 8 == some (.concat [.slice "w_lo" 0 2, .slice "w_lo" 8 2])
--- At N = 6 the lsb-side write is in range; at N = 2 it is fully below (a no-op).
+/-- The second statement of always_comb process `k`, whatever it is. -/
+private def combStmtAt (N W k : Nat) : Option Stmt2 :=
+  match (partsel.sem N W).processes[k]? with
+  | some (.alwaysComb (.block body)) => (body[1]? : Option Stmt2)
+  | _ => none
+
+-- `w_hi[N+3 +: 4] = b` at N = 4 (labels 7 .. 10 of `[7:0]`, the msb overhang)
+-- and `w_lo[N-3 -: 4] = b` at N = 4 (labels -2 .. 1, the lsb overhang) are
+-- loud since round 6: the model wrote the in-range bits (a clipped window,
+-- resp. a concat ending in a sink leaf past bit 7), Xcelium drops the whole
+-- write.
+#guard match combStmtAt 4 3 7 with
+  | some (.unsupported "AssignL" e) => e.startsWith "ArraySel:partial-overhang"
+  | _ => false
+#guard match combStmtAt 4 3 8 with
+  | some (.unsupported "AssignL" e) => e.startsWith "ArraySel:partial-overhang"
+  | _ => false
+-- In range (`w_hi` at N = 1: labels 4 .. 7; `w_lo` at N = 6: labels 0 .. 3)
+-- the target is the flat window; fully below (`w_lo` at N = 2: labels -4 .. -1)
+-- it is a no-op, as every tool agrees.
+#guard combTargetAt 1 4 7 == some (.slice "w_hi" 4 4)
 #guard combTargetAt 6 2 8 == some (.slice "w_lo" 0 4)
 #guard combTargetAt 2 5 8 == some (.slice "w_lo" 0 0)
 

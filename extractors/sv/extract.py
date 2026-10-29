@@ -12274,6 +12274,40 @@ def _convert_sym_call_expr(sm, e):
     return node if node is not None else unsupported(sm, e)
 
 
+def _sym_wide_index_refusal(sm, e):
+    """Round 6 (T1, 2026-10-29): a bit-select of a PACKED vector whose INDEX
+    is wider than 32 bits. IEEE 1800-2023 §11.5.1 evaluates the index in a
+    self-determined context and reads x for an invalid (out-of-bounds, or
+    x/z) one; the model takes the whole value (`v[a - P]` over a 42-bit `a`
+    is 2^42 - 2^32 + 2 for `a` all ones: out of range, x), as Yosys 0.53
+    (`prep; eval`) does, but Xcelium 24.03-s004 (warning BIGWBS), Icarus
+    12.0 and Verilator 5.042 truncate the index to its low 32 bits and read
+    `v[2]` — a defined bit where the LRM text says x, and a defined bit for
+    an index with x/z in its high half. The tools split, so a run-time index
+    wider than 32 bits is loud (`ElementSelectExpression:wide-index`), and so
+    is a CONSTANT index of 2^32 or more (Xcelium truncates a constant one
+    too). A constant wider than 32 bits whose value fits (`v[40'd2]`) is
+    unchanged, and so is a parametric index that is not wider than 32 bits
+    at the default point; the per-point twin is Lean's `Select:wide-index`
+    report (`RangeGuard2.lean`). Returns None when the select is fine."""
+    try:
+        if not e.value.type.isIntegral:
+            return None
+        sel = e.selector
+        if not sel.type.isIntegral:
+            return None
+        value = _constant_dimension_selector(sel)
+        if value is not None:
+            if value >= 2 ** 32:
+                return unsupported(sm, e, "ElementSelectExpression:wide-index")
+            return None
+        if sel.constant is None and int(sel.type.bitWidth) > 32:
+            return unsupported(sm, e, "ElementSelectExpression:wide-index")
+    except Exception:
+        return None
+    return None
+
+
 def _convert_sym_select_expr(sm, e, cname):
     if cname == "ElementSelectExpression":
         if _sym_cell_index_point_dependent(e):
@@ -12380,6 +12414,9 @@ def _convert_sym_select_expr(sm, e, cname):
     if array_select is not None:
         return array_select
     if cname == "ElementSelectExpression":
+        wide_index = _sym_wide_index_refusal(sm, e)
+        if wide_index is not None:
+            return wide_index
         index = e.selector
         source_type = e.value.type.canonicalType
         if type(source_type).__name__ == "PackedArrayType":
@@ -30076,6 +30113,122 @@ class _SymUnsizedXZLoud:
         return False
 
 
+def _sym_symbol_net_kind(sym):
+    """Whether the signal SYMBOL a name refers to is a NET in the LRM's
+    sense (round 6, H1): a `Net` symbol (`wire`, `tri`, an implicit net), or
+    the internal variable slang makes of a port declared WITHOUT the `var`
+    keyword and with a net or implicit header (an `input logic [1:0] s` is a
+    net, IEEE 1800-2023 §23.2.2.3 — slang reports it as a variable, exactly as
+    `_sym_port_is_net` documents for the formal side). Anything else — a
+    body `logic` variable, a `var` port, a loop variable — is not. Round 6
+    repair: the no-`var` rule holds for `input` and `inout` ports ONLY. An
+    `output` (or `ref`) port declared with an explicit data type —
+    `output logic [1:0] o`, `output reg [1:0] o` — is a VARIABLE (§23.2.2.3:
+    "if the data type is declared with the explicit data_type syntax, the port
+    kind shall default to variable"), and slang reports it with the same
+    `VariablePortHeader` and empty `var` as `input logic`, so the direction
+    token decides. Every tool zero-extends such a variable actual (Xcelium
+    24.03-s004 included: `gaps6/r3`). An implicit-type output (`output [1:0]
+    o`) and `output wire` are slang `Net` symbols, caught above."""
+    kind = str(getattr(sym, "kind", "")).split(".")[-1]
+    if kind == "Net":
+        return True
+    if kind != "Variable":
+        return False
+    syn = getattr(sym, "syntax", None)
+    while syn is not None and syn.kind not in (SyntaxKind.ImplicitAnsiPort,
+                                               SyntaxKind.PortDeclaration):
+        syn = getattr(syn, "parent", None)
+    header = getattr(syn, "header", None) if syn is not None else None
+    if header is None:
+        return False
+    if header.kind == SyntaxKind.NetPortHeader:
+        return True
+    if header.kind != SyntaxKind.VariablePortHeader:
+        return False
+    # The token's text without its trivia: `str(token)` carries the comments
+    # and whitespace before it (`"\n  // clk\n  input"`).
+    direction = getattr(header, "direction", None)
+    direction_text = str(getattr(direction, "valueText", "") or "").strip()
+    if direction_text not in ("input", "inout"):
+        return False
+    return not str(getattr(header, "varKeyword", "") or "").strip()
+
+
+def _sym_four_state_vector(t):
+    """Whether a type is a plain 4-state scalar or packed vector (`logic`,
+    `reg`, `logic [W-1:0]`, nested packed dimensions of them)."""
+    ct = t.canonicalType
+    cur = ct
+    while type(cur).__name__ == "PackedArrayType":
+        cur = cur.elementType.canonicalType
+    return type(cur).__name__ == "ScalarType" and bool(ct.isFourState)
+
+
+def _sym_vector_width_fixed(sm, t, type_syntax):
+    """Whether a plain 4-state scalar/packed-vector type has the same width at
+    EVERY parameter point: a scalar, or packed dimensions whose syntax is
+    recovered and whose bounds are all literals (`[5:0]`; not `[W-1:0]`, not a
+    typedef). Used by `_sym_net_bound_actual` to leave unmarked the
+    connections whose widths cannot differ between points."""
+    ct = t.canonicalType
+    if type(ct).__name__ == "ScalarType":
+        return True
+    if type(ct).__name__ != "PackedArrayType":
+        return False
+    ndims = 0
+    cur = ct
+    while type(cur).__name__ == "PackedArrayType":
+        ndims += 1
+        cur = cur.elementType.canonicalType
+    dims = _syntax_packed_dims(sm, type_syntax) if type_syntax is not None else None
+    if dims is None or len(dims) != ndims:
+        return False
+    return all((dim.get("msb") or {}).get("kind") == "Int"
+               and (dim.get("lsb") or {}).get("kind") == "Int" for dim in dims)
+
+
+def _sym_net_bound_actual(sm, port, e):
+    """Round 6 (H1, 2026-10-29): whether an INPUT port connection is the one
+    shape Xcelium 24.03-s004 binds BIT FOR BIT instead of as a continuous
+    assignment: a NET formal (`_sym_port_is_net`; a `var` or 2-state formal
+    is a variable and is zero-extended by every tool) fed by a BARE reference
+    to a NET actual (`_sym_symbol_net_kind`; the implicit conversions slang
+    wraps around a mismatched width are peeled, so `.i(s)` into a wider port
+    is recognised; a variable actual, a part- or bit-select, a constant and
+    any expression are not). When the actual is narrower the formal's high
+    bits stay undriven (z, warning CUVMPW) in Xcelium where IEEE 1800-2023
+    §23.3.3/§10.7 — and Icarus 12.0, Verilator 5.042, Yosys 0.53 and slang —
+    zero-extend (`PortConn:net-width`, Hier2.lean). Whether it IS narrower
+    depends on the point, so the extractor only marks the shape; it is not
+    marked when both declared widths are fixed (literal bounds) and the
+    formal is not wider, which keeps every envelope of such a connection
+    unchanged."""
+    try:
+        if _sym_port_is_net(port) is not True:
+            return False
+        if not _sym_four_state_vector(port.type):
+            return False
+        op = e
+        while (type(op).__name__ == "ConversionExpression"
+               and op.conversionKind in (ConversionKind.Implicit,
+                                         ConversionKind.Propagated)):
+            op = op.operand
+        if type(op).__name__ != "NamedValueExpression":
+            return False
+        sym = op.symbol
+        if not _sym_symbol_net_kind(sym) or not _sym_four_state_vector(op.type):
+            return False
+        if (_sym_vector_width_fixed(sm, port.type,
+                                    _decl_type_syntax(getattr(port, "internalSymbol", None)))
+                and _sym_vector_width_fixed(sm, op.type, _decl_type_syntax(sym))
+                and int(port.type.bitWidth) <= int(op.type.bitWidth)):
+            return False
+        return True
+    except Exception:
+        return False
+
+
 def _sym_port_conn(sm, m, pc):
     """One port connection of instance `m` -> `PortConn` (or `Unsupported`).
     Inputs carry the actual as a VALUE expression (`expr`, `null` when
@@ -30124,6 +30277,10 @@ def _sym_port_conn(sm, m, pc):
                 return node
             with _SymUnsizedXZLoud("PortConnection:unsized-xz"):
                 node["expr"] = _sym_port_actual(sm, e)
+            if _sym_net_bound_actual(sm, port, e):
+                # Round 6 (H1): the net-to-net shape Xcelium binds bit for
+                # bit; absent (= false) on every other connected input.
+                node["net"] = True
         return node
     if e is None:
         node["target"] = None
@@ -30701,7 +30858,11 @@ def process_symbolic(top, sources, incdirs, out_path):
     """`--top` mode: compile all sources as ONE slang compilation (name
     resolution across packages/files) and emit the top module in the
     extended symbolic vocabulary as one sv-0.2 envelope."""
-    global _SYM
+    global _SYM, _SOURCE_BYTES
+    # Symbolic mode reads sources from `source_map`, never from the M0-mode
+    # global: clear it so an earlier `process_file` in the same process cannot
+    # make Unsupported texts slice the wrong source (a fresh process has None).
+    _SOURCE_BYTES = None
     source_map = {}
     file_entries = []
     for p in sources:

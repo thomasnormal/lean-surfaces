@@ -44,6 +44,12 @@ against the golden trace (the Xcelium-as-reference rule):
      CONTRADICTED:neither         Xcelium equals neither the model nor Icarus
      (plus a check that the declaration's recorded sim/lean traces still equal
      the fresh Icarus trace and the model trace)
+  oracle_disagreement naming Xcelium itself (`"sim": "xcelium"`, round 6: the
+  reference departs from IEEE 1800-2023 and the departure is declared, not refused)
+     DECLARED-XCELIUM:holds       the pin equals the recorded sim_trace and the model
+                                  equals the recorded lean_trace
+     DECLARED-XCELIUM:resolved    the pin now equals the model (retire the declaration)
+     DECLARED-XCELIUM:changed     any other trace
   icarus_unavailable (Icarus cannot simulate the row)
      CONFIRMED (xcelium simulates it, == model) | model!=X | X-not-run
 
@@ -125,6 +131,7 @@ SIGNAL_CAUSES = [
     (r"bits_labels",         r"o1",                            "P1"),
     (r"array_param_labels",  r"w",                             "P1"),
     (r"dyn32",               r"minus2|minus2_dn|m32|o32|d32",  "P2"),
+    (r"partsel_dyn",         r"dyn_up|dyn_dn",                 "P2"),   # round 6: the admitted half of partsel
     (r"hier_width",          r"in_narrow",                     "H1"),
     (r"fold_pcase",          r"o3",                            "T1"),
 ]
@@ -390,7 +397,11 @@ def declaration_verdict(rec):
         od = case["oracle_disagreement"]
         notes = []
         sg = od.get("sigma", accept[0])
-        if I["status"] != "ok":
+        xcelium_declared = od.get("sim") == "xcelium"
+        if xcelium_declared:
+            # The recorded sim_trace is the PINNED Xcelium trace, not an Icarus one.
+            pass
+        elif I["status"] != "ok":
             notes.append("Icarus did not run (%s)" % I["status"])
         elif I["cycles"] != od.get("sim_trace"):
             notes.append("recorded sim_trace no longer equals the fresh Icarus trace")
@@ -400,7 +411,14 @@ def declaration_verdict(rec):
             verdict = "UNKNOWN:%s" % ("stale" if X["stale"] else "x-not-run")
         else:
             xt = X["cycles"]
-            if xt == od.get("lean_trace"):
+            if xcelium_declared:
+                if xt == od.get("sim_trace") and models.get(sg) == od.get("lean_trace"):
+                    verdict = "DECLARED-XCELIUM:holds"
+                elif xt == models.get(sg):
+                    verdict = "DECLARED-XCELIUM:resolved"
+                else:
+                    verdict = "DECLARED-XCELIUM:changed"
+            elif xt == od.get("lean_trace"):
                 verdict = "CONFIRMED"
             elif xt == od.get("sim_trace"):
                 verdict = "CONTRADICTED:X==icarus"

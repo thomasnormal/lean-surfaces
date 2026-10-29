@@ -11,6 +11,7 @@ hand-built design `decDesign` of `LeanModels/Sv/Comb2ProcExample.lean`
 -/
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.Comb2ProcExample
+import LeanModels.Sv.CombAlias2Example
 
 /-!
 # The SV source instantiates to the proved design
@@ -33,6 +34,8 @@ load_design_sv2 onehot_dec from "Examples/system-verilog/sem2/onehot_dec/onehot_
 #guard onehot_dec.sem.name == decDesign.name
 #guard onehot_dec.sem.decls.toList == decDesign.decls.toList
 #guard toString (repr onehot_dec.sem.processes) == toString (repr decDesign.processes)
+-- the always_comb alias guard (`CombAlias2.lean`) leaves the instantiated design unchanged
+#guard toString (repr onehot_dec.sem.aliasGuard.processes) == toString (repr onehot_dec.sem.processes)
 #guard match onehot_dec.sem.processes.toList with
   | [.alwaysComb body] => body.symExec onehot_dec.sem [] == some decSym
   | _ => false

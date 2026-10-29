@@ -2,8 +2,14 @@
 // NON-last element, and an element label outside an ASCENDING dimension.
 // IEEE 1800-2023 7.4.6/11.5.1: each dimension is range-checked on its own -
 // out-of-range bits read x and an msb-overhanging write is clipped. Icarus
-// 12.0 and Yosys 0.53 linearize into the neighbouring element instead (a
-// declared disagreement, docs/sv-oracle-disagreements.md).
+// 12.0 and Yosys 0.53 linearize into the neighbouring element instead
+// (docs/sv-oracle-disagreements.md), and Xcelium 24.03-s004 does neither: it
+// treats a part-select that is only partly in range as wholly invalid (all x
+// read, write dropped; docs/sv-xcelium-audit.md, P1/P3/DX1). Since round 6
+// (2026-10-29) THIS DESIGN IS A LOUD-REFUSAL ROW (`ArraySel:partial-overhang`):
+// the three tools split three ways and the model does not choose. The one
+// shape on which Xcelium equals the model, `asc_oob = q[0][4]`, is the
+// declared Icarus row `array_oob_asc`.
 module array_oob_part (
   input  logic [7:0] src,
   input  logic [3:0] a,

@@ -712,7 +712,8 @@
                   },
                   "width": 8,
                   "name": "a"
-                }
+                },
+                "net": true
               },
               {
                 "kind": "PortConn",

@@ -10,6 +10,7 @@ Icarus), tied to the hand-built design `faDesign` of
 -/
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.Comb2ProcExample
+import LeanModels.Sv.CombAlias2Example
 
 /-!
 # The SV source instantiates to the proved design
@@ -32,6 +33,8 @@ load_design_sv2 fa_comb_proc from "Examples/system-verilog/sem2/fa_comb_proc/fa_
 #guard fa_comb_proc.sem.name == faDesign.name
 #guard fa_comb_proc.sem.decls.toList == faDesign.decls.toList
 #guard toString (repr fa_comb_proc.sem.processes) == toString (repr faDesign.processes)
+-- the always_comb alias guard (`CombAlias2.lean`) leaves the instantiated design unchanged
+#guard toString (repr fa_comb_proc.sem.aliasGuard.processes) == toString (repr fa_comb_proc.sem.processes)
 #guard match fa_comb_proc.sem.processes.toList with
   | [.alwaysComb body] => body.symExec fa_comb_proc.sem [] == some faSym
   | _ => false

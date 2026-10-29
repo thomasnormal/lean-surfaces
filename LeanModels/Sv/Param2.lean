@@ -141,13 +141,15 @@ is ONE flat window of the declared vector:
 * an out-of-range constant element select reads all-x and writes nothing
   (the no-op target is the zero-width window `Lhs2.slice n 0 0`) — the
   pinned `Sem2` rules for dynamic out-of-range selects;
-* a part select partially out of its dimension reads x in exactly the
-  out-of-range bits (a concat of the in-range window with x fill) and
-  writes exactly the in-range bits: an msb-side overhang is the clipped
-  window; an overhang BELOW the dimension's lsb (`x[-2 +: 4]`, `x[1 -: 4]`
-  at some parameter point) is a concatenation target whose low leaf is a
-  zero-effect SINK past the vector's msb, consuming the RHS bits that land
-  out of range (`arrayPartTarget`).
+* a part select wholly outside its dimension reads all x and writes
+  nothing (every tool agrees); a part select PARTLY outside it (some
+  selected elements inside the dimension, some outside, on either side) is
+  LOUD, read and write alike (`ArraySel:partial-overhang`, `partOverhangMsg`,
+  round 6 2026-10-29): the LRM (§11.5.1) reads x in exactly the out-of-range
+  bits and writes exactly the in-range ones — what the model computed until
+  then, and what Icarus 12.0, Yosys 0.53 and slang's constant evaluator do —
+  but Xcelium 24.03-s004 treats the whole select as invalid (a read is all x,
+  a write is dropped), so the tools split and the model does not choose.
 
 An indexed part-select whose BASE reads a signal (`v[sel +: 4]`, §11.5.1:
 only the width must be constant) is a READ-only tier over a 1-D vector
@@ -173,10 +175,13 @@ overhang either end of their dimension (`m[0][5:3]` reads two bits of
 per-dimension rule (x reads, clipped/no-op writes; slang's constant
 evaluator agrees) — a recorded simulator/synthesis disagreement
 (`docs/sv-oracle-disagreements.md` "Linearized packed-array indices";
-declared rows `array_oob_inner`, `array_oob_part` and `array_oob_lsbwrite`
-in `harness/sv/cases2.json`). Overhang past either END of the vector (the
-last element's msb, the first element's lsb) agrees in every tool (rows
-`array_oob`, `partsel*`). -/
+declared row `array_oob_inner` in `harness/sv/cases2.json`; the former
+`array_oob_part` and `array_oob_lsbwrite` rows are refusal rows since round
+6). A part select that overhangs either END of the vector (the last
+element's msb, the first element's lsb) is now loud as well — it was
+recorded here as agreeing in every tool, which Xcelium 24.03 contradicts
+(`docs/sv-xcelium-audit.md` clusters P1 and P3; rows `array_oob`,
+`partsel*`). -/
 
 /-- Element offset of declared label `k` in a dimension declared `[l:r]`:
 the right bound is offset 0 (the LSB side) whether the range ascends or
@@ -347,8 +352,24 @@ def arrayElemRead (env : IEnv) (n : String) (is : List PExpr) : Expr2 :=
   | .ok (_, w, false) => .lit (LVec.xVec w)
   | .error e => .unsupported "ArraySel" e
 
-/-- Read lowering of a part-select path: the in-range window, with x fill
-for exactly the out-of-range bits. -/
+/-- The refusal text of a PARTLY out-of-range constant part select (round 6,
+2026-10-29): some selected elements inside the dimension and some outside.
+IEEE 1800-2023 §11.5.1 reads x in exactly the out-of-range bits (and a write
+changes exactly the in-range ones) — Icarus 12.0, Yosys 0.53 and slang's
+constant evaluator agree — but Xcelium 24.03-s004 treats the whole select as
+invalid (a read is all x, a write is dropped; 41 shapes measured, no flag
+changes it), so the tools split and the model does not choose
+(`docs/sv-oracle-disagreements.md`, "Refused where the oracles split"). A
+select wholly inside, wholly outside (x read, no-op write: every tool agrees)
+and a single-bit select are unchanged. -/
+def partOverhangMsg (lo hi : Int) (c : Nat) : String :=
+  s!"part select [{lo}, {hi}] (element offsets) is partly outside its dimension of {c} elements: IEEE 1800-2023 §11.5.1 reads x in the out-of-range bits only (and writes only the in-range ones), Xcelium 24.03 treats the whole select as invalid (a read is all x, a write is dropped); refused rather than one reading chosen"
+
+/-- Read lowering of a part-select path: the in-range window. Wholly out of
+range: all x. PARTLY out of range: LOUD (`ArraySel:partial-overhang`,
+`partOverhangMsg`) — the model used to concatenate the in-range window with x
+fill for exactly the out-of-range bits (the LRM reading, Icarus and Yosys),
+which Xcelium contradicts. -/
 def arrayPartRead (env : IEnv) (n : String) (is : List PExpr) (mode : PartMode)
     (a b : PExpr) : Expr2 :=
   match arrayPartGeom env n is mode a b with
@@ -363,11 +384,7 @@ def arrayPartRead (env : IEnv) (n : String) (is : List PExpr) (mode : PartMode)
         let lo' := max lo 0
         let hi' := min hi ((c : Int) - 1)
         if ok && decide (lo' ≤ hi') then
-          let above := (hi - hi').toNat * s
-          let below := (lo' - lo).toNat * s
-          .concat ((if above = 0 then #[] else #[.lit (LVec.xVec above)])
-            ++ #[.slice (.ident n) (pb + lo' * s).toNat ((hi' - lo' + 1).toNat * s)]
-            ++ (if below = 0 then #[] else #[.lit (LVec.xVec below)]))
+          .unsupported "ArraySel:partial-overhang" (partOverhangMsg lo hi c)
         else .lit (LVec.xVec w)
 
 /-- Read lowering of a DYNAMIC indexed part-select (`dynPartPlan`'s
@@ -378,7 +395,8 @@ declared range reads x and every bit inside reads the vector (§11.5.1) —
 under the guard `e ≤ c + q` (past it every selected bit is above the msb:
 all x, where the logical shift would fill zeros). An x/z bit in `e` makes
 the shift and the guard x, so the whole result is x (§11.5.1; Icarus
-agrees, row `partsel`). -/
+agrees, rows `partsel_dyn*`, `dyn32`; Xcelium 24.03 reads a base that leaves the
+vector as all x — a departure recorded under audit cluster P2). -/
 def dynPartRead (n : String) (w q c : Nat) (e : Expr2) : Expr2 :=
   .ternary (.binary .le e (.lit (LVec.ofNat (Nat.log2 (c + q) + 1) (c + q))))
     (.slice (.binary (.shr false)
@@ -428,23 +446,23 @@ def arrayElemTarget (env : IEnv) (n : String) (is : List PExpr) :
   | .error e => .error e
 
 /-- Total bit width of a declared packed vector (its geometry-table entry;
-`0` when absent — unused then, the select is loud). -/
+`0` when absent — unused then, the select is loud). No longer used by
+`arrayPartTarget` since round 6 (the lsb-overhang SINK leaf it sized is
+refused); kept because `sv2_inst_simp` (`Gen2.lean`) names it. -/
 def arrayFlatWidth (env : IEnv) (n : String) : Nat :=
   match arrayDims env n with
   | .ok ds => dimsStride ds
   | .error _ => 0
 
 /-- Target lowering of a part-select path. In range: the flat window.
-Fully out of range: a no-op (the zero-width window). An overhang on the
-msb side: the in-range window (the RHS's high bits are truncated away). An
-overhang on the LSB side (`x[-2 +: 4]`, `x[1 -: 4]`, at some parameter
-point): writes to the out-of-range bits do nothing (§11.5.1), so the
-in-range elements take the RHS bits ABOVE the overhanging ones — a
-concatenation target whose low leaf is a SINK, the zero-effect window just
-past the vector's msb (`LVec.insertAt` drops every bit landing there),
-consuming exactly the overhanging RHS bits. A concatenation target needs
-one sampled RHS: continuous assigns and blocking statements; an NBA to it
-stays loud (`resolveLhs2`). A dynamic (signal) base is loud — the write
+Fully out of range: a no-op (the zero-width window; every tool agrees).
+PARTLY out of range, on either side (`x[N+3 +: 4]` past the msb, `x[-2 +: 4]`
+and `x[1 -: 4]` below the lsb, at some parameter point): LOUD
+(`ArraySel:partial-overhang`, `partOverhangMsg`, round 6 2026-10-29). The
+model used to write exactly the in-range bits (§11.5.1 — an msb-side
+overhang the clipped window, an lsb-side one a concatenation target whose low
+leaf was a SINK past the vector's msb); Xcelium 24.03 drops the WHOLE write
+instead, so the tools split. A dynamic (signal) base is loud too — the write
 tier has no run-time-offset window. -/
 def arrayPartTarget (env : IEnv) (n : String) (is : List PExpr) (mode : PartMode)
     (a b : PExpr) : Except String (Lhs2 × Nat) :=
@@ -461,11 +479,8 @@ def arrayPartTarget (env : IEnv) (n : String) (is : List PExpr) (mode : PartMode
         .error s!"part select [{lo}, {hi}] (element offsets) far outside its dimension"
       else if !ok || decide (hi < 0) || decide ((c : Int) ≤ lo) then
         .ok (.slice n 0 0, w)
-      else if decide (0 ≤ lo) then
-        .ok (.slice n (pb + lo * s).toNat (((c : Int) - lo).toNat * s), w)
       else
-        .ok (.concat [.slice n pb.toNat ((min hi ((c : Int) - 1) + 1).toNat * s),
-                      .slice n (arrayFlatWidth env n) ((-lo).toNat * s)], w)
+        .error s!"ArraySel:partial-overhang: {partOverhangMsg lo hi c}"
 
 /-! ## Self-determined widths (full semantic-tier version) -/
 
@@ -1599,18 +1614,23 @@ private def lhsIs (r : Except String (Lhs2 × Nat)) (l : Lhs2) (w : Nat) : Bool 
 #guard match arrayPartRead arrEnv "q" [] .range (.int 2) (.int 1) with
   | .unsupported "ArraySel" _ => true
   | _ => false
--- m[0][4:2] overhangs [2:0] on the msb side: x for elements 4..3, then m[0][2].
-#guard arrayPartRead arrEnv "m" [.int 0] .range (.int 4) (.int 2) ==
-  .concat #[.lit (LVec.xVec 8), .slice (.ident "m") 8 4]
--- Targets: in range, out of range (zero-width no-op), msb overhang clipped,
+-- m[0][4:2] overhangs [2:0] on the msb side (elements 4..3 outside): LOUD
+-- since round 6 — Xcelium reads the whole select as x where the LRM reads x
+-- in the two outside elements only (`ArraySel:partial-overhang`).
+#guard match arrayPartRead arrEnv "m" [.int 0] .range (.int 4) (.int 2) with
+  | .unsupported "ArraySel:partial-overhang" _ => true
+  | _ => false
+-- … and wholly outside is still all x (every tool agrees): m[0][6:5].
+#guard arrayPartRead arrEnv "m" [.int 0] .range (.int 6) (.int 5) == .lit (LVec.xVec 8)
+-- Targets: in range, out of range (zero-width no-op), msb overhang loud,
 -- lsb overhang loud.
 #guard lhsIs (arrayElemTarget arrEnv "m" [.int 1, .int 2]) (.slice "m" 20 4) 4
 #guard lhsIs (arrayElemTarget arrEnv "m" [.int 0, .int 3]) (.slice "m" 0 0) 4
-#guard lhsIs (arrayPartTarget arrEnv "m" [.int 0] .range (.int 4) (.int 2)) (.slice "m" 8 4) 12
--- m[0][1:-1] overhangs [2:0] on the LSB side: m[0][1:0] (bits 0..7) takes
--- RHS bits 11..4; RHS bits 3..0 land in the sink past m's msb (bit 24).
-#guard lhsIs (arrayPartTarget arrEnv "m" [.int 0] .range (.int 1) (.int (-1)))
-  (.concat [.slice "m" 0 8, .slice "m" 24 4]) 12
+#guard (arrayPartTarget arrEnv "m" [.int 0] .range (.int 4) (.int 2)).toOption.isNone
+#guard lhsIs (arrayPartTarget arrEnv "m" [.int 0] .range (.int 6) (.int 5)) (.slice "m" 0 0) 8
+-- m[0][1:-1] overhangs [2:0] on the LSB side: loud (it was a concatenation
+-- target ending in a sink leaf past m's msb).
+#guard (arrayPartTarget arrEnv "m" [.int 0] .range (.int 1) (.int (-1))).toOption.isNone
 -- Too many selects for the declared dimensions is loud.
 #guard match arrayElemRead arrEnv "q" [.int 0, .int 4, .int 0] with
   | .unsupported "ArraySel" _ => true
@@ -1710,22 +1730,26 @@ private def pGvShadow : PDesign :=
           (SvState.showSignal st "m", SvState.showSignal st "y", SvState.showSignal st "z"))
       == some [("11000011", "1100", "x1"), ("01101001", "0110", "x0")]
 
-/-! ## Indexed part-selects: lsb-side overhang targets and run-time bases
-(`arrayPartTarget`'s sink leaf, `dynPartPlan`/`dynPartRead`) -/
+/-! ## Indexed part-selects: partly out-of-range targets (refused since round 6)
+and run-time bases (`arrayPartTarget`, `dynPartPlan`/`dynPartRead`) -/
 
--- 1-D `v` is `[7:0]`. v[-2 +: 4] = v[1 -: 4] = labels 1..-2: v[1:0] takes the
--- RHS's bits 3..2, the low two RHS bits land in the sink past bit 7.
-#guard lhsIs (arrayPartTarget arrEnv "v" [] .up (.int (-2)) (.int 4))
-  (.concat [.slice "v" 0 2, .slice "v" 8 2]) 4
-#guard lhsIs (arrayPartTarget arrEnv "v" [] .down (.int 1) (.int 4))
-  (.concat [.slice "v" 0 2, .slice "v" 8 2]) 4
--- Both ends at once (v[-1 +: 10]): all of v, between the truncated RHS top
--- bit and the one-bit sink.
-#guard lhsIs (arrayPartTarget arrEnv "v" [] .up (.int (-1)) (.int 10))
-  (.concat [.slice "v" 0 8, .slice "v" 8 1]) 10
--- msb overhang (v[6 +: 4]) is the clipped window; fully below is a no-op.
-#guard lhsIs (arrayPartTarget arrEnv "v" [] .up (.int 6) (.int 4)) (.slice "v" 6 2) 4
+-- 1-D `v` is `[7:0]`. v[-2 +: 4] = v[1 -: 4] = labels 1..-2 overhangs the lsb:
+-- LOUD since round 6 (it was a concatenation target ending in a sink leaf).
+#guard (arrayPartTarget arrEnv "v" [] .up (.int (-2)) (.int 4)).toOption.isNone
+#guard (arrayPartTarget arrEnv "v" [] .down (.int 1) (.int 4)).toOption.isNone
+-- Both ends at once (v[-1 +: 10]) is loud too.
+#guard (arrayPartTarget arrEnv "v" [] .up (.int (-1)) (.int 10)).toOption.isNone
+-- msb overhang (v[6 +: 4]) is loud; the message names the refusal tag. Fully
+-- below (v[-6 +: 4]) is a no-op, fully above (v[9 +: 4]) too.
+#guard (arrayPartTarget arrEnv "v" [] .up (.int 6) (.int 4)).toOption.isNone
+#guard match arrayPartTarget arrEnv "v" [] .up (.int 6) (.int 4) with
+  | .error e => e.startsWith "ArraySel:partial-overhang"
+  | _ => false
 #guard lhsIs (arrayPartTarget arrEnv "v" [] .up (.int (-6)) (.int 4)) (.slice "v" 0 0) 4
+#guard lhsIs (arrayPartTarget arrEnv "v" [] .up (.int 9) (.int 4)) (.slice "v" 0 0) 4
+-- A part select wholly inside is the flat window, read and write.
+#guard lhsIs (arrayPartTarget arrEnv "v" [] .up (.int 4) (.int 4)) (.slice "v" 4 4) 4
+#guard arrayPartRead arrEnv "v" [] .up (.int 4) (.int 4) == .slice (.ident "v") 4 4
 
 private def dynPlanIs (r : Option (Except String (Nat × Nat × Nat))) (p : Nat × Nat × Nat) : Bool :=
   match r with
@@ -1769,14 +1793,15 @@ private def dynPlanLoud (r : Option (Except String (Nat × Nat × Nat))) : Bool 
   | .unsupported "ArraySel:dynamic" _ => true
   | _ => false
 -- A constant label far outside the dimension (a 32-bit unsigned wrap such as
--- `UI - 1` at `UI = 0`: 2^32 - 1) is loud on a read and on a target, where
--- an ordinary overhang is modelled.
+-- `UI - 1` at `UI = 0`: 2^32 - 1) is loud on a read and on a target
+-- (`ArraySel:index-range`); an ordinary partial overhang is loud too
+-- (`ArraySel:partial-overhang`), a select wholly outside is all x.
 #guard match arrayPartRead arrEnv "v" [] .up (.int 4294967295) (.int 4) with
   | .unsupported "ArraySel:index-range" _ => true
   | _ => false
 #guard (arrayPartTarget arrEnv "v" [] .up (.int 4294967295) (.int 4)).toOption.isNone
 #guard match arrayPartRead arrEnv "v" [] .up (.int 6) (.int 4) with
-  | .concat _ => true
+  | .unsupported "ArraySel:partial-overhang" _ => true
   | _ => false
 -- A concatenation-target leaf must write exactly its declared width: an
 -- overhanging part (`r[6 +: 4]` on `[7:4]` clips to 2 bits) is refused there
@@ -1786,11 +1811,15 @@ private def dynPlanLoud (r : Option (Except String (Nat × Nat × Nat))) : Bool 
   (.concat [.ident "v", .slice "r" 0 2]) 10
 
 /-- `dynpart`: run-time indexed part-select READS (`v[sel +: 4]` and
-`v[sel -: 4]` over `[7:0]`, `r[sel +: 2]` over `[7:4]`) and a constant-base
-TARGET overhanging the lsb (`w[-2 +: 4] = b` in an always_comb). The pinned
-values are what Icarus 12.0 prints for the same SystemVerilog (x/z base:
-all x; out-of-range bits: x; the overhanging write lands `b[3:2]` in
-`w[1:0]`); the envelope-level twin is row `partsel`. -/
+`v[sel -: 4]` over `[7:0]`, `r[sel +: 2]` over `[7:4]`) and an in-range
+constant-base TARGET (`w[1 +: 4] = b` in an always_comb). The pinned values
+are what Icarus 12.0 prints for the same SystemVerilog (x/z base: all x;
+out-of-range bits: x). A run-time base that leaves the vector is the model's
+LRM reading, which Xcelium 24.03 contradicts (cluster P2 of
+`docs/sv-xcelium-audit.md`; a value-level overhang cannot be refused
+statically); the same always_comb with the
+lsb-overhanging constant target `w[-2 +: 4] = b` (the shape this design used
+before round 6) is refused (`pDynPartOv` below). -/
 private def pDynPart : PDesign :=
   { name := "dynpart"
     params := []
@@ -1810,11 +1839,19 @@ private def pDynPart : PDesign :=
       .assign "dd" (.arrayPart "v" [] .down (.ident "sel") (.int 4)),
       .assign "dr" (.arrayPart "r" [] .up (.ident "sel") (.int 2)),
       .alwaysComb (.block [.blockingAssign "w" (.fill .l0),
-        .blockingAssignL (.arrayPart "w" [] .up (.int (-2)) (.int 4)) (.ident "b")])]
+        .blockingAssignL (.arrayPart "w" [] .up (.int 1) (.int 4)) (.ident "b")])]
     generates := []
     others := [] }
 
+/-- `pDynPart` with the write moved below the lsb (`w[-2 +: 4] = b`): loud. -/
+private def pDynPartOv : PDesign :=
+  { pDynPart with processes := [
+      .alwaysComb (.block [.blockingAssign "w" (.fill .l0),
+        .blockingAssignL (.arrayPart "w" [] .up (.int (-2)) (.int 4)) (.ident "b")])] }
+
 #guard pDynPart.crossCheck == []
+#guard !(pDynPart.instantiateD2 []).hasUnsupported
+#guard (pDynPartOv.instantiateD2 []).hasUnsupported
 #guard (Res.toOption (run2 (pDynPart.instantiateD2 []) σ_src 64
         [[("v", LVec.lit "10110100"), ("r", LVec.lit "1001"), ("b", LVec.lit "1011"),
           ("sel", LVec.ofNat 3 0)],
@@ -1823,9 +1860,9 @@ private def pDynPart : PDesign :=
         (fun tr => tr.map fun st =>
           (SvState.showSignal st "du", SvState.showSignal st "dd",
            SvState.showSignal st "dr", SvState.showSignal st "w"))
-      == some [("0100", "0xxx", "xx", "00000010"), ("0110", "0100", "1x", "00000010"),
-               ("x101", "1101", "00", "00000010"), ("xxx1", "1011", "x1", "00000010"),
-               ("xxxx", "xxxx", "xx", "00000010")]
+      == some [("0100", "0xxx", "xx", "00010110"), ("0110", "0100", "1x", "00010110"),
+               ("x101", "1101", "00", "00010110"), ("xxx1", "1011", "x1", "00010110"),
+               ("xxxx", "xxxx", "xx", "00010110")]
 
 /-- `dyn32`: 32-bit run-time bases (`v[s - 2 +: 4]` and `v[s - 2 -: 4]`, `s`
 4 bits: the unsized `2` makes the base `Resize32(s) - 2`, 32-bit unsigned)
@@ -1891,10 +1928,11 @@ private def pCtx : PDesign :=
 #guard (Res.toOption (run2 (pCtx.instantiateD2 [2]) σ_src 64
         [[("a", LVec.lit "10"), ("v", LVec.lit "00000000")]])).map
         (fun tr => tr.map fun st => SvState.showSignal st "on") == some ["1110"]
--- N = 8: `v[1 +: 8]` reads x at bit 8, which collapses the 8-bit sum.
-#guard (Res.toOption (run2 (pCtx.instantiateD2 [8]) σ_src 64
-        [[("a", LVec.lit "00000000"), ("v", LVec.lit "10010001")]])).map
-        (fun tr => tr.map fun st => SvState.showSignal st "oa") == some ["xxxx"]
+-- N = 8: `v[1 +: 8]` leaves the vector at bit 8 (partly out of range): loud
+-- since round 6 (`ArraySel:partial-overhang`; the model used to read x at bit
+-- 8, which collapsed the 8-bit sum — Xcelium reads the whole select as x).
+#guard (pCtx.instantiateD2 [8]).hasUnsupported
+#guard !(pCtx.instantiateD2 [7]).hasUnsupported
 -- N = 4 (equal widths): exactly the unchanged lowering.
 #guard match pCtx.instantiate2 [4] with
   | .ok m => toString (repr m.processes.toList) ==

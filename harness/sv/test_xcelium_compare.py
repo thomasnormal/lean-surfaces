@@ -136,6 +136,28 @@ class Declarations(unittest.TestCase):
         d = self.decl(self.A, icarus=self.ALLX)
         self.assertTrue(any("sim_trace" in n for n in d["notes"]))
 
+    def xdecl(self, x, model=None, icarus=None):
+        """A declaration naming Xcelium itself: sim_trace is the PINNED Xcelium
+        trace (here ALLX), lean_trace the model's (A)."""
+        od = dict(id="xcelium-test", sim="xcelium", sigma="src", sim_trace=self.ALLX, lean_trace=self.A,
+                  observed="Xcelium departs", reference="IEEE")
+        r = rec({"src": model or self.A}, x, icarus if icarus is not None else self.A,
+                case=dict(oracle_disagreement=od))
+        return r["declaration"]
+
+    def test_declared_xcelium_departure_holds_resolves_or_changes(self):
+        self.assertEqual(self.xdecl(self.ALLX)["verdict"], "DECLARED-XCELIUM:holds")
+        self.assertEqual(self.xdecl(self.A)["verdict"], "DECLARED-XCELIUM:resolved")
+        self.assertEqual(self.xdecl(self.B)["verdict"], "DECLARED-XCELIUM:changed")
+        # the model moved: the recorded lean_trace no longer holds
+        d = self.xdecl(self.ALLX, model=self.B, icarus=self.B)
+        self.assertEqual(d["verdict"], "DECLARED-XCELIUM:changed")
+        self.assertTrue(any("lean_trace" in n for n in d["notes"]))
+
+    def test_declared_xcelium_departure_does_not_compare_icarus_to_the_recorded_trace(self):
+        # Icarus equals the model here (it is NOT the recorded sim_trace): no note.
+        self.assertEqual(self.xdecl(self.ALLX, icarus=self.A)["notes"], [])
+
     def test_icarus_unavailable(self):
         r = rec({"src": self.A}, self.A, case=dict(icarus_unavailable=dict(id="iu")))
         self.assertEqual(r["declaration"], dict(kind="icarus_unavailable", id="iu", verdict="CONFIRMED",
@@ -154,6 +176,9 @@ class Routing(unittest.TestCase):
         self.assertEqual(C.cell_cause(dict(top="array_oob"), "over"), "P1")
         self.assertEqual(C.cell_cause(dict(top="array_oob_part"), "w_flat"), "P3")
         self.assertEqual(C.cell_cause(dict(top="m", file="hier_width"), "in_narrow"), "H1")
+        # round 6: the admitted half of partsel keeps its run-time selects in P2
+        self.assertEqual(C.cell_cause(dict(top="partsel_dyn"), "dyn_up"), "P2")
+        self.assertIsNone(C.cell_cause(dict(top="partsel_dyn"), "rev_up"))
 
     def test_unrouted_cell_is_unclustered(self):
         A = tr(("a=0", "y=1"))

@@ -11,6 +11,7 @@ Icarus), tied to the hand-built design `latchDesign` of
 -/
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.Comb2ProcExample
+import LeanModels.Sv.CombAlias2Example
 
 /-!
 # The SV source instantiates to the proved design
@@ -34,6 +35,8 @@ load_design_sv2 latch_comb from "Examples/system-verilog/sem2/latch_comb/latch_c
 #guard latch_comb.sem.name == latchDesign.name
 #guard latch_comb.sem.decls.toList == latchDesign.decls.toList
 #guard toString (repr latch_comb.sem.processes) == toString (repr latchDesign.processes)
+-- the always_comb alias guard (`CombAlias2.lean`) leaves the instantiated design unchanged
+#guard toString (repr latch_comb.sem.aliasGuard.processes) == toString (repr latch_comb.sem.processes)
 #guard match latch_comb.sem.processes.toList with
   | [.alwaysComb body] => body.symExec latch_comb.sem [] == some latchSym
   | _ => false

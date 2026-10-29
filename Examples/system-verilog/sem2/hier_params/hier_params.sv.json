@@ -419,7 +419,8 @@
                   },
                   "width": 3,
                   "name": "a"
-                }
+                },
+                "net": true
               },
               {
                 "kind": "PortConn",
@@ -549,7 +550,8 @@
                   },
                   "width": 3,
                   "name": "a"
-                }
+                },
+                "net": true
               },
               {
                 "kind": "PortConn",

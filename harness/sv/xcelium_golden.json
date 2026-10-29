@@ -17,6 +17,62 @@
    "hash": "bb03941172345a5ce4f7271b2de4d2ed213764e37c7e0e310266f16d1d611f25",
    "status": "ok"
   },
+  "acg_alias_bits_ok": {
+   "cycles": [
+    "CYCLE 0 a=0 b=0 y=0",
+    "CYCLE 1 a=1 b=0 y=0",
+    "CYCLE 2 a=1 b=1 y=1",
+    "CYCLE 3 a=0 b=1 y=1",
+    "CYCLE 4 a=1 b=1 y=1",
+    "CYCLE 5 a=x b=1 y=1",
+    "CYCLE 6 a=0 b=0 y=0",
+    "CYCLE 7 a=1 b=1 y=1"
+   ],
+   "hash": "00232185d301c459c0b272465b2b66d98b99eb7becd542978e3d6a4297406170",
+   "status": "ok"
+  },
+  "acg_alias_copy": {
+   "cycles": [
+    "CYCLE 0 a=11 y=11",
+    "CYCLE 1 a=10 y=10",
+    "CYCLE 2 a=00 y=00",
+    "CYCLE 3 a=11 y=11",
+    "CYCLE 4 a=00 y=00",
+    "CYCLE 5 a=11 y=11",
+    "CYCLE 6 a=1x y=1x",
+    "CYCLE 7 a=11 y=11"
+   ],
+   "hash": "8014420b79808a99fb39b092a686f1e3347c4dbccfa5806b86fa3f19607a3c93",
+   "status": "ok"
+  },
+  "acg_alias_far": {
+   "cycles": [
+    "CYCLE 0 a=11 b=00 y=11 z=00",
+    "CYCLE 1 a=10 b=01 y=10 z=01",
+    "CYCLE 2 a=00 b=10 y=00 z=10",
+    "CYCLE 3 a=01 b=11 y=01 z=11",
+    "CYCLE 4 a=11 b=00 y=11 z=00",
+    "CYCLE 5 a=x0 b=11 y=x0 z=11",
+    "CYCLE 6 a=00 b=1x y=00 z=1x",
+    "CYCLE 7 a=11 b=01 y=11 z=01"
+   ],
+   "hash": "17094aeab8ab27ffc01448994fa3b937cf2d89c39db4f8ff4cd7ea241ab983d8",
+   "status": "ok"
+  },
+  "acg_alias_hier_ok": {
+   "cycles": [
+    "CYCLE 0 a=11 y=11",
+    "CYCLE 1 a=10 y=10",
+    "CYCLE 2 a=00 y=00",
+    "CYCLE 3 a=11 y=11",
+    "CYCLE 4 a=00 y=00",
+    "CYCLE 5 a=11 y=11",
+    "CYCLE 6 a=1x y=1x",
+    "CYCLE 7 a=11 y=11"
+   ],
+   "hash": "a905802876ae3ceaf013098d30de439c705d12de81b0ff2ff985c805a5cf8028",
+   "status": "ok"
+  },
   "acg_alias_port": {
    "cycles": [
     "CYCLE 0 a=00 y=00",
@@ -29,6 +85,34 @@
     "CYCLE 7 a=10 y=10"
    ],
    "hash": "b5c9d3aecc5b54cf915c3a3678c12ba00566bb98fdfef07912a37218762dd085",
+   "status": "ok"
+  },
+  "acg_alias_port_wr": {
+   "cycles": [
+    "CYCLE 0 a=00 y=00",
+    "CYCLE 1 a=01 y=01",
+    "CYCLE 2 a=10 y=10",
+    "CYCLE 3 a=01 y=01",
+    "CYCLE 4 a=01 y=01",
+    "CYCLE 5 a=11 y=11",
+    "CYCLE 6 a=00 y=00",
+    "CYCLE 7 a=10 y=10"
+   ],
+   "hash": "dc40bf67f417a952c8df9d98f87c11d5307ade69c753517d05e2e35055621fc2",
+   "status": "ok"
+  },
+  "acg_alias_wr": {
+   "cycles": [
+    "CYCLE 0 a=11 y=11",
+    "CYCLE 1 a=10 y=10",
+    "CYCLE 2 a=00 y=00",
+    "CYCLE 3 a=11 y=11",
+    "CYCLE 4 a=00 y=00",
+    "CYCLE 5 a=11 y=11",
+    "CYCLE 6 a=1x y=1x",
+    "CYCLE 7 a=11 y=11"
+   ],
+   "hash": "ebd094dd6d520531db3ce4369600feb38b2f0b12d217e44dddc223d54a24d386",
    "status": "ok"
   },
   "acg_bits_ok": {
@@ -392,7 +476,20 @@
     "CYCLE 2 a=x01z m_flat=000xx01z hi_read=xx over=xxxx beyond=x",
     "CYCLE 3 a=1111 m_flat=00001111 hi_read=xx over=xxxx beyond=x"
    ],
-   "hash": "187d2c3d0448470a52cd36a1aea7e2544422c3e271b81124e8b6408749c78da4",
+   "hash": "c571549c0f3ae5deac0d5da99a3a327e8b1120ec559a21b9ab5667f198ff8f93",
+   "status": "ok",
+   "warnings": [
+    "xmelab:BNDWRN"
+   ]
+  },
+  "array_oob_asc": {
+   "cycles": [
+    "CYCLE 0 src=10110110 asc_oob=x",
+    "CYCLE 1 src=01001001 asc_oob=x",
+    "CYCLE 2 src=00001000 asc_oob=x",
+    "CYCLE 3 src=1011x110 asc_oob=x"
+   ],
+   "hash": "54884996cf99e416a6f96ca5aa59b53cec4f7f2a9e3d7de797441cec260292e5",
    "status": "ok",
    "warnings": [
     "xmelab:BNDWRN"
@@ -416,7 +513,7 @@
     "CYCLE 2 a=x01z w_flat=00000000 v=00000000",
     "CYCLE 3 a=0101 w_flat=00000000 v=00000000"
    ],
-   "hash": "067e061c6d10000c9d5bb38ace148d90ccee111c629bebcac4500bfff816c3fe",
+   "hash": "534905dea7f7f032be46ed95d416aa09642a52ae45aa4fa8e4b667bde14bd657",
    "status": "ok",
    "warnings": [
     "xmelab:BNDWRN"
@@ -429,7 +526,7 @@
     "CYCLE 2 a=x01z w_flat=01z00000 v=000001z0",
     "CYCLE 3 a=0101 w_flat=00100000 v=00001010"
    ],
-   "hash": "36ad078ddcfdce571483a7ef04ab008f3d0aab97af4a4019674730371633560c",
+   "hash": "cc6ecdfb0370e0a55ddd6144e1e422623f931abbf8095d617d47efc9debad478",
    "status": "ok"
   },
   "array_oob_part": {
@@ -1098,7 +1195,24 @@
     "CYCLE 16 v=01001110 s=x010 b32=z0000000000000000000000000000001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
     "CYCLE 17 v=1x0z1100 s=01z0 b32=z0000000000000000000000000000001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx"
    ],
-   "hash": "f5336db0cdec5d8c65d49065e0d5d1f6954de717bb1a01764fb875a0be69b222",
+   "hash": "988feca3708955fed2b070c824960a1c4ce1f883c9f89d843bedca45dedbc1b8",
+   "status": "ok"
+  },
+  "dyn32_part": {
+   "cycles": [
+    "CYCLE 0 v=10110111 s=0010 b32=00000000000000000000000000000101 minus2=0111 minus2_dn=xxxx m32=0111 o32=xxxx d32=1101",
+    "CYCLE 1 v=10110111 s=0011 b32=00000000000000000000000000000111 minus2=1011 minus2_dn=xxxx m32=1011 o32=xxxx d32=1011",
+    "CYCLE 2 v=10110111 s=0111 b32=00000000000000000000000000000010 minus2=xxxx minus2_dn=1101 m32=xxxx o32=1101 d32=xxxx",
+    "CYCLE 3 v=10110111 s=1001 b32=00000000000000000000000000001001 minus2=xxxx minus2_dn=1011 m32=xxxx o32=xxxx d32=xxxx",
+    "CYCLE 4 v=10110111 s=1111 b32=00000000000000000000000000000011 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=0110 d32=0111",
+    "CYCLE 5 v=01001110 s=0100 b32=00000000000000000000000000000110 minus2=0011 minus2_dn=xxxx m32=0011 o32=xxxx d32=1001",
+    "CYCLE 6 v=01001110 s=0101 b32=00000000000000000000000000000001 minus2=1001 minus2_dn=1110 m32=1001 o32=0111 d32=xxxx",
+    "CYCLE 7 v=01001110 s=1010 b32=00000000000000000000000000001000 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+    "CYCLE 8 v=1x0z1100 s=0110 b32=00000000000000000000000000000100 minus2=1x0z minus2_dn=z110 m32=1x0z o32=1x0z d32=z110",
+    "CYCLE 9 v=1x0z1100 s=x010 b32=0000000000000000000000000000x001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+    "CYCLE 10 v=1x0z1100 s=0110 b32=z0000000000000000000000000000001 minus2=1x0z minus2_dn=z110 m32=1x0z o32=xxxx d32=xxxx"
+   ],
+   "hash": "b336b9eb1fde27a5b5fadf3c6d239c6223e375c2728bfe787a9836146a0f0dd6",
    "status": "ok"
   },
   "enum_fixed_array_element": {
@@ -3659,6 +3773,75 @@
     "xmelab:CUVMPW"
    ]
   },
+  "hier_width_ok": {
+   "cycles": [
+    "CYCLE 0 a=1101 s=00 out_wide=000010 out_narrow=10 in_wide=0010 in_narrow=111111 in_safe=1101",
+    "CYCLE 1 a=0010 s=00 out_wide=001101 out_narrow=01 in_wide=0101 in_narrow=111111 in_safe=1101",
+    "CYCLE 2 a=0001 s=00 out_wide=001110 out_narrow=10 in_wide=0110 in_narrow=111111 in_safe=1101",
+    "CYCLE 3 a=0101 s=01 out_wide=001010 out_narrow=10 in_wide=0010 in_narrow=111110 in_safe=1100",
+    "CYCLE 4 a=0101 s=01 out_wide=001010 out_narrow=10 in_wide=0010 in_narrow=111110 in_safe=1100",
+    "CYCLE 5 a=0111 s=01 out_wide=001000 out_narrow=00 in_wide=0000 in_narrow=111110 in_safe=1100",
+    "CYCLE 6 a=0011 s=10 out_wide=001100 out_narrow=00 in_wide=0100 in_narrow=111101 in_safe=1111",
+    "CYCLE 7 a=0110 s=10 out_wide=001001 out_narrow=01 in_wide=0001 in_narrow=111101 in_safe=1111",
+    "CYCLE 8 a=1111 s=10 out_wide=000000 out_narrow=00 in_wide=0000 in_narrow=111101 in_safe=1111",
+    "CYCLE 9 a=0000 s=11 out_wide=001111 out_narrow=11 in_wide=0111 in_narrow=111100 in_safe=1110",
+    "CYCLE 10 a=0101 s=11 out_wide=001010 out_narrow=10 in_wide=0010 in_narrow=111100 in_safe=1110",
+    "CYCLE 11 a=0010 s=11 out_wide=001101 out_narrow=01 in_wide=0101 in_narrow=111100 in_safe=1110",
+    "CYCLE 12 a=z001 s=x1 out_wide=00x110 out_narrow=10 in_wide=0110 in_narrow=1111x0 in_safe=11x0",
+    "CYCLE 13 a=1100 s=z0 out_wide=000011 out_narrow=11 in_wide=0011 in_narrow=1111x1 in_safe=11x1"
+   ],
+   "hash": "c215eb041d8fc3abee72c4896917b6e4786525a0a53c75550b88dd0d282b5ca6",
+   "status": "ok",
+   "warnings": [
+    "xmelab:CUVMPW"
+   ]
+  },
+  "hier_width_ok_n2": {
+   "cycles": [
+    "CYCLE 0 a=10 s=00 out_wide=0001 out_narrow=01 in_wide=01 in_narrow=1111 in_safe=01",
+    "CYCLE 1 a=11 s=00 out_wide=0000 out_narrow=00 in_wide=00 in_narrow=1111 in_safe=01",
+    "CYCLE 2 a=00 s=00 out_wide=0011 out_narrow=11 in_wide=01 in_narrow=1111 in_safe=01",
+    "CYCLE 3 a=01 s=01 out_wide=0010 out_narrow=10 in_wide=00 in_narrow=1110 in_safe=00",
+    "CYCLE 4 a=11 s=01 out_wide=0000 out_narrow=00 in_wide=00 in_narrow=1110 in_safe=00",
+    "CYCLE 5 a=10 s=01 out_wide=0001 out_narrow=01 in_wide=01 in_narrow=1110 in_safe=00",
+    "CYCLE 6 a=11 s=10 out_wide=0000 out_narrow=00 in_wide=00 in_narrow=1101 in_safe=11",
+    "CYCLE 7 a=01 s=10 out_wide=0010 out_narrow=10 in_wide=00 in_narrow=1101 in_safe=11",
+    "CYCLE 8 a=01 s=10 out_wide=0010 out_narrow=10 in_wide=00 in_narrow=1101 in_safe=11",
+    "CYCLE 9 a=10 s=11 out_wide=0001 out_narrow=01 in_wide=01 in_narrow=1100 in_safe=10",
+    "CYCLE 10 a=10 s=11 out_wide=0001 out_narrow=01 in_wide=01 in_narrow=1100 in_safe=10",
+    "CYCLE 11 a=01 s=11 out_wide=0010 out_narrow=10 in_wide=00 in_narrow=1100 in_safe=10",
+    "CYCLE 12 a=z0 s=x1 out_wide=00x1 out_narrow=x1 in_wide=01 in_narrow=11x0 in_safe=x0",
+    "CYCLE 13 a=00 s=z0 out_wide=0011 out_narrow=11 in_wide=01 in_narrow=11x1 in_safe=x1"
+   ],
+   "hash": "9f94a4b54a32fc5106144e187894e0a2cfa0ee69cdc1f1603588117f77352d49",
+   "status": "ok",
+   "warnings": [
+    "xmelab:CUVMPW"
+   ]
+  },
+  "hier_width_ok_n6": {
+   "cycles": [
+    "CYCLE 0 a=100100 s=00 out_wide=00011011 out_narrow=11 in_wide=011011 in_narrow=11111111 in_safe=111101",
+    "CYCLE 1 a=011001 s=00 out_wide=00100110 out_narrow=10 in_wide=000110 in_narrow=11111111 in_safe=111101",
+    "CYCLE 2 a=001000 s=00 out_wide=00110111 out_narrow=11 in_wide=010111 in_narrow=11111111 in_safe=111101",
+    "CYCLE 3 a=011010 s=01 out_wide=00100101 out_narrow=01 in_wide=000101 in_narrow=11111110 in_safe=111100",
+    "CYCLE 4 a=001111 s=01 out_wide=00110000 out_narrow=00 in_wide=010000 in_narrow=11111110 in_safe=111100",
+    "CYCLE 5 a=110110 s=01 out_wide=00001001 out_narrow=01 in_wide=001001 in_narrow=11111110 in_safe=111100",
+    "CYCLE 6 a=100000 s=10 out_wide=00011111 out_narrow=11 in_wide=011111 in_narrow=11111101 in_safe=111111",
+    "CYCLE 7 a=001100 s=10 out_wide=00110011 out_narrow=11 in_wide=010011 in_narrow=11111101 in_safe=111111",
+    "CYCLE 8 a=111111 s=10 out_wide=00000000 out_narrow=00 in_wide=000000 in_narrow=11111101 in_safe=111111",
+    "CYCLE 9 a=101110 s=11 out_wide=00010001 out_narrow=01 in_wide=010001 in_narrow=11111100 in_safe=111110",
+    "CYCLE 10 a=100011 s=11 out_wide=00011100 out_narrow=00 in_wide=011100 in_narrow=11111100 in_safe=111110",
+    "CYCLE 11 a=110011 s=11 out_wide=00001100 out_narrow=00 in_wide=001100 in_narrow=11111100 in_safe=111110",
+    "CYCLE 12 a=0010z1 s=x1 out_wide=001101x0 out_narrow=x0 in_wide=0101x0 in_narrow=111111x0 in_safe=1111x0",
+    "CYCLE 13 a=000110 s=z0 out_wide=00111001 out_narrow=01 in_wide=011001 in_narrow=111111x1 in_safe=1111x1"
+   ],
+   "hash": "31be3f3dc72076ed2aa95247293db3ed402a7921865cbf5824d211617d2df0b4",
+   "status": "ok",
+   "warnings": [
+    "xmelab:CUVMPW"
+   ]
+  },
   "indexed_part_assign": {
    "cycles": [
     "CYCLE 0 source=0011 value=10100011",
@@ -3815,6 +3998,50 @@
    "warnings": [
     "xmelab:BNDWRN"
    ]
+  },
+  "label_kminus_p": {
+   "cycles": [
+    "CYCLE 0 b=01 p=10",
+    "CYCLE 1 b=10 p=00",
+    "CYCLE 2 b=11 p=10",
+    "CYCLE 3 b=x0 p=00",
+    "CYCLE 4 b=0z p=z0"
+   ],
+   "hash": "32099aef8603e519f918d951559947808af02a3cd80f5bf819619ae720702d71",
+   "status": "ok"
+  },
+  "label_kminus_p_w3": {
+   "cycles": [
+    "CYCLE 0 b=01 p=10",
+    "CYCLE 1 b=10 p=01",
+    "CYCLE 2 b=11 p=11",
+    "CYCLE 3 b=x0 p=0x",
+    "CYCLE 4 b=0z p=z0"
+   ],
+   "hash": "9e088caf2deaf4673aa8c3343c47509b3ba8c87cfe042be5e1fd4e0fd36a31db",
+   "status": "ok"
+  },
+  "label_kminus_p_w5": {
+   "cycles": [
+    "CYCLE 0 b=01 p=10",
+    "CYCLE 1 b=10 p=00",
+    "CYCLE 2 b=11 p=10",
+    "CYCLE 3 b=x0 p=00",
+    "CYCLE 4 b=0z p=z0"
+   ],
+   "hash": "bbb983d4718209394ac9f6a7ff75d7eeca63964cc44dc205459d5522ad328fb3",
+   "status": "ok"
+  },
+  "label_kminus_q": {
+   "cycles": [
+    "CYCLE 0 b=01 q=10",
+    "CYCLE 1 b=10 q=01",
+    "CYCLE 2 b=11 q=11",
+    "CYCLE 3 b=x0 q=0x",
+    "CYCLE 4 b=0z q=z0"
+   ],
+   "hash": "ff059bdf561164956aa0b36a286bfac2ea35d1ad9b6a311b91ad1294a9426c35",
+   "status": "ok"
   },
   "label_kminus_w0": {
    "cycles": [
@@ -4580,6 +4807,48 @@
    "hash": "7b9ffa297bb193c761cfc780d858a9d2f697cedc5d30c677fbe06fa9e9a71bbe",
    "status": "ok"
   },
+  "net_width_ok": {
+   "cycles": [
+    "CYCLE 0 s=01 pv=000001 pe=000001",
+    "CYCLE 1 s=10 pv=000010 pe=000010",
+    "CYCLE 2 s=11 pv=000011 pe=000011",
+    "CYCLE 3 s=x1 pv=0000x1 pe=0000x1"
+   ],
+   "hash": "f09152f60ad2447ef45fd5591fe6ce8834fb8586246b1cec931dd23d27c4662a",
+   "status": "ok",
+   "warnings": [
+    "xmelab:CUVMPW"
+   ]
+  },
+  "net_width_outvar": {
+   "cycles": [
+    "CYCLE 0 s=01 ol=01 orr=10 ov=00 pl=000001 pr=000010 pv=000000",
+    "CYCLE 1 s=10 ol=10 orr=01 ov=11 pl=000010 pr=000001 pv=000011",
+    "CYCLE 2 s=11 ol=11 orr=00 ov=10 pl=000011 pr=000000 pv=000010",
+    "CYCLE 3 s=x1 ol=x1 orr=x0 ov=x0 pl=0000x1 pr=0000x0 pv=0000x0",
+    "CYCLE 4 s=z0 ol=z0 orr=x1 ov=x1 pl=0000z0 pr=0000x1 pv=0000x1",
+    "CYCLE 5 s=00 ol=00 orr=11 ov=01 pl=000000 pr=000011 pv=000001"
+   ],
+   "hash": "b2a3c5c1fc85ed4d143d5d58837ebfa730f5681214c973589d7aa51d7e209af2",
+   "status": "ok",
+   "warnings": [
+    "xmelab:CUVMPW"
+   ]
+  },
+  "net_width_outvar1": {
+   "cycles": [
+    "CYCLE 0 s=0 ol=0 orr=1 pl=0000 pr=0001",
+    "CYCLE 1 s=1 ol=1 orr=0 pl=0001 pr=0000",
+    "CYCLE 2 s=x ol=x orr=x pl=000x pr=000x",
+    "CYCLE 3 s=z ol=z orr=x pl=000z pr=000x",
+    "CYCLE 4 s=1 ol=1 orr=0 pl=0001 pr=0000"
+   ],
+   "hash": "08649dea7c43608807d17fd705d386d4933e5cfc847af3a809ad5042df22554f",
+   "status": "ok",
+   "warnings": [
+    "xmelab:CUVMPW"
+   ]
+  },
   "noncanonical_bit_assign": {
    "cycles": [
     "CYCLE 0 source=10100101 value=1xxxxxx1",
@@ -4677,6 +4946,78 @@
    ],
    "hash": "23e362a2c7e3f644e6b5be37ce8010628c559211f04d26a358b6b43056478c85",
    "status": "ok"
+  },
+  "overhang_legacy_k2": {
+   "cycles": [
+    "CYCLE 0 v=10110100 b=101 y=101 w=00010100",
+    "CYCLE 1 v=01101001 b=011 y=010 w=00001100",
+    "CYCLE 2 v=1x0z1x0z b=x01 y=z1x w=000x0100",
+    "CYCLE 3 v=11111111 b=110 y=111 w=00011000"
+   ],
+   "hash": "155bf184bc3532564ea768af3128456ea8a80924d2c585d69647750f4a1052d3",
+   "status": "ok"
+  },
+  "overhang_legacy_k9": {
+   "cycles": [
+    "CYCLE 0 v=10110100 b=101 y=xxx w=00000000",
+    "CYCLE 1 v=01101001 b=011 y=xxx w=00000000",
+    "CYCLE 2 v=1x0z1x0z b=x01 y=xxx w=00000000",
+    "CYCLE 3 v=11111111 b=110 y=xxx w=00000000"
+   ],
+   "hash": "3f8ad69de2b351a322663501399cd5ec3cd4f775f9b709cdfc5affe3ddb475d6",
+   "status": "ok",
+   "warnings": [
+    "xmelab:BNDWRN"
+   ]
+  },
+  "overhang_read_n3": {
+   "cycles": [
+    "CYCLE 0 a=101101110001 y=0110",
+    "CYCLE 1 a=011001100110 y=1100",
+    "CYCLE 2 a=x01zx01zx01z y=01zx",
+    "CYCLE 3 a=111111111111 y=1111"
+   ],
+   "hash": "e39f82b80e70625f9e808742ecc8ab5af107a7e9cf8b223f6e18ccfcdfae8d25",
+   "status": "ok"
+  },
+  "overhang_read_n5": {
+   "cycles": [
+    "CYCLE 0 a=101101110001 y=xxxx",
+    "CYCLE 1 a=011001100110 y=xxxx",
+    "CYCLE 2 a=x01zx01zx01z y=xxxx",
+    "CYCLE 3 a=111111111111 y=xxxx"
+   ],
+   "hash": "54ab1c13dc36cac43c5b77b8f95a3378f219f8d42e2eace5e0798af98a6af378",
+   "status": "ok",
+   "warnings": [
+    "xmelab:BNDWRN"
+   ]
+  },
+  "overhang_write_n1": {
+   "cycles": [
+    "CYCLE 0 b=1011 w_hi=10110000 w_lo=00000000",
+    "CYCLE 1 b=0110 w_hi=01100000 w_lo=00000000",
+    "CYCLE 2 b=x01z w_hi=x01z0000 w_lo=00000000",
+    "CYCLE 3 b=1111 w_hi=11110000 w_lo=00000000"
+   ],
+   "hash": "f12f3846825bfe31d95f305e587b8cde39197e9019602770abae4b1b9de6397c",
+   "status": "ok",
+   "warnings": [
+    "xmelab:BNDWRN"
+   ]
+  },
+  "overhang_write_n6": {
+   "cycles": [
+    "CYCLE 0 b=1011 w_hi=00000000 w_lo=00001011",
+    "CYCLE 1 b=0110 w_hi=00000000 w_lo=00000110",
+    "CYCLE 2 b=x01z w_hi=00000000 w_lo=0000x01z",
+    "CYCLE 3 b=1111 w_hi=00000000 w_lo=00001111"
+   ],
+   "hash": "5bf6a96a28b6a914d6b074df37c7e8d4333ccb56e74502e4ca233eac25711e94",
+   "status": "ok",
+   "warnings": [
+    "xmelab:BNDWRN"
+   ]
   },
   "packed_aggregate_array_member": {
    "cycles": [
@@ -4795,6 +5136,108 @@
    "warnings": [
     "xmelab:BNDWRN"
    ]
+  },
+  "param_types_ok": {
+   "cycles": [
+    "CYCLE 0 v=1011001110001111 o_p=11 o_v=11 o_v2=11 o_q=11 o_sv=00 o_u=10 o_s1=0111 o_s2=0001 o_s3=0011",
+    "CYCLE 1 v=0101010101010101 o_p=10 o_v=10 o_v2=01 o_q=01 o_sv=10 o_u=10 o_s1=1010 o_s2=1010 o_s3=0101",
+    "CYCLE 2 v=1000000000000001 o_p=00 o_v=00 o_v2=00 o_q=00 o_sv=00 o_u=10 o_s1=0000 o_s2=0000 o_s3=0000",
+    "CYCLE 3 v=1100110100100101 o_p=10 o_v=10 o_v2=01 o_q=01 o_sv=01 o_u=10 o_s1=0010 o_s2=0100 o_s3=1001",
+    "CYCLE 4 v=1001011101111010 o_p=01 o_v=01 o_v2=11 o_q=11 o_sv=11 o_u=10 o_s1=1101 o_s2=1111 o_s3=1110",
+    "CYCLE 5 v=01111101z001001x o_p=01 o_v=01 o_v2=01 o_q=01 o_sv=00 o_u=10 o_s1=1001 o_s2=0010 o_s3=0100"
+   ],
+   "hash": "6b9f09360d7414a08f3992b8e7d99127bb4490444e05c45b4761316f4b8bb748",
+   "status": "ok"
+  },
+  "param_types_ok_p0_v3": {
+   "cycles": [
+    "CYCLE 0 v=1011001110001111 o_p=00 o_v=10 o_v2=11 o_q=11 o_sv=00 o_u=10 o_s1=0111 o_s2=0001 o_s3=0011",
+    "CYCLE 1 v=0101010101010101 o_p=01 o_v=10 o_v2=01 o_q=01 o_sv=10 o_u=10 o_s1=1010 o_s2=1010 o_s3=0101",
+    "CYCLE 2 v=1000000000000001 o_p=00 o_v=00 o_v2=00 o_q=00 o_sv=00 o_u=10 o_s1=0000 o_s2=0000 o_s3=0000",
+    "CYCLE 3 v=0100010001010111 o_p=01 o_v=00 o_v2=01 o_q=00 o_sv=10 o_u=10 o_s1=1011 o_s2=1010 o_s3=0101",
+    "CYCLE 4 v=0001101011111110 o_p=11 o_v=11 o_v2=11 o_q=10 o_sv=11 o_u=10 o_s1=1111 o_s2=1111 o_s3=1111",
+    "CYCLE 5 v=1100110000zz1110 o_p=zz o_v=01 o_v2=11 o_q=00 o_sv=0z o_u=10 o_s1=z111 o_s2=0zz1 o_s3=zz11"
+   ],
+   "hash": "41a82780af26f46d6151cbe9b5e3ecf9d12bd5410a3c952538388eb9043319ed",
+   "status": "ok"
+  },
+  "param_types_ok_p5": {
+   "cycles": [
+    "CYCLE 0 v=1011001110001111 o_p=01 o_v=11 o_v2=11 o_q=11 o_sv=00 o_u=10 o_s1=0111 o_s2=0001 o_s3=0011",
+    "CYCLE 1 v=0101010101010101 o_p=10 o_v=10 o_v2=01 o_q=01 o_sv=10 o_u=10 o_s1=1010 o_s2=1010 o_s3=0101",
+    "CYCLE 2 v=1000000000000001 o_p=00 o_v=00 o_v2=00 o_q=00 o_sv=00 o_u=10 o_s1=0000 o_s2=0000 o_s3=0000",
+    "CYCLE 3 v=1101011101100101 o_p=11 o_v=10 o_v2=11 o_q=11 o_sv=11 o_u=10 o_s1=0010 o_s2=1100 o_s3=1001",
+    "CYCLE 4 v=0110010100010000 o_p=10 o_v=00 o_v2=01 o_q=01 o_sv=00 o_u=10 o_s1=1000 o_s2=0010 o_s3=0100",
+    "CYCLE 5 v=111z111011001x11 o_p=11 o_v=x1 o_v2=10 o_q=10 o_sv=10 o_u=10 o_s1=01x1 o_s2=1001 o_s3=001x"
+   ],
+   "hash": "a5b3a69f40473bc099a1fab6ed7683d2867126a0de9ada5f9824eb265bb1bcaa",
+   "status": "ok"
+  },
+  "param_types_ok_s4n": {
+   "cycles": [
+    "CYCLE 0 v=1011001110001111 o_p=11 o_v=11 o_v2=11 o_q=11 o_sv=00 o_u=10 o_s1=xxxx o_s2=1111 o_s3=0011",
+    "CYCLE 1 v=0101010101010101 o_p=10 o_v=10 o_v2=01 o_q=01 o_sv=10 o_u=10 o_s1=xxxx o_s2=0101 o_s3=0101",
+    "CYCLE 2 v=1000000000000001 o_p=00 o_v=00 o_v2=00 o_q=00 o_sv=00 o_u=10 o_s1=xxxx o_s2=0001 o_s3=0000",
+    "CYCLE 3 v=0111101001100011 o_p=01 o_v=01 o_v2=10 o_q=10 o_sv=11 o_u=10 o_s1=xxxx o_s2=0011 o_s3=1010",
+    "CYCLE 4 v=0000100101101000 o_p=00 o_v=00 o_v2=01 o_q=01 o_sv=11 o_u=10 o_s1=xxxx o_s2=1000 o_s3=1001",
+    "CYCLE 5 v=11z1010x00010101 o_p=10 o_v=10 o_v2=0x o_q=0x o_sv=00 o_u=10 o_s1=xxxx o_s2=0101 o_s3=010x"
+   ],
+   "hash": "32cf072973338cd1cbeac4bf187b1e3fdb98d18b035edeab5dfcb14efc0e71df",
+   "status": "ok",
+   "warnings": [
+    "xmelab:BNDWRN"
+   ]
+  },
+  "param_types_ok_signed": {
+   "cycles": [
+    "CYCLE 0 v=1011001110001111 o_p=11 o_v=11 o_v2=11 o_q=11 o_sv=xx o_u=10 o_s1=0011 o_s2=1110 o_s3=xxxx",
+    "CYCLE 1 v=0101010101010101 o_p=10 o_v=10 o_v2=01 o_q=01 o_sv=xx o_u=10 o_s1=0101 o_s2=0101 o_s3=xxxx",
+    "CYCLE 2 v=1000000000000001 o_p=00 o_v=00 o_v2=00 o_q=00 o_sv=xx o_u=10 o_s1=0000 o_s2=0000 o_s3=xxxx",
+    "CYCLE 3 v=1011010010101101 o_p=10 o_v=10 o_v2=00 o_q=00 o_sv=xx o_u=10 o_s1=0100 o_s2=0010 o_s3=xxxx",
+    "CYCLE 4 v=1100100111011100 o_p=10 o_v=10 o_v2=01 o_q=01 o_sv=xx o_u=10 o_s1=1001 o_s2=0111 o_s3=xxxx",
+    "CYCLE 5 v=0z1100101z011100 o_p=10 o_v=10 o_v2=10 o_q=10 o_sv=xx o_u=10 o_s1=0010 o_s2=101z o_s3=xxxx"
+   ],
+   "hash": "41ead21691ffa53130ff92f6a974e9271c98f40d5f9cc518429d53bafedc4c5b",
+   "status": "ok",
+   "warnings": [
+    "xmelab:BNDWRN"
+   ]
+  },
+  "param_types_ok_u32": {
+   "cycles": [
+    "CYCLE 0 v=1011001110001111 o_p=11 o_v=11 o_v2=11 o_q=01 o_sv=00 o_u=10 o_s1=0111 o_s2=0001 o_s3=0011",
+    "CYCLE 1 v=0101010101010101 o_p=10 o_v=10 o_v2=01 o_q=10 o_sv=10 o_u=10 o_s1=1010 o_s2=1010 o_s3=0101",
+    "CYCLE 2 v=1000000000000001 o_p=00 o_v=00 o_v2=00 o_q=00 o_sv=00 o_u=10 o_s1=0000 o_s2=0000 o_s3=0000",
+    "CYCLE 3 v=0010000010101010 o_p=01 o_v=01 o_v2=00 o_q=01 o_sv=01 o_u=10 o_s1=0101 o_s2=0101 o_s3=1010",
+    "CYCLE 4 v=1110101011100100 o_p=10 o_v=10 o_v2=10 o_q=11 o_sv=11 o_u=10 o_s1=0010 o_s2=1100 o_s3=1001",
+    "CYCLE 5 v=110z0110111x0101 o_p=10 o_v=10 o_v2=10 o_q=10 o_sv=11 o_u=10 o_s1=x010 o_s2=11x0 o_s3=1x01"
+   ],
+   "hash": "e98fa4720b88ea780810efe3ca6ef2c23d1a182cd9bd2b9eaa21c0a268cc9f20",
+   "status": "ok"
+  },
+  "param_types_ok_u32_3": {
+   "cycles": [
+    "CYCLE 0 v=1011001110001111 o_p=11 o_v=11 o_v2=11 o_q=11 o_sv=00 o_u=10 o_s1=0111 o_s2=0001 o_s3=0011",
+    "CYCLE 1 v=0101010101010101 o_p=10 o_v=10 o_v2=01 o_q=01 o_sv=10 o_u=10 o_s1=1010 o_s2=1010 o_s3=0101",
+    "CYCLE 2 v=1000000000000001 o_p=00 o_v=00 o_v2=00 o_q=00 o_sv=00 o_u=10 o_s1=0000 o_s2=0000 o_s3=0000",
+    "CYCLE 3 v=0010101000011110 o_p=11 o_v=11 o_v2=10 o_q=10 o_sv=00 o_u=10 o_s1=1111 o_s2=0011 o_s3=0111",
+    "CYCLE 4 v=1111001111011111 o_p=11 o_v=11 o_v2=11 o_q=11 o_sv=10 o_u=10 o_s1=1111 o_s2=1011 o_s3=0111",
+    "CYCLE 5 v=0011x0110110x011 o_p=01 o_v=01 o_v2=11 o_q=11 o_sv=11 o_u=10 o_s1=0x01 o_s2=110x o_s3=10x0"
+   ],
+   "hash": "7cd747e17a89c187f48d6c90b8a8a429fa2f2cbb2c5b7447275892a890ebbabe",
+   "status": "ok"
+  },
+  "param_types_ok_v25": {
+   "cycles": [
+    "CYCLE 0 v=1011001110001111 o_p=11 o_v=11 o_v2=11 o_q=11 o_sv=00 o_u=10 o_s1=0111 o_s2=0001 o_s3=0011",
+    "CYCLE 1 v=0101010101010101 o_p=10 o_v=10 o_v2=01 o_q=01 o_sv=10 o_u=10 o_s1=1010 o_s2=1010 o_s3=0101",
+    "CYCLE 2 v=1000000000000001 o_p=00 o_v=00 o_v2=00 o_q=00 o_sv=00 o_u=10 o_s1=0000 o_s2=0000 o_s3=0000",
+    "CYCLE 3 v=0000001011000001 o_p=00 o_v=00 o_v2=10 o_q=10 o_sv=10 o_u=10 o_s1=0000 o_s2=1000 o_s3=0000",
+    "CYCLE 4 v=1110110111010001 o_p=00 o_v=00 o_v2=01 o_q=01 o_sv=10 o_u=10 o_s1=1000 o_s2=1010 o_s3=0100",
+    "CYCLE 5 v=x10001111101001x o_p=01 o_v=01 o_v2=11 o_q=11 o_sv=10 o_u=10 o_s1=1001 o_s2=1010 o_s3=0100"
+   ],
+   "hash": "928741bd3a90eef160c0847f77ac454b20a8fc71e9e8d424f61bea8ee5eb969a",
+   "status": "ok"
   },
   "param_types_p0_v3": {
    "cycles": [
@@ -4920,6 +5363,91 @@
    "warnings": [
     "xmelab:BNDWRN"
    ]
+  },
+  "partsel_dyn": {
+   "cycles": [
+    "CYCLE 0 a=101101110001 v=10110100 sel=000 rev_up=001110101101 rev_dn=001110101101 top=1011 dyn_up=0100 dyn_dn=xxxx dyn_lane=001",
+    "CYCLE 1 a=011001100110 v=01101001 sel=001 rev_up=110100001011 rev_dn=110100001011 top=0110 dyn_up=0100 dyn_dn=xxxx dyn_lane=100",
+    "CYCLE 2 a=101100101110 v=11110000 sel=010 rev_up=110101100101 rev_dn=110101100101 top=1011 dyn_up=1100 dyn_dn=xxxx dyn_lane=100",
+    "CYCLE 3 a=111111111111 v=00001111 sel=011 rev_up=111111111111 rev_dn=111111111111 top=1111 dyn_up=0001 dyn_dn=1111 dyn_lane=111",
+    "CYCLE 4 a=000000000000 v=1x0z1x0z sel=100 rev_up=000000000000 rev_dn=000000000000 top=0000 dyn_up=1x0z dyn_dn=z1x0 dyn_lane=xxx",
+    "CYCLE 5 a=101010101010 v=10000001 sel=101 rev_up=010101010101 rev_dn=010101010101 top=1010 dyn_up=xxxx dyn_dn=0000 dyn_lane=xxx",
+    "CYCLE 6 a=x01zx01zx01z v=01111110 sel=110 rev_up=01z1zxzx0x01 rev_dn=01z1zxzx0x01 top=x01z dyn_up=xxxx dyn_dn=1111 dyn_lane=xxx",
+    "CYCLE 7 a=110011001100 v=11001010 sel=111 rev_up=100001011110 rev_dn=100001011110 top=1100 dyn_up=xxxx dyn_dn=1100 dyn_lane=xxx",
+    "CYCLE 8 a=110011001100 v=11001010 sel=x10 rev_up=100001011110 rev_dn=100001011110 top=1100 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxx",
+    "CYCLE 9 a=110011001100 v=11001010 sel=1z1 rev_up=100001011110 rev_dn=100001011110 top=1100 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxx",
+    "CYCLE 10 a=110011001100 v=11001010 sel=011 rev_up=100001011110 rev_dn=100001011110 top=1100 dyn_up=1001 dyn_dn=1010 dyn_lane=110"
+   ],
+   "hash": "8fa019cdd4e1a4a2a64b270a6de79c4b07521d0455c4e093e42f7036631f99e3",
+   "status": "ok"
+  },
+  "partsel_dyn_n1_w4": {
+   "cycles": [
+    "CYCLE 0 a=1011 v=10110100 sel=000 rev_up=1011 rev_dn=1011 top=1 dyn_up=0100 dyn_dn=xxxx dyn_lane=1011",
+    "CYCLE 1 a=0110 v=01101001 sel=001 rev_up=0110 rev_dn=0110 top=0 dyn_up=0100 dyn_dn=xxxx dyn_lane=xxxx",
+    "CYCLE 2 a=1011 v=11110000 sel=010 rev_up=1011 rev_dn=1011 top=1 dyn_up=1100 dyn_dn=xxxx dyn_lane=xxxx",
+    "CYCLE 3 a=1111 v=00001111 sel=011 rev_up=1111 rev_dn=1111 top=1 dyn_up=0001 dyn_dn=1111 dyn_lane=xxxx",
+    "CYCLE 4 a=0000 v=1x0z1x0z sel=100 rev_up=0000 rev_dn=0000 top=0 dyn_up=1x0z dyn_dn=z1x0 dyn_lane=xxxx",
+    "CYCLE 5 a=1010 v=10000001 sel=101 rev_up=1010 rev_dn=1010 top=1 dyn_up=xxxx dyn_dn=0000 dyn_lane=xxxx",
+    "CYCLE 6 a=x01z v=01111110 sel=110 rev_up=x01z rev_dn=x01z top=x dyn_up=xxxx dyn_dn=1111 dyn_lane=xxxx",
+    "CYCLE 7 a=1100 v=11001010 sel=111 rev_up=1100 rev_dn=1100 top=1 dyn_up=xxxx dyn_dn=1100 dyn_lane=xxxx",
+    "CYCLE 8 a=1100 v=11001010 sel=x10 rev_up=1100 rev_dn=1100 top=1 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxxx",
+    "CYCLE 9 a=1100 v=11001010 sel=1z1 rev_up=1100 rev_dn=1100 top=1 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxxx",
+    "CYCLE 10 a=1100 v=11001010 sel=011 rev_up=1100 rev_dn=1100 top=1 dyn_up=1001 dyn_dn=1010 dyn_lane=xxxx"
+   ],
+   "hash": "d32200f70532884c2c8581c7e735b6e0799d5e5992101f30ab6ee66cfed2f7d5",
+   "status": "ok"
+  },
+  "partsel_dyn_n2_w5": {
+   "cycles": [
+    "CYCLE 0 a=1011011100 v=10110100 sel=000 rev_up=1110010110 rev_dn=1110010110 top=10 dyn_up=0100 dyn_dn=xxxx dyn_lane=11100",
+    "CYCLE 1 a=0110011001 v=01101001 sel=001 rev_up=1100101100 rev_dn=1100101100 top=01 dyn_up=0100 dyn_dn=xxxx dyn_lane=01100",
+    "CYCLE 2 a=1011001011 v=11110000 sel=010 rev_up=0101110110 rev_dn=0101110110 top=10 dyn_up=1100 dyn_dn=xxxx dyn_lane=xxxxx",
+    "CYCLE 3 a=1111111111 v=00001111 sel=011 rev_up=1111111111 rev_dn=1111111111 top=11 dyn_up=0001 dyn_dn=1111 dyn_lane=xxxxx",
+    "CYCLE 4 a=0000000000 v=1x0z1x0z sel=100 rev_up=0000000000 rev_dn=0000000000 top=00 dyn_up=1x0z dyn_dn=z1x0 dyn_lane=xxxxx",
+    "CYCLE 5 a=1010101010 v=10000001 sel=101 rev_up=0101010101 rev_dn=0101010101 top=10 dyn_up=xxxx dyn_dn=0000 dyn_lane=xxxxx",
+    "CYCLE 6 a=x01zx01zx0 v=01111110 sel=110 rev_up=01zx0x01zx rev_dn=01zx0x01zx top=x0 dyn_up=xxxx dyn_dn=1111 dyn_lane=xxxxx",
+    "CYCLE 7 a=1100110011 v=11001010 sel=111 rev_up=1001111001 rev_dn=1001111001 top=11 dyn_up=xxxx dyn_dn=1100 dyn_lane=xxxxx",
+    "CYCLE 8 a=1100110011 v=11001010 sel=x10 rev_up=1001111001 rev_dn=1001111001 top=11 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxxxx",
+    "CYCLE 9 a=1100110011 v=11001010 sel=1z1 rev_up=1001111001 rev_dn=1001111001 top=11 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxxxx",
+    "CYCLE 10 a=1100110011 v=11001010 sel=011 rev_up=1001111001 rev_dn=1001111001 top=11 dyn_up=1001 dyn_dn=1010 dyn_lane=xxxxx"
+   ],
+   "hash": "7ea9e669181d297e3dfc863b860e7ffb494c9228f0fb8308a1a33b59a1275ef5",
+   "status": "ok"
+  },
+  "partsel_dyn_n5_w1": {
+   "cycles": [
+    "CYCLE 0 a=10110 v=10110100 sel=000 rev_up=01101 rev_dn=01101 top=10110 dyn_up=0100 dyn_dn=xxxx dyn_lane=0",
+    "CYCLE 1 a=01100 v=01101001 sel=001 rev_up=00110 rev_dn=00110 top=01100 dyn_up=0100 dyn_dn=xxxx dyn_lane=0",
+    "CYCLE 2 a=10110 v=11110000 sel=010 rev_up=01101 rev_dn=01101 top=10110 dyn_up=1100 dyn_dn=xxxx dyn_lane=1",
+    "CYCLE 3 a=11111 v=00001111 sel=011 rev_up=11111 rev_dn=11111 top=11111 dyn_up=0001 dyn_dn=1111 dyn_lane=1",
+    "CYCLE 4 a=00000 v=1x0z1x0z sel=100 rev_up=00000 rev_dn=00000 top=00000 dyn_up=1x0z dyn_dn=z1x0 dyn_lane=0",
+    "CYCLE 5 a=10101 v=10000001 sel=101 rev_up=10101 rev_dn=10101 top=10101 dyn_up=xxxx dyn_dn=0000 dyn_lane=x",
+    "CYCLE 6 a=x01zx v=01111110 sel=110 rev_up=xz10x rev_dn=xz10x top=x01zx dyn_up=xxxx dyn_dn=1111 dyn_lane=x",
+    "CYCLE 7 a=11001 v=11001010 sel=111 rev_up=10011 rev_dn=10011 top=11001 dyn_up=xxxx dyn_dn=1100 dyn_lane=x",
+    "CYCLE 8 a=11001 v=11001010 sel=x10 rev_up=10011 rev_dn=10011 top=11001 dyn_up=xxxx dyn_dn=xxxx dyn_lane=x",
+    "CYCLE 9 a=11001 v=11001010 sel=1z1 rev_up=10011 rev_dn=10011 top=11001 dyn_up=xxxx dyn_dn=xxxx dyn_lane=x",
+    "CYCLE 10 a=11001 v=11001010 sel=011 rev_up=10011 rev_dn=10011 top=11001 dyn_up=1001 dyn_dn=1010 dyn_lane=1"
+   ],
+   "hash": "c5480928d02e5dc4273d8617c900b82285d80bb223620aabf9efe70ed7274926",
+   "status": "ok"
+  },
+  "partsel_dyn_n6_w2": {
+   "cycles": [
+    "CYCLE 0 a=101101110001 v=10110100 sel=000 rev_up=010011011110 rev_dn=010011011110 top=101101 dyn_up=0100 dyn_dn=xxxx dyn_lane=01",
+    "CYCLE 1 a=011001100110 v=01101001 sel=001 rev_up=100110011001 rev_dn=100110011001 top=011001 dyn_up=0100 dyn_dn=xxxx dyn_lane=01",
+    "CYCLE 2 a=101100101110 v=11110000 sel=010 rev_up=101110001110 rev_dn=101110001110 top=101100 dyn_up=1100 dyn_dn=xxxx dyn_lane=10",
+    "CYCLE 3 a=111111111111 v=00001111 sel=011 rev_up=111111111111 rev_dn=111111111111 top=111111 dyn_up=0001 dyn_dn=1111 dyn_lane=11",
+    "CYCLE 4 a=000000000000 v=1x0z1x0z sel=100 rev_up=000000000000 rev_dn=000000000000 top=000000 dyn_up=1x0z dyn_dn=z1x0 dyn_lane=00",
+    "CYCLE 5 a=101010101010 v=10000001 sel=101 rev_up=101010101010 rev_dn=101010101010 top=101010 dyn_up=xxxx dyn_dn=0000 dyn_lane=10",
+    "CYCLE 6 a=x01zx01zx01z v=01111110 sel=110 rev_up=1zx01zx01zx0 rev_dn=1zx01zx01zx0 top=x01zx0 dyn_up=xxxx dyn_dn=1111 dyn_lane=xx",
+    "CYCLE 7 a=110011001100 v=11001010 sel=111 rev_up=001100110011 rev_dn=001100110011 top=110011 dyn_up=xxxx dyn_dn=1100 dyn_lane=xx",
+    "CYCLE 8 a=110011001100 v=11001010 sel=x10 rev_up=001100110011 rev_dn=001100110011 top=110011 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xx",
+    "CYCLE 9 a=110011001100 v=11001010 sel=1z1 rev_up=001100110011 rev_dn=001100110011 top=110011 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xx",
+    "CYCLE 10 a=110011001100 v=11001010 sel=011 rev_up=001100110011 rev_dn=001100110011 top=110011 dyn_up=1001 dyn_dn=1010 dyn_lane=11"
+   ],
+   "hash": "6aaaf43545be81b5ebfd30300857cbbdbded836e9ee332ef4569980e29ca349f",
+   "status": "ok"
   },
   "partsel_n1_w4": {
    "cycles": [
@@ -6152,6 +6680,50 @@
     "CYCLE 3 a=x b=1010101010101010101010101010101010101010 y=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx z=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx0x01 d=1x1x1x1x1x1x1x1x1x1x1x1x1x1x1x1x1x1x1010"
    ],
    "hash": "4ed61eea6bcde791f166992baac56af8115ded0ecba9f7c512a4a6fa09cf6f00",
+   "status": "ok"
+  },
+  "wide_index_dead_n4": {
+   "cycles": [
+    "CYCLE 0 a=0011 v=10110101 o=0",
+    "CYCLE 1 a=1010 v=10110101 o=x",
+    "CYCLE 2 a=0111 v=10110101 o=1",
+    "CYCLE 3 a=0000 v=10110101 o=1",
+    "CYCLE 4 a=x001 v=10110101 o=x"
+   ],
+   "hash": "56358c1adf049353b9f8d828a389c398cb4a881042e001b7ac243762aa011d7a",
+   "status": "ok"
+  },
+  "wide_index_dead_n40": {
+   "cycles": [
+    "CYCLE 0 a=0000000000000000000000000000000000000011 v=10110101 o=0",
+    "CYCLE 1 a=1000000000000000000000000000000000000010 v=10110101 o=1",
+    "CYCLE 2 a=0000000100000000000000000000000000000110 v=10110101 o=0",
+    "CYCLE 3 a=0000000000000000000000000000000000000001 v=10110101 o=0",
+    "CYCLE 4 a=x000000000000000000000000000000000000101 v=10110101 o=1"
+   ],
+   "hash": "c42c6e675a0a76f815d3c975d7856fdc718df87f47b1ff185ba7d61a01e08af3",
+   "status": "ok"
+  },
+  "wide_index_n30": {
+   "cycles": [
+    "CYCLE 0 a=00000000000000000000000000000011 v=10110101 b=1 o=1 w=00001000",
+    "CYCLE 1 a=00000000000000000000000000001010 v=10110101 b=1 o=1 w=00000000",
+    "CYCLE 2 a=00000000000000000000000000000001 v=10110101 b=1 o=x w=00000010",
+    "CYCLE 3 a=00000000000000000000000000000000 v=10110101 b=1 o=x w=00000001",
+    "CYCLE 4 a=x0000000000000000000000000000001 v=10110101 b=1 o=x w=00000000"
+   ],
+   "hash": "fd78a6d2b65bfe4f41d1a20468a6ad77b17e4cbc12d0f1ba231a5741149c241c",
+   "status": "ok"
+  },
+  "wide_index_n8": {
+   "cycles": [
+    "CYCLE 0 a=0000000011 v=10110101 b=1 o=1 w=00001000",
+    "CYCLE 1 a=0000001010 v=10110101 b=1 o=1 w=00000000",
+    "CYCLE 2 a=0000000001 v=10110101 b=1 o=x w=00000010",
+    "CYCLE 3 a=0000000000 v=10110101 b=1 o=x w=00000001",
+    "CYCLE 4 a=x000000001 v=10110101 b=1 o=x w=00000000"
+   ],
+   "hash": "afc1b63c40d0215dd6255ed2b6e0b2edbd1fe847b297b7d97b196bb0cec4f4bd",
    "status": "ok"
   },
   "xcheck_div_w4": {

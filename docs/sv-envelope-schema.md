@@ -133,6 +133,11 @@ an `Unsupported` node is reached).
 The measured two-state declaration boundary and its representation rationale
 are recorded in [`sv-two-state-boundary.md`](sv-two-state-boundary.md).
 
+What each refusal tag means for the sv-0.2 tier — measured trigger, reason, where the code raises
+it, and whether it is refused now, allowed later (with its prerequisite) or never (with its
+principle) — is the generated register [`sv-refusals.md`](sv-refusals.md); the svGolf-facing twin is
+[`../svgolf/REFUSALS.md`](../svgolf/REFUSALS.md).
+
 ### Expression event controls
 
 `SignalEventControl:clock` covers event controls whose sampled operand is an
@@ -1293,14 +1298,14 @@ genvar that reuses a parameter's name never reaches a declared range; rows
 offset (the right bound of `[l:r]` is offset 0 in either direction), checks
 every dimension's range on its own, and lowers to one flat window of the
 declared vector. An out-of-range element select reads x and writes nothing;
-a part select partially past its dimension reads x in exactly the
-out-of-range bits and, as a target, writes exactly its in-range bits: an
-msb-side overhang is the clipped window, and an lsb-side overhang
-(`x[-2 +: 4]`, `x[1 -: 4]` at some parameter point) is a concatenation
-target whose low leaf is a zero-effect sink just past the vector's msb
-(`arrayPartTarget`; such a target needs one sampled RHS, so a NONBLOCKING
-write to it stays loud). The node is a legal assignment target (continuous
-and procedural).
+a part select WHOLLY past its dimension reads all x and writes nothing. A
+part select only PARTLY past its dimension (`x[-2 +: 4]`, `x[1 -: 4]`,
+`x[N+3 +: 4]` at some parameter point, either side) used to read x in exactly
+the out-of-range bits and, as a target, write exactly its in-range bits (an
+msb-side overhang the clipped window, an lsb-side one a concatenation target
+whose low leaf was a zero-effect sink just past the vector's msb); **since
+round 6 (2026-10-29) it is refused** (`ArraySel:partial-overhang`, below). The
+node is a legal assignment target (continuous and procedural).
 
 **Run-time part-select bases (2026-10-27).** IEEE 1800-2023 §11.5.1 lets the
 BASE of an indexed part select read signals (only its width must be
@@ -1321,7 +1326,10 @@ than 32 bits is `Unsupported` `RangeSelectExpression:dynamic-wide-base`
 Icarus truncates such an index to its low 32 bits, Yosys does not — a 40-bit
 base `2^32 + 1` reads `v[4:1]` in Icarus and all x in Yosys. Either reading lowers the select to
 a shift of the x-padded vector: every selected bit outside the declared
-range reads x, and an x/z base reads all x (rows `partsel*`, `dyn32`). A
+range reads x, and an x/z base reads all x (rows `dyn32` and `partsel_dyn*`; the `partsel*`
+rows, which first pinned it, are loud-refusal rows since round 6 because
+their CONSTANT-base selects overhang the vector, and Xcelium reads this
+run-time overhang all x too: audit P2). A
 base whose TYPE is signed is `Unsupported`
 `RangeSelectExpression:dynamic-signed-base`. Such a node is
 never a target: a run-time base on a procedural target is
@@ -1339,8 +1347,22 @@ the write `w[0][5:2] = a`, the lsb-overhang write `w[1][-1 +: 2] = …`) —
 into the neighbouring element: declared disagreements `array_oob_inner`,
 `array_oob_part` and `array_oob_lsbwrite`
 (`docs/sv-oracle-disagreements.md`, "Linearized packed-array indices").
-Overhang past the end of the LAST element agrees in every tool
-(`array_oob`).
+Overhang past the end of the LAST element agreed between Icarus, Yosys
+and the model (`array_oob`) — and **Xcelium 24.03-s004 contradicts it**
+(`docs/sv-xcelium-audit.md`, clusters P1/P3): it reads a PARTLY out-of-range
+part select as all x and drops an overhanging write. Since round 6
+(2026-10-29) such a constant part select is **refused, read and write, on
+either side**: `Expr2.unsupported "ArraySel:partial-overhang"` (a read), an
+`AssignL` error beginning `ArraySel:partial-overhang` (a write), in
+`Param2.lean` (`arrayPartRead`, `arrayPartTarget`, `partOverhangMsg`), and
+`Select:partial-overhang` for the legacy `PartSel` encoding's constant slice
+(`RangeGuard2.lean`, below). A select wholly outside the dimension (x read,
+no-op write) and the single-bit select agree in every tool and are unchanged;
+a RUN-TIME base that leaves the vector keeps reading x in exactly the
+out-of-range bits (audit P2). Fixtures `overhang_read`, `overhang_write`,
+`overhang_legacy`; no recorded theorem used the refused branches
+(`arrayPartRead_of_inRange`, `arrayPartTarget_of_inRange` and the `…_desc0`
+window lemmas are in-range statements).
 
 The extractor emits `ArraySel` only where the legacy `BitSel`/`PartSel`
 encoding is absent or default-folded, so every previously admitted select
@@ -1714,7 +1736,7 @@ body — is ONE node, and the definitions it names follow the top in
 | kind | key order / fields |
 |---|---|
 | `Instance` | `kind`, `span`, `name`, `module` (the definition), `path` (`[{label, genvar}]`: the generate blocks the instance sits in, outermost first — `genvar` is the loop variable of a generate-for block and `null` for an if-generate block; unnamed blocks carry slang's `genblk<n>`), `params` (`[{name, expr}]`: the OVERRIDDEN parameters only, each a symbolic constant expression of the instantiating scope — ordered `#(…)` overrides arrive resolved to names), `ports` (one `PortConn` per child port, in the child's port order) |
-| `PortConn` | `kind`, `span`, `port`, `dir` (`"in"`/`"out"`), then for an input `expr` (a VALUE expression of the instantiating scope, `null` when unconnected) and, when unconnected, `net` (bool); for an output `target` (an assignment target — the shapes a continuous `assign` admits — `null` when unconnected) |
+| `PortConn` | `kind`, `span`, `port`, `dir` (`"in"`/`"out"`), then for an input `expr` (a VALUE expression of the instantiating scope, `null` when unconnected) and, when unconnected, `net` (bool); a CONNECTED input carries `net: true` (absent = false; round 6, 2026-10-29) only when it is the net-to-net shape Xcelium binds bit for bit — a net formal, 4-state, fed by a bare reference to a net (a `wire`, an `input`/`inout` port without `var`, an `output wire` or implicit-type `output`; NOT an `output logic`/`output reg`/`output var logic` port, which is a variable, 23.2.2.3), their declared widths not both fixed with the formal not wider (`_sym_net_bound_actual`, `_sym_symbol_net_kind`; Lean: a narrower actual is `PortConn:net-width`); for an output `target` (an assignment target — the shapes a continuous `assign` admits — `null` when unconnected) |
 
 slang resolves named, ordered, `.name` and `.*` connections, so `ports`
 always lists every child port. Each definition is extracted ALONE at its own
@@ -1751,7 +1773,13 @@ runs on the cycle clock: the flat tier's single-clock gap, which flattening
 does not widen.) On an instance-free design `instantiateH` IS `instantiate2`
 (`Hier2Gen.lean`, `PDesign.instantiateH_flat`).
 
-**Port width context.** An input actual NARROWER than its port is admitted
+**Port width context.** (Round 6, 2026-10-29: a bare reference to a NET fed
+into a NET formal wider than it is first judged by the net-to-net rule —
+`PortConn:net-width`, marked by `"net": true` on the connection, since
+Xcelium 24.03 leaves the formal's high bits z where every other tool
+zero-extends; `docs/sv-oracle-disagreements.md`, "Port connection width
+context". The rest of this paragraph is unchanged for every other shape.) An
+input actual NARROWER than its port is admitted
 only when its context-determined and self-determined readings agree:
 rigid operands, `& | ^` and `?:` over them, comparison results, and
 unsigned conversions of these. Any other narrower actual (`p + q`, `~p`,
@@ -1896,17 +1924,40 @@ the module that instantiates it): always_comb block reads bit [1] of 't'
 generate-block path inside that level; the leaf's flattened signal is the
 clauses' prefixes concatenated outermost first plus the local name,
 `mm.g.ll.t`.] The guard is about
-ONE block re-run on its own result; a block that reads a different
-variable related to one it writes is admitted and settles to what Xcelium
-24.03 and Verilator 5.042 show. Icarus 12.0 differs in two measured ways
-(`docs/sv-oracle-disagreements.md`): on a pure continuous copy of a written
-variable (`assign w = t;`, a port loop) it keeps the copy in the
-sensitivity list but propagates the copy's update synchronously inside the
-block's run, so the wake-up is lost — an LRM-permitted interleaving
-(§4.7/§4.8), rows `acg_alias_assign`, `acg_alias_port`, declared pending a
-cross-process refusal; and on a variable whose other bits another process
-writes it leaves the whole variable out of the list, against §9.2.2.2.1 —
-row `acg_xproc_bits`, declared.
+ONE block re-run on its own result. A block that reads a CONTINUOUS COPY of
+a variable it writes (`assign w = t; always_comb begin y = w; t = a; end`, a
+chain of assigns, a child's input (net) and output port tied to one parent
+variable, or a copy made by a child's own `assign`) is refused by a second, design-level guard (round 6, lane
+B, 2026-10-29; `LeanModels/Sv/CombAlias2.lean`): `Unsupported`
+`AlwaysComb:alias-read`, naming the module, the copy (and its instance, when
+it is a flattened instance's signal) and the bits, citing IEEE 1800-2023
+§9.2.2.2.1 and §4.7/§4.8. Icarus 12.0 keeps the copy in the sensitivity list
+but propagates its update synchronously inside the block's run, so the
+wake-up is lost, while Xcelium 24.03 and Verilator 5.042 defer the update
+and re-run the block; the LRM permits both interleavings, so the tools
+split. A body is refused when, on some control path, a statement reads a bit
+DOWNSTREAM, through at least one continuous assignment (port connections
+included, transitively, whatever the right-hand side computes), of a bit the
+path writes at that statement or later; write-then-read, a separate
+`always_comb` copy and a copy of a variable the block does not write are
+admitted. The guard needs the flattened design, so it runs on the
+instantiated design BESIDE `name.sem` (like the legacy-select range guard):
+in `load_design_sv2` at the defaults and at every probed point, and in the
+differential runner; `name.sem N` elsewhere is the unguarded settle family
+(`docs/sv-oracle-disagreements.md`). Rows `acg_alias_assign`,
+`acg_alias_port` (formerly declared Icarus departures, retired) and
+`acg_alias_chain`, `acg_alias_not`, `acg_alias_bits`,
+`acg_alias_hier`, `acg_alias_thru` (the copy is made by a child instance's
+own `assign`, the path running through two port connections) are loud-refusal
+rows; `acg_alias_wire` (`wire w; assign w = t;`) is a loud-refusal row too, but
+of the extractor's `NetSymbol:net-z` (an internal wire never reaches the
+guard; the nets the tier admits are input ports, covered by the port loop); `acg_alias_wr`, `acg_alias_copy`,
+`acg_alias_far`, `acg_alias_bits_ok`, `acg_alias_port_wr`,
+`acg_alias_hier_ok` are the admitted counterparts. On a variable whose other
+bits another process writes Icarus leaves the whole variable out of the
+sensitivity list on whole-vector reads, against §9.2.2.2.1 and §6.5 ("each bit
+in a packed type is also an independent element") — row `acg_xproc_bits`,
+a declared Icarus departure.
 
 **Recorded refusals.** `inout`/`ref` ports (`PortConnection:InOut`/`:Ref`),
 interface ports and interface instances (`PortConnection:…`,
@@ -2343,6 +2394,29 @@ followed in the repair round (next section).
   at each row's point. Only REACHED selects count: `ripple_add` selects
   `a[i]` in a loop with no iteration at `N = 0`, so it passes there. Rows
   `fold_vsel` (N = 1, 2, 3), refusal rows `fold_vsel_n0`, `fold_vsel_nm1`.
+  **Round 6 (2026-10-29): the same guard family reports two more kinds**
+  (`PDesign.selectGuardReport`, which the loader, `probeCheckString` and the
+  runner call; `legacyRangeReport` is its unchanged legacy half):
+  `Select:partial-overhang` — a constant slice of a lowered design that
+  leaves its declared signal PARTLY (`lo < W < lo + w`, `Design2.firstSliceViolation`:
+  the lowering of a legacy `partSel` such as `v[K+2:K]` at `K = 6` on `[7:0]`),
+  and `Select:wide-index` — a bit-select whose index is not an
+  elaboration-time constant and is wider than 32 bits at the point
+  (`PDesign.wideIndexViolation`, widths from `selfWidth2`), or a constant
+  of 2^32 or more. It judges only code the point INSTANTIATES
+  (`PDesign.liveBitIdxs`: the taken `genIf` arm and the iterations `genvarSeq`
+  yields, each under its genvar binding; the first version walked every arm and
+  refused a wide index in an uninstantiated one — row `wide_index_dead_n40`).
+  The extractor refuses the already-wide case at the default point: in a READ as
+  `Unsupported` `ElementSelectExpression:wide-index` (run-time index above 32
+  bits, or constant index of 2^32 or more; also a packed-array element select);
+  in a WRITE target the refused select leaves no usable target, so the node that
+  reaches the envelope is the assignment's, `AssignmentExpression:target` (row
+  `wide_index_wr`). The extractor's node sits inside the arm it belongs to and is
+  only loud where that arm is expanded.
+  Both are the tool splits of the Xcelium audit (clusters
+  P1/P3 and T1); `RangeGuard2.lean` has the argument. Rows
+  `overhang_legacy_k6`, `wide_index_n40`, `fold_pcase_*`.
 * **`$high`/`$size` of a declared signal** read its FIRST packed dimension
   at each point (`IEnv.dims`; `Param.lean`, `dimQuery`; IEEE 1800-2023
   §20.7): `$high` the larger label, `$size` the element count. They were

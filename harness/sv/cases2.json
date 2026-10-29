@@ -71,7 +71,7 @@
         "sim": "iverilog",
         "declared": "2026-10-20",
         "reference": "IEEE 1800-2023 6.5 (independent packed bits), 6.8 Table 6-7 (four-state variables initialize to x) and 23.2.2.3 (explicitly typed output defaults to variable); docs/sv-oracle-disagreements.md",
-        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. No licensed-simulator confirmation is claimed.",
+        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row bit_select_assign) keeps the variable's initial x in the untouched bits and equals the model's trace exactly in every cycle, so only Icarus departs (docs/sv-xcelium-audit.md, D1). In Xcelium a variable reads x and a net reads z; Icarus re-declares a variable with a continuously driven bit as a net.",
         "retirement_condition": "When Icarus retains x in the untouched variable bits, this row must fail until its declaration is removed after review.",
         "source_sha256": "59a7be5dcb11c54287493e0ba8156d5e21c007a21a1149e6c6322f35945c9364",
         "envelope_sha256": "2e1a0033fc8382664318476fd3578474cd8f9a54db18df41b982224bf7cc7731",
@@ -232,7 +232,7 @@
         "sim": "iverilog",
         "declared": "2026-10-20",
         "reference": "IEEE 1800-2023 6.5 (independent packed bits), 6.8 Table 6-7 (four-state variables initialize to x) and 23.2.2.3 (explicitly typed output defaults to variable); docs/sv-oracle-disagreements.md",
-        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. No licensed-simulator confirmation is claimed.",
+        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row noncanonical_bit_assign) keeps the variable's initial x in the untouched bits and equals the model's trace exactly in every cycle, so only Icarus departs (docs/sv-xcelium-audit.md, D1). In Xcelium a variable reads x and a net reads z; Icarus re-declares a variable with a continuously driven bit as a net.",
         "retirement_condition": "When Icarus retains x in the untouched variable bits, this row must fail until its declaration is removed after review.",
         "source_sha256": "8bbb5821d858e04b76cb9b335bab1e46f823b8e101f190232768ee9bb7685a67",
         "envelope_sha256": "c83b3ae954fd2f8ac61851c53c2f5e5aec1cdec39205377ee6dfc07b6e5f32de",
@@ -288,7 +288,7 @@
         "sim": "iverilog",
         "declared": "2026-10-20",
         "reference": "IEEE 1800-2023 6.5 (independent packed bits), 6.8 Table 6-7 (four-state variables initialize to x) and 23.2.2.3 (explicitly typed output defaults to variable); docs/sv-oracle-disagreements.md",
-        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. No licensed-simulator confirmation is claimed.",
+        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row packed_member_subrange) keeps the variable's initial x in the untouched bits and equals the model's trace exactly in every cycle, so only Icarus departs (docs/sv-xcelium-audit.md, D1). In Xcelium a variable reads x and a net reads z; Icarus re-declares a variable with a continuously driven bit as a net.",
         "retirement_condition": "When Icarus retains x in the untouched variable bits, this row must fail until its declaration is removed after review.",
         "source_sha256": "e949c83750095533b0430fe9b64ece4f521076d547bc4b6afd7c84c7e4b384ce",
         "envelope_sha256": "69321eef476b027bc08508e19b66fa88c0e64154dfa996bbda5d0e060c49e730",
@@ -326,7 +326,7 @@
         "sim": "iverilog",
         "declared": "2026-10-20",
         "reference": "IEEE 1800-2023 6.5 (independent packed bits), 6.8 Table 6-7 (four-state variables initialize to x) and 23.2.2.3 (explicitly typed output defaults to variable); docs/sv-oracle-disagreements.md",
-        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. No licensed-simulator confirmation is claimed.",
+        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row packed_member_bit) keeps the variable's initial x in the untouched bits and equals the model's trace exactly in every cycle, so only Icarus departs (docs/sv-xcelium-audit.md, D1). In Xcelium a variable reads x and a net reads z; Icarus re-declares a variable with a continuously driven bit as a net.",
         "retirement_condition": "When Icarus retains x in the untouched variable bits, this row must fail until its declaration is removed after review.",
         "source_sha256": "0decd26a88510d788f832e684c372abe8045d63c29b1854b4f32c9e8e70674c3",
         "envelope_sha256": "888bb6afab49b2054e197dbfd30fcf50f49c06b1832a6f33084462de9180712c",
@@ -364,7 +364,7 @@
         "sim": "iverilog",
         "declared": "2026-10-20",
         "reference": "IEEE 1800-2023 6.5 (independent packed bits), 6.8 Table 6-7 (four-state variables initialize to x) and 23.2.2.3 (explicitly typed output defaults to variable); docs/sv-oracle-disagreements.md",
-        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. No licensed-simulator confirmation is claimed.",
+        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row packed_union_subrange) keeps the variable's initial x in the untouched bits and equals the model's trace exactly in every cycle, so only Icarus departs (docs/sv-xcelium-audit.md, D1). In Xcelium a variable reads x and a net reads z; Icarus re-declares a variable with a continuously driven bit as a net.",
         "retirement_condition": "When Icarus retains x in the untouched variable bits, this row must fail until its declaration is removed after review.",
         "source_sha256": "bfb65271bb66c2e26e6561f4c421b254ccd27dc63c0fad966d63b6da0820e524",
         "envelope_sha256": "1f4d27016a2a6525964c8a31103d7c0e2ca2303fc39841fb019ee6ed8e59cb27",
@@ -402,7 +402,7 @@
         "sim": "iverilog",
         "declared": "2026-10-20",
         "reference": "IEEE 1800-2023 6.5 (independent packed bits), 6.8 Table 6-7 (four-state variables initialize to x) and 23.2.2.3 (explicitly typed output defaults to variable); docs/sv-oracle-disagreements.md",
-        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. No licensed-simulator confirmation is claimed.",
+        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row packed_union_bit) keeps the variable's initial x in the untouched bits and equals the model's trace exactly in every cycle, so only Icarus departs (docs/sv-xcelium-audit.md, D1). In Xcelium a variable reads x and a net reads z; Icarus re-declares a variable with a continuously driven bit as a net.",
         "retirement_condition": "When Icarus retains x in the untouched variable bits, this row must fail until its declaration is removed after review.",
         "source_sha256": "f5aa22b992d1b5b3e51d9d00d25be5602b4e300230fd679caa044f2cb2ee2116",
         "envelope_sha256": "abeb3845cfd7e3a4d4a81aef620d4f99ce5127d114d31f450aaf5dbc746c8180",
@@ -962,7 +962,7 @@
         "sim": "iverilog",
         "declared": "2026-10-20",
         "reference": "IEEE 1800-2023 6.5 (independent packed bits), 6.8 Table 6-7 (four-state variables initialize to x) and 23.2.2.3 (explicitly typed output defaults to variable); docs/sv-oracle-disagreements.md",
-        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. No licensed-simulator confirmation is claimed.",
+        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row nested_member_bit) keeps the variable's initial x in the untouched bits and equals the model's trace exactly in every cycle, so only Icarus departs (docs/sv-xcelium-audit.md, D1). In Xcelium a variable reads x and a net reads z; Icarus re-declares a variable with a continuously driven bit as a net.",
         "retirement_condition": "When Icarus retains x in the untouched variable bits, this row must fail until its declaration is removed after review.",
         "source_sha256": "8e8385fdb9db3d6e1e5d33bc8b34155de728011af8c0bea10ebd0c2ec7f817d0",
         "envelope_sha256": "ea408888287bd02355739185451bb8c8dc0baa798a5375dfc53b4311bc676e3a",
@@ -1085,7 +1085,7 @@
         "sim": "iverilog",
         "declared": "2026-10-20",
         "reference": "IEEE 1800-2023 6.5 (independent packed bits), 6.8 Table 6-7 (four-state variables initialize to x) and 23.2.2.3 (explicitly typed output defaults to variable); docs/sv-oracle-disagreements.md",
-        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. No licensed-simulator confirmation is claimed.",
+        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row nested_member_concat) keeps the variable's initial x in the untouched bits and equals the model's trace exactly in every cycle, so only Icarus departs (docs/sv-xcelium-audit.md, D1). In Xcelium a variable reads x and a net reads z; Icarus re-declares a variable with a continuously driven bit as a net.",
         "retirement_condition": "When Icarus retains x in the untouched variable bits, this row must fail until its declaration is removed after review.",
         "source_sha256": "9834c5765904706745cd0dc2b464a836e2df7a4b29f96911d20efef55b49ebc9",
         "envelope_sha256": "031f99717efb5719db8b6170ff2f7596f7e5b17435117f626c15fe65597e3e44",
@@ -1124,7 +1124,7 @@
         "sim": "iverilog",
         "declared": "2026-10-20",
         "reference": "IEEE 1800-2023 6.5 (independent packed bits), 6.8 Table 6-7 (four-state variables initialize to x) and 23.2.2.3 (explicitly typed output defaults to variable); docs/sv-oracle-disagreements.md",
-        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. No licensed-simulator confirmation is claimed.",
+        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row typedef_nested_concat) keeps the variable's initial x in the untouched bits and equals the model's trace exactly in every cycle, so only Icarus departs (docs/sv-xcelium-audit.md, D1). In Xcelium a variable reads x and a net reads z; Icarus re-declares a variable with a continuously driven bit as a net.",
         "retirement_condition": "When Icarus retains x in the untouched variable bits, this row must fail until its declaration is removed after review.",
         "source_sha256": "c67935ff5813df146304253a7bf99a03f785f0d3b7b547280a4b20d03bbfe11b",
         "envelope_sha256": "c3435fb70d1d6bad113b48b71af4c0ad03116491dd11222db078af0f1932c08e",
@@ -1300,7 +1300,7 @@
         "sim": "iverilog",
         "declared": "2026-10-20",
         "reference": "IEEE 1800-2023 6.5 (independent packed bits), 6.8 Table 6-7 (four-state variables initialize to x) and 23.2.2.3 (explicitly typed output defaults to variable); docs/sv-oracle-disagreements.md",
-        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. No licensed-simulator confirmation is claimed.",
+        "observed": "Icarus 12.0 (Debian 13) and 12.0-2build2 (Ubuntu 24.04): partially continuously assigned logic is represented as a net and untouched bits become z; the independent variable/procedural/net diagnostic reproduces this lowering difference. Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row fixed_array_noncanonical_slice) keeps the variable's initial x in the untouched bits and equals the model's trace exactly in every cycle, so only Icarus departs (docs/sv-xcelium-audit.md, D1). In Xcelium a variable reads x and a net reads z; Icarus re-declares a variable with a continuously driven bit as a net.",
         "retirement_condition": "When Icarus retains x in the untouched variable bits, this row must fail until its declaration is removed after review.",
         "source_sha256": "65a39ebd9650ef7f21c5dd45b20e5b663b2434ad640a097b193353968d989432",
         "envelope_sha256": "068fe5822e5a7d3180310e6166201df77c4c802490323b34a111df877883b770",
@@ -4948,7 +4948,9 @@
         {
           "a": "1111"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "array_oob_inner",
@@ -4972,7 +4974,7 @@
         "sim": "iverilog",
         "declared": "2026-10-27",
         "reference": "IEEE 1800-2023 7.4.6 (an index out of its own dimension is invalid: reads x, writes perform no operation) and 11.5.1 (out-of-range bit-select of the packed element m[0] reads x); slang 11 constant evaluation of the same select gives 1'bx; docs/sv-oracle-disagreements.md#linearized-packed-array-indices",
-        "observed": "Icarus 12.0 (macOS, Homebrew) linearizes a multidimensional packed select: m[0][4] reads m[1][0] and the write w[0][5] = 1 lands in w[1][1]. Yosys 0.53 eval on the same source agrees with Icarus (w_flat = 00100000, z = ~a[0]). No licensed-simulator confirmation is claimed.",
+        "observed": "Icarus 12.0 (macOS, Homebrew) linearizes a multidimensional packed select: m[0][4] reads m[1][0] and the write w[0][5] = 1 lands in w[1][1]. Yosys 0.53 eval on the same source agrees with Icarus (w_flat = 00100000, z = ~a[0]). Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row array_oob_inner; xmelab warns BNDWRN on the constant selects) range-checks each packed dimension on its own, like the model: w_flat = 00000000 and z = x, exactly the model's trace, so Icarus and the Yosys front end are the outliers (Verilator, 2-state, masks the index: a third behaviour; docs/sv-xcelium-audit.md, D2). This confirmation is for the BIT-SELECT row only: for a part-select that overhangs an inner dimension Xcelium equals neither the model nor Icarus (docs/sv-xcelium-audit.md, DX1).",
         "retirement_condition": "When Icarus checks each packed dimension separately (z reads x and w stays 00000000), this row must fail until its declaration is removed after review.",
         "source_sha256": "39cb070d2c3bc98db2b95a5e459f708a1b071b38e79d3e2be12391d3b562b92c",
         "envelope_sha256": "fbda6a47f2ad824c0edd7652c2ce4cadcb4dd1d796ff4d7764af47e2b0249508",
@@ -5256,27 +5258,8 @@
           "a": "1001"
         }
       ],
-      "oracle_disagreement": {
-        "id": "iverilog-packed-inner-part-linearized",
-        "sim": "iverilog",
-        "declared": "2026-10-27",
-        "reference": "IEEE 1800-2023 7.4.6 (each packed dimension is range-checked on its own: out-of-range bits read x, writes to them perform no operation) and 11.5.1 (a part-select partly out of range reads x in its out-of-range bits; an indexed part-select is the same part); slang 11 constant evaluation gives Q[0][2 +: 3] = 3'b11x, Q[1][-1 +: 2] = 2'bx0, M[0][5:3] = 3'bxx0; docs/sv-oracle-disagreements.md#linearized-packed-array-indices",
-        "observed": "Icarus 12.0 (macOS, Homebrew) linearizes part and indexed-part selects that overhang an inner dimension of a non-last element, and an element label outside an ascending dimension: m[0][5:3] reads m[1][1:0] and m[0][3]; q[0][2 +: 3] reads q[1][0] as its low bit; q[1][-1 +: 2] reads q[0][3]; q[0][4] reads q[1][0]; the write w[0][5:2] = a lands a[3:2] in w[1][1:0] (w_flat = 00111100 for a = 1111). Yosys 0.53 prep; eval on the same source gives the same values as Icarus. No licensed-simulator confirmation is claimed.",
-        "retirement_condition": "When Icarus checks each packed dimension separately (d_hi, r_lo, r_hi and asc_oob read x in exactly the out-of-range bits and the write is clipped to w[0][3:2]), this row must fail until its declaration is removed after review.",
-        "source_sha256": "2288d4b7736af797d9d19b2f9c052d59f6cdcde379dd48d5ab74a15c6c4872d0",
-        "envelope_sha256": "848761719d866652ad95b0533662cd624be1e32a13834faa1b293bcb5b90e770",
-        "case_sha256": "178b061210033fb2310218dcc43fa1bbc57c9976f0b8d58eda9131e0ca3f176c",
-        "testbench_sha256": "76cad0886a9571c21fbdcdf0c7d75d8a50d3beeab7aa1c3f1ce5960ba881d86d",
-        "sigma": "src",
-        "sim_trace": [
-          "CYCLE 0 src=10110110 a=1111 d_hi=110 r_lo=110 r_hi=10 asc_oob=0 w_flat=00111100",
-          "CYCLE 1 src=01001001 a=1001 d_hi=001 r_lo=001 r_hi=01 asc_oob=1 w_flat=00100100"
-        ],
-        "lean_trace": [
-          "CYCLE 0 src=10110110 a=1111 d_hi=xx0 r_lo=11x r_hi=x0 asc_oob=x w_flat=00001100",
-          "CYCLE 1 src=01001001 a=1001 d_hi=xx1 r_lo=00x r_hi=x1 asc_oob=x w_flat=00000100"
-        ]
-      }
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6). Its declaration `iverilog-packed-inner-part-linearized` (Icarus 12.0 and Yosys 0.53 linearize an out-of-range INNER index, declared 2026-10-27) described a model-versus-Icarus difference on a simulated trace; Xcelium equals neither (docs/sv-xcelium-audit.md DX1), and the row no longer simulates. The declaration was RETIRED from this row (round 6, lane C: a declaration on a row that no longer simulates is checked by nothing); its record is in docs/sv-oracle-disagreements.md, 'Declarations retired in round 6'. The one confirmed part, the element label outside an ascending dimension (asc_oob = q[0][4], Xcelium equals the model, only Icarus and Yosys's front end linearize it), is the declared Icarus row array_oob_asc."
     },
     {
       "name": "gvcat",
@@ -5896,7 +5879,9 @@
         {
           "sel": "011"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "partsel_n2_w5",
@@ -5981,7 +5966,9 @@
         {
           "sel": "011"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "partsel_n6_w2",
@@ -6066,7 +6053,9 @@
         {
           "sel": "011"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "partsel_n5_w1",
@@ -6151,7 +6140,9 @@
         {
           "sel": "011"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "partsel_n1_w4",
@@ -6236,7 +6227,9 @@
         {
           "sel": "011"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "array_oob_lsbwrite",
@@ -6261,31 +6254,8 @@
           "a": "0101"
         }
       ],
-      "oracle_disagreement": {
-        "id": "iverilog-packed-inner-lsb-write-linearized",
-        "sim": "iverilog",
-        "declared": "2026-10-27",
-        "reference": "IEEE 1800-2023 7.4.6 (each packed dimension is range-checked on its own: a write to an out-of-range bit performs no operation) and 11.5.1 (an indexed part-select partly out of range writes only its in-range bits); docs/sv-oracle-disagreements.md#linearized-packed-array-indices",
-        "observed": "Icarus 12.0 (macOS, Homebrew) linearizes the procedural write w[1][-1 +: 2] = a[1:0] over logic [1:0][3:0] w: a[0] lands in w[0][3] (w_flat = 00011000 for a = 0011, 00001000 for a = 0101), where the per-dimension rule writes only w[1][0] = a[1] (00010000, 00000000). The 1-D twin v[-1 +: 3] = a[2:0] agrees (v[1:0] = a[2:1]). Icarus prints sorry: constant selects in always_* processes are not currently supported (all bits will be included) for both writes at compile time. Yosys 0.53 prep; eval on the same source gives the same values as Icarus. No licensed-simulator confirmation is claimed.",
-        "retirement_condition": "When Icarus checks the inner dimension separately (the write lands only in w[1][0]), this row must fail until its declaration is removed after review.",
-        "source_sha256": "6e94f926ef7450dd2fbe0c864cd782fc9320e11ab4d8e9bca2d3a68efab731ee",
-        "envelope_sha256": "57e1c335c0dad49fa5fe4de5ccfac0e102c9dafe7eda247814fcc53baaa6a959",
-        "case_sha256": "efb09e6037e15f6415a9dad3166a206fbdc03e8d1b591eaed5d78d4e91393dcc",
-        "testbench_sha256": "f28304f617c9bbd47bb6f436bfb32fdd2f0676986300a9099d648790ddb6a14f",
-        "sigma": "src",
-        "sim_trace": [
-          "CYCLE 0 a=0011 w_flat=00011000 v=00000001",
-          "CYCLE 1 a=1110 w_flat=00010000 v=00000011",
-          "CYCLE 2 a=x01z w_flat=0001z000 v=00000001",
-          "CYCLE 3 a=0101 w_flat=00001000 v=00000010"
-        ],
-        "lean_trace": [
-          "CYCLE 0 a=0011 w_flat=00010000 v=00000001",
-          "CYCLE 1 a=1110 w_flat=00010000 v=00000011",
-          "CYCLE 2 a=x01z w_flat=00010000 v=00000001",
-          "CYCLE 3 a=0101 w_flat=00000000 v=00000010"
-        ]
-      }
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6). Its declaration `iverilog-packed-inner-lsb-write-linearized` (Icarus 12.0 and Yosys 0.53 linearize the inner-dimension lsb write, declared 2026-10-27) described a model-versus-Icarus difference on a simulated trace; Xcelium equals neither (docs/sv-xcelium-audit.md DX1), and the row no longer simulates. The declaration was RETIRED from this row (round 6, lane C: a declaration on a row that no longer simulates is checked by nothing); its record is in docs/sv-oracle-disagreements.md, 'Declarations retired in round 6'. The in-range twin of this design is row array_oob_lsbwrite_l1 (unchanged)."
     },
     {
       "name": "array_oob_lsbwrite_l1",
@@ -6365,7 +6335,9 @@
           "nz": "0011000001011100",
           "r": "00111000"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "const_wrap_k0_u1",
@@ -6481,7 +6453,9 @@
         "K": 1,
         "U": 15,
         "UI": 9
-      }
+      },
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "const_wrap_k4_u3",
@@ -6597,7 +6571,9 @@
         "K": 6,
         "U": 8,
         "UI": 14
-      }
+      },
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "const_wrap_k7_u0",
@@ -6655,7 +6631,9 @@
         "K": 7,
         "U": 0,
         "UI": 3
-      }
+      },
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "dyn32",
@@ -6784,7 +6762,9 @@
         {
           "v": "01111101z001001x"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "param_types_p5",
@@ -6826,7 +6806,9 @@
       ],
       "params": {
         "P": 5
-      }
+      },
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "param_types_p0_v3",
@@ -6869,7 +6851,9 @@
       "params": {
         "P": 0,
         "V4": 3
-      }
+      },
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "param_types_v25",
@@ -6911,7 +6895,9 @@
       ],
       "params": {
         "V4": 25
-      }
+      },
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "param_types_signed",
@@ -6955,7 +6941,9 @@
         "SV4": 3,
         "S4": 5,
         "SB": -7
-      }
+      },
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "param_types_s4n",
@@ -6999,7 +6987,9 @@
         "S4": -8,
         "SB": 10,
         "B5": 12
-      }
+      },
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "param_types_u32",
@@ -7042,7 +7032,9 @@
       "params": {
         "U32": 200,
         "Q": 9
-      }
+      },
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "param_types_u32_3",
@@ -7084,7 +7076,9 @@
       ],
       "params": {
         "U32": 3
-      }
+      },
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "ctx_width",
@@ -7543,7 +7537,9 @@
       ],
       "params": {
         "N": 8
-      }
+      },
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6). This row also matched Xcelium before the change, only because the x bit collapsed an arithmetic result to all x in the model too."
     },
     {
       "name": "ctx_width_n2",
@@ -7771,7 +7767,9 @@
       ],
       "params": {
         "N": 8
-      }
+      },
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6). This row also matched Xcelium before the change, only because the x bit collapsed an arithmetic result to all x in the model too."
     },
     {
       "name": "ripple_fa_n4_cin0",
@@ -11739,7 +11737,9 @@
           "a": "1100",
           "s": "z0"
         }
-      ]
+      ],
+      "refusal": "PortConn:net-width",
+      "measured": "Refused since round 6 (2026-10-29), `PortConn:net-width`: instance u4 connects the bare net `s` (2 bits, an input port) to the NET formal `i` of hw_pass (W = N + 2 bits, an input without `var`). IEEE 1800-2023 23.3.3 / 10.7 zero-extend the narrower actual (what the model computed; Icarus 12.0, Verilator 5.042, Yosys 0.53 and slang agree), but Xcelium 24.03-s004 binds the two nets bit for bit and leaves the formal's high bits undriven: z (warning CUVMPW; `~i` showed x, docs/sv-xcelium-audit.md H1). Variable actuals, proper part-selects, constants, expressions and `var`/2-state formals are zero-extended by every tool and stay admitted (row net_width_ok). The other instances of this design (u1, u2, u3, u5) were and are unaffected; they lost their differential coverage here with the whole design. Round 6, lane C: their coverage lives on in row hier_width_ok (Examples/system-verilog/sem2/hier_width_ok/, the same design with u4 fed by a VARIABLE copy of s and the same stimulus), which the model, Icarus 12.0 and Xcelium 24.03-s004 agree on in all 14 cycles."
     },
     {
       "name": "hier_width_n2",
@@ -11814,7 +11814,9 @@
           "a": "00",
           "s": "z0"
         }
-      ]
+      ],
+      "refusal": "PortConn:net-width",
+      "measured": "Refused since round 6 (2026-10-29), `PortConn:net-width`: instance u4 connects the bare net `s` (2 bits, an input port) to the NET formal `i` of hw_pass (W = N + 2 bits, an input without `var`). IEEE 1800-2023 23.3.3 / 10.7 zero-extend the narrower actual (what the model computed; Icarus 12.0, Verilator 5.042, Yosys 0.53 and slang agree), but Xcelium 24.03-s004 binds the two nets bit for bit and leaves the formal's high bits undriven: z (warning CUVMPW; `~i` showed x, docs/sv-xcelium-audit.md H1). Variable actuals, proper part-selects, constants, expressions and `var`/2-state formals are zero-extended by every tool and stay admitted (row net_width_ok). The other instances of this design (u1, u2, u3, u5) were and are unaffected; they lost their differential coverage here with the whole design. Round 6, lane C: their coverage lives on in row hier_width_ok_n2 (Examples/system-verilog/sem2/hier_width_ok/, the same design with u4 fed by a VARIABLE copy of s and the same stimulus), which the model, Icarus 12.0 and Xcelium 24.03-s004 agree on in all 14 cycles."
     },
     {
       "name": "hier_width_n6",
@@ -11889,7 +11891,9 @@
           "a": "000110",
           "s": "z0"
         }
-      ]
+      ],
+      "refusal": "PortConn:net-width",
+      "measured": "Refused since round 6 (2026-10-29), `PortConn:net-width`: instance u4 connects the bare net `s` (2 bits, an input port) to the NET formal `i` of hw_pass (W = N + 2 bits, an input without `var`). IEEE 1800-2023 23.3.3 / 10.7 zero-extend the narrower actual (what the model computed; Icarus 12.0, Verilator 5.042, Yosys 0.53 and slang agree), but Xcelium 24.03-s004 binds the two nets bit for bit and leaves the formal's high bits undriven: z (warning CUVMPW; `~i` showed x, docs/sv-xcelium-audit.md H1). Variable actuals, proper part-selects, constants, expressions and `var`/2-state formals are zero-extended by every tool and stay admitted (row net_width_ok). The other instances of this design (u1, u2, u3, u5) were and are unaffected; they lost their differential coverage here with the whole design. Round 6, lane C: their coverage lives on in row hier_width_ok_n6 (Examples/system-verilog/sem2/hier_width_ok/, the same design with u4 fed by a VARIABLE copy of s and the same stimulus), which the model, Icarus 12.0 and Xcelium 24.03-s004 agree on in all 14 cycles."
     },
     {
       "name": "hier_nested",
@@ -12796,7 +12800,7 @@
         "sim": "iverilog",
         "declared": "2026-10-28",
         "reference": "IEEE 1800-2023 5.7.1 (an unbased unsized literal takes the width of its context), 11.6.1 (context-determined operands) and 23.3.3 (a port connection is a continuous assignment); docs/sv-oracle-disagreements.md",
-        "observed": "Icarus 12.0 sizes an unbased-unsized fill NESTED under an operator in an input-port actual narrower than the port self-determined and zero-pads the actual to the port width (warning: Padding 2 high bits of the port): a ^ 1-fill at a = 00 reads 0011 where the context reading gives 1111. Verilator 5.042 (the seven two-state outputs over all 32 two-state points) and Yosys 0.53 (prep; flatten; eval, all ten outputs over the same points) agree with the model. No licensed-simulator confirmation is claimed.",
+        "observed": "Icarus 12.0 sizes an unbased-unsized fill NESTED under an operator in an input-port actual narrower than the port self-determined and zero-pads the actual to the port width (warning: Padding 2 high bits of the port): a ^ 1-fill at a = 00 reads 0011 where the context reading gives 1111. Verilator 5.042 (the seven two-state outputs over all 32 two-state points) and Yosys 0.53 (prep; flatten; eval, all ten outputs over the same points) agree with the model. Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row hier_fill_ctx; xmelab warns CUVMPW, port sizes differ, and still extends the fill to the port width) equals the model's trace in all 36 cycles, so only Icarus departs (docs/sv-xcelium-audit.md, D3).",
         "retirement_condition": "When Icarus evaluates the nested fills at the port width, this row must fail until its declaration is removed after review.",
         "source_sha256": "b2c6a01a5e9d9aef3d28081b7087df80a3c404b38c25238a586f283a777666bf",
         "envelope_sha256": "14e1dd2639bbf34f7417e8aebfafb20a62969218574121a9b726b3f8ceeb1b7c",
@@ -13101,7 +13105,7 @@
         "sim": "iverilog",
         "declared": "2026-10-28",
         "reference": "IEEE 1800-2023 6.5 (independent packed bits), 6.8 Table 6-7 (four-state variables initialize to x) and 23.2.2.3 (explicitly typed output defaults to variable); docs/sv-oracle-disagreements.md#partial-variable-initialization",
-        "observed": "Icarus 12.0 (macOS, Homebrew) represents the variable y, whose bits 3:2 are a leaf of the concatenated continuous target {y[3:2], z} and whose bits 1:0 have no driver, as a net and reads the undriven bits as z (y = 10zz for x = 101); the model keeps the variable's initial x (y = 10xx). The same lowering as the other partial-variable rows, reached through a concatenation target. Yosys 0.53 prep; eval reports y[1:0] as used but undriven (Missing value for y[1:0]); its synthesized netlist simulated in Icarus reads them as x. No licensed-simulator confirmation is claimed.",
+        "observed": "Icarus 12.0 (macOS, Homebrew) represents the variable y, whose bits 3:2 are a leaf of the concatenated continuous target {y[3:2], z} and whose bits 1:0 have no driver, as a net and reads the undriven bits as z (y = 10zz for x = 101); the model keeps the variable's initial x (y = 10xx). The same lowering as the other partial-variable rows, reached through a concatenation target. Yosys 0.53 prep; eval reports y[1:0] as used but undriven (Missing value for y[1:0]); its synthesized netlist simulated in Icarus reads them as x. Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row concat_undriven) keeps the variable's initial x in the untouched bits and equals the model's trace exactly in every cycle, so only Icarus departs (docs/sv-xcelium-audit.md, D1). In Xcelium a variable reads x and a net reads z; Icarus re-declares a variable with a continuously driven bit as a net.",
         "retirement_condition": "When Icarus retains x in the untouched variable bits y[1:0], this row must fail until its declaration is removed after review.",
         "source_sha256": "8c517a443dae532c29bde051e5773515a54ba3b8b574bff49ef64b1f8e376af0",
         "envelope_sha256": "42dbe032d29c9f43a0a80c0a2271b0cc9915a60145bb9ea96d0f484a390194fc",
@@ -13157,11 +13161,11 @@
         "sim": "iverilog",
         "declared": "2026-10-28",
         "reference": "IEEE 1800-2023 11.5.1 (x[b -: w] selects the w bits from label b DOWN to label b-w+1; a part partly out of range reads x in exactly its out-of-range bits) and 7.4.1 (a single-element range [7:7] has one bit, label 7); slang 11 constant evaluation of the same select over localparam logic [7:7] U = 1 gives U[8 -: 2] = 2'bx1; docs/sv-oracle-disagreements.md#single-element-range-direction",
-        "observed": "At L = 7 the input u is logic [7:7] and w = u[L+1 -: 2] = u[8 -: 2]. Icarus 12.0 (macOS, Homebrew) evaluates a -: part-select over a single-element range as the +: part-select with the same base (labels b+w-1 down to b, here 9:8, all out of range), so w reads xx in every cycle; the LRM selects labels 8:7, w = {x, u[7]}, which the model gives (x1, x0, xx, xz). Yosys 0.53 chparam -set L 7; prep; eval agrees with the model (w = x1 at u = 1, x0 at u = 0). No licensed-simulator confirmation is claimed.",
+        "observed": "At L = 7 the input u is logic [7:7] and w = u[L+1 -: 2] = u[8 -: 2]. Icarus 12.0 (macOS, Homebrew) evaluates a -: part-select over a single-element range as the +: part-select with the same base (labels b+w-1 down to b, here 9:8, all out of range), so w reads xx in every cycle; the LRM selects labels 8:7, w = {x, u[7]}, which the model gives (x1, x0, xx, xz). Yosys 0.53 chparam -set L 7; prep; eval agrees with the model (w = x1 at u = 1, x0 at u = 0). Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row array_param_labels_l7; xmelab warns BNDWRN) reads w = xx in every cycle, the same as Icarus, but only because Xcelium returns all x for ANY part-select that is partly out of range (docs/sv-xcelium-audit.md, P1: a departure from 11.5.1 that the model does not follow): its value trace neither confirms nor contradicts the Icarus lowering described here. Its elaboration diagnostic does corroborate the label set: for the same select as a continuous-assign target xmelab prints BNDIPERR with the LRM range (u[8 -: 2] over [7:7] is [8:7], never Icarus's 9:8; 38 of 38 -: cases over [7:7] and 38 of 38 over [0:0], verifier run of the audit, docs/sv-xcelium-audit.md, DX2).",
         "retirement_condition": "When Icarus reads u[8 -: 2] over [7:7] as labels 8:7 (w = {x, u[7]}), this row must fail until its declaration is removed after review.",
         "source_sha256": "00352f50c7f3ec598b8a0fc48d3f87ce0f3211a3c9903a8353c327bd9f6d30c7",
         "envelope_sha256": "2351b939697d9893fa18417ded89075b9d21f92d6c8a2d43f7c54073ee41ca74",
-        "case_sha256": "2323d268f59bda90819cd0429a923ef3f41f0a51b4191e1ea944a935e8655f37",
+        "case_sha256": "c22ef39546fe138a6166f3efa3931b251fe14178247b3143e8d15057da9e7ceb",
         "testbench_sha256": "e0ab2b853ec98b16084a6d3e16108ae81bfd55e53a37be8f10d4a317c5adf578",
         "sigma": "src",
         "sim_trace": [
@@ -13176,7 +13180,9 @@
           "CYCLE 2 x=01001011 u=x y=00 v=x w=xx",
           "CYCLE 3 x=01001011 u=z y=00 v=x w=xz"
         ]
-      }
+      },
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6). Its declaration `iverilog-single-element-minus-select` (Icarus 12.0 reads u[L+1 -: 2] over [7:7] as the +: select, declared 2026-10-28) is kept as the record of that Icarus lowering, but the row no longer simulates: the select [8:7] over [7:7] is partly out of range, which is refused here (docs/sv-xcelium-audit.md DX2)."
     },
     {
       "name": "int_const_flat",
@@ -13756,7 +13762,9 @@
           "v": "01",
           "b": "11"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "label_n0_nm1",
@@ -13853,7 +13861,9 @@
           "v": "0110",
           "b": "10"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "label_param_n4_p0",
@@ -13925,7 +13935,9 @@
           "v": "011011",
           "b": "10"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "net_z_flat",
@@ -14068,7 +14080,9 @@
           "a": "000000000",
           "v": "1x0z1100"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "high_label",
@@ -14574,7 +14588,9 @@
         {
           "b": "0z"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "label_kminus_w3",
@@ -14604,7 +14620,9 @@
         {
           "b": "0z"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "label_kminus_w1",
@@ -14635,33 +14653,8 @@
           "b": "0z"
         }
       ],
-      "oracle_disagreement": {
-        "id": "iverilog-ascending-full-width-minus-select",
-        "sim": "iverilog",
-        "declared": "2026-10-28",
-        "reference": "IEEE 1800-2023 11.5.1 (x[b -: w] selects the w bits from label b DOWN to label b-w+1, whatever the declared direction; a part partly out of range reads x in exactly its out-of-range bits) and 7.4.1 (logic [K:0] at K = -1 is the ascending two-element range [-1:0], labels -1 and 0); Yosys 0.53 chparam -set W 1; prep; eval gives p = x1, x0, x1 for b = 01, 10, 11; docs/sv-oracle-disagreements.md#ascending-full-width-minus-select",
-        "observed": "At W = 1 the localparam K = W - 2 is -1, t is logic [-1:0] (t[-1] = b[0], t[0] = b[1]) and p = t[K -: 2] = t[-1 -: 2]. Icarus 12.0 (macOS, Homebrew) reads a constant-base -: part-select over an ASCENDING range whose base is the range's left label and whose width is the element count as the whole vector, t[-1:0] = {b[0], b[1]} (p = 10, 01, 11, 0x, z0); the LRM selects labels -2..-1, p = {x, t[-1]}, which the model gives (x1, x0, x1, x0, xz) and Yosys 0.53 agrees. q = t[K +: 2] = t[-1:0] agrees in all three. No licensed-simulator confirmation is claimed.",
-        "retirement_condition": "When Icarus reads t[-1 -: 2] over [-1:0] as labels -2..-1 (p = {x, t[-1]}), this row must fail until its declaration is removed after review.",
-        "source_sha256": "5b3e1f0c4e695723349a3c0de2f56726fea1b95cd61ae064c94b399b9f043dd4",
-        "envelope_sha256": "4cf28e7fdc5b57ce8d65413bf70ccc458127112dcd9f82c8be74f40f2a5e7fe7",
-        "case_sha256": "3d6d7d719664149f0641c017c612ec8864d00d102f6e24b224289efe49fe07e6",
-        "testbench_sha256": "4776fd7af6d81bd460233140d5ecd9bfcd22348763129b2a69644014efb33134",
-        "sigma": "src",
-        "sim_trace": [
-          "CYCLE 0 b=01 p=10 q=10",
-          "CYCLE 1 b=10 p=01 q=01",
-          "CYCLE 2 b=11 p=11 q=11",
-          "CYCLE 3 b=x0 p=0x q=0x",
-          "CYCLE 4 b=0z p=z0 q=z0"
-        ],
-        "lean_trace": [
-          "CYCLE 0 b=01 p=x1 q=10",
-          "CYCLE 1 b=10 p=x0 q=01",
-          "CYCLE 2 b=11 p=x1 q=11",
-          "CYCLE 3 b=x0 p=x0 q=0x",
-          "CYCLE 4 b=0z p=xz q=z0"
-        ]
-      }
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6). Its declaration `iverilog-ascending-full-width-minus-select` (Icarus 12.0 reads t[-1 -: 2] over [-1:0] as the whole vector, declared 2026-10-28) described a model-versus-Icarus difference on a simulated trace; Xcelium equals neither (docs/sv-xcelium-audit.md DX1), and the row no longer simulates. The declaration was RETIRED from this row (round 6, lane C: a declaration on a row that no longer simulates is checked by nothing); its record is in docs/sv-oracle-disagreements.md, 'Declarations retired in round 6'. The admitted halves of this design live on as rows label_kminus_q (q = t[K +: 2] over the ascending range [-1:0] at W = 1: in range, all four tools agree) and label_kminus_p, label_kminus_p_w3, label_kminus_p_w5 (p = t[K -: 2] at W = 4, 3, 5: in range)."
     },
     {
       "name": "label_kminus_w0",
@@ -14691,7 +14684,9 @@
         {
           "b": "0z"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "label_kminus_wm1",
@@ -14721,7 +14716,9 @@
         {
           "b": "0z"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "label_kminus_w5",
@@ -14751,7 +14748,9 @@
         {
           "b": "0z"
         }
-      ]
+      ],
+      "refusal": "ArraySel:partial-overhang",
+      "measured": "Refused since round 6 (2026-10-29), `ArraySel:partial-overhang`: at this parameter point the design holds a constant part select that is only PARTLY outside its vector. IEEE 1800-2023 11.5.1 reads x in exactly the out-of-range bits and changes only the in-range bits of a write, and the model, Icarus 12.0, Yosys 0.53 and slang agreed; Xcelium 24.03-s004 reads the whole select as x and drops the whole write (docs/sv-xcelium-audit.md clusters P1 and P3, 41 shapes, no flag changes it), so the tools split and the model no longer chooses a reading. Until then this row was a simulated match with Icarus. A select wholly outside (x read, no-op write: every tool agrees), a single-bit select and an in-range one are unchanged (rows overhang_read_n3/n5, overhang_write_n1/n6)."
     },
     {
       "name": "aggregate_point",
@@ -16350,39 +16349,8 @@
           "a": "11"
         }
       ],
-      "oracle_disagreement": {
-        "id": "iverilog-comb-assign-alias-sensitivity",
-        "sim": "iverilog",
-        "declared": "2026-10-28",
-        "reference": "IEEE 1800-2023 4.7 (while evaluating a procedural statement the simulator may suspend it at any point and process pending events) and 4.8 (its example `assign p = q; ... q = 0; $display(p);`: 'The simulator is correct in displaying either a 1 or a 0'): the stale and the settled answers are both permitted interleavings, so this declaration records an LRM-PERMITTED TOOL SPLIT, not a departure from a rule; the model computes the settled value (w is in the block's implicit sensitivity list, 9.2.2.2.1), as Xcelium 24.03, Verilator 5.042 and Yosys 0.53 do; docs/sv-oracle-disagreements.md",
-        "observed": "Icarus 12.0 (Homebrew, macOS) KEEPS w in the block's sensitivity list (`iverilog -g2012` netlist: `.event anyedge, w, a`; w is a BUFZ functor of t) but propagates the BUFZ update synchronously inside the block's run: the write `t = a` changes w before the block reaches its event control, so the change wakes nothing and y keeps the previous run's w (y lags a by one change, stale at cycles 1-7). Distinguishing probe (round-3 WP4 verifier, re-run round 4): `assign w = t; always_comb begin y = w; t = a; z = w; end` gives y = 00, z = 01 at a = 01 in Icarus (z, read after the write in the same run, already sees the new w), y = z = a in Xcelium 24.03 and Verilator 5.042; with `assign w = ~t;` (a NOT functor, scheduled) Icarus re-runs the block and agrees. Xcelium 24.03 (fleet gate refsim on vip-ng, one batched testbench with the other two rows, WP4 round 3) gives exactly the model's trace on all 8 cycles, x included; Verilator 5.042 (--binary --timing, two-state) gives it with x read as 0; Yosys 0.53 `prep; eval` gives y = a. The always_comb self-read guard admits the block (w and t are different variables). Under the refuse-where-the-tools-split policy the row is a refusal candidate; it stays declared until a cross-process alias guard exists (docs/sv-oracle-disagreements.md).",
-        "retirement_condition": "When the Icarus the harness runs re-runs the block after the copy's update (y follows a in the same cycle), the harness fails ('disagreement resolved') and this declaration must be removed after review; it is also removed, and the row becomes a refusal row, when ls-sv refuses an always_comb that reads a continuous copy of a variable it writes.",
-        "source_sha256": "6f8d0d7b933baab03bcf0ae62f868da4592597a32e040d6c0bd7777446d12fe8",
-        "envelope_sha256": "1234ba254771b44cc2d377b19c9c743cdc9e5d98a2580c70865d3064cdd25783",
-        "case_sha256": "90d3225320a4e204e88fb280bfbcdba56da210ce541e12506bf8a7ffd82254d5",
-        "testbench_sha256": "cafe4382dcc7d9ae843a5389fa03b7668c13a84ba430589436896621e90fd526",
-        "sigma": "src",
-        "sim_trace": [
-          "CYCLE 0 a=11 y=11",
-          "CYCLE 1 a=10 y=11",
-          "CYCLE 2 a=00 y=10",
-          "CYCLE 3 a=11 y=00",
-          "CYCLE 4 a=00 y=11",
-          "CYCLE 5 a=11 y=00",
-          "CYCLE 6 a=1x y=11",
-          "CYCLE 7 a=11 y=1x"
-        ],
-        "lean_trace": [
-          "CYCLE 0 a=11 y=11",
-          "CYCLE 1 a=10 y=10",
-          "CYCLE 2 a=00 y=00",
-          "CYCLE 3 a=11 y=11",
-          "CYCLE 4 a=00 y=00",
-          "CYCLE 5 a=11 y=11",
-          "CYCLE 6 a=1x y=1x",
-          "CYCLE 7 a=11 y=11"
-        ]
-      }
+      "refusal": "AlwaysComb:alias-read",
+      "measured": "Flip of the declared Icarus departure `iverilog-comb-assign-alias-sensitivity` (retired with this row, round 6 lane B 2026-10-29). Fresh runs (Icarus 12.0, Xcelium 24.03-s004 through refsim on vip-ng, Verilator 5.042 two-state): `assign w = t; always_comb begin y = w; t = a; end`. Stimulus a = 11 10 00 11 00 11 1x 11: Icarus y = 11 11 10 00 11 00 11 1x (one change behind a: the copy is updated inside the block's run, nothing wakes the block); Xcelium y = 11 10 00 11 00 11 1x 11 (= a on every cycle, x included); Verilator y = 11 10 00 11 00 11 10 11; the settle semantics gives y = a. IEEE 1800-2023 4.7/4.8 permit both orders, so the tools split and the block is refused.  Policy (Thomas, 2026-10-29, WP4 round 6 lane B): an always_comb that reads a continuous copy of a variable it writes is refused where the event-driven tools split (IEEE 1800-2023 9.2.2.2.1 puts the copy in the block's sensitivity list; 4.7/4.8 leave open whether the copy is updated inside the block's run); the guard follows the dependency path through `assign`s and port connections, not the functor a simulator builds (LeanModels/Sv/CombAlias2.lean)."
     },
     {
       "name": "acg_alias_port",
@@ -16418,39 +16386,8 @@
           "a": "10"
         }
       ],
-      "oracle_disagreement": {
-        "id": "iverilog-comb-port-loop-sensitivity",
-        "sim": "iverilog",
-        "declared": "2026-10-28",
-        "reference": "IEEE 1800-2023 4.7 (while evaluating a procedural statement the simulator may suspend it at any point and process pending events) and 4.8 (its `assign p = q; ... q = 0; $display(p);` example: either value is correct), with 23.3.3 (a port connection is a continuous assignment): the stale and the settled answers are both permitted interleavings, so this declaration records an LRM-PERMITTED TOOL SPLIT, not a departure from a rule; the model computes the settled value (i is in the block's implicit sensitivity list, 9.2.2.2.1), as Xcelium 24.03, Verilator 5.042 and Yosys 0.53 do; docs/sv-oracle-disagreements.md",
-        "observed": "Icarus 12.0 (Homebrew, macOS) KEEPS the child's input port i in the block's sensitivity list (`iverilog -g2012` netlist: `.event anyedge, i, a`; i is a net on the variable node of the output port o, both connected to the parent's w) but the write of o changes i synchronously inside the block's run, before the block reaches its event control, so the change wakes nothing and y keeps the previous run's i (y lags a by one change, stale at cycles 1-3 and 5-7). Xcelium 24.03 (fleet gate refsim on vip-ng, one batched testbench with the other two rows, WP4 round 3) gives exactly the model's trace on all 8 cycles; Verilator 5.042 (--binary --timing, two-state) gives it with x read as 0; Yosys 0.53 `prep -flatten; eval` gives y = a. The always_comb self-read guard admits the block: it reads i and writes o, different variables. Under the refuse-where-the-tools-split policy the row is a refusal candidate; it stays declared until a cross-process alias guard exists (docs/sv-oracle-disagreements.md).",
-        "retirement_condition": "When the Icarus the harness runs re-runs the block after the port loop's update (y follows a in the same cycle), the harness fails ('disagreement resolved') and this declaration must be removed after review; it is also removed, and the row becomes a refusal row, when ls-sv refuses an always_comb that reads, through a port loop, a variable it writes.",
-        "source_sha256": "f2630299402dc19c604ba11eec81f747f1c8698eab072920ceb9d4cdea8886db",
-        "envelope_sha256": "5f4a305b8e3b71637ef84b81e6f46213872adcb2e784e2bd047f1e3ca5b5221b",
-        "case_sha256": "a6a50267b4af846f9e808f95c258ab9f06b851a47958788248fa6f93e29d2045",
-        "testbench_sha256": "cf2e9695481975d9527024f1ef262d7274817dcb3e66d8a6ee4bdb9d5f64252b",
-        "sigma": "src",
-        "sim_trace": [
-          "CYCLE 0 a=00 y=00",
-          "CYCLE 1 a=01 y=00",
-          "CYCLE 2 a=10 y=01",
-          "CYCLE 3 a=01 y=10",
-          "CYCLE 4 a=01 y=10",
-          "CYCLE 5 a=11 y=01",
-          "CYCLE 6 a=00 y=11",
-          "CYCLE 7 a=10 y=00"
-        ],
-        "lean_trace": [
-          "CYCLE 0 a=00 y=00",
-          "CYCLE 1 a=01 y=01",
-          "CYCLE 2 a=10 y=10",
-          "CYCLE 3 a=01 y=01",
-          "CYCLE 4 a=01 y=01",
-          "CYCLE 5 a=11 y=11",
-          "CYCLE 6 a=00 y=00",
-          "CYCLE 7 a=10 y=10"
-        ]
-      }
+      "refusal": "AlwaysComb:alias-read",
+      "measured": "Flip of the declared Icarus departure `iverilog-comb-port-loop-sensitivity` (retired with this row, round 6 lane B 2026-10-29). Fresh runs (Icarus 12.0, Xcelium 24.03-s004 through refsim on vip-ng, Verilator 5.042 two-state): the child's input and output ports `i`, `o` tied to one parent variable `w`, `always_comb begin y = i; o = a; end` (the loop exists after flattening). Stimulus a = 00 01 10 01 01 11 00 10: Icarus y = 00 00 01 10 10 01 11 00 (one change behind a: the copy is updated inside the block's run, nothing wakes the block); Xcelium y = 00 01 10 01 01 11 00 10 (= a on every cycle, x included); Verilator y = 00 01 10 01 01 11 00 10; the settle semantics gives y = a. IEEE 1800-2023 4.7/4.8 permit both orders, so the tools split and the block is refused.  Policy (Thomas, 2026-10-29, WP4 round 6 lane B): an always_comb that reads a continuous copy of a variable it writes is refused where the event-driven tools split (IEEE 1800-2023 9.2.2.2.1 puts the copy in the block's sensitivity list; 4.7/4.8 leave open whether the copy is updated inside the block's run); the guard follows the dependency path through `assign`s and port connections, not the functor a simulator builds (LeanModels/Sv/CombAlias2.lean)."
     },
     {
       "name": "acg_xproc_bits",
@@ -16495,8 +16432,8 @@
         "id": "iverilog-comb-bit-split-sensitivity",
         "sim": "iverilog",
         "declared": "2026-10-28",
-        "reference": "IEEE 1800-2023 9.2.2.2.1 (the implicit sensitivity list of always_comb includes the expansions of the longest static prefix of every read, except an expression also written within the block: the second block reads t, expansion t[1] and t[0], and writes only t[1], so t[0] belongs in its list); 9.2.2.2 and 6.5 make the design LEGAL (independent elements of a variable, each bit of a packed type, may be assigned by different processes as long as their longest static prefixes do not overlap), as ls-sv's bit-granular one-driver rule admits it; docs/sv-oracle-disagreements.md",
-        "observed": "Icarus 12.0 (Homebrew, macOS), without a diagnostic, leaves ALL of t out of the second block's sensitivity list (`iverilog -g2012` netlist: its event is `.event anyedge, b` alone) because the block writes t[1], so a change of t[0] (written by the first always_comb; also with `assign t[0] = a;`) does not wake it and y keeps the previous t[0] until b changes (stale at cycles 1, 3 and 5). Xcelium 24.03 (fleet gate refsim on vip-ng, one batched testbench with the other two rows, WP4 round 3) gives exactly the model's trace on all 7 cycles, x included; Verilator 5.042 (--binary --timing, two-state) gives it with x read as 0. The same departure reaches further admitted designs, measured by the round-3 WP4 verifier with Xcelium 24.03 = model: a dynamic read `y = t[s]` (x_dyn) and a child output port driving t[0] (x_child); docs/sv-oracle-disagreements.md lists the class.",
+        "reference": "IEEE 1800-2023 9.2.2.2.1 (the implicit sensitivity list of always_comb includes the expansions of the longest static prefix of every read, except an expression also written within the block: the second block reads t, expansion t[1] and t[0], and writes only t[1], so t[0] belongs in its list); 6.5 (\"Each bit in a packed type is also an independent element\") and 9.2.2.2 (\"multiple assignments made to independent elements of a variable are allowed as long as their longest static prefixes do not overlap\") make the design LEGAL, as ls-sv's bit-granular one-driver rule admits it; docs/sv-oracle-disagreements.md",
+        "observed": "Icarus 12.0 (Homebrew, macOS), without a diagnostic, leaves ALL of t out of the second block's sensitivity list (`iverilog -g2012` netlist: its event is `.event anyedge, b` alone) because the block writes t[1], so a change of t[0] (written by the first always_comb; also with `assign t[0] = a;`) does not wake it and y keeps the previous t[0] until b changes (stale at cycles 1, 3 and 5). Xcelium 24.03 (fleet gate refsim on vip-ng, one batched testbench with the other two rows, WP4 round 3) gives exactly the model's trace on all 7 cycles, x included; Verilator 5.042 (--binary --timing, two-state) gives it with x read as 0. The same departure reaches further admitted designs, measured by the round-3 WP4 verifier with Xcelium 24.03 = model: a dynamic read `y = t[s]` (x_dyn) and a child output port driving t[0] (x_child); docs/sv-oracle-disagreements.md lists the class. Which reads Icarus drops (round 6 lane B, from the D4 triage and its verifier: Icarus 12.0 against Xcelium 24.03-s004, Verilator 5.042 and Yosys 0.53, minimal repros, a 48-step stimulus): the Icarus gap is WHOLE-VECTOR reads only -- `y = t` and the constant part-select `y = t[1:0]` are stale (25 of 48 steps each; 15 of 48 with the writer on bit 1 and 11 of 48 with `assign t[0] = a`), while the read of the unwritten bit `y = t[0]` and the concatenation `y = {t[1], t[0]}` are NOT (Icarus prints `sorry: constant selects in always_* processes are not currently supported (all bits will be included)` and includes every bit); `always @*` in place of the second `always_comb` is fine in Icarus; Xcelium, Verilator and Yosys give y = {b, a} on every shape. Only Icarus departs, so the row stays a declared Icarus departure and the model is not changed (the model equals Xcelium's pinned trace on all 7 cycles).",
         "retirement_condition": "When the Icarus the harness runs keeps the unwritten bits of a partly written variable in the block's sensitivity list (y = {b, a} every cycle), the harness fails ('disagreement resolved') and this declaration must be removed after review.",
         "source_sha256": "9e919b41754a2749e80d419be0272337f14e5fabdfdeee1dfa9fe4c6e0f48405",
         "envelope_sha256": "2dc43250450b13724023e7aa8a166ffcefcb1a56b0cace4d9090865247bf418b",
@@ -16522,6 +16459,466 @@
           "CYCLE 6 a=0 b=0 y=00"
         ]
       }
+    },
+    {
+      "name": "acg_alias_wire",
+      "example": "sem2/acg_alias_wire",
+      "top": "acg_alias_wire",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "0"
+        },
+        {
+          "a": "1"
+        },
+        {
+          "a": "0"
+        },
+        {
+          "a": "1"
+        },
+        {
+          "a": "1"
+        },
+        {
+          "a": "x"
+        },
+        {
+          "a": "0"
+        },
+        {
+          "a": "1"
+        }
+      ],
+      "refusal": "NetSymbol:net-z",
+      "measured": "Round 6 lane B 2026-10-29, fresh runs (Icarus 12.0 local, Xcelium 24.03-s004 through the fleet gate refsim on vip-ng, Verilator 5.042 --binary --timing two-state: x reads as 0). `wire w; assign w = t; always_comb begin y = w; t = a; end` (a one-bit net). THIS ROW IS NOT REFUSED BY THE ALIAS GUARD: the envelope carries `Unsupported` `NetSymbol:net-z` for `wire w;` (2026-10-28: an undriven net reads z while the tier initializes every declaration to x, so an internal wire is always refused), which is what the row pins; the alias guard never sees a wire copy (the Lean census of the row is `ok`: the declaration is not in the design). Stimulus a = 0 1 0 1 1 x 0 1: Icarus y = 0 0 1 0 0 1 x 0 (one change behind a: the copy is updated inside the block's run, nothing wakes the block); Xcelium y = 0 1 0 1 1 x 0 1 (= a on every cycle, x included); Verilator y = 0 1 0 1 1 0 0 1; the settle semantics would give y = a. IEEE 1800-2023 4.7/4.8 permit both orders, so the tools split on the net exactly as on `acg_alias_assign`, and the guard, which follows the continuous assignments and never the kind of the declaration, would refuse it were nets admitted. The nets the tier does admit are input ports, covered by the port-loop rows `acg_alias_port` and `acg_alias_thru`. Policy (Thomas, 2026-10-29, WP4 round 6 lane B): an always_comb that reads a continuous copy of a variable it writes is refused where the event-driven tools split (IEEE 1800-2023 9.2.2.2.1 puts the copy in the block's sensitivity list; 4.7/4.8 leave open whether the copy is updated inside the block's run); the guard follows the dependency path through `assign`s and port connections, not the functor a simulator builds (LeanModels/Sv/CombAlias2.lean)."
+    },
+    {
+      "name": "acg_alias_chain",
+      "example": "sem2/acg_alias_chain",
+      "top": "acg_alias_chain",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "11"
+        },
+        {
+          "a": "10"
+        },
+        {
+          "a": "00"
+        },
+        {
+          "a": "11"
+        },
+        {
+          "a": "00"
+        },
+        {
+          "a": "11"
+        },
+        {
+          "a": "1x"
+        },
+        {
+          "a": "11"
+        }
+      ],
+      "refusal": "AlwaysComb:alias-read",
+      "measured": "Round 6 lane B 2026-10-29, fresh runs (Icarus 12.0 local, Xcelium 24.03-s004 through the fleet gate refsim on vip-ng, Verilator 5.042 --binary --timing two-state: x reads as 0). a chain `assign v = w; assign w = t; always_comb begin y = v; t = a; end` (the guard is transitive). Stimulus a = 11 10 00 11 00 11 1x 11: Icarus y = 11 11 10 00 11 00 11 1x (one change behind a: the copy is updated inside the block's run, nothing wakes the block); Xcelium y = 11 10 00 11 00 11 1x 11 (= a on every cycle, x included); Verilator y = 11 10 00 11 00 11 10 11; the settle semantics gives y = a. IEEE 1800-2023 4.7/4.8 permit both orders, so the tools split and the block is refused.  Policy (Thomas, 2026-10-29, WP4 round 6 lane B): an always_comb that reads a continuous copy of a variable it writes is refused where the event-driven tools split (IEEE 1800-2023 9.2.2.2.1 puts the copy in the block's sensitivity list; 4.7/4.8 leave open whether the copy is updated inside the block's run); the guard follows the dependency path through `assign`s and port connections, not the functor a simulator builds (LeanModels/Sv/CombAlias2.lean)."
+    },
+    {
+      "name": "acg_alias_not",
+      "example": "sem2/acg_alias_not",
+      "top": "acg_alias_not",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "11"
+        },
+        {
+          "a": "10"
+        },
+        {
+          "a": "00"
+        },
+        {
+          "a": "11"
+        },
+        {
+          "a": "00"
+        },
+        {
+          "a": "11"
+        },
+        {
+          "a": "1x"
+        },
+        {
+          "a": "11"
+        }
+      ],
+      "refusal": "AlwaysComb:alias-read",
+      "measured": "Round 6 lane B 2026-10-29, fresh runs (Icarus 12.0 local, Xcelium 24.03-s004 through the fleet gate refsim on vip-ng, Verilator 5.042 --binary --timing two-state: x reads as 0). `assign w = ~t; always_comb begin y = w; t = a; end` (an inverting copy). Stimulus a = 11 10 00 11 00 11 1x 11: Icarus y = 00 01 11 00 11 00 0x 00, Xcelium y = 00 01 11 00 11 00 0x 00, Verilator y = 00 01 11 00 11 00 01 00 -- every tool gives y = ~a here (a NOT functor is scheduled, so Icarus re-runs the block). The row is refused all the same: the guard is keyed on the dependency path, never on the kind of functor, because `assign w = t` (the same block) is stale in Icarus. Policy (Thomas, 2026-10-29, WP4 round 6 lane B): an always_comb that reads a continuous copy of a variable it writes is refused where the event-driven tools split (IEEE 1800-2023 9.2.2.2.1 puts the copy in the block's sensitivity list; 4.7/4.8 leave open whether the copy is updated inside the block's run); the guard follows the dependency path through `assign`s and port connections, not the functor a simulator builds (LeanModels/Sv/CombAlias2.lean)."
+    },
+    {
+      "name": "acg_alias_bits",
+      "example": "sem2/acg_alias_bits",
+      "top": "acg_alias_bits",
+      "signals": [
+        "a",
+        "b",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "0",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "1"
+        },
+        {
+          "a": "0",
+          "b": "1"
+        },
+        {
+          "a": "1",
+          "b": "1"
+        },
+        {
+          "a": "x",
+          "b": "1"
+        },
+        {
+          "a": "0",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "1"
+        }
+      ],
+      "refusal": "AlwaysComb:alias-read",
+      "measured": "Round 6 lane B 2026-10-29, fresh runs (Icarus 12.0 local, Xcelium 24.03-s004 through the fleet gate refsim on vip-ng, Verilator 5.042 --binary --timing two-state: x reads as 0). `assign t[0] = b; assign w = t; always_comb begin y = w; t[1] = a; end` (the bit t[1] the block writes is one of the bits w copies). Stimulus (a b) = 00 10 11 01 11 x1 00 11: Icarus y = 00 00 11 11 01 11 x0 01 (one change behind); Xcelium y = 00 10 11 01 11 x1 00 11 (= {a, b}, x included); Verilator y = 00 10 11 01 11 01 00 11 (= {a, b}). The bit-level partner `acg_alias_bits_ok` (the copy is of t[0], which the block does not write) is admitted. Policy (Thomas, 2026-10-29, WP4 round 6 lane B): an always_comb that reads a continuous copy of a variable it writes is refused where the event-driven tools split (IEEE 1800-2023 9.2.2.2.1 puts the copy in the block's sensitivity list; 4.7/4.8 leave open whether the copy is updated inside the block's run); the guard follows the dependency path through `assign`s and port connections, not the functor a simulator builds (LeanModels/Sv/CombAlias2.lean)."
+    },
+    {
+      "name": "acg_alias_hier",
+      "example": "sem2/acg_alias_hier",
+      "top": "acg_alias_hier",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "11"
+        },
+        {
+          "a": "10"
+        },
+        {
+          "a": "00"
+        },
+        {
+          "a": "11"
+        },
+        {
+          "a": "00"
+        },
+        {
+          "a": "11"
+        },
+        {
+          "a": "1x"
+        },
+        {
+          "a": "11"
+        }
+      ],
+      "refusal": "AlwaysComb:alias-read",
+      "measured": "Round 6 lane B 2026-10-29, fresh runs (Icarus 12.0 local, Xcelium 24.03-s004 through the fleet gate refsim on vip-ng, Verilator 5.042 --binary --timing two-state: x reads as 0). the alias inside an instantiated module (`assign w = t; always_comb begin y = w; t = a; end` in the child `u`; flattened signals `u.w`, `u.t`). Stimulus a = 11 10 00 11 00 11 1x 11: Icarus y = 11 11 10 00 11 00 11 1x (one change behind a: the copy is updated inside the block's run, nothing wakes the block); Xcelium y = 11 10 00 11 00 11 1x 11 (= a on every cycle, x included); Verilator y = 11 10 00 11 00 11 10 11; the settle semantics gives y = a. IEEE 1800-2023 4.7/4.8 permit both orders, so the tools split and the block is refused.  Policy (Thomas, 2026-10-29, WP4 round 6 lane B): an always_comb that reads a continuous copy of a variable it writes is refused where the event-driven tools split (IEEE 1800-2023 9.2.2.2.1 puts the copy in the block's sensitivity list; 4.7/4.8 leave open whether the copy is updated inside the block's run); the guard follows the dependency path through `assign`s and port connections, not the functor a simulator builds (LeanModels/Sv/CombAlias2.lean)."
+    },
+    {
+      "name": "acg_alias_thru",
+      "example": "sem2/acg_alias_thru",
+      "top": "acg_alias_thru",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "11"
+        },
+        {
+          "a": "10"
+        },
+        {
+          "a": "00"
+        },
+        {
+          "a": "11"
+        },
+        {
+          "a": "00"
+        },
+        {
+          "a": "11"
+        },
+        {
+          "a": "1x"
+        },
+        {
+          "a": "11"
+        }
+      ],
+      "refusal": "AlwaysComb:alias-read",
+      "measured": "Round 6 lane B 2026-10-29, fresh runs (Icarus 12.0 local, Xcelium 24.03-s004 through the fleet gate refsim on vip-ng, Verilator 5.042 --binary --timing two-state: x reads as 0). the copy is made by a CHILD: `acg_alias_thru_buf` assigns `o = i`, the parent ties `i` to `t` and `o` to `w`, and the parent's `always_comb begin y = w; t = a; end` reads `w` before it writes `t`; after flattening the path t -> u.i -> u.o -> w is three continuous assignments (two port connections around the child's own `assign`), none of them in the parent's module. Stimulus a = 11 10 00 11 00 11 1x 11: Icarus y = 11 11 10 00 11 00 11 1x (one change behind a: the copy is updated inside the block's run, nothing wakes the block); Xcelium y = 11 10 00 11 00 11 1x 11 (= a on every cycle, x included); Verilator y = 11 10 00 11 00 11 10 11; the settle semantics gives y = a. IEEE 1800-2023 4.7/4.8 permit both orders, so the tools split and the block is refused. Policy (Thomas, 2026-10-29, WP4 round 6 lane B): an always_comb that reads a continuous copy of a variable it writes is refused where the event-driven tools split (IEEE 1800-2023 9.2.2.2.1 puts the copy in the block's sensitivity list; 4.7/4.8 leave open whether the copy is updated inside the block's run); the guard follows the dependency path through `assign`s and port connections, not the functor a simulator builds (LeanModels/Sv/CombAlias2.lean)."
+    },
+    {
+      "name": "acg_alias_wr",
+      "example": "sem2/acg_alias_wr",
+      "top": "acg_alias_wr",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "11"
+        },
+        {
+          "a": "10"
+        },
+        {
+          "a": "00"
+        },
+        {
+          "a": "11"
+        },
+        {
+          "a": "00"
+        },
+        {
+          "a": "11"
+        },
+        {
+          "a": "1x"
+        },
+        {
+          "a": "11"
+        }
+      ]
+    },
+    {
+      "name": "acg_alias_copy",
+      "example": "sem2/acg_alias_copy",
+      "top": "acg_alias_copy",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "11"
+        },
+        {
+          "a": "10"
+        },
+        {
+          "a": "00"
+        },
+        {
+          "a": "11"
+        },
+        {
+          "a": "00"
+        },
+        {
+          "a": "11"
+        },
+        {
+          "a": "1x"
+        },
+        {
+          "a": "11"
+        }
+      ]
+    },
+    {
+      "name": "acg_alias_far",
+      "example": "sem2/acg_alias_far",
+      "top": "acg_alias_far",
+      "signals": [
+        "a",
+        "b",
+        "y",
+        "z"
+      ],
+      "stimulus": [
+        {
+          "a": "11",
+          "b": "00"
+        },
+        {
+          "a": "10",
+          "b": "01"
+        },
+        {
+          "a": "00",
+          "b": "10"
+        },
+        {
+          "a": "01",
+          "b": "11"
+        },
+        {
+          "a": "11",
+          "b": "00"
+        },
+        {
+          "a": "x0",
+          "b": "11"
+        },
+        {
+          "a": "00",
+          "b": "1x"
+        },
+        {
+          "a": "11",
+          "b": "01"
+        }
+      ]
+    },
+    {
+      "name": "acg_alias_bits_ok",
+      "example": "sem2/acg_alias_bits_ok",
+      "top": "acg_alias_bits_ok",
+      "signals": [
+        "a",
+        "b",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "0",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "1"
+        },
+        {
+          "a": "0",
+          "b": "1"
+        },
+        {
+          "a": "1",
+          "b": "1"
+        },
+        {
+          "a": "x",
+          "b": "1"
+        },
+        {
+          "a": "0",
+          "b": "0"
+        },
+        {
+          "a": "1",
+          "b": "1"
+        }
+      ]
+    },
+    {
+      "name": "acg_alias_port_wr",
+      "example": "sem2/acg_alias_port_wr",
+      "top": "acg_alias_port_wr",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "00"
+        },
+        {
+          "a": "01"
+        },
+        {
+          "a": "10"
+        },
+        {
+          "a": "01"
+        },
+        {
+          "a": "01"
+        },
+        {
+          "a": "11"
+        },
+        {
+          "a": "00"
+        },
+        {
+          "a": "10"
+        }
+      ]
+    },
+    {
+      "name": "acg_alias_hier_ok",
+      "example": "sem2/acg_alias_hier_ok",
+      "top": "acg_alias_hier_ok",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "11"
+        },
+        {
+          "a": "10"
+        },
+        {
+          "a": "00"
+        },
+        {
+          "a": "11"
+        },
+        {
+          "a": "00"
+        },
+        {
+          "a": "11"
+        },
+        {
+          "a": "1x"
+        },
+        {
+          "a": "11"
+        }
+      ]
     },
     {
       "name": "rbw_child",
@@ -18556,7 +18953,9 @@
           "a": "000000000101111000110000101001110",
           "v": "00110011"
         }
-      ]
+      ],
+      "refusal": "Select:wide-index",
+      "measured": "Refused since round 6 (2026-10-29), `Select:wide-index`: at this parameter point a run-time bit-select index (v[a - P], `a` 33 or 42 bits) is wider than 32 bits. IEEE 1800-2023 11.5.1 evaluates the index whole (out of range: x; the model and Yosys 0.53 `prep; eval` agree), but Xcelium 24.03-s004 (warning BIGWBS), Icarus 12.0 and Verilator 5.042 truncate it to its low 32 bits and read a defined bit (docs/sv-xcelium-audit.md T1), so the tools split and the model does not truncate. Until then this row matched Icarus and Xcelium only because its stimulus never let the whole index and its low 32 bits disagree."
     },
     {
       "name": "fold_pcase_n40",
@@ -18605,7 +19004,9 @@
           "a": "000000000000000000101111000110000101001110",
           "v": "00110011"
         }
-      ]
+      ],
+      "refusal": "Select:wide-index",
+      "measured": "Refused since round 6 (2026-10-29), `Select:wide-index`: at this parameter point a run-time bit-select index (v[a - P], `a` 33 or 42 bits) is wider than 32 bits. IEEE 1800-2023 11.5.1 evaluates the index whole (out of range: x; the model and Yosys 0.53 `prep; eval` agree), but Xcelium 24.03-s004 (warning BIGWBS), Icarus 12.0 and Verilator 5.042 truncate it to its low 32 bits and read a defined bit (docs/sv-xcelium-audit.md T1), so the tools split and the model does not truncate. Until then this row matched Icarus and Xcelium only because its stimulus never let the whole index and its low 32 bits disagree."
     },
     {
       "name": "fold_pcase_n40_pm1",
@@ -18655,7 +19056,9 @@
           "a": "000000000000000000101111000110000101001110",
           "v": "00110011"
         }
-      ]
+      ],
+      "refusal": "Select:wide-index",
+      "measured": "Refused since round 6 (2026-10-29), `Select:wide-index`: at this parameter point a run-time bit-select index (v[a - P], `a` 33 or 42 bits) is wider than 32 bits. IEEE 1800-2023 11.5.1 evaluates the index whole (out of range: x; the model and Yosys 0.53 `prep; eval` agree), but Xcelium 24.03-s004 (warning BIGWBS), Icarus 12.0 and Verilator 5.042 truncate it to its low 32 bits and read a defined bit (docs/sv-xcelium-audit.md T1), so the tools split and the model does not truncate. Until then this row matched Icarus and Xcelium only because its stimulus never let the whole index and its low 32 bits disagree."
     },
     {
       "name": "fold_pcase_n40_p5",
@@ -18705,7 +19108,9 @@
           "a": "000000000000000000101111000110000101001110",
           "v": "00110011"
         }
-      ]
+      ],
+      "refusal": "Select:wide-index",
+      "measured": "Refused since round 6 (2026-10-29), `Select:wide-index`: at this parameter point a run-time bit-select index (v[a - P], `a` 33 or 42 bits) is wider than 32 bits. IEEE 1800-2023 11.5.1 evaluates the index whole (out of range: x; the model and Yosys 0.53 `prep; eval` agree), but Xcelium 24.03-s004 (warning BIGWBS), Icarus 12.0 and Verilator 5.042 truncate it to its low 32 bits and read a defined bit (docs/sv-xcelium-audit.md T1), so the tools split and the model does not truncate. Until then this row matched Icarus and Xcelium only because its stimulus never let the whole index and its low 32 bits disagree."
     },
     {
       "name": "fold_lpgrow",
@@ -19823,35 +20228,8 @@
           "v": "01010101"
         }
       ],
-      "oracle_disagreement": {
-        "id": "iverilog-wide-index-truncation",
-        "sim": "iverilog",
-        "declared": "2026-10-28",
-        "reference": "IEEE 1800-2023 11.5.1 (a bit-select whose index is out of the address bounds reads x for a 4-state value; the index is the whole value of its expression, here 42 bits) and 11.8.2 (P zero-extended into the unsigned context); docs/sv-oracle-disagreements.md",
-        "observed": "Icarus 12.0 (Homebrew, macOS): a run-time bit-select index wider than 32 bits is read at its low 32 bits — v[a - P] at a 42-bit index 2^42 - 2^32 + 2 reads v[2]; Verilator 5.042 does the same on a plain v[a]; Yosys 0.53 (prep; eval) reads x, as the model does. In-range indices (cycles 2, 4) and indices whose low 32 bits are out of range (cycle 5) agree. No licensed-simulator confirmation is claimed.",
-        "retirement_condition": "When Icarus reads an out-of-range index wider than 32 bits as x, this row must fail until its declaration is removed after review.",
-        "source_sha256": "b78042ef5ce527f67c15f677d10fc1f469f3f3fe34be4b0d5d1d931c175169da",
-        "envelope_sha256": "614b3254f0010c247f6560ee0d7a1909e53a16bf07ae6e8345592e107fe48aae",
-        "case_sha256": "018d5fd1d88c29f535d260a494525b7026958f6750b4f913d0fdbc70e3f30ef0",
-        "testbench_sha256": "2047ac3427bd27588660f2129e3f663b78d508fd6be7eba952376b6a494b6208",
-        "sigma": "src",
-        "sim_trace": [
-          "CYCLE 0 a=111111111111111111111111111111111111111111 v=10110101 o1=00 o2=00 o3=1",
-          "CYCLE 1 a=000000000000000000000000000000000000000000 v=01001010 o1=00 o2=00 o3=1",
-          "CYCLE 2 a=000000000011111111111111111111111111111101 v=11110000 o1=01 o2=01 o3=0",
-          "CYCLE 3 a=010000000000000000000000000000000000000001 v=00001111 o1=00 o2=00 o3=0",
-          "CYCLE 4 a=000000000100000000000000000000000000000100 v=10101010 o1=00 o2=00 o3=1",
-          "CYCLE 5 a=000000000000000000000000000000000000000101 v=01010101 o1=00 o2=00 o3=x"
-        ],
-        "lean_trace": [
-          "CYCLE 0 a=111111111111111111111111111111111111111111 v=10110101 o1=00 o2=00 o3=x",
-          "CYCLE 1 a=000000000000000000000000000000000000000000 v=01001010 o1=00 o2=00 o3=x",
-          "CYCLE 2 a=000000000011111111111111111111111111111101 v=11110000 o1=01 o2=01 o3=0",
-          "CYCLE 3 a=010000000000000000000000000000000000000001 v=00001111 o1=00 o2=00 o3=x",
-          "CYCLE 4 a=000000000100000000000000000000000000000100 v=10101010 o1=00 o2=00 o3=1",
-          "CYCLE 5 a=000000000000000000000000000000000000000101 v=01010101 o1=00 o2=00 o3=x"
-        ]
-      }
+      "refusal": "Select:wide-index",
+      "measured": "Refused since round 6 (2026-10-29), `Select:wide-index`: at this parameter point a run-time bit-select index (v[a - P], `a` 33 or 42 bits) is wider than 32 bits. IEEE 1800-2023 11.5.1 evaluates the index whole (out of range: x; the model and Yosys 0.53 `prep; eval` agree), but Xcelium 24.03-s004 (warning BIGWBS), Icarus 12.0 and Verilator 5.042 truncate it to its low 32 bits and read a defined bit (docs/sv-xcelium-audit.md T1), so the tools split and the model does not truncate. Until then this row matched Icarus and Xcelium only because its stimulus never let the whole index and its low 32 bits disagree. Its declaration `iverilog-wide-index-truncation` (cycles 0, 1, 3: the model x, Icarus a defined bit) is corrected: Xcelium truncates too (all three simulators agree, the model alone follows the LRM text), and the row is now a refusal row. The declaration was RETIRED from this row (round 6, lane C: it called the truncation an Icarus quirk, and Xcelium truncates too); the corrected statement is in docs/sv-oracle-disagreements.md, 'Select indices wider than 32 bits', and the record in 'Declarations retired in round 6'."
     },
     {
       "name": "pi_ansi_forms",
@@ -27321,6 +27699,2086 @@
       ],
       "refusal": "division by zero in a constant context",
       "measured": "round 7 folds 2026-10-29 (round 6 FOLDS verifier major 4, repro vw_sqd): `localparam shortint H1 = 4'd8 / (U + 1'b1)` (also byte H2 = 4'd9 % (U + 1'b1), bit [15:0] H3), default N = 32. N = 8, U = 255: 8 bits wrap; H1 is 0 at 16 bits in every tool, H2 (a byte, no wider context) is a true modulo by zero: Icarus 12.0 reads 0 (x squashed into the 2-state byte), the Yosys 0.53 netlist x, so the tools split there. Loud at H1 by the own-width gate"
+    },
+    {
+      "name": "partsel_dyn",
+      "example": "sem2/partsel_dyn",
+      "top": "partsel_dyn",
+      "signals": [
+        "a",
+        "v",
+        "sel",
+        "rev_up",
+        "rev_dn",
+        "top",
+        "dyn_up",
+        "dyn_dn",
+        "dyn_lane"
+      ],
+      "stimulus": [
+        {
+          "a": "101101110001",
+          "v": "10110100",
+          "sel": "000"
+        },
+        {
+          "a": "011001100110",
+          "v": "01101001",
+          "sel": "001"
+        },
+        {
+          "a": "101100101110",
+          "v": "11110000",
+          "sel": "010"
+        },
+        {
+          "a": "111111111111",
+          "v": "00001111",
+          "sel": "011"
+        },
+        {
+          "a": "000000000000",
+          "v": "1x0z1x0z",
+          "sel": "100"
+        },
+        {
+          "a": "101010101010",
+          "v": "10000001",
+          "sel": "101"
+        },
+        {
+          "a": "x01zx01zx01z",
+          "v": "01111110",
+          "sel": "110"
+        },
+        {
+          "a": "110011001100",
+          "v": "11001010",
+          "sel": "111"
+        },
+        {
+          "sel": "x10"
+        },
+        {
+          "sel": "1z1"
+        },
+        {
+          "sel": "011"
+        }
+      ],
+      "oracle_disagreement": {
+        "id": "xcelium-runtime-partial-part-select-all-x",
+        "sim": "xcelium",
+        "declared": "2026-10-29",
+        "reference": "IEEE 1800-2023 11.5.1 (Vector bit-select and part-select addressing, printed page 296): 'Part-selects that are partially out of range shall, when read, return x for the bits that are out of range', with the base expressions evaluated in a self-determined context; slang, Icarus 12.0 and Yosys 0.53 follow it; docs/sv-oracle-disagreements.md, 'Run-time part-select bases that leave the vector'; docs/sv-xcelium-audit.md, cluster P2 and 6.1",
+        "observed": "Xcelium 24.03-s004 (the reference simulator, default flags; pinned in harness/sv/xcelium_golden.json, row partsel_dyn) treats an indexed part-select READ whose RUN-TIME base leaves the vector for some of its bits and not for others as wholly invalid and returns all x for the whole select, where the model, Icarus 12.0 and Yosys 0.53 return the in-range bits and x only for the out-of-range ones. dyn_up = v[sel +: 4] at sel = 5, 6, 7 and dyn_dn = v[sel -: 4] at sel = 0, 1, 2 (v = 10000001, sel = 101: dyn_up is x100 in the model, xxxx in Xcelium). 6 of the 22 part-select cells of this row are partly out of range: Xcelium is all x on those 6 and equals the LRM value on the other 16 (in range, wholly out of range, x/z base), and the model equals an independent LRM oracle on all 22; Icarus equals the model in every cycle. Xcelium prints no warning by default (IIFAOB / IIRAOB only under -ii_warn -ii_rwarn); the result is not a time-zero race and does not depend on the stimulus order or on the context (verifier probes: 864 cells in assign, always, function and testbench contexts). The same Xcelium rule drops the whole write and reads all x for CONSTANT bases, where it is REFUSED (ArraySel:partial-overhang); a run-time base cannot be refused statically, so the departure is declared, not followed. svGolf's fourstate stage refuses run-time selects that can leave their declared range (svgolf/README.md). -ii_val does not repair module-level reads (docs/sv-xcelium-reference.md, section 6).",
+        "retirement_condition": "When Xcelium reads a run-time-base part-select that is partly out of range per bit like the LRM (in-range bits kept, x for the out-of-range ones: another Xcelium version, or a flag that applies at module level), the pinned trace equals the model's and the harness fails ('disagreement resolved'; diff_test2.py --golden, or a live xrun run) until the declaration is removed after review; it is also removed, and the row becomes a refusal row, when ls-sv refuses a part-select whose run-time base can leave the vector.",
+        "source_sha256": "24ff9567e17f665b7f56e50933b9042265994fbe1ef123777cca0595ce7765fb",
+        "envelope_sha256": "b026e0a09292c01f2f571c5707885cb6f2440aa37e35bfc5a27a998aec8bdcdc",
+        "case_sha256": "24776571a475f2893ea4bf2369d2fb3dfe69e0681b2cc6340993bc80d3b7d5a2",
+        "testbench_sha256": "7023921086d849e13ecbf2f74b3d80428b7b97cf52fce6c507e369e24e270ea1",
+        "sigma": "src",
+        "sim_trace": [
+          "CYCLE 0 a=101101110001 v=10110100 sel=000 rev_up=001110101101 rev_dn=001110101101 top=1011 dyn_up=0100 dyn_dn=xxxx dyn_lane=001",
+          "CYCLE 1 a=011001100110 v=01101001 sel=001 rev_up=110100001011 rev_dn=110100001011 top=0110 dyn_up=0100 dyn_dn=xxxx dyn_lane=100",
+          "CYCLE 2 a=101100101110 v=11110000 sel=010 rev_up=110101100101 rev_dn=110101100101 top=1011 dyn_up=1100 dyn_dn=xxxx dyn_lane=100",
+          "CYCLE 3 a=111111111111 v=00001111 sel=011 rev_up=111111111111 rev_dn=111111111111 top=1111 dyn_up=0001 dyn_dn=1111 dyn_lane=111",
+          "CYCLE 4 a=000000000000 v=1x0z1x0z sel=100 rev_up=000000000000 rev_dn=000000000000 top=0000 dyn_up=1x0z dyn_dn=z1x0 dyn_lane=xxx",
+          "CYCLE 5 a=101010101010 v=10000001 sel=101 rev_up=010101010101 rev_dn=010101010101 top=1010 dyn_up=xxxx dyn_dn=0000 dyn_lane=xxx",
+          "CYCLE 6 a=x01zx01zx01z v=01111110 sel=110 rev_up=01z1zxzx0x01 rev_dn=01z1zxzx0x01 top=x01z dyn_up=xxxx dyn_dn=1111 dyn_lane=xxx",
+          "CYCLE 7 a=110011001100 v=11001010 sel=111 rev_up=100001011110 rev_dn=100001011110 top=1100 dyn_up=xxxx dyn_dn=1100 dyn_lane=xxx",
+          "CYCLE 8 a=110011001100 v=11001010 sel=x10 rev_up=100001011110 rev_dn=100001011110 top=1100 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxx",
+          "CYCLE 9 a=110011001100 v=11001010 sel=1z1 rev_up=100001011110 rev_dn=100001011110 top=1100 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxx",
+          "CYCLE 10 a=110011001100 v=11001010 sel=011 rev_up=100001011110 rev_dn=100001011110 top=1100 dyn_up=1001 dyn_dn=1010 dyn_lane=110"
+        ],
+        "lean_trace": [
+          "CYCLE 0 a=101101110001 v=10110100 sel=000 rev_up=001110101101 rev_dn=001110101101 top=1011 dyn_up=0100 dyn_dn=0xxx dyn_lane=001",
+          "CYCLE 1 a=011001100110 v=01101001 sel=001 rev_up=110100001011 rev_dn=110100001011 top=0110 dyn_up=0100 dyn_dn=01xx dyn_lane=100",
+          "CYCLE 2 a=101100101110 v=11110000 sel=010 rev_up=110101100101 rev_dn=110101100101 top=1011 dyn_up=1100 dyn_dn=000x dyn_lane=100",
+          "CYCLE 3 a=111111111111 v=00001111 sel=011 rev_up=111111111111 rev_dn=111111111111 top=1111 dyn_up=0001 dyn_dn=1111 dyn_lane=111",
+          "CYCLE 4 a=000000000000 v=1x0z1x0z sel=100 rev_up=000000000000 rev_dn=000000000000 top=0000 dyn_up=1x0z dyn_dn=z1x0 dyn_lane=xxx",
+          "CYCLE 5 a=101010101010 v=10000001 sel=101 rev_up=010101010101 rev_dn=010101010101 top=1010 dyn_up=x100 dyn_dn=0000 dyn_lane=xxx",
+          "CYCLE 6 a=x01zx01zx01z v=01111110 sel=110 rev_up=01z1zxzx0x01 rev_dn=01z1zxzx0x01 top=x01z dyn_up=xx01 dyn_dn=1111 dyn_lane=xxx",
+          "CYCLE 7 a=110011001100 v=11001010 sel=111 rev_up=100001011110 rev_dn=100001011110 top=1100 dyn_up=xxx1 dyn_dn=1100 dyn_lane=xxx",
+          "CYCLE 8 a=110011001100 v=11001010 sel=x10 rev_up=100001011110 rev_dn=100001011110 top=1100 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxx",
+          "CYCLE 9 a=110011001100 v=11001010 sel=1z1 rev_up=100001011110 rev_dn=100001011110 top=1100 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxx",
+          "CYCLE 10 a=110011001100 v=11001010 sel=011 rev_up=100001011110 rev_dn=100001011110 top=1100 dyn_up=1001 dyn_dn=1010 dyn_lane=110"
+        ]
+      }
+    },
+    {
+      "name": "partsel_dyn_n2_w5",
+      "example": "sem2/partsel_dyn",
+      "top": "partsel_dyn",
+      "params": {
+        "N": 2,
+        "W": 5
+      },
+      "signals": [
+        "a",
+        "v",
+        "sel",
+        "rev_up",
+        "rev_dn",
+        "top",
+        "dyn_up",
+        "dyn_dn",
+        "dyn_lane"
+      ],
+      "stimulus": [
+        {
+          "a": "1011011100",
+          "v": "10110100",
+          "sel": "000"
+        },
+        {
+          "a": "0110011001",
+          "v": "01101001",
+          "sel": "001"
+        },
+        {
+          "a": "1011001011",
+          "v": "11110000",
+          "sel": "010"
+        },
+        {
+          "a": "1111111111",
+          "v": "00001111",
+          "sel": "011"
+        },
+        {
+          "a": "0000000000",
+          "v": "1x0z1x0z",
+          "sel": "100"
+        },
+        {
+          "a": "1010101010",
+          "v": "10000001",
+          "sel": "101"
+        },
+        {
+          "a": "x01zx01zx0",
+          "v": "01111110",
+          "sel": "110"
+        },
+        {
+          "a": "1100110011",
+          "v": "11001010",
+          "sel": "111"
+        },
+        {
+          "sel": "x10"
+        },
+        {
+          "sel": "1z1"
+        },
+        {
+          "sel": "011"
+        }
+      ],
+      "oracle_disagreement": {
+        "id": "xcelium-runtime-partial-part-select-all-x",
+        "sim": "xcelium",
+        "declared": "2026-10-29",
+        "reference": "IEEE 1800-2023 11.5.1 (Vector bit-select and part-select addressing, printed page 296): 'Part-selects that are partially out of range shall, when read, return x for the bits that are out of range', with the base expressions evaluated in a self-determined context; slang, Icarus 12.0 and Yosys 0.53 follow it; docs/sv-oracle-disagreements.md, 'Run-time part-select bases that leave the vector'; docs/sv-xcelium-audit.md, cluster P2 and 6.1",
+        "observed": "Xcelium 24.03-s004 (the reference simulator, default flags; pinned in harness/sv/xcelium_golden.json, row partsel_dyn_n2_w5) treats an indexed part-select READ whose RUN-TIME base leaves the vector for some of its bits and not for others as wholly invalid and returns all x for the whole select, where the model, Icarus 12.0 and Yosys 0.53 return the in-range bits and x only for the out-of-range ones. dyn_up = v[sel +: 4] at sel = 5, 6, 7 and dyn_dn = v[sel -: 4] at sel = 0, 1, 2 (v = 10000001, sel = 101: dyn_up is x100 in the model, xxxx in Xcelium). 6 of the 22 part-select cells of this row are partly out of range: Xcelium is all x on those 6 and equals the LRM value on the other 16 (in range, wholly out of range, x/z base), and the model equals an independent LRM oracle on all 22; Icarus equals the model in every cycle. Xcelium prints no warning by default (IIFAOB / IIRAOB only under -ii_warn -ii_rwarn); the result is not a time-zero race and does not depend on the stimulus order or on the context (verifier probes: 864 cells in assign, always, function and testbench contexts). The same Xcelium rule drops the whole write and reads all x for CONSTANT bases, where it is REFUSED (ArraySel:partial-overhang); a run-time base cannot be refused statically, so the departure is declared, not followed. svGolf's fourstate stage refuses run-time selects that can leave their declared range (svgolf/README.md). -ii_val does not repair module-level reads (docs/sv-xcelium-reference.md, section 6).",
+        "retirement_condition": "When Xcelium reads a run-time-base part-select that is partly out of range per bit like the LRM (in-range bits kept, x for the out-of-range ones: another Xcelium version, or a flag that applies at module level), the pinned trace equals the model's and the harness fails ('disagreement resolved'; diff_test2.py --golden, or a live xrun run) until the declaration is removed after review; it is also removed, and the row becomes a refusal row, when ls-sv refuses a part-select whose run-time base can leave the vector.",
+        "source_sha256": "24ff9567e17f665b7f56e50933b9042265994fbe1ef123777cca0595ce7765fb",
+        "envelope_sha256": "b026e0a09292c01f2f571c5707885cb6f2440aa37e35bfc5a27a998aec8bdcdc",
+        "case_sha256": "402e32a1f6a963fa332b12642759e8a0d5e66dbd9ad6150b32bd4d2c4e10a62e",
+        "testbench_sha256": "f905c39ea2aa3541e07af0b8d6394e71719544f8fe272d4a03d6d32917da96fc",
+        "sigma": "src",
+        "sim_trace": [
+          "CYCLE 0 a=1011011100 v=10110100 sel=000 rev_up=1110010110 rev_dn=1110010110 top=10 dyn_up=0100 dyn_dn=xxxx dyn_lane=11100",
+          "CYCLE 1 a=0110011001 v=01101001 sel=001 rev_up=1100101100 rev_dn=1100101100 top=01 dyn_up=0100 dyn_dn=xxxx dyn_lane=01100",
+          "CYCLE 2 a=1011001011 v=11110000 sel=010 rev_up=0101110110 rev_dn=0101110110 top=10 dyn_up=1100 dyn_dn=xxxx dyn_lane=xxxxx",
+          "CYCLE 3 a=1111111111 v=00001111 sel=011 rev_up=1111111111 rev_dn=1111111111 top=11 dyn_up=0001 dyn_dn=1111 dyn_lane=xxxxx",
+          "CYCLE 4 a=0000000000 v=1x0z1x0z sel=100 rev_up=0000000000 rev_dn=0000000000 top=00 dyn_up=1x0z dyn_dn=z1x0 dyn_lane=xxxxx",
+          "CYCLE 5 a=1010101010 v=10000001 sel=101 rev_up=0101010101 rev_dn=0101010101 top=10 dyn_up=xxxx dyn_dn=0000 dyn_lane=xxxxx",
+          "CYCLE 6 a=x01zx01zx0 v=01111110 sel=110 rev_up=01zx0x01zx rev_dn=01zx0x01zx top=x0 dyn_up=xxxx dyn_dn=1111 dyn_lane=xxxxx",
+          "CYCLE 7 a=1100110011 v=11001010 sel=111 rev_up=1001111001 rev_dn=1001111001 top=11 dyn_up=xxxx dyn_dn=1100 dyn_lane=xxxxx",
+          "CYCLE 8 a=1100110011 v=11001010 sel=x10 rev_up=1001111001 rev_dn=1001111001 top=11 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxxxx",
+          "CYCLE 9 a=1100110011 v=11001010 sel=1z1 rev_up=1001111001 rev_dn=1001111001 top=11 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxxxx",
+          "CYCLE 10 a=1100110011 v=11001010 sel=011 rev_up=1001111001 rev_dn=1001111001 top=11 dyn_up=1001 dyn_dn=1010 dyn_lane=xxxxx"
+        ],
+        "lean_trace": [
+          "CYCLE 0 a=1011011100 v=10110100 sel=000 rev_up=1110010110 rev_dn=1110010110 top=10 dyn_up=0100 dyn_dn=0xxx dyn_lane=11100",
+          "CYCLE 1 a=0110011001 v=01101001 sel=001 rev_up=1100101100 rev_dn=1100101100 top=01 dyn_up=0100 dyn_dn=01xx dyn_lane=01100",
+          "CYCLE 2 a=1011001011 v=11110000 sel=010 rev_up=0101110110 rev_dn=0101110110 top=10 dyn_up=1100 dyn_dn=000x dyn_lane=xxxxx",
+          "CYCLE 3 a=1111111111 v=00001111 sel=011 rev_up=1111111111 rev_dn=1111111111 top=11 dyn_up=0001 dyn_dn=1111 dyn_lane=xxxxx",
+          "CYCLE 4 a=0000000000 v=1x0z1x0z sel=100 rev_up=0000000000 rev_dn=0000000000 top=00 dyn_up=1x0z dyn_dn=z1x0 dyn_lane=xxxxx",
+          "CYCLE 5 a=1010101010 v=10000001 sel=101 rev_up=0101010101 rev_dn=0101010101 top=10 dyn_up=x100 dyn_dn=0000 dyn_lane=xxxxx",
+          "CYCLE 6 a=x01zx01zx0 v=01111110 sel=110 rev_up=01zx0x01zx rev_dn=01zx0x01zx top=x0 dyn_up=xx01 dyn_dn=1111 dyn_lane=xxxxx",
+          "CYCLE 7 a=1100110011 v=11001010 sel=111 rev_up=1001111001 rev_dn=1001111001 top=11 dyn_up=xxx1 dyn_dn=1100 dyn_lane=xxxxx",
+          "CYCLE 8 a=1100110011 v=11001010 sel=x10 rev_up=1001111001 rev_dn=1001111001 top=11 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxxxx",
+          "CYCLE 9 a=1100110011 v=11001010 sel=1z1 rev_up=1001111001 rev_dn=1001111001 top=11 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxxxx",
+          "CYCLE 10 a=1100110011 v=11001010 sel=011 rev_up=1001111001 rev_dn=1001111001 top=11 dyn_up=1001 dyn_dn=1010 dyn_lane=xxxxx"
+        ]
+      }
+    },
+    {
+      "name": "partsel_dyn_n6_w2",
+      "example": "sem2/partsel_dyn",
+      "top": "partsel_dyn",
+      "params": {
+        "N": 6,
+        "W": 2
+      },
+      "signals": [
+        "a",
+        "v",
+        "sel",
+        "rev_up",
+        "rev_dn",
+        "top",
+        "dyn_up",
+        "dyn_dn",
+        "dyn_lane"
+      ],
+      "stimulus": [
+        {
+          "a": "101101110001",
+          "v": "10110100",
+          "sel": "000"
+        },
+        {
+          "a": "011001100110",
+          "v": "01101001",
+          "sel": "001"
+        },
+        {
+          "a": "101100101110",
+          "v": "11110000",
+          "sel": "010"
+        },
+        {
+          "a": "111111111111",
+          "v": "00001111",
+          "sel": "011"
+        },
+        {
+          "a": "000000000000",
+          "v": "1x0z1x0z",
+          "sel": "100"
+        },
+        {
+          "a": "101010101010",
+          "v": "10000001",
+          "sel": "101"
+        },
+        {
+          "a": "x01zx01zx01z",
+          "v": "01111110",
+          "sel": "110"
+        },
+        {
+          "a": "110011001100",
+          "v": "11001010",
+          "sel": "111"
+        },
+        {
+          "sel": "x10"
+        },
+        {
+          "sel": "1z1"
+        },
+        {
+          "sel": "011"
+        }
+      ],
+      "oracle_disagreement": {
+        "id": "xcelium-runtime-partial-part-select-all-x",
+        "sim": "xcelium",
+        "declared": "2026-10-29",
+        "reference": "IEEE 1800-2023 11.5.1 (Vector bit-select and part-select addressing, printed page 296): 'Part-selects that are partially out of range shall, when read, return x for the bits that are out of range', with the base expressions evaluated in a self-determined context; slang, Icarus 12.0 and Yosys 0.53 follow it; docs/sv-oracle-disagreements.md, 'Run-time part-select bases that leave the vector'; docs/sv-xcelium-audit.md, cluster P2 and 6.1",
+        "observed": "Xcelium 24.03-s004 (the reference simulator, default flags; pinned in harness/sv/xcelium_golden.json, row partsel_dyn_n6_w2) treats an indexed part-select READ whose RUN-TIME base leaves the vector for some of its bits and not for others as wholly invalid and returns all x for the whole select, where the model, Icarus 12.0 and Yosys 0.53 return the in-range bits and x only for the out-of-range ones. dyn_up = v[sel +: 4] at sel = 5, 6, 7 and dyn_dn = v[sel -: 4] at sel = 0, 1, 2 (v = 10000001, sel = 101: dyn_up is x100 in the model, xxxx in Xcelium). 6 of the 22 part-select cells of this row are partly out of range: Xcelium is all x on those 6 and equals the LRM value on the other 16 (in range, wholly out of range, x/z base), and the model equals an independent LRM oracle on all 22; Icarus equals the model in every cycle. Xcelium prints no warning by default (IIFAOB / IIRAOB only under -ii_warn -ii_rwarn); the result is not a time-zero race and does not depend on the stimulus order or on the context (verifier probes: 864 cells in assign, always, function and testbench contexts). The same Xcelium rule drops the whole write and reads all x for CONSTANT bases, where it is REFUSED (ArraySel:partial-overhang); a run-time base cannot be refused statically, so the departure is declared, not followed. svGolf's fourstate stage refuses run-time selects that can leave their declared range (svgolf/README.md). -ii_val does not repair module-level reads (docs/sv-xcelium-reference.md, section 6).",
+        "retirement_condition": "When Xcelium reads a run-time-base part-select that is partly out of range per bit like the LRM (in-range bits kept, x for the out-of-range ones: another Xcelium version, or a flag that applies at module level), the pinned trace equals the model's and the harness fails ('disagreement resolved'; diff_test2.py --golden, or a live xrun run) until the declaration is removed after review; it is also removed, and the row becomes a refusal row, when ls-sv refuses a part-select whose run-time base can leave the vector.",
+        "source_sha256": "24ff9567e17f665b7f56e50933b9042265994fbe1ef123777cca0595ce7765fb",
+        "envelope_sha256": "b026e0a09292c01f2f571c5707885cb6f2440aa37e35bfc5a27a998aec8bdcdc",
+        "case_sha256": "8757f507a0cf5eb1eb470e0858adc7c1a1a647caf9faede2a74f890a476982c0",
+        "testbench_sha256": "c203835b645e0d58a1c5383e113a6a9a4b044b4f9f925cfdcb12a53dd082c1f6",
+        "sigma": "src",
+        "sim_trace": [
+          "CYCLE 0 a=101101110001 v=10110100 sel=000 rev_up=010011011110 rev_dn=010011011110 top=101101 dyn_up=0100 dyn_dn=xxxx dyn_lane=01",
+          "CYCLE 1 a=011001100110 v=01101001 sel=001 rev_up=100110011001 rev_dn=100110011001 top=011001 dyn_up=0100 dyn_dn=xxxx dyn_lane=01",
+          "CYCLE 2 a=101100101110 v=11110000 sel=010 rev_up=101110001110 rev_dn=101110001110 top=101100 dyn_up=1100 dyn_dn=xxxx dyn_lane=10",
+          "CYCLE 3 a=111111111111 v=00001111 sel=011 rev_up=111111111111 rev_dn=111111111111 top=111111 dyn_up=0001 dyn_dn=1111 dyn_lane=11",
+          "CYCLE 4 a=000000000000 v=1x0z1x0z sel=100 rev_up=000000000000 rev_dn=000000000000 top=000000 dyn_up=1x0z dyn_dn=z1x0 dyn_lane=00",
+          "CYCLE 5 a=101010101010 v=10000001 sel=101 rev_up=101010101010 rev_dn=101010101010 top=101010 dyn_up=xxxx dyn_dn=0000 dyn_lane=10",
+          "CYCLE 6 a=x01zx01zx01z v=01111110 sel=110 rev_up=1zx01zx01zx0 rev_dn=1zx01zx01zx0 top=x01zx0 dyn_up=xxxx dyn_dn=1111 dyn_lane=xx",
+          "CYCLE 7 a=110011001100 v=11001010 sel=111 rev_up=001100110011 rev_dn=001100110011 top=110011 dyn_up=xxxx dyn_dn=1100 dyn_lane=xx",
+          "CYCLE 8 a=110011001100 v=11001010 sel=x10 rev_up=001100110011 rev_dn=001100110011 top=110011 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xx",
+          "CYCLE 9 a=110011001100 v=11001010 sel=1z1 rev_up=001100110011 rev_dn=001100110011 top=110011 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xx",
+          "CYCLE 10 a=110011001100 v=11001010 sel=011 rev_up=001100110011 rev_dn=001100110011 top=110011 dyn_up=1001 dyn_dn=1010 dyn_lane=11"
+        ],
+        "lean_trace": [
+          "CYCLE 0 a=101101110001 v=10110100 sel=000 rev_up=010011011110 rev_dn=010011011110 top=101101 dyn_up=0100 dyn_dn=0xxx dyn_lane=01",
+          "CYCLE 1 a=011001100110 v=01101001 sel=001 rev_up=100110011001 rev_dn=100110011001 top=011001 dyn_up=0100 dyn_dn=01xx dyn_lane=01",
+          "CYCLE 2 a=101100101110 v=11110000 sel=010 rev_up=101110001110 rev_dn=101110001110 top=101100 dyn_up=1100 dyn_dn=000x dyn_lane=10",
+          "CYCLE 3 a=111111111111 v=00001111 sel=011 rev_up=111111111111 rev_dn=111111111111 top=111111 dyn_up=0001 dyn_dn=1111 dyn_lane=11",
+          "CYCLE 4 a=000000000000 v=1x0z1x0z sel=100 rev_up=000000000000 rev_dn=000000000000 top=000000 dyn_up=1x0z dyn_dn=z1x0 dyn_lane=00",
+          "CYCLE 5 a=101010101010 v=10000001 sel=101 rev_up=101010101010 rev_dn=101010101010 top=101010 dyn_up=x100 dyn_dn=0000 dyn_lane=10",
+          "CYCLE 6 a=x01zx01zx01z v=01111110 sel=110 rev_up=1zx01zx01zx0 rev_dn=1zx01zx01zx0 top=x01zx0 dyn_up=xx01 dyn_dn=1111 dyn_lane=xx",
+          "CYCLE 7 a=110011001100 v=11001010 sel=111 rev_up=001100110011 rev_dn=001100110011 top=110011 dyn_up=xxx1 dyn_dn=1100 dyn_lane=xx",
+          "CYCLE 8 a=110011001100 v=11001010 sel=x10 rev_up=001100110011 rev_dn=001100110011 top=110011 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xx",
+          "CYCLE 9 a=110011001100 v=11001010 sel=1z1 rev_up=001100110011 rev_dn=001100110011 top=110011 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xx",
+          "CYCLE 10 a=110011001100 v=11001010 sel=011 rev_up=001100110011 rev_dn=001100110011 top=110011 dyn_up=1001 dyn_dn=1010 dyn_lane=11"
+        ]
+      }
+    },
+    {
+      "name": "partsel_dyn_n5_w1",
+      "example": "sem2/partsel_dyn",
+      "top": "partsel_dyn",
+      "params": {
+        "N": 5,
+        "W": 1
+      },
+      "signals": [
+        "a",
+        "v",
+        "sel",
+        "rev_up",
+        "rev_dn",
+        "top",
+        "dyn_up",
+        "dyn_dn",
+        "dyn_lane"
+      ],
+      "stimulus": [
+        {
+          "a": "10110",
+          "v": "10110100",
+          "sel": "000"
+        },
+        {
+          "a": "01100",
+          "v": "01101001",
+          "sel": "001"
+        },
+        {
+          "a": "10110",
+          "v": "11110000",
+          "sel": "010"
+        },
+        {
+          "a": "11111",
+          "v": "00001111",
+          "sel": "011"
+        },
+        {
+          "a": "00000",
+          "v": "1x0z1x0z",
+          "sel": "100"
+        },
+        {
+          "a": "10101",
+          "v": "10000001",
+          "sel": "101"
+        },
+        {
+          "a": "x01zx",
+          "v": "01111110",
+          "sel": "110"
+        },
+        {
+          "a": "11001",
+          "v": "11001010",
+          "sel": "111"
+        },
+        {
+          "sel": "x10"
+        },
+        {
+          "sel": "1z1"
+        },
+        {
+          "sel": "011"
+        }
+      ],
+      "oracle_disagreement": {
+        "id": "xcelium-runtime-partial-part-select-all-x",
+        "sim": "xcelium",
+        "declared": "2026-10-29",
+        "reference": "IEEE 1800-2023 11.5.1 (Vector bit-select and part-select addressing, printed page 296): 'Part-selects that are partially out of range shall, when read, return x for the bits that are out of range', with the base expressions evaluated in a self-determined context; slang, Icarus 12.0 and Yosys 0.53 follow it; docs/sv-oracle-disagreements.md, 'Run-time part-select bases that leave the vector'; docs/sv-xcelium-audit.md, cluster P2 and 6.1",
+        "observed": "Xcelium 24.03-s004 (the reference simulator, default flags; pinned in harness/sv/xcelium_golden.json, row partsel_dyn_n5_w1) treats an indexed part-select READ whose RUN-TIME base leaves the vector for some of its bits and not for others as wholly invalid and returns all x for the whole select, where the model, Icarus 12.0 and Yosys 0.53 return the in-range bits and x only for the out-of-range ones. dyn_up = v[sel +: 4] at sel = 5, 6, 7 and dyn_dn = v[sel -: 4] at sel = 0, 1, 2 (v = 10000001, sel = 101: dyn_up is x100 in the model, xxxx in Xcelium). 6 of the 22 part-select cells of this row are partly out of range: Xcelium is all x on those 6 and equals the LRM value on the other 16 (in range, wholly out of range, x/z base), and the model equals an independent LRM oracle on all 22; Icarus equals the model in every cycle. Xcelium prints no warning by default (IIFAOB / IIRAOB only under -ii_warn -ii_rwarn); the result is not a time-zero race and does not depend on the stimulus order or on the context (verifier probes: 864 cells in assign, always, function and testbench contexts). The same Xcelium rule drops the whole write and reads all x for CONSTANT bases, where it is REFUSED (ArraySel:partial-overhang); a run-time base cannot be refused statically, so the departure is declared, not followed. svGolf's fourstate stage refuses run-time selects that can leave their declared range (svgolf/README.md). -ii_val does not repair module-level reads (docs/sv-xcelium-reference.md, section 6).",
+        "retirement_condition": "When Xcelium reads a run-time-base part-select that is partly out of range per bit like the LRM (in-range bits kept, x for the out-of-range ones: another Xcelium version, or a flag that applies at module level), the pinned trace equals the model's and the harness fails ('disagreement resolved'; diff_test2.py --golden, or a live xrun run) until the declaration is removed after review; it is also removed, and the row becomes a refusal row, when ls-sv refuses a part-select whose run-time base can leave the vector.",
+        "source_sha256": "24ff9567e17f665b7f56e50933b9042265994fbe1ef123777cca0595ce7765fb",
+        "envelope_sha256": "b026e0a09292c01f2f571c5707885cb6f2440aa37e35bfc5a27a998aec8bdcdc",
+        "case_sha256": "4ed2a39a36c612e6ea2add75934d0ba956d9bf7d5d4adc566597513b1ed6ad4c",
+        "testbench_sha256": "ae07ef14cf1fb3c838d7cde5d93a36bca23cc6faa6a47fdaf3f8665b03985f1b",
+        "sigma": "src",
+        "sim_trace": [
+          "CYCLE 0 a=10110 v=10110100 sel=000 rev_up=01101 rev_dn=01101 top=10110 dyn_up=0100 dyn_dn=xxxx dyn_lane=0",
+          "CYCLE 1 a=01100 v=01101001 sel=001 rev_up=00110 rev_dn=00110 top=01100 dyn_up=0100 dyn_dn=xxxx dyn_lane=0",
+          "CYCLE 2 a=10110 v=11110000 sel=010 rev_up=01101 rev_dn=01101 top=10110 dyn_up=1100 dyn_dn=xxxx dyn_lane=1",
+          "CYCLE 3 a=11111 v=00001111 sel=011 rev_up=11111 rev_dn=11111 top=11111 dyn_up=0001 dyn_dn=1111 dyn_lane=1",
+          "CYCLE 4 a=00000 v=1x0z1x0z sel=100 rev_up=00000 rev_dn=00000 top=00000 dyn_up=1x0z dyn_dn=z1x0 dyn_lane=0",
+          "CYCLE 5 a=10101 v=10000001 sel=101 rev_up=10101 rev_dn=10101 top=10101 dyn_up=xxxx dyn_dn=0000 dyn_lane=x",
+          "CYCLE 6 a=x01zx v=01111110 sel=110 rev_up=xz10x rev_dn=xz10x top=x01zx dyn_up=xxxx dyn_dn=1111 dyn_lane=x",
+          "CYCLE 7 a=11001 v=11001010 sel=111 rev_up=10011 rev_dn=10011 top=11001 dyn_up=xxxx dyn_dn=1100 dyn_lane=x",
+          "CYCLE 8 a=11001 v=11001010 sel=x10 rev_up=10011 rev_dn=10011 top=11001 dyn_up=xxxx dyn_dn=xxxx dyn_lane=x",
+          "CYCLE 9 a=11001 v=11001010 sel=1z1 rev_up=10011 rev_dn=10011 top=11001 dyn_up=xxxx dyn_dn=xxxx dyn_lane=x",
+          "CYCLE 10 a=11001 v=11001010 sel=011 rev_up=10011 rev_dn=10011 top=11001 dyn_up=1001 dyn_dn=1010 dyn_lane=1"
+        ],
+        "lean_trace": [
+          "CYCLE 0 a=10110 v=10110100 sel=000 rev_up=01101 rev_dn=01101 top=10110 dyn_up=0100 dyn_dn=0xxx dyn_lane=0",
+          "CYCLE 1 a=01100 v=01101001 sel=001 rev_up=00110 rev_dn=00110 top=01100 dyn_up=0100 dyn_dn=01xx dyn_lane=0",
+          "CYCLE 2 a=10110 v=11110000 sel=010 rev_up=01101 rev_dn=01101 top=10110 dyn_up=1100 dyn_dn=000x dyn_lane=1",
+          "CYCLE 3 a=11111 v=00001111 sel=011 rev_up=11111 rev_dn=11111 top=11111 dyn_up=0001 dyn_dn=1111 dyn_lane=1",
+          "CYCLE 4 a=00000 v=1x0z1x0z sel=100 rev_up=00000 rev_dn=00000 top=00000 dyn_up=1x0z dyn_dn=z1x0 dyn_lane=0",
+          "CYCLE 5 a=10101 v=10000001 sel=101 rev_up=10101 rev_dn=10101 top=10101 dyn_up=x100 dyn_dn=0000 dyn_lane=x",
+          "CYCLE 6 a=x01zx v=01111110 sel=110 rev_up=xz10x rev_dn=xz10x top=x01zx dyn_up=xx01 dyn_dn=1111 dyn_lane=x",
+          "CYCLE 7 a=11001 v=11001010 sel=111 rev_up=10011 rev_dn=10011 top=11001 dyn_up=xxx1 dyn_dn=1100 dyn_lane=x",
+          "CYCLE 8 a=11001 v=11001010 sel=x10 rev_up=10011 rev_dn=10011 top=11001 dyn_up=xxxx dyn_dn=xxxx dyn_lane=x",
+          "CYCLE 9 a=11001 v=11001010 sel=1z1 rev_up=10011 rev_dn=10011 top=11001 dyn_up=xxxx dyn_dn=xxxx dyn_lane=x",
+          "CYCLE 10 a=11001 v=11001010 sel=011 rev_up=10011 rev_dn=10011 top=11001 dyn_up=1001 dyn_dn=1010 dyn_lane=1"
+        ]
+      }
+    },
+    {
+      "name": "partsel_dyn_n1_w4",
+      "example": "sem2/partsel_dyn",
+      "top": "partsel_dyn",
+      "params": {
+        "N": 1,
+        "W": 4
+      },
+      "signals": [
+        "a",
+        "v",
+        "sel",
+        "rev_up",
+        "rev_dn",
+        "top",
+        "dyn_up",
+        "dyn_dn",
+        "dyn_lane"
+      ],
+      "stimulus": [
+        {
+          "a": "1011",
+          "v": "10110100",
+          "sel": "000"
+        },
+        {
+          "a": "0110",
+          "v": "01101001",
+          "sel": "001"
+        },
+        {
+          "a": "1011",
+          "v": "11110000",
+          "sel": "010"
+        },
+        {
+          "a": "1111",
+          "v": "00001111",
+          "sel": "011"
+        },
+        {
+          "a": "0000",
+          "v": "1x0z1x0z",
+          "sel": "100"
+        },
+        {
+          "a": "1010",
+          "v": "10000001",
+          "sel": "101"
+        },
+        {
+          "a": "x01z",
+          "v": "01111110",
+          "sel": "110"
+        },
+        {
+          "a": "1100",
+          "v": "11001010",
+          "sel": "111"
+        },
+        {
+          "sel": "x10"
+        },
+        {
+          "sel": "1z1"
+        },
+        {
+          "sel": "011"
+        }
+      ],
+      "oracle_disagreement": {
+        "id": "xcelium-runtime-partial-part-select-all-x",
+        "sim": "xcelium",
+        "declared": "2026-10-29",
+        "reference": "IEEE 1800-2023 11.5.1 (Vector bit-select and part-select addressing, printed page 296): 'Part-selects that are partially out of range shall, when read, return x for the bits that are out of range', with the base expressions evaluated in a self-determined context; slang, Icarus 12.0 and Yosys 0.53 follow it; docs/sv-oracle-disagreements.md, 'Run-time part-select bases that leave the vector'; docs/sv-xcelium-audit.md, cluster P2 and 6.1",
+        "observed": "Xcelium 24.03-s004 (the reference simulator, default flags; pinned in harness/sv/xcelium_golden.json, row partsel_dyn_n1_w4) treats an indexed part-select READ whose RUN-TIME base leaves the vector for some of its bits and not for others as wholly invalid and returns all x for the whole select, where the model, Icarus 12.0 and Yosys 0.53 return the in-range bits and x only for the out-of-range ones. dyn_up = v[sel +: 4] at sel = 5, 6, 7 and dyn_dn = v[sel -: 4] at sel = 0, 1, 2 (v = 10000001, sel = 101: dyn_up is x100 in the model, xxxx in Xcelium). 6 of the 22 part-select cells of this row are partly out of range: Xcelium is all x on those 6 and equals the LRM value on the other 16 (in range, wholly out of range, x/z base), and the model equals an independent LRM oracle on all 22; Icarus equals the model in every cycle. Xcelium prints no warning by default (IIFAOB / IIRAOB only under -ii_warn -ii_rwarn); the result is not a time-zero race and does not depend on the stimulus order or on the context (verifier probes: 864 cells in assign, always, function and testbench contexts). The same Xcelium rule drops the whole write and reads all x for CONSTANT bases, where it is REFUSED (ArraySel:partial-overhang); a run-time base cannot be refused statically, so the departure is declared, not followed. svGolf's fourstate stage refuses run-time selects that can leave their declared range (svgolf/README.md). -ii_val does not repair module-level reads (docs/sv-xcelium-reference.md, section 6).",
+        "retirement_condition": "When Xcelium reads a run-time-base part-select that is partly out of range per bit like the LRM (in-range bits kept, x for the out-of-range ones: another Xcelium version, or a flag that applies at module level), the pinned trace equals the model's and the harness fails ('disagreement resolved'; diff_test2.py --golden, or a live xrun run) until the declaration is removed after review; it is also removed, and the row becomes a refusal row, when ls-sv refuses a part-select whose run-time base can leave the vector.",
+        "source_sha256": "24ff9567e17f665b7f56e50933b9042265994fbe1ef123777cca0595ce7765fb",
+        "envelope_sha256": "b026e0a09292c01f2f571c5707885cb6f2440aa37e35bfc5a27a998aec8bdcdc",
+        "case_sha256": "71a6383fdc6d2cfb1a6d2feec1b49de6d24a0f8a27a1369f9cbaf08ffd8453a7",
+        "testbench_sha256": "f0a20d1cc40d8563a73ff0f2c7e283a7453beedc6a684b73ca64514ce6b15eb1",
+        "sigma": "src",
+        "sim_trace": [
+          "CYCLE 0 a=1011 v=10110100 sel=000 rev_up=1011 rev_dn=1011 top=1 dyn_up=0100 dyn_dn=xxxx dyn_lane=1011",
+          "CYCLE 1 a=0110 v=01101001 sel=001 rev_up=0110 rev_dn=0110 top=0 dyn_up=0100 dyn_dn=xxxx dyn_lane=xxxx",
+          "CYCLE 2 a=1011 v=11110000 sel=010 rev_up=1011 rev_dn=1011 top=1 dyn_up=1100 dyn_dn=xxxx dyn_lane=xxxx",
+          "CYCLE 3 a=1111 v=00001111 sel=011 rev_up=1111 rev_dn=1111 top=1 dyn_up=0001 dyn_dn=1111 dyn_lane=xxxx",
+          "CYCLE 4 a=0000 v=1x0z1x0z sel=100 rev_up=0000 rev_dn=0000 top=0 dyn_up=1x0z dyn_dn=z1x0 dyn_lane=xxxx",
+          "CYCLE 5 a=1010 v=10000001 sel=101 rev_up=1010 rev_dn=1010 top=1 dyn_up=xxxx dyn_dn=0000 dyn_lane=xxxx",
+          "CYCLE 6 a=x01z v=01111110 sel=110 rev_up=x01z rev_dn=x01z top=x dyn_up=xxxx dyn_dn=1111 dyn_lane=xxxx",
+          "CYCLE 7 a=1100 v=11001010 sel=111 rev_up=1100 rev_dn=1100 top=1 dyn_up=xxxx dyn_dn=1100 dyn_lane=xxxx",
+          "CYCLE 8 a=1100 v=11001010 sel=x10 rev_up=1100 rev_dn=1100 top=1 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxxx",
+          "CYCLE 9 a=1100 v=11001010 sel=1z1 rev_up=1100 rev_dn=1100 top=1 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxxx",
+          "CYCLE 10 a=1100 v=11001010 sel=011 rev_up=1100 rev_dn=1100 top=1 dyn_up=1001 dyn_dn=1010 dyn_lane=xxxx"
+        ],
+        "lean_trace": [
+          "CYCLE 0 a=1011 v=10110100 sel=000 rev_up=1011 rev_dn=1011 top=1 dyn_up=0100 dyn_dn=0xxx dyn_lane=1011",
+          "CYCLE 1 a=0110 v=01101001 sel=001 rev_up=0110 rev_dn=0110 top=0 dyn_up=0100 dyn_dn=01xx dyn_lane=xxxx",
+          "CYCLE 2 a=1011 v=11110000 sel=010 rev_up=1011 rev_dn=1011 top=1 dyn_up=1100 dyn_dn=000x dyn_lane=xxxx",
+          "CYCLE 3 a=1111 v=00001111 sel=011 rev_up=1111 rev_dn=1111 top=1 dyn_up=0001 dyn_dn=1111 dyn_lane=xxxx",
+          "CYCLE 4 a=0000 v=1x0z1x0z sel=100 rev_up=0000 rev_dn=0000 top=0 dyn_up=1x0z dyn_dn=z1x0 dyn_lane=xxxx",
+          "CYCLE 5 a=1010 v=10000001 sel=101 rev_up=1010 rev_dn=1010 top=1 dyn_up=x100 dyn_dn=0000 dyn_lane=xxxx",
+          "CYCLE 6 a=x01z v=01111110 sel=110 rev_up=x01z rev_dn=x01z top=x dyn_up=xx01 dyn_dn=1111 dyn_lane=xxxx",
+          "CYCLE 7 a=1100 v=11001010 sel=111 rev_up=1100 rev_dn=1100 top=1 dyn_up=xxx1 dyn_dn=1100 dyn_lane=xxxx",
+          "CYCLE 8 a=1100 v=11001010 sel=x10 rev_up=1100 rev_dn=1100 top=1 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxxx",
+          "CYCLE 9 a=1100 v=11001010 sel=1z1 rev_up=1100 rev_dn=1100 top=1 dyn_up=xxxx dyn_dn=xxxx dyn_lane=xxxx",
+          "CYCLE 10 a=1100 v=11001010 sel=011 rev_up=1100 rev_dn=1100 top=1 dyn_up=1001 dyn_dn=1010 dyn_lane=xxxx"
+        ]
+      }
+    },
+    {
+      "name": "array_oob_asc",
+      "example": "sem2/array_oob_asc",
+      "top": "array_oob_asc",
+      "signals": [
+        "src",
+        "asc_oob"
+      ],
+      "stimulus": [
+        {
+          "src": "10110110"
+        },
+        {
+          "src": "01001001"
+        },
+        {
+          "src": "00001000"
+        },
+        {
+          "src": "1011x110"
+        }
+      ],
+      "oracle_disagreement": {
+        "id": "iverilog-packed-asc-label-linearized",
+        "sim": "iverilog",
+        "declared": "2026-10-29",
+        "reference": "IEEE 1800-2023 11.5.1 (a bit-select whose address is out of bounds reads x for a 4-state value; here the label 4 of the packed element q[0], declared [0:3]) and the per-dimension invalid-index rule for packed arrays (cited as 7.4.6 in the sibling declarations; the audit's triage read it as 7.4.5 in the 2023 text, docs/sv-xcelium-audit.md 6.4); docs/sv-oracle-disagreements.md#linearized-packed-array-indices",
+        "observed": "Icarus 12.0 (macOS, Homebrew) linearizes an element label outside an ASCENDING dimension of a NON-LAST element: q[0][4] over logic [0:1][0:3] q reads q[1][0] (= src[3]: asc_oob = 0 for src = 10110110, 1 for src = 01001001), where the per-dimension rule reads x, which the model gives. Recorded on the former row array_oob_part: Yosys 0.53 prep; eval gives the same values as Icarus. Xcelium 24.03-s004 (the reference simulator; pinned in harness/sv/xcelium_golden.json, row array_oob_asc; xmelab warns BNDWRN) reads x, equal to the model in every cycle, so only Icarus and Yosys's front end depart (docs/sv-xcelium-audit.md, DX1). This row is the half of the former array_oob_part that stays admitted: its part-selects that overhang an inner dimension and its overhanging write are the loud-refusal row array_oob_part.",
+        "retirement_condition": "When Icarus reads q[0][4] over [0:3] as x (it checks each packed dimension separately), this row must fail until its declaration is removed after review.",
+        "source_sha256": "e618ffbb6f939fb0924e5922f9dcc1b87009d0aa16d55d6dfbc6adc3676af7bc",
+        "envelope_sha256": "fdd6c5088e925ba26d7592f2273dee80f305eea850173df95642aafc5595128d",
+        "case_sha256": "6968a57a03d3e87920c9b59e2f193682071119474ad25e9c4d52160081d84219",
+        "testbench_sha256": "98292a9d50eafa686702b148224cfc499ae3c871dcabf47b7fe020ef7847422e",
+        "sigma": "src",
+        "sim_trace": [
+          "CYCLE 0 src=10110110 asc_oob=0",
+          "CYCLE 1 src=01001001 asc_oob=1",
+          "CYCLE 2 src=00001000 asc_oob=1",
+          "CYCLE 3 src=1011x110 asc_oob=x"
+        ],
+        "lean_trace": [
+          "CYCLE 0 src=10110110 asc_oob=x",
+          "CYCLE 1 src=01001001 asc_oob=x",
+          "CYCLE 2 src=00001000 asc_oob=x",
+          "CYCLE 3 src=1011x110 asc_oob=x"
+        ]
+      }
+    },
+    {
+      "name": "label_kminus_p",
+      "example": "sem2/label_kminus_p",
+      "top": "label_kminus_p",
+      "signals": [
+        "b",
+        "p"
+      ],
+      "stimulus": [
+        {
+          "b": "01"
+        },
+        {
+          "b": "10"
+        },
+        {
+          "b": "11"
+        },
+        {
+          "b": "x0"
+        },
+        {
+          "b": "0z"
+        }
+      ]
+    },
+    {
+      "name": "label_kminus_p_w3",
+      "example": "sem2/label_kminus_p",
+      "top": "label_kminus_p",
+      "params": {
+        "W": 3
+      },
+      "signals": [
+        "b",
+        "p"
+      ],
+      "stimulus": [
+        {
+          "b": "01"
+        },
+        {
+          "b": "10"
+        },
+        {
+          "b": "11"
+        },
+        {
+          "b": "x0"
+        },
+        {
+          "b": "0z"
+        }
+      ]
+    },
+    {
+      "name": "label_kminus_p_w5",
+      "example": "sem2/label_kminus_p",
+      "top": "label_kminus_p",
+      "params": {
+        "W": 5
+      },
+      "signals": [
+        "b",
+        "p"
+      ],
+      "stimulus": [
+        {
+          "b": "01"
+        },
+        {
+          "b": "10"
+        },
+        {
+          "b": "11"
+        },
+        {
+          "b": "x0"
+        },
+        {
+          "b": "0z"
+        }
+      ]
+    },
+    {
+      "name": "label_kminus_q",
+      "example": "sem2/label_kminus_q",
+      "top": "label_kminus_q",
+      "signals": [
+        "b",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "b": "01"
+        },
+        {
+          "b": "10"
+        },
+        {
+          "b": "11"
+        },
+        {
+          "b": "x0"
+        },
+        {
+          "b": "0z"
+        }
+      ]
+    },
+    {
+      "name": "dyn32_part",
+      "example": "sem2/dyn32",
+      "top": "dyn32",
+      "signals": [
+        "v",
+        "s",
+        "b32",
+        "minus2",
+        "minus2_dn",
+        "m32",
+        "o32",
+        "d32"
+      ],
+      "stimulus": [
+        {
+          "v": "10110111",
+          "s": "0010",
+          "b32": "00000000000000000000000000000101"
+        },
+        {
+          "s": "0011",
+          "b32": "00000000000000000000000000000111"
+        },
+        {
+          "s": "0111",
+          "b32": "00000000000000000000000000000010"
+        },
+        {
+          "s": "1001",
+          "b32": "00000000000000000000000000001001"
+        },
+        {
+          "s": "1111",
+          "b32": "00000000000000000000000000000011"
+        },
+        {
+          "v": "01001110",
+          "s": "0100",
+          "b32": "00000000000000000000000000000110"
+        },
+        {
+          "s": "0101",
+          "b32": "00000000000000000000000000000001"
+        },
+        {
+          "s": "1010",
+          "b32": "00000000000000000000000000001000"
+        },
+        {
+          "v": "1x0z1100",
+          "s": "0110",
+          "b32": "00000000000000000000000000000100"
+        },
+        {
+          "s": "x010",
+          "b32": "0000000000000000000000000000x001"
+        },
+        {
+          "s": "0110",
+          "b32": "z0000000000000000000000000000001"
+        }
+      ],
+      "oracle_disagreement": {
+        "id": "xcelium-runtime-partial-part-select-all-x",
+        "sim": "xcelium",
+        "declared": "2026-10-29",
+        "reference": "IEEE 1800-2023 11.5.1 (Vector bit-select and part-select addressing, printed page 296): 'Part-selects that are partially out of range shall, when read, return x for the bits that are out of range', with the base expressions evaluated in a self-determined context; slang, Icarus 12.0 and Yosys 0.53 follow it; docs/sv-oracle-disagreements.md, 'Run-time part-select bases that leave the vector'; docs/sv-xcelium-audit.md, cluster P2 and 6.1",
+        "observed": "Xcelium 24.03-s004 (the reference simulator, default flags; pinned in harness/sv/xcelium_golden.json, row dyn32_part) treats an indexed part-select READ whose RUN-TIME base leaves the vector for some of its bits and not for others as wholly invalid and returns all x for the whole select, where the model, Icarus 12.0 and Yosys 0.53 return the in-range bits and x only for the out-of-range ones. The five 32-bit-base selects of dyn32 (v[s - 2 +: 4], v[s - 2 -: 4], v[{28'b0, s} - 32'd2 +: 4], v[b32 +: 4], v[b32 -: 4]) at bases 0..9, e.g. v = 10110111, b32 = 5: o32 is x011 in the model, xxxx in Xcelium. The stimulus of this row keeps every 32-bit base non-negative, so no cell involves how a 32-bit UNSIGNED base is typed (row dyn32 does, and is not declared: Xcelium reads such a base as unsigned, the model, Icarus and Yosys as two's complement; docs/sv-xcelium-audit.md, 6.4). 15 of the 55 part-select cells of this row are partly out of range: Xcelium is all x on those 15 and equals the LRM value on the other 40 (in range, wholly out of range, x/z base), and the model equals an independent LRM oracle on all 55; Icarus equals the model in every cycle. Xcelium prints no warning by default (IIFAOB / IIRAOB only under -ii_warn -ii_rwarn); the result is not a time-zero race and does not depend on the stimulus order or on the context (verifier probes: 864 cells in assign, always, function and testbench contexts). The same Xcelium rule drops the whole write and reads all x for CONSTANT bases, where it is REFUSED (ArraySel:partial-overhang); a run-time base cannot be refused statically, so the departure is declared, not followed. svGolf's fourstate stage refuses run-time selects that can leave their declared range (svgolf/README.md). -ii_val does not repair module-level reads (docs/sv-xcelium-reference.md, section 6).",
+        "retirement_condition": "When Xcelium reads a run-time-base part-select that is partly out of range per bit like the LRM (in-range bits kept, x for the out-of-range ones: another Xcelium version, or a flag that applies at module level), the pinned trace equals the model's and the harness fails ('disagreement resolved'; diff_test2.py --golden, or a live xrun run) until the declaration is removed after review; it is also removed, and the row becomes a refusal row, when ls-sv refuses a part-select whose run-time base can leave the vector.",
+        "source_sha256": "02199565c1267c22d3623943e4f66b30353cbe3b3632cbf4bb41a0f8105e2a0c",
+        "envelope_sha256": "5b052f72bc0293fc7291979263ba2e6c93ed554e3c73e48b190208fd11d3b32b",
+        "case_sha256": "cf1f4660fc5d19222bbcd97fc292fd5c4df7fd075f26553ae06a21136bc791bd",
+        "testbench_sha256": "782ae65122d95e5ae25b669b06e5add861809377921d05d7276be43555202a61",
+        "sigma": "src",
+        "sim_trace": [
+          "CYCLE 0 v=10110111 s=0010 b32=00000000000000000000000000000101 minus2=0111 minus2_dn=xxxx m32=0111 o32=xxxx d32=1101",
+          "CYCLE 1 v=10110111 s=0011 b32=00000000000000000000000000000111 minus2=1011 minus2_dn=xxxx m32=1011 o32=xxxx d32=1011",
+          "CYCLE 2 v=10110111 s=0111 b32=00000000000000000000000000000010 minus2=xxxx minus2_dn=1101 m32=xxxx o32=1101 d32=xxxx",
+          "CYCLE 3 v=10110111 s=1001 b32=00000000000000000000000000001001 minus2=xxxx minus2_dn=1011 m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 4 v=10110111 s=1111 b32=00000000000000000000000000000011 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=0110 d32=0111",
+          "CYCLE 5 v=01001110 s=0100 b32=00000000000000000000000000000110 minus2=0011 minus2_dn=xxxx m32=0011 o32=xxxx d32=1001",
+          "CYCLE 6 v=01001110 s=0101 b32=00000000000000000000000000000001 minus2=1001 minus2_dn=1110 m32=1001 o32=0111 d32=xxxx",
+          "CYCLE 7 v=01001110 s=1010 b32=00000000000000000000000000001000 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 8 v=1x0z1100 s=0110 b32=00000000000000000000000000000100 minus2=1x0z minus2_dn=z110 m32=1x0z o32=1x0z d32=z110",
+          "CYCLE 9 v=1x0z1100 s=x010 b32=0000000000000000000000000000x001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 10 v=1x0z1100 s=0110 b32=z0000000000000000000000000000001 minus2=1x0z minus2_dn=z110 m32=1x0z o32=xxxx d32=xxxx"
+        ],
+        "lean_trace": [
+          "CYCLE 0 v=10110111 s=0010 b32=00000000000000000000000000000101 minus2=0111 minus2_dn=1xxx m32=0111 o32=x101 d32=1101",
+          "CYCLE 1 v=10110111 s=0011 b32=00000000000000000000000000000111 minus2=1011 minus2_dn=11xx m32=1011 o32=xxx1 d32=1011",
+          "CYCLE 2 v=10110111 s=0111 b32=00000000000000000000000000000010 minus2=x101 minus2_dn=1101 m32=x101 o32=1101 d32=111x",
+          "CYCLE 3 v=10110111 s=1001 b32=00000000000000000000000000001001 minus2=xxx1 minus2_dn=1011 m32=xxx1 o32=xxxx d32=xx10",
+          "CYCLE 4 v=10110111 s=1111 b32=00000000000000000000000000000011 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=0110 d32=0111",
+          "CYCLE 5 v=01001110 s=0100 b32=00000000000000000000000000000110 minus2=0011 minus2_dn=110x m32=0011 o32=xx01 d32=1001",
+          "CYCLE 6 v=01001110 s=0101 b32=00000000000000000000000000000001 minus2=1001 minus2_dn=1110 m32=1001 o32=0111 d32=10xx",
+          "CYCLE 7 v=01001110 s=1010 b32=00000000000000000000000000001000 minus2=xxxx minus2_dn=x010 m32=xxxx o32=xxxx d32=x010",
+          "CYCLE 8 v=1x0z1100 s=0110 b32=00000000000000000000000000000100 minus2=1x0z minus2_dn=z110 m32=1x0z o32=1x0z d32=z110",
+          "CYCLE 9 v=1x0z1100 s=x010 b32=0000000000000000000000000000x001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 10 v=1x0z1100 s=0110 b32=z0000000000000000000000000000001 minus2=1x0z minus2_dn=z110 m32=1x0z o32=xxxx d32=xxxx"
+        ]
+      }
+    },
+    {
+      "name": "overhang_read_n3",
+      "example": "sem2/overhang_read",
+      "top": "overhang_read",
+      "params": {
+        "N": 3
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "101101110001"
+        },
+        {
+          "a": "011001100110"
+        },
+        {
+          "a": "x01zx01zx01z"
+        },
+        {
+          "a": "111111111111"
+        }
+      ],
+      "measured": "Control (round 6, lane A): a[7 +: 4] is wholly in range; Icarus 12.0 and Xcelium agree with the model. Re-measured on this row's own generated testbench: the Xcelium 24.03-s004 trace (vip-ng, refsim, 2026-10-29) equals the Icarus 12.0 trace in every cycle."
+    },
+    {
+      "name": "overhang_read_n4",
+      "example": "sem2/overhang_read",
+      "top": "overhang_read",
+      "params": {
+        "N": 4
+      },
+      "refusal": "ArraySel:partial-overhang",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "101101110001"
+        },
+        {
+          "a": "011001100110"
+        },
+        {
+          "a": "x01zx01zx01z"
+        },
+        {
+          "a": "111111111111"
+        }
+      ],
+      "measured": "Round 6, lane A (Xcelium audit P1): a[10 +: 4] over [11:0] is PARTLY out of range (bits 13:12). IEEE 1800-2023 11.5.1: y = {xx, a[11:10]} (xx10 at a = 101101110001; the model's former answer, also Icarus 12.0 and Yosys 0.53); Xcelium 24.03-s004: xxxx. Refused rather than one reading chosen. Re-measured on this row's own generated testbench with Xcelium 24.03-s004 (vip-ng, refsim, 2026-10-29) and Icarus 12.0: Xcelium y = xxxx in every cycle, Icarus xx10/xx01/xxx0/xx11. Yosys 0.53 (synth -flatten netlist simulated in Icarus; it warns 'Range [13:10] select out of bounds ... Setting 2 MSB bits to undef') equals Icarus on this stimulus; Verilator 5.042 (two-state, x/z stimulus zeroed) keeps the in-range bits (y = 0010)."
+    },
+    {
+      "name": "overhang_read_n5",
+      "example": "sem2/overhang_read",
+      "top": "overhang_read",
+      "params": {
+        "N": 5
+      },
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "101101110001"
+        },
+        {
+          "a": "011001100110"
+        },
+        {
+          "a": "x01zx01zx01z"
+        },
+        {
+          "a": "111111111111"
+        }
+      ],
+      "measured": "Control (round 6, lane A): a[13 +: 4] is WHOLLY out of range: all x in every tool (model, Icarus 12.0, Xcelium). Re-measured on this row's own generated testbench: the Xcelium 24.03-s004 trace (vip-ng, refsim, 2026-10-29) equals the Icarus 12.0 trace in every cycle."
+    },
+    {
+      "name": "overhang_write_n4",
+      "example": "sem2/overhang_write",
+      "top": "overhang_write",
+      "params": {
+        "N": 4
+      },
+      "refusal": "ArraySel:partial-overhang",
+      "signals": [
+        "b",
+        "w_hi",
+        "w_lo"
+      ],
+      "stimulus": [
+        {
+          "b": "1011"
+        },
+        {
+          "b": "0110"
+        },
+        {
+          "b": "x01z"
+        },
+        {
+          "b": "1111"
+        }
+      ],
+      "measured": "Round 6, lane A (Xcelium audit P3): w_hi[7 +: 4] (labels 7:10 of [7:0], msb overhang) and w_lo[1 -: 4] (labels -2:1, lsb overhang) are PARTLY out of range. IEEE 1800-2023 11.5.1 writes the in-range bits only (w_hi = 10000000, w_lo = 00000010 at b = 1011; the model's former answer, also Icarus 12.0 and Yosys 0.53); Xcelium 24.03-s004 drops the whole write (00000000). Refused rather than one reading chosen. Re-measured on this row's own generated testbench with Xcelium 24.03-s004 (vip-ng, refsim, 2026-10-29) and Icarus 12.0: Xcelium w_hi = w_lo = 00000000 in every cycle, Icarus 10000000/00000010 at b = 1011. The Yosys 0.53 netlist (simulated in Icarus) equals Icarus (w_hi = 10000000, w_lo = 00000010 at b = 1011); Verilator 5.042 keeps the in-range msb-side bit and mis-places the lsb-side write, so it is a witness for neither the lsb side nor the dropped write."
+    },
+    {
+      "name": "overhang_write_n1",
+      "example": "sem2/overhang_write",
+      "top": "overhang_write",
+      "params": {
+        "N": 1
+      },
+      "signals": [
+        "b",
+        "w_hi",
+        "w_lo"
+      ],
+      "stimulus": [
+        {
+          "b": "1011"
+        },
+        {
+          "b": "0110"
+        },
+        {
+          "b": "x01z"
+        },
+        {
+          "b": "1111"
+        }
+      ],
+      "measured": "Control (round 6, lane A): w_hi[4 +: 4] is in range, w_lo[-2 -: 4] is wholly below the vector (a no-op in every tool). Re-measured on this row's own generated testbench: the Xcelium 24.03-s004 trace (vip-ng, refsim, 2026-10-29) equals the Icarus 12.0 trace in every cycle."
+    },
+    {
+      "name": "overhang_write_n6",
+      "example": "sem2/overhang_write",
+      "top": "overhang_write",
+      "params": {
+        "N": 6
+      },
+      "signals": [
+        "b",
+        "w_hi",
+        "w_lo"
+      ],
+      "stimulus": [
+        {
+          "b": "1011"
+        },
+        {
+          "b": "0110"
+        },
+        {
+          "b": "x01z"
+        },
+        {
+          "b": "1111"
+        }
+      ],
+      "measured": "Control (round 6, lane A): w_hi[9 +: 4] is wholly above the vector (a no-op in every tool), w_lo[3 -: 4] is in range. Re-measured on this row's own generated testbench: the Xcelium 24.03-s004 trace (vip-ng, refsim, 2026-10-29) equals the Icarus 12.0 trace in every cycle."
+    },
+    {
+      "name": "overhang_legacy_k2",
+      "example": "sem2/overhang_legacy",
+      "top": "overhang_legacy",
+      "params": {
+        "K": 2
+      },
+      "signals": [
+        "v",
+        "b",
+        "y",
+        "w"
+      ],
+      "stimulus": [
+        {
+          "v": "10110100",
+          "b": "101"
+        },
+        {
+          "v": "01101001",
+          "b": "011"
+        },
+        {
+          "v": "1x0z1x0z",
+          "b": "x01"
+        },
+        {
+          "v": "11111111",
+          "b": "110"
+        }
+      ],
+      "measured": "Control (round 6, lane A): v[4:2] and w[4:2] are in range (the legacy PartSel encoding). Re-measured on this row's own generated testbench: the Xcelium 24.03-s004 trace (vip-ng, refsim, 2026-10-29) equals the Icarus 12.0 trace in every cycle."
+    },
+    {
+      "name": "overhang_legacy_k6",
+      "example": "sem2/overhang_legacy",
+      "top": "overhang_legacy",
+      "params": {
+        "K": 6
+      },
+      "refusal": "Select:partial-overhang",
+      "signals": [
+        "v",
+        "b",
+        "y",
+        "w"
+      ],
+      "stimulus": [
+        {
+          "v": "10110100",
+          "b": "101"
+        },
+        {
+          "v": "01101001",
+          "b": "011"
+        },
+        {
+          "v": "1x0z1x0z",
+          "b": "x01"
+        },
+        {
+          "v": "11111111",
+          "b": "110"
+        }
+      ],
+      "measured": "Round 6, lane A (Xcelium audit P1/P3, legacy encoding): v[8:6] and w[8:6] over the literal range [7:0] keep the legacy PartSel and lower to a constant slice that x-pads silently past the msb (bit 8). IEEE 1800-2023 11.5.1: y = {x, v[7:6]}, the write changes bits 7:6 (the model's former answer); Xcelium 24.03-s004: y = xxx, the write dropped. Refused by the select guard (`PDesign.selectGuardReport`, RangeGuard2.lean), a check beside `name.sem`. Re-measured on this row's own generated testbench with Xcelium 24.03-s004 (vip-ng, refsim, 2026-10-29) and Icarus 12.0: Xcelium y = xxx and w = 00000000 in every cycle, Icarus y = x10 and w = 01000000 at v = 10110100, b = 101. The Yosys 0.53 netlist (simulated in Icarus) equals Icarus (y = x10, w = 01000000); Verilator 5.042 (two-state) reads the out-of-range bit as 0."
+    },
+    {
+      "name": "overhang_legacy_k9",
+      "example": "sem2/overhang_legacy",
+      "top": "overhang_legacy",
+      "params": {
+        "K": 9
+      },
+      "signals": [
+        "v",
+        "b",
+        "y",
+        "w"
+      ],
+      "stimulus": [
+        {
+          "v": "10110100",
+          "b": "101"
+        },
+        {
+          "v": "01101001",
+          "b": "011"
+        },
+        {
+          "v": "1x0z1x0z",
+          "b": "x01"
+        },
+        {
+          "v": "11111111",
+          "b": "110"
+        }
+      ],
+      "measured": "Control (round 6, lane A): v[11:9] is wholly out of range: y = x, the write is a no-op, in every tool. Re-measured on this row's own generated testbench: the Xcelium 24.03-s004 trace (vip-ng, refsim, 2026-10-29) equals the Icarus 12.0 trace in every cycle."
+    },
+    {
+      "name": "wide_index_n8",
+      "example": "sem2/wide_index",
+      "top": "wide_index",
+      "params": {
+        "N": 8
+      },
+      "signals": [
+        "a",
+        "v",
+        "b",
+        "o",
+        "w"
+      ],
+      "stimulus": [
+        {
+          "a": "0000000011",
+          "v": "10110101",
+          "b": "1"
+        },
+        {
+          "a": "0000001010"
+        },
+        {
+          "a": "0000000001"
+        },
+        {
+          "a": "0000000000"
+        },
+        {
+          "a": "x000000001"
+        }
+      ],
+      "measured": "Control (round 6, lane A): the index a - 3 is 32 bits (a is 10 bits): every tool agrees (a - 3 wraps to 2^32 - 2 at a = 1: out of range, x). Re-measured on this row's own generated testbench: the Xcelium 24.03-s004 trace (vip-ng, refsim, 2026-10-29) equals the Icarus 12.0 trace in every cycle."
+    },
+    {
+      "name": "wide_index_n30",
+      "example": "sem2/wide_index",
+      "top": "wide_index",
+      "params": {
+        "N": 30
+      },
+      "signals": [
+        "a",
+        "v",
+        "b",
+        "o",
+        "w"
+      ],
+      "stimulus": [
+        {
+          "a": "00000000000000000000000000000011",
+          "v": "10110101",
+          "b": "1"
+        },
+        {
+          "a": "00000000000000000000000000001010"
+        },
+        {
+          "a": "00000000000000000000000000000001"
+        },
+        {
+          "a": "00000000000000000000000000000000"
+        },
+        {
+          "a": "x0000000000000000000000000000001"
+        }
+      ],
+      "measured": "Control (round 6, lane A): a is exactly 32 bits, the largest index every tool reads whole (BIGWBS fires above 32). Re-measured on this row's own generated testbench: the Xcelium 24.03-s004 trace (vip-ng, refsim, 2026-10-29) equals the Icarus 12.0 trace in every cycle."
+    },
+    {
+      "name": "wide_index_n40",
+      "example": "sem2/wide_index",
+      "top": "wide_index",
+      "params": {
+        "N": 40
+      },
+      "refusal": "Select:wide-index",
+      "signals": [
+        "a",
+        "v",
+        "b",
+        "o",
+        "w"
+      ],
+      "stimulus": [
+        {
+          "a": "000000000000000000000000000000000000000011",
+          "v": "10110101",
+          "b": "1"
+        },
+        {
+          "a": "000000000000000000000000000000000000001010"
+        },
+        {
+          "a": "000000000100000000000000000000000000000101"
+        },
+        {
+          "a": "000000000000000000000000000000000000000001"
+        },
+        {
+          "a": "000000000000000000000000000000000000000000"
+        },
+        {
+          "a": "x00000000000000000000000000000000000000001"
+        }
+      ],
+      "measured": "Round 6, lane A (Xcelium audit T1): the index of v[a - 3] and w[a] is 42 bits wide. IEEE 1800-2023 11.5.1 takes it whole (a = 2^32 + 5: a - 3 = 2^32 + 2 is out of range, x; the model and Yosys 0.53 prep; eval); Xcelium 24.03-s004 (BIGWBS), Icarus 12.0 and Verilator 5.042 read its low 32 bits (v[2]), and Xcelium writes w[a] at the truncated index too (Icarus drops that write). Refused by the select guard (`Select:wide-index`, RangeGuard2.lean) at the point, and by the extractor (`ElementSelectExpression:wide-index`) where the index is already wider than 32 bits at the default point. Re-measured on this row's own generated testbench with Xcelium 24.03-s004 (vip-ng, refsim, 2026-10-29) and Icarus 12.0: Xcelium and Icarus read o = v[2] = 1 at a = 3, 10 and 2^32 + 5 (BIGWBS in Xcelium); Xcelium writes w[a] at the truncated index (w = 00100000 at a = 2^32 + 5, 00000010 at a = x...01) where Icarus drops the write. The Yosys 0.53 `synth -flatten` netlist (simulated in Icarus) also truncates, only because its optimizer drops the high index bits; `prep; eval` keeps the whole value and reads x (audit T1). Verilator 5.042 truncates (its code casts the index to 32 bits)."
+    },
+    {
+      "name": "wide_index_dead_n4",
+      "example": "sem2/wide_index_dead",
+      "top": "wide_index_dead",
+      "signals": [
+        "a",
+        "v",
+        "o"
+      ],
+      "stimulus": [
+        {
+          "a": "0011",
+          "v": "10110101"
+        },
+        {
+          "a": "1010"
+        },
+        {
+          "a": "0111"
+        },
+        {
+          "a": "0000"
+        },
+        {
+          "a": "x001"
+        }
+      ],
+      "measured": "Control (round 6 repair, lane A): the live K == 1 arm is `v[a]` with a 4-bit index at N = 4: admitted, every tool agrees (a = 1010 and x001 are out of range: x). Re-measured on this row's own generated testbench: the Xcelium 24.03-s004 trace (vip-ng, refsim, 2026-10-29) equals the Icarus 12.0 trace in every cycle."
+    },
+    {
+      "name": "wide_index_dead_n40",
+      "example": "sem2/wide_index_dead",
+      "top": "wide_index_dead",
+      "params": {
+        "N": 40,
+        "K": 0
+      },
+      "signals": [
+        "a",
+        "v",
+        "o"
+      ],
+      "stimulus": [
+        {
+          "a": "0000000000000000000000000000000000000011",
+          "v": "10110101"
+        },
+        {
+          "a": "1000000000000000000000000000000000000010"
+        },
+        {
+          "a": "0000000100000000000000000000000000000110"
+        },
+        {
+          "a": "0000000000000000000000000000000000000001"
+        },
+        {
+          "a": "x000000000000000000000000000000000000101"
+        }
+      ],
+      "measured": "Control (round 6 repair, lane A): at N = 40, K = 0 the 40-bit `v[a]` sits in the K == 1 arm, which this point does NOT instantiate; the live arm indexes a[3:0]. `Select:wide-index` judges only instantiated generate code (`PDesign.liveBitIdxs`, RangeGuard2.lean). The first version of the guard walked both arms and refused this design (verifier finding, probe wi_dead2; the pre-change model admitted it). Re-measured on this row's own generated testbench: the Xcelium 24.03-s004 trace (vip-ng, refsim, 2026-10-29; no BIGWBS: the truncating arm is not elaborated) equals the Icarus 12.0 trace in every cycle, o = v[a[3:0]] (a = 2^32 + 6: v[6] = 0). Companion row wide_index_dead_n40_live (K = 1: the same select instantiated, refused)."
+    },
+    {
+      "name": "wide_index_dead_n40_live",
+      "example": "sem2/wide_index_dead",
+      "top": "wide_index_dead",
+      "params": {
+        "N": 40,
+        "K": 1
+      },
+      "refusal": "Select:wide-index",
+      "signals": [
+        "a",
+        "v",
+        "o"
+      ],
+      "stimulus": [
+        {
+          "a": "0000000000000000000000000000000000000011",
+          "v": "10110101"
+        },
+        {
+          "a": "1000000000000000000000000000000000000010"
+        },
+        {
+          "a": "0000000100000000000000000000000000000110"
+        },
+        {
+          "a": "0000000000000000000000000000000000000001"
+        },
+        {
+          "a": "x000000000000000000000000000000000000101"
+        }
+      ],
+      "measured": "Round 6 repair, lane A (companion of wide_index_dead_n40): the same design with K = 1, where the 40-bit `v[a]` is the INSTANTIATED arm. Refused by the select guard (`Select:wide-index`, RangeGuard2.lean). IEEE 1800-2023 11.5.1 takes the index whole (a = 2^32 + 6 is out of range: x; the model and Yosys 0.53 `prep; eval`); Xcelium 24.03-s004 (BIGWBS) and Icarus 12.0 read its low 32 bits (v[6] = 0). Re-measured on this row's own generated testbench (vip-ng, refsim, 2026-10-29): the Xcelium and Icarus traces are equal, o = 0 at a = 2^32 + 6 (cycle 2), where the LRM text gives x."
+    },
+    {
+      "name": "net_width_min",
+      "example": "sem2/net_width_min",
+      "top": "net_width_min",
+      "refusal": "PortConn:net-width",
+      "signals": [
+        "s",
+        "p"
+      ],
+      "stimulus": [
+        {
+          "s": "01"
+        },
+        {
+          "s": "10"
+        },
+        {
+          "s": "11"
+        },
+        {
+          "s": "x1"
+        }
+      ],
+      "measured": "Round 6, lane A (Xcelium audit H1): the NET formal i (6 bits) is fed the bare net s (2 bits). IEEE 1800-2023 23.3.3 / 10.7 zero-extend: p = 000001 at s = 01 (the model's former answer; Icarus 12.0, Verilator 5.042, Yosys 0.53 and slang agree); Xcelium 24.03-s004 binds the nets bit for bit: p = zzzz01 (CUVMPW). Refused (`PortConn:net-width`, Hier2.lean) when the extractor marks the connection net-bound (`net: true`). Re-measured on this row's own generated testbench with Xcelium 24.03-s004 (vip-ng, refsim, 2026-10-29) and Icarus 12.0: Xcelium p = zzzz01/zzzz10/zzzz11/zzzzx1 (CUVMPW), Icarus 000001/000010/000011/0000x1. Yosys 0.53 (synth -flatten netlist simulated in Icarus) and Verilator 5.042 (two-state) zero-extend, like Icarus: p = 000001, 000010, 000011 (Yosys also 0000x1)."
+    },
+    {
+      "name": "net_width_ok",
+      "example": "sem2/net_width_ok",
+      "top": "net_width_ok",
+      "signals": [
+        "s",
+        "pv",
+        "pe"
+      ],
+      "stimulus": [
+        {
+          "s": "01"
+        },
+        {
+          "s": "10"
+        },
+        {
+          "s": "11"
+        },
+        {
+          "s": "x1"
+        }
+      ],
+      "measured": "Control (round 6, lane A): a VARIABLE actual (sv) and an expression ({s}) into the same net formal are zero-extended by every tool, Xcelium included (docs/sv-xcelium-audit.md H1 matrix). Re-measured on this row's own generated testbench: the Xcelium 24.03-s004 trace (vip-ng, refsim, 2026-10-29) equals the Icarus 12.0 trace in every cycle."
+    },
+    {
+      "name": "net_width_outvar",
+      "example": "sem2/net_width_outvar",
+      "top": "net_width_outvar",
+      "signals": [
+        "s",
+        "ol",
+        "orr",
+        "ov",
+        "pl",
+        "pr",
+        "pv"
+      ],
+      "stimulus": [
+        {
+          "s": "01"
+        },
+        {
+          "s": "10"
+        },
+        {
+          "s": "11"
+        },
+        {
+          "s": "x1"
+        },
+        {
+          "s": "z0"
+        },
+        {
+          "s": "00"
+        }
+      ],
+      "measured": "Control (round 6 repair, lane A): the actuals ol (`output logic`), orr (`output reg`) and ov (`output var logic`) are VARIABLE output ports of the instantiating module (IEEE 1800-2023 23.2.2.3: an output declared with an explicit data type is a variable), although slang reports them with the same VariablePortHeader and no `var` as an `input logic` NET. The first version of the net-to-net rule marked them as nets and refused them as PortConn:net-width (verifier finding, probes nw_outreg and nw_var_out); the extractor now marks only input/inout ports (`_sym_symbol_net_kind`). Every tool zero-extends a variable actual into the wider net formal. Measured on this row's own generated testbench: the Xcelium 24.03-s004 trace (vip-ng, refsim, 2026-10-29) equals the Icarus 12.0 trace in every cycle (pl = 000001 at s = 01, 0000x1 at s = x1, 0000z0 at s = z0; CUVMPW is warned and nothing is z-filled); the Yosys 0.53 `synth -flatten` netlist zero-extends too. Compare net_width_outwire, where the actual is a net."
+    },
+    {
+      "name": "net_width_outwire",
+      "example": "sem2/net_width_outwire",
+      "top": "net_width_outwire",
+      "refusal": "unrecoverable packed dimensions",
+      "signals": [
+        "s",
+        "ow",
+        "oi",
+        "pw",
+        "pi"
+      ],
+      "stimulus": [
+        {
+          "s": "01"
+        },
+        {
+          "s": "10"
+        },
+        {
+          "s": "11"
+        },
+        {
+          "s": "x1"
+        }
+      ],
+      "measured": "Round 6 repair, lane A (neighbour of Xcelium audit H1): the NET formal i (6 bits) is fed the bare NETs ow (`output wire [1:0]`) and oi (an implicit-type `output [1:0]`) of the instantiating module (both nets, IEEE 1800-2023 23.2.2.3, like an input port). IEEE 1800-2023 23.3.3 / 10.7 zero-extend (Icarus 12.0, Verilator 5.042 and the Yosys 0.53 `synth -flatten` netlist agree: pw = 000001 at s = 01, 0000x1 at s = x1 in the 4-state tools); Xcelium 24.03-s004 binds the nets bit for bit and leaves the formal's high bits undriven. Re-measured on this row's own generated testbench (vip-ng, refsim, 2026-10-29) with Icarus 12.0: Xcelium pw = zzzz01/zzzz10/zzzz11/zzzzx1 and pi = zzzz10/zzzz01/zzzz00/zzzzx0 (CUVMPW at both instances), Icarus 000001/000010/000011/0000x1 and 000010/000001/000000/0000x0. THE MODEL REFUSES THIS ROW EARLIER than the net-to-net rule: the symbolic tier cannot recover the packed dimensions of a NET declaration (`wire [1:0]`, even `input wire [1:0]`), so the cross-check reports `unrecoverable packed dimensions` for `ow` before `PortConn:net-width` is reached (the verifier's probe nw_outwire). The extractor mark is in place (`PortConn:net-width` is the intended guard); the scalar twin of this shape, row net_width_outwire1, is refused earlier too (`assign target 'ow' undeclared`), so no net OUTPUT actual reaches `PortConn:net-width` today; and `output logic`/`output reg`/`output var logic` actuals are variables that every tool zero-extends (rows net_width_outvar, net_width_outvar1)."
+    },
+    {
+      "name": "net_width_outvar1",
+      "example": "sem2/net_width_outvar1",
+      "top": "net_width_outvar1",
+      "signals": [
+        "s",
+        "ol",
+        "orr",
+        "pl",
+        "pr"
+      ],
+      "stimulus": [
+        {
+          "s": "0"
+        },
+        {
+          "s": "1"
+        },
+        {
+          "s": "x"
+        },
+        {
+          "s": "z"
+        },
+        {
+          "s": "1"
+        }
+      ],
+      "measured": "Control (round 6 repair, lane A): the scalar twin of net_width_outvar. The actuals ol (`output logic`) and orr (`output reg`) are VARIABLE output ports of the instantiating module (IEEE 1800-2023 23.2.2.3), one bit wide, feeding the four-bit NET formal i; every tool zero-extends a variable actual, so `PortConn:net-width` must not fire (the first version of the net-to-net rule marked them as nets: verifier probes nw_outreg, nw_var_out). Measured on this row's own generated testbench: the Xcelium 24.03-s004 trace (vip-ng, refsim, 2026-10-29; CUVMPW is warned, nothing is z-filled) equals the Icarus 12.0 trace in every cycle (pl = 0000 at s = 0, 000x at s = x, 000z at s = z), and so does the Yosys 0.53 `synth -flatten` netlist; Verilator 5.042 (two-state) zero-extends too. Compare net_width_outwire1, the same shape with net outputs, where Xcelium z-fills."
+    },
+    {
+      "name": "net_width_outwire1",
+      "example": "sem2/net_width_outwire1",
+      "top": "net_width_outwire1",
+      "refusal": "assign target 'ow' undeclared",
+      "signals": [
+        "s",
+        "ow",
+        "oi",
+        "pw",
+        "pi"
+      ],
+      "stimulus": [
+        {
+          "s": "0"
+        },
+        {
+          "s": "1"
+        },
+        {
+          "s": "x"
+        },
+        {
+          "s": "z"
+        },
+        {
+          "s": "1"
+        }
+      ],
+      "measured": "Round 6 repair, lane A (neighbour of Xcelium audit H1, the scalar twin of net_width_outwire): the four-bit NET formal i is fed the bare one-bit NETs ow (`output wire`) and oi (an implicit-type `output`) of the instantiating module (both nets, IEEE 1800-2023 23.2.2.3, like an input port). IEEE 1800-2023 23.3.3 / 10.7 zero-extend the actual (Icarus 12.0, the Yosys 0.53 `synth -flatten` netlist and Verilator 5.042 agree: pw = 0000 at s = 0, 0001 at s = 1, 000x at s = x in the 4-state tools); Xcelium 24.03-s004 binds the nets bit for bit and leaves the formal's high bits undriven. Re-measured on this row's own generated testbench (vip-ng, refsim, 2026-10-29) with Icarus 12.0: Xcelium pw = zzz0/zzz1/zzzx/zzzz/zzz1 and pi = zzz1/zzz0/zzzx/zzzx/zzz0 (CUVMPW at both instances), Icarus 0000/0001/000x/000z/0001 and 0001/0000/000x/000x/0000. The extractor marks the connection (`net: true`), so `PortConn:net-width` is the intended guard, but THE MODEL REFUSES THIS ROW EARLIER: the symbolic tier does not declare a net output port, and `assign ow = s` is `unsupported process 'Assign' [assign target 'ow' undeclared]` (measured by this row; the vector twin, row net_width_outwire, stops at `unrecoverable packed dimensions`). The row pins that refusal: if net output ports become admissible, it fails and `PortConn:net-width` must then be shown to fire on it. The variable outputs of the same shape (`output logic`, `output reg`) are zero-extended by every tool and stay admitted (rows net_width_outvar1, net_width_outvar)."
+    },
+    {
+      "name": "hier_width_ok",
+      "example": "sem2/hier_width_ok",
+      "top": "hier_width_ok",
+      "signals": [
+        "a",
+        "s",
+        "out_wide",
+        "out_narrow",
+        "in_wide",
+        "in_narrow",
+        "in_safe"
+      ],
+      "stimulus": [
+        {
+          "a": "1101",
+          "s": "00"
+        },
+        {
+          "a": "0010",
+          "s": "00"
+        },
+        {
+          "a": "0001",
+          "s": "00"
+        },
+        {
+          "a": "0101",
+          "s": "01"
+        },
+        {
+          "a": "0101",
+          "s": "01"
+        },
+        {
+          "a": "0111",
+          "s": "01"
+        },
+        {
+          "a": "0011",
+          "s": "10"
+        },
+        {
+          "a": "0110",
+          "s": "10"
+        },
+        {
+          "a": "1111",
+          "s": "10"
+        },
+        {
+          "a": "0000",
+          "s": "11"
+        },
+        {
+          "a": "0101",
+          "s": "11"
+        },
+        {
+          "a": "0010",
+          "s": "11"
+        },
+        {
+          "a": "z001",
+          "s": "x1"
+        },
+        {
+          "a": "1100",
+          "s": "z0"
+        }
+      ]
+    },
+    {
+      "name": "hier_width_ok_n2",
+      "example": "sem2/hier_width_ok",
+      "top": "hier_width_ok",
+      "params": {
+        "N": 2
+      },
+      "signals": [
+        "a",
+        "s",
+        "out_wide",
+        "out_narrow",
+        "in_wide",
+        "in_narrow",
+        "in_safe"
+      ],
+      "stimulus": [
+        {
+          "a": "10",
+          "s": "00"
+        },
+        {
+          "a": "11",
+          "s": "00"
+        },
+        {
+          "a": "00",
+          "s": "00"
+        },
+        {
+          "a": "01",
+          "s": "01"
+        },
+        {
+          "a": "11",
+          "s": "01"
+        },
+        {
+          "a": "10",
+          "s": "01"
+        },
+        {
+          "a": "11",
+          "s": "10"
+        },
+        {
+          "a": "01",
+          "s": "10"
+        },
+        {
+          "a": "01",
+          "s": "10"
+        },
+        {
+          "a": "10",
+          "s": "11"
+        },
+        {
+          "a": "10",
+          "s": "11"
+        },
+        {
+          "a": "01",
+          "s": "11"
+        },
+        {
+          "a": "z0",
+          "s": "x1"
+        },
+        {
+          "a": "00",
+          "s": "z0"
+        }
+      ]
+    },
+    {
+      "name": "hier_width_ok_n6",
+      "example": "sem2/hier_width_ok",
+      "top": "hier_width_ok",
+      "params": {
+        "N": 6
+      },
+      "signals": [
+        "a",
+        "s",
+        "out_wide",
+        "out_narrow",
+        "in_wide",
+        "in_narrow",
+        "in_safe"
+      ],
+      "stimulus": [
+        {
+          "a": "100100",
+          "s": "00"
+        },
+        {
+          "a": "011001",
+          "s": "00"
+        },
+        {
+          "a": "001000",
+          "s": "00"
+        },
+        {
+          "a": "011010",
+          "s": "01"
+        },
+        {
+          "a": "001111",
+          "s": "01"
+        },
+        {
+          "a": "110110",
+          "s": "01"
+        },
+        {
+          "a": "100000",
+          "s": "10"
+        },
+        {
+          "a": "001100",
+          "s": "10"
+        },
+        {
+          "a": "111111",
+          "s": "10"
+        },
+        {
+          "a": "101110",
+          "s": "11"
+        },
+        {
+          "a": "100011",
+          "s": "11"
+        },
+        {
+          "a": "110011",
+          "s": "11"
+        },
+        {
+          "a": "0010z1",
+          "s": "x1"
+        },
+        {
+          "a": "000110",
+          "s": "z0"
+        }
+      ]
+    },
+    {
+      "name": "param_types_ok",
+      "example": "sem2/param_types_ok",
+      "top": "param_types_ok",
+      "signals": [
+        "v",
+        "o_p",
+        "o_v",
+        "o_v2",
+        "o_q",
+        "o_sv",
+        "o_u",
+        "o_s1",
+        "o_s2",
+        "o_s3"
+      ],
+      "stimulus": [
+        {
+          "v": "1011001110001111"
+        },
+        {
+          "v": "0101010101010101"
+        },
+        {
+          "v": "1000000000000001"
+        },
+        {
+          "v": "1100110100100101"
+        },
+        {
+          "v": "1001011101111010"
+        },
+        {
+          "v": "01111101z001001x"
+        }
+      ]
+    },
+    {
+      "name": "param_types_ok_p5",
+      "example": "sem2/param_types_ok",
+      "top": "param_types_ok",
+      "params": {
+        "P": 5
+      },
+      "signals": [
+        "v",
+        "o_p",
+        "o_v",
+        "o_v2",
+        "o_q",
+        "o_sv",
+        "o_u",
+        "o_s1",
+        "o_s2",
+        "o_s3"
+      ],
+      "stimulus": [
+        {
+          "v": "1011001110001111"
+        },
+        {
+          "v": "0101010101010101"
+        },
+        {
+          "v": "1000000000000001"
+        },
+        {
+          "v": "1101011101100101"
+        },
+        {
+          "v": "0110010100010000"
+        },
+        {
+          "v": "111z111011001x11"
+        }
+      ]
+    },
+    {
+      "name": "param_types_ok_p0_v3",
+      "example": "sem2/param_types_ok",
+      "top": "param_types_ok",
+      "params": {
+        "P": 0,
+        "V4": 3
+      },
+      "signals": [
+        "v",
+        "o_p",
+        "o_v",
+        "o_v2",
+        "o_q",
+        "o_sv",
+        "o_u",
+        "o_s1",
+        "o_s2",
+        "o_s3"
+      ],
+      "stimulus": [
+        {
+          "v": "1011001110001111"
+        },
+        {
+          "v": "0101010101010101"
+        },
+        {
+          "v": "1000000000000001"
+        },
+        {
+          "v": "0100010001010111"
+        },
+        {
+          "v": "0001101011111110"
+        },
+        {
+          "v": "1100110000zz1110"
+        }
+      ]
+    },
+    {
+      "name": "param_types_ok_v25",
+      "example": "sem2/param_types_ok",
+      "top": "param_types_ok",
+      "params": {
+        "V4": 25
+      },
+      "signals": [
+        "v",
+        "o_p",
+        "o_v",
+        "o_v2",
+        "o_q",
+        "o_sv",
+        "o_u",
+        "o_s1",
+        "o_s2",
+        "o_s3"
+      ],
+      "stimulus": [
+        {
+          "v": "1011001110001111"
+        },
+        {
+          "v": "0101010101010101"
+        },
+        {
+          "v": "1000000000000001"
+        },
+        {
+          "v": "0000001011000001"
+        },
+        {
+          "v": "1110110111010001"
+        },
+        {
+          "v": "x10001111101001x"
+        }
+      ]
+    },
+    {
+      "name": "param_types_ok_signed",
+      "example": "sem2/param_types_ok",
+      "top": "param_types_ok",
+      "params": {
+        "SV4": 3,
+        "S4": 5,
+        "SB": -7
+      },
+      "signals": [
+        "v",
+        "o_p",
+        "o_v",
+        "o_v2",
+        "o_q",
+        "o_sv",
+        "o_u",
+        "o_s1",
+        "o_s2",
+        "o_s3"
+      ],
+      "stimulus": [
+        {
+          "v": "1011001110001111"
+        },
+        {
+          "v": "0101010101010101"
+        },
+        {
+          "v": "1000000000000001"
+        },
+        {
+          "v": "1011010010101101"
+        },
+        {
+          "v": "1100100111011100"
+        },
+        {
+          "v": "0z1100101z011100"
+        }
+      ]
+    },
+    {
+      "name": "param_types_ok_s4n",
+      "example": "sem2/param_types_ok",
+      "top": "param_types_ok",
+      "params": {
+        "S4": -8,
+        "SB": 10,
+        "B5": 12
+      },
+      "signals": [
+        "v",
+        "o_p",
+        "o_v",
+        "o_v2",
+        "o_q",
+        "o_sv",
+        "o_u",
+        "o_s1",
+        "o_s2",
+        "o_s3"
+      ],
+      "stimulus": [
+        {
+          "v": "1011001110001111"
+        },
+        {
+          "v": "0101010101010101"
+        },
+        {
+          "v": "1000000000000001"
+        },
+        {
+          "v": "0111101001100011"
+        },
+        {
+          "v": "0000100101101000"
+        },
+        {
+          "v": "11z1010x00010101"
+        }
+      ]
+    },
+    {
+      "name": "param_types_ok_u32",
+      "example": "sem2/param_types_ok",
+      "top": "param_types_ok",
+      "params": {
+        "U32": 200,
+        "Q": 9
+      },
+      "signals": [
+        "v",
+        "o_p",
+        "o_v",
+        "o_v2",
+        "o_q",
+        "o_sv",
+        "o_u",
+        "o_s1",
+        "o_s2",
+        "o_s3"
+      ],
+      "stimulus": [
+        {
+          "v": "1011001110001111"
+        },
+        {
+          "v": "0101010101010101"
+        },
+        {
+          "v": "1000000000000001"
+        },
+        {
+          "v": "0010000010101010"
+        },
+        {
+          "v": "1110101011100100"
+        },
+        {
+          "v": "110z0110111x0101"
+        }
+      ]
+    },
+    {
+      "name": "param_types_ok_u32_3",
+      "example": "sem2/param_types_ok",
+      "top": "param_types_ok",
+      "params": {
+        "U32": 3
+      },
+      "signals": [
+        "v",
+        "o_p",
+        "o_v",
+        "o_v2",
+        "o_q",
+        "o_sv",
+        "o_u",
+        "o_s1",
+        "o_s2",
+        "o_s3"
+      ],
+      "stimulus": [
+        {
+          "v": "1011001110001111"
+        },
+        {
+          "v": "0101010101010101"
+        },
+        {
+          "v": "1000000000000001"
+        },
+        {
+          "v": "0010101000011110"
+        },
+        {
+          "v": "1111001111011111"
+        },
+        {
+          "v": "0011x0110110x011"
+        }
+      ]
+    },
+    {
+      "name": "wide_index_lit",
+      "example": "sem2/wide_index_lit",
+      "top": "wide_index_lit",
+      "refusal": "ElementSelectExpression:wide-index",
+      "signals": [
+        "a",
+        "v",
+        "o"
+      ],
+      "stimulus": [
+        {
+          "a": "000000000000000000000000000000011",
+          "v": "10110101"
+        },
+        {
+          "a": "100000000000000000000000000000010"
+        },
+        {
+          "a": "100000000000000000000000000000011"
+        },
+        {
+          "a": "000000000000000000000000000000001"
+        },
+        {
+          "a": "x00000000000000000000000000000010"
+        }
+      ],
+      "measured": "Round 6, lane A (Xcelium audit T1, extractor level): v[a] with a 33-bit literal-bounds `a` is a run-time bit-select index wider than 32 bits at the default point. The extractor emits Unsupported `ElementSelectExpression:wide-index`; the model does not truncate (a = 2^32 + 2 is out of range: x in the model and Yosys 0.53 `prep; eval`). Re-measured on this row's own testbench (Xcelium 24.03-s004 via vip-ng refsim, 2026-10-29, and Icarus 12.0): the two traces are identical — o = v[2] = 1 at a = 2^32 + 2 (cycle 1) and at a = x00...010 (an x bit in the index, cycle 4), where the LRM text gives x; Xcelium warns BIGWBS."
+    },
+    {
+      "name": "wide_index_const",
+      "example": "sem2/wide_index_const",
+      "top": "wide_index_const",
+      "refusal": "ElementSelectExpression:wide-index",
+      "signals": [
+        "v",
+        "o"
+      ],
+      "stimulus": [
+        {
+          "v": "10110101"
+        },
+        {
+          "v": "01001010"
+        },
+        {
+          "v": "1x0z1x0z"
+        }
+      ],
+      "measured": "Round 6, lane A (Xcelium audit T1, constant index): v[40'h1_0000_0002] is a constant index of 2^32 or more. IEEE 1800-2023 11.5.1: outside [7:0], x (the model, Icarus 12.0); Xcelium 24.03-s004 (BIGWBS in xmvlog and xmelab) truncates the constant to its low 32 bits and reads v[2]. Refused by the extractor (`ElementSelectExpression:wide-index`); a wider constant whose value fits (v[40'd2]) is unchanged. Re-measured on this row's own testbench (Xcelium 24.03-s004 via vip-ng refsim, 2026-10-29, and Icarus 12.0): Xcelium o = v[2] (1 at v = 10110101, 0 at 01001010, x at 1x0z1x0z), Icarus o = x in every cycle."
+    },
+    {
+      "name": "wide_index_wr",
+      "example": "sem2/wide_index_wr",
+      "top": "wide_index_wr",
+      "refusal": "AssignmentExpression:target",
+      "signals": [
+        "a",
+        "b",
+        "w"
+      ],
+      "stimulus": [
+        {
+          "a": "0000000000000000000000000000000000000011",
+          "b": "1"
+        },
+        {
+          "a": "0000000000000000000000000000000000001010"
+        },
+        {
+          "a": "0000000100000000000000000000000000000101"
+        },
+        {
+          "a": "0000000000000000000000000000000000000001"
+        },
+        {
+          "a": "x000000000000000000000000000000000000001"
+        }
+      ],
+      "measured": "Round 6 repair, lane A (Xcelium audit T1, the write path at an already-wide default point): w[a] with a 40-bit `a` is a bit-select write whose index is wider than 32 bits. The extractor refuses the select, and a refused select leaves no usable assignment target, so the tag that reaches the envelope is the assignment's, `AssignmentExpression:target`; the read tag `ElementSelectExpression:wide-index` is row wide_index_lit. IEEE 1800-2023 11.5.1 writes nothing for an out-of-range index (the model's reading, Icarus 12.0). Re-measured on this row's own generated testbench (Xcelium 24.03-s004, vip-ng, refsim, 2026-10-29, and Icarus 12.0): both agree in range (a = 3: w = 00001000; a = 1: 00000010), but Xcelium (BIGWBS) writes at the index truncated to 32 bits where Icarus drops the write: w = 00100000 at a = 2^32 + 5 (cycle 2) and 00000010 at a = x0...01 (cycle 4), Icarus 00000000 in both."
     }
   ]
 }

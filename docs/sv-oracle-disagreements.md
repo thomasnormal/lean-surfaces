@@ -43,9 +43,33 @@ run.
 The entry applies only to its named simulator and single schedule. A changed
 input or trace fails the harness. Agreement also fails while the entry is
 live, requiring review and removal of the resolved declaration. Missing
-tools and failed simulations cannot satisfy an entry. Xcelium runs keep
-their ordinary comparison. CI runs mutation and reporting tests even on
-hosts without a simulator, and emits warnings for measured disagreements.
+tools and failed simulations cannot satisfy an entry. CI runs mutation and
+reporting tests even on hosts without a simulator, and emits warnings for
+measured disagreements.
+
+The named simulator is `"iverilog"` or, since round 6 (2026-10-29), `"xcelium"`.
+Xcelium is the REFERENCE simulator of ls-sv (docs/sv-xcelium-reference.md), so
+a declaration that names it is a different statement from an Icarus one: the
+reference itself departs from an explicit sentence of IEEE 1800-2023 and the
+departure cannot be refused statically (the only such class so far is a
+run-time-base part-select that leaves the vector, "Run-time part-select bases
+that leave the vector" below). The model keeps the LRM reading and the row
+reports the departure, never a match; the policy for the other cases, where the
+shape CAN be refused, is to refuse (section "Refused where the oracles split",
+item (R6a), and "Icarus propagates a copy inside the block's own run: the alias
+rows are REFUSED"). An Xcelium declaration is checked in two places with the
+same alarms: against a LIVE `xrun` run, like an Icarus one (a harness run
+without Xcelium leaves the row to the Icarus comparison, which must agree with
+the model), and against the PINNED trace of `harness/sv/xcelium_golden.json`
+in `diff_test2.py --golden`, where the pin plays the simulator: the row
+reports `XREF-DECLARED` (counted apart from `XREF-MATCH` and `XREF-DIFF`) when
+the pinned and the model trace are the recorded ones, and the run FAILS when
+the departure is resolved (the pin equals the model) or has changed. Without a
+usable pin (stale, absent, failed) the input bindings are still checked. A row
+carries one declaration, so a row where Icarus and Xcelium depart in different
+cells needs a split. `harness/sv/declare_disagreement.py` writes a declaration
+from the row's current inputs and the pinned (or a fresh Icarus) trace: the
+digest recipe it uses is the checker's own (`binding_digests`).
 
 ## Unary plus
 
@@ -73,8 +97,17 @@ The affected exact fixtures are `bit_select_assign`,
 `packed_union_subrange`, `packed_union_bit`, `nested_member_bit`,
 `nested_member_concat`, `typedef_nested_concat`,
 `fixed_array_noncanonical_slice`, and `concat_undriven`. Their declarations
-bind each observed pair separately. No licensed-simulator confirmation is
-claimed for this group.
+bind each observed pair separately. Xcelium 24.03-s004 confirms the model on all
+eleven (2026-10-29, pinned in `harness/sv/xcelium_golden.json`, audit cluster D1
+in `docs/sv-xcelium-audit.md`): the pinned trace equals the model's in every
+cycle and only Icarus departs. In Xcelium a variable with a continuously
+driven bit keeps the untouched bits at x, and a NET reads z there (measured on
+`output wire`, an implicit-type `output [3:0]`, `wire`, `wire logic`, all z;
+`output logic`, `output var`, struct and fixed-array members and concatenation
+leaves, all x), which is the boundary the model's refusal of nets
+(`PortSymbol:net-z`, `NetSymbol:net-z`) relies on. Yosys erases the
+variable/net distinction (its netlist reads x for nets too), and Verilator is
+two-state, so neither is a witness for x versus z.
 
 `concat_undriven` (2026-10-28, `Examples/system-verilog/sem2/concat_undriven/`)
 reaches the same lowering through a plain-vector concatenation target:
@@ -136,42 +169,58 @@ and the write lands in `w[1][1]` (`w_flat = 00100000`, `z = ~a[0]`). Yosys
 netlist of such a source disagrees with the model; a post-synthesis
 equivalence check is the place this surfaces.
 
-The same split covers PART selects. `array_oob_part`
+The same split covered PART selects, and a part-select TARGET overhanging the
+LSB end of an inner dimension. `array_oob_part`
 (`Examples/system-verilog/sem2/array_oob_part/`) reads, over
 `logic [1:0][3:0] m` and the ascending `logic [0:1][0:3] q`, a range part
 overhanging the msb end of a non-last element (`m[0][5:3]`), indexed parts
 overhanging either end of an ascending dimension (`q[0][2 +: 3]`,
 `q[1][-1 +: 2]`), an element label outside an ascending dimension
-(`q[0][4]`), and writes `w[0][5:2] = a` (msb overhang). The model (and the
-LRM, §11.5.1: a part partly out of range reads x in exactly its
-out-of-range bits) gives `d_hi = xx0`, `r_lo = 11x`, `r_hi = x0`,
-`asc_oob = x` and clips the write to `w[0][3:2]` (`Param2.lean`,
-`arrayPartRead`/`arrayPartTarget`); slang's constant evaluator agrees
-(`M[0][5:3] = 3'bxx0`, `Q[0][2 +: 3] = 3'b11x`, `Q[1][-1 +: 2] = 2'bx0`).
-Icarus 12.0 and Yosys 0.53 (`prep; eval`) both linearize into the
-neighbouring element: `d_hi = 110`, `r_lo = 110`, `r_hi = 10`,
-`asc_oob = 0`, and the write's top bits land in `w[1][1:0]`
-(`w_flat = 00111100` for `a = 1111`).
-
-The same split covers a part-select TARGET overhanging the LSB end of an
-inner dimension. `array_oob_lsbwrite`
+(`q[0][4]`), and writes `w[0][5:2] = a` (msb overhang); `array_oob_lsbwrite`
 (`Examples/system-verilog/sem2/array_oob_lsbwrite/`) writes
-`w[1][L +: 2] = a[1:0]` with `L = -1` over `logic [1:0][3:0] w`: the model
-(§7.4.6/§11.5.1) writes only `w[1][0] = a[1]` (`Param2.lean`,
-`arrayPartTarget`: the in-range bits take the RHS's upper bits, the
-overhanging RHS bit lands in a zero-effect sink), giving `w_flat = 00010000`
-for `a = 0011`. Icarus 12.0 and Yosys 0.53 (`prep; eval`) also write `a[0]`
-into `w[0][3]` (`00011000`); Icarus additionally prints `sorry: constant
-selects in always_* processes are not currently supported (all bits will be
-included)` at compile time. The same design's 1-D write `v[L +: 3] = a[2:0]`
-agrees in every tool (`v[1:0] = a[2:1]`), and at `L = 1` (row
-`array_oob_lsbwrite_l1`, in range) so does `w_flat`.
+`w[1][L +: 2] = a[1:0]` with `L = -1` over `logic [1:0][3:0] w`. The model (and
+the LRM, §11.5.1: a part partly out of range reads x in exactly its
+out-of-range bits and a write changes only its in-range bits) gave
+`d_hi = xx0`, `r_lo = 11x`, `r_hi = x0`, `asc_oob = x`, clipped the first write
+to `w[0][3:2]` and wrote only `w[1][0] = a[1]` in the second (slang's constant
+evaluator agrees: `M[0][5:3] = 3'bxx0`, `Q[0][2 +: 3] = 3'b11x`,
+`Q[1][-1 +: 2] = 2'bx0`). Icarus 12.0 and Yosys 0.53 (`prep; eval`) linearize
+into the neighbouring element instead: `d_hi = 110`, `r_lo = 110`, `r_hi = 10`,
+`asc_oob = 0`, the first write's top bits land in `w[1][1:0]`
+(`w_flat = 00111100` for `a = 1111`), and the second writes `a[0]` into
+`w[0][3]` (`00011000`; Icarus also prints `sorry: constant selects in always_*
+processes are not currently supported (all bits will be included)`).
 
-Selects past the end of the LAST element agree in every tool, because
-linearization and the per-dimension rule coincide there (`array_oob`, a
-verified row; 1-D overhangs on both ends and run-time bases, rows
-`partsel*`). No licensed-simulator confirmation is claimed for any of these
-entries.
+**Since round 6 (2026-10-29) those two rows are LOUD-REFUSAL rows**, and the
+declarations on them are retired ("Declarations retired in round 6" below).
+Xcelium 24.03-s004 does not linearize and does not read the whole vector either:
+it treats every part-select that is only PARTLY in range as wholly invalid, so
+it reads `d_hi`, `r_lo`, `r_hi` as all x (`xxx`, `xxx`, `xx`) and drops both
+writes whole (`w_flat = 00000000`; the 1-D twin `v[L +: 3] = a[2:0]` too, which
+the model, Icarus and Yosys write as `v[1:0] = a[2:1]`). The tools split three
+ways (model/Icarus-on-1-D/Yosys-on-1-D/slang against Icarus-and-Yosys on the
+inner dimension against Xcelium), and the model no longer chooses
+(`ArraySel:partial-overhang`, item R6-1 below). What stays, as a declared
+Icarus row, is the one shape on which Xcelium equals the model: the element
+label OUTSIDE an ascending dimension, `q[0][4]` (row `array_oob_asc`,
+declaration `iverilog-packed-asc-label-linearized`): the model and Xcelium read
+x, Icarus and Yosys read `q[1][0]`.
+
+Selects past the end of the LAST element do NOT agree in every tool, contrary to
+what this page said until round 6: a part-select that overhangs either END of the
+vector (the last element's msb, the first element's lsb) is read as all x and
+written as a no-op by Xcelium (`array_oob`: `over = m[1][5:2]` is `xxxx`, the
+write `m[1][5:2] = ...` is dropped; the 1-D rows `partsel*`), while the model,
+Icarus and Yosys follow the LRM. Those rows are refusal rows too. A select WHOLLY
+outside (`m[1][5:4]`, `m[1][6]`) is x in every tool and stays admitted.
+The Xcelium confirmation of the declared bit-select row `array_oob_inner` is
+above; it covers that BIT-select row only. Yosys linearizes like Icarus, and
+Verilator (2-state) masks the index to `ceil(log2(dimension))` bits and
+crashes in its DFG pass on a constant outer-OOB read without `-fno-dfg`;
+Icarus cannot take a run-time OUTER index on a multidimensional packed array
+(`Array index expressions must be constant here`). The svGolf post-synthesis
+check sees the Yosys netlist disagree with the model on any source with an
+inner-dimension out-of-range select.
 
 ## Single-element range direction
 
@@ -200,7 +249,7 @@ Ranges like this arise at parameter points: `logic [N-1:0] v` is `[0:0]` at
 `N = 1`.
 
 Row `array_param_labels_l7` (`Examples/system-verilog/sem2/array_param_labels/`
-at `L = 7`, declaration `iverilog-single-element-minus-select`) pins it: the
+at `L = 7`, declaration `iverilog-single-element-minus-select`) pinned it: the
 input `logic [7:L] u` becomes `[7:7]` and `w = u[L+1 -: 2]` reads labels
 8..7, `{x, u[7]}` — `x1`, `x0`, `xx`, `xz` for `u = 1, 0, x, z` in the
 model, `x1`/`x0` in Yosys (`chparam -set L 7; prep; eval`), `2'bx1` for
@@ -208,8 +257,31 @@ slang's `U[8 -: 2]` — while Icarus reads labels 9..8 and gives `xx` in every
 cycle. Found by the verifier on probes `vr_one.sv` and `vh_prng.sv`;
 re-measured on `vr_one.sv` and the base sweep (2026-10-28). Because Yosys
 agrees with the model, a post-synthesis check does not see this split; an
-Icarus simulation of the RTL does. No licensed-simulator confirmation is
-claimed.
+Icarus simulation of the RTL does.
+
+Xcelium 24.03-s004 (round 6, 2026-10-29) cannot adjudicate it by VALUE, and can
+by DIAGNOSTIC. Its value trace on this row is `xx` in every cycle, equal to
+Icarus's, but only because Xcelium reads every partly out-of-range part-select
+as all x (cluster P1), which the model does not follow: on a one-label vector
+every select of two or more labels has an out-of-range label under both readings
+(a one-label `-:` and `+:` select is the same select), and Xcelium drops every
+overhanging write, so no value probe exists. Its elaboration diagnostic does
+separate them. An overhanging indexed part-select used as a continuous-assign
+net TARGET is a hard `BNDIPERR` error that prints the evaluated label range:
+`u[8 -: 2]` over `[7:7]` prints `[8:7]`, `u[7 -: 2]` prints `[7:6]`,
+`u[8 +: 2]` prints `[9:8]` (38 of 38 `-:` cases over `[7:7]` and 38 of 38 over
+`[0:0]`; with the parameter-dependent base of the row, `u[L+1 -: 2]` prints
+`[8:7]`), never Icarus's `9:8`. So Xcelium's front end reads `-:` over a
+single-element range as the LRM, the model, Yosys and Verilator do, and the
+declaration stands. That is a diagnostic from a verifier run, not pinned data
+(`xcelium_golden.json` holds traces). **The row is a loud-refusal row since
+round 6**: `u[8 -: 2]` over `[7:7]` is partly out of range, so
+`ArraySel:partial-overhang` refuses it, and the declaration is kept on the row
+as the record of the Icarus lowering (nothing checks it while the row is
+refused; the ordinary rows `array_param_labels`, `_n4_l2` and `_n3_l5` are
+unchanged). The Icarus quirk is no longer reachable through an admitted select:
+a select that stays in range on a one-label vector has width one, where `-:`
+and `+:` coincide.
 
 ## Ascending full-width minus select
 
@@ -236,28 +308,137 @@ Row `label_kminus_w1` (`Examples/system-verilog/sem2/label_kminus/` at
 `{x, t[-1]}` — `x1`, `x0`, `x1`, `x0`, `xz` for `b = 01, 10, 11, x0, 0z` in
 the model and `x1`/`x0`/`x1` in Yosys (`chparam -set W 1; prep; eval`) —
 while Icarus gives `10`, `01`, `11`, `0x`, `z0`. `q = t[K +: 2]` agrees in all
-three, and the family's other rows (`W = 4, 3, 0, -1, 5`) pass against Icarus.
+three, and the family's other rows (`W = 4, 3, 0, -1, 5`) passed against Icarus.
 Found by the verifier on probes `vb2c.sv`, `vb2.sv` and `vi1.sv` (2026-10-28,
 the static-label routing of WP1(b)); re-measured on the literal
-declarations above. No licensed-simulator confirmation is claimed.
+declarations above.
 
-## Select indices wider than 32 bits (2026-10-28, round 3 repair)
+Xcelium 24.03-s004 (round 6, 2026-10-29) equals neither side on `p`: it reads
+`xx` in all five cycles (the partly out-of-range select is wholly invalid, audit
+cluster P1), so the declaration could not be confirmed, and it equals the model
+and Icarus on `q` (`10`, `01`, `11`, `0x`, `z0`: no departure at all). Every
+row of the family has a partly out-of-range select at its point (`p` at
+`W <= 2`, and `q = t[K +: 2]` over the descending `[K:0]` at `W >= 3`), so
+**all six `label_kminus_w*` rows are loud-refusal rows since round 6**
+(`ArraySel:partial-overhang`) and the declaration is retired ("Declarations
+retired in round 6" below). What stays admitted is split into fixtures that
+contain only the in-range select: `label_kminus_p` (`p = t[K -: 2]` at
+`W = 4, 3, 5`: rows `label_kminus_p`, `_p_w3`, `_p_w5`) and `label_kminus_q`
+(`q = t[K +: 2]` over the ASCENDING `[-1:0]` at `W = 1`), each equal in the
+model, Icarus and Xcelium. The Icarus ascending `-:` reading is no longer
+reachable through an admitted select.
+
+## Run-time part-select bases that leave the vector (round 6, 2026-10-29)
+
+`v[sel +: 4]` and `v[sel -: 4]` over `logic [7:0] v` with a SIGNAL as the base are
+the one shape of the Xcelium part-select rule that cannot be refused statically:
+whether the select leaves the vector depends on the value. IEEE 1800-2023 11.5.1
+(printed page 296) reads such a select that is partly out of range as x in
+exactly the out-of-range bits ("Part-selects that are partially out of range
+shall, when read, return x for the bits that are out of range"), and the base
+expressions are evaluated in a self-determined context. The model, Icarus 12.0,
+Yosys 0.53 (on known bits) and slang follow it. Xcelium 24.03-s004 returns **all
+x for the whole select** whenever at least one selected bit is out of range and at
+least one is in range, and the LRM value in every other case (in range, wholly out
+of range, x/z base): over the verifier's 195 cycles and 864 distinct cells every
+partly-out read was all x and every other read equalled the LRM value, in
+`assign`, `always_comb`, `always @*`, `always_ff`, a function return, a `?:`,
+inside an expression, a testbench `initial` block and a `$display` argument, for
+`+:` and `-:`, 2-bit and 4-bit widths, ascending and offset ranges, memory words
+and packed-array slices. It prints no warning by default (`IIFAOB` / `IIRAOB`
+under `-ii_warn -ii_rwarn` only), is not a time-zero race and does not depend on
+the stimulus order. It is the same rule as the constant-base P1 and the write P3
+(docs/sv-xcelium-audit.md, 6.1 item 1), which are refused
+(`ArraySel:partial-overhang`, item (R6a) below); the model cannot refuse this
+one, so it is **declared**, and the row is reported as a departure of the
+reference from the standard, never as a match.
+
+Rows (`Examples/system-verilog/sem2/partsel_dyn/`, the part of the former
+`partsel` that stays admitted: the constant in-range selects `rev_up`, `rev_dn`,
+`top`, the run-time selects `dyn_up`, `dyn_dn` and the run-time lane select
+`dyn_lane`): `partsel_dyn`, `partsel_dyn_n2_w5`, `partsel_dyn_n6_w2`,
+`partsel_dyn_n5_w1`, `partsel_dyn_n1_w4`, and `dyn32_part`
+(`Examples/system-verilog/sem2/dyn32/`, the five 32-bit-base selects of `dyn32`
+with a stimulus that keeps every base non-negative). Declaration
+`xcelium-runtime-partial-part-select-all-x`, `"sim": "xcelium"`: the recorded
+simulator trace is the PINNED Xcelium trace. On each `partsel_dyn*` row 6 of the 22
+part-select cells are partly out of range (`dyn_up` at `sel = 5, 6, 7`, `dyn_dn` at
+`sel = 0, 1, 2`), Xcelium is all x on those 6 and equals an independent LRM oracle
+on the other 16, and the model equals the oracle on all 22; on `dyn32_part` 15 of 55,
+with the same result. Icarus equals the model on every cycle of every one of the six
+rows, so in a default (Icarus-only) run they are verified matches that name the
+declared Xcelium departure on their line, and `diff_test2.py --golden` reports
+`XREF-DECLARED`; with a live `xrun` the row is a declared disagreement.
+
+Why a declaration and not "follow Xcelium": following it would put the model against
+the LRM text, Icarus, Yosys and slang, and a consumer turns the all-x into defined
+values (`if (|a[B+:4])`, `$countones`, `case`, `===` all take the other branch). Why
+not "refuse": the base is a signal. svGolf is covered separately: its `fourstate`
+stage refuses a run-time select whose index can leave its declared range
+(`svgolf/README.md`), so a scored design never reaches this shape.
+`-ii_val` does not make the reference follow the LRM here (module-level reads stay
+all x), so no flag choice removes the declaration (docs/sv-xcelium-reference.md,
+section 6).
+
+**What is NOT declared.** Row `dyn32` keeps its 22 differing cells and is not declared:
+8 of them are a different cause. Xcelium reads a 32-bit UNSIGNED base as unsigned
+(`s - 2` at `s = 0, 1` is `32'hFFFFFFFE` and `32'hFFFFFFFF`, wholly out of range, all x;
+`b32 = 32'hFFFFFFFE`, `32'hFFFFFFFF`), as the typing rules of 11.8.1 imply, and the
+model, Icarus and Yosys read it as a two's-complement `int` (`Param2.lean`
+`dynPartRead32`, the header of `dyn32.sv`). On a vector with a negative range the
+difference is visible without the partial rule: `w[3:-4]` with an unsigned 32-bit
+`bu = 32'hFFFFFFFE` gives `w[bu +: 4] = xxxx` in Xcelium and `1101` in Icarus, and a
+signed `bi = -2` gives `1101` in both. That is the model's recorded decision
+against the reference, not a departure of the reference from the standard, and round 6
+is refusal-only, so it is an open item (docs/sv-xcelium-audit.md, 6.4).
+
+## Select indices wider than 32 bits (2026-10-28, round 3 repair; REFUSED 2026-10-29, round 6)
 
 `fold_pcase_wide` (`Examples/system-verilog/sem2/fold_pcase/`, `N = 40`)
 reads `v[a - P]` over `logic [7:0] v` with a 42-bit `a` and `int P = -3`.
 IEEE 1800-2023 §11.8.2 zero-extends `P` into the unsigned 42-bit index
 expression and §11.5.1 reads an index outside `[7:0]` as x; the index is
-the whole 42-bit value. The model does both (the round-3 repair, row
+the whole 42-bit value. The model did both (the round-3 repair, row
 `fold_pcase_n40`), and so does Yosys 0.53 (`prep; eval`: `v[a]` at
 `a = 2^32 + 2` is `1'x`). Icarus 12.0 reads such an index at its LOW 32
 bits: `a` all ones gives index `2^42 - 2^32 + 2` and Icarus reads `v[2]`;
 `a = 0` reads `v[3]`, `a = 2^40 + 1` reads `v[4]`. Verilator 5.042 does the
 same on a plain `v[a]`. In-range indices (`a = 2^32 - 3`, `2^32 + 4`) and
 out-of-range ones whose low 32 bits are also out of range (`a = 5`) agree.
-This is the bit-select twin of the run-time part-select base wider than 32
-bits below, which the model refuses; a bit-select index is not refused
-because the refusal would have to sit in `instExpr2`'s select arm, whose
-lemmas (`instExpr2_bitSel_ident_dyn`) are stated for every environment.
+
+This was a declared Icarus departure (`iverilog-wide-index-truncation`,
+"Icarus alone, no licensed-simulator confirmation"). **Xcelium 24.03-s004
+contradicts that premise** (docs/sv-xcelium-audit.md, T1): it truncates the
+index to its low 32 bits too, and says so (`xmelab: *W,BIGWBS`, which fires
+only above 32 bits), equal to Icarus on all 13 cells of a minimal repro and on
+every read form probed (33, 40 and 64-bit index, signed index, procedural
+block, part-select base, unpacked-array element). It also truncates a CONSTANT
+wide index (`v[40'h1_0000_0002]` reads `v[2]`; Icarus and the model read x) and
+a wide index of an lvalue (`w[a] = 1` at `a = 2^32 + 2` sets bit 2; Icarus drops
+the write). Three simulators truncate, the LRM text and Yosys do not: the model
+is alone with the standard, and a truncation would be one oracle against the
+text, so **round 6 refuses**, as it already refused the part-select twin below.
+A bit-select whose index is wider than 32 bits and is not a constant is loud
+(`Select:wide-index`, `RangeGuard2.lean` `PDesign.wideIndexViolation`, at the
+instance's own point; the extractor's `ElementSelectExpression:wide-index` where
+the index is already wider at the default point), as is a constant index of
+2^32 or more. The refusal sits BESIDE `name.sem` (the select guard family of
+`RangeGuard2.lean`), not in `instExpr2`'s select arm, whose lemmas
+(`instExpr2_bitSel_ident_dyn`) are stated for every environment. A constant
+wider than 32 bits whose value fits (`v[40'd2]`) and an index of at most 32 bits
+are unchanged (`wide_index_n8`, `wide_index_n30`). Rows `fold_pcase_n31`,
+`fold_pcase_n40`, `fold_pcase_n40_pm1`, `fold_pcase_n40_p5` and
+`fold_pcase_wide` (33- and 42-bit signal-dependent indices; they had matched
+only because their stimulus never let the whole index and its low 32 bits
+disagree) are loud-refusal rows; `fold_rself_n40`, whose index is a parameter
+constant equal to 0, stays a verified row. The declaration is corrected
+(Xcelium truncates too: three simulators, not an Icarus quirk) and retired by
+this refusal ("Declarations retired in round 6" below). Fixtures `wide_index`
+(the width depends on the point: Lean's guard), `wide_index_lit` (a 33-bit
+index at the default point: Xcelium equals Icarus, both truncate, and an x bit
+in the high half still reads a defined bit) and `wide_index_const`
+(`v[40'h1_0000_0002]`: Xcelium reads `v[2]`, Icarus and the model x): the
+extractor's refusals.
 
 ## Refused where the oracles split (2026-10-28)
 
@@ -649,6 +830,35 @@ same probes `$signed('hz1)` (36 z then `0001`) and `$unsigned($signed('hz1))`
 second is refused with the class (recorded over-refusal; probe
 `gaps5/init2/d/ov3.sv`).
 
+(R6a, cited elsewhere as R6-1) (Round 6 lane A, 2026-10-29; Xcelium 24.03-s004 as reference, audit
+`docs/sv-xcelium-audit.md`.) Three shapes on which Xcelium departs from the
+explicit IEEE 1800-2023 text while the model, Icarus 12.0, Yosys 0.53 and slang
+follow it, or (the third) three simulators depart from it together. Per the
+2026-10-29 policy — where the tools split, or where the model would follow one
+oracle against the LRM, refuse loudly — none is declared and none is followed;
+each is a fixture with a loud-refusal row (`measured` names the Xcelium
+value). (i) A constant part select PARTLY out of range, read or write, either
+side: the LRM reads x in exactly the out-of-range bits and writes exactly the
+in-range ones, Xcelium reads the whole select as x and drops the write
+(`ArraySel:partial-overhang`, `Select:partial-overhang`; "Linearized packed-array
+indices" above; rows `overhang_read_n4`, `overhang_write_n4`,
+`overhang_legacy_k6` and 33 flipped rows). A select wholly outside (x read,
+no-op write) and a single-bit select agree in every tool and are unchanged;
+a RUN-TIME base that leaves the vector cannot be refused statically (audit P2).
+(ii) A NET formal fed by a bare, narrower NET actual: zero-extended by the
+model and four tools, z-filled by Xcelium (`PortConn:net-width`, "Port
+connection width context" above; rows `net_width_min`, `hier_width*`). (iii) A
+bit-select index wider than 32 bits: whole in the LRM text, the model and Yosys
+`prep; eval`, truncated to 32 bits by Xcelium (BIGWBS), Icarus and Verilator
+(`Select:wide-index`, "Select indices wider than 32 bits" above; rows
+`wide_index_n40`, `fold_pcase_*`; only code the point instantiates is judged,
+rows `wide_index_dead_n40`, `wide_index_dead_n40_live`; a wide WRITE target at the
+default point reaches the envelope as `AssignmentExpression:target`, row
+`wide_index_wr`). Recorded gaps: the net-to-net output twin,
+a part- or bit-select of a net actual, and a wide index judged only where the
+point's width table knows the index (a generate-local declaration is not
+judged).
+
 ## Refused where the tools agree but `name.sem` cannot follow (2026-10-28)
 
 Two shapes have a single answer in Icarus 12.0 and Yosys 0.53 that the
@@ -742,7 +952,15 @@ Verilator on the seven two-state ones (Verilator rejects the `'x`/`'z`
 operands as tristate constructs). A bare fill, and fills whose widened bits
 are masked (`a & '1`, `a & 'x`, `s ? '0 : a`, `(a ^ '1) & b`), agree in
 every tool: row `hier_fill`, a verified Icarus match, Yosys agreeing on
-every two-state point.
+every two-state point. Xcelium 24.03-s004 (round 6, 2026-10-29) agrees with the
+model on `hier_fill_ctx` in all 36 cycles (pinned in
+`harness/sv/xcelium_golden.json`; `xmelab` warns `CUVMPW`, port sizes differ, and
+still extends the fill to the port width), so only Icarus departs; a verifier
+design with a 3-bit actual into an 8-bit port and 14 actual shapes found
+Icarus differing on seven of the shapes in 41 of 41 samples, on the `?:` shape in
+20 of 41 and on the `+` shape in 6 of 41, and Verilator and the Yosys netlist
+matching Xcelium on all 41 samples (the controls outside a port actual agree in
+all four tools).
 
 UNSIZED BASED literals with an x/z high-order bit (`'hx0`, `'bz`) in an
 input actual narrower than the port split the same way, but with Yosys on
@@ -754,6 +972,52 @@ lead decision. `PortConnection:unsized-xz`, item (A2) above, row
 `pa_unsized_xz`. [Round 5 repair: at any port width, since the port can be
 wider at a point other than the bound one; rows `pa_unsized_xz_p*`,
 `pa_unsized_xz_g`, `pa_unsized_xz_n*`.]
+
+NET TO NET (round 6, lane A, 2026-10-29; REFUSED). The rule above reads
+a narrower input actual as zero-extended, and for a bare reference to a
+NET fed into a NET formal that is where Xcelium 24.03-s004 stops agreeing
+(docs/sv-xcelium-audit.md, cluster H1; rows `hier_width`, `hier_width_n2`,
+`hier_width_n6`, minimal repro `net_width_min`): with
+`child(input logic [5:0] i, ...)` and a 2-bit input port `s`, `.i(s)` gives
+`i = 000001` at `s = 01` in the model, Icarus 12.0, Verilator 5.042, Yosys 0.53
+(`assign p = { 4'h0, s }`) and slang (an implicit `logic[1:0] -> logic[5:0]`
+conversion, diagnostic PortWidthExpand), but `zzzz01` in Xcelium: it binds the
+two nets bit for bit and leaves the formal's high bits undriven (warning
+`CUVMPW`; §23.3.3.7 permits collapsing nets and says nothing of widths; §23.3.3,
+§23.3.3.8 and §10.7 imply the zero-extension). The audit's `~i` observable
+turned the z into x. An `input logic [W-1:0]` without `var` is a net
+(§23.2.2.3); the shape that z-fills is a net formal fed by a whole net
+identifier (a `wire`, a tri net, an input port, the output of another
+instance), measured on 31 + 21 isolated cases. What zero-extends in Xcelium
+too, and stays admitted: a VARIABLE actual (assign-, comb- or always-driven
+`logic`), a proper part-select, a constant, any expression (`{s}`, `s ^ 2'b10`,
+`?:`, `+`), a `var` formal or a 2-state formal even with a net actual (row
+`net_width_ok`). Round 6 repair (verifier finding): an OUTPUT port of the
+instantiating module is a net only without an explicit data type — `output wire`
+and an implicit-type `output` are nets (Xcelium z-fills them, `pw = zzzz01` for a
+vector and `zzz0` for a scalar; rows `net_width_outwire` and `net_width_outwire1`,
+which the model refuses, see below), while `output logic`, `output reg` and `output var logic` are VARIABLES
+(23.2.2.3) that every tool zero-extends, Xcelium included (rows `net_width_outvar`
+and `net_width_outvar1`, admitted: the Xcelium 24.03-s004 trace equals Icarus 12.0
+in every cycle). Net OUTPUT actuals are refused earlier than the net-to-net rule: a
+VECTOR net declaration by the cross-check (`unrecoverable packed dimensions`: the
+symbolic tier does not recover the packed dimensions of a `wire [1:0]`, row
+`net_width_outwire`), a SCALAR net output by the model (`assign target 'ow'
+undeclared`, row `net_width_outwire1`), so `PortConn:net-width` is reached through
+slang-Variable ports (`input logic`); the extractor's mark on an output net stays as
+the guard for the day those become admissible. slang reports an
+`output logic` with the same header and empty `var` as an `input logic`, so the
+extractor decides by the direction token (`_sym_symbol_net_kind`). The extractor
+marks the connection (`"net": true` on a
+CONNECTED input `PortConn`, `_sym_net_bound_actual`: net formal, 4-state, bare
+net actual, widths not both fixed with the formal not wider) and the flattening
+is loud where the actual is narrower than the port at the instance's own point
+(`PortConn:net-width`, `Hier2.lean` `connProcs`). Recorded gaps, not
+refused: a full-range part-select and a constant bit-select of a net actual
+(Xcelium z-fills those too), and the OUTPUT twin (a narrower output formal into
+a wider whole NET target leaves z in Xcelium, `zzzz11`, while a wider variable
+target zero-extends; no row exercises it and `PConn.output` carries no net
+information).
 
 Unconnected input ports read z for a net (`input logic a`, `input wire`)
 and x for a `var` variable in Icarus 12.0, which the model follows (rows
@@ -926,72 +1190,168 @@ condition read after the write, run-time indices after a whole write, nested
 ten admitted designs (`acg_*`, `latch_comb`) in one testbench gave exactly
 Icarus's trace — hence the model's — on all 60 cycles.
 
-### Icarus propagates a copy inside the block's own run (2026-10-28, WP4 round 3; rewritten from measurements, round 4)
+### Icarus propagates a copy inside the block's own run: the alias rows are REFUSED (2026-10-29, WP4 round 6 lane B; mechanism measured 2026-10-28, rounds 3 and 4)
 
-The guard is about ONE block re-run on its own result. A block that reads a
-DIFFERENT variable which is a pure copy of one it writes is admitted, and
-there Icarus 12.0 and the other tools part. Round 3 described the cause as
-Icarus merging the copy with the written variable and dropping it from the
-sensitivity list, and filed it as an Icarus departure from §9.2.2.2.1. Both
-claims were wrong (round-3 WP4 verifier), and this section replaces them
-with what is measured:
+The self-read guard is about ONE block re-run on its own result. A block that
+reads a DIFFERENT variable which is a continuous copy of one it writes
+(`assign w = t; always_comb begin y = w; t = a; end`, the same through a
+chain of assigns, a child's input port (a net) and output port tied to one
+parent variable, or a copy made by a child's own `assign`) passes it, and
+there Icarus 12.0 and the other tools part. Rounds 3
+and 4 recorded the rows as declared Icarus departures; on 2026-10-29 Thomas
+decided to refuse the shape instead (the Xcelium audit, cluster D4,
+`docs/sv-xcelium-audit.md`), and the two declarations are retired (below).
 
-* **The copy stays in the sensitivity list.** `iverilog -g2012` on the
-  committed sources compiles `acg_alias_assign`'s block to `.event anyedge,
-  w, a` (`w` a `BUFZ` functor of `t`) and `acg_alias_port`'s to `.event
-  anyedge, i, a` (`i` a net on the variable node of the output port `o`,
-  both connected to the parent's `w`).
-* **The update is propagated synchronously, inside the block's run.** The
-  block's write of `t` (`o`) changes `w` (`i`) before the block reaches its
-  event control, so the change wakes nothing and the read that came first
-  keeps the previous value. The distinguishing probe (`mech_buf`, round-3
-  verifier, re-run in round 4) is `assign w = t; always_comb begin y = w;
-  t = a; z = w; end`: Icarus gives `y = 00, z = 01` at `a = 01` — `z`, read
-  after the write in the same run, already sees the new `w`, and `y` is
-  never refreshed. With `assign w = ~t;` (a `NOT` functor, which Icarus
+**The mechanism (measured, round 3 verifier, re-measured rounds 4 and 6).**
+
+* The copy stays in the sensitivity list. `iverilog -g2012` compiles
+  `acg_alias_assign`'s block to `.event anyedge, w, a` (`w` a `BUFZ` functor
+  of `t`) and `acg_alias_port`'s to `.event anyedge, i, a` (`i` a net on the
+  variable node of the output port `o`, both connected to the parent's `w`).
+* Icarus applies the update synchronously, INSIDE the block's run. The write
+  of `t` (`o`) changes `w` (`i`) before the block reaches its event control, so
+  the change wakes nothing and the read that came first keeps the previous
+  value. The distinguishing probe (`mech_buf`) is `assign w = t; always_comb
+  begin y = w; t = a; z = w; end`: Icarus gives `y = 00, z = 01` at `a = 01` --
+  `z`, read after the write in the same run, already sees the new `w`, and
+  `y` is never refreshed. With `assign w = ~t;` (a `NOT` functor, which Icarus
   schedules) the block is woken and Icarus agrees with every other tool.
-  Xcelium 24.03 and Verilator 5.042 give `y = z = a` on the probe; Yosys
-  0.53 `prep; eval` gives `y = a` on both rows.
-* **The LRM permits both answers.** IEEE 1800-2023 §4.7: "At any time while
-  evaluating a procedural statement, the simulator may suspend execution
-  and place the partially completed event as a pending event in the event
-  region." §4.8's example (`assign p = q; … q = 0; $display(p);`): "The
-  simulator is correct in displaying either a 1 or a 0." Icarus's
-  interleaving (update the copy at once, inside the block's run) is one of
-  the permitted ones; Xcelium and Verilator chose the other (update it after
-  the block suspends at its event control, which wakes the block). Neither
-  is a departure from a documented rule.
+* Xcelium 24.03-s004 defers the update until the process has returned to its
+  event control and RE-RUNS the block (a `$display` in the block shows two runs
+  per change in Xcelium and one in Icarus; `w` read right after `t = a` is
+  still old); Verilator 5.042 also runs the block twice; the model's settle
+  semantics gives the same answer, `y = a`. Yosys 0.53 `prep; eval` gives
+  `y = a`.
+* The LRM leaves both orders open. IEEE 1800-2023 §4.7: "At any time while
+  evaluating a procedural statement, the simulator may suspend execution and
+  place the partially completed event as a pending event in the event region";
+  §4.8's own example (`assign p = q; … q = 0; $display(p);`) says "The
+  simulator is correct in displaying either a 1 or a 0" (Icarus prints 0,
+  Xcelium 1, Verilator 0). §9.2.2.2.1 (the copy is read and not written by the
+  block, so it is in the implicit sensitivity list) and §4.3/§4.5 lean towards
+  re-triggering, but §4.8
+  licenses a different value at an observation point, not a skipped trigger,
+  and the classic `always @(w, a)` with the same alias is stale in Icarus under
+  rules the LRM permits. The honest classification is an LRM gap with the two
+  event-faithful tools on opposite sides; Verilator and Yosys do not model
+  event order (on the direct self-read `y = t; t = a` Verilator gives `y = a`
+  and the Yosys netlist is `assign y = a`, where §9.2.2.2.1 (b), Xcelium and
+  Icarus all give the stale value), so their agreement with the model is not
+  evidence.
 
-So the two alias rows are an LRM-PERMITTED TOOL SPLIT, not the
-"simulator disagrees with a documented language rule" this page's opening
-paragraph describes. The model computes the settled value, which is the
-answer of Xcelium, Verilator and Yosys. Under the policy "refuse where the
-tools split" (the self-read guard's own reasoning, "Self-reading
-`always_comb`: refused" above) these rows are refusal candidates. The
-refusal is NOT built: it needs a cross-process check — an `always_comb`
-that reads a continuous copy of a variable it writes (through `assign`
-chains or a port loop, which only forms after flattening) — and such a
-check cannot enter `name.sem` without falsifying pinned statements
-(`PDesign.instantiateGD2_eq_driverGuard`, `Design2.driverGuard_of_ok`); it
-would sit beside it, as the legacy-range guard does (`RangeGuard2.lean`).
-Until then the rows keep exact declarations whose text says what they are:
-both traces pinned, source, envelope, case and testbench hash-bound, and a
-retirement condition that does not hold today (the row fails the day the
-harness's Icarus re-runs the block after the copy's update).
+**The refusal.** The tools split, so by the policy "refuse where the tools
+split" the block is refused: loud `AlwaysComb:alias-read`
+(`LeanModels/Sv/CombAlias2.lean`; proved sound for control paths in
+`CombAlias2Sound.lean`). A body is refused when, on some control path, a
+statement reads a bit that is DOWNSTREAM, through at least one continuous
+assignment of the flat design, of a bit the path writes at that statement or
+later. Details that matter:
 
-| Row (declaration) | Shape | Stimulus | Icarus `y` | model = Xcelium `y` |
-| --- | --- | --- | --- | --- |
-| `acg_alias_assign` (`iverilog-comb-assign-alias-sensitivity`) | `assign w = t; always_comb begin y = w; t = a; end` | `a` = 11 10 00 11 00 11 1x 11 | 11 11 10 00 11 00 11 1x | 11 10 00 11 00 11 1x 11 |
-| `acg_alias_port` (`iverilog-comb-port-loop-sensitivity`) | child `always_comb begin y = i; o = a; end`, `.i(w), .o(w)` | `a` = 00 01 10 01 01 11 00 10 | 00 00 01 10 10 01 11 00 | 00 01 10 01 01 11 00 10 |
+* "Continuous assignment" is every `Process2.assign` of the flattened design.
+  After `Hier2.lean`'s flattening these include the port connections, so a
+  port loop exists only at that level, and the guard runs on the flattened
+  design once (a child's signals are `u.w`, `u.t`; the message names the
+  instance). The path may leave the block's module and come back:
+  `acg_alias_thru` has the parent's block read `w`, the child copies its input
+  to its output, the parent ties the input to the variable the block writes
+  and the output to `w` (three continuous assignments, none in the parent;
+  Icarus stale, Xcelium settled).
+* It is TRANSITIVE (the round-3 verifier's probe `assign w = t; assign v = w;
+  always_comb begin y = v; t = a; end` is stale 48/48 in Icarus), and it
+  follows the dependency path, NOT the functor kind: `assign w = ~t` is refused
+  although every tool agrees on it (`acg_alias_not`), because `assign w = t`
+  (the same block) does not.
+* Bit granularity is the self-read guard's (`Expr2.rdW`, `Stmt2.mayW`,
+  `readsViol`): a copy of `t[0]` read before a write of `t[1]` is admitted
+  (`acg_alias_bits_ok`), a copy of all of `t` is refused
+  (`acg_alias_bits`). A run-time index covers its whole signal.
+* NOT refused, because every tool agrees (measured): write then read
+  (`acg_alias_wr`, `acg_alias_port_wr`, `acg_alias_hier_ok`); a SEPARATE
+  `always_comb` copy, which is a process and is woken like any other
+  (`acg_alias_copy`); a copy of a variable the block does not write
+  (`acg_alias_far`); and a cross-process pair of `always_comb` blocks.
+* It sits BESIDE `name.sem`, like the legacy-select range guard
+  (`RangeGuard2.lean`): `load_design_sv2` at the defaults and at every point of
+  the probe sidecar, the differential runner at each row's point, and
+  `PDesign.aliasReport` for any other tool. `name.sem` itself is the
+  unguarded settle family: the recorded lemmas `PDesign.instantiate2_eq`,
+  `PDesign.assemble2_processes`, `PDesign.instantiateG2_of_ok`,
+  `PDesign.instantiateGD2_of_ok`, `PDesign.instantiateGD2_eq_driverGuard`,
+  `Design2.driverGuard_of_ok`, `PDesign.instantiateH_of_rec`, the ∀-N proofs of
+  `ripple_add`, `mul2d`, `partsel`, `ripple_fa` and `CombViewMain.lean` (which
+  unfolds `instantiateGD2`) are stated for the unguarded family, so a guard
+  inside `instantiate2`/`instantiateG2`/`instantiateGD2` would falsify them.
+  RECORDED RESTRICTION: `name.sem N` at a parameter point other than the
+  defaults and the probed ones does not carry the refusal (the self-read guard
+  is in `instProcess2` and does carry it). A ∀-N proof discharges the guard
+  with `Design2.aliasGuard_of_noComb` (a design without `always_comb`:
+  `ripple_add`, `mul2d`, `ripple_fa`), `Design2.aliasGuard_of_noAssign` (no
+  continuous assignment: the proof API's designs, `CombAlias2Example.lean`,
+  `as_aliasGuard N` at every width) or `Design2.aliasGuard_of_admits`. `partsel`
+  is the one ∀-N family with `always_comb` blocks (two, reading only `b` and
+  writing `w_hi`/`w_lo`, which no assign reads): the census finds it admitted
+  at every row's point, but no ∀-N statement of that is recorded (a gap).
+* What is proved (`CombAlias2Sound.lean`): the fan-out is closed under the flows
+  and contains every downstream bit; on EVERY control path of an admitted body no
+  read touches a bit downstream of a window written at or after it
+  (`Stmt2.aliasViol_epaths`); the guard is idempotent and the identity on
+  the designs above. NOT proved: that a simulator which applies the copy inside
+  the run reads the same values as one which defers it. `Sem2.lean` has no
+  intra-block propagation semantics to prove it against; the argument is the
+  measured mechanism above.
 
-Xcelium 24.03 through the fleet gate `refsim` on `vip-ng` and Verilator
-5.042 (`--binary --timing`, two-state, so it reads `x` as 0) ran one
-batched testbench of these rows and `acg_xproc_bits` (round 3). Icarus also
-behaves this way on `wire [1:0] w = t;` (a net declaration assignment, also
-a `BUFZ`). It prints no diagnostic on either row (its `sorry: constant
-selects in always_* processes are not currently supported` warning appears
-only when a block READS a constant select, as in `rbw_bits`, `rbw_part`,
-`rbw_child` and `acg_bits_ok`).
+| Row | Shape | Stimulus | Icarus `y` | Xcelium = settle `y` | Verilator `y` (two-state) | Verdict |
+| --- | --- | --- | --- | --- | --- | --- |
+| `acg_alias_assign` | `assign w = t; always_comb begin y = w; t = a; end` | a = 11 10 00 11 00 11 1x 11 | 11 11 10 00 11 00 11 1x | 11 10 00 11 00 11 1x 11 | 11 10 00 11 00 11 10 11 | REFUSED (Icarus stale) |
+| `acg_alias_port` | child `always_comb begin y = i; o = a; end`, `.i(w), .o(w)` | a = 00 01 10 01 01 11 00 10 | 00 00 01 10 10 01 11 00 | 00 01 10 01 01 11 00 10 | 00 01 10 01 01 11 00 10 | REFUSED (Icarus stale) |
+| `acg_alias_wire` | `wire w; assign w = t;` (one bit), same block | a = 0 1 0 1 1 x 0 1 | 0 0 1 0 0 1 x 0 | 0 1 0 1 1 x 0 1 | 0 1 0 1 1 0 0 1 | refused EARLIER, `NetSymbol:net-z` (not by this guard; the tools split on it too) |
+| `acg_alias_chain` | `assign v = w; assign w = t;`, `y = v; t = a;` | a = 11 10 00 11 00 11 1x 11 | 11 11 10 00 11 00 11 1x | 11 10 00 11 00 11 1x 11 | 11 10 00 11 00 11 10 11 | REFUSED (Icarus stale) |
+| `acg_alias_not` | `assign w = ~t;`, same block | a = 11 10 00 11 00 11 1x 11 | 00 01 11 00 11 00 0x 00 | 00 01 11 00 11 00 0x 00 | 00 01 11 00 11 00 01 00 | REFUSED, tools agree (guard keyed on the path, not the functor) |
+| `acg_alias_bits` | `assign t[0] = b; assign w = t;`, `y = w; t[1] = a;` | (a, b) = 0/0 1/0 1/1 0/1 1/1 x/1 0/0 1/1 | 00 00 11 11 01 11 x0 01 | 00 10 11 01 11 x1 00 11 | 00 10 11 01 11 01 00 11 | REFUSED (Icarus stale) |
+| `acg_alias_hier` | the `acg_alias_assign` shape inside a child instance `u` | a = 11 10 00 11 00 11 1x 11 | 11 11 10 00 11 00 11 1x | 11 10 00 11 00 11 1x 11 | 11 10 00 11 00 11 10 11 | REFUSED (Icarus stale) |
+| `acg_alias_thru` | the copy is made by a CHILD (`assign o = i;`), the parent ties `i` to `t` and `o` to `w`: `y = w; t = a;` | a = 11 10 00 11 00 11 1x 11 | 11 11 10 00 11 00 11 1x | 11 10 00 11 00 11 1x 11 | 11 10 00 11 00 11 10 11 | REFUSED (Icarus stale) |
+| `acg_alias_wr` | `assign w = t;`, `t = a; y = w;` (write, then read) | a = 11 10 00 11 00 11 1x 11 | 11 10 00 11 00 11 1x 11 | 11 10 00 11 00 11 1x 11 | 11 10 00 11 00 11 10 11 | admitted, Icarus = Xcelium = model |
+| `acg_alias_copy` | `always_comb w = t;` beside `y = w; t = a;` | a = 11 10 00 11 00 11 1x 11 | 11 10 00 11 00 11 1x 11 | 11 10 00 11 00 11 1x 11 | 11 10 00 11 00 11 10 11 | admitted, Icarus = Xcelium = model |
+| `acg_alias_far` | `assign w = a;`, `y = w; z = b;` (a copy of what the block does not write) | (a, b) = 11/00 10/01 00/10 01/11 11/00 x0/11 00/1x 11/01 | 11 10 00 01 11 x0 00 11 | 11 10 00 01 11 x0 00 11 | 11 10 00 01 11 00 00 11 | admitted, Icarus = Xcelium = model |
+| `acg_alias_bits_ok` | `assign t[0] = b; assign w = t[0];`, `y = w; t[1] = a;` | (a, b) = 0/0 1/0 1/1 0/1 1/1 x/1 0/0 1/1 | 0 0 1 1 1 1 0 1 | 0 0 1 1 1 1 0 1 | 0 0 1 1 1 1 0 1 | admitted, Icarus = Xcelium = model |
+| `acg_alias_port_wr` | child `always_comb begin o = a; y = i; end`, `.i(w), .o(w)` | a = 00 01 10 01 01 11 00 10 | 00 01 10 01 01 11 00 10 | 00 01 10 01 01 11 00 10 | 00 01 10 01 01 11 00 10 | admitted, Icarus = Xcelium = model |
+| `acg_alias_hier_ok` | write-then-read inside a child instance | a = 11 10 00 11 00 11 1x 11 | 11 10 00 11 00 11 1x 11 | 11 10 00 11 00 11 1x 11 | 11 10 00 11 00 11 10 11 | admitted, Icarus = Xcelium = model |
+
+Icarus is stale (one change behind) on every refused row except `acg_alias_not`,
+and the guard refuses all of them but `acg_alias_wire` (below: an earlier refusal
+takes that one); the model equals Xcelium on every admitted
+row and Icarus, Xcelium and the model agree there (rows PASS against Icarus;
+the Xcelium pins are in `harness/sv/xcelium_golden.json`).
+
+**An internal `wire` never reaches the guard.** The fixture `acg_alias_wire`
+(`wire w; assign w = t;`, one bit) is refused EARLIER, by the extractor:
+`wire w;` is `Unsupported` `NetSymbol:net-z` (2026-10-28: an undriven net
+reads z while the tier initializes every declaration to x, so every internal
+net is refused), and so are `wire [1:0] w;` (`unrecoverable packed
+dimensions`) and `wire w = t;` (`non-literal initializer`). The row pins that
+refusal (`"refusal": "NetSymbol:net-z"`), not the alias guard's; the tools
+split on it exactly as on `acg_alias_assign` (measured above), and the guard,
+which follows the continuous assignments and never the kind of declaration,
+would refuse it were nets admitted. The nets the tier does admit are INPUT
+ports (an `input logic` without `var` is a net, §23.2.2.3), and a copy
+through one is the port loop `acg_alias_port` (the refusal reads `u.i`, a
+net) and the child's copy in `acg_alias_thru`.
+
+**Census (2026-10-29, one Lean process per sweep, `PDesign.aliasReport`).**
+Over every sv-0.2 envelope in the tree (494: 294 in `Examples/system-verilog`
+and 200 of svGolf's tasks, references and attacks; 150 of them with a probe
+sidecar, every probed point checked) at the defaults the guard refuses
+exactly six (`acg_alias_assign`, `_port`, `_chain`, `_not`, `_bits`,
+`_hier`); the seventh refusal row, `acg_alias_thru`, was added after that
+sweep and is refused in the row sweep. Over every row of `harness/sv/cases2.json`
+at the row's own parameter point (676 rows): 7 refused (those seven, all
+carrying `"refusal": "AlwaysComb:alias-read"`), 662 pass the guard (whatever else
+refuses them), and 7 points
+that could not be built for an unrelated reason (the `fold_shp*`/`fold_uwidp*`
+rows' `Constant:untyped-width`, themselves loud-refusal rows). No simulated
+row and no svGolf envelope is
+refused (none of the 200 svGolf envelopes, none of the 150 sidecars' points): no
+previously admitted design changed behaviour.
 
 ### Icarus leaves a partly written variable out of the sensitivity list (2026-10-28, WP4 round 3; corrected round 4)
 
@@ -1023,6 +1383,23 @@ refusal would be an over-refusal of a legal design; the declaration is the
 right record, and its retirement condition is Icarus keeping the unwritten
 bits in the list.
 
+**Which reads Icarus drops (round 6, lane B, 2026-10-29; from the Xcelium
+audit's D4 triage and its verifier, minimal repros over a 48-step stimulus).**
+The Icarus gap is WHOLE-VECTOR reads only: `y = t` and the constant
+part-select `y = t[1:0]` are stale (25 of 48 steps each; 15 of 48 with the
+writer on bit 1 and 11 of 48 with `assign t[0] = a`), while the read of the
+unwritten bit `y = t[0]` and the concatenation `y = {t[1], t[0]}` are NOT
+(Icarus prints `sorry: constant selects in always_* processes are not
+currently supported (all bits will be included)` and includes every bit);
+`always @*` in place of the second `always_comb` is fine in Icarus. Xcelium
+24.03-s004, Verilator 5.042 and Yosys 0.53 give `y = {b, a}` on every shape.
+Only Icarus departs, from §9.2.2.2.1 read with §6.5 ("each bit in a packed
+type is also an independent element"), so the row stays a declared Icarus
+departure and the model is unchanged (it equals Xcelium's pinned trace on
+all 7 cycles). This is NOT the alias guard's business: the second block
+reads `t` and writes `t[1]`, and no continuous assignment is involved; the
+alias guard (above) neither refuses nor changes this row.
+
 **The class reaches further than the row.** The round-3 WP4 verifier found
 two more admitted designs on which the model's trace equals Xcelium 24.03's
 on every cycle (and Verilator 5.042's with `x` read as 0) while Icarus 12.0
@@ -1042,6 +1419,27 @@ fail undeclared against Icarus: such a row needs its own declaration. No
 disagreement was found for unpacked-element, packed-2D or struct-member
 splits, or for a read of a constant bit (`y = t[0]`), which Icarus does put
 in the list.
+
+## Declarations retired in round 6 (2026-10-29)
+
+A declaration is checked only on a row that simulates. These rows became loud-refusal
+rows in round 6 (the tools split and the model no longer chooses), so their declarations
+were removed from `harness/sv/cases2.json` rather than left behind as data nothing
+checks. The records:
+
+| id | row | what it declared | why retired |
+|---|---|---|---|
+| `iverilog-packed-inner-part-linearized` | `array_oob_part` | Icarus 12.0 and Yosys 0.53 linearize part-selects and indexed parts that overhang an inner dimension of a non-last element, a label outside an ascending dimension, and the write `w[0][5:2] = a` | the row is refused (`ArraySel:partial-overhang`); Xcelium equals neither the model nor Icarus on the part-selects and the write. The one shape on which Xcelium equals the model, `q[0][4]`, is the new declared row `array_oob_asc` (`iverilog-packed-asc-label-linearized`) |
+| `iverilog-packed-inner-lsb-write-linearized` | `array_oob_lsbwrite` | Icarus and Yosys write `a[0]` into `w[0][3]` for `w[1][-1 +: 2] = a[1:0]` | refused; Xcelium drops the whole write on the inner dimension and on the 1-D twin. The in-range twin `array_oob_lsbwrite_l1` is unchanged |
+| `iverilog-ascending-full-width-minus-select` | `label_kminus_w1` | Icarus reads `t[-1 -: 2]` over the ascending `[-1:0]` as the whole vector | refused; Xcelium reads `xx`, equal to neither side. The in-range halves live on as `label_kminus_q` and `label_kminus_p*` |
+| `iverilog-comb-assign-alias-sensitivity` | `acg_alias_assign` | Icarus 12.0 propagates the update of `w` (`assign w = t`) synchronously inside the `always_comb` block's run, so the wake-up is lost and `y` lags `a` by one change (an LRM-permitted tool split, IEEE 1800-2023 §4.7/§4.8); the model, Xcelium, Verilator and Yosys settle | the row is refused (`AlwaysComb:alias-read`, `LeanModels/Sv/CombAlias2.lean`): the design-level alias guard exists, which was the declaration's own second retirement condition. The admitted counterparts (`acg_alias_wr`, `acg_alias_copy`, `acg_alias_far`, `acg_alias_bits_ok`) agree in every tool; see "Icarus propagates a copy inside the block's own run" |
+| `iverilog-comb-port-loop-sensitivity` | `acg_alias_port` | the same mechanism through a child's input and output ports tied to one parent variable (the loop exists only after flattening) | refused by the same guard, which runs on the flattened design; the admitted twin `acg_alias_port_wr` (write, then read) agrees in every tool |
+| `iverilog-wide-index-truncation` | `fold_pcase_wide` | Icarus (Verilator on a plain `v[a]` too) truncates a bit-select index wider than 32 bits to its low 32 bits where the model and Yosys read the whole value; "no licensed-simulator confirmation is claimed" | CONTRADICTED: Xcelium, the reference, truncates too (`BIGWBS`), so the model is alone with the LRM text against three simulators; refused (`Select:wide-index`), see "Select indices wider than 32 bits" |
+
+`iverilog-single-element-minus-select` (`array_param_labels_l7`) is the one declaration
+kept on a refused row, at the lead's decision: it records the Icarus lowering of `-:` over
+a single-element range, which Xcelium's elaboration diagnostic corroborates ("Single-element
+range direction"); nothing checks it while the row is refused.
 
 ## Unavailable oracles
 

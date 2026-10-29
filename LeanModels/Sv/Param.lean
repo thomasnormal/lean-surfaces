@@ -472,8 +472,11 @@ deriving Repr, BEq, Inhabited
 (the extractor resolves named, ordered, `.name` and `.*` connections).
 `input`: the actual is a value expression of the instantiating scope
 (`none` = unconnected; `net` = the port is a net, so an unconnected one
-reads z — a variable port reads its initial x). `output`: the actual is an
-assignment target of the instantiating scope (`none` = unconnected).
+reads z — a variable port reads its initial x; on a CONNECTED input `net`
+marks the one shape Xcelium binds bit for bit — a net formal fed by a bare
+net actual — so a narrower actual there is `PortConn:net-width`,
+`Hier2.lean`). `output`: the actual is an assignment target of the
+instantiating scope (`none` = unconnected).
 `unsupported`: a loud connection (inout, interface port, port default, …). -/
 inductive PConn where
   | input (port : String) (actual : Option PExpr) (net : Bool)

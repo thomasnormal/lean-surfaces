@@ -62,7 +62,9 @@ from oracle_disagreements import HarnessError  # noqa: E402
 REPO = diff_test2.REPO
 HOST = "vip-ng"
 REFSIM = "/var/tmp/thomas-ahle/fleet2/bin/refsim"
-REMOTE_ROOT = "/tmp/ta-xref"
+# Where this tool works on the host (yours alone; never a fleet directory). The
+# default is unchanged; set LS_SV_XCELIUM_REMOTE_ROOT to use another private root.
+REMOTE_ROOT = os.environ.get("LS_SV_XCELIUM_REMOTE_ROOT", "/tmp/ta-xref")
 SSH = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=20",
        "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=4"]
 NAME_OK = re.compile(r"^[A-Za-z0-9_.-]+$")

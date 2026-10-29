@@ -10,7 +10,7 @@
   "source_files": [
     {
       "path": "Examples/system-verilog/sem2/acg_alias_assign/acg_alias_assign.sv",
-      "sha256": "6f8d0d7b933baab03bcf0ae62f868da4592597a32e040d6c0bd7777446d12fe8"
+      "sha256": "82972ac93ae39482812443a0cab849b498a9c56e898712c8110fdbb092d3b84c"
     }
   ],
   "packages": [],
@@ -20,9 +20,9 @@
       {
         "kind": "Module",
         "span": {
-          "line": 15,
+          "line": 17,
           "col": 1,
-          "end_line": 25,
+          "end_line": 27,
           "end_col": 10
         },
         "name": "acg_alias_assign",
@@ -33,9 +33,9 @@
           {
             "kind": "Port",
             "span": {
-              "line": 16,
+              "line": 18,
               "col": 22,
-              "end_line": 16,
+              "end_line": 18,
               "end_col": 23
             },
             "name": "a",
@@ -47,9 +47,9 @@
                   "msb": {
                     "kind": "Int",
                     "span": {
-                      "line": 16,
+                      "line": 18,
                       "col": 17,
-                      "end_line": 16,
+                      "end_line": 18,
                       "end_col": 18
                     },
                     "value": 1,
@@ -58,9 +58,9 @@
                   "lsb": {
                     "kind": "Int",
                     "span": {
-                      "line": 16,
+                      "line": 18,
                       "col": 19,
-                      "end_line": 16,
+                      "end_line": 18,
                       "end_col": 20
                     },
                     "value": 0,
@@ -74,9 +74,9 @@
           {
             "kind": "Port",
             "span": {
-              "line": 17,
+              "line": 19,
               "col": 22,
-              "end_line": 17,
+              "end_line": 19,
               "end_col": 23
             },
             "name": "y",
@@ -88,9 +88,9 @@
                   "msb": {
                     "kind": "Int",
                     "span": {
-                      "line": 17,
+                      "line": 19,
                       "col": 17,
-                      "end_line": 17,
+                      "end_line": 19,
                       "end_col": 18
                     },
                     "value": 1,
@@ -99,9 +99,9 @@
                   "lsb": {
                     "kind": "Int",
                     "span": {
-                      "line": 17,
+                      "line": 19,
                       "col": 19,
-                      "end_line": 17,
+                      "end_line": 19,
                       "end_col": 20
                     },
                     "value": 0,
@@ -117,9 +117,9 @@
           {
             "kind": "Var",
             "span": {
-              "line": 19,
+              "line": 21,
               "col": 15,
-              "end_line": 19,
+              "end_line": 21,
               "end_col": 16
             },
             "name": "t",
@@ -130,9 +130,9 @@
                   "msb": {
                     "kind": "Int",
                     "span": {
-                      "line": 19,
+                      "line": 21,
                       "col": 10,
-                      "end_line": 19,
+                      "end_line": 21,
                       "end_col": 11
                     },
                     "value": 1,
@@ -141,9 +141,9 @@
                   "lsb": {
                     "kind": "Int",
                     "span": {
-                      "line": 19,
+                      "line": 21,
                       "col": 12,
-                      "end_line": 19,
+                      "end_line": 21,
                       "end_col": 13
                     },
                     "value": 0,
@@ -158,9 +158,9 @@
           {
             "kind": "Var",
             "span": {
-              "line": 19,
+              "line": 21,
               "col": 18,
-              "end_line": 19,
+              "end_line": 21,
               "end_col": 19
             },
             "name": "w",
@@ -171,9 +171,9 @@
                   "msb": {
                     "kind": "Int",
                     "span": {
-                      "line": 19,
+                      "line": 21,
                       "col": 10,
-                      "end_line": 19,
+                      "end_line": 21,
                       "end_col": 11
                     },
                     "value": 1,
@@ -182,9 +182,9 @@
                   "lsb": {
                     "kind": "Int",
                     "span": {
-                      "line": 19,
+                      "line": 21,
                       "col": 12,
-                      "end_line": 19,
+                      "end_line": 21,
                       "end_col": 13
                     },
                     "value": 0,
@@ -201,17 +201,17 @@
           {
             "kind": "Assign",
             "span": {
-              "line": 20,
+              "line": 22,
               "col": 10,
-              "end_line": 20,
+              "end_line": 22,
               "end_col": 15
             },
             "target": {
               "kind": "Ident",
               "span": {
-                "line": 20,
+                "line": 22,
                 "col": 10,
-                "end_line": 20,
+                "end_line": 22,
                 "end_col": 11
               },
               "width": 2,
@@ -220,9 +220,9 @@
             "value": {
               "kind": "Ident",
               "span": {
-                "line": 20,
+                "line": 22,
                 "col": 14,
-                "end_line": 20,
+                "end_line": 22,
                 "end_col": 15
               },
               "width": 2,
@@ -232,34 +232,34 @@
           {
             "kind": "AlwaysComb",
             "span": {
-              "line": 21,
+              "line": 23,
               "col": 3,
-              "end_line": 24,
+              "end_line": 26,
               "end_col": 6
             },
             "body": {
               "kind": "Block",
               "span": {
-                "line": 21,
+                "line": 23,
                 "col": 15,
-                "end_line": 24,
+                "end_line": 26,
                 "end_col": 6
               },
               "stmts": [
                 {
                   "kind": "BlockingAssign",
                   "span": {
-                    "line": 22,
+                    "line": 24,
                     "col": 5,
-                    "end_line": 22,
+                    "end_line": 24,
                     "end_col": 11
                   },
                   "target": {
                     "kind": "Ident",
                     "span": {
-                      "line": 22,
+                      "line": 24,
                       "col": 5,
-                      "end_line": 22,
+                      "end_line": 24,
                       "end_col": 6
                     },
                     "width": 2,
@@ -268,9 +268,9 @@
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 22,
+                      "line": 24,
                       "col": 9,
-                      "end_line": 22,
+                      "end_line": 24,
                       "end_col": 10
                     },
                     "width": 2,
@@ -280,17 +280,17 @@
                 {
                   "kind": "BlockingAssign",
                   "span": {
-                    "line": 23,
+                    "line": 25,
                     "col": 5,
-                    "end_line": 23,
+                    "end_line": 25,
                     "end_col": 11
                   },
                   "target": {
                     "kind": "Ident",
                     "span": {
-                      "line": 23,
+                      "line": 25,
                       "col": 5,
-                      "end_line": 23,
+                      "end_line": 25,
                       "end_col": 6
                     },
                     "width": 2,
@@ -299,9 +299,9 @@
                   "value": {
                     "kind": "Ident",
                     "span": {
-                      "line": 23,
+                      "line": 25,
                       "col": 9,
-                      "end_line": 23,
+                      "end_line": 25,
                       "end_col": 10
                     },
                     "width": 2,

@@ -10,6 +10,7 @@ Icarus), tied to the hand-built design `muxDesign` of
 -/
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.Comb2ProcExample
+import LeanModels.Sv.CombAlias2Example
 
 /-!
 # The SV source instantiates to the proved design
@@ -32,6 +33,8 @@ load_design_sv2 mux4_case from "Examples/system-verilog/sem2/mux4_case/mux4_case
 #guard mux4_case.sem.name == muxDesign.name
 #guard mux4_case.sem.decls.toList == muxDesign.decls.toList
 #guard toString (repr mux4_case.sem.processes) == toString (repr muxDesign.processes)
+-- the always_comb alias guard (`CombAlias2.lean`) leaves the instantiated design unchanged
+#guard toString (repr mux4_case.sem.aliasGuard.processes) == toString (repr mux4_case.sem.processes)
 #guard match mux4_case.sem.processes.toList with
   | [.alwaysComb body] => body.symExec mux4_case.sem [] == some muxSym
   | _ => false

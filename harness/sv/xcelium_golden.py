@@ -11,8 +11,8 @@ is the single place that defines the golden file format and its content hash.
   * `row_hash`   -- the content hash a golden entry is keyed by;
   * `load` / `save` -- the file, deterministic bytes (sorted rows, fixed indent);
   * `Xref`       -- what `diff_test2.py --golden` uses to compare a model trace
-                    with the pinned Xcelium trace (XREF-MATCH / -DIFF / -STALE /
-                    -NONE).
+                    with the pinned Xcelium trace (XREF-MATCH / -DECLARED /
+                    -DIFF / -STALE / -NONE).
 
 The file is produced by `harness/sv/xcelium_batch.py` (see
 docs/sv-xcelium-reference.md for the refresh procedure). Row layout:
@@ -121,6 +121,14 @@ class Xref:
     XREF-STALE (the pinned hash no longer matches the sources: the golden
     entry describes other sources, so nothing is claimed), XREF-NONE (no
     usable Xcelium trace: the row is not pinned, or Xcelium could not take it).
+
+    A row that carries an `oracle_disagreement` declaration naming Xcelium
+    (round 6, docs/sv-oracle-disagreements.md) is checked through the
+    `declaration` argument of `check`: the pin plays the simulator, and the
+    row is XREF-DECLARED -- counted apart from XREF-MATCH and XREF-DIFF, never
+    a match -- exactly when the pinned and the model trace are the recorded
+    ones. A declared departure that has been resolved or has changed is not a
+    status: the declaration raises `HarnessError`, a hard failure of the run.
     """
 
     def __init__(self, path=None):
@@ -130,40 +138,64 @@ class Xref:
             raise FileNotFoundError(
                 "no golden file at %s (refresh it with harness/sv/xcelium_batch.py, "
                 "see docs/sv-xcelium-reference.md)" % self.path)
-        self.counts = {"match": 0, "diff": 0, "stale": 0, "none": 0}
+        self.counts = {"match": 0, "declared": 0, "diff": 0, "stale": 0, "none": 0}
 
     @property
     def version(self):
         return (self.golden.get("simulator") or {}).get("version", "unknown")
 
-    def check(self, name, dut_sv, tb, params, model_traces, diff_traces):
+    def check(self, name, dut_sv, tb, params, model_traces, diff_traces, declaration=None):
         """Returns `(status, detail_lines)`; counts the status. `model_traces`:
         the model's traces for the accepted schedules (a list of line lists).
-        `diff_traces(sim, lean)`: the harness's trace differ."""
+        `diff_traces(sim, lean)`: the harness's trace differ. `declaration`:
+        for a row that declares an Xcelium departure, a callable taking the
+        pinned trace (or None when no usable pin exists) and returning the
+        declaration id; it raises `HarnessError` for a changed input, a
+        resolved departure or a changed trace (`diff_test2` builds it from
+        `oracle_disagreements.golden_disagreement`)."""
         entry = self.golden["rows"].get(name)
         if entry is None:
             self.counts["none"] += 1
-            return "XREF-NONE", ["no pinned Xcelium entry for this row"]
+            return "XREF-NONE", self._unchecked(declaration, "no pinned Xcelium entry for this row")
         now = row_hash(name, read_text(dut_sv), tb, params)
         if entry.get("hash") != now:
             self.counts["stale"] += 1
-            return "XREF-STALE", [
+            return "XREF-STALE", self._unchecked(declaration, (
                 "the DUT / testbench / parameters changed since the pin (%s... vs %s...): "
                 "refresh harness/sv/xcelium_golden.json (warning, not a failure)"
-                % ((entry.get("hash") or "none")[:10], now[:10])]
+                % ((entry.get("hash") or "none")[:10], now[:10])))
         if entry.get("status") != STATUS_OK:
             self.counts["none"] += 1
             msg = (entry.get("message") or "").strip().splitlines()
-            return "XREF-NONE", ["Xcelium %s: %s" % (entry.get("status"),
-                                                       msg[0] if msg else "(no message)")]
+            return "XREF-NONE", self._unchecked(declaration, "Xcelium %s: %s" % (
+                entry.get("status"), msg[0] if msg else "(no message)"))
         xtrace = entry["cycles"]
+        if declaration is not None:
+            ident = declaration(xtrace)
+            if ident:
+                self.counts["declared"] += 1
+                return "XREF-DECLARED", [
+                    "declared Xcelium departure %s: the pinned trace and the model trace are the "
+                    "recorded ones (not a match)" % ident]
         if any(xtrace == m for m in model_traces):
             self.counts["match"] += 1
             return "XREF-MATCH", []
         self.counts["diff"] += 1
         return "XREF-DIFF", (diff_traces(xtrace, model_traces[0]) or "").split("\n")
 
+    @staticmethod
+    def _unchecked(declaration, line):
+        """The detail of a status that carries no usable pin. A declared Xcelium
+        departure then cannot be re-checked against the pin, but its input
+        bindings still are (a changed source raises `HarnessError`)."""
+        if declaration is None:
+            return [line]
+        ident = declaration(None)
+        return [line, "declared Xcelium departure %s: NOT re-checked against the pin (input bindings only)"
+                % ident]
+
     def summary(self):
         c = self.counts
-        return ("xref vs pinned Xcelium %s: %d XREF-MATCH, %d XREF-DIFF, %d XREF-STALE, "
-                "%d XREF-NONE" % (self.version, c["match"], c["diff"], c["stale"], c["none"]))
+        return ("xref vs pinned Xcelium %s: %d XREF-MATCH, %d XREF-DECLARED, %d XREF-DIFF, "
+                "%d XREF-STALE, %d XREF-NONE"
+                % (self.version, c["match"], c["declared"], c["diff"], c["stale"], c["none"]))

@@ -48,6 +48,25 @@ conversions). Every other input actual narrower than its port is LOUD
 (`PortConn:context-width`) — never one reading silently chosen
 (`docs/sv-oracle-disagreements.md`, "Port connection width context").
 
+NET TO NET (round 6, H1, 2026-10-29). The rule above reads a port connection
+as the continuous assignment of IEEE 1800-2023 §23.3.3 and zero-extends a
+narrower actual (§10.7): Icarus 12.0, Verilator 5.042, Yosys 0.53 and slang
+agree. Xcelium 24.03-s004 does NOT, in exactly one shape: a NET formal (an
+`input logic [W-1:0] i` without `var` is a net, §23.2.2.3) bound to a bare
+reference to a NET actual (a `wire`, or an input port of the instantiating
+module, which is a net too) is connected bit for bit, and the formal's high
+bits stay undriven — z (warning `CUVMPW`; §23.3.3.7 permits collapsing the
+two nets). The extractor marks that shape on the connection (`PConn.input
+… net := true`, `_sym_net_bound_actual`: net formal, bare whole-net actual,
+widths not provably fixed-and-not-narrower), and when the actual is
+narrower than the port at the instance's own point `connProcs` is loud
+(`PortConn:net-width`). Unchanged, because every tool agrees (Xcelium
+included): variable actuals, proper part-selects, constants and expressions,
+variable (`var`) and 2-state formals, equal or wider actuals. Not covered,
+listed as gaps: a full-range part-select or a constant bit-select of a net
+actual (Xcelium z-fills those too), and the output direction (a narrower
+output formal into a wider whole NET target leaves z in Xcelium).
+
 Integer actuals (`.i(5)`, `.i(-1)`, `.i(g)`, `.i(N*3-1)`) arrive as their
 UNCONVERTED INT-class tree (the extractor peels slang's conversion to the
 port type of the instance it bound, which had folded the constant at that
@@ -381,6 +400,25 @@ truncation (§11.8.2 / §23.3.3). -/
 def portOut (n : String) (wp wt : Nat) : Expr2 :=
   if wp == wt then .ident n else .resize wt (.ident n)
 
+/-- Whether an input actual of self-determined width `w` (when known) is
+strictly NARROWER than the port it feeds (`wp` bits). -/
+def netNarrower (w : Option Nat) (wp : Nat) : Bool :=
+  match w with
+  | some w => decide (w < wp)
+  | none => false
+
+/-- The refusal text of `PortConn:net-width` (round 6, H1, 2026-10-29): a
+bare NET actual narrower than the NET input formal it feeds. IEEE 1800-2023
+§23.3.3/§23.3.3.8/§10.7 read the connection as a continuous assignment that
+zero-extends the source — what the model computed until then and what Icarus
+12.0, Verilator 5.042, Yosys 0.53 and slang do — but Xcelium 24.03-s004 binds
+the two nets bit for bit and leaves the formal's high bits undriven (z,
+warning CUVMPW; §23.3.3.7 permits collapsing). Variable actuals, proper
+part-selects, constants and expressions (Xcelium zero-extends those too),
+variable and 2-state formals, and equal or wider actuals are unchanged. -/
+def netWidthMsg (port : String) (wp : Nat) : String :=
+  s!"input port '{port}' ({wp} bits) is a net bound to a bare, narrower net actual: IEEE 1800-2023 §23.3.3/§10.7 zero-extend it (Icarus, Verilator, Yosys and slang agree), Xcelium 24.03 leaves the formal's high bits undriven (z, CUVMPW); refused rather than one reading chosen"
+
 /-- The continuous assignments realizing one child port `dc`'s connection
 (`[]` for an unconnected output or variable input). -/
 def connProcs (env : IEnv) (elems : List (String × Nat)) (pfx : String)
@@ -395,11 +433,25 @@ def connProcs (env : IEnv) (elems : List (String × Nat)) (pfx : String)
       else
         match actual with
         | some e =>
-            if portInOk env elems dc.width e then
-              [.assign (.ident n) (fitExpr2 env elems (some dc.width) e)]
-            else
-              [.unsupported "PortConn:context-width"
-                s!"input port '{dc.name}' ({dc.width} bits) connected to a narrower context-sensitive expression: Icarus/Yosys zero-pad its self-determined value, the LRM evaluates it at the port width"]
+            -- Round 6 (H1, 2026-10-29): a CONNECTED input with `net` set is a
+            -- net formal bound to a bare reference to a NET (the extractor's
+            -- `_sym_net_bound_actual`); when that actual is narrower than the
+            -- port here, the tools split (`netWidthMsg`).
+            match net with
+            | true =>
+                if netNarrower (selfWidth2 env elems e) dc.width then
+                  [.unsupported "PortConn:net-width" (netWidthMsg dc.name dc.width)]
+                else if portInOk env elems dc.width e then
+                  [.assign (.ident n) (fitExpr2 env elems (some dc.width) e)]
+                else
+                  [.unsupported "PortConn:context-width"
+                    s!"input port '{dc.name}' ({dc.width} bits) connected to a narrower context-sensitive expression: Icarus/Yosys zero-pad its self-determined value, the LRM evaluates it at the port width"]
+            | false =>
+                if portInOk env elems dc.width e then
+                  [.assign (.ident n) (fitExpr2 env elems (some dc.width) e)]
+                else
+                  [.unsupported "PortConn:context-width"
+                    s!"input port '{dc.name}' ({dc.width} bits) connected to a narrower context-sensitive expression: Icarus/Yosys zero-pad its self-determined value, the LRM evaluates it at the port width"]
         | none =>
             if net then [.assign (.ident n) (.lit (LVec.replicate dc.width .lz))] else []
   | some (.output _ target) =>
@@ -1071,6 +1123,19 @@ private def pAnd : PExpr := .binary (.m0 .and) (.ident "p") (.ident "q")
         | [.assign (.ident "u.x") (.lit v)] => v.toBinString == "zzz" | _ => false)
 #guard (connProcs cwEnv cwElems "u." [.input "x" none false] (cwPort 3)).isEmpty
 #guard loudKind (connProcs cwEnv cwElems "u." [] (cwPort 3)) == some "PortConn:missing"
+-- Round 6 (H1): a CONNECTED input with `net` set (a net formal bound to a bare
+-- net actual) is loud when the actual is narrower than the port, and
+-- unchanged otherwise — equal or wider actual, `net` unset (a variable
+-- actual or formal, an expression: every tool zero-extends those).
+private def cwNetConn (e : PExpr) : List PConn := [.input "x" (some e) true]
+#guard loudKind (connProcs cwEnv cwElems "u." (cwNetConn (.ident "p")) (cwPort 4))
+  == some "PortConn:net-width"
+#guard (match connProcs cwEnv cwElems "u." (cwNetConn (.ident "p")) (cwPort 2) with
+        | [.assign (.ident "u.x") (.ident "p")] => true | _ => false)
+#guard (match connProcs cwEnv cwElems "u." (cwNetConn (.ident "p")) (cwPort 1) with
+        | [.assign (.ident "u.x") (.resize 1 (.ident "p"))] => true | _ => false)
+#guard (match connProcs cwEnv cwElems "u." (cwConn (.ident "p")) (cwPort 4) with
+        | [.assign (.ident "u.x") (.resize 4 (.ident "p"))] => true | _ => false)
 
 -- Fills in a narrower input actual take the LRM (port-width) reading
 -- anywhere, Verilator 5.042 and Yosys 0.53 agreeing (module docstring);
@@ -1090,7 +1155,7 @@ private def pFillTop (e : PExpr) : PDesign :=
     processes := []
     generates :=
       [.inst { name := "u", module := "pass"
-               conns := [.input "x" (some e) true, .output "y" (some (.ident "y"))] }] }
+               conns := [.input "x" (some e) false, .output "y" (some (.ident "y"))] }] }
 private def fillAt (e : PExpr) (p s : Nat) : Option String :=
   match (pFillTop e).instantiateH [pPass] [] with
   | .ok d =>

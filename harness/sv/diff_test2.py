@@ -66,6 +66,12 @@ an absent simulator, no simulator at all) is needed -- and reports one of
 `XREF-MATCH`, `XREF-DIFF` (the model is suspect), `XREF-STALE` (the sources
 changed since the pin: a warning), `XREF-NONE` (no usable pinned trace), plus
 totals. `XREF-DIFF` leaves the exit code alone unless `--golden-strict`.
+A row whose `oracle_disagreement` names Xcelium (`"sim": "xcelium"`, round 6:
+a departure of the reference from IEEE 1800-2023 11.5.1 that cannot be refused
+statically) reports `XREF-DECLARED` when the pinned trace and the model trace
+are exactly the recorded ones -- counted apart from `XREF-MATCH`, never a
+match, and not an `XREF-DIFF` -- and FAILS the run when the departure is
+resolved or has changed (the same alarms an Icarus declaration has).
 """
 
 import argparse
@@ -84,12 +90,14 @@ RUNNER = os.path.join("harness", "sv", "runner2.lean")
 sys.path.insert(0, HARNESS_DIR)
 import gen_tb2  # noqa: E402
 import xcelium_golden  # noqa: E402
-from oracle_disagreements import (HarnessError, SimulatorError, oracle_disagreement,
+from oracle_disagreements import (HarnessError, SimulatorError, check_declaration_bindings,
+                                 golden_disagreement, oracle_disagreement,
                                  oracle_unavailability, report_annotation)  # noqa: E402
 
 # Dependency order matters: each may import the previous ones.
 SV_LEAN_MODULES = ["Basic", "Ast", "Semantics", "Obs", "Sem2", "CombGuard2",
-                   "Param", "Param2", "Hier2", "Probe2", "RangeGuard2", "Ingest2"]
+                   "Param", "Param2", "Hier2", "Probe2", "RangeGuard2", "CombAlias2",
+                   "Ingest2"]
 
 SIGMA_NAMES = ("src", "rev")
 
@@ -250,6 +258,24 @@ def run_iverilog(dut_sv, tb_text, workdir):
                            % (p.returncode, workdir, p.stdout[-3000:],
                               p.stderr[-2000:]), "runtime", p)
     return cycle_lines(p.stdout)
+
+
+def xcelium_declaration(case, dut_sv, envelope, tb, lean_by_sigma):
+    """For `--golden`: the checker `Xref.check` calls for a row whose
+    `oracle_disagreement` names Xcelium (`"sim": "xcelium"`). Given the pinned
+    trace it is `golden_disagreement` -- the pin plays the simulator, so a
+    resolved or changed departure raises `HarnessError`; given None (no usable
+    pin: stale, absent or failed) it checks the input bindings alone."""
+    with open(dut_sv, "rb") as handle:
+        source_bytes = handle.read()
+    with open(envelope, "rb") as handle:
+        envelope_bytes = handle.read()
+
+    def check(pinned):
+        if pinned is None:
+            return check_declaration_bindings(case, source_bytes, envelope_bytes, tb)
+        return golden_disagreement(case, source_bytes, envelope_bytes, tb, pinned, lean_by_sigma)
+    return check
 
 
 def envelope_refusal_kinds(envelope):
@@ -527,6 +553,12 @@ def main():
                 print("%-24s XCHECK-FAIL: cross-check UNCONFIRMED and no simulator verified the point" % name)
                 for ln in xunconf:
                     print("  " + ln)
+            xdecl = case.get("oracle_disagreement") or {}
+            if ok and xdecl.get("sim") == "xcelium" and not declared_case:
+                # An Xcelium departure is declared on this row but no live xrun
+                # compared it: the Icarus match above is not the whole story.
+                results.append("xcelium:DECLARED DEPARTURE (%s; checked by --golden, not here)"
+                               % xdecl.get("id"))
             if ok:
                 if xprobe is not None:
                     if xunconf:
@@ -550,9 +582,13 @@ def main():
             else:
                 failures += 1
             if xref is not None:
+                tb_golden = gen_tb2.generate_tb2(top, ports, case)
+                declaration = None
+                if (case.get("oracle_disagreement") or {}).get("sim") == "xcelium":
+                    declaration = xcelium_declaration(case, dut_sv, envelope, tb_golden, lean)
                 status, detail = xref.check(
-                    name, dut_sv, gen_tb2.generate_tb2(top, ports, case),
-                    case.get("params"), [lean[sg] for sg in sigmas], diff_traces)
+                    name, dut_sv, tb_golden,
+                    case.get("params"), [lean[sg] for sg in sigmas], diff_traces, declaration)
                 print("%-24s %s" % (name, status))
                 for ln in detail:
                     print("  " + ln)
@@ -578,7 +614,8 @@ def main():
         print("--golden-strict: %d XREF-DIFF row(s)" % xref.counts["diff"])
         return 1
     return 0 if (verified or disagreements or refusals
-                 or (xref is not None and xref.counts["match"] + xref.counts["diff"])) else 1
+                 or (xref is not None and xref.counts["match"] + xref.counts["declared"]
+                     + xref.counts["diff"])) else 1
 
 
 if __name__ == "__main__":

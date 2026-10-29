@@ -219,8 +219,22 @@ def main (argv : List String) : IO UInt32 := do
       -- The legacy-select range guard (round 3 folds, `RangeGuard2.lean`):
       -- a check beside `name.sem`, at this row's point, every module of the
       -- hierarchy at its own point.
-      if let some msg := pd.legacyRangeReport lib args then
-        .error s!"Select:legacy-range: {msg}"
+      -- Round 6 (2026-10-29): the same guard family also reports
+      -- `Select:wide-index` and `Select:partial-overhang`
+      -- (`PDesign.selectGuardReport`, with the legacy half unchanged).
+      if let some (k, msg) := pd.selectGuardReport lib args then
+        .error s!"{k}: {msg}"
+      -- The always_comb alias guard (round 6, lane B, `CombAlias2.lean`): a
+      -- check beside `name.sem`, applied to the instantiated design (the
+      -- flattened one for a hierarchy, port connections included). An
+      -- `always_comb` that reads a continuous copy of a variable it writes
+      -- becomes the loud `AlwaysComb:alias-read` process, named here before
+      -- `run2` would stop at it; an admitted design is returned unchanged.
+      let d := d.aliasGuard
+      for p in d.processes do
+        match p with
+        | .unsupported "AlwaysComb:alias-read" msg => .error s!"AlwaysComb:alias-read: {msg}"
+        | _ => pure ()
       let stim ← (← getArrF case "stimulus").toList.mapM (parseEntry d)
       let signals ← (← getArrF case "signals").toList.mapM (fun s => s.getStr?)
       pure (d, stim, signals, fuel)
@@ -236,7 +250,13 @@ def main (argv : List String) : IO UInt32 := do
         else if dc.isOutput then out.putStrLn s!"PORT {dc.name} out {dc.width}"
       match run2 d σ fuel stim with
       | .timeout => err "run2: timeout (fuel exhausted / comb loop)"
-      | .unsupported m => err s!"run2: unsupported: {m}"
+      | .unsupported m =>
+          -- Round 6: name the first loud node with its text as well
+          -- (`Design2.firstLoud`): `m` carries only the node's kind.
+          let detail := match d.firstLoud with
+            | some (k, t) => s!" [{k}: {t}]"
+            | none => ""
+          err s!"run2: unsupported: {m}{detail}"
       | .ok trace => do
           let mut k := 0
           for st in trace do

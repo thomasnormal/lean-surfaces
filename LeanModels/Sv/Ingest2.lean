@@ -4,6 +4,7 @@ import LeanModels.Sv.Param2
 import LeanModels.Sv.Hier2
 import LeanModels.Sv.Probe2
 import LeanModels.Sv.RangeGuard2
+import LeanModels.Sv.CombAlias2
 
 /-!
 # SV symbolic-envelope ingestion — schema sv-0.2 (`LeanModels.Sv`)
@@ -427,7 +428,9 @@ def parsePProcess (j : Json) : Except String PProcess := do
 /-! ## Module instances (F3) -/
 
 /-- One `PortConn` (or a loud `Unsupported` connection). An unconnected
-input carries `net` (an unconnected net reads z, a variable x). -/
+input carries `net` (an unconnected net reads z, a variable x); a connected
+one carries it only when true (net formal, bare net actual: `Hier2.lean`,
+"Net to net"). -/
 def parsePConn (j : Json) : Except String PConn := do
   match ← getKind j with
   | "PortConn" =>
@@ -436,7 +439,14 @@ def parsePConn (j : Json) : Except String PConn := do
         match ← getStrField j "dir" with
         | "in" =>
             match getOptField j "expr" with
-            | some ej => return .input port (some (← parsePExpr ej)) false
+            | some ej =>
+                -- On a connected input `net` is optional: absent = false; true
+                -- marks a net formal bound to a bare net actual (round 6, H1).
+                let net ← match getOptField j "net" with
+                  | none => pure false
+                  | some (Json.bool b) => pure b
+                  | _ => throw "connected input with a non-boolean 'net' field"
+                return .input port (some (← parsePExpr ej)) net
             | none =>
                 match getOptField j "net" with
                 | some (Json.bool b) => return .input port none b
@@ -778,10 +788,36 @@ def Envelope2.legacyRangeAtPoints (e : Envelope2) (pr : Probes2) : Option (Strin
     | .ok (d', args) => (d'.legacyRangeReport e.lib args).map (renderOverrides p.overrides, ·)
     | .error _ => none
 
+/-- **The select guards at every probed point** (round 6, 2026-10-29; the
+legacy-select range guard above plus `Select:wide-index` and
+`Select:partial-overhang`, `PDesign.selectGuardReport`): the first point at
+which a module of the hierarchy is refused — `(point, kind, message)`, or
+`none`. -/
+def Envelope2.selectGuardAtPoints (e : Envelope2) (pr : Probes2) :
+    Option (String × String × String) :=
+  pr.points.findSome? fun p =>
+    match e.design.atPoint (e.design.params.map fun prm => p.overrides.lookup prm.name) with
+    | .ok (d', args) =>
+        (d'.selectGuardReport e.lib args).map fun (k, msg) => (renderOverrides p.overrides, k, msg)
+    | .error _ => none
+
+/-- **The `always_comb` alias guard at every probed point** (round 6, lane
+B, 2026-10-29; `CombAlias2.lean`, a check BESIDE `name.sem` like the select
+guards): the first point at which the instantiated design holds an
+`always_comb` that reads a continuous copy of a variable it writes —
+`(point, message)`, or `none`. -/
+def Envelope2.aliasAtPoints (e : Envelope2) (pr : Probes2) : Option (String × String) :=
+  pr.points.findSome? fun p =>
+    match e.design.atPoint (e.design.params.map fun prm => p.overrides.lookup prm.name) with
+    | .ok (d', args) => (d'.aliasReport e.lib args).map (renderOverrides p.overrides, ·)
+    | .error _ => none
+
 /-- `probeReportString` collapsed to pass/fail: `.ok n` = all `n` entries
 agree, `.error msg` = the first failing entry (or a parse error). Since
 round 3 (folds) also `.error` when the legacy-select range guard refuses
-at a probed point (`Envelope2.legacyRangeAtPoints`). -/
+at a probed point (`Envelope2.legacyRangeAtPoints`), and since round 6 when
+a select guard does (`Envelope2.selectGuardAtPoints`) or the `always_comb`
+alias guard does (`Envelope2.aliasAtPoints`). -/
 def probeCheckString (envText probesText : String) : Except String Nat := do
   let rep ← probeReportString envText probesText
   match rep.find? (fun (_, v) => !v.ok) with
@@ -789,9 +825,12 @@ def probeCheckString (envText probesText : String) : Except String Nat := do
   | none =>
       let e ← parseEnvelope2String envText
       let pr ← parseProbes2String probesText
-      match e.legacyRangeAtPoints pr with
-      | some (l, msg) => throw s!"range guard FAILED at {l}: {msg} (`Select:legacy-range`)"
-      | none => return rep.length
+      match e.selectGuardAtPoints pr with
+      | some (l, k, msg) => throw s!"range guard FAILED at {l}: {msg} (`{k}`)"
+      | none =>
+          match e.aliasAtPoints pr with
+          | some (l, msg) => throw s!"alias guard FAILED at {l}: {msg} (`AlwaysComb:alias-read`)"
+          | none => return rep.length
 
 /-- `probeCheckString` on files: the envelope at `envPath` and its sidecar
 (`probeSidecarPath`). `.ok none` = no sidecar exists (nothing checked —
@@ -901,7 +940,10 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
           -- The one-driver rule (`Hier2.lean`, "Drivers"): a design that
           -- violates it AT THE DEFAULTS is refused here, early; at any
           -- other point `name.sem` carries the loud `PortConn:driver`.
-          for p in dD.processes do
+          -- (The alias guard of `CombAlias2.lean` is applied to the design
+          -- first: it only turns an `always_comb` process into a loud one,
+          -- so every other kind below is read off unchanged.)
+          for p in dD.aliasGuard.processes do
             match p with
             | .unsupported "PortConn:driver" msg =>
                 throwErrorAt path
@@ -911,14 +953,21 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
             | .unsupported "AlwaysComb:self-read" msg =>
                 throwErrorAt path
                   "load_design_sv2: '{pathStr}' REFUSED — at the defaults, in the instantiated design of module '{dD.name}': {msg} (`AlwaysComb:self-read`, `Stmt2.combAdmits`)"
+            -- The always_comb alias guard (round 6, lane B,
+            -- `CombAlias2.lean`): a block that reads a continuous copy of
+            -- a variable it writes — a check BESIDE `name.sem`, run at the
+            -- defaults here and at every probed point below.
+            | .unsupported "AlwaysComb:alias-read" msg =>
+                throwErrorAt path
+                  "load_design_sv2: '{pathStr}' REFUSED — at the defaults, {msg} (`AlwaysComb:alias-read`, `Stmt2.aliasViol`)"
             | _ => pure ()
       | _ => pure ()
       -- The legacy-select range guard (round 3 folds, `RangeGuard2.lean`):
       -- a check BESIDE `name.sem` (whose recorded lemmas pin it), run at
       -- the defaults here and at every probed point below.
-      if let some msg := pdD.legacyRangeReport lib argsD then
+      if let some (k, msg) := pdD.selectGuardReport lib argsD then
         throwErrorAt path
-          "load_design_sv2: '{pathStr}' REFUSED — at the defaults, {msg} (`Select:legacy-range`, `PDesign.legacyRangeReport`)"
+          "load_design_sv2: '{pathStr}' REFUSED — at the defaults, {msg} (`{k}`, `PDesign.selectGuardReport`)"
   | .error _ => pure ()
   -- The multi-point cross-check (round 3 CX, `Probe2.lean`): when the
   -- envelope has a probe sidecar (`extract.py --probe-points`), every
@@ -942,9 +991,13 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
         -- The legacy-select range guard at every probed point (round 3
         -- folds): the svGolf checker always probes the task's probe,
         -- scoring and backstop points.
-        if let some (l, msg) := envl.legacyRangeAtPoints pr then
+        if let some (l, k, msg) := envl.selectGuardAtPoints pr then
           throwErrorAt path
-            "load_design_sv2: '{pathStr}' REFUSED — at the probed point {l}: {msg} (`Select:legacy-range`, `PDesign.legacyRangeReport`)"
+            "load_design_sv2: '{pathStr}' REFUSED — at the probed point {l}: {msg} (`{k}`, `PDesign.selectGuardReport`)"
+        -- The always_comb alias guard at every probed point (round 6, lane B).
+        if let some (l, msg) := envl.aliasAtPoints pr then
+          throwErrorAt path
+            "load_design_sv2: '{pathStr}' REFUSED — at the probed point {l}: {msg} (`AlwaysComb:alias-read`, `PDesign.aliasReport`)"
   let funName := (← getCurrNamespace) ++ name.getId
   let pdName := funName ++ `pdesign
   let semName := funName ++ `sem

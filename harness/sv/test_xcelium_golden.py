@@ -81,7 +81,55 @@ class XrefTests(unittest.TestCase):
         status, detail = self.check("failed", [["CYCLE 0 y=1"]])
         self.assertEqual(status, "XREF-NONE")
         self.assertIn("xrun-compile-error", detail[0])
-        self.assertEqual(self.xref.counts, {"match": 1, "diff": 1, "stale": 1, "none": 2})
+        self.assertEqual(self.xref.counts, {"match": 1, "declared": 0, "diff": 1, "stale": 1, "none": 2})
+
+    def check_declared(self, name, model, declaration):
+        return self.xref.check(name, self.dut, self.tb, {"P": 3}, model, diff_test2.diff_traces,
+                               declaration)
+
+    def test_declared_xcelium_departure_is_its_own_status(self):
+        seen = []
+
+        def declaration(pinned):
+            seen.append(pinned)
+            return "xcelium-demo" if pinned == ["CYCLE 0 y=1"] else None
+        status, detail = self.check_declared("good", [["CYCLE 0 y=0"]], declaration)
+        self.assertEqual(status, "XREF-DECLARED")
+        self.assertIn("xcelium-demo", detail[0])
+        self.assertEqual(seen, [["CYCLE 0 y=1"]])
+        self.assertEqual(self.xref.counts["declared"], 1)
+        self.assertEqual((self.xref.counts["match"], self.xref.counts["diff"]), (0, 0))
+        self.assertIn("1 XREF-DECLARED", self.xref.summary())
+
+    def test_declaration_alarms_propagate_and_none_falls_back_to_the_ordinary_status(self):
+        def alarm(pinned):
+            raise diff_test2.HarnessError("demo: disagreement resolved; retire the declaration")
+        with self.assertRaisesRegex(diff_test2.HarnessError, "resolved; retire"):
+            self.check_declared("good", [["CYCLE 0 y=1"]], alarm)
+        self.assertEqual(self.xref.counts["match"], 0)
+        # A declaration that returns None (it is about another simulator) changes nothing.
+        self.assertEqual(self.check_declared("good", [["CYCLE 0 y=1"]], lambda pinned: None)[0],
+                         "XREF-MATCH")
+        self.assertEqual(self.check_declared("good", [["CYCLE 0 y=0"]], lambda pinned: None)[0],
+                         "XREF-DIFF")
+
+    def test_without_a_usable_pin_only_the_bindings_are_checked(self):
+        calls = []
+
+        def declaration(pinned):
+            calls.append(pinned)
+            return "xcelium-demo"
+        for name in ("stale", "missing", "failed"):
+            status, detail = self.check_declared(name, [["CYCLE 0 y=1"]], declaration)
+            self.assertIn(status, ("XREF-STALE", "XREF-NONE"))
+            self.assertIn("NOT re-checked against the pin", detail[-1])
+        self.assertEqual(calls, [None, None, None])
+        self.assertEqual(self.xref.counts["declared"], 0)
+
+        def changed(pinned):
+            raise diff_test2.HarnessError("demo: changed source; review the oracle declaration")
+        with self.assertRaisesRegex(diff_test2.HarnessError, "changed source"):
+            self.check_declared("stale", [["CYCLE 0 y=1"]], changed)
 
     def test_any_accepted_schedule_matches(self):
         self.assertEqual(self.check("good", [["CYCLE 0 y=0"], ["CYCLE 0 y=1"]])[0], "XREF-MATCH")
@@ -135,7 +183,11 @@ class ClassifyTests(unittest.TestCase):
 
 
 class CommittedGoldenTests(unittest.TestCase):
-    """The checked-in pin is well formed and covers exactly the simulated rows."""
+    """The checked-in pin is well formed and every entry belongs to a row of the
+    corpus. A row the model has since REFUSED (round 6: the partly-out-of-range
+    part-selects, the narrow net actual, the wide bit-select index) keeps its entry
+    as EVIDENCE: the Xcelium trace that motivated the refusal. `--golden` reports
+    only simulated rows, so such an entry is never compared."""
 
     @classmethod
     def setUpClass(cls):
@@ -148,12 +200,21 @@ class CommittedGoldenTests(unittest.TestCase):
         self.assertRegex(self.golden["simulator"]["version"], r"\d+\.\d+")
         self.assertEqual(self.golden["simulator"]["name"], "Xcelium")
 
-    def test_rows_are_the_simulated_rows(self):
-        simulated = {n for n, c in self.cases.items() if "refusal" not in c}
+    def test_rows_are_rows_of_the_corpus(self):
         pinned = set(self.golden["rows"])
         # Rows added to cases2.json after the pin are reported as XREF-NONE,
         # not failures; rows the pin has but the corpus no longer does are stale data.
-        self.assertEqual(pinned - simulated, set(), "pinned rows no longer in the corpus")
+        self.assertEqual(pinned - set(self.cases), set(), "pinned rows no longer in the corpus")
+
+    def test_evidence_entries_are_the_pins_of_refused_rows(self):
+        refused = {n for n in self.golden["rows"] if "refusal" in self.cases[n]}
+        # A refusal row's pin is evidence, and it was taken while the row still ran:
+        # the entry is a normal ok entry with the row's own cycle count.
+        for name in refused:
+            with self.subTest(row=name):
+                entry = self.golden["rows"][name]
+                self.assertEqual(entry["status"], G.STATUS_OK)
+                self.assertEqual(len(entry["cycles"]), len(self.cases[name]["stimulus"]))
 
     def test_entries_are_well_formed(self):
         names = list(self.golden["rows"])

@@ -13,9 +13,11 @@ import unittest
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import declare_disagreement
 import diff_test
 import diff_test2
 import oracle_disagreements
+import xcelium_golden
 
 
 class OracleDisagreementTests(unittest.TestCase):
@@ -209,6 +211,302 @@ class Phase2DisagreementTests(unittest.TestCase):
         self.assertEqual(status, 0, output)
         self.assertIn("1 case(s) verified, 0 skipped, 0 declared simulator disagreement(s)", output)
         self.assertIn("PASS", output)
+
+
+class XceliumDeclarationTests(unittest.TestCase):
+    """A declaration that names Xcelium (`"sim": "xcelium"`, round 6): the
+    reference simulator departs from IEEE 1800-2023 and the departure cannot be
+    refused statically. It is checked live (`xrun`) and against the pin
+    (`--golden`) with the same alarms an Icarus declaration has. The fixture is
+    an existing Icarus-declared row re-labelled: its recorded sim_trace plays
+    the Xcelium trace (the declaration's bindings do not cover `sim`)."""
+
+    NAME = "bit_select_assign"
+
+    def setUp(self):
+        self.root = Path(diff_test2.REPO)
+        cases = json.loads(Path(diff_test2.CASES_JSON).read_text())["cases"]
+        self.case = copy.deepcopy(next(c for c in cases if c["name"] == self.NAME))
+        self.case["oracle_disagreement"]["sim"] = "xcelium"
+        self.row = self.case["oracle_disagreement"]
+        self.sim_trace = list(self.row["sim_trace"])
+        self.lean_trace = list(self.row["lean_trace"])
+        self.dut = self.root / "Examples/system-verilog" / self.case["example"] / (self.case["top"] + ".sv")
+        self.source = self.dut.read_bytes()
+        self.envelope = self.dut.with_suffix(".sv.json").read_bytes()
+        module = json.loads(self.envelope)["design"]["modules"][0]
+        self.ports = [(p["name"], p["dir"], p["width"]["resolved"]) for p in module["ports"]]
+        self.tb = diff_test2.gen_tb2.generate_tb2(self.case["top"], self.ports, self.case)
+
+    def check(self, sim="xrun", **overrides):
+        inputs = dict(case=self.case, sim=sim, source=self.source, envelope=self.envelope,
+                      tb_text=self.tb, sim_trace=self.sim_trace,
+                      lean_by_sigma={"src": self.lean_trace})
+        inputs.update(overrides)
+        return diff_test2.oracle_disagreement(**inputs)
+
+    def golden(self, **overrides):
+        inputs = dict(case=self.case, source=self.source, envelope=self.envelope,
+                      tb_text=self.tb, pinned_trace=self.sim_trace,
+                      lean_by_sigma={"src": self.lean_trace})
+        inputs.update(overrides)
+        return diff_test2.golden_disagreement(**inputs)
+
+    # --- the live check: `xrun` and `xcelium` are one simulator ---
+    def test_live_xrun_run_is_checked_and_icarus_is_left_alone(self):
+        ident = self.row["id"]
+        self.assertEqual(self.check("xrun"), ident)
+        self.assertEqual(self.check("xcelium"), ident)
+        self.assertIsNone(self.check("iverilog"))
+
+    def test_an_icarus_declaration_is_not_about_xcelium(self):
+        case = copy.deepcopy(self.case)
+        case["oracle_disagreement"]["sim"] = "iverilog"
+        self.assertIsNone(diff_test2.oracle_disagreement(
+            case, "xrun", self.source, self.envelope, self.tb, self.sim_trace,
+            {"src": self.lean_trace}))
+        self.assertEqual(diff_test2.oracle_disagreement(
+            case, "iverilog", self.source, self.envelope, self.tb, self.sim_trace,
+            {"src": self.lean_trace}), case["oracle_disagreement"]["id"])
+
+    def test_unknown_simulator_names_are_invalid(self):
+        for name in ("xrun", "verilator", "", None):
+            case = copy.deepcopy(self.case)
+            case["oracle_disagreement"]["sim"] = name
+            with self.subTest(name=name), self.assertRaisesRegex(
+                    diff_test2.HarnessError, "invalid oracle_disagreement"):
+                diff_test2.oracle_disagreement(case, "xrun", self.source, self.envelope,
+                                               self.tb, self.sim_trace, {"src": self.lean_trace})
+
+    def test_resolved_changed_and_rebound_departures_fail_live(self):
+        with self.assertRaisesRegex(diff_test2.HarnessError, "resolved; retire"):
+            self.check(sim_trace=self.lean_trace)
+        with self.assertRaisesRegex(diff_test2.HarnessError, "unexpected trace"):
+            self.check(sim_trace=[self.sim_trace[0] + " extra=0"] + self.sim_trace[1:])
+        with self.assertRaisesRegex(diff_test2.HarnessError, "unexpected trace"):
+            self.check(lean_by_sigma={"src": self.sim_trace[:-1] + [self.sim_trace[-1] + "0"]})
+        for field in ("source", "envelope", "tb_text"):
+            value = {"source": self.source, "envelope": self.envelope, "tb_text": self.tb}[field]
+            with self.subTest(field=field), self.assertRaisesRegex(diff_test2.HarnessError, "changed"):
+                self.check(**{field: value + (" " if isinstance(value, str) else b" ")})
+
+    # --- the pinned check: the pin plays the simulator ---
+    def test_the_pin_is_checked_like_a_simulator(self):
+        self.assertEqual(self.golden(), self.row["id"])
+        with self.assertRaisesRegex(diff_test2.HarnessError, "resolved; retire"):
+            self.golden(pinned_trace=self.lean_trace)
+        bad = list(self.sim_trace)
+        bad[0] = bad[0].replace("z", "0", 1)
+        with self.assertRaisesRegex(diff_test2.HarnessError, "unexpected trace"):
+            self.golden(pinned_trace=bad)
+        with self.assertRaisesRegex(diff_test2.HarnessError, "unexpected trace"):
+            self.golden(lean_by_sigma={"src": bad})
+        with self.assertRaisesRegex(diff_test2.HarnessError, "changed source"):
+            self.golden(source=self.source + b" ")
+
+    def test_an_icarus_declaration_or_none_is_not_the_pins_business(self):
+        case = copy.deepcopy(self.case)
+        case["oracle_disagreement"]["sim"] = "iverilog"
+        self.assertIsNone(self.golden(case=case))
+        del case["oracle_disagreement"]
+        self.assertIsNone(self.golden(case=case))
+
+    def test_bindings_alone_can_be_checked_when_no_pin_is_usable(self):
+        args = (self.case, self.source, self.envelope, self.tb)
+        self.assertEqual(diff_test2.check_declaration_bindings(*args), self.row["id"])
+        with self.assertRaisesRegex(diff_test2.HarnessError, "changed testbench"):
+            diff_test2.check_declaration_bindings(self.case, self.source, self.envelope, self.tb + "\n")
+        case = copy.deepcopy(self.case)
+        del case["oracle_disagreement"]
+        self.assertIsNone(diff_test2.check_declaration_bindings(case, self.source, self.envelope, self.tb))
+
+    # --- `diff_test2.py --golden`, end to end with mocked tools ---
+    def run_main(self, pin, sims=(), pin_params=None, case=None, pin_status="ok", extra=()):
+        """Run the harness with `--golden` over this one row. `pin`: the pinned
+        trace (None: no entry); the entry is keyed by the hash of the DUT, the
+        generated testbench and the row's parameters, as `xcelium_batch` does."""
+        case = case or self.case
+        golden = xcelium_golden.empty_golden()
+        golden["simulator"] = {"name": "Xcelium", "version": "test 24.03"}
+        if pin is not None:
+            tb = diff_test2.gen_tb2.generate_tb2(case["top"], self.ports, case)
+            golden["rows"][case["name"]] = {
+                "hash": xcelium_golden.row_hash(case["name"], xcelium_golden.read_text(str(self.dut)),
+                                                tb, pin_params if pin_params is not None else case.get("params")),
+                "status": pin_status, "cycles": list(pin),
+                **({"message": "xmvlog: *E,TEST (m.sv,1|1): pinned failure"} if pin_status != "ok" else {})}
+        with tempfile.TemporaryDirectory(prefix="sv2-xcelium-declaration-test-") as directory:
+            cases_path = Path(directory) / "cases.json"
+            cases_path.write_text(json.dumps({"cases": [case]}))
+            golden_path = Path(directory) / "golden.json"
+            xcelium_golden.save(golden, str(golden_path))
+            output = io.StringIO()
+            with mock.patch.object(diff_test2, "CASES_JSON", str(cases_path)), \
+                    mock.patch.object(diff_test2, "ensure_oleans"), \
+                    mock.patch.object(diff_test2, "requested_simulators", return_value=list(sims)), \
+                    mock.patch.object(diff_test2, "run_lean", return_value=(self.ports, self.lean_trace)), \
+                    mock.patch.object(diff_test2, "run_iverilog", return_value=self.lean_trace), \
+                    mock.patch.object(diff_test2, "run_xcelium", return_value=self.sim_trace), \
+                    mock.patch.object(diff_test2, "run_cmd", side_effect=AssertionError(
+                        "unit tests must not launch external commands")), \
+                    mock.patch.object(sys, "argv", ["diff_test2.py", "--workdir", directory,
+                                                    "--golden", str(golden_path), *extra]), \
+                    contextlib.redirect_stdout(output):
+                status = diff_test2.main()
+            return status, output.getvalue()
+
+    def test_golden_reports_a_declared_departure_apart_from_match_and_diff(self):
+        status, output = self.run_main(self.sim_trace)
+        self.assertEqual(status, 0, output)
+        self.assertIn("XREF-DECLARED", output)
+        self.assertIn("1 XREF-DECLARED, 0 XREF-DIFF", output)
+        self.assertIn("0 XREF-MATCH", output)
+        self.assertNotIn("XREF-MATCH\n", output)
+        self.assertNotIn("PASS", output)
+
+    def test_golden_strict_fails_on_a_diff_but_not_on_a_declared_departure(self):
+        status, output = self.run_main(self.sim_trace, extra=("--golden-strict",))
+        self.assertEqual(status, 0, output)
+        self.assertNotIn("--golden-strict:", output)
+        icarus = copy.deepcopy(self.case)
+        icarus["oracle_disagreement"]["sim"] = "iverilog"
+        status, output = self.run_main(self.sim_trace, case=icarus, extra=("--golden-strict",))
+        self.assertEqual(status, 1, output)
+        self.assertIn("--golden-strict: 1 XREF-DIFF", output)
+
+    def test_golden_resolved_changed_or_rebound_departure_is_a_hard_failure(self):
+        status, output = self.run_main(self.lean_trace)           # pin == model: resolved
+        self.assertEqual(status, 1, output)
+        self.assertIn("resolved; retire", output)
+        self.assertNotIn("XREF-MATCH\n", output)
+        changed = list(self.sim_trace)
+        changed[0] = changed[0].replace("z", "1", 1)              # pin moved to a third value
+        status, output = self.run_main(changed)
+        self.assertEqual(status, 1, output)
+        self.assertIn("unexpected trace", output)
+        self.assertNotIn("XREF-DIFF\n", output)
+
+    def test_golden_without_a_usable_pin_still_checks_the_bindings(self):
+        for pin, kwargs in ((None, {}), (self.sim_trace, {"pin_params": {"N": 99}}),
+                            (self.sim_trace, {"pin_status": "xrun-compile-error"})):
+            with self.subTest(kwargs=kwargs, pinned=pin is not None):
+                # Icarus verifies the row (it agrees with the model) so that the
+                # run has something to count; the pin contributes no verdict.
+                status, output = self.run_main(pin, sims=("iverilog",), **kwargs)
+                self.assertEqual(status, 0, output)
+                self.assertIn("NOT re-checked against the pin", output)
+                self.assertNotIn("XREF-DECLARED\n", output)
+        # ... and a changed input fails even there.
+        case = copy.deepcopy(self.case)
+        case["signals"] = case["signals"][:-1]
+        status, output = self.run_main(None, sims=("iverilog",), case=case)
+        self.assertEqual(status, 1, output)
+        self.assertIn("changed case", output)
+
+    def test_golden_leaves_an_icarus_declaration_and_an_ordinary_row_alone(self):
+        icarus = copy.deepcopy(self.case)
+        icarus["oracle_disagreement"]["sim"] = "iverilog"
+        # Icarus is the outlier on its own declared rows: the pin equals the model.
+        status, output = self.run_main(self.lean_trace, case=icarus)
+        self.assertEqual(status, 0, output)
+        self.assertIn("XREF-MATCH", output)
+        self.assertIn("1 XREF-MATCH, 0 XREF-DECLARED, 0 XREF-DIFF", output)
+        # ... and a pin that differs from the model is an ordinary XREF-DIFF.
+        status, output = self.run_main(self.sim_trace, case=icarus)
+        self.assertEqual(status, 0, output)
+        self.assertIn("0 XREF-MATCH, 0 XREF-DECLARED, 1 XREF-DIFF", output)
+
+    def test_an_icarus_only_run_names_the_declared_xcelium_departure(self):
+        status, output = self.run_main(self.sim_trace, sims=("iverilog",))
+        self.assertEqual(status, 0, output)
+        self.assertIn("iverilog:ok(src)", output)
+        self.assertIn("xcelium:DECLARED DEPARTURE (%s; checked by --golden, not here)" % self.row["id"],
+                      output)
+        self.assertIn("1 case(s) verified", output)
+
+    def test_live_xrun_and_golden_agree_on_the_same_row(self):
+        status, output = self.run_main(self.sim_trace, sims=("xrun", "iverilog"))
+        self.assertEqual(status, 0, output)
+        self.assertIn("xrun:DECLARED DISAGREEMENT", output)
+        self.assertIn("iverilog:ok(src)", output)
+        self.assertIn("XREF-DECLARED", output)
+        self.assertIn("0 case(s) verified, 0 skipped, 1 declared simulator disagreement(s)", output)
+
+
+class DeclareDisagreementTests(unittest.TestCase):
+    """`declare_disagreement.build_declaration` is the recipe of the committed
+    declarations: it reproduces them bit for bit from their own inputs."""
+
+    NAMES = ("bit_select_assign", "array_oob_inner", "hier_fill_ctx")
+
+    def inputs(self, name):
+        root = Path(diff_test2.REPO)
+        cases = json.loads(Path(diff_test2.CASES_JSON).read_text())["cases"]
+        case = copy.deepcopy(next(c for c in cases if c["name"] == name))
+        dut = root / "Examples/system-verilog" / case["example"] / (case["top"] + ".sv")
+        envelope = dut.with_suffix(".sv.json").read_bytes()
+        module = json.loads(envelope)["design"]["modules"][0]
+        ports = [(p["name"], p["dir"], p["width"]["resolved"]) for p in module["ports"]]
+        tb = diff_test2.gen_tb2.generate_tb2(case["top"], ports, case)
+        return case, dut.read_bytes(), envelope, tb
+
+    def test_the_recipe_reproduces_the_committed_declarations(self):
+        for name in self.NAMES:
+            with self.subTest(name=name):
+                case, source, envelope, tb = self.inputs(name)
+                row = case["oracle_disagreement"]
+                text = {k: row[k] for k in declare_disagreement.TEXT_FIELDS}
+                built = declare_disagreement.build_declaration(
+                    case, row["sim"], text, source, envelope, tb,
+                    row["sim_trace"], row["lean_trace"], row["sigma"])
+                self.assertEqual(built, row)
+                self.assertEqual(list(built), list(row))  # key order too
+
+    def test_digests_are_the_checkers(self):
+        case, source, envelope, tb = self.inputs("bit_select_assign")
+        digests = oracle_disagreements.binding_digests(case, source, envelope, tb)
+        self.assertEqual(sorted(digests), ["case_sha256", "envelope_sha256", "source_sha256",
+                                           "testbench_sha256"])
+        for key, value in digests.items():
+            self.assertEqual(value, case["oracle_disagreement"][key])
+
+    def test_nothing_to_declare_and_bad_input_are_refused(self):
+        case, source, envelope, tb = self.inputs("bit_select_assign")
+        row = case["oracle_disagreement"]
+        text = {k: row[k] for k in declare_disagreement.TEXT_FIELDS}
+        build = declare_disagreement.build_declaration
+        with self.assertRaisesRegex(diff_test2.HarnessError, "nothing to declare"):
+            build(case, "xcelium", text, source, envelope, tb, row["lean_trace"], row["lean_trace"])
+        with self.assertRaisesRegex(diff_test2.HarnessError, "--sim must be"):
+            build(case, "xrun", text, source, envelope, tb, row["sim_trace"], row["lean_trace"])
+        with self.assertRaisesRegex(diff_test2.HarnessError, "missing observed"):
+            build(case, "xcelium", dict(text, observed=" "), source, envelope, tb,
+                  row["sim_trace"], row["lean_trace"])
+
+    def test_a_pin_is_used_only_when_it_describes_these_sources(self):
+        case, source, envelope, tb = self.inputs("bit_select_assign")
+        dut = Path(diff_test2.REPO) / "Examples/system-verilog" / case["example"] / (case["top"] + ".sv")
+        good = xcelium_golden.row_hash(case["name"], xcelium_golden.read_text(str(dut)), tb,
+                                       case.get("params"))
+        with tempfile.TemporaryDirectory(prefix="sv-declare-test-") as directory:
+            def pin(entry):
+                golden = xcelium_golden.empty_golden()
+                golden["simulator"] = {"version": "test"}
+                golden["rows"] = {case["name"]: entry} if entry else {}
+                path = str(Path(directory) / "g.json")
+                xcelium_golden.save(golden, path)
+                return path
+            trace = ["CYCLE 0 y=1"]
+            args = (case["name"], str(dut), tb, case.get("params"))
+            self.assertEqual(declare_disagreement.pinned_trace(
+                pin({"hash": good, "status": "ok", "cycles": trace}), *args), trace)
+            for entry, message in ((None, "not pinned"),
+                                   ({"hash": "0" * 64, "status": "ok", "cycles": trace}, "stale"),
+                                   ({"hash": good, "status": "runtime-error", "cycles": [],
+                                     "message": "x"}, "not ok")):
+                with self.subTest(message=message), self.assertRaisesRegex(
+                        diff_test2.HarnessError, message):
+                    declare_disagreement.pinned_trace(pin(entry), *args)
 
 
 class UnavailableOracleTests(unittest.TestCase):

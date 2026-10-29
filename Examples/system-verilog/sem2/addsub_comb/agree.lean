@@ -12,6 +12,7 @@ hand-built design family `asDesign N` of `LeanModels/Sv/Comb2ProcExample.lean`
 -/
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.Comb2ProcExample
+import LeanModels.Sv.CombAlias2Example
 
 /-!
 # The SV source instantiates to the proved design family
@@ -36,6 +37,9 @@ def same (N : Nat) : Bool :=
   (addsub_comb.sem N).name == (asDesign N).name &&
   (addsub_comb.sem N).decls.toList == (asDesign N).decls.toList &&
   toString (repr (addsub_comb.sem N).processes) == toString (repr (asDesign N).processes) &&
+  -- the always_comb alias guard (`CombAlias2.lean`) leaves the design unchanged
+  toString (repr (addsub_comb.sem N).aliasGuard.processes) ==
+    toString (repr (addsub_comb.sem N).processes) &&
   match (addsub_comb.sem N).processes.toList with
   | [.alwaysComb body] => body.symExec (addsub_comb.sem N) [] == some (asSym N)
   | _ => false

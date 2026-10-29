@@ -120,8 +120,7 @@ emits:
 | `PortSymbol:...`, `VariableSymbol:...`, `NetSymbol:...` with `:2state` / `:range` / `:type` | unsupported declared type: 2-state nets or symbolic declarations, multidimensional packed ranges, dynamic/queue or nonintegral types (real, string, ...); the legacy/self-check path admits one-dimensional packed scalar ranges, bounded fixed-unpacked integral arrays (including flattened multidimensional cells), and untagged packed struct/union vectors |
 | `NetSymbol:<NetKind>` / `:delay` | net kinds other than `wire` (`Tri0`, `WAnd`, ...), net delays; un-driven `wand`/`wor`/`triand`/`trior` use a high-impedance `Net.init` |
 | `NetSymbol:TriReg` | charge-storage net with driver release, capacitive retention, charge strength or decay |
-| `NetSymbol:Tri0` | implicit pull-0 net with strength-sensitive four-state driver resolution |
-| `NetSymbol:Tri1` | implicit pull-1 net with strength-sensitive four-state driver resolution |
+| `NetSymbol:Tri0` / `NetSymbol:Tri1` | driven implicit pull net with strength-sensitive four-state driver resolution; an un-driven declaration uses a repeated `0`/`1` literal `Net.init` |
 | `NetSymbol:Tri` | resolved-wire net requiring a general four-state driver set and strength resolution |
 | `NetSymbol:Interconnect` | hierarchical net requiring connected-port topology and per-bit net-type resolution |
 | `ExtractorInternal:<PyException>` | defensive catch-all: the extractor itself failed on this node (should not occur; `span` is `null`, `text` is the Python error) |

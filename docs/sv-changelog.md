@@ -1,3 +1,12 @@
+## [0.1.172] — 2026-10-29
+
+Un-driven `tri0` and `tri1` declarations now lower to flat cells initialized
+with their implicit pull zero or one in the legacy self-check tier. Driven
+forms remain loud because pull-strength resolution is outside the envelope.
+The `pull_net` fixture, extractor tests, Lean receipt, and differential row
+cover both values and the driven refusal boundary. Differential coverage grows
+**426/420/0/6 → 427/421/0/6**.
+
 ## [0.1.171] — 2026-10-29
 
 Un-driven `wand`, `wor`, `triand`, and `trior` declarations now lower to

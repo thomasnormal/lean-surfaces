@@ -1,5 +1,9 @@
 # `tri1` implicit pull nets — repricing boundary
 
+The legacy self-check tier admits an un-driven `tri1` declaration as a
+declaration-initialized one cell. A pull net with any continuous driver
+remains at the existing strength-resolution boundary.
+
 The legacy envelope admits an ordinary four-state `wire` with a limited
 procedural store, but it does not represent the implicit driver attached to a
 `tri1` net. IEEE 1800-2023 §§6.6.5 and 28.15.1 give an undriven `tri1` a
@@ -7,14 +11,14 @@ logic-1 value with pull strength. An explicit driver is resolved against that
 pull driver: a sufficiently strong source overrides it, while an unknown
 source remains an unknown resolved value.
 
-## Why `Tri1` remains a boundary
+## Why driven `Tri1` remains a boundary
 
 Replacing `tri1` with a constant one loses the live driver relationship and
 changes the result as soon as a continuous source drives or releases the net.
 Replacing it with a plain `wire` loses the implicit pull and its strength
 ordering. The current envelope has no per-net driver set, strength lattice or
-four-state resolution state, so it cannot admit even the no-delay undriven
-case without fabricating a value. No second scheduler is introduced.
+four-state resolution state. Only the un-driven pull value is represented;
+driven forms remain loud, and no second scheduler is introduced.
 
 ## 2026-10-22 census and decision
 

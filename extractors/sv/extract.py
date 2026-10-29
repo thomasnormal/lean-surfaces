@@ -24371,6 +24371,22 @@ def _net_has_no_continuous_drivers(m):
 
 def convert_net(sm, m):
     nk = str(m.netType.netKind).split(".")[-1]
+    if nk in ("Tri0", "Tri1"):
+        if (getattr(m, "delay", None) is not None
+                or not _net_has_no_continuous_drivers(m)):
+            return unsupported(sm, m, "NetSymbol:" + nk)
+        w, reason = type_width(m.type)
+        if w is None:
+            return unsupported(sm, m, "NetSymbol:" + reason)
+        value = "0" if nk == "Tri0" else "1"
+        return signed_metadata({
+            "kind": "Net",
+            "span": sym_span(sm, m),
+            "name": _storage_name(m),
+            "width": w,
+            "init": {"kind": "Literal", "span": sym_span(sm, m),
+                      "width": w, "bits": value * w},
+        }, m.type)
     if nk in ("Supply0", "Supply1"):
         if (getattr(m, "delay", None) is not None
                 or not _net_has_no_continuous_drivers(m)):

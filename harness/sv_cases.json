@@ -3856,6 +3856,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "pull_net",
+      "file": "Examples/system-verilog/pull_net/pull_net.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

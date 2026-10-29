@@ -12,6 +12,18 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Un-driven implicit-pull nets — 2026-10-29
+
+The legacy self-check tier now lowers un-driven `tri0` and `tri1`
+declarations to flat cells initialized with their implicit pull zero or one.
+Driven forms remain loud because the envelope does not model pull-strength
+resolution. The `pull_net` fixture, extractor regressions, generated envelope,
+Lean receipt, and differential row cover both values and the driven refusal
+boundary.
+
+Differential coverage grows **426/420/0/6 → 427/421/0/6**; grammar coverage
+remains **219/108/111**.
+
 ## Un-driven wired-resolution nets — 2026-10-29
 
 The legacy self-check tier now lowers un-driven `wand`, `wor`, `triand`, and

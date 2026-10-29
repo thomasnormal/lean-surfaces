@@ -4023,6 +4023,18 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "parameter_metadata",
+      "file": "Examples/system-verilog/parameter_metadata/parameter_metadata.sv",
+      "module": "top",
+      "oracle": [
+        "8",
+        "a",
+        "a5",
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

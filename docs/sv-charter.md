@@ -12,6 +12,21 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Exact integral parameters in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's existing exact integral
+parameter path. Elaborated module and compilation-unit parameters contribute
+compile-time metadata and bound references, not runtime self-check cells;
+real, string, type, and unresolved parameter forms remain loud. The
+`parameter_metadata` fixture, adapter regressions, generated envelope, Lean
+receipt, and differential row cover the admitted family.
+
+Differential coverage grows **444/438/0/6 → 445/439/0/6**; grammar coverage
+remains **221/112/109**. The temporary public sv-tests audit remains **364
+clean / 437 partial / 111 include skips**; `ParameterSymbol` residuals fall
+from **8 to 0**, while `ParameterSymbol:Parameter` falls from **7 to 6**, with
+**3** sole parameter blockers remaining.
+
 ## Represented statement calls in the adapter — 2026-10-29
 
 The legacy adapter census now admits the four statement calls whose effects

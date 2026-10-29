@@ -1,3 +1,18 @@
+## [0.1.190] — 2026-10-29
+
+The legacy adapter census now follows the extractor's exact integral
+`Parameter` admission. Elaborated module and compilation-unit integral
+parameters are compile-time metadata, and their bound references no longer
+create false `ParameterSymbol` residuals; real, string, type, and unresolved
+parameter forms remain loud. The `parameter_metadata` fixture, adapter
+regressions, generated envelope, Lean receipt, and differential row cover the
+family. Differential coverage grows **444/438/0/6 → 445/439/0/6**; grammar
+coverage remains **221/112/109**. The temporary public sv-tests audit remains
+**364 clean / 437 partial / 111 include skips**; parameter-only adapter
+residuals drop from **15 to 6** (`ParameterSymbol` **8→0** and
+`ParameterSymbol:Parameter` **7→6**), with **3** sole parameter blockers
+remaining.
+
 ## [0.1.189] — 2026-10-29
 
 The legacy adapter census now admits `$display`, `$write`, `$finish`, and

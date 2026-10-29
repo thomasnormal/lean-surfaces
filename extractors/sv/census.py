@@ -177,7 +177,35 @@ def _adapter_erased_decl(symbol):
         return False
 
 
+def _adapter_integral_parameter(symbol):
+    """Whether a parameter is compile-time metadata in the legacy path.
+
+    ``convert_module`` keeps an exact integral parameter out of runtime
+    storage when slang has already elaborated its value to an ``SVInt`` with
+    the declaration's width.  Keep this predicate aligned with that
+    admission rule; real/string/type parameters and unresolved values remain
+    explicit adapter blockers.
+    """
+    try:
+        if str(getattr(symbol, "kind", "")).split(".")[-1] != "Parameter":
+            return False
+        width, _two_state, reason = extract.type_width_2s(symbol.type)
+        value = getattr(getattr(symbol, "value", None), "value", None)
+        return (reason is None and width is not None
+                and type(value).__name__ == "SVInt"
+                and value.bitWidth == width)
+    except Exception:
+        return False
+
+
 def adapter_expr(sm, e):
+    # Exact integral parameters are elaboration metadata, not self-check
+    # cells.  The converter resolves their references to literals before the
+    # normal expression walk; mirror that decision here without depending on
+    # convert_design's temporary global binding table.
+    if (type(e).__name__ == "NamedValueExpression"
+            and _adapter_integral_parameter(getattr(e, "symbol", None))):
+        return []
     # Strings have no flat self-check slot, but the extractor already has an
     # exact source-history resolver for unconditional ASCII literals,
     # concatenations, and constant replications.  Reuse that proof here so
@@ -343,6 +371,9 @@ def adapter_design_blockers(sm, comp):
                             kinds_in(extract.convert_continuous_assign(sm, m))))
                     elif k == "StatementBlock":
                         continue
+                    elif k == "Parameter":
+                        if not _adapter_integral_parameter(m):
+                            out.append(type(m).__name__ + ":" + k)
                     else:
                         out.append(type(m).__name__ + ":" + k)
                 except Exception as exc:
@@ -352,6 +383,9 @@ def adapter_design_blockers(sm, comp):
     try:
         for unit in comp.getCompilationUnits():
             for m in unit:
+                if (str(getattr(m, "kind", "")).split(".")[-1] == "Parameter"
+                        and _adapter_integral_parameter(m)):
+                    continue
                 out.append(type(m).__name__)
     except Exception as exc:
         out.append("ExtractorInternal:" + type(exc).__name__)

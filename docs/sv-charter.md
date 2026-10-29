@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Discarded pure zero-size queries in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's `zero_size_statement`
+marker for discarded `len` and `size` calls on untouched empty string and
+queue storage. Initialized, populated, and effectful histories remain loud.
+The `pure_zero_size_statements_adapter` fixture, adapter regressions, generated
+envelope, Lean receipt, and differential row cover the admitted forms.
+
+Differential coverage grows **477/471/0/6 → 478/472/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in 990-file SystemVerilog example
+sweep (989 files before this witness), the adapter census moves **752 clean /
+237 partial → 754 clean / 236 partial** and the two discarded zero-size query
+residuals fall to zero.
+
 ## Discarded pure empty associative-array queries in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's

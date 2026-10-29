@@ -248,6 +248,19 @@ class DeclarationAdapter(unittest.TestCase):
             '$display("PASS"); end endmodule')
         self.assertIn("Call:num", residual)
 
+    def test_discarded_zero_size_queries_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; string text; int values[$]; initial begin '
+                'text.len(); values.size(); $display("PASS"); end endmodule'),
+            [])
+
+    def test_populated_zero_size_query_remains_loud(self):
+        residual = blockers(
+            'module top; string text, other; initial begin text = other; '
+            'text.len(); $display("PASS"); end endmodule')
+        self.assertIn("Call:len", residual)
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

@@ -130,6 +130,7 @@ ADAPTER_PURE_STATEMENT_MARKERS = (
     "floating_math_statement",
     "associative_empty_query_statement",
     "associative_empty_endpoint_statement",
+    "zero_size_statement",
     "itor_literal_statement", "itor_pure_statement",
     "bitstoreal_literal_statement", "bitstoreal_pure_statement",
     "bitstoshortreal_literal_statement", "bitstoshortreal_pure_statement",

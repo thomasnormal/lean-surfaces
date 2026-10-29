@@ -1989,6 +1989,10 @@ def _query_dimensions(value_type):
                 dimensions.append(None)
                 unpacked += 1
                 current = current.elementType.canonicalType
+            elif kind == "QueueType":
+                dimensions.append(None)
+                unpacked += 1
+                current = current.elementType.canonicalType
             elif kind == "PackedArrayType":
                 dimensions.append((current.range.left, current.range.right))
                 current = current.elementType.canonicalType
@@ -2020,6 +2024,9 @@ def _has_mixed_unpacked_dimensions(value_type):
             elif kind == "DynamicArrayType":
                 dynamic = True
                 current = current.elementType.canonicalType
+            elif kind == "QueueType":
+                dynamic = True
+                current = current.elementType.canonicalType
             elif kind in ("PackedArrayType", "PredefinedIntegerType", "EnumType",
                           "PackedStructType", "PackedUnionType", "ScalarType"):
                 break
@@ -2028,6 +2035,101 @@ def _has_mixed_unpacked_dimensions(value_type):
         return fixed and dynamic
     except Exception:
         return False
+
+
+def _dimension_query_extent(expression):
+    """Return a source-ordered current extent for a dynamic/queue operand.
+
+    The legacy state can expose metadata for an unallocated aggregate (size
+    zero) and for one literal queue or ``new[N]`` dynamic-array allocation.
+    Keep the query position in the calculation: a query before ``new[N]``
+    must still observe the empty aggregate.  A second allocation, a dynamic
+    size, or any non-literal queue update remains outside this object-free
+    slice.
+    """
+    try:
+        if type(expression).__name__ != "NamedValueExpression":
+            return None
+        symbol = getattr(expression, "symbol", None)
+        canonical = getattr(getattr(expression, "type", None), "canonicalType", None)
+        kind = type(canonical).__name__
+        if symbol is None or kind not in ("DynamicArrayType", "QueueType"):
+            return None
+        query_position = getattr(
+            getattr(getattr(expression, "sourceRange", None), "start", None),
+            "offset", -1)
+        if query_position < 0:
+            return None
+
+        def dynamic_allocation(node):
+            while type(node).__name__ == "ConversionExpression":
+                node = getattr(node, "operand", None)
+            if type(node).__name__ != "NewArrayExpression":
+                return None
+            size = getattr(node, "sizeExpr", None)
+            if (type(size).__name__ != "IntegerLiteral"
+                    or getattr(size, "bad", False)):
+                return None
+            value = int(getattr(size, "value", -1))
+            return value if 0 <= value <= 1024 else None
+
+        def queue_literal(node):
+            value = _queue_literal_initializer_size(node)
+            return value if value is not None and value <= 1024 else None
+
+        if kind == "DynamicArrayType":
+            initializer = getattr(symbol, "initializer", None)
+            extent = 0 if initializer is None else dynamic_allocation(initializer)
+            if extent is None:
+                # A positional literal initializer has an exact sampled size.
+                elements = (_pattern_source_elements(initializer)
+                            if initializer is not None else None)
+                if (elements is not None
+                        and all(_case_source_expression_ok(
+                            element, packed_members=True)
+                                for element in elements)):
+                    extent = len(elements)
+                else:
+                    extent = None
+            if extent is None:
+                return None
+            parse = dynamic_allocation
+        else:
+            initializer = getattr(symbol, "initializer", None)
+            extent = (0 if initializer is None else queue_literal(initializer))
+            if extent is None:
+                return None
+            parse = queue_literal
+
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        assignments = []
+        if instance is not None:
+            def inspect(node):
+                if type(node).__name__ != "AssignmentExpression":
+                    return
+                lhs = getattr(node, "left", None)
+                if (type(lhs).__name__ != "NamedValueExpression"
+                        or getattr(lhs, "symbol", None) is not symbol):
+                    return
+                position = getattr(
+                    getattr(getattr(node, "sourceRange", None), "start", None),
+                    "offset", -1)
+                if 0 <= position < query_position:
+                    assignments.append((position, parse(node.right)))
+            instance.visit(inspect)
+        if len(assignments) > 1:
+            return None
+        if assignments:
+            _position, assigned = assignments[0]
+            if assigned is None:
+                return None
+            if initializer is not None:
+                return None
+            extent = assigned
+        return extent
+    except Exception:
+        return None
 
 
 def _constant_dimension_selector(expression):
@@ -7632,8 +7734,17 @@ def _convert_dimension_query(sm, expression):
         return unsupported(sm, expression, "CallExpression:dimension:arity")
     argument = arguments[0]
     shape = _fixed_query_dimensions(argument.type)
-    if shape is None and _has_mixed_unpacked_dimensions(argument.type):
-        shape = _query_dimensions(argument.type)
+    runtime_extent = _dimension_query_extent(argument)
+    direct_runtime_dimension = type(argument.type.canonicalType).__name__ in (
+        "DynamicArrayType", "QueueType")
+    if not direct_runtime_dimension:
+        runtime_extent = None
+    if shape is None:
+        queried_shape = _query_dimensions(argument.type)
+        if (queried_shape is not None
+                and (runtime_extent is not None
+                     or _has_mixed_unpacked_dimensions(argument.type))):
+            shape = queried_shape
     if shape is None or not _bits_argument_source_ok(argument):
         return unsupported(sm, expression, "CallExpression:dimension:argument")
     dimensions, unpacked = shape
@@ -7652,15 +7763,20 @@ def _convert_dimension_query(sm, expression):
             return unsupported(sm, expression, "CallExpression:dimension:index")
         selected = dimensions[dimension - 1]
         if selected is None:
-            return unsupported(sm, expression, "CallExpression:dimension:dynamic")
-        left, right = selected
+            if runtime_extent is None:
+                return unsupported(sm, expression, "CallExpression:dimension:dynamic")
+            left, right = 0, runtime_extent - 1
+        else:
+            left, right = selected
         value = {
-            "$size": abs(left - right) + 1,
+            "$size": (runtime_extent if selected is None
+                       else abs(left - right) + 1),
             "$high": max(left, right),
             "$left": left,
             "$right": right,
             "$low": min(left, right),
-            "$increment": 1 if left >= right else -1,
+            "$increment": (-1 if dimensions[dimension - 1] is None
+                           else (1 if left >= right else -1)),
         }[expression.subroutineName]
     return {
         "kind": "Literal",

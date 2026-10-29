@@ -1,3 +1,16 @@
+## [0.1.179] — 2026-10-29
+
+Dimension metadata queries now cover direct dynamic arrays and queues when the
+current extent is source-pure: unallocated aggregates report the IEEE empty
+bounds, and one literal `new[N]` dynamic-array allocation reports its sampled
+extent. `$dimensions` and `$unpacked_dimensions` retain the declared rank.
+Dynamic allocation sizes, later mutations, aliases, and value uses remain
+loud. The `dynamic_dimension_queries` fixture, extractor regressions, Lean
+receipt, and differential row cover the admitted family. Differential
+coverage grows **433/427/0/6 → 434/428/0/6**.
+The fresh all-directory 22,071-file corpus census moves **5,884 clean /
+16,120 partial → 5,901 clean / 16,103 partial** with 67 include skips.
+
 ## [0.1.178] — 2026-10-29
 
 Declaration-only 2-state arrays combining fixed and dynamic unpacked

@@ -3921,6 +3921,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "dynamic_dimension_queries",
+      "file": "Examples/system-verilog/dynamic_dimension_queries/dynamic_dimension_queries.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -12,6 +12,22 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Dynamic-array and queue dimension queries — 2026-10-29
+
+Direct dynamic arrays and queues now expose source-pure IEEE 1800-2023 §20.7
+metadata. Unallocated aggregates report empty bounds, and one constant
+`new[N]` dynamic-array allocation reports its current extent; total and
+unpacked rank queries remain type metadata. Dynamic allocation sizes, later
+mutations, aliases, and aggregate value uses remain loud because the legacy
+flat state stores no general container object. The
+`dynamic_dimension_queries` fixture, extractor regressions, generated
+envelope, Lean receipt, and differential row cover the admitted slice.
+
+Differential coverage grows **433/427/0/6 → 434/428/0/6**; grammar coverage
+is unchanged. The fresh all-directory 22,071-file corpus census moves
+**5,884 clean / 16,120 partial → 5,901 clean / 16,103 partial** with 67
+include skips.
+
 ## Mixed fixed and dynamic dimension queries — 2026-10-29
 
 Declaration-only 2-state arrays that combine fixed and dynamic unpacked

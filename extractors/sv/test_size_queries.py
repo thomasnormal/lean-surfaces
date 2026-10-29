@@ -344,6 +344,42 @@ class SizeQueries(unittest.TestCase):
             'module top; int values[]; initial $display("%0d", values.size()); endmodule')
         self.assertTrue(any(node.get("zero_size_query") for node in nodes(design)))
 
+    def test_dynamic_dimension_queries_track_empty_and_constant_new(self):
+        design = lower(
+            'module top; int values[]; initial begin '
+            'if ($left(values) != 0 || $right(values) != -1 || '
+            '$size(values) != 0 || $increment(values) != -1) $finish; '
+            'values = new[4]; '
+            'if ($left(values) != 0 || $right(values) != 3 || '
+            '$low(values) != 0 || $high(values) != 3 || '
+            '$size(values) != 4 || $increment(values) != -1 || '
+            '$dimensions(values) != 2 || $unpacked_dimensions(values) != 1) '
+            '$finish; end endmodule')
+        queries = [node for node in nodes(design)
+                   if node.get("fixed_dimension_query")]
+        self.assertEqual(len(queries), 12)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_empty_queue_dimension_queries_are_metadata_only(self):
+        design = lower(
+            'module top; int q[$]; initial begin '
+            'if ($left(q) != 0 || $right(q) != -1 || $size(q) != 0 || '
+            '$increment(q) != -1 || $dimensions(q) != 2 || '
+            '$unpacked_dimensions(q) != 1) $finish; end endmodule')
+        queries = [node for node in nodes(design)
+                   if node.get("fixed_dimension_query")]
+        self.assertEqual(len(queries), 6)
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_dynamic_dimension_query_requires_constant_allocation(self):
+        design = lower(
+            'module top; int values[]; int n; initial begin '
+            'values = new[n]; $size(values); end endmodule')
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            for node in nodes(design)))
+
     def test_mutated_queue_size_stays_loud(self):
         design = lower(
             'module top; int q[$]; initial begin q.push_back(1); '

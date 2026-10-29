@@ -1,6 +1,6 @@
 {
  "provenance": {
-  "corpus_files": 22067,
+  "corpus_files": 22071,
   "corpus_name": "sv-tests-2",
   "corpus_path": "<corpus>/tests",
   "frontend": {
@@ -9,14 +9,14 @@
   },
   "platform": "linux-x86_64",
   "python": "3.12",
-  "walk": "chapter-* only"
+  "walk": "chapter-* + all subdirs"
  },
  "schema": "sv-census-1",
  "summary": {
   "blocker_files": [
    [
     "AssignmentExpression:target",
-    2679
+    2681
    ],
    [
     "ExpressionStatement:CallExpression",
@@ -28,11 +28,11 @@
    ],
    [
     "Hierarchy:ports",
-    2400
+    2402
    ],
    [
     "VariableSymbol:2state",
-    2101
+    2097
    ],
    [
     "SubroutineSymbol:Subroutine",
@@ -40,7 +40,7 @@
    ],
    [
     "ConcurrentAssertionStatement",
-    1359
+    1361
    ],
    [
     "InvalidStatement",
@@ -68,7 +68,7 @@
    ],
    [
     "HierarchicalValueExpression",
-    752
+    753
    ],
    [
     "CovergroupType:CovergroupType",
@@ -235,10 +235,6 @@
     70
    ],
    [
-    "NetSymbol:Tri",
-    67
-   ],
-   [
     "WaitStatement",
     65
    ],
@@ -255,10 +251,6 @@
     57
    ],
    [
-    "NetSymbol:Supply1",
-    57
-   ],
-   [
     "DynamicCast:type-or-effects",
     56
    ],
@@ -268,10 +260,6 @@
    ],
    [
     "SpecifyBlockSymbol:SpecifyBlock",
-    54
-   ],
-   [
-    "NetSymbol:TriReg",
     54
    ],
    [
@@ -287,10 +275,6 @@
     49
    ],
    [
-    "NetSymbol:Supply0",
-    48
-   ],
-   [
     "Loop:invalid-compilation",
     45
    ],
@@ -303,12 +287,12 @@
     45
    ],
    [
-    "NetSymbol:WAnd",
+    "VariableSymbol:type",
     43
    ],
    [
-    "VariableSymbol:type",
-    43
+    "NetSymbol:TriReg",
+    42
    ],
    [
     "Package:initializer",
@@ -321,14 +305,6 @@
    [
     "WaitForkStatement",
     40
-   ],
-   [
-    "NetSymbol:WOr",
-    39
-   ],
-   [
-    "NetSymbol:UserDefined",
-    39
    ],
    [
     "GenericClassDefSymbol:GenericClassDef",
@@ -351,24 +327,20 @@
     37
    ],
    [
-    "NetAliasSymbol:NetAlias",
-    35
-   ],
-   [
     "RandCaseStatement",
     35
    ],
    [
-    "NetType",
-    34
-   ],
-   [
-    "CallExpression:dimension:argument",
-    34
+    "NetSymbol:UserDefined",
+    31
    ],
    [
     "NamedValueExpression:Parameter",
     31
+   ],
+   [
+    "NetType",
+    30
    ],
    [
     "InsideExpression:source",
@@ -395,16 +367,12 @@
     22
    ],
    [
-    "NetSymbol:Tri0",
-    22
-   ],
-   [
     "ContinuousAssignSymbol:delay",
     21
    ],
    [
-    "NetSymbol:Tri1",
-    20
+    "NetSymbol:Tri",
+    21
    ],
    [
     "AssignmentExpression:compound-source",
@@ -441,6 +409,10 @@
    [
     "Generate:invalid-array",
     16
+   ],
+   [
+    "NetAliasSymbol:NetAlias",
+    15
    ],
    [
     "NetSymbol:Interconnect",
@@ -571,10 +543,6 @@
     8
    ],
    [
-    "NetType:NetType",
-    7
-   ],
-   [
     "BinaryExpression:BinaryXnor",
     7
    ],
@@ -603,6 +571,10 @@
     7
    ],
    [
+    "NetType:NetType",
+    6
+   ],
+   [
     "BinaryExpression:Divide-type",
     6
    ],
@@ -627,10 +599,6 @@
     6
    ],
    [
-    "SysCall:format",
-    6
-   ],
-   [
     "Package:AnonymousProgram",
     6
    ],
@@ -641,6 +609,18 @@
    [
     "WildcardImportSymbol:WildcardImport",
     6
+   ],
+   [
+    "NetSymbol:Tri1",
+    6
+   ],
+   [
+    "NetSymbol:2state",
+    5
+   ],
+   [
+    "NetSymbol:WAnd",
+    5
    ],
    [
     "BinaryExpression:LogicalImplication:source",
@@ -671,16 +651,16 @@
     5
    ],
    [
-    "NetSymbol:TriAnd",
-    5
-   ],
-   [
-    "NetSymbol:TriOr",
+    "NetSymbol:Tri0",
     5
    ],
    [
     "EmptyMemberSymbol",
     5
+   ],
+   [
+    "NetSymbol:WOr",
+    4
    ],
    [
     "IntraAssignment:packed-target-or-value",
@@ -715,6 +695,10 @@
     4
    ],
    [
+    "CallExpression:dimension:dynamic",
+    4
+   ],
+   [
     "EmptyArgumentExpression",
     4
    ],
@@ -731,6 +715,14 @@
     4
    ],
    [
+    "NetSymbol:TriAnd",
+    4
+   ],
+   [
+    "NetSymbol:TriOr",
+    4
+   ],
+   [
     "Replication:effects",
     3
    ],
@@ -744,6 +736,14 @@
    ],
    [
     "Package:CovergroupType",
+    3
+   ],
+   [
+    "CallExpression:dimension:argument",
+    3
+   ],
+   [
+    "SysCall:format",
     3
    ],
    [
@@ -804,6 +804,10 @@
    ],
    [
     "CaseStatement:pattern",
+    2
+   ],
+   [
+    "NetSymbol:Supply0",
     2
    ],
    [
@@ -899,10 +903,6 @@
     1
    ],
    [
-    "CallExpression:dimension:dynamic",
-    1
-   ],
-   [
     "Scanf:output-target",
     1
    ],
@@ -971,19 +971,23 @@
     1
    ],
    [
+    "NetSymbol:Supply1",
+    1
+   ],
+   [
     "NetSymbol",
     1
    ]
   ],
   "by_status": {
-   "clean": 5814,
-   "partial": 16186,
+   "clean": 5901,
+   "partial": 16103,
    "skip_include": 67
   },
   "clean_by_type": {
    "(none)": [
-    529,
-    1390
+    531,
+    1392
    ],
    "compilation": [
     0,
@@ -1002,7 +1006,7 @@
     25
    ],
    "compile_error": [
-    167,
+    173,
     1745
    ],
    "compile_fail": [
@@ -1031,15 +1035,15 @@
    ],
    "runtime_error": [
     8,
-    44
+    45
    ],
    "shell": [
     52,
     52
    ],
    "simulation": [
-    5030,
-    18703
+    5109,
+    18704
    ],
    "simulation elaboration": [
     2,
@@ -1142,14 +1146,14 @@
     "unlockable": 1
    },
    "chapter-4": {
-    "blocked_by_more": 214,
-    "clean": 209,
-    "partial": 214,
+    "blocked_by_more": 213,
+    "clean": 210,
+    "partial": 213,
     "simulation_tests": 423,
     "top_residual_blockers": [
      [
       "TimedStatement:DelayControl",
-      159
+      158
      ],
      [
       "InstanceSymbol:Instance",
@@ -1231,18 +1235,18 @@
     "unlockable": 0
    },
    "chapter-6": {
-    "blocked_by_more": 401,
-    "clean": 646,
-    "partial": 402,
+    "blocked_by_more": 381,
+    "clean": 666,
+    "partial": 382,
     "simulation_tests": 1048,
     "top_residual_blockers": [
      [
-      "TimedStatement:DelayControl",
-      125
-     ],
-     [
       "VariableSymbol:2state",
       114
+     ],
+     [
+      "TimedStatement:DelayControl",
+      106
      ],
      [
       "NamedValueExpression:2state",
@@ -1254,7 +1258,7 @@
      ],
      [
       "VariableDeclStatement:2state",
-      78
+      77
      ],
      [
       "CallExpression",
@@ -1305,15 +1309,15 @@
       15
      ],
      [
-      "NetSymbol:TriReg",
-      15
-     ],
-     [
       "Call:$fatal",
       14
      ],
      [
       "EventTriggerStatement",
+      14
+     ],
+     [
+      "NetSymbol:TriReg",
       14
      ]
     ],
@@ -1323,9 +1327,9 @@
   "extractor_internal_files": [],
   "per_chapter": {
    "chapter-10": {
-    "clean": 326,
+    "clean": 342,
     "error": 0,
-    "partial": 334,
+    "partial": 318,
     "skip_include": 0,
     "total": 660,
     "unlockable": 0
@@ -1371,11 +1375,11 @@
     "unlockable": 0
    },
    "chapter-16": {
-    "clean": 66,
+    "clean": 67,
     "error": 0,
-    "partial": 1483,
+    "partial": 1484,
     "skip_include": 0,
-    "total": 1549,
+    "total": 1551,
     "unlockable": 0
    },
    "chapter-17": {
@@ -1403,9 +1407,9 @@
     "unlockable": 0
    },
    "chapter-20": {
-    "clean": 417,
+    "clean": 433,
     "error": 0,
-    "partial": 408,
+    "partial": 392,
     "skip_include": 0,
     "total": 825,
     "unlockable": 0
@@ -1419,17 +1423,17 @@
     "unlockable": 0
    },
    "chapter-22": {
-    "clean": 429,
+    "clean": 431,
     "error": 0,
-    "partial": 115,
+    "partial": 113,
     "skip_include": 28,
     "total": 572,
-    "unlockable": 2
+    "unlockable": 0
    },
    "chapter-23": {
-    "clean": 181,
+    "clean": 182,
     "error": 0,
-    "partial": 672,
+    "partial": 671,
     "skip_include": 0,
     "total": 853,
     "unlockable": 0
@@ -1467,9 +1471,9 @@
     "unlockable": 0
    },
    "chapter-28": {
-    "clean": 21,
+    "clean": 42,
     "error": 0,
-    "partial": 717,
+    "partial": 696,
     "skip_include": 0,
     "total": 738,
     "unlockable": 0
@@ -1485,9 +1489,9 @@
    "chapter-3": {
     "clean": 60,
     "error": 0,
-    "partial": 240,
+    "partial": 242,
     "skip_include": 1,
-    "total": 301,
+    "total": 303,
     "unlockable": 0
    },
    "chapter-30": {
@@ -1523,9 +1527,9 @@
     "unlockable": 0
    },
    "chapter-34": {
-    "clean": 137,
+    "clean": 138,
     "error": 0,
-    "partial": 90,
+    "partial": 89,
     "skip_include": 1,
     "total": 228,
     "unlockable": 0
@@ -1547,17 +1551,17 @@
     "unlockable": 0
    },
    "chapter-37": {
-    "clean": 176,
+    "clean": 177,
     "error": 0,
-    "partial": 242,
+    "partial": 241,
     "skip_include": 0,
     "total": 418,
     "unlockable": 0
    },
    "chapter-38": {
-    "clean": 246,
+    "clean": 247,
     "error": 0,
-    "partial": 94,
+    "partial": 93,
     "skip_include": 1,
     "total": 341,
     "unlockable": 0
@@ -1571,9 +1575,9 @@
     "unlockable": 0
    },
    "chapter-4": {
-    "clean": 210,
+    "clean": 211,
     "error": 0,
-    "partial": 217,
+    "partial": 216,
     "skip_include": 0,
     "total": 427,
     "unlockable": 0
@@ -1587,25 +1591,25 @@
     "unlockable": 0
    },
    "chapter-5": {
-    "clean": 473,
+    "clean": 474,
     "error": 0,
-    "partial": 145,
+    "partial": 144,
     "skip_include": 0,
     "total": 618,
     "unlockable": 1
    },
    "chapter-6": {
-    "clean": 664,
+    "clean": 685,
     "error": 0,
-    "partial": 528,
+    "partial": 507,
     "skip_include": 0,
     "total": 1192,
     "unlockable": 2
    },
    "chapter-7": {
-    "clean": 334,
+    "clean": 338,
     "error": 0,
-    "partial": 462,
+    "partial": 458,
     "skip_include": 0,
     "total": 796,
     "unlockable": 0
@@ -1628,7 +1632,7 @@
    }
   },
   "seed": 20260721,
-  "unlockable_simulation": 8,
-  "unlockable_total": 15
+  "unlockable_simulation": 6,
+  "unlockable_total": 13
  }
 }

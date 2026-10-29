@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 433 | 427 | 0 | 6 | sv-tests-2 declarations |
+| 434 | 428 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -447,6 +447,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `user_nettype` | `Examples/system-verilog/user_nettype/user_nettype.sv` | match | **MATCH** | `ok` | MATCH |
 | `two_state_net` | `Examples/system-verilog/two_state_net/two_state_net.sv` | match | **MATCH** | `ok` | MATCH |
 | `mixed_dimension_queries` | `Examples/system-verilog/mixed_dimension_queries/mixed_dimension_queries.sv` | match | **MATCH** | `ok` | MATCH |
+| `dynamic_dimension_queries` | `Examples/system-verilog/dynamic_dimension_queries/dynamic_dimension_queries.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -618,7 +619,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.PowerExpression` | `Examples/system-verilog/power/context_power.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ProgramDeclaration` | `Examples/system-verilog/let_expressions/program.sv` | **REFUSE** | `unsupported` non-initial process 'Hierarchy:module-kind' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ProgramHeader` | `Examples/system-verilog/let_expressions/program.sv` | **REFUSE** | `unsupported` non-initial process 'Hierarchy:module-kind' (self-check tier runs initial-only designs) |
-| `SyntaxKind.QueueDimensionSpecifier` | `Examples/system-verilog/empty_aggregate_delete_statements/empty_aggregate_delete_statements.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.QueueDimensionSpecifier` | `Examples/system-verilog/dynamic_dimension_queries/dynamic_dimension_queries.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RangeDimensionSpecifier` | `Examples/system-verilog/adder/adder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.RangeList` | `Examples/system-verilog/case_inside/array_widening.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RealLiteralExpression` | `Examples/system-verilog/discarded_pure_floating_math/discarded_pure_floating_math.sv` | **MATCH** | `ok`  |
@@ -685,24 +686,24 @@ The extractor census is validation on real sv-tests-2 files; it is separate from
 
 | corpus paths | clean | partial | include skips |
 |---:|---:|---:|---:|
-| 22067 | 5814 | 16186 | 67 |
+| 22071 | 5901 | 16103 | 67 |
 
 | blocker kind | files |
 |---|---:|
-| `AssignmentExpression:target` | 2679 |
+| `AssignmentExpression:target` | 2681 |
 | `ExpressionStatement:CallExpression` | 2675 |
 | `CallExpression` | 2563 |
-| `Hierarchy:ports` | 2400 |
-| `VariableSymbol:2state` | 2101 |
+| `Hierarchy:ports` | 2402 |
+| `VariableSymbol:2state` | 2097 |
 | `SubroutineSymbol:Subroutine` | 1466 |
-| `ConcurrentAssertionStatement` | 1359 |
+| `ConcurrentAssertionStatement` | 1361 |
 | `InvalidStatement` | 1330 |
 | `ClassType` | 1330 |
 | `NamedValueExpression:2state` | 1267 |
 | `Hierarchy:module-kind` | 1250 |
 | `PrimitiveInstanceSymbol:PrimitiveInstance` | 1154 |
 | `MemberAccessExpression` | 1018 |
-| `HierarchicalValueExpression` | 752 |
+| `HierarchicalValueExpression` | 753 |
 | `CovergroupType:CovergroupType` | 725 |
 
 The committed census provenance identifies frontend family `pyslang-11` and corpus `sv-tests-2`. The corpus snapshot is not silently substituted when the external checkout is unavailable.

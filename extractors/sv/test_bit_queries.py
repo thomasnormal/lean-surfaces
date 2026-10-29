@@ -431,15 +431,18 @@ class FixedBitQueries(unittest.TestCase):
 
     def test_dynamic_or_effectful_dimension_queries_stay_loud(self):
         for declaration, expression in (
-                ("int values[];", "$size(values)"),
-                ("int values[$];", "$high(values)"),
-                ("int values[$];", "$left(values)"),
-                ("int values[$];", "$increment(values)"),
-                ("int values[];", "$dimensions(values)"),
-                ("int values[];", "$unpacked_dimensions(values)"),
+                ("int values[$]; initial values.push_back(1);", "$high(values)"),
+                ("int values[$]; initial values.push_back(1);", "$left(values)"),
+                ("int values[$]; initial values.push_back(1);", "$increment(values)"),
                 ("logic [7:0] value;", "$size(value++)")):
             with self.subTest(declaration=declaration, expression=expression):
                 self.assert_query_refused(query_source(expression, declaration))
+
+    def test_dynamic_dimension_query_with_runtime_new_stays_loud(self):
+        source = ("module top; int values[]; int n; initial begin "
+                  "values = new[n]; $display(\"%0d\", $size(values)); "
+                  "$finish; end endmodule")
+        self.assert_query_refused(source)
 
     def test_fixed_dimension_query_keeps_invalid_compilation_loud(self):
         source = ("module top; logic [7:0] value; initial $display(\"%0d\", "

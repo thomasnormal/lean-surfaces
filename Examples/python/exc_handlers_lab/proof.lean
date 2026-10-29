@@ -13,6 +13,10 @@ private theorem floorDiv_ne_bitAnd :
     (BinOp.floorDiv == BinOp.bitAnd) = false := by
   decide
 
+private theorem floorDiv_ne_mult :
+    (BinOp.floorDiv == BinOp.mult) = false := by
+  decide
+
 private theorem len_ne_lenMult :
     ("len" == lenMultBuiltinName) = false := by
   decide
@@ -38,7 +42,7 @@ theorem tuple_handler :
   unfold callFunction
   rw [callIn.eq_2]
   py_simp [exc_handlers_lab, excHandlerNames, excHandlerTuple,
-    excHandlerAdmitted, excHandlerMatches, floorDiv_ne_bitAnd,
+    excHandlerAdmitted, excHandlerMatches, floorDiv_ne_bitAnd, floorDiv_ne_mult,
     len_ne_lenMult, lenMultBuiltinName, funsHeapFree, FunctionDefn.heapFree,
     Stmt.heapFree, Stmt.heapFreeList, moduleGenFree, funsGenAllocFree,
     Stmt.genAllocFree, Stmt.genAllocFreeList, hasUnboundLocal,

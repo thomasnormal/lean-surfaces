@@ -233,7 +233,9 @@ The four the grammar census measured REFUSED while `<<`, `|` and `&` ran. -/
   .exn (.typeError "can't multiply sequence by non-int of type 'str'")
 #guard ev (bo (sL "") .mult (iL 1048577)) == .ok (.str "")
 #guard ev (bo (sL "") .mult (iL (-1048577))) == .ok (.str "")
-#guard isUnsupported (ev (bo (iL 3) .mult (.list #[iL 1] sp)))
+-- Heap-backed list repetition is live; the expression result is a fresh heap
+-- reference (the value-side boundary tests cover its frozen contents).
+#guard ev (bo (iL 3) .mult (.list #[iL 1] sp)) matches .ok (.ref _)
 -- `%` on a str is the FORMAT operator (§`%`-formatting on strings): the
 -- bare conversions decide (a non-tuple right operand is ONE argument),
 -- the minilanguage stays out of tier.

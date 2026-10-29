@@ -12,6 +12,9 @@ load_program exc_ancestors_lab from "Examples/python/exc_ancestors_lab/exc_ances
 private theorem floorDiv_ne_bitAnd :
     (BinOp.floorDiv == BinOp.bitAnd) = false := by decide
 
+private theorem floorDiv_ne_mult :
+    (BinOp.floorDiv == BinOp.mult) = false := by decide
+
 private theorem len_ne_lenMult :
     ("len" == lenMultBuiltinName) = false := by decide
 
@@ -26,7 +29,7 @@ theorem caught_arithmetic_identity_total (value : PyInt) :
   unfold callFunction
   rw [callIn.eq_2]
   py_simp [exc_ancestors_lab, excHandlerNames, excHandlerTuple,
-    excHandlerAdmitted, excHandlerMatches, floorDiv_ne_bitAnd,
+    excHandlerAdmitted, excHandlerMatches, floorDiv_ne_bitAnd, floorDiv_ne_mult,
     len_ne_lenMult, str_ne_fstring, str_ne_starArg, str_ne_starTuple,
     str_ne_starList, lenMultBuiltinName, funsHeapFree, FunctionDefn.heapFree,
     Stmt.heapFree, Stmt.heapFreeList, moduleGenFree, funsGenAllocFree,

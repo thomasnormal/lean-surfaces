@@ -1,3 +1,13 @@
+## [0.1.187] — 2026-10-29
+
+The legacy adapter census now follows the extractor's declaration-only path
+for integral typedefs, flat integral-struct typedefs, and bound enum metadata.
+These compile-time aliases do not allocate self-check state; unsupported
+tagged, generic, or otherwise effectful aliases remain loud. The
+`typedef_metadata` fixture, adapter regressions, generated envelope, Lean
+receipt, and differential row cover the admitted forms. Differential coverage
+grows **441/435/0/6 → 442/436/0/6**; grammar coverage remains **221/112/109**.
+
 ## [0.1.186] — 2026-10-29
 
 The legacy adapter census now follows the extractor's existing erasure rules

@@ -159,7 +159,11 @@ def _minus_string(kinds):
 def _adapter_erased_decl(symbol):
     """Whether the legacy converter intentionally drops this declaration."""
     try:
-        return (extract.is_module_event_decl(symbol)
+        return (extract._declaration_only(symbol)
+                or extract.is_integral_type_alias(symbol)
+                or extract.is_flat_unpacked_struct_alias(symbol)
+                or extract.is_bound_enum_member(symbol)
+                or extract.is_module_event_decl(symbol)
                 or extract.is_module_floating_decl(symbol)
                 or extract.is_inert_event_decl(symbol)
                 or extract.is_inert_2state_floating_decl(symbol)
@@ -310,15 +314,12 @@ def adapter_design_blockers(sm, comp):
             for m in body:
                 try:
                     k = str(m.kind).split(".")[-1]
+                    if _adapter_erased_decl(m):
+                        continue
                     if k == "Port":
                         out.extend(kinds_in(extract.convert_port(sm, m)))
                     elif k in ("Variable", "Net"):
                         if m.name in port_names:
-                            continue
-                        if k == "Variable" and _adapter_erased_decl(m):
-                            # These declarations are intentionally erased by
-                            # the legacy converter; their source-pure values
-                            # are replayed at query sites instead of stored.
                             continue
                         d = (extract.convert_var(sm, m) if k == "Variable"
                              else extract.convert_net(sm, m))

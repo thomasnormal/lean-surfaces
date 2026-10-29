@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Compile-time typedef metadata in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's declaration-only path
+for integral typedefs, flat integral-struct typedefs, and bound enum metadata.
+Those aliases allocate no self-check state, while tagged, generic, and
+otherwise unsupported aliases remain loud. The `typedef_metadata` fixture,
+adapter regressions, generated envelope, Lean receipt, and differential row
+cover the admitted forms.
+
+Differential coverage grows **441/435/0/6 → 442/436/0/6**; grammar coverage
+remains **221/112/109**. The temporary public sv-tests audit remains **364
+clean / 437 partial / 111 include skips**; the sole compile-time typedef rows
+now have no adapter residuals.
+
 ## Opaque declaration erasure in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's existing erasure rules

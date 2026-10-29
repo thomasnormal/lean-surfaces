@@ -50,6 +50,14 @@ class StringAdapterHistory(unittest.TestCase):
             '$display("%0d", r); end endmodule')
         self.assertIn("NamedValueExpression:2state", residual)
 
+    def test_compile_time_typedefs_follow_converter_erasure(self):
+        self.assertEqual(
+            blockers(
+                'module top; typedef bit [7:0] byte_t; '
+                'typedef struct { bit [3:0] hi; bit [3:0] lo; } pair_t; '
+                'byte_t b; pair_t p; initial $display("PASS"); endmodule'),
+            [])
+
 
 if __name__ == "__main__":
     unittest.main()

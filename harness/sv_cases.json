@@ -4123,6 +4123,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "severity_adapter",
+      "file": "Examples/system-verilog/severity_adapter/severity_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

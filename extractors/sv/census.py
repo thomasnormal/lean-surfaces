@@ -27,17 +27,18 @@ Classification per .sv file under <corpus>/chapter-*/:
 
 Adapter (pass 2, "unlockable") analysis — computed for every parsed file:
 the self-check tier the Adapter phase builds extends M0 with exactly
-  {initial blocks, $display/$finish calls, string literals,
-   local variable declarations (M0-typed: unsigned 4-state scalar/[W-1:0])}
+  {initial blocks, represented output/severity/termination calls,
+   string literals, local variable declarations (M0-typed: unsigned 4-state
+   scalar/[W-1:0])}
 A file is UNLOCKABLE iff it is `partial` and re-walking its elaborated AST
-with those four constructs treated as supported (descending into initial
+with those adapter constructs treated as supported (descending into initial
 bodies, which the envelope collapses into a single Unsupported node) leaves
 zero blockers. Everything inside an initial body must otherwise be M0
-vocabulary (begin/end, =, <=, if/else, M0 expressions); $display/$finish
-args may be string literals or M0 expressions; local decls must be M0-typed
-with M0/string initializers. The residual blockers of non-unlockable files
-are recorded in `adapter_blockers` (tags mirror extract.py's sv_kind
-convention, plus `Call:<name>` for non-$display/$finish calls).
+vocabulary (begin/end, =, <=, if/else, M0 expressions); represented call
+arguments must pass the converter's source-purity checks; local decls must be
+M0-typed with M0/string initializers. The residual blockers of non-unlockable
+files are recorded in `adapter_blockers` (tags mirror extract.py's sv_kind
+convention, plus `Call:<name>` for non-admitted calls).
 
 Determinism: --recheck re-runs a fixed-seed 200-file random sample against
 the stored census.json and asserts identical classification.
@@ -101,10 +102,13 @@ SEED = 20260721
 SAMPLE_SIZE = 200
 FILE_TIMEOUT_S = 90
 # Statement calls whose effects are represented by the legacy self-check
-# state: output and whole-run termination.  Other system and user calls stay
-# explicit adapter boundaries even when their syntax is recognized.
+# state: output, severity evaluation, and whole-run termination.  Other
+# system and user calls stay explicit adapter boundaries even when their
+# syntax is recognized.
 ADAPTER_CALLS = ("$display", "$write", "$finish", "$stop")
 ADAPTER_PURE_DIAGNOSTIC = ("$exit", "$printtimescale")
+ADAPTER_SEVERITY = ("$info", "$warning", "$error")
+ADAPTER_FATAL = "$fatal"
 DEEP_DIVE_CHAPTERS = ("chapter-4", "chapter-6", "chapter-11")
 
 # A *real* include directive at the start of a line (`include "f" / <f> /
@@ -326,6 +330,27 @@ def adapter_stmt(sm, s):
                 if (isinstance(converted, dict)
                         and converted.get("kind") == "Empty"
                         and converted.get("pure_diagnostic") == name):
+                    return []
+            if name in ADAPTER_SEVERITY or name == ADAPTER_FATAL:
+                # The converter has already checked the complete argument
+                # shape and lowered accepted calls to the self-check's
+                # severity/fatal constructors.  Mirror that boundary here;
+                # an Unsupported conversion remains a loud adapter residual.
+                converted = extract.convert_stmt(sm, s)
+                if not isinstance(converted, dict):
+                    return ["Call:" + name]
+                if (name in ADAPTER_SEVERITY
+                        and converted.get("kind") == "SysCall"
+                        and converted.get("name") == name):
+                    return []
+                if (name in ADAPTER_SEVERITY
+                        and converted.get("kind") == "Empty"
+                        and converted.get("severity_task") == name):
+                    return []
+                if (name == ADAPTER_FATAL
+                        and converted.get("kind") == "SysCall"
+                        and converted.get("name") == "$finish"
+                        and converted.get("fatal_task") is True):
                     return []
             # The extractor erases source-pure string statement methods after
             # replaying their literal history.  Mirror only those exact

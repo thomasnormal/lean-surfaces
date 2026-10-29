@@ -12,6 +12,22 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Severity-task calls in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's represented forms of
+`$info`, `$warning`, `$error`, and `$fatal`. Severity calls evaluate their
+accepted pure arguments without adding a diagnostic stream to the self-check
+state, while `$fatal` retains its represented whole-run halt. Unsupported
+argument forms remain loud. The `severity_adapter` fixture, adapter
+regressions, generated envelope, Lean receipt, and differential row cover the
+family.
+
+Differential coverage grows **454/448/0/6 → 455/449/0/6**; grammar coverage
+remains **235/113/122**. The temporary public sv-tests audit remains **380
+clean / 421 partial / 111 include skips**; the adapter's severity and fatal
+call residuals are removed for the represented forms, while unsupported forms
+remain loud.
+
 ## Inert pure diagnostics in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's exact inert forms of

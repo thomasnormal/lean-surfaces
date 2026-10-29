@@ -1,5 +1,14 @@
 # Call statements — admitted boundary
 
+## Severity-task calls in the adapter — 2026-10-29
+
+The legacy adapter now follows the extractor's represented forms of
+`$info`, `$warning`, `$error`, and `$fatal`. Severity calls evaluate their
+accepted pure arguments while their diagnostic stream remains outside the
+self-check output; `$fatal` retains its whole-run halt. Unsupported argument
+forms stay loud at the existing call boundary. `severity_adapter` pins the
+combined adapter path.
+
 ## Default formatting for severity tasks — 2026-10-29
 
 `$info`, `$warning`, and `$error` now admit calls without a format string when
@@ -296,10 +305,8 @@ loud scheduler boundary.
 All other statement-position calls remain `Unsupported` with their source
 text. The boundary is intentional:
 
-* `$strobe` and `$monitor` publish in Postponed and need the scheduler's
-  read-only region and registration rules;
-* `$fatal`, `$error`, `$warning`, and `$info` require a diagnostic channel,
-  severity and termination/status semantics that `Out` does not represent;
+* severity calls are represented above; `$strobe` and `$monitor` still publish
+  in Postponed and need the scheduler's read-only region and registration rules;
 * queue tasks, array methods, and PLA tasks mutate aggregate or modeled device
   state not present in the scalar/packed/fixed-cell store, except for the
   source-pure empty aggregate deletions admitted above;

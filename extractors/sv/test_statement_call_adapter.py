@@ -24,11 +24,28 @@ class StatementCallAdapter(unittest.TestCase):
                 '$display(""); $stop; end endmodule'),
             [])
 
-    def test_other_statement_calls_remain_loud(self):
+    def test_supported_severity_and_fatal_calls_follow_converter(self):
+        self.assertEqual(
+            blockers(
+                'module top; logic [3:0] x; initial begin x = 4\'d3; '
+                '$info("x=%0d", x); $warning("warning"); '
+                '$error("error"); $fatal(1, "done=%0d", x); end endmodule'),
+            [])
+        self.assertEqual(
+            blockers(
+                'module top; real value; initial '
+                '$info("value=%f", value); endmodule'),
+            [])
+
+    def test_unsupported_severity_arguments_remain_loud(self):
         residual = blockers(
-            'module top; initial begin $info("diagnostic"); '
-            '$display("PASS"); end endmodule')
+            'module top; real value; initial $info(value); endmodule')
         self.assertIn("Call:$info", residual)
+
+    def test_unsupported_fatal_arguments_remain_loud(self):
+        residual = blockers(
+            'module top; real value; initial $fatal(1, value); endmodule')
+        self.assertIn("Call:$fatal", residual)
 
     def test_inert_pure_diagnostics_follow_converter_erasure(self):
         self.assertEqual(

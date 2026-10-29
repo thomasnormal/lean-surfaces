@@ -106,6 +106,7 @@ FILE_TIMEOUT_S = 90
 # system and user calls stay explicit adapter boundaries even when their
 # syntax is recognized.
 ADAPTER_CALLS = ("$display", "$write", "$finish", "$stop")
+ADAPTER_FILE_OUTPUT = ("$fdisplay", "$fwrite")
 ADAPTER_PURE_DIAGNOSTIC = (
     "$exit", "$printtimescale", "$assertcontrol",
     "$asserton", "$assertoff", "$assertkill",
@@ -420,6 +421,19 @@ def adapter_stmt(sm, s):
                         continue
                     out.extend(adapter_expr(sm, a))
                 return out
+            if name in ADAPTER_FILE_OUTPUT:
+                # The extractor maps predefined-stdout `$fdisplay`/`$fwrite`
+                # to the represented `$display`/`$write` state after checking
+                # the descriptor, format, and argument purity. Mirror that
+                # exact converter boundary; arbitrary descriptors and
+                # malformed or effectful forms remain adapter blockers.
+                converted = extract.convert_stmt(sm, s)
+                if (isinstance(converted, dict)
+                        and converted.get("kind") == "SysCall"
+                        and converted.get("name") in ("$display", "$write")
+                        and converted.get("stdout_file_descriptor") in (1, 0x80000001)):
+                    return []
+                return ["Call:" + name]
             if name in ADAPTER_PURE_DIAGNOSTIC:
                 converted = extract.convert_stmt(sm, s)
                 if (isinstance(converted, dict)

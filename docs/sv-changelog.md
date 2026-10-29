@@ -1,3 +1,13 @@
+# [0.1.225] — 2026-10-29
+
+The legacy adapter census now follows the extractor's existing predefined
+stdout lowering for `$fdisplay` and `$fwrite`: the converter has already
+checked the descriptor, literal format, and argument purity and maps these
+calls to the represented `$display`/`$write` state. Other descriptors and
+unsupported forms remain loud. Differential coverage remains **490/484/0/6**;
+the 1002-file adapter sweep moves **798/204 → 801/201** and both `$fdisplay`
+and `$fwrite` adapter residuals fall to zero.
+
 # [0.1.224] — 2026-10-29
 
 The legacy fixed-struct-array ordering lowering now accepts a repeated

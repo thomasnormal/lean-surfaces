@@ -12,6 +12,22 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Predefined-stdout file output in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's existing lowering for
+`$fdisplay` and `$fwrite` on the predefined stdout descriptors (`1` and
+`32'h8000_0001`). The converter checks the descriptor, literal format, and
+argument purity before mapping to the represented `$display`/`$write` state;
+other descriptors and unsupported forms remain loud. The existing
+`fdisplay_stdout`, `fdisplay_mcd_variable`, and `fwrite_stdout` fixtures cover
+the admitted forms.
+
+Differential coverage remains **490/484/0/6** and grammar coverage remains
+**235/113/122**. On the checked-in **1002-file** example sweep, the adapter
+census moves **798 clean / 204 partial → 801 clean / 201 partial**; the
+`Call:$fdisplay` and `Call:$fwrite` residuals fall to zero. The two
+`Call:$strobe` residuals remain scheduler-owned postponed-output cases.
+
 ## Repeated fixed-struct-array ordering keys — 2026-10-29
 
 The legacy fixed-struct-array ordering lowering now accepts a repeated

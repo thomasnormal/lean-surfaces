@@ -55,6 +55,22 @@ class StatementCallAdapter(unittest.TestCase):
                 "$display(\"PASS\"); end endmodule"),
             [])
 
+    def test_predefined_stdout_file_output_follows_converter(self):
+        self.assertEqual(
+            blockers(
+                'module top; initial begin '
+                '$fdisplay(32\'h8000_0001, "PASS"); '
+                '$fwrite(32\'h8000_0001, ""); end endmodule'),
+            [])
+
+    def test_non_stdout_file_output_remains_loud(self):
+        residual = blockers(
+            'module top; initial begin '
+            '$fdisplay(32\'h8000_0002, "x"); '
+            '$fwrite(32\'h8000_0002, "x"); end endmodule')
+        self.assertIn("Call:$fdisplay", residual)
+        self.assertIn("Call:$fwrite", residual)
+
     def test_unlowered_array_ordering_remains_loud(self):
         residual = blockers(
             'module top; int values [0:3]; initial values.sort(); endmodule')

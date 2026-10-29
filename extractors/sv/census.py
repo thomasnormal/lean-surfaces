@@ -182,6 +182,13 @@ def _adapter_erased_decl(symbol):
                 or extract.is_inert_event_decl(symbol)
                 or extract.is_inert_2state_floating_decl(symbol)
                 or extract.is_chandle_decl(symbol)
+                # The module and local declaration paths erase an
+                # uninitialized class handle (including built-in handles
+                # such as mailbox and semaphore) as opaque metadata.  Keep
+                # the adapter's declaration walk on that same boundary;
+                # reads, writes, construction, and methods still flow
+                # through their ordinary loud expression/statement paths.
+                or extract.is_inert_class_handle_decl(symbol)
                 or extract.is_string_decl(symbol)
                 or extract.is_fixed_string_array_decl(symbol))
     except Exception:

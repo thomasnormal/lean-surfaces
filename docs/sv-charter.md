@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Opaque class-handle declarations in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's existing erasure of
+uninitialized opaque class handles. `mailbox` and `semaphore` declarations in
+module and procedural scopes contribute no flat self-check state; handle reads,
+construction, assignments, and methods remain loud at their existing
+boundaries. The `opaque_handle_adapter` fixture, adapter regression, generated
+envelope, Lean receipt, and differential row cover the family.
+
+Differential coverage grows **457/451/0/6 → 458/452/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in 932-file SystemVerilog example
+sweep, `VariableDeclStatement:type` residuals fall **28 → 24** while the
+remaining object, hierarchy, and scheduler boundaries stay loud.
+
 ## Clean elaborated generate scopes in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's elaboration flattening

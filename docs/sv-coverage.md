@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 457 | 451 | 0 | 6 | sv-tests-2 declarations |
+| 458 | 452 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -152,6 +152,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `empty_dynamic_array_write` | `Examples/system-verilog/empty_dynamic_array_write/empty_dynamic_array_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_subroutine_call` | `Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_handle_decl` | `Examples/system-verilog/opaque_handle_decl/opaque_handle_decl.sv` | match | **MATCH** | `ok` | MATCH |
+| `opaque_handle_adapter` | `Examples/system-verilog/opaque_handle_adapter/opaque_handle_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_handle_null_write` | `Examples/system-verilog/opaque_handle_null_write/opaque_handle_null_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_chandle_null_write` | `Examples/system-verilog/opaque_chandle_null_write/opaque_chandle_null_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_virtual_interface_null_write` | `Examples/system-verilog/opaque_virtual_interface_null_write/opaque_virtual_interface_null_write.sv` | match | **MATCH** | `ok` | MATCH |

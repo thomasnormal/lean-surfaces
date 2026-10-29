@@ -1253,6 +1253,15 @@
       "expect": "match"
     },
     {
+      "name": "opaque_handle_adapter",
+      "file": "Examples/system-verilog/opaque_handle_adapter/opaque_handle_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "opaque_handle_null_write",
       "file": "Examples/system-verilog/opaque_handle_null_write/opaque_handle_null_write.sv",
       "module": "top",

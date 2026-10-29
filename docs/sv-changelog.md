@@ -2243,6 +2243,16 @@ constructs stay loud at the nested boundary. The `generate_adapter` fixture,
 adapter regressions, generated envelope, Lean receipt, and differential row
 cover the family. Differential coverage grows **456/450/0/6 → 457/451/0/6**;
 grammar coverage remains **235/113/122**.
+## [0.1.203] — 2026-10-29
+
+The legacy adapter census now follows the extractor's opaque class-handle
+declaration erasure. Uninitialized `mailbox` and `semaphore` handles in module
+and procedural scopes contribute no self-check state; reads, construction,
+assignments, and methods remain loud. The `opaque_handle_adapter` fixture,
+adapter regressions, generated envelope, Lean receipt, and differential row
+cover the family. Differential coverage grows **457/451/0/6 → 458/452/0/6**;
+grammar coverage remains **235/113/122**. On the checked-in 932-file example
+sweep, `VariableDeclStatement:type` residuals fall **28 → 24**.
 ## [0.1.201] — 2026-10-29
 
 The legacy adapter census now follows the extractor's assignment-block

@@ -4204,6 +4204,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "dynamic_extent_adapter",
+      "file": "Examples/system-verilog/dynamic_extent_adapter/dynamic_extent_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

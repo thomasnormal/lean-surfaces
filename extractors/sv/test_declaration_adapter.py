@@ -39,12 +39,6 @@ class DeclarationAdapter(unittest.TestCase):
                 "logic b[] = '{}; $display(\"PASS\"); end endmodule"),
             [])
 
-    def test_nonempty_dynamic_array_allocation_remains_loud(self):
-        residual = blockers(
-            'module top; initial begin bit a[] = new[1]; '
-            '$display("PASS"); end endmodule')
-        self.assertIn("VariableDeclStatement:type", residual)
-
     def test_invalid_packed_dimensions_are_compile_time_metadata(self):
         self.assertEqual(
             blockers(
@@ -57,6 +51,21 @@ class DeclarationAdapter(unittest.TestCase):
             "module top; function automatic int f(); f = 1; endfunction "
             "initial begin bit [3:x] a = f(); $display(\"PASS\"); end endmodule")
         self.assertIn("VariableDeclStatement:type", residual)
+
+    def test_constant_extent_dynamic_declaration_follows_flat_lowering(self):
+        self.assertEqual(
+            blockers(
+                'module top; initial begin int values[]; '
+                'values = new[3]; values[0] = 1; '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_symbolic_dynamic_extent_remains_loud(self):
+        residual = blockers(
+            'module top; initial begin int n; int values[]; n = 3; '
+            'values = new[n]; values[0] = 1; '
+            '$display("PASS"); end endmodule')
+        self.assertIn("AssignmentExpression:target", residual)
 
 
 if __name__ == "__main__":

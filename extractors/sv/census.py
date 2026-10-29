@@ -322,6 +322,17 @@ def adapter_stmt(sm, s):
             return []
         if _adapter_erased_decl(sym):
             return []
+        # A procedural dynamic array whose source history fixes a finite
+        # extent is lowered by the converter into independent flat cells.
+        # Mirror only that exact lowering here; unresolved extents and any
+        # other dynamic-array representation remain adapter boundaries.
+        if type(sym.type.canonicalType).__name__ == "DynamicArrayType":
+            converted = extract.convert_var(sm, sym)
+            if (isinstance(converted, list) and converted
+                    and all(isinstance(cell, dict)
+                            and cell.get("kind") in ("Var", "Empty")
+                            for cell in converted)):
+                return []
         # The converter's local-declaration path admits both four-state and
         # two-state integral cells (and applies ``Squash2`` at the latter's
         # initializer/assignment boundary).  The adapter census used to call

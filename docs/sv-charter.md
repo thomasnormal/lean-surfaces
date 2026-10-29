@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Constant-extent dynamic-array declarations in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's finite dynamic-array
+lowering. A procedural dynamic-array declaration with a source-pure constant
+extent is admitted when the converter produces only flat `Var`/`Empty` cells;
+symbolic extents and dynamic target operations remain loud. The
+`dynamic_extent_adapter` fixture, adapter regression, generated envelope, Lean
+receipt, and differential row cover the family.
+
+Differential coverage grows **463/457/0/6 → 464/458/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in 938-file SystemVerilog example
+sweep, `VariableDeclStatement:type` residuals fall **20 → 12** (671 clean /
+267 partial).
+
 ## Invalid packed-dimension declarations in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's compile-time erasure for

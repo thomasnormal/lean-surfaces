@@ -4240,6 +4240,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "assertcontrol_tasks_adapter",
+      "file": "Examples/system-verilog/assertcontrol_tasks_adapter/assertcontrol_tasks_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

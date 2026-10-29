@@ -108,6 +108,13 @@ class DeclarationAdapter(unittest.TestCase):
             '$assertcontrol(control); $display("PASS"); end endmodule')
         self.assertIn("Call:$assertcontrol", residual)
 
+    def test_bare_assertion_controls_are_pure_diagnostics(self):
+        self.assertEqual(
+            blockers(
+                'module top; initial begin $asserton; $assertoff; '
+                '$assertkill; $display("PASS"); end endmodule'),
+            [])
+
 
 if __name__ == "__main__":
     unittest.main()

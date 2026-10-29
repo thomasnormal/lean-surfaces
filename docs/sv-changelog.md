@@ -1,3 +1,15 @@
+## [0.1.201] — 2026-10-29
+
+The legacy adapter census now follows the extractor's inert lowering for bare
+`$asserton`, `$assertoff`, and `$assertkill` tasks. These assertion controls
+carry no represented self-check state; argumented forms remain loud. The
+`assertcontrol_tasks_adapter` fixture, adapter regression, generated envelope,
+Lean receipt, and differential row cover the admitted shape. Differential
+coverage grows **467/461/0/6 → 468/462/0/6**; grammar coverage remains
+**235/113/122**. On the checked-in 942-file SystemVerilog example sweep, the
+adapter census moves **686 clean / 255 partial → 688 clean / 254 partial** and
+the three bare assertion-control residuals fall to zero.
+
 ## [0.1.200] — 2026-10-29
 
 The legacy adapter census now follows the extractor's inert lowering for

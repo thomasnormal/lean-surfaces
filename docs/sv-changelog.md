@@ -1,3 +1,12 @@
+## [0.1.171] — 2026-10-29
+
+Un-driven `wand`, `wor`, `triand`, and `trior` declarations now lower to
+high-impedance flat cells in the legacy self-check tier. Existing literal
+driver resolution remains available; dynamic, strengthened, and unsupported
+multi-driver forms remain loud. The `wired_net` fixture, extractor tests, Lean
+receipt, and differential row cover the family. Differential coverage grows
+**425/419/0/6 → 426/420/0/6**.
+
 ## [0.1.170] — 2026-10-29
 
 Un-driven `tri` declarations now lower to flat cells initialized with repeated

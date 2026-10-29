@@ -24406,6 +24406,18 @@ def convert_net(sm, m):
             return unsupported(sm, m, "NetSymbol:Tri")
     resolution = None
     if nk in ("WAnd", "TriAnd", "WOr", "TriOr"):
+        if _net_has_no_continuous_drivers(m):
+            w, reason = type_width(m.type)
+            if w is None:
+                return unsupported(sm, m, "NetSymbol:" + reason)
+            return signed_metadata({
+                "kind": "Net",
+                "span": sym_span(sm, m),
+                "name": _storage_name(m),
+                "width": w,
+                "init": {"kind": "Literal", "span": sym_span(sm, m),
+                          "width": w, "bits": "z" * w},
+            }, m.type)
         if not _wired_net_has_only_literal_drivers(m):
             return unsupported(sm, m, "NetSymbol:" + nk)
         resolution = "and" if nk in ("WAnd", "TriAnd") else "or"

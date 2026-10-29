@@ -3847,6 +3847,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "wired_net",
+      "file": "Examples/system-verilog/wired_net/wired_net.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

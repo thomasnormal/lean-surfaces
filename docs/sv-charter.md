@@ -12,6 +12,18 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Un-driven wired-resolution nets — 2026-10-29
+
+The legacy self-check tier now lowers un-driven `wand`, `wor`, `triand`, and
+`trior` declarations to high-impedance flat cells. Existing literal-driver
+resolution remains available; dynamic, strengthened, and unsupported
+multi-driver forms remain loud. The `wired_net` fixture, extractor
+regressions, generated envelope, Lean receipt, and differential row cover all
+four net kinds and a driven refusal boundary.
+
+Differential coverage grows **425/419/0/6 → 426/420/0/6**; grammar coverage
+remains **219/108/111**.
+
 ## Un-driven `tri` nets — 2026-10-29
 
 The legacy self-check tier now lowers an un-driven `tri` declaration to a

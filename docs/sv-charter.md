@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Represented statement calls in the adapter — 2026-10-29
+
+The legacy adapter census now admits the four statement calls whose effects
+already have self-check state: `$display`, `$write`, `$finish`, and `$stop`.
+Their arguments continue through the existing source-purity checks, while
+other system and user calls remain loud at their existing boundaries. The
+`statement_call_adapter` fixture, adapter regressions, generated envelope, Lean
+receipt, and differential row cover the family.
+
+Differential coverage grows **443/437/0/6 → 444/438/0/6**; grammar coverage
+remains **221/112/109**. The temporary public sv-tests audit is unchanged at
+**364 clean / 437 partial / 111 include skips**; represented output/termination
+calls no longer contribute adapter-only `Call:$stop`/`Call:$write` residuals.
+
 ## Local two-state declarations in the adapter — 2026-10-29
 
 The legacy adapter census now uses the extractor's existing integral type

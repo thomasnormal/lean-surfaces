@@ -1,3 +1,12 @@
+## [0.1.189] — 2026-10-29
+
+The legacy adapter census now admits `$display`, `$write`, `$finish`, and
+`$stop`, whose output and termination effects already have self-check state.
+Other system and user calls remain loud. The `statement_call_adapter` fixture,
+adapter regressions, generated envelope, Lean receipt, and differential row
+cover the family. Differential coverage grows **443/437/0/6 → 444/438/0/6**;
+grammar coverage remains **221/112/109**.
+
 ## [0.1.188] — 2026-10-29
 
 The legacy adapter census now uses the extractor's existing integral type

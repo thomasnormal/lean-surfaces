@@ -100,7 +100,10 @@ SUMMARY_JSON = os.path.join(REPO, "docs", "sv-construct-census.json")
 SEED = 20260721
 SAMPLE_SIZE = 200
 FILE_TIMEOUT_S = 90
-ADAPTER_CALLS = ("$display", "$finish")
+# Statement calls whose effects are represented by the legacy self-check
+# state: output and whole-run termination.  Other system and user calls stay
+# explicit adapter boundaries even when their syntax is recognized.
+ADAPTER_CALLS = ("$display", "$write", "$finish", "$stop")
 DEEP_DIVE_CHAPTERS = ("chapter-4", "chapter-6", "chapter-11")
 
 # A *real* include directive at the start of a line (`include "f" / <f> /
@@ -197,7 +200,8 @@ def adapter_expr(sm, e):
 
 def adapter_stmt(sm, s):
     """Blocker tags of a statement under the adapter tier (M0 vocabulary
-    + $display/$finish + string literals + M0-typed local var decls)."""
+    + represented output/termination calls + string literals + M0-typed local
+    var decls)."""
     if getattr(s, "bad", False):
         return ["InvalidStatement"]
     cn = type(s).__name__

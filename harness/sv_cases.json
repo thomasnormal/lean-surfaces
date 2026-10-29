@@ -3883,6 +3883,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "two_state_net",
+      "file": "Examples/system-verilog/two_state_net/two_state_net.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

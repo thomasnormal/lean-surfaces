@@ -1,3 +1,13 @@
+## [0.1.175] — 2026-10-29
+
+Scalar and descending packed `wire bit` nets now lower in the legacy
+self-check tier. Un-driven cells retain high-impedance net startup; four-state
+literal continuous drivers squash `x`/`z` to zero through the existing
+two-state boundary. Other net kinds, delays, dynamic drivers, and unsupported
+shapes remain loud. The `two_state_net` fixture, extractor tests, Lean receipt,
+and differential row cover the family. Differential coverage grows
+**429/423/0/6 → 430/424/0/6**.
+
 ## [0.1.174] — 2026-10-29
 
 Plain, un-driven user-defined nettypes with four-state integral scalar or

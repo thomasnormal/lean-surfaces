@@ -12,6 +12,19 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Two-state ordinary wire nets — 2026-10-29
+
+The legacy self-check tier now admits scalar and descending packed `wire bit`
+nets. Un-driven cells retain high-impedance net startup; four-state literal
+continuous drivers use the existing time-zero lowering and squash `x`/`z` to
+zero at the two-state data boundary. Other net kinds, delays, dynamic drivers,
+and unsupported shapes remain loud. The `two_state_net` fixture, extractor
+regressions, generated envelope, Lean receipt, and differential row cover the
+floating and driven cases.
+
+Differential coverage grows **429/423/0/6 → 430/424/0/6**; grammar coverage
+remains **220/109/111**.
+
 ## Plain user-defined nettypes — 2026-10-29
 
 The legacy self-check tier now lowers an un-driven user-defined nettype with a

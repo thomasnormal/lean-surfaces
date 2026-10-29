@@ -9,6 +9,14 @@ untagged packed structs and unions use the same fixed-vector representation.
 The extractor and focused tests cover both declarations and selected reads and
 writes, including signed forms.
 
+An ordinary `wire bit` scalar or descending packed vector is also admitted as
+flat net storage. An un-driven wire keeps the net's high-impedance startup
+value; a four-state literal continuous driver is lowered through the existing
+time-zero path and `Squash2` maps its `x`/`z` bits to zero. Dynamic drivers,
+delays, other net kinds, and unsupported data shapes remain on their existing
+boundaries. The `two_state_net` fixture covers both floating cells and an
+`x` driver.
+
 The current `VariableSymbol:2state` census tag names the shapes outside that
 value tier. The 2026-10-23 corpus snapshot has 3,989 files containing the tag;
 it is the sole refusal in 8 files. The previous snapshot had 4,132 files and

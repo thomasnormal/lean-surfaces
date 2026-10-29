@@ -23833,7 +23833,11 @@ def convert_continuous_assign(sm, m):
             "RangeSelectExpression")
             and getattr(left_symbol, "kind", None) is not None
             and str(left_symbol.kind) in ("SymbolKind.Net", "SymbolKind.Variable")
-            and value is not None and value.get("kind") == "Literal"
+            and value is not None
+            and (value.get("kind") == "Literal"
+                 or (value.get("kind") == "Squash2"
+                     and isinstance(value.get("operand"), dict)
+                     and value["operand"].get("kind") == "Literal"))
             and (_integral_literal_source(e.right) or bound_literal is not None)):
         # A single whole-net or constant packed-window literal driver has no
         # future re-evaluation and no resolution choice. At time zero it is
@@ -24506,6 +24510,26 @@ def convert_net(sm, m):
         resolution = "and" if nk in ("WAnd", "TriAnd") else "or"
     if getattr(m, "delay", None) is not None:
         return unsupported(sm, m, "NetSymbol:delay")
+    if nk == "Wire" and not getattr(m.type, "isFourState", True):
+        # A two-state data type on an ordinary wire still floats as z when it
+        # has no driver; the bit-typed assignment boundary squashes x/z to
+        # zero in convert_continuous_assign.  Keep the net's wire storage and
+        # mark its data type so later writes apply that conversion.
+        w, two, reason = type_width_2s(m.type)
+        if w is None or not two:
+            return unsupported(sm, m, "NetSymbol:" + (reason or "2state"))
+        init = m.initializer
+        init_d = convert_expr(sm, init) if init is not None else None
+        if init_d is not None:
+            init_d = squash2_wrap(init_d, w)
+        return signed_metadata({
+            "kind": "Net",
+            "span": sym_span(sm, m),
+            "name": _storage_name(m),
+            "width": w,
+            "two_state": True,
+            "init": init_d,
+        }, m.type)
     # A one-dimensional fixed-unpacked wire array can use the same flat
     # storage as a variable array when each cell is addressed directly.  The
     # cells remain ``Net`` declarations, so the existing literal-driver

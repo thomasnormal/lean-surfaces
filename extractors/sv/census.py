@@ -109,6 +109,10 @@ ADAPTER_CALLS = ("$display", "$write", "$finish", "$stop")
 ADAPTER_PURE_DIAGNOSTIC = (
     "$exit", "$printtimescale", "$assertcontrol",
     "$asserton", "$assertoff", "$assertkill",
+    "$monitoron", "$monitoroff", "$system",
+    "$sdf_annotate", "$timeformat",
+    "$dumpfile", "$dumpvars", "$dumpon", "$dumpoff", "$dumpall",
+    "$dumpflush", "$dumplimit", "$dumpportsflush",
 )
 ADAPTER_SEVERITY = ("$info", "$warning", "$error")
 ADAPTER_FATAL = "$fatal"
@@ -388,7 +392,9 @@ def adapter_stmt(sm, s):
                 converted = extract.convert_stmt(sm, s)
                 if (isinstance(converted, dict)
                         and converted.get("kind") == "Empty"
-                        and converted.get("pure_diagnostic") == name):
+                        and (converted.get("pure_diagnostic") == name
+                             or (name == "$system"
+                                 and converted.get("system_null_task") is True))):
                     return []
             converted = extract.convert_stmt(sm, s)
             if (isinstance(converted, dict)

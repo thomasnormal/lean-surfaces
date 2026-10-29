@@ -115,6 +115,25 @@ class DeclarationAdapter(unittest.TestCase):
                 '$assertkill; $display("PASS"); end endmodule'),
             [])
 
+    def test_existing_pure_diagnostic_markers_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; initial begin '
+                '$monitoroff; $monitoron(); '
+                '$dumpfile("trace.vcd"); $dumpvars(0, top); '
+                '$dumpon; $dumpoff; $dumpall; $dumpflush; '
+                '$dumplimit(1024); $dumpportsflush(); '
+                '$sdf_annotate("timing.sdf"); '
+                '$timeformat(-9, 2, " ns", 10); $system(); '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_dynamic_pure_diagnostic_arguments_remain_loud(self):
+        residual = blockers(
+            'module top; string path; initial begin '
+            '$dumpfile(path); $display("PASS"); end endmodule')
+        self.assertIn("Call:$dumpfile", residual)
+
 
 if __name__ == "__main__":
     unittest.main()

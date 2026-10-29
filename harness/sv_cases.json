@@ -4249,6 +4249,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "pure_diagnostic_markers_adapter",
+      "file": "Examples/system-verilog/pure_diagnostic_markers_adapter/pure_diagnostic_markers_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

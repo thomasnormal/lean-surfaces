@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Existing pure-diagnostic markers in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's existing inert
+`pure_diagnostic` markers for monitor toggles, VCD controls, static SDF and
+time-format calls, and the null `$system` task. Dynamic or effectful arguments
+remain loud. The `pure_diagnostic_markers_adapter` fixture, adapter
+regressions, generated envelope, Lean receipt, and differential row cover the
+admitted forms.
+
+Differential coverage grows **468/462/0/6 → 469/463/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in 943-file SystemVerilog example
+sweep, the adapter census moves **688 clean / 254 partial → 698 clean / 245
+partial** and the 15 pure-diagnostic call residuals fall to zero.
+
 ## Bare assertion-control tasks in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's inert lowering for bare

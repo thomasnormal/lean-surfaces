@@ -139,6 +139,7 @@ ADAPTER_PURE_STATEMENT_MARKERS = (
     "time_scale_statement",
     "sformatf_statement",
     "floating_string_atoreal_statement",
+    "fopen_invalid_mode_statement",
     "associative_count_statement",
     "associative_exists_statement",
     "associative_empty_delete_statement",

@@ -374,6 +374,19 @@ class DeclarationAdapter(unittest.TestCase):
             'text.atoreal(); $display("PASS"); end endmodule')
         self.assertIn("Call:atoreal", residual)
 
+    def test_discarded_invalid_literal_fopen_is_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; initial begin $fopen("/tmp/invalid", "z"); '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_dynamic_fopen_mode_remains_loud(self):
+        residual = blockers(
+            'module top; string mode; initial begin mode = "z"; '
+            '$fopen("/tmp/invalid", mode); $display("PASS"); end endmodule')
+        self.assertIn("Call:$fopen", residual)
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

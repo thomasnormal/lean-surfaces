@@ -1,3 +1,17 @@
+## [0.1.220] — 2026-10-29
+
+The legacy adapter census now follows the extractor's
+`fopen_invalid_mode_statement` marker for discarded `$fopen` calls with an
+invalid literal mode. The rejected call performs no represented filesystem
+operation; dynamic modes and valid opens remain loud. The
+`pure_fopen_invalid_mode_statements_adapter` fixture, adapter regressions,
+generated envelope, Lean receipt, and differential row cover the admitted form.
+Differential coverage grows **486/480/0/6 → 487/481/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in **999-file** SystemVerilog example
+sweep (**998 files before this witness**), the adapter census moves **791 clean
+/ 207 partial → 793 clean / 206 partial**; the existing `Call:$fopen`
+residual is cleared.
+
 ## [0.1.219] — 2026-10-29
 
 The legacy adapter census now follows the extractor's

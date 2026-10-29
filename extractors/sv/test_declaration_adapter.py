@@ -361,6 +361,19 @@ class DeclarationAdapter(unittest.TestCase):
                 '$display("PASS"); end endmodule'),
             [])
 
+    def test_discarded_pure_string_atoreal_is_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; string text; initial begin text = "1.5"; '
+                'text.atoreal(); $display("PASS"); end endmodule'),
+            [])
+
+    def test_effectful_string_atoreal_remains_loud(self):
+        residual = blockers(
+            'module top; string text, other; initial begin text = other; '
+            'text.atoreal(); $display("PASS"); end endmodule')
+        self.assertIn("Call:atoreal", residual)
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

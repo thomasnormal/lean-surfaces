@@ -138,6 +138,7 @@ ADAPTER_PURE_STATEMENT_MARKERS = (
     "clog2_statement", "isunbounded_statement", "signing_statement",
     "time_scale_statement",
     "sformatf_statement",
+    "floating_string_atoreal_statement",
     "associative_count_statement",
     "associative_exists_statement",
     "associative_empty_delete_statement",

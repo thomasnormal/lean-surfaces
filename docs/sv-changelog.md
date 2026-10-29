@@ -1,3 +1,16 @@
+## [0.1.219] — 2026-10-29
+
+The legacy adapter census now follows the extractor's
+`floating_string_atoreal_statement` marker for discarded `string.atoreal()`
+conversions of source-pure ASCII strings. Dynamic, non-ASCII, and effectful
+string histories remain loud. The `pure_string_atoreal_statements_adapter`
+fixture, adapter regressions, generated envelope, Lean receipt, and
+differential row cover the admitted form. Differential coverage grows
+**485/479/0/6 → 486/480/0/6**; grammar coverage remains **235/113/122**. On
+the checked-in **998-file** SystemVerilog example sweep (**997 files before
+this witness**), the adapter census moves **789 clean / 208 partial → 791
+clean / 207 partial**.
+
 ## [0.1.218] — 2026-10-29
 
 The legacy adapter census now follows the extractor's

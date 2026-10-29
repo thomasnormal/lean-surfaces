@@ -395,6 +395,14 @@ class DeclarationAdapter(unittest.TestCase):
                 '$ftell(32\'h8000_0001); $display("PASS"); end endmodule'),
             [])
 
+    def test_discarded_literal_coverage_queries_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; initial begin '
+                '$coverage_merge(23, "db"); $coverage_save(23, "db"); '
+                '$display("PASS"); end endmodule'),
+            [])
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

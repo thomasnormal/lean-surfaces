@@ -4431,6 +4431,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "pure_coverage_nocov_statements_adapter",
+      "file": "Examples/system-verilog/pure_coverage_nocov_statements_adapter/pure_coverage_nocov_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

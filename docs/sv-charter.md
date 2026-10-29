@@ -12,6 +12,21 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Discarded literal coverage queries in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's
+`coverage_nocov_statement` marker for discarded literal coverage queries. With
+no represented coverage database, these calls return the fixed empty-coverage
+result and carry no adapter state; dynamic arguments and covergroup-backed
+designs remain loud. The `pure_coverage_nocov_statements_adapter` fixture,
+adapter regression, generated envelope, Lean receipt, and differential row
+cover the admitted forms.
+
+Differential coverage grows **488/482/0/6 → 489/483/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in **1001-file** SystemVerilog example
+sweep (**1000 files before this witness**), the adapter census moves **794 clean
+/ 206 partial → 795 clean / 206 partial**.
+
 ## Discarded stdout file-position errors in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's

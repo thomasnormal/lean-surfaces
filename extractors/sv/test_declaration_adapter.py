@@ -261,6 +261,20 @@ class DeclarationAdapter(unittest.TestCase):
             'text.len(); $display("PASS"); end endmodule')
         self.assertIn("Call:len", residual)
 
+    def test_discarded_type_and_width_queries_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; int counter; initial begin '
+                '$typename(counter++); $bits(counter++); '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_malformed_type_query_remains_loud(self):
+        residual = blockers(
+            'module top; initial begin $typename(); '
+            '$display("PASS"); end endmodule')
+        self.assertIn("InvalidStatement", residual)
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

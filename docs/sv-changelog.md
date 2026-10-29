@@ -1,3 +1,17 @@
+## [0.1.212] — 2026-10-29
+
+The legacy adapter census now follows the extractor's `typename_statement`
+and `bits_statement` markers for discarded `$typename` and `$bits` calls.
+Their expression arguments are not evaluated, while malformed and
+value-position forms remain loud. The
+`pure_type_width_query_statements_adapter` fixture, adapter regressions,
+generated envelope, Lean receipt, and differential row cover the admitted
+forms. Differential coverage grows **478/472/0/6 → 479/473/0/6**; grammar
+coverage remains **235/113/122**. On the checked-in 991-file SystemVerilog
+example sweep (990 files before this witness), the adapter census moves
+**754 clean / 236 partial → 757 clean / 234 partial** and the two discarded
+type/width query residuals fall to zero.
+
 ## [0.1.211] — 2026-10-29
 
 The legacy adapter census now follows the extractor's `zero_size_statement`

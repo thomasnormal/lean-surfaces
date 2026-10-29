@@ -189,6 +189,10 @@ def _adapter_erased_decl(symbol):
                 # reads, writes, construction, and methods still flow
                 # through their ordinary loud expression/statement paths.
                 or extract.is_inert_class_handle_decl(symbol)
+                # A direct literal semaphore constructor is also erased by
+                # the local declaration path; the semaphore methods that
+                # follow it still have their own explicit adapter boundaries.
+                or extract.is_literal_semaphore_decl(symbol)
                 or extract.is_string_decl(symbol)
                 or extract.is_fixed_string_array_decl(symbol))
     except Exception:

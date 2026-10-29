@@ -1262,6 +1262,15 @@
       "expect": "match"
     },
     {
+      "name": "literal_semaphore_adapter",
+      "file": "Examples/system-verilog/literal_semaphore_adapter/literal_semaphore_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "opaque_handle_null_write",
       "file": "Examples/system-verilog/opaque_handle_null_write/opaque_handle_null_write.sv",
       "module": "top",

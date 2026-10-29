@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Literal semaphore declarations in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's literal semaphore
+declaration shortcut. A local `semaphore` initialized by a nonnegative literal
+`new(N)` contributes no flat declaration state; dynamic constructors and all
+semaphore operations remain loud. The `literal_semaphore_adapter` fixture,
+adapter regression, generated envelope, Lean receipt, and differential row
+cover the family.
+
+Differential coverage grows **458/452/0/6 → 459/453/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in 933-file SystemVerilog example
+sweep, `VariableDeclStatement:type` residuals fall **24 → 23** while dynamic
+object behavior stays loud.
+
 ## Opaque class-handle declarations in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's existing erasure of

@@ -2253,6 +2253,17 @@ adapter regressions, generated envelope, Lean receipt, and differential row
 cover the family. Differential coverage grows **457/451/0/6 → 458/452/0/6**;
 grammar coverage remains **235/113/122**. On the checked-in 932-file example
 sweep, `VariableDeclStatement:type` residuals fall **28 → 24**.
+## [0.1.204] — 2026-10-29
+
+The legacy adapter census now follows the extractor's literal semaphore
+declaration shortcut. A local `semaphore` initialized by `new(N)` for a
+nonnegative literal contributes no flat declaration state; dynamic constructors
+and all semaphore operations remain loud. The `literal_semaphore_adapter`
+fixture, adapter regressions, generated envelope, Lean receipt, and
+differential row cover the family. Differential coverage grows
+**458/452/0/6 → 459/453/0/6**; grammar coverage remains **235/113/122**. On
+the checked-in 933-file example sweep, `VariableDeclStatement:type` residuals
+fall **24 → 23**.
 ## [0.1.201] — 2026-10-29
 
 The legacy adapter census now follows the extractor's assignment-block

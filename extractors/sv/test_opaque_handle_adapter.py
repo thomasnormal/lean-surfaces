@@ -37,6 +37,19 @@ class OpaqueHandleAdapter(unittest.TestCase):
             'initial $display("PASS"); endmodule')
         self.assertIn("VariableSymbol:2state", residual)
 
+    def test_literal_semaphore_constructor_is_metadata(self):
+        self.assertEqual(
+            blockers(
+                'module top; initial begin semaphore sem = new(5); '
+                '$display("PASS"); $finish; end endmodule'),
+            [])
+
+    def test_dynamic_semaphore_constructor_remains_loud(self):
+        residual = blockers(
+            'module top; initial begin int keys = 5; '
+            'semaphore sem = new(keys); $display("PASS"); end endmodule')
+        self.assertIn("VariableDeclStatement:type", residual)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 458 | 452 | 0 | 6 | sv-tests-2 declarations |
+| 459 | 453 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -153,6 +153,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `empty_subroutine_call` | `Examples/system-verilog/empty_subroutine_call/empty_subroutine_call.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_handle_decl` | `Examples/system-verilog/opaque_handle_decl/opaque_handle_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_handle_adapter` | `Examples/system-verilog/opaque_handle_adapter/opaque_handle_adapter.sv` | match | **MATCH** | `ok` | MATCH |
+| `literal_semaphore_adapter` | `Examples/system-verilog/literal_semaphore_adapter/literal_semaphore_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_handle_null_write` | `Examples/system-verilog/opaque_handle_null_write/opaque_handle_null_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_chandle_null_write` | `Examples/system-verilog/opaque_chandle_null_write/opaque_chandle_null_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `opaque_virtual_interface_null_write` | `Examples/system-verilog/opaque_virtual_interface_null_write/opaque_virtual_interface_null_write.sv` | match | **MATCH** | `ok` | MATCH |
@@ -626,7 +627,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.NetPortHeader` | `Examples/system-verilog/sem2/net_z_flat/net_z_flat.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.NetTypeDeclaration` | `Examples/system-verilog/user_nettype/user_nettype.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NewArrayExpression` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.NewClassExpression` | `Examples/system-verilog/literal_semaphore_constructor/literal_semaphore_constructor.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.NewClassExpression` | `Examples/system-verilog/literal_semaphore_adapter/literal_semaphore_adapter.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NonAnsiPortList` | `Examples/system-verilog/sem2/pi_explicit/pi_explicit.sv` | **REFUSE** | `unsupported` non-initial process 'AlwaysPosedge:clk' (self-check tier runs initial-only designs) |
 | `SyntaxKind.NonblockingAssignmentExpression` | `Examples/system-verilog/array_reductions/timing.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.NullLiteralExpression` | `Examples/system-verilog/event_triggered_false/event_triggered_false.sv` | **MATCH** | `ok`  |

@@ -41,6 +41,10 @@ jobs:
       - name: Restore Mathlib build cache
         run: lake exe cache get
       - name: Full check
+        env:
+          # Keep the complete proof build below the hosted runner's memory
+          # limit; Lean uses this variable instead of a lake -j flag.
+          LEAN_NUM_THREADS: 2
         run: ./check.sh
 
   # The README quickstart, verbatim, on both platforms it promises. Nothing

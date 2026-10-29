@@ -106,7 +106,7 @@ FILE_TIMEOUT_S = 90
 # system and user calls stay explicit adapter boundaries even when their
 # syntax is recognized.
 ADAPTER_CALLS = ("$display", "$write", "$finish", "$stop")
-ADAPTER_PURE_DIAGNOSTIC = ("$exit", "$printtimescale")
+ADAPTER_PURE_DIAGNOSTIC = ("$exit", "$printtimescale", "$assertcontrol")
 ADAPTER_SEVERITY = ("$info", "$warning", "$error")
 ADAPTER_FATAL = "$fatal"
 ADAPTER_LOWERED_METHOD_MARKERS = (

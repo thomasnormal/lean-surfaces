@@ -12,6 +12,19 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Assertion-control diagnostics in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's inert lowering for
+literal and source-pure `$assertcontrol` diagnostics. These controls carry no
+self-check assertion state, while dynamic controls remain loud. The
+`assertcontrol_adapter` fixture, adapter regressions, generated envelope, Lean
+receipt, and differential row cover the admitted shape.
+
+Differential coverage grows **466/460/0/6 → 467/461/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in 941-file SystemVerilog example
+sweep, `Call:$assertcontrol` residuals fall **3 → 0** (686 clean / 255
+partial).
+
 ## Unpacked-struct declarations in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's flat-cell lowering for

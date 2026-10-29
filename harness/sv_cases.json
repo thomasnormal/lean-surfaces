@@ -4231,6 +4231,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "assertcontrol_adapter",
+      "file": "Examples/system-verilog/assertcontrol_adapter/assertcontrol_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

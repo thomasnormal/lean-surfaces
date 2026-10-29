@@ -95,6 +95,19 @@ class DeclarationAdapter(unittest.TestCase):
             'initial begin pair_t value; $display("PASS"); end endmodule')
         self.assertIn("VariableDeclStatement:type", residual)
 
+    def test_literal_assertcontrol_is_a_pure_diagnostic(self):
+        self.assertEqual(
+            blockers(
+                'module top; initial begin $assertcontrol(2, 5); '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_dynamic_assertcontrol_remains_loud(self):
+        residual = blockers(
+            'module top; int control; initial begin '
+            '$assertcontrol(control); $display("PASS"); end endmodule')
+        self.assertIn("Call:$assertcontrol", residual)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -4303,6 +4303,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "pure_enum_method_statements_adapter",
+      "file": "Examples/system-verilog/pure_enum_method_statements_adapter/pure_enum_method_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

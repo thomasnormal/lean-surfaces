@@ -201,6 +201,22 @@ class DeclarationAdapter(unittest.TestCase):
             'text = other; text.len(); $display("PASS"); end endmodule')
         self.assertIn("Call:len", residual)
 
+    def test_discarded_pure_enum_methods_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; typedef enum logic [1:0] { A = 0, B = 1 } E; '
+                'E value; initial begin value = B; value.name(); '
+                'value.first(); value.last(); value.num(); value.next(); '
+                'value.prev(); $display("PASS"); end endmodule'),
+            [])
+
+    def test_effectful_enum_method_remains_loud(self):
+        residual = blockers(
+            'module top; typedef enum logic [1:0] { A = 0, B = 1 } E; '
+            'E value; int count; initial begin value = B; count = 0; '
+            'value.next(count++); $display("PASS"); end endmodule')
+        self.assertIn("Call:next", residual)
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

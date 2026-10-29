@@ -1,3 +1,16 @@
+## [0.1.208] — 2026-10-29
+
+The legacy adapter census now follows the extractor's `enum_name_statement`
+and `enum_numeric_statement` markers for discarded source-pure enum `name`,
+`first`, `last`, `num`, `next`, and `prev` calls. Effectful receivers and step
+arguments remain loud. The `pure_enum_method_statements_adapter` fixture,
+adapter regressions, generated envelope, Lean receipt, and differential row
+cover the admitted forms. Differential coverage grows **474/468/0/6 →
+475/469/0/6**; grammar coverage remains **235/113/122**. On the checked-in
+987-file SystemVerilog example sweep (986 files before this witness), the
+adapter census moves **744 clean / 242 partial → 747 clean / 240 partial** and
+the six discarded enum-method call residuals fall to zero.
+
 ## [0.1.207] — 2026-10-29
 
 The legacy adapter census now follows the extractor's `string_query_statement`

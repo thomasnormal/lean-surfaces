@@ -387,6 +387,14 @@ class DeclarationAdapter(unittest.TestCase):
             '$fopen("/tmp/invalid", mode); $display("PASS"); end endmodule')
         self.assertIn("Call:$fopen", residual)
 
+    def test_discarded_stdout_position_errors_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; initial begin '
+                '$fseek(32\'h8000_0001, 0, 0); '
+                '$ftell(32\'h8000_0001); $display("PASS"); end endmodule'),
+            [])
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

@@ -4422,6 +4422,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "pure_stdout_position_error_statements_adapter",
+      "file": "Examples/system-verilog/pure_stdout_position_error_statements_adapter/pure_stdout_position_error_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

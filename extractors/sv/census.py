@@ -140,6 +140,8 @@ ADAPTER_PURE_STATEMENT_MARKERS = (
     "sformatf_statement",
     "floating_string_atoreal_statement",
     "fopen_invalid_mode_statement",
+    "fseek_stdout_error_statement",
+    "ftell_stdout_error_statement",
     "associative_count_statement",
     "associative_exists_statement",
     "associative_empty_delete_statement",

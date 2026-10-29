@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 487 | 481 | 0 | 6 | sv-tests-2 declarations |
+| 488 | 482 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -501,6 +501,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `pure_associative_count_exists_delete_statements_adapter` | `Examples/system-verilog/pure_associative_count_exists_delete_statements_adapter/pure_associative_count_exists_delete_statements_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `pure_string_atoreal_statements_adapter` | `Examples/system-verilog/pure_string_atoreal_statements_adapter/pure_string_atoreal_statements_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `pure_fopen_invalid_mode_statements_adapter` | `Examples/system-verilog/pure_fopen_invalid_mode_statements_adapter/pure_fopen_invalid_mode_statements_adapter.sv` | match | **MATCH** | `ok` | MATCH |
+| `pure_stdout_position_error_statements_adapter` | `Examples/system-verilog/pure_stdout_position_error_statements_adapter/pure_stdout_position_error_statements_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 

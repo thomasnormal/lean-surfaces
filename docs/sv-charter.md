@@ -12,6 +12,22 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Discarded stdout file-position errors in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's
+`fseek_stdout_error_statement` and `ftell_stdout_error_statement` markers for
+discarded file-position calls on the predefined stdout descriptor. The fixed
+error results carry no represented adapter state; dynamic descriptors and
+other arguments remain loud. The
+`pure_stdout_position_error_statements_adapter` fixture, adapter regression,
+generated envelope, Lean receipt, and differential row cover the admitted
+forms.
+
+Differential coverage grows **487/481/0/6 → 488/482/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in **1000-file** SystemVerilog example
+sweep (**999 files before this witness**), the adapter census moves **793 clean
+/ 206 partial → 794 clean / 206 partial**.
+
 ## Discarded invalid-literal `$fopen` calls in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's

@@ -12,6 +12,21 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Source-pure string statement methods in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's source-history erasure
+for discarded `string.putc`, `itoa`, `bintoa`, `octtoa`, and `hextoa` calls.
+Literal source-pure methods contribute no self-check string state; dynamic,
+effectful, and unsupported calls remain loud. The `string_method_adapter`
+fixture, adapter regressions, generated envelope, Lean receipt, and
+differential row cover the admitted shape.
+
+Differential coverage grows **452/446/0/6 → 453/447/0/6**; grammar coverage
+remains **235/113/122**. The temporary public sv-tests audit remains **380
+clean / 421 partial / 111 include skips**, while clean-file adapter residuals
+`Call:itoa`, `Call:bintoa`, `Call:octtoa`, `Call:hextoa`, and `Call:putc` each
+fall **1 → 0**; adapter unlockables remain **7**.
+
 ## Empty output arguments — 2026-10-29
 
 Empty arguments in no-conversion `$display` and `$write` calls now lower to

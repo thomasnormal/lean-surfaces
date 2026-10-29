@@ -4105,6 +4105,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "string_method_adapter",
+      "file": "Examples/system-verilog/string_method_adapter/string_method_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

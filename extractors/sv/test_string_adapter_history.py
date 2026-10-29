@@ -58,6 +58,20 @@ class StringAdapterHistory(unittest.TestCase):
                 'byte_t b; pair_t p; initial $display("PASS"); endmodule'),
             [])
 
+    def test_source_pure_string_statement_methods_are_admitted(self):
+        self.assertEqual(
+            blockers(
+                'module top; string s = "Test"; initial begin '
+                's.putc(2, "B"); s.itoa(12); s.bintoa(10); '
+                's.octtoa(8); s.hextoa(255); $display("PASS"); '
+                'end endmodule'),
+            [])
+
+    def test_dynamic_string_statement_method_remains_loud(self):
+        residual = blockers(
+            'module top; string s; int i; initial s.putc(i, "X"); endmodule')
+        self.assertIn("Call:putc", residual)
+
 
 if __name__ == "__main__":
     unittest.main()

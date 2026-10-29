@@ -320,6 +320,21 @@ def adapter_stmt(sm, s):
                         continue
                     out.extend(adapter_expr(sm, a))
                 return out
+            # The extractor erases source-pure string statement methods after
+            # replaying their literal history.  Mirror only those exact
+            # markers here: the legacy adapter has no string cell, so a
+            # discarded putc/integer-conversion/substr/case-conversion call
+            # contributes no state, while dynamic or effectful calls remain
+            # explicit `Call:<name>` blockers.
+            converted = extract.convert_stmt(sm, s)
+            if (isinstance(converted, dict)
+                    and converted.get("kind") == "Empty"
+                    and any(marker in converted for marker in (
+                        "string_putc_statement",
+                        "string_integer_conversion_statement",
+                        "string_substr_statement",
+                        "string_case_statement"))):
+                return []
             return ["Call:" + (name if name else type(e).__name__)]
         return _minus_string(kinds_in(extract.convert_stmt(sm, s)))
 

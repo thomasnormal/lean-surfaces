@@ -1,5 +1,6 @@
 import LeanModels.Sv.Hier2Gen
 import LeanModels.Sv.Comb2Base
+import LeanModels.Sv.CombViewArith
 
 /-!
 # `sv_structure`, stage 1: the family summary of a `PDesign` and its soundness
@@ -11,27 +12,31 @@ structural recursion, evaluated by the kernel/unifier) and everything it claims 
 against the real instantiation (`instProcess2`, `expandList2`, `buildDecls`, `dimTable`), using
 the `Gen2.lean` handles.
 
-## The fragment (v0)
+## The fragment (v1)
 
 A flat top whose processes are continuous assigns (`assign x = e`, `assign x[idx] = e`,
-`assign x[idx] = e` over a packed array) plus at most ONE `generate for` over a genvar
-`for (g = c0; g < bound; g++)` of such assigns. Targets and reads are whole signals or
-single-bit selects whose indices are AFFINE in the genvar and the parameters (`i`, `i + 1`,
-`N`, `N - 1`); declarations are scalars or 1-D packed vectors with affine bounds; every
-expression is a tree of `&`/`|`/`^` over such reads and literals. Everything else is refused
-with a specific message (`PDesign.summary` returns `.error msg`).
+`assign x[i][j] = e`, `assign x[i] = e` over a 2-D packed array (a whole row), `assign x[hi:lo] = e`),
+plus ANY NUMBER of `generate for` loops `for (g = c0; g < bound; g++)` whose bodies hold such assigns
+and, one level down, further `generate for` loops of such assigns (two levels deep, mixed bodies).
+
+* declarations: scalars, 1-D and 2-D packed arrays with affine bounds;
+* accesses (`Acc`): the whole signal, a bit `x[i]`, an element of a 1-D array, a row or an element
+  of a 2-D array (`x[i]`, `x[i][j]`), a part `x[hi:lo]` or a part of a row `x[i][hi:lo]`; every
+  index and bound AFFINE in the parameters and the enclosing genvars (`i`, `i + 1`, `N`, `2*N - 1`);
+* expressions: a tree of `&`/`|`/`^` over accesses and literals, concatenations of accesses and
+  literals, and (as the whole right-hand side) an unbased unsized fill `'0`.
+
+Everything else is refused with a specific message (`PDesign.summary` returns `.error msg`).
 
 ## What is claimed
 
-* `PDesign.summary d = .ok s` computes the sites (`TSite`: write window and read windows as
-  affine functions of the loop index) and the declaration geometry.
-* `Summary.pairs` is the closed-form list `statics ++ (range).flatMap body` (a `flatMap` over
-  the index range, never an enumeration) of `(SiteInst, Process2)` pairs: the footprint the
-  summary promises next to the process `instProcess2` really builds.
-* `site_desc` (the per-site soundness theorem): the real process IS an `assign` whose target
-  is EXACTLY the promised one and whose reads are CONTAINED in the promised ones (equal when
-  every array read is in range; `rhsFree`/`rhsDeclared` facts included).
-* The `Summary.sound` theorem in `CombViewThm.lean` assembles them against `instantiate2`.
+* `PDesign.summary d = .ok s` computes the sites (`TSite`: target access and read accesses as
+  affine data), the generate tree (`TFam`: loops and the sites in their bodies) and the
+  declaration geometry.
+* `Summary.enum` / `Summary.insts` / `Summary.pairs` is the closed-form list (a `flatMap` over each
+  loop's index range, never an enumeration of `N` cells) of the footprints the summary promises
+  next to the processes `instProcess2` really builds.
+* `site_desc` (per-site soundness, `CombViewThm.lean`) and `Summary.sound` (`CombViewSound.lean`).
 -/
 
 namespace LeanModels.Sv
@@ -59,6 +64,13 @@ def neg (a : Aff) : Aff := { terms := negTerms a.terms, c := -a.c }
 def sub (a b : Aff) : Aff := a.add b.neg
 def names (a : Aff) : List String := a.terms.map Prod.fst
 
+def scaleTerms (k : Int) : List (String × Int) → List (String × Int)
+  | [] => []
+  | (n, m) :: ts => (n, k * m) :: scaleTerms k ts
+
+/-- Scaling by a constant. -/
+def scale (k : Int) (a : Aff) : Aff := { terms := scaleTerms k a.terms, c := k * a.c }
+
 def evalTerms (σ : String → Int) : List (String × Int) → Int
   | [] => 0
   | (n, k) :: ts => k * σ n + evalTerms σ ts
@@ -85,6 +97,20 @@ theorem names_negTerms (a : List (String × Int)) :
   | nil => simp [negTerms]
   | cons p ts ih => obtain ⟨n, k⟩ := p; simp [negTerms, ih]
 
+theorem evalTerms_scaleTerms (σ : String → Int) (k : Int) (a : List (String × Int)) :
+    evalTerms σ (scaleTerms k a) = k * evalTerms σ a := by
+  induction a with
+  | nil => simp [scaleTerms, evalTerms]
+  | cons p ts ih =>
+    obtain ⟨n, m⟩ := p
+    simp [scaleTerms, evalTerms, ih, Int.mul_add, Int.mul_assoc]
+
+theorem names_scaleTerms (k : Int) (a : List (String × Int)) :
+    (scaleTerms k a).map Prod.fst = a.map Prod.fst := by
+  induction a with
+  | nil => simp [scaleTerms]
+  | cons p ts ih => obtain ⟨n, m⟩ := p; simp [scaleTerms, ih]
+
 theorem eval_add (σ : String → Int) (a b : Aff) : (a.add b).eval σ = a.eval σ + b.eval σ := by
   simp only [eval, add, evalTerms_append]
   omega
@@ -97,6 +123,10 @@ theorem eval_sub (σ : String → Int) (a b : Aff) : (a.sub b).eval σ = a.eval 
   rw [sub, eval_add, eval_neg]
   omega
 
+theorem eval_scale (σ : String → Int) (k : Int) (a : Aff) : (a.scale k).eval σ = k * a.eval σ := by
+  simp only [eval, scale, evalTerms_scaleTerms]
+  rw [Int.mul_add]
+
 theorem eval_const (σ : String → Int) (c : Int) : (const c).eval σ = c := by
   simp [eval, const, evalTerms]
 
@@ -108,6 +138,12 @@ theorem names_add (a b : Aff) : (a.add b).names = a.names ++ b.names := by
 
 theorem names_sub (a b : Aff) : (a.sub b).names = a.names ++ b.names := by
   simp [names, sub, add, neg, names_negTerms]
+
+theorem names_scale (k : Int) (a : Aff) : (a.scale k).names = a.names := by
+  simp [names, scale, names_scaleTerms]
+
+theorem eval_of_terms_nil (σ : String → Int) (a : Aff) (h : a.terms = []) : a.eval σ = a.c := by
+  simp [eval, h, evalTerms]
 
 theorem evalTerms_congr (σ σ' : String → Int) (a : List (String × Int))
     (h : ∀ n ∈ a.map Prod.fst, σ n = σ' n) : evalTerms σ a = evalTerms σ' a := by
@@ -161,9 +197,16 @@ theorem Agrees.mono {σ : String → Int} {E : IEnv} {ns ms : List String} (h : 
 
 /-! ## Recognizing an affine constant expression -/
 
+def affMul (a b : Aff) : Option Aff :=
+  if a.terms.isEmpty then some (b.scale a.c)
+  else if b.terms.isEmpty then some (a.scale b.c)
+  else none
+
 def affBin : SymBinOp → Aff → Aff → Option Aff
   | .m0 .add, a, b => some (a.add b)
   | .m0 .sub, a, b => some (a.sub b)
+  | .mul, a, b => affMul a b
+  | .m0 .mul, a, b => affMul a b
   | _, _, _ => none
 
 def affOf? : PExpr → Option Aff
@@ -176,8 +219,45 @@ def affOf? : PExpr → Option Aff
       | _, _ => none
   | _ => none
 
+theorem affMul_eval {a b c : Aff} (σ : String → Int) (h : affMul a b = some c) :
+    c.eval σ = a.eval σ * b.eval σ := by
+  unfold affMul at h
+  by_cases ha : a.terms.isEmpty = true
+  · simp only [ha, if_true, Option.some.injEq] at h
+    subst h
+    have ha' : a.terms = [] := by simpa using ha
+    rw [Aff.eval_scale, Aff.eval_of_terms_nil σ a ha']
+  · have ha' : a.terms.isEmpty = false := by simpa using ha
+    simp only [ha', Bool.false_eq_true, if_false] at h
+    by_cases hb : b.terms.isEmpty = true
+    · simp only [hb, if_true, Option.some.injEq] at h
+      subst h
+      have hb' : b.terms = [] := by simpa using hb
+      rw [Aff.eval_scale, Aff.eval_of_terms_nil σ b hb', Int.mul_comm]
+    · have hb' : b.terms.isEmpty = false := by simpa using hb
+      simp [hb'] at h
+
+theorem affMul_names {a b c : Aff} (h : affMul a b = some c) :
+    (a.terms = [] ∧ c.names = b.names) ∨ (b.terms = [] ∧ c.names = a.names) := by
+  unfold affMul at h
+  by_cases ha : a.terms.isEmpty = true
+  · simp only [ha, if_true, Option.some.injEq] at h
+    subst h
+    have ha' : a.terms = [] := by simpa using ha
+    exact Or.inl ⟨ha', by simp [Aff.names_scale]⟩
+  · have ha' : a.terms.isEmpty = false := by simpa using ha
+    simp only [ha', Bool.false_eq_true, if_false] at h
+    by_cases hb : b.terms.isEmpty = true
+    · simp only [hb, if_true, Option.some.injEq] at h
+      subst h
+      have hb' : b.terms = [] := by simpa using hb
+      exact Or.inr ⟨hb', by simp [Aff.names_scale]⟩
+    · have hb' : b.terms.isEmpty = false := by simpa using hb
+      simp [hb'] at h
+
 theorem affBin_cases {op : SymBinOp} {a b c : Aff} (h : affBin op a b = some c) :
-    (op = .m0 .add ∧ c = a.add b) ∨ (op = .m0 .sub ∧ c = a.sub b) := by
+    (op = .m0 .add ∧ c = a.add b) ∨ (op = .m0 .sub ∧ c = a.sub b) ∨
+    ((op = .mul ∨ op = .m0 .mul) ∧ affMul a b = some c) := by
   unfold affBin at h
   split at h <;> simp_all
 
@@ -207,7 +287,7 @@ theorem affOf?_sound {E : IEnv} {σ : String → Int} :
       simp only [affOf?] at h
       rcases h1 : affOf? l with _ | a1 <;> rcases h2 : affOf? r with _ | a2 <;>
         simp only [h1, h2] at h <;> try exact absurd h (by simp)
-      rcases affBin_cases h with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
+      rcases affBin_cases h with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ | ⟨hop, hm⟩
       · have hb1 : ∀ n ∈ a1.names, E.vals.lookup n = some (σ n) :=
           fun n hn => hb n (by rw [Aff.names_add]; exact List.mem_append_left _ hn)
         have hb2 : ∀ n ∈ a2.names, E.vals.lookup n = some (σ n) :=
@@ -222,6 +302,23 @@ theorem affOf?_sound {E : IEnv} {σ : String → Int} :
         obtain ⟨hi1, he1⟩ := affOf?_sound l a1 h1 hb1
         obtain ⟨hi2, he2⟩ := affOf?_sound r a2 h2 hb2
         exact ⟨isInt_binary_of (by simp) hi1 hi2, by rw [evalInt_sub_of hi1 hi2 he1 he2, Aff.eval_sub]⟩
+      · have hev := affMul_eval σ hm
+        have hn := affMul_names hm
+        have hb1 : ∀ n ∈ a1.names, E.vals.lookup n = some (σ n) := by
+          intro n hn1
+          rcases hn with ⟨h0, -⟩ | ⟨-, hc⟩
+          · simp [Aff.names, h0] at hn1
+          · exact hb n (by rw [hc]; exact hn1)
+        have hb2 : ∀ n ∈ a2.names, E.vals.lookup n = some (σ n) := by
+          intro n hn2
+          rcases hn with ⟨-, hc⟩ | ⟨h0, -⟩
+          · exact hb n (by rw [hc]; exact hn2)
+          · simp [Aff.names, h0] at hn2
+        obtain ⟨hi1, he1⟩ := affOf?_sound l a1 h1 hb1
+        obtain ⟨hi2, he2⟩ := affOf?_sound r a2 h2 hb2
+        rcases hop with rfl | rfl
+        · exact ⟨isInt_binary_of (by simp) hi1 hi2, by rw [evalInt_mul_of hi1 hi2 he1 he2, hev]⟩
+        · exact ⟨isInt_binary_of (by simp) hi1 hi2, by rw [evalInt_m0_mul_of hi1 hi2 he1 he2, hev]⟩
   | .paramRef _ (some _), a, h, _ => by simp [affOf?] at h
   | .lit _, a, h, _ | .ident _, a, h, _ | .enumRef _ _ _, a, h, _ | .fill _, a, h, _
   | .unary _ _, a, h, _ | .ternary _ _ _, a, h, _ | .concat _, a, h, _ | .resize _ _, a, h, _
@@ -233,49 +330,115 @@ theorem affOf?_sound {E : IEnv} {σ : String → Int} :
 /-! ## Template sites -/
 
 /-- The identity of a rank site (design principle 13): a plain process by its position among the
-module-level processes; a generate-family member by the block label, the position of the assign
-inside the block, and the loop indices. -/
+module-level processes; a generate-family member by the label of its innermost block, the position
+of the assign inside that block, and the values of the enclosing loop indices (outermost first). -/
 inductive SiteId where
   | plain (pos : Nat)
   | fam (label : String) (pos : Nat) (idx : List Int)
 deriving Repr, DecidableEq, Inhabited
 
-/-- The write of a template process. -/
-inductive TTgt where
+/-- One access to a declared signal: the shapes the summary can compute a window for.
+
+* `whole n`             the whole signal
+* `bit n i`             `n[i]`, `n` a scalar or 1-D vector (bit select)
+* `cell1 n i`           `n[i]`, `n` a 1-D packed array
+* `row n w r`           `n[r]`, `n` a 2-D packed array whose rows are `w` bits wide
+* `cell2 n w r c`       `n[r][c]`, rows `w` bits wide
+* `part1 n hi lo`       `n[hi:lo]`, `n` 1-D
+* `part2 n w r hi lo`   `n[r][hi:lo]`, rows `w` bits wide
+
+The row width `w` is the second dimension's extent, recorded here (affine) and checked against the
+declaration by `Summary.accOk`. -/
+inductive Acc where
   | whole (n : String)
   | bit (n : String) (idx : Aff)
-  | arr (n : String) (idx : Aff)
+  | cell1 (n : String) (idx : Aff)
+  | row (n : String) (w : Aff) (r : Aff)
+  | cell2 (n : String) (w : Aff) (r c : Aff)
+  | part1 (n : String) (hi lo : Aff)
+  | part2 (n : String) (w : Aff) (r hi lo : Aff)
 deriving Repr, DecidableEq, Inhabited
 
-/-- One read of a template expression. -/
-inductive TRd where
-  | whole (n : String)
-  | bit (n : String) (idx : Aff)
-  | arr (n : String) (idx : Aff)
-deriving Repr, DecidableEq, Inhabited
+def Acc.name : Acc → String
+  | .whole n => n
+  | .bit n _ => n
+  | .cell1 n _ => n
+  | .row n _ _ => n
+  | .cell2 n _ _ _ => n
+  | .part1 n _ _ => n
+  | .part2 n _ _ _ _ => n
 
-def TTgt.name : TTgt → String
-  | .whole n => n | .bit n _ => n | .arr n _ => n
+/-- The index expressions (not the row width, which the declaration determines). -/
+def Acc.affs : Acc → List Aff
+  | .whole _ => []
+  | .bit _ a => [a]
+  | .cell1 _ a => [a]
+  | .row _ _ r => [r]
+  | .cell2 _ _ r c => [r, c]
+  | .part1 _ hi lo => [hi, lo]
+  | .part2 _ _ r hi lo => [r, hi, lo]
 
-def TTgt.affs : TTgt → List Aff
-  | .whole _ => [] | .bit _ a => [a] | .arr _ a => [a]
+/-- Bit offset of an access (a row-major offset for the 2-D forms). -/
+def Acc.lo (σ : String → Int) : Acc → Nat
+  | .whole _ => 0
+  | .bit _ a => (a.eval σ).toNat
+  | .cell1 _ a => (a.eval σ).toNat
+  | .row _ w r => rmN (w.eval σ) (r.eval σ) 0
+  | .cell2 _ w r c => rmN (w.eval σ) (r.eval σ) (c.eval σ)
+  | .part1 _ _ lo => (lo.eval σ).toNat
+  | .part2 _ w r _ lo => rmN (w.eval σ) (r.eval σ) (lo.eval σ)
 
-def TRd.name : TRd → String
-  | .whole n => n | .bit n _ => n | .arr n _ => n
+/-- Bit width of an access (`0` for the whole signal: its width is the declared one). -/
+def Acc.wid (σ : String → Int) : Acc → Nat
+  | .whole _ => 0
+  | .bit _ _ => 1
+  | .cell1 _ _ => 1
+  | .row _ w _ => (w.eval σ).toNat
+  | .cell2 _ _ _ _ => 1
+  | .part1 _ hi lo => (hi.eval σ - lo.eval σ + 1).toNat
+  | .part2 _ _ _ hi lo => (hi.eval σ - lo.eval σ + 1).toNat
 
-def TRd.affs : TRd → List Aff
-  | .whole _ => [] | .bit _ a => [a] | .arr _ a => [a]
+/-- The write window of a target access. -/
+def Acc.win (σ : String → Int) (dw : String → Nat) : Acc → Win
+  | .whole n => (n, 0, dw n)
+  | .bit n a => (n, Acc.lo σ (.bit n a), 1)
+  | .cell1 n a => (n, Acc.lo σ (.cell1 n a), 1)
+  | .row n w r => (n, Acc.lo σ (.row n w r), Acc.wid σ (.row n w r))
+  | .cell2 n w r c => (n, Acc.lo σ (.cell2 n w r c), 1)
+  | .part1 n hi lo => (n, Acc.lo σ (.part1 n hi lo), Acc.wid σ (.part1 n hi lo))
+  | .part2 n w r hi lo => (n, Acc.lo σ (.part2 n w r hi lo), Acc.wid σ (.part2 n w r hi lo))
+
+/-- The lowered target. -/
+def Acc.lhs (σ : String → Int) : Acc → Lhs2
+  | .whole n => .ident n
+  | .bit n a => .slice n (Acc.lo σ (.bit n a)) 1
+  | .cell1 n a => .slice n (Acc.lo σ (.cell1 n a)) 1
+  | .row n w r => .slice n (Acc.lo σ (.row n w r)) (Acc.wid σ (.row n w r))
+  | .cell2 n w r c => .slice n (Acc.lo σ (.cell2 n w r c)) 1
+  | .part1 n hi lo => .slice n (Acc.lo σ (.part1 n hi lo)) (Acc.wid σ (.part1 n hi lo))
+  | .part2 n w r hi lo =>
+      .slice n (Acc.lo σ (.part2 n w r hi lo)) (Acc.wid σ (.part2 n w r hi lo))
+
+/-- The read it promises. -/
+def Acc.rd (σ : String → Int) : Acc → ReadWin
+  | .whole n => .whole n
+  | .bit n a => .win n (Acc.lo σ (.bit n a)) 1
+  | .cell1 n a => .win n (Acc.lo σ (.cell1 n a)) 1
+  | .row n w r => .win n (Acc.lo σ (.row n w r)) (Acc.wid σ (.row n w r))
+  | .cell2 n w r c => .win n (Acc.lo σ (.cell2 n w r c)) 1
+  | .part1 n hi lo => .win n (Acc.lo σ (.part1 n hi lo)) (Acc.wid σ (.part1 n hi lo))
+  | .part2 n w r hi lo => .win n (Acc.lo σ (.part2 n w r hi lo)) (Acc.wid σ (.part2 n w r hi lo))
 
 /-- A template process with its footprint: the write, the reads, and the process itself (the
 equation schema kept for the later stages). -/
 structure TSite where
   pos : Nat
-  tgt : TTgt
-  rds : List TRd
+  tgt : Acc
+  rds : List Acc
   proc : PProcess
 deriving Repr, Inhabited
 
-def TSite.names (st : TSite) : List String := st.tgt.name :: st.rds.map TRd.name
+def TSite.names (st : TSite) : List String := st.tgt.name :: st.rds.map Acc.name
 
 def TSite.affNames (st : TSite) : List String :=
   (st.tgt.affs.flatMap Aff.names) ++ (st.rds.flatMap fun r => r.affs.flatMap Aff.names)
@@ -292,95 +455,297 @@ theorem gateOf_cases {op : SymBinOp} {b : BinOp} (h : gateOf op = some b) :
   unfold gateOf at h
   split at h <;> simp_all
 
-/-- The reads of an expression of the fragment, or the reason it is outside it. -/
-def rdsOf? : PExpr → Except String (List TRd)
-  | .ident n => .ok [.whole n]
-  | .lit _ => .ok []
+/-! ## Declarations -/
+
+/-- A scalar, 1-D or 2-D packed declaration with affine bounds. -/
+structure DeclT where
+  name : String
+  isInput : Bool
+  isOutput : Bool
+  dims : List (PDim × Aff × Aff)
+deriving Repr, Inhabited
+
+def dimsW (σ : String → Int) : List (PDim × Aff × Aff) → Nat
+  | [] => 1
+  | (_, m, l) :: rest => ((m.eval σ - l.eval σ).natAbs + 1) * dimsW σ rest
+
+def DeclT.width (σ : String → Int) (dt : DeclT) : Nat := dimsW σ dt.dims
+
+def DeclT.vals (σ : String → Int) (dt : DeclT) : List (Int × Int) :=
+  dt.dims.map fun p => (p.2.1.eval σ, p.2.2.eval σ)
+
+def DeclT.pdims (dt : DeclT) : List PDim := dt.dims.map (·.1)
+
+/-- The element width `buildElems` records: the width of the second dimension of a 2-D
+declaration, `1` otherwise. -/
+def DeclT.elemW (σ : String → Int) (dt : DeclT) : Nat :=
+  match dt.dims with
+  | [_, p] => 1 * ((p.2.1.eval σ - p.2.2.eval σ).natAbs + 1)
+  | _ => 1
+
+def DeclT.affNames (dt : DeclT) : List String :=
+  dt.dims.flatMap fun p => p.2.1.names ++ p.2.2.names
+
+def DeclT.toDecl (σ : String → Int) (dt : DeclT) : Decl :=
+  { name := dt.name, width := dt.width σ, isInput := dt.isInput, isOutput := dt.isOutput }
+
+def dimOf? (name : String) (d : PDim) : Except String (PDim × Aff × Aff) :=
+  match affOf? d.msb, affOf? d.lsb with
+  | some m, some l => .ok (d, m, l)
+  | _, _ => .error s!"declaration `{name}`: packed bounds are not affine in the parameters"
+
+def declOf? (pd : PDecl) : Except String DeclT :=
+  match pd.init with
+  | some _ => .error s!"declaration `{pd.name}` has an initializer"
+  | none =>
+      if pd.isSigned || pd.twoState then
+        .error s!"declaration `{pd.name}` is signed or 2-state (outside the v1 fragment: the summary's declarations are unsigned 4-state)"
+      else
+        match pd.type with
+        | .packed [] _ => .ok ⟨pd.name, pd.isInput, pd.isOutput, []⟩
+        | .packed [d] _ =>
+            match dimOf? pd.name d with
+            | .ok p => .ok ⟨pd.name, pd.isInput, pd.isOutput, [p]⟩
+            | .error e => .error e
+        | .packed [d1, d2] _ =>
+            match dimOf? pd.name d1 with
+            | .error e => .error e
+            | .ok p1 =>
+                match dimOf? pd.name d2 with
+                | .error e => .error e
+                | .ok p2 => .ok ⟨pd.name, pd.isInput, pd.isOutput, [p1, p2]⟩
+        | _ => .error s!"declaration `{pd.name}`: only scalar, 1-D and 2-D packed declarations are in the v1 fragment"
+
+def declsOf? : List PDecl → Except String (List DeclT)
+  | [] => .ok []
+  | pd :: rest =>
+      match declOf? pd with
+      | .error e => .error e
+      | .ok dt =>
+          match declsOf? rest with
+          | .error e => .error e
+          | .ok ds => .ok (dt :: ds)
+
+def findDecl (ds : List DeclT) (n : String) : Option DeclT := ds.find? (fun dt => dt.name == n)
+
+/-- The (msb, lsb) bounds of a declaration. -/
+def dimsOf (ds : List DeclT) (n : String) : Option (List (Aff × Aff)) :=
+  (findDecl ds n).map fun dt => dt.dims.map fun p => (p.2.1, p.2.2)
+
+/-! ## Recognizing accesses and expressions -/
+
+def elemAcc? (ds : List DeclT) (n : String) (is : List PExpr) : Except String Acc :=
+  match dimsOf ds n with
+  | none => .error s!"`{n}` is not declared"
+  | some dims =>
+      match dims, is with
+      | [(_, l)], [i] =>
+          if l = Aff.const 0 then
+            match affOf? i with
+            | some a => .ok (.cell1 n a)
+            | none => .error s!"index of `{n}[…]` is not affine (dynamic or nonlinear)"
+          else .error s!"`{n}`: element selects need a zero-based descending dimension `[hi:0]`"
+      | [(_, l1), (m2, l2)], [i] =>
+          if l1 = Aff.const 0 ∧ l2 = Aff.const 0 then
+            match affOf? i with
+            | some a => .ok (.row n (m2.add (Aff.const 1)) a)
+            | none => .error s!"index of `{n}[…]` is not affine (dynamic or nonlinear)"
+          else .error s!"`{n}`: element selects need zero-based descending dimensions `[hi:0][hi:0]`"
+      | [(_, l1), (m2, l2)], [i, j] =>
+          if l1 = Aff.const 0 ∧ l2 = Aff.const 0 then
+            match affOf? i, affOf? j with
+            | some a, some b => .ok (.cell2 n (m2.add (Aff.const 1)) a b)
+            | _, _ => .error s!"an index of `{n}[…][…]` is not affine (dynamic or nonlinear)"
+          else .error s!"`{n}`: element selects need zero-based descending dimensions `[hi:0][hi:0]`"
+      | _, _ => .error s!"select path on `{n}` does not match its declared packed dimensions (outside the v1 fragment)"
+
+def partAcc? (ds : List DeclT) (n : String) (is : List PExpr) (mode : PartMode) (hi lo : PExpr) :
+    Except String Acc :=
+  match mode with
+  | .up => .error s!"indexed part select `{n}[…+:…]` (outside the v1 fragment)"
+  | .down => .error s!"indexed part select `{n}[…-:…]` (outside the v1 fragment)"
+  | .range =>
+      match dimsOf ds n with
+      | none => .error s!"`{n}` is not declared"
+      | some dims =>
+          match dims, is with
+          | [(_, l)], [] =>
+              if l = Aff.const 0 then
+                match affOf? hi, affOf? lo with
+                | some h, some l' => .ok (.part1 n h l')
+                | _, _ => .error s!"a bound of `{n}[hi:lo]` is not affine (dynamic or nonlinear)"
+              else .error s!"`{n}`: part selects need a zero-based descending dimension `[hi:0]`"
+          | [(_, l1), (m2, l2)], [i] =>
+              if l1 = Aff.const 0 ∧ l2 = Aff.const 0 then
+                match affOf? i, affOf? hi, affOf? lo with
+                | some r, some h, some l' => .ok (.part2 n (m2.add (Aff.const 1)) r h l')
+                | _, _, _ => .error s!"an index or bound of `{n}[…][hi:lo]` is not affine (dynamic or nonlinear)"
+              else .error s!"`{n}`: part selects need zero-based descending dimensions `[hi:0][hi:0]`"
+          | _, _ => .error s!"part select on `{n}` does not match its declared packed dimensions (outside the v1 fragment)"
+
+/-- A read of one access. -/
+def leafRd? (ds : List DeclT) : PExpr → Except String Acc
+  | .ident n => .ok (.whole n)
   | .bitSel b i =>
       match b with
       | .ident n =>
           match affOf? i with
-          | some a => .ok [.bit n a]
+          | some a => .ok (.bit n a)
           | none => .error s!"read `{n}[…]` has a non-affine (dynamic or nonlinear) index"
       | _ => .error "bit select of a non-identifier base"
-  | .arrayElem n is =>
-      match is with
-      | [i] =>
-          match affOf? i with
-          | some a => .ok [.arr n a]
-          | none => .error s!"read `{n}[…]` has a non-affine (dynamic or nonlinear) index"
-      | _ => .error s!"multi-dimensional array select `{n}[…][…]` (outside the v0 fragment)"
+  | .arrayElem n is => elemAcc? ds n is
+  | .arrayPart n is mode hi lo => partAcc? ds n is mode hi lo
+  | .unary .. => .error "unary operator (outside the v1 fragment)"
+  | .ternary .. => .error "conditional expression `?:` (outside the v1 fragment)"
+  | .partSel .. => .error "legacy part select (outside the v1 fragment)"
+  | .repl .. => .error "replication (outside the v1 fragment)"
+  | .reduce .. => .error "reduction (outside the v1 fragment)"
+  | .fill _ => .error "unbased unsized literal `'0`/`'1` inside an expression (outside the v1 fragment; allowed as a whole right-hand side)"
+  | _ => .error "expression construct outside the v1 fragment (constant, cast, width conversion or system call)"
+
+/-- One access, as a read list. -/
+def rdsLeaf? (ds : List DeclT) (e : PExpr) : Except String (List Acc) :=
+  match leafRd? ds e with
+  | .ok a => .ok [a]
+  | .error m => .error m
+
+/-- A concatenation part: a literal or one access. -/
+def partRd? (ds : List DeclT) (e : PExpr) : Except String (List Acc) :=
+  match e with
+  | .lit _ => .ok []
+  | _ => rdsLeaf? ds e
+
+def partsRd? (ds : List DeclT) : List PExpr → Except String (List Acc)
+  | [] => .ok []
+  | p :: ps =>
+      match partRd? ds p with
+      | .error e => .error e
+      | .ok a =>
+          match partsRd? ds ps with
+          | .error e => .error e
+          | .ok b => .ok (a ++ b)
+
+/-- The reads of an expression of the fragment, or the reason it is outside it. -/
+def rdsOf? (ds : List DeclT) : PExpr → Except String (List Acc)
+  | .lit _ => .ok []
   | .binary op l r =>
       match gateOf op with
       | none => .error s!"operator `{op.sym}` is not a bitwise gate (`&`, `|`, `^`)"
       | some _ =>
-          match rdsOf? l with
+          match rdsOf? ds l with
           | .error e => .error e
           | .ok a =>
-              match rdsOf? r with
+              match rdsOf? ds r with
               | .error e => .error e
               | .ok b => .ok (a ++ b)
-  | .unary .. => .error "unary operator (outside the v0 fragment)"
-  | .ternary .. => .error "conditional expression `?:` (outside the v0 fragment)"
-  | .concat _ => .error "concatenation (outside the v0 fragment)"
-  | .partSel .. => .error "part select (outside the v0 fragment)"
-  | .arrayPart .. => .error "array part select (outside the v0 fragment)"
-  | .repl .. => .error "replication (outside the v0 fragment)"
-  | .reduce .. => .error "reduction (outside the v0 fragment)"
-  | _ => .error "expression construct outside the v0 fragment (constant, cast, width conversion or system call)"
+  | .concat ps => partsRd? ds ps
+  | e => rdsLeaf? ds e
 
-def tgtOf? : PLhs → Except String TTgt
+/-- The reads of a right-hand side: an unbased unsized fill (`'0`) alone, or an expression. -/
+def rhsRds? (ds : List DeclT) (v : PExpr) : Except String (List Acc) :=
+  match v with
+  | .fill _ => .ok []
+  | _ => rdsOf? ds v
+
+def tgtOf? (ds : List DeclT) : PLhs → Except String Acc
   | .ident n => .ok (.whole n)
   | .bitSel n i =>
       match affOf? i with
       | some a => .ok (.bit n a)
       | none => .error s!"write to `{n}[…]` has a non-affine (dynamic) index: the driven window cannot be determined"
-  | .arrayElem n is =>
-      match is with
-      | [i] =>
-          match affOf? i with
-          | some a => .ok (.arr n a)
-          | none => .error s!"write to `{n}[…]` has a non-affine (dynamic) index: the driven window cannot be determined"
-      | _ => .error s!"write to a multi-dimensional array `{n}[…][…]` (outside the v0 fragment)"
-  | .partSel n .. => .error s!"part-select write to `{n}` (outside the v0 fragment)"
-  | .arrayPart n .. => .error s!"array part-select write to `{n}` (outside the v0 fragment)"
-  | .concat _ => .error "concatenation target (outside the v0 fragment)"
+  | .arrayElem n is => elemAcc? ds n is
+  | .arrayPart n is mode hi lo => partAcc? ds n is mode hi lo
+  | .partSel n .. => .error s!"legacy part-select write to `{n}` (outside the v1 fragment)"
+  | .concat _ => .error "concatenation target (outside the v1 fragment)"
 
-def siteOf? (pos : Nat) : PProcess → Except String TSite
+def siteOf? (ds : List DeclT) (pos : Nat) : PProcess → Except String TSite
   | .assign t v =>
-      match rdsOf? v with
+      match rhsRds? ds v with
       | .ok rds => .ok ⟨pos, .whole t, rds, .assign t v⟩
       | .error e => .error e
   | .assignL l v =>
-      match tgtOf? l with
+      match tgtOf? ds l with
       | .error e => .error e
       | .ok tg =>
-          match rdsOf? v with
+          match rhsRds? ds v with
           | .ok rds => .ok ⟨pos, tg, rds, .assignL l v⟩
           | .error e => .error e
   | .alwaysFF .. | .alwaysPlain .. | .alwaysComb .. | .alwaysFFR .. =>
       .error "procedural process (`always`): outside the combinational-assign fragment"
   | .unsupported k _ => .error s!"unsupported process `{k}`"
 
-def sitesOf? (tag : String) : Nat → List PProcess → Except String (List TSite)
+def sitesOf? (ds : List DeclT) (tag : String) : Nat → List PProcess → Except String (List TSite)
   | _, [] => .ok []
   | pos, p :: ps =>
-      match siteOf? pos p with
+      match siteOf? ds pos p with
       | .error e => .error s!"site `{tag}#{pos}`: {e}"
       | .ok st =>
-          match sitesOf? tag (pos + 1) ps with
+          match sitesOf? ds tag (pos + 1) ps with
           | .error e => .error e
           | .ok sts => .ok (st :: sts)
 
-/-- A generate-for family: block label, loop variable, first value, affine (parameter-only)
-upper bound, and the sites of the body in source order. -/
-structure TFam where
-  label : String
+/-! ## Generate loops -/
+
+/-- A generate-loop header `for (g = c0; g < bound; g++)` with its block label. -/
+structure Hdr where
+  lbl : Option String
   g : String
   c0 : Int
   bound : Aff
+  bndE : PExpr
+deriving Repr, Inhabited
+
+def Hdr.name (h : Hdr) : String := h.lbl.getD "genblk"
+
+/-- The loop index ranges over `[c0, bound)`. -/
+def Hdr.Rng (h : Hdr) (σ : String → Int) (i : Int) : Prop := h.c0 ≤ i ∧ i < h.bound.eval σ
+
+def Hdr.range (h : Hdr) (σ : String → Int) : List Int :=
+  intRange h.c0 (h.bound.eval σ - h.c0).toNat
+
+theorem Hdr.mem_range {h : Hdr} {σ : String → Int} {i : Int} : i ∈ h.range σ ↔ h.Rng σ i := by
+  simp only [Hdr.range, Hdr.Rng, mem_intRange]
+  omega
+
+/-- The header's envelope form. -/
+def Hdr.gen (h : Hdr) (rc : Option Nat) (body : List GenItem) : GenItem :=
+  .genFor h.lbl h.g (.int h.c0) (.binary .slt (.genvarRef h.g) h.bndE)
+    (.unary .inc (.genvarRef h.g)) rc body
+
+/-- The header's recognized bound is the envelope's. -/
+def Hdr.Wf (h : Hdr) : Prop := affOf? h.bndE = some h.bound
+
+/-- An inner loop: sites only. -/
+structure TInner where
+  hdr : Hdr
+  rc : Option Nat
   body : List TSite
 deriving Repr, Inhabited
+
+/-- An item of an outer loop's body. -/
+inductive TItem where
+  | site (st : TSite)
+  | loop (l : TInner)
+deriving Repr, Inhabited
+
+/-- A top-level generate loop. -/
+structure TFam where
+  hdr : Hdr
+  rc : Option Nat
+  body : List TItem
+deriving Repr, Inhabited
+
+def TItem.toGen : TItem → GenItem
+  | .site st => .process st.proc
+  | .loop l => l.hdr.gen l.rc (l.body.map fun st => GenItem.process st.proc)
+
+def TFam.toGen (f : TFam) : GenItem := f.hdr.gen f.rc (f.body.map TItem.toGen)
+
+def TItem.Wf : TItem → Prop
+  | .site _ => True
+  | .loop l => l.hdr.Wf
+
+def TFam.Wf (f : TFam) : Prop := f.hdr.Wf ∧ ∀ it ∈ f.body, it.Wf
 
 def procsOf? : List GenItem → Option (List PProcess)
   | [] => some []
@@ -405,82 +770,88 @@ theorem procsOf?_eq : ∀ {l : List GenItem} {ps : List PProcess}, procsOf? l = 
   | .unsupported .. :: _, _, h => by simp [procsOf?] at h
   | .inst _ :: _, _, h => by simp [procsOf?] at h
 
-def famOf? : GenItem → Except String TFam
-  | .genFor label g (.int c0) (.binary .slt (.genvarRef g') bnd) (.unary .inc (.genvarRef g'')) _ body =>
+def hdrOf? (label : Option String) (g : String) (initE bound step : PExpr) : Except String Hdr :=
+  match initE, bound, step with
+  | .int c0, .binary .slt (.genvarRef g') bnd, .unary .inc (.genvarRef g'') =>
       if g' = g ∧ g'' = g then
         match affOf? bnd with
         | none => .error "generate bound is not affine in the parameters"
-        | some b =>
-            match procsOf? body with
-            | none => .error "generate body holds a nested generate, a conditional generate or an instance"
-            | some ps =>
-                match sitesOf? (label.getD "genblk") 0 ps with
-                | .error e => .error e
-                | .ok sites => .ok ⟨label.getD "genblk", g, c0, b, sites⟩
+        | some b => .ok ⟨label, g, c0, b, bnd⟩
       else .error "generate loop header mentions a second loop variable"
-  | .genFor .. => .error "generate-for header outside `for (g = <int>; g < <affine>; g++)`"
-  | .genIf .. => .error "conditional generate (outside the v0 fragment)"
-  | .inst _ => .error "module instance (outside the v0 fragment)"
+  | _, _, _ => .error "generate-for header outside `for (g = <int>; g < <affine>; g++)`"
+
+theorem hdrOf?_spec {label : Option String} {g : String} {initE bound step : PExpr} {h : Hdr}
+    (hh : hdrOf? label g initE bound step = .ok h) :
+    h.lbl = label ∧ h.g = g ∧ h.Wf ∧
+      initE = .int h.c0 ∧ bound = .binary .slt (.genvarRef h.g) h.bndE ∧
+      step = .unary .inc (.genvarRef h.g) := by
+  unfold hdrOf? at hh
+  split at hh
+  · rename_i c0 g' bnd g''
+    by_cases hgg : g' = g ∧ g'' = g
+    · obtain ⟨h1, h2⟩ := hgg
+      subst h1 h2
+      simp only [and_self, if_true] at hh
+      rcases hb : affOf? bnd with _ | b
+      · simp [hb] at hh
+      · simp only [hb, Except.ok.injEq] at hh
+        subst hh
+        exact ⟨rfl, rfl, hb, rfl, rfl, rfl⟩
+    · simp [hgg] at hh
+  · simp at hh
+
+/-- An item of an outer loop's body at position `pos`. -/
+def itemOf? (ds : List DeclT) (tag : String) (pos : Nat) : GenItem → Except String TItem
+  | .process p =>
+      match siteOf? ds pos p with
+      | .error e => .error s!"site `{tag}#{pos}`: {e}"
+      | .ok st => .ok (.site st)
+  | .genFor label g initE bound step rc body =>
+      match hdrOf? label g initE bound step with
+      | .error e => .error e
+      | .ok h =>
+          match procsOf? body with
+          | none => .error "an inner generate loop holds a nested generate, a conditional generate or an instance (the v1 fragment nests generate loops two deep)"
+          | some ps =>
+              match sitesOf? ds h.name 0 ps with
+              | .error e => .error e
+              | .ok sts => .ok (.loop ⟨h, rc, sts⟩)
+  | .genIf .. => .error "conditional generate inside a generate loop (outside the v1 fragment)"
+  | .inst _ => .error "module instance inside a generate loop (outside the v1 fragment)"
+  | .unsupported k _ => .error s!"unsupported generate item `{k}`"
+
+def itemsOf? (ds : List DeclT) (tag : String) : Nat → List GenItem → Except String (List TItem)
+  | _, [] => .ok []
+  | pos, it :: rest =>
+      match itemOf? ds tag pos it with
+      | .error e => .error e
+      | .ok x =>
+          match itemsOf? ds tag (pos + 1) rest with
+          | .error e => .error e
+          | .ok xs => .ok (x :: xs)
+
+def famOf? (ds : List DeclT) : GenItem → Except String TFam
+  | .genFor label g initE bound step rc body =>
+      match hdrOf? label g initE bound step with
+      | .error e => .error e
+      | .ok h =>
+          match itemsOf? ds h.name 0 body with
+          | .error e => .error e
+          | .ok its => .ok ⟨h, rc, its⟩
+  | .genIf .. => .error "conditional generate (outside the v1 fragment)"
+  | .inst _ => .error "module instance (outside the v1 fragment)"
   | .process _ => .error "process item in the generate list"
   | .unsupported k _ => .error s!"unsupported generate item `{k}`"
 
-/-! ## Declarations -/
-
-/-- A scalar or 1-D packed declaration with affine bounds. -/
-structure DeclT where
-  name : String
-  isInput : Bool
-  isOutput : Bool
-  dim : Option (PDim × Aff × Aff)
-deriving Repr, Inhabited
-
-def DeclT.width (σ : String → Int) (dt : DeclT) : Nat :=
-  match dt.dim with
-  | none => 1
-  | some (_, m, l) => (m.eval σ - l.eval σ).natAbs + 1
-
-def DeclT.vals (σ : String → Int) (dt : DeclT) : List (Int × Int) :=
-  match dt.dim with
-  | none => []
-  | some (_, m, l) => [(m.eval σ, l.eval σ)]
-
-def DeclT.pdims (dt : DeclT) : List PDim :=
-  match dt.dim with
-  | none => []
-  | some (d, _, _) => [d]
-
-def DeclT.affNames (dt : DeclT) : List String :=
-  match dt.dim with
-  | none => []
-  | some (_, m, l) => m.names ++ l.names
-
-def DeclT.toDecl (σ : String → Int) (dt : DeclT) : Decl :=
-  { name := dt.name, width := dt.width σ, isInput := dt.isInput, isOutput := dt.isOutput }
-
-def declOf? (pd : PDecl) : Except String DeclT :=
-  match pd.init with
-  | some _ => .error s!"declaration `{pd.name}` has an initializer"
-  | none =>
-      if pd.isSigned || pd.twoState then
-        .error s!"declaration `{pd.name}` is signed or 2-state (outside the v0 fragment: the summary's declarations are unsigned 4-state)"
-      else
-        match pd.type with
-        | .packed [] _ => .ok ⟨pd.name, pd.isInput, pd.isOutput, none⟩
-        | .packed [d] _ =>
-            match affOf? d.msb, affOf? d.lsb with
-            | some m, some l => .ok ⟨pd.name, pd.isInput, pd.isOutput, some (d, m, l)⟩
-            | _, _ => .error s!"declaration `{pd.name}`: packed bounds are not affine in the parameters"
-        | _ => .error s!"declaration `{pd.name}`: only scalar and 1-D packed declarations are in the v0 fragment"
-
-def declsOf? : List PDecl → Except String (List DeclT)
+def famsOf? (ds : List DeclT) : List GenItem → Except String (List TFam)
   | [] => .ok []
-  | pd :: rest =>
-      match declOf? pd with
+  | it :: rest =>
+      match famOf? ds it with
       | .error e => .error e
-      | .ok dt =>
-          match declsOf? rest with
+      | .ok f =>
+          match famsOf? ds rest with
           | .error e => .error e
-          | .ok ds => .ok (dt :: ds)
+          | .ok fs => .ok (f :: fs)
 
 /-! ## The summary -/
 
@@ -488,27 +859,49 @@ structure Summary where
   params : List String
   decls : List DeclT
   statics : List TSite
-  fam : Option TFam
+  fams : List TFam
 deriving Repr, Inhabited
 
 def _root_.LeanModels.Sv.PDesign.summary (d : PDesign) : Except String Summary :=
-  if !d.localParams.isEmpty then .error "local parameters are outside the v0 fragment"
-  else if !d.enums.isEmpty then .error "enums are outside the v0 fragment"
+  if !d.localParams.isEmpty then .error "local parameters are outside the v1 fragment"
+  else if !d.enums.isEmpty then .error "enums are outside the v1 fragment"
   else if !d.others.isEmpty then .error "out-of-tier module members are present"
   else
     match declsOf? d.decls with
     | .error e => .error e
     | .ok ds =>
-        match sitesOf? "plain" 0 d.processes with
+        match sitesOf? ds "plain" 0 d.processes with
         | .error e => .error e
         | .ok sts =>
-            match d.generates with
-            | [] => .ok ⟨d.params.map (·.name), ds, sts, none⟩
-            | [it] =>
-                match famOf? it with
-                | .error e => .error e
-                | .ok f => .ok ⟨d.params.map (·.name), ds, sts, some f⟩
-            | _ => .error "more than one generate item (the v0 fragment has at most one `generate for`)"
+            match famsOf? ds d.generates with
+            | .error e => .error e
+            | .ok fs => .ok ⟨d.params.map (·.name), ds, sts, fs⟩
+
+/-- A site together with the loops that enclose it (outermost first) and the label of the
+innermost enclosing block (`"plain"` for a module-level process). -/
+structure LSite where
+  hdrs : List Hdr
+  blk : String
+  site : TSite
+deriving Repr, Inhabited
+
+/-- The site's identity at a valuation of its enclosing loop indices. -/
+def LSite.id (ls : LSite) (σ : String → Int) : SiteId :=
+  match ls.hdrs with
+  | [] => .plain ls.site.pos
+  | _ => .fam ls.blk ls.site.pos (ls.hdrs.map fun h => σ h.g)
+
+/-- The static identity of a site (unique per site on a design the structural check accepts). -/
+def LSite.key (ls : LSite) : String × Nat × Nat :=
+  ((if ls.hdrs.isEmpty then "plain" else ls.blk), ls.site.pos, ls.hdrs.length)
+
+/-- The located sites of one item of an outer loop's body. -/
+def TFam.itemLs (f : TFam) : TItem → List LSite
+  | .site st => [⟨[f.hdr], f.hdr.name, st⟩]
+  | .loop l => l.body.map fun st => ⟨[f.hdr, l.hdr], l.hdr.name, st⟩
+
+/-- The located sites of a top-level loop. -/
+def TFam.lsites (f : TFam) : List LSite := f.body.flatMap f.itemLs
 
 namespace Summary
 
@@ -516,9 +909,8 @@ variable (s : Summary)
 
 def declNames : List String := s.decls.map (·.name)
 def inputNames : List String := s.decls.filterMap fun dt => if dt.isInput then some dt.name else none
-def famSites : List TSite := match s.fam with | none => [] | some f => f.body
-def sites : List TSite := s.statics ++ s.famSites
-def find (n : String) : Option DeclT := s.decls.find? (fun dt => dt.name == n)
+def find (n : String) : Option DeclT := findDecl s.decls n
+def dimsOf' (n : String) : Option (List (Aff × Aff)) := dimsOf s.decls n
 
 /-- Declared width of a signal (`0` when undeclared). -/
 def dw (σ : String → Int) (n : String) : Nat := ((s.find n).map (·.width σ)).getD 0
@@ -526,30 +918,70 @@ def dw (σ : String → Int) (n : String) : Nat := ((s.find n).map (·.width σ)
 /-- The widths as the `IEnv.widths`/`Design2.declWidth` view of the declaration scope. -/
 def DW (σ : String → Int) (n : String) : Option Nat := (s.find n).map (·.width σ)
 
-/-- The most significant label of a zero-based descending 1-D declaration `[m:0]`. -/
-def AD (σ : String → Int) (n : String) : Option Int :=
+/-- The evaluated packed dimensions, as `IEnv.dims` records them. -/
+def DG (σ : String → Int) (n : String) : Option (List (Int × Int)) := (s.find n).map (·.vals σ)
+
+/-- The element width, as `buildElems` records it. -/
+def EW (σ : String → Int) (n : String) : Option Nat := (s.find n).map (·.elemW σ)
+
+/-- The most significant label of the `k`-th packed dimension (`0` if there is none). -/
+def dm (σ : String → Int) (n : String) (k : Nat) : Int :=
   match s.find n with
-  | some ⟨_, _, _, some (_, m, l)⟩ => if l = Aff.const 0 then some (m.eval σ) else none
-  | _ => none
+  | none => 0
+  | some dt =>
+      match dt.dims[k]? with
+      | none => 0
+      | some p => p.2.1.eval σ
+
+/-- The access is consistent with the declaration it names: right number of dimensions, zero-based
+descending, and the recorded row width is the second dimension's extent. -/
+def accOk : Acc → Bool
+  | .whole n => (s.find n).isSome
+  | .bit n _ =>
+      match s.dimsOf' n with
+      | some [] => true
+      | some [_] => true
+      | _ => false
+  | .cell1 n _ =>
+      match s.dimsOf' n with
+      | some [(_, l)] => decide (l = Aff.const 0)
+      | _ => false
+  | .row n w _ =>
+      match s.dimsOf' n with
+      | some [(_, l1), (m2, l2)] =>
+          decide (l1 = Aff.const 0) && decide (l2 = Aff.const 0) && decide (w = m2.add (Aff.const 1))
+      | _ => false
+  | .cell2 n w _ _ =>
+      match s.dimsOf' n with
+      | some [(_, l1), (m2, l2)] =>
+          decide (l1 = Aff.const 0) && decide (l2 = Aff.const 0) && decide (w = m2.add (Aff.const 1))
+      | _ => false
+  | .part1 n _ _ =>
+      match s.dimsOf' n with
+      | some [(_, l)] => decide (l = Aff.const 0)
+      | _ => false
+  | .part2 n w _ _ _ =>
+      match s.dimsOf' n with
+      | some [(_, l1), (m2, l2)] =>
+          decide (l1 = Aff.const 0) && decide (l2 = Aff.const 0) && decide (w = m2.add (Aff.const 1))
+      | _ => false
+
+/-- The located sites, in instantiation order of their first instances. -/
+def lsites : List LSite :=
+  s.statics.map (fun st => (⟨[], "plain", st⟩ : LSite)) ++ s.fams.flatMap TFam.lsites
+
+/-- The loop-header paths of the generate tree: each top-level loop alone, and each inner loop
+under its outer loop (outermost first). -/
+def hdrPaths : List (List Hdr) :=
+  s.fams.flatMap fun f =>
+    [f.hdr] :: f.body.filterMap fun it =>
+      match it with
+      | .site _ => none
+      | .loop l => some [f.hdr, l.hdr]
 
 end Summary
 
 /-! ## What the summary promises: footprints of the instantiated processes -/
-
-def TTgt.win (σ : String → Int) (dw : String → Nat) : TTgt → Win
-  | .whole n => (n, 0, dw n)
-  | .bit n a => (n, (a.eval σ).toNat, 1)
-  | .arr n a => (n, (a.eval σ).toNat, 1)
-
-def TTgt.lhs (σ : String → Int) : TTgt → Lhs2
-  | .whole n => .ident n
-  | .bit n a => .slice n (a.eval σ).toNat 1
-  | .arr n a => .slice n (a.eval σ).toNat 1
-
-def TRd.rd (σ : String → Int) : TRd → ReadWin
-  | .whole n => .whole n
-  | .bit n a => .win n (a.eval σ).toNat 1
-  | .arr n a => .win n (a.eval σ).toNat 1
 
 /-- The footprint of one process instance. -/
 structure SiteInst where
@@ -558,52 +990,127 @@ structure SiteInst where
   tgt : Lhs2
   rd : List ReadWin
 
-def TSite.inst (σ : String → Int) (dw : String → Nat) (id : SiteId) (st : TSite) : SiteInst :=
-  { id := id, win := st.tgt.win σ dw, tgt := st.tgt.lhs σ, rd := st.rds.map (TRd.rd σ) }
+/-- The footprint of a located site at a valuation of its loops. -/
+def LSite.inst (ls : LSite) (σ : String → Int) (dw : String → Nat) : SiteInst :=
+  { id := ls.id σ, win := ls.site.tgt.win σ dw, tgt := ls.site.tgt.lhs σ,
+    rd := ls.site.rds.map (Acc.rd σ) }
 
-def TFam.range (f : TFam) (σ : String → Int) : List Int :=
-  intRange f.c0 (f.bound.eval σ - f.c0).toNat
+/-- The valuation reached by binding the loops' indices, and the environment reached alongside
+it (`IEnv.bindVal`). -/
+def Reach : List Hdr → (String → Int) → (String → Int) → Prop
+  | [], σ, σ' => σ' = σ
+  | h :: hs, σ, σ' => ∃ i, h.Rng σ i ∧ Reach hs (bindσ h.g i σ) σ'
 
-def TFam.insts (f : TFam) (σ : String → Int) (dw : String → Nat) : List SiteInst :=
-  (f.range σ).flatMap fun i =>
-    f.body.map fun st => st.inst (bindσ f.g i σ) dw (.fam f.label st.pos [i])
+def ReachE : List Hdr → (String → Int) → IEnv → (String → Int) → IEnv → Prop
+  | [], σ, E, σ', E' => σ' = σ ∧ E' = E
+  | h :: hs, σ, E, σ', E' => ∃ i, h.Rng σ i ∧ ReachE hs (bindσ h.g i σ) (E.bindVal h.g i) σ' E'
 
-def Summary.insts (s : Summary) (σ : String → Int) : List SiteInst :=
-  s.statics.map (fun st => st.inst σ (s.dw σ) (.plain st.pos)) ++
-    (match s.fam with
-     | none => []
-     | some f => f.insts σ (s.dw σ))
+/-- `P` holds at every valuation of the loops (nested `∀`, outermost first). -/
+def Loops.all : List Hdr → (String → Int) → ((String → Int) → Prop) → Prop
+  | [], σ, P => P σ
+  | h :: hs, σ, P => ∀ i, h.Rng σ i → Loops.all hs (bindσ h.g i σ) P
 
-/-- The closed-form realized list: each promised footprint next to the process the real
-instantiation builds for it, in `instantiate2`'s order. -/
+theorem Loops.all_iff : ∀ (hs : List Hdr) (σ : String → Int) (P : (String → Int) → Prop),
+    Loops.all hs σ P ↔ ∀ σ', Reach hs σ σ' → P σ'
+  | [], σ, P => by simp [Loops.all, Reach]
+  | h :: hs, σ, P => by
+      simp only [Loops.all, Reach]
+      constructor
+      · intro H σ' ⟨i, hi, hr⟩
+        exact (Loops.all_iff hs _ P).mp (H i hi) σ' hr
+      · intro H i hi
+        exact (Loops.all_iff hs _ P).mpr fun σ' hr => H σ' ⟨i, hi, hr⟩
+
+theorem ReachE_Reach : ∀ {hs : List Hdr} {σ : String → Int} {E : IEnv} {σ' : String → Int}
+    {E' : IEnv}, ReachE hs σ E σ' E' → Reach hs σ σ'
+  | [], σ, E, σ', E', h => h.1
+  | h :: hs, σ, E, σ', E', ⟨i, hi, hr⟩ => ⟨i, hi, ReachE_Reach hr⟩
+
+theorem Reach_ReachE : ∀ {hs : List Hdr} {σ : String → Int} {σ' : String → Int} (E : IEnv),
+    Reach hs σ σ' → ∃ E', ReachE hs σ E σ' E'
+  | [], σ, σ', E, h => ⟨E, h, rfl⟩
+  | h :: hs, σ, σ', E, ⟨i, hi, hr⟩ => by
+      obtain ⟨E', hE⟩ := Reach_ReachE (E.bindVal h.g i) hr
+      exact ⟨E', i, hi, hE⟩
+
+/-- **The closed-form list**: each located site, instantiated at every valuation of its loops, in
+`instantiate2`'s order (module-level processes, then each generate loop: for each outer index, the
+body's items in order, an inner loop contributing its sites for each inner index). The builder
+`b` receives the located site, the valuation and the environment. -/
+def TFam.itemEnum {β : Type} (b : LSite → (String → Int) → IEnv → β) (σ : String → Int) (E : IEnv)
+    (f : TFam) (i : Int) : TItem → List β
+  | .site st => [b ⟨[f.hdr], f.hdr.name, st⟩ (bindσ f.hdr.g i σ) (E.bindVal f.hdr.g i)]
+  | .loop l => (l.hdr.range (bindσ f.hdr.g i σ)).flatMap fun j =>
+      l.body.map fun st =>
+        b ⟨[f.hdr, l.hdr], l.hdr.name, st⟩ (bindσ l.hdr.g j (bindσ f.hdr.g i σ))
+          ((E.bindVal f.hdr.g i).bindVal l.hdr.g j)
+
+def TFam.enum {β : Type} (b : LSite → (String → Int) → IEnv → β) (σ : String → Int) (E : IEnv)
+    (f : TFam) : List β :=
+  (f.hdr.range σ).flatMap fun i => f.body.flatMap fun it => f.itemEnum b σ E i it
+
+def Summary.enum {β : Type} (s : Summary) (b : LSite → (String → Int) → IEnv → β)
+    (σ : String → Int) (E : IEnv) : List β :=
+  s.statics.map (fun st => b ⟨[], "plain", st⟩ σ E) ++ s.fams.flatMap fun f => TFam.enum b σ E f
+
+def Summary.insts (s : Summary) (σ : String → Int) (E : IEnv := {}) : List SiteInst :=
+  s.enum (fun ls σ' _ => ls.inst σ' (s.dw σ)) σ E
+
+/-- The realized list: each promised footprint next to the process the real instantiation builds
+for it. -/
 def Summary.pairs (s : Summary) (σ : String → Int) (E : IEnv) (elems : List (String × Nat)) :
     List (SiteInst × Process2) :=
-  s.statics.map (fun st => (st.inst σ (s.dw σ) (.plain st.pos), instProcess2 E elems st.proc)) ++
-    (match s.fam with
-     | none => []
-     | some f =>
-         (f.range σ).flatMap fun i =>
-           f.body.map fun st =>
-             (st.inst (bindσ f.g i σ) (s.dw σ) (.fam f.label st.pos [i]),
-              instProcess2 (E.bindVal f.g i) elems st.proc))
+  s.enum (fun ls σ' E' => (ls.inst σ' (s.dw σ), instProcess2 E' elems ls.site.proc)) σ E
+
+theorem TFam.itemEnum_map {β γ : Type} (b : LSite → (String → Int) → IEnv → β) (g : β → γ)
+    (σ : String → Int) (E : IEnv) (f : TFam) (i : Int) (it : TItem) :
+    (f.itemEnum b σ E i it).map g = f.itemEnum (fun ls σ' E' => g (b ls σ' E')) σ E i it := by
+  cases it with
+  | site st => simp [TFam.itemEnum]
+  | loop l => simp [TFam.itemEnum, List.map_flatMap, List.map_map, Function.comp_def]
+
+theorem TFam.enum_map {β γ : Type} (b : LSite → (String → Int) → IEnv → β) (g : β → γ)
+    (σ : String → Int) (E : IEnv) (f : TFam) :
+    (TFam.enum b σ E f).map g = TFam.enum (fun ls σ' E' => g (b ls σ' E')) σ E f := by
+  unfold TFam.enum
+  simp only [List.map_flatMap]
+  apply flatMap_congr'
+  intro i _
+  apply flatMap_congr'
+  intro it _
+  exact TFam.itemEnum_map b g σ E f i it
+
+theorem Summary.enum_map {β γ : Type} (s : Summary) (b : LSite → (String → Int) → IEnv → β)
+    (g : β → γ) (σ : String → Int) (E : IEnv) :
+    (s.enum b σ E).map g = s.enum (fun ls σ' E' => g (b ls σ' E')) σ E := by
+  unfold Summary.enum
+  simp only [List.map_append, List.map_map, List.map_flatMap, Function.comp_def]
+  congr 1
+  apply flatMap_congr'
+  intro f _
+  exact TFam.enum_map b g σ E f
 
 theorem Summary.pairs_map_fst (s : Summary) (σ : String → Int) (E : IEnv)
-    (elems : List (String × Nat)) : (s.pairs σ E elems).map Prod.fst = s.insts σ := by
-  unfold Summary.pairs Summary.insts
-  rw [List.map_append, List.map_map]
-  congr 1
-  cases s.fam with
-  | none => rfl
-  | some f =>
-    simp only [TFam.insts, List.map_flatMap, List.map_map, Function.comp_def]
+    (elems : List (String × Nat)) : (s.pairs σ E elems).map Prod.fst = s.insts σ E := by
+  unfold Summary.pairs
+  rw [Summary.enum_map]
+  rfl
 
 /-! ## The declaration stage -/
 
 theorem declOf?_spec {pd : PDecl} {dt : DeclT} (h : declOf? pd = .ok dt) :
     dt.name = pd.name ∧ dt.isInput = pd.isInput ∧ dt.isOutput = pd.isOutput ∧ pd.init = none ∧
-    (∃ r, pd.type = .packed dt.pdims r) ∧
-    (∀ d m l, dt.dim = some (d, m, l) → affOf? d.msb = some m ∧ affOf? d.lsb = some l) ∧
+    (∃ r, pd.type = .packed dt.pdims r) ∧ dt.dims.length ≤ 2 ∧
+    (∀ p ∈ dt.dims, affOf? p.1.msb = some p.2.1 ∧ affOf? p.1.lsb = some p.2.2) ∧
     pd.isSigned = false ∧ pd.twoState = false := by
+  have hdim : ∀ {nm : String} {d : PDim} {p : PDim × Aff × Aff}, dimOf? nm d = .ok p →
+      p.1 = d ∧ affOf? p.1.msb = some p.2.1 ∧ affOf? p.1.lsb = some p.2.2 := by
+    intro nm d p hp
+    unfold dimOf? at hp
+    rcases hm : affOf? d.msb with _ | m <;> rcases hl : affOf? d.lsb with _ | l <;>
+      simp [hm, hl] at hp
+    subst hp
+    exact ⟨rfl, hm, hl⟩
   unfold declOf? at h
   cases hi : pd.init with
   | some v => rw [hi] at h; simp at h
@@ -616,24 +1123,39 @@ theorem declOf?_spec {pd : PDecl} {dt : DeclT} (h : declOf? pd = .ok dt) :
     cases hty : pd.type with
     | packed ds r =>
       rw [hty] at h
-      cases ds with
-      | nil =>
+      match ds, h with
+      | [], h =>
         simp only [Except.ok.injEq] at h
         subst h
-        refine ⟨rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims]⟩, ?_, hs.1, hs.2⟩
-        intro d m l hd; simp at hd
-      | cons d ds' =>
-        cases ds' with
-        | nil =>
-          rcases hm : affOf? d.msb with _ | m <;> rcases hl : affOf? d.lsb with _ | l <;>
-            simp [hm, hl] at h
+        refine ⟨rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims]⟩, by simp, ?_, hs.1, hs.2⟩
+        intro p hp; simp at hp
+      | [d], h =>
+        rcases hp : dimOf? pd.name d with e | p
+        · simp [hp] at h
+        · simp only [hp, Except.ok.injEq] at h
           subst h
-          refine ⟨rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims]⟩, ?_, hs.1, hs.2⟩
-          intro d' m' l' hd
-          simp only [Option.some.injEq, Prod.mk.injEq] at hd
-          obtain ⟨rfl, rfl, rfl⟩ := hd
-          exact ⟨hm, hl⟩
-        | cons d2 ds'' => simp at h
+          obtain ⟨h1, h2, h3⟩ := hdim hp
+          refine ⟨rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims, h1]⟩, by simp, ?_, hs.1, hs.2⟩
+          intro q hq
+          simp only [List.mem_singleton] at hq
+          subst hq
+          exact ⟨h2, h3⟩
+      | [d1, d2], h =>
+        rcases hp1 : dimOf? pd.name d1 with e | p1
+        · simp [hp1] at h
+        · rcases hp2 : dimOf? pd.name d2 with e | p2
+          · simp [hp1, hp2] at h
+          · simp only [hp1, hp2, Except.ok.injEq] at h
+            subst h
+            obtain ⟨h1, h2, h3⟩ := hdim hp1
+            obtain ⟨k1, k2, k3⟩ := hdim hp2
+            refine ⟨rfl, rfl, rfl, rfl, ⟨r, by simp [DeclT.pdims, h1, k1]⟩, by simp, ?_, hs.1, hs.2⟩
+            intro q hq
+            simp only [List.mem_cons, List.not_mem_nil, or_false] at hq
+            rcases hq with rfl | rfl
+            · exact ⟨h2, h3⟩
+            · exact ⟨k2, k3⟩
+      | _ :: _ :: _ :: _, h => simp at h
     | typeRef n pkg r => rw [hty] at h; simp at h
     | unrecoverable r => rw [hty] at h; simp at h
 
@@ -648,27 +1170,83 @@ theorem declsOf?_cons {pd : PDecl} {rest : List PDecl} {sd : List DeclT}
     · simp only [hd, hr, Except.ok.injEq] at h
       exact ⟨dt, sd', rfl, rfl, h.symm⟩
 
-/-- `dimsWidth` of at most one dimension, computed. -/
+/-- `evalDims` of the recognized dimensions, computed. -/
+theorem evalDims_dims {env : IEnv} {σ : String → Int} :
+    ∀ (dims : List (PDim × Aff × Aff)),
+      (∀ p ∈ dims, affOf? p.1.msb = some p.2.1 ∧ affOf? p.1.lsb = some p.2.2) →
+      (∀ p ∈ dims, ∀ n ∈ p.2.1.names ++ p.2.2.names, env.vals.lookup n = some (σ n)) →
+      evalDims env (dims.map (·.1)) = .ok (dims.map fun p => (p.2.1.eval σ, p.2.2.eval σ))
+  | [], _, _ => by simp
+  | p :: rest, ha, hg => by
+      obtain ⟨hm, hl⟩ := ha p (List.mem_cons_self ..)
+      have hm' : ∀ n ∈ p.2.1.names, env.vals.lookup n = some (σ n) :=
+        fun n hn => hg p (List.mem_cons_self ..) n (List.mem_append_left _ hn)
+      have hl' : ∀ n ∈ p.2.2.names, env.vals.lookup n = some (σ n) :=
+        fun n hn => hg p (List.mem_cons_self ..) n (List.mem_append_right _ hn)
+      obtain ⟨-, hem⟩ := affOf?_sound _ _ hm hm'
+      obtain ⟨-, hel⟩ := affOf?_sound _ _ hl hl'
+      have ih := evalDims_dims rest (fun q hq => ha q (List.mem_cons_of_mem _ hq))
+        (fun q hq => hg q (List.mem_cons_of_mem _ hq))
+      exact evalDims_cons_of hem hel ih
+
+/-- `PType.width` of the recognized dimensions, computed. -/
+theorem width_dims {env : IEnv} {σ : String → Int} (r : Option Nat) :
+    ∀ (dims : List (PDim × Aff × Aff)),
+      (∀ p ∈ dims, affOf? p.1.msb = some p.2.1 ∧ affOf? p.1.lsb = some p.2.2) →
+      (∀ p ∈ dims, ∀ n ∈ p.2.1.names ++ p.2.2.names, env.vals.lookup n = some (σ n)) →
+      (PType.packed (dims.map (·.1)) r).width env = .ok (dimsW σ dims)
+  | [], _, _ => by simp [dimsW]
+  | p :: rest, ha, hg => by
+      obtain ⟨hm, hl⟩ := ha p (List.mem_cons_self ..)
+      have hm' : ∀ n ∈ p.2.1.names, env.vals.lookup n = some (σ n) :=
+        fun n hn => hg p (List.mem_cons_self ..) n (List.mem_append_left _ hn)
+      have hl' : ∀ n ∈ p.2.2.names, env.vals.lookup n = some (σ n) :=
+        fun n hn => hg p (List.mem_cons_self ..) n (List.mem_append_right _ hn)
+      obtain ⟨-, hem⟩ := affOf?_sound _ _ hm hm'
+      obtain ⟨-, hel⟩ := affOf?_sound _ _ hl hl'
+      have ih := width_dims r rest (fun q hq => ha q (List.mem_cons_of_mem _ hq))
+        (fun q hq => hg q (List.mem_cons_of_mem _ hq))
+      rw [List.map_cons, PType.width_packed_cons, ih]
+      simp [PDim.width, hem, hel, dimsW, Gen2.except_ok_bind]
+
+theorem dt_agree {env : IEnv} {σ : String → Int} {dt : DeclT}
+    (hag : ∀ n ∈ dt.affNames, env.vals.lookup n = some (σ n)) :
+    ∀ p ∈ dt.dims, ∀ n ∈ p.2.1.names ++ p.2.2.names, env.vals.lookup n = some (σ n) := by
+  intro p hp n hn
+  apply hag n
+  simp only [DeclT.affNames, List.mem_flatMap]
+  exact ⟨p, hp, hn⟩
+
+/-- `dimsWidth` of a declaration, computed. -/
 theorem width_decl {env : IEnv} {σ : String → Int} {pd : PDecl} {dt : DeclT}
     (hd : declOf? pd = .ok dt)
     (hag : ∀ n ∈ dt.affNames, env.vals.lookup n = some (σ n)) :
     pd.type.width env = .ok (dt.width σ) := by
-  obtain ⟨-, -, -, -, ⟨r, hr⟩, hdim, -, -⟩ := declOf?_spec hd
+  obtain ⟨-, -, -, -, ⟨r, hr⟩, -, hdim, -, -⟩ := declOf?_spec hd
   rw [hr]
-  cases hdt : dt.dim with
-  | none => simp [DeclT.pdims, hdt, DeclT.width]
-  | some p =>
-    obtain ⟨d, m, l⟩ := p
-    obtain ⟨hm, hl⟩ := hdim d m l hdt
-    have hm' : ∀ n ∈ m.names, env.vals.lookup n = some (σ n) :=
-      fun n hn => hag n (by simp [DeclT.affNames, hdt, hn])
-    have hl' : ∀ n ∈ l.names, env.vals.lookup n = some (σ n) :=
-      fun n hn => hag n (by simp [DeclT.affNames, hdt, hn])
-    obtain ⟨-, hem⟩ := affOf?_sound _ _ hm hm'
-    obtain ⟨-, hel⟩ := affOf?_sound _ _ hl hl'
-    simp only [DeclT.pdims, hdt]
-    rw [PType.width_packed_single_of r hem hel]
-    simp [DeclT.width, hdt]
+  exact width_dims r dt.dims hdim (dt_agree hag)
+
+theorem elemWidth_decl {env : IEnv} {σ : String → Int} {pd : PDecl} {dt : DeclT}
+    (hd : declOf? pd = .ok dt)
+    (hag : ∀ n ∈ dt.affNames, env.vals.lookup n = some (σ n)) :
+    pd.type.elemWidth env = .ok (dt.elemW σ) := by
+  obtain ⟨-, -, -, -, ⟨r, hr⟩, hlen, hdim, -, -⟩ := declOf?_spec hd
+  rw [hr]
+  have hag' := dt_agree hag
+  unfold DeclT.pdims
+  match hdt : dt.dims, hlen with
+  | [], _ => simp [DeclT.elemW, hdt]
+  | [p], _ => simp [DeclT.elemW, hdt]
+  | [p1, p2], _ =>
+      have hp2 : p2 ∈ dt.dims := by rw [hdt]; simp
+      have hm : affOf? p2.1.msb = some p2.2.1 := (hdim p2 hp2).1
+      have hl : affOf? p2.1.lsb = some p2.2.2 := (hdim p2 hp2).2
+      obtain ⟨-, hem⟩ := affOf?_sound _ _ hm
+        (fun n hn => hag' p2 hp2 n (List.mem_append_left _ hn))
+      obtain ⟨-, hel⟩ := affOf?_sound _ _ hl
+        (fun n hn => hag' p2 hp2 n (List.mem_append_right _ hn))
+      simp [PType.elemWidth, DeclT.elemW, hdt, PDim.width, hem, hel, List.foldlM, Gen2.except_ok_bind]
+  | _ :: _ :: _ :: _, hl => simp at hl
 
 theorem buildDecls_summary {σ : String → Int} :
     ∀ (ds : List PDecl) (sd : List DeclT), declsOf? ds = .ok sd →
@@ -678,7 +1256,7 @@ theorem buildDecls_summary {σ : String → Int} :
       simp [declsOf?] at h; subst h; rfl
   | pd :: rest, sd, h, env, hag => by
       obtain ⟨dt, sd', hd, hr, rfl⟩ := declsOf?_cons h
-      obtain ⟨hn, hi, ho, hinit, -, -, hsg, hts⟩ := declOf?_spec hd
+      obtain ⟨hn, hi, ho, hinit, -, -, -, hsg, hts⟩ := declOf?_spec hd
       have hw := width_decl (env := env) (σ := σ) hd (fun n hn => hag dt (by simp) n hn)
       have hrest := buildDecls_summary rest sd' hr
         { env with widths := (pd.name, dt.width σ) :: env.widths }
@@ -695,19 +1273,17 @@ theorem buildDecls_summary {σ : String → Int} :
 theorem buildElems_summary {σ : String → Int} :
     ∀ (ds : List PDecl) (sd : List DeclT), declsOf? ds = .ok sd →
       ∀ (env : IEnv), (∀ dt ∈ sd, ∀ n ∈ dt.affNames, env.vals.lookup n = some (σ n)) →
-        buildElems env ds = .ok (sd.map fun dt => (dt.name, 1))
+        buildElems env ds = .ok (sd.map fun dt => (dt.name, dt.elemW σ))
   | [], sd, h, env, _ => by
       simp [declsOf?] at h; subst h; rfl
   | pd :: rest, sd, h, env, hag => by
       obtain ⟨dt, sd', hd, hr, rfl⟩ := declsOf?_cons h
-      obtain ⟨hn, -, -, -, ⟨r, hr'⟩, -, -, -⟩ := declOf?_spec hd
+      obtain ⟨hn, -, -, -, -, -, -, -, -⟩ := declOf?_spec hd
       have hw := width_decl (env := env) (σ := σ) hd (fun n hn => hag dt (by simp) n hn)
       have hrest := buildElems_summary rest sd' hr
         { env with widths := (pd.name, dt.width σ) :: env.widths }
         (fun dt' hdt' n hn => hag dt' (by simp [hdt']) n hn)
-      have hew : pd.type.elemWidth env = .ok 1 := by
-        rw [hr']
-        cases hdt : dt.dim <;> simp [DeclT.pdims, hdt]
+      have hew := elemWidth_decl (env := env) (σ := σ) hd (fun n hn => hag dt (by simp) n hn)
       simp only [buildElems, hw, hew]
       rw [hrest]
       simp [Res.ok_bind, hn]
@@ -724,24 +1300,12 @@ theorem dimTable_summary {σ : String → Int} :
       simp [declsOf?] at h; subst h; simp [dimTable]
   | pd :: rest, sd, h, env, hag, n => by
       obtain ⟨dt, sd', hd, hr, rfl⟩ := declsOf?_cons h
-      obtain ⟨hn, -, -, -, ⟨r, hr'⟩, hdim, -, -⟩ := declOf?_spec hd
+      obtain ⟨hn, -, -, -, ⟨r, hr'⟩, -, hdim, -, -⟩ := declOf?_spec hd
       have hrest := dimTable_summary rest sd' hr (dimTableStep env pd)
         (fun dt' hdt' n' hn' => by
           rw [dimTableStep_vals]; exact hag dt' (by simp [hdt']) n' hn') n
-      have hev : evalDims env dt.pdims = .ok (dt.vals σ) := by
-        cases hdt : dt.dim with
-        | none => simp [DeclT.pdims, DeclT.vals, hdt]
-        | some p =>
-          obtain ⟨d, m, l⟩ := p
-          obtain ⟨hm, hl⟩ := hdim d m l hdt
-          have hm' : ∀ n ∈ m.names, env.vals.lookup n = some (σ n) :=
-            fun n hn => hag dt (by simp) n (by simp [DeclT.affNames, hdt, hn])
-          have hl' : ∀ n ∈ l.names, env.vals.lookup n = some (σ n) :=
-            fun n hn => hag dt (by simp) n (by simp [DeclT.affNames, hdt, hn])
-          obtain ⟨-, hem⟩ := affOf?_sound _ _ hm hm'
-          obtain ⟨-, hel⟩ := affOf?_sound _ _ hl hl'
-          simp only [DeclT.pdims, DeclT.vals, hdt]
-          exact evalDims_cons_of hem hel evalDims_nil
+      have hev : evalDims env dt.pdims = .ok (dt.vals σ) :=
+        evalDims_dims dt.dims hdim (dt_agree (fun n hn => hag dt (by simp) n hn))
       simp only [dimTable, hr', hev, List.lookup, List.find?_cons]
       by_cases hnm : n = pd.name
       · subst hnm

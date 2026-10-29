@@ -12,49 +12,61 @@ Acceptance test of the structural stage (`docs/sv-comb-design.md` §7 steps 4 an
 The design constant is the one `Examples/system-verilog/ripple_add/gen.lean` already loaded
 (`load_design_sv2` is not repeated); only its `.olean` is imported, nothing of `svgolf/`.
 
-Build: `lake build LeanModels.Sv.CombViewExample` (not in the umbrella).
+Build: `lake build Examples.«system-verilog».ripple_add.comb_view`.
+
+Moved here from `LeanModels/Sv/CombViewExample.lean`: `LeanModels` must not import `Examples`.
 -/
 
 open LeanModels.Sv LeanModels.Sv.CombView
 open Examples.«system-verilog».ripple_add.gen
 
-namespace CombViewExample
+namespace Examples.«system-verilog».ripple_add.comb_view
 
 /-! ## Positive: the ripple-carry adder, every `N ≥ 1` -/
 
-/-- `sv_structure` leaves exactly three goals (shown verbatim in the test below):
-the declared-range goal and the two one-driver goals; each is one `omega`. -/
+/-- `sv_structure` leaves only compact goals: the declared-range goals and the one-driver goals
+(carry-in against carry cell, sum cell against sum cell, carry cell against carry cell); each is
+one `omega`. -/
 theorem ripple_comb (N : Nat) (hN : 1 ≤ N) : CombDesign (ripple_add.sem N) := by
   sv_structure
-  · intro i h0 h1; omega
-  · intro i h0 h1; omega
-  · intro i h0 h1 k h2 h3 h4; omega
+  all_goals (intros; omega)
 
 /-- … and two more for the rank (the rank is the player's: carry-in 0, bit `i`'s two cells
 `i + 1`, carry-out `N + 1`, as a function of the SITE IDENTITY). -/
 theorem ripple_acyclic (N : Nat) (hN : 1 ≤ N) : Acyclic (ripple_add.sem N) := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1) (fun _ _ i => i.toNat + 1))
-  · intro i h0 h1; omega
-  · intro i h0 h1; omega
-  · intro i h0 h1 k h2 h3 h4; omega
-  · intro k h0 h1 h2 h3; omega
-  · intro i h0 h1 k h2 h3 h4 h5; omega
-
-/-- The same, with the goals closed uniformly. -/
-example (N : Nat) (hN : 1 ≤ N) : Acyclic (ripple_add.sem N) := by
-  sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1) (fun _ _ i => i.toNat + 1))
   all_goals (intros; omega)
 
-/-- info: 'CombViewExample.ripple_comb' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- With the comb profile in hand the one-driver goals are not asked again. -/
+theorem ripple_acyclic_using (N : Nat) (hN : 1 ≤ N) (hc : CombDesign (ripple_add.sem N)) :
+    Acyclic (ripple_add.sem N) := by
+  sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1) (fun _ _ i => i.toNat + 1))
+    using hc
+  all_goals (intros; omega)
+
+/-- … and the lexicographic rank works on one-index families too (key `(index, 0, phase)`). -/
+example (N : Nat) (hN : 1 ≤ N) : Acyclic (ripple_add.sem N) := by
+  sv_structure (lexRank := fun
+    | .plain 0 => (0, 0, 0)
+    | .plain _ => (N + 1, 0, 0)
+    | .fam _ _ [i] => (i.toNat + 1, 0, 0)
+    | .fam _ _ _ => (0, 0, 0))
+  all_goals (intros; omega)
+
+/-- info: 'Examples.«system-verilog».ripple_add.comb_view.ripple_comb' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms ripple_comb
 
-/-- info: 'CombViewExample.ripple_acyclic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+/-- info: 'Examples.«system-verilog».ripple_add.comb_view.ripple_acyclic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms ripple_acyclic
 
+/-- info: 'Examples.«system-verilog».ripple_add.comb_view.ripple_acyclic_using' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ripple_acyclic_using
+
 /-- info: 'LeanModels.Sv.CombView.Summary.sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms CombView.Summary.sound
 
 -- The hint mode: families, site identities, windows, and the rank relation.
@@ -153,4 +165,4 @@ theorem bad_rank (N : Nat) (hN : 1 ≤ N) : Acyclic (ripple_add.sem N) := by
   sv_structure (rank := fun _ => 0)
   all_goals (intros; omega)
 
-end CombViewExample
+end Examples.«system-verilog».ripple_add.comb_view

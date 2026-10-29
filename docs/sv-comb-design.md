@@ -401,7 +401,40 @@ prototypes (5 and 6) follow once the in-flight rounds have landed.
 Not now: reflection, module instances, `always_comb` loops, the `Core`
 promotion, anything touching existing `LeanModels/Sv` files.
 
-### Status (10/29 evening)
+### Status (10/29, end of day): stages 1 and 2 built
+
+All of the following are in `LeanModels/Sv/` (not in the umbrella build; build
+the examples by module name) and each lane was verified by an independent agent
+that re-ran everything and found no blocker or major issue.
+
+| Stage | Files | Result |
+|---|---|---|
+| `sv_structure` | `CombView{,Thm,Sound,Main,Diag,Tactic,Arith}.lean` | `CombDesign` and `Acyclic` for symbolic N. Adder: 2 tactic lines each. Array multiplier (nested loops, 2-D arrays, part-select and concat targets, lexicographic rank): 2 lines for `CombDesign`, 2 plus a 13-line rank key for `Acyclic`, against about 1370 by hand. `using hc` skips the one-driver goals only. The multiplier's `Acyclic` needs `maxHeartbeats 400000`. |
+| x-free knownness | `CombKnownBits.lean`, `CombKnownThm.lean` | Proved once: for a design in the x-free fragment (`Design2.XFree`), with every read driven (`Covered`) and known inputs, every driven bit is known and equals the Boolean evaluation of its right-hand side. Strong induction on the rank. Operators outside the fragment (width-mismatched operands, dynamic index, `/ % **`, signed forms, wildcard equality) are listed in the module docstring. |
+| `sv_equations` | `CombEq{Base,Shape,Thm,Tactic}.lean`, `CombLib.lean` | The netlist view: pointwise Boolean equations of every site with the SV gate shape preserved, plus the knownness of each site, from `CombDesign`, `Acyclic` and a settled state. With `sv_cover` for the coverage goals. |
+
+Acceptance (the plan's test): the equations come from the real `add_n.sem N` and
+`mul_n.sem N`; nothing is typed in. Complete for-all-N correctness proofs:
+`Examples/system-verilog/ripple_add/comb_proof.lean` (adder: 108 code lines, of
+which the main theorem is 20 proof lines and the arithmetic bridge 72, against
+537 by hand) and `Examples/system-verilog/mul_array/comb_proof.lean`
+(multiplier: 197 code lines against 1380 by hand). Tampered adders (wrong gate,
+wrong carry direction, wrong offset: `ripple_add/neg/`) are accepted by the
+tactics but their correctness proofs fail, so the producer is not vacuous.
+Standard axioms only, pinned by `#guard_msgs`.
+
+Honest limits: (1) a one-time library of about 6000 lines; (2) the multiplier's
+six nested 2-D coverage goals are closed by hand (about 65 lines), because
+`sv_cover`'s witness search does not reach them; (3) the knownness side has no
+separate `sv_known` or `sv_bitvec` tactic (it is delivered inside
+`sv_equations` and the player applies the port bridge); (4) several fragment
+refusals are not source-located (they report a `decide` failure); (5) some
+obligations are closed internally by `intros; omega` or `try simp` (visible as
+tagged goals only when they fail); (6) module instances, `always_comb` bodies
+and edge-triggered processes are out of scope; (7) the `1 ≤ N` range and the
+Int/`toNat` presentation are still visible to the player.
+
+### Earlier status (10/29 evening, adder prototype)
 
 Steps 0 to 5 are done for the adder shape. `sv_structure` (files
 `LeanModels/Sv/CombView{,Thm,Sound,Main,Diag,Tactic,Example}.lean`, about

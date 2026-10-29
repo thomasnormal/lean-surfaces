@@ -3,7 +3,7 @@ import LeanModels.Sv.CombViewMain
 /-!
 # `sv_structure`: diagnostics (pure functions, no proofs depend on them)
 
-* `Summary.describe`    — the `sv_structure?` hint: declarations, sites, families, windows, reads
+* `Summary.describe`    — the `sv_structure?` hint: declarations, sites, loops, windows, reads
   and the rank relation a rank certificate has to satisfy (site identities as in design
   principle 13).
 * `Summary.structProblems` — the specific reason a structural check fails.
@@ -25,21 +25,34 @@ def Aff.showR (a : Aff) (rn : String → String) : String :=
 
 def Aff.show (a : Aff) : String := a.showR id
 
-def TTgt.showR (rn : String → String) : TTgt → String
+/-- An access, with its index variables renamed. -/
+def Acc.showR (rn : String → String) : Acc → String
   | .whole n => n
   | .bit n a => s!"{n}[{a.showR rn}]"
-  | .arr n a => s!"{n}[{a.showR rn}]"
+  | .cell1 n a => s!"{n}[{a.showR rn}]"
+  | .row n _ r => s!"{n}[{r.showR rn}]"
+  | .cell2 n _ r c => s!"{n}[{r.showR rn}][{c.showR rn}]"
+  | .part1 n hi lo => s!"{n}[{hi.showR rn}:{lo.showR rn}]"
+  | .part2 n _ r hi lo => s!"{n}[{r.showR rn}][{hi.showR rn}:{lo.showR rn}]"
 
-def TTgt.show (t : TTgt) : String := t.showR id
+def Acc.show (a : Acc) : String := a.showR id
 
-def TRd.show : TRd → String
+/-- An access at a valuation (indices evaluated). -/
+def Acc.showVal (σ : String → Int) : Acc → String
   | .whole n => n
-  | .bit n a => s!"{n}[{a.show}]"
-  | .arr n a => s!"{n}[{a.show}]"
+  | .bit n a => s!"{n}[{a.eval σ}]"
+  | .cell1 n a => s!"{n}[{a.eval σ}]"
+  | .row n _ r => s!"{n}[{r.eval σ}]"
+  | .cell2 n _ r c => s!"{n}[{r.eval σ}][{c.eval σ}]"
+  | .part1 n hi lo => s!"{n}[{hi.eval σ}:{lo.eval σ}]"
+  | .part2 n _ r hi lo => s!"{n}[{r.eval σ}][{hi.eval σ}:{lo.eval σ}]"
 
 def SiteId.show : SiteId → String
   | .plain p => s!"plain#{p}"
   | .fam l p idx => s!"{l}#{p}[{", ".intercalate (idx.map toString)}]"
+
+/-- A rank key, printed as a triple. -/
+def showKey (k : Key) : String := s!"({k.1}, {k.2.1}, {k.2.2})"
 
 def showWin (w : Win) : String :=
   let (n, lo, wd) := w
@@ -47,12 +60,16 @@ def showWin (w : Win) : String :=
 
 def DeclT.show (dt : DeclT) : String :=
   let dir := if dt.isInput then "input " else if dt.isOutput then "output" else "      "
-  match dt.dim with
-  | none => s!"{dir} {dt.name}"
-  | some (_, m, l) => s!"{dir} {dt.name} [{m.show} : {l.show}]"
+  let dims := " ".intercalate (dt.dims.map fun p => s!"[{p.2.1.show} : {p.2.2.show}]")
+  if dt.dims.isEmpty then s!"{dir} {dt.name}" else s!"{dir} {dt.name} {dims}"
 
 def TSite.show (st : TSite) (id : String) : String :=
-  s!"{id} : drives {st.tgt.show}   reads [{", ".intercalate (st.rds.map TRd.show)}]"
+  s!"{id} : drives {st.tgt.show}   reads [{", ".intercalate (st.rds.map Acc.show)}]"
+
+/-- The printed name of a located site, loop indices renamed. -/
+def LSite.label (ls : LSite) (rn : String → String) : String :=
+  if ls.hdrs.isEmpty then s!"plain#{ls.site.pos}"
+  else s!"{ls.blk}#{ls.site.pos}[{", ".intercalate (ls.hdrs.map fun h => rn h.g)}]"
 
 /-- The `sv_structure?` text. -/
 def Summary.describe (s : Summary) : String := Id.run do
@@ -62,31 +79,28 @@ def Summary.describe (s : Summary) : String := Id.run do
   out := out ++ "plain sites (module-level assigns):\n"
   for st in s.statics do
     out := out ++ s!"  {st.show s!"plain#{st.pos}"}\n"
-  match s.fam with
-  | none => out := out ++ "families: none\n"
-  | some f =>
-      out := out ++ s!"family `{f.label}`: for {f.g} in [{f.c0}, {f.bound.show}):\n"
-      for st in f.body do
-        out := out ++ s!"  {st.show s!"{f.label}#{st.pos}[{f.g}]"}\n"
+  if s.fams.isEmpty then
+    out := out ++ "families: none\n"
+  for f in s.fams do
+    out := out ++ s!"family `{f.hdr.name}`: for {f.hdr.g} in [{f.hdr.c0}, {f.hdr.bound.show}):\n"
+    for it in f.body do
+      match it with
+      | .site st =>
+          out := out ++ s!"  {st.show s!"{f.hdr.name}#{st.pos}[{f.hdr.g}]"}\n"
+      | .loop l =>
+          out := out ++ s!"  inner family `{l.hdr.name}`: for {l.hdr.g} in [{l.hdr.c0}, {l.hdr.bound.show}):\n"
+          for st in l.body do
+            out := out ++ s!"    {st.show s!"{l.hdr.name}#{st.pos}[{f.hdr.g}, {l.hdr.g}]"}\n"
   out := out ++ "rank relation a certificate must satisfy (writer < reader whenever the read window\n"
   out := out ++ "overlaps the written window; ranks are functions of the site identity):\n"
-  -- (site name for a reader, site name for a writer, site)
-  let readers : List (String × TSite) :=
-    s.statics.map (fun st => (s!"plain#{st.pos}", st)) ++
-    (match s.fam with
-     | none => []
-     | some f => f.body.map (fun st => (s!"{f.label}#{st.pos}[{f.g}]", st)))
-  let writers : List (String × String × TSite) :=
-    s.statics.map (fun st => (s!"plain#{st.pos}", "", st)) ++
-    (match s.fam with
-     | none => []
-     | some f => f.body.map (fun st => (s!"{f.label}#{st.pos}[{f.g}']", f.g, st)))
-  for (rid, rst) in readers do
-    for r in rst.rds do
-      for (wid, wg, wst) in writers do
-        if wst.tgt.name == r.name then
-          let rn := fun n => if n == wg && wg != "" then n ++ "'" else n
-          out := out ++ s!"  rank({wid}) < rank({rid})   [{rid} reads {r.show}; {wid} drives {wst.tgt.showR rn}]\n"
+  for a in s.lsites do
+    for r in a.site.rds do
+      for b in s.lsites do
+        if b.site.tgt.name == r.name then
+          let rnW := fun n => if b.hdrs.any (·.g == n) then n ++ "'" else n
+          let rid := a.label id
+          let wid := b.label rnW
+          out := out ++ s!"  rank({wid}) < rank({rid})   [{rid} reads {r.show}; {wid} drives {b.site.tgt.showR rnW}]\n"
   return out
 
 /-! ## Structural problems -/
@@ -95,36 +109,35 @@ def Summary.structProblems (s : Summary) : List String := Id.run do
   let mut ps : List String := []
   unless s.declNames.Nodup do
     ps := ps ++ ["declaration names are not pairwise distinct"]
-  let sid (st : TSite) (isFam : Bool) : String :=
-    match s.fam with
-    | some f => if isFam then s!"{f.label}#{st.pos}" else s!"plain#{st.pos}"
-    | none => s!"plain#{st.pos}"
-  let check (st : TSite) (isFam : Bool) (allowed : List String) : List String := Id.run do
-    let mut qs : List String := []
-    for n in st.names do
+  for ls in s.lsites do
+    let id := ls.label id
+    for n in ls.site.names do
       unless s.declNames.contains n do
-        qs := qs ++ [s!"site `{sid st isFam}` mentions the undeclared signal `{n}`"]
-    if s.inputNames.contains st.tgt.name then
-      qs := qs ++ [s!"site `{sid st isFam}` drives the input port `{st.tgt.name}`"]
-    for n in st.affNames do
-      unless allowed.contains n do
-        qs := qs ++ [s!"site `{sid st isFam}`: index mentions `{n}`, which is neither a parameter nor the loop variable"]
-    for n in st.arrNames do
-      unless s.arrOk n do
-        qs := qs ++ [s!"site `{sid st isFam}`: array select on `{n}` needs `{n}` declared as a zero-based descending vector `[hi:0]`"]
-    return qs
-  for st in s.statics do
-    ps := ps ++ check st false s.params
-  match s.fam with
-  | none => pure ()
-  | some f =>
-      for st in f.body do
-        ps := ps ++ check st true (f.g :: s.params)
-      for n in f.bound.names do
-        unless s.params.contains n && n != f.g do
-          ps := ps ++ [s!"family `{f.label}`: the bound mentions `{n}`, which is not a parameter"]
-      if f.c0 < 0 then
-        ps := ps ++ [s!"family `{f.label}`: the loop starts at a negative value {f.c0}"]
+        ps := ps ++ [s!"site `{id}` mentions the undeclared signal `{n}`"]
+    if s.inputNames.contains ls.site.tgt.name then
+      ps := ps ++ [s!"site `{id}` drives the input port `{ls.site.tgt.name}`"]
+    for n in ls.site.affNames do
+      unless (ls.hdrs.map (·.g) ++ s.params).contains n do
+        ps := ps ++ [s!"site `{id}`: index mentions `{n}`, which is neither a parameter nor an enclosing loop variable"]
+    for a in ls.site.tgt :: ls.site.rds do
+      unless s.accOk a do
+        ps := ps ++ [s!"site `{id}`: the access `{a.show}` does not match the declaration of `{a.name}` (a select needs zero-based descending packed dimensions `[hi:0]`, with the number of selects the declaration allows)"]
+  for p in s.hdrPaths do
+    unless (p.map (·.g) ++ s.params).Nodup do
+      ps := ps ++ [s!"loop variables {p.map (·.g)} are not distinct from each other and from the parameters {s.params}"]
+    for h in p do
+      for n in h.bound.names do
+        unless s.params.contains n do
+          ps := ps ++ [s!"loop `{h.name}`: the bound mentions `{n}`, which is not a parameter"]
+      if h.c0 < 0 then
+        ps := ps ++ [s!"loop `{h.name}`: the loop starts at a negative value {h.c0}"]
+  let keys := s.lsites.map LSite.key
+  for i in [0:keys.length] do
+    for j in [i+1:keys.length] do
+      if keys[i]! == keys[j]! then
+        let a := s.lsites[i]!
+        let b := s.lsites[j]!
+        ps := ps ++ [s!"two sites share the identity (`{a.label id}` and `{b.label id}`): generate blocks need distinct labels"]
   for dt in s.decls do
     for n in dt.affNames do
       unless s.params.contains n do
@@ -132,6 +145,10 @@ def Summary.structProblems (s : Summary) : List String := Id.run do
   return ps
 
 /-! ## Small-`N` counterexamples to the player obligations -/
+
+/-- Every (located site, valuation) pair of the closed-form enumeration. -/
+def Summary.instPairs (s : Summary) (σ : String → Int) : List (LSite × (String → Int)) :=
+  s.enum (fun ls σ' _ => (ls, σ')) σ {}
 
 def firstOverlapPair : List SiteInst → Option (SiteInst × SiteInst)
   | [] => none
@@ -147,7 +164,7 @@ def Summary.disjCounterexample (s : Summary) (σ : String → Int) : Option Stri
   | some (a, b) =>
       some s!"the one-driver rule fails: `{a.id.show}` drives {showWin a.win} and `{b.id.show}` drives {showWin b.win}, which share a bit"
 
-/-- A write window outside its declared signal (or at a negative index). -/
+/-- A write window outside its declared signal (the flat check). -/
 def Summary.rangeCounterexample (s : Summary) (σ : String → Int) : Option String :=
   (s.insts σ).findSome? fun a =>
     match s.DW σ a.win.1 with
@@ -156,28 +173,40 @@ def Summary.rangeCounterexample (s : Summary) (σ : String → Int) : Option Str
         if a.win.2.1 + a.win.2.2 ≤ dw then none
         else some s!"`{a.id.show}` drives {showWin a.win}, outside `{a.win.1}` which is only {dw} bit(s) wide"
 
-/-- A read at a negative index. -/
-def Summary.negCounterexample (s : Summary) (σ : String → Int) : Option String :=
-  let neg (_i : Int) (σs : String → Int) (st : TSite) (id : String) : Option String :=
-    (st.rds.findSome? fun r =>
-      match r with
-      | .bit n a => if a.eval σs < 0 then some s!"`{id}` reads {n}[{a.eval σs}], a negative index" else none
-      | _ => none)
-  (s.statics.findSome? fun st => neg 0 σ st s!"plain#{st.pos}") <|>
-  (match s.fam with
-   | none => none
-   | some f => (f.range σ).findSome? fun i =>
-       f.body.findSome? fun st => neg i (bindσ f.g i σ) st s!"{f.label}#{st.pos}[{i}]")
+/-- The in-range facts of an access, as a `Bool` (mirrors `Summary.InR`). -/
+def Summary.inRBool (s : Summary) (σd σs : String → Int) : Acc → Bool
+  | .whole _ => true
+  | .bit _ a => decide (0 ≤ a.eval σs)
+  | .cell1 n a => decide (0 ≤ a.eval σs ∧ a.eval σs ≤ s.dm σd n 0)
+  | .row n _ r => decide (0 ≤ r.eval σs ∧ r.eval σs ≤ s.dm σd n 0)
+  | .cell2 n _ r c =>
+      decide (0 ≤ r.eval σs ∧ r.eval σs ≤ s.dm σd n 0 ∧ 0 ≤ c.eval σs ∧ c.eval σs ≤ s.dm σd n 1)
+  | .part1 n hi lo => decide (0 ≤ lo.eval σs ∧ lo.eval σs ≤ hi.eval σs ∧ hi.eval σs ≤ s.dm σd n 0)
+  | .part2 n _ r hi lo =>
+      decide (0 ≤ r.eval σs ∧ r.eval σs ≤ s.dm σd n 0 ∧ 0 ≤ lo.eval σs ∧ lo.eval σs ≤ hi.eval σs ∧
+        hi.eval σs ≤ s.dm σd n 1)
 
-/-- A read whose driver does not have a smaller rank. -/
-def Summary.rankCounterexample (s : Summary) (σ : String → Int) (ρ : SiteId → Nat) :
-    Option String :=
+/-- An access outside the declared dimensions of its signal (a negative index, a row or column past
+the end). -/
+def Summary.accCounterexample (s : Summary) (σ : String → Int) : Option String :=
+  (s.instPairs σ).findSome? fun (ls, σ') =>
+    (ls.site.tgt :: ls.site.rds).findSome? fun a =>
+      if s.inRBool σ σ' a then none
+      else
+        let dims := (s.dimsOf' a.name).getD []
+        let shape := "".intercalate (dims.map fun p => s!"[{p.1.eval σ}:{p.2.eval σ}]")
+        some s!"`{ls.label (fun n => toString (σ' n))}` accesses {a.showVal σ'}, outside `{a.name}` which is declared {shape}"
+
+/-- A read whose driver does not have a smaller rank. `lt w r` says writer `w` is ranked below
+reader `r`; `showRank` prints a rank (or key). -/
+def Summary.rankCounterexample (s : Summary) (σ : String → Int) (lt : SiteId → SiteId → Bool)
+    (showRank : SiteId → String) : Option String :=
   let is := s.insts σ
   is.findSome? fun a =>
     is.findSome? fun b =>
       a.rd.findSome? fun r =>
-        if ReadWin.overlaps r b.win && !(decide (ρ b.id < ρ a.id)) then
-          some s!"the rank does not decrease along a read: `{a.id.show}` (rank {ρ a.id}) reads a window of `{r.name}` driven by `{b.id.show}` (rank {ρ b.id}, window {showWin b.win}); a driver must have a SMALLER rank than its reader"
+        if ReadWin.overlaps r b.win && !(lt b.id a.id) then
+          some s!"the rank does not decrease along a read: `{a.id.show}` (rank {showRank a.id}) reads a window of `{r.name}` driven by `{b.id.show}` (rank {showRank b.id}, window {showWin b.win}); a driver must have a SMALLER rank than its reader"
         else none
 
 end CombView

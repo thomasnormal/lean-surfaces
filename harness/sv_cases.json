@@ -4366,6 +4366,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "pure_sformatf_statements_adapter",
+      "file": "Examples/system-verilog/pure_sformatf_statements_adapter/pure_sformatf_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -313,6 +313,19 @@ class DeclarationAdapter(unittest.TestCase):
             '$clog2(counter++); $display("PASS"); end endmodule')
         self.assertIn("Call:$clog2", residual)
 
+    def test_discarded_literal_sformatf_is_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; initial begin $sformatf("%H", 8\'hAB); '
+                '$sformatf("%b", 4\'b1010); $display("PASS"); end endmodule'),
+            [])
+
+    def test_dynamic_sformatf_remains_loud(self):
+        residual = blockers(
+            'module top; string fmt; initial begin '
+            '$sformatf(fmt, 8\'hAB); $display("PASS"); end endmodule')
+        self.assertIn("Call:$sformatf", residual)
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

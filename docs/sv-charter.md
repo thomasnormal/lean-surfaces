@@ -12,6 +12,21 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Discarded pure `$sformatf` calls in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's `sformatf_statement`
+marker for discarded literal integral `$sformatf` calls. The formatted value
+is unobserved and carries no represented state; dynamic formats, unsupported
+conversions, and effectful operands remain loud. The
+`pure_sformatf_statements_adapter` fixture, adapter regressions, generated
+envelope, Lean receipt, and differential row cover the admitted forms.
+
+Differential coverage grows **481/475/0/6 → 482/476/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in 994-file SystemVerilog example
+sweep (993 files before this witness), the adapter census moves **765 clean /
+228 partial → 766 clean / 228 partial** and the discarded `$sformatf`
+residuals fall to zero.
+
 ## Discarded pure scalar metadata queries in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's `clog2_statement`,

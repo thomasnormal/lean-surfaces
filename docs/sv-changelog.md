@@ -2185,3 +2185,16 @@ coverage grows **450/444/0/6 → 451/445/0/6**; grammar coverage remains
 **234/112/122**. The temporary public audit remains **368 clean / 433 partial /
 111 include skips**, while adapter `SubroutineSymbol:Subroutine` residuals fall
 **24 → 22** and the clean `fork_return` residual disappears.
+## [0.1.197] — 2026-10-29
+
+Empty arguments in no-conversion `$display` and `$write` calls now lower to
+literal spaces through the existing `%s` renderer. The default integral and
+string arguments retain their ordinary formatting, while an omitted operand
+for a real conversion specifier remains loud. The
+`empty_display_arguments` fixture, adapter regressions, generated envelope,
+Lean receipt, and differential row cover the family. Differential coverage
+grows **451/445/0/6 → 452/446/0/6**; grammar coverage grows
+**234/112/122 → 235/113/122**. The temporary public sv-tests audit moves
+**368 clean / 433 partial / 111 include skips → 380 / 421 / 111**; the
+`EmptyArgumentExpression` adapter residual falls **12 → 0**, and adapter
+unlockables remain **7**.

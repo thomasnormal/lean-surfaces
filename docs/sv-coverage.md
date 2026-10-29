@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 451 | 445 | 0 | 6 | sv-tests-2 declarations |
+| 452 | 446 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -465,6 +465,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `display_format_escape_adapter` | `Examples/system-verilog/display_format_escape_adapter/display_format_escape_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `forward_typedef_metadata` | `Examples/system-verilog/forward_typedef_metadata/forward_typedef_metadata.sv` | match | **MATCH** | `ok` | MATCH |
 | `unreferenced_subroutine_metadata` | `Examples/system-verilog/unreferenced_subroutine_metadata/unreferenced_subroutine_metadata.sv` | match | **MATCH** | `ok` | MATCH |
+| `empty_display_arguments` | `Examples/system-verilog/empty_display_arguments/empty_display_arguments.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -472,7 +473,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 234 | 112 | 122 | pyslang SyntaxKind |
+| 235 | 113 | 122 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -536,6 +537,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ElabSystemTask` | `Examples/system-verilog/sem2/multi_top/multi_top.sv` | **REFUSE** | `error` expected exactly one module in the envelope, got 2 |
 | `SyntaxKind.ElementSelect` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ElseClause` | `Examples/system-verilog/array_named_display/array_named_display.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.EmptyArgument` | `Examples/system-verilog/empty_display_arguments/empty_display_arguments.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EmptyIdentifierName` | `Examples/system-verilog/foreach/values.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EmptyQueueExpression` | `Examples/system-verilog/empty_aggregate_delete_statements/empty_aggregate_delete_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.EmptyStatement` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |

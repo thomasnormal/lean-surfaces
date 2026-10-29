@@ -12,6 +12,21 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Empty output arguments — 2026-10-29
+
+Empty arguments in no-conversion `$display` and `$write` calls now lower to
+literal spaces through the existing `%s` renderer. Default integral and string
+arguments retain their ordinary formatting, while an omitted operand for a
+real conversion specifier remains loud. The `empty_display_arguments` fixture,
+adapter regressions, generated envelope, Lean receipt, and differential row
+cover the family.
+
+Differential coverage grows **451/445/0/6 → 452/446/0/6**; grammar coverage
+grows **234/112/122 → 235/113/122**. The temporary public sv-tests audit moves
+**368 clean / 433 partial / 111 include skips → 380 / 421 / 111**; the
+`EmptyArgumentExpression` adapter residual falls **12 → 0**, and adapter
+unlockables remain **7**.
+
 ## Unreferenced subroutine metadata — 2026-10-29
 
 The legacy adapter census now mirrors the extractor's identity-based erasure

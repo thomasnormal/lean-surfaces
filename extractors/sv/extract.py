@@ -23353,6 +23353,11 @@ def _default_display_argument(sm, expression):
         canonical = type(expression.type.canonicalType).__name__
     except Exception:
         return None
+    if type(expression).__name__ == "StringLiteral":
+        value = _string_source_value(expression)
+        if value is not None:
+            return "%s", _string_source_literal(
+                sm, expression, value, "string_source_default_display")
     if canonical == "StringType":
         value = _string_source_value(expression)
         if value is not None:
@@ -23374,6 +23379,26 @@ def _default_display_argument(sm, expression):
             or not _case_expression_ok(converted)):
         return None
     return "%d", converted
+
+
+def _empty_display_argument(sm, expression):
+    """Lower an omitted output argument to its exact one-space value.
+
+    The SV output tasks render an empty argument as a literal space when no
+    conversion specifier is consuming that position. Keep this as an ordinary
+    one-byte `%s` value so the existing self-check renderer supplies the same
+    output and no new runtime state is needed.
+    """
+    if type(expression).__name__ != "EmptyArgumentExpression":
+        return None
+    return "%s", {"kind": "Literal", "span": node_span(sm, expression),
+                   "width": 8, "bits": "00100000",
+                   "empty_display_argument": True}
+
+
+def _display_argument(sm, expression):
+    empty = _empty_display_argument(sm, expression)
+    return empty if empty is not None else _default_display_argument(sm, expression)
 
 
 def _convert_syscall(sm, s, e):
@@ -24239,7 +24264,7 @@ def _convert_syscall(sm, s, e):
         # default decimal conversion, while a string argument uses `%s`.
         # Construct an ordinary format string so the existing self-check
         # renderer supplies the standard field width and signedness rules.
-        defaults = [_default_display_argument(sm, arg) for arg in args]
+        defaults = [_display_argument(sm, arg) for arg in args]
         if any(item is None for item in defaults):
             return unsupported(sm, s, "SysCall:format")
         fmt = "".join(item[0] for item in defaults)
@@ -24262,7 +24287,30 @@ def _convert_syscall(sm, s, e):
     conv = []
     signed = []
     array_display_used = False
+    # A literal format with no conversion specifiers is the textual first
+    # argument followed by each remaining argument's default rendering. Empty
+    # arguments become one literal space in that sequence; a format containing
+    # `%` keeps the ordinary specifier/arity checks below.
+    if args[1:] and "%" not in fmt:
+        defaults = [_display_argument(sm, arg) for arg in args[1:]]
+        if any(item is None for item in defaults):
+            return unsupported(sm, s, "SysCall:format")
+        return {
+            "kind": "SysCall",
+            "span": span,
+            "name": name,
+            "format": fmt + "".join(item[0] for item in defaults),
+            "args": [item[1] for item in defaults],
+            "arg_signed": [
+                False if type(arg).__name__ == "EmptyArgumentExpression"
+                else bool(getattr(getattr(arg, "type", None), "isSigned", True))
+                for arg in args[1:]
+            ],
+            "default_format": True,
+        }
     for a in args[1:]:
+        if type(a).__name__ == "EmptyArgumentExpression":
+            return unsupported(sm, s, "SysCall:empty-argument-format")
         # A direct one-dimensional fixed-array value has no scalar expression
         # width, but `%p` diagnostics can render its already-flattened cells
         # without introducing aggregate storage.  Keep this exception tied to

@@ -310,8 +310,14 @@ def adapter_stmt(sm, s):
                 # spellings that the display formatter handles exactly).
                 if (name in ("$display", "$write") and args
                         and type(args[0]).__name__ == "StringLiteral"):
+                    if ("%" in getattr(args[0], "value", "")
+                            and any(type(a).__name__ == "EmptyArgumentExpression"
+                                    for a in args[1:])):
+                        return ["SysCall:empty-argument-format"]
                     args = args[1:]
                 for a in args:
+                    if type(a).__name__ == "EmptyArgumentExpression":
+                        continue
                     out.extend(adapter_expr(sm, a))
                 return out
             return ["Call:" + (name if name else type(e).__name__)]

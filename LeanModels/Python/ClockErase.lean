@@ -1270,7 +1270,31 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
               .of_seed (fun tr => by simp)
                 (by simp only [FrameState.withClock_self hs3])
         case listV xs => exact .unsupported
-        case ref a => exact .unsupported
+        case ref a =>
+          cases hop : op == .mult with
+          | false => exact .unsupported
+          | true =>
+            cases hobj : Heap.get? st.world.heap a with
+            | none => exact .unsupported
+            | some obj =>
+              cases obj with
+              | list xs =>
+                refine .bind (ihE m st value h) fun s2 v hs2 => ?_
+                cases hav : asInt v with
+                | none => exact .exn hs2 _
+                | some n =>
+                  cases hpost : Heap.get? s2.world.heap a with
+                  | none => exact .unsupported
+                  | some obj2 =>
+                    cases obj2 with
+                    | list xs2 =>
+                      refine .bind (.liftRes hs2 (heapListRepeatUpdate s2.world.heap a xs2 n))
+                        fun s3 h3 hs3 => ?_
+                      ce_norm
+                      exact .of_seed (fun tr => by simp [Run.seedF])
+                        (by simp [FrameState.withClock_self hs3, hs3])
+                    | _ => exact .unsupported
+              | _ => exact .unsupported
     case «attribute» recvE attr sp2 =>
       refine .bind (ihE m st recvE h) fun s2 r hs2 => ?_
       cases r <;> try exact .exn hs2 _
@@ -1797,7 +1821,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
     simp only [evalExpr]
     exact .bind (ihE m st l h) fun s1 a hs1 =>
       .bind (ihE m s1 r hs1) fun s2 b hs2 => by
-        cases hop : op == .bitAnd with
+        cases hop : (op == .bitAnd || op == .mult) with
         | false => exact .liftRes hs2 _
         | true =>
           ce_norm

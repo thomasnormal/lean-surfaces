@@ -6599,3 +6599,26 @@ well.
 DECIDED: fuse only an unobserved named genexp immediately consumed by a
 draining builtin; preserve loud failure across rebinding, conditional binding,
 and any intervening observation.
+
+## 2026-10-29-pycomplete-202 — admit heap-backed list repetition in the proof interpreter
+
+The fuel-based proof interpreter now follows the executable interpreter for
+heap-list repetition. `list * int` and `int * list` allocate a fresh heap list,
+including for zero and negative counts; `list *= int` updates the existing
+address so aliases observe the mutation. The workers retain the shared
+index-sized overflow, `seqBudget`, Boolean-count, and non-integral `TypeError`
+behavior. Since repetition can allocate or mutate, `BinOp.mult` and `*=` are
+excluded from the conditional `worldInv` fragment; scalar multiplication still
+runs through the ordinary pure worker outside that theorem's assumptions.
+
+| Measurement | Result |
+|---|---|
+| Focused proof differential | 8 cases: 8 MATCH, 0 refused, 0 failures (`repeat_live_list`, `repeat_aug_live_list`) |
+| Full proof differential | 3,758 cases: 3,613 matched, 145 expected refusals, 0 failures |
+| Build | `lake build leanmodels-run`, `lake build LeanModels.Python.Obs`, and `lake build Examples.python.string_repeat.spec` pass |
+| Generated docs | `docs/python-coverage.md` refreshed from 3,605 to 3,613 proof matches; `git diff --check` passes |
+| Clock erasure | Standalone legacy file still has unrelated pre-existing errors outside the supported build; new branches mirror the stateful worker paths |
+
+DECIDED: admit heap-backed list repetition on the proof surface while keeping
+allocation and mutation outside `worldInv`; retain list concatenation and other
+unmodeled heap operations as loud boundaries.

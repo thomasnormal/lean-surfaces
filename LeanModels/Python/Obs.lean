@@ -1645,11 +1645,41 @@ theorem fuelMono (fuel : Nat) :
             cases Env.lookup st.locals id with
             | none => exact Run.le_refl _
             | some old =>
-              cases old <;>
-                first
-                | exact Run.le_refl _
-                | exact Run.le_bind (ihE m st value k hk) fun st v =>
-                    Run.le_bind (Run.le_refl _) fun st r => Run.le_refl _
+              cases old <;> try exact Run.le_refl _
+              case ref a =>
+                cases hop : op == .mult with
+                | false => exact Run.le_refl _
+                | true =>
+                  cases hobj : Heap.get? st.world.heap a with
+                  | none =>
+                    simp only [hop, if_true, hobj]
+                    exact Run.le_refl _
+                  | some obj =>
+                    cases obj with
+                    | list xs =>
+                      simp only [hop, if_true, hobj]
+                      exact Run.le_bind (ihE m st value k hk) fun st v =>
+                        match hav : asInt v with
+                        | some n => by
+                          cases hpost : Heap.get? st.world.heap a with
+                          | none =>
+                            simp only [hpost]
+                            exact Run.le_refl _
+                          | some obj =>
+                            cases obj with
+                            | list xs' =>
+                              simp only [hpost]
+                              exact Run.le_bind (Run.le_refl _) fun st h' => Run.le_refl _
+                            | _ =>
+                              simp only [hpost]
+                              exact Run.le_refl _
+                        | none => by exact Run.le_refl _
+                    | _ =>
+                      simp only [hop, if_true, hobj]
+                      exact Run.le_refl _
+              all_goals
+                exact Run.le_bind (ihE m st value k hk) fun st v =>
+                  Run.le_bind (Run.le_refl _) fun st r => Run.le_refl _
           case «attribute» recvE attr _ =>
             -- pass 4: receiver, the fuel-free attribute load, then (for
             -- immediate old values) the value and the fuel-free store
@@ -2547,15 +2577,25 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         | true =>
           cases op <;> try { change false = true at hop; cases hop }
           simp only [Expr.heapFree, Bool.and_eq_true] at hfree
-          have hf := hfree.1.1
+          have hf := hfree.1.1.1
           change false = true at hf
           cases hf
         | false =>
-          simp only [Expr.heapFree, Bool.and_eq_true] at hfree
-          simp only [evalExpr, hop]
-          exact .bind (ihE st l hfree.1.2) fun st₁ a h₁ =>
-            .bind ((ihE st₁ r hfree.2).mono (wtrans st st₁ h₁)) fun st₂ b h₂ =>
-              .liftResF h₂ _
+          cases op with
+          | bitAnd =>
+            change true = false at hop
+            cases hop
+          | mult =>
+            simp only [Expr.heapFree, Bool.and_eq_true] at hfree
+            have hf := hfree.1.1.2
+            change false = true at hf
+            cases hf
+          | _ =>
+            simp only [Expr.heapFree, Bool.and_eq_true] at hfree
+            simp only [evalExpr, hop]
+            exact .bind (ihE st l hfree.1.2) fun st₁ a h₁ =>
+              .bind ((ihE st₁ r hfree.2).mono (wtrans st st₁ h₁)) fun st₂ b h₂ =>
+                .liftResF h₂ _
       | unaryOp op operand _ =>
         simp only [Expr.heapFree] at hfree
         simp only [evalExpr]
@@ -3326,7 +3366,12 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
           simp [Stmt.heapFree] at hfree
         case name id _ =>
           simp only [Stmt.heapFree, Bool.and_eq_true] at hfree
-          simp only [execStmt]
+          have hop : (op == .mult) = false := by
+            cases op <;> try rfl
+            have hf := hfree.1.2
+            change false = true at hf
+            cases hf
+          simp only [execStmt, hop, Bool.false_eq_true, if_false]
           cases Env.lookup st.locals id with
           | none => exact .exn
           | some old =>

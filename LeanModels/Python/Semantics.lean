@@ -4540,6 +4540,36 @@ def heapListAugAssign (h : Heap) (a : Addr) (op : BinOp) (v : RVal) : Res Heap :
   if op == .add then heapListExtend h a v
   else .unsupported "augmented assignment to a heap-valued attribute is outside the tier (docs/memory-model.md §bound() end-to-end)"
 
+/-! `list * int` is stateful for heap-backed lists: the result is a fresh
+list object, while `list *= int` updates the existing address. The proof
+interpreter uses the same bounded workers as the executable interpreter so
+the two surfaces agree on allocation, aliasing, and error ordering. -/
+
+def heapListRepeat (h : Heap) (xs : Array RVal) (count : Int) : Res (Heap × RVal) :=
+  if count.natAbs > seqIndexBudget then
+    .exn (.overflowError "cannot fit 'int' into an index-sized integer")
+  else if count ≤ 0 || xs.isEmpty then
+    .ok (h.push (.list #[]), .ref h.size)
+  else if count.natAbs ≤ seqBudget && xs.size * count.toNat ≤ seqBudget then
+    .ok (h.push (.list ((List.replicate count.toNat xs.toList).flatten.toArray)), .ref h.size)
+  else
+    .unsupported "list repetition beyond seqBudget is outside the tier (count magnitude or output element count; docs/memory-model.md §list repetition)"
+
+def heapListRepeatUpdate (h : Heap) (a : Addr) (xs : Array RVal) (count : Int) : Res Heap :=
+  if count.natAbs > seqIndexBudget then
+    .exn (.overflowError "cannot fit 'int' into an index-sized integer")
+  else if count ≤ 0 then
+    match Heap.update h a (.list #[]) with
+    | some h' => .ok h'
+    | none => .unsupported "dangling list reference during augmented repetition"
+  else if count.natAbs ≤ seqBudget && xs.size * count.toNat ≤ seqBudget then
+    let ys := (List.replicate count.toNat xs.toList).flatten.toArray
+    match Heap.update h a (.list ys) with
+    | some h' => .ok h'
+    | none => .unsupported "dangling list reference during augmented repetition"
+  else
+    .unsupported "list repetition beyond seqBudget is outside the tier (count magnitude or output element count; docs/memory-model.md §list repetition)"
+
 /-- `o.attr = v` on a heap object (H3: mutable self — the attribute
 store). Instances update their attribute table in place (`Env.set`
 semantics: replace-in-place or append — CPython `__dict__` insertion
@@ -5296,6 +5326,38 @@ def evalBinOpH (h : Heap) (op : BinOp) (a b : RVal) : Res (Heap × RVal) :=
     | .unsupported msg, _ | _, .unsupported msg => .unsupported msg
     | .timeout, _ | _, .timeout => .timeout
     | .exn e, _ | _, .exn e => .exn e
+  else if op == .mult then
+    match a, b with
+    | .ref addr, count =>
+      match Heap.get? h addr with
+      | some (.list xs) =>
+        match asInt count with
+        | some n => heapListRepeat h xs n
+        | none => .exn (.typeError s!"can't multiply sequence by non-int of type '{RVal.typeNameH h count}'")
+      | _ =>
+        match evalBinOp op a b with
+        | .ok value => .ok (h, value)
+        | .exn e => .exn e
+        | .timeout => .timeout
+        | .unsupported msg => .unsupported msg
+    | count, .ref addr =>
+      match Heap.get? h addr with
+      | some (.list xs) =>
+        match asInt count with
+        | some n => heapListRepeat h xs n
+        | none => .exn (.typeError s!"can't multiply sequence by non-int of type '{RVal.typeNameH h count}'")
+      | _ =>
+        match evalBinOp op a b with
+        | .ok value => .ok (h, value)
+        | .exn e => .exn e
+        | .timeout => .timeout
+        | .unsupported msg => .unsupported msg
+    | _, _ =>
+      match evalBinOp op a b with
+      | .ok value => .ok (h, value)
+      | .exn e => .exn e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg
   else
     match evalBinOp op a b with
     | .ok value => .ok (h, value)
@@ -7476,7 +7538,7 @@ mutual
     -- set when both operands are heap references.  Evict it from the
     -- world-preservation fragment conservatively; integer `&` still runs
     -- normally, but its proof path is outside `worldInv`.
-    | .binOp l op r _ => op != .bitAnd && l.heapFree && r.heapFree
+    | .binOp l op r _ => op != .bitAnd && op != .mult && l.heapFree && r.heapFree
     | .unaryOp _ e _ => e.heapFree
     | .formattedValue value _ _ => value.heapFree
     | .formattedValueAscii value _ => value.heapFree
@@ -7554,8 +7616,12 @@ mutual
        | [.tuple elts _] => (targetNames elts).isSome
        | _ => true) && v.heapFree
     -- pass 4: an attribute-target `+=` STORES through the heap
-    | .augAssign t _ v _ =>
-      (match t with | .attribute .. => false | _ => true) && v.heapFree
+    | .augAssign t op v _ =>
+      -- Repetition of a heap-backed list allocates or mutates, so the
+      -- conditional world-preservation fragment excludes `*=`.  This is
+      -- conservative for immediate numeric multiplication, but keeps the
+      -- theorem sound when the target is a reference.
+      (match t with | .attribute .. => false | _ => true) && op != .mult && v.heapFree
     | .whileLoop t body orelse _ =>
       t.heapFree && Stmt.heapFreeList body.toList && Stmt.heapFreeList orelse.toList
     | .forStmt _ iter body orelse _ =>
@@ -8139,7 +8205,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
     | .binOp l op r _ =>
         evalExpr m fuel st l ⤳ fun st a =>
         evalExpr m fuel st r ⤳ fun st b =>
-        if op == .bitAnd then
+        if op == .bitAnd || op == .mult then
           Run.liftRes st (evalBinOpH st.world.heap op a b) ⤳ fun st hr =>
           .ok { st with world := { st.world with heap := hr.1 } } hr.2
         else
@@ -9627,9 +9693,27 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
             -- (str/tuple/int/bool are immutable, so rebinding is faithful.)
             .unsupported
               "augmented assignment to a list ('+=' mutates in place, visible through aliases) is outside the v0 tier"
-        | some (.ref _) =>
-            .unsupported
-              "augmented assignment to a heap object is outside the H1 tier (docs/memory-model.md)"
+        | some (.ref a) =>
+            if op == .mult then
+              match Heap.get? st.world.heap a with
+              | some (.list xs) =>
+                evalExpr m fuel st value ⤳ fun st v =>
+                match asInt v with
+                | some n =>
+                  match Heap.get? st.world.heap a with
+                  | some (.list xs') =>
+                    Run.liftRes st (heapListRepeatUpdate st.world.heap a xs' n) ⤳ fun st h' =>
+                    .ok { st with world := { st.world with heap := h' } } .next
+                  | _ =>
+                    .unsupported "augmented repetition receiver is not a list"
+                | none =>
+                  .exn st (.typeError s!"can't multiply sequence by non-int of type '{RVal.typeNameH st.world.heap v}'")
+              | _ =>
+                .unsupported
+                  "augmented assignment to a heap object is outside the H1 tier (docs/memory-model.md)"
+            else
+              .unsupported
+                "augmented assignment to a heap object is outside the H1 tier (docs/memory-model.md)"
         | some old =>
             evalExpr m fuel st value ⤳ fun st v =>
             Run.liftRes st (evalBinOp op old v) ⤳ fun st r =>

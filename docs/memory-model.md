@@ -255,13 +255,14 @@ cycle DETECTION, never by running out of fuel).
   `.get`-style method calls on lists (a faithful `AttributeError`
   awaiting a `PyErr` form).
 
-  The executable monadic tier now admits heap-list `*=` for integer and
-  Boolean counts. It updates the existing list address in place, so aliases
-  observe the repeated contents; non-positive counts clear the list, the
-  pinned index-sized conversion and `seqBudget` bounds are retained, and
-  non-integral counts keep the faithful `TypeError`. The proof interpreter
-  remains loud because its boundary list representation cannot express this
-  heap mutation.
+  The executable monadic tier and the fuel-based proof interpreter now admit
+  heap-list repetition for integer and Boolean counts. Ordinary `list * int`
+  and `int * list` allocate a fresh heap list; `*=` updates the existing list
+  address in place, so aliases observe the repeated contents. Non-positive
+  counts produce a fresh empty list for ordinary repetition and clear the
+  existing list for `*=`, while the pinned index-sized conversion and
+  `seqBudget` bounds remain in force. Non-integral counts keep the faithful
+  `TypeError`.
 
   Boundary `Val.list` snapshots now also support ordinary `list * int` and
   `int * list` through the pure `listValueRepeat` worker. The result is a

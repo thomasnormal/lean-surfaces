@@ -298,6 +298,21 @@ class DeclarationAdapter(unittest.TestCase):
             '$display("PASS"); end endmodule')
         self.assertIn("SubroutineSymbol:Subroutine", residual)
 
+    def test_discarded_scalar_metadata_queries_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                '`timescale 1ns/1ps\nmodule top; int counter; '
+                'initial begin $clog2(8); $isunbounded(5); '
+                '$signed(8\'hff); $unsigned(counter); $timeunit; '
+                '$timeprecision; $display("PASS"); end endmodule'),
+            [])
+
+    def test_effectful_scalar_metadata_queries_remain_loud(self):
+        residual = blockers(
+            'module top; int counter; initial begin '
+            '$clog2(counter++); $display("PASS"); end endmodule')
+        self.assertIn("Call:$clog2", residual)
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

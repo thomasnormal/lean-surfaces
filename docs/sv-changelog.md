@@ -1,3 +1,18 @@
+## [0.1.214] — 2026-10-29
+
+The legacy adapter census now follows the extractor's `clog2_statement`,
+`isunbounded_statement`, `signing_statement`, and `time_scale_statement`
+markers for discarded scalar metadata queries. Constant `$clog2` and
+`$isunbounded`, integral signing casts, and timescale metadata carry no
+represented state; effectful and value-position forms remain loud. The
+`pure_scalar_metadata_statements_adapter` fixture, adapter regressions,
+generated envelope, Lean receipt, and differential row cover the admitted
+forms. Differential coverage grows **480/474/0/6 → 481/475/0/6**; grammar
+coverage remains **235/113/122**. On the checked-in 993-file SystemVerilog
+example sweep (992 files before this witness), the adapter census moves
+**760 clean / 232 partial → 765 clean / 228 partial** and the six scalar
+metadata query residuals fall to zero.
+
 ## [0.1.213] — 2026-10-29
 
 The legacy adapter census now follows the extractor's

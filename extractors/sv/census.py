@@ -133,6 +133,8 @@ ADAPTER_PURE_STATEMENT_MARKERS = (
     "zero_size_statement",
     "typename_statement", "bits_statement",
     "empty_subroutine_call", "empty_input_task_call",
+    "clog2_statement", "isunbounded_statement", "signing_statement",
+    "time_scale_statement",
     "itor_literal_statement", "itor_pure_statement",
     "bitstoreal_literal_statement", "bitstoreal_pure_statement",
     "bitstoshortreal_literal_statement", "bitstoshortreal_pure_statement",

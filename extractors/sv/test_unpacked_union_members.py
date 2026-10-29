@@ -139,6 +139,32 @@ class UnpackedUnionMembers(unittest.TestCase):
                             and node.get("sv_kind") == "VariableSymbol:type"
                             for node in nodes(design)))
 
+    def test_fixed_array_of_equal_width_unions_uses_one_cell_per_element(self):
+        design = extract_source(
+            "module top; typedef union { bit [7:0] a; bit [7:0] b; } u_t; "
+            "u_t values [1:0]; initial begin values[0].a = 8'hA5; "
+            "if (values[0].b !== 8'hA5) $finish; values[1].b = 8'h3C; "
+            "if (values[1].a !== 8'h3C) $finish; "
+            "$display(\"PASS\"); end endmodule")
+        declarations = [node for node in nodes(design)
+                        if node.get("kind") == "Var"]
+        self.assertEqual([node["name"] for node in declarations],
+                         ["values[1]", "values[0]"])
+        self.assertTrue(all(node.get("unpacked_union_cell")
+                            for node in declarations))
+        self.assertTrue(all(node["init"]["bits"] == "00000000"
+                            for node in declarations))
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+
+    def test_fixed_array_of_mixed_width_unions_stays_loud(self):
+        design = extract_source(
+            "module top; typedef union { bit [7:0] a; bit [3:0] b; } u_t; "
+            "u_t values [1:0]; initial begin end endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "VariableSymbol:2state"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

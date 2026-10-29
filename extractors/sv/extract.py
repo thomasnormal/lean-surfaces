@@ -24496,6 +24496,37 @@ def convert_fixed_array_vars(sm, m):
                         "name": name, "width": width, "init": init,
                     }, field_type))
             return declarations
+        if type(leaf_type).__name__ == "UnpackedUnionType":
+            # An equal-width untagged union is already one aliased flat
+            # vector cell.  Compose that representation over a finite fixed
+            # unpacked array: each selected element gets one independent
+            # union cell, while member reads/writes continue to use the
+            # existing union aliasing path.  Aggregate initializers and
+            # whole-array values still need an aggregate store and remain
+            # outside this declaration-only slice.
+            if getattr(leaf_type, "isTagged", False) or getattr(
+                    m, "initializer", None) is not None:
+                return None
+            union_shape = _unpacked_union_shape(leaf_type)
+            if union_shape is None:
+                return None
+            width, two = union_shape
+            positions = [()]
+            for left, right in dimensions:
+                step = 1 if right >= left else -1
+                positions = [prefix + (position,)
+                             for prefix in positions
+                             for position in range(left, right + step, step)]
+            base = _array_storage_name(m)
+            return [signed_metadata({
+                "kind": "Var",
+                "span": sym_span(sm, m),
+                "name": base + "".join(f"[{position}]" for position in indexes),
+                "width": width,
+                "init": ({"kind": "Literal", "span": None, "width": width,
+                          "bits": "0" * width} if two else None),
+                "unpacked_union_cell": True,
+            }, leaf_type) for indexes in positions]
         if len(dimensions) > 1:
             width, two, reason = type_width_2s(leaf_type)
             if width is None or reason is not None:

@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Fixed arrays of untagged unions — 2026-10-29
+
+Finite fixed unpacked arrays with an equal-width untagged union leaf now use
+one flat aliased vector cell per array element. Selecting either union member
+continues to read or write that element's cell, and 2-state cells retain their
+zero startup. Tagged, mixed-width, aggregate-initialized, and whole-array
+forms remain loud because the legacy state has no aggregate array object. The
+`fixed_array_unpacked_union` fixture, extractor regressions, generated
+envelope, Lean receipt, and differential row cover the admitted family.
+
+Differential coverage grows **434/428/0/6 → 435/429/0/6**; grammar coverage
+is unchanged. The external sv-tests-2 checkout is unavailable for a fresh
+corpus delta in this item.
+
 ## Dynamic-array and queue dimension queries — 2026-10-29
 
 Direct dynamic arrays and queues now expose source-pure IEEE 1800-2023 §20.7

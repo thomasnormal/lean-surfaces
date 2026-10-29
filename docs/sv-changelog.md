@@ -1,3 +1,15 @@
+## [0.1.180] — 2026-10-29
+
+Fixed unpacked arrays whose leaf is an equal-width untagged union now flatten
+to one aliased union cell per element. Union member reads and writes preserve
+the existing aliasing semantics, with zero startup for 2-state leaves and the
+existing four-state default for four-state leaves. Tagged, mixed-width,
+aggregate-initialized, and whole-array forms remain loud. The
+`fixed_array_unpacked_union` fixture, extractor regressions, generated
+envelope, Lean receipt, and differential row cover the admitted family.
+Differential coverage grows **434/428/0/6 → 435/429/0/6**; grammar coverage is
+unchanged.
+
 ## [0.1.179] — 2026-10-29
 
 Dimension metadata queries now cover direct dynamic arrays and queues when the

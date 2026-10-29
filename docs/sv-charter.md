@@ -12,6 +12,18 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Un-driven supply nets — 2026-10-28
+
+The legacy self-check tier now lowers an un-driven `supply0` or `supply1`
+declaration to a declaration-initialized flat cell containing repeated zero or
+one bits. Any continuous driver remains loud because the flat state does not
+model the IEEE strength lattice or supply-driver identity. The `supply_net`
+fixture, extractor regressions, generated envelope, Lean receipt, and
+differential row cover both values and the driven refusal boundary.
+
+Differential coverage grows **423/417/0/6 → 424/418/0/6**; grammar coverage
+remains **219/108/111**.
+
 ## Direct whole-net aliases — 2026-10-28
 
 The legacy self-check tier now admits a module-scope `alias left = right`

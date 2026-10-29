@@ -1,3 +1,12 @@
+## [0.1.169] — 2026-10-28
+
+Un-driven `supply0` and `supply1` declarations now lower to flat cells with
+repeated zero or one initializers in the legacy self-check tier. Any
+continuous driver remains loud because supply-strength resolution is outside
+the envelope. The `supply_net` fixture, extractor tests, Lean receipt, and
+differential row cover both values and the driven refusal boundary.
+Differential coverage grows **423/417/0/6 → 424/418/0/6**.
+
 ## [0.1.168] — 2026-10-28
 
 Direct whole-net aliases now share one legacy flat storage cell when their

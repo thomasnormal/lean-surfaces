@@ -24338,8 +24338,55 @@ def _wired_net_has_only_literal_drivers(m):
         return False
 
 
+def _supply_net_has_no_continuous_drivers(m):
+    """Whether a supply net has no competing driver-strength state.
+
+    An un-driven `supply0`/`supply1` net already has its permanent supply
+    value.  Once another continuous driver exists, the result depends on the
+    IEEE strength lattice, which the flat self-check state deliberately does
+    not represent.
+    """
+    try:
+        instance = m.parentScope.containingInstance
+        found = False
+
+        def inspect(node):
+            nonlocal found
+            if type(node).__name__ != "ContinuousAssignSymbol":
+                return
+            assignment = getattr(node, "assignment", None)
+            if assignment is None:
+                return
+            left = getattr(assignment, "left", None)
+            symbol = getattr(left, "symbol", None)
+            if symbol is None:
+                symbol = getattr(getattr(left, "value", None), "symbol", None)
+            found = found or symbol is m
+
+        instance.visit(inspect)
+        return not found
+    except Exception:
+        return False
+
+
 def convert_net(sm, m):
     nk = str(m.netType.netKind).split(".")[-1]
+    if nk in ("Supply0", "Supply1"):
+        if (getattr(m, "delay", None) is not None
+                or not _supply_net_has_no_continuous_drivers(m)):
+            return unsupported(sm, m, "NetSymbol:" + nk)
+        w, reason = type_width(m.type)
+        if w is None:
+            return unsupported(sm, m, "NetSymbol:" + reason)
+        value = "0" if nk == "Supply0" else "1"
+        return signed_metadata({
+            "kind": "Net",
+            "span": sym_span(sm, m),
+            "name": _storage_name(m),
+            "width": w,
+            "init": {"kind": "Literal", "span": sym_span(sm, m),
+                      "width": w, "bits": value * w},
+        }, m.type)
     if nk not in ("Wire", "Tri", "WAnd", "WOr", "TriAnd", "TriOr"):
         return unsupported(sm, m, "NetSymbol:" + nk)
     if nk == "Tri" and not _net_has_only_literal_continuous_drivers(m):

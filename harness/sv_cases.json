@@ -3829,6 +3829,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "supply_net",
+      "file": "Examples/system-verilog/supply_net/supply_net.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -1893,9 +1893,10 @@ types](sv-net-types.md).
 
 ## `supply1` nets
 
-`NetSymbol:Supply1` remains an explicit unsupported net declaration. The
-envelope has no supply-strength driver or resolution lattice, so it does not
-lower `supply1` to a literal one; see [the `supply1` boundary](sv-supply1.md).
+An un-driven `supply1` declaration is represented as a `Net` with a repeated
+`1` literal `init`; a declaration with any continuous driver remains explicit
+`NetSymbol:Supply1` because the envelope has no supply-strength driver or
+resolution lattice. See [the `supply1` boundary](sv-supply1.md).
 
 ## Variable packed ranges
 
@@ -1983,9 +1984,10 @@ scale or alter delay rounding; see [hierarchy timescales](sv-timescale.md).
 
 ## `supply0` nets
 
-`NetSymbol:Supply0` remains an explicit unsupported net declaration. The
-envelope has no supply-strength driver or resolution lattice, so it does not
-lower `supply0` to a literal zero; see [`supply0`](sv-supply0.md).
+An un-driven `supply0` declaration is represented as a `Net` with a repeated
+`0` literal `init`; a declaration with any continuous driver remains explicit
+`NetSymbol:Supply0` because the envelope has no supply-strength driver or
+resolution lattice. See [`supply0`](sv-supply0.md).
 
 ## System-call formatting
 

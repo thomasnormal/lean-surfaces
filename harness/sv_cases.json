@@ -4035,6 +4035,16 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "compilation_unit_typedef",
+      "file": "Examples/system-verilog/compilation_unit_typedef/compilation_unit_typedef.sv",
+      "module": "top",
+      "oracle": [
+        "a5",
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

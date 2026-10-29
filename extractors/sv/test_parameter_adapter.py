@@ -38,6 +38,13 @@ class ParameterAdapter(unittest.TestCase):
                      'initial $display("%0d", U); endmodule'),
             [])
 
+    def test_compilation_unit_typedef_is_metadata(self):
+        self.assertEqual(
+            blockers("typedef logic [7:0] byte_t; module top; "
+                     "byte_t b=8'hA5; initial begin $display(\"%0h\", b); "
+                     "$display(\"PASS\"); end endmodule"),
+            [])
+
 
 if __name__ == "__main__":
     unittest.main()

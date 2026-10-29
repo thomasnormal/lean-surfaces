@@ -383,6 +383,8 @@ def adapter_design_blockers(sm, comp):
     try:
         for unit in comp.getCompilationUnits():
             for m in unit:
+                if _adapter_erased_decl(m):
+                    continue
                 if (str(getattr(m, "kind", "")).split(".")[-1] == "Parameter"
                         and _adapter_integral_parameter(m)):
                     continue

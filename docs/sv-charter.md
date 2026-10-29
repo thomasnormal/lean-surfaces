@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Compilation-unit typedef metadata in the adapter — 2026-10-29
+
+The legacy adapter census now applies the extractor's declaration-erasure
+predicate to compilation-unit members. Integral and flat integral-struct
+typedefs, plus bound enum metadata, are compile-time declarations and do not
+create self-check state; package storage and unsupported aliases remain loud.
+The `compilation_unit_typedef` fixture, adapter regression, generated
+envelope, Lean receipt, and differential row cover the family.
+
+Differential coverage grows **445/439/0/6 → 446/440/0/6**; grammar coverage
+remains **221/112/109**. The temporary public sv-tests audit remains **364
+clean / 437 partial / 111 include skips**; clean-file `TypeAliasType` and
+`TransparentMemberSymbol` residuals fall from **26 to 0**.
+
 ## Exact integral parameters in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's existing exact integral

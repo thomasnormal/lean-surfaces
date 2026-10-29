@@ -55,6 +55,25 @@ class FixedArrayStringInitializer(unittest.TestCase):
                             and node.get("sv_kind") == "VariableSymbol:2state"
                             for node in nodes(design)))
 
+    def test_fixed_string_array_elements_drive_loops_and_display(self):
+        design = lower(
+            'module top; string text[4] = ' +
+            "'{\"111\", \"222\", \"333\", \"444\"}; "
+            'int i; initial begin while (text[i] != "222") i++; '
+            'if (text[i] == "222") $display("PASS"); end endmodule')
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             for node in nodes(design)))
+        self.assertTrue(any(node.get("fixed_string_array_dynamic")
+                            for node in nodes(design)))
+
+    def test_fixed_string_array_writes_stay_loud(self):
+        design = lower(
+            'module top; string text[2] = ' +
+            "'{\"a\", \"b\"}; initial text[0] = \"c\"; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") == "VariableSymbol:2state"
+                            for node in nodes(design)))
+
 
 if __name__ == "__main__":
     unittest.main()

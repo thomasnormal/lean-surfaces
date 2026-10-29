@@ -1,3 +1,13 @@
+## [0.1.184] — 2026-10-29
+
+Finite fixed unpacked arrays of ASCII `string` literals now support exact
+element reads in `foreach`, `while`, and `do…while` loops. Constant reads and
+source-pure dynamic indices reuse packed literals and ternaries; writes,
+aliases, dynamic or non-ASCII initializers, and aggregate forms remain loud.
+The `fixed_string_array_loops` fixture, extractor regressions, generated
+envelope, and differential row cover the family. Differential coverage grows
+**438/432/0/6 → 439/433/0/6**.
+
 ## [0.1.183] — 2026-10-29
 
 Compilation-unit `parameter` declarations now lower as elaboration metadata in

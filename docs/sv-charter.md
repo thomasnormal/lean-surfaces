@@ -12,6 +12,21 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Fixed unpacked string-array elements in procedural loops — 2026-10-29
+
+Finite one-dimensional unpacked arrays of ASCII `string` literals now replay
+their element values in the legacy self-check tier. Constant reads become the
+existing packed literal path; signed integral dynamic indices become an exact
+ternary over the declared cells, so `foreach`, `while`, and `do…while` retain
+their ordinary loop lowering and string comparisons. Writes, aliases, unequal
+cell widths, non-ASCII or dynamic initializers, and aggregate uses remain loud;
+the tier adds no string heap or scheduler state. The
+`fixed_string_array_loops` fixture, extractor regressions, generated envelope,
+and differential row cover the family.
+
+Differential coverage grows **438/432/0/6 → 439/433/0/6**; grammar coverage
+remains **111/109**.
+
 ## Compilation-unit parameters — 2026-10-29
 
 Compilation-unit `parameter` declarations now lower as elaboration metadata in

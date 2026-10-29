@@ -10,10 +10,11 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 438 | 432 | 0 | 6 | sv-tests-2 declarations |
+| 439 | 433 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
+| `fixed_string_array_loops` | `Examples/system-verilog/fixed_string_array_loops/fixed_string_array_loops.sv` | match | **MATCH** | `ok` | MATCH |
 | `severity_default_format` | `Examples/system-verilog/severity_default_format/severity_default_format.sv` | match | **MATCH** | `ok` | MATCH |
 | `default_display_format` | `Examples/system-verilog/default_display_format/default_display_format.sv` | match | **MATCH** | `ok` | MATCH |
 | `qualified_if_fallback` | `Examples/system-verilog/qualified_if_fallback/qualified_if_fallback.sv` | match | **MATCH** | `ok` | MATCH |
@@ -459,7 +460,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 220 | 109 | 111 | pyslang SyntaxKind |
+| 220 | 111 | 109 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -534,8 +535,8 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ExpressionStatement` | `Examples/system-verilog/always/automatic.sv` | **REFUSE** | `unsupported` non-initial process 'Always' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ForLoopStatement` | `Examples/system-verilog/case_inside/table.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ForVariableDeclaration` | `Examples/system-verilog/dist_uniform_variable_bounds/dist_uniform_variable_bounds.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ForeachLoopList` | `Examples/system-verilog/foreach/indices.sv` | **REFUSE** | `unsupported` unsupported expression 'ElementSelectExpression:source-type' |
-| `SyntaxKind.ForeachLoopStatement` | `Examples/system-verilog/foreach/indices.sv` | **REFUSE** | `unsupported` unsupported expression 'ElementSelectExpression:source-type' |
+| `SyntaxKind.ForeachLoopList` | `Examples/system-verilog/fixed_string_array_loops/fixed_string_array_loops.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ForeachLoopStatement` | `Examples/system-verilog/fixed_string_array_loops/fixed_string_array_loops.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ForeverStatement` | `Examples/system-verilog/forever_loops/timers.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.FunctionDeclaration` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
 | `SyntaxKind.FunctionPort` | `Examples/system-verilog/empty_input_task/empty_input_task.sv` | **MATCH** | `ok`  |
@@ -580,7 +581,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.LogicalShiftLeftExpression` | `Examples/system-verilog/min_typ_max/composition.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalShiftRightExpression` | `Examples/system-verilog/shifts/shifts.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.LoopGenerate` | `Examples/system-verilog/elaborated_generate/captures.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
-| `SyntaxKind.LoopStatement` | `Examples/system-verilog/foreach/values.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.LoopStatement` | `Examples/system-verilog/fixed_string_array_loops/fixed_string_array_loops.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.MinTypMaxExpression` | `Examples/system-verilog/min_typ_max/argument_context.sv` | **REFUSE** | `unsupported` unsupported statement 'InvalidStatement' |
 | `SyntaxKind.ModAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ModExpression` | `Examples/system-verilog/remainder/remainder.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |

@@ -655,6 +655,128 @@ def is_string_decl(symbol):
         return False
 
 
+def _fixed_string_array_values(symbol):
+    """Return a source-pure one-dimensional fixed ``string`` array.
+
+    String objects have no slot in the flat self-check state.  A finite array
+    whose elements are all ASCII literals can nevertheless be replayed at each
+    selected read.  Keep this recognizer deliberately narrow: one unpacked
+    dimension, a complete literal initializer (or the default empty strings),
+    and no later writes or method calls on the array.
+    """
+    try:
+        if str(getattr(symbol, "kind", "")) != "SymbolKind.Variable":
+            return None
+        array_type = symbol.type.canonicalType
+        if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
+            return None
+        element_type = array_type.elementType
+        if type(element_type.canonicalType).__name__ != "StringType":
+            return None
+        left, right = int(array_type.range.left), int(array_type.range.right)
+        count = abs(left - right) + 1
+        if count <= 0 or count > 1024:
+            return None
+        initializer = getattr(symbol, "initializer", None)
+        values = [""] * count
+        if initializer is not None:
+            node = initializer
+            while type(node).__name__ == "ConversionExpression":
+                node = getattr(node, "operand", None)
+                if node is None:
+                    return None
+            if type(node).__name__ not in (
+                    "SimpleAssignmentPatternExpression",
+                    "StructuredAssignmentPatternExpression"):
+                return None
+            elements = _pattern_source_elements(node)
+            if len(elements) != count:
+                return None
+            for index, element in enumerate(elements):
+                leaf = element
+                while type(leaf).__name__ == "ConversionExpression":
+                    leaf = getattr(leaf, "operand", None)
+                    if leaf is None:
+                        return None
+                text = getattr(leaf, "value", None)
+                if (type(leaf).__name__ != "StringLiteral"
+                        or getattr(leaf, "bad", False)
+                        or _disputed_string_escape(leaf)
+                        or not isinstance(text, str)
+                        or any(ord(char) == 0 or ord(char) > 127
+                               for char in text)):
+                    return None
+                values[index] = text
+        instance = getattr(getattr(symbol, "parentScope", None),
+                           "containingInstance", None)
+        if instance is None:
+            return None
+        allowed_spans = set()
+        invalid = False
+
+        def inspect_allowed(node):
+            nonlocal invalid
+            kind = type(node).__name__
+            if kind == "ElementSelectExpression":
+                base = getattr(node, "value", None)
+                if (getattr(base, "symbol", None) is symbol):
+                    span = getattr(base, "sourceRange", None)
+                    allowed_spans.add((getattr(getattr(span, "start", None),
+                                               "offset", None),
+                                       getattr(getattr(span, "end", None),
+                                               "offset", None)))
+                    return
+            if kind == "ForeachLoopStatement":
+                base = getattr(node, "arrayRef", None)
+                if getattr(base, "symbol", None) is symbol:
+                    span = getattr(base, "sourceRange", None)
+                    allowed_spans.add((getattr(getattr(span, "start", None),
+                                               "offset", None),
+                                       getattr(getattr(span, "end", None),
+                                               "offset", None)))
+                    return
+            if kind == "AssignmentExpression":
+                left_node = getattr(node, "left", None)
+                if (getattr(left_node, "symbol", None) is symbol
+                        or getattr(getattr(left_node, "value", None),
+                                   "symbol", None) is symbol):
+                    invalid = True
+            if kind == "CallExpression":
+                args = list(getattr(node, "arguments", ()))
+                if args and getattr(args[0], "symbol", None) is symbol:
+                    invalid = True
+
+        instance.visit(inspect_allowed)
+        if invalid:
+            return None
+        # Every remaining occurrence must be the base of an admitted element
+        # select or a foreach array reference; whole-array aliases remain loud.
+        def inspect_reads(node):
+            nonlocal invalid
+            if type(node).__name__ != "NamedValueExpression" \
+                    or getattr(node, "symbol", None) is not symbol:
+                return
+            span = getattr(node, "sourceRange", None)
+            key = (getattr(getattr(span, "start", None), "offset", None),
+                   getattr(getattr(span, "end", None), "offset", None))
+            if key not in allowed_spans:
+                invalid = True
+
+        instance.visit(inspect_reads)
+        if invalid:
+            return None
+        step = 1 if right >= left else -1
+        positions = list(range(left, right + step, step))
+        return dict(zip(positions, values))
+    except Exception:
+        return None
+
+
+def is_fixed_string_array_decl(symbol):
+    """Whether a fixed string array is safely replayable source metadata."""
+    return _fixed_string_array_values(symbol) is not None
+
+
 def is_inert_2state_queue_decl(symbol):
     """Whether a 2-state queue declaration is only metadata.
 
@@ -8554,6 +8676,9 @@ def _string_compare_source_value(operand, position):
     control-dependent writes remain loud.
     """
     try:
+        fixed_value = _fixed_string_array_selected_value(operand)
+        if fixed_value is not None:
+            return fixed_value
         resolved = _string_transform_history_value(operand, position)
         if resolved is not None:
             return resolved
@@ -8648,6 +8773,122 @@ def _string_compare_source_value(operand, position):
         return max(history, key=lambda item: item[0])[1]
     except Exception:
         return None
+
+
+def _fixed_string_array_selected_value(expression):
+    """Resolve a constant element of a source-pure fixed string array."""
+    try:
+        node = expression
+        while type(node).__name__ == "ConversionExpression":
+            node = getattr(node, "operand", None)
+            if node is None:
+                return None
+        if type(node).__name__ != "ElementSelectExpression":
+            return None
+        base = getattr(node, "value", None)
+        symbol = getattr(base, "symbol", None)
+        values = _fixed_string_array_values(symbol)
+        if values is None:
+            return None
+        index = _literal_integral_value(getattr(node, "selector", None))
+        return values.get(index) if index in values else None
+    except Exception:
+        return None
+
+
+def _fixed_string_array_dynamic_expr(sm, expression):
+    """Lower a dynamic read from a source-pure fixed string array.
+
+    The flat evaluator already has exact ternary and packed-string semantics.
+    Require equal-length ASCII cells so the selected value has one fixed width;
+    dynamic/out-of-range aggregate forms outside this closed slice remain loud.
+    """
+    try:
+        if type(expression).__name__ != "ElementSelectExpression":
+            return None
+        base = getattr(expression, "value", None)
+        values = _fixed_string_array_values(getattr(base, "symbol", None))
+        if values is None:
+            return None
+        selector = getattr(expression, "selector", None)
+        if _literal_integral_value(selector) is not None:
+            return None
+        if not _case_source_expression_ok(selector):
+            return None
+        index = convert_expr(sm, selector)
+        if index is None or index.get("kind") == "Unsupported":
+            return None
+        widths = {8 * len(text) if text else 8 for text in values.values()}
+        if len(widths) != 1:
+            return None
+        width = next(iter(widths))
+        index_width = width_of(index)
+        if index_width is None or index_width <= 0:
+            return None
+        span = node_span(sm, expression)
+
+        def literal(text):
+            data = text.encode("latin-1")
+            return {"kind": "Literal", "span": span, "width": width,
+                    "bits": "".join(format(byte, "08b") for byte in data)
+                            if data else "0" * width}
+
+        result = literal("")
+        for position in reversed(list(values)):
+            condition = {
+                "kind": "Binary", "span": span, "width": 1, "op": "===",
+                "left": index,
+                "right": {"kind": "Literal", "span": span,
+                           "width": index_width,
+                           "bits": format(position & ((1 << index_width) - 1),
+                                          f"0{index_width}b")},
+            }
+            result = {"kind": "Ternary", "span": span, "width": width,
+                      "cond": condition, "then": literal(values[position]),
+                      "else": result,
+                      "fixed_string_array_dynamic": True}
+        return result
+    except Exception:
+        return None
+
+
+def _fixed_string_array_compare(sm, expression, sym):
+    """Compare a dynamic fixed-string-array element with an ASCII string."""
+    try:
+        candidates = ((expression.left, expression.right),
+                      (expression.right, expression.left))
+        for selected, other in candidates:
+            if type(selected).__name__ != "ElementSelectExpression":
+                continue
+            base = getattr(selected, "value", None)
+            values = _fixed_string_array_values(getattr(base, "symbol", None))
+            if values is None or _literal_integral_value(
+                    getattr(selected, "selector", None)) is not None:
+                continue
+            dynamic = _fixed_string_array_dynamic_expr(sm, selected)
+            if dynamic is None:
+                continue
+            text = _string_source_value(other)
+            if text is None:
+                node = other
+                while type(node).__name__ == "ConversionExpression":
+                    node = getattr(node, "operand", None)
+                if type(node).__name__ != "StringLiteral":
+                    continue
+                text = getattr(node, "value", None)
+            if not isinstance(text, str):
+                continue
+            width = width_of(dynamic)
+            if width != (8 * len(text) if text else 8):
+                continue
+            right = _string_source_literal(sm, other, text,
+                                           "fixed_string_array_literal")
+            return {"kind": "Binary", "span": node_span(sm, expression),
+                    "width": 1, "op": sym, "left": dynamic, "right": right,
+                    "fixed_string_array_compare": True}
+    except Exception:
+        return None
+    return None
 
 
 def _string_source_decl_initializer(expression):
@@ -9733,6 +9974,10 @@ def _string_source_literal(sm, expression, value, marker):
 
 
 def _convert_string_compare(sm, expression, sym):
+    dynamic_array = _fixed_string_array_compare(sm, expression, sym)
+    if dynamic_array is not None:
+        return dynamic_array
+
     def is_string_operand(operand):
         node = operand
         while type(node).__name__ == "ConversionExpression":
@@ -9751,7 +9996,11 @@ def _convert_string_compare(sm, expression, sym):
             return valid_arity
         return (type(node).__name__ == "StringLiteral"
                 or (type(node).__name__ == "NamedValueExpression"
-                    and type(node.type.canonicalType).__name__ == "StringType"))
+                    and type(node.type.canonicalType).__name__ == "StringType")
+                or (type(node).__name__ == "ElementSelectExpression"
+                    and _fixed_string_array_values(
+                        getattr(getattr(node, "value", None), "symbol", None))
+                    is not None))
 
     if (_SYM is not None or sym not in _STRING_COMPARE_SYMS
             or not is_string_operand(expression.left)
@@ -10676,6 +10925,13 @@ def _legacy_member_select_window(sm, expression, expression_kind, result_kind):
 
 def _convert_selected_read(sm, expr, expression_kind):
     if expression_kind == "ElementSelectExpression":
+        fixed_string_value = _fixed_string_array_selected_value(expr)
+        if fixed_string_value is not None:
+            return _string_source_literal(sm, expr, fixed_string_value,
+                                          "fixed_string_array_index")
+        fixed_string_dynamic = _fixed_string_array_dynamic_expr(sm, expr)
+        if fixed_string_dynamic is not None:
+            return fixed_string_dynamic
         string_byte = _string_literal_index_value(expr)
         if string_byte is not None:
             width = expr.type.bitWidth
@@ -20907,6 +21163,7 @@ def _convert_foreach_loop(sm, statement):
     if _SYM is not None:
         return unsupported(sm, statement)
     source = statement.arrayRef
+    string_array = _fixed_string_array_values(getattr(source, "symbol", None))
     width, _, reason = type_width_2s(source.type)
     flat_shape = _fixed_array_shape(source)
     nested_shape = (_fixed_array_dimensions(source.type, max_cells=1024)
@@ -20916,6 +21173,11 @@ def _convert_foreach_loop(sm, statement):
     nested_foreach = (flat_shape is None and nested_shape is not None
                       and type(source.type.canonicalType).__name__ ==
                       "FixedSizeUnpackedArrayType")
+    if (string_array is not None):
+        flat_shape = None
+        nested_shape = ([(min(string_array), max(string_array))],
+                        source.type.canonicalType.elementType)
+        nested_foreach = True
     if (not _storage_expression(source)
             or str(source.symbol.kind) != "SymbolKind.Variable"
             or (not nested_foreach and flat_shape is None and
@@ -22032,7 +22294,8 @@ def _convert_local_decl(sm, stmt):
     if _SYM is None and is_literal_semaphore_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt),
                 "opaque_semaphore_literal_new_write": True}
-    if _SYM is None and is_string_decl(symbol):
+    if _SYM is None and (is_string_decl(symbol)
+                         or is_fixed_string_array_decl(symbol)):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
     if _SYM is None and is_inert_event_decl(symbol):
         return {"kind": "Empty", "span": node_span(sm, stmt)}
@@ -22518,10 +22781,13 @@ def _default_display_argument(sm, expression):
         return None
     if canonical == "StringType":
         value = _string_source_value(expression)
-        if value is None:
-            return None
-        return "%s", _string_source_literal(
-            sm, expression, value, "string_source_default_display")
+        if value is not None:
+            return "%s", _string_source_literal(
+                sm, expression, value, "string_source_default_display")
+        dynamic = _fixed_string_array_dynamic_expr(sm, expression)
+        if dynamic is not None:
+            return "%s", dynamic
+        return None
     try:
         width, _two_state, reason = type_width_2s(expression.type)
     except Exception:
@@ -23440,6 +23706,10 @@ def _convert_syscall(sm, s, e):
                 if string_value is not None:
                     value = _string_source_literal(
                         sm, a, string_value, "string_source_display")
+                else:
+                    dynamic_string = _fixed_string_array_dynamic_expr(sm, a)
+                    if dynamic_string is not None:
+                        value = dynamic_string
             conv.append(value)
         try:
             signed.append(bool(a.type.isSigned))
@@ -25056,6 +25326,7 @@ def _convert_static_procedural_storage(sm, members):
         if str(symbol.lifetime) != "VariableLifetime.Static":
             continue
         if (is_chandle_decl(symbol) or is_string_decl(symbol)
+                or is_fixed_string_array_decl(symbol)
                 or is_inert_event_decl(symbol)
                 or is_inert_2state_floating_decl(symbol)
                 or is_inert_2state_mixed_array_decl(symbol)
@@ -25423,6 +25694,7 @@ def convert_module(sm, inst):
                             or is_literal_semaphore_decl(m)
                             or is_module_virtual_interface_null_decl(m)
                             or is_string_decl(m)
+                            or is_fixed_string_array_decl(m)
                             or is_invalid_packed_dimension_decl(m)
                             or is_inert_2state_queue_decl(m)
                             or is_inert_empty_dynamic_array_decl(m)
@@ -25740,6 +26012,7 @@ def _declaration_only(member):
             or is_chandle_decl(member)
             or is_module_virtual_interface_null_decl(member)
             or is_string_decl(member)
+            or is_fixed_string_array_decl(member)
             or is_inert_2state_queue_decl(member)
             or is_inert_2state_dynamic_array_decl(member)
             or is_inert_2state_associative_array_decl(member)

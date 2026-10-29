@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "fixed_string_array_loops",
+      "file": "Examples/system-verilog/fixed_string_array_loops/fixed_string_array_loops.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "severity_default_format",
       "file": "Examples/system-verilog/severity_default_format/severity_default_format.sv",
       "module": "top",

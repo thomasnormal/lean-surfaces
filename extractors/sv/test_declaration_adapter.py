@@ -67,6 +67,20 @@ class DeclarationAdapter(unittest.TestCase):
             '$display("PASS"); end endmodule')
         self.assertIn("AssignmentExpression:target", residual)
 
+    def test_fixed_array_declaration_follows_flat_lowering(self):
+        self.assertEqual(
+            blockers(
+                'module top; initial begin int values[2]; '
+                'values[0] = 10; values[1] = 20; '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_unsupported_fixed_array_leaf_remains_loud(self):
+        residual = blockers(
+            'module top; initial begin real values[2]; '
+            '$display("PASS"); end endmodule')
+        self.assertIn("VariableDeclStatement:type", residual)
+
 
 if __name__ == "__main__":
     unittest.main()

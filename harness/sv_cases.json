@@ -4213,6 +4213,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "fixed_array_decl_adapter",
+      "file": "Examples/system-verilog/fixed_array_decl_adapter/fixed_array_decl_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

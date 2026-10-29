@@ -326,7 +326,8 @@ def adapter_stmt(sm, s):
         # extent is lowered by the converter into independent flat cells.
         # Mirror only that exact lowering here; unresolved extents and any
         # other dynamic-array representation remain adapter boundaries.
-        if type(sym.type.canonicalType).__name__ == "DynamicArrayType":
+        if type(sym.type.canonicalType).__name__ in (
+                "DynamicArrayType", "FixedSizeUnpackedArrayType"):
             converted = extract.convert_var(sm, sym)
             if (isinstance(converted, list) and converted
                     and all(isinstance(cell, dict)

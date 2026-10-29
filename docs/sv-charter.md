@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Fixed unpacked-array declarations in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's flat-cell lowering for
+procedural fixed unpacked arrays. A declaration is admitted only when its
+conversion produces `Var`/`Empty` cells; unsupported leaves and aggregate
+boundaries remain loud. The `fixed_array_decl_adapter` fixture, adapter
+regression, generated envelope, Lean receipt, and differential row cover the
+family.
+
+Differential coverage grows **464/458/0/6 → 465/459/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in 939-file SystemVerilog example
+sweep, `VariableDeclStatement:type` residuals fall **12 → 2** (679 clean /
+260 partial).
+
 ## Constant-extent dynamic-array declarations in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's finite dynamic-array

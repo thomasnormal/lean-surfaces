@@ -7097,6 +7097,39 @@ def callableLocalDoWhileShadowInitializationAssignmentContinueStatementFrameWitn
 
 #guard callableLocalDoWhileShadowInitializationAssignmentContinueStatementFrameWitness
 
+private def localDoWhileShadowInitializationAssignmentBreakStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .binary ">"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 0, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let body := .block (.sequence
+    (automaticLiteral "0x13" 5)
+    (.sequence
+      (.assign (handle "0x11") {
+        expression := .parameter (handle "0x13")
+        sourceType := intType
+        type := intType})
+      .break_))
+  let function := {base with body := .block (.sequence
+    (automaticLiteral "0x11" 3)
+    (.sequence
+      (.doWhile body condition)
+      (.return_ {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType}))) }
+  match evaluateCallableObject 128 .lp64 function [signed 2] with
+  | .ok (.ok value) => value == signed 5
+  | _ => false
+
+def callableLocalDoWhileShadowInitializationAssignmentBreakStatementFrameWitness : Bool :=
+  localDoWhileShadowInitializationAssignmentBreakStatementFrame
+
+#guard callableLocalDoWhileShadowInitializationAssignmentBreakStatementFrameWitness
+
 private def localDoWhileShadowComputedInitializationStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let condition : TypedCallableExpression := {

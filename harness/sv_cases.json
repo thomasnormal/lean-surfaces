@@ -3838,6 +3838,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "tri_net",
+      "file": "Examples/system-verilog/tri_net/tri_net.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -1898,6 +1898,13 @@ An un-driven `supply1` declaration is represented as a `Net` with a repeated
 `NetSymbol:Supply1` because the envelope has no supply-strength driver or
 resolution lattice. See [the `supply1` boundary](sv-supply1.md).
 
+## `tri` nets
+
+An un-driven `tri` declaration is represented as a `Net` with a repeated `z`
+literal `init`. A declaration with a continuous driver remains explicit
+`NetSymbol:Tri` unless the existing literal-driver lowering applies; general
+driver-strength resolution is outside the envelope. See [the `tri` boundary](sv-tri.md).
+
 ## Variable packed ranges
 
 `VariableSymbol:range` remains an explicit unsupported declaration when a

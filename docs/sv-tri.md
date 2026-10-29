@@ -1,20 +1,25 @@
 # `tri` resolved nets — repricing boundary
 
+The legacy self-check tier admits an un-driven `tri` declaration as a
+declaration-initialized high-impedance cell. A `tri` with a continuous driver
+remains at the existing boundary unless its driver is already covered by the
+literal-driver path.
+
 The `tri` net type is the resolved-wire spelling in IEEE 1800-2023 §6.6.1.
 With one driver it takes that driver's value, and with several drivers it
 resolves their four-state values according to net-driver strengths. Its
 undriven value is high impedance. `wire` and `tri` are equivalent names for
 the same resolved-net behavior; `tri reg` remains an invalid declaration.
 
-## Why `Tri` remains a boundary
+## Why driven `Tri` remains a boundary
 
 The legacy envelope has a flat value store and can carry a narrow continuous
 driver, but it has no general driver set or strength-resolution state. A
 single-driver `tri` can look like a plain wire, yet that rewrite changes the
 meaning when another driver is added and hides the high-impedance floating
-state. The invalid spelling also belongs to frontend diagnostics rather than
-runtime storage. No `tri` declaration is admitted by renaming it, and no
-second scheduler or recovery elaborator is introduced.
+state. The un-driven high-impedance case is represented directly; driven and
+invalid forms retain their boundaries. No second scheduler or recovery
+elaborator is introduced.
 
 ## 2026-10-22 census and decision
 

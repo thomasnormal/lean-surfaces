@@ -24338,13 +24338,13 @@ def _wired_net_has_only_literal_drivers(m):
         return False
 
 
-def _supply_net_has_no_continuous_drivers(m):
-    """Whether a supply net has no competing driver-strength state.
+def _net_has_no_continuous_drivers(m):
+    """Whether a net has no continuous driver state to preserve.
 
-    An un-driven `supply0`/`supply1` net already has its permanent supply
-    value.  Once another continuous driver exists, the result depends on the
-    IEEE strength lattice, which the flat self-check state deliberately does
-    not represent.
+    An un-driven `supply0`/`supply1` net already has its permanent supply value,
+    while an un-driven `tri` has its permanent high-impedance value. Once
+    another continuous driver exists, the result depends on driver strengths
+    or resolution state that the flat self-check representation lacks.
     """
     try:
         instance = m.parentScope.containingInstance
@@ -24373,7 +24373,7 @@ def convert_net(sm, m):
     nk = str(m.netType.netKind).split(".")[-1]
     if nk in ("Supply0", "Supply1"):
         if (getattr(m, "delay", None) is not None
-                or not _supply_net_has_no_continuous_drivers(m)):
+                or not _net_has_no_continuous_drivers(m)):
             return unsupported(sm, m, "NetSymbol:" + nk)
         w, reason = type_width(m.type)
         if w is None:
@@ -24389,8 +24389,21 @@ def convert_net(sm, m):
         }, m.type)
     if nk not in ("Wire", "Tri", "WAnd", "WOr", "TriAnd", "TriOr"):
         return unsupported(sm, m, "NetSymbol:" + nk)
-    if nk == "Tri" and not _net_has_only_literal_continuous_drivers(m):
-        return unsupported(sm, m, "NetSymbol:Tri")
+    if nk == "Tri":
+        if _net_has_no_continuous_drivers(m):
+            w, reason = type_width(m.type)
+            if w is None:
+                return unsupported(sm, m, "NetSymbol:" + reason)
+            return signed_metadata({
+                "kind": "Net",
+                "span": sym_span(sm, m),
+                "name": _storage_name(m),
+                "width": w,
+                "init": {"kind": "Literal", "span": sym_span(sm, m),
+                          "width": w, "bits": "z" * w},
+            }, m.type)
+        if not _net_has_only_literal_continuous_drivers(m):
+            return unsupported(sm, m, "NetSymbol:Tri")
     resolution = None
     if nk in ("WAnd", "TriAnd", "WOr", "TriOr"):
         if not _wired_net_has_only_literal_drivers(m):

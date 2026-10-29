@@ -1,3 +1,12 @@
+## [0.1.170] — 2026-10-29
+
+Un-driven `tri` declarations now lower to flat cells initialized with repeated
+high-impedance bits in the legacy self-check tier. Driven nets retain the
+existing literal-driver admission or remain loud when strength resolution is
+needed. The `tri_net` fixture, extractor tests, Lean receipt, and differential
+row cover the new boundary. Differential coverage grows **424/418/0/6 →
+425/419/0/6**.
+
 ## [0.1.169] — 2026-10-28
 
 Un-driven `supply0` and `supply1` declarations now lower to flat cells with

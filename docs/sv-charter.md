@@ -12,6 +12,18 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Un-driven `tri` nets — 2026-10-29
+
+The legacy self-check tier now lowers an un-driven `tri` declaration to a
+declaration-initialized high-impedance flat cell. Driven nets still use the
+existing literal-driver admission or remain loud when strength resolution is
+needed. The `tri_net` fixture, extractor regressions, generated envelope, Lean
+receipt, and differential row cover scalar/vector high impedance and a driven
+refusal boundary.
+
+Differential coverage grows **424/418/0/6 → 425/419/0/6**; grammar coverage
+remains **219/108/111**.
+
 ## Un-driven supply nets — 2026-10-28
 
 The legacy self-check tier now lowers an un-driven `supply0` or `supply1`

@@ -47,6 +47,19 @@ class StatementCallAdapter(unittest.TestCase):
             'module top; real value; initial $fatal(1, value); endmodule')
         self.assertIn("Call:$fatal", residual)
 
+    def test_lowered_array_ordering_methods_follow_converter(self):
+        self.assertEqual(
+            blockers(
+                "module top; int values [0:3]; initial begin "
+                "values = '{5, 1, 3, 2}; values.sort(); values.rsort(); "
+                "$display(\"PASS\"); end endmodule"),
+            [])
+
+    def test_unlowered_array_ordering_remains_loud(self):
+        residual = blockers(
+            'module top; int values [0:3]; initial values.sort(); endmodule')
+        self.assertIn("Call:sort", residual)
+
     def test_inert_pure_diagnostics_follow_converter_erasure(self):
         self.assertEqual(
             blockers(

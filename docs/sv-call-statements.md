@@ -1,5 +1,13 @@
 # Call statements — admitted boundary
 
+## Fixed-array ordering methods in the adapter — 2026-10-29
+
+The legacy adapter now follows the extractor's assignment-block lowering for
+source-pure fixed-array `sort`, `rsort`, and `reverse` calls, including the
+existing struct-array ordering path. Unknown, dynamic, and unsupported array
+histories remain loud. `ordering_adapter` pins the combined `sort`/`rsort`
+case.
+
 ## Severity-task calls in the adapter — 2026-10-29
 
 The legacy adapter now follows the extractor's represented forms of

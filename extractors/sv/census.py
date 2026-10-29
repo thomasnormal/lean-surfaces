@@ -109,6 +109,11 @@ ADAPTER_CALLS = ("$display", "$write", "$finish", "$stop")
 ADAPTER_PURE_DIAGNOSTIC = ("$exit", "$printtimescale")
 ADAPTER_SEVERITY = ("$info", "$warning", "$error")
 ADAPTER_FATAL = "$fatal"
+ADAPTER_LOWERED_METHOD_MARKERS = (
+    "fixed_array_reverse_lowered",
+    "fixed_array_ordering_lowered",
+    "fixed_struct_array_ordering_with_lowered",
+)
 DEEP_DIVE_CHAPTERS = ("chapter-4", "chapter-6", "chapter-11")
 
 # A *real* include directive at the start of a line (`include "f" / <f> /
@@ -331,12 +336,17 @@ def adapter_stmt(sm, s):
                         and converted.get("kind") == "Empty"
                         and converted.get("pure_diagnostic") == name):
                     return []
+            converted = extract.convert_stmt(sm, s)
+            if (isinstance(converted, dict)
+                    and converted.get("kind") == "Block"
+                    and any(converted.get(marker) is not None
+                            for marker in ADAPTER_LOWERED_METHOD_MARKERS)):
+                return []
             if name in ADAPTER_SEVERITY or name == ADAPTER_FATAL:
                 # The converter has already checked the complete argument
                 # shape and lowered accepted calls to the self-check's
                 # severity/fatal constructors.  Mirror that boundary here;
                 # an Unsupported conversion remains a loud adapter residual.
-                converted = extract.convert_stmt(sm, s)
                 if not isinstance(converted, dict):
                     return ["Call:" + name]
                 if (name in ADAPTER_SEVERITY

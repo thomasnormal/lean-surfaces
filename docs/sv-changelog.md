@@ -2234,3 +2234,13 @@ regressions, generated envelope, Lean receipt, and differential row cover the
 family. Differential coverage grows **454/448/0/6 → 455/449/0/6**; grammar
 coverage remains **235/113/122**. The temporary public sv-tests audit remains
 **380 clean / 421 partial / 111 include skips**.
+## [0.1.201] — 2026-10-29
+
+The legacy adapter census now follows the extractor's assignment-block
+lowering for source-pure fixed-array `sort`, `rsort`, and `reverse` calls,
+including the existing struct-array ordering path. Unknown, dynamic, and
+unsupported array histories remain loud. The `ordering_adapter` fixture,
+adapter regressions, generated envelope, Lean receipt, and differential row
+cover the family. Differential coverage grows **455/449/0/6 → 456/450/0/6**;
+grammar coverage remains **235/113/122**. The temporary public sv-tests audit
+remains **380 clean / 421 partial / 111 include skips**.

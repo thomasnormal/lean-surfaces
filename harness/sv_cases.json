@@ -4132,6 +4132,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "ordering_adapter",
+      "file": "Examples/system-verilog/ordering_adapter/ordering_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

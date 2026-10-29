@@ -8,87 +8,20 @@ value, and a definitional interpreter gives it meaning. Programs stay
 proofs read against code you recognize, which is what makes AI-assisted proving
 tractable.
 
-## Python release status
+## Language progress
 
-The Python prerelease is **v0.1.17 (2026-10-29)**. Its Git tag identifies the
-release commit on `master`. The earlier `v0.1.2` through `v0.1.6` entries
-record source releases whose local Git tags remain unpublished.
-See [CHANGELOG.md](CHANGELOG.md) for the version history.
+These bars use each tier's checked-in differential corpus: `MATCH` rows divided
+by all rows, rounded to one decimal place. The linked coverage pages are the
+source of truth; update the value and row count here whenever a harness
+regenerates one of them. A zero means the language is planned but has no
+implemented tier or measured corpus yet.
 
-The current source keeps the public judgments, tactics, and existing theorem
-statements unchanged. First-proof and tutorial builds stay within Python dependencies;
-exception control flow, starred calls and assignments, and measured float and
-string boundaries now follow CPython. Unread admitted class and function values
-are erased at ingestion. Flat starred assignments allocate the middle slice as
-a fresh list, and bare-name list deletion follows CPython's index rules.
-Immediate local aliases of supported builtins preserve the same call and
-shadowing rules; first-class callable aliases remain loud. Native dictionary
-iterators now
-retain resize failures without changing
-ordinary generator closure behavior. ASCII strings and bytes now admit
-integer parsing in bases 2–36 and base zero, with prefix detection, underscore
-grouping, all six integer whitespace characters, and exact invalid-literal
-errors within the documented digit budgets. Unicode input and non-ASCII bytes
-remain loud. String repetition supports both operand orders, boolean counts,
-and `*=`, including in-place heap-list `*=`, with both the original count magnitude and output code-point length
-bounded by 1,048,576. Tuple and namedtuple repetition
-also checks the original count magnitude before empty-sequence or negative-count
-handling, with the same independent element-count budget. Decimal output shares
-the 4300-digit admission across `str`, `print`, f-strings, container and range
-rendering, and bare `%s`/`%r`/`%d`; larger magnitudes refuse before conversion.
-Range construction retains Boolean fields for faithful rendering, while
-numerical consumers use their integer projections.
-Immutable bytes literals and literal defaults preserve every octet through
-extraction and the proof boundary. Indexing, slicing, concatenation, repetition,
-comparisons, membership, rendering, unpacking, iteration, and sequence
-consumers are modelled, alongside ASCII integer parsing. Decoding, methods,
-explicit iterator cursors, bytes percent formatting, and `dict(bytes)` pair
-construction remain loud.
-Module-scope annotated assignments admit simple targets with scalar literal
-annotations, including forward-reference strings; nonliteral annotations and
-explicit annotation-table bindings remain loud.
-Synchronous `with` supports explicit zero-argument constructors, multiple items,
-and body exception unwinding while preserving the original exception. A
-computed `__exit__` result is tested with normal truthiness when it does not
-inspect the exception arguments; argument-sensitive suppression and `async
-with` remain loud.
-`bool()` and `bool(value)` use the same truthiness semantics as conditionals,
-including heap containers and nondraining generator checks; builtin type values
-and keyword calls remain loud.
-Integral `divmod` returns the same signed floor quotient and remainder as `//`
-and `%`, including Boolean operands; nonintegral protocols remain loud.
-The two-argument integer `pow` builtin shares the pure exponentiation worker;
-negative exponents and the three-argument modulus form remain loud.
-Generator-expression capture preserves lexical local bindings when they shadow
-builtins or module definitions. Named `BaseException`, `ArithmeticError`, and
-`LookupError` handlers use the same CPython-measured catch relations in both
-interpreter surfaces; unmeasured OS-error ancestors and dynamic exception
-classes remain loud.
-Builtin `repr(value)` reuses the same renderer as container printing, including
-ASCII quoting, namedtuples, insertion-ordered dictionaries, and container cycles.
-Identity-dependent values, sets, non-ASCII strings, and over-budget renders stay loud.
-Intrinsic f-string `!r` fields share that renderer without consulting shadowed
-`str` or `repr` names; debug fields and explicit empty format specifications
-also work. `...` and the ordinary builtin `Ellipsis` are the same truthy
-singleton, with identity, equality, rendering, literal defaults, hashable keys,
-and argument/result transport. Notebook headers verify their compiler and
-transitive compiled imports by content before reuse.
-Binary64 literals/defaults and integer, Boolean, and finite-float true division
-use exact words and kernel-reducible rounding, including signed zero and
-faithful conversion/error order. Mixed numeric comparisons, rendering, unary
-signs, `abs`, and `int` share the same core. Other float arithmetic, unresolved
-non-finite division, float keys, and identity-dependent NaN operations remain
-loud coverage gaps, not scope exclusions. `PyFloat` provides typed marshalling;
-downstream exhaustive matches must handle the new value/operator/error
-constructors and rebuild their Lean artifacts. See [the float model](docs/python-floats.md).
-The executable differential suite has 3,756 cases: 3,712 agree with CPython and
-44 refuse loudly (**98.8% complete**). The narrower proof interpreter agrees on
-3,603 cases and refuses 153 (**95.9% complete**); neither run has a mismatch in
-the recorded suite. The grammar census has 145 witnesses, with 136 MATCH and 9
-REFUSE. These are measured
-examples, not a claim of complete language support; remaining gaps stay in scope.
-See [the measured coverage](docs/python-coverage.md) and
-[the interpreter boundary](docs/python-architecture.md).
+| Language | Completion | Current measurement |
+| --- | --- | --- |
+| Python | <progress value="98.8" max="100" aria-label="98.8% complete">98.8%</progress> **98.8%** | 3,714 / 3,758 differential rows ([coverage](docs/python-coverage.md)); proof interpreter: 3,613 / 3,758 |
+| C++ | <progress value="98.4" max="100" aria-label="98.4% complete">98.4%</progress> **98.4%** | 1,026 / 1,043 differential rows ([coverage](docs/cpp-coverage.md)) |
+| Rust | <progress value="0" max="100" aria-label="0.0% complete">0.0%</progress> **0.0%** | Lane planned, implementation not started ([roadmap](#roadmap-not-built--do-not-expect-it-in-this-tree)) |
+| SystemVerilog | <progress value="98.7" max="100" aria-label="98.7% complete">98.7%</progress> **98.7%** | 472 / 478 self-check rows ([coverage](docs/sv-coverage.md)) |
 
 ## C++ tier status
 

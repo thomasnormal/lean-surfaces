@@ -142,6 +142,7 @@ theorem EvalsIn.sortedDrainRev {m : Module} {st st₁ st₂ : FrameState}
     (hfn : findFunction m "sorted" = Option.none)
     (hcls : findClass m "sorted" = Option.none)
     (hnt : findNamedTuple m "sorted" = Option.none)
+    (hunbound : hasUnboundLocal st.locals "sorted" = false := by rfl)
     (harg : EvalsIn m st arg (.ref a) st₁)
     (hrev : EvalsIn m st₁ rev rv st₂)
     (hdesc : truthyH st₂.world.heap rv = .ok desc)
@@ -164,11 +165,15 @@ theorem EvalsIn.sortedDrainRev {m : Module} {st st₁ st₂ : FrameState}
       List.find? (fun kv : String × Expr => kv.fst != "reverse") [("reverse", rev)]
         = Option.none := rfl
   have hmap : List.map (fun x : String × Expr => x.snd) [("reverse", rev)] = [rev] := rfl
+  have hstar : "sorted" ≠ starArgBuiltinName := by decide
+  have hformat : "sorted" ≠ fstringFormatBuiltinName := by decide
   rw [evalExpr]
   simp only [hkw, Bool.false_eq_true, if_neg, not_false_eq_true, hlocal, hglob,
     hfn, hcls, hnt, Option.isSome_none, hdict, hself, hkey, hfind, hmap, if_pos,
     ht₁ F' (by omega), ht₂ F' (by omega), Run.ok_bind, Run.liftRes, hdesc, hobj,
-    Run.withLocals, ht₃ F' (by omega), hsort]
+    Run.withLocals, ht₃ F' (by omega), hstar, hformat, hunbound]
+  simp [flattenStarRun, flattenStarCallArgs, ht₂ F' (by omega), hdesc, hobj,
+    ht₃ F' (by omega), hsort]
 
 /-- **`sorted(<generator>)`** — the keyword-free arm, through the interpreter's
 other `sorted` dispatch (a call with no keywords never reaches the keyword
@@ -183,6 +188,7 @@ theorem EvalsIn.sortedDrain {m : Module} {st st₁ : FrameState}
     (hfn : findFunction m "sorted" = Option.none)
     (hcls : findClass m "sorted" = Option.none)
     (hnt : findNamedTuple m "sorted" = Option.none)
+    (hunbound : hasUnboundLocal st.locals "sorted" = false := by rfl)
     (harg : EvalsIn m st arg (.ref a) st₁)
     (hobj : Heap.get? st₁.world.heap a = some (.generator qname locals cont status))
     (hdrain : IterDrains m st₁.world a vs w')
@@ -198,11 +204,15 @@ theorem EvalsIn.sortedDrain {m : Module} {st st₁ : FrameState}
   have hlen : ("sorted" == "len") = false := rfl
   have hmult : ("sorted" == lenMultBuiltinName) = false := rfl
   have hself : ("sorted" == "sorted") = true := rfl
+  have hstar : "sorted" ≠ starArgBuiltinName := by decide
+  have hformat : "sorted" ≠ fstringFormatBuiltinName := by decide
   rw [evalExpr]
   simp only [hkw, hlocal, hglob, hfn, hcls, hnt, Option.isSome_none, hlen, hself,
     hmult, Bool.false_eq_true, if_neg, not_false_eq_true, if_pos,
     ht₁ F' (by omega), Run.ok_bind, Run.liftRes, hobj,
-    Run.withLocals, ht₃ F' (by omega), hsort]
+    Run.withLocals, ht₃ F' (by omega), hstar, hformat, hunbound]
+  simp [flattenStarRun, flattenStarCallArgs, ht₃ F' (by omega), hobj,
+    hstar, hformat, hunbound, hsort]
 
 /-- **A generator call whose ARGUMENTS move the state** — `EvalsIn.genCall`
 over `EvalsInList`. The lowered genexp's first argument is the outer iterator
@@ -217,7 +227,10 @@ theorem EvalsIn.genCallIn {m : Module} {st st₁ : FrameState} {fname : String}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params vs.length = true) (hgen : f.isGenerator = true)
-    (hargs : EvalsInList m st argEs.toList vs st₁) :
+    (hargs : EvalsInList m st argEs.toList vs st₁)
+    (hstar : fname ≠ starArgBuiltinName := by decide)
+    (hflat : flattenStarCallArgs vs = vs := by rfl)
+    (hunbound : hasUnboundLocal st.locals fname = false := by rfl) :
     EvalsIn m st (.call (.name fname sp) argEs #[] Option.none sp')
       (.ref st₁.world.heap.size)
       ⟨{ st₁.world with heap := st₁.world.heap.push (genObj fname f vs.toArray) },
@@ -233,7 +246,7 @@ theorem EvalsIn.genCallIn {m : Module} {st st₁ : FrameState} {fname : String}
     ha (F'' + 1) (by omega), Run.ok_bind, Option.isSome_some, if_pos,
     Option.isSome_none, Bool.false_or, Bool.false_eq_true, if_neg,
     not_false_eq_true, hcall, Run.withLocals]
-  rfl
+  simp [flattenStarRun, hflat, hcall, hstar, hunbound]
 
 /-- **A generator METHOD on a namedtuple receiver** — `pos.gen_moves()`. The
 receiver evaluates first (CPython's order), the plan is decided from the
@@ -250,7 +263,8 @@ theorem EvalsIn.ntupleGenMethod {m : Module} {st st₀ st₁ : FrameState}
     (hargs : EvalsInList m st₀ argEs.toList vs st₁)
     (hf : findFunction m qname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
-    (harity : arityOk f.params (vs.length + 1) = true) (hgen : f.isGenerator = true) :
+    (harity : arityOk f.params (vs.length + 1) = true) (hgen : f.isGenerator = true)
+    (hflat : flattenStarCallArgs vs = vs := by rfl) :
     EvalsIn m st (.call (.attribute recv attr sp) argEs #[] Option.none sp')
       (.ref st₁.world.heap.size)
       ⟨{ st₁.world with
@@ -269,7 +283,7 @@ theorem EvalsIn.ntupleGenMethod {m : Module} {st st₀ st₁ : FrameState}
   simp only [Array.isEmpty, Array.size_empty, hclock, Bool.false_eq_true, if_neg,
     not_false_eq_true, hr (F'' + 1) (by omega), Run.ok_bind, hplan,
     ha (F'' + 1) (by omega), hcall, Run.withLocals]
-  simp
+  simp [flattenStarRun, hflat, hcall]
 
 /-- **Call a generator function and drain what it answered, in one step** —
 `EvalsIn.genCallIn` and `IterDrains.of_genYields` composed, which is the PAIR
@@ -287,10 +301,15 @@ theorem EvalsIn.genCallDrains {m : Module} {st st₁ : FrameState} {fname : Stri
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params vs.length = true) (hgen : f.isGenerator = true)
     (hargs : EvalsInList m st argEs.toList vs st₁)
+    (hstar : fname ≠ starArgBuiltinName := by decide)
+    (hflat : flattenStarCallArgs vs = vs := by rfl)
+    (hunbound : hasUnboundLocal st.locals fname = false := by rfl)
     (hy : GenYields m
       ⟨{ st₁.world with heap := st₁.world.heap.push (.generator fname
-          (mkCallEnv f.params vs.toArray) [.block f.body.toList] .running) },
-        mkCallEnv f.params vs.toArray⟩ [.block f.body.toList] ys st') :
+          (markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray))
+          [.block f.body.toList] .running) },
+        markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray)⟩
+      [.block f.body.toList] ys st') :
     ∃ w', EvalsIn m st (.call (.name fname sp) argEs #[] Option.none sp')
         (.ref st₁.world.heap.size)
         ⟨{ st₁.world with heap := st₁.world.heap.push (genObj fname f vs.toArray) },
@@ -300,12 +319,16 @@ theorem EvalsIn.genCallDrains {m : Module} {st st₁ : FrameState} {fname : Stri
         st₁.world.heap.size ys w' := by
   obtain ⟨w', hd⟩ := IterDrains.of_genYields ys
     { st₁.world with heap := st₁.world.heap.push (genObj fname f vs.toArray) }
-    (mkCallEnv f.params vs.toArray) [.block f.body.toList] .created
-    (st₁.world.heap.push (.generator fname (mkCallEnv f.params vs.toArray)
+    (markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray))
+    [.block f.body.toList] .created
+    (st₁.world.heap.push (.generator fname
+      (markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray))
       [.block f.body.toList] .running)) st'
-    (Heap.get?_push_size _ _) (Or.inl rfl) (Heap.update_push_size _ _ _) hy
+    (by simpa [genObj] using
+      (Heap.get?_push_size st₁.world.heap (genObj fname f vs.toArray)))
+    (Or.inl rfl) (Heap.update_push_size _ _ _) hy
   exact ⟨w', EvalsIn.genCallIn hlocal hglob hcls hnt hf hargsOk hlocalsOk harity
-    hgen hargs, hd⟩
+    hgen hargs hstar hflat hunbound, hd⟩
 
 /-! ## §2 The `forList` loop at `GenEmits` altitude — where a `break` lands
 
@@ -506,7 +529,9 @@ theorem EvalsIn.closureGenCall {m : Module} {st : FrameState} {fname : String}
     -- H7 cells: a capture list with no CELL keys resolves to itself
     (hnc : cellsFor st.world.heap st.locals cap = .ok cap)
     (harity : arityOk ps vs.length = true)
-    (hargs : EvalsToList m st argEs.toList vs) :
+    (hargs : EvalsToList m st argEs.toList vs)
+    (hstar : fname ≠ starArgBuiltinName := by decide)
+    (hflat : flattenStarCallArgs vs = vs := by rfl) :
     EvalsIn m st (.call (.name fname sp) argEs #[] Option.none sp')
       (.ref st.world.heap.size)
       ⟨{ st.world with heap :=
@@ -522,8 +547,7 @@ theorem EvalsIn.closureGenCall {m : Module} {st : FrameState} {fname : String}
   simp only [Array.isEmpty, Array.size_empty, hlocal, ha (F'' + 1) (by omega),
     Run.ok_bind, hnotfree, if_neg, Bool.false_eq_true, not_false_eq_true, hobj,
     Run.withLocals]
-  simp only [hnc, Run.liftRes, Run.ok_bind, hcall]
-  simp
+  simp [flattenStarRun, hflat, hstar, hobj, hnc, hcall]
 
 /-! ## Smoke tests
 

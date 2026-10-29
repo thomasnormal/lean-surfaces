@@ -1195,7 +1195,9 @@ That middle field is the hinge of this landing. `[.block f.body.toList]` is
 literally the frame stack every `GenYields` theorem in this file is stated
 over, so a spec for the BODY and a spec for the CALL compose with no glue. -/
 def genObj (fname : String) (f : FunctionDefn) (args : Array RVal) : Obj :=
-  .generator fname (mkCallEnv f.params args) [.block f.body.toList] .created
+  .generator fname
+    (markUnboundLocals f.body.toList (mkCallEnv f.params args))
+    [.block f.body.toList] .created
 
 /-- **Calling a generator function runs no code**: it appends the suspended
 frame to the heap and answers its address. `callIn`'s creation arm in
@@ -1231,7 +1233,10 @@ theorem EvalsIn.genCall {m : Module} {st : FrameState} {fname : String}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params vs.length = true) (hgen : f.isGenerator = true)
-    (hargs : EvalsToList m st argEs.toList vs) :
+    (hargs : EvalsToList m st argEs.toList vs)
+    (hstar : fname ≠ starArgBuiltinName := by decide)
+    (hflat : flattenStarCallArgs vs = vs := by rfl)
+    (hunbound : hasUnboundLocal st.locals fname = false := by rfl) :
     EvalsIn m st (.call (.name fname sp) argEs #[] Option.none sp')
       (.ref st.world.heap.size)
       ⟨{ st.world with heap := st.world.heap.push (genObj fname f vs.toArray) },
@@ -1246,8 +1251,8 @@ theorem EvalsIn.genCall {m : Module} {st : FrameState} {fname : String}
   simp only [Array.isEmpty, Array.size_empty, hlocal, hglob, hcls, hnt, hf,
     ha (F'' + 1) (by omega), Run.ok_bind, Option.isSome_some, if_pos,
     Option.isSome_none, Bool.false_or, Bool.false_eq_true, if_neg,
-    not_false_eq_true, hcall, Run.withLocals]
-  rfl
+    not_false_eq_true, hcall, Run.withLocals, hstar, bne]
+  simp [flattenStarRun, hflat, hcall, hstar, hunbound]
 
 /-! ### Binding the object to a name -/
 
@@ -1972,8 +1977,10 @@ theorem callIn_drains {m : Module} {w : World}
     (hlocalsOk : f.localsOk = true) (harity : arityOk f.params args.size = true)
     (hgen : f.isGenerator = true)
     (hy : GenYields m
-      ⟨{ w with heap := w.heap.push (.generator fname (mkCallEnv f.params args)
-          [.block f.body.toList] .running) }, mkCallEnv f.params args⟩
+      ⟨{ w with heap := w.heap.push (.generator fname
+          (markUnboundLocals f.body.toList (mkCallEnv f.params args))
+          [.block f.body.toList] .running) },
+        markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
       [.block f.body.toList] vs st') :
     ∃ w', ∃ t, ∀ F ≥ t,
       callIn m F w fname args
@@ -1981,9 +1988,11 @@ theorem callIn_drains {m : Module} {w : World}
       drainIter m F { w with heap := w.heap.push (genObj fname f args) }
           w.heap.size = .ok w' vs := by
   obtain ⟨w', t, hdrain⟩ := IterDrains.of_genYields vs
-    { w with heap := w.heap.push (genObj fname f args) } (mkCallEnv f.params args)
+    { w with heap := w.heap.push (genObj fname f args) }
+    (markUnboundLocals f.body.toList (mkCallEnv f.params args))
     [.block f.body.toList] .created
-    (w.heap.push (.generator fname (mkCallEnv f.params args)
+    (w.heap.push (.generator fname
+      (markUnboundLocals f.body.toList (mkCallEnv f.params args))
       [.block f.body.toList] .running)) st'
     (Heap.get?_push_size _ _) (Or.inl rfl) (Heap.update_push_size _ _ _) hy
   exact ⟨w', t + 1, fun F hF => by

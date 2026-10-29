@@ -4312,6 +4312,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "pure_floating_math_statements_adapter",
+      "file": "Examples/system-verilog/pure_floating_math_statements_adapter/pure_floating_math_statements_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

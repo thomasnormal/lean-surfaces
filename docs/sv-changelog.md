@@ -1,3 +1,16 @@
+## [0.1.209] — 2026-10-29
+
+The legacy adapter census now follows the extractor's
+`floating_math_statement` marker for discarded source-pure `$sqrt`, `$pow`,
+and `$sin` calls. Effectful, timed, unsupported, and value-position forms
+remain loud. The `pure_floating_math_statements_adapter` fixture, adapter
+regressions, generated envelope, Lean receipt, and differential row cover the
+admitted forms. Differential coverage grows **475/469/0/6 → 476/470/0/6**;
+grammar coverage remains **235/113/122**. On the checked-in 988-file
+SystemVerilog example sweep (987 files before this witness), the adapter
+census moves **747 clean / 240 partial → 749 clean / 239 partial** and the
+three discarded floating-math call residuals fall to zero.
+
 ## [0.1.208] — 2026-10-29
 
 The legacy adapter census now follows the extractor's `enum_name_statement`

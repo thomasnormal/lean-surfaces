@@ -217,6 +217,19 @@ class DeclarationAdapter(unittest.TestCase):
             'value.next(count++); $display("PASS"); end endmodule')
         self.assertIn("Call:next", residual)
 
+    def test_discarded_pure_floating_math_is_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; initial begin $sqrt(16.0); $pow(2.0, 3.0); '
+                '$sin($sqrt(4.0)); $display("PASS"); end endmodule'),
+            [])
+
+    def test_effectful_floating_math_remains_loud(self):
+        residual = blockers(
+            'module top; int index; initial begin $sqrt(index++); '
+            '$display("PASS"); end endmodule')
+        self.assertIn("Call:$sqrt", residual)
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

@@ -74,12 +74,12 @@ load_program alias_lab from "Examples/python/alias_lab/alias_lab.json"
 #py_check alias_lab.str_alias(17) = "17"
 #py_check alias_lab.str_alias(true) = "True"
 #py_check alias_lab.str_alias("quoted") = "quoted"
-#py_check alias_lab.sum_alias(Val.list #[1, 2, 3]) = 6
+#py_check alias_lab.sum_alias(Val.list #[.int 1, .int 2, .int 3]) = 6
 #py_check alias_lab.sum_alias(Val.list #[], 5) = 5
-#py_check alias_lab.sum_alias(Val.list #[true, false]) = 1
-#py_check alias_lab.tuple_alias(Val.list #[1, 2]) = (1, 2)
-#py_check alias_lab.tuple_alias("ab") = ("a", "b")
-#py_check alias_lab.list_alias((1, 2)) = [1, 2]
+#py_check alias_lab.sum_alias(Val.list #[.bool true, .bool false]) = 1
+#py_check alias_lab.tuple_alias(Val.list #[.int 1, .int 2]) = Val.tuple #[.int 1, .int 2]
+#py_check alias_lab.tuple_alias("ab") = Val.tuple #[.str "a", .str "b"]
+#py_check alias_lab.list_alias(Val.tuple #[.int 1, .int 2]) = Val.list #[.int 1, .int 2]
 #py_check alias_lab.list_alias("ab") = ["a", "b"]
 #py_check alias_lab.ord_alias("A") = 65
 #py_check alias_lab.ord_alias("z") = 122

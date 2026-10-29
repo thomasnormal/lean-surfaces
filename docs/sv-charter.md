@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Mixed-dimension array declarations in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's declaration-only path
+for an untouched 2-state array with fixed dimensions around a dynamic
+dimension. A declaration such as `bit cells[2][][3]` contributes no flat state
+when later code does not read or write its value; initializers and value uses
+remain loud. The `mixed_array_dimension_adapter` fixture, adapter regression,
+generated envelope, Lean receipt, and differential row cover the family.
+
+Differential coverage grows **459/453/0/6 → 460/454/0/6**; grammar coverage
+remains **235/113/122**. The checked-in 934-file SystemVerilog example sweep
+remains at **23** `VariableDeclStatement:type` residuals because this exact
+declaration shape was not previously present there.
+
 ## Literal semaphore declarations in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's literal semaphore

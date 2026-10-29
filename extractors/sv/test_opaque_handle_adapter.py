@@ -50,6 +50,19 @@ class OpaqueHandleAdapter(unittest.TestCase):
             'semaphore sem = new(keys); $display("PASS"); end endmodule')
         self.assertIn("VariableDeclStatement:type", residual)
 
+    def test_untouched_mixed_array_declaration_is_metadata(self):
+        self.assertEqual(
+            blockers(
+                'module top; initial begin bit cells[2][][3]; '
+                '$display("PASS"); $finish; end endmodule'),
+            [])
+
+    def test_mixed_array_value_use_remains_loud(self):
+        residual = blockers(
+            'module top; initial begin bit cells[2][][3]; '
+            'cells[0][0][0] = 1; $display("PASS"); end endmodule')
+        self.assertIn("VariableDeclStatement:type", residual)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -2264,6 +2264,18 @@ differential row cover the family. Differential coverage grows
 **458/452/0/6 → 459/453/0/6**; grammar coverage remains **235/113/122**. On
 the checked-in 933-file example sweep, `VariableDeclStatement:type` residuals
 fall **24 → 23**.
+## [0.1.205] — 2026-10-29
+
+The legacy adapter census now follows the extractor's declaration-only path for
+an untouched 2-state mixed fixed/dynamic array. A declaration such as
+`bit cells[2][][3]` contributes no flat state when all later occurrences are
+dimension queries; initializers and value uses remain loud. The
+`mixed_array_dimension_adapter` fixture, adapter regressions, generated
+envelope, Lean receipt, and differential row cover the family. Differential
+coverage grows **459/453/0/6 → 460/454/0/6**; grammar coverage remains
+**235/113/122**. The checked-in 934-file example sweep remains at **23**
+`VariableDeclStatement:type` residuals because this exact declaration shape was
+not previously present in that corpus.
 ## [0.1.201] — 2026-10-29
 
 The legacy adapter census now follows the extractor's assignment-block

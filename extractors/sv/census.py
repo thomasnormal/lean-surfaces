@@ -193,6 +193,11 @@ def _adapter_erased_decl(symbol):
                 # the local declaration path; the semaphore methods that
                 # follow it still have their own explicit adapter boundaries.
                 or extract.is_literal_semaphore_decl(symbol)
+                # An untouched 2-state mixed fixed/dynamic array is likewise
+                # declaration-only when the extractor proves that every
+                # later occurrence is a dimension query.  Initializers and
+                # value uses remain ordinary loud array boundaries.
+                or extract.is_inert_2state_mixed_array_decl(symbol)
                 or extract.is_string_decl(symbol)
                 or extract.is_fixed_string_array_decl(symbol))
     except Exception:

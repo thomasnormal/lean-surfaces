@@ -1271,6 +1271,15 @@
       "expect": "match"
     },
     {
+      "name": "mixed_array_dimension_adapter",
+      "file": "Examples/system-verilog/mixed_array_dimension_adapter/mixed_array_dimension_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "opaque_handle_null_write",
       "file": "Examples/system-verilog/opaque_handle_null_write/opaque_handle_null_write.sv",
       "module": "top",

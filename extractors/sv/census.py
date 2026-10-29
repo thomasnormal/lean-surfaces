@@ -133,6 +133,7 @@ ADAPTER_PURE_STATEMENT_MARKERS = (
     "zero_size_statement",
     "typename_statement", "bits_statement",
     "empty_subroutine_call", "empty_input_task_call",
+    "literal_function_statement",
     "clog2_statement", "isunbounded_statement", "signing_statement",
     "time_scale_statement",
     "sformatf_statement",
@@ -588,8 +589,22 @@ def _adapter_erased_subroutines(sm, scope):
                         for marker in ADAPTER_PURE_STATEMENT_MARKERS)):
             erased.add((subroutine_key(subroutine), call_key(expression)))
 
+    def inspect_value(node):
+        if type(node).__name__ != "CallExpression":
+            return
+        subroutine = getattr(node, "subroutine", None)
+        if subroutine is None:
+            return
+        converted = extract.convert_expr(sm, node)
+        if (isinstance(converted, dict)
+                and converted.get("kind") == "Literal"
+                and (converted.get("literal_function_return")
+                     or converted.get("empty_function_default"))):
+            erased.add((subroutine_key(subroutine), call_key(node)))
+
     try:
         scope.visit(inspect_statement)
+        scope.visit(inspect_value)
     except Exception:
         return set()
     return {key for key, identities in calls.items()

@@ -326,6 +326,23 @@ class DeclarationAdapter(unittest.TestCase):
             '$sformatf(fmt, 8\'hAB); $display("PASS"); end endmodule')
         self.assertIn("Call:$sformatf", residual)
 
+    def test_literal_function_values_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; function bit [3:0] seven(input bit selector); '
+                'return 4\'d7; endfunction initial begin '
+                'seven(1\'b0); if (seven(1\'b1) == 4\'d7) '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_effectful_literal_function_argument_remains_loud(self):
+        residual = blockers(
+            'module top; function bit [3:0] seven(input bit selector); '
+            'return 4\'d7; endfunction int counter; initial begin '
+            'if (seven(counter++) == 4\'d7) $display("PASS"); '
+            'end endmodule')
+        self.assertIn("SubroutineSymbol:Subroutine", residual)
+
     def test_discarded_pure_array_queries_are_adapter_safe(self):
         self.assertEqual(
             blockers(

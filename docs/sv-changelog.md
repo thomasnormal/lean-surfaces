@@ -1,3 +1,19 @@
+## [0.1.216] — 2026-10-29
+
+The legacy adapter census now recognizes pure literal-return function calls:
+`literal_function_statement`, `literal_function_return`, and
+`empty_function_default`. Calls with pure actuals and known literal/default
+results carry no callable state; effectful, computed, output-bearing, and
+unsupported calls remain loud. The
+`pure_literal_function_values_adapter` fixture, adapter regressions,
+generated envelope, Lean receipt, and differential row cover the admitted
+forms. Differential coverage grows **482/476/0/6 → 483/477/0/6**; grammar
+coverage remains **235/113/122**. On the checked-in 995-file SystemVerilog
+example sweep (994 files before this witness), the adapter census moves
+**766 clean / 228 partial → 775 clean / 220 partial**;
+`SubroutineSymbol:Subroutine` falls **14 → 4** and the pure `seven` call
+residuals fall to zero.
+
 ## [0.1.215] — 2026-10-29
 
 The legacy adapter census now follows the extractor's `sformatf_statement`

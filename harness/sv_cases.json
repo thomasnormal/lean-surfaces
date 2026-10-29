@@ -4375,6 +4375,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "pure_literal_function_values_adapter",
+      "file": "Examples/system-verilog/pure_literal_function_values_adapter/pure_literal_function_values_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

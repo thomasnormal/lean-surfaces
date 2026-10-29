@@ -60,6 +60,14 @@ class ParameterAdapter(unittest.TestCase):
                             "initial $display(\"%0d\", f(1)); endmodule")
         self.assertIn("PackageSymbol", residual)
 
+    def test_bound_inside_expression_reuses_elaborated_parameters(self):
+        self.assertEqual(
+            blockers("module top; int a; int b=12; "
+                     "localparam c=5; localparam d=7; "
+                     "initial begin a = b inside {c,d}; "
+                     "$display(\"%0d\", a); end endmodule"),
+            [])
+
 
 if __name__ == "__main__":
     unittest.main()

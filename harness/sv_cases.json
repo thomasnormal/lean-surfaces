@@ -4055,6 +4055,16 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "inside_parameter_adapter",
+      "file": "Examples/system-verilog/inside_parameter_adapter/inside_parameter_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "0",
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

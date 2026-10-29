@@ -1,3 +1,16 @@
+## [0.1.193] — 2026-10-29
+
+The legacy adapter census now shares the converter's elaborated parameter
+scope when walking expressions. Bounded `inside { ... }` membership with
+literal or localparam items therefore reuses the existing literal lowering;
+dynamic, effectful, and unsupported membership remains loud. The
+`inside_parameter_adapter` fixture, adapter regression, generated envelope,
+Lean receipt, and differential row cover the family. Differential coverage
+grows **447/441/0/6 → 448/442/0/6**; the regenerated grammar census is
+**233/111/122** (the stale pre-rebase page was **221/112/109**). The
+temporary public sv-tests audit remains **364 clean / 437 partial / 111 include
+skips**, and adapter unlockables rise **6 → 7**.
+
 ## [0.1.192] — 2026-10-29
 
 Metadata-only packages now follow the extractor's package routing in the

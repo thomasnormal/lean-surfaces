@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Elaborated bounded `inside` expressions in the adapter — 2026-10-29
+
+The legacy adapter census now supplies the converter's elaborated parameter
+scope while walking expressions. Bounded `inside { ... }` membership with
+literal or localparam items follows the existing literal membership lowering;
+dynamic, effectful, and unsupported forms remain loud. The
+`inside_parameter_adapter` fixture, adapter regression, generated envelope,
+Lean receipt, and differential row cover the admitted shape.
+
+Differential coverage grows **447/441/0/6 → 448/442/0/6**; the regenerated grammar census is
+**233/111/122** (the stale pre-rebase page was **221/112/109**). The
+temporary public sv-tests audit remains **364 clean / 437 partial / 111 include
+skips**, and adapter unlockables rise **6 → 7**.
+
 ## Metadata-only packages in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's package routing for

@@ -358,7 +358,7 @@ def adapter_proc_blockers(sm, m):
     return ["ProceduralBlockSymbol:" + str(pk).split(".")[-1]]
 
 
-def adapter_design_blockers(sm, comp):
+def _adapter_design_blockers_impl(sm, comp):
     """Pass 2: residual blockers with the adapter tier treated as
     supported. Mirrors extract.convert_module's member routing."""
     out = []
@@ -425,6 +425,26 @@ def adapter_design_blockers(sm, comp):
     except Exception as exc:
         out.append("ExtractorInternal:" + type(exc).__name__)
     return sorted(set(out))
+
+
+def adapter_design_blockers(sm, comp):
+    """Run the adapter walk with the converter's elaborated parameter scope."""
+    previous = getattr(extract, "_ELAB_PARAMETERS", set())
+    parameters = set()
+
+    def inspect(node):
+        if str(getattr(node, "kind", "")).split(".")[-1] == "Parameter":
+            parameters.add(node)
+
+    try:
+        comp.getRoot().visit(inspect)
+    except Exception:
+        parameters = set()
+    extract._ELAB_PARAMETERS = set(previous) | parameters
+    try:
+        return _adapter_design_blockers_impl(sm, comp)
+    finally:
+        extract._ELAB_PARAMETERS = previous
 
 
 def parse_meta(text):

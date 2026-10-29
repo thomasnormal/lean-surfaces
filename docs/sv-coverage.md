@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 449 | 443 | 0 | 6 | sv-tests-2 declarations |
+| 450 | 444 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -463,6 +463,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `package_metadata` | `Examples/system-verilog/package_metadata/package_metadata.sv` | match | **MATCH** | `ok` | MATCH |
 | `inside_parameter_adapter` | `Examples/system-verilog/inside_parameter_adapter/inside_parameter_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `display_format_escape_adapter` | `Examples/system-verilog/display_format_escape_adapter/display_format_escape_adapter.sv` | match | **MATCH** | `ok` | MATCH |
+| `forward_typedef_metadata` | `Examples/system-verilog/forward_typedef_metadata/forward_typedef_metadata.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -470,7 +471,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 233 | 111 | 122 | pyslang SyntaxKind |
+| 234 | 112 | 122 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -550,6 +551,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ForeachLoopList` | `Examples/system-verilog/fixed_string_array_loops/fixed_string_array_loops.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ForeachLoopStatement` | `Examples/system-verilog/fixed_string_array_loops/fixed_string_array_loops.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ForeverStatement` | `Examples/system-verilog/forever_loops/timers.sv` | **REFUSE** | `unsupported` #delay: the self-check tier runs at time 0 (no scheduler) |
+| `SyntaxKind.ForwardTypedefDeclaration` | `Examples/system-verilog/forward_typedef_metadata/forward_typedef_metadata.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.FunctionDeclaration` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
 | `SyntaxKind.FunctionPort` | `Examples/system-verilog/empty_input_task/empty_input_task.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.FunctionPortList` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |

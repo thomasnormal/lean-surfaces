@@ -73,6 +73,19 @@ class ParameterAdapter(unittest.TestCase):
             blockers('module top; initial $display("octal \\123"); endmodule'),
             [])
 
+    def test_resolved_forward_typedef_is_metadata(self):
+        self.assertEqual(
+            blockers("typedef int word_t; typedef word_t; module top; "
+                     "word_t value=42; initial begin $display(\"%0d\", value); "
+                     "$display(\"PASS\"); end endmodule"),
+            [])
+
+    def test_unresolved_forward_typedef_remains_loud(self):
+        self.assertIn(
+            "ForwardingTypedefSymbol",
+            blockers("typedef missing_t; module top; "
+                     "initial $display(\"PASS\"); endmodule"))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -4075,6 +4075,16 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "forward_typedef_metadata",
+      "file": "Examples/system-verilog/forward_typedef_metadata/forward_typedef_metadata.sv",
+      "module": "top",
+      "oracle": [
+        "42",
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

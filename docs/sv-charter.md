@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Resolved forward typedef metadata — 2026-10-29
+
+The legacy adapter census now erases resolved forward typedef declarations
+whose matching aliases are already admitted as integral or flat-struct
+compile-time metadata. Unresolved, class, and opaque forward declarations
+remain loud. The `forward_typedef_metadata` fixture, adapter regressions,
+generated envelope, Lean receipt, and differential row cover the admitted
+shape.
+
+Differential coverage grows **449/443/0/6 → 450/444/0/6**; grammar coverage
+grows **233/111/122 → 234/112/122**. The temporary public sv-tests audit
+moves **364 clean / 437 partial / 111 include skips → 368 / 433 / 111**, while
+adapter unlockables remain **7**.
+
 ## Display format escapes in the adapter — 2026-10-29
 
 The legacy adapter census now treats the first string argument to represented

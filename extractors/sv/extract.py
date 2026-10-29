@@ -462,6 +462,26 @@ def is_integral_type_alias(symbol):
         return False
 
 
+def is_resolved_forward_typedef(symbol):
+    """Whether a forward typedef resolves to an already admitted alias.
+
+    A forward declaration contributes only type metadata once its matching
+    typedef is bound in the same scope.  Keep unresolved forwards and class
+    or otherwise opaque targets loud; the legacy state can erase only the
+    integral and flat-struct aliases that the ordinary typedef path already
+    admits.
+    """
+    if str(getattr(symbol, "kind", "")) != "SymbolKind.ForwardingTypedef":
+        return False
+    try:
+        target = symbol.parentScope.lookupName(symbol.name)
+        return (target is not None
+                and (is_integral_type_alias(target)
+                     or is_flat_unpacked_struct_alias(target)))
+    except Exception:
+        return False
+
+
 def is_module_event_decl(symbol):
     """Whether a module-scope named event has no self-check observation.
 
@@ -26592,6 +26612,7 @@ def _declaration_only(member):
     return (str(member.kind) == "SymbolKind.LetDecl"
             or is_integral_type_alias(member)
             or is_flat_unpacked_struct_alias(member)
+            or is_resolved_forward_typedef(member)
             or is_bound_enum_member(member)
             or is_module_event_decl(member)
             or is_inert_event_decl(member)

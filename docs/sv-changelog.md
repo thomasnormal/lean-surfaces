@@ -2161,3 +2161,15 @@ patterns, finite multidimensional array patterns and copies, packed windows in
 selected array cells, recursive right-streaming unpack into fixed arrays, and
 fixed-slice left-streaming targets. Unsupported aggregate, dynamic, timed, and
 effectful forms continue to fail loudly with their construct name.
+## [0.1.195] — 2026-10-29
+
+Resolved forward typedef declarations now follow the extractor's existing
+compile-time alias erasure in the legacy adapter census. A forward declaration
+that resolves to an admitted integral or flat-struct typedef contributes no
+self-check state; unresolved, class, and opaque forwards remain loud. The
+`forward_typedef_metadata` fixture, adapter regressions, generated envelope,
+Lean receipt, and differential row cover the family. Differential coverage
+grows **449/443/0/6 → 450/444/0/6**; grammar coverage grows **233/111/122 →
+234/112/122**. The temporary public sv-tests audit moves **364 clean / 437
+partial / 111 include skips → 368 / 433 / 111**, while adapter unlockables
+remain **7**.

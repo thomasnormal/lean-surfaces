@@ -165,6 +165,7 @@ def _adapter_erased_decl(symbol):
         return (extract._declaration_only(symbol)
                 or extract.is_integral_type_alias(symbol)
                 or extract.is_flat_unpacked_struct_alias(symbol)
+                or extract.is_resolved_forward_typedef(symbol)
                 or extract.is_bound_enum_member(symbol)
                 or extract.is_module_event_decl(symbol)
                 or extract.is_module_floating_decl(symbol)

@@ -84,6 +84,23 @@ class StatementCallAdapter(unittest.TestCase):
             '$sformat(value[7:0], "A"); end endmodule')
         self.assertIn("Call:$sformat", residual)
 
+    def test_plain_default_radix_writes_follow_converter(self):
+        self.assertEqual(
+            blockers(
+                'module top; logic [7:0] payload; '
+                'logic [63:0] binary_text, octal_text, hex_text; '
+                'initial begin payload = 8\'b10xz_zzzz; '
+                '$swriteb(binary_text, payload); '
+                '$swriteo(octal_text, payload); '
+                '$swriteh(hex_text, payload); end endmodule'),
+            [])
+
+    def test_selected_default_radix_targets_remain_loud(self):
+        residual = blockers(
+            'module top; logic [7:0] payload, value; initial begin '
+            'payload = 8\'h2a; $swriteb(value[7:0], payload); end endmodule')
+        self.assertIn("Call:$swriteb", residual)
+
     def test_unlowered_array_ordering_remains_loud(self):
         residual = blockers(
             'module top; int values [0:3]; initial values.sort(); endmodule')

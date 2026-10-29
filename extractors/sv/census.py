@@ -452,6 +452,26 @@ def adapter_stmt(sm, s):
                                 for stmt in statements)):
                     return []
                 return ["Call:" + name]
+            if name in ("$swriteb", "$swriteo", "$swriteh"):
+                # The task-selected radix forms use the same flat integral
+                # destination as the converter's marked lowering.  Keep the
+                # adapter boundary tied to that exact direct-target marker;
+                # selected/aggregate destinations and every unlowered form
+                # remain explicit call residuals.
+                converted = extract.convert_stmt(sm, s)
+                statements = ([converted] if isinstance(converted, dict)
+                              and converted.get("kind") == "BlockingAssign"
+                              else converted.get("stmts", [])
+                              if isinstance(converted, dict)
+                              and converted.get("kind") == "Block" else [])
+                if (statements
+                        and all(isinstance(stmt, dict)
+                                and stmt.get("default_radix_integral_assignment")
+                                in ("$swriteb", "$swriteo", "$swriteh")
+                                and stmt.get("target", {}).get("kind") == "Ident"
+                                for stmt in statements)):
+                    return []
+                return ["Call:" + name]
             if name in ADAPTER_PURE_DIAGNOSTIC:
                 converted = extract.convert_stmt(sm, s)
                 if (isinstance(converted, dict)

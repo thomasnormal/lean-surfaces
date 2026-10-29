@@ -12,6 +12,17 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Plain task-selected radix writes in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's marked flat-write
+lowering for direct integral `$swriteb`, `$swriteo`, and `$swriteh` calls.
+The converter has already checked the source history, radix spelling, and
+destination width; selected or aggregate destinations remain loud. Across all
+checked-in example sources, the adapter-only residuals
+`Call:$swriteb`, `Call:$swriteo`, and `Call:$swriteh` fall **1 → 0** each.
+Differential coverage remains **490/484/0/6** and grammar coverage remains
+**235/113/122**.
+
 ## Plain literal `$sformat` assignments in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's marked flat-write

@@ -1,3 +1,10 @@
+# [0.1.227] — 2026-10-29
+
+The legacy adapter census now follows the extractor's marked flat-write
+lowering for direct integral `$swriteb`, `$swriteo`, and `$swriteh` calls.
+Selected and aggregate destinations remain loud. The three adapter-only
+residuals fall **1 → 0** each; differential coverage remains **490/484/0/6**.
+
 # [0.1.226] — 2026-10-29
 
 The legacy adapter census now follows the extractor's marked flat-write

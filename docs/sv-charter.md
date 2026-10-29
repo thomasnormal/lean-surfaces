@@ -12,6 +12,22 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Local two-state declarations in the adapter — 2026-10-29
+
+The legacy adapter census now uses the extractor's existing integral type
+admission for local declarations, including scalar and packed 2-state cells.
+Those declarations already lower to static storage or `LocalDecl` with the
+ordinary `Squash2` boundary, so the adapter no longer reports a false
+`VariableDeclStatement:2state` residual. Unsupported local types and
+effectful initializers remain loud. The `local_2state_declarations` fixture,
+adapter regressions, generated envelope, Lean receipt, and differential row
+cover the admitted family.
+
+Differential coverage grows **442/436/0/6 → 443/437/0/6**; grammar coverage
+remains **221/112/109**. The temporary public sv-tests audit is unchanged at
+**364 clean / 437 partial / 111 include skips**; its local 2-state declaration
+residuals are reduced without changing the extractor classification.
+
 ## Compile-time typedef metadata in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's declaration-only path

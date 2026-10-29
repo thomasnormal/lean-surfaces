@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "local_2state_declarations",
+      "file": "Examples/system-verilog/local_2state_declarations/local_2state_declarations.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "typedef_metadata",
       "file": "Examples/system-verilog/typedef_metadata/typedef_metadata.sv",
       "module": "top",

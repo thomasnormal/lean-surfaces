@@ -223,7 +223,15 @@ def adapter_stmt(sm, s):
         sym = s.symbol
         if _adapter_erased_decl(sym):
             return []
-        w, reason = extract.type_width(sym.type)
+        # The converter's local-declaration path admits both four-state and
+        # two-state integral cells (and applies ``Squash2`` at the latter's
+        # initializer/assignment boundary).  The adapter census used to call
+        # ``type_width``, which is deliberately four-state-only for the
+        # module-level M0 path, and therefore reported a false
+        # ``VariableDeclStatement:2state`` residual for a declaration that
+        # already lowers to static storage or ``LocalDecl`` and executes in
+        # SelfCheck.
+        w, _two_state, reason = extract.type_width_2s(sym.type)
         out = [] if w is not None else ["VariableDeclStatement:" + reason]
         init = getattr(sym, "initializer", None)
         if init is not None:

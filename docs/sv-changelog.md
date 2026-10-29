@@ -1,3 +1,13 @@
+## [0.1.188] — 2026-10-29
+
+The legacy adapter census now uses the extractor's existing integral type
+admission for local scalar and packed 2-state declarations. These declarations
+already lower through static storage or `LocalDecl` with the ordinary `Squash2`
+boundary; unsupported local types and effectful initializers remain loud. The
+`local_2state_declarations` fixture, adapter regressions, generated envelope,
+Lean receipt, and differential row cover the family. Differential coverage
+grows **442/436/0/6 → 443/437/0/6**; grammar coverage remains **221/112/109**.
+
 ## [0.1.187] — 2026-10-29
 
 The legacy adapter census now follows the extractor's declaration-only path

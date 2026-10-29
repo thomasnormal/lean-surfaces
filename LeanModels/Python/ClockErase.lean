@@ -2702,7 +2702,20 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                 | nil => exact .exn hs3 _
                 | cons v rest =>
                   cases rest with
-                  | nil => exact .liftRes hs3 _
+                  | nil =>
+                    cases v <;> try exact .liftRes hs3 _
+                    case ref a =>
+                      ce_norm
+                      cases hh : Heap.get? s3.world.heap a with
+                      | none => exact .liftRes hs3 _
+                      | some obj =>
+                        cases obj <;> try exact .liftRes hs3 _
+                        case generator qn l cont stat =>
+                          refine .ite .unsupported ?_
+                          refine .bind
+                            (ClockErasedW.withLocals (ihDrain m s3.world a hs3))
+                            fun s4 vals hs4 => ?_
+                          exact .liftRes hs4 _
                   | cons _ _ => exact .exn hs3 _
               | refuse msg => exact .unsupported
             case float fv =>

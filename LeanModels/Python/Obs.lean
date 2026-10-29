@@ -797,13 +797,35 @@ theorem fuelMono (fuel : Nat) :
                         (ihCall m st.world qname ((RVal.ntuple tn fs xs :: vs).toArray) k hk)
                 case str sv =>
                   -- str METHOD dispatch (H5 strings): fork on the pure plan;
-                  -- every in-tier arm is args + a fuel-independent worker
+                  -- every in-tier arm is args + a fuel-independent worker;
+                  -- `.join` additionally drains a generator argument.
                   dsimp only
-                  cases strCallPlan attr <;>
-                    first
-                    | exact Run.le_refl _
-                    | exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk))
-                        fun st vs => Run.le_refl _
+                  cases strCallPlan attr with
+                  | swapcase | isupper | islower | upper | index =>
+                    exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk))
+                      fun st vs => Run.le_refl _
+                  | join =>
+                    refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk))
+                      fun st vs => ?_
+                    cases vs with
+                    | nil => exact Run.le_refl _
+                    | cons v rest =>
+                      cases rest with
+                      | cons _ _ => exact Run.le_refl _
+                      | nil =>
+                        cases v <;> try exact Run.le_refl _
+                        case ref a =>
+                          dsimp only
+                          cases Heap.get? st.world.heap a with
+                          | none => exact Run.le_refl _
+                          | some obj =>
+                            cases obj <;> try exact Run.le_refl _
+                            case generator q l c stat =>
+                              refine Run.le_ite (Run.le_refl _) ?_
+                              exact Run.le_bind
+                                (Run.le_withLocals (ihDrain m st.world a k hk))
+                                fun st vals => Run.le_refl _
+                  | refuse _ => exact Run.le_refl _
                 case float fv =>
                   -- `float.is_integer()` is a pure zero-argument query;
                   -- argument evaluation is the only recursive part.
@@ -2618,15 +2640,33 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               dsimp only
               have hvs := (Run.OkW.flattenStarRun_okW (ihEs st₁ cargs.toList hargsF)).mono
                 (wtrans st st₁ h₁)
-              cases strCallPlan attr <;>
-                first
-                | exact .unsupported
-                | (refine .bind hvs fun st₂ vs h₂ => ?_
-                   split <;> (try split) <;>
-                     first
-                     | exact .liftResF h₂ _
-                     | exact .exn
-                     | exact .unsupported)
+              cases strCallPlan attr with
+              | swapcase | isupper | islower | upper | index =>
+                refine .bind hvs fun st₂ vs h₂ => ?_
+                split <;> (try split) <;>
+                  first
+                  | exact .liftResF h₂ _
+                  | exact .exn
+                  | exact .unsupported
+              | join =>
+                refine .bind hvs fun st₂ vs h₂ => ?_
+                cases vs with
+                | nil => exact .exn
+                | cons v rest =>
+                  cases rest with
+                  | cons _ _ => exact .exn
+                  | nil =>
+                    cases v <;> try exact .liftResF h₂ _
+                    case ref a =>
+                      dsimp only
+                      cases Heap.get? st₂.world.heap a with
+                      | none => exact .liftResF h₂ _
+                      | some obj =>
+                        cases obj <;> try exact .liftResF h₂ _
+                        case generator q l c stat =>
+                          simp only [Module.heapFree_genFree hm, if_true]
+                          exact .unsupported
+              | refuse msg => exact .unsupported
             case float fv =>
               -- `float.is_integer()` preserves the world after its
               -- arguments have been evaluated, and its arity error is an

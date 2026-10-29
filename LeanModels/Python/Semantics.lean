@@ -9040,7 +9040,18 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
              | .join =>
                flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                match vs with
-               | [v] => Run.liftRes st (strJoinH st.world.heap sv v)
+               | [v] =>
+                 match v with
+                 | .ref a =>
+                   match Heap.get? st.world.heap a with
+                   | some (.generator ..) =>
+                     if moduleGenFree m then
+                       .unsupported "str.join() over a generator DRAINS it (a stateful read) — outside the tier"
+                     else
+                       Run.withLocals st.locals (drainIter m fuel st.world a) ⤳ fun st vals =>
+                       Run.liftRes st (strJoinList sv vals)
+                   | _ => Run.liftRes st (strJoinH st.world.heap sv v)
+                 | _ => Run.liftRes st (strJoinH st.world.heap sv v)
                | vs => .exn st (.typeError s!"str.join() takes exactly one argument ({vs.length} given)")
              | .refuse msg => .unsupported msg)
           | .float fv =>

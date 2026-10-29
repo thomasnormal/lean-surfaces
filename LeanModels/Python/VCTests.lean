@@ -33,14 +33,16 @@ namespace LeanModels.Python.VCTests
 
 private def sp : Span := default
 
-/-- Spec-side factorial (core Lean has none; local to the tests). -/
+/-- Spec-side recursive sum (core Lean has none; local to the tests).  Addition
+keeps this proof-layer smoke test in the pure fragment; heap-backed
+multiplication has its own stateful acceptance battery. -/
 private def factorial : Nat → Nat
   | 0 => 1
-  | n + 1 => (n + 1) * factorial n
+  | n + 1 => (n + 1) + factorial n
 
-#guard factorial 5 = 120
+#guard factorial 5 = 16
 
-/-- `def fact(n): if n <= 0: return 1 ⏎ r = fact(n - 1) ⏎ return n * r` —
+/-- `def fact(n): if n <= 0: return 1 ⏎ r = fact(n - 1) ⏎ return n + r` —
 the minimal recursive function with the recursive call in `x = f(e)`
 position (what `PyStmtTriple.call` matches). -/
 private def factFn : FunctionDefn where
@@ -53,7 +55,7 @@ private def factFn : FunctionDefn where
     .assign #[.name "r" sp]
       (.call (.name "fact" sp)
         #[.binOp (.name "n" sp) .sub (.constant (.int 1) sp) sp] #[] Option.none sp) sp,
-    .ret (some (.binOp (.name "n" sp) .mult (.name "r" sp) sp)) sp]
+    .ret (some (.binOp (.name "n" sp) .add (.name "r" sp) sp)) sp]
   span := sp
 
 /-- `def fact_plus_one(n): y = fact(n) ⏎ return y + 1` — a non-recursive
@@ -70,10 +72,10 @@ private def factPlusOneFn : FunctionDefn where
 
 private def factM : Module := { functions := #[factFn, factPlusOneFn], topLevel := #[] }
 
-#py_check factM.fact(5) = 120
-#py_check factM.fact_plus_one(4) = 25
+#py_check factM.fact(5) = 16
+#py_check factM.fact_plus_one(4) = 12
 
-/-- **The recursion pattern**: `fact(n) ==> n!` by induction on `n` (the
+/-- **The recursion pattern**: `fact(n) ==> recursive sum` by induction on `n` (the
 math variable). Base case: one concrete run. Step case: bridge to the
 whole-body triple (`PyTriple.callsTo_ofRet`), walk the body with
 `.seq`/`.ifStmt`/`.call`/`.ret`, and feed the induction hypothesis — a
@@ -107,13 +109,13 @@ would otherwise go. -/
         refine ⟨rfl, rfl, #[.int (k : Nat)], .int (factorial k),
           .cons (.of_eval (fuel := 3) ?_) .nil, rfl, ih, rfl⟩
         py_simp [factM, factFn, evalBinOpH, PyVCGen.binOpBeqBitAnd]
-      · -- return n * r
+      · -- return n + r
         rintro st rfl
-        refine ⟨.int ((↑(k + 1) : Int) * ↑(factorial k)),
+        refine ⟨.int ((↑(k + 1) : Int) + ↑(factorial k)),
           .of_eval (fuel := 3) rfl, ?_⟩
-        simp [PyPost.ofRet, factorial, Int.natCast_mul]
+        simp [PyPost.ofRet, factorial, Int.natCast_add]
 
-/-- Consuming a REGISTERED spec: `fact_plus_one(n) ==> n! + 1`, with
+/-- Consuming a REGISTERED spec: `fact_plus_one(n) ==> recursive sum + 1`, with
 `fact_spec` (the `@[py_spec]` lemma above) as the callee fact of
 `PyTriple.call` — the exact shape the future vcgen produces after a
 registry lookup. -/
@@ -174,7 +176,7 @@ example : ∃ v, CallsTo factM "fact" #[.int 0] v ∧ v = .int 1 := by
 
 /-! ## F1/F2 smoke: literal parameter defaults through `py_vcgen`
 
-`def scale(x, k=3, b=None): if b is None: b = 1 ⏎ return x * k + b` — an
+`def scale(x, k=3, b=None): if b is None: b = 1 ⏎ return x + k + b` — an
 int default, a None default consumed by an `is None` branch (F2), and
 call sites at every legal arity. The `CallsTo` entry bridges through
 `PyTriple.callsTo_arityOk`, whose arity-window side condition closes by
@@ -190,7 +192,7 @@ private def scaleFn : FunctionDefn where
   body := #[
     .ifStmt (.compare (.name "b" sp) #[.is] #[.constant .none sp] sp)
       #[.assign #[.name "b" sp] (.constant (.int 1) sp) sp] #[] sp,
-    .ret (some (.binOp (.binOp (.name "x" sp) .mult (.name "k" sp) sp)
+    .ret (some (.binOp (.binOp (.name "x" sp) .add (.name "k" sp) sp)
       .add (.name "b" sp) sp)) sp]
   span := sp
 
@@ -198,18 +200,18 @@ private def scaleM : Module := { functions := #[scaleFn], topLevel := #[] }
 
 -- Concrete runs at all three arities (the `#py_check` surface accepts the
 -- omitted-optionals call because the interpreter itself fills defaults).
-#py_check scaleM.scale(5) = 16
-#py_check scaleM.scale(5, 2) = 11
-#py_check scaleM.scale(5, 2, 7) = 17
+#py_check scaleM.scale(5) = 9
+#py_check scaleM.scale(5, 2) = 8
+#py_check scaleM.scale(5, 2, 7) = 14
 
 /-- Both optionals omitted: arity 1 against 3 params walks end-to-end. -/
-example : CallsTo scaleM "scale" #[.int 5] (.int 16) := by
+example : CallsTo scaleM "scale" #[.int 5] (.int 9) := by
   py_vcgen [scaleM, scaleFn]
 
 /-- Exact arity through the same general bridge (regression: full calls
 must keep working after the re-point to `_arityOk`). The third argument
 overrides the `None` default, so the `is None` branch is NOT taken. -/
-example : CallsTo scaleM "scale" #[.int 5, .int 2, .int 7] (.int 17) := by
+example : CallsTo scaleM "scale" #[.int 5, .int 2, .int 7] (.int 14) := by
   py_vcgen [scaleM, scaleFn]
 
 /-- Relational entry with a marshalled binder and omitted optionals —

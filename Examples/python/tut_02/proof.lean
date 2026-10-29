@@ -18,7 +18,7 @@ load_program tut_02 from "Examples/python/tut_02/tut_02.json"
 
 /-- Total correctness: straight-line body, one `py_prove`. -/
 theorem square_total (x : PyInt) : tut_02.square(x) ==> x * x := by
-  py_prove [tut_02, PyVCGen.binOpBeqBitAnd]
+  py_prove [tut_02, PyVCGen.binOpBeqBitAnd, evalBinOpH, setLikeRefH]
 
 /-- The relational reading, via the hypothesis-position arrow `⇓` and
 determinism-modulo-fuel (`CallsTo.typed_int_eq`, Surface.lean). -/

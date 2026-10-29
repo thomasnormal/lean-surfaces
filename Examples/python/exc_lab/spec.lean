@@ -119,7 +119,7 @@ loud. -/
   matches .exn (.user _ "Stop")
 #guard callFunction exc_lab "raise_value" #[.int 1] 4096
   matches .exn (.typeError "exceptions must derive from BaseException")
-#py_check exc_lab.raise_from(1) raises (.user _ "Stop")
+#py_check exc_lab.raise_from(1) raises (.user 0 "Stop")
 #py_check exc_lab.raise_shadowed(1) raises
   (.typeError "exceptions must derive from BaseException")
 #py_check exc_lab.exc_as_value(1) = 1

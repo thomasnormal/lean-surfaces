@@ -1280,6 +1280,15 @@
       "expect": "match"
     },
     {
+      "name": "associative_decl_adapter",
+      "file": "Examples/system-verilog/associative_decl_adapter/associative_decl_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "opaque_handle_null_write",
       "file": "Examples/system-verilog/opaque_handle_null_write/opaque_handle_null_write.sv",
       "module": "top",

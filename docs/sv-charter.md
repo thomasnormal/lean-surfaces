@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Associative-array declarations in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's static associative-array
+declaration erasure. Declarations that the extractor lowers to finite flat
+cells or declaration-only storage no longer create a false aggregate type
+residual; dynamic keys and value operations remain loud at their existing
+boundaries. The `associative_decl_adapter` fixture, adapter regression,
+generated envelope, Lean receipt, and differential row cover the family.
+
+Differential coverage grows **460/454/0/6 → 461/455/0/6**; grammar coverage
+remains **235/113/122**. On the checked-in 935-file SystemVerilog example
+sweep, `VariableDeclStatement:type` residuals fall **23 → 20** while dynamic
+associative operations remain loud.
+
 ## Mixed-dimension array declarations in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's declaration-only path

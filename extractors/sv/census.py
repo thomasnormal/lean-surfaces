@@ -298,6 +298,18 @@ def adapter_stmt(sm, s):
 
     if cn == "VariableDeclStatement":
         sym = s.symbol
+        # Finite associative arrays are lowered from their complete source
+        # history to static flat cells, and their declaration becomes Empty.
+        # Reuse those exact recognizers rather than treating every Empty
+        # declaration as metadata: dynamic constructors and other value
+        # boundaries must remain loud.
+        if (extract._finite_string_assoc_decls(sm, sym) is not None
+                or extract._finite_integral_assoc_decls(sm, sym) is not None
+                or (str(getattr(sym, "lifetime", "")).split(".")[-1]
+                    == "Static"
+                    and type(sym.type.canonicalType).__name__
+                    == "AssociativeArrayType")):
+            return []
         if _adapter_erased_decl(sym):
             return []
         # The converter's local-declaration path admits both four-state and

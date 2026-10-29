@@ -2276,6 +2276,17 @@ coverage grows **459/453/0/6 → 460/454/0/6**; grammar coverage remains
 **235/113/122**. The checked-in 934-file example sweep remains at **23**
 `VariableDeclStatement:type` residuals because this exact declaration shape was
 not previously present in that corpus.
+## [0.1.206] — 2026-10-29
+
+The legacy adapter census now follows static associative-array declaration
+erasure. Declarations that the extractor lowers to finite flat cells or
+declaration-only storage no longer create a false aggregate type residual;
+dynamic keys and value operations remain loud at their existing boundaries. The
+`associative_decl_adapter` fixture, adapter regression, generated envelope,
+Lean receipt, and differential row cover the family. Differential coverage
+grows **460/454/0/6 → 461/455/0/6**; grammar coverage remains **235/113/122**.
+On the checked-in 935-file example sweep, `VariableDeclStatement:type`
+residuals fall **23 → 20**.
 ## [0.1.201] — 2026-10-29
 
 The legacy adapter census now follows the extractor's assignment-block

@@ -4045,6 +4045,16 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "package_metadata",
+      "file": "Examples/system-verilog/package_metadata/package_metadata.sv",
+      "module": "top",
+      "oracle": [
+        "a5",
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

@@ -1,0 +1,128 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "source_file": "Examples/system-verilog/package_metadata/package_metadata.sv",
+  "source_sha256": "aeb9a503881ff3a9ad95e8ce14e188dc70f1d76fa7d255ffa9921fbe1b1bfdf5",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 16,
+          "end_col": 10
+        },
+        "name": "top",
+        "ports": [],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 9,
+              "col": 10,
+              "end_line": 9,
+              "end_col": 23
+            },
+            "name": "value",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 9,
+                "col": 18,
+                "end_line": 9,
+                "end_col": 23
+              },
+              "width": 8,
+              "bits": "10100101"
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 11,
+              "col": 3,
+              "end_line": 15,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 11,
+                "col": 11,
+                "end_line": 15,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 28
+                  },
+                  "name": "$display",
+                  "format": "%0h",
+                  "args": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 21,
+                        "end_line": 12,
+                        "end_col": 26
+                      },
+                      "width": 8,
+                      "name": "value"
+                    }
+                  ],
+                  "arg_signed": [
+                    false
+                  ]
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 13,
+                    "end_col": 22
+                  },
+                  "name": "$display",
+                  "format": "PASS",
+                  "args": [],
+                  "arg_signed": []
+                },
+                {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 13
+                  },
+                  "name": "$finish",
+                  "format": null,
+                  "args": [],
+                  "arg_signed": []
+                }
+              ]
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

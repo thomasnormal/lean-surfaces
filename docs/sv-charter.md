@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Metadata-only packages in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's package routing for
+metadata-only packages. Declaration-only package members, unreferenced
+subroutines, and imports contribute no self-check state; package storage and
+referenced subroutines remain loud. The `package_metadata` fixture, adapter
+regressions, generated envelope, Lean receipt, and differential row cover the
+admitted family.
+
+Differential coverage grows **446/440/0/6 → 447/441/0/6**; grammar coverage
+remains **221/112/109**. The temporary public sv-tests audit remains **364
+clean / 437 partial / 111 include skips**; clean-file `PackageSymbol`
+residuals fall from **2 to 0**.
+
 ## Compilation-unit typedef metadata in the adapter — 2026-10-29
 
 The legacy adapter census now applies the extractor's declaration-erasure

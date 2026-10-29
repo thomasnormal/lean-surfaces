@@ -198,6 +198,24 @@ def _adapter_integral_parameter(symbol):
         return False
 
 
+def _adapter_package_metadata(package, scope, packages):
+    """Whether a package contributes no runtime or referenced callable data."""
+    try:
+        for member in package:
+            kind = str(getattr(member, "kind", "")).split(".")[-1]
+            if (kind in ("ExplicitImport", "WildcardImport")
+                    and getattr(member, "package", None) in packages):
+                continue
+            if _adapter_erased_decl(member) or _adapter_integral_parameter(member):
+                continue
+            if kind == "Subroutine" and not extract._subroutine_is_referenced(scope, member):
+                continue
+            return False
+        return True
+    except Exception:
+        return False
+
+
 def adapter_expr(sm, e):
     # Exact integral parameters are elaboration metadata, not self-check
     # cells.  The converter resolves their references to literals before the
@@ -344,6 +362,10 @@ def adapter_design_blockers(sm, comp):
     """Pass 2: residual blockers with the adapter tier treated as
     supported. Mirrors extract.convert_module's member routing."""
     out = []
+    packages = {
+        m for unit in comp.getCompilationUnits() for m in unit
+        if str(getattr(m, "kind", "")).split(".")[-1] == "Package"
+    }
     for inst in comp.getRoot().topInstances:
         try:
             body = inst.body
@@ -371,6 +393,9 @@ def adapter_design_blockers(sm, comp):
                             kinds_in(extract.convert_continuous_assign(sm, m))))
                     elif k == "StatementBlock":
                         continue
+                    elif (k in ("ExplicitImport", "WildcardImport")
+                          and getattr(m, "package", None) in packages):
+                        continue
                     elif k == "Parameter":
                         if not _adapter_integral_parameter(m):
                             out.append(type(m).__name__ + ":" + k)
@@ -381,8 +406,16 @@ def adapter_design_blockers(sm, comp):
         except Exception as exc:
             out.append("ExtractorInternal:" + type(exc).__name__)
     try:
+        scope = comp.getRoot()
         for unit in comp.getCompilationUnits():
             for m in unit:
+                kind = str(getattr(m, "kind", "")).split(".")[-1]
+                if (kind in ("ExplicitImport", "WildcardImport")
+                        and getattr(m, "package", None) in packages):
+                    continue
+                if (kind == "Package"
+                        and _adapter_package_metadata(m, scope, packages)):
+                    continue
                 if _adapter_erased_decl(m):
                     continue
                 if (str(getattr(m, "kind", "")).split(".")[-1] == "Parameter"

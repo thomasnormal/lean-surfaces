@@ -1,3 +1,15 @@
+## [0.1.192] — 2026-10-29
+
+Metadata-only packages now follow the extractor's package routing in the
+legacy adapter census. Declaration-only package members, unreferenced package
+subroutines, and imports no longer create false `PackageSymbol` residuals;
+package storage and referenced subroutines remain loud. The
+`package_metadata` fixture, adapter regressions, generated envelope, Lean
+receipt, and differential row cover the family. Differential coverage grows
+**446/440/0/6 → 447/441/0/6**; grammar coverage remains **221/112/109**. The
+temporary public sv-tests audit remains **364 clean / 437 partial / 111 include
+skips**, and clean-file package residuals fall from **2 to 0**.
+
 ## [0.1.191] — 2026-10-29
 
 The legacy adapter census now applies the extractor's declaration-erasure

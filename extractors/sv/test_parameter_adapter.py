@@ -45,6 +45,21 @@ class ParameterAdapter(unittest.TestCase):
                      "$display(\"PASS\"); end endmodule"),
             [])
 
+    def test_metadata_only_package_and_import_are_erased(self):
+        self.assertEqual(
+            blockers("package P; typedef logic [7:0] byte_t; endpackage "
+                     "module top; import P::byte_t; byte_t b=8'hA5; "
+                     "initial begin $display(\"%0h\", b); "
+                     "$display(\"PASS\"); end endmodule"),
+            [])
+
+    def test_referenced_package_subroutine_remains_loud(self):
+        residual = blockers("package P; function int f(int x); "
+                            "return x+1; endfunction endpackage "
+                            "module top; import P::*; "
+                            "initial $display(\"%0d\", f(1)); endmodule")
+        self.assertIn("PackageSymbol", residual)
+
 
 if __name__ == "__main__":
     unittest.main()

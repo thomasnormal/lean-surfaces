@@ -208,7 +208,9 @@ or a conditionally-bound capture stays refused. -/
 #py_check gen_lab.drain_assigned_param(4) = 15
 #py_check gen_lab.drain_assigned_param(0) = 3
 
-#guard callFunction gen_lab "gen_assigned_lazy" #[.int 3] 4096 matches .unsupported _
+#py_check gen_lab.gen_assigned_lazy(3) = true
+#guard callFunction gen_lab "gen_assigned_rebound_still_loud" #[.int 3] 4096
+  matches .unsupported _
 #guard callFunction gen_lab "drain_unbound" #[.int 1] 4096 matches .unsupported _
 
 /-! ### the ingestion census: `is_generator` is CPython's syntactic,

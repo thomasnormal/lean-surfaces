@@ -3162,9 +3162,11 @@ both halves**, and the correction is the inch's real product.
 **Binding does not refuse.** The lowering's strict admission passes on a
 PARAMETER capture regardless of `drainOk`, so `g = (k for k in d if k != root)`
 lowers and `next(g)` answers 2 — agreeing with CPython.
-`gen_lab::gen_assigned_lazy` refuses because it captures a body-assigned `lim`,
-**not** because it binds. *That is this entry's own §5.2 finding — a refusal
-names a SITE, not its cause — broken in the same commit that stated it.*
+Before pycomplete-200, `gen_lab::gen_assigned_lazy` refused because it
+captured a body-assigned `lim`, **not** because it bound. The new item fuses
+that immediate-drain shape; the negative companion keeps the rebind window
+loud. *That is this entry's own §5.2 finding — a refusal names a SITE, not its
+cause — and the later admission preserves it.*
 
 **And the liveness IS witnessable — which is how the tier's first fully
 probeable DIVERGENCE was found.** `g = (k for k in d)` / `d[3] = 'c'` /
@@ -6572,3 +6574,28 @@ default-side walrus can make a by-value snapshot stale.
 
 DECIDED: admit only the one-argument `next` capture shape; retain the
 two-argument default witness and all escaping/rebound captures as loud.
+
+## 2026-10-29-pycomplete-200 — fuse immediately drained named genexps
+
+The capture admission now also handles the exact local-generator shape
+`g = (x for x in it if c); return all(g)` (and the other existing draining
+consumers). Ingestion removes the unobserved local alias and feeds the original
+genexp directly to the consumer, so the existing immediate-drain capture gate
+can prove a body-assigned local is observed before the enclosing frame runs
+again. This adds no runtime alias value or new generator semantics.
+
+The negative companion `gen_assigned_rebound_still_loud` rebinds the captured
+local between creation and consumption; it remains loud because a by-value
+capture would be stale. Conditional binding (`drain_unbound`) remains loud as
+well.
+
+| Measurement | Result |
+|---|---|
+| Focused differential | 8 cases: 6 matches and 2 expected refusals; 0 failures |
+| Full native differential | 3,758 cases: 3,714 matches, 44 recorded refusals, 0 failures |
+| Refusal census | 44 rows in 12 classes, 0 drifts; the old `gen_assigned_lazy` row left the whitelist and the rebinding companion replaced it |
+| Lean validation | `lake build leanmodels-run` passed; `git diff --check` passed |
+
+DECIDED: fuse only an unobserved named genexp immediately consumed by a
+draining builtin; preserve loud failure across rebinding, conditional binding,
+and any intervening observation.

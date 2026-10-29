@@ -798,7 +798,11 @@ REFERENCE, the lowering passes free names BY VALUE, and the two disagree
 exactly when a captured name is REBOUND between creation and
 consumption. v0 admits a free name only where they provably agree — a
 PARAMETER the enclosing body never assigns, or a name resolved outside
-the frame anyway (a module-level binding, a builtin). Anything else
+the frame anyway (a module-level binding, a builtin). A named genexp in the
+exact `g = (...); return consumer(g)` shape is fused at ingestion when
+`consumer` drains immediately, extending the same proof to a body-assigned
+capture without introducing a runtime alias value. A rebinding between those
+statements, or any other intervening observation, stays loud. Anything else
 leaves the `Expr.genExp` node, and evaluating it refuses loudly. On the
 shipped file four genexps lower (`king_capture`'s among them); the ones
 inside `bound`'s nested `moves()` are invisible, that whole def being

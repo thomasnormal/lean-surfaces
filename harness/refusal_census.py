@@ -978,7 +978,7 @@ WHITELIST_CLASS = {
     "gen_lab::upto": "boundary.generator",
     "gen_lab::gen_at_boundary": "boundary.generator",
     "gen_lab::send_is_loud": "generator.send-throw-close",
-    "gen_lab::gen_assigned_lazy": "genexp.lowering-admission",
+    "gen_lab::gen_assigned_rebound_still_loud": "genexp.lowering-admission",
     "gen_lab::drain_unbound": "genexp.lowering-admission",
     "gen_lab::yf_leak_drive": "genexp.lowering-admission",
     "dict_lab::genexp_local_capture_default_still_loud": "genexp.lowering-admission",

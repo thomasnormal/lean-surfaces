@@ -1490,6 +1490,37 @@ def lowerLenRepeatPairs (ctx : LowerCtx) : Array Stmt → Array Stmt
         | [] => []
       (go ss.toList).toArray
 
+/-- Fuse the exact local-generator shape whose lifetime is already bounded by
+an immediately consuming return:
+
+    g = (x for x in it if c)
+    return all(g)
+
+The assignment has no observation between creation and consumption, and the
+local cannot be read after the return. Replacing the name with the original
+genexp therefore preserves evaluation order while allowing `lowerExpr` to see
+the consumer's `drainOk` gate. This is deliberately limited to a single
+plain-name assignment, a direct return, no keywords, and the existing draining
+consumer inventory (plus one-argument `next`). -/
+private def fuseImmediateGenexpDrains (ss : Array Stmt) : Array Stmt :=
+  let isConsumer (name : String) (arity : Nat) : Bool :=
+    (name == "next" && arity == 1) || drainingBuiltins.contains name
+  let rec go : List Stmt → List Stmt
+    | .assign #[.name alias aliassp] (.genExp elt target iter ifs wb gsp) assignsp ::
+        .ret (some (.call (.name consumer csp) #[.name used usedsp]
+          #[] Option.none callsp)) retsp :: rest =>
+        if alias == used && isConsumer consumer 1 then
+          .ret (some (.call (.name consumer csp)
+            #[.genExp elt target iter ifs wb gsp] #[] Option.none callsp)) retsp
+            :: go rest
+        else
+          .assign #[.name alias aliassp] (.genExp elt target iter ifs wb gsp) assignsp
+            :: .ret (some (.call (.name consumer csp) #[.name used usedsp]
+              #[] Option.none callsp)) retsp :: go rest
+    | s :: rest => s :: go rest
+    | [] => []
+  (go ss.toList).toArray
+
 mutual
   /-- Rewrite every lowerable genexp in the statement. -/
   private partial def lowerStmt (ctx : LowerCtx) (s : Stmt) :
@@ -1623,7 +1654,7 @@ private def lowerGenExps (outer : List String) (functions : Array FunctionDefn)
           yfForbidden := (f.body.toList.map yfNames).flatten
           walrusForbidden := f.params.toList.map Param.arg
             ++ (f.body.toList.map stmtNamesXW).flatten }
-      let (body', st') := (lowerStmts ctx f.body).run st
+      let (body', st') := (lowerStmts ctx (fuseImmediateGenexpDrains f.body)).run st
       (acc.push { f with body := body' }, st')
   let topCtx : LowerCtx :=
     { outer, params := [], assigned := []

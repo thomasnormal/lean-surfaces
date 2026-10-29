@@ -291,10 +291,21 @@ def drain_assigned_param(n):
 
 
 def gen_assigned_lazy(n):
-    # NOT directly drained (the genexp binds to a name first): the
-    # by-value snapshot could go stale before consumption -- REFUSED
+    # The name is local, but it is consumed immediately by the return's
+    # draining builtin. Ingestion fuses this exact two-statement shape before
+    # lowering, so the body-assigned `lim` capture is observed at creation and
+    # matches CPython.
     lim = n
     g = (x < lim for x in range(n))
+    return all(g)
+
+
+def gen_assigned_rebound_still_loud(n):
+    # A rebinding between creation and consumption makes a by-value capture
+    # stale, so the named-genexp shortcut must remain loud.
+    lim = n
+    g = (x < lim for x in range(n))
+    lim = 0
     return all(g)
 
 

@@ -1,3 +1,12 @@
+# [0.1.226] — 2026-10-29
+
+The legacy adapter census now follows the extractor's marked flat-write
+lowering for plain literal `$sformat` assignments. Direct integral targets are
+admitted after the converter has checked the literal format and width;
+selected/aggregate targets and `$swrite` remain loud. Differential coverage
+remains **490/484/0/6**; the 1002-file adapter sweep moves **801/201 → 802/200**
+and the sole plain `$sformat` residual is cleared.
+
 # [0.1.225] — 2026-10-29
 
 The legacy adapter census now follows the extractor's existing predefined

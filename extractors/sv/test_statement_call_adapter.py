@@ -71,6 +71,19 @@ class StatementCallAdapter(unittest.TestCase):
         self.assertIn("Call:$fdisplay", residual)
         self.assertIn("Call:$fwrite", residual)
 
+    def test_plain_literal_sformat_assignments_follow_converter(self):
+        self.assertEqual(
+            blockers(
+                'module top; logic [7:0] value; initial begin '
+                '$sformat(value, "A"); $sformat(value, "B"); end endmodule'),
+            [])
+
+    def test_selected_sformat_targets_remain_loud(self):
+        residual = blockers(
+            'module top; logic [7:0] value; initial begin '
+            '$sformat(value[7:0], "A"); end endmodule')
+        self.assertIn("Call:$sformat", residual)
+
     def test_unlowered_array_ordering_remains_loud(self):
         residual = blockers(
             'module top; int values [0:3]; initial values.sort(); endmodule')

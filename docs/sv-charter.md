@@ -12,6 +12,19 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Plain literal `$sformat` assignments in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's marked flat-write
+lowering for plain literal `$sformat` assignments to direct integral targets.
+The converter checks the literal format and destination width before emitting
+the represented write; selected/aggregate targets and `$swrite` remain loud.
+The existing `sformat_literal_integral` fixture covers the admitted form.
+
+Differential coverage remains **490/484/0/6** and grammar coverage remains
+**235/113/122**. On the checked-in **1002-file** example sweep, the adapter
+census moves **801 clean / 201 partial → 802 clean / 200 partial**; the sole
+plain `$sformat` residual falls to zero.
+
 ## Predefined-stdout file output in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's existing lowering for

@@ -434,6 +434,24 @@ def adapter_stmt(sm, s):
                         and converted.get("stdout_file_descriptor") in (1, 0x80000001)):
                     return []
                 return ["Call:" + name]
+            if name == "$sformat":
+                # Plain literal `$sformat` lowers to a block of marked flat
+                # writes. The adapter has no string storage, but these
+                # already-materialized integral writes are represented state;
+                # selected/aggregate targets and all other forms stay loud.
+                converted = extract.convert_stmt(sm, s)
+                statements = ([converted] if isinstance(converted, dict)
+                              and converted.get("kind") == "BlockingAssign"
+                              else converted.get("stmts", [])
+                              if isinstance(converted, dict)
+                              and converted.get("kind") == "Block" else [])
+                if (statements
+                        and all(isinstance(stmt, dict)
+                                and stmt.get("sformat_literal_assignment") is True
+                                and stmt.get("target", {}).get("kind") == "Ident"
+                                for stmt in statements)):
+                    return []
+                return ["Call:" + name]
             if name in ADAPTER_PURE_DIAGNOSTIC:
                 converted = extract.convert_stmt(sm, s)
                 if (isinstance(converted, dict)

@@ -4085,6 +4085,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "unreferenced_subroutine_metadata",
+      "file": "Examples/system-verilog/unreferenced_subroutine_metadata/unreferenced_subroutine_metadata.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

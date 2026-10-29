@@ -2173,3 +2173,15 @@ grows **449/443/0/6 → 450/444/0/6**; grammar coverage grows **233/111/122 →
 234/112/122**. The temporary public sv-tests audit moves **364 clean / 437
 partial / 111 include skips → 368 / 433 / 111**, while adapter unlockables
 remain **7**.
+## [0.1.196] — 2026-10-29
+
+The legacy adapter census now mirrors the extractor's identity-based erasure
+of uncalled subroutine declarations. An unreferenced task or function has no
+time-zero effect and contributes no self-check state; referenced subroutines
+remain loud at the callable boundary. The
+`unreferenced_subroutine_metadata` fixture, adapter regressions, generated
+envelope, Lean receipt, and differential row cover the family. Differential
+coverage grows **450/444/0/6 → 451/445/0/6**; grammar coverage remains
+**234/112/122**. The temporary public audit remains **368 clean / 433 partial /
+111 include skips**, while adapter `SubroutineSymbol:Subroutine` residuals fall
+**24 → 22** and the clean `fork_return` residual disappears.

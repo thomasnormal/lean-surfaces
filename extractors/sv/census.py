@@ -402,6 +402,12 @@ def _adapter_design_blockers_impl(sm, comp):
                             kinds_in(extract.convert_continuous_assign(sm, m))))
                     elif k == "StatementBlock":
                         continue
+                    elif (k == "Subroutine"
+                          and not extract._subroutine_is_referenced(inst, m)):
+                        # A declaration has no time-zero effect until a call
+                        # site names it.  convert_module erases the same
+                        # unreferenced subroutine before building the envelope.
+                        continue
                     elif (k in ("ExplicitImport", "WildcardImport")
                           and getattr(m, "package", None) in packages):
                         continue

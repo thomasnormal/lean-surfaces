@@ -121,6 +121,14 @@ ADAPTER_LOWERED_METHOD_MARKERS = (
     "fixed_array_ordering_lowered",
     "fixed_struct_array_ordering_with_lowered",
 )
+ADAPTER_PURE_STATEMENT_MARKERS = (
+    "itor_literal_statement", "itor_pure_statement",
+    "bitstoreal_literal_statement", "bitstoreal_pure_statement",
+    "bitstoshortreal_literal_statement", "bitstoshortreal_pure_statement",
+    "rtoi_literal_statement", "rtoi_pure_statement",
+    "realtobits_literal_statement", "realtobits_pure_statement",
+    "shortrealtobits_literal_statement", "shortrealtobits_pure_statement",
+)
 DEEP_DIVE_CHAPTERS = ("chapter-4", "chapter-6", "chapter-11")
 
 # A *real* include directive at the start of a line (`include "f" / <f> /
@@ -396,6 +404,12 @@ def adapter_stmt(sm, s):
                              or (name == "$system"
                                  and converted.get("system_null_task") is True))):
                     return []
+            converted = extract.convert_stmt(sm, s)
+            if (isinstance(converted, dict)
+                    and converted.get("kind") == "Empty"
+                    and any(marker in converted
+                            for marker in ADAPTER_PURE_STATEMENT_MARKERS)):
+                return []
             converted = extract.convert_stmt(sm, s)
             if (isinstance(converted, dict)
                     and converted.get("kind") == "Block"

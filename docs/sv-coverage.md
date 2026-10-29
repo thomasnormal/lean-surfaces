@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 469 | 463 | 0 | 6 | sv-tests-2 declarations |
+| 470 | 464 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -483,6 +483,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `assertcontrol_adapter` | `Examples/system-verilog/assertcontrol_adapter/assertcontrol_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `assertcontrol_tasks_adapter` | `Examples/system-verilog/assertcontrol_tasks_adapter/assertcontrol_tasks_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `pure_diagnostic_markers_adapter` | `Examples/system-verilog/pure_diagnostic_markers_adapter/pure_diagnostic_markers_adapter.sv` | match | **MATCH** | `ok` | MATCH |
+| `pure_real_conversion_statements_adapter` | `Examples/system-verilog/pure_real_conversion_statements_adapter/pure_real_conversion_statements_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 
@@ -634,7 +635,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.NamedType` | `Examples/system-verilog/array_named_display/array_named_display.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NetAlias` | `Examples/system-verilog/net_alias/net_alias.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NetDeclaration` | `Examples/system-verilog/constant_expression_net_driver/constant_expression_net_driver.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.NetPortHeader` | `Examples/system-verilog/sem2/net_z_flat/net_z_flat.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
+| `SyntaxKind.NetPortHeader` | `Examples/system-verilog/sem2/net_width_outwire/net_width_outwire.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.NetTypeDeclaration` | `Examples/system-verilog/user_nettype/user_nettype.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NewArrayExpression` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NewClassExpression` | `Examples/system-verilog/literal_semaphore_adapter/literal_semaphore_adapter.sv` | **MATCH** | `ok`  |
@@ -671,7 +672,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.RealLiteralExpression` | `Examples/system-verilog/discarded_pure_floating_math/discarded_pure_floating_math.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RealTimeType` | `Examples/system-verilog/opaque_declarations/opaque_declarations.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RealType` | `Examples/system-verilog/discarded_pure_real_to_bits/discarded_pure_real_to_bits.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.RegType` | `Examples/system-verilog/sem2/pi_ansi_forms/pi_ansi_forms.sv` | **REFUSE** | `unsupported` non-initial process 'AlwaysPosedge:clk' (self-check tier runs initial-only designs) |
+| `SyntaxKind.RegType` | `Examples/system-verilog/sem2/net_width_outvar/net_width_outvar.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.RepeatedEventControl` | `Examples/system-verilog/intra_assignment/counts.sv` | **REFUSE** | `unsupported` @(event): the self-check tier runs at time 0 (no scheduler) |
 | `SyntaxKind.ReplicatedAssignmentPattern` | `Examples/system-verilog/assignment_patterns/replicated.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ReturnStatement` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
@@ -706,7 +707,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.UnaryBitwiseAndExpression` | `Examples/system-verilog/reductions/reductions.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.UnaryBitwiseNandExpression` | `Examples/system-verilog/reductions/reductions.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.UnaryBitwiseNorExpression` | `Examples/system-verilog/reductions/reductions.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
-| `SyntaxKind.UnaryBitwiseNotExpression` | `Examples/system-verilog/sem2/acg_case_ok/acg_case_ok.sv` | **REFUSE** | `unsupported` non-initial process 'AlwaysComb' (self-check tier runs initial-only designs) |
+| `SyntaxKind.UnaryBitwiseNotExpression` | `Examples/system-verilog/sem2/acg_alias_not/acg_alias_not.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.UnaryBitwiseOrExpression` | `Examples/system-verilog/reductions/reductions.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.UnaryBitwiseXnorExpression` | `Examples/system-verilog/reductions/reductions.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |
 | `SyntaxKind.UnaryBitwiseXorExpression` | `Examples/system-verilog/division/boundary_divider.sv` | **REFUSE** | `unsupported` non-initial process 'Assign' (self-check tier runs initial-only designs) |

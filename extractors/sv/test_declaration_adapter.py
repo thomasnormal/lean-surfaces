@@ -134,6 +134,22 @@ class DeclarationAdapter(unittest.TestCase):
             '$dumpfile(path); $display("PASS"); end endmodule')
         self.assertIn("Call:$dumpfile", residual)
 
+    def test_discarded_pure_real_conversions_are_adapter_safe(self):
+        self.assertEqual(
+            blockers(
+                'module top; initial begin '
+                '$itor(-17); $bitstoreal(64\'h3ff8_0000_0000_0000); '
+                '$bitstoshortreal(32\'h3fc0_0000); $rtoi(0.5); '
+                '$realtobits(1.0); $shortrealtobits(1.0); '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_effectful_real_conversion_remains_loud(self):
+        residual = blockers(
+            'module top; integer x; initial begin x = 1; '
+            '$itor(x++); $display("PASS"); end endmodule')
+        self.assertIn("Call:$itor", residual)
+
 
 if __name__ == "__main__":
     unittest.main()

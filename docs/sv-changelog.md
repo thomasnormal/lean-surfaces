@@ -1,3 +1,16 @@
+## [0.1.203] — 2026-10-29
+
+The legacy adapter census now follows the extractor's existing source-pure
+statement markers for discarded `$itor`, `$bitstoreal`, `$bitstoshortreal`,
+`$rtoi`, `$realtobits`, and `$shortrealtobits` conversions. Effectful or
+unsupported operands remain loud. The `pure_real_conversion_statements_adapter`
+fixture, adapter regressions, generated envelope, Lean receipt, and differential
+row cover the admitted forms. Differential coverage grows **469/463/0/6 →
+470/464/0/6**; grammar coverage remains **235/113/122**. On the checked-in
+982-file SystemVerilog example sweep (981 files before this witness), the
+adapter census moves **723 clean / 258 partial → 733 clean / 249 partial** and
+the 12 discarded-conversion call residuals fall to zero.
+
 ## [0.1.202] — 2026-10-29
 
 The legacy adapter census now follows the extractor's existing inert

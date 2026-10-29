@@ -1,3 +1,12 @@
+## [0.1.177] — 2026-10-29
+
+`$info`, `$warning`, and `$error` now accept no-format calls whose pure
+integral and source-pure ASCII string arguments use synthesized `%d`/`%s`
+fields. Their diagnostic stream remains outside the self-check transcript;
+opaque and effectful arguments remain loud. The `severity_default_format`
+fixture, extractor tests, Lean receipt, and differential row cover the family.
+Differential coverage grows **431/425/0/6 → 432/426/0/6**.
+
 ## [0.1.176] — 2026-10-29
 
 `$display` and `$write` now accept no-format calls whose arguments are

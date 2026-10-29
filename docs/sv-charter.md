@@ -12,6 +12,20 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Severity-task default formatting — 2026-10-29
+
+The legacy self-check tier now admits `$info`, `$warning`, and `$error` calls
+without a format string when their arguments are represented integrals or
+source-pure ASCII string histories. The extractor synthesizes `%d`/`%s`
+fields, evaluates the pure arguments, and leaves the diagnostic stream outside
+the self-check transcript. Opaque and effectful arguments remain loud. The
+`severity_default_format` fixture, extractor regressions, generated envelope,
+Lean receipt, and differential row cover the new call family. The external
+sv-tests-2 snapshot is unchanged because that checkout is unavailable here.
+
+Differential coverage grows **431/425/0/6 → 432/426/0/6**; grammar coverage
+remains **220/109/111**.
+
 ## Default output formatting — 2026-10-29
 
 The legacy self-check tier now admits `$display` and `$write` calls without a

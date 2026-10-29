@@ -2,6 +2,15 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "severity_default_format",
+      "file": "Examples/system-verilog/severity_default_format/severity_default_format.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "default_display_format",
       "file": "Examples/system-verilog/default_display_format/default_display_format.sv",
       "module": "top",

@@ -1,5 +1,14 @@
 # Call statements — admitted boundary
 
+## Default formatting for severity tasks — 2026-10-29
+
+`$info`, `$warning`, and `$error` now admit calls without a format string when
+each argument is a represented integral expression or a source-pure ASCII
+string. The arguments lower to synthesized `%d`/`%s` fields while the
+diagnostic stream remains outside the self-check transcript. Opaque real,
+handle, aggregate, dynamic-string, and effectful arguments stay loud.
+`severity_default_format` pins the integral and source-string cases.
+
 ## Default formatting without a format string — 2026-10-29
 
 `$display` and `$write` now admit arguments without a format string when each

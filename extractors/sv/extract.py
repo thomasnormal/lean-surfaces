@@ -23048,30 +23048,57 @@ def _convert_syscall(sm, s, e):
             # self-check state. Keep the format literal while evaluating the
             # ordinary pure expressions used as display-style arguments.
             fmt = _literal_format_string(args[0]) if args else None
+            default_format = False
+            default_nodes = None
+            if fmt is None and args:
+                # IEEE 1800-2023 §20.10 uses the same default conversion rules
+                # as the output tasks when the first argument is not a format
+                # string. The diagnostic stream is still outside the
+                # self-check state, so retain only the pure `%d`/`%s` lowering
+                # and keep opaque or effectful arguments loud.
+                defaults = [_default_display_argument(sm, arg) for arg in args]
+                if all(item is not None for item in defaults):
+                    fmt = "".join(item[0] for item in defaults)
+                    default_format = True
+                    default_nodes = [item[1] for item in defaults]
+                else:
+                    # A no-format real, handle, aggregate, or dynamic string
+                    # would need a default renderer that this state does not
+                    # represent. Keep that new branch loud; the existing
+                    # literal-format path still has its source-pure opaque
+                    # argument erasure rule below.
+                    return unsupported(sm, s, "ExpressionStatement:CallExpression")
             if fmt is None:
-                return unsupported(sm, s, "ExpressionStatement:CallExpression")
-            converted = [convert_expr(sm, arg) for arg in args[1:]]
+                # Preserve the existing no-argument severity-task admission.
+                return {"kind": "SysCall", "span": node_span(sm, s),
+                        "name": name, "format": None, "args": [],
+                        "arg_signed": []}
+            converted_args = args if default_format else args[1:]
+            converted = (default_nodes if default_format else
+                         [convert_expr(sm, arg) for arg in converted_args])
             if any(node is None or node.get("kind") == "Unsupported"
                    for node in converted):
                 # Real/shortreal values have no self-check representation, but
                 # a source-pure diagnostic argument is still evaluated by
-                # IEEE severity tasks.  Since the diagnostic stream is outside
+                # IEEE severity tasks. Since the diagnostic stream is outside
                 # the observable state, erase the whole call only after the
                 # source-level purity walk proves every argument harmless.
-                if all(_severity_argument_source_ok(arg) for arg in args[1:]):
+                if all(_severity_argument_source_ok(arg)
+                       for arg in converted_args):
                     return {"kind": "Empty", "span": node_span(sm, s),
                             "severity_task": name,
                             "opaque_arguments": True}
                 return unsupported(sm, s, "ExpressionStatement:CallExpression")
             signed = []
-            for arg in args[1:]:
+            for arg in converted_args:
                 try:
                     signed.append(bool(arg.type.isSigned))
                 except Exception:
                     signed.append(True)
             return {"kind": "SysCall", "span": node_span(sm, s),
                     "name": name, "format": fmt,
-                    "args": converted, "arg_signed": signed}
+                    "args": converted, "arg_signed": signed,
+                    **({"default_format": True} if default_format else {})}
         return unsupported(sm, s, "ExpressionStatement:CallExpression")
     span = node_span(sm, s)
     if name in SYSCALL_CTRL:

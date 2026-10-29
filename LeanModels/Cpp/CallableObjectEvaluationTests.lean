@@ -14229,6 +14229,84 @@ def callableLocalDoWhileSwitchShadowInitializationFallthroughAssignmentContinueF
 
 #guard callableLocalDoWhileSwitchShadowInitializationFallthroughAssignmentContinueFalseStatementFrameWitness
 
+private def localDoWhileSwitchShadowInitializationFallthroughAssignmentBreakStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .binary "<"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 2, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let switchCondition : TypedCallableExpression := {
+    expression := .parameter (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let body := .block (.sequence
+    (.switch_ switchCondition [
+      {label := some 0, body := .block (.sequence
+        (automaticLiteral "0x13" 5)
+        (.assign (handle "0x11") {
+          expression := .parameter (handle "0x13")
+          sourceType := intType
+          type := intType}))},
+      {label := none, body := .break_}])
+    .break_)
+  let function := {base with body := .block (.sequence
+    (automaticLiteral "0x11" 3)
+    (.sequence
+      (.doWhile body condition)
+      (.return_ {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType}))) }
+  match evaluateCallableObject 128 .lp64 function [signed 0] with
+  | .ok (.ok value) => value == signed 5
+  | _ => false
+
+def callableLocalDoWhileSwitchShadowInitializationFallthroughAssignmentBreakStatementFrameWitness : Bool :=
+  localDoWhileSwitchShadowInitializationFallthroughAssignmentBreakStatementFrame
+
+#guard callableLocalDoWhileSwitchShadowInitializationFallthroughAssignmentBreakStatementFrameWitness
+
+private def localDoWhileSwitchShadowInitializationFallthroughAssignmentBreakFalseStatementFrame : Bool :=
+  let base := incrementFunction .int "++" false
+  let condition : TypedCallableExpression := {
+    expression := .binary "<"
+      {expression := .parameter (handle "0x10"), sourceType := intType, type := intType}
+      {expression := .integer 2, sourceType := intType, type := intType}
+    sourceType := intType
+    type := .builtin .boolean}
+  let switchCondition : TypedCallableExpression := {
+    expression := .parameter (handle "0x10")
+    sourceType := intType
+    type := intType}
+  let body := .block (.sequence
+    (.switch_ switchCondition [
+      {label := some 0, body := .block (.sequence
+        (automaticLiteral "0x13" 5)
+        (.assign (handle "0x11") {
+          expression := .parameter (handle "0x13")
+          sourceType := intType
+          type := intType}))},
+      {label := none, body := .break_}])
+    .break_)
+  let function := {base with body := .block (.sequence
+    (automaticLiteral "0x11" 3)
+    (.sequence
+      (.doWhile body condition)
+      (.return_ {
+        expression := .parameter (handle "0x11")
+        sourceType := intType
+        type := intType}))) }
+  match evaluateCallableObject 128 .lp64 function [signed 1] with
+  | .ok (.ok value) => value == signed 3
+  | _ => false
+
+def callableLocalDoWhileSwitchShadowInitializationFallthroughAssignmentBreakFalseStatementFrameWitness : Bool :=
+  localDoWhileSwitchShadowInitializationFallthroughAssignmentBreakFalseStatementFrame
+
+#guard callableLocalDoWhileSwitchShadowInitializationFallthroughAssignmentBreakFalseStatementFrameWitness
+
 private def localDoWhileSwitchDefaultShadowInitializationFallthroughAssignmentStatementFrame : Bool :=
   let base := incrementFunction .int "++" false
   let condition : TypedCallableExpression := {

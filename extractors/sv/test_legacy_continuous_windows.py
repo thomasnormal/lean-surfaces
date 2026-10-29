@@ -164,13 +164,16 @@ class LegacyContinuousWindows(unittest.TestCase):
         self.assertEqual([s["target"]["name"] for s in stmts],
                          ["value[0].x", "value[1].y"])
 
-    def test_fixed_array_of_unpacked_struct_aggregate_initializer_stays_loud(self):
+    def test_fixed_array_of_unpacked_struct_aggregate_initializer_flattens_fields(self):
         envelope = self.extract(
             "module top; typedef struct { bit [3:0] x; int y; } S; "
             "S value [0:1] = '{'{4'ha, 1}, '{4'hb, 2}}; endmodule")
-        self.assertTrue(any(n.get("kind") == "Unsupported"
-                            and n.get("sv_kind") == "VariableSymbol:2state"
-                            for n in self._walk(envelope)))
+        decls = envelope["design"]["modules"][0]["decls"]
+        self.assertEqual([d["name"] for d in decls],
+                         ["value[0].x", "value[0].y",
+                          "value[1].x", "value[1].y"])
+        self.assertFalse(any(n.get("kind") == "Unsupported"
+                             for n in self._walk(envelope)))
 
     def test_nested_unpacked_integral_struct_fields_flatten_recursively(self):
         envelope = self.extract(

@@ -1,3 +1,14 @@
+## [0.1.182] — 2026-10-29
+
+Finite fixed unpacked arrays of untagged integral structs now accept complete
+positional or keyed element patterns. Each element is flattened through the
+existing struct-field cells in declared order, preserving per-field 2-state
+startup and conversion. Partial, replicated, effectful, and whole-aggregate
+forms remain loud. The `fixed_array_struct_initializer` fixture, extractor
+regressions, generated envelope, Lean receipt, and differential row cover the
+admitted family. Differential coverage grows **436/430/0/6 → 437/431/0/6**;
+grammar coverage is unchanged.
+
 ## [0.1.181] — 2026-10-29
 
 Fixed unpacked byte arrays now accept a direct ASCII string literal

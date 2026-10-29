@@ -12,6 +12,21 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Fixed arrays of initialized unpacked structs — 2026-10-29
+
+Finite fixed unpacked arrays whose leaf is an untagged integral struct now
+accept complete positional or keyed element patterns. The extractor flattens
+each element into the existing field cells in declared order, retaining the
+ordinary 2-state zero and assignment-boundary conversions. Partial,
+replicated, effectful, and whole-aggregate forms remain loud because no
+aggregate array object is introduced. The `fixed_array_struct_initializer`
+fixture, extractor regressions, generated envelope, Lean receipt, and
+differential row cover the admitted family.
+
+Differential coverage grows **436/430/0/6 → 437/431/0/6**; grammar coverage is
+unchanged. The external sv-tests-2 checkout is unavailable for a fresh corpus
+delta in this item.
+
 ## Fixed unpacked byte-array string initializers — 2026-10-29
 
 Direct ASCII string literals now initialize finite fixed unpacked byte arrays

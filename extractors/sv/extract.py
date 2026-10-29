@@ -24495,9 +24495,10 @@ def convert_fixed_array_vars(sm, m):
         if type(leaf_type).__name__ == "UnpackedStructType":
             # Compose the existing shallow-struct field cells with the
             # fixed-array cell expansion.  Whole struct values and aggregate
-            # array initializers still need an aggregate store, so this slice
-            # admits declarations without an initializer only.
-            if getattr(leaf_type, "isTagged", False) or getattr(m, "initializer", None) is not None:
+            # array initializers still need an aggregate store unless every
+            # element is a complete positional/keyed struct pattern that can
+            # be flattened independently.
+            if getattr(leaf_type, "isTagged", False):
                 return None
             positions = [()]
             for left, right in dimensions:
@@ -24507,10 +24508,29 @@ def convert_fixed_array_vars(sm, m):
                              for position in range(left, right + step, step)]
             base = _array_storage_name(m)
             declarations = []
-            for indexes in positions:
+            initializer = getattr(m, "initializer", None)
+            if initializer is not None and len(dimensions) != 1:
+                return None
+            if initializer is None:
+                values = [None] * len(positions)
+            elif len(dimensions) == 1:
+                # At the array leaf the struct pattern is consumed by the
+                # existing struct flattener, rather than by the scalar-only
+                # fixed-array pattern walker.
+                values = _pattern_source_elements(initializer)
+            else:
+                values = _fixed_array_pattern_elements(initializer, dimensions)
+            if values is None or len(values) != len(positions):
+                return None
+            for position_index, indexes in enumerate(positions):
                 cell = base + "".join(f"[{position}]" for position in indexes)
-                cells = _unpacked_struct_field_cells(
-                    cell, leaf_type, sym_span(sm, m))
+                element = values[position_index] if len(dimensions) == 1 else None
+                if element is None:
+                    cells = _unpacked_struct_field_cells(
+                        cell, leaf_type, sym_span(sm, m))
+                else:
+                    cells = _unpacked_struct_initializer_cells(
+                        sm, cell, leaf_type, element)
                 if cells is None:
                     return None
                 for name, width, init, field_type in cells:

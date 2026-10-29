@@ -10,7 +10,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 436 | 430 | 0 | 6 | sv-tests-2 declarations |
+| 437 | 431 | 0 | 6 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -450,6 +450,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `dynamic_dimension_queries` | `Examples/system-verilog/dynamic_dimension_queries/dynamic_dimension_queries.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_unpacked_union` | `Examples/system-verilog/fixed_array_unpacked_union/fixed_array_unpacked_union.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_string_initializer` | `Examples/system-verilog/fixed_array_string_initializer/fixed_array_string_initializer.sv` | match | **MATCH** | `ok` | MATCH |
+| `fixed_array_struct_initializer` | `Examples/system-verilog/fixed_array_struct_initializer/fixed_array_struct_initializer.sv` | match | **MATCH** | `ok` | MATCH |
 
 ## Grammar census
 

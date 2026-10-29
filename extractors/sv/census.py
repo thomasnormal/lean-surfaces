@@ -203,6 +203,11 @@ def _adapter_erased_decl(symbol):
                 # declaration-only route; nonzero allocations and later
                 # value uses remain ordinary loud boundaries.
                 or extract.is_inert_empty_dynamic_array_decl(symbol)
+                # A malformed packed dimension is rejected during
+                # elaboration, so the converter emits no runtime declaration.
+                # Keep direct literal recovery on the same declaration-only
+                # path; calls and references remain loud.
+                or extract.is_invalid_packed_dimension_decl(symbol)
                 or extract.is_string_decl(symbol)
                 or extract.is_fixed_string_array_decl(symbol))
     except Exception:

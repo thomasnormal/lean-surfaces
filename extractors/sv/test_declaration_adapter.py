@@ -45,6 +45,19 @@ class DeclarationAdapter(unittest.TestCase):
             '$display("PASS"); end endmodule')
         self.assertIn("VariableDeclStatement:type", residual)
 
+    def test_invalid_packed_dimensions_are_compile_time_metadata(self):
+        self.assertEqual(
+            blockers(
+                "module top; initial begin bit [3:x] a; "
+                "bit [3] b = 1'b0; $display(\"PASS\"); end endmodule"),
+            [])
+
+    def test_invalid_packed_dimension_effect_remains_loud(self):
+        residual = blockers(
+            "module top; function automatic int f(); f = 1; endfunction "
+            "initial begin bit [3:x] a = f(); $display(\"PASS\"); end endmodule")
+        self.assertIn("VariableDeclStatement:type", residual)
+
 
 if __name__ == "__main__":
     unittest.main()

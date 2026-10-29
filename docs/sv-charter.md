@@ -12,6 +12,19 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Invalid packed-dimension declarations in the adapter — 2026-10-29
+
+The legacy adapter census now follows the extractor's compile-time erasure for
+malformed integral packed-dimension declarations. Rejected declarations, with
+direct literal initializers recovered from their source spelling, allocate no
+self-check cells; effectful initializers and value uses remain loud. The
+`invalid_dimension_adapter` fixture, adapter regression, generated envelope,
+Lean receipt, and differential row cover the family.
+
+Differential coverage grows **462/456/0/6 → 463/457/0/6**; grammar coverage
+remains **235/113/122**. The checked-in 937-file SystemVerilog example sweep
+remains at **20** `VariableDeclStatement:type` residuals.
+
 ## Empty dynamic-array declarations in the adapter — 2026-10-29
 
 The legacy adapter census now follows the extractor's declaration-only path

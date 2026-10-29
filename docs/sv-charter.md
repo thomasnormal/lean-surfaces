@@ -12,6 +12,21 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Display format escapes in the adapter — 2026-10-29
+
+The legacy adapter census now treats the first string argument to represented
+`$display` and `$write` calls as their format string. Escape spellings are
+consumed by the existing formatter before ordinary expression walking, while
+dynamic or unsupported value arguments remain loud. The
+`display_format_escape_adapter` fixture, adapter regression, generated
+envelope, Lean receipt, and differential row cover the admitted shape.
+
+Differential coverage grows **448/442/0/6 → 449/443/0/6**; grammar coverage
+remains **233/111/122**. The temporary public sv-tests audit remains **364
+clean / 437 partial / 111 include skips**; the clean-file
+`StringLiteral:named-control-escape` residual falls **1 → 0**, while adapter
+unlockables remain **7**.
+
 ## Elaborated bounded `inside` expressions in the adapter — 2026-10-29
 
 The legacy adapter census now supplies the converter's elaborated parameter

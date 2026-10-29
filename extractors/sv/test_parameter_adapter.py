@@ -68,6 +68,11 @@ class ParameterAdapter(unittest.TestCase):
                      "$display(\"%0d\", a); end endmodule"),
             [])
 
+    def test_display_format_escape_is_not_an_expression_argument(self):
+        self.assertEqual(
+            blockers('module top; initial $display("octal \\123"); endmodule'),
+            [])
+
 
 if __name__ == "__main__":
     unittest.main()

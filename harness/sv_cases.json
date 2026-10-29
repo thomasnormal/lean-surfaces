@@ -4065,6 +4065,16 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "display_format_escape_adapter",
+      "file": "Examples/system-verilog/display_format_escape_adapter/display_format_escape_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "octal S",
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

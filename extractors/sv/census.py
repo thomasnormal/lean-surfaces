@@ -302,6 +302,14 @@ def adapter_stmt(sm, s):
                     args = list(e.arguments)
                 except Exception:
                     return ["Call:" + name + ":args"]
+                # `$display`/`$write` consume their first string as the
+                # format itself.  The converter already renders that string
+                # into the SysCall node, so do not send it through the
+                # ordinary expression adapter (which would reject escape
+                # spellings that the display formatter handles exactly).
+                if (name in ("$display", "$write") and args
+                        and type(args[0]).__name__ == "StringLiteral"):
+                    args = args[1:]
                 for a in args:
                     out.extend(adapter_expr(sm, a))
                 return out

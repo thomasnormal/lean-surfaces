@@ -1,0 +1,252 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "signed_operand",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/signed_operand/signed_operand.sv",
+      "sha256": "e8f5b44486640a1a3b5769d265c04701152d7c9e1d0243adadcc7ae08f24346e"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 4,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "signed_operand",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 4,
+              "col": 39,
+              "end_line": 4,
+              "end_col": 44
+            },
+            "name": "N",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 39,
+                      "end_line": 4,
+                      "end_col": 44
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 39,
+                      "end_line": 4,
+                      "end_col": 44
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 4,
+                "col": 43,
+                "end_line": 4,
+                "end_col": 44
+              },
+              "value": 7,
+              "resolved_width": 32
+            },
+            "resolved": 7
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 22,
+              "end_line": 5,
+              "end_col": 23
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 17,
+                      "end_line": 5,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 19,
+                      "end_line": 5,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 22,
+              "end_line": 6,
+              "end_col": 23
+            },
+            "name": "o",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "ParamRef",
+                    "span": {
+                      "line": 6,
+                      "col": 17,
+                      "end_line": 6,
+                      "end_col": 18
+                    },
+                    "name": "N"
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 19,
+                      "end_line": 6,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 8,
+              "col": 10,
+              "end_line": 8,
+              "end_col": 29
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 8,
+                "col": 10,
+                "end_line": 8,
+                "end_col": 11
+              },
+              "width": 8,
+              "name": "o"
+            },
+            "value": {
+              "kind": "Resize",
+              "span": {
+                "line": 8,
+                "col": 14,
+                "end_line": 8,
+                "end_col": 29
+              },
+              "width": 8,
+              "operand": {
+                "kind": "Binary",
+                "span": {
+                  "line": 8,
+                  "col": 14,
+                  "end_line": 8,
+                  "end_col": 29
+                },
+                "width": 32,
+                "op": "*",
+                "left": {
+                  "kind": "Unsupported",
+                  "span": {
+                    "line": 8,
+                    "col": 14,
+                    "end_line": 8,
+                    "end_col": 24
+                  },
+                  "sv_kind": "ConversionExpression:width",
+                  "text": "$signed(a)"
+                },
+                "right": {
+                  "kind": "Unary",
+                  "span": {
+                    "line": 8,
+                    "col": 27,
+                    "end_line": 8,
+                    "end_col": 29
+                  },
+                  "width": 32,
+                  "op": "-",
+                  "operand": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 28,
+                      "end_line": 8,
+                      "end_col": 29
+                    },
+                    "value": 2,
+                    "resolved_width": 32
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -1212,14 +1212,32 @@ def const_literal(sm, e):
             return None
         if sv.bitWidth != e.type.bitWidth:
             return None
-        return {
+        return _sym_signed_literal(e, {
             "kind": "Literal",
             "span": node_span(sm, e),
             "width": sv.bitWidth,
             "bits": svint_bits(sv),
-        }
+        })
     except Exception:
         return None
+
+
+def _sym_signed_literal(e, node):
+    """Symbolic CONSTANT positions only (`_SymPos`: parameter defaults,
+    localparams, generate headers, select labels, part bounds, case
+    patterns): mark a Literal whose frontend type is SIGNED (`4'sd3`, or a
+    constant slang typed `int` and folded to 32 bits) with `signed: true`.
+    The Lean constant tier evaluates sized operands at their width and
+    signedness (Param.lean `evalSized`); an unmarked signed literal would make
+    its whole operand cluster unsigned. Value positions carry signedness in
+    their operators already and are unchanged, as are legacy envelopes."""
+    if _SYM is not None and _SYM.symctx:
+        try:
+            if e.type.isSigned:
+                node["signed"] = True
+        except Exception:
+            pass
+    return node
 
 
 def _visit_selected_expression(expression, inspect):
@@ -2914,6 +2932,8 @@ def _fixed_array_selection_prefix(expression):
     integral members).
     """
     try:
+        if _sym_cell_index_point_dependent(expression):
+            return None
         selectors = []
         current = expression
         while type(current).__name__ == "ElementSelectExpression":
@@ -3003,6 +3023,8 @@ def _fixed_array_oob_select(sm, expression):
     array object.  Resizes, dynamic indices, and unsupported leaves stay loud.
     """
     try:
+        if _sym_cell_index_point_dependent(expression):
+            return False
         selectors = []
         current = expression
         while type(current).__name__ == "ElementSelectExpression":
@@ -3059,6 +3081,8 @@ def _fixed_array_oob_read(sm, expression):
     arrays, aggregate leaves, and packed/scalar selections remain loud.
     """
     try:
+        if _sym_cell_index_point_dependent(expression):
+            return None
         if type(expression).__name__ != "ElementSelectExpression":
             return None
         selectors = []
@@ -7854,6 +7878,28 @@ def _fixed_array_struct_copy_assignment(sm, expr):
         return None
 
 
+def _sym_query_dims_literal(sm, argument):
+    """Whether a dimension query's argument is a declared variable or net
+    whose packed dimensions are all written with literal bounds (no
+    unpacked dimensions): its range is the same at every parameter point
+    (round 3 folds)."""
+    try:
+        if type(argument).__name__ != "NamedValueExpression":
+            return False
+        symbol = argument.symbol
+        if str(symbol.kind).split(".")[-1] not in ("Variable", "Net"):
+            return False
+        if type(symbol.type.canonicalType).__name__ not in ("PackedArrayType", "ScalarType"):
+            return False
+        dims = _syntax_packed_dims(sm, _decl_type_syntax(symbol))
+        if dims is None:
+            return False
+        return all((d.get("msb") or {}).get("kind") == "Int"
+                   and (d.get("lsb") or {}).get("kind") == "Int" for d in dims)
+    except Exception:
+        return False
+
+
 def _convert_dimension_query(sm, expression):
     """Fold fixed array metadata without evaluating the queried operand."""
     try:
@@ -7893,6 +7939,14 @@ def _convert_dimension_query(sm, expression):
     if shape is None or not _bits_argument_source_ok(argument):
         return unsupported(sm, expression, "CallExpression:dimension:argument")
     dimensions, unpacked = shape
+    if (not count_query and _SYM is not None and _sym_family_point_dependent()
+            and not _sym_query_dims_literal(sm, argument)):
+        # Round 3 folds (symbolic mode): the fold below reads the DEFAULT
+        # point's range — `$left(v)` of `logic [N-1:0] v` is 2 at N = 3 and
+        # was emitted as that literal at every N. Only `$high`/`$size` of a
+        # declared signal are carried per point (`SysCall`, Lean
+        # `dimQuery`); every other query of a range that may move is loud.
+        return unsupported(sm, expression, "CallExpression:dimension:default-point")
     if count_query:
         value = len(dimensions) if expression.subroutineName == "$dimensions" else unpacked
     else:
@@ -8152,6 +8206,9 @@ def _convert_conversion_expr(sm, e):
         if node is not None:
             return node
     if ow == tw:
+        marker = _sym_unsigned_simple_operand(sm, e, kind)
+        if marker is not None:
+            return marker
         if state_squash:
             return {
                 "kind": "Squash2",
@@ -8510,12 +8567,12 @@ def _convert_integer_expr(sm, e, cname):
         if node is not None:
             return node
     value = e.value
-    return {
+    return _sym_signed_literal(e, {
         "kind": "Literal",
         "span": node_span(sm, e),
         "width": value.bitWidth,
         "bits": svint_bits(value),
-    }
+    })
 
 
 def _disputed_string_escape(expression):
@@ -12199,6 +12256,8 @@ def _convert_sym_call_expr(sm, e):
 
 def _convert_sym_select_expr(sm, e, cname):
     if cname == "ElementSelectExpression":
+        if _sym_cell_index_point_dependent(e):
+            return unsupported(sm, e, "ElementSelect:default-point-index")
         cell = _fixed_array_cell(sm, e)
         if cell is not None:
             name, width, _two_state = cell
@@ -12294,6 +12353,12 @@ def _convert_sym_select_expr(sm, e, cname):
                     "lsb": {"kind": "Int", "span": node_span(sm, e),
                             "value": lsb},
                 }
+    param_root = _sym_param_root_select(sm, e, cname)
+    if param_root is not None:
+        return param_root
+    array_select = _sym_array_select(sm, e, cname)
+    if array_select is not None:
+        return array_select
     if cname == "ElementSelectExpression":
         index = e.selector
         source_type = e.value.type.canonicalType
@@ -12423,6 +12488,483 @@ def _convert_sym_select_expr(sm, e, cname):
         "width": _safe_width(e),
         "count": count,
         "operand": _convert_expr(sm, e.concat),
+    }
+
+
+# --- packed-array select paths (ArraySel; sv-0.2 symbolic mode) -----------
+#
+# One `ArraySel` node carries a whole select chain over a declared packed
+# array, `x[i1]...[ik]` plus an optional trailing part select on the next
+# dimension (`[msb:lsb]`, `[b +: w]`, `[b -: w]`), with every index and bound
+# kept as its RAW declared label, symbolically (parameters, genvars and
+# literals only; nothing folded at the default parameter point). Lean
+# (`Param2.lean`, `arrayElemWindow`/`arrayPartGeom`) normalizes the labels
+# against the declaration's symbolic packed dimensions at EVERY parameter
+# point, checks each dimension's range (IEEE 1800-2023 7.4.6/11.5.1), and
+# lowers to flat `slice` windows. The path is taken only where the legacy
+# BitSel/PartSel encoding is absent (refused) or default-folded; every other
+# select keeps its legacy node unchanged.
+
+_ARRAY_SELECT_LITERALS = ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral")
+
+
+def _sym_tree_static(node):
+    """True when a converted symbolic tree reads no signal (literals,
+    parameters, genvars, enum members and operators over them). A
+    `$bits` query of ONE declared signal (`Ident`) is an elaboration-time
+    constant (its type is read, never its value), exact per point because
+    every admitted declaration carries its width per point (a default-point
+    shape is refused at the declaration, `_sym_aggregate_point_dependent`);
+    any other `$bits` argument and `$high`/`$size` are not static
+    (`_sym_constant_label_refusal`)."""
+    if isinstance(node, dict):
+        if (node.get("kind") == "SysCall"
+                and node.get("name") in _SYM_TYPE_QUERY_CALLS
+                and [arg.get("kind") if isinstance(arg, dict) else None
+                     for arg in node.get("args") or []] == ["Ident"]):
+            return True
+        if node.get("kind") in ("Ident", "Unsupported", "ArraySel", "BitSel",
+                                "PartSel", "Repl", "Concat", "Fill"):
+            return False
+        return all(_sym_tree_static(value) for key, value in node.items()
+                   if key != "span")
+    if isinstance(node, list):
+        return all(_sym_tree_static(value) for value in node)
+    return True
+
+
+def _sym_packed_dims_count(declared_type):
+    """Dimension count of a 4-state unsigned packed array of scalars, else
+    None (structs, unions, enums and signed/2-state types keep their own
+    encodings)."""
+    try:
+        if not declared_type.isFourState or declared_type.isSigned:
+            return None
+        current = declared_type.canonicalType
+        count = 0
+        while type(current).__name__ == "PackedArrayType":
+            count += 1
+            current = current.elementType.canonicalType
+        if count == 0 or type(current).__name__ != "ScalarType":
+            return None
+        return count
+    except Exception:
+        return None
+
+
+def _sym_label_static(expression):
+    """Whether a select label names nothing but parameters and enum members
+    (literals and exact `$bits` queries included, `_sym_bits_query_exact`):
+    no genvar, no signal. Such a label is evaluated at EVERY instantiated
+    point, whatever the generate structure around it. (`$high`/`$size` of a
+    signal keep the legacy encoding: cv32e40p's `OpA_DI[$high(OpA_DI)]`.)"""
+    if expression is None:
+        return False
+    found = False
+
+    def inspect(node):
+        nonlocal found
+        if _sym_query_call(node, _SYM_TYPE_QUERY_CALLS):
+            if not _sym_bits_query_exact(node):
+                found = True
+            return VisitAction.Skip
+        if type(node).__name__ == "NamedValueExpression":
+            try:
+                kind = str(node.symbol.kind).split(".")[-1]
+                name = node.symbol.name
+            except Exception:
+                kind, name = None, None
+            if kind not in ("Parameter", "EnumValue") or name in _SYM.genvars:
+                found = True
+
+    try:
+        _visit_selected_expression(expression, inspect)
+    except Exception:
+        return False
+    return not found
+
+
+def _sym_array_select_depth1(sm, e, symbol, part, selectors):
+    """Whether a SINGLE select takes the ArraySel path: exactly where the
+    legacy encoding is refused or default-folded. Canonical `[msb:0]`
+    selects, and literal labels over literal declared bounds, stay legacy."""
+    dims = _syntax_packed_dims(sm, _decl_type_syntax(symbol))
+    if not dims:
+        return False
+    lsb = dims[0].get("lsb") or {}
+    msb = dims[0].get("msb") or {}
+    bounds_literal = lsb.get("kind") == "Int" and msb.get("kind") == "Int"
+    source_type = e.value.type.canonicalType
+    canonical = (lsb.get("kind") == "Int" and lsb.get("value") == 0
+                 and int(source_type.range.left) >= 0
+                 and int(source_type.range.right) == 0)
+    labels = list(selectors) + ([part[1], part[2]] if part is not None else [])
+    if not bounds_literal and all(_sym_label_static(label) for label in labels):
+        # A STATIC label (literals and parameters) over a parameter-dependent
+        # range: canonical at the default point says nothing about another
+        # point, where `[K-1:0]` may be the ascending `[-1:0]` (2026-10-28).
+        return True
+    if part is None:
+        literal = type(selectors[0]).__name__ in _ARRAY_SELECT_LITERALS
+        return not canonical and not (literal and bounds_literal)
+    mode, left, right = part
+    literal = (type(left).__name__ in _ARRAY_SELECT_LITERALS
+               and type(right).__name__ in _ARRAY_SELECT_LITERALS)
+    if mode == "range":
+        return not canonical and not (literal and bounds_literal)
+    return not (literal and canonical)
+
+
+def _sym_param_root_select(sm, e, cname):
+    """Symbolic mode only (round 3 folds, item 2): a select whose ROOT is a
+    parameter or localparam VALUE (`localparam logic [N-1:0] P = 3;
+    … P[1]`). `ArraySel` covers declared signals only, so such a select
+    keeps the legacy `BitSel`/`PartSel` encoding over `ParamRef`, which the
+    Lean constant tier reads as OFFSETS from bit 0 of the parameter's value.
+    That is exact when the labels are offsets at every point:
+
+    * a range that is canonical `[m:0]` (m ≥ 0) at the default point — the
+      labels are emitted raw, and Lean checks the range AT EACH POINT
+      (`IEnv.pdims`, `evalAt`): `[N-1:0]` at N = 0 is the ascending
+      `[-1:0]`, where `P[1]` is out of range (Icarus and Yosys read x) — a
+      loud constant-tier error there, never offset 1;
+    * a range whose bounds are all literals — the labels are folded to
+      offsets of that fixed range (exact at every point), EXCEPT an indexed
+      part select, whose base was never folded (`R[0 +: 2]` over `[0:3]`
+      read offsets 1:0, i.e. labels 2:3).
+
+    Refused (`Unsupported` `<kind>:param-range`): a parameter-dependent
+    range that is not canonical at the default point (its labels were folded
+    to the DEFAULT range's offsets — `Q[1]` over `[0:N-1]` read offset 2 at
+    every `N`), an indexed part select over a non-canonical literal range,
+    and any select of a parameter of a MULTI-dimensional packed type (the
+    constant tier selects single bits; `M[1]` of `logic [1:0][3:0] M` is a
+    4-bit element). Returns None everywhere else."""
+    if _SYM is None or cname not in ("ElementSelectExpression", "RangeSelectExpression"):
+        return None
+    try:
+        root = e.value
+        chained = False
+        while type(root).__name__ == "ElementSelectExpression":
+            root, chained = root.value, True
+        if type(root).__name__ != "NamedValueExpression":
+            return None
+        symbol = root.symbol
+        if str(symbol.kind).split(".")[-1] != "Parameter":
+            return None
+        source_type = root.type.canonicalType
+        if type(source_type).__name__ != "PackedArrayType":
+            return None
+        if chained or type(source_type.elementType.canonicalType).__name__ == "PackedArrayType":
+            return unsupported(sm, e, cname + ":param-range")
+        left, right = int(source_type.range.left), int(source_type.range.right)
+        canonical = left >= 0 and right == 0
+        dims = _syntax_packed_dims(sm, _decl_type_syntax(symbol)) or []
+        bounds_literal = bool(dims) and all(
+            (d.get("msb") or {}).get("kind") == "Int"
+            and (d.get("lsb") or {}).get("kind") == "Int" for d in dims)
+        indexed = (cname == "RangeSelectExpression" and str(e.selectionKind).split(".")[-1]
+                   in ("IndexedUp", "IndexedDown"))
+    except Exception:
+        return None
+    if canonical or (bounds_literal and not indexed):
+        return None
+    return unsupported(sm, e, cname + ":param-range")
+
+
+def _sym_array_select(sm, e, cname):
+    """The `ArraySel` node for a packed-array select chain, an Unsupported
+    node for a nested chain the legacy path would mis-size, or None (the
+    legacy BitSel/PartSel path decides)."""
+    if cname not in ("ElementSelectExpression", "RangeSelectExpression"):
+        return None
+    depth = dims = None
+    try:
+        part = None
+        current = e
+        if cname == "RangeSelectExpression":
+            mode = {"Simple": "range", "IndexedUp": "up", "IndexedDown": "down"}.get(
+                str(e.selectionKind).split(".")[-1])
+            if mode is None:
+                return None
+            part = (mode, e.left, e.right)
+            current = e.value
+        selectors = []
+        while type(current).__name__ == "ElementSelectExpression":
+            selectors.insert(0, current.selector)
+            current = current.value
+        if type(current).__name__ != "NamedValueExpression":
+            return None
+        symbol = current.symbol
+        if (str(symbol.kind).split(".")[-1] not in ("Variable", "Net")
+                or symbol.name in _SYM.genvars):
+            return None
+        dims = _sym_packed_dims_count(current.type)
+        depth = len(selectors) + (1 if part is not None else 0)
+        if dims is None or depth == 0 or depth > dims:
+            return None
+        if any(_sym_inexact_bits_label(label)
+               for label in selectors + ([part[1], part[2]] if part else [])):
+            # A `$bits` label whose width is a default-point value.
+            return unsupported(sm, e, cname + ":query-label")
+        if depth == 1 and not _sym_array_select_depth1(sm, e, symbol, part, selectors):
+            return None
+        with _SymPos():
+            indices = [_convert_expr(sm, selector) for selector in selectors]
+            part_node = None
+            if part is not None:
+                part_node = {"mode": part[0],
+                             "left": _convert_expr(sm, part[1]),
+                             "right": _convert_expr(sm, part[2])}
+        labels = indices + ([part_node["left"], part_node["right"]]
+                            if part_node is not None else [])
+        if not all(_sym_tree_static(label) for label in labels):
+            refusal = _sym_constant_label_refusal(
+                sm, e, labels, selectors + ([part[1], part[2]] if part else []))
+            if refusal is not None:
+                return refusal
+            dynamic = _sym_dynamic_part_select(sm, e, cname, symbol, part,
+                                               part_node, indices, dims)
+            if dynamic is not None:
+                return dynamic
+            # The legacy nested encoding sizes inner elements as bits: exact
+            # for two dimensions only.
+            if depth >= 2 and dims > 2:
+                return unsupported(sm, e, cname + ":nested-dynamic")
+            return None
+        return {
+            "kind": "ArraySel",
+            "span": node_span(sm, e),
+            "width": _safe_width(e),
+            "name": _storage_name(symbol),
+            "indices": indices,
+            "part": part_node,
+        }
+    except Exception:
+        # An unexpected failure on a chain past two dimensions stays loud:
+        # the legacy nested fallback sizes inner elements as bits.
+        if depth is not None and dims is not None and depth >= 2 and dims > 2:
+            return unsupported(sm, e, cname + ":array-select")
+        return None
+
+
+# --- dynamic indexed part-select bases (sv-0.2 symbolic mode) --------------
+#
+# IEEE 1800-2023 11.5.1 lets the BASE of `x[b +: w]` / `x[b -: w]` be a
+# run-time expression (only the width must be constant). On a 1-D vector
+# with a descending declared range the `ArraySel` node carries such a base
+# as an ordinary VALUE expression (converted outside `_SymPos`, so its
+# operators keep their value-tier meaning, self-determined); Lean
+# (`Param2.lean`, `dynPartPlan`/`dynPartRead`) lowers it to a shift of the
+# x-padded vector, exact in every out-of-range bit and on an x/z base. Reads
+# only: `_target_shape_ok` refuses such a node as a target. A SIGNED base is
+# refused (`...:dynamic-signed-base`): Lean reads the base unsigned, and a
+# negative signed base selects bits below the lsb. Everything else (multi-dim
+# arrays, element paths, ascending ranges) keeps the legacy refusal.
+
+
+def _sym_tree_supported(node):
+    """True when a converted symbolic tree contains no Unsupported node."""
+    if isinstance(node, dict):
+        if node.get("kind") == "Unsupported":
+            return False
+        return all(_sym_tree_supported(value) for key, value in node.items()
+                   if key != "span")
+    if isinstance(node, list):
+        return all(_sym_tree_supported(value) for value in node)
+    return True
+
+
+def _sym_first_unsupported(node):
+    """The first Unsupported node of a converted tree, or None."""
+    if isinstance(node, dict):
+        if node.get("kind") == "Unsupported":
+            return node
+        for key, value in node.items():
+            if key != "span":
+                found = _sym_first_unsupported(value)
+                if found is not None:
+                    return found
+    if isinstance(node, list):
+        for value in node:
+            found = _sym_first_unsupported(value)
+            if found is not None:
+                return found
+    return None
+
+
+# `$bits` of a declared signal is its instantiated width (`evalInt`), exact at
+# every point when the declaration's width is carried per point
+# (`_sym_bits_query_exact`); `$high`/`$size` are not
+# (`_sym_constant_label_refusal`).
+_SYM_TYPE_QUERY_CALLS = ("$bits",)
+_SYM_QUERY_SYSTEM_CALLS = ("$bits", "$high", "$size", "$low", "$left", "$right",
+                           "$increment", "$dimensions", "$unpacked_dimensions")
+
+
+def _sym_query_call(node, names=_SYM_QUERY_SYSTEM_CALLS):
+    """Whether a bound expression is an array query system function call
+    (`$bits(a)`, `$high(a)`, …; `names`): an elaboration-time constant that
+    names a signal without reading it (IEEE 1800-2023 §20.6.2, §20.7)."""
+    try:
+        return (type(node).__name__ == "CallExpression" and node.isSystemCall
+                and node.subroutineName in names)
+    except Exception:
+        return False
+
+
+def _sym_bits_query_exact(node):
+    """Whether a `$bits` call reads a width that the envelope carries PER
+    POINT: its one argument names a declared variable or net (not a
+    parameter, a genvar, a type, an expression or an unpacked array) whose
+    type is a scalar, a packed vector over explicit ranges or a fixed
+    typedef, an enum (`TypeRef`, resolved per point), or a packed
+    struct/union whose layout is fixed at every point. Anything else is a
+    default-point value (2026-10-28: `$bits(s)` of `struct packed {logic
+    [N-1:0] x; ...}` read the default width at every point — verifier rows
+    `vg1`, `vd1_p1`, `vj1`) and is refused as a label (`…:query-label`)."""
+    try:
+        arguments = list(node.arguments)
+        if len(arguments) != 1:
+            return False
+        argument = arguments[0]
+        if type(argument).__name__ != "NamedValueExpression":
+            return False
+        symbol = argument.symbol
+        if (str(symbol.kind).split(".")[-1] not in ("Variable", "Net")
+                or symbol.name in _SYM.genvars):
+            return False
+        canonical = symbol.type.canonicalType
+        cname = type(canonical).__name__
+        if cname in ("ScalarType", "EnumType"):
+            return True
+        if cname in ("PackedStructType", "PackedUnionType"):
+            return not _sym_aggregate_point_dependent(canonical)
+        if cname != "PackedArrayType":
+            return False
+        type_syntax = _decl_type_syntax(symbol)
+        if (type_syntax is not None
+                and type_syntax.kind in (SyntaxKind.LogicType, SyntaxKind.RegType)
+                and _syntax_packed_dims(_SYM.sm, type_syntax) is not None):
+            return True
+        return not (_sym_family_point_dependent() and _sym_syntax_point_dependent(
+            type_syntax, getattr(symbol, "parentScope", None) or _SYM.scope))
+    except Exception:
+        return False
+
+
+def _sym_inexact_bits_label(expression):
+    """Whether a source label holds a `$bits` call that is not exact per
+    point (`_sym_bits_query_exact`)."""
+    if expression is None:
+        return False
+    found = False
+
+    def inspect(node):
+        nonlocal found
+        if _sym_query_call(node, _SYM_TYPE_QUERY_CALLS):
+            if not _sym_bits_query_exact(node):
+                found = True
+            return VisitAction.Skip
+
+    try:
+        _visit_selected_expression(expression, inspect)
+    except Exception:
+        return True
+    return found
+
+
+def _sym_reads_signal(expression):
+    """True when a source expression names anything but a parameter, a
+    genvar or an enum member (a run-time read). The argument of an array
+    query (`$bits(a) - 1`) is not read (2026-10-28: such a constant label
+    was mislabelled `…:dynamic-signed-base`)."""
+    reads = False
+
+    def inspect(node):
+        nonlocal reads
+        if _sym_query_call(node):
+            return VisitAction.Skip
+        if type(node).__name__ == "NamedValueExpression":
+            try:
+                kind = str(node.symbol.kind).split(".")[-1]
+            except Exception:
+                kind = None
+            if kind not in ("Parameter", "Genvar", "EnumValue"):
+                reads = True
+
+    try:
+        _visit_selected_expression(expression, inspect)
+    except Exception:
+        return True
+    return reads
+
+
+def _sym_constant_label_refusal(sm, e, labels, sources):
+    """A select whose labels read no signal is a CONSTANT select even when a
+    label failed to convert: refuse it with the label's own refusal kind
+    (e.g. `ConversionExpression:width`) instead of routing it to the
+    run-time-base path, whose kinds (`...:dynamic-signed-base`) would
+    mislabel a constant base as dynamic (verifier finding 2026-10-28)."""
+    if any(_sym_reads_signal(source) for source in sources if source is not None):
+        return None
+    for label in labels:
+        inner = _sym_first_unsupported(label)
+        if inner is not None:
+            return unsupported(sm, e, inner.get("sv_kind") or inner.get("svKind")
+                               or "RangeSelectExpression:constant-label")
+    if any(_sym_has_value_query(label) for label in labels):
+        # `$high(a)`/`$size(a)` of a declared signal: an elaboration-time
+        # constant (not a run-time base), outside the label tier — the
+        # constant tier reads them as `width - 1`/`width`, exact only for a
+        # 1-D `[W-1:0]` range at every point (2026-10-28).
+        return unsupported(sm, e, type(e).__name__ + ":query-label")
+    return None
+
+
+def _sym_has_value_query(node):
+    """Whether a converted tree holds a `$high`/`$size` query of a
+    non-constant argument (a declared signal), or a `$bits` query of
+    anything but one declared signal (an expression)."""
+    if isinstance(node, dict):
+        if (node.get("kind") == "SysCall" and node.get("name") in ("$high", "$size")
+                and not all(_sym_tree_static(arg) for arg in node.get("args") or [])):
+            return True
+        if (node.get("kind") == "SysCall" and node.get("name") in _SYM_TYPE_QUERY_CALLS
+                and not _sym_tree_static(node)):
+            return True
+        return any(_sym_has_value_query(value) for key, value in node.items()
+                   if key != "span")
+    if isinstance(node, list):
+        return any(_sym_has_value_query(value) for value in node)
+    return False
+
+
+def _sym_dynamic_part_select(sm, e, cname, symbol, part, part_node, indices, dims):
+    """The `ArraySel` node for a run-time indexed part-select base, an
+    Unsupported node for a signed base, or None (not this shape)."""
+    if (part is None or part[0] not in ("up", "down") or indices or dims != 1
+            or not _sym_tree_static(part_node["right"])):
+        return None
+    source_type = e.value.type.canonicalType
+    if int(source_type.range.left) < int(source_type.range.right):
+        return None
+    if part[1].type.isSigned:
+        return unsupported(sm, e, cname + ":dynamic-signed-base")
+    if int(part[1].type.bitWidth) > 32:
+        # Icarus 12.0 truncates a wider index to its low 32 bits, Yosys 0.53
+        # reads all of it (measured 2026-10-28): no consensus to model.
+        return unsupported(sm, e, cname + ":dynamic-wide-base")
+    base = _convert_expr(sm, part[1])
+    if not _sym_tree_supported(base):
+        return None
+    return {
+        "kind": "ArraySel",
+        "span": node_span(sm, e),
+        "width": _safe_width(e),
+        "name": _storage_name(symbol),
+        "indices": [],
+        "part": {"mode": part[0], "left": base, "right": part_node["right"]},
     }
 
 
@@ -18858,9 +19400,9 @@ def _compound_rhs(expr):
 
 
 def _target_shape_ok(t):
-    """Semantic-tier LHS shapes: Ident, or a single BitSel/PartSel whose
-    base is an Ident (no nested selects, no concat LHS — the CV32E40P
-    provable files use none of those on the left)."""
+    """Semantic-tier LHS shapes: Ident, a single BitSel/PartSel whose
+    base is an Ident, or an ArraySel packed-array select chain (nested
+    selects such as `pp[i][j]` — see `_sym_array_select`)."""
     if t is None:
         return False
     k = t.get("kind")
@@ -18869,7 +19411,17 @@ def _target_shape_ok(t):
     if k in ("BitSel", "PartSel"):
         base = t.get("value")
         return base is not None and base.get("kind") == "Ident"
-    return False
+    if k == "ArraySel" and not _sym_array_select_static(t):
+        return False  # a run-time part-select base is a read-only form
+    return k == "ArraySel"
+
+
+def _sym_array_select_static(t):
+    """Whether every label of an `ArraySel` node is an elaboration-time
+    constant (False for a dynamic indexed part-select base)."""
+    part = t.get("part") or {}
+    labels = list(t.get("indices") or []) + [part.get("left"), part.get("right")]
+    return all(_sym_tree_static(label) for label in labels if label is not None)
 
 
 def select_target(sm, lhs):
@@ -21814,6 +22366,8 @@ def _convert_assignment_expr(sm, expr, span_node=None):
     if type(expr).__name__ != "AssignmentExpression":
         return unsupported(sm, span_node or expr,
                            "AssignmentExpression:" + type(expr).__name__)
+    if _sym_cell_index_point_dependent(expr.left):
+        return unsupported(sm, span_node or expr, "ElementSelect:default-point-index")
     endpoint = _associative_endpoint_assignment(sm, expr)
     if endpoint is not None:
         return endpoint
@@ -23753,6 +24307,31 @@ def convert_procedural_block(sm, m):
             sm, m, "ProceduralBlockSymbol:" + str(pk).split(".")[-1]
         )
 
+    if _SYM is not None and pk in (ProceduralBlockKind.AlwaysComb,
+                                   ProceduralBlockKind.AlwaysFF):
+        # A declaration initializer counts as a writer of an always_comb /
+        # always_ff variable (sv-0.2, 2026-10-28, round 4 Lane A): the tools
+        # split on its legality, so the block is refused
+        # (`_sym_proc_initialized_write`).
+        written = _sym_proc_initialized_write(m.body)
+        if written is not None:
+            style = ("always_comb" if pk == ProceduralBlockKind.AlwaysComb
+                     else "always_ff")
+            if written[0] == "unknown":
+                return unsupported(
+                    sm, m, "ProceduralBlockSymbol:initialized-unknown",
+                    _sym_unknown_target_text(written[1], m))
+            return unsupported(
+                sm, m, "ProceduralBlockSymbol:initialized-variable",
+                "%s writes '%s', which has a declaration initializer: IEEE "
+                "1800-2023 counts the initialization as a procedural "
+                "assignment (§6.5, §10.5) and forbids any other process to "
+                "assign an %s variable (§9.2.2.2, §9.2.2.4); Xcelium 24.03 "
+                "rejects the design (*E,MULAXX) where Icarus 12.0, Yosys "
+                "0.53 and slang run it, so the tools split on its legality "
+                "(drop the initializer, or write the variable from a plain "
+                "`always` procedure)" % (style, written[1], style))
+
     if pk == ProceduralBlockKind.AlwaysComb:
         return {
             "kind": "AlwaysComb",
@@ -24346,6 +24925,14 @@ def convert_continuous_assign(sm, m):
     explicit_strength = _continuous_assignment_has_strength(m)
     if type(e).__name__ != "AssignmentExpression":
         return unsupported(sm, m, "ContinuousAssignSymbol:" + type(e).__name__)
+    if _sym_cell_index_point_dependent(e.left):
+        return unsupported(sm, m, "ElementSelect:default-point-index")
+    initialized = _sym_initialized_target_info(e.left) if _SYM is not None else None
+    if initialized is not None:
+        return unsupported(
+            sm, m, "ContinuousAssignSymbol:initialized-" + initialized[0],
+            _sym_unknown_target_text(initialized[1], m)
+            if initialized[0] == "unknown" else None)
     left_symbol = getattr(e.left, "symbol", None)
     if left_symbol is None:
         left_symbol = getattr(getattr(e.left, "value", None), "symbol", None)
@@ -26517,6 +27104,7 @@ class SymCtx:
         self.enum_nodes = []          # EnumType nodes, registration order
         self.enum_by_key = {}         # (name, from_package) -> node
         self.packages = set()         # package names actually referenced
+        self.instance_modules = []    # definitions instantiated (F3), first-use order
 
 
 class _SymPos:
@@ -26609,6 +27197,86 @@ def _enum_members(ct):
         return []
 
 
+def _sym_enum_values_point_dependent(t):
+    """Whether an enum type's member VALUES can differ between the points
+    of the family (round 6 folds, the class behind the round 5 FOLDS
+    verifier's blockers: an envelope value fixed at the default point). The
+    `EnumType` node carries each member's DEFAULT-point value
+    (`register_enum`), and Lean binds those at every point: `typedef enum
+    logic [7:0] {EA = N, EB = N + 2} e_t; assign o1 = EB;` read 5 at `N = 5`
+    (default `N = 3`) where Icarus 12.0 and the Yosys 0.53 netlist give 7
+    (scratch probe `gaps5/folds/d/fold_enm`). True when some member
+    initializer names anything point-dependent
+    (`_sym_syntax_point_dependent`; a member without one follows its
+    predecessor); a reference to a member of such a type is refused
+    (`EnumValueSymbol:default-point-value`). Members of a fixed enum, and
+    any enum in a family with one point or declared in a package, keep their
+    exact values."""
+    if not _sym_family_point_dependent():
+        return False
+    try:
+        if _enum_name_of(t)[1] is not None:
+            return False  # a package enum: fixed at every point
+        ct = t.canonicalType
+        syn = ct.syntax
+        if syn is None:
+            return False
+        scope = _SYM.scope
+        for member in syn.members:
+            init = getattr(member, "initializer", None)
+            if init is not None and _sym_syntax_point_dependent(init, scope):
+                return True
+        # Round 7 folds (round 6 FOLDS verifier blocker 2): a BASE type whose
+        # width depends on the point makes every member value depend on it
+        # too (`{EA = -1}` is 2^N - 1, a value past 2^N is out of range), and
+        # Lean only truncates the default point's value to the point's base
+        # width (`Param.lean` `enumMemberVals`). A whole-class refusal: an
+        # enum over `logic [N-1:0]` whose members are plain literals (an FSM
+        # `{S0, S1, S2}`) is refused too, a recorded over-refusal.
+        if (_sym_syntax_point_dependent(getattr(syn, "baseType", None), scope)
+                or _sym_syntax_point_dependent(getattr(syn, "dimensions", None), scope)):
+            return True
+        return False
+    except Exception:
+        return True
+
+
+def _sym_enum_unsized_member(t):
+    """Whether some member initializer of the enum type behind `t` contains an
+    unbased-unsized literal (`'0`, `'1`, `'x`, `'z`, also inside an
+    expression such as `~'0`; round 7 folds, round 6 FOLDS verifier blocker
+    2). IEEE 1800-2023 §5.7.1 fills it to the base width (`typedef enum
+    logic [3:0] {EA = '1, EB = 0}`: EA = 15, slang's value, which the
+    envelope carries), while Icarus 12.0 and the Yosys 0.53 netlist both
+    give EA = 1, at the default point too (verifier repro `vw_enw`: `{a,
+    EA}` at `a = 15` is 241 in both tools). The tools split from the LRM, so
+    a reference to a member of such an enum is refused at every point and
+    in every scope, package enums included
+    (`EnumValueSymbol:unsized-literal-member`). Unknown shapes count as
+    containing one."""
+    try:
+        syn = t.canonicalType.syntax
+        if syn is None:
+            return False
+        found = False
+
+        def walk(node, depth=0):
+            nonlocal found
+            if found or node is None or depth > 64:
+                return
+            if getattr(node, "kind", None) == SyntaxKind.UnbasedUnsizedLiteralExpression:
+                found = True
+                return
+            for child in _syntax_children(node):
+                walk(child, depth + 1)
+
+        for member in syn.members:
+            walk(getattr(member, "initializer", None))
+        return found
+    except Exception:
+        return True
+
+
 def _enum_base_node(sm, ct):
     """PackedType node for the enum's base type: symbolic packed dims
     recovered from the EnumType syntax when possible, resolved width from
@@ -26674,6 +27342,10 @@ def _sym_named_value(sm, e, sym, skind):
             d["from_package"] = pkg
         return d
     if skind == "EnumValue":
+        if _sym_enum_unsized_member(sym.type):
+            return unsupported(sm, e, "EnumValueSymbol:unsized-literal-member")
+        if _sym_enum_values_point_dependent(sym.type):
+            return unsupported(sm, e, "EnumValueSymbol:default-point-value")
         tname, pkg = register_enum(sm, sym.type)
         return {
             "kind": "EnumRef",
@@ -26715,6 +27387,64 @@ def _sym_literal(sm, e, cname):
     return None
 
 
+def _sym_mentions_name(expression):
+    """Whether a frontend expression names any symbol (a parameter, a
+    genvar, a signal whose TYPE a query reads, …): its constant value may
+    then depend on the parameter point. An expression of literals alone
+    (`(33:22:11)`) has one value at every point. Unknown shapes count as
+    naming something."""
+    found = False
+
+    def inspect(node):
+        nonlocal found
+        if type(node).__name__ in ("NamedValueExpression", "HierarchicalValueExpression"):
+            found = True
+
+    try:
+        _visit_selected_expression(expression, inspect)
+    except Exception:
+        return True
+    return found
+
+
+def _sym_bound_syntax_point_dependent(expression):
+    """Whether any node of a bound expression has SOURCE syntax that can
+    differ between the points of the family (`_sym_syntax_point_dependent`
+    over each node's syntax; round 7 folds). Unlike `_sym_mentions_name`
+    this sees what slang binds away: the size of a cast (`M'(255)`,
+    `(M + 0)'(255)`) and the type of a type cast (`t_w'(x)` with a
+    point-dependent typedef). slang's implicit conversions carry no syntax
+    of their own; the walk reaches their operands. Unknown shapes count as
+    dependent."""
+    scope = getattr(_SYM, "scope", None) if _SYM is not None else None
+    found = False
+
+    def inspect(node):
+        nonlocal found
+        if found:
+            return
+        syntax = getattr(node, "syntax", None)
+        if syntax is not None and _sym_syntax_point_dependent(syntax, scope):
+            found = True
+
+    try:
+        _visit_selected_expression(expression, inspect)
+    except Exception:
+        return True
+    return found
+
+
+def _sym_contains_unsupported(d):
+    """Whether a converted tree holds an `Unsupported` node."""
+    if isinstance(d, dict):
+        if d.get("kind") == "Unsupported":
+            return True
+        return any(_sym_contains_unsupported(v) for v in d.values())
+    if isinstance(d, list):
+        return any(_sym_contains_unsupported(v) for v in d)
+    return False
+
+
 def _has_sym_refs(d):
     """True if a converted tree contains symbolic reference nodes whose
     value must not be constant-folded."""
@@ -26734,6 +27464,9 @@ def _sym_conversion(sm, e, ow, tw, state_squash):
     no symbolic references)."""
     op = e.operand
     ocname = type(op).__name__
+    unsized_xz = _sym_unsized_xz_widening(sm, e, op, tw)
+    if unsized_xz is not None:
+        return unsized_xz
     if _DIV_CONTEXT and not _SYM.symctx and op.type.isIntegral and e.type.isIntegral:
         inner = _convert_expr(sm, op)
         if state_squash:
@@ -26762,7 +27495,10 @@ def _sym_conversion(sm, e, ow, tw, state_squash):
                 }
         except Exception:
             pass
-        return None
+        widened = _sym_literal_widening(sm, e, op, tw)
+        if widened is None:
+            widened = _sym_signed_literal_conversion(sm, e, op, tw)
+        return widened
     inner = _convert_expr(sm, op)
     try:
         resizable = (
@@ -26770,12 +27506,63 @@ def _sym_conversion(sm, e, ow, tw, state_squash):
         )
     except Exception:
         resizable = False
+    if not resizable:
+        # A signed INT-class constant (`-1`, `37`, `N - 1`, `-7 / 2`) stays
+        # unconverted: the Lean side fits it at the instantiated width.
+        int_tree = _sym_int_value_tree(e, op, inner)
+        if int_tree is not None:
+            return int_tree
+        # A signed parameter/genvar WIDENED into an unsigned context (`a + P`
+        # with a 42-bit `a`): zero extension of the simple operand (round 3
+        # folds; the same-width twin is `_sym_unsigned_simple_operand`).
+        widened = _sym_unsigned_simple_operand(sm, e, e.conversionKind, inner)
+        if widened is not None:
+            return widened
+        # A sized signed literal under a same-width retyping
+        # (`12'shF80` into a 9-bit target).
+        literal = _sym_signed_literal_conversion(sm, e, op, tw, inner)
+        if literal is not None:
+            return literal
+    if (not resizable and not _has_sym_refs(inner) and _sym_tree_static(inner)
+            and _SYM.symctx and _sym_family_point_dependent()):
+        # Round 3 repair: the symbolic-position twin of the refusal below.
+        return _sym_signed_constant_symctx(sm, e, inner, tw)
+    if (not resizable and not _has_sym_refs(inner) and _sym_tree_static(inner)
+            and not _SYM.symctx and _sym_family_point_dependent()):
+        # Any other signed constant's fold is a default-point value. (A
+        # signed operand that reads a signal keeps the path below.)
+        return unsupported(sm, e, "ConversionExpression:signed-constant")
     if not resizable and not _has_sym_refs(inner):
         # Signed/exotic constant operand without symbolic refs: slang's
         # fold (M0 path) is the only representation we have. NOTE the
         # recorded limitation: the folded width is defaults-elaborated.
+        fixed_query = False
+        try:
+            fixed_query = (_dimension_query_call(op) and len(list(op.arguments)) == 1
+                           and _sym_query_dims_literal(sm, list(op.arguments)[0]))
+        except Exception:
+            fixed_query = False
+        if (_sym_contains_unsupported(inner) and _sym_family_point_dependent()
+                and not fixed_query and _sym_mentions_name(op)
+                and const_literal(sm, e) is not None):
+            # Round 3 folds: an operand the symbolic tier could NOT
+            # represent (`$left(v)`, an `Unsupported` node) must not be
+            # replaced by slang's DEFAULT-point value (`$left(v)` of `logic
+            # [N-1:0] v` read 2 at every N, silently): loud instead.
+            return unsupported(sm, e, "ConversionExpression:default-point-fold")
+        if (_sym_family_point_dependent() and const_literal(sm, e) is not None
+                and _sym_bound_syntax_point_dependent(op)):
+            # Round 7 folds: the operand's FULL syntax decides, not only its
+            # bound names. A size cast `M'(255)` has no bound child for `M`
+            # (slang binds the size away), so `localparam int X1 = M'(255)`
+            # was slang's default-point literal -1 at every M (`M = 16`:
+            # Icarus 12.0 and the Yosys 0.53 netlist give 255).
+            return unsupported(sm, e, "ConversionExpression:default-point-fold")
         return None
     if not resizable:
+        widening = _sym_signed_widening(sm, e, op, inner, tw)
+        if widening is not None:
+            return widening
         return unsupported(sm, e, "ConversionExpression:width")
     # Unsigned operands ALWAYS emit Resize in symbolic mode — the target
     # width is context-propagated (parameter-dependent), so a folded
@@ -26791,6 +27578,121 @@ def _sym_conversion(sm, e, ow, tw, state_squash):
         "width": tw,
         "operand": inner,
     }
+
+
+def _sym_signed_constant_symctx(sm, e, inner, tw):
+    """Symbolic positions of a parametric family (round 3 repair): a SIGNED
+    constant tree without symbolic references (`-1`, `8'sd100 + 8'sd1`)
+    under a width-changing conversion. slang's fold (the only alternative)
+    is a literal of the DEFAULT point's target width — `localparam logic
+    [N-1:0] L = -1` read 255 at N = 16. An assignment-like (`Implicit`)
+    conversion — a localparam/parameter initializer, an override — keeps the
+    tree under a resize of the target width (`SignedResize` into a signed
+    type, `Resize` otherwise), which Lean evaluates at the target width at
+    each point, with the tree's own signedness (Param.lean `evalAssign`,
+    `evalAt`). Any other conversion is loud
+    (`ConversionExpression:signed-constant`, the value-position refusal)."""
+    try:
+        implicit = e.conversionKind == ConversionKind.Implicit
+        signed = e.type.isSigned
+    except Exception:
+        implicit = False
+        signed = False
+    if not implicit:
+        return unsupported(sm, e, "ConversionExpression:signed-constant")
+    return {"kind": "SignedResize" if signed else "Resize",
+            "span": node_span(sm, e), "width": tw, "operand": inner}
+
+
+def _sym_literal_widening(sm, e, op, tw):
+    """Value positions only: a SIZED unsigned literal zero-extended by its
+    context (`a + 1'b1` with a 4-bit `a`) becomes `Resize(tw, literal)` like
+    every other unsigned operand, instead of slang's folded `tw`-bit literal
+    — the context width is parameter-dependent (`logic [N-1:0] a`), and the
+    folded width baked the default point's into the tree: at N = 1 the
+    self-determined `{a + 1'b1, 1'b0}` came out 5 bits wide instead of 2
+    (differential finding 2026-10-28). Returns None (the fold) for anything
+    else: signed literals, truncations, and the symbolic positions of a
+    module with one point. Round 3 repair: the SYMBOLIC positions of a
+    parametric family too (`_SymPos` — case items, select labels, generate
+    conditions, localparam initializers): a literal folded at the default
+    point's context width inflated the width Lean computes for that context
+    wherever it is narrower (`v[s + 1'b1]` with `logic [N-1:0] s` indexed at
+    4 bits at N = 2 — repro `c_idxshr`)."""
+    if _SYM is None or (_SYM.symctx and not _sym_family_point_dependent()):
+        return None
+    try:
+        if (op.type.isSigned or e.type.isSigned or not op.type.isIntegral
+                or not e.type.isIntegral or int(op.type.bitWidth) >= int(tw)):
+            return None
+    except Exception:
+        return None
+    inner = _convert_expr(sm, op)
+    if not isinstance(inner, dict) or inner.get("kind") != "Literal":
+        return None
+    return {"kind": "Resize", "span": node_span(sm, e), "width": tw,
+            "operand": inner}
+
+
+def _sym_signed_literal_conversion(sm, e, op, tw, inner=None):
+    """Value positions only: a SIZED SIGNED literal (`4'sb1000`) converted
+    by its context. slang's fold extended it to the DEFAULT point's context
+    width, and the Lean value tier zero-extended that literal at every wider
+    point (2026-10-28, the sign-preserving twin of the `-1` finding:
+    `assign o = 4'sb1000` into `[N+1:0]`). It is emitted as a resize of the
+    literal at its OWN width instead, which Lean applies at the instantiated
+    context width: `SignedResize` across a sign-preserving conversion (an
+    assignment-like `Implicit` one, or a `Propagated` one into a signed
+    type — sign extension, IEEE 1800-2023 §11.8.2), `Resize` across a
+    `Propagated` one into an unsigned type (zero extension). Returns None
+    (the fold) anywhere else — the symbolic positions of a module with one
+    point included (round 3 repair: a parametric family's symbolic
+    positions take the resize too — `localparam logic [N-1:0] S = 8'sd100`
+    was folded to the default point's 4 bits, repro `c_lit`)."""
+    if _SYM is None or (_SYM.symctx and not _sym_family_point_dependent()):
+        return None
+    try:
+        kind = e.conversionKind
+        if not (op.type.isSigned and op.type.isIntegral and e.type.isIntegral):
+            return None
+        if kind == ConversionKind.Implicit or (
+                kind == ConversionKind.Propagated and e.type.isSigned):
+            node_kind = "SignedResize"
+        elif kind == ConversionKind.Propagated:
+            node_kind = "Resize"
+        else:
+            return None
+    except Exception:
+        return None
+    if inner is None:
+        inner = _convert_expr(sm, op)
+    if not isinstance(inner, dict) or inner.get("kind") != "Literal":
+        return None
+    return {"kind": node_kind, "span": node_span(sm, e), "width": tw,
+            "operand": inner}
+
+
+def _sym_signed_widening(sm, e, op, inner, tw):
+    """Symbolic CONSTANT positions only (`_SymPos`): a signed operand
+    converted to a signed type — the sign extension of IEEE 1800-2023
+    §11.8.2 (`SB + 5` with `parameter byte SB`, `S4 * -1`) — becomes a
+    `SignedResize`, which the Lean constant tier evaluates at its width
+    (Param.lean `evalAt`). Without it such a constant label was refused and
+    mislabelled a run-time base (verifier finding 2026-10-28). A signed
+    operand in an UNSIGNED context (zero extension) stays loud, as does
+    every value-position conversion."""
+    if _SYM is None or not _SYM.symctx:
+        return None
+    try:
+        if not (op.type.isIntegral and e.type.isIntegral
+                and op.type.isSigned and e.type.isSigned):
+            return None
+        if int(op.type.bitWidth) > int(tw):
+            return None
+    except Exception:
+        return None
+    return {"kind": "SignedResize", "span": node_span(sm, e), "width": tw,
+            "operand": inner}
 
 
 def _sym_expr_syscall(sm, e):
@@ -26999,6 +27901,10 @@ def _syntax_name(sm, sn, scope, name, from_package):
         return {"kind": "GenvarRef", "span": _syntax_span(sm, sn),
                 "name": name}
     if cls == "EnumValueSymbol":
+        if _sym_enum_unsized_member(sym.type):
+            return _syntax_unsupported(sm, sn, "EnumValueSymbol:unsized-literal-member")
+        if _sym_enum_values_point_dependent(sym.type):
+            return _syntax_unsupported(sm, sn, "EnumValueSymbol:default-point-value")
         tname, pkg = register_enum(sm, sym.type)
         return {
             "kind": "EnumRef",
@@ -27088,6 +27994,8 @@ def _dtype_sym(sm, t, type_syntax):
         if cname in ("PackedStructType", "PackedUnionType"):
             if getattr(ct, "isTagged", False):
                 return None, "tagged-struct"
+            if _sym_aggregate_point_dependent(ct):
+                return None, "default-point-aggregate"
             # The semantic tier stores an untagged packed struct/union as one
             # fixed vector; member offsets become PartSel windows below.
             width = int(ct.bitWidth)
@@ -27121,10 +28029,39 @@ def convert_port_sym(sm, m):
     if direction is None:
         return unsupported(sm, m, "PortSymbol:" + d)
     isym = getattr(m, "internalSymbol", None)
+    if isym is not None and (isym.name != m.name
+                             or getattr(m, "internalExpr", None) is not None):
+        # A non-ANSI port with an EXPLICIT port expression (`module m(.q(y))`,
+        # or a select `module m(y[1:0])`, §23.2.2.1): the port's name is not
+        # its internal signal's, so the Port and the internal declaration
+        # would be two unconnected storages — `q` never followed `y` and
+        # read its initializer or x where Icarus 12.0 reads y (round 4 Lane
+        # A probe `i_non_explicit`). Loud (Verilator 5.042 and Yosys 0.53 do
+        # not even parse the form).
+        return unsupported(sm, m, "PortSymbol:explicit-expression")
+    if (direction == "in" and isym is not None
+            and getattr(isym, "initializer", None) is not None):
+        # A NON-ANSI input whose separately declared internal symbol has an
+        # initializer (`input [1:0] a; logic [1:0] a = 2'b01;`, or a net
+        # declaration assignment `wire [1:0] a = 2'b01;`; round 4 repair,
+        # INIT verifier `n_in5`/`n_in6`). Unlike an ANSI port default
+        # (§23.2.2.4, on the PORT symbol, refused at an unconnected
+        # connection), slang keeps it on the internal symbol, and the Port
+        # dropped it: the model read the connection alone. §6.5 counts the
+        # initialization as a procedural assignment and implies a continuous
+        # assignment from the input connection, so the design is illegal;
+        # slang is silent and the tools split: Icarus 12.0 and Xcelium 24.03
+        # resolve both drivers in a child on a parent port, Icarus follows
+        # the driver through a parent variable or at the top where Xcelium
+        # still resolves, the Yosys 0.53 netlist keeps the constant,
+        # Verilator 5.042 the input (rows `pi_in_*`). Loud.
+        return unsupported(sm, m, "PortSymbol:initialized-input")
     tsyn = _decl_type_syntax(isym) if isym is not None else None
     dtype, reason = _dtype_sym(sm, m.type, tsyn)
     if dtype is None:
         return unsupported(sm, m, "PortSymbol:" + reason)
+    if direction == "out" and _sym_net_z(isym, dtype):
+        return unsupported(sm, m, "PortSymbol:net-z")
     result = {
         "kind": "Port",
         "span": sym_span(sm, m),
@@ -27133,14 +28070,538 @@ def convert_port_sym(sm, m):
         "width": dtype,
         **({"two_state": True} if not m.type.isFourState else {}),
     }
+    # An OUTPUT variable port's declaration initializer (`output logic [1:0]
+    # y = 2'b10`, §10.5: the variable's initial value) lives on the PORT
+    # symbol (`m.initializer`), not on its internal variable: emitted as
+    # `init` exactly as `convert_var_sym` emits a variable's (the key is
+    # absent without one, so other envelopes are unchanged). An output NET
+    # port with one is illegal (slang `DisallowedPortDefault`): loud. An
+    # INPUT port's is a port default (§23.2.2.4), the value of an
+    # unconnected instance input — refused at that connection
+    # (`PortConnection:default`), irrelevant to a top whose inputs the
+    # stimulus drives (only on the PORT symbol: the non-ANSI separately
+    # declared form is the `PortSymbol:initialized-input` refusal above).
+    pinit = getattr(m, "initializer", None)
+    if pinit is None and direction == "out" and isym is not None:
+        # The NON-ANSI forms (`output [1:0] y; logic [1:0] y = 2'b10;`,
+        # Verilog-2001 `reg [1:0] y = 2'b10;`): slang keeps the initializer
+        # on the separately declared internal symbol, and the Port dropped
+        # it silently (round 3 CX verifier, `pi_nonansi2/3/6/7`).
+        pinit = getattr(isym, "initializer", None)
+    if direction == "out" and pinit is not None:
+        if str(getattr(isym, "kind", "")) != "SymbolKind.Variable":
+            return unsupported(sm, m, "PortSymbol:initializer")
+        result["init"] = _sym_decl_init(sm, pinit, dtype)
     if m.type.isSigned:
         result["signed"] = True
     return result
 
 
+def _sym_dtype_fixed(dtype):
+    """Whether a symbolic `PackedType` has the same width at EVERY
+    parameter point: every packed bound is a literal `Int` (a scalar's
+    `packed` is empty). Unrecovered dimensions (`packed: null`) and type
+    references are not."""
+    if not isinstance(dtype, dict) or dtype.get("kind") != "PackedType":
+        return False
+    packed = dtype.get("packed")
+    if packed is None:
+        return False
+    return all(isinstance(dim, dict)
+               and (dim.get("msb") or {}).get("kind") == "Int"
+               and (dim.get("lsb") or {}).get("kind") == "Int"
+               for dim in packed)
+
+
+def _sym_decl_init(sm, init, dtype):
+    """The converted declaration initializer of a symbolic `Port` or `Var`
+    (sv-0.2, 2026-10-28, round 4 Lane A). slang wraps a literal whose width
+    or signedness differs from the declaration's in an implicit conversion
+    (`output logic [3:0] y = 2'b10` -> `Resize(4, Literal(2, "10"))`,
+    `2'sb10` -> `SignedResize`), which Lean's `instDecl` refuses as a
+    "non-literal initializer". The conversion is the assignment-like one
+    (IEEE 1800-2023 §10.5, §10.8, §11.8.2): zero-extension of an unsigned
+    source, sign-extension of a signed one, truncation of a wider one, to
+    the declared width. It is lowered exactly here:
+    * a literal of 0/1 bits becomes the `Int` of its value (the
+      two's-complement value of a signed one). `instDecl` evaluates an
+      `Int` initializer as `LVec.ofInt w v` at the declared width `w` OF
+      EACH POINT — exactly the conversion, so the lowering also stays exact
+      in a parametric family, where the conversion's own width is the
+      default point's (`output logic [N-1:0] y = 2'b10`);
+    * a literal with x/z bits becomes the `Literal` of the declared width,
+      but only when that width is the same at every point
+      (`_sym_dtype_fixed`) and, for a signed source, its sign bit is 0/1;
+    * anything else keeps the conversion (loud in `instDecl`, as before).
+
+    Round 4 repair (2026-10-28, INIT verifier): the lowering reads the
+    LITERAL ITSELF (`_sym_decl_literal`: the initializer is an integer
+    literal, directly or under one assignment-like conversion), never a
+    `Literal` slang folded, and it covers three more cases:
+    * an UNSIZED unsigned literal whose high-order bit is x or z (`'bx`,
+      `'hz1`) is extended with that bit (§5.7.1: "shall be extended to the
+      size of the expression containing the literal constant"; Icarus 12,
+      Xcelium 24.03 and Yosys 0.53 agree), where slang's conversion
+      constant and the zero-extending `Resize` padded with 0 (`w_ux`);
+    * a PLAIN `Literal` (no conversion at the default point: the literal
+      has the declared width there, or slang folded a truncation) at a
+      width that is NOT fixed is a default-point value that `instDecl`
+      would store unchanged at every point (`logic [W-1:0] t = 4'sb1010`
+      at W = 8 read 00001010, Icarus 11111010 — `h_slit`, `h_lit`,
+      `w_lit4`): a 0/1 literal becomes the `Int` of its value like a
+      converted one, an unsized literal of one repeated x/z bit (`'bx`,
+      `'hz`) becomes `Fill` (that bit at every width: the initializer is
+      the whole expression, so truncation and §5.7.1 extension both give
+      it), and every other x/z literal is loud (`Initializer:x-literal-
+      parametric-width`), as is a folded non-literal (`Initializer:
+      default-point-literal`);
+    * an x/z literal at a fixed width is recomputed from the literal and
+      emitted only where slang's value differs.
+    The initializer is the whole expression, so an unsized x/z literal
+    WIDENED to the declaration is decided here from the literal, before the
+    expression-context rule (`_sym_unsized_xz_widening`, loud in a family
+    with several points) sees it.
+
+    Round 5 (2026-10-29, INIT2 verifier `sbd`/`p4`/`nf`): an UNSIZED SIGNED
+    BASED literal (`'sb1`, `'sh8`, `'shF`) is loud here
+    (`Initializer:unsized-signed`), as it was at 2e8c8b28 (where it arrived
+    as a `SignedResize` that `instDecl` refused). The tools split on it:
+    Icarus 12.0 sizes the literal to its digits and sign-extends (`logic
+    [7:0] t = 'sb1` reads 11111111, `'sh8` 11111000), while Xcelium 24.03,
+    Verilator 5.042, Yosys 0.53 and §5.7.1 (an unsized literal is at least
+    32 bits, its digits zero-padded) give 00000001 and 00001000. Round 4
+    emitted the `Int`, a silent pick. The same literal anywhere else in the
+    design is refused by `_sym_unsized_signed_scan`."""
+    node = convert_expr(sm, init)
+    if _sym_unsized_signed_based(init):
+        return unsupported(sm, init, "Initializer:unsized-signed")
+    kind = node.get("kind")
+    fixed = _sym_dtype_fixed(dtype)
+    width = dtype.get("resolved") if isinstance(dtype, dict) else None
+    if not isinstance(width, int) or width <= 0:
+        return node
+    lit = _sym_decl_literal(init)
+    if lit is not None:
+        _sym_mark_decl_literal(init)
+    if (lit is not None and lit[2] and not lit[1] and lit[0][0] in "xz"
+            and len(lit[0]) < width):
+        bits = lit[0]
+        if fixed:
+            return {"kind": "Literal", "span": node.get("span"),
+                    "width": width,
+                    "bits": _sym_literal_extend(bits, False, True, width)}
+        if set(bits) == {bits[0]}:
+            return {"kind": "Fill", "span": node.get("span"), "bit": bits[0],
+                    "resolved_width": width}
+        return unsupported(sm, init, "Initializer:x-literal-parametric-width")
+    if (kind not in ("Resize", "SignedResize", "Literal")
+            or node.get("width") != width):
+        return node
+    if lit is None:
+        if kind == "Literal" and not fixed:
+            return unsupported(sm, init, "Initializer:default-point-literal")
+        return node
+    bits, signed, unsized = lit
+    if set(bits) <= set("01"):
+        if kind == "Literal" and fixed:
+            return node
+        value = int(bits, 2)
+        if signed and bits[0] == "1":
+            value -= 1 << len(bits)
+        return {"kind": "Int", "span": node.get("span"), "value": value,
+                "resolved_width": None}
+    if fixed:
+        out = _sym_literal_extend(bits, signed, unsized, width)
+        if out is None:
+            return node
+        if kind == "Literal" and node.get("bits") == out:
+            return node
+        return {"kind": "Literal", "span": node.get("span"), "width": width,
+                "bits": out}
+    if unsized and not signed and bits[0] in "xz" and set(bits) == {bits[0]}:
+        return {"kind": "Fill", "span": node.get("span"), "bit": bits[0],
+                "resolved_width": width}
+    if kind == "Literal":
+        return unsupported(sm, init, "Initializer:x-literal-parametric-width")
+    return node
+
+
+def _sym_decl_literal(init):
+    """The integer literal of a declaration initializer — the literal itself
+    or under the implicit (`Implicit`/`Propagated`) conversions slang
+    inserts, never an explicit cast — as `(bits, signed, unsized)`: `bits`
+    MSB-first over 0/1/x/z at the literal's OWN width, `unsized` slang's
+    `isDeclaredUnsized` (round 4 repair). The initializer is then the
+    literal alone, whose assignment-like conversion to the declared type
+    (§10.8) depends only on the literal (a signed one arrives under TWO
+    conversions: to the signed type of the target's width, then to the
+    target). None for anything else (a constant expression slang may fold,
+    an explicit cast, an unbased-unsized literal) and on any exception."""
+    try:
+        core = init
+        while type(core).__name__ == "ConversionExpression":
+            if core.conversionKind not in (ConversionKind.Implicit,
+                                           ConversionKind.Propagated):
+                return None
+            core = core.operand
+        if type(core).__name__ != "IntegerLiteral":
+            return None
+        bits = svint_bits(core.value).lower()
+        if (not bits or len(bits) != int(core.type.bitWidth)
+                or not set(bits) <= set("01xz")):
+            return None
+        return bits, bool(core.type.isSigned), bool(core.isDeclaredUnsized)
+    except Exception:
+        return None
+
+
+def _sym_unsized_signed_based(init):
+    """Whether a declaration initializer is an UNSIZED SIGNED BASED integer
+    literal (`'sb1`, `'sh8`, `'sd5`), itself or under the implicit
+    conversions slang inserts (round 5, 2026-10-29). A plain decimal (`5`,
+    `IntegerLiteralExpression` syntax) is not. A signed unsized literal
+    without syntax, or an exception, counts (fails closed)."""
+    try:
+        core = init
+        while type(core).__name__ == "ConversionExpression":
+            if core.conversionKind not in (ConversionKind.Implicit,
+                                           ConversionKind.Propagated):
+                return False
+            core = core.operand
+        if type(core).__name__ != "IntegerLiteral":
+            return False
+        if not core.isDeclaredUnsized or not core.type.isSigned:
+            return False
+        syn = core.syntax
+        return syn is None or syn.kind != SyntaxKind.IntegerLiteralExpression
+    except Exception:
+        return True
+
+
+def _sym_unsized_signed_scan(sm, tree):
+    """Every UNSIZED SIGNED BASED literal token of the compiled sources
+    (`'sb1`, `'Sh8`, `'so7`, `'sd5`; `IntegerVectorExpression` syntax with
+    no size and an `'s` base), as one `Unsupported`
+    `IntegerLiteral:unsized-signed` each (round 5 Lane A, 2026-10-29; the
+    choke point for the CLASS). Icarus 12.0 sizes such a literal to its
+    digits and sign-extends it IN EVERY CONTEXT measured (an assignment, an
+    initializer, `a + 'sb1`, `localparam P = 'sh8` (P = -8), an index
+    `V['sb1]`, a comparison, a `case` item, `>>>`), while Verilator 5.042,
+    Yosys 0.53, Xcelium 24.03 (initializers) and IEEE 1800-2023 §5.7.1 read
+    the digits zero-padded to 32 bits. The symbolic tier admitted the
+    expression forms at 2e8c8b28 with the LRM value (a silent pick against
+    the harness oracle), and a fold or a direct literal read (an index, a
+    bound) would bypass any per-expression check, so the class is refused
+    at the source: any occurrence in the files makes the design loud.
+    Over-refuses `'sd…` and literals whose top digit bit is 0 (`'sb01`),
+    where the tools agree, and literals in modules the top never reaches
+    (recorded gaps). An exception is loud (fails closed)."""
+    found = []
+
+    def visit(n):
+        try:
+            if getattr(n, "kind", None) == SyntaxKind.IntegerVectorExpression:
+                size = getattr(n, "size", None)
+                base = getattr(getattr(n, "base", None), "valueText", "")
+                if ((size is None or not str(size).strip())
+                        and str(base or "").lower().startswith("'s")):
+                    found.append(_syntax_unsupported(
+                        sm, n, "IntegerLiteral:unsized-signed"))
+        except Exception as exc:
+            found.append(internal_error(exc))
+        return True
+
+    try:
+        tree.root.visit(visit)
+    except Exception as exc:
+        found.append(internal_error(exc))
+    return found
+
+
+def _sym_range_key(e):
+    """A hashable key for the source range of a bound expression (the same
+    in every generate-for iteration slang binds), or None."""
+    try:
+        r = e.sourceRange
+        return (r.start.buffer.id, r.start.offset, r.end.offset)
+    except Exception:
+        return None
+
+
+def _sym_peel_implicit(e):
+    """`e` without the implicit (`Implicit`/`Propagated`) conversions slang
+    wrapped around it."""
+    while (type(e).__name__ == "ConversionExpression"
+           and e.conversionKind in (ConversionKind.Implicit,
+                                    ConversionKind.Propagated)):
+        e = e.operand
+    return e
+
+
+def _sym_xz_bits(e):
+    """The MSB-first bits of an integer literal (lower case), or None."""
+    if type(e).__name__ != "IntegerLiteral":
+        return None
+    bits = svint_bits(e.value).lower()
+    return bits or None
+
+
+def _sym_unsized_xz_top(e):
+    """Whether `e` is an UNSIZED based integer literal whose high-order bit
+    is x or z (`'bx`, `'hx0`, `'hz1`)."""
+    bits = _sym_xz_bits(e)
+    return bool(bits and e.isDeclaredUnsized and bits[0] in "xz")
+
+
+def _sym_contains_unsized_xz(e):
+    """Whether a bound expression holds an unsized x/z-top literal anywhere
+    (an exception counts: fails closed)."""
+    found = False
+
+    def inspect(node):
+        nonlocal found
+        found = found or _sym_unsized_xz_top(node)
+
+    try:
+        _visit_selected_expression(e, inspect)
+    except Exception:
+        return True
+    return found
+
+
+def _sym_mark_decl_literal(init):
+    """Record the integer literal of a declaration initializer that
+    `_sym_decl_init` decides from the literal itself (round 5 repair): the
+    x/z scan (`_sym_xz_literal_scan`) leaves exactly that literal to it."""
+    key = _sym_range_key(_sym_peel_implicit(init))
+    if key is None or _SYM is None:
+        return
+    marked = getattr(_SYM, "xz_decl_literals", None)
+    if marked is None:
+        marked = set()
+        _SYM.xz_decl_literals = marked
+    marked.add(key)
+
+
+def _sym_xz_literal_scan(sm, body):
+    """THE CHOKE POINT for x/z integer literals whose value the envelope
+    fixes at the default point (round 5 repair, 2026-10-29, verifier of the
+    round-5 INIT repair, repros `gaps5/vinitA/d/vp1`-`vp9`, `ex/ex3`). One
+    bound-tree walk of a converted module body; every finding is an
+    `Unsupported` in the module's `others`, so the whole design is loud.
+
+    (P) In a scope whose context widths can differ between points — every
+    member of a module with an overridable parameter, every generate-for
+    body (`_sym_family_point_dependent`) — the envelope holds slang's
+    DEFAULT-point binding, and an x/z literal there has no representation
+    Lean recomputes per point: a literal of exactly the default context
+    width carries no conversion and Lean zero-extends it at a wider point
+    (`assign y = 'hx0` into `[N-1:0]`, N = 32 default, at N = 40: model 8
+    zeros, 28 x, `0000`; Icarus 12.0 and the Yosys 0.53 netlist 36 x then
+    `0000` — `vp3`, `vp4`, `vp9`), and a narrower default context FOLDS the
+    literal to a default-width `Literal` (`'hx0` at N = 8 is `xxxx0000`,
+    `12'hxF0` is `11110000` — `vp6`, `vp7`, `vp8`). Loud here:
+    * every UNSIZED literal whose high-order bit is x or z, widened at the
+      default point or not (`IntegerLiteral:unsized-xz-parametric`);
+    * every x/z-bearing literal (sized or not) under an implicit conversion
+      that changes its width (`ConversionExpression:xz-literal-parametric`)
+      — over-refusing a sized literal zero-extended into a `Resize` (recorded
+      gap).
+    The one exception is the literal of a declaration initializer that
+    `_sym_decl_init` decides from the literal itself (`Fill`, the `Int`, a
+    fixed-width `Literal`, or its own refusal; `_sym_mark_decl_literal`).
+
+    (C) In ANY scope: `$unsigned` of an expression holding an unsized x/z-top
+    literal, WIDENED by its context (`assign y = $unsigned('hz1)` into 40
+    bits, `ex3`): Icarus 12.0 zero-extends the self-determined 32-bit value
+    (8 zeros, 28 z, `0001`), as the model did, while the Yosys 0.53 netlist
+    extends the z (36 z then `0001`): the tools split, so it is loud
+    (`CallExpression:unsized-xz-cast`). `$signed` (sign extension of the x/z
+    top bit) agrees in every tool and is unchanged.
+
+    Instance bodies are not walked (each definition is its own converted
+    module); an instance's port actuals are. An exception is loud."""
+    found = []
+    seen = set()
+    marked = getattr(_SYM, "xz_decl_literals", None) or set()
+
+    def flag(node, kind, key):
+        if key is None or (kind, key) not in seen:
+            seen.add((kind, key))
+            found.append(unsupported(sm, node, kind))
+
+    def check(node, dep):
+        cname = type(node).__name__
+        if cname == "IntegerLiteral":
+            key = _sym_range_key(node)
+            if dep and key not in marked and _sym_unsized_xz_top(node):
+                flag(node, "IntegerLiteral:unsized-xz-parametric", key)
+            return
+        if cname != "ConversionExpression":
+            return
+        if node.conversionKind not in (ConversionKind.Implicit,
+                                       ConversionKind.Propagated):
+            return
+        core = _sym_peel_implicit(node)
+        ccname = type(core).__name__
+        if ccname == "IntegerLiteral":
+            bits = _sym_xz_bits(core)
+            if (dep and bits is not None and set(bits) - set("01")
+                    and int(core.type.bitWidth) != int(node.type.bitWidth)):
+                key = _sym_range_key(core)
+                if key not in marked:
+                    flag(node, "ConversionExpression:xz-literal-parametric",
+                         key)
+        elif (ccname == "CallExpression"
+                and getattr(core, "isSystemCall", False)
+                and core.subroutineName == "$unsigned"
+                and any(_sym_contains_unsized_xz(a) for a in core.arguments)
+                and int(core.type.bitWidth) < int(node.type.bitWidth)):
+            flag(node, "CallExpression:unsized-xz-cast", _sym_range_key(core))
+
+    def walk(scope, dep):
+        def visit(node):
+            try:
+                cname = type(node).__name__
+                if cname == "InstanceSymbol":
+                    for pc in node.portConnections:
+                        e = pc.expression
+                        if e is not None:
+                            _visit_selected_expression(
+                                e, lambda n: check(n, dep))
+                    return VisitAction.Skip
+                if cname == "GenerateBlockArraySymbol" and not dep:
+                    walk(node, True)
+                    return VisitAction.Skip
+                check(node, dep)
+            except Exception as exc:
+                found.append(internal_error(exc))
+            return VisitAction.Advance
+
+        scope.visit(visit)
+
+    try:
+        walk(body, _sym_family_point_dependent())
+    except Exception as exc:
+        found.append(internal_error(exc))
+    return found
+
+
+def _sym_literal_extend(bits, signed, unsized, width):
+    """`bits` (a literal's own value) converted to `width` by the
+    assignment-like conversion: truncation to the low bits, else extension
+    with the sign bit of a signed literal, with an UNSIZED unsigned
+    literal's x/z high-order bit (IEEE 1800-2023 §5.7.1), or with 0. None
+    for a signed literal whose x/z sign bit would be replicated (loud, the
+    recorded restriction)."""
+    if len(bits) >= width:
+        return bits[len(bits) - width:]
+    top = bits[0]
+    if signed:
+        if top not in "01":
+            return None
+        pad = top
+    elif unsized and top in "xz":
+        pad = top
+    else:
+        pad = "0"
+    return pad * (width - len(bits)) + bits
+
+
+def _sym_unsized_xz_widening(sm, e, op, tw):
+    """Symbolic twin of `_unsized_based_widening_bits` (round 4 repair,
+    2026-10-28, INIT verifier `w_uxa`): an UNSIZED unsigned based literal
+    whose high-order bit is x or z, WIDENED by a 4-state context (`assign y
+    = 'bx`, `a ? 'hz1 : 40'd5` into 40 bits). IEEE 1800-2023 §5.7.1 extends
+    it with that bit to the size of the expression, and Icarus 12, Xcelium
+    24.03 and Yosys 0.53 agree; slang's conversion constant and the
+    symbolic `Resize` zero-extended it. In a family with ONE point
+    (`_sym_family_point_dependent`) the literal is emitted padded to the
+    context width, as the M0 path does. In a family with several points the
+    context width is the default point's, and no symbolic form is exact:
+    the literal's own 32-bit width takes part in sizing its expression, so
+    even `Fill` would differ at a point whose context is narrower. Loud
+    (`ConversionExpression:unsized-xz`). None for every other conversion; an
+    integer literal that cannot be inspected is loud too (fails closed).
+
+    CORRECTED (round 5 Lane A, 2026-10-29): "Icarus 12 agrees" holds for
+    continuous and procedural assignments, operators, comparisons and
+    scalar declaration initializers in a module with one point — NOT in
+    three positions the round-4 hook also reached, now loud
+    (`_SYM_UNSIZED_XZ_LOUD`, `_SymUnsizedXZLoud`):
+    * an INPUT PORT ACTUAL (INIT2 verifier, repro `gaps4/vinit2/d/p8.sv`;
+      `gaps5/init/d/pa.sv`): Icarus 12.0 sizes an actual narrower than its
+      port self-determined and pads it with ZEROS ("Padding 8 high bits of
+      the port": `.i('hx0)` into 40 bits is 8 zeros, 28 x, `0000`), while
+      Xcelium 24.03, Yosys 0.53 and §10.8/§23.3.3 extend the x
+      (`PortConnection:unsized-xz`, set by `_sym_port_conn`; bare, under
+      `?:`, under an operator). It over-refuses actuals whose own width
+      already reaches the port (`c ? 'hx0 : 40'd5`, `'hx0 ^ b` with a
+      40-bit `b`), where the tools agree (recorded gap);
+    * a CONSTANT position (`_SymPos`: parameter and localparam values,
+      instance overrides, `case` items, selects, generate headers;
+      `gaps5/init/d/ucp.sv`, `cq1`-`cq3`): loud
+      (`ConversionExpression:unsized-xz-constant`). A `case` item is the
+      shape this newly refuses: `case (b) 'hx0:` over a 40-bit `b` is
+      x-padded by Icarus 12.0 and Yosys 0.53, but the Yosys netlist reads
+      the x as a don't-care (`b = 00000000x…0000`: Icarus 2, netlist 1),
+      2e8c8b28 zero-padded the item (wrong against both at `b = x…0000`)
+      and round 4 followed Icarus. A parameter or localparam value and an
+      override (`localparam logic [39:0] LP = 'hx0`, `#(.P('hz1))`) split
+      too — x/z-padded by Icarus, ZERO-padded by Yosys (`40'h00xxxxxxx0`)
+      and slang's constant — but the Lean constant tier refuses every x/z
+      constant ("x/z literal in a constant context"), so those were loud
+      at 2e8c8b28 and stay loud;
+    * an UNPACKED-ARRAY assignment-pattern element (`logic [39:0] m [0:1]
+      = '{'hx0, 'hz1}`, INIT2 verifier `ap`): neither Icarus 12.0 ("sorry:
+      Assignment to an entire array") nor Yosys 0.53 (syntax error) runs
+      it, and at 2e8c8b28 the zero-extending `Resize` element was a loud
+      "non-literal initializer"; loud again
+      (`Initializer:unsized-xz-element`, set by
+      `convert_fixed_array_vars_sym`).
+
+    CORRECTED again (round 5 repair, 2026-10-29, verifier of the round-5
+    INIT repair): this hook sees only a conversion whose operand IS the
+    literal, at the point slang BOUND (the defaults, the first generate-for
+    iteration), so the claims above hold only where that point is the only
+    one. In a family the widening may happen at another point only (a
+    32-bit default context has no conversion at all), and a literal under
+    `$unsigned` is reached through a cast: both are refused by the scan
+    `_sym_xz_literal_scan` (`IntegerLiteral:unsized-xz-parametric`,
+    `ConversionExpression:xz-literal-parametric`, `CallExpression:unsized-
+    xz-cast`), and an input actual holding such a literal is
+    `PortConnection:unsized-xz` at ANY port width (`_sym_port_conn`)."""
+    if _SYM is None or type(op).__name__ != "IntegerLiteral":
+        return None
+    loud = _SYM_UNSIZED_XZ_LOUD
+    if loud is None and getattr(_SYM, "symctx", False):
+        loud = "ConversionExpression:unsized-xz-constant"
+    try:
+        if (not op.isDeclaredUnsized or op.type.isSigned
+                or not op.type.isIntegral or not e.type.isIntegral
+                or not e.type.isFourState):
+            return None
+        bits = svint_bits(op.value).lower()
+        if not bits or int(tw) <= len(bits) or bits[0] not in "xz":
+            return None
+        tw = int(tw)
+    except Exception:
+        return unsupported(sm, e, loud or "ConversionExpression:unsized-xz")
+    if loud is not None:
+        return unsupported(sm, e, loud)
+    if _sym_family_point_dependent():
+        return unsupported(sm, e, "ConversionExpression:unsized-xz")
+    return signed_metadata({
+        "kind": "Literal", "span": node_span(sm, e), "width": tw,
+        "bits": bits[0] * (tw - len(bits)) + bits,
+    }, e.type)
+
+
 def convert_var_sym(sm, m):
     if is_inert_2state_floating_decl(m):
         return {"kind": "Empty", "span": sym_span(sm, m)}
+    if _sym_array_point_dependent(sm, m):
+        return unsupported(sm, m, "VariableSymbol:default-point-array")
     array_decls = convert_fixed_array_vars_sym(sm, m)
     if array_decls is not None:
         return array_decls
@@ -27154,7 +28615,7 @@ def convert_var_sym(sm, m):
         "name": m.name,
         "width": dtype,
         **({"two_state": True} if not m.type.isFourState else {}),
-        "init": convert_expr(sm, init) if init is not None else None,
+        "init": _sym_decl_init(sm, init, dtype) if init is not None else None,
     }
     if m.type.isSigned:
         result["signed"] = True
@@ -27301,7 +28762,12 @@ def convert_fixed_array_vars_sym(sm, m):
             for i, element in enumerate(elements):
                 if not _case_source_expression_ok(element, packed_members=True):
                     return None
-                value = convert_expr(sm, element)
+                # Round 5 (2026-10-29): an unsized x/z element is loud, and
+                # the declaration carries that refusal.
+                with _SymUnsizedXZLoud("Initializer:unsized-xz-element"):
+                    value = convert_expr(sm, element)
+                if "Initializer:unsized-xz-element" in json.dumps(value):
+                    return unsupported(sm, m, "Initializer:unsized-xz-element")
                 if (value is None or value.get("kind") == "Unsupported"
                         or width_of(value) != width
                         or not _case_expression_ok(value)):
@@ -27342,6 +28808,329 @@ def convert_fixed_array_vars_sym(sm, m):
         return None
 
 
+def _sym_net_z(symbol, dtype):
+    """Whether a declaration whose type converted to `dtype` is a NET the
+    semantic tier would otherwise admit — an internal `wire` (`wire w;`,
+    `wire logic [1:0] w;`) or the internal symbol of an OUTPUT port declared
+    as one (`output wire logic y`, `output wire y`, an implicitly typed
+    `output y`). A net's undriven bits read z (IEEE 1800-2023 §6.6; Icarus
+    12.0 agrees — verifier rows `v_undf`, `v_undn`, `v_partnet`), while the
+    semantic tier initializes every declaration to x, and whether every bit
+    has a driver is not decided here: such a declaration is refused
+    (`NetSymbol:net-z`, `PortSymbol:net-z`; 2026-10-28). An implicitly typed
+    net WITH packed dimensions (`wire [7:0] w`) keeps its existing loud form
+    (`packed: null`, refused by the load gate); scalar and explicitly typed
+    ones used to pass it. Input net ports stay admitted: the instantiating
+    scope drives every bit, and an unconnected one reads z (`PortConn.net`).
+    `output logic y` is a variable (§23.2.2.3)."""
+    try:
+        if symbol is None or str(symbol.kind) != "SymbolKind.Net":
+            return False
+    except Exception:
+        return False
+    return not (dtype.get("kind") == "PackedType" and dtype.get("packed") is None)
+
+
+# --- default-point folds of declared shapes (sv-0.2, 2026-10-28) -----------
+#
+# Two declaration forms carry slang's DEFAULT-point shape as literals:
+# a packed struct/union is one `[W-1:0]` vector whose member windows are
+# fixed PartSel offsets (`_dtype_sym`), and a fixed unpacked array is one
+# declaration per default-point cell (`convert_fixed_array_vars_sym`, which
+# also recovers a typedef'd element's packed ranges from the canonical type).
+# Where that shape depends on the family's point — a member, element or
+# dimension width that names an overridable parameter or a genvar, directly
+# or through a localparam or a typedef — every other point would read the
+# default layout (verifier rows `vg2`: `s.x` of `struct packed {logic [N-1:0]
+# x; ...}` read the default window; `vb4`: `mem[1]` of `[0:K-1]` survived at
+# K = 1). Such a declaration is refused (`…:default-point-aggregate`,
+# `VariableSymbol:default-point-array`); a shape fixed at every point keeps
+# its encoding.
+
+def _sym_syntax_point_dependent(syntax, scope, depth=0):
+    """Whether a declaration syntax subtree names anything whose value can
+    differ between the points of the family: an overridable parameter, a
+    genvar, a type parameter, or (conservatively) anything this walk cannot
+    classify. Localparams, typedefs and declared signals named in it are
+    followed to their own declarations; package members are fixed."""
+    if syntax is None:
+        return False
+    if depth > 24:
+        return True
+    if isinstance(syntax, (list, tuple)):
+        return any(_sym_syntax_point_dependent(item, scope, depth + 1)
+                   for item in syntax)
+    try:
+        kind = syntax.kind
+    except Exception:
+        return True
+    if kind == SyntaxKind.IdentifierName:
+        try:
+            name = syntax.identifier.valueText
+        except Exception:
+            return True
+        if _SYM is not None and name in _SYM.genvars:
+            return True
+        try:
+            symbol = scope.lookupName(name) if scope is not None else None
+        except Exception:
+            symbol = None
+        return _sym_symbol_point_dependent(symbol, depth + 1)
+    if kind == SyntaxKind.ScopedName:
+        children = _syntax_children(syntax)
+        try:
+            package = (_SYM.comp.getPackage(children[0].identifier.valueText)
+                       if children and children[0].kind == SyntaxKind.IdentifierName
+                       else None)
+        except Exception:
+            package = None
+        return package is None
+    if kind != SyntaxKind.SystemName and str(kind).endswith("Name"):
+        return True
+    return any(_sym_syntax_point_dependent(child, scope, depth + 1)
+               for child in _syntax_children(syntax))
+
+
+def _sym_symbol_point_dependent(symbol, depth):
+    """`_sym_syntax_point_dependent` for one resolved name."""
+    if symbol is None:
+        return True
+    try:
+        if "::" in symbol.hierarchicalPath:
+            return False
+    except Exception:
+        pass
+    cls = type(symbol).__name__
+    scope = getattr(symbol, "parentScope", None)
+    try:
+        if cls == "ParameterSymbol":
+            if not symbol.isLocalParam:
+                return True
+            return (_sym_syntax_point_dependent(symbol.declaredType.typeSyntax, scope, depth)
+                    or _sym_syntax_point_dependent(symbol.syntax, scope, depth))
+        if cls == "TypeAliasType":
+            return _sym_syntax_point_dependent(symbol.targetType.typeSyntax, scope, depth)
+        if cls in ("VariableSymbol", "NetSymbol"):
+            return (_sym_syntax_point_dependent(symbol.declaredType.typeSyntax, scope, depth)
+                    or _sym_syntax_point_dependent(
+                        getattr(symbol.syntax, "dimensions", None), scope, depth))
+    except Exception:
+        return True
+    return True
+
+
+def _sym_aggregate_point_dependent(canonical):
+    """Whether a packed struct/union type's layout depends on the point."""
+    if not _sym_family_point_dependent():
+        return False
+    try:
+        return _sym_syntax_point_dependent(
+            canonical.syntax, getattr(canonical, "parentScope", None) or _SYM.scope)
+    except Exception:
+        return True
+
+
+def _sym_array_point_dependent(sm, m):
+    """Whether a fixed unpacked array declaration's cells or element ranges
+    are a default-point fold: an unpacked dimension that depends on the
+    point, or an element type whose packed ranges are not carried
+    symbolically (a typedef) and depend on it."""
+    try:
+        if type(m.type.canonicalType).__name__ != "FixedSizeUnpackedArrayType":
+            return False
+    except Exception:
+        return False
+    if not _sym_family_point_dependent():
+        return False
+    scope = getattr(m, "parentScope", None) or _SYM.scope
+    try:
+        if _sym_syntax_point_dependent(getattr(m.syntax, "dimensions", None), scope):
+            return True
+        type_syntax = _decl_type_syntax(m)
+        if (type_syntax is not None
+                and type_syntax.kind in (SyntaxKind.LogicType, SyntaxKind.RegType)
+                and _syntax_packed_dims(sm, type_syntax) is not None):
+            return False
+        return _sym_syntax_point_dependent(type_syntax, scope)
+    except Exception:
+        return True
+
+
+def _sym_initialized_target(left):
+    """`"variable"` / `"net"` when the continuous-assignment target `left`
+    (a name, a bit/part/member select of one, a concatenation or streaming
+    target of those) writes a bit of a declaration that carries a
+    declaration initializer, else `None` (sv-0.2, 2026-10-28, round 3 CX
+    repair; symbolic mode only). A VARIABLE's initializer is a procedural
+    write (§10.5) that `driversOk` never sees, so with a continuous driver
+    of any of its bits the design mixes continuous and procedural writers
+    (§6.5) — slang `-Wmixed-var-assigns`, Icarus "Unable to assign to
+    unresolved wires", Yosys a conflicting constant driver — yet the model
+    would run it (verifier probes `vg_init`, `vh_init`). A NET's initializer
+    is a continuous driver of its own (§10.3.1), so the extra driver is a
+    resolved multi-driver net the model does not resolve. Only the target
+    PATH is walked (an index expression is read, not written). An output
+    variable port's initializer sits on the port symbol, not on its
+    internal variable, so the port of the same name is consulted too.
+    `"unknown"` when the target cannot be inspected (fails CLOSED; the
+    callers refuse it, `_sym_initialized_target_info` names the
+    construct)."""
+    info = _sym_initialized_target_info(left)
+    return info[0] if info is not None else None
+
+
+def _sym_initialized_target_info(left, procedural=False):
+    """`(kind, detail)` for `_sym_initialized_target`, or `None`: `kind` is
+    `"variable"` / `"net"` (detail: the declaration's name) or `"unknown"`
+    (detail: the construct that could not be inspected). It FAILS CLOSED
+    (2026-10-28, round 4 Lane A, round 3 CX verifier minor): an expression
+    kind outside the target shapes it knows, and any exception while
+    inspecting one (the port lookup included, which used to swallow its
+    exceptions and admit), give `"unknown"`, so a caller refuses rather than
+    admits the target unchecked. `procedural` (a procedural assignment
+    target, `_sym_proc_initialized_write`) skips a variable declared inside
+    a procedural block or subroutine, or with automatic lifetime: no other
+    process can write it, and its initializer is not a module-level
+    declaration initializer."""
+    def port_init(sym):
+        # Raises (fails closed through the caller) when the scope cannot be
+        # inspected.
+        scope = sym.parentScope
+        members = scope.asSymbol() if hasattr(scope, "asSymbol") else scope
+        for member in members:
+            if (str(member.kind) == "SymbolKind.Port" and member.name == sym.name
+                    and getattr(member, "initializer", None) is not None):
+                return True
+        return False
+
+    def block_local(sym):
+        if str(getattr(sym, "lifetime", "")).endswith("Automatic"):
+            return True
+        return bool(sym.parentScope.isProceduralContext)
+
+    def walk(x):
+        n = type(x).__name__
+        if n in ("NamedValueExpression", "HierarchicalValueExpression"):
+            sym = x.symbol
+            k = str(getattr(sym, "kind", ""))
+            kind = ("variable" if k == "SymbolKind.Variable" else
+                    "net" if k == "SymbolKind.Net" else None)
+            if kind is None or (procedural and block_local(sym)):
+                return None
+            if getattr(sym, "initializer", None) is not None or port_init(sym):
+                return (kind, sym.name)
+            return None
+        if n in ("ElementSelectExpression", "RangeSelectExpression",
+                 "MemberAccessExpression"):
+            return walk(x.value)
+        if n == "ConcatenationExpression":
+            for operand in x.operands:
+                found = walk(operand)
+                if found is not None:
+                    return found
+            return None
+        if n == "StreamingConcatenationExpression":
+            for stream in x.streams:
+                found = walk(stream.operand)
+                if found is not None:
+                    return found
+            return None
+        return ("unknown", n)
+
+    try:
+        return walk(left)
+    except Exception as exc:
+        # Fail CLOSED (round 3 folds, CX verifier minor): a target the walk
+        # cannot inspect is refused, never admitted unchecked.
+        return ("unknown", "%s (%s)" % (type(left).__name__, type(exc).__name__))
+
+
+def _sym_unknown_target_text(detail, node):
+    return ("cannot inspect the assignment target (%s) for a declaration "
+            "initializer, so it is refused rather than admitted unchecked: %s"
+            % (detail, source_text(node)))
+
+
+def _sym_proc_initialized_write(body):
+    """`(kind, detail)` of the first assignment target in the procedural
+    `body` that writes a module-level declaration WITH an initializer
+    (`_sym_initialized_target_info`, procedural), or `None` (sv-0.2,
+    2026-10-28, round 4 Lane A). Every `AssignmentExpression` (blocking,
+    nonblocking, compound) and increment/decrement the body holds is
+    inspected; an exception while visiting fails CLOSED (`"unknown"`). The
+    caller refuses an `always_comb` / `always_ff` with such a write: IEEE
+    1800-2023 §9.2.2.2/§9.2.2.4 forbid any other process to assign their
+    variables, §6.5 and §10.5 count a declaration initialization as a
+    procedural assignment, and §4.2 lists procedural assignment statements
+    among processes — Xcelium 24.03 rejects every such design
+    (`xmelab: *E,MULAXX: Multiple drivers to always_comb/always_ff output
+    variable`), Verilator 5.042 stops on `MULTIDRIVEN` for a whole-variable
+    always_comb write, while Icarus 12.0, Yosys 0.53 and slang run them:
+    the tools split on legality, so the model refuses rather than follow
+    one (docs/sv-oracle-disagreements.md, "Refused where the oracles
+    split"). A plain `always` writer is unrestricted (§9.2.2.1) and stays
+    admitted (Xcelium elaborates it)."""
+    hits = []
+    incdec = ("Preincrement", "Predecrement", "Postincrement", "Postdecrement")
+
+    def inspect(node):
+        if hits:
+            return VisitAction.Skip
+        n = type(node).__name__
+        target = None
+        if n == "AssignmentExpression":
+            target = node.left
+        elif (n == "UnaryExpression"
+              and str(getattr(node, "op", "")).split(".")[-1] in incdec):
+            target = node.operand
+        if target is not None:
+            found = _sym_initialized_target_info(target, procedural=True)
+            if found is not None:
+                hits.append(found)
+                return VisitAction.Skip
+        return None
+
+    try:
+        body.visit(inspect)
+    except Exception as exc:
+        return ("unknown", "%s (%s)" % (type(body).__name__, type(exc).__name__))
+    return hits[0] if hits else None
+
+
+def _sym_cell_index_point_dependent(expression):
+    """Whether an element-select chain into a fixed unpacked array has a
+    CONSTANT index that is slang's default-point fold (sv-0.2, 2026-10-28,
+    WP2 repair). A fixed unpacked array is one declaration per cell
+    (`convert_fixed_array_vars_sym`) and a constant element select names its
+    cell (`_fixed_array_selection_prefix` -> `Ident "m[0]"`); an index that
+    names a genvar or an overridable parameter would freeze to the cell of
+    the point slang elaborated (verifier rows `uarr_rd`: `y[i] = m[i]` read
+    `m[0]` for every i; `uarr_k`: `m[K] = a` wrote `m[0]` at every K). Such
+    a select is refused (`ElementSelect:default-point-index`) instead. Only
+    selects INTO an unpacked dimension are inspected (a packed bit-select
+    keeps its symbolic index), and a run-time index (no constant) is left to
+    the existing paths."""
+    if _SYM is None or not _sym_family_point_dependent():
+        return False
+    try:
+        current = expression
+        while type(current).__name__ == "ElementSelectExpression":
+            value = current.value
+            if (type(value.type.canonicalType).__name__ == "FixedSizeUnpackedArrayType"
+                    and _constant_dimension_selector(current.selector) is not None):
+                selector = current.selector
+                while (getattr(selector, "syntax", None) is None
+                       and type(selector).__name__ == "ConversionExpression"):
+                    selector = selector.operand
+                syntax = getattr(selector, "syntax", None)
+                if syntax is None or _sym_syntax_point_dependent(syntax, _SYM.scope):
+                    return True
+            current = value
+        return False
+    except Exception:
+        return True
+
+
 def convert_net_sym(sm, m):
     nk = str(m.netType.netKind).split(".")[-1]
     if nk != "Wire":
@@ -27351,6 +29140,8 @@ def convert_net_sym(sm, m):
     dtype, reason = _dtype_sym(sm, m.type, _decl_type_syntax(m))
     if dtype is None:
         return unsupported(sm, m, "NetSymbol:" + reason)
+    if _sym_net_z(m, dtype):
+        return unsupported(sm, m, "NetSymbol:net-z")
     init = m.initializer
     result = {
         "kind": "Net",
@@ -27363,6 +29154,37 @@ def convert_net_sym(sm, m):
     if m.type.isSigned:
         result["signed"] = True
     return result
+
+
+def _sym_param_named_type_point_dependent(m):
+    """Whether parameter/localparam `m`'s DECLARED type is NAMED (a typedef,
+    a type parameter, a package type — any type syntax but a keyword or
+    implicit one, `_SYM_FIXED_PARAM_TYPE_KINDS`) and its width can differ
+    between the points of the family (round 6 folds, round 5 FOLDS verifier
+    blocker 2, repros `vs_td2`, `vs_td4`). Such a syntax carries no
+    dimensions of its own, so `_param_width_type` used to emit slang's
+    elaborated bounds — the DEFAULT point's: `typedef logic signed [M-1:0]
+    st_t; localparam st_t TS = -1;` became `[31:0]` (default `M = 32`), with
+    no `ParamRef` for the Lean `PType.boundsLiteral` guard to see, and Lean
+    read TS at 32 bits at every M (`TS + a` into 64 bits: 4294967310 where
+    Icarus 12.0 and the Yosys 0.53 netlist give 270 at `M = 8`, 16 at
+    `M = 1`). The unsigned 4-state twin was already loud (`_dtype_sym`
+    recovers dimensions only from a `logic`/`reg` syntax). Decided by the
+    point-dependence walk of the declaration forms
+    (`_sym_syntax_point_dependent`: the typedef is followed to its target
+    syntax); a family with one point keeps the exact elaborated width."""
+    if not _sym_family_point_dependent():
+        return False
+    tsyn = _decl_type_syntax(m)
+    if tsyn is None:
+        return False
+    try:
+        if str(tsyn.kind).split(".")[-1] in _SYM_FIXED_PARAM_TYPE_KINDS:
+            return False
+        scope = getattr(m, "parentScope", None) or _SYM.scope
+        return _sym_syntax_point_dependent(tsyn, scope)
+    except Exception:
+        return True
 
 
 def _param_width_type(sm, m):
@@ -27386,10 +29208,19 @@ def _param_width_type(sm, m):
         w = int(t.bitWidth)
         dims = getattr(_decl_type_syntax(m), "dimensions", None)
         ndims = sum(1 for _ in dims) if dims is not None else 0
+        if (type(t.canonicalType).__name__ in ("PackedStructType", "PackedUnionType")
+                and _sym_aggregate_point_dependent(t.canonicalType)):
+            # A struct/union whose width depends on the point (2026-10-28):
+            # its default-point width is not this parameter's width elsewhere.
+            return {"kind": "PackedType", "packed": None, "resolved": w}
     except Exception:
         return None
-    if ndims != 0:
+    if ndims == 0 and _sym_param_named_type_point_dependent(m):
+        # Round 6 folds: a typedef'd (named) type whose width depends on the
+        # point — its elaborated bounds below would be the default point's.
         return {"kind": "PackedType", "packed": None, "resolved": w}
+    if ndims != 0:
+        return _sym_param_syntax_dims(sm, m, w)
     if w == 1:
         return {"kind": "PackedType", "packed": [], "resolved": 1}
     span = sym_span(sm, m)
@@ -27405,6 +29236,25 @@ def _param_width_type(sm, m):
     }
 
 
+def _sym_param_legacy_width_type(m):
+    """Whether a parameter/localparam's declared type keeps the width-only
+    `_param_width_type` node it had before `_dtype_sym` admitted 2-state and
+    signed declarations (merge of the 2-state declaration tier with the
+    default-point folds, 2026-10-29). `_dtype_sym` now describes an
+    `int`/`shortint`/`byte`... as `packed: []` with only a `resolved` width,
+    which the Lean instantiator reads as ONE bit (`dimsWidth []`), and a
+    2-state typedef'd vector as unrecoverable `packed: null` (the typedef
+    carries no `bit` syntax at the parameter), where `_param_width_type`
+    states the exact elaborated bounds (or refuses the point-dependent
+    ones). The 2-state declaration tier is about ports and variables; a
+    parameter keeps its measured, fold-guarded type, so every parameter
+    type node of the committed envelopes is unchanged."""
+    try:
+        return bool(m.type.isSigned) or not m.type.isFourState
+    except Exception:
+        return False
+
+
 def convert_param_sym(sm, m):
     """ParameterSymbol -> ParameterDecl (module parameter) or LocalParam
     (localparam). `default`/`expr` is the SYMBOLIC bound initializer;
@@ -27417,8 +29267,10 @@ def convert_param_sym(sm, m):
     ptype = None
     if tsyn is not None and tsyn.kind != SyntaxKind.ImplicitType:
         ptype, _reason = _dtype_sym(sm, m.type, tsyn)
-        if ptype is None:
+        if ptype is None or _sym_param_legacy_width_type(m):
             ptype = _param_width_type(sm, m)
+    elif _sym_implicit_ranged(tsyn):
+        ptype = _sym_param_syntax_dims(sm, m, None)
     init = getattr(m, "initializer", None)
     init_d = convert_sym_expr(sm, init) if init is not None else None
     resolved = None
@@ -27427,22 +29279,119 @@ def convert_param_sym(sm, m):
     except Exception:
         pass
     if m.isLocalParam:
-        return {
+        return _sym_implicit_signing(tsyn, ptype, _sym_param_signedness(m, ptype, {
             "kind": "LocalParam",
             "span": sym_span(sm, m),
             "name": m.name,
             "type": ptype,
             "expr": init_d,
             "resolved": resolved,
-        }
-    return {
+        }))
+    return _sym_implicit_signing(tsyn, ptype, _sym_param_signedness(m, ptype, {
         "kind": "ParameterDecl",
         "span": sym_span(sm, m),
         "name": m.name,
         "type": ptype,
         "default": init_d,
         "resolved": resolved,
-    }
+    }))
+
+
+def _sym_param_signedness(m, ptype, node):
+    """Record a DECLARED parameter type's signedness where it departs from
+    the envelope default (signed exactly when 32 bits wide: `int`,
+    `integer`; unsigned otherwise: `logic [..]`, `bit`). `int unsigned`,
+    `logic [31:0]`, `bit [31:0]` get `signed: false`; `byte`, `shortint`,
+    `longint`, `logic signed [..]` get `signed: true`. The Lean constant
+    tier reads `int` parameters as unbounded integers and every other type
+    at its width (Param.lean `declConstType`): without the field an
+    `int unsigned` parameter was read as an `int` and `UI - 1` at `UI = 0`
+    came out -1 instead of 2^32 - 1 (verifier finding 2026-10-28). Untyped
+    parameters (`type: null`) carry nothing.
+
+    Round 5 folds (verifier repros `vq_sgn2`, `vq_sgn3`): a type whose
+    WIDTH depends on a parameter (`logic signed [M-1:0] S`, symbolic
+    bounds) always carries the field. Whether it departs from the default
+    rule is a fact of the DEFAULT point's width only: `S` at the default
+    `M = 32` matched it and lost its `signed`, and Lean applies the rule at
+    each point's width (`Param.lean` `declConstType`), so it read S as
+    UNSIGNED at `M = 8` (o1 = 255 where Icarus 12.0 and the Yosys 0.53
+    netlist sign-extend -1), and `logic [N-1:0] U` (default `N = 8`) as
+    SIGNED at `N = 32`. Lean now refuses a parameter-dependent type without
+    the field (`declConstType`)."""
+    if ptype is None:
+        return node
+    try:
+        width = int(m.type.bitWidth)
+        signed = bool(m.type.isSigned)
+    except Exception:
+        return node
+    if signed != (width == 32) or _has_sym_refs(ptype):
+        node["signed"] = signed
+    return node
+
+
+def _sym_implicit_ranged(tsyn):
+    """True for an IMPLICIT parameter type that carries a packed range
+    (`parameter [3:0] V`, `parameter signed [3:0] V`): IEEE 1800-2023
+    §6.20.2 fixes such a parameter's range (and, without `signed`, makes it
+    unsigned) whatever the override — it is a typed parameter, not an
+    untyped one (verifier finding 2026-10-28: `type: null` made the Lean
+    constant tier read `V + 4'd8` unbounded, 17 where every simulator wraps
+    to 1)."""
+    try:
+        return (tsyn is not None and tsyn.kind == SyntaxKind.ImplicitType
+                and any(c.kind == SyntaxKind.VariableDimension
+                        for c in _syntax_children(tsyn)))
+    except Exception:
+        return False
+
+
+def _sym_param_syntax_dims(sm, m, width):
+    """PackedType of a DIMENSIONED parameter type (`parameter [3:0] V`,
+    `parameter logic signed [3:0] S`, `parameter bit [4:0] B`): the
+    symbolic dimensions read from the type syntax (`_syntax_packed_dims`)
+    when they cover every packed dimension of the elaborated type, so the
+    width stays parameter-dependent exactly as declared; otherwise the
+    loud `packed: null`. Signedness is `_sym_param_signedness`'s field."""
+    try:
+        t = m.type
+        if width is None:
+            width = int(t.bitWidth)
+        ndims = 0
+        cur = t.canonicalType
+        while type(cur).__name__ == "PackedArrayType":
+            ndims += 1
+            cur = cur.elementType.canonicalType
+        if type(cur).__name__ != "ScalarType" or ndims == 0:
+            return {"kind": "PackedType", "packed": None, "resolved": width}
+        packed = _syntax_packed_dims(sm, _decl_type_syntax(m))
+        if packed is None or len(packed) != ndims:
+            packed = None
+        return {"kind": "PackedType", "packed": packed, "resolved": width}
+    except Exception:
+        return {"kind": "PackedType", "packed": None, "resolved": width}
+
+
+def _sym_implicit_signing(tsyn, ptype, node):
+    """A RANGELESS implicit parameter type with a signing keyword
+    (`parameter signed P = 4'd3`) stays untyped (`type: null`: its range is
+    the final value's, §6.20.2) but records the keyword as `signed`, which
+    the Lean side applies to the final value's type (`PParam.signed?`)."""
+    if ptype is not None or tsyn is None:
+        return node
+    try:
+        if tsyn.kind != SyntaxKind.ImplicitType:
+            return node
+        signing = getattr(tsyn, "signing", None)
+        kind = str(getattr(signing, "kind", ""))
+        if kind.endswith("SignedKeyword") and not kind.endswith("UnsignedKeyword"):
+            node["signed"] = True
+        elif kind.endswith("UnsignedKeyword"):
+            node["signed"] = False
+    except Exception:
+        pass
+    return node
 
 
 # --- generate constructs ---------------------------------------------------
@@ -27484,6 +29433,7 @@ def convert_generate_for(sm, m):
     _SYM.genvars.append(genvar)
     try:
         init = convert_sym_expr(sm, m.initialExpression)
+        init = _sym_genvar_init(sm, m, init)
         bound = convert_sym_expr(sm, m.stopExpression)
         step = _genstep(sm, m.iterExpression)
         entries = []
@@ -27635,6 +29585,8 @@ def convert_members_sym(sm, scope):
 
 def _convert_member_sym(sm, m, k):
     """One non-if-generate member -> node or None (silently skipped)."""
+    if k == "Instance":
+        return convert_instance_sym(sm, m)
     if k == "Parameter":
         return convert_param_sym(sm, m)
     if k == "Genvar":
@@ -27678,6 +29630,895 @@ def _convert_member_sym(sm, m, k):
             pass
         return unsupported(sm, m, type(m).__name__ + ":" + k)
     return unsupported(sm, m, type(m).__name__ + ":" + k)
+
+
+# --- module instances (F3, 2026-10-28) --------------------------------------
+#
+# A module instance in symbolic mode is ONE `Instance` node: the definition
+# name, the symbolic parameter overrides, one `PortConn` per child port (in
+# the child's port order — slang resolves named, ordered, `.name` and `.*`
+# connections), and the lexical generate path the instance sits under. The
+# definition itself is emitted ONCE as a further `Module` of the envelope,
+# elaborated ALONE at its own defaults (`_sym_instance_definitions`); the
+# Lean side (`LeanModels/Sv/Hier2.lean`) flattens at instantiation time.
+
+_SYM_HIER_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_$]*\Z")
+
+
+def _sym_instance_path(m):
+    """The lexical generate path of instance `m` inside the module being
+    converted: one `{label, genvar}` per enclosing generate block, outermost
+    first (`genvar` = the loop variable of a generate-for block, `None` for
+    an if-generate block; unnamed blocks carry slang's LRM `genblk<n>`
+    names). Recovered from the hierarchical path of the bound template
+    instance — every generate-for body is bound from its FIRST entry, so the
+    indexed segments pair, in order, with the enclosing genvars on
+    `_SYM.genvars`. `None` when the path does not decompose that way (an
+    escaped identifier containing `.`/`[`/`]` anywhere on it)."""
+    parts = m.hierarchicalPath.split(".")
+    if len(parts) < 2:
+        return None
+    segs = []
+    genvars = list(_SYM.genvars)
+    used = 0
+    for part in parts[1:-1]:
+        mt = re.fullmatch(r"([A-Za-z_][A-Za-z0-9_$]*)(?:\[(-?\d+)\])?", part)
+        if mt is None:
+            return None
+        if mt.group(2) is None:
+            segs.append({"label": mt.group(1), "genvar": None})
+        else:
+            if used >= len(genvars):
+                return None
+            segs.append({"label": mt.group(1), "genvar": genvars[used]})
+            used += 1
+    if used != len(genvars) or not _SYM_HIER_NAME.match(parts[-1]):
+        return None
+    return segs
+
+
+def _sym_port_is_net(port):
+    """Whether an INPUT port is a net (an unconnected one reads z, IEEE
+    1800-2023 §23.2.2.3/§23.3.3) rather than a variable (reads its initial
+    x). slang reports `input logic a` as a variable; the LRM makes an input
+    port declared without the `var` keyword a net of the default net type,
+    and Icarus 12.0 agrees (z), so the `var` keyword of the declaration
+    header decides. `None` when the declaration header is not recognized."""
+    isym = getattr(port, "internalSymbol", None)
+    if isym is None:
+        return None
+    if str(isym.kind) == "SymbolKind.Net":
+        return True
+    syn = getattr(isym, "syntax", None)
+    while syn is not None and syn.kind not in (SyntaxKind.ImplicitAnsiPort,
+                                               SyntaxKind.PortDeclaration):
+        syn = getattr(syn, "parent", None)
+    header = getattr(syn, "header", None) if syn is not None else None
+    if header is None:
+        return None
+    if header.kind == SyntaxKind.NetPortHeader:
+        return True
+    if header.kind != SyntaxKind.VariablePortHeader:
+        return None
+    return not str(getattr(header, "varKeyword", "") or "").strip()
+
+
+def _sym_same_range(a, b):
+    """Whether two bound expressions come from the same source text (slang
+    substitutes a port's default value as the connection of an unconnected
+    port)."""
+    try:
+        ra, rb = a.sourceRange, b.sourceRange
+        return (ra.start.offset == rb.start.offset and ra.end.offset == rb.end.offset
+                and ra.start.buffer == rb.start.buffer)
+    except Exception:
+        return False
+
+
+_SYM_INT_ACTUAL_BINOPS = ("+", "-", "*", "/", "%", "&", "|", "^",
+                          "<<", ">>", "<<<", ">>>", "**")
+
+
+def _sym_int_actual_node(node):
+    """Whether a converted symbolic tree is an INT-class constant expression
+    (unsized integers, genvars, unqualified parameters, unary `-`/`+` and
+    integer arithmetic over them) — the trees the Lean value tier
+    materializes EXACTLY at any context width (`instExpr2`'s `.int`)."""
+    if not isinstance(node, dict):
+        return False
+    kind = node.get("kind")
+    if kind in ("Int", "GenvarRef"):
+        return True
+    if kind == "ParamRef":
+        return node.get("from_package") is None
+    if kind == "Unary":
+        return node.get("op") in ("-", "+") and _sym_int_actual_node(
+            node.get("operand"))
+    if kind == "Binary":
+        return (node.get("op") in _SYM_INT_ACTUAL_BINOPS
+                and _sym_int_actual_node(node.get("left"))
+                and _sym_int_actual_node(node.get("right")))
+    return False
+
+
+def _sym_port_actual(sm, e):
+    """An input actual as a VALUE expression (F3 port connections,
+    2026-10-28 repair). slang binds the actual already CONVERTED to the port
+    type of the instance it bound — at the default parameters, or at the
+    FIRST iteration of an enclosing generate-for — and an integer-typed
+    constant under that conversion was folded into a literal of THAT port
+    width (`.i(5)` into a 1-bit port: `1'b1`), which the Lean side then
+    zero-extended at every other width (verifier finding: `.i(5)`, `.i(-1)`,
+    `.i(37)`, `.i(g)`). Here the implicit conversions are peeled off: an
+    actual whose own type is a 32-bit signed integral (`int`, `integer`,
+    a genvar, an unsized decimal) that converts, in a symbolic position, to
+    an INT-class tree (`_sym_int_actual_node`) is emitted UNCONVERTED, and
+    the Lean side fits it to the port width at each point (exact: `.int` is
+    `LVec.ofInt` at the context width). The same constant whose type slang
+    WIDENED (the port is wider than 32 bits at the bound point, so the
+    context width was propagated into it) is loud (`PortConnection:int-
+    width`): its folded literal is a default-point value. Anything else is
+    the ordinary conversion."""
+    op = e
+    while (type(op).__name__ == "ConversionExpression"
+           and op.conversionKind in (ConversionKind.Implicit,
+                                     ConversionKind.Propagated)):
+        op = op.operand
+    if op is e:
+        return convert_expr(sm, e)
+    try:
+        signed32 = (op.type.isIntegral and op.type.isSigned)
+        width = int(op.type.bitWidth)
+    except Exception:
+        return convert_expr(sm, e)
+    if not signed32:
+        return convert_expr(sm, e)
+    with _SymPos():
+        node = convert_expr(sm, op)
+    if width == 32 and _sym_int_actual_node(node):
+        return node
+    if width > 32 and _sym_int_actual_syntax(op):
+        return unsupported(sm, e, "PortConnection:int-width")
+    return convert_expr(sm, e)
+
+
+def _sym_int_actual_syntax(e):
+    """Whether a bound expression is, SYNTACTICALLY, an integer constant
+    expression of the INT class (decimal literals, names, unary `-`/`+`,
+    integer arithmetic, parentheses) — the shape whose context-widened
+    binding `_sym_port_actual` refuses."""
+    syn = getattr(e, "syntax", None)
+
+    def ok(sn):
+        if sn is None:
+            return False
+        k = sn.kind
+        if k == SyntaxKind.ParenthesizedExpression:
+            kids = _syntax_children(sn)
+            return len(kids) == 1 and ok(kids[0])
+        if k in (SyntaxKind.IntegerLiteralExpression, SyntaxKind.IdentifierName):
+            return True
+        if k in (SyntaxKind.UnaryMinusExpression, SyntaxKind.UnaryPlusExpression):
+            kids = _syntax_children(sn)
+            return len(kids) == 1 and ok(kids[0])
+        if SYM_SYNTAX_BINOPS.get(k) in _SYM_INT_ACTUAL_BINOPS:
+            kids = _syntax_children(sn)
+            return len(kids) == 2 and ok(kids[0]) and ok(kids[1])
+        return False
+    try:
+        return ok(syn)
+    except Exception:
+        return False
+
+
+# --- INT-class constants at a conversion boundary (sv-0.2, 2026-10-28) -----
+#
+# slang binds `assign o = -1;` (`o` a parameter- or genvar-width vector) as an
+# implicit conversion of the 32-bit signed constant to the target type of the
+# DEFAULT point (or of the FIRST iteration of an enclosing generate-for), and
+# the M0 fold made that a literal of THAT width, which the Lean value tier
+# then zero-extended at every other point (verifier findings `w_stale_flat`,
+# `w_gvw_flat`, `v_cstale`: `-1` into `[N+1:0]` at N = 7 read 000111111, every
+# simulator 111111111). `_sym_conversion` now emits the UNCONVERTED INT-class
+# tree instead — what `_sym_port_actual` does for port actuals — and
+# `fitExpr2` materializes it at the INSTANTIATED context width. Exact because
+# the conversion is sign-preserving: an assignment-like (`Implicit`)
+# conversion keeps the right-hand side's own signedness (IEEE 1800-2023
+# §11.8.2, §10.7), and a `Propagated` one is admitted only into a SIGNED type,
+# so in both the constant's value is extended by its sign or truncated, which
+# is `LVec.ofInt` at the context width (`instExpr2`'s `.int`/`.paramRef`).
+# A propagated conversion into an UNSIGNED type zero-extends a negative
+# operand instead and is never admitted here. A signed constant outside the
+# vocabulary is LOUD in a parametric family
+# (`ConversionExpression:signed-constant`): its fold is a default-point value.
+
+_SYM_INT_VALUE_BINOPS = _SYM_INT_ACTUAL_BINOPS + (
+    "u/", "s/", "u%", "s%", "u**u", "u**s", "s**u", "s**s",
+    "u<<", "s<<", "u>>", "s>>", "u<<<", "s<<<", "u>>>", "s>>>")
+
+
+_SYM_INT_VALUE_DIVOPS = _SYM_INT_VALUE_BINOPS[len(_SYM_INT_ACTUAL_BINOPS):]
+
+
+def _sym_int_value_node(node, in_div=False):
+    """`_sym_int_actual_node` for a VALUE-position tree: the same leaves
+    (unsized integers, genvars, unqualified parameters) under unary `- + ~`
+    and integer arithmetic, its operators spelled either way (value
+    positions carry the operand signedness: `s/`, `u<<`, …). Below such a
+    value-position `/ % ** << >> <<< >>>` (`in_div`), the operand
+    conversions `_sym_conversion` emits there (`Resize`/`SignedResize`) are
+    admitted too: Lean's `instDivOperand2` re-applies them at the operation
+    width of each point (§11.8.2), as for every other division operand."""
+    if not isinstance(node, dict):
+        return False
+    kind = node.get("kind")
+    if kind in ("Int", "GenvarRef"):
+        return True
+    if kind == "ParamRef":
+        return node.get("from_package") is None
+    if kind == "SysCall":
+        # `$high(v)` / `$size(v)` of a declared signal (round 3 folds, item
+        # 4): an `int` the Lean constant tier evaluates from the signal's
+        # declared range AT EACH POINT (`Param.lean`, `dimQuery`; loud
+        # without one).
+        args = node.get("args") or []
+        return (node.get("name") in ("$high", "$size") and len(args) == 1
+                and isinstance(args[0], dict) and args[0].get("kind") == "Ident")
+    if kind == "Unary":
+        return node.get("op") in ("-", "+", "~") and _sym_int_value_node(
+            node.get("operand"), in_div)
+    if kind in ("Resize", "SignedResize"):
+        return in_div and _sym_int_value_node(node.get("operand"), True)
+    if kind == "Binary":
+        op = node.get("op")
+        below = in_div or op in _SYM_INT_VALUE_DIVOPS
+        return (op in _SYM_INT_VALUE_BINOPS
+                and _sym_int_value_node(node.get("left"), below)
+                and _sym_int_value_node(node.get("right"), below))
+    return False
+
+
+def _sym_int_value_tree(e, op, inner):
+    """The unconverted INT-class tree `inner` of the value-position
+    conversion `e` of the signed constant `op` (see above), or None."""
+    if _SYM is None or _SYM.symctx:
+        return None
+    try:
+        kind = e.conversionKind
+        if not (op.type.isIntegral and op.type.isSigned
+                and e.type.isIntegral):
+            return None
+        if not (kind == ConversionKind.Implicit
+                or (kind == ConversionKind.Propagated and e.type.isSigned)):
+            return None
+    except Exception:
+        return None
+    return inner if _sym_int_value_node(inner) else None
+
+
+def _sym_unsigned_simple_operand(sm, e, kind, inner=None):
+    """A SIGNED simple operand propagated into an UNSIGNED context (round 3
+    folds, item 1; round 3 repair; round 4 precision pass): a parameter,
+    localparam or genvar reference (or an INT-class `$high`/`$size`) under
+    a `Propagated` signed-to-unsigned conversion, in the VALUE positions of
+    a parametric family and, since the round 3 repair, in its SYMBOLIC
+    positions too (`_SymPos` — case items, select labels, generate
+    conditions, initializers). IEEE 1800-2023 §11.8.2 converts a simple
+    operand to the propagated type before extending it: ZERO extension into
+    an unsigned type (Icarus 12.0 and Yosys 0.53 agree; repros `ib_pneg`,
+    `vp_case`, `vp_idx`). slang's conversion changes no bit at the default
+    point's width (`a + P` with `int P` and a 9-bit `a`: the context is 32
+    bits there), so the generic path dropped it and Lean sign-extended the
+    bare reference wherever the context outgrew 32 bits. The conversion is
+    kept as `Resize(tw, operand)` — and so is the WIDENING twin (`inner`
+    given, from `_sym_conversion`: `P` into the 42-bit context of `a + P`,
+    formerly `ConversionExpression:width`, emitted in every module).
+
+    What this makes exact or loud, at EVERY point: Lean reads the marker as
+    the operand's own-width value zero-extended to the context it is handed
+    (value tier `instExpr2`'s `resize` arm; constant tier `evalAt`), never
+    as a context of its own — `tw` is the DEFAULT point's width, and the
+    constant tier does not read it as a target (round 4, `Param.lean`
+    `PExpr.pushedTarget`, which reads only a conversion AT a root: reading
+    `Resize(8, SB) + Resize(8, 1'b1)` as a pushed 8-bit target gave
+    `v[SB + 1'b1]` the default point's width at N = 4).
+    A NEGATIVE genvar under the marker at a context wider than 32 bits is
+    loud (Icarus sign-extends it: `GenvarRef:unsigned-extension`,
+    `PExpr.negGenvarAt`). Returns None — the UNWRAPPED reference — in
+    exactly these cases, each exact at every point: an unsigned operand
+    (nothing to extend but zeros); a signed target (sign extension is the
+    LRM's, and the bare reference materializes with the operand's DECLARED
+    signedness, which the envelope records at every point — since round 5
+    for a parameter whose width depends on another too,
+    `_sym_param_signedness`; before, `logic signed [M-1:0] S` at a default
+    `M = 32` lost its `signed` field and Lean read the bare `S` UNSIGNED at
+    every other `M`, verifier repro `vq_sgn2`, so this case and the next
+    were exact only for a fixed-width operand); an assignment-like
+    (`Implicit`) same-width conversion (a right-hand side keeps its own
+    signedness, §10.7: `localparam logic [N-1:0] L = P` with `int P = -3`
+    at a default `N = 32` is sign-extended at `N = 40` by the model, Icarus
+    and Yosys, repro `conf_lp2`; a WIDTH-CHANGING one into an unsigned type
+    is loud, `ConversionExpression:width`); a module with one point (the
+    default is the only point); and every other operand (an unsized literal
+    is non-negative; a sized signed literal is
+    `_sym_signed_literal_conversion`'s)."""
+    if _SYM is None or kind != ConversionKind.Propagated:
+        return None
+    if _SYM.symctx and not _sym_family_point_dependent():
+        return None
+    try:
+        op = e.operand
+        if not (op.type.isIntegral and e.type.isIntegral and op.type.isSigned
+                and not e.type.isSigned):
+            return None
+        if op.type.isFourState != e.type.isFourState and not e.type.isFourState:
+            return None
+        if int(op.type.bitWidth) > int(e.type.bitWidth):
+            return None
+    except Exception:
+        return None
+    if inner is None and not _sym_family_point_dependent():
+        return None
+    if inner is None:
+        inner = _convert_expr(sm, op)
+    if not isinstance(inner, dict) or not (
+            inner.get("kind") in ("ParamRef", "GenvarRef")
+            or (inner.get("kind") == "SysCall" and _sym_int_value_node(inner))):
+        return None
+    return {"kind": "Resize", "span": node_span(sm, e), "width": e.type.bitWidth,
+            "operand": inner}
+
+
+def _sym_family_point_dependent():
+    """Whether the scope being converted is a family with more than one
+    point: an overridable (non-local) parameter, or an enclosing genvar.
+    A default-point fold is exact only outside such a scope."""
+    if _SYM is None or _SYM.scope is None or _SYM.genvars:
+        return True
+    try:
+        return any(type(member).__name__ in ("ParameterSymbol",
+                                             "TypeParameterSymbol")
+                   and not getattr(member, "isLocalParam", False)
+                   for member in _SYM.scope)
+    except Exception:
+        return True
+
+
+# The `Unsupported` kind `_sym_unsized_xz_widening` emits for an unsized x/z
+# literal widened inside the construct being converted (an input port actual,
+# an unpacked-array pattern element), or None (round 5 Lane A, 2026-10-29).
+_SYM_UNSIZED_XZ_LOUD = None
+
+
+class _SymUnsizedXZLoud:
+    """with _SymUnsizedXZLoud(kind): make every unsized x/z widening loud."""
+
+    def __init__(self, kind):
+        self.kind = kind
+
+    def __enter__(self):
+        global _SYM_UNSIZED_XZ_LOUD
+        self.saved = _SYM_UNSIZED_XZ_LOUD
+        _SYM_UNSIZED_XZ_LOUD = self.kind
+
+    def __exit__(self, *exc):
+        global _SYM_UNSIZED_XZ_LOUD
+        _SYM_UNSIZED_XZ_LOUD = self.saved
+        return False
+
+
+def _sym_port_conn(sm, m, pc):
+    """One port connection of instance `m` -> `PortConn` (or `Unsupported`).
+    Inputs carry the actual as a VALUE expression (`expr`, `null` when
+    unconnected, plus `net`); outputs carry it as an assignment TARGET
+    (`target`, `null` when unconnected) — the shapes a continuous `assign`
+    admits (`select_target`, concatenation targets). Port-width coercion is
+    the Lean side's (per parameter point), never folded here."""
+    port = pc.port
+    pname = getattr(port, "name", "") or ""
+    if type(port).__name__ != "PortSymbol":
+        return unsupported(sm, m, "PortConnection:" + type(port).__name__,
+                           pname)
+    dname = str(port.direction).split(".")[-1]
+    direction = DIRECTION_MAP.get(dname)
+    if direction is None:
+        return unsupported(sm, m, "PortConnection:" + dname, pname)
+    if not _SYM_HIER_NAME.match(pname):
+        return unsupported(sm, m, "PortConnection:name", pname)
+    e = pc.expression
+    if getattr(port, "initializer", None) is not None and (
+            e is None or _sym_same_range(e, port.initializer)):
+        # A port default (§23.2.2.4) is the value of an unconnected input:
+        # slang substitutes it, bound in the CHILD's scope — not modelled.
+        return unsupported(sm, m, "PortConnection:default", pname)
+    span = node_span(sm, e) if e is not None else sym_span(sm, m)
+    node = {"kind": "PortConn", "span": span, "port": pname,
+            "dir": direction}
+    if direction == "in":
+        if e is None:
+            net = _sym_port_is_net(port)
+            if net is None:
+                return unsupported(sm, m, "PortConnection:kind", pname)
+            node["expr"] = None
+            node["net"] = net
+        else:
+            # Round 5 (2026-10-29): an unsized x/z literal widened anywhere
+            # in an input actual is loud (`_sym_unsized_xz_widening`).
+            # Round 5 repair: an actual HOLDING an unsized x/z-top literal is
+            # loud whatever the port width at the bound point (the default
+            # parameters, the first generate-for iteration): Icarus 12.0
+            # zero-pads a narrower actual, Xcelium and the Yosys netlist
+            # extend the x/z, and the port can be wider at another point
+            # (`gaps5/vinitA/d/vp1`, `vp2`, `vp7`).
+            if _sym_contains_unsized_xz(e):
+                node["expr"] = unsupported(sm, e, "PortConnection:unsized-xz")
+                return node
+            with _SymUnsizedXZLoud("PortConnection:unsized-xz"):
+                node["expr"] = _sym_port_actual(sm, e)
+        return node
+    if e is None:
+        node["target"] = None
+        return node
+    if type(e).__name__ != "AssignmentExpression":
+        return unsupported(sm, m, "PortConnection:" + type(e).__name__, pname)
+    left = e.left
+    initialized = _sym_initialized_target_info(left)
+    if initialized is not None:
+        # An output connection is a continuous driver of its actual: the
+        # same mixture `convert_continuous_assign` refuses.
+        return unsupported(
+            sm, m, "PortConnection:initialized-" + initialized[0],
+            pname + ": " + _sym_unknown_target_text(initialized[1], left)
+            if initialized[0] == "unknown" else pname)
+    if type(left).__name__ == "ConcatenationExpression":
+        parts = _symbolic_concat_target(sm, left)
+        if parts is None:
+            return unsupported(sm, m, "PortConnection:target", pname)
+        target = {"kind": "ConcatTarget", "span": node_span(sm, left),
+                  "width": left.type.bitWidth, "parts": parts}
+    else:
+        target, ok = select_target(sm, left)
+        if not ok:
+            return unsupported(sm, m, "PortConnection:target", pname)
+    node["target"] = target
+    return node
+
+
+_SYM_OVERRIDE_PROPAGATING_BINOPS = (
+    "BinaryOperator.Add", "BinaryOperator.Subtract", "BinaryOperator.Multiply",
+    "BinaryOperator.Divide", "BinaryOperator.Mod", "BinaryOperator.BinaryAnd",
+    "BinaryOperator.BinaryOr", "BinaryOperator.BinaryXor",
+    "BinaryOperator.BinaryXnor", "BinaryOperator.LogicalShiftLeft",
+    "BinaryOperator.LogicalShiftRight", "BinaryOperator.ArithmeticShiftLeft",
+    "BinaryOperator.ArithmeticShiftRight", "BinaryOperator.Power")
+_SYM_OVERRIDE_PROPAGATING_UNOPS = (
+    "UnaryOperator.Minus", "UnaryOperator.Plus", "UnaryOperator.BitwiseNot")
+
+
+_SYM_FIXED_PARAM_TYPE_KINDS = (
+    "IntType", "IntegerType", "ByteType", "ShortIntType", "LongIntType",
+    "LogicType", "BitType", "RegType", "ImplicitType")
+
+
+def _sym_param_type_fixed(p):
+    """Whether parameter `p`'s DECLARED type has the same width at every
+    point (round 5 folds): a keyword integral type (`int`, `integer`,
+    `byte`, `logic`, `bit`, …) or an implicit one whose packed dimensions
+    are built from integer literals (`[39:0]`, `[4*10-1:0]`) and names of
+    sibling parameters of the same instance whose value is a literal at
+    every point (overridden by an integer-literal expression, `.W(40)`, or
+    not overridden with one as its default), or an untyped parameter (an
+    INT-class override makes it an `int`). A bound naming anything else
+    (`[W-1:0]` with `.W(N + 40)`, `[$clog2(D):0]`), a typedef or any other
+    type syntax is NOT fixed: its width at an instance is the width at
+    THAT point only."""
+    try:
+        tsyn = _decl_type_syntax(p)
+        if tsyn is None:
+            return False
+        if str(tsyn.kind).split(".")[-1] not in _SYM_FIXED_PARAM_TYPE_KINDS:
+            return False
+
+        def literal(n, names=frozenset()):
+            k = n.kind
+            if k in (SyntaxKind.IntegerLiteralExpression,
+                     SyntaxKind.IntegerVectorExpression):
+                return True
+            if k == SyntaxKind.IdentifierName:
+                return str(n).strip() in names
+            if (k == SyntaxKind.ParenthesizedExpression
+                    or k in SYM_SYNTAX_BINOPS or k in SYM_SYNTAX_UNOPS):
+                kids = _syntax_children(n)
+                return bool(kids) and all(literal(c, names) for c in kids)
+            return False
+        consts = set()
+        try:
+            for q in p.parentScope:
+                if type(q).__name__ != "ParameterSymbol" or q is p:
+                    continue
+                qinit = getattr(q.declaredType, "initializer", None)
+                qsyn = getattr(qinit, "syntax", None)
+                if qsyn is not None and literal(qsyn):
+                    consts.add(q.name)
+        except Exception:
+            consts = set()
+        consts = frozenset(consts)
+        for dim in _syntax_children(tsyn):
+            if dim.kind != SyntaxKind.VariableDimension:
+                return False
+            for spec in _syntax_children(dim):
+                if spec.kind != SyntaxKind.RangeDimensionSpecifier:
+                    return False
+                for sel in _syntax_children(spec):
+                    if sel.kind != SyntaxKind.SimpleRangeSelect:
+                        return False
+                    bounds = _syntax_children(sel)
+                    if len(bounds) != 2 or not all(literal(b, consts) for b in bounds):
+                        return False
+        return True
+    except Exception:
+        return False
+
+
+def _sym_param_untyped(p):
+    """Whether parameter `p` has no declared type and no packed range
+    (`parameter W = 8`, `parameter signed W = 8`): it takes the type of its
+    final value (IEEE 1800-2023 §6.20.2)."""
+    try:
+        tsyn = _decl_type_syntax(p)
+        if tsyn is None:
+            return True
+        if tsyn.kind != SyntaxKind.ImplicitType:
+            return False
+        return not any(c.kind == SyntaxKind.VariableDimension
+                       for c in _syntax_children(tsyn))
+    except Exception:
+        return False
+
+
+def _sym_icarus_widens(e):
+    """Whether Icarus 12.0 (default `-gno-strict-expr-width`) types the
+    constant expression `e` WIDER than its own type when it becomes an
+    untyped parameter's value (round 6 folds; the extractor twin of
+    `Param.lean`'s `PExpr.icarusWidens`, measured there with `$bits`): `+ -
+    *` anywhere on its context chain (through implicit conversions, `/ % & |
+    ^ ~^`, unary `- + ~` and both arms of `?:`), `**` (`2 ** N` is 42
+    bits in Icarus at `N = 40`), and, round 7, a LEFT shift `<< <<<` (`1 <<
+    N` is 32 + N bits in Icarus, the value 2^40 at `N = 40` where Yosys
+    gives 0; a right shift stops the width). Measured: `#(.W(N + 1))` into an untyped `W`
+    read as `{a, W}` is `0x600000009` in Icarus and `0x300000009` in the
+    Yosys 0.53 netlist at `a = 3`, `N = 8` (scratch `gaps5/folds/p/uw/t6`).
+    Anything this walk cannot read counts as widening."""
+    try:
+        cname = type(e).__name__
+        if cname == "ConversionExpression":
+            return _sym_icarus_widens(e.operand)
+        if cname == "BinaryExpression":
+            op = str(e.op)
+            if op in ("BinaryOperator.Add", "BinaryOperator.Subtract",
+                      "BinaryOperator.Multiply", "BinaryOperator.Power"):
+                return True
+            if op in ("BinaryOperator.LogicalShiftLeft",
+                      "BinaryOperator.ArithmeticShiftLeft"):
+                # Round 7 folds (round 6 FOLDS verifier blocker 3): Icarus
+                # widens a left shift by its amount (`1 << N` is 32 + N bits,
+                # `1 << 3` 35); a right shift stops the width.
+                return True
+            if op in ("BinaryOperator.Divide", "BinaryOperator.Mod",
+                      "BinaryOperator.BinaryAnd", "BinaryOperator.BinaryOr",
+                      "BinaryOperator.BinaryXor", "BinaryOperator.BinaryXnor"):
+                return _sym_icarus_widens(e.left) or _sym_icarus_widens(e.right)
+            return False
+        if cname == "UnaryExpression":
+            if str(e.op) in _SYM_OVERRIDE_PROPAGATING_UNOPS:
+                return _sym_icarus_widens(e.operand)
+            return False
+        if cname == "ConditionalExpression":
+            return _sym_icarus_widens(e.left) or _sym_icarus_widens(e.right)
+        return False
+    except Exception:
+        return True
+
+
+def _sym_override_root(sm, p, init, expr):
+    """An instance parameter override whose expression is a TYPED (non-INT)
+    context-propagating operator — `+ - * / % & | ^ ~^`, a shift or power,
+    unary `- + ~`, under any conversion — is where the tools split (round 3
+    repair, measured on `fold_ovr`/`fold_ovr2`): IEEE 1800-2023 §10.8 lists
+    a typed parameter's override among the assignment-like contexts, so
+    `.P(U + 8'd100)` with an 8-bit `U = 200` into `logic [15:0] P` is
+    evaluated at 16 bits — 300, Icarus 12.0 — while Yosys 0.53 (the
+    synthesized netlist) and Verilator 5.042 evaluate it at its own 8 bits
+    and give 44. The Lean constant tier evaluates an override in the
+    INSTANTIATING scope, without the child's parameter type, so it could
+    follow neither reading at every point. Refused:
+    `InstanceSymbol:override-context` (`docs/sv-oracle-disagreements.md`,
+    "Refused where the oracles split"). INT-class overrides (`.W(N + 2)`),
+    leaves, selects and comparisons are unchanged.
+
+    Round 4 folds: the INT class is decided at EVERY point
+    (`_sym_genvar_int_class`: a `logic signed [N-1:0]` parameter is 32 bits
+    only at N = 32, so `.P(S + 1)` over one is typed and refused), and an
+    INT-class override into a typed parameter WIDER than 32 bits
+    (`.P(N * 1024)` into `logic signed [39:0] P`, whose tree slang pushed
+    the 40 bits into: `SignedResize(40, N) * 1024`) keeps that assignment as
+    a root conversion of the parameter's width (`SignedResize`, the tree's
+    own signedness), which the Lean constant tier reads as an
+    assignment-like root (`Param.lean` `evalSized`): the 32-bit value where
+    it equals the 40-bit one, `Constant:assignment-context` where the
+    32-bit arithmetic overflows (the tools split on a typed override's
+    context, above).
+
+    Round 5 folds (verifier repro `vq_ovr2`, rows `fold_ovrw*`): that root
+    conversion's width is the child parameter's width at the DEFAULT point,
+    exact only when the parameter's declared type has one width at every
+    point (`_sym_param_type_fixed`). Into a parameter whose type depends on
+    another (`#(.W(N + 40), .P(N << 40))` with `logic signed [W-1:0] P`,
+    default `N = 0`) it is not: at `N = 1` P is 41 bits, where `N << 40` is
+    -2^40 (Icarus 12.0, §10.8, slang) and 0 in the Yosys 0.53 netlist, while
+    both readings of the default point's 40 bits are 0, so the model ran
+    silently. Such an INT-class context-propagating override is refused
+    (`InstanceSymbol:override-context`), whatever its width at the default
+    point (below 32 bits the envelope tree is the 32-bit `int` one, which
+    is Yosys's reading wherever the type grows past 32). Leaves stay
+    admitted (`.P(N)`: no operator, both tools sign-extend), and a
+    dependent type whose parameters are literal at every point (`.W(40)`)
+    counts as fixed (the verifier's `vq_ovr` `u4`)."""
+    core = init
+    try:
+        while type(core).__name__ == "ConversionExpression":
+            core = core.operand
+        cname = type(core).__name__
+        propagating = (
+            (cname == "BinaryExpression"
+             and str(core.op) in _SYM_OVERRIDE_PROPAGATING_BINOPS)
+            or (cname == "UnaryExpression"
+                and str(core.op) in _SYM_OVERRIDE_PROPAGATING_UNOPS)
+            or cname == "ConditionalExpression")
+    except Exception:
+        return unsupported(sm, init, "InstanceSymbol:override-context", p.name)
+    if not propagating:
+        return expr
+    if _sym_genvar_int_class(init):
+        if _sym_param_untyped(p) and _sym_icarus_widens(init):
+            # Round 6 folds: an untyped child parameter takes the override's
+            # type — 32 bits to slang and Yosys, lossless to Icarus.
+            return unsupported(sm, init, "InstanceSymbol:override-untyped-width", p.name)
+        if not _sym_param_type_fixed(p):
+            return unsupported(sm, init, "InstanceSymbol:override-context", p.name)
+        try:
+            width = int(core.type.bitWidth)
+            signed = bool(core.type.isSigned)
+        except Exception:
+            return unsupported(sm, init, "InstanceSymbol:override-context", p.name)
+        if (width > 32 and isinstance(expr, dict)
+                and expr.get("kind") not in ("Unsupported", "Resize", "SignedResize")):
+            return {"kind": "SignedResize" if signed else "Resize",
+                    "span": node_span(sm, init), "width": width, "operand": expr}
+        return expr
+    return unsupported(sm, init, "InstanceSymbol:override-context", p.name)
+
+
+def _sym_genvar_init(sm, m, init):
+    """A genvar initializer's assignment to its 32-bit `integer` (round 4
+    folds, verifier repro `rf_gv`). slang binds `genvar g = U + 1'b1` as an
+    `Implicit` conversion to `integer` around the operand tree; where that
+    tree has 32 bits at the DEFAULT point the conversion changes no bit there
+    and the generic path drops it, so the envelope held the bare tree, which
+    Lean evaluated at its OWN width at every other point. That is Icarus
+    12.0's reading (`g` starts at 0 with `logic [N-1:0] U = -1` at N = 4);
+    slang's own elaboration at that point, the Yosys 0.53 netlist and IEEE
+    1800-2023 §10.8/§11.8.1 evaluate it at 32 bits (16) — the oracles split.
+    A 32-bit initializer outside the INT class at some point
+    (`_sym_genvar_int_class`) whose root conversion was dropped (or that
+    has none: a `logic signed [31:0]` tree is an `integer` to slang) is kept
+    under `Resize(32, init)`
+    (`SignedResize(32, init)` for a signed operand), which the Lean constant
+    tier reads as an assignment-like root (`Param.lean` `evalSized`,
+    `PExpr.pushedTarget`): the own-width value where both readings agree,
+    refused (`Constant:assignment-context`) where they differ or where the
+    value does not fit the 32-bit target. The two readings can split at the
+    default point too (`4'd15 + 1'b1`), so every module gets the wrapper (the
+    initializer is converted with the genvar pushed, where the literal
+    widenings are kept as `Resize` nodes). Returned unchanged: INT-class
+    initializers (`0`, `N - 1`, `G0`), a width-changing conversion (already
+    a root `Resize`/`SignedResize`, or loud) and an `Unsupported` tree."""
+    if _SYM is None or not isinstance(init, dict) or init.get("kind") == "Unsupported":
+        return init
+    try:
+        e = m.initialExpression
+        op = e
+        if type(e).__name__ == "ConversionExpression":
+            if e.conversionKind != ConversionKind.Implicit:
+                return init
+            op = e.operand
+        # (No root conversion at all: a `logic signed [31:0]` tree IS an
+        # `integer` to slang — `S + S` with `logic signed [N-1:0] S` at N = 32.)
+        if not (op.type.isIntegral and e.type.isIntegral):
+            return init
+        if int(op.type.bitWidth) != 32 or int(e.type.bitWidth) != 32:
+            return init
+        if _sym_genvar_int_class(e):
+            return init
+        signed = bool(op.type.isSigned)
+    except Exception:
+        return init
+    return {"kind": "SignedResize" if signed else "Resize",
+            "span": node_span(sm, e), "width": 32, "operand": init}
+
+
+def _sym_genvar_int_class(e, depth=0):
+    """Whether a bound genvar initializer is of the INT class at EVERY point
+    (`_sym_genvar_init`): every leaf an unsized integer, a genvar, an `int`/
+    `integer` parameter, or an UNTYPED parameter whose own initializer is of
+    the class (its type is its value's, §6.20.2), under conversions, unary
+    and binary operators and `?:` arms. A parameter whose DECLARED type is a
+    packed range is never of the class, whatever its default width
+    (`logic signed [N-1:0] S` is 32 bits only at N = 32; round 4's
+    `_sym_bound_int_class`, which read the default width, was removed in
+    round 5 — it had no caller left). Also the INT test of
+    `_sym_override_root`."""
+    if depth > 16:
+        return False
+    try:
+        cname = type(e).__name__
+        if cname == "ConversionExpression":
+            return _sym_genvar_int_class(e.operand, depth + 1)
+        if cname in ("IntegerLiteral", "NamedValueExpression"):
+            t = e.type
+            if not (t.isIntegral and t.isSigned and int(t.bitWidth) == 32):
+                return False
+            if cname == "IntegerLiteral":
+                return type(t).__name__ == "PredefinedIntegerType"
+            sym = e.symbol
+            scls = type(sym).__name__
+            if scls == "GenvarSymbol":
+                return True
+            if scls != "ParameterSymbol":
+                return False
+            if type(t).__name__ == "PredefinedIntegerType":
+                return True
+            tsyn = _decl_type_syntax(sym)
+            if tsyn is None or tsyn.kind != SyntaxKind.ImplicitType or _sym_implicit_ranged(tsyn):
+                return False
+            init = getattr(sym, "initializer", None)
+            return init is not None and _sym_genvar_int_class(init, depth + 1)
+        if cname == "UnaryExpression":
+            return _sym_genvar_int_class(e.operand, depth + 1)
+        if cname == "BinaryExpression":
+            return (_sym_genvar_int_class(e.left, depth + 1)
+                    and _sym_genvar_int_class(e.right, depth + 1))
+        if cname == "ConditionalExpression":
+            return (_sym_genvar_int_class(e.left, depth + 1)
+                    and _sym_genvar_int_class(e.right, depth + 1))
+    except Exception:
+        return False
+    return False
+
+
+def convert_instance_sym(sm, m):
+    """A module instance -> ONE `Instance` node (schema sv-0.2, F3): `name`,
+    `module` (the definition, emitted as a further `Module` of the
+    envelope), `path` (`_sym_instance_path`), `params` (`[{name, expr}]`,
+    the OVERRIDDEN parameters only, each override a symbolic constant
+    expression over the instantiating scope's parameters and genvars —
+    ordered `#(…)` overrides arrive resolved to names), `ports` (one
+    `PortConn` per child port, child port order). Interfaces, type
+    parameters and anything else outside the tier are `Unsupported`."""
+    try:
+        if not m.isModule:
+            return unsupported(sm, m, "InstanceSymbol:interface")
+        dname = m.definition.name
+        if not _SYM_HIER_NAME.match(m.name) or not _SYM_HIER_NAME.match(dname):
+            return unsupported(sm, m, "InstanceSymbol:name")
+        path = _sym_instance_path(m)
+        if path is None:
+            return unsupported(sm, m, "InstanceSymbol:path")
+        params = []
+        for p in m.body.parameters:
+            if not getattr(p, "isOverridden", False):
+                continue
+            if type(p).__name__ != "ParameterSymbol":
+                return unsupported(sm, m, "InstanceSymbol:type-parameter")
+            init = p.declaredType.initializer
+            if init is None:
+                return unsupported(sm, m, "InstanceSymbol:override")
+            params.append({"name": p.name,
+                           "expr": _sym_override_root(sm, p, init,
+                                                      convert_sym_expr(sm, init))})
+        ports = [_sym_port_conn(sm, m, pc) for pc in m.portConnections]
+        if dname not in _SYM.instance_modules:
+            _SYM.instance_modules.append(dname)
+        return {
+            "kind": "Instance",
+            "span": sym_span(sm, m),
+            "name": m.name,
+            "module": dname,
+            "path": path,
+            "params": params,
+            "ports": ports,
+        }
+    except Exception as exc:
+        return internal_error(exc)
+
+
+def _sym_convert_definition(tree, source_map, name):
+    """The definition of an instantiated module, elaborated ALONE at its own
+    parameter defaults — a separate slang compilation whose only top is
+    `name`, i.e. exactly the module `--top name` emits (its `resolved`
+    metadata is the definition's own defaults, so the Lean load gate
+    cross-checks it like a top) — converted by the top-module converter.
+    Returns `(module node or None, packages, instantiated definition
+    names)`; `None` when slang cannot elaborate it as a top (a parameter
+    without a default)."""
+    global _SYM
+    saved = _SYM
+    try:
+        options = CompilationOptions()
+        options.topModules = {name}
+        if _SYM_DEF_OVERRIDES:
+            options.paramOverrides = list(_SYM_DEF_OVERRIDES)
+        comp = Compilation(pyslang.Bag([options]))
+        comp.addSyntaxTree(tree)
+        sm = tree.sourceManager
+        inst = None
+        for cand in comp.getRoot().topInstances:
+            if cand.name == name:
+                inst = cand
+                break
+        if inst is None:
+            return None, set(), []
+        nerr = sum(1 for d in comp.getAllDiagnostics() if d.isError())
+        _SYM = SymCtx(comp, sm, source_map)
+        try:
+            module = convert_module_sym(sm, inst)
+            _reject_invalid_lowering(sm, comp, [module], module["others"],
+                                     "implication_lowered", "LogicalImplication",
+                                     "lowered implication")
+            for pred, tag, what in (
+                    (contains_division, "Division", "division"),
+                    (contains_remainder, "Remainder", "remainder"),
+                    (contains_power, "Power", "power"),
+                    (contains_shift, "Shift", "a shift")):
+                if pred(module) and nerr:
+                    module["others"].append(unsupported(
+                        sm, comp, tag + ":invalid-compilation",
+                        "frontend rejected source containing " + what))
+        except Exception as exc:
+            module = internal_error(exc)
+        return module, set(_SYM.packages), list(_SYM.instance_modules)
+    finally:
+        _SYM = saved
+
+
+def _sym_instance_definitions(tree, source_map, top, module):
+    """Every definition the top module instantiates, transitively, in
+    first-use (breadth-first) order: `(modules, others, packages)` —
+    `modules` the converted definitions (each once, whatever its parameter
+    overrides at the instance sites), `others` an `Unsupported` per
+    definition slang cannot elaborate alone. A recursive instantiation
+    emits its definition once; the Lean side refuses the unbounded
+    hierarchy loudly."""
+    modules, others, packages = [], [], set()
+    if module.get("kind") != "Module":
+        return modules, others, packages
+    pending = list(_SYM.instance_modules)
+    seen = {top}
+    while pending:
+        name = pending.pop(0)
+        if name in seen:
+            continue
+        seen.add(name)
+        node, pkgs, more = _sym_convert_definition(tree, source_map, name)
+        if node is None:
+            others.append({"kind": "Unsupported", "span": None,
+                           "sv_kind": "ModuleDefinition:elaboration",
+                           "text": name})
+            continue
+        modules.append(node)
+        packages |= pkgs
+        pending.extend(more)
+    return modules, others, packages
 
 
 def convert_module_sym(sm, inst):
@@ -27725,6 +30566,8 @@ def convert_module_sym(sm, inst):
                 processes.append(convert_continuous_assign(sm, m))
             elif k == "GenerateBlockArray":
                 generates.append(convert_generate_for(sm, m))
+            elif k == "Instance":
+                generates.append(convert_instance_sym(sm, m))
             elif k == "GenerateBlock":
                 run = []
                 j = i
@@ -27766,6 +30609,8 @@ def convert_module_sym(sm, inst):
             others.append(internal_error(exc))
         i += 1
 
+    # Round 5 repair (2026-10-29): x/z literals fixed at the default point.
+    others.extend(_sym_xz_literal_scan(sm, body))
     _reject_overlapping_symbolic_drivers(processes)
 
     return {
@@ -27814,7 +30659,7 @@ def process_symbolic(top, sources, incdirs, out_path):
         tree = SyntaxTree.fromFiles(list(sources), sm_obj, bag)
     else:
         tree = SyntaxTree.fromFiles(list(sources))
-    comp = Compilation()
+    comp = _sym_top_compilation(top)
     comp.addSyntaxTree(tree)
     sm = tree.sourceManager
 
@@ -27853,8 +30698,13 @@ def process_symbolic(top, sources, incdirs, out_path):
             if contains_shift(module) and nerr:
                 module["others"].append(unsupported(sm, comp, "Shift:invalid-compilation",
                                                   "frontend rejected source containing a shift"))
+            # Round 5 (2026-10-29): unsized signed based literals, loud.
+            module["others"].extend(_sym_unsized_signed_scan(sm, tree))
         except Exception as exc:
             module = internal_error(exc)
+        # F3: the definitions the top instantiates (none: unchanged envelope).
+        defs, def_others, def_packages = _sym_instance_definitions(
+            tree, source_map, top, module)
         envelope = {
             "schema_version": SYM_SCHEMA_VERSION,
             "language": "systemverilog",
@@ -27863,8 +30713,9 @@ def process_symbolic(top, sources, incdirs, out_path):
             "mode": "symbolic",
             "top": top,
             "source_files": file_entries,
-            "packages": sorted(_SYM.packages - {""}),
-            "design": {"kind": "Design", "modules": [module], "others": []},
+            "packages": sorted((_SYM.packages | def_packages) - {""}),
+            "design": {"kind": "Design", "modules": [module] + defs,
+                       "others": def_others},
             "lean_blocks": [],
         }
     finally:
@@ -27888,6 +30739,253 @@ def process_symbolic(top, sources, incdirs, out_path):
 
 
 SYM_SCHEMA_VERSION = "sv-0.2"
+
+
+# ---------------------------------------------------------------------------
+# Multi-point cross-check probes (sv-0.2, `--probe-points`; 2026-10-28,
+# round 3 CX). The symbolic envelope is elaborated by slang at the DEFAULT
+# parameter point, and anything the extractor computes there (a width, an
+# offset, a cell, a sign) and writes into the symbolic tree is a
+# default-point FOLD: right at the defaults, silently wrong elsewhere. A
+# probe point P re-runs the SAME symbolic extraction with slang's top-level
+# `paramOverrides` set to P (slang then elaborates P itself), and writes the
+# result to an opt-in SIDECAR `<envelope minus .json>.probes.json`. The Lean
+# side (`LeanModels/Sv/Probe2.lean`) instantiates the envelope AND the point
+# extraction at P through the same `instantiate2`/`instantiateH` and requires
+# the two `Design2` values to be equal: a fold differs between the two
+# extractions, so it refuses loudly at P. Each instance the P-elaborated
+# hierarchy holds is probed the same way (its definition re-extracted alone
+# at the overrides that instance receives). The envelope itself is
+# untouched: without `--probe-points` nothing below runs.
+# ---------------------------------------------------------------------------
+
+PROBE_SCHEMA_VERSION = "sv-0.2-probes"
+
+# The top-level `paramOverrides` of the symbolic extraction in progress
+# (`["N=4", ...]`); `None` = the defaults (the envelope).
+_SYM_PARAM_OVERRIDES = None
+# Per-definition `paramOverrides` while one instance's definition is probed.
+_SYM_DEF_OVERRIDES = None
+
+_PROBE_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_$]*$")
+_PROBE_VALUE = re.compile(r"^-?[0-9]+$")
+
+
+def _sym_top_compilation(top=None):
+    """The top-level compilation of `process_symbolic`: plain at the
+    defaults (every envelope, unchanged), slang `paramOverrides` at a probe
+    point — with `top` the ONLY top module there (`topModules`), because
+    slang applies `paramOverrides` to EVERY top-level module and counts the
+    errors of every one: an unrelated, uninstantiated module of the same
+    sources with a parameter of the same name must neither receive the
+    point nor make the design's point look rejected (a testbench's
+    `#(.N(v))` and `name.sem` override the DUT alone)."""
+    if not _SYM_PARAM_OVERRIDES:
+        return Compilation()
+    options = CompilationOptions()
+    options.paramOverrides = list(_SYM_PARAM_OVERRIDES)
+    if top is not None:
+        options.topModules = {top}
+    return Compilation(pyslang.Bag([options]))
+
+
+def parse_probe_points(spec):
+    """`"N=1;N=2;N=4,W=8"` -> `[[("N", 1)], [("N", 2)], [("N", 4), ("W", 8)]]`.
+    Points are `;`-separated, assignments `,`-separated, values decimal
+    integers (the integer overrides a testbench passes, `#(.N(4))`)."""
+    points = []
+    for raw in spec.split(";"):
+        raw = raw.strip()
+        if not raw:
+            continue
+        point, seen = [], set()
+        for asg in raw.split(","):
+            name, eq, value = asg.strip().partition("=")
+            name, value = name.strip(), value.strip()
+            if not eq or not _PROBE_NAME.match(name) or not _PROBE_VALUE.match(value):
+                raise ExtractError("--probe-points: bad assignment %r in point %r "
+                                   "(want NAME=INT[,NAME=INT...])" % (asg, raw))
+            if name in seen:
+                raise ExtractError("--probe-points: %s assigned twice in point %r"
+                                   % (name, raw))
+            seen.add(name)
+            point.append((name, int(value)))
+        points.append(point)
+    if not points:
+        raise ExtractError("--probe-points: no point given")
+    return points
+
+
+def _probe_instances(scope, out, seen):
+    """Every module instance under `scope` in an ELABORATED hierarchy
+    (instantiated generate blocks included, recursively): one
+    `(definition, [(param, value)...])` per distinct pair, first-seen
+    order — the OVERRIDDEN parameters of that instance with slang's values
+    there (the point `instantiateH` gives the child: `PInst.given`)."""
+    for m in scope:
+        k = str(m.kind).split(".")[-1]
+        if k == "Instance":
+            if not getattr(m, "isModule", False):
+                continue
+            ovs, ok = [], True
+            for p in m.body.parameters:
+                if not getattr(p, "isOverridden", False) or getattr(p, "isLocalParam", False):
+                    continue
+                v = _cv_int(p.value) if type(p).__name__ == "ParameterSymbol" else None
+                if not isinstance(v, int) or not _probe_int_typed(p):
+                    ok = False
+                    break
+                ovs.append((p.name, v))
+            key = (m.definition.name, tuple(ovs) if ok else None)
+            if key not in seen:
+                seen.add(key)
+                out.append(key)
+            _probe_instances(m.body, out, seen)
+        elif k == "GenerateBlock":
+            if not getattr(m, "isUninstantiated", False):
+                _probe_instances(m, out, seen)
+        elif k == "GenerateBlockArray":
+            for e in m.entries:
+                if not getattr(e, "isUninstantiated", False):
+                    _probe_instances(e, out, seen)
+
+
+def _probe_int_typed(p):
+    """Whether an INTEGER `paramOverrides` value gives the overridden
+    parameter `p` the type it has at this instance — the condition for
+    probing the instance's definition at `P=<int>`. Always for a parameter
+    with a declared type or range; for an UNTYPED one (implicit type, no
+    range: IEEE 1800-2023 §6.20.2, it takes the type of its final value —
+    `#(.P(4'd9))` makes `P` a 4-bit logic) only when that type is the
+    32-bit signed one an integer override gives. Otherwise the entry is
+    recorded unprobed (`overrides: null`, loud on the Lean side): an int
+    probe would check a different family member from the instance the
+    hierarchy builds."""
+    try:
+        ts = p.declaredType.typeSyntax
+        if (ts is not None and (str(ts.kind) != "SyntaxKind.ImplicitType"
+                                or len(ts.dimensions) != 0)):
+            return True
+        t = p.type
+        return int(t.bitWidth) == 32 and bool(t.isSigned)
+    except Exception:
+        return False
+
+
+def _probe_overrides(point):
+    return ["%s=%d" % (n, v) for n, v in point]
+
+
+def _probe_strip_spans(node):
+    """A probed module without its `span` fields (source positions; the
+    Lean side reads none of them, and a sidecar holds one module per
+    point)."""
+    if isinstance(node, dict):
+        return {k: _probe_strip_spans(v) for k, v in node.items() if k != "span"}
+    if isinstance(node, list):
+        return [_probe_strip_spans(v) for v in node]
+    return node
+
+
+def write_probe_sidecar(top, sources, incdirs, out_path, points):
+    """Extract `top` at every probe point (`parse_probe_points`) and write
+    the sidecar next to the envelope `out_path` (already written at the
+    defaults). Returns the sidecar path. Each point holds its overrides,
+    slang's error count there, the top module extracted at the point, and
+    one `instances` entry per distinct `(definition, overrides)` pair of
+    the P-elaborated hierarchy (`module: null` when slang cannot elaborate
+    that definition alone at those overrides, or an override is not an
+    integer — the Lean side reports it as unprobed, never as agreement)."""
+    import tempfile
+    global _SYM_PARAM_OVERRIDES, _SYM_DEF_OVERRIDES
+    with open(out_path, encoding="utf-8") as f:
+        envelope = json.load(f)
+    top_mod = envelope["design"]["modules"][0]
+    if top_mod.get("kind") != "Module":
+        raise ExtractError("--probe-points: the top module did not extract")
+    pnames = [p["name"] for p in top_mod.get("params", [])
+              if p.get("kind") == "ParameterDecl"]
+    order = {n: i for i, n in enumerate(pnames)}
+    for point in points:
+        for n, _ in point:
+            if n not in order:
+                raise ExtractError("--probe-points: %r is not a parameter of %s (%s)"
+                                   % (n, top, ", ".join(pnames) or "none"))
+    tmpdir = tempfile.mkdtemp(prefix="svprobe_")
+    out_points = []
+    try:
+        for idx, point in enumerate(points):
+            point = sorted(point, key=lambda nv: order[nv[0]])
+            ovs = _probe_overrides(point)
+            tmp = os.path.join(tmpdir, "p%d.sv.json" % idx)
+            _SYM_PARAM_OVERRIDES = ovs
+            try:
+                process_symbolic(top, sources, incdirs, tmp)
+                # The P-elaborated hierarchy (slang's own instance values).
+                if incdirs:
+                    popt = pyslang.parsing.PreprocessorOptions()
+                    popt.additionalIncludePaths = list(incdirs)
+                    tree = SyntaxTree.fromFiles(list(sources), pyslang.SourceManager(),
+                                                pyslang.Bag([popt]))
+                else:
+                    tree = SyntaxTree.fromFiles(list(sources))
+                comp = _sym_top_compilation(top)
+                comp.addSyntaxTree(tree)
+                nerr = sum(1 for d in comp.getAllDiagnostics() if d.isError())
+                insts = []
+                for cand in comp.getRoot().topInstances:
+                    if cand.name == top:
+                        _probe_instances(cand.body, insts, set())
+            finally:
+                _SYM_PARAM_OVERRIDES = None
+            with open(tmp, encoding="utf-8") as f:
+                penv = json.load(f)
+            entries = []
+            source_map = {}
+            for p in sources:
+                with open(p, "rb") as f:
+                    source_map[os.path.normpath(p)] = f.read()
+            for dname, dovs in insts:
+                node = None
+                if dovs is not None:
+                    _SYM_DEF_OVERRIDES = _probe_overrides(dovs)
+                    try:
+                        node, _, _ = _sym_convert_definition(tree, source_map, dname)
+                    finally:
+                        _SYM_DEF_OVERRIDES = None
+                entries.append({
+                    "module": dname,
+                    "overrides": None if dovs is None else
+                    [{"name": n, "value": v} for n, v in dovs],
+                    "design": _probe_strip_spans(node),
+                })
+            out_points.append({
+                "overrides": [{"name": n, "value": v} for n, v in point],
+                "frontend_errors": nerr,
+                "module": _probe_strip_spans(penv["design"]["modules"][0]),
+                "instances": entries,
+            })
+    finally:
+        for f in os.listdir(tmpdir):
+            os.remove(os.path.join(tmpdir, f))
+        os.rmdir(tmpdir)
+    sidecar = {
+        "schema_version": PROBE_SCHEMA_VERSION,
+        "top": top,
+        "envelope": os.path.basename(out_path),
+        "source_files": envelope["source_files"],
+        # The `--probe-points` argument that regenerates exactly this file.
+        "probe_points": ";".join(",".join("%s=%d" % nv for nv in
+                                          sorted(pt, key=lambda nv: order[nv[0]]))
+                                 for pt in points),
+        "points": out_points,
+    }
+    base = out_path[:-5] if out_path.endswith(".json") else out_path
+    side_path = base + ".probes.json"
+    with open(side_path, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(sidecar, f, indent=1)
+        f.write("\n")
+    return side_path
 
 
 # ---------------------------------------------------------------------------
@@ -27966,18 +31064,31 @@ def main(argv=None):
                         "the file defining the top module)")
     parser.add_argument("--min-typ-max", choices=("min", "typ", "max"), default="typ",
                         help="legacy elaboration choice for min:typ:max expressions (default: typ)")
+    parser.add_argument("--probe-points", dest="probe_points", default=None,
+                        metavar="'N=1;N=4,W=8'",
+                        help="symbolic mode: ALSO re-extract the top at each "
+                        "parameter point (slang paramOverrides) and write the "
+                        "cross-check sidecar <envelope minus .json>.probes.json "
+                        "(the envelope itself is unchanged)")
     args = parser.parse_args(argv)
 
     try:
         if args.top is not None:
             if args.min_typ_max != "typ":
                 raise ExtractError("--min-typ-max min/max is not admitted in symbolic mode")
+            points = (parse_probe_points(args.probe_points)
+                      if args.probe_points is not None else None)
             out = process_symbolic(args.top, args.sources, args.incdirs,
                                    args.out)
             print(out)
+            if points is not None:
+                print(write_probe_sidecar(args.top, args.sources, args.incdirs,
+                                          out, points))
         else:
             if args.incdirs or args.out:
                 raise ExtractError("-I/-o require --top (symbolic mode)")
+            if args.probe_points is not None:
+                raise ExtractError("--probe-points requires --top (symbolic mode)")
             for src in args.sources:
                 process_file(src, args.min_typ_max)
     except ExtractError as e:

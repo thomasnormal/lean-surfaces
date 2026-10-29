@@ -1,0 +1,211 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "acg_latch_read",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/acg_latch_read/acg_latch_read.sv",
+      "sha256": "51b29e3ebbcad082719fd7a805b234263bd3f895ab9417f26a6a66dfee3b5bf3"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 6,
+          "col": 1,
+          "end_line": 14,
+          "end_col": 10
+        },
+        "name": "acg_latch_read",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 16,
+              "end_line": 7,
+              "end_col": 18
+            },
+            "name": "en",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 20,
+              "end_line": 7,
+              "end_col": 21
+            },
+            "name": "d",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 16,
+              "end_line": 8,
+              "end_col": 17
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 19,
+              "end_line": 8,
+              "end_col": 20
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 10,
+              "col": 3,
+              "end_line": 13,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 10,
+                "col": 15,
+                "end_line": 13,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 11,
+                    "end_col": 19
+                  },
+                  "cond": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 9,
+                      "end_line": 11,
+                      "end_col": 11
+                    },
+                    "width": 1,
+                    "name": "en"
+                  },
+                  "then": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 11,
+                      "col": 13,
+                      "end_line": 11,
+                      "end_col": 19
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 13,
+                        "end_line": 11,
+                        "end_col": 14
+                      },
+                      "width": 1,
+                      "name": "q"
+                    },
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 11,
+                        "col": 17,
+                        "end_line": 11,
+                        "end_col": 18
+                      },
+                      "width": 1,
+                      "name": "d"
+                    }
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 12,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 11
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 12,
+                      "col": 5,
+                      "end_line": 12,
+                      "end_col": 6
+                    },
+                    "width": 1,
+                    "name": "y"
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 12,
+                      "col": 9,
+                      "end_line": 12,
+                      "end_col": 10
+                    },
+                    "width": 1,
+                    "name": "q"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

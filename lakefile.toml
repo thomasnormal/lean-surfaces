@@ -31,7 +31,7 @@ name = "LeanModels"
 [[lean_lib]]
 name = "Examples"
 globs = ["Examples.+"]
-needs = ["circuitSources", "verilogASources", "pythonEnvelopes", "cEnvelopes", "esEnvelopes"]
+needs = ["circuitSources", "verilogASources", "pythonEnvelopes", "cEnvelopes", "esEnvelopes", "svEnvelopes"]
 
 [[input_dir]]
 name = "circuitSources"
@@ -74,6 +74,18 @@ filter = { extension = ["json"] }
 [[input_dir]]
 name = "esEnvelopes"
 path = "Examples/es"
+text = true
+filter = { extension = ["json"] }
+
+# THE SV TIER'S ENVELOPES, the same omission once more.  SystemVerilog
+# examples read their `.json` envelopes at ELABORATION time
+# (`load_design_sv2`, `EnvelopeIngest.loadFile`, and the `IO.FS.readFile`
+# fixture checks in `#eval`), so a regenerated envelope must re-elaborate its
+# consumers.  Same accepted cost as the other tiers: per-library
+# invalidation, and over-coverage of JSON nothing loads.
+[[input_dir]]
+name = "svEnvelopes"
+path = "Examples/system-verilog"
 text = true
 filter = { extension = ["json"] }
 

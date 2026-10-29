@@ -582,7 +582,15 @@ remain outside this surface.
 Across separate symbolic continuous assignments, statically known windows on
 the same base are checked for overlap after extraction. A duplicate or
 overlapping constant driver is converted to `Unsupported` rather than being
-silently resolved by process order; dynamic windows are not guessed.
+silently resolved by process order; dynamic windows are not guessed. This
+extractor guard sees literal-index windows only, at the default point: a
+window whose position depends on a genvar or a parameter
+(`for (genvar i = 0; i < 4; i++) assign y[i/2] = a[i];`, or
+`assign y[K+1:K] = …` next to `assign y[1:0] = …` at `K = 1`) is checked on
+the Lean side instead, at every parameter point, by the one-driver rule
+(2026-10-28, WP2: `PDesign.instantiateG2`/`instantiateGD2`, `Hier2.lean`
+"Drivers" — see "Drivers" under "Module instances"), which `name.sem`, the
+differential runner and `load_design_sv2` apply to every top.
 
 Concatenation leaves may also be direct fixed members of an untagged packed
 struct. Their accumulated offsets become ordinary `PartSel` leaves and retain
@@ -1196,9 +1204,13 @@ uninstantiated mode).
 Top-level key order: `schema_version` (`"sv-0.2"`), `language`, `frontend`,
 `mode` (`"symbolic"`), `top`, `source_files` (list of `{path, sha256}` in
 CLI order), `packages` (sorted names of packages the top module actually
-references), `design`, `lean_blocks`. `design.modules` holds exactly one
-`Module`; `design.others` is `[]` (packages are name-resolution inputs, not
-`$unit` noise).
+references), `design`, `lean_blocks`. `design.modules` holds the top
+`Module` first; for a design that instantiates modules it is followed by the
+definition of every module the top instantiates, transitively ("Module
+instances" below), and `design.others` lists an `Unsupported` per definition
+that could not be elaborated alone. A design without instances has exactly
+one `Module` and `design.others` is `[]` (packages are name-resolution
+inputs, not `$unit` noise).
 
 ## Module (symbolic)
 
@@ -1210,14 +1222,14 @@ Key order: `kind`, `span`, `name`, `imports`, `params`, `types`, `ports`,
 | `imports` | `{"kind": "Import", "span", "package", "name"}` — `name` is `"*"` for wildcard imports |
 | `params` | `ParameterDecl` / `LocalParam`, source order |
 | `types` | `EnumType`, first-reference order |
-| `generates` | `GenerateFor` / `GenerateIf`, source order |
+| `generates` | `GenerateFor` / `GenerateIf` / `Instance` (a module-level instance), source order |
 
 ## New node kinds
 
 | kind | key order / fields |
 |---|---|
-| `ParameterDecl` | `kind`, `span`, `name`, `type` (`PackedType` \| `TypeRef` \| `null` for implicit), `default` (symbolic expr \| `null`), `resolved` |
-| `LocalParam` | `kind`, `span`, `name`, `type`, `expr` (symbolic), `resolved` |
+| `ParameterDecl` | `kind`, `span`, `name`, `type` (`PackedType` \| `TypeRef` \| `null` for an implicit type without a range — a ranged one, `parameter [3:0] V`, is a `PackedType`), `default` (symbolic expr \| `null`), `resolved`, then optional `signed` (bool — the declared type's signedness where it departs from the default, or a rangeless implicit type's signing keyword; see "Constant typing" and "Parameter types and context widths" below) |
+| `LocalParam` | `kind`, `span`, `name`, `type`, `expr` (symbolic), `resolved`, optional `signed` (as on `ParameterDecl`) |
 | `ParamRef` | `kind`, `span`, `name` (+ `from_package` only when package-scoped) — a parameter/localparam reference in ANY expression position |
 | `GenvarRef` | `kind`, `span`, `name` — reference to an enclosing generate-for's loop variable |
 | `GenerateFor` | `kind`, `span`, `label`, `genvar`, `init`, `bound`, `step` (symbolic exprs; `step` uses `Unary` op `"++"`/`"--"`), `resolved_count`, `body` (member list, source order) |
@@ -1245,16 +1257,1650 @@ localparam exprs, generate headers and conditions, dimension bounds) the
 operator set additionally admits `* / % ** << >> <<< >>>`; in ordinary
 process/assign positions the M0/self-check operator set is unchanged and
 everything else remains `Unsupported` (selects, case, event lists,
-instantiations, 2-state types, ... — phase 2+ tiers). A width-changing
+instantiations (admitted since 2026-10-28: "Module instances" below), 2-state
+types, ... — phase 2+ tiers). A width-changing
 implicit conversion whose operand contains symbolic references is emitted
 as `Resize` around the symbolic operand (unsigned operands; signed →
-`Unsupported`) instead of being constant-folded.
+`Unsupported`, except the INT-class constants, sized signed literals and
+sign-preserving parameter conversions of "Default-point folds, static labels
+and nets" below) instead of being constant-folded.
 
 New `Unsupported` tags of this mode: `Syntax:<SyntaxKind>` /
 `Syntax:Identifier:unresolved` / `Syntax:Identifier:<SymbolClass>`
 (dimension-syntax recovery), `GenerateBlockSymbol:unconditional` (bare
 `begin`/`end` generate block), `GenerateFor:no-template` (zero-instance
 loop body), `TransparentMemberSymbol:<Class>`.
+
+## Packed-array select paths (`ArraySel`, 2026-10-27)
+
+A select chain over a declared 4-state unsigned packed array of scalars —
+element selects `x[i₁]…[iₖ]`, optionally followed by one part select on the
+next dimension (`[msb:lsb]`, `[base +: width]`, `[base -: width]`) — is ONE
+expression/target node:
+
+| kind | key order / fields |
+|---|---|
+| `ArraySel` | `kind`, `span`, `width` (defaults-elaborated metadata), `name` (the declared signal), `indices` (symbolic label expressions, outermost dimension first), `part` (`null`, or `{"mode": "range" \| "up" \| "down", "left", "right"}` — `range`: msb/lsb labels; `up`/`down`: base label and width) |
+
+Every index and bound is the RAW declared label as a symbolic expression
+(`Int`, `ParamRef`, `GenvarRef`, operators over them): nothing is folded at
+the default parameter point. The Lean side (`LeanModels/Sv/Param2.lean`,
+`arrayElemWindow`/`arrayPartGeom`) evaluates the declaration's symbolic
+`PackedType` dimensions once per instance IN THE DECLARATION'S SCOPE
+(`dimTable`: parameters and localparams, before generate expansion — a
+genvar that reuses a parameter's name never reaches a declared range; rows
+`array_gvshadow*`), maps each label to its element
+offset (the right bound of `[l:r]` is offset 0 in either direction), checks
+every dimension's range on its own, and lowers to one flat window of the
+declared vector. An out-of-range element select reads x and writes nothing;
+a part select partially past its dimension reads x in exactly the
+out-of-range bits and, as a target, writes exactly its in-range bits: an
+msb-side overhang is the clipped window, and an lsb-side overhang
+(`x[-2 +: 4]`, `x[1 -: 4]` at some parameter point) is a concatenation
+target whose low leaf is a zero-effect sink just past the vector's msb
+(`arrayPartTarget`; such a target needs one sampled RHS, so a NONBLOCKING
+write to it stays loud). The node is a legal assignment target (continuous
+and procedural).
+
+**Run-time part-select bases (2026-10-27).** IEEE 1800-2023 §11.5.1 lets the
+BASE of an indexed part select read signals (only its width must be
+constant): `v[sel +: 4]`, `a[sel*W +: W]`. On a 1-D vector with a
+descending declared range whose lsb label is not negative (a negative lsb
+is refused at instantiation, 2026-10-28), in a READ position, the extractor emits
+`ArraySel` with `indices: []` and `part.left` an ordinary VALUE expression
+(converted outside the symbolic constant position, so its operators keep
+their value-tier meaning and self-determined width); `part.right` stays a
+symbolic constant. Lean (`dynPartPlan`, `dynBaseRead`) reads the base by
+its self-determined width: below 32 bits UNSIGNED (`dynPartRead`); at
+EXACTLY 32 bits as a two's-complement `int` (`dynPartRead32`, 2026-10-28 —
+Icarus 12.0 and Yosys 0.53 both read a 32-bit index that way, so
+`v[s - 2 +: 4]`, whose unsized `2` makes the base 32-bit unsigned, at
+`s = 0` is `v[1:-2]`: rows `dyn32`, verifier probe `pa.sv`). A base WIDER
+than 32 bits is `Unsupported` `RangeSelectExpression:dynamic-wide-base`
+(and `Expr2.unsupported "ArraySel:dynamic"` in Lean should one arrive):
+Icarus truncates such an index to its low 32 bits, Yosys does not — a 40-bit
+base `2^32 + 1` reads `v[4:1]` in Icarus and all x in Yosys. Either reading lowers the select to
+a shift of the x-padded vector: every selected bit outside the declared
+range reads x, and an x/z base reads all x (rows `partsel*`, `dyn32`). A
+base whose TYPE is signed is `Unsupported`
+`RangeSelectExpression:dynamic-signed-base`. Such a node is
+never a target: a run-time base on a procedural target is
+`AssignmentExpression:target` (a continuous one is illegal SV). Every other
+run-time base — after an element select, over a multi-dimensional array,
+over an ascending range, or over a non-variable root — keeps the legacy
+refusal `RangeSelectExpression:dynamic-indexed`.
+
+These out-of-range rules are the LRM's (IEEE 1800-2023 §7.4.6, §11.5.1) and
+slang's constant evaluator's. Icarus 12.0 and Yosys 0.53 instead linearize
+any select that leaves an INNER dimension of a non-last element — element
+labels (`m[0][4]`, also outside an ascending dimension), and part or
+indexed-part selects overhanging either end (`m[0][5:3]`, `q[1][-1 +: 2]`,
+the write `w[0][5:2] = a`, the lsb-overhang write `w[1][-1 +: 2] = …`) —
+into the neighbouring element: declared disagreements `array_oob_inner`,
+`array_oob_part` and `array_oob_lsbwrite`
+(`docs/sv-oracle-disagreements.md`, "Linearized packed-array indices").
+Overhang past the end of the LAST element agrees in every tool
+(`array_oob`).
+
+The extractor emits `ArraySel` only where the legacy `BitSel`/`PartSel`
+encoding is absent or default-folded, so every previously admitted select
+keeps its node: (1) every chain of two or more selects (previously nested
+`BitSel` reads sized for two dimensions, and refused targets); (2) a single
+select on a dimension whose declared lsb is not the literal `0` (or whose
+range is not descending at the defaults) unless the labels and the declared
+bounds are all literals; (3) an indexed part select unless its base and
+width are literals over a canonical dimension; (4) since 2026-10-28, a
+single select whose labels are all STATIC — literals, parameters,
+localparams, enum members and `$bits` queries, no genvar and no signal —
+over a dimension whose declared bounds are not both literals, even when
+that dimension is the canonical `[m:0]` at the defaults ("Default-point
+folds, static labels and nets" below). A chain whose labels read a
+signal keeps the legacy encoding for two dimensions and is `Unsupported`
+(`ElementSelectExpression:nested-dynamic`) beyond them, where the legacy
+encoding would size inner elements as single bits (an unexpected internal
+failure on such a chain is `Unsupported` `…:array-select` for the same
+reason). Struct members, unpacked
+arrays, enums and 2-state/signed declarations are untouched.
+
+Before this node, case (2) with a literal label against a
+parameter-dependent range (`logic [7:L] u; … u[5]`) and case (3) with a
+parameter width (`x[4 +: N]`) were folded at the default parameters — exact
+there and wrong at every other parameter point; the differential rows
+`array_param_labels*` pin the corrected behavior at three parameter points.
+
+## Constant typing in symbolic positions (2026-10-28)
+
+The Lean constant tier (`LeanModels/Sv/Param.lean`, `evalInt`) evaluates
+parameter defaults, localparams, generate headers and conditions,
+dimension bounds and select labels at each operand's self-determined width
+and signedness (IEEE 1800-2023 §11.6, §11.8: `K + 3'd4` with
+`logic [2:0] K` is 3-bit arithmetic and wraps; `K + 4` widens `K` first —
+slang's tree shows that as `Resize`). Expressions of the INT class only
+(unsized integers, genvars, `int`/untyped parameters, system calls) keep
+the mathematical-integer evaluation. Two envelope facts feed this:
+
+* **`signed` on `ParameterDecl`/`LocalParam`.** The default is: a declared
+  type is signed exactly when it is 32 bits wide (`int`, `integer`) and
+  unsigned otherwise (`logic [7:0]`, `bit`). The extractor emits
+  `"signed": false` for `int unsigned`, `logic [31:0]`, `bit [31:0]`, … and
+  `"signed": true` for `byte`, `shortint`, `longint`, `logic signed [..]`;
+  nothing for types that match the default and nothing for untyped
+  parameters. Envelopes whose typed parameters are all `int` are unchanged.
+  Before the field an `int unsigned UI` was read as an `int`, and
+  `v[UI - 1 +: 4]` at `UI = 0` selected `v[2:-1]` instead of reading the
+  unsigned label `2^32 - 1`.
+* **`signed: true` on a `Literal` in a symbolic constant position** (any
+  `_SymPos` position: parameter defaults, localparams, generate headers,
+  select labels, part bounds, case patterns) whose frontend type is signed:
+  `4'sd3`, or a constant slang typed `int` and folded to 32 bits
+  (`N + 4'sd3` gives `Literal` width 32 `signed: true`). `Ingest2` reads it
+  as `Cast` signed of the literal (`$signed`), which the value tier passes
+  through. Value-position literals are unchanged — their operators already
+  carry signedness.
+
+A select label that the width-exact evaluation puts at or beyond `±2^30`
+element offsets outside its dimension (in practice: a 32-bit unsigned wrap
+such as `UI - 1` or `U - 1` at 0, giving `2^32 - 1`) is LOUD
+(`ArraySel:index-range`; a legacy `[msb:lsb]` read is `PartSel:bounds`):
+Icarus reads such a label as a huge unsigned index (all x), Yosys as a
+negative one (partly in range) — measured on verifier probe `pc.sv`. A
+narrower wrap (`U - 4'd1` at `U = 0` is `15`) is modelled exactly: rows
+`const_wrap*` sweep `K`, `U` and `UI`, Icarus 12.0 agreeing on every value.
+
+## Parameter types and context widths across parameter points (2026-10-28)
+
+slang elaborates the envelope at the DEFAULT parameters, so every width
+and signedness it folds into the tree is the default point's. Four rules
+keep the tree exact at the other points (rows `param_types*`,
+`ctx_width*`, `ctx_width_n2*`, Icarus 12.0; Yosys 0.53 agrees where
+checked):
+
+* **Ranged parameters are typed.** A parameter with a range and no type
+  (`parameter [3:0] V`, `parameter signed [3:0] V`) is a `PackedType` with
+  its symbolic dimensions and the usual `signed` field (IEEE 1800-2023
+  §6.20.2: unsigned at its range unless `signed`, whatever the override —
+  an override of 25 reads 9). It was `type: null` and read as an `int`, so
+  `v[V + 4'd8 +: 2]` computed 17 where every simulator wraps to 1. A
+  dimensioned keyword type (`logic signed [3:0]`, `bit [4:0]`) now carries
+  its symbolic dimensions too (previously `packed: null`, which refused the
+  whole design). A RANGELESS implicit type with a signing keyword
+  (`parameter signed P = 4'd3`) stays `type: null` and carries
+  `signed: true` (`false` for `unsigned`): its range is the final value's.
+* **Untyped parameters at the default point.** A parameter with neither
+  type nor range has the type of its final value (§6.20.2): its default's
+  where it is not overridden (`parameter P = 3'd5` is 3-bit unsigned, and
+  `P + 3'd4` wraps), an `int` where an integer override sets it. The Lean
+  side models both (`Param.lean`, `PDesign.atPoint`: a not-overridden
+  untyped parameter whose default is not `int`-typed is retyped to its
+  default's type before instantiation; the load gate and the differential
+  runner instantiate through it). At an overridden point the envelope's
+  value-tier tree around such a parameter — operator signedness,
+  conversions — is still the default point's, so a VALUE-position read of
+  it there is loud (`ParamRef:override-type`, `IEnv.stale`); constant
+  positions (labels, widths, generate conditions) are evaluated at the
+  override's type and stay exact. `name.sem` reads every argument as an
+  integer override.
+* **Sign extension in constant positions.** A signed operand widened to a
+  signed type in a symbolic constant position (`SB + 5` with
+  `parameter byte SB`, `S * -1`, `(S >>> 1) + 4`) is a `SignedResize`
+  (evaluated width-exactly). A signed operand widened into an UNSIGNED
+  context stays `Unsupported` `ConversionExpression:width`; a constant
+  select whose label fails to convert this way keeps that kind (it used to
+  be routed to the run-time-base path and mislabelled
+  `RangeSelectExpression:dynamic-signed-base`).
+* **Value-position widths.** A sized unsigned literal widened by its value
+  context (`a + 1'b1` with `logic [N-1:0] a`) is `Resize(width, Literal)`
+  like every other unsigned operand, not a literal folded at the default
+  width (at `N = 1`, `{a + 1'b1, 1'b0}` came out 5 bits wide instead of 2).
+  On the Lean side (`Param2.lean`, `instExpr2`): `- ~ +` extend a narrower
+  operand to the context before the operator; `+ - *` with an operand wider
+  than the context run at the operand's width and truncate the result (an
+  x bit above the context collapses the sum, §11.4.3: `v[1 +: N] + 4'd9` at
+  `N = 8` is `xxxx`); `/ % ** << >>` results are truncated to the context;
+  an implicit conversion contributes its OPERAND's width to a
+  max-of-operands width (`selfWidth2`), never its default-elaborated
+  `width`. A `$signed(…)` operand that must be widened where the default
+  point needed no conversion is loud (`Resize:signed`: sign- or
+  zero-extension depends on the whole expression's signedness).
+
+**32-bit `int` arithmetic.** The proof-facing constant tier keeps INT-class
+arithmetic unbounded. `PDesign.int32Agrees` instantiates a point twice — as
+`instantiate2` does and with INT-class parameters and `int` localparams
+evaluated width-exactly at 32 bits (`IEnv.int32`) — and the differential
+runner and `load_design_sv2` (at the defaults) refuse a point where the two
+designs differ: `v[(N*N) >> 30 +: 4]` at `N = 65536`, where `N*N` wraps to
+0 in every simulator. Genvar and unsized-literal-only arithmetic stays
+unbounded in both.
+
+**Recorded refusals in this domain.** Loud, not rows: a run-time base over
+a descending vector whose lsb label is negative (`n[s +: 2]` on
+`logic [3:-4] n` is emitted as `ArraySel` and refused at instantiation —
+"dynamic part-select over a range reaching below label 0"; the run-time
+base path covers descending 1-D vectors whose lsb label is at least 0); a
+parameter's `$bits`/`$size`/`$high` in a label (only declared signals are
+in tier); a LITERAL-base indexed select partly outside the vector
+(`v[0 -: 4]` is `RangeSelectExpression:range`, while the same select with a
+parameter base reads x in its out-of-range bits); a continuous
+concatenation target with part-select leaves (`assign {y1, y2[P +: 3]} = …`
+is `AssignmentExpression:target`); a part select whose label is a
+concatenation (`v[{S, 1'b0} +: 4]`, "concatenation in a constant context");
+and implicitly typed NETS and net ports (`wire [7:0] w`, `output wire
+[7:0] w`): their `PackedType` keeps `packed: null` and the load gate
+refuses the design, because a partially driven net's undriven bits are z
+(§6.6) while the semantic tier initializes every declaration to x. Since
+2026-10-28 every other net that would pass the gate is refused at
+extraction for the same reason (`NetSymbol:net-z`, `PortSymbol:net-z`,
+below).
+
+## Default-point folds, static labels and nets (2026-10-28)
+
+slang elaborates a module once, at its default parameters (a library
+module at ITS defaults; a generate body at its first iteration). Three
+facts read off that elaboration used to reach the Lean family silently —
+each disagreed with Icarus 12.0 and with Yosys 0.53 or the LRM at another
+parameter point, with no refusal (verifier designs `w_stale_flat`,
+`w_gvw_flat`, `v_cstale`, `vq_k0`, `vn_n0`, `v_undf`, `v_undn`,
+`v_partnet`). Each is now exact or loud.
+
+* **Unsized INT-class constants at a conversion boundary.** `assign o = -1;`
+  with `o` a parameter- or genvar-width vector is a conversion of the
+  32-bit signed constant to the target type of the DEFAULT point; the fold
+  made it a literal of that width, which Lean zero-extended at every other
+  point (`[N+1:0]` at `N = 7`: `000111111` where every simulator reads
+  `111111111`; a child module at an override, `-1`/`37` on `[W-1:0]` at
+  `W = 8`: `00000011`/`00000001` for `11111111`/`00100101`). In a value
+  position (`_sym_conversion`), the operand of a SIGN-PRESERVING conversion
+  — an assignment-like (`Implicit`) one, which keeps the right-hand side's
+  own signedness (§10.7, §11.8.2), or a `Propagated` one into a signed
+  type — whose converted tree is INT-class (`Int`, `GenvarRef`, unqualified
+  `ParamRef`, unary `- + ~`, integer arithmetic in either spelling: `+ - *
+  & | ^`, `s/ u/ s% u% s**s … s<< u>> …`, and below a division, shift or
+  power the `Resize`/`SignedResize` operand conversions of that position) is
+  emitted UNCONVERTED, as `_sym_port_actual` does for port actuals; Lean's
+  `fitExpr2` materializes it at the instantiated context width. A
+  `Propagated` conversion into an UNSIGNED type zero-extends a negative
+  operand and is never emitted this way (`a + N` with a 40-bit `a` stays
+  `ConversionExpression:width`). A SIZED SIGNED literal (`4'sb1000`) is a
+  `SignedResize` of the literal at its own width across a sign-preserving
+  conversion (a `Resize` across a `Propagated` one into an unsigned type).
+  Any other signed constant (`(3 > 2) ? -1 : 2`) is `Unsupported`
+  `ConversionExpression:signed-constant` in a parametric family (an
+  overridable parameter in scope, or an enclosing genvar) and keeps its
+  fold in a module with a single point; a signed operand that READS a
+  signal (`$signed(a) * -2` into `[N:0]`) keeps its `ConversionExpression:
+  width` refusal (refusal row `signed_operand`). Rows `int_const_flat*` (N =
+  1, 2, 7, 12, 31, 40), `int_const_gen`, `int_const_hier`, `int_const_sized*`,
+  refusal row `int_const_loud`; Yosys 0.53 agrees with Icarus on
+  `int_const_flat` at `N = 1` and `N = 40`.
+* **Static labels over a parameter-dependent range.** A select whose
+  labels are all static (literals, parameters, exact `$bits` queries — see
+  below) on a
+  dimension whose declared bounds are not both literals is an `ArraySel`
+  path even when that dimension is `[m:0]` at the defaults: the legacy
+  `BitSel`/`PartSel` encoding reads labels as offsets from lsb 0 at every
+  point, and `logic [K-1:0] t` with `K = N - 4` is the ascending `[-1:0]` at
+  `N = 4` (`t[1 +: 2]` read `x0` where every tool reads `xx`; `v[1]` on
+  `[N-1:0]` at `N = 0` read a bit that is out of range). Rows `label_k0*`,
+  `label_n0*` (N down to -1), `label_param*`. Labels that mention a genvar
+  or read a signal keep the legacy encoding — at a point where the
+  declared range is not `[m:0]` with `m ≥ 0` such a select reads its label
+  as an offset (`for (genvar g = 0; g < 2; g++) y[g] = v[g];` and `o =
+  v[s];` on `[N-1:0]` at `N = 0`); since the round 3 folds the
+  legacy-select range guard refuses such a point loudly ("Default-point
+  folds, round 3" below). Over a multi-element
+  ascending range Icarus 12.0 reads a full-width constant-base `-:` from
+  the left label as `+:` (declared disagreement, row `label_kminus_w1`,
+  `docs/sv-oracle-disagreements.md`, "Ascending full-width minus select").
+* **Nets.** A net's undriven bits read z (§6.6), the semantic tier
+  initializes every declaration to x, and the extractor does not decide
+  whether every bit has a driver. An internal `wire` that would pass the
+  load gate — scalar (`wire w;`) or explicitly typed (`wire logic [1:0]
+  w;`) — is `Unsupported` `NetSymbol:net-z`; an OUTPUT port whose internal
+  symbol is a net (`output wire logic [1:0] y`, `output wire y`, the
+  implicitly typed `output y`) is `Unsupported` `PortSymbol:net-z`. Input
+  net ports stay admitted (the instantiating scope drives every bit; an
+  unconnected one reads z, `PortConn.net`), as do variables (`output logic
+  y` is a variable, §23.2.2.3). An implicitly typed net WITH packed
+  dimensions keeps its `packed: null` form. Refusal rows `net_z_flat`,
+  `net_z_scalar`, `net_z_hier`, `net_z_part`.
+
+**Array query labels.** `$bits(a)` of a declared signal reads its type,
+never its value, and Lean evaluates it from `a`'s INSTANTIATED declaration
+(`evalInt`): a select label built from it (`v[$bits(a) - 1 -: 2]`, a target
+`y[$bits(a) - 3 +: 2]`, `$clog2($bits(a))`) is static (`ArraySel`, rows
+`bits_labels*`; Icarus 12.0 aborts on the out-of-range target at `N = 1,
+2`, where the model agrees with Yosys 0.53) exactly when that declaration
+carries its width per point (`_sym_bits_query_exact`): `a` is a variable or
+net (not a parameter, a genvar, a type, an expression or an unpacked array)
+whose type is a scalar, a packed vector over explicit ranges or a fixed
+typedef, an enum (`TypeRef`), or a packed struct/union whose layout is
+fixed at every point (rows `bits_struct_fixed_n*`). Any other `$bits`
+argument in a label is `…:query-label` (refusal row `bits_expr_label`); a
+parameter-dependent struct/union is refused at its declaration as well
+(next paragraph; refusal row `bits_aggregate` — verifier rows `vg1`,
+`vd1_p1`, `vj1` read the DEFAULT width at every point after the first
+version of this rule). A `$high(a)`/`$size(a)`
+label that reaches the `ArraySel` path is refused as `…:query-label` — the
+constant tier used to read them as `width - 1` and `width`, exact only for
+a 1-D `[W-1:0]` range at every point (refusal row `high_label`; since round
+3 they read the declared range at each point, "Default-point folds, round
+3" below, and the refusal is conservative) — instead of being
+mislabelled a run-time base (`…:dynamic-signed-base`); a select that kept
+the legacy encoding with such a label keeps it (cv32e40p `alu_div`'s
+`OpA_DI[$high(OpA_DI)]`). `$clog2(sig)` of a signal value IS a run-time base
+and keeps that kind.
+
+**Default-point shapes of declarations.** Two declaration encodings carry
+the default point's SHAPE as literals: a packed struct/union is one
+`[W-1:0]` vector whose member selects are fixed `PartSel` windows, and a
+fixed unpacked array is one declaration per default-point cell (`mem[0]`,
+`mem[1]`; a typedef'd element's packed ranges are read off the canonical
+type). Where that shape depends on the family's point — a member, element
+or dimension width naming an overridable parameter or a genvar, directly
+or through a localparam, a typedef or a declared signal's type (package
+members are fixed) — every other point read the default layout (verifier
+row `vg2`: `s.x` of `struct packed {logic [N-1:0] x; logic [1:0] y;}` at
+`N = 8` read `00000101` for `10110101`; `vb4`: `mem[1]` of `[0:K-1]` at
+`K = 1` was a phantom cell that kept a written value). In a parametric
+family (`_sym_family_point_dependent`) such a declaration is now
+`Unsupported`: `…:default-point-aggregate` for a struct/union variable, net
+or port, `VariableSymbol:default-point-array` for an unpacked array, and a
+parameter typed with such an aggregate gets the unrecoverable type
+(`packed: null`, refused by `crossCheck`) instead of its default-point width
+(refusal rows `aggregate_point`, `array_point`, `aggregate_param`). A shape
+fixed at every point keeps its encoding (`localparam int L = 3` member widths, a package
+struct; rows `bits_struct_fixed_n*`), and no committed envelope changed.
+
+**Default-point cell indices (2026-10-28, WP2 repair).** The same fold
+reached the CELL a constant element select names: slang reports the
+constant of `m[i]` (a genvar) or `m[K]` (an overridable parameter) at the
+point it elaborated, and the select became `Ident "m[0]"` at every point —
+`for (genvar i = 0; i < 4; i++) assign y[i] = m[i];` read `m[0]` four times
+(verifier row `uarr_rd`: `y = 0000` at `a = 0110`, Icarus `0110`), and
+`assign m[K] = a;` wrote `m[0]` at every `K` (`uarr_k`). In a parametric
+family such a select INTO an unpacked dimension, read or write, is now
+`Unsupported` (`ElementSelect:default-point-index`,
+`_sym_cell_index_point_dependent`); literal and localparam indices, a
+run-time index (left to the existing paths) and a packed bit-select with a
+genvar index inside a cell (`m[0][i]`) are unchanged. Rows `cell_genvar`,
+`cell_param`, `cell_param_k1` (loud) and `cell_fixed`, `cell_fixed_w3`
+(pass); no committed envelope changed.
+
+**Case comparison width.** A plain `case` compares its subject and every
+item at the widest of their self-determined widths (§12.5); Lean's
+`instStmt2` used the subject's width alone, so an unsized item was
+truncated to a narrower subject — `case (b) -1:` on a 2-bit `b` matched
+`b = 2'b11` and `4:` matched `b = 0`, at the default point too, and an item
+`-1` against a subject that is narrower than 32 bits only at a non-default
+point (verifier row `va2`, `logic [N:0]` at `N = 20`) matched all ones.
+`caseWidth2` (`Param2.lean`) now takes the maximum, and the subject is fitted
+to it (zero-extended; a `$signed` subject that would need a widening is
+loud). `case … inside` compares PAIRWISE (§12.5.4, `==?` per item), so it
+keeps the subject's width when no item is wider and is otherwise refused at
+instantiation (`Case:inside-width`; Icarus 12.0 does not parse `case …
+inside`). Rows `case_width_n*` (N = 1, 2, 3, 20, 32, 33, 40), refusal row
+`case_inside_width`. (A `Propagated` conversion into an unsigned type,
+above, is the conversion-node path; a case item never carries one — its
+width is decided here.)
+
+**Loud-refusal rows.** A `harness/sv/cases2.json` row with a `refusal`
+field (a refusal kind) asserts that the model refuses the design at the
+row's parameters: the runner exits nonzero and the kind appears in its
+error or among the envelope's `Unsupported` kinds. No simulator runs, and
+the row counts as a refusal, never as a verified match.
+
+## Recorded refusals: parameter roots, first-dimension labels, concatenation targets (2026-10-28)
+
+Three more select and target shapes stay loud. Each was measured with
+one-shape probe modules on the current extractor and
+`harness/sv/runner2.lean` (probes, not rows); none is a silent
+disagreement.
+
+* **An indexed part-select whose ROOT is a parameter or localparam.**
+  `MASK[i*2 +: 2]` and `MASK[P +: 2]` (`localparam logic [7:0] MASK`, or a
+  `parameter logic [7:0]` root) are `Unsupported`
+  `RangeSelectExpression:dynamic-indexed`, in value positions and in
+  generate-if conditions (`if (MASK[i*2 +: 2] == 2'b10)`), although the base
+  is an elaboration-time constant: `ArraySel` covers declared signals only
+  and the run-time-base path covers variable roots only, so the shape falls
+  through to the legacy refusal. The same parameter is admitted under a
+  literal base (`MASK[2 +: 2]`), a bit select (`MASK[P]`) and a range select
+  (`MASK[P+1:P]`), and all three match Icarus 12.0 at in-range points. A
+  range select on a parameter or localparam root that is PARTLY out of
+  range at the instance's parameters (`MASK[P+1:P]` or `PM[P+1:P]` over
+  `[7:0]` at `P = 7`, i.e. `[8:7]`) is refused when `run2` runs the design
+  (`unsupported expression 'PartSel:base'`), where Icarus 12.0 and Yosys
+  0.53 read the missing bit as x (`x1`/`x0`); the same select on a SIGNAL
+  root (`v[P+1:P]` over `logic [7:0] v`) is admitted and reads the missing
+  bit as x, as both tools do (probes `vr_mask` at `P` = 0, 2, 5, 7 and
+  one-select probes per root kind at `P` = 5 and 7).
+* **A negative label on a canonical first dimension.** A single constant
+  select on a zero-based descending dimension — the first dimension of
+  `logic [1:0][3:0] m` as `m[K]`, or a 1-D `logic [7:0] v` as `v[K]` —
+  keeps the legacy `BitSel` node, and at a parameter point where `K` is
+  negative it is refused at instantiation: a read as `BitSel:index`, a
+  procedural write as `AssignL`. A label above the msb there reads x and
+  writes nothing. On every other range (`logic [2:1][3:0] n`, an ascending
+  `logic [0:1][3:0] q`) and in every select chain (`m[K][1]`, `m[K][3:2]`)
+  the select is an `ArraySel`, and an out-of-range label on either side
+  reads x and writes nothing (rows `array_oob*`). Measured at `K` = -1, 0, 2
+  and 3. Icarus 12.0 aborts on a whole-element select outside the first
+  dimension of a two-dimensional array (assertions `elab_expr.cc:6220` on a
+  read, `elab_lval.cc:698` on a write), so those x reads have no Icarus
+  oracle; on the 1-D and chained forms Icarus agrees with the model.
+* **Concatenation targets** (`AssignmentExpression:target`; admitted leaves
+  are whole signals, constant bit selects and `[msb:lsb]` part selects with
+  literal labels — rows `concat_assign`, `concat_split`, `concat_add`,
+  `concat_undriven`): a leaf indexed by a genvar or a parameter
+  (`{c[i+1], s[i]} = a[i] + b[i] + c[i]` in a generate loop,
+  `{y[P], z} = x`); an indexed part-select leaf, with a literal or a
+  parameter base (`{y[2 +: 2], z}`, `{y[3 -: 2], z}`, `{y[P +: 2], z}`); a
+  right-hand side that reads the name of any target signal, even on bits
+  disjoint from the target's windows (`{y[3:2], z} = {y[1:0], a[0]}` with
+  `y[1:0]` driven elsewhere — the single-sampled-RHS rule is checked by
+  name); and a signed right-hand side that must be extended to the target
+  width (`{y, z} = $signed(a)` with a 2-bit `a`; at the target's width,
+  `$signed(a)` of a 5-bit `a`, it is admitted). Leaves that select through
+  `ArraySel` are refused as well ("Nested packed-array selects" in
+  `docs/sv-charter.md`), and a `wire`-vector leaf is refused with its
+  declaration (implicitly typed nets, above).
+
+## Module instances (`Instance`, 2026-10-28)
+
+A module instance — at module level (in `generates`) or inside a generate
+body — is ONE node, and the definitions it names follow the top in
+`design.modules`:
+
+| kind | key order / fields |
+|---|---|
+| `Instance` | `kind`, `span`, `name`, `module` (the definition), `path` (`[{label, genvar}]`: the generate blocks the instance sits in, outermost first — `genvar` is the loop variable of a generate-for block and `null` for an if-generate block; unnamed blocks carry slang's `genblk<n>`), `params` (`[{name, expr}]`: the OVERRIDDEN parameters only, each a symbolic constant expression of the instantiating scope — ordered `#(…)` overrides arrive resolved to names), `ports` (one `PortConn` per child port, in the child's port order) |
+| `PortConn` | `kind`, `span`, `port`, `dir` (`"in"`/`"out"`), then for an input `expr` (a VALUE expression of the instantiating scope, `null` when unconnected) and, when unconnected, `net` (bool); for an output `target` (an assignment target — the shapes a continuous `assign` admits — `null` when unconnected) |
+
+slang resolves named, ordered, `.name` and `.*` connections, so `ports`
+always lists every child port. Each definition is extracted ALONE at its own
+parameter defaults (a separate slang compilation whose only top is that
+module: exactly what `--top <module>` emits), once, whatever the overrides
+at its instance sites; its `resolved` metadata is the definition's own, and
+the Lean load gate cross-checks every library module like a top.
+
+**Semantics (Lean side, `LeanModels/Sv/Hier2.lean`).** `load_design_sv2`
+defines `name.plib` (the library) and `name.sem` flattens at instantiation
+time (`PDesign.instantiateH`): at each instance, at the current parameter
+and genvar values, the overrides are evaluated in the instantiating scope,
+the child is brought to that parameter point (`PDesign.atPoint`) and
+instantiated recursively, its declarations are hoisted under the
+hierarchical name `<path>.<inst>.<signal>` (`g_bit[3].fa.s`; port flags
+cleared), its processes are renamed the same way, and each port connection
+becomes a continuous assignment (IEEE 1800-2023 §23.3.3): `<pfx>port =
+actual` for an input (instantiated at the port's width), `target =
+<pfx>port` zero-extended or truncated to the target for an output. After
+flattening, every module's OWN signals have one driver per bit, checked at
+each instance's parameter point (see "Drivers" below). An
+unconnected input NET reads z; an unconnected `var` input keeps its initial
+x (slang reports `input logic a` as a variable, but §23.2.2.3 makes an input
+declared without `var` a net — Icarus 12.0 agrees: z). The cycle semantics
+runs every edge process on its one clock, so a child flop must be clocked by
+what is, through bare connections, an input port of the TOP: its clock must
+be one of the child's input ports, connected to a bare signal of the same
+width that is itself an input port of the instantiating module; the flop then
+flattens to a flop on that signal, and the rule applies again one level up.
+Any other clock — a child-internal signal, an expression, a derived or gated
+parent signal such as `assign gclk = clk & en` — is loud (`Instance:clock`).
+(A top-level `always_ff @(posedge g)` on a derived `g` is still admitted and
+runs on the cycle clock: the flat tier's single-clock gap, which flattening
+does not widen.) On an instance-free design `instantiateH` IS `instantiate2`
+(`Hier2Gen.lean`, `PDesign.instantiateH_flat`).
+
+**Port width context.** An input actual NARROWER than its port is admitted
+only when its context-determined and self-determined readings agree:
+rigid operands, `& | ^` and `?:` over them, comparison results, and
+unsigned conversions of these. Any other narrower actual (`p + q`, `~p`,
+signed casts) is loud (`PortConn:context-width`): the LRM evaluates it at the
+port's width (slang, Verilator 5.042), Icarus 12.0 and Yosys 0.53 evaluate
+it self-determined and zero-pad (`docs/sv-oracle-disagreements.md`, "Port
+connection width context"). Unbased-unsized fills are admitted anywhere
+among those operands and take the LRM reading (a fill is as wide as its
+context, §5.7.1: `a ^ '1` into a 4-bit port is `{2'b11, ~a}`), as Verilator
+5.042 and Yosys 0.53 do; Icarus 12.0 alone zero-pads a fill nested under an
+operator — the declared disagreement of row `hier_fill_ctx`, while bare and
+masked fills (`'1`, `a & '1`, `s ? '0 : a`) agree everywhere (row
+`hier_fill`). A wider actual is truncated (all tools agree).
+
+**Integer actuals (2026-10-28 repair).** slang binds an input actual
+already CONVERTED to the port type of the instance it bound — at the
+default parameters, or at the FIRST iteration of an enclosing generate-for
+— and folds an integer constant under that conversion into a literal of
+that one width (`.i(5)` into the 1-bit port of `W = 1` was `1'b1` at every
+`W`; verifier finding, also `.i(-1)`, `.i(37)`, `.i(N*3-1)`). The extractor
+(`_sym_port_actual`) now peels the implicit conversions: an actual whose own
+type is a 32-bit signed integral (an unsized decimal, a genvar, an `int`
+parameter, `-`/`+` and integer arithmetic over them) is emitted as its
+UNCONVERTED INT-class tree (`Int`, `GenvarRef`, `ParamRef`, `Unary`,
+`Binary`), which the Lean side materializes at each instance's own port width
+(`.int` is `LVec.ofInt` at the context width — exact; a genvar actual
+`.i(g)` narrower than 32 bits, formerly `ConversionExpression:width`, is
+admitted the same way). The same constant into a port WIDER than 32 bits is
+loud: at the bound point slang has propagated the port width into it
+(`PortConnection:int-width`), and at another point the Lean side refuses the
+narrower actual (`PortConn:context-width`). Sized literals keep the ordinary
+conversion (a context-width `Resize`, exact). Rows `hier_intact*` (`N` = 4,
+2, 7, 8, 30: unsized, negated, genvar and parameter-expression actuals into
+genvar- and `N`-dependent ports). The FLAT twin — an unsized constant
+assigned to a parameter- or genvar-width target (`assign o = -1` with
+`logic [N+1:0] o`, verifier `w_stale_flat`/`w_gvw_flat`) — is still folded at
+the default width by `_sym_conversion`: a recorded flat-tier gap
+(`docs/sv-charter.md`, 2026-10-28).
+
+**Drivers (2026-10-28 repair).** Flattening adds continuous assignments
+after the extractor's overlapping-driver guard ran on each module alone,
+and `Sem2` resolves several writers of one bit by process order, never by
+net resolution (§28.12) or the multiple-driver error of a variable
+(§10.3.2). So at every level, at the instance's own parameter point, the
+module's own signals have one driver per bit (`driversOk`), checked per
+WINDOW — a constant select drives its own bits, a whole-signal target or a
+run-time index the whole signal, which is exactly its longest static prefix
+(§11.5.3): the windows its continuous assignments drive — its own
+`assign`s and its instances' output connections alike — are pairwise
+disjoint and avoid its input ports; none shares a bit with a window a
+procedural process of the module writes (the continuous/procedural mixture
+IEEE 1800-2023 §6.5 forbids on one longest static prefix); no procedural
+process writes an input port (§23.3.3.2); and no window an `always_comb`
+or `always_ff` process writes shares a bit with a window ANY other process
+writes (§9.2.2.2/§9.2.2.4, per longest static prefix as slang applies it,
+`-Wmultiple-always-assigns`). Otherwise the flattened design carries a loud
+`PortConn:driver` process (`Hier2.lean`, `driversOk`/`Design2.driverGuard`)
+whose message names the signal and the clause. Two instance outputs on one
+wire (verifier `w_multi1`, which Icarus resolves), a parent `assign` and an
+instance output on one bit (`w_multi2`; `w_inval`, illegal for a
+variable), and a child driving its own input port are loud; instance
+outputs on disjoint bits (`pair`, `ripple_fa`'s `s[i]`/`c[i+1]`) are
+admitted. Every child is checked (instance-free children included), and
+since 2026-10-28 (WP2) so is EVERY top: one holding an instance by
+`PDesign.topGuard` inside `instantiateH`, an instance-free (flat) top by
+`PDesign.instantiateG2` — `instantiate2` under the same guard — whose total
+family `PDesign.instantiateGD2` is the flat `name.sem`; the differential
+runner and `load_design_sv2`'s defaults gate use it too, so a flat top whose
+drivers overlap at some parameter point is loud there. Rows: continuous
+overlaps `drv_genvar_ov`, `drv_param_ov_k1`, `drv_param_ov_k0` (loud) and
+the disjoint families `drv_genvar_disj*`, `drv_param_ov` (pass against
+Icarus 12.0); two `always_comb` writers of `y[0]` `drv_pw_lit`, a genvar-
+and parameter-dependent pair `drv_pw_gv` (loud at `D = 2`, `drv_pw_gv_d1`
+passes), `drv_pw_par` (passes at `K = 1`, `drv_pw_par_k0` loud), two
+`always_ff` writers `drv_pw_ff` (loud at `D = 2`, `drv_pw_ff_d1` passes);
+the mixture on another bit `drv_mix` (`always_comb y[0] = a; assign y[K] =
+b;`, passes at `K = 1`) and on the same bit `drv_mix_k0` (loud). slang's
+full analysis agrees at every one of these points. Before WP2 the flat case
+was the extractor's literal-window guard alone, so
+`for (genvar i = 0; i < 4; i++) assign y[i/2] = a[i];` loaded and ordered
+the two drivers of each bit by issue (`y = xx00` at `a = 0101`; Icarus
+refuses the design, Yosys 0.53 reports conflicting drivers), and procedural
+writers were not checked at all (`always_comb y[0] = a[0]; always_comb
+y[0] = a[1];` ran with the process order's value, where Icarus 12.0 gave
+the other block's). Still admitted: writers of DISTINCT constant elements
+(the generate-indexed `always_ff` writers of `cv32e40p_register_file_ff`'s
+`mem`), a continuous driver of another bit of a procedurally written
+variable, and two plain `always @(posedge clk)` writers of one bit (legal;
+neither block is exclusive). `alwaysFFR` does not record whether it came
+from `always_ff` or from a plain `always @(posedge clk or negedge rn)`, so
+it counts as exclusive: two plain async-reset `always` writers of one bit
+are refused although legal — a conservative, loud over-refusal (no
+committed envelope or row has one). A proof about `name.sem` removes the
+guard with `PDesign.instantiateGD2_of_ok` (`Hier2Gen.lean`), from
+`CombDesign` (`PDesign.instantiateGD2_of_combDesign`), from a
+continuous-only process list (`driversOk_of_continuous`), or clause by
+clause for a list with procedural processes (`driversOk_iff`).
+
+**Self-reading `always_comb` (2026-10-28, WP4).** `instProcess2` passes
+every instantiated `AlwaysComb` body through the self-read guard
+(`LeanModels/Sv/CombGuard2.lean`, `combGuardProc`) at the module's declared
+widths, at every parameter point and in every module of a hierarchy: a
+body that, on some control path, READS a bit before that path writes it
+and WRITES the bit later on the same path becomes the loud process
+`Unsupported` `AlwaysComb:self-read`, whose message names the signal and
+the bits and cites IEEE 1800-2023 §9.2.2.2.1; `load_design_sv2` refuses
+the envelope at the defaults with that message. An event-driven simulator
+runs such a block once per wake-up and never on its own writes, so the read
+sees the previous run's value (Icarus 12, Xcelium), while `Sem2` settles
+the block to its fixpoint (as Verilator 5.042 and Yosys 0.53 do). Reads are
+`if` conditions, `case` subjects and patterns, right-hand sides and the
+index expressions of reads and targets; a constant slice reads and writes
+exactly its bits, a run-time index reads (and may write) the whole signal
+and must-writes nothing. Admitted: latches (`if (en) q = d;`), latches that
+read their own held value (`if (en) q = d; y = q;`), temporaries written on
+every path before they are read, bit-disjoint reads and writes
+(`t[0] = a; y = t[0]; t[1] = b;`). `CombGuard2Sound.lean` proves every
+admitted body idempotent on shaped states
+(`runCombProcess2_alwaysComb_idem_of_admits`): there one run per wake-up IS
+the fixpoint. Rows: `rbw_*` (loud) and `acg_*` (pass against Icarus 12.0)
+in `harness/sv/cases2.json`. `always @*`, `always @(…)` and `always_latch`
+remain `Unsupported` in symbolic mode (`TimedStatement:ImplicitEventControl`,
+`TimedStatement:EventListControl`, `SignalEventControl:None_`,
+`ProceduralBlockSymbol:AlwaysLatch`), so `AlwaysComb` is the only
+procedural kind `Sem2` settles to a fixpoint. In a hierarchy the child's
+refusal names the instance it was flattened from (round 3, 2026-10-28,
+`Process2.inInstance` in `Hier2.lean`): the message starts
+`in instance '<inst>' of module '<child>' (its signals flatten under the
+prefix '<prefix>' inside the module that instantiates it):`, one clause per
+level, outermost first — each prefix relative to its own level, so a
+nested leaf's flattened names carry the prefixes concatenated (round 4
+wording; row and `agree.lean` pin: `sem2/rbw_child`). [Round 5 Lane A,
+2026-10-29: this wording is the accepted resolution of the INIT2
+verifier's naming minor — the message does NOT print one flattened path.
+Exactly what it gives, measured through `load_design_sv2` on `nest` →
+instance `mm` of `nest_m` → generate block `g` → instance `ll` of
+`nest_l`: "in instance 'mm' of module 'nest_m' (its signals flatten under
+the prefix 'mm.' inside the module that instantiates it): in instance 'll'
+of module 'nest_l' (its signals flatten under the prefix 'g.ll.' inside
+the module that instantiates it): always_comb block reads bit [1] of 't'
+…". Each clause's prefix is relative to its own level and includes the
+generate-block path inside that level; the leaf's flattened signal is the
+clauses' prefixes concatenated outermost first plus the local name,
+`mm.g.ll.t`.] The guard is about
+ONE block re-run on its own result; a block that reads a different
+variable related to one it writes is admitted and settles to what Xcelium
+24.03 and Verilator 5.042 show. Icarus 12.0 differs in two measured ways
+(`docs/sv-oracle-disagreements.md`): on a pure continuous copy of a written
+variable (`assign w = t;`, a port loop) it keeps the copy in the
+sensitivity list but propagates the copy's update synchronously inside the
+block's run, so the wake-up is lost — an LRM-permitted interleaving
+(§4.7/§4.8), rows `acg_alias_assign`, `acg_alias_port`, declared pending a
+cross-process refusal; and on a variable whose other bits another process
+writes it leaves the whole variable out of the list, against §9.2.2.2.1 —
+row `acg_xproc_bits`, declared.
+
+**Recorded refusals.** `inout`/`ref` ports (`PortConnection:InOut`/`:Ref`),
+interface ports and interface instances (`PortConnection:…`,
+`InstanceSymbol:interface`), instance arrays
+(`InstanceArraySymbol:InstanceArray`), port default values
+(`PortConnection:default` — slang substitutes the default, bound in the
+child's scope), type-parameter overrides (`InstanceSymbol:type-parameter`),
+an untyped child parameter overridden by a non-integer expression (Lean,
+§6.20.2), a TYPED child parameter overridden by a parameter expression that
+needs a narrowing conversion (`.P(LP)` with `localparam int LP` into
+`parameter logic [3:0] P`: `ConversionExpression:width`; a literal override
+such as `.P(3)` is admitted), a child definition with a parameter that has
+no default (slang cannot elaborate it alone: it is listed in
+`design.others` as `ModuleDefinition:elaboration`, its definition is absent
+from the library, and the instance is loud), an instance inside a
+generate branch not taken at the DEFAULT parameters (slang does not bind it:
+`UninstantiatedDefSymbol:UninstantiatedDef`, loud only where that branch is
+taken) — the extractor binds each generate-for body from its FIRST
+iteration, so this includes an instance in a branch inside a generate-for
+that the first iteration does not take (`if (i % 2 == 1) inv u … else buf u
+…` is loud at every `N ≥ 2`), escaped identifiers containing `.`, `[`
+or `]` on an instance path (`InstanceSymbol:name`/`:path` — the hierarchical
+names must stay collision-free; the load gate and the differential runner
+re-check `Design2.namesNodup`), `defparam` and `bind` (out-of-tier module
+members), recursive instantiation (Lean: the hierarchy is deeper than
+its library), an integer constant actual into a port wider than 32 bits
+(`PortConnection:int-width` / `PortConn:context-width`, above), signed and
+2-state ports (`PortSymbol:signed`, `PortSymbol:2state`; `int`/`integer`
+variables are themselves `VariableSymbol:2state`/`:signed`, so no
+integer-typed SIGNAL can be an actual), and — a flat-tier gap that blocks
+most legacy-style children — a child declaring a `wire [..]` net or
+non-ANSI ports (`input [3:0] a;`): the load gate and the differential runner
+refuse its declaration as "unrecoverable packed dimensions" (crossCheck of
+the library module). Rows: `ripple_fa*` (the exhaustive `N = 4` adder of
+`full_adder` instances), `hier_params*`, `hier_width*`, `hier_nested*`,
+`hier_clk*`, `hier_fill`, `hier_intact*` (Icarus 12.0; Yosys 0.53 `chparam;
+prep; flatten; eval` agrees on spot checks of `hier_width` and
+`hier_params` and on every two-state point of `hier_fill`), and the declared
+Icarus disagreement `hier_fill_ctx`.
+
+## Declaration initializers (symbolic mode, 2026-10-28, round 3 CX repair; round 4 Lane A)
+
+**Output-port initializers.** An output VARIABLE port's declaration
+initializer (`output logic [1:0] y = 2'b10`) is the variable's initial
+value (§10.5), exactly a `Var`'s `init`. The `Port` node carries it as an
+optional `init` (a symbolic expression, after `width`; the key is ABSENT on
+a port without one, so every other envelope is unchanged), ingested into
+`PDecl.init` exactly as a `Var`'s. slang keeps it in one of two places,
+and `convert_port_sym` reads both (round 4 enumeration, every form slang
+accepts):
+
+| Form | slang keeps the initializer on | Pinned by |
+| --- | --- | --- |
+| ANSI `output logic`/`reg`/`var logic [1:0] y = …` | the port symbol | `pi_ansi_forms` |
+| ANSI shared declaration `output logic [1:0] y5 = …, y6 = …`; packed struct port | the port symbol | `pi_ansi_multi` |
+| non-ANSI `output [1:0] y;` + `logic`/`reg`/`var logic [1:0] y = …;`, also scalar (`output y; reg y = 1'b1;`) | the internal variable | `pi_nonansi_forms`, `pi_nonansi_reg` |
+| non-ANSI single declaration `output reg`/`logic [1:0] y = …;`, shared `output reg [1:0] y = …, z = …;` | the port symbol | `pi_nonansi_forms`, `pi_hier_plain` |
+| non-ANSI `output var logic [1:0] y = …;` | the port symbol | extractor tests (Icarus 12.0 does not parse it) |
+
+The symbolic `Port` used to drop it silently (`name.sem` read `y = x1`
+where Icarus reads `11`; round-2 verifier probe `vg_initq`, round-3 CX
+verifier probes `pi_nonansi2/3/6/7`; the non-ANSI half fixed in the round 3
+folds). An ANSI `output var [1:0] y = …` (implicit data type) emits its
+initializer too, but its packed dimensions are not recovered, so that port
+is loud for an unrelated reason (crossCheck "unrecoverable packed
+dimensions"). A non-ANSI port with an EXPLICIT port expression (`module
+m(.q(y))`, or a select `module m(y[1:0])`, §23.2.2.1) is `Unsupported`
+`PortSymbol:explicit-expression` (round 4): its name is not its internal
+signal's, and the extractor used to emit the port and the internal
+variable as two unconnected storages (`q` stuck at its initializer where
+Icarus 12.0 reads `y`; row `pi_explicit`). An output NET port with an
+initializer is illegal (slang `DisallowedPortDefault`) and is `Unsupported`
+`PortSymbol:initializer`. An ANSI INPUT port's initializer is a port
+default (§23.2.2.4) on the PORT symbol, handled at the connection
+(`PortConnection:default` when an instance leaves it unconnected) and never
+emitted; the Lean side refuses an input `Port` that carries one (a non-ANSI
+single declaration `input logic [1:0] a = …;` is a slang error,
+`DisallowedPortDefault`). The non-ANSI form with a SEPARATELY declared
+variable or net (`input [1:0] a; logic [1:0] a = 2'b01;`, or `wire [1:0] a
+= 2'b01;`) is not a port default: slang keeps that initializer on the
+internal symbol, `PortConnection:default` never fires, and the `Port` used
+to drop it, so the model read the connection alone (round 4 repair, INIT
+verifier `n_in5`/`n_in6`; the round-4 claim that this section's §6.5
+mixture was closed in hierarchical designs did not hold for it). §6.5 makes
+a variable's initialization a procedural assignment and implies a
+continuous assignment from the input connection, so the design is illegal
+(a net gets a second continuous driver); slang is silent, and the tools
+split: Icarus 12.0 and Xcelium 24.03 resolve both drivers in a child
+connected to a parent port (`y = x1, xx, 0x, x1` for `b = 11, 10, 00,
+x1`), through a parent variable or at the top Icarus follows the driver
+and Xcelium still resolves, the Yosys 0.53 netlist keeps the constant. It
+is `Unsupported` `PortSymbol:initialized-input`, at the top and in children
+(rows `pi_in_init`, `pi_in_init2`, `pi_in_top`, `pi_in_net`).
+
+**Converted literal initializers (round 4).** When the literal's width or
+signedness differs from the declaration's, slang wraps it in an implicit
+conversion (`output logic [3:0] y = 2'b10` → `Resize(4, Literal(2,
+"10"))`, `2'sb10` → `SignedResize`), which `instDecl` refuses as a
+"non-literal initializer". The extractor lowers it, for Ports and Vars
+alike (`_sym_decl_init`): a literal of 0/1 bits becomes the `Int` of its
+value (the two's-complement value of a signed one), which `instDecl`
+converts as `LVec.ofInt w v` at the declared width `w` OF EACH POINT —
+zero-extension, sign-extension and truncation, also in a parametric
+family, where the conversion's own width is the default point's; a literal
+with x/z bits becomes the `Literal` of the declared width, but only when
+that width is the same at every point (every packed bound an `Int`) and,
+for a signed source, its sign bit is 0/1. [CORRECTED, round 4 repair: as
+first shipped this padded an UNSIZED x/z literal with 0, and a literal
+with no conversion at the default point was not handled at all — see
+"Literal initializers, round 4 repair" below.] Anything else keeps the
+conversion and stays loud: an x/z literal at a parameter-dependent width
+(row `pi_width_px`), a signed literal with an x/z sign bit, a negated
+literal (`= -2` is a `Unary`), any other non-literal initializer. Rows
+`pi_width_forms` (fixed widths: zero-, sign-extension, truncation, unsized
+`'b10`, an `int` `22`, a 40-bit `'h3`, `2'bx1`, a `Var`), `pi_width_p*`
+(`N` = 1, 2, 4, 8, 40) and `pi_hier_plain` (a child at its own point):
+Icarus 12.0 and Xcelium 24.03 identical, Verilator 5.042 the same with `x`
+read as 0, the Yosys 0.53 netlist the same initial values.
+
+**Literal initializers, round 4 repair (INIT verifier, 2026-10-28).** The
+lowering now reads the LITERAL ITSELF (`_sym_decl_literal`: the
+initializer is an integer literal, directly or under the implicit
+conversions slang inserts — a signed one arrives under two — never an
+explicit cast), not a value slang folded, and decides from its own bits,
+signedness and `isDeclaredUnsized`:
+
+| Initializer | Declared width fixed at every point | Width depends on a parameter |
+| --- | --- | --- |
+| 0/1 literal, converted at the default point | `Int` of its value | `Int` of its value |
+| 0/1 literal, NO conversion at the default point (`logic [W-1:0] t = 4'sb1010` at `W = 4`) | `Literal` as before | `Int` of its value (new) |
+| unsized unsigned, x/z high-order bit, widened (`'hz1` into 40 bits) | `Literal` padded with that bit (new: was padded with 0) | `Fill` when every bit is that bit (`'bx`, `'hz`), else loud |
+| unsized, one repeated x/z bit, not widened (`'bx` into `[N-1:0]` at `N = 4`) | `Literal` as before | `Fill` (new) |
+| any other x/z literal | `Literal` (zero-/sign-extended, or truncated) | loud |
+| a signed literal with an x/z sign bit that would be replicated | loud | loud |
+| an UNSIZED SIGNED based literal (`'sb1`, `'sh8`, `'sd5`) — round 5 | loud (`Initializer:unsized-signed`) | loud (`Initializer:unsized-signed`) |
+
+[CORRECTED, round 5 Lane A, 2026-10-29: as shipped in round 4 the first row
+also covered an UNSIZED SIGNED based literal (`logic [7:0] t = 'sb1` → `Int
+1`), where the tools split — Icarus 12.0 sizes the literal to its digits and
+sign-extends (`11111111`), Xcelium 24.03, Verilator 5.042, the Yosys 0.53
+netlist and §5.7.1 give `00000001` — and round 4 picked a side silently. It
+is loud again, as at 2e8c8b28 (where the `SignedResize` was a "non-literal
+initializer"); see "Round 5 refusals" below.]
+
+The two silent wrong values it closes: an UNSIZED unsigned literal whose
+high-order bit is x or z was padded with 0 (`output logic [39:0] y = 'bx`
+read 8 zeros then 32 x), where IEEE 1800-2023 §5.7.1 extends it with that
+bit "to the size of the expression containing the literal constant" and
+Icarus 12.0, Xcelium 24.03 and the Yosys 0.53 netlist agree (row
+`pi_unsized_xz`; slang's own conversion constant zero-extends, the M0 path
+already repaired it, `_unsized_based_widening_bits`); and a PLAIN literal
+— no conversion at the default point because it has the declared width
+there, or a truncation slang folded — at a parameter-dependent width was a
+default-point `Literal` that `instDecl` stored unchanged at every point
+(`h_slit`: `t = 4'sb1010` at `W = 8` read `00001010`, the tools
+`11111010`; `h_lit`: a 2-bit init of a 5-bit `o` lost `o[W-1] <= a`). Only
+parametric tops are cross-checked, so in a child of a non-parametric top
+that was silent in `name.sem` (rows `pi_lit_p`, `pi_lit_p_n1/_n2/_n8/_n33`,
+`pi_lit_hier`, `pi_unsized_xz_p*`). `Fill` is exact there because the
+initializer is the whole expression: truncation and §5.7.1 extension both
+give the repeated bit at every width. The loud cases are `Unsupported`
+`Initializer:x-literal-parametric-width` (a sized x/z literal, or a mixed
+unsized one, at a parameter-dependent width: rows `pi_lit_px*`,
+`pi_uxz_px*`) or `Initializer:default-point-literal` (a non-literal value
+folded to a `Literal` at such a width); `instDecl` reports either as a
+"non-literal initializer".
+
+**Unsized x/z literals in expressions (round 4 repair).** The same §5.7.1
+extension in an EXPRESSION context (`assign y = 'bx;`, `a ? 'hz1 : 40'd5`
+into 40 bits) was a zero-extending `Resize` in symbolic mode
+(`_sym_literal_widening`; slang's fold zero-extends too), against Icarus
+12.0, Xcelium 24.03 and Yosys 0.53's reading of the source (`prep`:
+`40'hzzzzzzzzz1`). `_sym_unsized_xz_widening` (the symbolic twin of the M0
+repair) now emits such a widened unsigned unsized literal padded to the
+context width when the module is a family with ONE point (row `ux_expr`),
+and `Unsupported` `ConversionExpression:unsized-xz` in a family with
+several points (rows `ux_expr_p*`): the padded value depends on the
+context width, and the literal's own 32 bits take part in sizing its
+expression, so not even `Fill` is exact where a point's context is
+narrower. The synthesized netlist reads every x/z constant as a
+don't-care (z = 0), the general synthesis reading. [CORRECTED, round 5
+Lane A, 2026-10-29: the tools agree in continuous and procedural
+assignments, operators, comparisons and declaration initializers, NOT in
+every context the rule reached. In an INPUT PORT ACTUAL Icarus 12.0 pads
+the port with zeros, in a CONSTANT position (a typed parameter or
+localparam value, an instance override) Yosys 0.53 and slang pad with
+zeros, and an unpacked-array pattern element has no Icarus/Yosys oracle;
+those three are loud now — "Round 5 refusals" below.] [CORRECTED again,
+round 5 repair, 2026-10-29: the agreement holds only for the literal
+itself, directly widened, at a point where the envelope's binding is the
+point's own. Under `$unsigned` the tools split even in a plain assignment
+(`assign y = $unsigned('hz1)` into 40 bits: Icarus 12.0 8 zeros, 28 z,
+`0001`, the Yosys 0.53 netlist 36 z then `0001`), and in a family the
+literal's value was fixed at the default point; both are loud now —
+"Round 5 repair refusals" below.]
+
+**Round 5 refusals (Lane A, 2026-10-29).** Refusal-only; every shape below
+was admitted after round 4 and picked one side of a tool split, or had no
+oracle. (1) An unsized x/z literal widened inside an INPUT PORT ACTUAL
+(bare, under `?:`, under an operator: `.i('hx0)` into 40 bits) is
+`Unsupported` `PortConnection:unsized-xz`: Icarus 12.0 sizes an actual
+narrower than its port self-determined and pads it with ZEROS ("Padding 8
+high bits of the port": 8 zeros, 28 x, `0000`), Xcelium 24.03, Yosys 0.53
+(`40'hxxxxxxxxx0`) and §10.8/§23.3.3 extend the x. At 2e8c8b28 the model
+followed Icarus (a zero-extending `Resize`), after round 4 Xcelium/Yosys.
+Over-refusal (recorded gap): an actual whose own width already reaches the
+port (`s ? 'hx0 : 40'd5`), where the tools agree. Row `pa_unsized_xz`. (2)
+The same widening in a CONSTANT position (`_SymPos`: parameter and
+localparam values, instance overrides, `case` items, selects, generate
+headers) is `ConversionExpression:unsized-xz-constant`. The shape it newly
+refuses is the `case` item: `case (b) 'hx0:` over a 40-bit `b` is
+x-padded by Icarus 12.0 and by Yosys 0.53's `prep`, but the Yosys netlist
+reads the x as a don't-care (`b = 00000000x…0000`: Icarus 2, netlist 1;
+`docs/sv-oracle-disagreements.md`, synthesis-side item 2); 2e8c8b28
+zero-padded the item (wrong against both tools at `b = x…0000`) and round
+4 followed Icarus. Parameter and localparam values and overrides split as
+well (`localparam logic [39:0] LP = 'hx0`, `#(.P('hz1))`: 36 x/z then the
+digits in Icarus, `40'h00xxxxxxx0`/`40'h00zzzzzzz1` in Yosys and in
+slang's constant), but the Lean constant tier refuses every x/z constant
+("x/z literal in a constant context"), so they were loud at 2e8c8b28, in
+round 4 and now (an untyped `localparam LQ = 'hx0` too). Rows `ux_const`
+(the three together). (3) An unsized x/z literal
+as an UNPACKED-ARRAY assignment-pattern element (`logic [39:0] m [0:1] =
+'{'hx0, 'hz1}`) is `Initializer:unsized-xz-element` on the declaration:
+Icarus 12.0 ("sorry: Assignment to an entire array") and Yosys 0.53 (a
+syntax error) cannot run it, and it was a loud "non-literal initializer" at
+2e8c8b28. Row `ux_array`. (4) An UNSIZED SIGNED based literal (`'sb1`,
+`'sh8`, `'so7`, `'sd5`; no size, an `'s` base) is loud wherever it
+appears: a declaration or output-port initializer is
+`Initializer:unsized-signed` (loud at 2e8c8b28 as a `SignedResize`;
+admitted as an `Int` in round 4), and EVERY such token in the compiled
+sources adds an `Unsupported` `IntegerLiteral:unsized-signed` to the top
+module's `others` (`_sym_unsized_signed_scan`, a syntax scan — one choke
+point for the class, since a fold or a direct literal read such as an
+index would bypass a per-expression check). Icarus 12.0 sizes the literal
+to its digits and sign-extends it in every context measured (`'sb1` reads
+-1 in an assignment, an initializer, `a + 'sb1`, `localparam P = 'sh8` is
+-8, an index, a comparison, a `case` item, `>>>`), while Verilator 5.042,
+Yosys 0.53, Xcelium 24.03 and §5.7.1 read the digits zero-padded to 32
+bits; the expression forms were admitted with the LRM value at 2e8c8b28.
+Over-refusals (recorded gaps): `'sd…` and literals whose top digit bit is
+0 (`'sb01`), where the tools agree, and literals in modules the top never
+instantiates. Rows `pi_unsized_signed`, `pi_unsized_signed_n32`,
+`ux_signed`.
+
+**Round 5 repair refusals (Lane A, 2026-10-29).** Refusal-only, closing the
+verifier of the round-5 INIT repair (repros `gaps5/vinitA/d/vp1`–`vp9`,
+`ex/ex3`). One choke point, `_sym_xz_literal_scan`: a walk of every
+converted module's bound tree (instance bodies excluded, an instance's port
+actuals included) whose findings are `Unsupported` entries in that
+module's `others`, so the whole design is loud. (P) In a scope whose
+context widths differ between points — every member of a module with an
+overridable parameter (a top or an instantiated definition), every
+generate-for body — the envelope holds slang's DEFAULT-point binding, and
+an x/z literal there had no form Lean recomputes per point: a literal of
+exactly the default context width carries no conversion, and Lean
+zero-extended the 32-bit `Literal` at a wider point (`assign y = 'hx0`
+into `[N-1:0]`, `N = 32` by default, at `N = 40`: model 8 zeros, 28 x,
+`0000`; Icarus 12.0 and the Yosys 0.53 netlist 36 x then `0000` — rows
+`ux_pdep*`, the child form `ux_pdep_child`, the `case` item form
+`ux_pdep_case*`), and a narrower default context folded the literal to a
+default-width `Literal` (`'hx0` at `N = 8` is `xxxx0000`, the sized
+`12'hxF0` is `11110000` — rows `ux_pdep_narrow*`, `ux_pdep_sized*`).
+Every UNSIZED literal whose high-order bit is x or z is now
+`IntegerLiteral:unsized-xz-parametric` there, widened at the default
+point or not, and every x/z-bearing literal under an implicit conversion
+that changes its width is `ConversionExpression:xz-literal-parametric`.
+The one exception is the literal of a declaration initializer that
+`_sym_decl_init` decides from the literal itself (the table above; the
+`Fill` of `logic [N-1:0] t = 'bx` is unchanged). (C) In ANY scope,
+`$unsigned` of an expression holding an unsized x/z-top literal, widened by
+its context, is `CallExpression:unsized-xz-cast` (row `ux_unsigned_cast`:
+Icarus 12.0 zero-extends the self-determined 32-bit value, as the model
+did; the Yosys 0.53 netlist extends the x/z). `$signed('hz1)` widened
+(sign extension of the z) agrees in Icarus and the netlist and is
+unchanged. (Port) An input port actual HOLDING an unsized x/z-top literal
+is `PortConnection:unsized-xz` at ANY port width, not only where the port
+is wider at the bound point: the port of a `W = N` child is 32 bits at a
+32-bit default and 40 bits at `N = 40`, where the model zero-extended the
+literal with Icarus against the netlist (rows `pa_unsized_xz_p*`, the
+generate-for form `pa_unsized_xz_g`), and a narrower default folded the
+actual to the bound port width (rows `pa_unsized_xz_n*`, wrong against
+both tools at `N = 40`). [This corrects "Round 5 refusals" (1), which left
+a narrowing or 32-bit port unchanged.] The same scan also closes a shape
+the verifier did not list: `default: y = 'bx` and `assign y2 = 'bz` into
+`[N-1:0]` with `N = 8` by default were 8-bit `Literal`s zero-extended at
+every wider point (`N = 16`: `y2` 8 zeros then 8 z, Icarus 12.0 and the
+Yosys 0.53 netlist 16 z; row `ux_pdep_fill*`). Over-refusals (recorded
+gaps): that very shape, where `Fill` would be exact; a sized x/z literal
+zero-extended into a `Resize` in a family (`assign y1 = 12'hxF0`, `a ^
+4'bx1z0` into `[N-1:0]`, `N = 16` by default: the pre-repair model equals
+Icarus at `N` = 1, 2, 3, 4, 7, 8, 15, 16, 31, 32, 33, 63, 64, 65, probe
+`gaps5/init2/d/ov1.sv`; the netlist differs only where an x/z bit meets an
+operator, synthesis-side item 2 of `docs/sv-oracle-disagreements.md`); an
+unsized x/z-top literal in a family position whose width never varies; an
+input port default (`input logic [N-1:0] i = 'hx0`) of a family;
+`$unsigned($signed('hz1))`; an actual at a fixed port no wider than 32 bits
+(`.i('hx0)` into a 32-bit or 8-bit port), where the tools agree.
+
+**Initialized targets of continuous drivers.** A continuous driver of any
+bit of a declaration with an initializer is refused: `assign` →
+`ContinuousAssignSymbol:initialized-variable` / `:initialized-net`, an
+instance OUTPUT connection (a continuous driver of its actual) →
+`PortConnection:initialized-variable` / `:initialized-net`. For a variable
+the initializer is a procedural write the one-driver rule (`driversOk`)
+never sees, so the design mixes continuous and procedural writers (§6.5
+counts "a declared variable initialization" as a procedural assignment;
+slang `-Wmixed-var-assigns`, Icarus "Unable to assign to unresolved wires",
+Xcelium 24.03 `*E,ICDDIV` "Illegal combination of driver and declaration
+initializer", Yosys 0.53 a conflicting constant driver) — the model used to
+run it. For a net the initializer is a continuous driver of its own
+(§10.3.1), so the extra driver makes a resolved multi-driver net the model
+does not resolve (Icarus: constant 1 and `a` give `1, x, x, 1` for `a = 1,
+0, x, z`). Only the target PATH is inspected (a name, bit/part/member
+selects of it, concatenation and streaming targets of those; an index
+expression is read, not written), and an output variable port's
+initializer is found on its port symbol. The inspection FAILS CLOSED
+(round 4): a target shape it does not know, or an exception while
+inspecting, is `ContinuousAssignSymbol:initialized-unknown` /
+`PortConnection:initialized-unknown`, its `text` naming the construct.
+Rows: `vg_init`, `vg_initp`, `vh_init`, `vh_initp` (a child's own
+`assign`), `vg_initn` (loud).
+
+**Initialized variables of `always_comb` / `always_ff` (round 4).** An
+`always_comb` or `always_ff` block that assigns (blocking, nonblocking,
+compound or increment) any bit of a module-level variable with a
+declaration initializer is `Unsupported`
+`ProceduralBlockSymbol:initialized-variable`, its `text` naming the
+variable: IEEE 1800-2023 §9.2.2.2/§9.2.2.4 let no other process assign such
+a variable and §6.5/§10.5 count the initialization as a procedural
+assignment, and the tools split on the legality — Xcelium 24.03 rejects
+every such design (`*E,MULAXX`), Verilator 5.042 stops on a whole-variable
+`always_comb` write, Icarus 12.0, Yosys 0.53 and slang run them
+(`docs/sv-oracle-disagreements.md`, "Refused where the oracles split"
+(5)). Round 3 admitted these as legal; that is withdrawn. A plain `always`
+writer is unrestricted (§9.2.2.1) and stays admitted; a variable declared
+inside the block, or automatic, is the block's own and is not counted; an
+exception while inspecting the body is
+`ProceduralBlockSymbol:initialized-unknown`. Rows `vg_initc`, `vg_initf`,
+`vg_initq`, `vg_initqp*`, `pi_nonansi`, `pi_nonansi_hier`, `pi_nonansi_p*`
+and `vh_initcomb` (loud); the admitted forms are the `pi_*` rows above and
+`pi_nonansi_reg`.
+
+## Default-point folds, round 3 (2026-10-28)
+
+Six more facts slang computes at the default point reached the Lean family
+silently and are now exact or loud at every point (repros `ib_pneg`, `sp`,
+`sx`, `ps_param`, `vb3` of the round-2 gap list, and `$left`-style queries
+found while fixing them; the CX verifier's non-ANSI initializer,
+"Declaration initializers" above). The first and third items below were
+fixed in VALUE positions; the symbolic positions and the constant tier
+followed in the repair round (next section).
+
+* **Signed simple operands in an unsigned context.** `a + P` with `int P =
+  -3` and a 9-bit `a` is 32 bits wide at the default point; `P` is
+  converted to the unsigned context type there, a conversion that changes
+  no bit at that width, and the extractor used to drop it, leaving a bare
+  `ParamRef` that Lean materialized at the context width by SIGN extension.
+  Where `a` is wider than 32 bits (`N ≥ 31` for `[N+1:0]`) IEEE 1800-2023
+  §11.8.2 converts the simple operand to the propagated type first and so
+  ZERO-extends it (Icarus 12.0 and Yosys 0.53 agree). In a parametric
+  family's value positions, a `Propagated` conversion of a signed
+  `ParamRef`, `GenvarRef` or `$high`/`$size` query into an unsigned type of
+  the same width is now kept as `Resize(width, operand)`
+  (`_sym_unsigned_simple_operand`); the widening twin (a 32-bit `P` into the
+  42-bit context of `a + P` at `N = 40`, previously
+  `ConversionExpression:width`) is the same node in every module. An
+  assignment-like (`Implicit`) conversion keeps the right-hand side's
+  signedness (`o = P` sign-extends) and stays unconverted. Lean
+  (`instExpr2`): such a `Resize` no wider than the context is the plain
+  materialization (the same bits); under a wider context it is the
+  operand's own-width value zero-extended. A constant subexpression the
+  value tier folds (`a + P * 2`) is evaluated at the OPERATION width
+  `max(context, own width)` with its own signedness (`constAtCtx2`; the
+  self-width value dropped the carry), and the constant tier's `resize`
+  takes a signed operand modulo its own width before extending
+  (`evalAt`/`evalInt`). Typed signed parameters (`parameter byte B = -3`,
+  `o8 = a + B` into `[N:0]`) follow the same rule. Rows `fold_pneg*` (N =
+  1, 7, 30, 31, 40; P = -3, -1, 5), `fold_sparam*` (N = 1, 2, 3, 7, 9, 12).
+* **A negative genvar there is where the oracles split.** Yosys 0.53,
+  Verilator 5.042 and the LRM (§27.4: the loop's implicit localparam is an
+  `integer`) zero-extend a negative genvar into a wider unsigned context
+  exactly like a parameter, but Icarus 12.0 SIGN-extends it (`a ^ g`, `g =
+  -1`, 42-bit `a`: Icarus `~a`, the others `{a[41:32], ~a[31:0]}`). The
+  model refuses rather than pick one: `GenvarRef:unsigned-extension`
+  (`PExpr.negGenvarWidened`, in `instExpr2`, `instDivOperand2` and the
+  constant fold). Rows `fold_pgen` (N = 7, 30, 40 with a non-negative
+  genvar; refusal row `fold_pgen_n40`).
+* **A truncation at the default point is no truncation at a wider one.**
+  `c = a + b` with 4-bit operands into `[N-1:0]` is truncated at the
+  default `N = 2` (slang's tree: `Resize(2, a + b)`); at `N = 8` the
+  operands are extended before the addition and its carry survives
+  (§11.8.2). Lean lowered the `Resize` at the operand's own width and
+  zero-extended the 4-bit sum. A `Resize` around a context-propagating
+  operator (`PExpr.ctxPropagates`: unary `- ~ +`, `+ - * / % & | ^`, the
+  left operand of a shift or power, `?:`) under a context WIDER than the
+  operator's own width is now lowered at the context (`~a` gains its high
+  ones, `a - b` its borrow). Rows `fold_ctxres*` (N = 1, 2, 4, 5, 8, 40).
+* **Selects of a parameter's value.** `P[1]`, `Q[0 +: 2]` and `if (Q[1])`
+  with `localparam logic [N-1:0] P, Q` keep the legacy `BitSel`/`PartSel`
+  encoding over `ParamRef` (`ArraySel` covers declared signals), which the
+  constant tier reads as OFFSETS from bit 0. The extractor now emits it only
+  where that is exact at every point (`_sym_param_root_select`): a range
+  canonical `[m:0]` at the default point (labels raw), or literal bounds
+  (labels folded to offsets of the fixed range) except an indexed part
+  select, whose base was never folded (`R[0 +: 2]` over `logic [0:3]` read
+  labels 2:3). Every other select of a parameter value — a
+  parameter-dependent range that is not canonical at the default point
+  (`Q[1]` over `[0:N-1]` read offset 2 at every `N`), an indexed part
+  select over a non-canonical literal range, a multi-dimensional parameter
+  (the constant tier selects bits) — is `Unsupported` `<kind>:param-range`.
+  The Lean constant tier checks the canonical case AT EACH POINT
+  (`IEnv.pdims`, `paramSelectOk`): at `N = 0` the range is the ascending
+  `[-1:0]` and the select is refused, as is a label out of range (`P[1]` at
+  `N = 1`, where Icarus and Yosys read x — "constant bit select out of
+  range"). Rows `fold_psel` (N = 2, 4, 40), refusal rows `fold_psel_n1`,
+  `fold_psel_n0`, `fold_psel_nm1`.
+* **Run-time and genvar labels: the legacy-select range guard.** `o =
+  v[s]` and `w[g] = v[g]` on `logic [N-1:0] v` keep the legacy offset
+  encoding (exact while the range is `[m:0]`, `m ≥ 0`); at `N = 0` `v` is
+  `[-1:0]` and `v[s]` at `s = 1` read label -1 where Icarus and Yosys read
+  x. `LeanModels/Sv/RangeGuard2.lean` (`PDesign.legacyRangeReport`) refuses
+  a point at which a legacy-selected declaration that the instantiated
+  design still mentions has a range other than literal bounds or `[m:0]`,
+  `m ≥ 0` (`Select:legacy-range`, naming the declaration, the module and
+  its range there), every module of a hierarchy at its own point. It is a
+  CHECK beside `name.sem`, not part of it: the lowering and instantiation
+  lemmas (`instExpr2_bitSel_ident_dyn`, `PDesign.instantiateGD2_of_ok`,
+  `PDesign.instantiateH_of_rec`, …), the ∀-N examples and the svGolf
+  reference solutions pin `name.sem` to `instantiateGD2`/`instantiateHD2`.
+  It runs in `load_design_sv2` (at the defaults and at EVERY point of the
+  probe sidecar — the svGolf checker probes the task's probe, scoring and
+  backstop points), in `probeCheckString`, and in the differential runner
+  at each row's point. Only REACHED selects count: `ripple_add` selects
+  `a[i]` in a loop with no iteration at `N = 0`, so it passes there. Rows
+  `fold_vsel` (N = 1, 2, 3), refusal rows `fold_vsel_n0`, `fold_vsel_nm1`.
+* **`$high`/`$size` of a declared signal** read its FIRST packed dimension
+  at each point (`IEnv.dims`; `Param.lean`, `dimQuery`; IEEE 1800-2023
+  §20.7): `$high` the larger label, `$size` the element count. They were
+  `width - 1` and `width`: `$high(u)` of `logic [7:4] u` was 3, not 7;
+  `$size(m)` of `logic [3:0][N-1:0] m` was `4N`, not 4; `$high(v)` of
+  `[N-1:0]` at `N = 0` was 1, not 0. A signal without an evaluated
+  dimension entry (an enum- or struct-typed declaration, a scalar, a bound
+  read before the declaration scope is built) is loud. A value position may
+  now read `$high(sig)`/`$size(sig)` (an `int`, unconverted like the other
+  INT-class trees; it was `ConversionExpression:width`): Icarus 12.0
+  evaluates them there but not in a generate condition or a localparam.
+  Rows `fold_query*` (N = -1, 0, 1, 3, 40). `$left`/`$right`/`$low`/
+  `$increment` remain outside the tier, and in a VALUE position they were a
+  silent fold: the symbolic tier refused the call, and the conversion
+  around it fell back to slang's DEFAULT-point constant (`$left(v)` of
+  `logic [N-1:0] v` read 2 at every `N`; Icarus 12.0 and Yosys 0.53 read 7
+  at `N = 8`). In a parametric family a conversion whose operand converted
+  to an `Unsupported` node and that names a symbol (a parameter, a genvar,
+  a signal whose type a query reads — `_sym_mentions_name`) is no longer
+  replaced by that constant: `ConversionExpression:default-point-fold`
+  (`_sym_conversion`), unless the operand is a dimension query of a signal
+  whose range is written with literal bounds (the fold is exact there;
+  `_sym_query_dims_literal`). A constant of literals alone (`(33:22:11)`)
+  keeps its fold (its value is the same at every point; the recorded
+  default-width limitation of such folds is unchanged).
+  Refusal row `fold_lrq`, rows `fold_lrq_fixed` (N = 3, 8).
+* **The cross-check's normalization** gains one rule (`Probe2.lean`, rule
+  6): `resize w (a op b)` for `+ - *` narrows both operands to a width `k`
+  (`w ≤ k <` the operation's width) when every bit dropped is a known 0/1
+  (a literal's high bits, or a zero-extension of something at most `k` bits
+  wide) — the envelope's `a + B` at a narrow point (`a`'s 4 bits, truncated)
+  against slang's `resize w (resize 8 a + 8'hfd)` there (`fold_sparam` at
+  N = 1, 2, 3) is one circuit written two ways.
+
+All 43 passing rows match Icarus 12.0 and agree with the cross-check at
+every row point (31 points); each was also synthesized by Yosys 0.53
+(`chparam; synth -flatten; abc`) and the netlist simulated in Icarus with
+the row's testbench: it matches on every cycle whose inputs are all 0/1,
+except `fold_vsel_n1`'s out-of-range reads (`v[1]` of the one-bit `[0:0]`),
+which the model and Icarus read as x and the netlist resolves to a constant
+(synthesis treats x as don't-care).
+
+## Default-point folds in symbolic positions and constant contexts (round 3 repair, 2026-10-28)
+
+The round-3 conversions above were made in VALUE positions; the round-3
+verifier found the same default-point folds in the SYMBOLIC positions
+(`_SymPos`: case items, select labels, generate conditions, localparam and
+parameter initializers, instance overrides) and in the constant tier's
+evaluation of a typed localparam. Each is exact or loud at every point now
+— except where (iii) below says otherwise: the round 3 FOLDS verifier found
+that floor wrong for self-determined roots and INT-class targets and a
+silent oracle pick for genvar initializers, all repaired in "Default-point
+folds, round 4" below.
+
+* **Symbolic positions carry the value-position conversions** in a
+  parametric family (a module with one point keeps the old encodings):
+  the signed-simple-operand marker `Resize(width, ParamRef | GenvarRef |
+  $high | $size)` — `case (a) P:` and `v[a - P]` (`int P = -3`) read a bare
+  `P` that Lean SIGN-extended where the case or the index is wider than 32
+  bits (verifier repros `vp_case`, `vp_case2`, `vp_idx`; the widening twin
+  replaces `ConversionExpression:width` there — Icarus 12.0, Yosys 0.53 and
+  §12.5/§11.8.2 zero-extend `P`; Verilator 5.042 sign-extends the bare item
+  `P:` but zero-extends `P + 1'b0:`, measured on `fold_pcase` at `N = 40`); `Resize(width, Literal)`
+  for a sized literal its context widens, and `SignedResize`/`Resize` for a
+  sized SIGNED literal, instead of slang's literal folded at the DEFAULT
+  point's context width (`v[s + 1'b1]` was indexed at 4 bits at `N = 2`,
+  `localparam logic [N-1:0] S = 8'sd100` read 4 at `N = 16`); and a signed
+  constant tree without references under an assignment-like width change
+  (`localparam logic [N-1:0] L = -1`, which read 255 at `N = 16`) keeps the
+  tree under a conversion of the target width
+  (`_sym_signed_constant_symctx`), any other such conversion loud
+  (`ConversionExpression:signed-constant`, as in value positions).
+* **The constant tier reads a conversion's width as the default point's**
+  (`Param.lean`): `ctype` is transparent to `Resize`/`SignedResize` (the
+  operand's own type at THESE parameters; `Squash2` kept its width as a
+  floor until round 5, which made it transparent too — "Default-point
+  folds, round 5"), and `evalAt` converts to the context it is handed — a
+  context-propagating operand (`PExpr.ctxPropagates`) is evaluated AT the
+  context, anything else is its own bits extended — never truncating to
+  the envelope's width. A root's context comes from one of three places.
+  (i) A typed localparam initializer or typed parameter default is
+  evaluated at its DECLARED width at the point (`evalAssign`: `max(target,
+  own width)` with its own signedness, then converted;
+  `PParam.evalDefault`): `localparam logic [N-1:0] L1 = 8'd200 + 8'd100`
+  is 44 at `N = 8` and 300 at `N = 16` — it was 12, the default `N = 4`
+  value, at every point (verifier repros `vp_lp2`, `vp_lp`). (ii) A
+  self-determined root (a label, a generate condition) takes its own width
+  at the point (`rootType`, since round 4 `evalSized`): `U + 8'd200 < 8'd50` with `logic [N-1:0] U`
+  compares at 8 bits at `N = 8` (slang's tree is 16 bits at the default
+  `N = 16`), and `U > 5` at `N = 40` compares 40 bits where `U` was
+  truncated to the default point's 32. (iii) An assignment-like root whose
+  target is out of reach — a genvar initializer, an `int` localparam
+  (`Squash2`), an INT-class instance parameter override — keeps its
+  conversions' width as a floor where every operand on its context chain is
+  converted or INT class (the target was pushed into the tree), or where the
+  root is a conversion around a context-propagating operator
+  (`PExpr.chainInfo`). [Superseded in round 4: the floor was
+  read off conversions that are no evidence of an outside target — a
+  signed-operand marker and a widened literal are the DEFAULT point's
+  widest-operand width — and gave self-determined roots the default point's
+  width; an `integer`/`int` target with no conversion to read was evaluated
+  at its own width; a genvar initializer followed Icarus where the oracles
+  split. No root is evaluated at a conversion's width any more: see
+  "Default-point folds, round 4".] A TYPED instance override that is a
+  context-propagating operator (`.P(U + 8'd100)`, `U` 8 bits, into
+  `logic [15:0] P`) is where the tools split — §10.8 makes it an
+  assignment-like context and Icarus 12.0 gives 300, Yosys 0.53 and
+  Verilator 5.042 evaluate it at its own 8 bits (44) — and the constant
+  tier evaluates an override without the child's type: refused,
+  `InstanceSymbol:override-context` (`_sym_override_root`, refusal row
+  `fold_ovr`; leaves, selects, comparisons and INT-class overrides stay
+  admitted, rows `fold_ovr2*`). A negative genvar zero-extended past 32
+  bits in a constant expression is refused as in value positions
+  (`PExpr.negGenvarAt`).
+* **The value tier's constant folds** (`constAtCtx2`) evaluate at
+  `max(context, own width)` in every case (the root type of a pushed-down
+  chain would read the default point's width).
+
+Rows (all against Icarus 12.0, the cross-check agreeing at every row
+point): `fold_pcase*` (N = 7, 31, 40; P = -3, -1, 5), `fold_lpgrow*` (N =
+2, 3, 4, 8, 16, 31, 40), `fold_lpshr*` (N = 4, 8, 9, 12, 16, 40),
+`fold_cgrow*` (N = 4, 8, 32, 33, 40), `fold_lshr*` (N = 1, 2, 3, 4, 5),
+`fold_ovr2*` (N = 4, 8, 16, 20), refusal row `fold_ovr`.
+Row `fold_pcase_wide` is a DECLARED Icarus disagreement: a run-time select
+index wider than 32 bits whose value is out of range reads x (§11.5.1, the
+model and Yosys 0.53 `prep; eval`), Icarus 12.0 reads the bit at the
+index's low 32 bits (`docs/sv-oracle-disagreements.md`).
+
+## Default-point folds, round 4: root contexts and genvar initializers (2026-10-28)
+
+The round 3 FOLDS verifier found the constant tier still reading root
+contexts off conversion widths, which are the DEFAULT point's. The Lean
+constant tier (`Param.lean`) now never evaluates a root at a width read off
+a conversion [round 5 correction: except a 4-state → 2-state `Squash2`,
+whose default-point width `ctype` still used as a floor until round 5 —
+"Default-point folds, round 5" below]:
+
+* **Every root is read at its own type at the point** (`evalSized`: `ctype`,
+  conversions transparent, then `evalAt`) — a select label, a generate
+  condition or bound, a dimension bound, an untyped localparam or parameter
+  default. `PExpr.chainInfo`/`rootType` are gone: they read "every operand
+  converted" as a pushed-down target, but in `SB + 1'b1` with `logic signed
+  [N-1:0] SB` (default `N = 8`) the conversions are the signed-operand
+  marker and a widened literal, `Resize(8, SB) + Resize(8, 1'b1)` — the
+  default point's widest operand — so `v[SB + 1'b1]` read v[16] at `N = 4`,
+  `if (SB + 1'b1)` took the wrong branch and `localparam X = (SB + 1'b1) >>
+  1` was 8 (Icarus 12.0 and the Yosys 0.53 netlist: v[0], the else branch,
+  0; rows `fold_rself*`).
+* **An `integer`/`int` localparam or parameter default is a 32-bit target**
+  (`evalIntTarget`: `evalAssign 32` outside the INT class, `evalInt` for an
+  INT-class tree or the `Squash2` of one), like a typed vector target
+  (`evalAssign` at its declared width): `localparam integer L = U + 1'b1`
+  with `logic [N-1:0] U = -1` is 16 at `N = 4` and 256 at `N = 8` (it was 0;
+  rows `fold_rint*`).
+* **A genvar initializer is an assignment to the genvar's 32-bit `integer`**
+  and the oracles split on it: `genvar g = U + 1'b1` (4-bit `U = 15`) starts
+  at 0 in Icarus 12.0 (its own width) and at 16 in slang's elaboration, the
+  Yosys 0.53 netlist and IEEE 1800-2023 §10.8/§11.8.1. The extractor keeps
+  the assignment (`_sym_genvar_init`): an initializer outside the INT class
+  at some point (`_sym_genvar_int_class` — unsized integers, genvars,
+  `int`/`integer` parameters and untyped parameters with an INT default;
+  a `logic signed [N-1:0]` parameter is NOT of the class, whatever its
+  default width) whose root
+  conversion slang made same-width, or that has none, is wrapped in
+  `Resize(32, init)` (`SignedResize(32, init)` for a signed operand). Lean
+  reads a conversion AT a root as an outside target
+  (`PExpr.pushedTarget`) and uses it only to refuse: the own-width value where the target's reading agrees,
+  `Constant:assignment-context` where it differs (rows `fold_rgv_n4_um1`,
+  `fold_rgv_n8_um1`, the signed `fold_rgv_n4_s7`: `S + S` with a 4-bit `S =
+  7` is -2 against 14), and also where a 32-bit target's value is no 32-bit
+  signed integer — Icarus and Yosys keep such a genvar initializer whole,
+  slang and §27.4 truncate it to the `integer` (`genvar m = U` with a
+  40-bit `U = 2^40 - 1`, or a 32-bit unsigned `U = 2^32 - 1`: m starts at -1
+  in slang; rows `fold_rgvw_n40_um1`, `fold_rgvw_n33_um1`,
+  `fold_rgvw_n32_um1`). Where the readings agree the rows pass (`fold_rgv`,
+  `_n4`, `_n4_s3`, `_n32_um1`, `_n40`, `_n40_um1`; `fold_rgvw`, `_n40`,
+  `_n4_um1`, `_n40_u5`). The 32-bit fit check also refuses an instance
+  override of such a value into a 32-bit typed parameter (a recorded
+  over-refusal; the tools convert it alike).
+* **An INT-class instance override into a typed parameter wider than 32
+  bits** (`.P(N * 1024)` into `logic signed [39:0] P`: slang pushes the 40
+  bits into the tree, `SignedResize(40, N) * 1024`) keeps that assignment as
+  a root conversion of the parameter's width (`_sym_override_root`), read
+  like a genvar initializer's: the 32-bit value where the 40-bit one is the
+  same, `Constant:assignment-context` where the 32-bit arithmetic overflows
+  (Icarus 12.0 gives the 40-bit value, the Yosys 0.53 netlist the 32-bit
+  wrap; rows `fold_rovr*`). [Round 5: exact only for a parameter of FIXED
+  width; into one whose declared width depends on another parameter the
+  conversion carried the default point's width and the refusal missed the
+  split, so such an override is refused — "Default-point folds, round 5".] No conversion INSIDE a root is read as a target
+  any more: in a value position an INT leaf widened past 32 bits takes a
+  SIBLING signal's width (`a + P * 2` with a 33-bit `a`), which
+  `constAtCtx2` re-evaluates at the operation width. The INT class of an
+  override is decided at every point (`_sym_genvar_int_class`), so `.T(S +
+  1)` over a `logic signed [N-1:0] S` is a typed propagating override and
+  refused (`InstanceSymbol:override-context`).
+
+Confirmed by new repros that the round 3 repair holds: `fold_rcase*`
+(`-P`, `P + 2`, `~P` case items with `int P = -3`/`5` at `N = 7, 31, 40`),
+`fold_rlp*` (`~4'd0`, `-4'd1`, `4'd8 * 4'd4`, `(4'd15 + 4'd1) >> 1` into
+`logic [N-1:0]` at `N = 2, 3, 4, 8, 16`), and the unwrapped same-width
+assignment `localparam logic [N-1:0] L1 = P` (`fold_rlpsgn*`, sign-extended
+at `N = 40` in the model, Icarus 12.0 and Yosys 0.53).
+
+## Default-point folds, round 5: 2-state targets, declared signedness, dependent overrides, untyped wraps (2026-10-28)
+
+The round 4 FOLDS verifier found three more default-point folds, all
+silent wrong values, and one oracle split followed silently:
+
+* **`Squash2` is transparent to `ctype`** (`Param.lean`; verifier repro
+  `vq_sq2`, rows `fold_sq2*`). slang wraps the initializer of a 2-state
+  target in a same-width 4-state → 2-state conversion sized at the DEFAULT
+  point (`localparam bit [N-1:0] B1 = (U + 1'b1) >> 1` is `Squash2(32, …)`
+  at `N = 32`), and `ctype` kept that width as a floor: at `N = 4` the
+  localparams and the `bit` parameter default were evaluated at 32 bits (8,
+  1, 4, 8) where Icarus 12.0 and the Yosys 0.53 netlist give 0. The target
+  is supplied from above (`evalAssign` at the declared width,
+  `evalIntTarget` for an `int`), so the node contributes its operand's own
+  type. With this, no root of the constant tier is read at a conversion's
+  width. *(Round 6 correction: this covered a `Squash2` at the root only.
+  Under a NARROWING target slang's tree is `Resize(target, Squash2(default
+  width, op))`, and the context did not reach through the `Squash2`, so
+  `op` was evaluated at its own width where the target is the wider
+  context — `localparam shortint H1 = (U + 1'b1) >> 1` was 0 at a 4-bit
+  `U = 15` where every tool gives 8. See "Default-point folds, round 6".)*
+* **`signed` on every parameter-dependent type** (extractor
+  `_sym_param_signedness`; verifier repros `vq_sgn2`, `vq_sgn3`, rows
+  `fold_psgn*`, `fold_psgnw*`). The field was emitted only where a type departed from
+  "signed exactly when 32 bits wide" at the DEFAULT point, and Lean applied
+  that rule at each point's width: `logic signed [M-1:0] S = -1` (default
+  `M = 32`) was read UNSIGNED at `M = 8` (`assign o1 = S` gave 255 where
+  both tools sign-extend -1, and `localparam integer I = S >>> 1` 127 for
+  -1), `logic [N-1:0] U` (default `N = 8`) SIGNED at `N = 32`. A
+  `ParameterDecl`/`LocalParam` whose `type` holds a reference now always
+  carries `signed`; fixed-width types keep the old encoding (re-extraction
+  adds `"signed": false` to seven existing fixture envelopes: `fold_cgrow`,
+  `fold_lpgrow`, `fold_lpshr`, `fold_ovr`, `fold_ovr2`, `fold_psel`,
+  `fold_rlp`; nothing else changes). `declConstType` refuses a type with a
+  non-literal bound and no `signed` (a stale envelope can no longer be read
+  by the one-width rule).
+* **An INT-class context-propagating override into a child parameter
+  whose declared width depends on a parameter is refused**
+  (`InstanceSymbol:override-context`, `_sym_override_root` with
+  `_sym_param_type_fixed`; verifier repro `vq_ovr2`, refusal rows
+  `fold_ovrw*`). `#(.W(N + 40), .P(N << 40))` into `logic signed [W-1:0] P`
+  (default `N = 0`): the round 4 root conversion carried the default
+  point's 40 bits, where the 32-bit and 40-bit readings are both 0, while
+  at `N = 1` P is 41 bits and Icarus 12.0 (and §10.8, slang) give -2^40,
+  the Yosys 0.53 netlist 0 — the model ran silently. A LEAF override
+  (`.P(N)`), an operator into a FIXED-width parameter (refused only where
+  its 32-bit value overflows, `fold_rovr`) and into an `int` stay admitted
+  (rows `fold_ovrwl*`). The fixed-width test is syntactic: a keyword
+  integral or implicit type whose bounds are built from integer literals
+  and from sibling parameters whose value is a literal at every point
+  (`.W(40)`, or a literal default not overridden), or an untyped
+  parameter.
+* **An untyped constant whose own-type value wraps is refused**
+  (`Constant:untyped-overflow`, `Param.lean` `evalUntyped`; round 3
+  verifier minor 4, rows `fold_uovf*`). An untyped parameter default or
+  localparam takes its expression's type (§6.20.2): `localparam Y = SB +
+  1'b1` with an 8-bit `SB = 255` is 0 in slang, the LRM and the Yosys 0.53
+  netlist, and 256 in Icarus 12.0, which evaluates an untyped parameter
+  value losslessly. The model compares the own-type value with its reading
+  at 64 more bits, shifts kept at their own width (Icarus's lossless
+  evaluation stops at a shift: `(SB + 1'b1) >> 1` is 0 there, so
+  `fold_rself`'s untyped `X` still runs); it over-refuses where Icarus
+  happens to keep the bits (`-SB`, `~SB`), loudly. *(Round 7: a RIGHT shift
+  stops it; a LEFT shift does not, `1 << N` is 2^40 at `N = 40` in
+  Icarus.)* INT-class expressions
+  keep the unbounded reading (`int32Agrees`). An untyped value is
+  observable beyond its own width (`$bits(X)` is 65 in Icarus and 40 in
+  Yosys for `localparam X = U + N * 1024`, 40-bit `U`, `N = -2097153`), so
+  a narrow output that hides the difference is no evidence the tools agree.
+  *(Round 6 correction: the value check did not refuse every split. The
+  width splits even where no value wraps, the INT class splits too, and a
+  wrap beyond 64 extra bits escaped. See "Default-point folds, round 6".)*
+
+## Default-point folds, round 6: `Squash2` under a narrowing target, typedef widths, enum values, untyped widths (2026-10-29)
+
+Refusal-only, monotone (the round 5 FOLDS verifier's findings and the class
+behind them). No shape that was loud before is admitted; the one changed
+computation is shown equal to Icarus 12.0, the Yosys 0.53 netlist and
+slang's elaboration at every row point.
+*(Round 7 correction: one loud shape was admitted — a `Squash2` operand
+that divides by zero at its OWN width but not at the wider context
+(`localparam shortint H1 = 4'd8 / (U + 1'b1)` at a 4-bit `U = 15`). It is
+loud again; see "Default-point folds, round 7".)*
+
+* **The context reaches through a `Squash2`** (`Param.lean`
+  `PExpr.ctxPropagates`; verifier blocker 1, repro `vs_sqn`, rows
+  `fold_sqn*`). A 2-state target narrower than its initializer at the
+  default point is `Resize(target, Squash2(default width, op))`. `ctype`
+  has read the `Squash2` as transparent since round 5, but `evalAt`'s
+  `resize` arm only widened a context-propagating operand, and the
+  `Squash2` was not one: `localparam shortint H1 = (U + 1'b1) >> 1` with
+  `logic [N-1:0] U = -1` (default `N = 32`) was 0 at `N = 4` where Icarus
+  12.0, the Yosys 0.53 netlist and slang's elaboration give 8 (also `byte`,
+  `bit [7:0]`, `bit signed [7:0]`, a `byte` parameter default, and an `int`
+  over a 40-bit default operand). The value tier refuses every `Squash2`
+  (`instExpr2`), so only the constant tier reads this. Measured three-way
+  equal at 23 row points (`N = 0, 1, 2, 4, 7, 8, 15, 16, 31, 33, 63, 64,
+  65`; `K = 4, 8, 31, 32, 33, 64, 65`; `N = 4, U = 5`; `K = 4, UK = 5`) and
+  five more in scratch.
+* **A named parameter type of point-dependent width is unrecoverable**
+  (extractor `_sym_param_named_type_point_dependent`, called by
+  `_param_width_type`; verifier blocker 2, repros `vs_td2`, `vs_td4`, refusal
+  rows `fold_tdw*`). `typedef logic signed [M-1:0] st_t; localparam st_t
+  TS = -1;` has no dimensions in its type syntax, and `_param_width_type`
+  emitted slang's elaborated bounds — the DEFAULT point's — with no
+  `ParamRef` for `PType.boundsLiteral` to see: `TS + a` at `M = 8` was
+  4294967310 where both tools give 270. A `ParameterDecl`/`LocalParam`
+  whose declared type is named (anything but `_SYM_FIXED_PARAM_TYPE_KINDS`)
+  and point-dependent (`_sym_syntax_point_dependent`, which follows the
+  typedef) now has `packed: null` ("unrecoverable packed dimensions"). A
+  fixed-width typedef keeps its bounds (rows `fold_tdf*`); the unsigned
+  4-state twin was already `packed: null`.
+* **A member of an enum whose values depend on the point is refused**
+  (extractor `_sym_enum_values_point_dependent`,
+  `EnumValueSymbol:default-point-value`; refusal rows `fold_enm*`). The
+  `EnumType` node carries each member's default-point value: `typedef enum
+  logic [7:0] {EA = N, EB = N + 2}` read EB = 5 at every `N` (default 3)
+  where both tools give 7 at `N = 5`. A reference to a member of a module
+  enum with a point-dependent member initializer is `Unsupported`; fixed
+  enums and package enums keep `EnumRef` (rows `fold_enf*`).
+  *(Round 7 correction: the class is wider. A member value can depend on
+  the point with no name in its initializer — through an unsized literal
+  (`'1`) or a base width that depends on the point. See "Default-point
+  folds, round 7".)*
+* **An untyped constant that Icarus types wider than its own type is
+  refused** (`Param.lean` `PExpr.icarusWidens` in `evalUntyped`,
+  `Constant:untyped-width`; verifier major 3 and minor 4, repros `vs_uw`,
+  `vs_up`, `vs_uw3`, `vs_upw2`; refusal rows `fold_uwid*`, `fold_uwidp*`,
+  `fold_uwint*`). §6.20.2 types an untyped parameter by its expression;
+  Icarus 12.0 (default `-gno-strict-expr-width`) gives it the LOSSLESS
+  width (measured with `$bits`: one carry bit per `+ -`, the operand widths
+  summed for `*`, a base- and value-dependent width for `**`, carried
+  through `/ % & | ^`, unary `- ~ +` and `?:` arms, stopped by shifts,
+  comparisons, casts, selects and concatenation parts). It shows wherever
+  the width is observable even when no value wraps — `(Y + 8'd255) >> 1`
+  into 8 bits with `Y = SB + 1'b1`, `SB = 5`: 130 against 2 — and in the
+  INT class too: `localparam B = N + 1` (int `N`) is 33 bits, `{a, B}` is
+  `0x1e00000009` against `0xf00000009`, and a negative `C = N - 9` in
+  `a + C` into 64 bits `0x200000002` against `0x100000002`. Every untyped
+  parameter default and localparam built with `+ - * **` on its context
+  chain is refused at every point, whatever its value, so this also
+  refuses constants whose width is never observed (recorded
+  over-refusals: rows `fold_uwid_n16`, `fold_uwidp_y6*`, `fold_uwidp_y250`,
+  the four former PASS rows `fold_uovf`, `_sb100`, `_n16`, `_n4_sb3`, and
+  the cv32e40p `register_file_ff` row, whose `NUM_TOT_WORDS` sizes
+  dimensions only). The round 5 `Constant:untyped-overflow` check stays
+  behind it for the expressions it admits (`fold_rself`'s `(SB + 1'b1) >>
+  1`; rows `fold_uwok*`).
+  *(Round 7 correction: "stopped by shifts" holds for a RIGHT shift only.
+  Icarus widens a LEFT shift by its amount — `$bits(1 << N)` is 32 + N,
+  and the value at `N = 40` is 2^40 where Yosys gives 0 — so `<< <<<` now
+  count as widening too. See "Default-point folds, round 7".)*
+* **An INT-class override with `+ - * **` into an untyped child parameter
+  is refused** (extractor `_sym_override_root` with `_sym_param_untyped`
+  and `_sym_icarus_widens`, `InstanceSymbol:override-untyped-width`;
+  refusal rows `fold_uwovr*`). The child parameter takes the override's
+  type: 32 bits in slang and Yosys, the lossless 33 in Icarus (`{a, W}`
+  with `.W(N + 1)`: `0x1e00000009` against `0xf00000009`). Leaf overrides
+  and overrides into typed parameters stay (rows `fold_uwovl*`).
+
+## Default-point folds, round 7: size casts, enum widths, left shifts, the `Squash2` own-width gate (2026-10-29)
+
+Refusal-only, monotone (the round 6 FOLDS verifier's findings). Every
+change below is a new loud refusal, or the return of one; no computation
+changes, and no shape loud at 2e8c8b28 or in the round 6 tree is admitted.
+
+* **A cast whose size or type depends on the point is not folded**
+  (extractor `_sym_conversion`, new `_sym_bound_syntax_point_dependent`,
+  `ConversionExpression:default-point-fold`; verifier blocker 1, repros
+  `vw_szc2`, `vw_szc3`, `vw_szo`; refusal rows `fold_szc*`, `fold_szo*`).
+  slang binds a size cast's size away (`M'(255)` has no bound child for
+  `M`), so the round 3 guard, which looks for bound NAMES, let the M0 fold
+  through: `localparam int X1 = M'(255)` and `X6 = M'(300)` were slang's
+  default-point literals -1 and 44 at every `M`, where Icarus 12.0, the
+  Yosys 0.53 netlist and slang's elaboration at the point give 255 and 300
+  at `M = 16`, and X6 = -4 at `M = 4`. The override form (`.W(M'(255))`,
+  `.W(M'(300) + 1)` into an `int W`) folded the same way. In a family with
+  more than one point, a conversion the symbolic tier would replace by
+  slang's fold is now refused when any node of its operand has source
+  syntax that depends on the point (`_sym_syntax_point_dependent` over each
+  node's syntax, so a cast's size `M`, `(M + 0)`, or a typedef'd cast type
+  counts). Also refused: `M'(1) << 3`, `signed'(M'(200))`, `$signed(M'(8'd200))`,
+  `(M)'(255)`, `logic [63:0] R9 = M'(255)`, `M'(200) + 1`. A fixed cast
+  (`8'(255)`) and a single-point module keep the fold, which is exact there.
+* **An enum member initializer with an unbased-unsized literal is refused
+  everywhere** (extractor `_sym_enum_unsized_member`,
+  `EnumValueSymbol:unsized-literal-member`; verifier blocker 2, repro
+  `vw_enw`; refusal rows `fold_enw*`, `fold_enu`). IEEE 1800-2023 §5.7.1
+  fills `'1` to the base width, and slang does (`typedef enum logic [3:0]
+  {EA = '1, EB = 0}`: EA = 15, the value the `EnumType` node carried);
+  Icarus 12.0 and the Yosys 0.53 netlist both give EA = 1, in a module with
+  one point too (`{a, EA}` at `a = 15` is 241 in both tools, 255 in the
+  model). The tools split from the LRM, so a reference to a member of such
+  an enum — `'0`, `'1`, `'x`, `'z`, `~'0` anywhere in any member
+  initializer, package enums included — is `Unsupported` at every point.
+* **An enum whose base width depends on the point is refused**
+  (`_sym_enum_values_point_dependent` now also reads the base type and its
+  dimensions; `EnumValueSymbol:default-point-value`; refusal rows
+  `fold_enb*`). The `EnumType` node carries the default point's member
+  values and Lean only truncates them to the point's base width
+  (`Param.lean` `enumMemberVals`). With `typedef enum logic [N-1:0] {SA =
+  9, SB = 2}` (default `N = 4`), at `N = 3` SA does not fit: slang reports
+  `EnumValueOutOfRange`, Icarus refuses to elaborate, and the Yosys netlist
+  truncates to 1, which the model would have read. Every member of such an
+  enum is refused, at every point, the literal FSM form `{T0, T1, T2}`
+  where it fits included (a recorded over-refusal).
+* **A left shift widens an untyped constant** (`Param.lean`
+  `PExpr.icarusWidens`, extractor `_sym_icarus_widens`;
+  `Constant:untyped-width` and `InstanceSymbol:override-untyped-width`;
+  verifier blocker 3, repros `vw_shl`, `vw_shp`, `vw_sho`; refusal rows
+  `fold_shl*`, `fold_shp*`, `fold_sho*`). Icarus 12.0 widens `<<` and `<<<`
+  by the shift amount where the left operand is or contains an unsized or
+  INT-class operand (`$bits(1 << N)` 40 at `N = 8`, 72 at `N = 40`, where
+  the value is 2^40 and Yosys gives 0; `1 << 3` 35, `7 << 1` 33, `(N | 1)
+  << 2` 34, carried through `(1 << N) | 1` and `(1 << N) / 2`); slang,
+  §6.20.2 and the Yosys netlist keep 32 bits. Every untyped parameter
+  default, localparam and INT-class override into an untyped child with a
+  left shift on its context chain is refused; a sized left operand
+  (`SB << 4`, 8 bits in Icarus) is refused too, a recorded over-refusal. A
+  right shift still stops the width (`256 >> N` runs). The value-position
+  spellings (`u/`, `s%`, `u**u`, `u<<`) now count like their constant
+  twins.
+* **The `Squash2` own-width gate** (`Param.lean` `evalAt`'s `resize`,
+  `signedResize` and `squash2` arms with `PExpr.isSquash2`; verifier major
+  4, repro `vw_sqd`; rows `fold_sqd*`). Round 6 read a `Squash2` under a
+  narrowing 2-state target at the wider context (a correction shown equal
+  to slang, Icarus and the Yosys netlist), which also ADMITTED a shape
+  round 5 refused: `localparam shortint H1 = 4'd8 / (U + 1'b1)` at a 4-bit
+  `U = 15` divides by zero at U's own 4 bits and gives 0 at 16 bits. The
+  round 5 rule admits no loud shape, so the own-width reading must still
+  be defined: such a point is loud again (`division by zero in a constant
+  context`, rows `fold_sqd_n4_u15`, `_n7_u127`, `_n8_u255`), although
+  every tool agrees on 0 there (a recorded over-refusal). Where the
+  own-width reading is defined the value is unchanged (rows `fold_sqd`,
+  `_n4_u7`, `_n2_u3`, `_n1_u1`, `_n33_u5` run).
+
+## Probe sidecars: the multi-point cross-check (`--probe-points`, 2026-10-28)
+
+An envelope is elaborated by slang at the DEFAULT parameter point, and
+anything the extractor computes there and writes into the symbolic tree (a
+width, an offset, a cell, a sign) is a **default-point fold**: right at
+the defaults, silently wrong at other points. The cross-check turns that
+whole class into a loud refusal at chosen points:
+
+```
+python3.12 extractors/sv/extract.py --top <module> <files...> -o <file>.sv.json \
+    --probe-points "N=1;N=2;N=16;N=4,W=8"
+```
+
+writes the envelope exactly as without the option (byte-identical) and,
+next to it, the opt-in sidecar `<file>.sv.probes.json` (the envelope path
+with `.json` replaced by `.probes.json`). Points are `;`-separated,
+assignments `,`-separated, values decimal integers — the integer overrides
+a testbench passes (`#(.N(4))`); every name must be a `ParameterDecl` of
+the top (else exit 1, no sidecar). For each point the SAME symbolic
+extraction is re-run with slang's top-level `paramOverrides` set to the
+point, so slang elaborates the point itself — with the `--top` module the
+ONLY top-level module of that compilation (`topModules`; round 3 CX
+repair). slang applies `paramOverrides` to every top-level module and
+counts the errors of every one, so an unrelated, uninstantiated module of
+the same sources with a parameter of the same name used to receive the
+point too and, when it failed there, refused a DUT that every tool runs
+(fixture `sem2/multi_top`); a testbench's `#(.N(v))` and `name.sem`
+override the DUT alone. The default-point envelope is unaffected (it is
+still one plain compilation of all sources).
+
+Sidecar keys, in order: `schema_version` (`"sv-0.2-probes"`), `top`,
+`envelope` (the envelope's file name), `source_files` (the envelope's own
+list — a sidecar from other sources is refused), `probe_points` (the
+normalized `--probe-points` argument that regenerates exactly this file;
+assignments in parameter declaration order), and `points`, one object per
+point:
+
+- `overrides`: `[{name, value}]`, declaration order;
+- `frontend_errors`: slang's error-diagnostic count when it elaborates the
+  top ALONE at the point (its own hierarchy, plus parse and package errors
+  of the sources; errors of modules the top does not instantiate are not
+  counted). `> 0`: slang rejects the top there — a failing verdict
+  (`frontendRejects`, reported only when the two designs compare equal);
+- `module`: the top `Module` extracted AT the point (`span` fields
+  stripped; an overridden parameter's `default` is the override literal
+  and its `resolved` is slang's value at the point);
+- `instances`: one entry per distinct `(definition, overrides)` pair of the
+  point-elaborated hierarchy (instantiated generate blocks included,
+  recursively): `module` (the definition), `overrides` (the OVERRIDDEN
+  parameters of that instance with slang's values there, `null` when one
+  is not an integer, or when an UNTYPED parameter — implicit type, no
+  range — receives a type other than the 32-bit signed one an integer
+  override gives: IEEE 1800-2023 §6.20.2 gives it the type of its final
+  value, so `#(.P(4'd9))` makes `P` 4-bit and an int probe `P=9` would
+  check a different family member; such entries are unprobed, a failing
+  `refused` verdict), `design` (the definition re-extracted alone at those
+  overrides, `null` when slang cannot elaborate it alone).
+
+**The Lean check** (`LeanModels/Sv/Probe2.lean`, `PDesign.pointVerdict`):
+the envelope's module and the point's module are brought to the point by
+the same `PDesign.atPoint` and instantiated by the same
+`instantiateG2`/`instantiateH` (one-driver rule included; a point that
+overrides every parameter is exactly `name.sem` there), and the two
+`Design2` values are compared: declarations exactly, processes in order,
+structurally, after a width-identity normalization (`Expr2.norm`: an
+identity `resize`/`resizeSigned` vanishes, a resize of a literal is
+evaluated, nested truncations merge, a resize moves through a ternary or a
+bitwise `& | ^` whose operands have one width, and an expression with a
+loud operand is that operand — each an equation of the evaluator on
+width-correct values; nothing is moved through arithmetic, whose x-collapse
+sees the high bits). Two loud nodes are equal when their kinds are. The
+point module's own `resolved` metadata is also replayed at the point
+(`PDesign.crossCheck`). Each instance entry is compared the same way
+against the envelope's library definition at the entry's overrides.
+Verdicts: `agree` (the only pass), `differ` (two VALUES differ — a silent
+fold), `unconfirmed` (equal except where one side is loud: the point
+extraction refuses a construct slang inserts only at the point, or the
+envelope refuses — nothing vouches for the envelope there), `metaDiffer`,
+`frontendRejects`, `refused` (either side fails to instantiate, or an
+instance could not be probed). Only `differ` is a default-point fold; the
+refusal messages (`load_design_sv2`, `diff_test2.py`'s `XCHECK-FAIL`)
+print the verdict and its meaning (`ProbeVerdict.meaning`), never a
+generic "a fold leaked".
+
+**Consumers.** (1) `load_design_sv2` runs every entry of the sidecar when
+one exists and REFUSES the envelope at the first non-`agree` entry, naming
+the point, the entry and the first differing declaration or process (and
+the innermost differing node). (2) `harness/sv/diff_test2.py --xcheck`
+(default on) re-extracts every row with parameter overrides at the row's
+point into its work dir (the committed envelope must be byte-identical to
+the fresh one, else `XCHECK-STALE`) and the runner prints the row point's
+`XCHECK` lines; any `FAIL` verdict is `XCHECK-FAIL`, a failed case; an
+`UNCONFIRMED` verdict passes only when every simulator then matches the
+model at that very point (`xcheck:UNCONFIRMED, simulator-verified`).
+(3) The svGolf checker (or any tool) calls `LeanModels.Sv.probeReportString
+envText probesText` (every labelled verdict), `probeCheckString` (`.ok n`
+iff all `n` entries agree, else the first failure) or `probeCheckFile
+envPath` (`.ok none` when no sidecar exists — nothing compared, NOT
+agreement), all in `Ingest2.lean`; `harness/sv/xcheck2.lean <envelope>
+[<probes>]` (or `--batch <list>`) prints them from the command line.
+Committed sidecars: `ripple_add`, `mul2d`, `partsel`, `ripple_fa` (the
+∀-N proof examples; `extractors/sv/test_probe_points.py` regenerates each
+committed sidecar from its `probe_points` and requires byte identity).
+(4) Since the round 3 folds, `load_design_sv2` and `probeCheckString` also
+run the legacy-select range guard at every sidecar point
+(`Envelope2.legacyRangeAtPoints`, "Default-point folds, round 3" above),
+refusing a point where it fails whatever the verdicts are.
+
+**Limits.** Only probed points are checked; a fold whose dependency is a
+GENVAR rather than a parameter (the body of a generate-for is bound from
+its first iteration at every point alike) is invisible to it; a hierarchy's
+child is checked at the overrides slang gives it, which are not compared
+against the values `instantiateH` computes for it; an `unconfirmed` entry
+is not a pass for the loader or the checker API (it may be over-cautious:
+the measured cases are all simulator-correct). A defect that is the SAME
+at every point (not a fold) agrees everywhere and is invisible to it: the
+dropped output-port initializer above was one (`sem2/vg_initqp` agreed at
+N = 3, 5 while wrong at every N).
 
 ## Self-check signed integral tier (2026-10-09)
 

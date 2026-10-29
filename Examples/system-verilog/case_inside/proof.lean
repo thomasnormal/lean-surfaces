@@ -60,7 +60,7 @@ theorem ambiguous_then_match (subject candidate mask previous : LVec)
   change stepSStmt (fuel + 14)
     [("selector",subject),("candidate",candidate),("mask",mask),("choice",previous)]
     pending output selectedBody = _
-  rcases output with ⟨lines,current,halted,transfer⟩
+  rcases output with ⟨lines,current,strobes,halted,transfer⟩
   change halted = false at running
   subst halted
   rfl

@@ -15,6 +15,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import diff_test
 import diff_test2
+import oracle_disagreements
 
 
 class OracleDisagreementTests(unittest.TestCase):
@@ -150,7 +151,7 @@ class OracleDisagreementTests(unittest.TestCase):
 class Phase2DisagreementTests(unittest.TestCase):
     cases = ("bit_select_assign", "noncanonical_bit_assign", "packed_member_subrange",
              "packed_member_bit", "packed_union_subrange", "packed_union_bit", "nested_member_bit", "nested_member_concat", "typedef_nested_concat",
-             "fixed_array_noncanonical_slice")
+             "fixed_array_noncanonical_slice", "concat_undriven")
 
     def run_main(self, name, sims=("iverilog",), resolved=False, changed=False):
         case = next(c for c in json.loads(Path(diff_test2.CASES_JSON).read_text())["cases"]
@@ -342,6 +343,109 @@ class UnavailableOracleTests(unittest.TestCase):
         status, output = self.run_main(self.cases[0], sims=("xrun",))
         self.assertEqual(status, 0, output)
         self.assertIn("1 case(s) verified, 0 skipped", output)
+
+
+# Measured 2026-10-28 with Homebrew Icarus 12.0 on macOS (full diff_test2
+# suite): the same failures as the recorded Ubuntu signatures, framed by
+# macOS libc and macOS /bin/sh (oracle_disagreements.py, "HOST FRAMING").
+DARWIN_IVL_ABORT = (
+    "sh: line 1: 31863 Done                    /opt/homebrew/Cellar/icarus-verilog/12.0/lib/ivl/ivlpp"
+    " -L -F\"/var/folders/qz/yy2p38hj2m9c7bfp30yq99340000gn/T//ivrlg21feae553\""
+    " -f\"/var/folders/qz/yy2p38hj2m9c7bfp30yq99340000gn/T//ivrlg1feae553\""
+    " -p\"/var/folders/qz/yy2p38hj2m9c7bfp30yq99340000gn/T//ivrli1feae553\"\n"
+    "     31864 Abort trap: 6           | /opt/homebrew/Cellar/icarus-verilog/12.0/lib/ivl/ivl"
+    " -C\"/var/folders/qz/yy2p38hj2m9c7bfp30yq99340000gn/T//ivrlh1feae553\""
+    " -C\"/opt/homebrew/Cellar/icarus-verilog/12.0/lib/ivl/vvp.conf\" -- -\n")
+DARWIN_VVP_ASSERT = ("Assertion failed: (adr+that.size_ <= size_), function set_vec, "
+                     "file vvp_net.cc, line 1180.\n")
+
+
+def darwin_form(record, pid=40000):
+    """A recorded (Ubuntu) failure as macOS frames it: libc's assertion format
+    and the bash job report, with fresh process ids and temporary names."""
+    def darwin_assert(match):
+        return "Assertion failed: (%s), function %s, file %s, line %s." % (
+            match.group("expr"), oracle_disagreements._short_function(match.group("func")),
+            match.group("file"), match.group("line"))
+    stderr = oracle_disagreements._GLIBC_ASSERT.sub(darwin_assert, record["stderr"])
+    report = DARWIN_IVL_ABORT.replace("31863", str(pid)).replace("31864", str(pid + 1)) \
+        .replace("1feae553", "%x" % (pid * 7919))
+    stderr = stderr.replace("Aborted (core dumped)\n", report)
+    return dict(record, stderr=stderr)
+
+
+class HostFramingTests(unittest.TestCase):
+    """One Icarus failure, two hosts: accepted in both framings, and nothing
+    else is accepted because of the rewriting."""
+
+    setUp = UnavailableOracleTests.setUp
+    run_main = UnavailableOracleTests.run_main
+
+    def framed(self):
+        out = []
+        for case in self.cases:
+            for record in case["icarus_unavailable"]["failures"]:
+                darwin = darwin_form(record)
+                if darwin != record:
+                    out.append((case, record, darwin))
+        return out
+
+    def test_every_recorded_crash_in_macos_framing_is_the_same_failure(self):
+        framed = self.framed()
+        # Non-vacuity: the sixteen cases that ERRORed on macOS all carry one.
+        self.assertGreaterEqual(len({c["name"] for c, _, _ in framed}), 16)
+        for case, _record, darwin in framed:
+            for pid in (40000, 7):
+                with self.subTest(name=case["name"], pid=pid):
+                    status, output = self.run_main(case, darwin_form(_record, pid))
+                    self.assertEqual(status, 1, output)  # unavailable is never verified
+                    self.assertIn("UNAVAILABLE ORACLE", output)
+                    self.assertNotIn("unexpected simulator failure", output)
+
+    def test_measured_macos_signatures_are_recognized(self):
+        by_name = {c["name"]: c for c in self.cases}
+        compile_case = by_name["packed_member_indexed"]
+        runtime_case = by_name["noncanonical_member_bit"]
+        compile_record = dict(stage="compile", returncode=134, stdout="", stderr=(
+            "<source>:12: assert: elab_net.cc:668: failed assertion tail_sel.sel == "
+            "index_component_t::SEL_PART || tail_sel.sel == index_component_t::SEL_BIT\n"
+            + DARWIN_IVL_ABORT))
+        runtime_record = dict(stage="runtime", returncode=-6, stdout="",
+                              stderr=DARWIN_VVP_ASSERT)
+        for case, record in ((compile_case, compile_record), (runtime_case, runtime_record)):
+            with self.subTest(name=case["name"]):
+                status, output = self.run_main(case, record)
+                self.assertEqual(status, 1, output)
+                self.assertIn("UNAVAILABLE ORACLE", output)
+                self.assertNotIn("unexpected simulator failure", output)
+
+    def test_host_framing_does_not_admit_a_different_failure(self):
+        compile_case, _, darwin = next(t for t in self.framed() if t[1]["stage"] == "compile")
+        runtime_case, _, rdarwin = next(t for t in self.framed() if t[1]["stage"] == "runtime")
+        variants = [
+            (compile_case, dict(darwin, stderr=darwin["stderr"].replace(
+                "Abort trap: 6", "Segmentation fault: 11"))),
+            (compile_case, dict(darwin, stderr=darwin["stderr"].replace(
+                "Abort trap: 6           | /opt/homebrew/Cellar/icarus-verilog/12.0/lib/ivl/ivl ",
+                "Abort trap: 6           | /opt/homebrew/Cellar/icarus-verilog/12.0/lib/ivl/ivlpp "))),
+            (compile_case, dict(darwin, stderr=darwin["stderr"].split("sh: line")[0] + "Aborted\n")),
+            (compile_case, dict(darwin, stderr=darwin["stderr"].split("sh: line")[0])),
+            (compile_case, dict(darwin, returncode=139)),
+            (compile_case, dict(darwin, stderr=darwin["stderr"].replace("elab_net.cc:668", "elab_net.cc:669"))),
+            (runtime_case, dict(rdarwin, stderr=rdarwin["stderr"].replace("line 1180", "line 1181"))),
+            (runtime_case, dict(rdarwin, stderr=rdarwin["stderr"].replace("function set_vec", "function set_bit"))),
+            (runtime_case, dict(rdarwin, stderr=rdarwin["stderr"].replace("<= size_)", "< size_)"))),
+            (runtime_case, dict(rdarwin, stderr=rdarwin["stderr"].replace("vvp_net.cc", "vvp_net2.cc"))),
+            (runtime_case, dict(rdarwin, stage="compile")),
+            (runtime_case, dict(rdarwin, stderr=rdarwin["stderr"] + "trailing diagnostic\n")),
+        ]
+        for case, record in variants:
+            with self.subTest(name=case["name"], stderr=record["stderr"][-80:],
+                              returncode=record["returncode"], stage=record["stage"]):
+                status, output = self.run_main(case, record)
+                self.assertEqual(status, 1, output)
+                self.assertIn("unexpected simulator failure", output)
+                self.assertNotIn("UNAVAILABLE ORACLE", output)
 
 
 if __name__ == "__main__":

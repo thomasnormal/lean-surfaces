@@ -1,0 +1,2127 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "fold_sqn",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/fold_sqn/fold_sqn.sv",
+      "sha256": "746a3ebf85db3798fc29c2b398d8b5135afb5af937db897a7ddf0d53008a0f14"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 9,
+          "col": 1,
+          "end_line": 31,
+          "end_col": 10
+        },
+        "name": "fold_sqn",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 9,
+              "col": 33,
+              "end_line": 9,
+              "end_col": 39
+            },
+            "name": "N",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 33,
+                      "end_line": 9,
+                      "end_col": 39
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 33,
+                      "end_line": 9,
+                      "end_col": 39
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 9,
+                "col": 37,
+                "end_line": 9,
+                "end_col": 39
+              },
+              "value": 32,
+              "resolved_width": 32
+            },
+            "resolved": 32
+          },
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 9,
+              "col": 65,
+              "end_line": 9,
+              "end_col": 71
+            },
+            "name": "U",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 9,
+                      "col": 58,
+                      "end_line": 9,
+                      "end_col": 61
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 9,
+                        "col": 58,
+                        "end_line": 9,
+                        "end_col": 59
+                      },
+                      "name": "N"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 9,
+                        "col": 60,
+                        "end_line": 9,
+                        "end_col": 61
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 62,
+                      "end_line": 9,
+                      "end_col": 63
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Unary",
+              "span": {
+                "line": 9,
+                "col": 69,
+                "end_line": 9,
+                "end_col": 71
+              },
+              "width": 32,
+              "op": "-",
+              "operand": {
+                "kind": "Int",
+                "span": {
+                  "line": 9,
+                  "col": 70,
+                  "end_line": 9,
+                  "end_col": 71
+                },
+                "value": 1,
+                "resolved_width": 32
+              }
+            },
+            "resolved": 4294967295,
+            "signed": false
+          },
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 10,
+              "col": 34,
+              "end_line": 10,
+              "end_col": 54
+            },
+            "name": "PY",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 10,
+                      "col": 34,
+                      "end_line": 10,
+                      "end_col": 54
+                    },
+                    "value": 7,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 10,
+                      "col": 34,
+                      "end_line": 10,
+                      "end_col": 54
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "default": {
+              "kind": "Resize",
+              "span": {
+                "line": 10,
+                "col": 39,
+                "end_line": 10,
+                "end_col": 54
+              },
+              "width": 8,
+              "operand": {
+                "kind": "Squash2",
+                "span": {
+                  "line": 10,
+                  "col": 39,
+                  "end_line": 10,
+                  "end_col": 54
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 10,
+                    "col": 39,
+                    "end_line": 10,
+                    "end_col": 54
+                  },
+                  "width": 32,
+                  "op": ">>",
+                  "left": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 10,
+                      "col": 40,
+                      "end_line": 10,
+                      "end_col": 48
+                    },
+                    "width": 32,
+                    "op": "+",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 10,
+                        "col": 40,
+                        "end_line": 10,
+                        "end_col": 41
+                      },
+                      "name": "U"
+                    },
+                    "right": {
+                      "kind": "Resize",
+                      "span": {
+                        "line": 10,
+                        "col": 44,
+                        "end_line": 10,
+                        "end_col": 48
+                      },
+                      "width": 32,
+                      "operand": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 10,
+                          "col": 44,
+                          "end_line": 10,
+                          "end_col": 48
+                        },
+                        "width": 1,
+                        "bits": "1"
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 10,
+                      "col": 53,
+                      "end_line": 10,
+                      "end_col": 54
+                    },
+                    "value": 1,
+                    "resolved_width": 32
+                  }
+                }
+              }
+            },
+            "resolved": 0,
+            "signed": true
+          },
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 11,
+              "col": 33,
+              "end_line": 11,
+              "end_col": 39
+            },
+            "name": "K",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 11,
+                      "col": 33,
+                      "end_line": 11,
+                      "end_col": 39
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 11,
+                      "col": 33,
+                      "end_line": 11,
+                      "end_col": 39
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 11,
+                "col": 37,
+                "end_line": 11,
+                "end_col": 39
+              },
+              "value": 40,
+              "resolved_width": 32
+            },
+            "resolved": 40
+          },
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 11,
+              "col": 65,
+              "end_line": 11,
+              "end_col": 72
+            },
+            "name": "UK",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 11,
+                      "col": 58,
+                      "end_line": 11,
+                      "end_col": 61
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 11,
+                        "col": 58,
+                        "end_line": 11,
+                        "end_col": 59
+                      },
+                      "name": "K"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 11,
+                        "col": 60,
+                        "end_line": 11,
+                        "end_col": 61
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 11,
+                      "col": 62,
+                      "end_line": 11,
+                      "end_col": 63
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 40
+            },
+            "default": {
+              "kind": "Unary",
+              "span": {
+                "line": 11,
+                "col": 70,
+                "end_line": 11,
+                "end_col": 72
+              },
+              "width": 40,
+              "op": "-",
+              "operand": {
+                "kind": "Int",
+                "span": {
+                  "line": 11,
+                  "col": 71,
+                  "end_line": 11,
+                  "end_col": 72
+                },
+                "value": 1,
+                "resolved_width": 40
+              }
+            },
+            "resolved": 1099511627775,
+            "signed": false
+          },
+          {
+            "kind": "LocalParam",
+            "span": {
+              "line": 14,
+              "col": 23,
+              "end_line": 14,
+              "end_col": 43
+            },
+            "name": "H1",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 14,
+                      "col": 23,
+                      "end_line": 14,
+                      "end_col": 43
+                    },
+                    "value": 15,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 14,
+                      "col": 23,
+                      "end_line": 14,
+                      "end_col": 43
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 16
+            },
+            "expr": {
+              "kind": "Resize",
+              "span": {
+                "line": 14,
+                "col": 28,
+                "end_line": 14,
+                "end_col": 43
+              },
+              "width": 16,
+              "operand": {
+                "kind": "Squash2",
+                "span": {
+                  "line": 14,
+                  "col": 28,
+                  "end_line": 14,
+                  "end_col": 43
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 14,
+                    "col": 28,
+                    "end_line": 14,
+                    "end_col": 43
+                  },
+                  "width": 32,
+                  "op": ">>",
+                  "left": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 14,
+                      "col": 29,
+                      "end_line": 14,
+                      "end_col": 37
+                    },
+                    "width": 32,
+                    "op": "+",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 14,
+                        "col": 29,
+                        "end_line": 14,
+                        "end_col": 30
+                      },
+                      "name": "U"
+                    },
+                    "right": {
+                      "kind": "Resize",
+                      "span": {
+                        "line": 14,
+                        "col": 33,
+                        "end_line": 14,
+                        "end_col": 37
+                      },
+                      "width": 32,
+                      "operand": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 14,
+                          "col": 33,
+                          "end_line": 14,
+                          "end_col": 37
+                        },
+                        "width": 1,
+                        "bits": "1"
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 14,
+                      "col": 42,
+                      "end_line": 14,
+                      "end_col": 43
+                    },
+                    "value": 1,
+                    "resolved_width": 32
+                  }
+                }
+              }
+            },
+            "resolved": 0,
+            "signed": true
+          },
+          {
+            "kind": "LocalParam",
+            "span": {
+              "line": 15,
+              "col": 19,
+              "end_line": 15,
+              "end_col": 32
+            },
+            "name": "Y1",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 19,
+                      "end_line": 15,
+                      "end_col": 32
+                    },
+                    "value": 7,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 19,
+                      "end_line": 15,
+                      "end_col": 32
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "expr": {
+              "kind": "Resize",
+              "span": {
+                "line": 15,
+                "col": 24,
+                "end_line": 15,
+                "end_col": 32
+              },
+              "width": 8,
+              "operand": {
+                "kind": "Squash2",
+                "span": {
+                  "line": 15,
+                  "col": 24,
+                  "end_line": 15,
+                  "end_col": 32
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 15,
+                    "col": 24,
+                    "end_line": 15,
+                    "end_col": 32
+                  },
+                  "width": 32,
+                  "op": "+",
+                  "left": {
+                    "kind": "ParamRef",
+                    "span": {
+                      "line": 15,
+                      "col": 24,
+                      "end_line": 15,
+                      "end_col": 25
+                    },
+                    "name": "U"
+                  },
+                  "right": {
+                    "kind": "Resize",
+                    "span": {
+                      "line": 15,
+                      "col": 28,
+                      "end_line": 15,
+                      "end_col": 32
+                    },
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 15,
+                        "col": 28,
+                        "end_line": 15,
+                        "end_col": 32
+                      },
+                      "width": 1,
+                      "bits": "1"
+                    }
+                  }
+                }
+              }
+            },
+            "resolved": 0,
+            "signed": true
+          },
+          {
+            "kind": "LocalParam",
+            "span": {
+              "line": 16,
+              "col": 24,
+              "end_line": 16,
+              "end_col": 44
+            },
+            "name": "B8",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 16,
+                      "col": 19,
+                      "end_line": 16,
+                      "end_col": 20
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 16,
+                      "col": 21,
+                      "end_line": 16,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "expr": {
+              "kind": "Resize",
+              "span": {
+                "line": 16,
+                "col": 29,
+                "end_line": 16,
+                "end_col": 44
+              },
+              "width": 8,
+              "operand": {
+                "kind": "Squash2",
+                "span": {
+                  "line": 16,
+                  "col": 29,
+                  "end_line": 16,
+                  "end_col": 44
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 16,
+                    "col": 29,
+                    "end_line": 16,
+                    "end_col": 44
+                  },
+                  "width": 32,
+                  "op": ">>",
+                  "left": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 16,
+                      "col": 30,
+                      "end_line": 16,
+                      "end_col": 38
+                    },
+                    "width": 32,
+                    "op": "+",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 16,
+                        "col": 30,
+                        "end_line": 16,
+                        "end_col": 31
+                      },
+                      "name": "U"
+                    },
+                    "right": {
+                      "kind": "Resize",
+                      "span": {
+                        "line": 16,
+                        "col": 34,
+                        "end_line": 16,
+                        "end_col": 38
+                      },
+                      "width": 32,
+                      "operand": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 16,
+                          "col": 34,
+                          "end_line": 16,
+                          "end_col": 38
+                        },
+                        "width": 1,
+                        "bits": "1"
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 16,
+                      "col": 43,
+                      "end_line": 16,
+                      "end_col": 44
+                    },
+                    "value": 1,
+                    "resolved_width": 32
+                  }
+                }
+              }
+            },
+            "resolved": 0
+          },
+          {
+            "kind": "LocalParam",
+            "span": {
+              "line": 17,
+              "col": 31,
+              "end_line": 17,
+              "end_col": 51
+            },
+            "name": "S8",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 17,
+                      "col": 26,
+                      "end_line": 17,
+                      "end_col": 27
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 17,
+                      "col": 28,
+                      "end_line": 17,
+                      "end_col": 29
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "expr": {
+              "kind": "Resize",
+              "span": {
+                "line": 17,
+                "col": 36,
+                "end_line": 17,
+                "end_col": 51
+              },
+              "width": 8,
+              "operand": {
+                "kind": "Squash2",
+                "span": {
+                  "line": 17,
+                  "col": 36,
+                  "end_line": 17,
+                  "end_col": 51
+                },
+                "width": 32,
+                "operand": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 17,
+                    "col": 36,
+                    "end_line": 17,
+                    "end_col": 51
+                  },
+                  "width": 32,
+                  "op": ">>",
+                  "left": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 17,
+                      "col": 37,
+                      "end_line": 17,
+                      "end_col": 45
+                    },
+                    "width": 32,
+                    "op": "+",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 17,
+                        "col": 37,
+                        "end_line": 17,
+                        "end_col": 38
+                      },
+                      "name": "U"
+                    },
+                    "right": {
+                      "kind": "Resize",
+                      "span": {
+                        "line": 17,
+                        "col": 41,
+                        "end_line": 17,
+                        "end_col": 45
+                      },
+                      "width": 32,
+                      "operand": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 17,
+                          "col": 41,
+                          "end_line": 17,
+                          "end_col": 45
+                        },
+                        "width": 1,
+                        "bits": "1"
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 17,
+                      "col": 50,
+                      "end_line": 17,
+                      "end_col": 51
+                    },
+                    "value": 1,
+                    "resolved_width": 32
+                  }
+                }
+              }
+            },
+            "resolved": 0,
+            "signed": true
+          },
+          {
+            "kind": "LocalParam",
+            "span": {
+              "line": 18,
+              "col": 26,
+              "end_line": 18,
+              "end_col": 46
+            },
+            "name": "L8",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 18,
+                      "col": 21,
+                      "end_line": 18,
+                      "end_col": 22
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 18,
+                      "col": 23,
+                      "end_line": 18,
+                      "end_col": 24
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "expr": {
+              "kind": "Resize",
+              "span": {
+                "line": 18,
+                "col": 31,
+                "end_line": 18,
+                "end_col": 46
+              },
+              "width": 8,
+              "operand": {
+                "kind": "Binary",
+                "span": {
+                  "line": 18,
+                  "col": 31,
+                  "end_line": 18,
+                  "end_col": 46
+                },
+                "width": 32,
+                "op": ">>",
+                "left": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 18,
+                    "col": 32,
+                    "end_line": 18,
+                    "end_col": 40
+                  },
+                  "width": 32,
+                  "op": "+",
+                  "left": {
+                    "kind": "ParamRef",
+                    "span": {
+                      "line": 18,
+                      "col": 32,
+                      "end_line": 18,
+                      "end_col": 33
+                    },
+                    "name": "U"
+                  },
+                  "right": {
+                    "kind": "Resize",
+                    "span": {
+                      "line": 18,
+                      "col": 36,
+                      "end_line": 18,
+                      "end_col": 40
+                    },
+                    "width": 32,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 18,
+                        "col": 36,
+                        "end_line": 18,
+                        "end_col": 40
+                      },
+                      "width": 1,
+                      "bits": "1"
+                    }
+                  }
+                },
+                "right": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 18,
+                    "col": 45,
+                    "end_line": 18,
+                    "end_col": 46
+                  },
+                  "value": 1,
+                  "resolved_width": 32
+                }
+              }
+            },
+            "resolved": 0
+          },
+          {
+            "kind": "LocalParam",
+            "span": {
+              "line": 19,
+              "col": 18,
+              "end_line": 19,
+              "end_col": 39
+            },
+            "name": "KI",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 19,
+                      "col": 18,
+                      "end_line": 19,
+                      "end_col": 39
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 19,
+                      "col": 18,
+                      "end_line": 19,
+                      "end_col": 39
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "expr": {
+              "kind": "Resize",
+              "span": {
+                "line": 19,
+                "col": 23,
+                "end_line": 19,
+                "end_col": 39
+              },
+              "width": 32,
+              "operand": {
+                "kind": "Squash2",
+                "span": {
+                  "line": 19,
+                  "col": 23,
+                  "end_line": 19,
+                  "end_col": 39
+                },
+                "width": 40,
+                "operand": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 19,
+                    "col": 23,
+                    "end_line": 19,
+                    "end_col": 39
+                  },
+                  "width": 40,
+                  "op": ">>",
+                  "left": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 19,
+                      "col": 24,
+                      "end_line": 19,
+                      "end_col": 33
+                    },
+                    "width": 40,
+                    "op": "+",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 19,
+                        "col": 24,
+                        "end_line": 19,
+                        "end_col": 26
+                      },
+                      "name": "UK"
+                    },
+                    "right": {
+                      "kind": "Resize",
+                      "span": {
+                        "line": 19,
+                        "col": 29,
+                        "end_line": 19,
+                        "end_col": 33
+                      },
+                      "width": 40,
+                      "operand": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 19,
+                          "col": 29,
+                          "end_line": 19,
+                          "end_col": 33
+                        },
+                        "width": 1,
+                        "bits": "1"
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 19,
+                      "col": 38,
+                      "end_line": 19,
+                      "end_col": 39
+                    },
+                    "value": 1,
+                    "resolved_width": 32
+                  }
+                }
+              }
+            },
+            "resolved": 0
+          },
+          {
+            "kind": "LocalParam",
+            "span": {
+              "line": 20,
+              "col": 25,
+              "end_line": 20,
+              "end_col": 46
+            },
+            "name": "W40",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 20,
+                      "col": 19,
+                      "end_line": 20,
+                      "end_col": 21
+                    },
+                    "value": 39,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 20,
+                      "col": 22,
+                      "end_line": 20,
+                      "end_col": 23
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 40
+            },
+            "expr": {
+              "kind": "Squash2",
+              "span": {
+                "line": 20,
+                "col": 31,
+                "end_line": 20,
+                "end_col": 46
+              },
+              "width": 40,
+              "operand": {
+                "kind": "Binary",
+                "span": {
+                  "line": 20,
+                  "col": 31,
+                  "end_line": 20,
+                  "end_col": 46
+                },
+                "width": 40,
+                "op": ">>",
+                "left": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 20,
+                    "col": 32,
+                    "end_line": 20,
+                    "end_col": 40
+                  },
+                  "width": 40,
+                  "op": "+",
+                  "left": {
+                    "kind": "Resize",
+                    "span": {
+                      "line": 20,
+                      "col": 32,
+                      "end_line": 20,
+                      "end_col": 33
+                    },
+                    "width": 40,
+                    "operand": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 20,
+                        "col": 32,
+                        "end_line": 20,
+                        "end_col": 33
+                      },
+                      "name": "U"
+                    }
+                  },
+                  "right": {
+                    "kind": "Resize",
+                    "span": {
+                      "line": 20,
+                      "col": 36,
+                      "end_line": 20,
+                      "end_col": 40
+                    },
+                    "width": 40,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 20,
+                        "col": 36,
+                        "end_line": 20,
+                        "end_col": 40
+                      },
+                      "width": 1,
+                      "bits": "1"
+                    }
+                  }
+                },
+                "right": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 20,
+                    "col": 45,
+                    "end_line": 20,
+                    "end_col": 46
+                  },
+                  "value": 1,
+                  "resolved_width": 32
+                }
+              }
+            },
+            "resolved": 2147483648
+          },
+          {
+            "kind": "LocalParam",
+            "span": {
+              "line": 21,
+              "col": 22,
+              "end_line": 21,
+              "end_col": 43
+            },
+            "name": "LL",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 21,
+                      "col": 22,
+                      "end_line": 21,
+                      "end_col": 43
+                    },
+                    "value": 63,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 21,
+                      "col": 22,
+                      "end_line": 21,
+                      "end_col": 43
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 64
+            },
+            "expr": {
+              "kind": "Squash2",
+              "span": {
+                "line": 21,
+                "col": 27,
+                "end_line": 21,
+                "end_col": 43
+              },
+              "width": 64,
+              "operand": {
+                "kind": "Binary",
+                "span": {
+                  "line": 21,
+                  "col": 27,
+                  "end_line": 21,
+                  "end_col": 43
+                },
+                "width": 64,
+                "op": ">>",
+                "left": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 21,
+                    "col": 28,
+                    "end_line": 21,
+                    "end_col": 37
+                  },
+                  "width": 64,
+                  "op": "+",
+                  "left": {
+                    "kind": "Resize",
+                    "span": {
+                      "line": 21,
+                      "col": 28,
+                      "end_line": 21,
+                      "end_col": 30
+                    },
+                    "width": 64,
+                    "operand": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 21,
+                        "col": 28,
+                        "end_line": 21,
+                        "end_col": 30
+                      },
+                      "name": "UK"
+                    }
+                  },
+                  "right": {
+                    "kind": "Resize",
+                    "span": {
+                      "line": 21,
+                      "col": 33,
+                      "end_line": 21,
+                      "end_col": 37
+                    },
+                    "width": 64,
+                    "operand": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 21,
+                        "col": 33,
+                        "end_line": 21,
+                        "end_col": 37
+                      },
+                      "width": 1,
+                      "bits": "1"
+                    }
+                  }
+                },
+                "right": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 21,
+                    "col": 42,
+                    "end_line": 21,
+                    "end_col": 43
+                  },
+                  "value": 1,
+                  "resolved_width": 32
+                }
+              }
+            },
+            "resolved": 549755813888,
+            "signed": true
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 22,
+              "end_line": 12,
+              "end_col": 23
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 12,
+                      "col": 17,
+                      "end_line": 12,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 12,
+                      "col": 19,
+                      "end_line": 12,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 13,
+              "col": 23,
+              "end_line": 13,
+              "end_col": 25
+            },
+            "name": "o1",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 17,
+                      "end_line": 13,
+                      "end_col": 19
+                    },
+                    "value": 63,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 20,
+                      "end_line": 13,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 64
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 13,
+              "col": 27,
+              "end_line": 13,
+              "end_col": 29
+            },
+            "name": "o2",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 17,
+                      "end_line": 13,
+                      "end_col": 19
+                    },
+                    "value": 63,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 20,
+                      "end_line": 13,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 64
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 13,
+              "col": 31,
+              "end_line": 13,
+              "end_col": 33
+            },
+            "name": "o3",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 17,
+                      "end_line": 13,
+                      "end_col": 19
+                    },
+                    "value": 63,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 20,
+                      "end_line": 13,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 64
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 13,
+              "col": 35,
+              "end_line": 13,
+              "end_col": 37
+            },
+            "name": "o4",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 17,
+                      "end_line": 13,
+                      "end_col": 19
+                    },
+                    "value": 63,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 20,
+                      "end_line": 13,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 64
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 13,
+              "col": 39,
+              "end_line": 13,
+              "end_col": 41
+            },
+            "name": "o5",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 17,
+                      "end_line": 13,
+                      "end_col": 19
+                    },
+                    "value": 63,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 20,
+                      "end_line": 13,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 64
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 13,
+              "col": 43,
+              "end_line": 13,
+              "end_col": 45
+            },
+            "name": "o6",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 17,
+                      "end_line": 13,
+                      "end_col": 19
+                    },
+                    "value": 63,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 20,
+                      "end_line": 13,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 64
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 13,
+              "col": 47,
+              "end_line": 13,
+              "end_col": 49
+            },
+            "name": "o7",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 17,
+                      "end_line": 13,
+                      "end_col": 19
+                    },
+                    "value": 63,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 20,
+                      "end_line": 13,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 64
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 13,
+              "col": 51,
+              "end_line": 13,
+              "end_col": 53
+            },
+            "name": "o8",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 17,
+                      "end_line": 13,
+                      "end_col": 19
+                    },
+                    "value": 63,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 20,
+                      "end_line": 13,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 64
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 13,
+              "col": 55,
+              "end_line": 13,
+              "end_col": 57
+            },
+            "name": "o9",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 17,
+                      "end_line": 13,
+                      "end_col": 19
+                    },
+                    "value": 63,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 20,
+                      "end_line": 13,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 64
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 22,
+              "col": 10,
+              "end_line": 22,
+              "end_col": 17
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 22,
+                "col": 10,
+                "end_line": 22,
+                "end_col": 12
+              },
+              "width": 64,
+              "name": "o1"
+            },
+            "value": {
+              "kind": "ParamRef",
+              "span": {
+                "line": 22,
+                "col": 15,
+                "end_line": 22,
+                "end_col": 17
+              },
+              "name": "H1"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 23,
+              "col": 10,
+              "end_line": 23,
+              "end_col": 17
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 23,
+                "col": 10,
+                "end_line": 23,
+                "end_col": 12
+              },
+              "width": 64,
+              "name": "o2"
+            },
+            "value": {
+              "kind": "ParamRef",
+              "span": {
+                "line": 23,
+                "col": 15,
+                "end_line": 23,
+                "end_col": 17
+              },
+              "name": "Y1"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 24,
+              "col": 10,
+              "end_line": 24,
+              "end_col": 17
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 24,
+                "col": 10,
+                "end_line": 24,
+                "end_col": 12
+              },
+              "width": 64,
+              "name": "o3"
+            },
+            "value": {
+              "kind": "Resize",
+              "span": {
+                "line": 24,
+                "col": 15,
+                "end_line": 24,
+                "end_col": 17
+              },
+              "width": 64,
+              "operand": {
+                "kind": "ParamRef",
+                "span": {
+                  "line": 24,
+                  "col": 15,
+                  "end_line": 24,
+                  "end_col": 17
+                },
+                "name": "B8"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 25,
+              "col": 10,
+              "end_line": 25,
+              "end_col": 17
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 25,
+                "col": 10,
+                "end_line": 25,
+                "end_col": 12
+              },
+              "width": 64,
+              "name": "o4"
+            },
+            "value": {
+              "kind": "ParamRef",
+              "span": {
+                "line": 25,
+                "col": 15,
+                "end_line": 25,
+                "end_col": 17
+              },
+              "name": "S8"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 26,
+              "col": 10,
+              "end_line": 26,
+              "end_col": 17
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 26,
+                "col": 10,
+                "end_line": 26,
+                "end_col": 12
+              },
+              "width": 64,
+              "name": "o5"
+            },
+            "value": {
+              "kind": "Resize",
+              "span": {
+                "line": 26,
+                "col": 15,
+                "end_line": 26,
+                "end_col": 17
+              },
+              "width": 64,
+              "operand": {
+                "kind": "ParamRef",
+                "span": {
+                  "line": 26,
+                  "col": 15,
+                  "end_line": 26,
+                  "end_col": 17
+                },
+                "name": "L8"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 27,
+              "col": 10,
+              "end_line": 27,
+              "end_col": 17
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 27,
+                "col": 10,
+                "end_line": 27,
+                "end_col": 12
+              },
+              "width": 64,
+              "name": "o6"
+            },
+            "value": {
+              "kind": "ParamRef",
+              "span": {
+                "line": 27,
+                "col": 15,
+                "end_line": 27,
+                "end_col": 17
+              },
+              "name": "KI"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 28,
+              "col": 10,
+              "end_line": 28,
+              "end_col": 17
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 28,
+                "col": 10,
+                "end_line": 28,
+                "end_col": 12
+              },
+              "width": 64,
+              "name": "o7"
+            },
+            "value": {
+              "kind": "ParamRef",
+              "span": {
+                "line": 28,
+                "col": 15,
+                "end_line": 28,
+                "end_col": 17
+              },
+              "name": "PY"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 29,
+              "col": 10,
+              "end_line": 29,
+              "end_col": 18
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 29,
+                "col": 10,
+                "end_line": 29,
+                "end_col": 12
+              },
+              "width": 64,
+              "name": "o8"
+            },
+            "value": {
+              "kind": "Resize",
+              "span": {
+                "line": 29,
+                "col": 15,
+                "end_line": 29,
+                "end_col": 18
+              },
+              "width": 64,
+              "operand": {
+                "kind": "ParamRef",
+                "span": {
+                  "line": 29,
+                  "col": 15,
+                  "end_line": 29,
+                  "end_col": 18
+                },
+                "name": "W40"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 30,
+              "col": 10,
+              "end_line": 30,
+              "end_col": 17
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 30,
+                "col": 10,
+                "end_line": 30,
+                "end_col": 12
+              },
+              "width": 64,
+              "name": "o9"
+            },
+            "value": {
+              "kind": "ParamRef",
+              "span": {
+                "line": 30,
+                "col": 15,
+                "end_line": 30,
+                "end_col": 17
+              },
+              "name": "LL"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

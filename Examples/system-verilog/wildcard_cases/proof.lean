@@ -54,7 +54,7 @@ theorem selection_retained (selector previous : LVec) (pending : NbaQueue)
   simp only [if_true]
   change stepSStmt (fuel + 15) [("selector",selector),("choice",previous)]
     pending output selectedBody = _
-  rcases output with ⟨lines, current, halted, transfer⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer⟩
   change halted = false at running
   subst halted
   rfl

@@ -1,0 +1,697 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "pi_nonansi_forms",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/pi_nonansi_forms/pi_nonansi_forms.sv",
+      "sha256": "b4877ea1c475c5a1db2d04d45a6d1da27d08cd3e8b2551d55273b606f53193b7"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 12,
+          "col": 1,
+          "end_line": 32,
+          "end_col": 10
+        },
+        "name": "pi_nonansi_forms",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 26,
+              "end_line": 12,
+              "end_col": 29
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 31,
+              "end_line": 12,
+              "end_col": 32
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 34,
+              "end_line": 12,
+              "end_col": 36
+            },
+            "name": "z1",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 16,
+                      "col": 10,
+                      "end_line": 16,
+                      "end_col": 11
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 16,
+                      "col": 12,
+                      "end_line": 16,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 16,
+                "col": 20,
+                "end_line": 16,
+                "end_col": 25
+              },
+              "width": 2,
+              "bits": "10"
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 38,
+              "end_line": 12,
+              "end_col": 40
+            },
+            "name": "z2",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 18,
+                      "col": 8,
+                      "end_line": 18,
+                      "end_col": 9
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 18,
+                      "col": 10,
+                      "end_line": 18,
+                      "end_col": 11
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 18,
+                "col": 18,
+                "end_line": 18,
+                "end_col": 23
+              },
+              "width": 2,
+              "bits": "01"
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 42,
+              "end_line": 12,
+              "end_col": 44
+            },
+            "name": "z3",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 20,
+                      "col": 14,
+                      "end_line": 20,
+                      "end_col": 15
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 20,
+                      "col": 16,
+                      "end_line": 20,
+                      "end_col": 17
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 20,
+                "col": 24,
+                "end_line": 20,
+                "end_col": 29
+              },
+              "width": 2,
+              "bits": "11"
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 46,
+              "end_line": 12,
+              "end_col": 48
+            },
+            "name": "z4",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 21,
+                      "col": 15,
+                      "end_line": 21,
+                      "end_col": 16
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 21,
+                      "col": 17,
+                      "end_line": 21,
+                      "end_col": 18
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 21,
+                "col": 25,
+                "end_line": 21,
+                "end_col": 30
+              },
+              "width": 2,
+              "bits": "10"
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 50,
+              "end_line": 12,
+              "end_col": 52
+            },
+            "name": "z5",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 22,
+                      "col": 17,
+                      "end_line": 22,
+                      "end_col": 18
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 22,
+                      "col": 19,
+                      "end_line": 22,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 22,
+                "col": 27,
+                "end_line": 22,
+                "end_col": 32
+              },
+              "width": 2,
+              "bits": "01"
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 54,
+              "end_line": 12,
+              "end_col": 56
+            },
+            "name": "z6",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 23,
+                      "col": 15,
+                      "end_line": 23,
+                      "end_col": 16
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 23,
+                      "col": 17,
+                      "end_line": 23,
+                      "end_col": 18
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 23,
+                "col": 25,
+                "end_line": 23,
+                "end_col": 30
+              },
+              "width": 2,
+              "bits": "10"
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 58,
+              "end_line": 12,
+              "end_col": 60
+            },
+            "name": "z7",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 23,
+                      "col": 15,
+                      "end_line": 23,
+                      "end_col": 16
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 23,
+                      "col": 17,
+                      "end_line": 23,
+                      "end_col": 18
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 23,
+                "col": 37,
+                "end_line": 23,
+                "end_col": 42
+              },
+              "width": 2,
+              "bits": "01"
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 62,
+              "end_line": 12,
+              "end_col": 64
+            },
+            "name": "z8",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 25,
+                "col": 12,
+                "end_line": 25,
+                "end_col": 16
+              },
+              "width": 1,
+              "bits": "1"
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 26,
+              "col": 3,
+              "end_line": 31,
+              "end_col": 6
+            },
+            "style": "always",
+            "clock": "clk",
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 26,
+                "col": 25,
+                "end_line": 31,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "NonblockingAssign",
+                  "span": {
+                    "line": 27,
+                    "col": 5,
+                    "end_line": 27,
+                    "end_col": 16
+                  },
+                  "target": {
+                    "kind": "BitSel",
+                    "span": {
+                      "line": 27,
+                      "col": 5,
+                      "end_line": 27,
+                      "end_col": 10
+                    },
+                    "width": 1,
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 27,
+                        "col": 5,
+                        "end_line": 27,
+                        "end_col": 7
+                      },
+                      "width": 2,
+                      "name": "z1"
+                    },
+                    "index": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 27,
+                        "col": 8,
+                        "end_line": 27,
+                        "end_col": 9
+                      },
+                      "value": 0,
+                      "resolved_width": 32
+                    }
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 27,
+                      "col": 14,
+                      "end_line": 27,
+                      "end_col": 15
+                    },
+                    "width": 1,
+                    "name": "a"
+                  }
+                },
+                {
+                  "kind": "NonblockingAssign",
+                  "span": {
+                    "line": 28,
+                    "col": 5,
+                    "end_line": 28,
+                    "end_col": 16
+                  },
+                  "target": {
+                    "kind": "BitSel",
+                    "span": {
+                      "line": 28,
+                      "col": 5,
+                      "end_line": 28,
+                      "end_col": 10
+                    },
+                    "width": 1,
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 28,
+                        "col": 5,
+                        "end_line": 28,
+                        "end_col": 7
+                      },
+                      "width": 2,
+                      "name": "z2"
+                    },
+                    "index": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 28,
+                        "col": 8,
+                        "end_line": 28,
+                        "end_col": 9
+                      },
+                      "value": 1,
+                      "resolved_width": 32
+                    }
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 28,
+                      "col": 14,
+                      "end_line": 28,
+                      "end_col": 15
+                    },
+                    "width": 1,
+                    "name": "a"
+                  }
+                },
+                {
+                  "kind": "NonblockingAssign",
+                  "span": {
+                    "line": 29,
+                    "col": 5,
+                    "end_line": 29,
+                    "end_col": 16
+                  },
+                  "target": {
+                    "kind": "BitSel",
+                    "span": {
+                      "line": 29,
+                      "col": 5,
+                      "end_line": 29,
+                      "end_col": 10
+                    },
+                    "width": 1,
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 29,
+                        "col": 5,
+                        "end_line": 29,
+                        "end_col": 7
+                      },
+                      "width": 2,
+                      "name": "z4"
+                    },
+                    "index": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 29,
+                        "col": 8,
+                        "end_line": 29,
+                        "end_col": 9
+                      },
+                      "value": 0,
+                      "resolved_width": 32
+                    }
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 29,
+                      "col": 14,
+                      "end_line": 29,
+                      "end_col": 15
+                    },
+                    "width": 1,
+                    "name": "a"
+                  }
+                },
+                {
+                  "kind": "NonblockingAssign",
+                  "span": {
+                    "line": 30,
+                    "col": 5,
+                    "end_line": 30,
+                    "end_col": 16
+                  },
+                  "target": {
+                    "kind": "BitSel",
+                    "span": {
+                      "line": 30,
+                      "col": 5,
+                      "end_line": 30,
+                      "end_col": 10
+                    },
+                    "width": 1,
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 30,
+                        "col": 5,
+                        "end_line": 30,
+                        "end_col": 7
+                      },
+                      "width": 2,
+                      "name": "z6"
+                    },
+                    "index": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 30,
+                        "col": 8,
+                        "end_line": 30,
+                        "end_col": 9
+                      },
+                      "value": 1,
+                      "resolved_width": 32
+                    }
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 30,
+                      "col": 14,
+                      "end_line": 30,
+                      "end_col": 15
+                    },
+                    "width": 1,
+                    "name": "a"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

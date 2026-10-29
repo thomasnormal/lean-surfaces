@@ -144,6 +144,7 @@
               "from_package": null,
               "resolved": 2
             },
+            "two_state": false,
             "init": null
           },
           {
@@ -161,6 +162,7 @@
               "from_package": null,
               "resolved": 2
             },
+            "two_state": false,
             "init": null
           }
         ],

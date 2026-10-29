@@ -1,0 +1,259 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "vh_initcomb",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/vh_initcomb/vh_initcomb.sv",
+      "sha256": "cecdbb540e225823fc9a39ba3461296398db4779adfe2fa8b9d2c2fa73d67450"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 13,
+          "col": 1,
+          "end_line": 18,
+          "end_col": 10
+        },
+        "name": "vh_initcomb",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 14,
+              "col": 22,
+              "end_line": 14,
+              "end_col": 23
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 15,
+              "col": 22,
+              "end_line": 15,
+              "end_col": 23
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 17,
+                      "end_line": 15,
+                      "end_col": 18
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 19,
+                      "end_line": 15,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 17,
+              "col": 17,
+              "end_line": 17,
+              "end_col": 33
+            },
+            "name": "u",
+            "module": "vh_initcomb_c",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 17,
+                  "col": 23,
+                  "end_line": 17,
+                  "end_col": 24
+                },
+                "port": "a",
+                "dir": "in",
+                "expr": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 17,
+                    "col": 23,
+                    "end_line": 17,
+                    "end_col": 24
+                  },
+                  "width": 1,
+                  "name": "a"
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 17,
+                  "col": 30,
+                  "end_line": 17,
+                  "end_col": 31
+                },
+                "port": "o",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 17,
+                    "col": 30,
+                    "end_line": 17,
+                    "end_col": 31
+                  },
+                  "width": 2,
+                  "name": "y"
+                }
+              }
+            ]
+          }
+        ],
+        "others": []
+      },
+      {
+        "kind": "Module",
+        "span": {
+          "line": 6,
+          "col": 1,
+          "end_line": 11,
+          "end_col": 10
+        },
+        "name": "vh_initcomb_c",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 22,
+              "end_line": 7,
+              "end_col": 23
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 22,
+              "end_line": 8,
+              "end_col": 31
+            },
+            "name": "o",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 17,
+                      "end_line": 8,
+                      "end_col": 18
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 19,
+                      "end_line": 8,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 8,
+                "col": 26,
+                "end_line": 8,
+                "end_col": 31
+              },
+              "width": 2,
+              "bits": "10"
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 10,
+              "col": 3,
+              "end_line": 10,
+              "end_col": 24
+            },
+            "sv_kind": "ProceduralBlockSymbol:initialized-variable",
+            "text": "always_comb writes 'o', which has a declaration initializer: IEEE 1800-2023 counts the initialization as a procedural assignment (\u00a76.5, \u00a710.5) and forbids any other process to assign an always_comb variable (\u00a79.2.2.2, \u00a79.2.2.4); Xcelium 24.03 rejects the design (*E,MULAXX) where Icarus 12.0, Yosys 0.53 and slang run it, so the tools split on its legality (drop the initializer, or write the variable from a plain `always` procedure)"
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

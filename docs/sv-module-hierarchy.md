@@ -49,7 +49,9 @@ redefinitions also remain loud.
 Closed static initializers are admitted. New reads whose initialization order
 would depend on flattened storage retain the existing
 `Generate:initializer-order` boundary. The current loader still requires one
-top module. Symbolic extraction is unchanged and keeps its instance boundary.
+top module. Symbolic extraction keeps its instance boundary: an instance there
+is one `Instance` node plus the child's definition, flattened by the Lean side
+(`docs/sv-envelope-schema.md`, "Module instances", 2026-10-28).
 
 The independently referenced authored fixtures exercise sibling isolation,
 live cross-instance reads/stores, NBA capture across later source changes,

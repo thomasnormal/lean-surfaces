@@ -1,0 +1,8830 @@
+{
+ "schema_version": "sv-0.2-probes",
+ "top": "partsel",
+ "envelope": "partsel.sv.json",
+ "source_files": [
+  {
+   "path": "Examples/system-verilog/partsel/partsel.sv",
+   "sha256": "deb6b16a7445878e8086f7b3dda960d695b43686f2864f80b5cfb3dd8590b56a"
+  }
+ ],
+ "probe_points": "N=1;N=2;N=8;W=1;W=2;W=5;N=2,W=5;N=6,W=2",
+ "points": [
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 1
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "partsel",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 1,
+       "resolved_width": 32
+      },
+      "resolved": 1
+     },
+     {
+      "kind": "ParameterDecl",
+      "name": "W",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 3,
+       "resolved_width": 32
+      },
+      "resolved": 3
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "v",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "sel",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "top",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 1
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_rng",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_lane",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "W"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 1,
+       "name": "top"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_hi"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_lo"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "W"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_rng"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "+",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_up"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_dn"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 3,
+       "name": "dyn_lane"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 3,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "*",
+         "left": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "Ident",
+           "width": 3,
+           "name": "sel"
+          }
+         },
+         "right": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "W"
+        }
+       }
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_hi"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_hi",
+          "indices": [],
+          "part": {
+           "mode": "up",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "+",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_lo"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_lo",
+          "indices": [],
+          "part": {
+           "mode": "down",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_rev",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 1,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 3,
+         "name": "rev_up",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "GenvarRef",
+            "name": "i"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 3,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "GenvarRef",
+             "name": "i"
+            }
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 3,
+         "name": "rev_dn",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "+",
+             "left": {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 3,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "GenvarRef",
+              "name": "i"
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 2
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "partsel",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 2,
+       "resolved_width": 32
+      },
+      "resolved": 2
+     },
+     {
+      "kind": "ParameterDecl",
+      "name": "W",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 3,
+       "resolved_width": 32
+      },
+      "resolved": 3
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 6
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "v",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "sel",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 6
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 6
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "top",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 2
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_rng",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_lane",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "W"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 2,
+       "name": "top"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 2,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_hi"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_lo"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "W"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_rng"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "+",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_up"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_dn"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 3,
+       "name": "dyn_lane"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 3,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "*",
+         "left": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "Ident",
+           "width": 3,
+           "name": "sel"
+          }
+         },
+         "right": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "W"
+        }
+       }
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_hi"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_hi",
+          "indices": [],
+          "part": {
+           "mode": "up",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "+",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_lo"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_lo",
+          "indices": [],
+          "part": {
+           "mode": "down",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_rev",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 2,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 3,
+         "name": "rev_up",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "GenvarRef",
+            "name": "i"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 3,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "GenvarRef",
+             "name": "i"
+            }
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 3,
+         "name": "rev_dn",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "+",
+             "left": {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 3,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "GenvarRef",
+              "name": "i"
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 8
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "partsel",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 8,
+       "resolved_width": 32
+      },
+      "resolved": 8
+     },
+     {
+      "kind": "ParameterDecl",
+      "name": "W",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 3,
+       "resolved_width": 32
+      },
+      "resolved": 3
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 24
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "v",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "sel",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 24
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 24
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "top",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_rng",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_lane",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "W"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 8,
+       "name": "top"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 8,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_hi"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_lo"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "W"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_rng"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "+",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_up"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_dn"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 3,
+       "name": "dyn_lane"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 3,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "*",
+         "left": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "Ident",
+           "width": 3,
+           "name": "sel"
+          }
+         },
+         "right": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "W"
+        }
+       }
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_hi"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_hi",
+          "indices": [],
+          "part": {
+           "mode": "up",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "+",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_lo"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_lo",
+          "indices": [],
+          "part": {
+           "mode": "down",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_rev",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 8,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 3,
+         "name": "rev_up",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "GenvarRef",
+            "name": "i"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 3,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "GenvarRef",
+             "name": "i"
+            }
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 3,
+         "name": "rev_dn",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "+",
+             "left": {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 3,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "GenvarRef",
+              "name": "i"
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "W",
+     "value": 1
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "partsel",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 4,
+       "resolved_width": 32
+      },
+      "resolved": 4
+     },
+     {
+      "kind": "ParameterDecl",
+      "name": "W",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 1,
+       "resolved_width": 32
+      },
+      "resolved": 1
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "v",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "sel",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "top",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_rng",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_lane",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "W"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 1
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "top"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_hi"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_lo"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "W"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_rng"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "+",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_up"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_dn"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 1,
+       "name": "dyn_lane"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "*",
+         "left": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "Ident",
+           "width": 3,
+           "name": "sel"
+          }
+         },
+         "right": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "W"
+        }
+       }
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_hi"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_hi",
+          "indices": [],
+          "part": {
+           "mode": "up",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "+",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_lo"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_lo",
+          "indices": [],
+          "part": {
+           "mode": "down",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_rev",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 4,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "rev_up",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "GenvarRef",
+            "name": "i"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "GenvarRef",
+             "name": "i"
+            }
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "rev_dn",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "+",
+             "left": {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "GenvarRef",
+              "name": "i"
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "W",
+     "value": 2
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "partsel",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 4,
+       "resolved_width": 32
+      },
+      "resolved": 4
+     },
+     {
+      "kind": "ParameterDecl",
+      "name": "W",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 2,
+       "resolved_width": 32
+      },
+      "resolved": 2
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "v",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "sel",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "top",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_rng",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_lane",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "W"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 2
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "top"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_hi"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_lo"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "W"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_rng"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "+",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_up"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_dn"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 2,
+       "name": "dyn_lane"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 2,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "*",
+         "left": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "Ident",
+           "width": 3,
+           "name": "sel"
+          }
+         },
+         "right": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "W"
+        }
+       }
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_hi"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_hi",
+          "indices": [],
+          "part": {
+           "mode": "up",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "+",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_lo"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_lo",
+          "indices": [],
+          "part": {
+           "mode": "down",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_rev",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 4,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 2,
+         "name": "rev_up",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "GenvarRef",
+            "name": "i"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 2,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "GenvarRef",
+             "name": "i"
+            }
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 2,
+         "name": "rev_dn",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "+",
+             "left": {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 2,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "GenvarRef",
+              "name": "i"
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "W",
+     "value": 5
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "partsel",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 4,
+       "resolved_width": 32
+      },
+      "resolved": 4
+     },
+     {
+      "kind": "ParameterDecl",
+      "name": "W",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 5,
+       "resolved_width": 32
+      },
+      "resolved": 5
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 20
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "v",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "sel",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 20
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 20
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "top",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_rng",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_lane",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "W"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 5
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "top"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_hi"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_lo"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "W"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_rng"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "+",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_up"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_dn"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 5,
+       "name": "dyn_lane"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 5,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "*",
+         "left": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "Ident",
+           "width": 3,
+           "name": "sel"
+          }
+         },
+         "right": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "W"
+        }
+       }
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_hi"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_hi",
+          "indices": [],
+          "part": {
+           "mode": "up",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "+",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_lo"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_lo",
+          "indices": [],
+          "part": {
+           "mode": "down",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_rev",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 4,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 5,
+         "name": "rev_up",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "GenvarRef",
+            "name": "i"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 5,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "GenvarRef",
+             "name": "i"
+            }
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 5,
+         "name": "rev_dn",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "+",
+             "left": {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 5,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "GenvarRef",
+              "name": "i"
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 2
+    },
+    {
+     "name": "W",
+     "value": 5
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "partsel",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 2,
+       "resolved_width": 32
+      },
+      "resolved": 2
+     },
+     {
+      "kind": "ParameterDecl",
+      "name": "W",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 5,
+       "resolved_width": 32
+      },
+      "resolved": 5
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 10
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "v",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "sel",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 10
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 10
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "top",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 2
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_rng",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_lane",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "W"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 5
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 2,
+       "name": "top"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 2,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_hi"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_lo"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "W"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_rng"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "+",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_up"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_dn"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 5,
+       "name": "dyn_lane"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 5,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "*",
+         "left": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "Ident",
+           "width": 3,
+           "name": "sel"
+          }
+         },
+         "right": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "W"
+        }
+       }
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_hi"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_hi",
+          "indices": [],
+          "part": {
+           "mode": "up",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "+",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_lo"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_lo",
+          "indices": [],
+          "part": {
+           "mode": "down",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_rev",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 2,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 5,
+         "name": "rev_up",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "GenvarRef",
+            "name": "i"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 5,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "GenvarRef",
+             "name": "i"
+            }
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 5,
+         "name": "rev_dn",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "+",
+             "left": {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 5,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "GenvarRef",
+              "name": "i"
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 6
+    },
+    {
+     "name": "W",
+     "value": 2
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "partsel",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 6,
+       "resolved_width": 32
+      },
+      "resolved": 6
+     },
+     {
+      "kind": "ParameterDecl",
+      "name": "W",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 2,
+       "resolved_width": 32
+      },
+      "resolved": 2
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 12
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "v",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "sel",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 12
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "rev_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "ParamRef",
+            "name": "N"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 12
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "top",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 6
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "ov_rng",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_up",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_dn",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 3,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "dyn_lane",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "W"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 2
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_hi",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "w_lo",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 7,
+          "resolved_width": null
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     }
+    ],
+    "decls": [],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 6,
+       "name": "top"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 6,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_hi"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_lo"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "W"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "ov_rng"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "+",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 2,
+          "resolved_width": 32
+         }
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_up"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 4,
+       "name": "dyn_dn"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "v",
+       "indices": [],
+       "part": {
+        "mode": "down",
+        "left": {
+         "kind": "Ident",
+         "width": 3,
+         "name": "sel"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 4,
+         "resolved_width": 32
+        }
+       }
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "Ident",
+       "width": 2,
+       "name": "dyn_lane"
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 2,
+       "name": "a",
+       "indices": [],
+       "part": {
+        "mode": "up",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "*",
+         "left": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "Ident",
+           "width": 3,
+           "name": "sel"
+          }
+         },
+         "right": {
+          "kind": "Resize",
+          "width": 32,
+          "operand": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "W"
+        }
+       }
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_hi"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_hi",
+          "indices": [],
+          "part": {
+           "mode": "up",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "+",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "kind": "AlwaysComb",
+      "body": {
+       "kind": "Block",
+       "stmts": [
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "Ident",
+          "width": 8,
+          "name": "w_lo"
+         },
+         "value": {
+          "kind": "Fill",
+          "bit": "0",
+          "resolved_width": 8
+         }
+        },
+        {
+         "kind": "BlockingAssign",
+         "target": {
+          "kind": "ArraySel",
+          "width": 4,
+          "name": "w_lo",
+          "indices": [],
+          "part": {
+           "mode": "down",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "ParamRef",
+             "name": "N"
+            },
+            "right": {
+             "kind": "Int",
+             "value": 3,
+             "resolved_width": 32
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 4,
+            "resolved_width": 32
+           }
+          }
+         },
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "b"
+         }
+        }
+       ]
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_rev",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 6,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 2,
+         "name": "rev_up",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "GenvarRef",
+            "name": "i"
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 2,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "up",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "*",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "-",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "GenvarRef",
+             "name": "i"
+            }
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "W"
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 2,
+         "name": "rev_dn",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "+",
+             "left": {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 2,
+         "name": "a",
+         "indices": [],
+         "part": {
+          "mode": "down",
+          "left": {
+           "kind": "Binary",
+           "width": 32,
+           "op": "-",
+           "left": {
+            "kind": "Binary",
+            "width": 32,
+            "op": "*",
+            "left": {
+             "kind": "Binary",
+             "width": 32,
+             "op": "-",
+             "left": {
+              "kind": "ParamRef",
+              "name": "N"
+             },
+             "right": {
+              "kind": "GenvarRef",
+              "name": "i"
+             }
+            },
+            "right": {
+             "kind": "ParamRef",
+             "name": "W"
+            }
+           },
+           "right": {
+            "kind": "Int",
+            "value": 1,
+            "resolved_width": 32
+           }
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "W"
+          }
+         }
+        }
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": []
+  }
+ ]
+}

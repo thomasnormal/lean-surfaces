@@ -17,6 +17,30 @@ import LeanModels.Sv.ToggleExample
 -- (`load_design_sv2`) — the CV32E40P phase-2 pipeline.
 import LeanModels.Sv.Param
 import LeanModels.Sv.Ingest2
+-- The Design2 proof layer over the sv-0.2 semantics: the fuel-free evaluator
+-- (Pure2), the spec judgment `⊨₂` (Spec2), the known-value BitVec calculus and
+-- `sv2_known` (Known2), the generate-loop expansion lemmas (Gen2), the
+-- combinational settle theorem (Comb2Base/Sound/Term/Comb2), fuel monotonicity
+-- (Mono2), and the worked full adder (Comb2Example). Concatenation targets
+-- (Comb2ConcatExample) and `always_comb` bodies (Comb2Proc, Comb2ProcExample)
+-- are in the settle profile; module instances flatten through Hier2/Hier2Gen.
+-- Acceptance examples: `Examples/system-verilog/ripple_add` (the N-bit
+-- generate-loop ripple adder), `mul2d`, `partsel` and `ripple_fa`.
+import LeanModels.Sv.Pure2
+import LeanModels.Sv.Spec2
+import LeanModels.Sv.Known2
+import LeanModels.Sv.Gen2
+import LeanModels.Sv.Comb2Base
+import LeanModels.Sv.Comb2Sound
+import LeanModels.Sv.Comb2Term
+import LeanModels.Sv.Comb2
+import LeanModels.Sv.Comb2Example
+import LeanModels.Sv.Comb2ConcatExample
+import LeanModels.Sv.Comb2Proc
+import LeanModels.Sv.Comb2ProcExample
+import LeanModels.Sv.Hier2
+import LeanModels.Sv.Hier2Gen
+import LeanModels.Sv.Mono2
 -- R1 inches 2-3: the IEEE 1800 §4.4 event-region TYPES, the region-aware
 -- oracle (introduced additively, with the conservativity of the widening
 -- proved), the slot-structured trace, and the `cycleOf` abstraction every

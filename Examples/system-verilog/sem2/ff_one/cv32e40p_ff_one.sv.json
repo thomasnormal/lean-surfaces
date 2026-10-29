@@ -575,7 +575,7 @@
               "end_col": 45
             },
             "target": {
-              "kind": "BitSel",
+              "kind": "ArraySel",
               "span": {
                 "line": 57,
                 "col": 12,
@@ -583,71 +583,64 @@
                 "end_col": 38
               },
               "width": 1,
-              "value": {
-                "kind": "Ident",
-                "span": {
-                  "line": 57,
-                  "col": 12,
-                  "end_line": 57,
-                  "end_col": 21
-                },
-                "width": 32,
-                "name": "sel_nodes"
-              },
-              "index": {
-                "kind": "Binary",
-                "span": {
-                  "line": 57,
-                  "col": 22,
-                  "end_line": 57,
-                  "end_col": 37
-                },
-                "width": 32,
-                "op": "-",
-                "left": {
+              "name": "sel_nodes",
+              "indices": [
+                {
                   "kind": "Binary",
                   "span": {
                     "line": 57,
                     "col": 22,
                     "end_line": 57,
-                    "end_col": 35
+                    "end_col": 37
                   },
                   "width": 32,
-                  "op": "**",
+                  "op": "-",
                   "left": {
-                    "kind": "Int",
+                    "kind": "Binary",
                     "span": {
                       "line": 57,
                       "col": 22,
                       "end_line": 57,
-                      "end_col": 23
-                    },
-                    "value": 2,
-                    "resolved_width": 32
-                  },
-                  "right": {
-                    "kind": "ParamRef",
-                    "span": {
-                      "line": 57,
-                      "col": 25,
-                      "end_line": 57,
                       "end_col": 35
                     },
-                    "name": "NUM_LEVELS"
-                  }
-                },
-                "right": {
-                  "kind": "Int",
-                  "span": {
-                    "line": 57,
-                    "col": 36,
-                    "end_line": 57,
-                    "end_col": 37
+                    "width": 32,
+                    "op": "**",
+                    "left": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 57,
+                        "col": 22,
+                        "end_line": 57,
+                        "end_col": 23
+                      },
+                      "value": 2,
+                      "resolved_width": 32
+                    },
+                    "right": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 57,
+                        "col": 25,
+                        "end_line": 57,
+                        "end_col": 35
+                      },
+                      "name": "NUM_LEVELS"
+                    }
                   },
-                  "value": 1,
-                  "resolved_width": 32
+                  "right": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 57,
+                      "col": 36,
+                      "end_line": 57,
+                      "end_col": 37
+                    },
+                    "value": 1,
+                    "resolved_width": 32
+                  }
                 }
-              }
+              ],
+              "part": null
             },
             "value": {
               "kind": "Literal",
@@ -681,7 +674,7 @@
               "name": "first_one_o"
             },
             "value": {
-              "kind": "BitSel",
+              "kind": "ArraySel",
               "span": {
                 "line": 96,
                 "col": 24,
@@ -689,28 +682,21 @@
                 "end_col": 38
               },
               "width": 5,
-              "value": {
-                "kind": "Ident",
-                "span": {
-                  "line": 96,
-                  "col": 24,
-                  "end_line": 96,
-                  "end_col": 35
-                },
-                "width": 160,
-                "name": "index_nodes"
-              },
-              "index": {
-                "kind": "Int",
-                "span": {
-                  "line": 96,
-                  "col": 36,
-                  "end_line": 96,
-                  "end_col": 37
-                },
-                "value": 0,
-                "resolved_width": 32
-              }
+              "name": "index_nodes",
+              "indices": [
+                {
+                  "kind": "Int",
+                  "span": {
+                    "line": 96,
+                    "col": 36,
+                    "end_line": 96,
+                    "end_col": 37
+                  },
+                  "value": 0,
+                  "resolved_width": 32
+                }
+              ],
+              "part": null
             }
           },
           {
@@ -743,7 +729,7 @@
               "width": 1,
               "op": "~",
               "operand": {
-                "kind": "BitSel",
+                "kind": "ArraySel",
                 "span": {
                   "line": 97,
                   "col": 25,
@@ -751,28 +737,21 @@
                   "end_col": 37
                 },
                 "width": 1,
-                "value": {
-                  "kind": "Ident",
-                  "span": {
-                    "line": 97,
-                    "col": 25,
-                    "end_line": 97,
-                    "end_col": 34
-                  },
-                  "width": 32,
-                  "name": "sel_nodes"
-                },
-                "index": {
-                  "kind": "Int",
-                  "span": {
-                    "line": 97,
-                    "col": 35,
-                    "end_line": 97,
-                    "end_col": 36
-                  },
-                  "value": 0,
-                  "resolved_width": 32
-                }
+                "name": "sel_nodes",
+                "indices": [
+                  {
+                    "kind": "Int",
+                    "span": {
+                      "line": 97,
+                      "col": 35,
+                      "end_line": 97,
+                      "end_col": 36
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                ],
+                "part": null
               }
             }
           }

@@ -1,6 +1,9 @@
 import Lean
 import LeanModels.Sv.Param
 import LeanModels.Sv.Param2
+import LeanModels.Sv.Hier2
+import LeanModels.Sv.Probe2
+import LeanModels.Sv.RangeGuard2
 
 /-!
 # SV symbolic-envelope ingestion — schema sv-0.2 (`LeanModels.Sv`)
@@ -72,6 +75,7 @@ deriving instance Lean.ToExpr for SymUnaryOp
 deriving instance Lean.ToExpr for SysFn
 deriving instance Lean.ToExpr for RedOp
 deriving instance Lean.ToExpr for CaseCheck
+deriving instance Lean.ToExpr for PartMode
 deriving instance Lean.ToExpr for PExpr
 deriving instance Lean.ToExpr for PLhs
 deriving instance Lean.ToExpr for PDim
@@ -84,6 +88,9 @@ deriving instance Lean.ToExpr for PEnumType
 deriving instance Lean.ToExpr for PDecl
 deriving instance Lean.ToExpr for PStmt
 deriving instance Lean.ToExpr for PProcess
+deriving instance Lean.ToExpr for PPathSeg
+deriving instance Lean.ToExpr for PConn
+deriving instance Lean.ToExpr for PInst
 deriving instance Lean.ToExpr for GenItem
 deriving instance Lean.ToExpr for PDesign
 
@@ -202,7 +209,15 @@ partial def parsePExpr (j : Json) : Except String PExpr := do
         let width ← getNatField j "width"
         let bits ← getStrField j "bits"
         match LVec.ofBinLit? width bits with
-        | some v => return .lit v
+        | some v =>
+            -- A SIGNED literal (`4'sd3`, or a constant slang typed `int`;
+            -- optional `signed: true`) is the cast `$signed(lit)`: the same
+            -- bits, signed for every consuming operator — the value tier
+            -- passes casts through, the constant tier reads them signed.
+            match getOptField j "signed" with
+            | some (Json.bool true) => return .cast true (.lit v)
+            | none | some (Json.bool false) => return .lit v
+            | some _ => throw "field 'signed' is not a bool"
         | none => throw s!"invalid 4-state digit string {bits.quote}"
     | "Ident" => return .ident (← getStrField j "name")
     | "ParamRef" => return .paramRef (← getStrField j "name") (getOptStr j "from_package")
@@ -255,6 +270,21 @@ partial def parsePExpr (j : Json) : Except String PExpr := do
         match args with
         | [a] => return .sysCall fn a
         | _ => return .unsupported "SysCall:arity" s!"{fn.sym} with {args.length} args"
+    | "ArraySel" =>
+        -- A packed-array select path (raw declared labels; Param2 lowers
+        -- it against the declaration's dimensions).
+        let name ← getStrField j "name"
+        let indices ← (← (← getField j "indices").getArr?).toList.mapM parsePExpr
+        match getOptField j "part" with
+        | none => return .arrayElem name indices
+        | some pj =>
+            let mode ← match ← getStrField pj "mode" with
+              | "range" => pure PartMode.range
+              | "up" => pure PartMode.up
+              | "down" => pure PartMode.down
+              | m => throw s!"unknown ArraySel part mode {m.quote}"
+            return .arrayPart name indices mode (← parsePExpr (← getField pj "left"))
+              (← parsePExpr (← getField pj "right"))
     | "Unsupported" =>
         let (svKind, text) ← parseUnsupportedFields j
         return .unsupported svKind text
@@ -293,8 +323,9 @@ private def parseTarget (j : Json) : Except String (Except String String) := do
   | _ => return .error "AssignmentExpression:target"
 
 /-- Semantic-tier assignment targets: whole signal, one `BitSel`/`PartSel`
-over an identifier base, or a concatenation of those leaves. Anything else
-degrades to a loud unsupported statement. -/
+over an identifier base, a packed-array select path (`ArraySel`), or a
+concatenation of those leaves. Anything else degrades to a loud unsupported
+statement. -/
 partial def parseTargetL (j : Json) : Except String (Except String PLhs) := do
   match (← j.getObjVal? "kind") with
   | .str "ConcatTarget" =>
@@ -313,6 +344,8 @@ partial def parseTargetL (j : Json) : Except String (Except String PLhs) := do
       | .ident n => return .ok (.ident n)
       | .bitSel (.ident n) idx => return .ok (.bitSel n idx)
       | .partSel (.ident n) msb lsb => return .ok (.partSel n msb lsb)
+      | .arrayElem n is => return .ok (.arrayElem n is)
+      | .arrayPart n is mode a b => return .ok (.arrayPart n is mode a b)
       | _ => return .error "AssignmentExpression:target"
 
 partial def parsePStmt (j : Json) : Except String PStmt := do
@@ -391,6 +424,51 @@ def parsePProcess (j : Json) : Except String PProcess := do
         return .unsupported svKind text
     | other => throw s!"unknown process kind {other.quote}"
 
+/-! ## Module instances (F3) -/
+
+/-- One `PortConn` (or a loud `Unsupported` connection). An unconnected
+input carries `net` (an unconnected net reads z, a variable x). -/
+def parsePConn (j : Json) : Except String PConn := do
+  match ← getKind j with
+  | "PortConn" =>
+      let port ← getStrField j "port"
+      withCtx s!"port '{port}'" do
+        match ← getStrField j "dir" with
+        | "in" =>
+            match getOptField j "expr" with
+            | some ej => return .input port (some (← parsePExpr ej)) false
+            | none =>
+                match getOptField j "net" with
+                | some (Json.bool b) => return .input port none b
+                | _ => throw "unconnected input without a boolean 'net' field"
+        | "out" =>
+            match getOptField j "target" with
+            | none => return .output port none
+            | some tj =>
+                match ← parseTargetL tj with
+                | .ok t => return .output port (some t)
+                | .error k => return .unsupported port k "output port connection target"
+        | d => throw s!"unknown port connection dir {d.quote}"
+  | "Unsupported" =>
+      let (svKind, text) ← parseUnsupportedFields j
+      return .unsupported "" svKind text
+  | other => throw s!"unknown port connection kind {other.quote}"
+
+/-- An `Instance` node: definition name, lexical generate path, overridden
+parameters (symbolic constant expressions of the instantiating scope), one
+connection per child port. -/
+def parsePInst (j : Json) : Except String PInst := do
+  let name ← getStrField j "name"
+  withCtx s!"instance '{name}'" do
+    let module ← getStrField j "module"
+    let path ← (← (← getField j "path").getArr?).toList.mapM fun sj => do
+      pure { label := ← getStrField sj "label", genvar := getOptStr sj "genvar" : PPathSeg }
+    let params ← (← (← getField j "params").getArr?).toList.mapM fun pj => do
+      let pname ← getStrField pj "name"
+      pure (pname, ← withCtx s!"override '{pname}'" (parsePExpr (← getField pj "expr")))
+    let conns ← (← (← getField j "ports").getArr?).toList.mapM parsePConn
+    return { name, module, path, params, conns }
+
 /-! ## Generate items -/
 
 /-- Parse a generate-region member. Process shapes become `GenItem.process`;
@@ -418,7 +496,11 @@ partial def parseGenItem (j : Json) : Except String GenItem := do
           | some je => (← je.getArr?).toList.mapM parseGenItem
         return .genIf cond thenB elseB
     | "AlwaysPosedge" | "AlwaysComb" | "Assign" => return .process (← parsePProcess j)
-    | "Var" | "Net" =>
+    | "Instance" => return .inst (← parsePInst j)
+    | "Var" | "Net" | "LocalParam" | "ParameterDecl" =>
+        -- Generate-local declarations — including a `localparam` in a
+        -- generate block (per-instance constant scoping) — are outside this
+        -- slice: a loud item, never a whole-envelope parse failure.
         return .unsupported s!"GenerateDecl:{kind}"
           s!"generate-local declaration '{(getOptStr j "name").getD "?"}'"
     | "Unsupported" =>
@@ -443,9 +525,19 @@ def parsePDecl (j : Json) : Except String PDecl := do
         | some value => value.getBool?.toOption.getD false
       match kind with
       | "Port" =>
+          -- An OUTPUT variable port's declaration initializer (`output
+          -- logic [1:0] y = 2'b10`; round 3 CX repair — the extractor
+          -- used to drop it silently) is its initial value, exactly a
+          -- `Var`'s `init`. An input port never carries one (a port
+          -- default is refused at the unconnected connection): loud.
+          let init ← match getOptField j "init" with
+            | none => pure none
+            | some ji => pure (some (← withCtx "init" (parsePExpr ji)))
           match ← getStrField j "dir" with
-          | "in" => return { name, type := ty, isSigned, twoState, isInput := true }
-          | "out" => return { name, type := ty, isSigned, twoState, isOutput := true }
+          | "in" =>
+              if init.isSome then throw "input port with an initializer (a port default) is outside the tier"
+              return { name, type := ty, isSigned, twoState, isInput := true }
+          | "out" => return { name, type := ty, isSigned, twoState, isOutput := true, init }
           | d => throw s!"unknown port dir {d.quote}"
       | "Var" | "Net" =>
           let init ← match getOptField j "init" with
@@ -453,6 +545,15 @@ def parsePDecl (j : Json) : Except String PDecl := do
             | some ji => pure (some (← withCtx "init" (parsePExpr ji)))
           return { name, type := ty, isSigned, twoState, isNet := kind == "Net", init }
       | other => throw s!"unknown declaration kind {other.quote}"
+
+/-- The optional `signed` field of a `ParameterDecl`/`LocalParam` (the
+declared type's signedness when it departs from the envelope default —
+`PParam.signed?`). -/
+private def parseOptSigned (j : Json) : Except String (Option Bool) :=
+  match getOptField j "signed" with
+  | none => .ok none
+  | some (Json.bool b) => .ok (some b)
+  | some _ => .error "field 'signed' is not a bool"
 
 /-- Parse the sv-0.2 `Module` payload into a `PDesign`. `Unsupported`
 members of any list are routed to `PDesign.others` — instantiation turns
@@ -480,14 +581,18 @@ def parseModule2 (j : Json) : Except String PDesign :=
           let type? ← match getOptField pj "type" with
             | none => pure none
             | some tj => pure (some (← withCtx s!"parameter '{pname}' type" (parsePType tj)))
-          params := params ++ [{ name := pname, default?, resolved? := getOptInt pj "resolved", type? }]
+          let signed? ← parseOptSigned pj
+          params := params ++
+            [{ name := pname, default?, resolved? := getOptInt pj "resolved", type?, signed? }]
       | "LocalParam" =>
           let pname ← getStrField pj "name"
           let expr ← withCtx s!"localparam '{pname}'" (parsePExpr (← getField pj "expr"))
           let type? ← match getOptField pj "type" with
             | none => pure none
             | some tj => pure (some (← withCtx s!"localparam '{pname}' type" (parsePType tj)))
-          localParams := localParams ++ [{ name := pname, expr, resolved? := getOptInt pj "resolved", type? }]
+          let signed? ← parseOptSigned pj
+          localParams := localParams ++
+            [{ name := pname, expr, resolved? := getOptInt pj "resolved", type?, signed? }]
       | "Unsupported" => others := others ++ [← parseUnsupportedFields pj]
       | other => throw s!"unknown parameter kind {other.quote}"
     for tj in (← (← getField j "types").getArr?) do
@@ -525,11 +630,16 @@ structure Envelope2 where
   sourceFiles : List (String × String)
   packages : List String
   design : PDesign
+  /-- The module library of a hierarchical envelope (F3): the definitions
+  of every module the top instantiates, transitively, each elaborated alone
+  at its own defaults (`[]` for a single-module envelope). -/
+  lib : List PDesign := []
 deriving Repr, BEq, Inhabited
 
 /-- Parse a full sv-0.2 envelope. Validates `schema_version = "sv-0.2"`,
-`language = "systemverilog"`, `mode = "symbolic"`, and exactly one module,
-loudly. -/
+`language = "systemverilog"`, `mode = "symbolic"`, loudly. The first module
+is the top; the further ones are the module library of a hierarchical
+design (F3). -/
 def parseEnvelope2 (j : Json) : Except String Envelope2 :=
   withCtx "envelope" do
     let sv ← getStrField j "schema_version"
@@ -548,12 +658,18 @@ def parseEnvelope2 (j : Json) : Except String Envelope2 :=
     let design ← getField j "design"
     let modules ← (← getField design "modules").getArr?
     match modules.toList with
-    | [m] =>
+    | m :: defs =>
         let pd ← parseModule2 m
         unless pd.name == top do
           throw s!"module name {pd.name.quote} ≠ top {top.quote}"
-        return { top, sourceFiles, packages, design := pd }
-    | ms => throw s!"expected exactly one module, got {ms.length}"
+        let lib ← defs.mapM fun dj => do
+          let c ← parseModule2 dj
+          pure c.markOverrideRetypes
+        -- Untyped parameters whose default-point type an integer override
+        -- changes (§6.20.2): value-position reads of them are loud at
+        -- overridden points (`PParam.overrideRetypes`).
+        return { top, sourceFiles, packages, design := pd.markOverrideRetypes, lib }
+    | [] => throw "expected at least one module, got 0"
 
 /-- JSON text → `Envelope2`. -/
 def parseEnvelope2String (s : String) : Except String Envelope2 :=
@@ -562,6 +678,131 @@ def parseEnvelope2String (s : String) : Except String Envelope2 :=
 /-- JSON text → `PDesign`. -/
 def loadPDesignString (s : String) : Except String PDesign :=
   (·.design) <$> parseEnvelope2String s
+
+/-- JSON text → the top `PDesign` and its module library (`[]` for a
+single-module envelope). -/
+def loadHierString (s : String) : Except String (PDesign × List PDesign) :=
+  (fun e => (e.design, e.lib)) <$> parseEnvelope2String s
+
+/-! ## Probe sidecars (the multi-point cross-check, round 3 CX)
+
+`extract.py --top T --probe-points "N=1;N=4,W=8"` writes, next to the
+envelope `<file>.sv.json`, the sidecar `<file>.sv.probes.json` (schema
+`sv-0.2-probes`, `docs/sv-envelope-schema.md` "Probe sidecar"): per point
+the overrides, slang's error count there, the top module extracted AT the
+point, and every probed instance. `Probe2.lean` holds the check; this
+section parses sidecars and wires them into `load_design_sv2`, the
+differential runner and the svGolf checker. -/
+
+/-- `[{name, value}]` → override list (declaration order as written). -/
+private def parseOverrides (j : Json) : Except String (List (String × Int)) := do
+  (← j.getArr?).toList.mapM fun oj => do
+    pure (← getStrField oj "name", ← getIntField oj "value")
+
+/-- A probed module node, or `none` when the extractor recorded none (or
+an out-of-vocabulary node — an unprobed entry, never agreement). The
+module is marked exactly as `parseEnvelope2` marks every module. -/
+private def parseProbeModule? (j : Option Json) : Except String (Option PDesign) :=
+  match j with
+  | none => .ok none
+  | some mj =>
+      match getKind mj with
+      | .ok "Module" => do
+          let pd ← parseModule2 mj
+          pure (some pd.markOverrideRetypes)
+      | _ => .ok none
+
+/-- Parse a probe sidecar. Validates `schema_version = "sv-0.2-probes"`,
+loudly; a point whose top module did not extract as a `Module` fails the
+parse (a refusal, never a vacuous point). -/
+def parseProbes2 (j : Json) : Except String Probes2 :=
+  withCtx "probe sidecar" do
+    let sv ← getStrField j "schema_version"
+    unless sv == "sv-0.2-probes" do
+      throw s!"unsupported schema_version {sv.quote} (want \"sv-0.2-probes\")"
+    let top ← getStrField j "top"
+    let sourceFiles ← (← (← getField j "source_files").getArr?).toList.mapM fun sj => do
+      pure (← getStrField sj "path", ← getStrField sj "sha256")
+    let points ← (← (← getField j "points").getArr?).toList.mapM fun pj => do
+      let overrides ← withCtx "point" (parseOverrides (← getField pj "overrides"))
+      withCtx s!"point {renderOverrides overrides}" do
+        let frontendErrors := (getOptNat pj "frontend_errors").getD 0
+        let some module ← parseProbeModule? (getOptField pj "module")
+          | throw "the top module did not extract at this point"
+        let instances ← match getOptField pj "instances" with
+          | none => pure []
+          | some ij => (← ij.getArr?).toList.mapM fun ej => do
+              let mname ← getStrField ej "module"
+              let ov ← match getOptField ej "overrides" with
+                | none => pure none
+                | some oj => some <$> parseOverrides oj
+              let design ← parseProbeModule? (getOptField ej "design")
+              pure ({ module := mname, overrides := ov, design } : ProbeInst2)
+        pure ({ overrides, frontendErrors, module, instances } : ProbePoint2)
+    return { top, sourceFiles, points }
+
+/-- JSON text → `Probes2`. -/
+def parseProbes2String (s : String) : Except String Probes2 :=
+  Json.parse s >>= parseProbes2
+
+/-- The sidecar path of an envelope path: `x.sv.json` ↦ `x.sv.probes.json`. -/
+def probeSidecarPath (envPath : String) : String :=
+  if envPath.endsWith ".json" then
+    String.join ((envPath.toList.take (envPath.length - 5)).map Char.toString) ++ ".probes.json"
+  else envPath ++ ".probes.json"
+
+/-- Every probe verdict of a sidecar against its envelope, labelled
+`<point> <entry>` (`Probes2.report`). -/
+def Envelope2.probeReport (e : Envelope2) (pr : Probes2) : List (String × ProbeVerdict) :=
+  pr.report e.top e.sourceFiles e.design e.lib
+
+/-- **The svGolf checker's entry point** (pure): envelope text and probe
+sidecar text → every verdict (`Envelope2.probeReport`). `.ok` lists every
+entry; the design passes the cross-check iff all are `.agree`
+(`ProbeVerdict.ok`); `.error` = an unparseable envelope or sidecar. -/
+def probeReportString (envText probesText : String) :
+    Except String (List (String × ProbeVerdict)) := do
+  let e ← parseEnvelope2String envText
+  let pr ← parseProbes2String probesText
+  return e.probeReport pr
+
+/-- **The legacy-select range guard at every probed point** (round 3
+folds, `RangeGuard2.lean`): the first point at which a module of the
+hierarchy selects a declaration with the legacy offset encoding while its
+range there is not `[m:0]`, `m ≥ 0` — `(point, message)`, or `none`. A
+point the envelope cannot be brought to (`PDesign.atPoint`) is left to the
+cross-check, which refuses it. -/
+def Envelope2.legacyRangeAtPoints (e : Envelope2) (pr : Probes2) : Option (String × String) :=
+  pr.points.findSome? fun p =>
+    match e.design.atPoint (e.design.params.map fun prm => p.overrides.lookup prm.name) with
+    | .ok (d', args) => (d'.legacyRangeReport e.lib args).map (renderOverrides p.overrides, ·)
+    | .error _ => none
+
+/-- `probeReportString` collapsed to pass/fail: `.ok n` = all `n` entries
+agree, `.error msg` = the first failing entry (or a parse error). Since
+round 3 (folds) also `.error` when the legacy-select range guard refuses
+at a probed point (`Envelope2.legacyRangeAtPoints`). -/
+def probeCheckString (envText probesText : String) : Except String Nat := do
+  let rep ← probeReportString envText probesText
+  match rep.find? (fun (_, v) => !v.ok) with
+  | some (l, v) => throw s!"cross-check FAILED at {l}: {v.render}"
+  | none =>
+      let e ← parseEnvelope2String envText
+      let pr ← parseProbes2String probesText
+      match e.legacyRangeAtPoints pr with
+      | some (l, msg) => throw s!"range guard FAILED at {l}: {msg} (`Select:legacy-range`)"
+      | none => return rep.length
+
+/-- `probeCheckString` on files: the envelope at `envPath` and its sidecar
+(`probeSidecarPath`). `.ok none` = no sidecar exists (nothing checked —
+NOT agreement; a checker that requires the cross-check must treat it as a
+failure), `.ok (some n)` = all `n` entries agree. -/
+def probeCheckFile (envPath : System.FilePath) : IO (Except String (Option Nat)) := do
+  let side : System.FilePath := ⟨probeSidecarPath envPath.toString⟩
+  unless (← side.pathExists) do return .ok none
+  let envText ← IO.FS.readFile envPath
+  let prText ← IO.FS.readFile side
+  return (some <$> probeCheckString envText prText)
 
 /-! ## `load_design_sv2` -/
 
@@ -575,11 +816,32 @@ encoding):
 * `ff_one.pdesign : PDesign` — the envelope as a literal term;
 * `ff_one : Nat → … → Nat → Design` — one named explicit binder per SV
   `parameter`, declaration order, body `PDesign.instantiateD`.
+* `ff_one.sem : Nat → … → Nat → Design2` — the semantic-tier twin
+  (`PDesign.instantiateGD2`: `PDesign.instantiateD2` under the one-driver
+  rule `driversOk` — continuous drivers, the §6.5 continuous/procedural
+  mixture and the `always_comb`/`always_ff` exclusivity, per window —
+  checked at EVERY parameter point — a violation is the
+  loud `PortConn:driver` process, `Hier2.lean` "Drivers"; at the defaults
+  the envelope is refused here); for a HIERARCHICAL envelope (F3: the top plus
+  the definitions it instantiates) also `ff_one.plib : List PDesign`, the
+  module library, and `ff_one.sem` flattens through
+  `PDesign.instantiateHD2 ff_one.pdesign ff_one.plib` (`Hier2.lean`); every
+  library module passes the same `crossCheck` gate at its own defaults, and
+  the hierarchy flattened at the defaults must have distinct names
+  (`Design2.namesNodup`) and one driver per bit (`driversOk`: no
+  `PortConn:driver` process).
 
 Before defining anything the command replays the defaults elaboration and
 compares it against the envelope's `resolved` metadata
 (`PDesign.crossCheck`); any mismatch **refuses the envelope** with the
 full message list — the ingestion-time differential test against slang.
+When the envelope has a probe sidecar (`x.sv.json` ↦ `x.sv.probes.json`,
+written by `extract.py --probe-points`), every entry of it must
+`agree` (`Probe2.lean`, the multi-point cross-check: the envelope and
+slang's own extraction AT each point instantiate to the same design there,
+and slang's metadata at the point matches the Lean elaboration); the first
+entry that does not refuses the envelope, naming the point, the entry and
+the first difference.
 Missing files, malformed envelopes, and redeclarations are elaboration
 errors, never silent. Paths resolve against the cwd (the package root
 under `lake build`).
@@ -609,10 +871,85 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
   | (msgs, _) =>
       throwErrorAt path
         "load_design_sv2: '{pathStr}' REFUSED — our defaults elaboration disagrees with the envelope's `resolved` metadata (Lean vs slang differential):\n  {String.intercalate "\n  " msgs}"
+  -- A hierarchical envelope (F3): every library module passes the same
+  -- differential gate against ITS defaults (the extractor elaborated each
+  -- definition alone at its own defaults).
+  let lib := envl.lib
+  for c in lib do
+    match c.crossCheck with
+    | [] => pure ()
+    | msgs =>
+        throwErrorAt path
+          "load_design_sv2: '{pathStr}' REFUSED — module '{c.name}' of the hierarchy: our defaults elaboration disagrees with the envelope's `resolved` metadata (Lean vs slang differential):\n  {String.intercalate "\n  " msgs}"
+  -- The defaults point with exact 32-bit `int` constants (`int32Agrees`).
+  match pd.atPoint [] with
+  | .ok (pdD, argsD) =>
+      unless (if lib.isEmpty then pdD.int32Agrees argsD else pdD.int32AgreesH lib argsD) do
+        throwErrorAt path
+          "load_design_sv2: '{pathStr}' REFUSED — at the defaults an INT-class constant expression leaves the 32-bit range: exact 32-bit `int` arithmetic and the unbounded constant tier build different designs (`PDesign.int32Agrees`)"
+      -- Every top, flat ones included (2026-10-28, WP2): an instance-free
+      -- top through `instantiateG2` (`name.sem`'s family), a hierarchical
+      -- one through `instantiateH` (whose `topGuard` checks it).
+      let flatTop := lib.isEmpty || GenItem.listInstFree pdD.generates
+      let instD := if flatTop then pdD.instantiateG2 argsD (PDesign.surfaceFuel argsD)
+        else pdD.instantiateH lib argsD (PDesign.surfaceFuel argsD)
+      match instD with
+      | .ok dD =>
+          unless lib.isEmpty || dD.namesNodup do
+            throwErrorAt path
+              "load_design_sv2: '{pathStr}' REFUSED — flattening the hierarchy at the defaults produced two declarations of one name (`Design2.namesNodup`)"
+          -- The one-driver rule (`Hier2.lean`, "Drivers"): a design that
+          -- violates it AT THE DEFAULTS is refused here, early; at any
+          -- other point `name.sem` carries the loud `PortConn:driver`.
+          for p in dD.processes do
+            match p with
+            | .unsupported "PortConn:driver" msg =>
+                throwErrorAt path
+                  "load_design_sv2: '{pathStr}' REFUSED — at the defaults, {msg} (`PortConn:driver`, `driversOk`)"
+            -- The always_comb self-read guard (WP4, `CombGuard2.lean`):
+            -- refused here at the defaults, loud in `name.sem` elsewhere.
+            | .unsupported "AlwaysComb:self-read" msg =>
+                throwErrorAt path
+                  "load_design_sv2: '{pathStr}' REFUSED — at the defaults, in the instantiated design of module '{dD.name}': {msg} (`AlwaysComb:self-read`, `Stmt2.combAdmits`)"
+            | _ => pure ()
+      | _ => pure ()
+      -- The legacy-select range guard (round 3 folds, `RangeGuard2.lean`):
+      -- a check BESIDE `name.sem` (whose recorded lemmas pin it), run at
+      -- the defaults here and at every probed point below.
+      if let some msg := pdD.legacyRangeReport lib argsD then
+        throwErrorAt path
+          "load_design_sv2: '{pathStr}' REFUSED — at the defaults, {msg} (`Select:legacy-range`, `PDesign.legacyRangeReport`)"
+  | .error _ => pure ()
+  -- The multi-point cross-check (round 3 CX, `Probe2.lean`): when the
+  -- envelope has a probe sidecar (`extract.py --probe-points`), every
+  -- point's re-extraction must instantiate to exactly the design the
+  -- envelope gives there — a default-point fold differs, and refuses here.
+  let sidePath := probeSidecarPath pathStr
+  if ← System.FilePath.pathExists ⟨sidePath⟩ then
+    let prText ←
+      match ← (IO.FS.readFile ⟨sidePath⟩).toBaseIO with
+      | .ok c => pure c
+      | .error e => throwErrorAt path "load_design_sv2: cannot read probe sidecar '{sidePath}': {toString e}"
+    match parseProbes2String prText with
+    | .error e =>
+        throwErrorAt path "load_design_sv2: '{pathStr}' REFUSED — its probe sidecar '{sidePath}' is not valid: {e}"
+    | .ok pr =>
+        match (envl.probeReport pr).find? (fun (_, v) => !v.ok) with
+        | some (l, v) =>
+            throwErrorAt path
+              "load_design_sv2: '{pathStr}' REFUSED — multi-point cross-check (probe sidecar '{sidePath}') at {l}: {v.render}\n({v.meaning} — `Probe2.lean`)"
+        | none => pure ()
+        -- The legacy-select range guard at every probed point (round 3
+        -- folds): the svGolf checker always probes the task's probe,
+        -- scoring and backstop points.
+        if let some (l, msg) := envl.legacyRangeAtPoints pr then
+          throwErrorAt path
+            "load_design_sv2: '{pathStr}' REFUSED — at the probed point {l}: {msg} (`Select:legacy-range`, `PDesign.legacyRangeReport`)"
   let funName := (← getCurrNamespace) ++ name.getId
   let pdName := funName ++ `pdesign
   let semName := funName ++ `sem
-  for n in [funName, pdName, semName] do
+  let libName := funName ++ `plib
+  for n in [funName, pdName, semName] ++ (if lib.isEmpty then [] else [libName]) do
     if (← getEnv).contains n then
       throwErrorAt name "load_design_sv2: '{n}' has already been declared"
   let paramNames := pd.params.map (·.name)
@@ -652,10 +989,32 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
     enableRealizationsForConst funName
     addDocStringCore funName
       s!"Design family `{envl.top}` (via `load_design_sv2` from `{pathStr}`): one `Nat` binder per SV parameter, declaration order — {paramNames}. Body: `PDesign.instantiateD {pdName}`; errors are the loud `errorDesign` (every run `.unsupported`), never silent."
+    -- A hierarchical envelope's module library (F3): `name.plib`.
+    unless lib.isEmpty do
+      addAndCompile <| .defnDecl {
+        name := libName
+        levelParams := []
+        type := Lean.mkApp (Lean.mkConst ``List [.zero]) (Lean.mkConst ``LeanModels.Sv.PDesign)
+        value := toExpr lib
+        hints := .abbrev
+        safety := .safe }
+      enableRealizationsForConst libName
+      addDocStringCore libName
+        s!"Module library of the hierarchical design `{envl.top}` (via `load_design_sv2` from `{pathStr}`): the definitions it instantiates, transitively — {lib.map (·.name)}. Each a literal `LeanModels.Sv.PDesign` elaborated alone at its own defaults."
     -- The semantic-tier twin: `name.sem : Nat^n → Design2` (phase 2 —
-    -- selects, case, async reset; runs under `run2`).
-    let semBody := Lean.mkApp2 (Lean.mkConst ``LeanModels.Sv.PDesign.instantiateD2)
-      (Lean.mkConst pdName) argsList
+    -- selects, case, async reset; runs under `run2`). A hierarchical
+    -- envelope flattens through `PDesign.instantiateHD2` (Hier2.lean); an
+    -- instance-free top instantiates through `PDesign.instantiateGD2`,
+    -- `instantiateD2` under the one-driver rule at every parameter point
+    -- (2026-10-28, WP2 — `Hier2.lean`, "Drivers").
+    let flatTop := lib.isEmpty || GenItem.listInstFree pd.generates
+    let semBody :=
+      if flatTop then
+        Lean.mkApp2 (Lean.mkConst ``LeanModels.Sv.PDesign.instantiateGD2)
+          (Lean.mkConst pdName) argsList
+      else
+        Lean.mkApp3 (Lean.mkConst ``LeanModels.Sv.PDesign.instantiateHD2)
+          (Lean.mkConst pdName) (Lean.mkConst libName) argsList
     let semValue := paramNames.foldr
       (fun p acc => Lean.mkLambda (Name.mkSimple p) .default natTy acc) semBody
     let semType := paramNames.foldr
@@ -670,7 +1029,10 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
       safety := .safe }
     enableRealizationsForConst semName
     addDocStringCore semName
-      s!"Semantic-tier design family `{envl.top}` (`Design2`, via `PDesign.instantiateD2 {pdName}`): one `Nat` binder per SV parameter, declaration order — {paramNames}. Runs under `run2` (selects, case, async active-low reset in-tier)."
+      (if flatTop then
+        s!"Semantic-tier design family `{envl.top}` (`Design2`, via `PDesign.instantiateGD2 {pdName}` — `instantiateD2` under the one-driver rule, Hier2.lean): one `Nat` binder per SV parameter, declaration order — {paramNames}. Runs under `run2` (selects, case, async active-low reset in-tier)."
+      else
+        s!"Semantic-tier design family `{envl.top}` (`Design2`, via `PDesign.instantiateHD2 {pdName} {libName}` — the module hierarchy flattened, Hier2.lean): one `Nat` binder per SV parameter, declaration order — {paramNames}. Runs under `run2`.")
   liftTermElabM do
     Term.addTermInfo' name (Lean.mkConst funName) (isBinder := true)
 
@@ -863,5 +1225,16 @@ private def unsupMemberText : String := r#"{
 -- SysCall arity ≠ 1 is representable but loud (unsupported node, not a parse error).
 #guard (Json.parse r#"{"kind": "SysCall", "name": "$size", "args": []}"# >>= parsePExpr).toOption
         == some (.unsupported "SysCall:arity" "$size with 0 args")
+-- A `localparam` inside a generate block is a loud item, not a parse failure.
+#guard (Json.parse r#"{"kind": "LocalParam", "span": null, "name": "LL", "type": null,
+    "expr": {"kind": "Int", "span": null, "value": 1, "resolved_width": 32}, "resolved": 1}"#
+    >>= parseGenItem).toOption
+        == some (.unsupported "GenerateDecl:LocalParam" "generate-local declaration 'LL'")
+-- A signed literal (`signed: true`, symbolic constant positions) is
+-- `$signed` of its bits; the optional typed-parameter `signed` field parses.
+#guard (Json.parse r#"{"kind": "Literal", "span": null, "width": 4, "bits": "1111", "signed": true}"#
+    >>= parsePExpr).toOption == some (.cast true (.lit (LVec.ofNat 4 15)))
+#guard (Json.parse r#"{"kind": "Literal", "span": null, "width": 4, "bits": "1111"}"#
+    >>= parsePExpr).toOption == some (.lit (LVec.ofNat 4 15))
 
 end LeanModels.Sv

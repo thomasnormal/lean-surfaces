@@ -1,0 +1,310 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "cell_param",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/cell_param/cell_param.sv",
+      "sha256": "d20fc612c73f176cdc6c24d1b23cda8750dfe1b53b881a2218aa57679081d020"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 16,
+          "end_col": 10
+        },
+        "name": "cell_param",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 8,
+              "col": 17,
+              "end_line": 8,
+              "end_col": 22
+            },
+            "name": "K",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 17,
+                      "end_line": 8,
+                      "end_col": 22
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 17,
+                      "end_line": 8,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 8,
+                "col": 21,
+                "end_line": 8,
+                "end_col": 22
+              },
+              "value": 0,
+              "resolved_width": 32
+            },
+            "resolved": 0
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 10,
+              "col": 22,
+              "end_line": 10,
+              "end_col": 23
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 11,
+              "col": 22,
+              "end_line": 11,
+              "end_col": 23
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 11,
+                      "col": 17,
+                      "end_line": 11,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 11,
+                      "col": 19,
+                      "end_line": 11,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 13,
+              "col": 9,
+              "end_line": 13,
+              "end_col": 14
+            },
+            "name": "m[0]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "two_state": false,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 13,
+              "col": 9,
+              "end_line": 13,
+              "end_col": 14
+            },
+            "name": "m[1]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "two_state": false,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 13,
+              "col": 9,
+              "end_line": 13,
+              "end_col": 14
+            },
+            "name": "m[2]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "two_state": false,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 13,
+              "col": 9,
+              "end_line": 13,
+              "end_col": 14
+            },
+            "name": "m[3]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "two_state": false,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 14,
+              "col": 10,
+              "end_line": 14,
+              "end_col": 18
+            },
+            "sv_kind": "ElementSelect:default-point-index",
+            "text": "m[K] = a"
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 15,
+              "col": 10,
+              "end_line": 15,
+              "end_col": 38
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 15,
+                "col": 10,
+                "end_line": 15,
+                "end_col": 11
+              },
+              "width": 4,
+              "name": "y"
+            },
+            "value": {
+              "kind": "Concat",
+              "span": {
+                "line": 15,
+                "col": 14,
+                "end_line": 15,
+                "end_col": 38
+              },
+              "width": 4,
+              "parts": [
+                {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 15,
+                    "col": 15,
+                    "end_line": 15,
+                    "end_col": 19
+                  },
+                  "width": 1,
+                  "name": "m[3]"
+                },
+                {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 15,
+                    "col": 21,
+                    "end_line": 15,
+                    "end_col": 25
+                  },
+                  "width": 1,
+                  "name": "m[2]"
+                },
+                {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 15,
+                    "col": 27,
+                    "end_line": 15,
+                    "end_col": 31
+                  },
+                  "width": 1,
+                  "name": "m[1]"
+                },
+                {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 15,
+                    "col": 33,
+                    "end_line": 15,
+                    "end_col": 37
+                  },
+                  "width": 1,
+                  "name": "m[0]"
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

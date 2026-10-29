@@ -1,0 +1,231 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "int_const_loud",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/int_const_loud/int_const_loud.sv",
+      "sha256": "088ed3cf4ea8151f412b227a3a1b42389f12aaef0a30469c9f34e3bd8937c957"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 4,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "int_const_loud",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 4,
+              "col": 39,
+              "end_line": 4,
+              "end_col": 44
+            },
+            "name": "N",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 39,
+                      "end_line": 4,
+                      "end_col": 44
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 39,
+                      "end_line": 4,
+                      "end_col": 44
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 4,
+                "col": 43,
+                "end_line": 4,
+                "end_col": 44
+              },
+              "value": 7,
+              "resolved_width": 32
+            },
+            "resolved": 7
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 24,
+              "end_line": 5,
+              "end_col": 25
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 17,
+                      "end_line": 5,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 19,
+                      "end_line": 5,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 24,
+              "end_line": 6,
+              "end_col": 25
+            },
+            "name": "o",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 6,
+                      "col": 17,
+                      "end_line": 6,
+                      "end_col": 20
+                    },
+                    "width": null,
+                    "op": "+",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 6,
+                        "col": 17,
+                        "end_line": 6,
+                        "end_col": 18
+                      },
+                      "name": "N"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 6,
+                        "col": 19,
+                        "end_line": 6,
+                        "end_col": 20
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 21,
+                      "end_line": 6,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 9
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 8,
+              "col": 10,
+              "end_line": 8,
+              "end_col": 30
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 8,
+                "col": 10,
+                "end_line": 8,
+                "end_col": 11
+              },
+              "width": 9,
+              "name": "o"
+            },
+            "value": {
+              "kind": "Unsupported",
+              "span": {
+                "line": 8,
+                "col": 14,
+                "end_line": 8,
+                "end_col": 30
+              },
+              "sv_kind": "ConversionExpression:signed-constant",
+              "text": "(3 > 2) ? -1 : 2"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -1,0 +1,5094 @@
+{
+ "schema_version": "sv-0.2-probes",
+ "top": "mul2d",
+ "envelope": "mul2d.sv.json",
+ "source_files": [
+  {
+   "path": "Examples/system-verilog/mul2d/mul2d.sv",
+   "sha256": "510a79d94ea35a4469a9b6a17d78d96eaa46d0090074074b735a551b3923824e"
+  }
+ ],
+ "probe_points": "N=1;N=2;N=3;N=5;N=8",
+ "points": [
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 1
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "mul2d",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 1,
+       "resolved_width": 32
+      },
+      "resolved": 1
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 1
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 1
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "p",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "Int",
+            "value": 2,
+            "resolved_width": null
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "N"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 2
+      }
+     }
+    ],
+    "decls": [
+     {
+      "kind": "Var",
+      "name": "pp",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 1
+      },
+      "init": null
+     },
+     {
+      "kind": "Var",
+      "name": "s",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 2
+      },
+      "init": null
+     },
+     {
+      "kind": "Var",
+      "name": "c",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 2
+      },
+      "init": null
+     },
+     {
+      "kind": "Var",
+      "name": "t",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 1
+      },
+      "init": null
+     }
+    ],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 2,
+       "name": "s",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Concat",
+       "width": 2,
+       "parts": [
+        {
+         "kind": "Literal",
+         "width": 1,
+         "bits": "0"
+        },
+        {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "pp",
+         "indices": [
+          {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         ],
+         "part": null
+        }
+       ]
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 2,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Fill",
+       "bit": "0",
+       "resolved_width": 2
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "t",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Fill",
+       "bit": "0",
+       "resolved_width": 1
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "p",
+       "indices": [],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "Int",
+           "value": 2,
+           "resolved_width": 32
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       }
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 1,
+       "name": "s",
+       "indices": [
+        {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "ParamRef",
+         "name": "N"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 1,
+         "resolved_width": 32
+        }
+       }
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_pp",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 1,
+      "body": [
+       {
+        "kind": "GenerateFor",
+        "label": "g_pp_j",
+        "genvar": "j",
+        "init": {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        },
+        "bound": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "s<",
+         "left": {
+          "kind": "GenvarRef",
+          "name": "j"
+         },
+         "right": {
+          "kind": "ParamRef",
+          "name": "N"
+         }
+        },
+        "step": {
+         "kind": "Unary",
+         "width": null,
+         "op": "++",
+         "operand": {
+          "kind": "GenvarRef",
+          "name": "j"
+         }
+        },
+        "resolved_count": 1,
+        "body": [
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "pp",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "&",
+           "left": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 1,
+             "name": "a"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           },
+           "right": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 1,
+             "name": "b"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "i"
+            }
+           }
+          }
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "kind": "GenerateFor",
+      "label": "g_row",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 1,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 0,
+      "body": [
+       {
+        "kind": "Unsupported",
+        "sv_kind": "GenerateFor:no-template",
+        "text": "for (i = 1; i < N; i++) begin : g_row\n      assign c[i][0] = 1'b0;\n      for (j = 0; j < N; j++) begin : g_bit\n        assign t[i][j]   = s[i-1][j+1] ^ pp[i][j];\n        assign s[i][j]   = t[i][j] ^ c"
+       }
+      ]
+     },
+     {
+      "kind": "GenerateFor",
+      "label": "g_out",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 1,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "BitSel",
+         "width": 1,
+         "value": {
+          "kind": "Ident",
+          "width": 2,
+          "name": "p"
+         },
+         "index": {
+          "kind": "GenvarRef",
+          "name": "i"
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "s",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         ],
+         "part": null
+        }
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 2
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "mul2d",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 2,
+       "resolved_width": 32
+      },
+      "resolved": 2
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 2
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 2
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "p",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "Int",
+            "value": 2,
+            "resolved_width": null
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "N"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      }
+     }
+    ],
+    "decls": [
+     {
+      "kind": "Var",
+      "name": "pp",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      },
+      "init": null
+     },
+     {
+      "kind": "Var",
+      "name": "s",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 6
+      },
+      "init": null
+     },
+     {
+      "kind": "Var",
+      "name": "c",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 6
+      },
+      "init": null
+     },
+     {
+      "kind": "Var",
+      "name": "t",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 4
+      },
+      "init": null
+     }
+    ],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 3,
+       "name": "s",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Concat",
+       "width": 3,
+       "parts": [
+        {
+         "kind": "Literal",
+         "width": 1,
+         "bits": "0"
+        },
+        {
+         "kind": "ArraySel",
+         "width": 2,
+         "name": "pp",
+         "indices": [
+          {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         ],
+         "part": null
+        }
+       ]
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 3,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Fill",
+       "bit": "0",
+       "resolved_width": 3
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 2,
+       "name": "t",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Fill",
+       "bit": "0",
+       "resolved_width": 2
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 2,
+       "name": "p",
+       "indices": [],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "Int",
+           "value": 2,
+           "resolved_width": 32
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       }
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 2,
+       "name": "s",
+       "indices": [
+        {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "ParamRef",
+         "name": "N"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 1,
+         "resolved_width": 32
+        }
+       }
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_pp",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 2,
+      "body": [
+       {
+        "kind": "GenerateFor",
+        "label": "g_pp_j",
+        "genvar": "j",
+        "init": {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        },
+        "bound": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "s<",
+         "left": {
+          "kind": "GenvarRef",
+          "name": "j"
+         },
+         "right": {
+          "kind": "ParamRef",
+          "name": "N"
+         }
+        },
+        "step": {
+         "kind": "Unary",
+         "width": null,
+         "op": "++",
+         "operand": {
+          "kind": "GenvarRef",
+          "name": "j"
+         }
+        },
+        "resolved_count": 2,
+        "body": [
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "pp",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "&",
+           "left": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 2,
+             "name": "a"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           },
+           "right": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 2,
+             "name": "b"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "i"
+            }
+           }
+          }
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "kind": "GenerateFor",
+      "label": "g_row",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 1,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 1,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "c",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         ],
+         "part": null
+        },
+        "value": {
+         "kind": "Literal",
+         "width": 1,
+         "bits": "0"
+        }
+       },
+       {
+        "kind": "GenerateFor",
+        "label": "g_bit",
+        "genvar": "j",
+        "init": {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        },
+        "bound": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "s<",
+         "left": {
+          "kind": "GenvarRef",
+          "name": "j"
+         },
+         "right": {
+          "kind": "ParamRef",
+          "name": "N"
+         }
+        },
+        "step": {
+         "kind": "Unary",
+         "width": null,
+         "op": "++",
+         "operand": {
+          "kind": "GenvarRef",
+          "name": "j"
+         }
+        },
+        "resolved_count": 2,
+        "body": [
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "t",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "s",
+            "indices": [
+             {
+              "kind": "Binary",
+              "width": 32,
+              "op": "-",
+              "left": {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              "right": {
+               "kind": "Int",
+               "value": 1,
+               "resolved_width": 32
+              }
+             },
+             {
+              "kind": "Binary",
+              "width": 32,
+              "op": "+",
+              "left": {
+               "kind": "GenvarRef",
+               "name": "j"
+              },
+              "right": {
+               "kind": "Int",
+               "value": 1,
+               "resolved_width": 32
+              }
+             }
+            ],
+            "part": null
+           },
+           "right": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "pp",
+            "indices": [
+             {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             {
+              "kind": "GenvarRef",
+              "name": "j"
+             }
+            ],
+            "part": null
+           }
+          }
+         },
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "s",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "t",
+            "indices": [
+             {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             {
+              "kind": "GenvarRef",
+              "name": "j"
+             }
+            ],
+            "part": null
+           },
+           "right": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "c",
+            "indices": [
+             {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             {
+              "kind": "GenvarRef",
+              "name": "j"
+             }
+            ],
+            "part": null
+           }
+          }
+         },
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "c",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "Binary",
+             "width": 32,
+             "op": "+",
+             "left": {
+              "kind": "GenvarRef",
+              "name": "j"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "|",
+           "left": {
+            "kind": "Binary",
+            "width": 1,
+            "op": "&",
+            "left": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "s",
+             "indices": [
+              {
+               "kind": "Binary",
+               "width": 32,
+               "op": "-",
+               "left": {
+                "kind": "GenvarRef",
+                "name": "i"
+               },
+               "right": {
+                "kind": "Int",
+                "value": 1,
+                "resolved_width": 32
+               }
+              },
+              {
+               "kind": "Binary",
+               "width": 32,
+               "op": "+",
+               "left": {
+                "kind": "GenvarRef",
+                "name": "j"
+               },
+               "right": {
+                "kind": "Int",
+                "value": 1,
+                "resolved_width": 32
+               }
+              }
+             ],
+             "part": null
+            },
+            "right": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "pp",
+             "indices": [
+              {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              {
+               "kind": "GenvarRef",
+               "name": "j"
+              }
+             ],
+             "part": null
+            }
+           },
+           "right": {
+            "kind": "Binary",
+            "width": 1,
+            "op": "&",
+            "left": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "c",
+             "indices": [
+              {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              {
+               "kind": "GenvarRef",
+               "name": "j"
+              }
+             ],
+             "part": null
+            },
+            "right": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "t",
+             "indices": [
+              {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              {
+               "kind": "GenvarRef",
+               "name": "j"
+              }
+             ],
+             "part": null
+            }
+           }
+          }
+         }
+        ]
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "s",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         ],
+         "part": null
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "c",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         ],
+         "part": null
+        }
+       }
+      ]
+     },
+     {
+      "kind": "GenerateFor",
+      "label": "g_out",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 2,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "BitSel",
+         "width": 1,
+         "value": {
+          "kind": "Ident",
+          "width": 4,
+          "name": "p"
+         },
+         "index": {
+          "kind": "GenvarRef",
+          "name": "i"
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "s",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         ],
+         "part": null
+        }
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 3
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "mul2d",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 3,
+       "resolved_width": 32
+      },
+      "resolved": 3
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 3
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "p",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "Int",
+            "value": 2,
+            "resolved_width": null
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "N"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 6
+      }
+     }
+    ],
+    "decls": [
+     {
+      "kind": "Var",
+      "name": "pp",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 9
+      },
+      "init": null
+     },
+     {
+      "kind": "Var",
+      "name": "s",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 12
+      },
+      "init": null
+     },
+     {
+      "kind": "Var",
+      "name": "c",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 12
+      },
+      "init": null
+     },
+     {
+      "kind": "Var",
+      "name": "t",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 9
+      },
+      "init": null
+     }
+    ],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "s",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Concat",
+       "width": 4,
+       "parts": [
+        {
+         "kind": "Literal",
+         "width": 1,
+         "bits": "0"
+        },
+        {
+         "kind": "ArraySel",
+         "width": 3,
+         "name": "pp",
+         "indices": [
+          {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         ],
+         "part": null
+        }
+       ]
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 4,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Fill",
+       "bit": "0",
+       "resolved_width": 4
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 3,
+       "name": "t",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Fill",
+       "bit": "0",
+       "resolved_width": 3
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 3,
+       "name": "p",
+       "indices": [],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "Int",
+           "value": 2,
+           "resolved_width": 32
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       }
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 3,
+       "name": "s",
+       "indices": [
+        {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "ParamRef",
+         "name": "N"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 1,
+         "resolved_width": 32
+        }
+       }
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_pp",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 3,
+      "body": [
+       {
+        "kind": "GenerateFor",
+        "label": "g_pp_j",
+        "genvar": "j",
+        "init": {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        },
+        "bound": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "s<",
+         "left": {
+          "kind": "GenvarRef",
+          "name": "j"
+         },
+         "right": {
+          "kind": "ParamRef",
+          "name": "N"
+         }
+        },
+        "step": {
+         "kind": "Unary",
+         "width": null,
+         "op": "++",
+         "operand": {
+          "kind": "GenvarRef",
+          "name": "j"
+         }
+        },
+        "resolved_count": 3,
+        "body": [
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "pp",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "&",
+           "left": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 3,
+             "name": "a"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           },
+           "right": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 3,
+             "name": "b"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "i"
+            }
+           }
+          }
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "kind": "GenerateFor",
+      "label": "g_row",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 1,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 2,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "c",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         ],
+         "part": null
+        },
+        "value": {
+         "kind": "Literal",
+         "width": 1,
+         "bits": "0"
+        }
+       },
+       {
+        "kind": "GenerateFor",
+        "label": "g_bit",
+        "genvar": "j",
+        "init": {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        },
+        "bound": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "s<",
+         "left": {
+          "kind": "GenvarRef",
+          "name": "j"
+         },
+         "right": {
+          "kind": "ParamRef",
+          "name": "N"
+         }
+        },
+        "step": {
+         "kind": "Unary",
+         "width": null,
+         "op": "++",
+         "operand": {
+          "kind": "GenvarRef",
+          "name": "j"
+         }
+        },
+        "resolved_count": 3,
+        "body": [
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "t",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "s",
+            "indices": [
+             {
+              "kind": "Binary",
+              "width": 32,
+              "op": "-",
+              "left": {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              "right": {
+               "kind": "Int",
+               "value": 1,
+               "resolved_width": 32
+              }
+             },
+             {
+              "kind": "Binary",
+              "width": 32,
+              "op": "+",
+              "left": {
+               "kind": "GenvarRef",
+               "name": "j"
+              },
+              "right": {
+               "kind": "Int",
+               "value": 1,
+               "resolved_width": 32
+              }
+             }
+            ],
+            "part": null
+           },
+           "right": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "pp",
+            "indices": [
+             {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             {
+              "kind": "GenvarRef",
+              "name": "j"
+             }
+            ],
+            "part": null
+           }
+          }
+         },
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "s",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "t",
+            "indices": [
+             {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             {
+              "kind": "GenvarRef",
+              "name": "j"
+             }
+            ],
+            "part": null
+           },
+           "right": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "c",
+            "indices": [
+             {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             {
+              "kind": "GenvarRef",
+              "name": "j"
+             }
+            ],
+            "part": null
+           }
+          }
+         },
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "c",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "Binary",
+             "width": 32,
+             "op": "+",
+             "left": {
+              "kind": "GenvarRef",
+              "name": "j"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "|",
+           "left": {
+            "kind": "Binary",
+            "width": 1,
+            "op": "&",
+            "left": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "s",
+             "indices": [
+              {
+               "kind": "Binary",
+               "width": 32,
+               "op": "-",
+               "left": {
+                "kind": "GenvarRef",
+                "name": "i"
+               },
+               "right": {
+                "kind": "Int",
+                "value": 1,
+                "resolved_width": 32
+               }
+              },
+              {
+               "kind": "Binary",
+               "width": 32,
+               "op": "+",
+               "left": {
+                "kind": "GenvarRef",
+                "name": "j"
+               },
+               "right": {
+                "kind": "Int",
+                "value": 1,
+                "resolved_width": 32
+               }
+              }
+             ],
+             "part": null
+            },
+            "right": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "pp",
+             "indices": [
+              {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              {
+               "kind": "GenvarRef",
+               "name": "j"
+              }
+             ],
+             "part": null
+            }
+           },
+           "right": {
+            "kind": "Binary",
+            "width": 1,
+            "op": "&",
+            "left": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "c",
+             "indices": [
+              {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              {
+               "kind": "GenvarRef",
+               "name": "j"
+              }
+             ],
+             "part": null
+            },
+            "right": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "t",
+             "indices": [
+              {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              {
+               "kind": "GenvarRef",
+               "name": "j"
+              }
+             ],
+             "part": null
+            }
+           }
+          }
+         }
+        ]
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "s",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         ],
+         "part": null
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "c",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         ],
+         "part": null
+        }
+       }
+      ]
+     },
+     {
+      "kind": "GenerateFor",
+      "label": "g_out",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 3,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "BitSel",
+         "width": 1,
+         "value": {
+          "kind": "Ident",
+          "width": 6,
+          "name": "p"
+         },
+         "index": {
+          "kind": "GenvarRef",
+          "name": "i"
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "s",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         ],
+         "part": null
+        }
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 5
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "mul2d",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 5,
+       "resolved_width": 32
+      },
+      "resolved": 5
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 5
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 5
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "p",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "Int",
+            "value": 2,
+            "resolved_width": null
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "N"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 10
+      }
+     }
+    ],
+    "decls": [
+     {
+      "kind": "Var",
+      "name": "pp",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 25
+      },
+      "init": null
+     },
+     {
+      "kind": "Var",
+      "name": "s",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 30
+      },
+      "init": null
+     },
+     {
+      "kind": "Var",
+      "name": "c",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 30
+      },
+      "init": null
+     },
+     {
+      "kind": "Var",
+      "name": "t",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 25
+      },
+      "init": null
+     }
+    ],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 6,
+       "name": "s",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Concat",
+       "width": 6,
+       "parts": [
+        {
+         "kind": "Literal",
+         "width": 1,
+         "bits": "0"
+        },
+        {
+         "kind": "ArraySel",
+         "width": 5,
+         "name": "pp",
+         "indices": [
+          {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         ],
+         "part": null
+        }
+       ]
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 6,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Fill",
+       "bit": "0",
+       "resolved_width": 6
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 5,
+       "name": "t",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Fill",
+       "bit": "0",
+       "resolved_width": 5
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 5,
+       "name": "p",
+       "indices": [],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "Int",
+           "value": 2,
+           "resolved_width": 32
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       }
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 5,
+       "name": "s",
+       "indices": [
+        {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "ParamRef",
+         "name": "N"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 1,
+         "resolved_width": 32
+        }
+       }
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_pp",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 5,
+      "body": [
+       {
+        "kind": "GenerateFor",
+        "label": "g_pp_j",
+        "genvar": "j",
+        "init": {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        },
+        "bound": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "s<",
+         "left": {
+          "kind": "GenvarRef",
+          "name": "j"
+         },
+         "right": {
+          "kind": "ParamRef",
+          "name": "N"
+         }
+        },
+        "step": {
+         "kind": "Unary",
+         "width": null,
+         "op": "++",
+         "operand": {
+          "kind": "GenvarRef",
+          "name": "j"
+         }
+        },
+        "resolved_count": 5,
+        "body": [
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "pp",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "&",
+           "left": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 5,
+             "name": "a"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           },
+           "right": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 5,
+             "name": "b"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "i"
+            }
+           }
+          }
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "kind": "GenerateFor",
+      "label": "g_row",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 1,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 4,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "c",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         ],
+         "part": null
+        },
+        "value": {
+         "kind": "Literal",
+         "width": 1,
+         "bits": "0"
+        }
+       },
+       {
+        "kind": "GenerateFor",
+        "label": "g_bit",
+        "genvar": "j",
+        "init": {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        },
+        "bound": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "s<",
+         "left": {
+          "kind": "GenvarRef",
+          "name": "j"
+         },
+         "right": {
+          "kind": "ParamRef",
+          "name": "N"
+         }
+        },
+        "step": {
+         "kind": "Unary",
+         "width": null,
+         "op": "++",
+         "operand": {
+          "kind": "GenvarRef",
+          "name": "j"
+         }
+        },
+        "resolved_count": 5,
+        "body": [
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "t",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "s",
+            "indices": [
+             {
+              "kind": "Binary",
+              "width": 32,
+              "op": "-",
+              "left": {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              "right": {
+               "kind": "Int",
+               "value": 1,
+               "resolved_width": 32
+              }
+             },
+             {
+              "kind": "Binary",
+              "width": 32,
+              "op": "+",
+              "left": {
+               "kind": "GenvarRef",
+               "name": "j"
+              },
+              "right": {
+               "kind": "Int",
+               "value": 1,
+               "resolved_width": 32
+              }
+             }
+            ],
+            "part": null
+           },
+           "right": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "pp",
+            "indices": [
+             {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             {
+              "kind": "GenvarRef",
+              "name": "j"
+             }
+            ],
+            "part": null
+           }
+          }
+         },
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "s",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "t",
+            "indices": [
+             {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             {
+              "kind": "GenvarRef",
+              "name": "j"
+             }
+            ],
+            "part": null
+           },
+           "right": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "c",
+            "indices": [
+             {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             {
+              "kind": "GenvarRef",
+              "name": "j"
+             }
+            ],
+            "part": null
+           }
+          }
+         },
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "c",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "Binary",
+             "width": 32,
+             "op": "+",
+             "left": {
+              "kind": "GenvarRef",
+              "name": "j"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "|",
+           "left": {
+            "kind": "Binary",
+            "width": 1,
+            "op": "&",
+            "left": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "s",
+             "indices": [
+              {
+               "kind": "Binary",
+               "width": 32,
+               "op": "-",
+               "left": {
+                "kind": "GenvarRef",
+                "name": "i"
+               },
+               "right": {
+                "kind": "Int",
+                "value": 1,
+                "resolved_width": 32
+               }
+              },
+              {
+               "kind": "Binary",
+               "width": 32,
+               "op": "+",
+               "left": {
+                "kind": "GenvarRef",
+                "name": "j"
+               },
+               "right": {
+                "kind": "Int",
+                "value": 1,
+                "resolved_width": 32
+               }
+              }
+             ],
+             "part": null
+            },
+            "right": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "pp",
+             "indices": [
+              {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              {
+               "kind": "GenvarRef",
+               "name": "j"
+              }
+             ],
+             "part": null
+            }
+           },
+           "right": {
+            "kind": "Binary",
+            "width": 1,
+            "op": "&",
+            "left": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "c",
+             "indices": [
+              {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              {
+               "kind": "GenvarRef",
+               "name": "j"
+              }
+             ],
+             "part": null
+            },
+            "right": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "t",
+             "indices": [
+              {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              {
+               "kind": "GenvarRef",
+               "name": "j"
+              }
+             ],
+             "part": null
+            }
+           }
+          }
+         }
+        ]
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "s",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         ],
+         "part": null
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "c",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         ],
+         "part": null
+        }
+       }
+      ]
+     },
+     {
+      "kind": "GenerateFor",
+      "label": "g_out",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 5,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "BitSel",
+         "width": 1,
+         "value": {
+          "kind": "Ident",
+          "width": 10,
+          "name": "p"
+         },
+         "index": {
+          "kind": "GenvarRef",
+          "name": "i"
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "s",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         ],
+         "part": null
+        }
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": []
+  },
+  {
+   "overrides": [
+    {
+     "name": "N",
+     "value": 8
+    }
+   ],
+   "frontend_errors": 0,
+   "module": {
+    "kind": "Module",
+    "name": "mul2d",
+    "imports": [],
+    "params": [
+     {
+      "kind": "ParameterDecl",
+      "name": "N",
+      "type": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Int",
+          "value": 31,
+          "resolved_width": 32
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "resolved": 32
+      },
+      "default": {
+       "kind": "Int",
+       "value": 8,
+       "resolved_width": 32
+      },
+      "resolved": 8
+     }
+    ],
+    "types": [],
+    "ports": [
+     {
+      "kind": "Port",
+      "name": "a",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "b",
+      "dir": "in",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 8
+      }
+     },
+     {
+      "kind": "Port",
+      "name": "p",
+      "dir": "out",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "Binary",
+           "width": null,
+           "op": "*",
+           "left": {
+            "kind": "Int",
+            "value": 2,
+            "resolved_width": null
+           },
+           "right": {
+            "kind": "ParamRef",
+            "name": "N"
+           }
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 16
+      }
+     }
+    ],
+    "decls": [
+     {
+      "kind": "Var",
+      "name": "pp",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 64
+      },
+      "init": null
+     },
+     {
+      "kind": "Var",
+      "name": "s",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 72
+      },
+      "init": null
+     },
+     {
+      "kind": "Var",
+      "name": "c",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 72
+      },
+      "init": null
+     },
+     {
+      "kind": "Var",
+      "name": "t",
+      "width": {
+       "kind": "PackedType",
+       "packed": [
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        },
+        {
+         "msb": {
+          "kind": "Binary",
+          "width": null,
+          "op": "-",
+          "left": {
+           "kind": "ParamRef",
+           "name": "N"
+          },
+          "right": {
+           "kind": "Int",
+           "value": 1,
+           "resolved_width": null
+          }
+         },
+         "lsb": {
+          "kind": "Int",
+          "value": 0,
+          "resolved_width": null
+         }
+        }
+       ],
+       "resolved": 64
+      },
+      "init": null
+     }
+    ],
+    "processes": [
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 9,
+       "name": "s",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Concat",
+       "width": 9,
+       "parts": [
+        {
+         "kind": "Literal",
+         "width": 1,
+         "bits": "0"
+        },
+        {
+         "kind": "ArraySel",
+         "width": 8,
+         "name": "pp",
+         "indices": [
+          {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         ],
+         "part": null
+        }
+       ]
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 9,
+       "name": "c",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Fill",
+       "bit": "0",
+       "resolved_width": 9
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 8,
+       "name": "t",
+       "indices": [
+        {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        }
+       ],
+       "part": null
+      },
+      "value": {
+       "kind": "Fill",
+       "bit": "0",
+       "resolved_width": 8
+      }
+     },
+     {
+      "kind": "Assign",
+      "target": {
+       "kind": "ArraySel",
+       "width": 8,
+       "name": "p",
+       "indices": [],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "Binary",
+          "width": 32,
+          "op": "*",
+          "left": {
+           "kind": "Int",
+           "value": 2,
+           "resolved_width": 32
+          },
+          "right": {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        },
+        "right": {
+         "kind": "ParamRef",
+         "name": "N"
+        }
+       }
+      },
+      "value": {
+       "kind": "ArraySel",
+       "width": 8,
+       "name": "s",
+       "indices": [
+        {
+         "kind": "Binary",
+         "width": 32,
+         "op": "-",
+         "left": {
+          "kind": "ParamRef",
+          "name": "N"
+         },
+         "right": {
+          "kind": "Int",
+          "value": 1,
+          "resolved_width": 32
+         }
+        }
+       ],
+       "part": {
+        "mode": "range",
+        "left": {
+         "kind": "ParamRef",
+         "name": "N"
+        },
+        "right": {
+         "kind": "Int",
+         "value": 1,
+         "resolved_width": 32
+        }
+       }
+      }
+     }
+    ],
+    "generates": [
+     {
+      "kind": "GenerateFor",
+      "label": "g_pp",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 8,
+      "body": [
+       {
+        "kind": "GenerateFor",
+        "label": "g_pp_j",
+        "genvar": "j",
+        "init": {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        },
+        "bound": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "s<",
+         "left": {
+          "kind": "GenvarRef",
+          "name": "j"
+         },
+         "right": {
+          "kind": "ParamRef",
+          "name": "N"
+         }
+        },
+        "step": {
+         "kind": "Unary",
+         "width": null,
+         "op": "++",
+         "operand": {
+          "kind": "GenvarRef",
+          "name": "j"
+         }
+        },
+        "resolved_count": 8,
+        "body": [
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "pp",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "&",
+           "left": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 8,
+             "name": "a"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           },
+           "right": {
+            "kind": "BitSel",
+            "width": 1,
+            "value": {
+             "kind": "Ident",
+             "width": 8,
+             "name": "b"
+            },
+            "index": {
+             "kind": "GenvarRef",
+             "name": "i"
+            }
+           }
+          }
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "kind": "GenerateFor",
+      "label": "g_row",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 1,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 7,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "c",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         ],
+         "part": null
+        },
+        "value": {
+         "kind": "Literal",
+         "width": 1,
+         "bits": "0"
+        }
+       },
+       {
+        "kind": "GenerateFor",
+        "label": "g_bit",
+        "genvar": "j",
+        "init": {
+         "kind": "Int",
+         "value": 0,
+         "resolved_width": 32
+        },
+        "bound": {
+         "kind": "Binary",
+         "width": 1,
+         "op": "s<",
+         "left": {
+          "kind": "GenvarRef",
+          "name": "j"
+         },
+         "right": {
+          "kind": "ParamRef",
+          "name": "N"
+         }
+        },
+        "step": {
+         "kind": "Unary",
+         "width": null,
+         "op": "++",
+         "operand": {
+          "kind": "GenvarRef",
+          "name": "j"
+         }
+        },
+        "resolved_count": 8,
+        "body": [
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "t",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "s",
+            "indices": [
+             {
+              "kind": "Binary",
+              "width": 32,
+              "op": "-",
+              "left": {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              "right": {
+               "kind": "Int",
+               "value": 1,
+               "resolved_width": 32
+              }
+             },
+             {
+              "kind": "Binary",
+              "width": 32,
+              "op": "+",
+              "left": {
+               "kind": "GenvarRef",
+               "name": "j"
+              },
+              "right": {
+               "kind": "Int",
+               "value": 1,
+               "resolved_width": 32
+              }
+             }
+            ],
+            "part": null
+           },
+           "right": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "pp",
+            "indices": [
+             {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             {
+              "kind": "GenvarRef",
+              "name": "j"
+             }
+            ],
+            "part": null
+           }
+          }
+         },
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "s",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "GenvarRef",
+             "name": "j"
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "^",
+           "left": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "t",
+            "indices": [
+             {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             {
+              "kind": "GenvarRef",
+              "name": "j"
+             }
+            ],
+            "part": null
+           },
+           "right": {
+            "kind": "ArraySel",
+            "width": 1,
+            "name": "c",
+            "indices": [
+             {
+              "kind": "GenvarRef",
+              "name": "i"
+             },
+             {
+              "kind": "GenvarRef",
+              "name": "j"
+             }
+            ],
+            "part": null
+           }
+          }
+         },
+         {
+          "kind": "Assign",
+          "target": {
+           "kind": "ArraySel",
+           "width": 1,
+           "name": "c",
+           "indices": [
+            {
+             "kind": "GenvarRef",
+             "name": "i"
+            },
+            {
+             "kind": "Binary",
+             "width": 32,
+             "op": "+",
+             "left": {
+              "kind": "GenvarRef",
+              "name": "j"
+             },
+             "right": {
+              "kind": "Int",
+              "value": 1,
+              "resolved_width": 32
+             }
+            }
+           ],
+           "part": null
+          },
+          "value": {
+           "kind": "Binary",
+           "width": 1,
+           "op": "|",
+           "left": {
+            "kind": "Binary",
+            "width": 1,
+            "op": "&",
+            "left": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "s",
+             "indices": [
+              {
+               "kind": "Binary",
+               "width": 32,
+               "op": "-",
+               "left": {
+                "kind": "GenvarRef",
+                "name": "i"
+               },
+               "right": {
+                "kind": "Int",
+                "value": 1,
+                "resolved_width": 32
+               }
+              },
+              {
+               "kind": "Binary",
+               "width": 32,
+               "op": "+",
+               "left": {
+                "kind": "GenvarRef",
+                "name": "j"
+               },
+               "right": {
+                "kind": "Int",
+                "value": 1,
+                "resolved_width": 32
+               }
+              }
+             ],
+             "part": null
+            },
+            "right": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "pp",
+             "indices": [
+              {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              {
+               "kind": "GenvarRef",
+               "name": "j"
+              }
+             ],
+             "part": null
+            }
+           },
+           "right": {
+            "kind": "Binary",
+            "width": 1,
+            "op": "&",
+            "left": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "c",
+             "indices": [
+              {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              {
+               "kind": "GenvarRef",
+               "name": "j"
+              }
+             ],
+             "part": null
+            },
+            "right": {
+             "kind": "ArraySel",
+             "width": 1,
+             "name": "t",
+             "indices": [
+              {
+               "kind": "GenvarRef",
+               "name": "i"
+              },
+              {
+               "kind": "GenvarRef",
+               "name": "j"
+              }
+             ],
+             "part": null
+            }
+           }
+          }
+         }
+        ]
+       },
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "s",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         ],
+         "part": null
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "c",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "ParamRef",
+           "name": "N"
+          }
+         ],
+         "part": null
+        }
+       }
+      ]
+     },
+     {
+      "kind": "GenerateFor",
+      "label": "g_out",
+      "genvar": "i",
+      "init": {
+       "kind": "Int",
+       "value": 0,
+       "resolved_width": 32
+      },
+      "bound": {
+       "kind": "Binary",
+       "width": 1,
+       "op": "s<",
+       "left": {
+        "kind": "GenvarRef",
+        "name": "i"
+       },
+       "right": {
+        "kind": "ParamRef",
+        "name": "N"
+       }
+      },
+      "step": {
+       "kind": "Unary",
+       "width": null,
+       "op": "++",
+       "operand": {
+        "kind": "GenvarRef",
+        "name": "i"
+       }
+      },
+      "resolved_count": 8,
+      "body": [
+       {
+        "kind": "Assign",
+        "target": {
+         "kind": "BitSel",
+         "width": 1,
+         "value": {
+          "kind": "Ident",
+          "width": 16,
+          "name": "p"
+         },
+         "index": {
+          "kind": "GenvarRef",
+          "name": "i"
+         }
+        },
+        "value": {
+         "kind": "ArraySel",
+         "width": 1,
+         "name": "s",
+         "indices": [
+          {
+           "kind": "GenvarRef",
+           "name": "i"
+          },
+          {
+           "kind": "Int",
+           "value": 0,
+           "resolved_width": 32
+          }
+         ],
+         "part": null
+        }
+       }
+      ]
+     }
+    ],
+    "others": []
+   },
+   "instances": []
+  }
+ ]
+}

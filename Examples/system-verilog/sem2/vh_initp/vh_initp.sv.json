@@ -1,0 +1,259 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "vh_initp",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/vh_initp/vh_initp.sv",
+      "sha256": "9ff000919cb0962db009b80ba2e2f9cf2e7fc13b39ef69c505289fa7dca77e31"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 14,
+          "col": 1,
+          "end_line": 19,
+          "end_col": 10
+        },
+        "name": "vh_initp",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 15,
+              "col": 22,
+              "end_line": 15,
+              "end_col": 23
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 16,
+              "col": 22,
+              "end_line": 16,
+              "end_col": 23
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 16,
+                      "col": 17,
+                      "end_line": 16,
+                      "end_col": 18
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 16,
+                      "col": 19,
+                      "end_line": 16,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 18,
+              "col": 14,
+              "end_line": 18,
+              "end_col": 30
+            },
+            "name": "u",
+            "module": "vh_initp_c",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 18,
+                  "col": 20,
+                  "end_line": 18,
+                  "end_col": 21
+                },
+                "port": "a",
+                "dir": "in",
+                "expr": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 18,
+                    "col": 20,
+                    "end_line": 18,
+                    "end_col": 21
+                  },
+                  "width": 1,
+                  "name": "a"
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 18,
+                  "col": 27,
+                  "end_line": 18,
+                  "end_col": 28
+                },
+                "port": "o",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 18,
+                    "col": 27,
+                    "end_line": 18,
+                    "end_col": 28
+                  },
+                  "width": 2,
+                  "name": "y"
+                }
+              }
+            ]
+          }
+        ],
+        "others": []
+      },
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 12,
+          "end_col": 10
+        },
+        "name": "vh_initp_c",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 22,
+              "end_line": 8,
+              "end_col": 23
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 9,
+              "col": 22,
+              "end_line": 9,
+              "end_col": 31
+            },
+            "name": "o",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 17,
+                      "end_line": 9,
+                      "end_col": 18
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 19,
+                      "end_line": 9,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 9,
+                "col": 26,
+                "end_line": 9,
+                "end_col": 31
+              },
+              "width": 2,
+              "bits": "10"
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 11,
+              "col": 10,
+              "end_line": 11,
+              "end_col": 18
+            },
+            "sv_kind": "ContinuousAssignSymbol:initialized-variable",
+            "text": "o[0] = a"
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

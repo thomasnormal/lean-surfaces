@@ -105,7 +105,8 @@
               "value": 32,
               "resolved_width": 32
             },
-            "resolved": 32
+            "resolved": 32,
+            "signed": false
           },
           {
             "kind": "ParameterDecl",
@@ -157,7 +158,8 @@
               "value": 8,
               "resolved_width": 32
             },
-            "resolved": 8
+            "resolved": 8,
+            "signed": false
           },
           {
             "kind": "ParameterDecl",
@@ -284,7 +286,8 @@
                 }
               }
             },
-            "resolved": 3
+            "resolved": 3,
+            "signed": false
           },
           {
             "kind": "LocalParam",
@@ -388,7 +391,8 @@
                 "resolved_width": 32
               }
             },
-            "resolved": 8
+            "resolved": 8,
+            "signed": false
           }
         ],
         "types": [],
@@ -3449,7 +3453,7 @@
                                       }
                                     },
                                     "then": {
-                                      "kind": "Literal",
+                                      "kind": "Resize",
                                       "span": {
                                         "line": 128,
                                         "col": 51,
@@ -3457,7 +3461,17 @@
                                         "end_col": 55
                                       },
                                       "width": 4,
-                                      "bits": "0001"
+                                      "operand": {
+                                        "kind": "Literal",
+                                        "span": {
+                                          "line": 128,
+                                          "col": 51,
+                                          "end_line": 128,
+                                          "end_col": 55
+                                        },
+                                        "width": 1,
+                                        "bits": "1"
+                                      }
                                     },
                                     "else": {
                                       "kind": "Fill",

@@ -120,8 +120,14 @@ class Division(unittest.TestCase):
         design = symbolic("module divider #(parameter W = 8) "
                           "(input logic [W-1:0] value, output logic [31:0] result); "
                           "assign result = value[(W < 16 ? 3 : 7):0] / 8'd2; endmodule")
-        selection = next(node for node in nodes(design) if node.get("kind") == "PartSel")
-        self.assertFalse(any(node.get("kind") == "SignedResize" for node in nodes(selection["msb"])))
+        # Since the round-2 static-label change the select is an `ArraySel`
+        # whose range bounds are `part.left`/`part.right` (a `PartSel`'s
+        # `msb` before); the bound must stay free of runtime markers.
+        selection = next(node for node in nodes(design)
+                         if node.get("kind") in ("PartSel", "ArraySel"))
+        msb = (selection["msb"] if selection["kind"] == "PartSel"
+               else selection["part"]["left"])
+        self.assertFalse(any(node.get("kind") == "SignedResize" for node in nodes(msb)))
         self.assertFalse(any(node.get("kind") == "Unsupported" for node in nodes(design)))
 
     def test_symbolic_invalid_compilation_cannot_hide_division(self):

@@ -1,0 +1,139 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "vg_initq",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/vg_initq/vg_initq.sv",
+      "sha256": "060877e74af687ef0843e9b01acfcd15c2a326fae9ad4c616cb52ef6be319f23"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 12,
+          "col": 1,
+          "end_line": 18,
+          "end_col": 10
+        },
+        "name": "vg_initq",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 13,
+              "col": 16,
+              "end_line": 13,
+              "end_col": 19
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 14,
+              "col": 16,
+              "end_line": 14,
+              "end_col": 17
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 15,
+              "col": 22,
+              "end_line": 15,
+              "end_col": 31
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 17,
+                      "end_line": 15,
+                      "end_col": 18
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 19,
+                      "end_line": 15,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 15,
+                "col": 26,
+                "end_line": 15,
+                "end_col": 31
+              },
+              "width": 2,
+              "bits": "10"
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 17,
+              "col": 3,
+              "end_line": 17,
+              "end_col": 38
+            },
+            "sv_kind": "ProceduralBlockSymbol:initialized-variable",
+            "text": "always_ff writes 'y', which has a declaration initializer: IEEE 1800-2023 counts the initialization as a procedural assignment (\u00a76.5, \u00a710.5) and forbids any other process to assign an always_ff variable (\u00a79.2.2.2, \u00a79.2.2.4); Xcelium 24.03 rejects the design (*E,MULAXX) where Icarus 12.0, Yosys 0.53 and slang run it, so the tools split on its legality (drop the initializer, or write the variable from a plain `always` procedure)"
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

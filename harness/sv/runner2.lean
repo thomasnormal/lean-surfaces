@@ -7,17 +7,41 @@ Executed by `harness/sv/diff_test2.py` as
 
 Loads a symbolic sv-0.2 envelope, resolves the case's parameter values
 (declaration order; a parameter absent from the case's `params` object
-takes its envelope default), instantiates the SEMANTIC tier
-(`PDesign.instantiate2` → `Design2`), and prints:
+takes its envelope default — and, when untyped, its default's type:
+`PDesign.atPoint`), instantiates the SEMANTIC tier
+(`PDesign.instantiateG2` → `Design2`: `instantiate2` under the one-driver
+rule, `name.sem`'s family; a hierarchical envelope — top plus module
+library — through `PDesign.instantiateH`, which flattens it), and
+prints:
 
   PORT <name> <in|out> <width>     — one line per port, at THESE parameters
                                      (the TB generator's width source)
   CYCLE <k> <name>=<binary> ...    — one line per stimulus cycle, `run2`
                                      under the requested schedule
 
-Any failure (parse, crossCheck, instantiation, `.timeout`/`.unsupported`)
+Any failure (parse, crossCheck, instantiation, a one-driver violation
+`PortConn:driver`, `.timeout`/`.unsupported`)
 prints `ERROR: ...` on stderr and exits nonzero. The crossCheck gate is
 replayed here exactly as `load_design_sv2` does at elaboration time.
+
+THE MULTI-POINT CROSS-CHECK (round 3 CX, `LeanModels/Sv/Probe2.lean`):
+
+  lake env lean --run harness/sv/runner2.lean <envelope> <cases2.json> <case> <src|rev> <probes.json>
+
+with a probe sidecar (`extract.py --probe-points`, written by
+`diff_test2.py --xcheck` into its work dir) FIRST prints, before anything
+else and whatever happens after, one line per entry of the sidecar point
+whose overrides are exactly the case's `params`:
+
+  XCHECK ok          <point> <entry>
+  XCHECK UNCONFIRMED <point> <entry>: <verdict>
+  XCHECK FAIL        <point> <entry>: <verdict>
+
+(`ProbeVerdict.status`; `XCHECK FAIL nopoint: …` when the sidecar has no
+such point, or does not parse). The harness counts any `FAIL` as an
+`XCHECK-FAIL` case; `UNCONFIRMED` (the two designs are equal except where
+one side refuses) fails the case unless every simulator then matches the
+model at this very point (`diff_test2.py`).
 -/
 
 import Lean
@@ -61,32 +85,22 @@ def findCase (cases : Array Json) (name : String) : Except String Json := do
       return c
   .error s!"case '{name}' not found"
 
-/-- Resolve the argument vector: envelope parameter order; per-name value
-from the case's `params` object, else the parameter's envelope default
-(evaluated in order, earlier parameters visible). -/
-def resolveArgs (pd : PDesign) (paramsJ : Option Json) : Except String (List Int) := do
-  let mut env : IEnv := {}
-  let mut args : List Int := []
-  for p in pd.params do
-    let given : Option Int :=
-      match paramsJ with
-      | none => none
-      | some pj =>
-          match pj.getObjVal? p.name with
-          | .ok v => v.getInt?.toOption
-          | .error _ => none
-    let v ← match given with
-      | some v => pure v
-      | none =>
-          match p.default? with
-          | none => .error s!"parameter '{p.name}': no case value and no default"
-          | some e =>
-              match evalInt env e with
-              | .ok v => pure v
-              | .error msg => .error s!"parameter '{p.name}' default: {msg}"
-    env := env.bindVal p.name v
-    args := args ++ [v]
-  return args
+/-- Resolve the parameter point: envelope parameter order; per-name value
+from the case's `params` object (an integer OVERRIDE, as the testbench
+passes it: `#(.P(v))`), else the parameter's envelope default (evaluated in
+order, earlier parameters visible). `PDesign.atPoint` also retypes every
+NOT-overridden untyped parameter with a non-INT default to its default's
+type (IEEE 1800-2023 §6.20.2), so the instantiated design is the one the
+simulator elaborates at exactly these overrides. -/
+def resolvePoint (pd : PDesign) (paramsJ : Option Json) :
+    Except String (PDesign × List Int) :=
+  pd.atPoint <| pd.params.map fun p =>
+    match paramsJ with
+    | none => none
+    | some pj =>
+        match pj.getObjVal? p.name with
+        | .ok v => v.getInt?.toOption
+        | .error _ => none
 
 /-- One stimulus entry: `{name: "<MSB-first bits>"}` → `SvState`,
 validated against declared input widths. -/
@@ -114,6 +128,34 @@ def sigmaOf : String → Except String ScheduleOracle
   | "rev" => .ok σ_rev
   | s => .error s!"unknown sigma '{s}' (want src|rev)"
 
+/-- The case's `params` as an override list (non-integer values skipped —
+the runner's `resolvePoint` reads them the same way). -/
+def caseOverrides (paramsJ : Option Json) : List (String × Int) :=
+  match paramsJ with
+  | some (.obj kvs) =>
+      kvs.toArray.toList.filterMap fun (n, v) => (v.getInt?.toOption.map (n, ·))
+  | _ => []
+
+/-- The `XCHECK` lines of the case's point (`Envelope2.probeReport` of the
+sidecar point whose overrides are exactly the case's). -/
+def xcheckLines (envText probesText casesText caseName : String) : List String :=
+  let r : Except String (List String) := do
+    let envl ← parseEnvelope2String envText
+    let pr ← parseProbes2String probesText
+    let cj ← Json.parse casesText
+    let case ← findCase (← getArrF cj "cases") caseName
+    let ov := caseOverrides (getFOpt case "params")
+    let same (a b : List (String × Int)) : Bool :=
+      a.length == b.length && a.all (b.contains ·)
+    match pr.points.find? (fun p => same p.overrides ov) with
+    | none => .error s!"the sidecar has no point {renderOverrides ov}"
+    | some p =>
+        pure <| (envl.probeReport { pr with points := [p] }).map fun (l, v) =>
+          if v.ok then s!"XCHECK ok   {l}" else s!"XCHECK {v.status} {l}: {v.render}"
+  match r with
+  | .ok ls => ls
+  | .error e => [s!"XCHECK FAIL nopoint: {e}"]
+
 end SvHarness2
 
 open SvHarness2 in
@@ -121,23 +163,64 @@ def main (argv : List String) : IO UInt32 := do
   let err (msg : String) : IO UInt32 := do
     (← IO.getStderr).putStrLn s!"ERROR: {msg}"
     return 1
+  let (argv, probes?) := match argv with
+    | [e, c, n, s, p] => ([e, c, n, s], some p)
+    | _ => (argv, none)
   match argv with
   | [envPath, casesPath, caseName, sigmaName] => do
     let envText ← IO.FS.readFile ⟨envPath⟩
     let casesText ← IO.FS.readFile ⟨casesPath⟩
+    -- The multi-point cross-check FIRST (round 3 CX): printed whatever
+    -- the rest of the run does, so a refusal row still reports it.
+    if let some pp := probes? then
+      let prText ← IO.FS.readFile ⟨pp⟩
+      let o ← IO.getStdout
+      for ln in xcheckLines envText prText casesText caseName do
+        o.putStrLn ln
+      o.flush
     let r : Except String (Design2 × List SvState × List String × Nat) := do
-      let pd ← loadPDesignString envText
+      let (pd, lib) ← loadHierString envText
       match pd.crossCheck with
       | [] => pure ()
       | msgs => .error s!"crossCheck REFUSED: {String.intercalate " | " msgs}"
+      -- A hierarchical envelope (F3): every library module at its own
+      -- defaults, exactly as `load_design_sv2` gates it.
+      for c in lib do
+        match c.crossCheck with
+        | [] => pure ()
+        | msgs => .error s!"crossCheck REFUSED (module '{c.name}'): {String.intercalate " | " msgs}"
       let cj ← Json.parse casesText
       let fuel := (getFOpt cj "fuel").bind (·.getNat?.toOption) |>.getD 1000
       let case ← findCase (← getArrF cj "cases") caseName
-      let args ← resolveArgs pd (getFOpt case "params")
-      let d ← match pd.instantiate2 args (PDesign.surfaceFuel args) with
+      let (pd, args) ← resolvePoint pd (getFOpt case "params")
+      -- Exact 32-bit `int` constants must give the design the unbounded
+      -- fast path gives (`PDesign.int32Agrees`): otherwise the proof-facing
+      -- family is not the circuit a simulator elaborates here.
+      unless (if lib.isEmpty then pd.int32Agrees args else pd.int32AgreesH lib args) do
+        .error "int32: an INT-class constant expression leaves the 32-bit range at these parameters (exact 32-bit `int` arithmetic and the unbounded constant tier build different designs)"
+      -- A hierarchical envelope flattens through `instantiateH` (Hier2.lean);
+      -- an instance-free top through `instantiateG2`, `instantiate2` under
+      -- the same one-driver rule (`name.sem`'s family, 2026-10-28 WP2).
+      let flatTop := lib.isEmpty || GenItem.listInstFree pd.generates
+      let inst := if flatTop then pd.instantiateG2 args (PDesign.surfaceFuel args)
+        else pd.instantiateH lib args (PDesign.surfaceFuel args)
+      let d ← match inst with
         | .ok d => pure d
         | .timeout => .error "instantiate2: generate fuel exhausted"
         | .unsupported m => .error s!"instantiate2: {m}"
+      unless d.namesNodup do
+        .error "instantiateH: two declarations of one name after flattening"
+      -- The one-driver rule (`Hier2.lean`, "Drivers"), named before `run2`
+      -- would stop at the loud process.
+      for p in d.processes do
+        match p with
+        | .unsupported "PortConn:driver" msg => .error s!"PortConn:driver: {msg}"
+        | _ => pure ()
+      -- The legacy-select range guard (round 3 folds, `RangeGuard2.lean`):
+      -- a check beside `name.sem`, at this row's point, every module of the
+      -- hierarchy at its own point.
+      if let some msg := pd.legacyRangeReport lib args then
+        .error s!"Select:legacy-range: {msg}"
       let stim ← (← getArrF case "stimulus").toList.mapM (parseEntry d)
       let signals ← (← getArrF case "signals").toList.mapM (fun s => s.getStr?)
       pure (d, stim, signals, fuel)
@@ -161,4 +244,4 @@ def main (argv : List String) : IO UInt32 := do
             out.putStrLn (s!"CYCLE {k} " ++ " ".intercalate cells)
             k := k + 1
           return 0
-  | _ => err "usage: runner2.lean <envelope.sv.json> <cases2.json> <case> <src|rev>"
+  | _ => err "usage: runner2.lean <envelope.sv.json> <cases2.json> <case> <src|rev> [<probes.json>]"

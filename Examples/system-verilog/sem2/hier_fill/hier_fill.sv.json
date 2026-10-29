@@ -1,0 +1,1245 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "hier_fill",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/hier_fill/hier_fill.sv",
+      "sha256": "b3aa9d9acbd7a16f0a3dab8c189b5a90ba20267ed887ca1e441bbd9614f19b15"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 14,
+          "col": 1,
+          "end_line": 35,
+          "end_col": 10
+        },
+        "name": "hier_fill",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 15,
+              "col": 22,
+              "end_line": 15,
+              "end_col": 23
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 17,
+                      "end_line": 15,
+                      "end_col": 18
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 15,
+                      "col": 19,
+                      "end_line": 15,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 16,
+              "col": 22,
+              "end_line": 16,
+              "end_col": 23
+            },
+            "name": "b",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 16,
+                      "col": 17,
+                      "end_line": 16,
+                      "end_col": 18
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 16,
+                      "col": 19,
+                      "end_line": 16,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 17,
+              "col": 22,
+              "end_line": 17,
+              "end_col": 23
+            },
+            "name": "s",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 18,
+              "col": 22,
+              "end_line": 18,
+              "end_col": 24
+            },
+            "name": "f1",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 18,
+                      "col": 17,
+                      "end_line": 18,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 18,
+                      "col": 19,
+                      "end_line": 18,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 19,
+              "col": 22,
+              "end_line": 19,
+              "end_col": 24
+            },
+            "name": "f0",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 19,
+                      "col": 17,
+                      "end_line": 19,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 19,
+                      "col": 19,
+                      "end_line": 19,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 20,
+              "col": 22,
+              "end_line": 20,
+              "end_col": 24
+            },
+            "name": "fx",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 20,
+                      "col": 17,
+                      "end_line": 20,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 20,
+                      "col": 19,
+                      "end_line": 20,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 21,
+              "col": 22,
+              "end_line": 21,
+              "end_col": 24
+            },
+            "name": "fz",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 21,
+                      "col": 17,
+                      "end_line": 21,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 21,
+                      "col": 19,
+                      "end_line": 21,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 22,
+              "col": 22,
+              "end_line": 22,
+              "end_col": 26
+            },
+            "name": "and1",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 22,
+                      "col": 17,
+                      "end_line": 22,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 22,
+                      "col": 19,
+                      "end_line": 22,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 23,
+              "col": 22,
+              "end_line": 23,
+              "end_col": 26
+            },
+            "name": "andx",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 23,
+                      "col": 17,
+                      "end_line": 23,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 23,
+                      "col": 19,
+                      "end_line": 23,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 24,
+              "col": 22,
+              "end_line": 24,
+              "end_col": 24
+            },
+            "name": "t0",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 24,
+                      "col": 17,
+                      "end_line": 24,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 24,
+                      "col": 19,
+                      "end_line": 24,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 25,
+              "col": 22,
+              "end_line": 25,
+              "end_col": 26
+            },
+            "name": "nest",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 25,
+                      "col": 17,
+                      "end_line": 25,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 25,
+                      "col": 19,
+                      "end_line": 25,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 27,
+              "col": 11,
+              "end_line": 27,
+              "end_col": 45
+            },
+            "name": "u_f1",
+            "module": "hf_pass",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 27,
+                  "col": 22,
+                  "end_line": 27,
+                  "end_col": 24
+                },
+                "port": "x",
+                "dir": "in",
+                "expr": {
+                  "kind": "Fill",
+                  "span": {
+                    "line": 27,
+                    "col": 22,
+                    "end_line": 27,
+                    "end_col": 24
+                  },
+                  "bit": "1",
+                  "resolved_width": 4
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 27,
+                  "col": 41,
+                  "end_line": 27,
+                  "end_col": 43
+                },
+                "port": "y",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 27,
+                    "col": 41,
+                    "end_line": 27,
+                    "end_col": 43
+                  },
+                  "width": 4,
+                  "name": "f1"
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 28,
+              "col": 11,
+              "end_line": 28,
+              "end_col": 45
+            },
+            "name": "u_f0",
+            "module": "hf_pass",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 28,
+                  "col": 22,
+                  "end_line": 28,
+                  "end_col": 24
+                },
+                "port": "x",
+                "dir": "in",
+                "expr": {
+                  "kind": "Fill",
+                  "span": {
+                    "line": 28,
+                    "col": 22,
+                    "end_line": 28,
+                    "end_col": 24
+                  },
+                  "bit": "0",
+                  "resolved_width": 4
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 28,
+                  "col": 41,
+                  "end_line": 28,
+                  "end_col": 43
+                },
+                "port": "y",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 28,
+                    "col": 41,
+                    "end_line": 28,
+                    "end_col": 43
+                  },
+                  "width": 4,
+                  "name": "f0"
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 29,
+              "col": 11,
+              "end_line": 29,
+              "end_col": 45
+            },
+            "name": "u_fx",
+            "module": "hf_pass",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 29,
+                  "col": 22,
+                  "end_line": 29,
+                  "end_col": 24
+                },
+                "port": "x",
+                "dir": "in",
+                "expr": {
+                  "kind": "Fill",
+                  "span": {
+                    "line": 29,
+                    "col": 22,
+                    "end_line": 29,
+                    "end_col": 24
+                  },
+                  "bit": "x",
+                  "resolved_width": 4
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 29,
+                  "col": 41,
+                  "end_line": 29,
+                  "end_col": 43
+                },
+                "port": "y",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 29,
+                    "col": 41,
+                    "end_line": 29,
+                    "end_col": 43
+                  },
+                  "width": 4,
+                  "name": "fx"
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 30,
+              "col": 11,
+              "end_line": 30,
+              "end_col": 45
+            },
+            "name": "u_fz",
+            "module": "hf_pass",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 30,
+                  "col": 22,
+                  "end_line": 30,
+                  "end_col": 24
+                },
+                "port": "x",
+                "dir": "in",
+                "expr": {
+                  "kind": "Fill",
+                  "span": {
+                    "line": 30,
+                    "col": 22,
+                    "end_line": 30,
+                    "end_col": 24
+                  },
+                  "bit": "z",
+                  "resolved_width": 4
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 30,
+                  "col": 41,
+                  "end_line": 30,
+                  "end_col": 43
+                },
+                "port": "y",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 30,
+                    "col": 41,
+                    "end_line": 30,
+                    "end_col": 43
+                  },
+                  "width": 4,
+                  "name": "fz"
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 31,
+              "col": 11,
+              "end_line": 31,
+              "end_col": 47
+            },
+            "name": "u_and1",
+            "module": "hf_pass",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 31,
+                  "col": 22,
+                  "end_line": 31,
+                  "end_col": 28
+                },
+                "port": "x",
+                "dir": "in",
+                "expr": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 31,
+                    "col": 22,
+                    "end_line": 31,
+                    "end_col": 28
+                  },
+                  "width": 4,
+                  "op": "&",
+                  "left": {
+                    "kind": "Resize",
+                    "span": {
+                      "line": 31,
+                      "col": 22,
+                      "end_line": 31,
+                      "end_col": 23
+                    },
+                    "width": 4,
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 31,
+                        "col": 22,
+                        "end_line": 31,
+                        "end_col": 23
+                      },
+                      "width": 2,
+                      "name": "a"
+                    }
+                  },
+                  "right": {
+                    "kind": "Fill",
+                    "span": {
+                      "line": 31,
+                      "col": 26,
+                      "end_line": 31,
+                      "end_col": 28
+                    },
+                    "bit": "1",
+                    "resolved_width": 4
+                  }
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 31,
+                  "col": 41,
+                  "end_line": 31,
+                  "end_col": 45
+                },
+                "port": "y",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 31,
+                    "col": 41,
+                    "end_line": 31,
+                    "end_col": 45
+                  },
+                  "width": 4,
+                  "name": "and1"
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 32,
+              "col": 11,
+              "end_line": 32,
+              "end_col": 47
+            },
+            "name": "u_andx",
+            "module": "hf_pass",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 32,
+                  "col": 22,
+                  "end_line": 32,
+                  "end_col": 28
+                },
+                "port": "x",
+                "dir": "in",
+                "expr": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 32,
+                    "col": 22,
+                    "end_line": 32,
+                    "end_col": 28
+                  },
+                  "width": 4,
+                  "op": "&",
+                  "left": {
+                    "kind": "Resize",
+                    "span": {
+                      "line": 32,
+                      "col": 22,
+                      "end_line": 32,
+                      "end_col": 23
+                    },
+                    "width": 4,
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 32,
+                        "col": 22,
+                        "end_line": 32,
+                        "end_col": 23
+                      },
+                      "width": 2,
+                      "name": "a"
+                    }
+                  },
+                  "right": {
+                    "kind": "Fill",
+                    "span": {
+                      "line": 32,
+                      "col": 26,
+                      "end_line": 32,
+                      "end_col": 28
+                    },
+                    "bit": "x",
+                    "resolved_width": 4
+                  }
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 32,
+                  "col": 41,
+                  "end_line": 32,
+                  "end_col": 45
+                },
+                "port": "y",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 32,
+                    "col": 41,
+                    "end_line": 32,
+                    "end_col": 45
+                  },
+                  "width": 4,
+                  "name": "andx"
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 33,
+              "col": 11,
+              "end_line": 33,
+              "end_col": 45
+            },
+            "name": "u_t0",
+            "module": "hf_pass",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 33,
+                  "col": 22,
+                  "end_line": 33,
+                  "end_col": 32
+                },
+                "port": "x",
+                "dir": "in",
+                "expr": {
+                  "kind": "Ternary",
+                  "span": {
+                    "line": 33,
+                    "col": 22,
+                    "end_line": 33,
+                    "end_col": 32
+                  },
+                  "width": 4,
+                  "cond": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 33,
+                      "col": 22,
+                      "end_line": 33,
+                      "end_col": 23
+                    },
+                    "width": 1,
+                    "name": "s"
+                  },
+                  "then": {
+                    "kind": "Fill",
+                    "span": {
+                      "line": 33,
+                      "col": 26,
+                      "end_line": 33,
+                      "end_col": 28
+                    },
+                    "bit": "0",
+                    "resolved_width": 4
+                  },
+                  "else": {
+                    "kind": "Resize",
+                    "span": {
+                      "line": 33,
+                      "col": 31,
+                      "end_line": 33,
+                      "end_col": 32
+                    },
+                    "width": 4,
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 33,
+                        "col": 31,
+                        "end_line": 33,
+                        "end_col": 32
+                      },
+                      "width": 2,
+                      "name": "a"
+                    }
+                  }
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 33,
+                  "col": 41,
+                  "end_line": 33,
+                  "end_col": 43
+                },
+                "port": "y",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 33,
+                    "col": 41,
+                    "end_line": 33,
+                    "end_col": 43
+                  },
+                  "width": 4,
+                  "name": "t0"
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 34,
+              "col": 11,
+              "end_line": 34,
+              "end_col": 47
+            },
+            "name": "u_nest",
+            "module": "hf_pass",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 34,
+                  "col": 22,
+                  "end_line": 34,
+                  "end_col": 34
+                },
+                "port": "x",
+                "dir": "in",
+                "expr": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 34,
+                    "col": 22,
+                    "end_line": 34,
+                    "end_col": 34
+                  },
+                  "width": 4,
+                  "op": "&",
+                  "left": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 34,
+                      "col": 23,
+                      "end_line": 34,
+                      "end_col": 29
+                    },
+                    "width": 4,
+                    "op": "^",
+                    "left": {
+                      "kind": "Resize",
+                      "span": {
+                        "line": 34,
+                        "col": 23,
+                        "end_line": 34,
+                        "end_col": 24
+                      },
+                      "width": 4,
+                      "operand": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 34,
+                          "col": 23,
+                          "end_line": 34,
+                          "end_col": 24
+                        },
+                        "width": 2,
+                        "name": "a"
+                      }
+                    },
+                    "right": {
+                      "kind": "Fill",
+                      "span": {
+                        "line": 34,
+                        "col": 27,
+                        "end_line": 34,
+                        "end_col": 29
+                      },
+                      "bit": "1",
+                      "resolved_width": 4
+                    }
+                  },
+                  "right": {
+                    "kind": "Resize",
+                    "span": {
+                      "line": 34,
+                      "col": 33,
+                      "end_line": 34,
+                      "end_col": 34
+                    },
+                    "width": 4,
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 34,
+                        "col": 33,
+                        "end_line": 34,
+                        "end_col": 34
+                      },
+                      "width": 2,
+                      "name": "b"
+                    }
+                  }
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 34,
+                  "col": 41,
+                  "end_line": 34,
+                  "end_col": 45
+                },
+                "port": "y",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 34,
+                    "col": 41,
+                    "end_line": 34,
+                    "end_col": 45
+                  },
+                  "width": 4,
+                  "name": "nest"
+                }
+              }
+            ]
+          }
+        ],
+        "others": []
+      },
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 12,
+          "end_col": 10
+        },
+        "name": "hf_pass",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 22,
+              "end_line": 8,
+              "end_col": 23
+            },
+            "name": "x",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 17,
+                      "end_line": 8,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 19,
+                      "end_line": 8,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 9,
+              "col": 22,
+              "end_line": 9,
+              "end_col": 23
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 17,
+                      "end_line": 9,
+                      "end_col": 18
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 19,
+                      "end_line": 9,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 11,
+              "col": 10,
+              "end_line": 11,
+              "end_col": 15
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 11,
+                "col": 10,
+                "end_line": 11,
+                "end_col": 11
+              },
+              "width": 4,
+              "name": "y"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 11,
+                "col": 14,
+                "end_line": 11,
+                "end_col": 15
+              },
+              "width": 4,
+              "name": "x"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

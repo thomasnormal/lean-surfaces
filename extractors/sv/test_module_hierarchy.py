@@ -18,7 +18,7 @@ from test_elaborated_generate import declarations, walls
 # REFERENCE: ee8714f2a4cf6e37caa01906 24.03-s004 2026-10-20 | tests=ModuleHierarchy-initializer | source=Examples/system-verilog/module_hierarchy/initializer.sv@sha256:b2c565aa68bb9c8609deb4055fd892f7933f0b479f6318b0ee3a6ba0e7d69b9c | top=top | args=["-ii_val"] | map=Examples/system-verilog/module_hierarchy/README.md#static-module-hierarchy
 # REFERENCE: 0963959003dff2b501ae4b57 24.03-s004 2026-10-20 | tests=ModuleHierarchy-timescale | source=Examples/system-verilog/module_hierarchy/timescale.sv@sha256:23ee1928880921ed2b076a5571c852053a347937ae4d1ec9de3e0a78678c8bb3 | top=top | args=["-ii_val"] | map=Examples/system-verilog/module_hierarchy/README.md#static-module-hierarchy
 # REFERENCE: 9f39189729f25f270a2890d3 24.03-s004 2026-10-20 | tests=ModuleHierarchy-storage | source=Examples/system-verilog/module_hierarchy/storage.sv@sha256:8cb77f64a1b76e6d308f8a65da3358ab2764afc20bbc7a4873ac8641aa0c78e7 | top=top | args=["-ii_val"] | map=Examples/system-verilog/module_hierarchy/README.md#static-module-hierarchy
-# SYNTHETIC-ORACLE: tests=ModuleHierarchy-binding-and-admission | origin=spec | authority=docs/sv-module-hierarchy.md | map=identity:actual-instance-declarations;references:bound-symbols;scope:injective-routes;packages:one-original-slot;invalid:frontend-barrier;ports:unmodelled-propagation;timescale:no-rescaling;limits:1024-instances-64-depth;symbolic:unchanged
+# SYNTHETIC-ORACLE: tests=ModuleHierarchy-binding-and-admission | origin=spec | authority=docs/sv-module-hierarchy.md | map=identity:actual-instance-declarations;references:bound-symbols;scope:injective-routes;packages:one-original-slot;invalid:frontend-barrier;ports:unmodelled-propagation;timescale:no-rescaling;limits:1024-instances-64-depth;symbolic:structural-instance
 
 
 def fixture(name):
@@ -153,9 +153,14 @@ class ModuleHierarchy(unittest.TestCase):
         self.assertFalse(walls(d))
         self.assertEqual([p['name'] for p in d['modules'][0]['ports']], ['a'])
 
-    def test_symbolic_instance_vocabulary_is_unchanged(self):
+    def test_symbolic_instance_vocabulary_is_structural(self):
+        # Symbolic mode (F3, 2026-10-28) keeps the instance boundary as ONE
+        # `Instance` node plus the child's definition (flattened by the Lean
+        # side, `Hier2.lean`); it never reuses this file's static lowering.
         d = symbolic('module child;endmodule module divider #(parameter int N=8);child u();endmodule')
-        self.assertIn('InstanceSymbol:Instance', walls(d))
+        self.assertNotIn('InstanceSymbol:Instance', walls(d))
+        self.assertTrue(any(n.get('kind') == 'Instance' and n.get('module') == 'child'
+                            for n in nodes(d)))
         self.assertFalse(any(n.get('hierarchy_lowered') for n in nodes(d)))
 
 

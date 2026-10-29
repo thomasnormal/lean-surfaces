@@ -132,7 +132,7 @@ def fixtureReceipt : IO Unit := do
         world := next
       unless world.out.halted && world.out.flush == expected do
         throw (IO.userError s!"{name} complete transcript differs")
-  for name in ["effects", "dynamic_string", "constant_based"] do
+  for name in ["effects", "constant_based"] do
     match loadEnvelopeDesign
         (← IO.FS.readFile s!"Examples/system-verilog/replication/{name}.sv.json") with
     | .error _ => pure ()

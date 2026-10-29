@@ -153,6 +153,7 @@
               ],
               "resolved": 4
             },
+            "two_state": false,
             "init": {
               "kind": "Literal",
               "span": {
@@ -204,6 +205,7 @@
               ],
               "resolved": 4
             },
+            "two_state": false,
             "init": {
               "kind": "Literal",
               "span": {

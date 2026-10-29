@@ -162,6 +162,18 @@ This is a scope decision, not a claim that the language lacks those types.
 Any future aggregate, object, string/real, handle, or event rung must introduce
 its own representation, operations, lifetime rules, and differential fixtures.
 
+**Interaction with the parametric default-point folds (2026-10-29).** The
+symbolic value tier lowers a `Squash2` operand at its own self-determined
+width. That equals the context-directed lowering except where a WIDER context
+(a larger target at another parameter point) would change a context-directed
+operand's operation width (IEEE 1800-2023 §11.8.2): `Resize(w, Squash2(w0,
+a + b))` carries the sum's carry there. `instExpr2` is loud
+(`Squash2:context`) in exactly that corner (`PExpr.ctxSensitive`), so the
+default point's narrowing is never silently reused. A parameter keeps its
+width-only `_param_width_type` node: `_sym_param_legacy_width_type`. The Design2
+comb proof layer covers 4-state input ports only (`CombDesign.inFourState`):
+`applyInputs2` squashes the stimulus of a 2-state input.
+
 The same inert treatment applies to a procedural pure string-literal write:
 the assignment is lowered to `Empty` because the opaque string has no flat state
 slot. Nonliteral writes and all subsequent string operations remain unsupported;

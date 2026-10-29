@@ -533,7 +533,7 @@
               "name": "nib_o"
             },
             "value": {
-              "kind": "PartSel",
+              "kind": "ArraySel",
               "span": {
                 "line": 14,
                 "col": 19,
@@ -541,38 +541,32 @@
                 "end_col": 25
               },
               "width": 4,
-              "value": {
-                "kind": "Ident",
-                "span": {
-                  "line": 14,
-                  "col": 19,
-                  "end_line": 14,
-                  "end_col": 20
+              "name": "a",
+              "indices": [],
+              "part": {
+                "mode": "range",
+                "left": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 14,
+                    "col": 21,
+                    "end_line": 14,
+                    "end_col": 22
+                  },
+                  "value": 4,
+                  "resolved_width": 32
                 },
-                "width": 8,
-                "name": "a"
-              },
-              "msb": {
-                "kind": "Int",
-                "span": {
-                  "line": 14,
-                  "col": 21,
-                  "end_line": 14,
-                  "end_col": 22
-                },
-                "value": 4,
-                "resolved_width": 32
-              },
-              "lsb": {
-                "kind": "Int",
-                "span": {
-                  "line": 14,
-                  "col": 23,
-                  "end_line": 14,
-                  "end_col": 24
-                },
-                "value": 1,
-                "resolved_width": 32
+                "right": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 14,
+                    "col": 23,
+                    "end_line": 14,
+                    "end_col": 24
+                  },
+                  "value": 1,
+                  "resolved_width": 32
+                }
               }
             }
           },

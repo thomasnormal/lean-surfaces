@@ -169,6 +169,7 @@
               ],
               "resolved": 4
             },
+            "two_state": false,
             "init": null
           },
           {
@@ -210,6 +211,7 @@
               ],
               "resolved": 4
             },
+            "two_state": false,
             "init": null
           }
         ],

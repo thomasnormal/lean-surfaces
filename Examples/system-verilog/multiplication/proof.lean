@@ -63,11 +63,14 @@ def runtimeEnv : IEnv := { widths := [("left", 4), ("right", 8)] }
   .binary .mul (.resize 16 (.ident "left")) (.resize 16 (.ident "right"))
 #guard instExpr2 runtimeEnv [] none sourceProduct ==
   .binary .mul (.resize 8 (.ident "left")) (.ident "right")
+-- A context narrower than the operands: the product runs at the operands'
+-- width and is truncated to the context (an x bit above the context
+-- collapses it, IEEE 1800-2023 §11.4.3).
 #guard instExpr2 runtimeEnv [] (some 2) sourceProduct ==
-  .binary .mul (.resize 8 (.ident "left")) (.ident "right")
+  .resize 2 (.binary .mul (.resize 8 (.ident "left")) (.ident "right"))
 #guard instExpr2 runtimeEnv [] (some 2)
   (.binary (.m0 .mul) (.ident "left") (.ident "right")) ==
-  .binary .mul (.resize 8 (.ident "left")) (.ident "right")
+  .resize 2 (.binary .mul (.resize 8 (.ident "left")) (.ident "right"))
 #guard evalExpr2 16 [("left", .lit "1101"), ("right", .ofNat 8 23)]
   (instExpr2 runtimeEnv [] (some 16) sourceProduct) == .ok (.ofNat 16 299)
 #guard evalBinOp .mul (.ofNat 4 0) (.lit "0x10") == .xVec 4

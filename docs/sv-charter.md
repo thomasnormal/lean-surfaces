@@ -10928,3 +10928,3339 @@ nested pure math calls while preserving the signed 32-bit conversion boundary.
 Effectful, timed, unsupported, and value-position forms remain loud. The
 `discarded_pure_rtoi` fixture and extractor regressions are the acceptance
 evidence.
+
+## Concatenated continuous-assignment targets in the comb settle theorem — 2026-10-27
+
+The Design2 combinational settle theorem (`LeanModels/Sv/Comb2Base`,
+`Comb2Sound`, `Comb2Term`, `Comb2`) now admits continuous assigns whose target
+is a concatenation — `assign {cout, s} = a + b + cin;`, nested ones included —
+of leaves (whole signals, constant slices, constant-literal element selects).
+A target's static write windows are a list (`Lhs2.windows?` / `Lhs2.wins`,
+MSB-first), each placed at its bit offset in the concatenated value
+(`Win.placed`); one process's effect is `combWrite`, the right-hand side
+resized to the target's total width and written slice by slice, proved equal
+on shaped states to the interpreter's own path (`resolveConcatLhs2_of_windows?`,
+`writeConcatLhs2_eq`). The profile gains one obligation, `selfDisjoint` (a
+target's windows are pairwise disjoint); `CombEqs` says each placed window
+holds its slice of the resized right-hand side, and `Writes`/`Acyclic` range
+over every window. Settle soundness, termination, the `⊨₂` introductions and
+the leaf read-backs keep their statements; the ripple-adder proof changes by
+six one-line edits (window membership by `simp`, a one-element window list)
+plus the new `selfDisjoint` field. New
+read-backs `CombEqs.concat_part` / `CombEqs.concat_part_ident`.
+
+`LeanModels/Sv/Comb2ConcatExample.lean` proves the one-line adder correct for
+every width `N` — the same statement as `ripple_add`'s gate-level proof — and
+a nested `{y[3:2], {z, y[1:0]}} = x` target, with `run2` `#guard`s under both
+schedules. Differential rows `concat_add` (`N` = 4, 1, 8) and `concat_split`
+(slices, a bit-select rotation, zero-extension, truncation) match Icarus;
+`Examples/system-verilog/sem2/concat_add/agree.lean` checks that the SV source
+instantiates to exactly the proved design family at `N` = 1, 2, 4, 8, 32.
+Dynamic-index leaves stay off-profile, and `always_comb` processes remain
+outside the comb profile.
+
+## Nested packed-array selects (`ArraySel`) — 2026-10-27
+
+sv-0.2 symbolic mode now admits multi-dimensional packed arrays with nested
+selects whose labels are elaboration-time constants — `pp[i][j]`,
+`s[i-1][j+1]`, row reads `pp[i]`, row part-selects `s[N-1][N:1]`, indexed
+parts `x[i*W +: W]` — as continuous and procedural TARGETS and in
+expressions, over any number of dimensions and over ascending, descending
+and non-zero-based ranges whose bounds may depend on parameters. The
+extractor emits each chain as ONE `ArraySel` node with the raw declared
+labels (`docs/sv-envelope-schema.md`, "Packed-array select paths"); the
+`IEnv` of `instantiate2` carries every declaration's dimensions EVALUATED
+ONCE in the declaration scope (`IEnv.dims`, built by `dimTable` from
+`PDesign.packedDims` before generate expansion, so a genvar that reuses a
+parameter's name cannot change an array's geometry — found by independent
+review, pinned by the `array_gvshadow*` rows), and `Param2.lean` lowers a chain to
+one flat window of the declared vector after normalizing each label against
+its own dimension and checking each dimension's range (IEEE 1800-2023
+§7.4.2, §7.4.6, §11.5.1). `Sem2` is unchanged: an in-range select is a
+`slice`, an out-of-range element select reads x and writes the zero-width
+window (no-op), a partial part select reads x in exactly its out-of-range
+bits and, as a target, writes the in-range bits of an msb-side overhang
+(an lsb-side overhang on a target is loud). Previously admitted selects keep
+their legacy nodes byte-for-byte (all 77 reproducible sv-0.2 envelopes
+re-extract identically); two legacy default-folds that were wrong away from
+the default parameters (`u[5]` over `[7:L]`, `x[4 +: N]`) now take the new
+path, and a dynamic inner index on a 3-D array, which the legacy encoding
+sized as one bit, is now loud.
+
+Proof handles (`LeanModels/Sv/Gen2.lean`, "Packed-array select paths at
+symbolic parameters"): `PDesign.dimTable_lookup_of`/`evalDims_cons_of` give
+an instantiated environment's geometry entry, `arrayDims_of` reads it,
+`walkIndices_cons_of`/`walkIndices_desc0_cons` walk the labels
+(`[m:0]` has label = offset and `m + 1` elements), and
+`arrayElemRead_of_inRange`/`arrayElemTarget_of_inRange` (and the part twins)
+give the flat `slice`. `Examples/system-verilog/mul2d/gen.lean` proves, for
+every `N ≥ 1`, the whole instantiated process list of the 2-D array
+multiplier `mul2d.sv` (`mul2d_processes`, the `ripple_processes` twin), in
+particular that its partial-product generate block instantiates to the cells
+`pp[i*N+j] = a[j] & b[i]` (`mul2d_pp_expand`, `mul2d_pp_instantiated`) and
+that `s[i-1][j+1]` reads the 1-bit window at `(i-1)*(N+1) + (j+1)`. The `Gen2.except_ok_bind` /
+`except_error_bind` lemmas about core `Except` are no longer global `simp`
+lemmas (local to `Gen2.lean`, passed explicitly by `sv2_inst_simp` and the
+ripple-adder instantiation proofs).
+
+Differential rows (Icarus 12.0): `mul2d_n4_all` (all 256 products plus four
+x/z cycles, sampling every internal 2-D array), `mul2d_n{1,2,3}_all`,
+`mul2d_n5_sample`; `array_ranges` at three parameter points (ascending
+outer, non-zero-based inner, `+:`/`-:` parts), `array_3d`, `array_oob`
+(selects past the end of the last element), `array_param_labels` at three
+parameter points, `array_gvshadow` at three parameter points (genvars named
+like the parameters in a declared range; read and target) — all match.
+`array_oob_inner` and `array_oob_part` are declared disagreements: Icarus
+12.0 and Yosys 0.53 linearize an out-of-range INNER index (`m[0][4]` reads
+`m[1][0]`) and a part or indexed part overhanging an inner dimension of a
+non-last element (`m[0][5:3]`, `q[1][-1 +: 2]`, the write `w[0][5:2] = a`),
+while the LRM and slang check each dimension
+(`docs/sv-oracle-disagreements.md`, "Linearized packed-array indices").
+Out of tier, loud: concatenation targets with `ArraySel` leaves, signal
+indices below the first dimension of a chain, and arrays declared through a
+typedef (no recoverable dimension list).
+
+Review fix (same day): a parameter/genvar-CONSTANT select (`i[0]`, `P[3:1]`)
+now has a self-determined width (`selfWidth2`: one bit, or the part's
+width), so it is exact in self-determined positions — `{i[0]}`,
+`{8{i[0]}}` — where it previously materialized as a 32-bit literal and the
+consuming gate read x (pre-existing, newly reachable through `ArraySel`
+targets; rows `gvcat`, `gvcat_n6`). An unexpected extractor failure on a
+select chain past two dimensions is now `Unsupported`
+(`…:array-select`) rather than the legacy nested fallback.
+
+## `always_comb` in the comb settle theorem — 2026-10-27
+
+The Design2 combinational settle theorem now covers designs whose logic sits
+in `always_comb` blocks. `LeanModels/Sv/Comb2Proc.lean` runs a body
+SYMBOLICALLY (`Stmt2.symExec`) — blocking assignments to whole signals,
+constant slices and constant-literal element selects under `begin … end`,
+`if`/`else`, `case` and `case … inside` with or without `default` — and
+produces one equation per written window over the body's pre-state: a read
+of a written window is replaced by its equation, branches join under a known
+bit (`(|c) === 1'b1`, exactly the interpreter's `if` truthiness, or the arm's
+hit), a window a path does not write keeps its pre-state value, and a bit
+write inside a written window splices into it (the "default, then override"
+idiom). `Design2.lowerComb` replaces every body by the continuous assign
+`{w₀, …, wₖ} = {E₀, …, Eₖ}`. On states with the comb shape a successful body
+run, at any fuel, IS that assign's write, and the body completes at every fuel
+from the static bound `Stmt2.fuelB` (`symExec_sound` / `symExec_total`, one
+fuel induction over `execStmt2`/`execCase2`/`execStmts2`); a step simulation
+(`CombSim`) lifts that to `Runs2.lowerComb_iff` — a design and its lowering
+have the same completed runs under every schedule whenever the lowering is in
+the comb profile. The settle theorems of `Comb2Sound`/`Comb2Term` therefore
+apply unchanged (`Comb2*.lean` are untouched): `Terminates2.of_lowerComb_acyclic`,
+`Models2.of_combProc` (with `_inputs` / `_pointwise`), the fixpoint
+characterization `procFixpoint_iff_combEqs` (every process, the bodies
+included, maps the state to itself iff the lowered equations hold), and the
+per-window read-back `CombEqs.symWindow` / `_ident`. The lowering refuses a
+body whose equations read a window the body itself writes
+(`SymState.selfReadFree`): latches, and every read of a window's pre-state
+value by a body that writes it (see the review fix below). For one-process
+designs `CombDesign.of_single` reduces the profile to `decide` checks on
+closed data, and `Acyclic.of_lowerComb_single` gives the certificate with no
+proof at all.
+
+`LeanModels/Sv/Comb2ProcExample.lean` proves, under `⊨₂` with `Terminates2`:
+a full adder written as one `always_comb` with a temporary and an `if`/`else`
+(`fa_correct`, the gate-level adder's statement), a default-then-`case`
+4-way multiplexer (`mux_correct`: `y = d[sel]`), and a default-then-override
+one-hot decoder (`dec_correct`: `y = en ? 1 << sel : 0`), each with `run2`
+`#guard`s, and an `N`-bit adder/subtractor with a zero flag
+(`if (sub) y = a - b; else y = a + b; z = ~|y;`) for EVERY `N`
+(`as_correct`, `as_terminates`; the symbolic execution and the profile are
+evaluated by `simp` with `N` a variable). Differential rows `fa_comb_proc`,
+`mux4_case`, `onehot_dec`, `latch_comb` and `addsub_comb` (`N` = 4, 1, 8),
+with `x`/`z` conditions and `case` subjects, match Icarus, and each
+fixture's `agree.lean` checks that the SV source instantiates to exactly the
+proved design (`addsub_comb` at `N` = 1, 2, 4, 8, 32). Refused by the lowering: nonblocking assignments,
+dynamic-index and concatenation targets in procedural code, a whole read of
+a partly written signal, reads or writes that straddle a written window,
+branches that write different overlapping windows of one signal, and designs
+with clocked processes, and (self-read check) latches and every body that
+reads a window it writes before or without writing it; the extractor refuses
+procedural `for`. Open: a packaged tactic for evaluating the symbolic
+execution at symbolic widths (today a `simp` call over the definitions), a
+window-level termination rank (`Acyclic` ranks processes, and a body lowers
+to ONE assign, so a body that writes `t` and reads `w` next to
+`assign w = t + 1` is rejected as a cycle although no window depends on
+itself; Icarus and the settle semantics both settle it — split the body into
+separate blocks), and `always_ff` (the settle theory is comb-only).
+
+Review fix (same day): self-reads. The first version accepted a body that
+reads a window it writes only later (`always_comb begin y = t; t = a; end`)
+and proved, through `Models2.of_combProc`, that `y = a` on every snapshot.
+That is what the settle semantics computes (`run2` re-runs a comb process
+until nothing changes) and what Yosys 0.53 `proc` synthesizes
+(`assign y = a`), but not what an event-driven simulator does: IEEE
+1800-2023 §9.2.2.2.1 leaves the variables a block writes out of its
+implicit sensitivity list, and a block is never woken by its own writes, so
+Icarus 12 runs the block once per change of `a` and shows `y` one change
+behind (`a` = 01, 10, 11 gives `y` = 00, 01, 10). A narrower fix that
+exempted the pre-state values a join keeps (`Win.held`) would still accept
+`if (c) t = a; y = t; t = b;`, where the settle answer is `y = c ? a : b`
+(Yosys agrees) and Icarus shows the previous `b` while `c` is low. The
+lowering now refuses every body whose lowered equations read any window of
+its own write set (`SymState.selfReadFree`, latches included), and
+`runCombProcess2_alwaysComb_idem` proves the property that makes the two
+readings agree on what remains: one run of an accepted body is already the
+body's own fixpoint. Fixtures `Examples/system-verilog/sem2/rbw_comb` and
+`rbw_held` pin the refusal on the instantiated SV (`rbw_refused`,
+`held_refused`) and the `run2` traces. They have no `cases2.json` rows:
+the disagreement is the MODEL's, since IEEE sides with Icarus, and an
+`oracle_disagreement` declaration records only a simulator's departure from
+the standard. Outside this API, `run2` still runs a self-reading
+`always_comb` with the settle answer. That divergence from the standard's
+event semantics (on which Sem2 agrees with Yosys, not Icarus) is open;
+remodelling `combSettle2`, refusing such bodies at ingestion, or a
+semantic row in `docs/sv-declared-divergences.json` are the options.
+(Decided 2026-10-28: Sem2 is kept and the divergence is the semantic row
+`sv-div-3`; see the entry of that date.)
+
+## Indexed part-selects: lsb-overhang targets and run-time bases — 2026-10-27
+
+Indexed part-selects `x[b +: w]` / `x[b -: w]` and range selects `x[hi:lo]`
+whose base and bounds are elaboration-time constants over parameters and
+genvars (`rev_up[i*W +: W] = a[(N-1-i)*W +: W]`, `a[N*W-1 -: N]`) already
+lower through `ArraySel` (entry above); this entry closes the two gaps that
+remained, both in `LeanModels/Sv/Param2.lean`, `Sem2` unchanged. (1) A
+TARGET overhanging the LSB end of its dimension (`w[N-3 -: 4] = b` at
+`N < 6`), previously loud, now writes exactly its in-range bits, which take
+the RHS's upper bits (IEEE 1800-2023 §11.5.1): `arrayPartTarget` lowers it to
+a concatenation target whose low leaf is a zero-effect sink window just
+past the vector's msb (`LVec.insertAt` drops every bit there). It runs in
+continuous assigns and blocking statements; a nonblocking write to it stays
+loud (`resolveLhs2`), and it is outside the comb settle profile (the
+`always_comb` lowering refuses procedural concatenation targets). (2) A
+RUN-TIME base in a READ (`v[sel +: 4]`, `a[sel*W +: W]`), previously
+`RangeSelectExpression:dynamic-indexed`, is admitted on a 1-D vector with a
+descending range: the extractor emits `ArraySel` with the base as a value
+expression (`_sym_dynamic_part_select`), and `dynPartPlan`/`dynPartRead`
+lower it to a right shift of the vector padded with x above and below, under
+a guard, so every out-of-range bit reads x and an x/z base reads all x. A
+signed base is `RangeSelectExpression:dynamic-signed-base`; a run-time base
+on a procedural target is `AssignmentExpression:target` (continuous ones are
+illegal SV); after an element select, over a multi-dimensional array or an
+ascending range it keeps `dynamic-indexed`, and in Lean it is
+`ArraySel:dynamic`.
+
+Proof handles (`LeanModels/Sv/Gen2.lean`): over a 1-D zero-based descending
+vector with symbolic base and width, `arrayPartGeom_up_desc0`/`_down_desc0`
+compute the geometry, `arrayPartTarget_up_desc0`/`_down_desc0` and
+`arrayPartRead_up_desc0`/`_down_desc0` give the in-range `slice`, and
+`fitExpr2_arrayPart_up_desc0`/`_down_desc0` read it in a same-width context
+with no resize. `instExpr2_arrayPart` now carries the hypothesis
+`dynPartPlan … = none` (discharged by `dynPartPlan_of_evalInt` or
+`dynPartPlan_of_geom`; `mul2d/gen.lean` changed one `rw`), and
+`instExpr2_arrayPart_dyn` is the run-time case. `sv2_inst_simp` unfolds
+`dynPartPlan`. `Examples/system-verilog/partsel/gen.lean` proves, for every
+`N` and every `W ≥ 1`, that the lane-reversal generate block of
+`partsel.sv` (one `+:` and one `-:` template, targets and reads)
+instantiates to the `W`-bit window copies `rev[i*W +: W] ← a[(N-1-i)*W +: W]`
+(`partsel_rev_expand`; `partsel_rev_instantiated` at the environment
+`instantiate2` builds), axioms `[propext, Classical.choice, Quot.sound]`, and
+pins the lowered nodes of the overhanging and run-time selects at the row
+parameter points.
+
+Differential rows (Icarus 12.0): `partsel` (`N`, `W` = 4, 3), `partsel_n2_w5`,
+`partsel_n6_w2`, `partsel_n5_w1`, `partsel_n1_w4` — reads overhanging
+either end, a range select above the msb, procedural writes overhanging
+either end or fully out of range, run-time bases over every value and with
+x/z bits — all match, as does `array_oob_lsbwrite_l1`.
+`array_oob_lsbwrite` is a declared disagreement: an lsb-overhang write into
+an INNER dimension (`w[1][-1 +: 2]`) is linearized into `w[0][3]` by Icarus
+and Yosys (`docs/sv-oracle-disagreements.md`, "Linearized packed-array
+indices"). Measured: Icarus cannot be the oracle for a CONTINUOUS assign
+that overhangs either end — `vvp` aborts (`adr+that.size_ <= size_`,
+`vvp_net.cc:1180`) on the msb side, and elaboration stops with `sorry: part
+selects straddling the start of signal` on the lsb side — so the overhanging
+writes in `partsel.sv` are procedural. Yosys 0.53 `prep; eval` gives
+`partsel`'s values at `(4, 3)`.
+
+Out of tier, loud: signed and 2-state declarations (`PortSymbol:signed`,
+`PortSymbol:2state` — the gap is the declaration, not the select);
+part-selects of a PARAMETER (`P[i*4 +: 4]`, a constant table) stay
+`RangeSelectExpression:dynamic-indexed`; run-time bases on targets and
+below an element select.
+
+## Width-exact constant labels and 32-bit run-time bases — 2026-10-28
+
+An independent review of the entry above found four silent disagreements
+with Icarus 12.0 and Yosys 0.53, all now fixed or refused. (1) The constant
+tier (`evalInt`, `LeanModels/Sv/Param.lean`) evaluated select labels and
+generate conditions over unbounded integers, so `v[K + 3'd4 +: 2]` with
+`parameter logic [2:0] K = 5` selected bit 9 where every simulator selects
+bit 1 (3-bit arithmetic wraps, IEEE 1800-2023 §11.6/§11.8); the same root
+cause hit element, range and bit selects and a generate-if. `evalInt` now
+keeps its mathematical fast path for the INT class only — unsized
+integers, genvars, system calls and `int`/untyped parameters, the
+`PExpr.isInt` test — and sends every node with any other operand to
+`evalSized`, the §11.6/§11.8 rules verbatim (`ctype` self-determined types,
+`evalAt` at the propagated type, `canonInt` wrapping; x reads, division by
+zero and out-of-range constant selects loud). Typed parameters that are
+not `int` bind in the new `IEnv.nvals` with their width and signedness
+(`bindParams`, `bindLocal`), so a `ParamRef` is INT exactly when it is bound
+in `vals` and proofs holding `env.vals.lookup n = some v` need nothing more.
+(2)/(4) The signedness of a 32-bit typed parameter was not in the envelope
+(`int` and `int unsigned` looked alike), so `v[UI - 1 +: 4]` at `UI = 0`
+read `v[2:-1]`. The extractor now emits `signed` on `ParameterDecl` and
+`LocalParam` where the type departs from the default (signed iff 32 bits
+wide), and `signed: true` on signed literals in symbolic constant positions
+(`docs/sv-envelope-schema.md`, "Constant typing"); only
+`sem2/fifo/cv32e40p_fifo.sv.json` changes among the reproducible
+envelopes. A label that wraps past `2^31` (`UI - 1`, `U - 1` at 0) is where
+the tools split — Icarus reads it as a huge unsigned index, Yosys as a
+negative one — so it is refused (`partOffsetsWild`, `ArraySel:index-range`;
+legacy `[msb:lsb]` reads `PartSel:bounds`). (3) A run-time part-select base
+was read unsigned at its own width; both tools read a 32-bit base as a
+two's-complement `int` (`v[s - 2 +: 4]` at `s = 0` is `v[1:-2]`), so a
+32-bit base now lowers through `dynPartRead32` (sign-extended to 34 bits
+plus `w - 1`, one unsigned guard for both ends), a narrower one keeps
+`dynPartRead`, and a wider one is loud (Icarus truncates it to 32 bits,
+Yosys does not) — `dynBaseRead` in Lean, `RangeSelectExpression:dynamic-wide-base`
+in the extractor. Minor: a concatenation-target leaf whose
+lowered window is not its declared width (a part select overhanging its
+vector at that parameter point) is refused (`concatLeafExact`) instead of
+shifting the RHS split; a `localparam` inside a generate block is a loud
+`GenerateDecl:LocalParam` item instead of an `Ingest2` parse failure.
+
+Recorded restrictions: INT-class arithmetic is still unbounded (a 32-bit
+`int` overflow is not wrapped); an UNTYPED parameter with a sized default
+(`parameter P = 3'd5`) is read as an `int` (its override value's type),
+while slang elaborated the envelope at the default's 3-bit type. (Both
+superseded by the next entry: the default point is modelled, value reads
+at overridden points are loud, and overflow is caught by `int32Agrees`.)
+
+Proof surface: the compositional `evalInt_*_of` lemmas (`Gen2.lean`),
+`evalInt_slt`, `genvarSeq_ascending(_length)` and the
+`GenItem.expand2_genFor_ascending*` family take INT-class side conditions
+(`isInt_paramRef_of`, `isInt_binary_of`, `rfl` for genvars and integers);
+the legacy part-select lemmas (`instExpr2_partSel_ident`, `instLhs2_partSel`,
+`fitExpr2_partSel_ident*`) take `msb.isInt env = true ∨ m < 2 ^ 31`;
+`instExpr2_arrayPart_dyn` now ends in `dynBaseRead` (`dynBaseRead_lt32`,
+`dynBaseRead_32`). `ripple_add`, `mul2d` and `partsel` were updated
+accordingly, statements of their headline theorems unchanged.
+
+Differential rows (Icarus 12.0): `const_wrap` and `const_wrap_k*_u*` sweep
+`K`, `U` and `UI` over `sem2/const_wrap/const_wrap.sv` — sized-label wraps on
+`+:`/`-:` reads and an always_comb target, a bit select, an element select
+and a range select on `[19:4]`, a canonical range select, a widened label,
+`U - 4'd1`, an `int unsigned` label and a generate-if; `dyn32`
+(`sem2/dyn32/dyn32.sv`) drives `v[s - 2 ±: 4]`, a concatenated 32-bit base
+and a raw 32-bit input base through negative, huge and x/z values. All match.
+
+## Parameter types and context widths across parameter points — 2026-10-28
+
+A second independent review found three more places where slang's
+DEFAULT-point elaboration leaked into other parameter points as silent
+disagreements with Icarus 12.0 and Yosys 0.53; all are now exact or loud
+(`docs/sv-envelope-schema.md`, "Parameter types and context widths across
+parameter points"). (1) A parameter with a range and no type
+(`parameter [3:0] V4 = 4'd9`) arrived as `type: null` and was read as an
+unbounded `int`, so `v[V4 + 4'd8 +: 2]` selected bit 17 where every
+simulator wraps to 1 (IEEE 1800-2023 §6.20.2 makes it 4-bit unsigned
+whatever the override; an override of 25 reads 9). The extractor now
+types implicit ranged parameters (`_sym_implicit_ranged`,
+`_sym_param_syntax_dims`) and gives dimensioned keyword types
+(`logic signed [3:0]`, `bit [4:0]`) their symbolic dimensions instead of
+`packed: null`; a rangeless `parameter signed P` records `signed`. (2) An
+untyped parameter with a sized default (`parameter P = 3'd5`) was read as
+an `int` even where it is not overridden; there its type is the default's
+and `P + 3'd4` wraps. `PDesign.atPoint` (`Param.lean`) resolves a
+partially overridden point and retypes every not-overridden untyped
+parameter whose default is not `int`-typed; `crossCheck` and the
+differential runner instantiate through it. Where such a parameter IS
+overridden its value-tier tree is still the default point's, so a value
+read of it is loud there (`PParam.overrideRetypes`, set at ingestion by
+`markOverrideRetypes`; `IEnv.stale`; `ParamRef:override-type`, untyped
+localparams defined from it included), while its constant uses are exact.
+(3) Context-determined widths came from the default-point tree: `-a`/`~a`
+with `logic [N-1:0] a` computed at N bits and zero-extended (at N = 2, `-a`
+for `a = 10` gave `0010`, not `1110`), and `+`/`-` truncated an operand
+wider than the context first, dropping the x of an out-of-range bit
+(`v[1 +: N] + 4'd9` at N = 8 is `xxxx`). `instExpr2` (`Param2.lean`) now
+extends `- ~ +` operands to the context, runs `+ - *` at the widest
+x-carrying operand (`rigidMax2`, `ctxOpWidth2`) and truncates, truncates
+`/ % ** << >>` results to the context (`ctxTrunc2`), reads an implicit
+conversion's operand width in `selfWidth2` (never its default-elaborated
+`width`), and refuses a `$signed` operand that must be widened
+(`Resize:signed`). The extractor emits `Resize(width, Literal)` for a
+sized literal its value context widens (`_sym_literal_widening`), which
+fixes self-determined widths such as `{a + 1'b1, 1'b0}` at N = 1; that
+changes `sem2/fifo` and `sem2/register_file_ff` among the reproducible
+envelopes (regenerated). Minor: a signed constant label operand
+sign-extended to 32 bits (`SB + 5`, `S4 * -1`) is a `SignedResize`
+(`_sym_signed_widening`) and evaluates; a constant select whose label still
+fails to convert keeps its own refusal kind
+(`_sym_constant_label_refusal`) instead of the misleading
+`…:dynamic-signed-base`.
+
+32-bit `int` overflow: the proof-facing constant tier keeps INT-class
+arithmetic unbounded (bounding it would put `N < 2^31`-style hypotheses
+into every ∀-N theorem). `PDesign.int32Agrees` compares a point's
+`instantiate2` design with one built under exact 32-bit `int` arithmetic
+(`IEnv.int32`: INT parameters and `int` localparams bound at `(32, signed)`
+and evaluated by `evalSized`); the differential runner and `load_design_sv2`
+(at the defaults) refuse a point where they differ, e.g.
+`v[(N*N) >> 30 +: 4]` at `N = 65536`. A checker instantiating a family at
+concrete parameters should call it too.
+
+Kept loud and recorded (schema): run-time bases over a range with a
+negative lsb, a parameter's `$bits` in a label, a literal-base select
+partly out of range, concatenation targets with part-select leaves,
+concatenation labels, and implicitly typed nets/net ports (`wire [7:0]`;
+a partially driven net's undriven bits are z, which the semantic tier
+does not model — an implicit-net admission tried this round was reverted
+when it turned the refusal into x-vs-z mismatches).
+
+Proof surface: `instExpr2_add`/`instExpr2_sub` take
+`(ctxOpWidth2 env elems l r).getD w ≤ w`, `fitExpr2_of_rigid_ne` takes
+`e.signedCast = false`; `PDesign.instantiate2` is
+`instantiate2From {}` (`instantiate2_eq` unfolds both). Headline statements
+of `ripple_add`, `mul2d` and `partsel` are unchanged.
+
+Differential rows (Icarus 12.0): `param_types` and seven override points
+(`sem2/param_types`: untyped, ranged, signed-ranged, 32-bit-unsigned,
+`logic signed`, `bit`, `byte` parameters in `+:`/`-:` labels and a value
+comparison); `ctx_width` at N = 4, 1, 2, 3, 6, 8 and `ctx_width_n2` at
+N = 2, 4, 8 (the same body elaborated at a narrower default, so the tree
+carries the conversions of N = 2). Lean guards in `Param2.lean` pin the
+`-a`/overhang values, the stale-read refusal and `int32Agrees`.
+
+## Module instances in sv-0.2 symbolic mode (hierarchical designs) — 2026-10-28
+
+sv-0.2 symbolic mode now admits module hierarchies. The extractor emits a
+module instance — at module level or inside a `generate` for/if body — as ONE
+`Instance` node (definition name, lexical generate path, symbolic parameter
+overrides, one `PortConn` per child port) and appends the definition of every
+module the top instantiates, transitively, to `design.modules`, each
+elaborated ALONE at its own defaults (a separate slang compilation per
+definition, so its `resolved` metadata is its own and the load gate
+cross-checks it like a top). Designs without instances are byte-identical:
+all 101 reproducible sv-0.2 envelopes re-extract unchanged
+(`docs/sv-envelope-schema.md`, "Module instances").
+
+The Lean side FLATTENS at instantiation time
+(`LeanModels/Sv/Hier2.lean`, `PDesign.instantiateH`): at each instance, at the
+current parameter and genvar values, the overrides are evaluated in the
+instantiating scope, the child is brought to that parameter point
+(`PDesign.atPoint`) and instantiated recursively, its declarations are hoisted
+under `<path>.<inst>.<signal>` (`g_bit[3].fa.s`, port flags cleared), its
+processes renamed, and every port connection becomes a continuous assignment
+(§23.3.3) with LRM width coercion. `Sem2` is unchanged; `GenItem` gains the
+`inst` constructor, which the flat instantiations keep as a loud process.
+`load_design_sv2` defines `name.plib` and routes `name.sem` through
+`PDesign.instantiateHD2` for a hierarchical envelope (single-module
+envelopes elaborate exactly as before); the differential runner dispatches
+the same way and re-checks `Design2.namesNodup`. Measured and recorded: an
+input actual narrower than its port is admitted only where the LRM reading
+(slang, Verilator 5.042) and the Icarus 12.0 / Yosys 0.53 reading
+(self-determined, zero-padded) agree — any other is loud
+(`PortConn:context-width`, `docs/sv-oracle-disagreements.md`) — except that
+unbased-unsized fills are admitted anywhere among the agreeing operands and
+take the LRM reading, which Verilator and Yosys share and Icarus alone does
+not (declared row `hier_fill_ctx`); unconnected input nets read z, `var`
+inputs x (Icarus agrees); a child flop whose clock is a child input port
+bare-connected to an input port of the instantiating module flattens to a
+flop on that signal (so every flattened flop is clocked, through bare
+connections, by an input port of the top), any other clock is loud.
+
+Proof surface (`LeanModels/Sv/Hier2Gen.lean`): the walk's equations
+(`expandListH_cons_ok`, `GenItem.expandH_inst`, `GenItem.expandH_genFor_of`,
+`expandItersH_eq_flatMap`, `GenItem.expandH_genFor_ascending_flatMap`), the
+instance step `instExpandH_of`, the decomposition
+`PDesign.instantiateRec_of_ok` (the `instantiate2_of_ok` twin) and the
+conservative extension `PDesign.instantiateH_flat` /
+`PDesign.instantiateHD2_flat` (an instance-free design flattens to exactly
+`instantiate2`). `Examples/system-verilog/ripple_fa/gen.lean` proves, for
+every `N`, the whole flattened process list of the ripple-carry adder written
+with a `full_adder` per bit in a generate loop (`ripple_fa_processes`, the
+`ripple_processes` twin) and its declarations (`ripple_fa_decls`).
+
+Differential rows (Icarus 12.0, all PASS): `ripple_fa_n4_cin0/1`
+(exhaustive at N = 4), `ripple_fa_n4_xz`, `ripple_fa_n1/n3/n8`;
+`hier_params*` (named/ordered overrides and connections, expressions on
+inputs, an output into a part select, three instances of one definition at
+three parameter points; N = 3, 2, 5); `hier_width*` (narrow/wide coercion in
+both directions; N = 4, 2, 6); `hier_nested*` (three levels, instances in
+generate for/if, `.*`, unconnected net/var inputs and output; N = 3, 2, 4);
+`hier_clk*` (clocked children, `.clk` implicit connection; W = 4, 1, 6);
+`hier_fill` (bare and masked fills in narrower input actuals). Yosys 0.53
+agrees on spot checks of `hier_width` and `hier_params` and on all 32
+two-state points of `hier_fill`. Declared Icarus disagreement:
+`hier_fill_ctx` (`iverilog-port-fill-self-determined` — ten nested-fill
+shapes; Yosys agrees with the model on every two-state point, Verilator on
+every two-state output).
+
+Recorded refusals: `inout`/`ref` and interface ports, interface instances,
+instance arrays, port default values, type-parameter overrides, `defparam`,
+`bind`, recursive instantiation, escaped identifiers containing `.[]` on an
+instance path, a typed child parameter overridden by a parameter expression
+needing a narrowing conversion (`ConversionExpression:width`; literal
+overrides are admitted), a child definition with a parameter that has no
+default (`ModuleDefinition:elaboration`: slang cannot elaborate it alone, so
+it is not in the library), and an instance inside a generate branch not
+taken at the default parameters (slang leaves it unbound as
+`UninstantiatedDefSymbol`: loud wherever that branch is taken) — for a
+branch inside a generate-for, not taken at the loop's FIRST iteration, since
+the extractor binds the body from that iteration.
+
+Single-clock gap, recorded (2026-10-28): the cycle semantics runs every edge
+process on its one clock whatever the clock name, so a TOP-level
+`always_ff @(posedge g)` on a derived or gated `g` (`assign g = clk & en`) is
+admitted and fires while `en = 0`, where every simulator holds it. This is
+inherited from the flat tier, not introduced by flattening: a child flop is
+admitted only on a clock that traces, through bare input-port connections,
+to an input port of the top (`clockGuardProc`, `Hier2.lean`; `#guard`s for
+the gated, child-internal and two-level cases), so no flattened child flop
+runs on a derived clock. Closing the top-level half needs a clock-domain
+check on `Design2` (or a multi-clock cycle semantics) and is not started.
+
+One driver per bit after flattening (2026-10-28, verifier round 2):
+flattening adds the port-connection assigns AFTER the extractor's
+overlapping-driver guard has run on each module alone, and `Sem2` gives
+several continuous drivers of one bit issue order (last write wins), so two
+instance outputs on one wire (verifier `w_multi1`: Icarus resolves the
+net), a parent `assign` and an instance output on one bit (`w_multi2`;
+`w_inval`, illegal for a variable) were silently ordered. Now every module
+of the hierarchy, at the instance's own parameter point, must drive each bit
+of its OWN signals once (`driversOk`, `Hier2.lean`): the windows of its
+continuous assignments — its `assign`s and its instances' output connections
+alike — pairwise disjoint, none on a signal a procedural process writes or
+on an input port, and no procedural write to an input port; otherwise a loud
+`PortConn:driver` process is appended, so `run2`, the differential runner and
+`load_design_sv2` refuse (`#guard`s in `Hier2.lean`; the three repros now
+refuse). Every child is checked, instance-free ones included; an
+instance-free TOP is the flat tier's, unchanged (`instantiateH_flat`
+re-proved). The `ripple_fa` acceptance proves the rule for every `N`
+(`ripple_fa_driversOk`, through `driversOk_of_continuous`, `Hier2Gen.lean`),
+so its headline statements are unchanged.
+
+Integer actuals (same round): slang binds an input actual converted to the
+port type of the instance it bound (defaults / first generate iteration), and
+an integer constant under that conversion was folded to a literal of THAT
+width (`.i(5)` into `W = g` ports: `001011` where Icarus has `101011`;
+`.i(-1)`, `.i(37)`, `.i(N*3-1)`). The extractor (`_sym_port_actual`, additive)
+emits the unconverted INT-class tree, which Lean fits per point exactly; a
+genvar actual narrower than its port (formerly `ConversionExpression:width`)
+is admitted the same way; an integer constant into a port wider than 32 bits
+is loud (`PortConnection:int-width`). Rows `hier_intact*` (N = 4, 2, 7, 8,
+30) PASS against Icarus 12.0, and the verifier's `w_lit`, `w_gvw` and
+`w_stale` repros re-extracted now match it. Existing envelopes re-extract
+byte-identically.
+
+Flat-tier gaps recorded by the same verifier round, NOT fixed (both predate
+F3 and change many envelopes if fixed, so they wait for an extractor pass
+coordinated with upstream): (1) an unsized integer constant assigned to a
+parameter- or genvar-width target in a flat module (`assign o1 = -1` with
+`logic [N+1:0] o1`; `assign neg[(g*(g-1))/2 +: g] = -1` in a genvar loop) is
+folded at the default width by `_sym_conversion` — `w_stale_flat_n7` gives
+`000111111` where Icarus has `111111111`, `w_gvw_flat` `001011` against
+`111111`; the fix is `_sym_port_actual`'s peel at that conversion. (2) The
+extractor's symbolic overlap guard sees only `Int`-index windows
+(`_symbolic_target_windows`), so overlapping continuous drivers whose
+windows depend on a genvar or parameter in an instance-free top are not
+refused; the hierarchical rule above covers every child and every top with
+an instance, not that flat case. Also documented, not rows: a CONNECTED
+`input var` port (Icarus coerces it to inout and reads the parent's input as
+x; Verilator and the model agree) and a z/z bit under an x/z `?:` condition
+(Icarus z, Table 11-20 x) — `docs/sv-oracle-disagreements.md`.
+
+## Registered and documented simulator/synthesis splits; Icarus host framing — 2026-10-28
+
+A documentation-and-harness pass (no Lean, extractor or `Sem2` change) that
+makes the known places where `run2`, Icarus 12.0, Yosys 0.53 and the LRM
+part ways machine-tracked or written down, so an svGolf proof about a design
+cannot rest on one of them without a record saying so.
+
+**Self-reading `always_comb` is a declared SEMANTIC divergence, `sv-div-3`**
+(`docs/sv-declared-divergences.json`, the tier's first semantic row). Lead
+decision: `Sem2` is kept. On `if (c) t = a; y = t; t = b;` (`sem2/rbw_held`)
+and `y = t; t = a;` (`sem2/rbw_comb`) `run2` settles to the fixpoint, which
+is what Yosys `proc` synthesizes and what svGolf scores; IEEE 1800-2023
+§9.2.2.2.1 and Icarus run the block once per wake-up and show the stale `t`.
+The row's two guards live in `harness/sv_divergence_probe.py` in the
+layered shape of family-architecture §5.0a (b): the MODEL side is the
+build's own `#guard (run2 heldDesign …)`/`rbwDesign` pins in
+`LeanModels/Sv/Comb2ProcExample.lean`, tied to the committed SV by the
+fixtures' `agree.lean` (the probe checks they exist outside comments and
+reads their stimulus and traces, and runs no Lean); the ORACLE side is RUN —
+Icarus on the committed SV with the pin's own stimulus (`run2` `01 10 11` vs
+Icarus `01 01 11`; `00 01 10 11` vs `00 00 01 10`). `sv_div_3_has_not_widened`
+also requires Yosys `prep; eval` to give the settle answer on all 32 and 4
+two-state input points (the reason the debt is carried), Icarus to give
+exactly the declared stale trace (it differs from `run2` only where `t` is
+read stale, and agrees on the `c = 1` cycle that writes `t` first), and the
+settle-theorem refusals (`rbw_refused`, `held_refused`, `lowerComb.isNone`)
+to stay declared. The failure direction was run against mutated copies:
+a `run2` pin changed to Icarus's trace (a remodel), a commented-out pin, a
+removed refusal, a removed `agree.lean` link and a de-self-read SV body each
+turn a guard red; without `iverilog`/`yosys` on PATH the guards report
+COULD NOT VERIFY and fail closed (the shared register therefore now needs
+both tools on the host that runs it). The 2026-10-27 entry's open question
+is answered there.
+
+**`sv-div-1`'s fixture guard is repaired.** `sv_div_1_still_divergent`
+looked for a recorded Xcelium fixture by FILE NAME, and the CI readiness
+probe `harness/sv/xcelium_probe.py` and its unit test (34849ef6,
+2026-10-09) match that test while recording no operator result: the guard
+reported the row fixed and `harness/divergence_register.py` exited 1 from
+that commit on. Instrument source files (`*.py`, `*.pyc`, `*.sh`) are no
+longer counted; a recorded result file named for Xcelium still retires the
+row. No Xcelium fixture exists, so the row is still divergent. Recorded in
+the row (`guard_repaired`).
+
+**Synthesis-side divergences are written down**
+(`docs/sv-oracle-disagreements.md`, "Synthesis-side divergences"). On two
+`always_comb` shapes the proof API accepts, the model, Icarus and the LRM
+agree and Yosys does not: a `unique`/`priority case` with no matching item
+(the block's earlier value; Yosys reads `full_case`, `prep; eval` gives x
+and the netlist `y = a`), and x/z bits in a plain `case` item (`2'bx1`
+never matches `01`; Yosys's `$eq` makes it x under `eval` and a wildcard in
+the netlist). The svGolf post-synthesis check must flag designs that rely
+on either. `unique0` and a `unique case` with a `default` agree everywhere.
+
+**Two declared Icarus disagreements, hash-bound like the others.**
+`array_param_labels_l7` (`iverilog-single-element-minus-select`): Icarus
+evaluates `x[b -: w]` over a single-element range `[k:k]` with a constant
+(elaboration-time) base as `x[b +: w]`, in reads and writes, where the
+model, slang and Yosys select labels `b` down to `b-w+1`; with a run-time
+base Icarus reads labels `b` down to `b-w+1` as well and all three agree
+(verifier probe `vp_onedyn`). At `L = 7` the fixture's constant-base
+`u[L+1 -: 2]` reads `x1` in the model and
+`xx` in Icarus ("Single-element range direction"). `concat_undriven`
+(`iverilog-concat-target-undriven-init`, new fixture
+`Examples/system-verilog/sem2/concat_undriven/`, envelope regenerated by the
+extractor): `assign {y[3:2], z} = x;` leaves `y[1:0]` undriven, z in Icarus
+and x in the model ("Partial variable initialization"). Out-of-range
+concatenation leaves (`{y[4:3], z, y[2:0]} = x` over `[3:0]`) cannot be
+compiled by Icarus; Yosys `prep; eval` agrees with `run2` on all 64
+two-state inputs — a note, not a row.
+
+**Refusals documented** (`docs/sv-envelope-schema.md`, "Recorded refusals:
+parameter roots, first-dimension labels, concatenation targets"): an indexed
+part-select whose root is a parameter or localparam (`MASK[i*2 +: 2]`,
+`RangeSelectExpression:dynamic-indexed` although the base is constant), and
+a range select on such a root that is partly out of range at the
+instance's parameters (`MASK[P+1:P]` over `[7:0]` at `P = 7`, refused by
+`run2` as `PartSel:base` where Icarus and Yosys read the missing bit as x;
+in range it is admitted and matches Icarus, and on a signal root the
+partly-out-of-range select is admitted and agrees with both); a
+negative constant label on a canonical first dimension (legacy `BitSel`:
+`BitSel:index` on a read, `AssignL` on a write, while labels above the msb
+and every `ArraySel` select read x / write nothing); and the concatenation
+targets still refused — genvar/parameter-indexed leaves, `+:`/`-:` leaves, a
+right-hand side reading a target signal's name even on disjoint bits, a
+signed right-hand side that needs extension, `ArraySel` and `wire`-vector
+leaves.
+
+**Icarus host framing.** The sixteen `icarus_unavailable` crash signatures
+were recorded with Ubuntu's Icarus 12.0-2build2 and ERRORed on every run
+with Homebrew Icarus 12.0 on macOS, which reports the same assertion
+through macOS libc and the aborted `ivl` stage through a bash job report
+with run-varying process ids and temporary names.
+`harness/sv/oracle_disagreements.py` now reduces exactly those two framings
+to one canonical text on both sides before comparing (file, line, function
+and expression of an assertion are kept; which pipeline stage died of which
+signal is kept); stage, exit status, stdout and every other line stay exact.
+`HostFramingTests` (`harness/sv/test_oracle_disagreements.py`) accepts every
+recorded crash in its macOS framing and the two measured macOS signatures,
+and rejects twelve mutations (another assertion, line, function, expression
+or file; an aborted preprocessor; a segmentation fault; a bare `Aborted`; a
+missing abort report; another exit status or stage; an extra line).
+
+**Found, NOT fixed here (open, model-side, silent).** A `case` item wider
+than the case subject is truncated to the subject's width: with
+`logic [1:0] s`, `case (s) 4: y = 1;` matches `s = 00`, `3'd5:` matches
+`s = 01`, `3'b100:` matches `s = 00` and `-1:` matches `s = 11` in `run2`,
+while Icarus 12.0, Yosys 0.53 (`prep; eval` and the synthesized netlist)
+and IEEE 1800-2023 §12.5.1 (subject and items evaluated at the widest of
+them) give the `default`. The always_comb lowering accepts the shape
+(`lowerComb` is `some` on the `case (s) 4:` probe, as on the `unique case`
+and x/z-item probes above), so it reaches the settle-theorem API as well as
+`name.sem`. The envelope is right — slang wraps the subject in `Resize`
+to the widest width and emits the items at it — and
+`LeanModels/Sv/Param2.lean` drops it: `instStmt2`'s `caseStmt` arm fits
+every item to `sctx := selfWidth2 env elems subj`, and since this date's
+"Parameter types and context widths" entry `selfWidth2` reads a `Resize`
+as its OPERAND's width. Verifier probe `ac_casew` (2026-10-27, before that
+change) still gave the IEEE answer. A fix computes `sctx` as the maximum of
+the subject's and every item's self-determined width. Not a row: it is
+neither a simulator's departure from the standard nor a decision the tier
+has taken, and a failing row would only hide it inside the suite's FAIL
+count. The independent verifier reproduced it on `vr_cwide` (2-bit `s`;
+`case (s) 3'd6: y = 1; default: y = 5;` and `case (s) 2'd1: q = 2; -2:
+q = 3; default: q = 4;`): at `s = 10` `run2` gives `y = 001 q = 011`,
+Icarus and Yosys `prep; eval` give `y = 101 q = 100`, every other cycle
+agrees. Routed to the owner of `Param2.lean`; once fixed, a `cases2.json`
+row with an item wider than its subject (`vr_cwide`) pins it.
+
+**Open for the lead: the fleet floor now needs EDA tools.**
+`harness/divergence_register.py` is in `tools/triad.sh`'s `DEFAULT_FLOOR`
+(every lane's floor) and in `tools/c_torture_gate.sh`, and `sv-div-3`'s
+guards fail closed without `iverilog`/`vvp` and `yosys` on PATH (measured
+with `PATH=/usr/bin:/bin`: COULD NOT VERIFY on both guards, exit 1). CI
+installs Icarus but not Yosys. Either the floor's rationale in
+`tools/triad.sh` records that requirement, or every host that runs the
+floor installs Yosys; this pass changes neither (`tools/` is outside it).
+
+Differential suite (Icarus 12.0, macOS, `harness/sv/diff_test2.py --sim
+iverilog`): 153 cases, 113 verified, 16 declared simulator
+disagreements (14 before plus `concat_undriven` and
+`array_param_labels_l7`), 23 unavailable backends (the sixteen crashes now
+recognized), 24 skipped in all (the 23 plus the `xrun_only` row `t2_ci`), 0
+failed, 0 ERROR, exit 0 (before: 16 ERROR rows on this host). Register:
+`harness/divergence_register.py` OK, 3 live rows (sv 2, es 1), every live
+guard held; `--self-test` OK.
+
+## Default-point folds, static labels and nets (WP1) — 2026-10-28
+
+Round-1 verifiers found three places where sv-0.2 symbolic mode gave a
+SILENTLY wrong value — no refusal, disagreeing with Icarus 12.0 and with
+Yosys 0.53 or the LRM — each a fact read off slang's DEFAULT-point
+elaboration (a library module at its own defaults, a generate body at its
+first iteration). All three are now exact or loud
+(`docs/sv-envelope-schema.md`, "Default-point folds, static labels and
+nets"); a fourth, a mislabelled refusal, is relabelled.
+
+**(a) Unsized INT-class constants — exact.** `assign o = -1;` into a
+parameter- or genvar-width target is an implicit conversion of the 32-bit
+signed constant to the DEFAULT point's target type, and `_sym_conversion`
+fell through to the M0 fold: a literal of that width, zero-extended by Lean
+everywhere else (`w_stale_flat`: `[N+1:0]` at N = 7 read `000111111`, every
+tool `111111111`; `w_gvw_flat`: `001011` for `111111`; `v_cstale`: a child at
+`W = 8` read `00000011`/`00000001` for `-1`/`37`, every tool
+`11111111`/`00100101`). The extractor now emits the UNCONVERTED INT-class
+tree (`_sym_int_value_tree`, `_sym_int_value_node`: `Int`, `GenvarRef`,
+unqualified `ParamRef`, unary `- + ~`, integer arithmetic in value or
+constant spelling) — the `_sym_port_actual` treatment — whenever the
+conversion is SIGN-PRESERVING: an assignment-like `Implicit` conversion
+(the right-hand side keeps its own signedness, IEEE 1800-2023 §10.7,
+§11.8.2) or a `Propagated` one into a signed type. `fitExpr2` materializes
+it at the instantiated width. A `Propagated` conversion into an UNSIGNED
+type zero-extends a negative operand and stays `ConversionExpression:width`.
+A sized signed literal is a `SignedResize` of the literal at its own width
+(`_sym_signed_literal_conversion`; it, too, used to fold at the default
+width). Every other signed constant (`(3 > 2) ? -1 : 2`) is LOUD in a
+parametric family (`ConversionExpression:signed-constant`,
+`_sym_family_point_dependent`: an overridable parameter or an enclosing
+genvar) and keeps the exact fold in a one-point module. Side effect: INT
+expressions over parameters in value positions (`assign o = N - 1;`,
+`o = K;`, `B * 2` with a `byte` B, `S < 0` with a `logic signed [3:0]` S),
+which were `ConversionExpression:width`, are now admitted. No committed
+envelope changed under (a).
+
+**(b) Static labels over a parameter-dependent range — exact.**
+`_sym_array_select_depth1` chose "canonical `[msb:0]`" at the default point
+only, so `t[1 +: 2]` on `logic [K-1:0] t` (`K = N - 4`) and `v[1]` on
+`[N-1:0]` kept the legacy `PartSel`/`BitSel` encoding, which reads a label
+as an offset from lsb 0 at every point — wrong where the range is the
+ascending `[-1:0]` (`vq_k0` at N = 4: `o = x0`, every tool `xx`; `vn_n0` at
+N = 0). A select whose labels are all STATIC (literals, parameters,
+localparams, enum members, `$bits` queries — `_sym_label_static`) over a
+dimension whose declared bounds are not both literals is now an `ArraySel`
+path, normalized against `IEnv.dims` at every point. Exact rather than loud
+because the ∀-N proofs go through under their existing hypotheses, and
+because a loud Lean-side guard is not available without changing theorem
+statements: `instExpr2_bitSel_ident`, `instLhs2_bitSel`,
+`fitExpr2_bitSel_ident` (Gen2) pin label = offset for EVERY environment, and
+a declaration-level guard would falsify `ripple_elems`/`ripple_decls`, stated
+for every `N : Int` although `a`, `b`, `s` are `[-1:0]` at N = 0 (where no
+select on them is instantiated). Envelopes regenerated (10): `mul2d`,
+`partsel`, `ripple_add`, `ripple_fa`, `sem2/ff_one`, `sem2/hier_nested`,
+`sem2/hier_params`, `sem2/hier_width`, `sem2/probes/t2_sel`,
+`sem2/register_file_ff` (their 36 rows pass unchanged). Proofs: the
+envelope-shape pins `ripple_static_source` (`ripple_add`, `ripple_fa`) and
+the `mul2d` templates `s0T`/`c0T`/`t0T`/`pHiT` follow the new tree;
+`ripple_static` (both) and `mul2d_static` are re-proved with UNCHANGED
+statements (`c[0]`, `c[N]` over `[N:0]` are in range for every `N : Nat`;
+`s[0]`, `c[0]`, `t[0]`, `pp[0]` and the target `p[2*N-1:N]` under the
+existing `1 ≤ N`), through new `mul2d` lemmas `mul2d_p_dims`, `evalInt_pMsb`,
+`mulEnv_p` and the private `instExpr2_fill_ctx`. Every headline statement
+(`ripple_processes`, `mem_ripple_processes`, `ripple_sem_*`, the
+`ripple_add` spec/proof, `mul2d_processes`, `partsel_*`, `ripple_fa`) is
+unchanged; `#print axioms` stays within `[propext, Classical.choice,
+Quot.sound]`.
+
+**(c) Nets — loud.** A net's undriven bits read z (§6.6) and the semantic
+tier initializes every declaration to x; implicitly typed nets with packed
+dimensions were already loud (`packed: null`), but scalar implicit nets and
+explicitly typed ones passed the gate (`v_undf`, `v_undn`, `v_partnet`:
+`zz`/`z0` read as `xx`/`x0`; a scalar `wire w`/`output wire yo` too). An
+internal `wire` that would pass is now `NetSymbol:net-z`, an output port
+whose internal symbol is a net (`output wire logic`, `output wire`, the
+implicit `output y`) `PortSymbol:net-z` (`_sym_net_z`). Input net ports stay
+admitted. No committed sv-0.2 envelope declares either.
+
+**(d) Array-query labels.** `v[$bits(a) - 1 -: 2]` was refused and
+mislabelled `RangeSelectExpression:dynamic-signed-base` because
+`_sym_tree_static`/`_sym_reads_signal` read the query's argument as a
+run-time value. A `$bits` query of a declared signal whose declaration
+carries its width per point is now static (exact `ArraySel`, also as a
+target and under `$clog2`; narrowed in the repair round below — the first
+version admitted ANY argument); `$high`/`$size` of a signal are refused as
+`…:query-label` (the constant tier reads them as `width - 1`/`width`, exact
+only on a 1-D `[W-1:0]` range at every point) and keep the legacy encoding
+where they had it (cv32e40p `alu_div`'s `OpA_DI[$high(OpA_DI)]`).
+
+**Harness.** `harness/sv/diff_test2.py` gains LOUD-REFUSAL rows: a case
+with a `refusal` kind passes only when the runner refuses the design at the
+row's parameters and the kind appears in its error or in the envelope's
+`Unsupported` kinds; it runs no simulator and counts as a refusal, never a
+match (the summary line gains `N loud refusal(s)`).
+
+**Recorded, not fixed (open).** (1) Labels that mention a GENVAR or read a
+SIGNAL keep the legacy encoding, so at a point where the declared range is
+not `[m:0]` with `m ≥ 0` they still read the label as an offset: on
+`logic [N-1:0] v` at N = 0, `for (genvar g = 0; g < 2; g++) y[g] = v[g];`
+and `o = v[s];` give `y = 10`, `o = 1` where Icarus gives `x0`, `x`
+(silent). The route: genvar labels through `ArraySel` (template lemmas
+re-stated under geometry hypotheses, as `mul2d`'s `MulEnvOk` does) plus a
+run-time element `ArraySel` read. (2) NEW, outside this package, silent: a
+`Resize` wrapping a CONTEXT-DETERMINED operand is lowered by
+`instExpr2`'s `.resize` arm at the operand's own width and zero-extended,
+while §11.6.1 evaluates the operation at the context width: `assign c =
+a + b;` (4-bit `a`, `b`; `logic [N-1:0] c`, default N = 2, tree `Resize(2,
+a + b)`) at N = 8 with `a = 1111, b = 0001` gives `00000000`, Icarus
+`00010000` (`d = a - b`: `00001111` for `11111111`). A fix fits a
+non-rigid, context-sized operand at the context when the context is wider
+(not comparisons/reductions); among the ∀-N envelopes only `partsel` holds
+a `Resize`. (3) `$high`/`$size` of a declared signal in the constant tier
+are `width - 1`/`width` (Param.lean), wrong for a non-`[W-1:0]` range and
+for `$size` of a multi-dimensional array; only the `crossCheck` at the
+defaults catches it where the result is a localparam or a width. (4) NEW,
+silent, pre-existing (the original extractor emits the same tree): a signed
+parameter of a non-`int` type in an UNSIGNED context that is exactly as
+wide as the parameter at the defaults — `assign o8 = a + B;` with a
+`byte B = -3`, a 4-bit `a` and `logic [N:0] o8`, default N = 7 — needs no
+conversion there, so the tree holds a bare `ParamRef B`, which Lean
+sign-extends at a wider point while §11.8.2 zero-extends it (N = 40, a = 0:
+Icarus `0…011111101`, model `1…111111101`).
+
+Differential suite (Icarus 12.0, macOS, `python3 harness/sv/diff_test2.py
+--sim iverilog`): 190 cases, 144 verified, 16 declared simulator
+disagreements, 23 unavailable backends (24 skipped with the `xrun_only` row
+`t2_ci`), 6 loud refusals, 0 failed, exit 0. Re-extraction of every
+regenerable sv-0.2 envelope reproduces the committed bytes (124 same, 0
+diff; the 3 cv32e40p envelopes whose sources are elsewhere skipped).
+
+Differential rows (Icarus 12.0): `int_const_flat` (N = 7, 1, 2, 31, 40 and
+N = 12 with `B = 100`; Yosys 0.53 agrees at N = 1 and N = 40),
+`int_const_gen`, `int_const_hier`, `int_const_sized` (N = 7, 1, 30, 40),
+`label_k0` (N = 8, 4, 5, 3, 2), `label_n0` (N = 4, 0, 1, 2, -1),
+`label_param` (six `(N, P)` points), `bits_labels` (N = 6, 3, 9; Icarus 12.0
+aborts on the out-of-range target at N = 1, 2, where the model agrees with
+Yosys 0.53); loud-refusal rows `int_const_loud`, `net_z_flat`,
+`net_z_scalar`, `net_z_hier`, `net_z_part`, `high_label`. Extractor tests:
+`extractors/sv/test_symbolic_default_point.py` (15); two
+`test_symbolic_continuous_selects.py` cases now expect the `ArraySel`
+encoding of a literal label over `[W-1:0]`.
+
+### WP1 repair round (verifier round 2) — 2026-10-28
+
+The independent verifier found that the first version of (d) had opened a
+new silent path, and three PRE-EXISTING silent default-point folds of the
+same class. All four are now loud or exact; two smaller findings are fixed
+and the open residual stays recorded.
+
+**`$bits` labels, narrowed (regression of (d)).** `_sym_tree_static` and
+`_sym_label_static` treated `$bits(x)` as static for ANY argument, and Lean
+evaluates it from `x`'s instantiated declaration — whose width is a
+default-point literal for a packed struct/union over parameter-dependent
+members. Labels that used to be refused were admitted and wrong at every
+other point (verifier `vg1`: `v[$clog2($bits(s)) +: 2]` and the target
+`y[$bits(s) - 1 -: 2]` at N = 1, 2, 5, 8, 20; `vd1_p1`; `vj1`, a packed
+union; Icarus and Yosys agree with each other). `$bits` is now static only
+when `_sym_bits_query_exact` holds: its one argument names a variable or
+net whose type is a scalar, a packed vector over explicit ranges or a fixed
+typedef, an enum, or a packed struct/union whose layout is fixed at every
+point. Any other `$bits` label — an expression, a part-select, a
+point-dependent aggregate — is `…:query-label` (`_sym_inexact_bits_label`
+in `_sym_array_select`; `_sym_has_value_query` for converted trees). Rows:
+`bits_struct_fixed_n{1,2,4,9}` (exact), refusal rows `bits_aggregate`,
+`bits_expr_label`.
+
+**Point-dependent declaration shapes (pre-existing, root cause of the
+above).** A packed struct/union is stored as one `[W-1:0]` vector with fixed
+member `PartSel` windows, and a fixed unpacked array as one declaration per
+DEFAULT-point cell, so a member, element or dimension width that depends on
+an overridable parameter or a genvar was the default layout everywhere
+(`vg2`: `s.x` at N = 8 read `00000101`, Icarus and Yosys `10110101`; `vb4`:
+`mem[1]` of `[0:K-1]` at K = 1 a phantom cell that kept `d[3]`, Icarus
+`xx`). The HEAD extractor emitted the same trees. `_sym_syntax_point_dependent`
+walks a declaration's type and dimension syntax, following localparams,
+typedefs and declared signals to their own declarations (package members
+are fixed; anything it cannot classify counts as dependent), and in a
+parametric family such a declaration is now `Unsupported`:
+`…:default-point-aggregate` for a struct/union variable, net or port,
+`VariableSymbol:default-point-array` for an unpacked array (its unpacked
+dimensions, or a typedef'd element whose ranges were read off the canonical
+type). A parameter typed with such an aggregate gets an unrecoverable type
+(`packed: null`, refused by `crossCheck`). Refusal rows `aggregate_point`,
+`array_point`, `aggregate_param`. No committed envelope changed (re-extraction
+134 same).
+
+**Case comparison width (pre-existing, Lean).** `instStmt2` lowered every
+`case` item at the SUBJECT's self-determined width, while §12.5 compares at
+the widest of subject and items: an unsized item was truncated to a
+narrower subject — `case (b) -1:` on a 2-bit `b` matched `b = 2'b11` and
+`4:` matched `b = 0`, at the DEFAULT point too (Icarus: no match), and the
+verifier's `va2` (`case (a) -1:` on `logic [N:0] a`, default N = 40) matched
+21 ones at N = 20 (Icarus, Yosys: 0). The envelope's subject `Resize`
+carries only the default point's width. `Param2.lean` now lowers through
+`caseWidth2` (the maximum over subject and items at the current point) and
+fits the subject to it (`fitExpr2`: zero-extension; a `$signed` subject
+needing a widening is loud). `case … inside` compares pairwise (§12.5.4), so
+it keeps the subject's width when no item is wider and is otherwise loud
+(`Case:inside-width`; Icarus 12.0 does not parse `case … inside`). Every
+committed case statement has items no wider than its subject, so no
+existing lowering changed; the `pCaseW` `#guard` in `Param2.lean` pins the
+rule. Rows `case_width_n{1,2,3,20,32,33,40}` (exact), refusal row
+`case_inside_width`.
+
+**Smaller findings.** (1) `ConversionExpression:signed-constant` is used
+only for a signed operand that reads no signal (`_sym_tree_static`); a
+signed operand that does (`$signed(a) * -2` into `[N:0]`) is again
+`ConversionExpression:width`, as at HEAD (refusal row `signed_operand`).
+(2) The static-label routing of (b) exposed a second Icarus 12.0 reading
+of constant-base `-:`: over a multi-element ASCENDING range, a select whose
+base is the left label and whose width is the element count reads the whole
+vector (`t[-1 -: 2]` over `[-1:0]` is `t[-1:0]`; the LRM, Yosys 0.53 and slang
+read `{x, t[-1]}`). Declared (`iverilog-ascending-full-width-minus-select`,
+row `label_kminus_w1`, `docs/sv-oracle-disagreements.md`, "Ascending
+full-width minus select"); the family's other points pass
+(`label_kminus_w{4,3,0,m1,5}`). (3) The three envelopes whose sources are
+not on this machine (`Examples/system-verilog/{ff_one,alu_div,popcnt}`)
+predate (b) and still carry legacy `BitSel`/`PartSel` encodings for static
+labels; every claim their `ingest.lean` makes sits at a canonical point
+(`LEN = 8, 32`; `alu_div` at `[8, 3]`, `[32, 6]`; `popcnt` at its defaults)
+plus the point-independent `instantiate_WFNames`, where that encoding is
+exact. They are to be regenerated when the sources are available (and
+their `ingest.lean` cannot build while the umbrella `LeanModels` is red).
+(4) Pin statements whose TEXT followed the regenerated envelopes in (b):
+`ripple_static_source` (`ripple_add`, `ripple_fa`) and the `mul2d`
+templates `s0T`/`c0T`/`t0T`/`pHiT`; no headline ∀-N statement changed.
+
+**Still open (recorded, not fixed).** Genvar and signal (run-time) labels on
+a parameter-dependent range keep the legacy offset encoding, so at a point
+where the range is not `[m:0]` with `m ≥ 0` they read the wrong bit
+(`vb3`: `o = v[s]` on `logic [N-1:0] v` is `1` at N = 0 and `0` at N = -1,
+Icarus `x`). A Lean-side guard would falsify `instExpr2_bitSel_ident_dyn`,
+`instLhs2_bitSel_dyn` and the genvar template lemmas, stated for every
+environment; refusing every run-time bit-select on a parametric vector in
+the extractor would refuse correct designs at every realistic point (`N ≥
+1`). The route stays the recorded one: genvar labels through `ArraySel`
+under geometry hypotheses, plus a run-time element `ArraySel` read.
+
+Measured after the repair round: `python3 harness/sv/diff_test2.py --sim
+iverilog` — 214 cases, 160 verified, 17 declared simulator disagreements,
+23 unavailable backends (24 skipped with `t2_ci`), 13 loud refusals, 0
+failed, exit 0 (new rows: `bits_struct_fixed_n*`, `case_width_n*`,
+`label_kminus_w*`; refusal rows `aggregate_point`, `bits_aggregate`,
+`bits_expr_label`, `array_point`, `aggregate_param`, `case_inside_width`,
+`signed_operand`). Re-extraction of every regenerable sv-0.2 envelope: 134
+same, 0 diff, 3 skipped. The verifier's repros `vg1`, `vg2`, `vd1_p1`, `vj1`,
+`vb4` are refused at every swept point; `va2` (N = 20, 31, 32, 40, 50) and
+`vd2` (N = 0, 1, 2, 3, 4, 7) pass against Icarus 12.0. Extractor tests
+`test_symbolic_*.py` + `test_module_hierarchy.py`: 155 passed (eight new in
+`test_symbolic_default_point.py`).
+
+## One driver per bit on instance-free tops (WP2) — 2026-10-28
+
+F3's one-driver rule (`driversOk`, `Hier2.lean` "Drivers", round 1) was
+applied to every CHILD of a hierarchy and to a top only when the top held
+an instance, so an instance-free top relied on the extractor's overlap
+guard alone (`_symbolic_target_windows`), which sees literal-index windows
+at the default point only — the gap recorded as (2) under "Module instances
+in sv-0.2 symbolic mode" above. A flat top whose continuous drivers overlap
+through a genvar or a parameter was admitted and resolved by issue order:
+`for (genvar i = 0; i < 4; i++) assign y[i/2] = a[i];` loaded and gave
+`y = xx00` at `a = 0101`, where Icarus 12.0 refuses the design
+("Unresolved net/uwire y cannot have multiple drivers") and Yosys 0.53
+reports "multiple conflicting drivers" — a design a ⊨₂ proof could have
+been stated about while every oracle disagreed with it.
+
+**The rule now covers every top, at every parameter point.**
+`PDesign.instantiateG2` is `instantiate2` under `PDesign.driverGuard` (the
+same rule, at the module's own signals), and `PDesign.instantiateGD2` is
+its total family. `load_design_sv2` defines the flat `name.sem` as
+`PDesign.instantiateGD2 name.pdesign [P₁, …]` (and so for a hierarchical
+envelope whose top holds no instance in any generate branch),
+refuses at elaboration time an envelope that violates the rule at its
+defaults (message naming the signal and the clause), and the differential
+runner instantiates a flat envelope through `instantiateG2` and reports
+`PortConn:driver: <message>`. `instantiateH` is unchanged (its top guard
+still checks a top with an instance; `instantiateH_flat` and every other
+statement stand). One refinement of the rule's windows: an element select
+with a LITERAL index (`Lhs2.index n (.lit c) ew`, `c` without x/z) now
+drives element `c`'s window instead of the whole signal (`Lhs2.indexWin?`)
+— exactly what `resolveLhs2` writes and `Comb2Base`'s `Lhs2.window?` names;
+the sv-0.2 instantiation folds constant indices to slices, so no
+instantiated design changes.
+
+**What it does not refuse.** (Superseded the same day by the repair round
+below, which adds the `always_comb`/`always_ff` exclusivity clause and
+makes the §6.5 mixture clause per window.) Several PROCEDURAL writers of one variable
+are not checked — Icarus accepts them, and the exclusivity rules for
+`always_comb`/`always_ff` variables (IEEE 1800-2023 §9.2.2.2, §9.2.2.4)
+are applied by tools per longest static prefix (§11.5.3), so writers of
+distinct constant elements are legal. The one committed design with
+several procedural writers of one variable,
+`sem2/register_file_ff` (generate-indexed `always_ff` writers of distinct
+`mem` elements), stays admitted. A continuous driver of a procedurally
+written variable (§6.5's forbidden mixture) and any write to an input port
+(§23.3.3.2) remain refused, as in round 1. Scanned with the new families:
+every committed sv-0.2 envelope at its defaults and every `cases2.json`
+point — no committed envelope, `load_design_sv2` user or differential row
+changed status; the only `PortConn:driver` refusals are the new rows below.
+
+**Proofs: statements unchanged, guard discharged.** Every ∀-N proof through
+`name.sem` now removes the guard, with these new lemmas (`Hier2Gen.lean`):
+
+* `PDesign.instantiateGD2_of_ok` — the instantiation at the surface fuel
+  plus `driversOk` on its process list give `name.sem … = m`;
+  `PDesign.instantiateGD2_of_driversOk` (the same, stated on
+  `instantiateD2`), `PDesign.instantiateGD2_eq_driverGuard` (at any point),
+  `PDesign.instantiateG2_of_ok`, `Design2.errorDesign_driverGuard`.
+* The reusable route from the comb profile:
+  `driversOk_of_combDesign` (a `CombDesign` with positive write windows
+  passes `driversOk` at any names and any list of its input ports —
+  `CombDesign.disjoint`/`selfDisjoint`/`notInput` ARE the rule's clauses,
+  carried to the driver windows by `DrvWin.MatchList` /
+  `Lhs2.drvWins_matchList` and `DrvWin.overlaps_eq_false_of_matches`) and
+  its flat-family corollary `PDesign.instantiateGD2_of_combDesign`, with
+  `PDesign.instantiate2_inputNames`. Demonstrated on the proved design
+  behind `sem2/concat_add` (`cadd_driversOk`, from `cadd_comb` alone).
+* The process-list route: `driverWins_map` (with round 1's
+  `driverWins_cons`/`_append`/`_flatMap`), `DrvWin.overlaps_some`,
+  `DrvWin.overlaps_some_eq_false`, `DrvWin.overlaps_none_left`/`_right`,
+  `pairwise_flatMap_range` (a generate family's windows: one cell, and two
+  cells `j < k`) and `rowMajor_le` (row-major bases `i * K` for `omega`).
+
+Discharged: `ripple_add/gen.lean` (`ripple_driversOk`, every `N`;
+`ripple_sem_eq : ripple_add.sem N = ripple_add.pdesign.instantiateD2 [N]`
+re-proves `ripple_sem_processes`, `mem_ripple_sem_processes`,
+`ripple_sem_decls`, so `proof.lean`/`spec.lean` are untouched) and
+`mul2d/gen.lean` (`mul2d_driversOk`, every `N`: rows stated over their
+base offsets, `rowMajor_le` between rows; `mul2d_processes` re-proved).
+`partsel/gen.lean` and the eight `sem2/*/agree.lean` relate `name.sem` by
+`#guard` at concrete points, which pass unchanged; `ripple_fa` is
+hierarchical (round 1's `ripple_fa_driversOk`).
+
+**Recipe for a svGolf proof** (`Hier2Gen.lean` module docstring): prove
+the instantiation `pd.instantiate2 [N] (PDesign.surfaceFuel [N]) = .ok m`
+(the `Gen2.lean` recipe), then either (a) `CombDesign m` — which the settle
+theorem needs anyway — and positive write windows:
+`PDesign.instantiateGD2_of_combDesign h hc hpos : name.sem N = m`; or (b)
+the process list `P N` of `m`, its windows by `simp only [driverWins_cons,
+driverWins_append, driverWins_flatMap, driverWins_map, Process2.drvWins,
+Lhs2.drvWins, List.filter_cons, …]`, disjointness by
+`pairwise_flatMap_range` + `simp [DrvWin.overlaps]` + `omega`, and
+`driversOk_of_continuous` → `PDesign.instantiateGD2_of_ok`. Then rewrite
+every `name.sem N` fact along the equation.
+
+**Rows** (`harness/sv/cases2.json`, sources `Examples/system-verilog/sem2/drv_*`):
+`drv_genvar_ov` (the probe, loud `PortConn:driver`), `drv_genvar_disj`,
+`drv_genvar_disj_n1`, `drv_genvar_disj_n3` (`y[2*i +: 2]` over a genvar and
+`N`: admitted, PASS against Icarus 12.0), `drv_param_ov` (`y[K+1:K]` next
+to `y[1:0]` at `K = 2`: PASS), `drv_param_ov_k1`, `drv_param_ov_k0` (the
+same envelope at `K = 1, 0`: loud). In-Lean pins: `Hier2.lean` `#guard`s
+`flatLoud` (`pGv`, `pParOv`, `pDrvTwice`, `pDrvIn`).
+
+**Doc fixes (round-1 leftovers).** `Comb2Base`'s `Lhs2.window?` docstring
+no longer calls concatenation targets out of profile (they are in, through
+`Lhs2.windows?`); `Comb2Proc`'s covered-shapes text qualifies
+"`unique`/`priority` do not change execution" — true in simulation (Lean,
+Icarus, §12.5.3), not after Yosys 0.53 `proc` (a `unique`/`priority` case
+with no matching arm is don't-care; x bits in plain `case` item constants
+are wildcards; `docs/sv-oracle-disagreements.md`); its gaps paragraph
+records that a block-local declaration inside `always_comb` reaches the
+envelope as `LocalDecl`, which the sv-0.2 ingestion refuses, and that
+`unique if`/`unique0 if`/`priority if` are refused by the extractor
+(`ConditionalStatement:Unique`/`:Unique0`/`:Priority`).
+
+Measured: `python3 harness/sv/diff_test2.py --sim iverilog` — 221 cases,
+164 verified, 17 declared simulator disagreements, 23 unavailable backends
+(24 skipped), 16 loud refusals, 0 failed, exit 0 (new: 4 verified, 3 loud).
+A scan of all 141 committed sv-0.2 envelopes at their defaults and all 221
+case points through `instantiateG2`/`instantiateH`: `PortConn:driver` only
+on `drv_genvar_ov` (defaults and row) and `drv_param_ov` at `K = 1, 0`.
+Re-extraction of every regenerable sv-0.2 envelope: 137 same, 0 diff, 3
+skipped (the three new envelopes included). The ∀-N proofs and every
+`load_design_sv2` user build with unchanged statements; the new theorems'
+`#print axioms` are within `[propext, Classical.choice, Quot.sound]`.
+
+### WP2 repair round (verifier round 2) — 2026-10-28
+
+Three verifier findings, all fixed.
+
+**(1) Procedural writers of one bit were admitted and silently ordered.**
+WP2's rule checked continuous drivers only, so two `always_comb` (or
+`always_ff`) processes writing one bit — illegal under IEEE 1800-2023
+§9.2.2.2/§9.2.2.4, an error in slang's full analysis
+(`-Wmultiple-always-assigns`) — loaded and ran with `Sem2`'s process order
+deciding the bit: `always_comb y[0] = a[0]; always_comb y[0] = a[1];` gave
+the second block's value where Icarus 12.0 gives the first's; a genvar- or
+parameter-dependent pair (`always_comb y[i/D] = a[i]` at `D = 2`,
+`y[K]`/`y[0]` at `K = 0`) and two generate-loop `always_ff` writers
+diverged the same way (verifier rows `pw_lit`, `pw_ov`, `pw_par`, `pw_ff`;
+for the flop pair neither `σ_src` nor `σ_rev` matched Icarus). Round 1's note that "slang and the extractor report it at
+the default point" was wrong: the extractor never runs slang's driver
+analysis. `driversOk` gains a fourth clause, `procExclusiveOk`: no window an
+`always_comb`/`always_ff` process writes (`Process2.exclusive`;
+`Process2.procWins` = `Stmt2.drvWins` of its body, every branch, a run-time
+index the whole signal — exactly the longest static prefix, §11.5.3) shares
+a bit with a window ANY other process writes (`Process2.exclClash`). Two
+plain `always @(posedge clk)` writers stay admitted (legal; Icarus runs
+them). `alwaysFFR` counts as exclusive because it does not record whether it
+came from `always_ff` or from a plain `always @(posedge clk or negedge rn)`:
+two plain async-reset writers of one bit are refused although legal — a
+conservative LOUD over-refusal; no committed envelope or row has one.
+
+**(2) The §6.5 mixture clause was per signal.** WP2 refused a continuous
+driver of ANY bit of a procedurally written variable, which also refused
+legal flat designs Lean had simulated exactly like Icarus
+(`always_comb y[0] = a; assign y[1] = b;`), and the docs cited §6.5 for
+it although §6.5 forbids the mixture only on one longest static prefix. The
+clause is now per window: a continuous window must share no bit with any
+procedural window (`driversOk`'s second clause). The input-port clauses
+stay per signal (any write of an input port is §23.3.3.2's).
+
+**(3) Default-point cell indices (extractor, pre-existing).** A constant
+element select into a fixed unpacked array names its cell, and slang's
+constant for `m[i]` (genvar) or `m[K]` (overridable parameter) is the
+DEFAULT point's: `for (genvar i …) assign y[i] = m[i];` read `m[0]` at
+every `i` (y = 0000 at a = 0110, Icarus 0110), `assign m[K] = a;` wrote
+`m[0]` at every `K` (at `K = 1` Icarus gives `zz1z`). WP2's rule had only
+made the multi-iteration WRITE form loud by accident (two drivers of
+`m[0]`). Additive extractor hook `_sym_cell_index_point_dependent` (five
+one-line call sites: the cell-name helper, both out-of-bounds helpers, the
+symbolic select read, and both assignment converters): in a parametric
+family a constant select INTO an unpacked dimension whose index names a
+genvar or an overridable parameter is `Unsupported`
+(`ElementSelect:default-point-index`), read or write. Literal and localparam
+indices, run-time indices and a genvar bit-select inside a cell
+(`m[0][i]`) are unchanged; M0 mode never reaches it (`_SYM is None`).
+Pinned by `extractors/sv/test_symbolic_cell_index.py` (6 tests).
+
+**Proofs.** No statement changed. `Process2.procWrites` is now
+`procWins.map (·.1)` (the same value), `driversOk_of_continuous` is
+re-proved from its unchanged hypotheses (the new clauses hold vacuously
+without procedural windows: `procWins_nil_of_procWrites`,
+`procExclusiveOk_of_procWins_nil`), and so every route of WP2 —
+`driversOk_of_combDesign`, `PDesign.instantiateGD2_of_combDesign`,
+`ripple_driversOk`, `mul2d_driversOk`, `ripple_fa_driversOk`,
+`cadd_driversOk` — builds untouched. New for designs WITH procedural
+processes: `driversOk_iff` (the rule clause by clause, as `Pairwise` /
+`∀ … ∈` statements), `procExclusiveOk_iff`, and
+`Process2.exclClash_of_procWins_nil_left`/`_right` (a continuous assign
+clashes with nothing). Recipe: `driversOk_iff.mpr ⟨…⟩`, the windows by
+`simp [driverWins_cons, …, Process2.procWins, Stmt2.drvWins,
+Stmt2.drvWinsList, Lhs2.drvWins]`, generate families by
+`pairwise_flatMap_range`, each pair by `DrvWin.overlaps_some_eq_false` +
+`omega`.
+
+**Rows** (sources `Examples/system-verilog/sem2/`): `drv_pw_lit` (two
+`always_comb` on `y[0]`, loud), `drv_pw_gv` (genvar/parameter pair, loud at
+`D = 2`) and `drv_pw_gv_d1` (pass), `drv_pw_par` (pass at `K = 1`) and
+`drv_pw_par_k0` (loud), `drv_pw_ff` (two `always_ff`, loud at `D = 2`) and
+`drv_pw_ff_d1` (pass), `drv_mix` (`always_comb y[0]` + `assign y[K]`, pass
+at `K = 1`) and `drv_mix_k0` (loud); `cell_genvar`, `cell_param`,
+`cell_param_k1` (loud `ElementSelect:default-point-index`) and the control
+`cell_fixed`, `cell_fixed_w3` (pass). slang's full analysis refuses exactly
+the loud driver points and accepts the passing ones. In-Lean pins:
+`Hier2.lean` `pPw` (`flatLoud` at each clause, including a run-time index,
+`always_ff`/`always` pairs, and one process writing a bit twice).
+
+Measured: `python3 harness/sv/diff_test2.py --sim iverilog` — 235 cases,
+170 verified, 17 declared simulator disagreements, 23 unavailable backends
+(24 skipped), 24 loud refusals, 0 failed, exit 0 (new: 6 verified, 8 loud;
+every earlier row keeps its verdict). A scan of all 148 committed sv-0.2
+envelopes at their defaults and all 235 case points through
+`instantiateG2`/`instantiateH`: `PortConn:driver` only on the `drv_*` rows
+meant to be loud — `cv32e40p_register_file_ff`'s generate-indexed
+`always_ff` writers (distinct constant `mem` elements) stay admitted, and no
+committed envelope or `load_design_sv2` user has two writers of one window.
+Re-extraction of every regenerable sv-0.2 envelope with the cell-index
+hook: 145 same, 0 diff, 3 skipped (the new envelopes included). The ∀-N
+proofs, the eight `agree.lean` files and every buildable `load_design_sv2`
+user build with unchanged statements; the new theorems' `#print axioms` are
+within `[propext, Classical.choice, Quot.sound]`.
+
+## The multi-point cross-check (CX, round 3) — 2026-10-28
+
+Rounds 1–2 closed a long tail of silent wrong values of ONE class: the
+extractor elaborates a symbolic envelope with slang at the DEFAULT
+parameter point, and something it computes there — a width, an offset, a
+cell, a sign — leaks into the symbolic tree, so `name.sem P` is wrong at
+other points `P` while every default-point check passes. Each was found by
+a verifier and fixed by its own guard (`ElementSelect:default-point-index`,
+`VariableSymbol:default-point-array`, `…:default-point-aggregate`,
+`ConversionExpression:signed-constant`, …). This round replaces the
+whack-a-mole with a check that makes the whole class loud at chosen points.
+
+**The check.** `extract.py --top T … --probe-points "N=1;N=4,W=8"` re-runs
+the SAME symbolic extraction with slang's top-level `paramOverrides` set to
+each point (slang then elaborates the point itself) and writes the opt-in
+sidecar `<file>.sv.probes.json` (`docs/sv-envelope-schema.md`, "Probe
+sidecars"); the envelope stays byte-identical. Each instance of the
+point-elaborated hierarchy is probed too (its definition re-extracted alone
+at the overrides it receives there). `LeanModels/Sv/Probe2.lean`
+(`PDesign.pointVerdict`, `PDesign.pointAgrees`) brings the envelope's
+module and the point's module to the point with the same `atPoint`,
+instantiates both with the same `instantiateG2`/`instantiateH`, and compares
+the two `Design2` values (declarations exactly; processes in order,
+structurally, after a width-identity normalization); it also replays the
+point module's own `resolved` metadata at the point (the load gate's
+Lean-vs-slang differential, extended to every probe point) and fails on
+slang errors at the point. A fold differs between the two extractions, so
+it is caught wherever it changes something.
+
+**Verdicts.** `agree` (the only pass); `differ` — two VALUES differ, a
+silent fold; `unconfirmed` — equal except where one side is LOUD (slang's
+tree at the point holds a conversion the extractor does not admit, so
+nothing vouches for the envelope's value there); `metaDiffer`,
+`frontendRejects`, `refused`. A refusal on either side is never agreement.
+
+**Consumers.** `load_design_sv2` runs every entry of a sidecar when one
+exists and refuses the envelope at the first non-`agree` entry, naming the
+point, the entry and the first differing declaration or process (and its
+innermost differing node). `diff_test2.py --xcheck` (DEFAULT ON)
+re-extracts every row with parameter overrides at the row's point (the
+committed envelope must be byte-identical to the fresh extraction, else
+`XCHECK-STALE`), and the runner prints the row point's verdicts
+(`runner2.lean … <probes.json>`); any `FAIL` is `XCHECK-FAIL`, a failed
+case; `UNCONFIRMED` passes only when every simulator then matches the model
+at that very point. The svGolf checker calls `probeReportString` /
+`probeCheckString` / `probeCheckFile` (`Ingest2.lean`; `probeCheckFile`
+answers `.ok none` when no sidecar exists — nothing compared, not
+agreement); `harness/sv/xcheck2.lean` is the command-line front end
+(`--batch` for sweeps). Committed sidecars guard the ∀-N proof examples
+`ripple_add` (N = 1, 2, 3, 5, 8, 16), `mul2d` (N = 1, 2, 3, 5, 8),
+`partsel` (eight points over N and W) and `ripple_fa` (N = 1, 2, 3, 5, 8,
+16, every `full_adder` instance included): all agree, their proofs build
+with unchanged statements, and the load-time cost is below the noise
+(partsel: 2.25–2.30 s with the sidecar, 2.28–2.38 s without).
+
+**False mismatches, measured and removed.** Comparing the raw instantiated
+trees, the sweep below reported 81 non-agreeing entries; 36 of them were
+equal circuits written differently, all from one cause — slang inserts a
+conversion exactly where the widths at ITS point differ, so the same source
+carries a conversion that is the identity at one point and absent at the
+other (`resize 4 a` against `a` with a 4-bit `a`; `resize 8 (c ? 0 : r)`
+with a 32-bit `0` against `c ? 8'b0 : r`; `resize 4 (c & resize 6 b)`
+against `resize 4 c & b`; a resize around an operand that is already loud).
+`Expr2.norm` removes exactly those — an identity `resize`/`resizeSigned`
+vanishes, a resize of a literal is evaluated, nested truncations merge, a
+resize moves through a ternary or a bitwise `& | ^` whose operands have one
+width, an expression with a loud operand is that operand (the evaluator is
+strict in every operand) — each rule an equation of `evalExpr2` on
+width-correct values; nothing moves through arithmetic, whose whole-vector
+x-collapse sees the high bits (`#guard`ed both ways in `Probe2.lean`).
+After it: 0 false mismatches.
+
+**Measured** (every sv-0.2 envelope whose top has parameters and whose
+sources are on this machine — 66 envelopes — at every parameter alone over
+N ∈ {1..8, 16, 32} plus every `cases2.json` row's own point; one point
+dropped whose declarations exceed 65536 bits; 967 points, 1145 entries with
+178 instance entries):
+
+| verdict | entries | what |
+|---|---|---|
+| agree | 1100 | |
+| differ (silent fold) | 0 | none in any committed envelope |
+| unconfirmed, point refuses | 30 | `context_divider`/`_16`, `context_power`/`_16` at W = 1..7 (`ConversionExpression:signed-constant` on `(-8'sh80) / 8'sd2` and `** 2`), `case_width` at N = 33, 40 (`ConversionExpression:width` on the item `N`); all 30 simulator-correct (Icarus 12.0: the 28 division/power points as scratch rows, the two `case_width` rows in the suite) |
+| unconfirmed, envelope refuses | 1 | `int_const_loud` N = 32 |
+| unconfirmed, both refuse differently | 3 | `const_wrap` K = 2, 3; `array_point` K = 1 |
+| refused | 11 | `aggregate_param` at every N (the envelope itself refuses: unrecoverable packed dimensions); `register_file_ff` ADDR_WIDTH = 32 (generate fuel) |
+
+Cost: extraction 45 ms per point (in process, 43.8 s for the sweep), the
+Lean check median 1 ms, p90 6 ms, max 7.4 s per point
+(`register_file_ff` at 256 registers); the whole sweep is one
+`xcheck2.lean --batch` process of 19–33 s wall time (machine load).
+
+**The check catches the folds of rounds 1–2.** With each guard disabled
+again (monkeypatched to "never point dependent", scratch extractions) the
+cross-check reports a SILENT difference at every non-default point where
+the fold changes the design, and the current extractor agrees (or is loud
+on both sides): `_sym_cell_index_point_dependent` (`cell_param`: the
+envelope writes `m[0]`, slang at K = 1, 2, 3 writes `m[K]`),
+`_sym_array_point_dependent` (`array_point`, K = 1, 3, 4: declaration
+count 6 vs 5/7/8), `_sym_aggregate_point_dependent` (`aggregate_point`,
+`bits_aggregate`, N = 1, 2, 4, 8: `s` 5 bits vs `N + 2`), and the
+signed-constant guard (`int_const_loud`, N = 32). `load_design_sv2` of the
+`cell_param` mutation refuses at K = 1 with "differ (SILENT default-point
+fold): … envelope … (Lhs2.ident "m[0]") … ≠ point … ".
+`extractors/sv/test_probe_points.py` pins the extractor half (byte-identical
+envelope, recorded points and instances, refused points, the mutation
+visible in the sidecar, every committed sidecar regenerating byte for
+byte).
+
+**Rows.** `xcheck_div_w4`, `xcheck_pow16_w3` (an `UNCONFIRMED` point the
+simulator verifies). Every earlier row with overrides now also runs the
+cross-check; `case_width_n33`/`_n40` are `UNCONFIRMED, simulator-verified`.
+Measured: `python3 harness/sv/diff_test2.py --sim iverilog` with the
+cross-check on (255 cases, the WP4 rows of the same day included): 181
+verified, 17 declared simulator disagreements, 24 skipped (unavailable
+Icarus backends), 33 loud refusals, 0 failed — of the 118 rows with
+integer overrides, 107 run rows `xcheck:agree`, 4 `UNCONFIRMED,
+simulator-verified` (`case_width_n33`, `_n40`, the two new rows), and the 7
+loud rows report it for information (6 agree; `aggregate_param`'s envelope
+refuses at its point). Seven cases first ERRORed on a missing `.olean`
+while the other lane rebuilt `Param2`; each passed when rerun alone.
+
+**Not covered — for WP FOLDS.** (1) A fold whose dependency is a GENVAR,
+not a parameter: the extractor binds a generate-for body from its first
+iteration at every point alike, so the multi-point check cannot see it
+(the round-2 `cell_genvar` reads were found by a verifier, not by this).
+A per-iteration check would compare slang's elaborated `genblk[i]` bodies
+with Lean's substitution. (2) The `unconfirmed` class is over-cautious on
+every measured case: the extractor refuses at the point a conversion it
+would not need at the default (a signed constant narrowed into a W-bit
+target; a 32-bit parameter widened to a 40-bit case subject); admitting
+those conversions symbolically would turn 30 entries into `agree`.
+(3) A hierarchy's child is checked at the overrides slang gives it, which
+are not compared with the values `instantiateH` computes for it.
+(4) `Expr2.norm`'s rules are argued and `#guard`ed, not proved (they run
+in the checker only; a wrong rule could only hide a fold, never change
+`name.sem`).
+
+### CX repair round (verifier round 3) — 2026-10-28
+
+The independent CX verifier returned `fix` with two majors and two minors
+(and, as one of the majors, the round-2 WP2 verifier's two majors in Lane
+B's extractor, which CX was asked to carry and had not). All are fixed;
+no theorem statement changed.
+
+**(1) The probe compilation elaborates the top alone.** slang applies
+`paramOverrides` to EVERY top-level module of a compilation, and
+`getAllDiagnostics` counts the errors of every one. A source set holding
+an unrelated, uninstantiated module with a parameter of the same name
+(`multi_top` beside `side_mod`, whose `if (N > 6) $error(…)` fires at
+N = 8) made the point extraction report `frontend_errors = 1`, so
+`xcheck2`, `diff_test2` (`XCHECK-FAIL`) and `load_design_sv2` all refused
+a DUT that Icarus 12.0, Xcelium, Yosys 0.53 (`chparam; eval`) and
+Verilator 5.042 run correctly at N = 8 (verifier evidence); the same cause
+could inject `Division:/Remainder:/Power:/Shift:invalid-compilation`
+markers into the point module. At a probe point `_sym_top_compilation(top)`
+now sets `topModules = {top}` beside `paramOverrides`, and the
+`frontend_errors` compilation shares it — a testbench's `#(.N(v))` and
+`name.sem` override the DUT alone. The default-point envelope is still one
+plain compilation of all sources (byte-identical). Fixture
+`sem2/multi_top` (rows `multi_top`, `multi_top_n8`: PASS, `xcheck:agree`);
+test `test_unrelated_top_neither_receives_the_point_nor_counts`.
+
+**(2) The round-2 WP2 verifier's majors.** The CX report said the round-2
+journal had no final `WP2:verify` result. That was wrong: the second
+`WP2:verify` entry (key `v2:42213afc…`) has a `result` with verdict `fix`
+and two majors in Lane B's extractor. Both are fixed here
+(`docs/sv-envelope-schema.md`, "Declaration initializers"):
+
+- *An output-port initializer was dropped.* slang keeps
+  `output logic [1:0] y = 2'b10`'s initializer on the PORT symbol, not on
+  the port's internal variable, and `convert_port_sym` never read it:
+  `name.sem` gave `y = x1, x0` where Icarus gives `11, 10` (probe
+  `vg_initq`). The `Port` node now carries it as an optional `init` (the
+  key is absent without one), ingested (`Ingest2.parsePDecl`) into
+  `PDecl.init` exactly like a `Var`'s; an output NET port with one (illegal,
+  slang `DisallowedPortDefault`) is `PortSymbol:initializer`; the Lean
+  side refuses an input `Port` carrying one (a port default stays the
+  connection's `PortConnection:default`). This was the SAME at every
+  point, so the cross-check could not see it: the parametric twin
+  `vg_initqp` agreed at N = 3, 5 while wrong at every N.
+- *An initializer plus a continuous driver was admitted.* A variable's
+  declaration initializer is a procedural write (§10.5) the one-driver
+  rule never sees, so `logic [1:0] t = 2'b10; assign t[0] = a;` mixes
+  continuous and procedural writers (§6.5): slang `-Wmixed-var-assigns`,
+  Icarus "Unable to assign to unresolved wires", Yosys 0.53 a conflicting
+  constant driver — and the model ran it (`y = 11, 10, 1x`). A continuous
+  driver of any bit of an initialized declaration is now refused: `assign`
+  → `ContinuousAssignSymbol:initialized-variable` / `:initialized-net`,
+  instance output connection → `PortConnection:initialized-variable` /
+  `:initialized-net` (a net's initializer is itself a continuous driver,
+  §10.3.1, so the extra driver is a resolved multi-driver net: Icarus gives
+  `w[0]` = 1, x, x, 1 for `a` = 1, 0, x, z). Only the target PATH is
+  walked (an index is read, not written); an output variable port's
+  initializer is found on its port symbol; procedural writers
+  (`always_comb`, `always_ff`) of an initialized variable stay admitted.
+  (CORRECTED round 4, Lane A: Xcelium 24.03 rejects every `always_comb` /
+  `always_ff` writer of an initialized variable, `*E,MULAXX`, so they are
+  now refused, `ProceduralBlockSymbol:initialized-variable`; a plain
+  `always` writer stays admitted. See "Declaration initializers, every
+  form, and the always_comb/always_ff mixture (round 4, Lane A)" below.)
+  The suggested `driversOk` alternative was not taken: the exclusivity
+  clause and its theorems stay untouched. Before the guard the net form
+  was already loud for an unrelated reason (a `wire [1:0]` net's packed
+  dimensions are not recovered in symbolic mode); the variable, port and
+  hierarchical forms were silent.
+
+Rows (Icarus 12.0): `vg_initq`, `vg_initqp`, `vg_initqp_n1`, `_n3`, `_n5`,
+`vg_initc` PASS; `vg_init`, `vg_initp` (`ContinuousAssignSymbol:
+initialized-variable`), `vh_init` (`PortConnection:initialized-variable`),
+`vg_initn` (`ContinuousAssignSymbol:initialized-net`) loud. Tests:
+`extractors/sv/test_sym_initializers.py` (11). (Round 4, Lane A: the six
+PASS rows are now loud refusals, `ProceduralBlockSymbol:initialized-
+variable` — Xcelium 24.03 rejects an `always_ff`/`always_comb` writer of an
+initialized variable; see the round-4 entry below.)
+
+**(3) Untyped child parameters (minor).** An untyped parameter takes the
+type of its final value (§6.20.2), so `uchild2 #(.P(4'd9))` has a 4-bit `P`
+while the probe's integer override `P=9` gives a 32-bit signed one; the two
+instances `#(.P(4'd9))` and `#(.P(9))` were merged into one int probe that
+checked another family member. `_probe_int_typed` now records such an
+instance unprobed (`overrides: null`, a loud `refused` entry): an untyped
+parameter (implicit type, no range) is probed only when its type at the
+instance is the 32-bit signed one. No silent consequence existed
+(`instantiateH` already refuses a sized override of an untyped parameter);
+test `test_untyped_sized_child_override_is_unprobed`.
+
+**(4) Messages and the harness module list (minor).** Every non-agreeing
+verdict used to print "the envelope and slang's extraction at this point
+differ (a default-point fold)" (`diff_test2.py`) and "…something the
+extractor computed at the defaults leaked…" (`load_design_sv2`), also for
+`frontendRejects`, `metaDiffer` and `refused`, where nothing differed.
+`ProbeVerdict.meaning` (`Probe2.lean`) now says what each verdict means
+(only `differ` is a fold), `load_design_sv2` appends it, and `diff_test2`
+prints a neutral `XCHECK-FAIL` headline above the verdict lines.
+`SV_LEAN_MODULES` gains `CombGuard2` (after `Sem2`; `Param2` imports it),
+so an edit to it rebuilds the harness's `Param2`/`Hier2`/`Probe2`/`Ingest2`.
+
+The round-2 WP2 verifier's minor on `test_division.py::test_selected_
+constant_positions_do_not_acquire_runtime_markers` (it still looked for
+the `PartSel` that the round-2 static-label change turned into an
+`ArraySel`) is fixed in the test: it reads the `ArraySel`'s `part.left`,
+same assertion. Its other minors (`driversOk_of_lowerComb`, the per-cycle
+`vg_plain2` race) are not Lane B's.
+
+**Measured.** `reext`: same 161, diff 0, skip 3 (the cv32e40p envelopes,
+sources off-machine) — no committed envelope had an output-port
+initializer or an initialized continuous target. The CX sweep re-run with
+the repaired extractor (68 envelopes — the 66 of CX plus `vg_initqp` and
+`multi_top` — 987 points, 1165 entries): every one of the 1145 entries of
+the CX sweep keeps its verdict (1100 agree, 34 unconfirmed, 11 refused,
+0 differ) and the 20 new entries agree; extraction 39 ms per point (38.4 s
+in all), the Lean batch 12.9 s wall. `python3 harness/sv/diff_test2.py
+--sim iverilog` with the cross-check on, 271 cases (the WP4 rows of the
+same day included): 189 verified, 20 declared simulator disagreements, 24
+skipped (23 unavailable Icarus backends), 38 loud refusals, 0 failed, 0
+errors; 111 row points `xcheck:agree`, 4 `UNCONFIRMED, simulator-verified`
+(unchanged). Extractor suite `python3.12 -m pytest extractors/sv/`: 1744
+pass, 3 skipped, 0 failed (`test_division` included). Builds (one slot command): the
+SV modules, the ∀-N proof examples, the nine `agree.lean` files
+and every non-umbrella `load_design_sv2` user, unchanged statements.
+
+## The `always_comb` self-read guard (WP4) — 2026-10-28
+
+**Decision (Thomas, 2026-10-28): refuse self-reading `always_comb` bodies,
+loudly.** IEEE 1800-2023 §9.2.2.2.1 leaves out of an `always_comb` block's
+implicit sensitivity list "any expression that is also written within the
+block", so an event-driven simulator runs the block once per wake-up and a
+read of a bit the block writes LATER sees the previous run's value; `Sem2`'s
+`combSettle2` re-runs the block to its fixpoint. Icarus 12, Xcelium 24.03
+and mox-sim show the stale value, Verilator 5.042, Yosys 0.53 and the settle
+semantics the combinational one: no answer is safe. `sv-div-3` (declared the
+same morning, `run2` keeps the settle answer) is RETIRED by this refusal.
+
+**The rule** (`LeanModels/Sv/CombGuard2.lean`, `Stmt2.combViol`): a body is
+refused when, on some control path, a bit is READ before the path writes it
+AND the path WRITES that bit later — per bit, path-sensitive. A static walk
+carries `M`, the bits written on every path so far (`Stmt2.mustW`: an `if`
+without `else`, a `case` without `default`, a run-time index target and a
+procedural concatenation must-write nothing), and `A`, the bits some path
+may write after the current statement (`Stmt2.mayW`: a run-time index may
+write all of its signal); a read outside `M` that the current assignment or
+`A` may write is a violation. Conditions are independent (a body has no
+loops, so every path through a point is a prefix times a suffix), which
+makes "outside `M`, inside `A`" exactly "some path reads it unwritten and
+writes it later". Reads: `if` conditions, `case` subjects and patterns,
+right-hand sides, the index expressions of reads and targets (and the
+operands of a compound assignment once lowered — the symbolic extractor
+still refuses `+=` itself, `AssignmentExpression:compound`). A constant
+slice reads/writes exactly its bits; after instantiation every constant
+index IS a constant slice (`instExpr2`/`instLhsLeaf2`), so constant indices
+are decided exactly and every `.index` is a run-time one, treated as a
+may-overlap with the whole signal. Refused: `y = t; t = a;`,
+`if (c) t = a; y = t; t = b;` (the `c = 0` path; Verilator's ALWCOMBORDER
+misses it), `t[0] = a; y = t[1]; t[1] = b;`. Admitted: a latch
+`if (en) q = d;`, a latch reading its held value `if (en) q = d; y = q;`,
+`t[0] = a; y = t[0]; t[1] = b;`, temporaries written on every path first.
+
+**Process kinds.** `combSettle2` re-runs the comb-phase kinds
+(`Process2.isCombPhase`): `alwaysComb`, continuous `assign`, and the loud
+`unsupported`. Only `alwaysComb` runs once per wake-up in a simulator, so
+only it is guarded; a continuous `assign` is re-evaluated on every change of
+its right-hand side, its own writes included, in both readings, and
+`always_ff`/plain `always @(posedge …)`/`alwaysFFR` run once per edge in
+both. `always @*`, `always @(a or b)`, `always @(a)` and `always_latch` never
+reach `Process2` in symbolic mode — measured: `TimedStatement:
+ImplicitEventControl`, `TimedStatement:EventListControl`,
+`SignalEventControl:None_`, `ProceduralBlockSymbol:AlwaysLatch` — so there
+is nothing else to cover; if one is admitted later as a comb-phase process
+it must go through `combGuardProc` too.
+
+**Where.** Per process, where every instantiated `always_comb` is built:
+`instProcess2` (`Param2.lean`) now maps `PProcess.alwaysComb b` to
+`combGuardProc (env.widths.lookup) (instStmt2 env elems b)` — the process
+itself when admitted, else `Process2.unsupported "AlwaysComb:self-read" msg`,
+whose message names the signal and the bits and cites §9.2.2.2.1. That is
+every parameter point of every `name.sem` (flat `instantiateGD2`,
+hierarchical `instantiateHD2`, generate-expanded, every child module), the
+differential runner's design, and `load_design_sv2`'s defaults gate, which
+refuses with the same message (an arm next to `PortConn:driver` in
+`Ingest2.lean`, naming the top module). DEVIATION from the plan (a hook next
+to `Design2.driverGuard`/`PDesign.topGuard` in `Hier2.lean`): every guard
+composed there is pinned by theorems whose statements must not change —
+`Design2.driverGuard_of_ok`, `PDesign.instantiateG2_of_ok`,
+`PDesign.instantiateGD2_of_ok`, `PDesign.instantiateGD2_of_driversOk`,
+`PDesign.instantiateH_of_rec` all conclude "the guarded family IS the raw
+instantiation" from `driversOk` alone, and folding the rule into
+`driversOk` falsifies `driversOk_iff`. A per-process hook inside
+`instProcess2` keeps every one of them true (no generic lemma computes
+`instProcess2` of an `alwaysComb`), and no ∀-N proof needed a change. The
+process-level message cannot name the module (`instProcess2` has no module
+name in scope); `load_design_sv2`'s message does, and the runner reports the
+kind (`run2: unsupported: unsupported process 'AlwaysComb:self-read'`).
+
+**Justification** (`LeanModels/Sv/CombGuard2Sound.lean`): every admitted
+body is idempotent on shaped states — one fuel induction over
+`execStmt2`/`execCase2`/`execStmts2` (`CombGuard.sim`) relating the second
+run's state to the first by `Inv M F τ σ` (every bit is the first run's, or,
+outside the must-set, the final state's), with the first run's `Frame` as a
+by-product:
+
+    theorem runCombProcess2_alwaysComb_idem_of_admits {wd : String → Option Nat}
+        {body : Stmt2} (hadm : body.combAdmits wd = true) {st r : SvState} {f : Nat}
+        (hs : CombGuard.Shaped wd st)
+        (h : runCombProcess2 f st (.alwaysComb body) = .ok r) :
+        runCombProcess2 f r (.alwaysComb body) = .ok r
+
+(and `CombGuard.execStmt2_idem_of_admits` at the statement level, any NBA
+queue). So on an admitted body the settle loop's re-runs of the block are
+the identity: the one run a simulator makes per wake-up already leaves the
+block's settled value. It covers the FULL tier — blocking/nonblocking,
+constant slices, run-time index reads and writes, procedural concatenation
+targets, `if`, `case`/`case … inside` — not only the fragment `Comb2Proc`
+lowers, and generalizes `runCombProcess2_alwaysComb_idem` from
+`SymState.selfReadFree` (latches included). `#print axioms`: `[propext,
+Classical.choice, Quot.sound]`, pinned with `#guard_msgs`.
+
+**The guard and `selfReadFree` are different tests, neither stronger.** The
+guard admits latches, which the lowering refuses; the lowering sees through
+values that never reach an equation and accepts `y = t; y = a; t = b;` and
+`if (t) y = a; else y = a; t = b;`, which the guard refuses (pinned:
+`Comb2ProcExample.dead_lowers`/`dead_refused`, `same_lowers`/
+`same_refused`). So "selfReadFree implies admitted" is FALSE in general;
+what holds, and is checked: every body of `Comb2ProcExample` the lowering
+accepts is admitted (`fa_admits`, `mux_admits`, `dec_admits` by `decide`,
+`as_admits` for EVERY `N` by `simp` — each read the walk compares is on a
+different signal than the bits written after it), every `agree.lean` design
+with an `always_comb` instantiates to its hand-built twin unchanged, and a
+scan of all 165 committed sv-0.2 envelopes at their defaults finds 62
+`always_comb` processes of which exactly the 8 intended `rbw_*` fixtures are
+refused. On a degenerate body of the second kind the API meets the guard's
+loud process through `name.sem` (`lowerComb` is `none`), never a body the
+guard let through.
+
+**Fixtures and rows** (`Examples/system-verilog/sem2/`, all
+`harness/sv/cases2.json`): `rbw_comb` and `rbw_held` are now refusal
+fixtures — their `agree.lean` pins `load_design_sv2`'s refusal text with
+`#guard_msgs` and checks (an `#eval` that throws on mismatch) that the
+envelope instantiates to the hand-built design's declarations with
+`combGuardProc` of its body as the only process; loud rows `rbw_comb`,
+`rbw_held`, `rbw_bits`, `rbw_cond`, `rbw_case_item`, `rbw_dyn`, `rbw_part`,
+`rbw_nested` (`AlwaysComb:self-read`) and `rbw_compound`
+(`AssignmentExpression:compound`, refused upstream), each with its measured
+Icarus/Xcelium trace and the settle answer in the row's `measured` field and
+the table in `docs/sv-oracle-disagreements.md`; PASS rows `acg_latch_read`,
+`acg_temp_all`, `acg_two_temps`, `acg_bits_ok`, `acg_part_ok`,
+`acg_case_ok`, `acg_cond_ok`, `acg_dyn_ok`, `acg_nested_ok`. Verilator
+5.042 and Yosys 0.53 (`prep; eval`, every two-state point) give the settle
+answer on every refused shape; Icarus and Xcelium agree with each other
+from cycle 1 on and disagree at cycle 0 (time-zero ordering). Xcelium 24.03
+(one `refsim` run on `vip-ng`, one batched testbench) gave Icarus's trace —
+hence the model's — on all 60 cycles of the ten admitted designs.
+
+**Registry.** `sv-div-3` moved to `retired_rows` (`retired: 2026-10-28`,
+`retired_by` recording that the written retirement condition — a `Sem2`
+remodel — did NOT occur: the divergence is closed by making it unreachable
+from ingested designs). Its guards stay and change meaning
+(`harness/sv_divergence_probe.py`): `sv_div_3_still_divergent` now raises
+the alarm when any refusal pin is gone (the `instProcess2` hook, an
+`agree.lean` refusal pin or instantiation link, a `cases2.json` refusal row,
+`rbw_guard`/`held_guard`) — checked to fire on a removed hook and on removed
+`#guard_msgs` pins — and `sv_div_3_has_not_widened` keeps measuring the tool
+split that justifies the refusal (hand-built `run2` pins = settle, Icarus =
+the declared stale trace, Yosys = settle on 32/32 and 4/4 points).
+
+**Gaps.** (1) The M0-tier family `name : Nat → … → Design`
+(`PDesign.instantiateD`, `Param.lean`) of a `load_design_sv2` envelope also
+fixpoint-settles `always_comb` and is NOT guarded (M0 paths untouched by
+rule); at the defaults `load_design_sv2` refuses the whole envelope, so it is
+reachable only at a non-default point of a parametric self-reading body.
+(2) Cross-process bit splits are not self-reads and are not refused:
+`always_comb t[0] = a;` (or `assign t[0] = a;`) next to
+`always_comb begin t[1] = b; y = t; end` — Xcelium 24.03, Verilator and the
+model re-run the second block when `t[0]` changes, Icarus 12 does not
+(variable-granularity sensitivity, its own `sorry` warning); recorded in
+`docs/sv-oracle-disagreements.md` as an Icarus departure, no row yet.
+(3) Over-refusals, all loud: statically infeasible path combinations
+(`if (c) t = a; y = t; if (c) t = b;`), dead reads and irrelevant
+conditions (the two `selfReadFree`-accepted bodies above), and a run-time
+index read of a partly written signal. (4) Hand-built `Design2` values
+(`rbwDesign`, `heldDesign`) still run under `run2` with the settle answer;
+the guard is applied at instantiation, not inside `Sem2` (unchanged).
+
+**Measured.** `python3 harness/sv/diff_test2.py --sim iverilog` (after the
+final build): 255 cases, 181 verified, 17 declared simulator disagreements,
+23 unavailable backends (24 skipped), 33 loud refusals, 0 failed, 0 ERROR,
+exit 0 (new: 9 verified `acg_*`, 9 loud `rbw_*`; `fa_comb_proc`,
+`mux4_case`, `latch_comb`, `onehot_dec`, `addsub_comb*` keep PASS). Every
+regenerable sv-0.2 envelope re-extracts byte-identically (161 same, 0 diff,
+3 skipped: the cv32e40p sources are off-machine). The ∀-N proofs
+(`ripple_add/{gen,proof,spec}`, `mul2d/gen`, `partsel/gen`, `ripple_fa/gen`),
+every buildable `agree.lean` and `load_design_sv2` user, and
+`LeanModels.Sv.{CombGuard2,CombGuard2Sound,Ingest2,Param,Param2,Gen2,Hier2,
+Hier2Gen,Comb2Example,Comb2ConcatExample,Comb2Proc,Comb2ProcExample,Mono2,
+SelfCheck}` build in one slot command with every existing statement
+unchanged; `alu_div/ingest`, `ff_one/ingest` and `popcnt/ingest` import the
+`LeanModels` umbrella and cannot build while the Python lane is red
+upstream (not touched). `harness/sv_divergence_probe.py` PASS,
+`harness/divergence_register.py` OK, `tools/docs_check.py` clean.
+
+## The `always_comb` self-read guard: round-3 repairs (WP4) — 2026-10-28
+
+Repairs after the independent verification of the entry above. No theorem
+statement changed; nothing in `Sem2` changed.
+
+**The justification theorem is now under the default build.** Nothing
+imported `LeanModels.Sv.CombGuard2Sound`, so `lake build` never compiled
+`runCombProcess2_alwaysComb_idem_of_admits` or its `#guard_msgs` axiom
+pins. `Comb2ProcExample` now imports it and applies it (`latch_idem`: the
+latch's one run is its own fixpoint, axioms pinned), and every
+`Examples/system-verilog/sem2/*/agree.lean` that imports `Comb2ProcExample`
+puts it under the `Examples` glob. The differential harness's olean list
+(`SV_LEAN_MODULES`, `harness/sv/diff_test2.py`, Lane B's file) already
+names `CombGuard2` in the working tree, so an edit of the guard can no
+longer leave `runner2` on a stale `Param2.olean`.
+
+**Icarus does not wake a block through an alias of a variable it writes.**
+The guard is about ONE block re-run on its own result. A block that reads a
+different variable aliasing one it writes is admitted, and there the LRM,
+Xcelium and the model agree that the block wakes when the alias changes,
+while Icarus 12.0 merges the alias with the written variable and keeps the
+stale value. (CORRECTED round 4, Lane A, from the round-3 verifier's
+measurements: Icarus does NOT merge the alias or drop it — its netlist keeps
+it in the block's event list, `.event anyedge, w, a` / `.event anyedge, i,
+a` — it propagates the copy's update synchronously inside the block's run,
+so the wake-up is lost; IEEE 1800-2023 §4.7/§4.8 permit that interleaving,
+so the two alias rows record a TOOL SPLIT, not an Icarus departure from
+§9.2.2.2.1. The bit split, by contrast, IS a departure: Icarus leaves the
+whole variable out of the list. `docs/sv-oracle-disagreements.md` has the
+measured account.) Three admitted fixtures, each a `cases2.json` row with an
+exact `oracle_disagreement` declaration (both traces pinned, source,
+envelope, case and testbench hash-bound): `acg_alias_assign`
+(`assign w = t; always_comb begin y = w; t = a; end`,
+`iverilog-comb-assign-alias-sensitivity`), `acg_alias_port` (a child whose
+input and output ports connect to one parent variable,
+`iverilog-comb-port-loop-sensitivity`), `acg_xproc_bits`
+(`always_comb t[0] = a;` beside `always_comb begin t[1] = b; y = t; end`,
+`iverilog-comb-bit-split-sensitivity`). One batched Xcelium 24.03 run
+(fleet gate `refsim` on `vip-ng`) gives the model's trace on all 23 cycles
+of the three rows, `x` included; Verilator 5.042 gives it with `x` read as
+0. Icarus alone also merges `wire [1:0] w = t;` and `assign t[0] = a;` the
+same way, and does not merge `assign w = ~t;`. Traces:
+`docs/sv-oracle-disagreements.md` ("Icarus does not wake a block through an
+alias…"; retitled in round 4 "Icarus propagates a copy inside the block's
+own run" and "Icarus leaves a partly written variable out of the
+sensitivity list"). The claim "across blocks both readings re-run a block" is
+qualified accordingly in the `CombGuard2Sound.lean` and `Comb2Proc.lean`
+docstrings and the schema doc. CORRECTION to gap (2) of the entry above:
+Icarus prints NO diagnostic on the bit split; its `sorry: constant selects
+in always_* processes` warning appears only when a block READS a constant
+select (`rbw_bits`, `rbw_part`, `rbw_child`, `acg_bits_ok`).
+
+**The bit split is outside the standard.** IEEE 1800-2023 §9.2.2.2: the
+variables an `always_comb` writes "shall not be written to by any other
+processes" — variable granularity. (CORRECTED round 4, Lane A: the 2023
+text continues "However, multiple assignments made to independent elements
+of a variable are allowed as long as their longest static prefixes do not
+overlap", and §6.5 makes each bit of a packed type an independent element:
+the bit split is LEGAL, bit-granular exactly like `procExclusiveOk`, and a
+variable-granular refusal would be an over-refusal. The row's declaration no
+longer names that exit.) ls-sv's one-driver rule
+(`procExclusiveOk`) is bit-granular and admits `acg_xproc_bits`, as do
+Xcelium and Verilator. The row cites §9.2.2.2 and its retirement condition
+names both exits (Icarus re-runs the block, or ls-sv refuses
+variable-granular multi-writers). Refusing them is NOT done here: it is a
+design-level rule, and composing one beside `Design2.driverGuard` would
+falsify the pinned statements listed in the entry above (`driversOk_iff`
+and the `…_of_ok` family). Recorded as an open gap.
+
+**A child's refusal names its instance.** The guard runs on the child's own
+instantiation, where neither the instance nor the flattened names are known.
+`instBodyProc` (`Hier2.lean`) now passes every flattened child process
+through `Process2.inInstance pfx i`, which leaves every process unchanged
+except an `AlwaysComb:self-read` refusal, whose message gains the clause
+`in instance '<inst>' of module '<child>' (its signals flatten under the
+prefix '<path>'):` — one clause per level, outermost first. (Round 4: the
+clause now reads `… under the prefix '<prefix>' inside the module that
+instantiates it`, because each level's prefix is relative to its parent —
+the round-3 verifier's `n_nest` read as if the leaf's signals were under
+`l.` where they are under `m.l.`.) `Process2.inInstance`
+is a `@[simp]` definition with one equation per constructor, so the
+concrete flattening proofs (`ripple_fa/gen.lean`'s `fa_flatten`) go through
+unchanged. Fixture `sem2/rbw_child` (`t[0] = a; y = t[1]; t[1] = b;` in the
+instance `u` of `rbw_child_leaf`): its `agree.lean` pins
+`load_design_sv2`'s refusal text ("in the instantiated design of module
+'rbw_child': in instance 'u' of module 'rbw_child_leaf' (its signals flatten
+under the prefix 'u.'): always_comb block reads bit [1] of 't' …") and
+checks that the flattened design's only loud process is exactly that
+refusal and that the child's `t` is `u.t`; loud row `rbw_child` (Icarus
+12.0 y = 0 0 1 1 0, settle y = 0 1 1 0 0). A FLAT top's process message
+still names no module: the `Design2` that carries it is the module, and
+`load_design_sv2` names it; `runner2` prints only the kind (Lane B's file,
+not edited).
+
+**Measured.**
+`python3 harness/sv/diff_test2.py --sim iverilog`, one clean full run
+after the final build: 271 cases, 189 verified, 20 declared simulator
+disagreements (3 new: the alias rows), 23 unavailable backends (24
+skipped), 38 loud refusals (new: `rbw_child`), 0 failed, 0 ERROR, exit 0;
+multi-point cross-check 111 row points agree, 4 unconfirmed but
+simulator-verified. (An earlier full run had 3 ERROR rows,
+`case_width_n1/n32/n33`, with "object file … Probe2.olean / Ingest2.olean
+does not exist": the other lane's concurrent `diff_test2` rebuilt those
+oleans mid-run; the three passed when rerun, and the clean run above has
+none.) Every regenerable sv-0.2 envelope re-extracts byte-identically (173
+same, 0 diff, 3 skipped: cv32e40p sources off-machine). One slot build of
+`LeanModels.Sv.{CombGuard2,CombGuard2Sound,Param,Param2,Hier2,Hier2Gen,
+Probe2,Ingest2,Gen2,Comb2Example,Comb2ConcatExample,Comb2Proc,
+Comb2ProcExample,Mono2,SelfCheck}`, the ∀-N proofs (`ripple_add/{gen,proof,
+spec}`, `mul2d/gen`, `partsel/gen`, `ripple_fa/gen`) and every buildable
+`agree.lean`/`load_design_sv2` user (now including `sem2/rbw_child`) is
+green with every existing statement unchanged.
+`harness/sv/test_oracle_disagreements.py` OK, `harness/sv_divergence_probe.py`
+PASS, `harness/divergence_register.py` OK, `tools/docs_check.py` clean.
+
+**Gaps, updated.** (1) The M0 family (`PDesign.instantiateD`) of a
+`load_design_sv2` envelope is still unguarded (unchanged). (2) Variable-
+granular multi-writers of an `always_comb` variable (§9.2.2.2) are admitted
+(row `acg_xproc_bits`, declared). (Round 4: they are LEGAL in IEEE
+1800-2023 — independent elements; the open item is Icarus's departure, a
+class wider than the row: `x_dyn`, `x_child`, `assign t[0] = a;`.) (3) The over-refusals of the entry above
+are unchanged. (Round 4, Lane A: one more, documented in the rule text but
+missing here — a procedural concatenation target must-writes nothing,
+`Lhs2.mustW .concat => []`, so `{t, u} = a; y = t; t = b;` is refused as a
+self-read although every tool treats `t` as written before the read; the
+soundness proof already covers concatenation targets, so a must-write of
+their ident/constant-slice leaves is the fix.) (4) A flat top's process message names no module (the
+design is the module); `runner2` prints only the refusal kind.
+
+## Default-point folds, round 3 (WP FOLDS, Lane B) — 2026-10-28
+
+The CX cross-check made the default-point fold class loud at probed points;
+this package removes the five folds the round-2 gap list still carried (and
+the CX verifier's non-ANSI initializer), so each is exact or loud at EVERY
+point, not only where a probe looks — in VALUE positions; the verifier then
+found items 1 and 2 still silent in symbolic positions (case items, select
+labels) and in the constant tier's typed localparams, fixed in the repair
+round below; the next verifier found that repair's root-context floor
+wrong (silent values in self-determined roots, `integer`/`int` targets and
+genvar initializers), fixed in "Default-point folds, round 4" below.
+`docs/sv-envelope-schema.md`,
+"Default-point folds, round 3", is the reference; rows `fold_*` and
+`pi_nonansi*` in `harness/sv/cases2.json`.
+
+1. **Signed simple operands in an unsigned context** (repros `ib_pneg`,
+   `ib_neg32`, `sp`). The extractor dropped every same-width conversion,
+   so `a + P` (`int P = -3`) carried a bare `ParamRef` that Lean
+   SIGN-extended wherever the context outgrew 32 bits; §11.8.2 zero-extends
+   a simple operand converted to an unsigned type, and Icarus 12.0 and
+   Yosys 0.53 agree. In a parametric family the conversion is now kept as
+   `Resize(width, operand)` for a signed `ParamRef`/`GenvarRef`/`$high`/
+   `$size` (`_sym_unsigned_simple_operand`); the widening twin (previously
+   `ConversionExpression:width`) is the same node. Lean lowers it as
+   materialization at or below its width and zero extension above
+   (`instExpr2`), folds constant subexpressions at the operation width
+   (`constAtCtx2`), and the constant tier's `resize` reduces a signed
+   operand modulo its own width first (`evalAt`/`evalInt`). A NEGATIVE
+   genvar in that position splits the oracles (Icarus sign-extends,
+   Yosys/Verilator zero-extend): refused, `GenvarRef:unsigned-extension`.
+2. **A default-point truncation of a context-propagating operator** (repro
+   `sx`): `c = a + b` truncated at `N = 2` kept the 4-bit sum at `N = 8`.
+   `instExpr2` now lowers a `Resize` around `+ - * / % & | ^ ~ - ?:` and
+   shift/power left operands at a WIDER context (`PExpr.ctxPropagates`).
+3. **Selects of a parameter's value** (repro `ps_param`): the extractor
+   keeps the legacy encoding only over a range canonical at the default
+   point (raw labels) or with literal bounds (folded offsets, not an
+   indexed part select) and refuses everything else (`<kind>:param-range`,
+   which also caught a wrong-at-every-point `R[0 +: 2]` over a literal
+   `[0:3]`); Lean checks the canonical range at each point (`IEnv.pdims`,
+   `paramSelectOk`).
+4. **Genvar and run-time labels** (repro `vb3`): the legacy-select range
+   guard (`LeanModels/Sv/RangeGuard2.lean`, `PDesign.legacyRangeReport`)
+   refuses a point where a legacy-selected declaration the instantiated
+   design still mentions has a range other than literal bounds or `[m:0]`,
+   `m ≥ 0` (`Select:legacy-range`), every module at its own point. It is a
+   check BESIDE `name.sem` (load gate at the defaults and every probed
+   point, `probeCheckString`, the differential runner) — DEVIATION from the
+   preferred "in the guard composition": every place `name.sem` composes is
+   pinned by a recorded statement (`instExpr2_bitSel_ident_dyn`,
+   `instantiate2_eq`, `instantiateG2_of_ok`, `instantiateGD2_of_ok`,
+   `instantiateH_of_rec`, `instantiateH_flat`, the ∀-N examples'
+   `ripple_paramEnv`/`ripple_elems` stated for every `N : Int`, and the
+   svGolf reference solutions' `show …instantiateGD2…`), so any guard there
+   falsifies an existing statement. Only REACHED selects count, so
+   `ripple_add` passes at `N = 0` (its loop has no iteration).
+5. **`$high`/`$size`** read the declaration's first packed dimension at
+   each point (`dimQuery`), loud without one; value positions admit them
+   (Icarus 12.0 cannot evaluate them in generate conditions). Found while
+   testing them: `$left`/`$right`/`$low` in a value position were a silent
+   fold — the tier refused the call and the conversion around it fell back
+   to slang's DEFAULT-point constant (`$left(v)` read 2 at every `N`). A
+   conversion whose operand converted to `Unsupported` and names a symbol
+   is no longer folded in a parametric family
+   (`ConversionExpression:default-point-fold`), except a query of a range
+   with literal bounds.
+6. **Non-ANSI output-port initializers** (CX verifier major): `convert_port_sym`
+   reads the internal variable's initializer when the port symbol has none.
+   Minors: `_sym_initialized_target` fails closed (`…:initialized-unknown`)
+   and runs once per site; schema wording fixed.
+
+The cross-check gains normalization rule 6 (`Probe2.lean`): `resize w (a op
+b)` for `+ - *` distributes when no operand bit above `w` can be x/z (the
+envelope's `a + B` at a 4-bit point against slang's `resize 4 (resize 8 a +
+8'hfd)`).
+
+**Measured.** 50 new rows over 13 new fixtures (`sem2/fold_pneg`,
+`fold_sparam`, `fold_pgen`, `fold_ctxres`, `fold_psel`, `fold_vsel`,
+`fold_query`, `fold_lrq`, `fold_lrq_fixed`, `pi_nonansi`, `pi_nonansi_reg`,
+`pi_nonansi_hier`, `pi_nonansi_p`): 43 PASS against Icarus 12.0 at points
+including N = 0, -1, 1 and widths across 32 (N = 30, 31, 40), every one with
+the cross-check agreeing at its point (31 row points); 7 loud refusal rows
+(`fold_psel_n1`, `fold_psel_n0`, `fold_psel_nm1`, `fold_vsel_n0`,
+`fold_vsel_nm1`, `fold_pgen_n40`, `fold_lrq`). Yosys 0.53 (`chparam; synth -flatten; abc`, the netlist
+simulated in Icarus with the row's testbench) agrees with every passing row
+on every cycle whose inputs are all 0/1, except `fold_vsel_n1`'s
+out-of-range reads, which the model and Icarus read as x and the netlist
+resolves (x is a synthesis don't-care). Before the fixes the model failed
+`fold_pneg_n31/n40*` (sign extension of `P`), the `fold_ctxres` points above
+4 bits, the cross-check at `fold_sparam_n3`, and read `fold_psel`/`fold_vsel`
+at N ≤ 0 silently. The CX sweep rerun over every probed envelope (76,
+1305 entries): every one of CX's 1165 entries keeps its verdict; of the 140
+new ones 135 agree and the 5 failing are exactly the refused points of
+`fold_psel` and `fold_vsel` (the cross-check itself reports `fold_vsel` at
+N = 0 as a silent fold). Full `python3 harness/sv/diff_test2.py --sim
+iverilog` on the final tree: 321 cases, 232 verified, 20 declared simulator
+disagreements, 24 skipped (23 unavailable Icarus backends), 45 loud
+refusals, 0 failed, 0 ERROR, exit 0; cross-check 142 row points agree, 4
+unconfirmed but simulator-verified.
+Every regenerable sv-0.2 envelope re-extracts byte-identically (186 same,
+0 diff, 3 cv32e40p skipped); the two that changed — `partsel` (the
+run-time base `sel*W` now carries `Resize(32, W)`: the same Design2 at every
+point, its `#guard`s unchanged) and `sem2/register_file_ff` (`waddr == gidx`)
+— were regenerated, with `partsel.sv.probes.json`. Extractor suite 1763
+passed, 3 skipped (`PYTHONHASHSEED` 1 and 2; new `test_sym_folds3.py`;
+`test_symbolic_default_point`'s widened-parameter test updated: loud before,
+a `Resize` now). One slot build of the SV modules
+(`RangeGuard2` new), the ∀-N proofs, every buildable `agree.lean` and
+`load_design_sv2`/`instExpr2` user (75 jobs) is green with every existing
+statement unchanged; the three umbrella-importing cv32e40p `ingest.lean`
+files elaborate cleanly with the `import LeanModels` line removed (scratch
+copies). `docs_check` clean, `divergence_register` OK.
+
+**Gaps.** (1) The range guard is not in `name.sem` (above): a proof about
+`name.sem` at a point no consumer checks — not a load default, not a probed
+point, not a row — still sees the legacy offset reading there. (2) A
+`Resize` around a context-propagating operator is propagated only into a
+WIDER context; whether slang ever emits such a `Resize` for a widening (not
+a truncation) at the default point is argued, not measured exhaustively.
+(3) `$left`/`$right`/`$low` stay outside the tier; `$high`/`$size` in a
+dimension bound of a LATER declaration are loud during the geometry pass
+(`dimTable` threads widths, not ranges). (4) An initializer needing a width
+or sign conversion is still loud (Ports and Vars). (5) The extractor
+test `test_empty_associative_delete::test_symbolic_mode_stays_loud` is
+flaky under some `PYTHONHASHSEED` values (seeds 1 and 5 fail) with the
+HEAD extractor too — pre-existing, not investigated.
+
+### FOLDS repair round (verifier round 3, Lane B) — 2026-10-28
+
+The verifier found items 1 and 2 above exact only in VALUE positions. Both
+majors are fixed; `docs/sv-envelope-schema.md`, "Default-point folds in
+symbolic positions and constant contexts (round 3 repair)", is the
+reference.
+
+1. **Symbolic positions** (major, repros `vp_case`, `vp_case2`, `vp_idx`).
+   `case (a) P:` and `v[a - P]` (`int P = -3`, `a` 42 bits at `N = 40`) read
+   a bare `ParamRef` that Lean sign-extended: `_sym_unsigned_simple_operand`
+   returned None under `_SymPos`. In a parametric family the symbolic
+   positions now carry the value-position conversions: the marker (and its
+   widening twin, formerly `ConversionExpression:width`), `Resize(w,
+   literal)` for a widened sized literal and `SignedResize`/`Resize` for a
+   sized signed one (`_sym_literal_widening`, `_sym_signed_literal_conversion`),
+   and a signed reference-free constant under an assignment-like width
+   change keeps its tree under a conversion of the target width
+   (`_sym_signed_constant_symctx`; any other such conversion is
+   `ConversionExpression:signed-constant`, as in value positions). Hunting
+   with them: a literal folded at the default context also inflated widths
+   where the context is NARROWER (`v[s + 1'b1]` indexed at 4 bits at `N = 2`,
+   case items `2'b11 + 2'b01` compared at 4 bits), and `localparam logic
+   [N-1:0] L = 300` / `= -1` / `= 8'sd100` were folded at the default width.
+2. **The constant tier** (major, repros `vp_lp2`, `vp_lp`). `evalAt`/`ctype`
+   read every `Resize` width as the context, but it is the DEFAULT point's:
+   `localparam logic [N-1:0] L1 = 8'd200 + 8'd100` was 12 at every `N`.
+   `ctype` is now transparent to `Resize`/`SignedResize` (a `Squash2` keeps
+   its width as a floor), `evalAt` evaluates a context-propagating operand
+   (`PExpr.ctxPropagates`, moved from Param2) at the context it is handed
+   and never truncates to the envelope's width, and a root's context is
+   supplied: a typed localparam or typed parameter default at its declared
+   width HERE (`evalAssign`, `PParam.evalDefault`); a self-determined root
+   (label, generate condition) at its own width here (`rootType`), which
+   also fixes `U > 5` at a 40-bit `U` (truncated to the default 32 before)
+   and `U + 8'd200 < 8'd50` at a narrower `U`; and a root whose target was
+   pushed into every operand (a genvar initializer, an `int` localparam, an
+   INT-class override) keeps the conversions' width as a floor
+   (`PExpr.chainInfo`). [Round 4 correction: this floor was wrong — it read
+   the signed-operand marker and widened literals, which carry the default
+   point's widest-operand width, as a pushed target, giving self-determined
+   roots that width (`v[SB + 1'b1]`), missed `integer`/`int` targets with no
+   conversion to read, and followed Icarus on genvar initializers where the
+   oracles split. Replaced; see "Default-point folds, round 4" below.] `constAtCtx2` evaluates at `max(context, own
+   width)` in every case. A negative genvar zero-extended past 32 bits is
+   loud in the constant tier too (`PExpr.negGenvarAt`).
+3. **Found while measuring with Yosys 0.53 and Verilator 5.042** (no
+   Xcelium this round, per the user):
+   (a) a TYPED instance override that is a context-propagating expression
+   (`.P(U + 8'd100)` into `logic [15:0] P`) splits the tools — §10.8 and
+   Icarus evaluate it at the parameter's width (300), Yosys and Verilator
+   at its own (44) — and the constant tier evaluates an override without
+   the child's type: refused, `InstanceSymbol:override-context`
+   (`_sym_override_root`); recorded under "Refused where the oracles split"
+   (4). By the old rules the model followed Icarus there, silently.
+   (b) Yosys evaluates a plain `case` item at its own width (`2'b11 +
+   2'b01` is 0, not 4 in a 4-bit case); the model, Icarus and Verilator
+   follow §12.5 — recorded as synthesis-side divergence 3.
+   (c) A run-time select index wider than 32 bits whose value is out of
+   range: Icarus 12.0 (and Verilator) read the bit at its low 32 bits, the
+   model and Yosys `prep; eval` read x (§11.5.1) — declared Icarus
+   disagreement `iverilog-wide-index-truncation`, row `fold_pcase_wide`.
+   Not refused like the wide part-select base: the refusal would sit in
+   `instExpr2`'s select arm, whose lemmas are stated for every environment.
+4. **Minors.** The round-3 entry above and the schema section now say
+   "value positions"; `_sym_unsigned_simple_operand`'s docstring covers the
+   symbolic positions. The range guard's two compromises stay documented
+   (Gaps 1 above).
+
+**Measured.** 34 new rows over 7 new fixtures (`sem2/fold_pcase`,
+`fold_lpgrow`, `fold_lpshr`, `fold_cgrow`, `fold_lshr`, `fold_ovr`,
+`fold_ovr2`): 32 PASS against Icarus 12.0 with the cross-check agreeing at
+every row point (`fold_pcase*` N = 7, 31, 40, P = -3, -1, 5;
+`fold_lpgrow*` N = 2, 3, 4, 8, 16, 31, 40; `fold_lpshr*` N = 4, 8, 9, 12,
+16, 40; `fold_cgrow*` N = 4, 8, 32, 33, 40; `fold_lshr*` N = 1, 2, 3, 4,
+5; `fold_ovr2*` N = 4, 8, 16, 20), one declared Icarus disagreement
+(`fold_pcase_wide`), one refusal row (`fold_ovr`). The verifier's own
+repros (`vp_case`, `vp_case2`, `vp_idx`, `vp_lp`, `vp_lp2` at the points
+they named, N = 31/40, P = -1) PASS, except `vp_idx`'s out-of-range wide
+indices (3c). The verifier measured the old model failing `vp_case`,
+`vp_case2` and `vp_idx` at N = 40 and `vp_lp2`/`vp_lp`; for the new
+fixtures the old reading follows from the old rules (literal and `Resize`
+widths of the default point) and was not re-run. Yosys 0.53 (`synth -flatten;
+abc`, the netlist simulated in Icarus with each row's testbench) agrees on
+every known-input cycle of `fold_lpgrow*`, `fold_lpshr*`, `fold_cgrow*`,
+`fold_ovr2*`, `fold_lshr_n1`/`_n2` and of the six regenerated envelopes'
+rows except `case_width_n33`/`_n40` (3b); `fold_pcase*` differ only on
+out-of-range reads (x in the RTL, a don't-care in the netlist), `fold_lshr`
+at N = 3, 4, 5 on the case items (3b). Verilator 5.042 matches Icarus on
+`fold_lpgrow`, `fold_lpshr`, `fold_cgrow`, `fold_lshr` and `fold_ovr2`;
+on `fold_pcase` at N = 40 it SIGN-extends the bare case item `P:` (Icarus,
+Yosys and §11.8.2 zero-extend). Extra hunting repros (scratch): generate
+conditions `P < U`, `U - P > 33'h1_0000_0000`, `(U + 8'd200) >> 8` at N =
+4, 8, 33, 40 and P = 5, a genvar compare against `B + 4'd1` at N = 1, 2, 8,
+and a run-time base `v[s - P -: 4]` at N = 2, 4, 30 PASS (at N = 40 the
+wide-base refusal). Full `python3 harness/sv/diff_test2.py --sim iverilog`:
+355 cases, 264 verified, 21 declared simulator disagreements, 24 skipped
+(23 unavailable Icarus backends), 46 loud refusals, 0 failed, 0 ERROR, exit
+0; cross-check 171 row points agree, 2 unconfirmed but simulator-verified
+(pre-existing). CX sweep (85 envelopes, 1463 entries): every one of the
+previous 1305 entries keeps its verdict except `case_width` at N = 33 and
+40, UNCONFIRMED → ok (the widening twin now extracts at the point); of the
+158 new entries 145 agree and 13 are loud refusals (`fold_ovr` at every
+point, `fold_ovr2`'s constant part select out of range at N ≤ 3). reext:
+193 same, 0 diff (3 cv32e40p skipped) after regenerating the six envelopes
+the symbolic-position conversions change — `sem2/aggregate_param`,
+`case_width`, `fold_psel`, `fold_sparam`, `int_const_flat`, `param_types`
+(same values at their rows' points; their rows keep their verdicts).
+Extractor suite 1775 passed, 3 skipped (`PYTHONHASHSEED` 1, 2, 3, 5; new
+`test_sym_folds3r.py`; `test_symbolic_param_widths`' widened-parameter
+label test updated: loud before, the zero-extension marker now). One slot
+build of the SV modules, the ∀-N proofs, every buildable `agree.lean` and
+`load_design_sv2` user is green with every statement unchanged; new
+`#guard`s in `Param.lean` pin `evalAssign`, `rootType` and the
+negative-genvar refusal. `docs_check` clean, `divergence_register` OK.
+
+**Gaps.** (1) A typed override of a context-propagating expression is
+refused, not modelled (the tools split). (2) A genvar initializer or
+`int` localparam whose pushed-down target is out of reach keeps the default
+point's width as its floor — exact for a fixed target (`int`, a genvar),
+which is every such target in the tier; a typed localparam goes through
+`evalAssign`. [Round 4 correction: FALSE as written — the verifier's
+`rf_int`/`rf_ipar` (an `integer` target read at its operand's own width) and
+`rf_gv` (a genvar initializer, where Icarus and slang/Yosys split) were
+silent wrong values; repaired in "Default-point folds, round 4" below.] (3) The wide-index Icarus disagreement is declared, not
+refused. (4) svGolf (a separate lake project) was not rebuilt or re-checked
+here. (5) The range guard stays a check beside `name.sem` with name-level
+reachability (verifier minor, no change).
+
+## Declaration initializers, every form, and the always_comb/always_ff mixture (round 4, Lane A) — 2026-10-28
+
+The open round-3 initializer and documentation majors (CX verifier: the
+non-ANSI port initializer, the fail-open target walk, the width-converted
+initializer; WP4 verifier: `vg_initc` rejected by Xcelium, the alias
+declarations' mechanism and LRM position) and the minors. Extractor changes
+are symbolic-only and additive (`convert_port_sym`, `convert_var_sym`, the
+initialized-target walk, one `_SYM`-gated hook in
+`convert_procedural_block`); `Hier2.lean` changes one message string; no
+theorem statement changed and no M0 path was touched.
+
+**(1) Every output-port initializer form.** The round 3 folds already read
+the internal variable's initializer for the separate non-ANSI declaration
+(`output [1:0] y; logic [1:0] y = 2'b10;`). Round 4 enumerated every form
+slang accepts — ANSI `logic`/`reg`/`var logic` (port symbol), ANSI shared
+declarations and packed structs (port symbol), non-ANSI separate
+`logic`/`reg`/`var logic` and scalars (internal variable), non-ANSI single
+`output reg`/`logic`/`var logic … = …;` and shared ones (port symbol) — and
+pins each (rows `pi_ansi_forms`, `pi_ansi_multi`, `pi_nonansi_forms`,
+`pi_hier_plain`; `test_sym_initializers.py` for the non-ANSI `output var
+logic` single declaration, which Icarus 12.0 does not parse). It found one
+more SILENT WRONG: a non-ANSI port with an explicit port expression
+(`module m(clk, a, .q(y))`, or `module m(y[1:0])`) was emitted as a `Port`
+`q` and an unconnected `Var` `y`, so `q` read its initializer (`10`)
+forever where Icarus 12.0 gives `11, 10, 1x`; it is now
+`PortSymbol:explicit-expression` (row `pi_explicit`; Xcelium 24.03
+elaborates it, Verilator 5.042 and Yosys 0.53 do not parse it). The
+width-converted literal initializer (`output logic [3:0] y = 2'b10`,
+slang's `Resize`/`SignedResize`), refused before as "non-literal
+initializer", is now lowered exactly (`_sym_decl_init`): a 0/1 literal to
+the `Int` of its value, which `instDecl` converts at each point's declared
+width (`LVec.ofInt` — zero-/sign-extension and truncation exactly, also in a
+parametric family whose conversion width is the default point's), an x/z
+literal to the `Literal` of a declared width that is fixed at every point
+[CORRECTED, round 4 repair below: not exact — an UNSIZED x/z literal was
+padded with 0, and a literal with NO conversion at the default point was
+still stored at the default width at every point];
+everything else stays loud (an x/z literal at a parameter-dependent width,
+row `pi_width_px`; an x/z sign bit; a negated literal). Rows
+`pi_width_forms`, `pi_width_p` and `pi_width_p_n1/_n2/_n8/_n40`
+(`xcheck:agree`) and `pi_hier_plain` (a child at `W = 5`).
+
+**(2) The initialized-target walk fails closed.** `_sym_initialized_target`
+returned `None` — admitted — for an expression shape it did not know, and
+its port lookup swallowed exceptions; both now give `"unknown"`
+(`_sym_initialized_target_info`), refused as
+`ContinuousAssignSymbol:initialized-unknown` /
+`PortConnection:initialized-unknown` with the construct named in `text`.
+No existing envelope changed.
+
+**(3) A declaration initializer counts as a writer of an `always_comb` /
+`always_ff` variable — refused.** IEEE 1800-2023 §9.2.2.2/§9.2.2.4 let no
+other process assign such a variable; §6.5 counts "a declared variable
+initialization" as a procedural assignment, §10.5 calls it "a special case
+of procedural assignment", §4.2 lists procedural assignment statements
+among processes — no clause decides outright. Measured: Xcelium 24.03
+rejects 41 of 41 probes (`xmelab: *E,MULAXX: Multiple drivers to
+always_comb/always_ff output variable`): `always_comb` AND `always_ff`, bit
+and whole-variable writes, every port form, flat and in a child; Verilator
+5.042 stops on `MULTIDRIVEN` for a whole-variable `always_comb` write;
+slang accepts all of them, Icarus 12.0 and Yosys 0.53 every one they parse
+and do not reject for an unrelated reason (one and four probes). The tools split on
+legality, so the block is refused
+(`ProceduralBlockSymbol:initialized-variable`, `_sym_proc_initialized_write`:
+every assignment and increment target of the body, block-local and
+automatic variables excluded, fails closed). A plain `always` writer is
+unrestricted (§9.2.2.1) and Xcelium runs it: admitted. Rows CORRECTED from
+PASS to loud (this round's own rows, the claim "a declaration initializer
+plus an always_comb writer is legal" withdrawn): `vg_initc`, `vg_initq`,
+`vg_initqp`, `vg_initqp_n1/_n3/_n5`, `pi_nonansi`, `pi_nonansi_hier`,
+`pi_nonansi_p`, `pi_nonansi_p_n1/_n2/_n5`; new loud rows `vg_initf` (flat
+`always_ff`) and `vh_initcomb` (a child's `always_comb`). Before: `vg_initc`
+PASS against Icarus (y = 11, 10, 1x, 1z) while Xcelium refuses to elaborate
+it; after: refused, kind in the envelope. The round-2 item "Hier2's §6.5
+mixture clause misses declaration initializers" is closed by the round-3
+extractor guard in flat designs (`vg_init`, `vg_initp`) and hierarchical
+ones [CORRECTED, round 4 repair below: not for a non-ANSI INPUT whose
+separately declared variable has an initializer, which the `Port` dropped
+— now `PortSymbol:initialized-input`] — a parent variable driven by an instance output (`vh_init`) and,
+new, a child's own `assign` to its initialized output port (`vh_initp`:
+Icarus "Unable to assign to unresolved wires", Xcelium `*E,ICDDIV`, Yosys a
+conflicting constant driver).
+
+**(4) The alias and bit-split declarations, rewritten from measurements.**
+Round 3 said Icarus 12 "merges the pure alias with `t` and drops it from the
+sensitivity list" and filed `acg_alias_assign`/`acg_alias_port` as Icarus
+departures from §9.2.2.2.1. Measured instead (`iverilog -g2012` netlists of
+the committed sources): the copy IS in the block's event list (`.event
+anyedge, w, a`; `.event anyedge, i, a`); Icarus propagates the copy's
+update synchronously inside the block's run, before the block reaches its
+event control, so the wake-up is lost (probe `mech_buf`: `y = 00, z = 01`
+at `a = 01` — the read after the write already sees the new copy; a `NOT`
+copy is scheduled and agrees). §4.7/§4.8 permit that interleaving ("the
+simulator is correct in displaying either"), so the two rows record an
+LRM-PERMITTED TOOL SPLIT; Xcelium 24.03, Verilator 5.042 and Yosys 0.53
+(`eval`, re-measured) give the model's answer. By the refuse-where-the-tools-split
+policy they are refusal candidates; the refusal (an `always_comb` reading a
+continuous copy of a variable it writes, through `assign` chains or a port
+loop that forms only after flattening) is not built — it cannot enter
+`name.sem` without falsifying `PDesign.instantiateGD2_eq_driverGuard` /
+`Design2.driverGuard_of_ok`, and would sit beside it like the range guard —
+so the declarations stay, re-worded: reference §4.7/§4.8, the measured
+mechanism, a retirement condition that does not hold today. The bit split
+(`acg_xproc_bits`) is the opposite case: LEGAL in 2023 (§9.2.2.2 "multiple
+assignments made to independent elements of a variable are allowed";
+§6.5: each bit of a packed type is one), so round 3's "outside the
+standard at variable granularity" is withdrawn, and Icarus DOES depart from
+§9.2.2.2.1 (its netlist leaves all of `t` out: `.event anyedge, b`). The
+class is wider than the row: `x_dyn` (`y = t[s]`) and `x_child` (a child
+port drives `t[0]`), both admitted, both stale in Icarus only (event lists
+re-checked). Fixture headers, the three declarations (source and envelope
+hashes rebound after the header edits; case, testbench and traces
+unchanged), `docs/sv-oracle-disagreements.md`, the schema's self-read
+paragraph, the `CombGuard2Sound.lean`/`Comb2Proc.lean` docstrings and the
+round-3 WP4 charter entries (in-place CORRECTED notes) now say this.
+
+**(5) Minors.** `Process2.inInstance`'s clause now reads "its signals
+flatten under the prefix '<p>' inside the module that instantiates it"
+(each prefix relative to its own level, so a nested leaf's names are the
+concatenation; `rbw_child/agree.lean`'s pin updated); the `Lhs2.mustW
+.concat => []` over-refusal is in the WP4 gap list; the schema's sidecar
+pointer already read "above" (fixed in the round 3 folds).
+
+**Before → after (oracle traces).** `pi_explicit`: Icarus 12.0 `q = 11, 10,
+1x`; the model before the change kept `q` at its initializer (`10`, the
+`Port` and an unconnected `Var y`), after it refuses
+(`PortSymbol:explicit-expression`). `pi_width_forms`/`pi_width_p_n8`: before
+`decl …: non-literal initializer outside the M0 tier` (loud), after PASS
+(`w1 … w8 = 1010 10 1110 0010 0110 0…011 01x1 1001` at cycle 0; at `N = 8`
+`y = 00000011, z = 11111110, u = 0000000101`), Icarus 12.0 = Xcelium 24.03
+on every cycle of every new admitted row (row testbenches from
+`gen_tb2`, run under both). `vg_initc`/`vg_initf`: before PASS against Icarus
+(`y = 11, 10, 1x, 1z` / `11, 10, 1x`), Xcelium refuses to elaborate them;
+after refused (`ProceduralBlockSymbol:initialized-variable`).
+
+**Measured.** Extractor suite from the repo root: 1793 passed, 3 skipped, 1
+failed — `test_empty_associative_delete::test_symbolic_mode_stays_loud`,
+flaky at HEAD too (2 of 8 HEAD runs fail; unrelated). `test_sym_initializers.py`
+26 tests (15 new). Re-extraction: 211 same, 0 diff, 3 skipped (cv32e40p
+sources off-machine; their committed envelopes carry no initializer); the
+envelopes this change alters were regenerated — `vg_initc`, `vg_initq`,
+`vg_initqp`, `pi_nonansi`, `pi_nonansi_hier`, `pi_nonansi_p` (the block
+becomes `Unsupported`) and `acg_alias_assign`, `acg_alias_port`,
+`acg_xproc_bits` (header comments; their declarations' source and envelope
+hashes rebound) — and before the edits a first sweep showed exactly the six
+process-level differences and nothing else. svGolf's 22 reference and
+scoring sources extract byte-identically with and without this round's
+changes. One slot build of `LeanModels.Sv.{Ingest2,Probe2,Param,Param2,
+RangeGuard2,Gen2,Hier2,Hier2Gen,CombGuard2,CombGuard2Sound,Comb2Example,
+Comb2ConcatExample,Comb2Proc,Comb2ProcExample,Mono2,SelfCheck}`, the ∀-N
+proofs (`ripple_add/{gen,proof,spec}`, `mul2d/gen`, `partsel/gen`,
+`ripple_fa/gen`), the `load_design_sv2` proof users (`division`,
+`implication`, `multiplication` + spec, `power`, `remainder`, `shifts`,
+`wildcard_equality`) and all nine sem2 `agree.lean` files: 70 jobs, green,
+every `#print axioms` (26) within `[propext, Classical.choice, Quot.sound]`.
+`test_oracle_disagreements.py` OK, `sv_divergence_probe.py` PASS,
+`divergence_register.py` OK, `docs_check.py` clean.
+`python3 harness/sv/diff_test2.py --sim iverilog` (one run under the slot,
+370 cases at its start): 258 verified, 21 declared simulator
+disagreements, 24 skipped (23 unavailable Icarus backends), 63 loud
+refusals, 0 FAIL, 0 ERROR — and 4 `XCHECK-FAIL`, all Lane B's
+`fold_pneg_n31`, `fold_pneg_n31_pm1`, `fold_pneg_n40`, `fold_pneg_n40_pm1`
+(`a + P * 2` folded in the default envelope's instantiation but a `mul` at
+the point), which Lane B's own concurrent full run reproduces while it edits
+`Param.lean`; this lane's extractor leaves `fold_pneg`'s envelope and its
+`N = 31` sidecar byte-identical (checked with and without the round-4
+changes). Every row of this entry: `pi_ansi_forms`, `pi_ansi_multi`,
+`pi_nonansi_forms`, `pi_nonansi_reg`, `pi_width_forms`, `pi_width_p`,
+`pi_width_p_n1/_n2/_n8/_n40` (`xcheck:agree`), `pi_hier_plain` PASS;
+`pi_width_px`, `pi_explicit`, `vg_initf`, `vh_initcomb`, `vh_initp` and the
+twelve corrected rows loud with their kinds; the three re-worded
+declarations CHECKED (their rebound hashes and unchanged traces accepted).
+
+**Gaps.** (1) The alias rows stay DECLARED although the policy says refuse
+where the tools split: the refusal needs a cross-process alias analysis
+beside `name.sem` (load gate and runner), not built here — a lead decision.
+(2) The Icarus bit-split class (`x_dyn`, `x_child`, `assign t[0] = a;`) has
+no rows; each would need its own declaration. (3) Initializer
+over-refusals, all loud: an x/z literal at a parameter-dependent width, an
+x/z sign bit, a negated literal (`= -2`), an ANSI `output var [1:0]`
+(implicit type: dimensions not recovered). (4) The `always_ff` refusal
+makes the common FPGA idiom `logic q = 0; always_ff … q <= …` loud (a
+plain `always` writer is admitted); svGolf's 22 sources do not use it, a
+player's design that does is now refused. (5) The non-ANSI `output var
+logic … = …;` declaration is admitted without a differential row (Icarus
+12.0 does not parse it). (6) `Lhs2.mustW .concat => []` is recorded, not
+fixed (CombGuard2's code is outside this lane). (7) A user function called
+in an `always_comb` that writes an initialized variable is not inspected;
+user calls are `Unsupported` in symbolic procedural code, so such a block
+is loud anyway.
+
+### INIT repair round (round 4 verifier, Lane A) — 2026-10-28
+
+The round 4 INIT verifier found three silent wrong values in the
+declaration-initializer work above (one a regression of this lane, two
+pre-existing in the forms item (1) claimed to cover), one more in
+expression context (routed to the folds lane by the verifier, closed here
+in the extractor alone, Lane B being mid-repair; no Lean file touched), and
+the over-claims that went with them. Extractor changes are
+symbolic-only and additive (`_sym_decl_init` rewritten on top of the new
+`_sym_decl_literal`/`_sym_literal_extend`, one refusal in
+`convert_port_sym`, one `_sym_unsized_xz_widening` hook at the top of
+`_sym_conversion`); no Lean file changed, no M0 path was touched.
+
+**(1) Unsized x/z literals in initializers (regression).** The round-4
+lowering padded an UNSIZED literal whose high-order bit is x or z with 0
+(`output logic [39:0] y = 'bx` read 8 zeros then 32 x; slang's own
+conversion constant does the same). IEEE 1800-2023 §5.7.1 extends it with
+that bit "to the size of the expression containing the literal constant",
+and Icarus 12.0, Xcelium 24.03 and the Yosys 0.53 netlist agree. The
+lowering now reads the literal itself (`_sym_decl_literal`, with slang's
+`isDeclaredUnsized`) and pads with that bit at a fixed width; at a
+parameter-dependent width an unsized literal of ONE repeated x/z bit
+(`'bx`, `'hz`) is `Fill` (the initializer is the whole expression, so every
+width gives that bit), anything else stays loud. Row `pi_unsized_xz`
+(ports and variables, 36 and 40 bits, truncation): before `y =
+00000000x…x1`, `z = 00000000z…z0001`, `v = 1000z…z`, `w = 00000000x…x0101`;
+after PASS, Icarus = Xcelium = netlist. Rows `pi_unsized_xz_p` at the
+default, `N = 1, 8, 40` (`xcheck:agree`).
+
+**(2) A non-ANSI input whose separately declared variable has an
+initializer (pre-existing; item (3)'s "closed in hierarchical designs" did
+not hold).** `input [1:0] a; logic [1:0] a = 2'b01;` keeps the initializer
+on the internal variable, not the port, so `PortConnection:default` never
+fired and the `Port` dropped it: the model read `y = b`. §6.5 makes the
+design illegal; slang is silent; the tools split — Icarus 12.0 and Xcelium
+24.03 resolve both drivers in a child on a parent port (`y = x1, xx, 0x,
+x1`), Icarus follows the driver through a parent variable and at the top
+where Xcelium still resolves, the Yosys 0.53 netlist keeps `01`, Verilator
+5.042 gives the input (and rejects the net form, `%Error-ASSIGNIN`). Now
+`PortSymbol:initialized-input`, top and children, variables and nets.
+Rows `pi_in_init` (verifier `n_in5`), `pi_in_init2` (`n_in6`, the
+Icarus/Xcelium split the model used to follow silently), `pi_in_top`,
+`pi_in_net` (before: loud for an unrelated reason), all loud.
+
+**(3) Plain literal initializers at a parameter-dependent width
+(pre-existing).** A literal with NO conversion at the default point (it
+has the declared width there, or slang folded a truncation) was emitted as
+a default-width `Literal`, which `instDecl` stored unchanged at every
+point. A 0/1 literal is now the `Int` of its value (two's complement when
+slang types it signed; a signed literal arrives under two implicit
+conversions, which `_sym_decl_literal` strips), an x/z literal is `Fill`
+or loud as in (1) (`Initializer:x-literal-parametric-width`), and a folded
+non-literal at such a width is loud (`Initializer:default-point-literal`).
+[CORRECTED, round 5 Lane A, 2026-10-29: "the `Int` of its value" also
+took in UNSIZED SIGNED based literals (`'sb1`, `'sh8`, `'shF`, fixed or
+parametric width, Var or output Port), on which Icarus 12.0 (sign-extends
+the digits: `11111111`) and Xcelium/Verilator/Yosys/§5.7.1 (`00000001`)
+split — a silent pick (INIT2 verifier `sbd`, `p4`, `nf`); loud again since
+round 5, as at 2e8c8b28.]
+Rows `pi_lit_p` at the default and `N = 1, 2, 8, 33` (before at `N = 8`:
+`y = 1011`, `z = 1010`, `u` 32 bits; after `00001011`, `11111010`, 36 bits,
+Icarus = Xcelium = netlist), `pi_lit_hier` (children of a non-parametric
+top, which no cross-check reaches: before `z = 00001` at `a = 1`, `s =
+00001010`; after `10001`, `11111010`), `pi_lit_px`/`_n4` and
+`pi_uxz_px`/`_n8` loud (before, `pi_lit_px_n4` read the 2-bit `x1` where
+the tools give `00x1`).
+
+**(4) Unsized x/z literals in expressions (pre-existing, outside the lane's
+files; closed in the extractor).** `assign y = 'bx;` and `a ? 'hz1 :
+40'd5` into 40 bits were zero-extending `Resize`s in symbolic mode (the M0
+path already had the repair, `_unsized_based_widening_bits`).
+`_sym_unsized_xz_widening` pads such an unsigned widened literal to the
+context width in a module with one point (row `ux_expr`: before `y =
+00000000x…x`, after 40 x, Icarus = Xcelium; Yosys's `prep` constants
+`40'hzzzzzzzzz1`/`36'hxxxxxxxxx` agree, its netlist reads x/z as
+don't-cares) and refuses it in a family with several points
+(`ConversionExpression:unsized-xz`, rows `ux_expr_p`/`_n8`): the padded
+value depends on the context width and the literal's own 32 bits take part
+in sizing its expression, so not even `Fill` is exact. That refusal is
+also an OVER-refusal at points where the 32-bit literal is not widened at
+all (`ux_expr_p` at `N = 8` was right before). [CORRECTED, round 5 Lane A,
+2026-10-29: "Icarus = Xcelium" holds for assignments and operators, but
+the hook also reached INPUT PORT ACTUALS (Icarus 12.0 zero-pads the port,
+Xcelium/Yosys extend the x — INIT2 verifier `p8`), CONSTANT positions
+(a typed localparam or an override: Icarus x-pads, Yosys and slang
+zero-pad) and UNPACKED-ARRAY pattern elements (no Icarus/Yosys oracle;
+loud at 2e8c8b28). In each it picked a side silently; all three are loud
+since round 5 (the round-5 Lane A entry below).]
+
+**(5) Docs.** The schema's "Converted literal initializers" paragraph and
+item (1) above carry CORRECTED notes; the schema gained "Literal
+initializers, round 4 repair" (the decision table) and "Unsized x/z
+literals in expressions"; the input-initializer sentence is rewritten;
+`docs/sv-oracle-disagreements.md` gained "Refused where the oracles split"
+(9) and "Refused where the tools agree but `name.sem` cannot follow"
+(3)/(4).
+
+**Measured.** Xcelium 24.03 (refsim on vip-ng, one batch of the 22 row
+testbenches) equals Icarus 12.0 on every cycle of every admitted row and of
+`pi_in_init`, `pi_in_net`, `pi_lit_px*`, `pi_uxz_px*`, `ux_expr_p*`; it
+differs on `pi_in_init2` and `pi_in_top` (the split above). The Yosys 0.53
+netlist equals Icarus on every initializer row. Before-traces: runner2 on
+envelopes from a copy of the extractor with this repair reverted
+(`gaps4/ifix/before.log`). The 22 rows (12 PASS, 7 cross-checked points
+agree; 10 loud with their kinds) ran green in a scoped `diff_test2`.
+Extractor suite from the repo root (final tree, Lane B's tests included):
+1817 passed, 3 skipped, 1 failed — the known-flaky
+`test_empty_associative_delete::test_symbolic_mode_stays_loud` (2 of 4
+reruns fail; flaky at HEAD too);
+`test_sym_initializers.py` 42 tests (16 new, one adjusted: `output var
+[1:0] y4 = 2'b10` has unrecovered dimensions, so its literal is now its
+`Int`). Re-extraction: 230 same, 0 diff, 3 skipped (cv32e40p); no existing
+envelope changed, the four committed probe sidecars regenerate
+byte-identically, and svGolf's 57 task and test sources (`tb.sv` aside)
+extract byte-identically with and without the repair. One slot build of
+the round's module list, the ∀-N proofs, the `load_design_sv2` proof users
+(with `unary_plus`) and the nine `agree.lean` files: 74 jobs, green, 28
+`#print axioms` within `[propext, Classical.choice, Quot.sound]`.
+`python3 harness/sv/diff_test2.py --sim iverilog` (one slot run, 477 cases
+with Lane B's concurrent rows): 343 verified, 21 declared simulator
+disagreements, 24 skipped (23 unavailable Icarus backends), 89 loud
+refusals, 0 FAIL, 0 ERROR, 0 `XCHECK-FAIL`; 232 cross-checked row points
+agree, 2 unconfirmed but simulator-verified (pre-existing).
+`test_oracle_disagreements.py` OK, `sv_divergence_probe.py` PASS,
+`divergence_register.py` OK, `docs_check.py` clean.
+
+**Gaps.** (1) `ux_expr_p`-style over-refusal: an unsized x/z literal in a
+family is loud even at points where it is not widened. (2) A signed
+literal with an x/z sign bit (`'sbx`, `4'sbx01`) stays loud. (3) An x/z
+literal at a parameter-dependent width other than a one-bit-repeated
+unsized one stays loud. (4) The verifier's minor about
+`LeanModels/Python/PayloadBlind.lean` (the `alu_div`/`ff_one`/`popcnt`
+`ingest.lean` files import the umbrella and do not build) is outside this
+lane and reported, not fixed.
+
+## Default-point folds, round 4 (Lane B: root contexts and genvar initializers) — 2026-10-28
+
+The round 3 FOLDS verifier found three silent wrong values in the constant
+tier's root contexts, two of them regressions of the round 3 repair (its
+transparent `ctype` plus the pushed-chain floor `PExpr.chainInfo`/
+`rootType`). The floor is gone: no root is evaluated at a width read off a
+conversion, whose width is the DEFAULT point's. [Round 5 correction: FALSE
+as written — `ctype`'s `Squash2` arm still read the 2-state conversion's
+default-point width as a floor (`localparam bit [N-1:0] B1 = (U + 1'b1) >>
+1` was 8 at `N = 4`, where both tools give 0; verifier repro `vq_sq2`);
+repaired in "Default-point folds, round 5" below.] `docs/sv-envelope-schema.md`,
+"Default-point folds, round 4", is the reference.
+
+1. **Self-determined roots** (major, regression; verifier repros `rf_lbl`,
+   `rf_gen`, `rf_lp`, `rf_par`). With `parameter logic signed [N-1:0] SB =
+   -1` (default `N = 8`) slang's tree of `SB + 1'b1` is `Resize(8, SB) +
+   Resize(8, 1'b1)` — the round 3 signed-operand marker and a widened
+   literal, both at the default point's widest-operand width — and
+   `chainInfo` read "every leaf a conversion" as a pushed-down 8-bit target:
+   `v[SB + 1'b1]` read v[16] at `N = 4`, `if (SB + 1'b1)` took the then
+   branch, an untyped `localparam X = (SB + 1'b1) >> 1` and parameter default
+   were 8, where Icarus 12.0 and the Yosys 0.53 netlist agree on v[0], the
+   else branch and 0. `evalSized` now evaluates every root at its OWN type at
+   the point (`ctype`, then `evalAt`).
+2. **INT-class targets** (major, regression; repros `rf_int`, `rf_ipar`).
+   `localparam integer L = U + 1'b1` and `parameter integer P = U + 1'b1`
+   with `logic [N-1:0] U = -1` (default `N = 32`: no conversion to read)
+   were evaluated at U's own width, 0 at `N = 4` and `N = 8`, where Icarus and
+   Yosys give 16 and 256. An `integer`/`int` localparam or parameter default
+   is now an assignment to a 32-bit target (`evalIntTarget`: `evalAssign 32`
+   outside the INT class; an INT-class tree, or the `Squash2` of an `int`
+   target around one, keeps `evalInt`), like a typed vector target
+   (`evalAssign`). `bindLocal` no longer evaluates a typed initializer with
+   `evalInt` first.
+3. **Genvar initializers** (major, oracle split; repro `rf_gv`).
+   `for (genvar g = U + 1'b1; g < 17; g++)` with `logic [N-1:0] U = -1`,
+   default `N = 32`: at `N = 4` Icarus starts at 0 (its own 4-bit width),
+   slang's elaboration and the Yosys netlist at 16 (the genvar's 32-bit
+   `integer` target, §10.8/§11.8.1), and the model silently followed Icarus
+   (HEAD 2e8c8b28 followed slang/Yosys, equally silently). The extractor
+   keeps the assignment (`_sym_genvar_init`): an initializer outside the INT
+   class at some point (`_sym_genvar_int_class`, stricter than
+   `_sym_bound_int_class`, which takes a `logic signed [N-1:0]` parameter
+   for an `int` because it is 32 bits at `N = 32`) whose root conversion
+   slang made same-width, or that has none, is wrapped in `Resize(32, …)`
+   (`SignedResize(32, …)` for a signed operand). Lean reads a conversion AT
+   a root as an outside target (`PExpr.pushedTarget`) and uses it only to
+   REFUSE: the own-width value where the target's reading agrees,
+   `Constant:assignment-context` where it differs. Found while measuring:
+   (a) the signed twin, `genvar h = S + S`
+   with a 4-bit signed `S = 7`, -2 against 14; (b) an initializer whose value
+   is no 32-bit signed integer (`genvar m = U` with a 40-bit `U = 2^40 - 1`,
+   or a 32-bit unsigned `U = 2^32 - 1`): Icarus AND Yosys keep it whole (no
+   iteration), slang and §27.4 convert it to the `integer` (m starts at -1) —
+   refused too (the check is keyed on the 32-bit target, so an instance
+   override of such a value into a 32-bit typed parameter is refused alike,
+   a recorded over-refusal); (c) an INT-class instance override into a typed
+   parameter wider than 32 bits (`.P(N * 1024)` into `logic signed [39:0]
+   P`, admitted by round 3 as INT class): on a 32-bit overflow (N = 2^21)
+   Icarus gives the 40-bit value, the Yosys netlist the 32-bit wrap, and the
+   round 3 floor followed Icarus silently. `_sym_override_root` now keeps
+   that assignment as a root conversion of the parameter's width, refused
+   where the readings differ (rows `fold_rovr*`), and decides the INT
+   class at every point (`_sym_genvar_int_class`: an override over a
+   `logic signed [N-1:0]` parameter is typed, so refused as round 3's
+   `InstanceSymbol:override-context`). A first version also read an
+   INT-class chain widened past 32 bits INSIDE a root as a target; the full
+   suite caught it on `fold_pneg_n31/n40*` (`a + P * 2`, where the
+   widening is a sibling signal's, in a value position) and it was dropped
+   — no conversion inside a root is a target. `docs/sv-oracle-disagreements.md`,
+   "Refused where the oracles split" (6), (7) and (8).
+4. **The round 3 verify-1 majors, re-checked with new repros.** Case items
+   `-P`, `P + 2`, `~P` with `int P = -3` (and 5) in a case of `N + 2` bits
+   at `N = 7, 31, 40` (`fold_rcase*`): the model and Icarus zero-extend P
+   into the wide case; Yosys differs only by the recorded synthesis-side
+   divergence 3 (own-width items). Typed localparams `~4'd0`, `-4'd1`,
+   `4'd8 * 4'd4`, `(4'd15 + 4'd1) >> 1` into `logic [N-1:0]`, slang's
+   default-point truncation at `N = 2`, at `N = 3, 4, 8, 16` (`fold_rlp*`):
+   PASS, Yosys agrees. The UNWRAPPED encoding `_sym_unsigned_simple_operand`
+   keeps for a same-width assignment-like conversion,
+   `localparam logic [N-1:0] L1 = P` at the default `N = 32`, sign-extends at
+   `N = 40` in the model, Icarus and Yosys (`fold_rlpsgn*`).
+5. **Over-claims corrected.** The round 3 repair entry's floor sentence and
+   its Gap (2) ("exact for a fixed target") carry a correction note; the
+   round 3 entry's opening and the schema's round 3 repair section point
+   here; `_sym_unsigned_simple_operand`'s docstring now says exactly where
+   the marker is emitted (value AND symbolic positions of a family), that
+   its width is never read as a context, and why each case it leaves
+   unwrapped is exact or loud at every point. [Round 5 correction: its
+   "a signed target … the bare reference materializes signed" was exact
+   only for a fixed-width operand — a parameter whose default width is 32
+   lost its `signed` field (verifier repro `vq_sgn2`); fixed and restated
+   in round 5.]
+
+**Measured.** 45 new rows over 8 new fixtures (`sem2/fold_rself`, `fold_rint`,
+`fold_rgv`, `fold_rgvw`, `fold_rovr`, and the confirmation fixtures
+`fold_rcase`, `fold_rlp`, `fold_rlpsgn`), `harness/sv/cases2.json`
+append-only (370 → 415): 36 PASS against Icarus 12.0 with the cross-check
+agreeing at every row point — `fold_rself*` (N = 8, 2, 4, 12, 40; N = 4 with
+SB = 3), `fold_rint*` (N = 32, 4, 8, 40; N = 4 with U = 3), `fold_rgv*`
+(default, N = 4, 40; N = 4 with S = 3; U = -1 at N = 32, 40), `fold_rgvw*`
+(default, N = 40; N = 4 with U = -1; N = 40 with U = 5), `fold_rovr*` (N =
+5, -7, 2^21 - 1), `fold_rcase*`, `fold_rlp*`, `fold_rlpsgn*` (above) — and
+9 loud refusal rows (`Constant:assignment-context`: `fold_rgv_n4_um1`,
+`_n8_um1`, `_n4_s7`, `fold_rgvw_n40_um1`, `_n33_um1`, `_n32_um1`,
+`fold_rovr_n2097152`, `_n4194304`, `_nm2097153`). The Yosys 0.53 netlist
+(`synth -flatten; abc`, simulated in Icarus with each row's testbench; a
+negative override of a parameter wider than 32 bits passed to `chparam` at
+the parameter's own width) agrees with every PASS row on every cycle except
+`fold_rcase_n31/n40/n40_p5` (synthesis-side divergence 3), and splits
+from Icarus exactly at the refused `fold_rovr` points; at the refused
+genvar points the oracles split as recorded (Icarus, Yosys and slang's
+point elaboration). Before the fix, on the round 3 tree: `rf_lbl` (N = 2,
+4), `rf_gen`, `rf_par`, `rf_int` (N = 4, 8), `rf_ipar`, `rf_gv` and the new
+`fold_rself_n2/n4`, `fold_rint_n4/n8`, `fold_rgv_n4_um1/n8_um1` were silent
+default-point folds (`XCHECK FAIL … SILENT default-point fold`, the
+envelope reading v[16] for v[0], L = 0 for 16, g from 0 for 16) and
+`fold_rgv_n4_s7` ran (Icarus's reading) where it is now refused; the
+`fold_rovr` overflow reading of the round 3 floor (Icarus's) and
+`fold_rgvw`'s whole-value reading (Icarus's and Yosys's) follow from the
+old rules and were not re-run. The verifier's passing and loud repros
+(`rf_case`, `rf_val`, `vz_p`, `dq_asc`, `dq_2d`, `pc_carry`, `vz_sgn`,
+31 rows) keep their verdicts. Full `python3 harness/sv/diff_test2.py --sim
+iverilog`: 415 cases, 298 verified, 21 declared simulator disagreements,
+24 skipped (23 unavailable Icarus backends), 72 loud refusals, 0 failed, 0
+ERROR, exit 0; cross-check 197 row points agree, 2 unconfirmed but
+simulator-verified (pre-existing). CX sweep (95 envelopes, 1671 entries):
+every one of the round 3 sweep's 1463 entries keeps its verdict (the first
+version of this change flipped five `fold_pneg` points, item 3(c)); of
+the 208 new entries 168 agree, 10 are the refused genvar points of
+`fold_rgv`, 1 the refused `fold_rovr` point, 9 `fold_rlpsgn` at N ≤ 16
+(the point extraction refuses slang's signed truncation there,
+`ConversionExpression:width`, so no row is claimed), 10 Lane A's
+`pi_width_px`, and 10 UNCONFIRMED `fold_rself` overrides of the untyped
+`Y` (`ParamRef:override-type`). reext: 212 same, 0 diff (3 cv32e40p
+skipped) — no existing envelope changes; the 8 new fixture envelopes are
+the only new ones. Extractor suite 1797 passed, 3 skipped (`PYTHONHASHSEED`
+7; seed 11 hits the pre-existing flaky
+`test_empty_associative_delete::test_symbolic_mode_stays_loud` in 2 of 3
+runs); new `test_sym_folds4.py`. One slot build of the SV modules, the ∀-N
+proofs, every buildable `agree.lean` and `load_design_sv2` user (75 jobs)
+is green with every statement unchanged; all 28 `#print axioms` within
+[propext, Classical.choice, Quot.sound]; new `#guard`s in `Param.lean`
+pin the self-determined roots, `evalIntTarget`, the genvar and override
+root refusals and the 32-bit fit check. `docs_check` clean,
+`divergence_register` OK.
+
+**Gaps.** (1) Pre-existing, verifier minor, not addressed: an untyped
+constant whose self-determined value overflows (`localparam Y = SB + 1'b1`)
+is 256 in Icarus 12.0 (lossless) and 0 in the model, the Yosys netlist and
+§6.20.2/§11.8.1 — undeclared, so no row of that shape is admitted to
+`cases2.json` (the round 4 fixtures avoid it). [Round 5: refused,
+`Constant:untyped-overflow`.] (2) The 32-bit fit check
+over-refuses an instance override of a value that is no 32-bit signed
+integer into a 32-bit typed parameter, and the INT-class-chain target of an
+override into a parameter whose own type is parameter-dependent is the
+default point's (only the refusal side uses it). [Round 5 correction: the
+refusal side MISSED the split there, so the model ran silently — verifier
+repro `vq_ovr2`, 0 where Icarus gives -2^40; such an override is refused
+since round 5.] (3) A genvar initializer
+of the INT class keeps `evalInt`'s unbounded reading (the documented
+`int32Agrees` restriction), and an INT-class leaf widened past 32 bits
+INSIDE a constant root is read at 32 bits (value positions re-evaluate at
+the operation width, `constAtCtx2`). (4) The legacy-select range guard and
+`_sym_override_root`'s over-refusal of width-neutral typed overrides stay
+as documented (verifier minors, optional). (5) svGolf (a separate lake
+project) was not rebuilt here; the 3 cv32e40p envelopes are reext SKIP.
+(6) A negative override of a parameter wider than 32 bits must be passed
+to Yosys `chparam` at the parameter's width (a `32'sh…` value is not
+sign-extended): the measuring script `oracles.py` was corrected for it.
+
+## Default-point folds, round 5 (Lane B repair: 2-state targets, declared signedness, dependent overrides, untyped wraps) — 2026-10-28
+
+The round 4 FOLDS verifier found three blockers: two silent wrong values
+that round 4's claim "no root is evaluated at a width read off a
+conversion" had missed, and one oracle split that the model followed
+silently. It also found three minors. `docs/sv-envelope-schema.md`,
+"Default-point folds, round 5", is the reference.
+`docs/sv-oracle-disagreements.md`, "Refused where the oracles split",
+items (10) and (11), records the splits.
+
+1. **`Squash2` was a floor** (blocker; verifier repro `vq_sq2`; a HEAD-era
+   rule that rounds 3 and 4 kept). slang wraps the initializer of a
+   2-state target in a same-width 4-state → 2-state conversion sized at
+   the DEFAULT point. `ctype` read it as `max(that width, the operand's
+   width)`. Take `localparam bit [N-1:0] B1 = (U + 1'b1) >> 1`, `B2 = (U +
+   1'b1) % 3'd5`, `B3 = (U + 1'b1) >>> 2` and `parameter bit [N-1:0] PB =
+   (U + 1'b1) >> 1`, with `logic [N-1:0] U = -1` and default `N = 32`.
+   The model gave 8, 1, 4, 8 at `N = 4` and 128, 1, 64, 128 at `N = 8`.
+   Icarus 12.0 and the Yosys 0.53 netlist give 0 for all four. `ctype` is
+   now transparent to `Squash2`, as it is to `Resize`. The target comes
+   from `evalAssign` (the declared width) or `evalIntTarget` (`int`).
+   *(Round 6 correction: this fixed a `Squash2` at the root and introduced
+   a silent wrong value under a NARROWING target, `Resize(target,
+   Squash2(…))`: the context stopped at the `Squash2`, so `localparam
+   shortint H1 = (U + 1'b1) >> 1` became 0 at a 4-bit `U = 15` where HEAD,
+   round 4 and every tool give 8. See "Default-point folds, round 6".)*
+2. **Signedness was folded at the default point** (blocker; present at
+   HEAD). `_sym_param_signedness` emitted `signed` only where the type
+   departed from "signed exactly when 32 bits wide" AT THE DEFAULT POINT.
+   `declConstType` then applied that rule at each point's width.
+   * `parameter logic signed [M-1:0] S = -1` (default `M = 32`) was read
+     UNSIGNED at `M = 8` (verifier repro `vq_sgn2`). `assign o1 = S` gave
+     255 where both tools give 2^64 - 1. `localparam integer I = S >>> 1`
+     gave 127 where both tools give -1. `S < 0` gave 0.
+   * `logic [N-1:0] U` (default `N = 8`) was read SIGNED at `N = 32`
+     (`vq_sgn3`); `int32Agrees` made it loud there.
+
+   The extractor now always emits `signed` for a type whose width depends
+   on a parameter. `declConstType` refuses a type with a non-literal bound
+   and no field, so a stale envelope cannot be read by the one-width rule.
+   Re-extraction adds `"signed": false` to seven existing envelopes:
+   `fold_cgrow`, `fold_lpgrow`, `fold_lpshr`, `fold_ovr`, `fold_ovr2`,
+   `fold_psel` and `fold_rlp`. All seven are unsigned, so their
+   default-point reading is unchanged. No other envelope or probe sidecar
+   changes.
+3. **An INT-class override into a parameter of dependent width**
+   (blocker, oracle split; verifier repro `vq_ovr2`). Take `#(.W(N + 40),
+   .P(N << 40))` into `logic signed [W-1:0] P`, with default `N = 0`.
+   Round 4's root conversion carried the default point's 40 bits, where
+   the 32-bit and 40-bit readings agree on 0. At `N = 1`, P is 41 bits:
+   Icarus 12.0, §10.8 and slang give -2^40, and the Yosys netlist gives 0.
+   At `N = 24` it is 24·2^40 against 0. The refusal side MISSED the split
+   and the model ran, so round 4 Gap (2) was wrong to call this case
+   refusal-only.
+   `_sym_override_root` now refuses (`InstanceSymbol:override-context`) an
+   INT-class context-propagating override into a child parameter whose
+   declared width is not fixed. `_sym_param_type_fixed` counts a type as
+   fixed when it is a keyword integral or implicit type whose bounds are
+   built from integer literals and from sibling parameters that are
+   literal at every point (`.W(40)`, or a literal default that is not
+   overridden), or when the parameter is untyped. These stay admitted:
+   leaves (`.P(N)`), fixed-width targets (`fold_rovr`), `int` targets, and
+   the verifier's `vq_ovr` `u4` (`.W(40)`). A first version refused `u4`,
+   which turned `vq_ovr` default, `N = 7` and `N = -7` loud where they had
+   passed. The sibling-literal clause fixed that.
+4. **Over-claims** (minor). These now carry round 5 correction notes:
+   * in the round 4 entry: "no root is evaluated at a width read off a
+     conversion", its Gaps (1) and (2), and item 5's docstring claim;
+   * the schema's round 3 and round 4 sections.
+
+   `_sym_unsigned_simple_operand`'s docstring now says the bare signed
+   reference is exact because the declared signedness is recorded at
+   every point (since round 5), and that it was exact only for fixed-width
+   operands before.
+5. **`_sym_bound_int_class`** (minor) had no caller left after round 4. It
+   was added in round 3 (it is not at HEAD), so it is removed.
+6. **Untyped constants that wrap** (minor; round 3 verifier minor 4; the
+   tools split). `localparam Y = SB + 1'b1` with an 8-bit `SB = 255` is 0
+   in slang, §6.20.2 and the Yosys netlist, and 256 in Icarus 12.0, which
+   evaluates an untyped parameter value losslessly.
+   * **Measured** with probes, the Icarus traces checked against Yosys
+     netlists: Icarus widens through `+ - * / **`, unary `-` and the arms
+     of `?:`, and stops at shifts, comparisons, casts and selects. The
+     width differs too: `$bits(X)` is 65 in Icarus and 40 in Yosys for `X
+     = U + N * 1024`. *(Round 7 correction: at right shifts and at a sized
+     left operand; a left shift of an unsized or INT-class operand widens,
+     `1 << N` is 2^40 at `N = 40` in Icarus.)*
+   * **The fix.** New `evalUntyped`, for untyped parameter defaults and
+     localparams. It refuses (`Constant:untyped-overflow`) wherever the
+     own-type value differs from its reading at 64 more bits, with shifts
+     kept at their own width.
+   * **Soundness.** It refuses every measured split. It over-refuses where
+     Icarus happens to keep the bits (`-SB`, `~SB`, `~(SB + 1'b1)`).
+     *(Round 6 correction: it did not. The same entry measured the WIDTH
+     split (`$bits` 65 against 40) without refusing it; the width splits
+     where no value wraps (`(Y + 8'd255) >> 1` into 8 bits: 130 against 2
+     at `SB = 5`) and in the INT class (`N + 1` is 33 bits in Icarus); and
+     a wrap beyond 64 extra bits (`2 ** SB` at `SB = 100`) escaped. See
+     "Default-point folds, round 6".)*
+   * **What it changes.** The shift barrier keeps `fold_rself`'s untyped
+     `X = (SB + 1'b1) >> 1` running, since Icarus agrees there. The
+     verifier's `vq_mix` at `N = -2097153` and at `N = -7, U = 5`, which
+     passed on a 40-bit output, is now refused. Its untyped `X` really
+     differs: 4395899026432 against 1097364143104, visible at 80 bits.
+   * **The pinned `#guard` that changed meaning.** The untyped `L = K +
+     3'd7` at `K = 1` (a 3-bit wrap to 0) is now loud. The guard now pins
+     `K = 0` (7) and the refusal.
+
+**Measured.** 40 new rows over six new fixtures (`sem2/fold_sq2`,
+`fold_psgn`, `fold_psgnw`, `fold_ovrw`, `fold_ovrwl`, `fold_uovf`).
+`harness/sv/cases2.json` is append-only (437 → 477, after Lane A's
+round 4 repair rows). No existing row was changed.
+* 33 rows PASS against Icarus 12.0, with the cross-check agreeing at
+  every row point:
+  * `fold_sq2*`: default; `N = 0, 1, 2, 4, 8, 31, 33, 64`; `N = 4` with
+    `U = 5`.
+  * `fold_psgn*`: default; `M = 8`, `M = 4` with `S = -3`, `M = 16` with
+    `S = 5`; `N = 32, 16`; `N = 32` with `M = 16`; `M = 8` with `N = 32`.
+  * `fold_psgnw*`: default; `M = 40, 33, 64`; `M = 40` with `S = 5`;
+    `M = 48` with `S = -3`.
+  * `fold_ovrwl*`: default; `N = 1, 24, -5, 100`.
+  * `fold_uovf*`: default `SB = 5`; `SB = 100`; `N = 16`; `N = 4` with
+    `SB = 3`.
+* 7 rows are loud refusals:
+  * `InstanceSymbol:override-context`: `fold_ovrw`, `fold_ovrw_n1`,
+    `fold_ovrw_n24`.
+  * `Constant:untyped-overflow`: `fold_uovf_sb255`, `_sb200`,
+    `_n16_sbm1`, `_n4_sb15`.
+
+`fold_psgn` at `M = 40` and `fold_ovrwl` at `N = -30` are not rows. The
+point extraction refuses slang's narrowing of `S` into the `integer` and
+of `N` into the 10-bit `P` (`ConversionExpression:width`), so they cannot
+be cross-checked. `fold_psgnw` covers the wide `M`.
+
+The Yosys 0.53 netlist (`chparam; synth -flatten; abc`, simulated in
+Icarus) agrees with Icarus on every 0/1 cycle of every PASS row. It splits
+from Icarus exactly at the refused points:
+* `fold_ovrw`: 0 against -2^40 at `N = 1`;
+* `fold_uovf`: 0 against 256, 144 against 400, and so on.
+
+Before the fix, on the round 4 tree with the old extractor:
+* `fold_sq2_n0` to `n31` FAILED against Icarus (8, 1, 4, 8 at `N = 4`);
+* `fold_psgn` at `M = 8, 4, 40` FAILED (o1 = 255 for 2^64 - 1, I = 127
+  for -1);
+* `fold_psgn` at `N = 32` was loud through `int32Agrees`;
+* `fold_ovrw` at `N = 1` and `N = 24` FAILED (0 for -2^40 and 24·2^40);
+* `fold_uovf` at `SB = 255`, `N = 4` and `N = 16, SB = -1` FAILED,
+  following the LRM and Yosys silently.
+
+The verifier's 134 repro rows (`vq_*`) were re-run on the final tree,
+re-extracted. 25 changed verdict:
+* `vq_sq2`, `vq_typ` (`N = 0` to `31`, and `N = 4` with `U = 3`),
+  `vq_sgn`, `vq_sgn2` and `vq_sgn3` move from XCHECK-FAIL or ERROR to
+  PASS.
+* `vq_ovr2` and the two `vq_mix` points above move to loud refusals.
+
+Every other `vq_*` row keeps its verdict. That includes the pre-existing
+loud ones and the declared wide-index `vq_idx` disagreement.
+
+Full `python3 harness/sv/diff_test2.py --sim iverilog`: 477 cases, 343
+verified, 21 declared simulator disagreements, 24 skipped (23 unavailable
+Icarus backends), 89 loud refusals, 0 failed, 0 ERROR, exit 0. The
+cross-check had 232 row points agree and 2 unconfirmed but
+simulator-verified (pre-existing). reext: 230 same, 0 diff, 3 cv32e40p
+skipped. Before regeneration it found exactly the seven `signed`
+additions above, and the regenerated files are byte-identical to it.
+
+Extractor suite: 1818 passed, 3 skipped, with `PYTHONHASHSEED=7`; the
+new file is `test_sym_folds5.py`. The pre-existing flaky
+`test_empty_associative_delete::test_symbolic_mode_stays_loud` failed in
+one run and in 2 of 3 runs on its own, under the same seed; it is
+unrelated to this change. `Param.lean` gains `#guard`s for the
+`Squash2` targets, the `signed` refusal and the declared signedness, and
+the untyped-wrap refusal with its shift barrier.
+
+One slot build covered the SV modules, the ∀-N proofs, every `agree.lean`
+and every `load_design_sv2` user except the three cv32e40p `ingest.lean`
+(see Gaps). It is green (75 jobs) with every statement unchanged, and all
+30 reported `#print axioms` are within [propext, Classical.choice,
+Quot.sound]. `docs_check` is clean and `divergence_register` reports OK.
+
+**Gaps.**
+1. `evalUntyped` over-approximates Icarus's widths: it refuses `-SB`,
+   `~SB` and `~(SB + 1'b1)` where Icarus keeps the bits. Its wide reading
+   is 64 extra bits, so a wrap that only shows beyond that (a huge `**`)
+   is not seen.
+2. The fixed-width test is syntactic. A dependent type whose width is in
+   fact constant through a non-literal expression is refused, which is an
+   over-refusal.
+3. The three cv32e40p `ingest.lean` files import the umbrella
+   `LeanModels`. The umbrella's Python modules (`LeanModels.Python.Tests`,
+   `PayloadBlind`) are unchanged from HEAD, belong to no SV lane, and fail
+   to build in this tree, so those three were not built. Their envelopes
+   hold no parameter of dependent width, so neither the `signed` refusal
+   nor the `Squash2` change can reach them.
+4. svGolf (a separate lake project) was not rebuilt here.
+5. Round 4's gaps (2, first half) and (3) through (6) stand.
+
+## Initializers and unsized literals, refusal-only (round 5, Lane A) — 2026-10-29
+
+Round 5 is refusal-only and monotone: a fix may add a loud refusal, revert a
+round-3/4 change to 2e8c8b28 behaviour where that was loud or correct, or
+correct a value only where Icarus 12.0, the Yosys 0.53 netlist and slang's
+own elaboration agree on a parameter sweep. Where the tools split, the
+design is refused, never decided for one side. This entry closes the round-4
+INIT2 verifier's two majors and its minor, plus two further silent picks of
+the round-4 expression hook found by this round's own probes. Every change is
+an extractor refusal (symbolic mode only, additive; no M0 path touched); no
+Lean file changed. Probes and logs:
+`/private/tmp/claude-501/-Users-ahle-repos-lean-surfaces/ef50039c-ca19-4962-8585-1ff4626e9462/scratchpad/gaps5/init/`.
+
+**(1) Unsized x/z literals in input port actuals (INIT2 major 1).** The
+round-4 hook `_sym_unsized_xz_widening` also rewrote input port actuals,
+where the tools split. `.i('hx0)` into a 40-bit port gives 8 zeros, 28 x,
+`0000` in Icarus 12.0, which pads the self-determined actual with zeros
+("Padding 8 high bits of the port"). Xcelium 24.03 (verifier) and the Yosys
+0.53 netlist give 36 x then `0000`. At 2e8c8b28 the model followed Icarus (a
+zero-extending `Resize`, row PASS); after round 4 it followed Xcelium and
+Yosys (row FAIL against Icarus). Neither choice was recorded. Inside an
+input actual (`_sym_port_conn` sets `_SymUnsizedXZLoud`) every such widening
+is now `PortConnection:unsized-xz`, whether the literal is bare, under `?:`
+or under an operator. [CORRECTED, round 5 repair, 2026-10-29: only where
+the port was wider than the literal at the BOUND point (the defaults, the
+first generate-for iteration); a port wider only at another point was
+admitted with Icarus's padding (verifier `vp1`, `vp2`), and a narrower
+default folded the actual (`vp7`). Since the repair any actual holding an
+unsized x/z-top literal is refused — "Unsized x/z literals at every
+point" below.] Fixture and refusal row: `pa_unsized_xz`. The schema
+paragraph, the round-4 entry (4) above and the hook's docstring carry
+CORRECTED notes on the "Icarus agrees" claim.
+
+**(2) Unsized signed based literals (INIT2 major 2, plus its expression
+twin).** Icarus 12.0 sizes `'sb1`, `'sh8` and `'shF` to their digits and
+sign-extends them in every context measured: an initializer, an
+assignment, `a + 'sb1`, `localparam P = 'sh8` (-8), an index, a comparison,
+a `case` item and `>>>`. In 8 bits `'sb1` is `11111111` and `'sh8` is
+`11111000`. Verilator 5.042, the Yosys 0.53 netlist, Xcelium 24.03
+(initializers) and §5.7.1 give `00000001` and `00001000`.
+
+- At 2e8c8b28, initializers were loud: a `SignedResize` that `instDecl`
+  refused. Expressions were admitted with the LRM value, a silent pick
+  against the harness oracle (`head_ux_signed` FAILs against Icarus).
+- Round 4 made initializers admitted `Int`s (`r4_pi_unsized_signed` FAILs).
+- Now a declaration or output-port initializer is `Initializer:unsized-signed`
+  (`_sym_decl_init`).
+- Every such token in the compiled sources adds `IntegerLiteral:unsized-signed`
+  to the top's `others` (`_sym_unsized_signed_scan`, a syntax scan). This is
+  the one choke point for the class: a fold or a direct literal read, such as
+  an index, would bypass a per-expression check.
+
+Fixtures and refusal rows: `pi_unsized_signed`, `pi_unsized_signed_n32` and
+`ux_signed`.
+
+**(3) Two more silent picks of the round-4 hook (found here).**
+
+- **CONSTANT positions** (`_SymPos`). A `case` item `'hx0` over a 40-bit `b`
+  is x-padded by Icarus and Yosys `prep`, but the Yosys netlist reads the x as
+  a don't-care: at `b = 00000000` then 28 x then `0000`, Icarus gives 2 and
+  the netlist 1. 2e8c8b28 zero-padded the item and was wrong against both
+  tools at `b = x…0000`; round 4 followed Icarus. It is now
+  `ConversionExpression:unsized-xz-constant`.
+  - Parameter values and overrides (`localparam logic [39:0] LP = 'hx0`,
+    `#(.P('hz1))`, an untyped `LQ = 'hx0`) split as well: Icarus against Yosys
+    and slang's constant. They were loud in the Lean constant tier ("x/z
+    literal in a constant context") at 2e8c8b28, in round 4 and now.
+  - Fixture and refusal row: `ux_const`.
+- **Unpacked-array pattern elements** (`logic [39:0] m [0:1] = '{'hx0,
+  'hz1}`, verifier `ap`). Icarus does not support the declaration and Yosys
+  does not parse it, so there is no oracle. 2e8c8b28 refused it as a
+  "non-literal initializer"; round 4 admitted it.
+  - It is now `Initializer:unsized-xz-element` on the declaration
+    (`convert_fixed_array_vars_sym`).
+  - Fixture and refusal row: `ux_array`.
+
+**(4) Nested-instance refusal naming (INIT2 minor): accepted as worded.**
+`Process2.inInstance` gives one clause per level, outermost first. It does
+not print one flattened path. Measured through `load_design_sv2` on `nest` →
+`mm` (`nest_m`) → generate block `g` → `ll` (`nest_l`):
+
+> in instance 'mm' of module 'nest_m' (its signals flatten under the prefix
+> 'mm.' inside the module that instantiates it): in instance 'll' of module
+> 'nest_l' (its signals flatten under the prefix 'g.ll.' inside the module
+> that instantiates it): always_comb block reads bit [1] of 't' …
+
+The leaf's flattened signal is `mm.g.ll.t`: the clauses' prefixes
+concatenated outermost first. The schema's self-read paragraph now says
+exactly this. Threading the accumulated prefix would change `ChildInst`,
+which the `fa_flatten` proof simplifies through, and `Hier2.lean` was not
+touched.
+
+**(5) Re-checks.**
+
+- **Round-4 closures hold.**
+  - Non-ANSI output-port initializers (`reg`, `logic`, `var logic`; converted,
+    signed, unsized x/z and sized x forms; probe `rc1b`) PASS against Icarus
+    and equal the Yosys netlist.
+  - The §6.5 mixtures stay refused (probes `rc2`, `rc3`). These include a
+    non-ANSI initialized input two levels down, an `assign` to a bit of an
+    initialized variable, a child output into an initialized variable, a
+    streaming target and a struct-member target.
+  - Unsized x/z in declarations and expressions wider than 32 bits equals
+    Icarus and the Yosys netlist (probes `uf`, `uxc`, `ni`; nets are loud
+    anyway for packed dimensions). [CORRECTED, round 5 repair, 2026-10-29:
+    true of declaration initializers and of modules with one point only.
+    In a family the expression value was fixed at the default point and
+    wrong against both tools at other points (verifier `vp3`, `vp4`,
+    `vp6`, `vp8`, `vp9`), and `$unsigned('hz1)` widened splits Icarus from
+    the netlist even with one point (`ex3`) — "Unsized x/z literals at
+    every point" below.]
+  - The `FailsClosed` tests pass.
+- **Refusal sets, 2e8c8b28 against the current extractor.** The comparison
+  covered every sem2 fixture, the round-3/4 INIT repro directories and these
+  probes (450 tops). The 2e8c8b28-loud shapes in this lane that are admitted
+  now:
+  - converted 0/1 literal initializers (`pi_width_forms`, `pi_width_p`,
+    `pi_lit_p`);
+  - unsized unsigned x/z initializers at a fixed width (`pi_unsized_xz`,
+    `w_var2`);
+  - their `Fill` at a parameter-dependent width (`pi_unsized_xz_p`).
+
+  `pi_lit_p`, `pi_unsized_xz_p` and `pi_width_p` were swept at the default
+  and `N` = 0, 1, 2, 3, 4, 7, 8, 15, 16, 31, 32, 33, 63, 64, 65. All 48
+  points PASS against Icarus with xcheck agree (slang's elaboration at the
+  point), and the Yosys netlist traces equal Icarus's at every point. The
+  remaining differences are Lane B's (`fold_psgn`, `fold_psgnw`,
+  `fold_query`).
+
+**Verification.**
+
+- **Build.** One slot build was green: 74 jobs, with every statement
+  unchanged.
+  - It covered LeanModels.Sv.{Ingest2, Probe2, Param, Param2, RangeGuard2,
+    Gen2, Hier2, Hier2Gen, CombGuard2, CombGuard2Sound, Comb2Example,
+    Comb2ConcatExample, Comb2Proc, Comb2ProcExample, Mono2, SelfCheck}.
+  - It also covered the ∀-N files (ripple_add gen/proof/spec, mul2d,
+    partsel, ripple_fa), the `load_design_sv2` proof users and all nine sem2
+    `agree.lean`.
+  - All 28 `#print axioms` reports are within [propext, Classical.choice,
+    Quot.sound].
+- **Extractor suite.** On the final tree, 1835 passed and 3 skipped, in
+  three consecutive runs. In one earlier run,
+  `test_symbolic_instances::test_generate_loop_instance` and the known-flaky
+  `test_empty_associative_delete` each failed once; the first passes alone.
+  `test_sym_initializers.py` has 52 tests (10 new, 2 adjusted to the
+  restored refusals).
+- **reext and sidecars.** reext gave 246 same, 0 diff and 3 cv32e40p
+  skipped, with Lane B's round-6 fixtures in the tree; the only envelopes
+  this entry creates are the five new fixtures. The four committed probe
+  sidecars regenerate byte-identically.
+- **docs_check.** Clean.
+- **Full `diff_test2 --sim iverilog`.** EXIT 0 on the tree after Lane B
+  corrected its rows: 0 FAIL, 0 ERROR.
+  - 378 verified, 21 declared, 124 loud (the six new rows included), 24
+    skipped, 23 unavailable.
+  - Cross-check: 263 row points agree, 2 unconfirmed (pre-existing).
+  - A first run, made before Lane B updated its `Constant:untyped-width`
+    rows, failed only those 9 rows (`register_file_ff`, `fold_uovf*`).
+
+**Gaps.**
+
+1. `PortConnection:unsized-xz` over-refuses an actual whose own width
+   already reaches the port (`s ? 'hx0 : 40'd5`, `'hx0 ^ b` with a 40-bit
+   `b`). It also over-refuses a widening inside a comparison within an
+   actual. The tools agree on both.
+2. `IntegerLiteral:unsized-signed` over-refuses `'sd…` and literals whose
+   top digit bit is 0 (`'sb01`), where the tools agree. Because it is a
+   scan of every compiled file, it also refuses literals in modules the top
+   never instantiates.
+3. `ConversionExpression:unsized-xz-constant` covers selects and generate
+   headers with no measured split there.
+4. The nested-instance message keeps its per-level clauses (4).
+5. Xcelium was not re-run in this round. Its values are the round-4
+   verifier's (`p8`, `sbd`).
+
+## Default-point folds, round 6 (Lane B, refusal-only: `Squash2` under a narrowing target, typedef widths, enum values, untyped widths) — 2026-10-29
+
+Under the round 5 rule (refusal-only and monotone), this round closes the
+round 5 FOLDS verifier's four findings and the class behind its two
+blockers: a width, bound, value or conversion that the envelope fixes at
+the DEFAULT point and Lean then uses at other points without recomputing
+it. Nothing that was loud is admitted. The one corrected computation is
+equal to Icarus 12.0, the Yosys 0.53 netlist and slang's own elaboration
+at every row point (and five more in scratch). *(Round 7 correction: one
+loud shape was admitted by item 1 — a `Squash2` operand that divides by
+zero at its own width but not at the context; it is loud again, see
+"Default-point folds, round 7".)* Everything else is a new
+loud refusal. `docs/sv-envelope-schema.md`, "Default-point folds, round
+6", is the reference; `docs/sv-oracle-disagreements.md`, items (12) and
+(13), records the two new oracle splits.
+
+1. **The context reaches through a `Squash2`** (blocker; a regression of
+   round 5; verifier repro `vs_sqn`). Round 5 made `ctype` read `Squash2`
+   as its operand's type but left `PExpr.ctxPropagates (.squash2 ..)`
+   false. A 2-state target NARROWER than its initializer at the default
+   point is `Resize(target, Squash2(default width, op))`, and the
+   `resize` arm then evaluated `op` at its own width where the target is
+   the wider context. With `logic [N-1:0] U = -1` (default `N = 32`), at
+   `N = 4`: `localparam shortint H1 = (U + 1'b1) >> 1` was 0 where Icarus,
+   the Yosys netlist and slang give 8; `byte Y1 = U + 1'b1` 0 for 16; `bit
+   [7:0]`, `bit signed [7:0]` and a `byte` parameter default 0 for 8; and
+   `localparam int KI = (UK + 1'b1) >> 1` (default 40-bit `UK`) 0 for 8 at
+   `K = 4`. HEAD and round 4 gave the right value here. Fix (rule (c)):
+   `ctxPropagates (.squash2 _ a) = a.ctxPropagates`. The value tier
+   refuses every `Squash2`, so only the constant tier reads it.
+   *(Round 7 correction: this also admitted `localparam shortint H1 =
+   4'd8 / (U + 1'b1)` at a 4-bit `U = 15`, which divides by zero at U's
+   own 4 bits — loud in round 5 — and gives 0 at the 16-bit context. The
+   own-width reading is now required to be defined; see round 7, item 4.)*
+   * **Three-way measurement** (`slang3.py`, scratch `gaps5/folds`): the
+     nine outputs of `fold_sqn` (H1, Y1, B8, S8, L8, KI, PY, W40, LL) agree
+     between slang's elaborated value, Icarus and the Yosys netlist at the
+     default and at `N = 0, 1, 2, 3, 4, 7, 8, 15, 16, 31, 33, 63, 64, 65`,
+     `K = 4, 8, 15, 16, 31, 32, 33, 63, 64, 65`, `N = 4, U = 5`, `K = 4,
+     UK = 5`, `N = 8, U = 100`. The model PASSES at all of them. Before,
+     at the same shapes: the verifier's `run2n.log` (0 for 8, 16, 128,
+     2^30).
+   * `Param.lean` `#guard`s pin H1 = 8, KI = 8, Y1 = 16 and the `byte`
+     default PY = 8 at a 4-bit `U = 15`, and H1 = 0 at a 33-bit operand.
+2. **A named parameter type of point-dependent width** (blocker; present
+   at HEAD; verifier repros `vs_td2`, `vs_td4`). `typedef logic signed
+   [M-1:0] st_t; localparam st_t TS = -1;` has no dimensions in its type
+   syntax, so `_param_width_type` emitted slang's elaborated bounds, the
+   default point's `[31:0]`, with no `ParamRef` for round 5's
+   `PType.boundsLiteral` guard to see. With the round 5 extractor `TS + a`
+   (a = 15) was 4294967310 at every M where both tools give 16, 30, 270,
+   2147483662, 1099511627790 and 14 at `M = 1, 4, 8, 31, 40, 64`; the
+   2-state `bit [M-1:0]` typedef the same. New
+   `_sym_param_named_type_point_dependent`: a declared type that is not a
+   keyword or implicit type (`_SYM_FIXED_PARAM_TYPE_KINDS`) and whose
+   syntax, typedef followed, is point-dependent
+   (`_sym_syntax_point_dependent`) becomes `packed: null`, loud as
+   "unrecoverable packed dimensions" at every point. Fixed-width typedefs,
+   and any typedef in a family with one point, keep their bounds.
+3. **Enum member values fixed at the default point** (the class, found by
+   the search; present at HEAD). The `EnumType` node carries each member's
+   default-point value, and Lean bound those at every point: `typedef enum
+   logic [7:0] {EA = N, EB = N + 2}` (default `N = 3`) read EB = 5 at
+   `N = 5`, where both tools give 7, and at `N = 0`, where they give 2. New
+   `_sym_enum_values_point_dependent`: a reference to a member of a module
+   enum with a point-dependent member initializer is `Unsupported`
+   (`EnumValueSymbol:default-point-value`). Fixed enums and package enums
+   keep `EnumRef`; a first version refused package enums too (the
+   initializer's names were looked up in the module scope), measured on a
+   probe and corrected before any row. *(Round 7 correction: the class is
+   wider than named initializers — a member value also depends on the
+   point through an unsized literal (`'1`) or a point-dependent base width;
+   see round 7, item 2.)*
+4. **Untyped constants: the width splits, not only the value** (major
+   and minor; verifier repros `vs_uw`, `vs_up`, `vs_uw3`, `vs_upw2`; INT
+   class newly measured). Icarus 12.0 (default `-gno-strict-expr-width`)
+   gives an untyped parameter or localparam the lossless WIDTH of its
+   expression, slang, §6.20.2 and Yosys its own type. Measured with `$bits`
+   (scratch `gaps5/folds/p/uw`): one carry bit per `+ -` (`SB + 1'b1` 9,
+   `N + 1` 33), the sum for `*`, a base- and value-dependent width for `**`
+   (`2 ** N` 32 at `N = 8`, 42 at `N = 40`), carried through `/ % & | ^`,
+   unary `- ~ +` and `?:` arms, stopped by shifts, comparisons, casts,
+   selects and concatenation parts. *(Round 7 correction: a RIGHT shift
+   stops the width; a LEFT shift of an unsized or INT-class operand widens
+   it, `1 << N` is 32 + N bits in Icarus. Left shifts are now refused too;
+   see round 7, item 3.)* It shows with no wrap: `(Y + 8'd255)
+   >> 1` into 8 bits (`Y = SB + 1'b1`, `SB = 5`) is 130 against 2; `{a, B}`
+   with `localparam B = N + 1` is `0x1e00000009` against `0xf00000009`;
+   `a + C` with `C = N - 9 = -1` into 64 bits is `0x200000002` against
+   `0x100000002` at `a = 3`. The model
+   followed Yosys silently; at `N = 40`, `{a, E}` with `E = 2 ** N` passed
+   even `int32Agrees`, because the 32-bit materialization hid the unbounded
+   value. New `PExpr.icarusWidens` in `evalUntyped`: every untyped
+   parameter default and localparam built with `+ - * **` on its context
+   chain is refused at every point, whatever its value
+   (`Constant:untyped-width`). This is a whole-class refusal at one choke
+   point. It also covers minor 4 (`2 ** SB` at `SB = 100`, which escaped
+   the round 5 check at 64 more bits). A first version exempted an INT-class
+   `<unsized literal> ** <INT>` (32 bits in Icarus while the value fits);
+   the `N = 40` measurement above refuted it, and it was removed before any
+   row.
+5. **An INT-class override with `+ - * **` into an untyped child
+   parameter** (found by the search). The child parameter takes the
+   override's type: 32 bits in slang and Yosys, 33 in Icarus (`.W(N + 1)`
+   read as `{a, W}`: `0x1e00000009` against `0xf00000009`). The model
+   followed Yosys. `_sym_override_root` now refuses it
+   (`InstanceSymbol:override-untyped-width`, `_sym_param_untyped`,
+   `_sym_icarus_widens`). Leaves and overrides into typed parameters stay.
+6. **Over-claims corrected** with round 6 notes: the round 5 entry's
+   `Squash2` item ("no root … is read at a conversion's width") and its
+   item 6 ("It refuses every measured split"), the schema's round 5
+   section (both sentences) and oracle-disagreements item (11).
+
+**Rows** (`harness/sv/cases2.json`, 64 appended over 11 new sem2
+fixtures, and 9 existing rows corrected):
+* PASS against Icarus 12.0 with the cross-check agreeing (40):
+  `fold_sqn*` (23), `fold_tdf*` (5: default, `M = 1, 8, 40, 64`),
+  `fold_uwok*` (5: default, `N = 0, 1, 30, 40`), `fold_uwovl*` (3:
+  default, `N = 0, 31`), `fold_enf*` (4: default, `N = 4, 16, 40`). The
+  Yosys netlist agrees with Icarus on every cycle of every one.
+* Loud refusal rows, each with a `measured` field (24): `fold_tdw*` (7,
+  "unrecoverable packed dimensions"), `fold_uwid*` (4), `fold_uwidp*` (5)
+  and `fold_uwint*` (3) (`Constant:untyped-width`), `fold_uwovr*` (2,
+  `InstanceSymbol:override-untyped-width`), `fold_enm*` (3,
+  `EnumValueSymbol:default-point-value`).
+* **Corrected rows** (the refusal reaches them; the rule allows only
+  refusals, so each says why): `fold_uovf`, `_sb100`, `_n16`, `_n4_sb3`
+  (PASS → `Constant:untyped-width`, over-refusals: 64-bit reads where the
+  tools agree); `fold_uovf_sb255`, `_sb200`, `_n16_sbm1`, `_n4_sb15` (kind
+  `Constant:untyped-overflow` → `Constant:untyped-width`, refused earlier
+  by the new check); `register_file_ff` (PASS → `Constant:untyped-width`,
+  an over-refusal: the cv32e40p register file's untyped `NUM_TOT_WORDS`,
+  built with `+`, is read only in dimension and generate bounds).
+
+**Measured.** Full `python3 harness/sv/diff_test2.py --sim iverilog`: 547
+cases, 378 verified, 21 declared simulator disagreements, 24 skipped (23
+unavailable Icarus backends), 124 loud refusals, 0 failed, 0 ERROR, exit 0;
+the cross-check had 263 row points agree and 2 unconfirmed but
+simulator-verified (pre-existing). Against round 5 (477 cases): +40
+verified rows here, −5 corrected to refusals; +24 refusal rows here, +5
+corrected, +6 from Lane A's round 5 entry. The verifier's repros, re-extracted
+and re-run: `vs_sqn` (18 points) and `vs_sq` (11) PASS; `vs_td`, `vs_td2`,
+`vs_td4` (21) are loud ("unrecoverable packed dimensions"); `vs_uw`,
+`vs_up`, `vs_uw3`, `vs_upw`, `vs_upw2` (15) are loud
+(`Constant:untyped-width`). Before, with the round 5 extractor,
+`fold_tdw` FAILED at every `M ≠ 32` (o1 = 4294967310 at `M = 8` where
+Icarus gives 270); with the round 5 or HEAD extractor `fold_enm` FAILED at
+`N = 5` (o1 = 5 for 7) and `N = 0` (5 for 2) and `fold_uwovr` FAILED at
+`N = 8` and `N = 0` (the Yosys reading).
+
+reext: 246 same, 0 diff, 3 cv32e40p skipped (the new fixtures included);
+the four committed probe sidecars and their envelopes regenerate
+byte-identically. No existing envelope changes: no fixture in the corpus
+had a point-dependent named parameter type, a point-dependent enum member
+or a widening override into an untyped child. Extractor suite: 1834
+passed, 3 skipped, 1 failed; `test_sym_folds6.py` is new (7 tests), and one
+`test_sym_folds5.py` assertion (`.X(N * 2)` into an untyped `X` admitted)
+now asserts the round 6 refusal. The failure is the known-flaky
+`test_empty_associative_delete::test_symbolic_mode_stays_loud`, which also
+fails and passes on its own from run to run under the same seed; it is
+unrelated.
+`Param.lean`'s `#guard`s: the round 5 guards that pinned untyped
+`L = K + 3'd7` at `K = 0`, `Y = SB + 1'b1` at `SB = 5` and `N + 1` as
+values now pin their refusal; the hand-built `gen_sel` smoke design's
+`KM1 = K - 1` is now an `int` localparam, with its untyped twin pinned
+loud. One slot build (75 jobs: the SV modules, the ∀-N proofs, the nine
+`agree.lean`, every `load_design_sv2` user except the three cv32e40p
+`ingest.lean`) is green with every statement unchanged; all 28 reported
+`#print axioms` are within [propext, Classical.choice, Quot.sound].
+`docs_check` is clean and `divergence_register` reports OK.
+
+**Gaps.**
+
+1. `Constant:untyped-width` refuses every untyped constant built with
+   `+ - * **`, INT class included (`localparam KM1 = K - 1`), at every
+   point and whether or not its width is ever observed: rows
+   `register_file_ff`, `fold_uovf` (four), `fold_uwid_n16`, and
+   `fold_uwidp` at overridden points (the load gate refuses the design at
+   its defaults first). Recorded over-refusals, not narrowed.
+2. `InstanceSymbol:override-untyped-width` refuses such an override even
+   where the child never observes the parameter's width.
+3. The typedef and enum refusals hold at the default point too, where the
+   envelope is exact.
+4. An enum whose BASE width depends on the point (`typedef enum logic
+   [N-1:0] {…}`) is not refused. Its members materialize at the point's
+   base width, while the value tier's tree carries the default point's
+   conversions; the cross-check reports the tree difference as a
+   default-point fold, so no row can claim it. On a first `fold_enf` the
+   values equalled Icarus at `N = 3, 4, 16`; no wrong value was found.
+5. Two default-point widths in the value tier are read without a measured
+   shape reaching them: `instExpr2`'s `resize` fallback to the envelope's
+   width when neither a context nor the operand's width is known, and the
+   `Squash2` self width in `selfWidth2`/`divOperandWidth2`. The `Squash2`
+   node itself is refused, and it appears only at assignment roots.
+6. An enum-typed parameter is read as an `int` (`declConstType`); its
+   member default does not evaluate (enums bind after parameters), so the
+   load gate refuses such a design, but `instantiate2` at explicit
+   arguments would type it as an `int`. Not measured.
+7. The `**` width model is an over-approximation from five measured
+   shapes; Icarus's rule is base- and value-dependent.
+8. The before-values of `fold_uwid`, `fold_uwidp` and `fold_uwint` were not
+   re-run on a round 5 Lean build: for `vs_uw`/`vs_up` the verifier's logs
+   show the model following Yosys, and for the INT class the value tier's
+   32-bit `paramNWidth` gives Yosys's reading by construction.
+9. svGolf (a separate lake project) was not rebuilt; the three cv32e40p
+   `ingest.lean` files import the umbrella `LeanModels` and were not built.
+
+## Unsized x/z literals at every point (round 5 repair, Lane A, refusal-only) — 2026-10-29
+
+This entry closes the four findings of the verifier of the round-5 INIT
+repair under the round 5 rule: refusal-only and monotone, no shape loud at
+2e8c8b28 or in the round-5 tree admitted, and a class refused at one choke
+point rather than shape by shape. Every change is in the extractor's
+symbolic mode (additive; no M0 path, no Lean file). Repros: the verifier's
+`gaps5/vinitA/d/` (`vp1`–`vp9`, `ex/ex3`), with its Icarus and Yosys
+netlist traces in `o1`–`o5`; this round's probes, traces and logs:
+`/private/tmp/claude-501/-Users-ahle-repos-lean-surfaces/ef50039c-ca19-4962-8585-1ff4626e9462/scratchpad/gaps5/init2/`.
+
+**(1) Blocker: x/z literals fixed at the default point.** The envelope of a
+family holds slang's binding at the DEFAULT point, and the round-4/5 hook
+(`_sym_unsized_xz_widening`) saw only a widening visible there. A literal
+of exactly the default context width carries no conversion, so a 32-bit
+`Literal` reached Lean, which zero-extended it at every wider point; a
+narrower default context folded the literal to a default-width `Literal`.
+The envelopes were identical at 2e8c8b28, in round 4 and in round 5.
+
+- `assign y1 = 'hx0` into `[N-1:0]`, `N = 32` by default (`vp3`): at `N =
+  40` the model gave 8 zeros, 28 x, `0000`; Icarus 12.0 and the Yosys 0.53
+  netlist give 36 x then `0000` (FAIL at `N` = 33, 40, 64).
+- The child form (`vp4`): a non-parametric top instantiates a child with a
+  32-bit default at `W = 40`. Wrong against both tools, with no cross-check
+  for the shape: silent in `name.sem`.
+- The `case` item `'hz1` over `[N-1:0] b` (`vp9`): at `N = 40`, `b` = 36 z
+  then `0001`, the model gave 2, both tools 1.
+- A default of `N = 8` (`vp6`) folded `'hx0` to `xxxx0000`, and the sized
+  `12'hxF0` to `11110000` (`vp8`). The cross-check reports the silent fold
+  (`vp6` at `N` = 31, 32; `vp8` at 12, 32, 33, 40, 64), and `vp6`'s rows
+  FAIL against Icarus from `N = 33`. This round's probe `ov2`
+  adds `default: y = 'bx` and `'bz` at `N = 8`: FAIL against Icarus at every
+  `N` from 15 (at `N = 16`, `y2` is 8 zeros then 8 z, both tools 16 z).
+
+The fix is ONE choke point, `_sym_xz_literal_scan`: a walk of every
+converted module's bound tree (instance bodies excluded, port actuals
+included), its findings `Unsupported` entries in the module's `others`, so
+the design is loud. In a scope whose context widths differ between points
+(a module with an overridable parameter, top or definition; a generate-for
+body) every unsized x/z-top literal is `IntegerLiteral:unsized-xz-
+parametric`, widened at the default point or not, and every x/z-bearing
+literal under an implicit conversion that changes its width is
+`ConversionExpression:xz-literal-parametric`. The literal of a declaration
+initializer that `_sym_decl_init` decides from the literal itself (the
+round-4 `Fill`/`Int`/fixed-width table) is the one exception
+(`_sym_mark_decl_literal`). Fixtures and refusal rows: `ux_pdep`,
+`ux_pdep_child`, `ux_pdep_narrow`, `ux_pdep_sized`, `ux_pdep_case`,
+`ux_pdep_fill`, with the verifier's points.
+
+**(2) Major: port actuals at another point.** `PortConnection:unsized-xz`
+fired only where the port was wider than the literal at the BOUND point.
+`vp1` (`W = N`, 32 by default) was admitted at `N` = 33, 40, 64 with
+Icarus's zero padding (8 zeros, 28 x, `0000` at `N = 40`) against the
+netlist's 36 x then `0000` (and Xcelium's): rows PASS with "xcheck
+UNCONFIRMED, simulator-verified". `vp2` (a generate-for bound at `g = 0`)
+did the same at `g = 1` with no cross-check, and `vp7` (`N = 8` by default)
+was folded to the bound port width, wrong against both tools. `_sym_port_conn`
+now refuses any input actual HOLDING an unsized x/z-top literal, at any
+port width (`_sym_contains_unsized_xz`). Fixtures and refusal rows:
+`pa_unsized_xz_p`, `pa_unsized_xz_g`, `pa_unsized_xz_n`.
+
+**(3) Major: `$unsigned` of an unsized x/z literal.** `assign y1 =
+$unsigned('hz1)` into 40 bits (`ex3`, one point) is 8 zeros, 28 z, `0001`
+in Icarus 12.0 (the self-determined value zero-extended), as in the model
+since 2e8c8b28, and 36 z then `0001` in the Yosys 0.53 netlist. The scan
+refuses, in any scope, `$unsigned` of an expression holding an unsized
+x/z-top literal whose result is widened (`CallExpression:unsized-xz-cast`;
+fixture and row `ux_unsigned_cast`). `$signed('hz1)` widened agrees in both
+tools (probe `ov3`) and is unchanged.
+
+**(4) Minor: two policies in the docs.** Synthesis-side item 2 of
+`docs/sv-oracle-disagreements.md` now says that it stands for sized x/z
+`case` items and x/z constants under operators (the netlist reads them as
+don't-cares; measured again on `ov1`, `ov3`, `ov4`), that the x/z
+refusals of rounds 5 and this repair each have their own reason and are
+supersets of that reading where they overlap, and that refusing the
+general netlist reading is routed to the lead as one recorded decision.
+
+**Corrections.** The round-5 entry's (1) and (5), the schema's round-4
+"Unsized x/z literals in expressions" note and "Round 5 refusals", the
+oracle doc's (A2) and port-width paragraph and the hook's docstring carry
+CORRECTED notes; new: schema "Round 5 repair refusals", oracle (A5), (A6).
+
+**Refusal sets.** Pre-repair against current, over every sv-0.2 envelope,
+the round-4/5 INIT repro directories and the verifier's repros (435 tops):
+nothing loud became admitted. Two tops (`pf`, `pfy`) changed kind only,
+their nested `CallExpression`/`ConversionExpression:Explicit` refusals
+inside port actuals now replaced by `PortConnection:unsized-xz` on the
+same lines. 2e8c8b28 against current (439 tops): the admitted set is
+round 5's (Lane A's converted and unsized initializers, Lane B's folds),
+with no addition.
+
+**Over-refusals (recorded gaps).**
+
+1. `ux_pdep_fill`'s shape: `Fill` would be exact.
+2. A sized x/z literal zero-extended into a `Resize` in a family (`ov1`,
+   `12'hxF0` and `a ^ 4'bx1z0` into `[N-1:0]`, 16 by default). The
+   pre-repair model equals Icarus at `N` = 1, 2, 3, 4, 7, 8, 15, 16, 31,
+   32, 33, 63, 64, 65; the netlist differs only where x/z meets an
+   operator.
+3. An unsized x/z-top literal in a family position of fixed width, and an
+   input port default of a family.
+4. `$unsigned($signed('hz1))`, which agrees in both tools (`ov3`).
+5. An actual into a fixed port of at most 32 bits (`.i('hx0)` into 32 or 8
+   bits agrees in both tools, `ov4`).
+
+**Verification.**
+
+- **Build.** One slot build of the required list was green (74 jobs): the
+  LeanModels.Sv modules, the ∀-N files, the `load_design_sv2` proof users
+  and all nine sem2 `agree.lean`, with every statement unchanged. All 28
+  `#print axioms` reports are within [propext, Classical.choice,
+  Quot.sound].
+- **Full `diff_test2 --sim iverilog`.** EXIT 0, 0 FAIL, 0 ERROR: 378
+  verified, 21 declared, 155 loud (the 31 new refusal rows included), 24
+  skipped, 23 unavailable; cross-check 263 row points agree, 2 unconfirmed
+  (pre-existing). The 31 new rows were also run alone first: all refused
+  with their kinds.
+- **reext.** 265 same, 0 diff, 3 cv32e40p skipped. The envelopes this entry
+  changes are the round-5 fixtures `pa_unsized_xz` (actuals refused whole)
+  and `ux_expr_p` (scan findings added; its rows keep their kind), plus the
+  ten new fixtures. The four committed probe sidecars regenerate
+  byte-identically.
+- **Extractor suite.** 1855 passed, 3 skipped (`test_sym_initializers.py`:
+  12 new tests, 2 adjusted to the new refusals). The known-flaky
+  `test_empty_associative_delete::test_symbolic_mode_stays_loud` fails in
+  about one run in three under `-n 4`, with the pre-repair extractor too.
+- **`cases2.json`.** 31 rows appended; no existing row changed.
+- **docs_check.** Clean.
+
+## Default-point folds, round 7 (Lane B repair, refusal-only: size casts, enum widths, left shifts, the `Squash2` own-width gate) — 2026-10-29
+
+This entry closes the round 6 FOLDS verifier's five findings under the
+round 5 rule: refusal-only and monotone. Every change is a new loud
+refusal or the return of one; no computation changes, and no shape that
+was loud at 2e8c8b28 or in the round 6 tree is admitted (round 6 had
+admitted one; item 4 makes it loud again). `docs/sv-envelope-schema.md`,
+"Default-point folds, round 7", is the reference;
+`docs/sv-oracle-disagreements.md` items (14)–(16) record the new oracle
+splits and items (5)–(6) of "Refused where the tools agree" the two
+refusals where the tools agree. The verifier's repros `vw_szc2`, `vw_szo`,
+`vw_enw`, `vw_shl`, `vw_shp`, `vw_sho` and `vw_sqd` are the fixtures
+`fold_szc`, `fold_szo`, `fold_enw`, `fold_shl`, `fold_shp`, `fold_sho` and
+`fold_sqd` (same bodies, renamed); `vw_szc3`'s shapes are unit tests in
+`extractors/sv/test_sym_folds7.py`.
+
+1. **A cast whose size depends on the point** (blocker; present at HEAD;
+   the class round 6 was asked to search and missed; repros `vw_szc2`,
+   `vw_szc3`, `vw_szo`). `localparam int X1 = M'(255)` and `X6 =
+   M'(300)` were slang's default-point folds (-1 and 44 at `M = 8`) at
+   every `M`: slang binds a size cast's size away, so the round 3
+   `default-point-fold` guard, which looks for bound names, never saw `M`.
+   Icarus 12.0, the Yosys 0.53 netlist and slang's elaboration at the
+   point agree (255 and 300 at `M = 16`, 40, 64; X6 = -4 at `M = 4`, 0 at
+   `M = 1`); the verifier's runs had the model at -1 and 44 at every
+   point. The override form (`.W(M'(255))`, `.W(M'(300) + 1)` into an `int
+   W`) folded the same way. Fix: in a family with more than one point,
+   `_sym_conversion` refuses the M0 fold
+   (`ConversionExpression:default-point-fold`) whenever any node of the
+   operand has source syntax that depends on the point (new
+   `_sym_bound_syntax_point_dependent`: `_sym_syntax_point_dependent`
+   over each bound node's syntax, so a cast's size or type is seen). Every
+   shape the verifier listed (`M'(1) << 3`, `signed'(M'(200))`,
+   `$signed(M'(8'd200))`, `(M)'(255)`, `(M + 0)'(255)`, `logic [63:0] R9 =
+   M'(255)`, `M'(200) + 1`) is refused (`test_sym_folds7.py`), and so are
+   a parameter default `P = M'(255)`, a genvar bound `i < M'(2)` and a
+   value-position `assign o = M'(255)` (scratch probe `p/szv.sv`); fixed
+   casts and single-point modules keep the fold. Rows `fold_szc*`,
+   `fold_szo*` (default, `M` = 1, 4, 16, 40, 64).
+2. **Enum member values that depend on the base width** (blocker; present
+   at HEAD; repro `vw_enw`). Two refusals at the member reference:
+   * an initializer containing an unbased-unsized literal (`'0 '1 'x 'z`,
+     `~'0`): `EnumValueSymbol:unsized-literal-member`, at every point and
+     in every scope, package enums and single-point modules included.
+     §5.7.1 and slang fill `'1` (EA = 15 at `N = 4`, the value the envelope
+     carried); Icarus and the Yosys netlist both give EA = 1, the default
+     point included (`{a, EA}` = 241 at `a = 15`; the model 255). At `N =
+     8` the model's 15 matched no tool (slang 255, the tools 1). Rows
+     `fold_enw*` (default, `N` = 2, 8, 33) and `fold_enu`.
+   * a base type or dimension that depends on the point:
+     `_sym_enum_values_point_dependent` now reads `baseType` and
+     `dimensions` too (`EnumValueSymbol:default-point-value`). The
+     envelope carries the default point's values and Lean truncates them
+     to the point's width (`enumMemberVals`): `{SA = 9, SB = 2}` over
+     `logic [N-1:0]` at `N = 3` is `EnumValueOutOfRange` in slang, an
+     elaboration error in Icarus and SA = 1 in the Yosys netlist, the
+     model's reading. Every member of such an enum is refused, including
+     the FSM form `{T0, T1, T2}` where it fits (a recorded over-refusal).
+     Rows `fold_enb*` (default, `N` = 3, 1, 8, 16).
+3. **A left shift widens an untyped constant** (blocker; present at HEAD;
+   repros `vw_shl`, `vw_shp`, `vw_sho`; the round 6 "stopped by a shift"
+   was wrong for left shifts). Icarus widens `<<`/`<<<` by the amount
+   where the left operand is or contains an unsized or INT-class operand
+   (`$bits(1 << N)` = 32 + N; 2^40 at `N = 40` where Yosys gives 0); the
+   model followed Yosys at every point (verifier runs: lean == yosys !=
+   icarus on every mismatch). Fix: `PExpr.icarusWidens` counts
+   `.shl`/`.ashl`/`.m0 (.shl _)`/`.m0 (.ashl _)` as widening (and, for
+   completeness, the value-position spellings `.m0 (.pow ..)` as widening
+   and `.m0 .div/.sdiv/.rem/.srem` as carrying), and `_sym_icarus_widens`
+   counts `LogicalShiftLeft` and `ArithmeticShiftLeft`. `SB << 4` (a
+   sized left operand, 8 bits in Icarus) is refused too — the `#guard`
+   that pinned it at 240 now pins the refusal; a recorded over-refusal.
+   Rows `fold_shl*` (`Constant:untyped-width`; default, `N` = 0, 1, 2, 3,
+   33, 40, 64), `fold_shp*` (default, `N` = 1, 31, 33, 40), `fold_sho*`
+   (`InstanceSymbol:override-untyped-width`; same points).
+4. **The `Squash2` own-width gate** (major; a round 6 admission of a shape
+   round 5 refused; repro `vw_sqd`). Round 6's `ctxPropagates (.squash2
+   _ a) = a.ctxPropagates` let the context reach a squashed operand that
+   divides by zero at its own width: `localparam shortint H1 = 4'd8 / (U
+   + 1'b1)` at a 4-bit `U = 15` was `division by zero` in round 5 and 0 in
+   round 6 (0 is also what slang, Icarus and the Yosys netlist give). The
+   round 5 rule admits no loud shape, so the lead's option (b) is taken:
+   `evalAt`'s `resize`, `signedResize` and `squash2` arms first evaluate a
+   `Squash2` operand at its own width (the round 5 reading,
+   `PExpr.isSquash2`) and propagate its error; the context value is
+   returned only when that reading is defined. Where it is, nothing
+   changes (rows `fold_sqd`, `_n2_u3`, `_n1_u1`, `_n4_u7`, `_n33_u5` run,
+   slang, Icarus and the Yosys netlist agreeing three-way on H1, H2, H3);
+   where it is not, the point is loud (`_n4_u15`, `_n7_u127`, `_n8_u255`;
+   recorded over-refusals at the first two, where all three tools agree
+   on H1 = 0, H2 = 9; at `N = 8, U = 255` the byte H2 splits, Icarus 0 and
+   the Yosys netlist x). The round 6 report's `newly_admitted: None` was
+   wrong; with this gate it is true.
+5. **Over-claims corrected** with round 7 notes: "stopped by a shift" in
+   the charter's round 6 item 4 (and the round 5 entry's item 6), the
+   schema's round 6 and round 5 untyped bullets, oracle-disagreements items
+   (11) and (12), and the docstrings of `PExpr.icarusWidens` and
+   `PExpr.shiftBarriers`; the round 6 entry's "Nothing that was loud is
+   admitted" and its item 1; the round 6 enum item. The round 6 report's
+   sentence that the 235-row prefix of `cases2.json` from HEAD was
+   unchanged was also wrong: HEAD row 63, `register_file_ff`, was one of
+   its nine corrected rows (PASS → `Constant:untyped-width`).
+
+**Before and after.** With this round's extractor hunks disabled (a scratch
+copy) and the current Lean, the fixtures reproduce the verifier's values:
+`fold_szc` at `M = 16` read X1 = -1 and X6 = 44 where both tools give 255
+and 300, and `fold_szo` 45 where they give 301; `fold_enw` read EA = 15 at
+the default where both tools give 1 (3 at `N = 2`); `fold_enu` 15 for 1;
+`fold_sho` 0 where Icarus gives 2^33 at `N = 33`. The 2e8c8b28 extractor
+emits the same default-point literals for `fold_szc` and `fold_szo`. After:
+every one of these rows is refused with its kind.
+
+**Verification.** Scratch (regenerated after the 2026-10-29 machine
+restart cleared `/private/tmp`, including the round's first scratch
+directory and the verifier's): `/private/tmp/claude-501/-Users-ahle-repos-lean-surfaces/ef50039c-ca19-4962-8585-1ff4626e9462/scratchpad/gaps5/folds4/`
+(`o1/` Icarus and Yosys netlist traces of all 48 rows, `logs/`).
+
+- **Build.** One slot build of the required list was green (75 jobs): the
+  LeanModels.Sv modules, the ∀-N files, the `load_design_sv2` proof users,
+  `clog2`/`unary_plus`/`multiplication` and all nine sem2 `agree.lean`,
+  with every statement unchanged; it was repeated, green, after the last
+  edit (a docstring note on `PExpr.shiftBarriers`, made while the
+  differential run below used the oleans of the first build). All 28
+  `#print axioms` reports are within [propext, Classical.choice,
+  Quot.sound].
+- **Oracles.** Icarus 12.0 and the Yosys 0.53 netlist agree on every cycle
+  of `fold_szc*`, `fold_szo*`, `fold_enw*`, `fold_enu`, `fold_enb`,
+  `_n8`, `_n16` and every `fold_sqd` point but `_n8_u255`; they split on
+  every `fold_shl*`, `fold_shp*`, `fold_sho*` row and on `fold_sqd_n8_u255`
+  (H2); Icarus refuses `fold_enb_n3` and `_n1`. slang's elaborated values
+  agree three-way on every `fold_szc*` point and on every `fold_sqd` point
+  but `_n8_u255`.
+- **Full `diff_test2 --sim iverilog`.** 626 cases, EXIT 0, 0 FAIL, 0
+  ERROR: 383 verified, 21 declared, 198 loud refusals, 24 skipped, 23
+  unavailable backends; cross-check 267 row points agree, 2 unconfirmed
+  (pre-existing).
+- **reext.** 265 same, 0 diff, 3 cv32e40p skipped; the four committed probe
+  sidecars and their envelopes regenerate byte-identically. The only new
+  envelopes are the nine fixtures.
+- **`cases2.json`.** 48 rows appended (578 → 626); no existing row changed
+  in this round. Against 2e8c8b28 the 235-row prefix differs in
+  `register_file_ff` only (round 6).
+- **Extractor suite.** 1854 passed, 3 skipped, 1 failed: the known-flaky
+  `test_empty_associative_delete::test_symbolic_mode_stays_loud` (alone it
+  passed in 2 of 4 runs).

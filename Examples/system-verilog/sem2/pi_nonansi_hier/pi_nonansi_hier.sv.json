@@ -1,0 +1,313 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "pi_nonansi_hier",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/pi_nonansi_hier/pi_nonansi_hier.sv",
+      "sha256": "3ec8659534fa0503f76bc534a5fd53fae84056a81d681e97b8f9f8b0669925b3"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 12,
+          "col": 1,
+          "end_line": 14,
+          "end_col": 10
+        },
+        "name": "pi_nonansi_hier",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 36,
+              "end_line": 12,
+              "end_col": 39
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 53,
+              "end_line": 12,
+              "end_col": 54
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 75,
+              "end_line": 12,
+              "end_col": 76
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 12,
+                      "col": 70,
+                      "end_line": 12,
+                      "end_col": 71
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 12,
+                      "col": 72,
+                      "end_line": 12,
+                      "end_col": 73
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 13,
+              "col": 21,
+              "end_line": 13,
+              "end_col": 47
+            },
+            "name": "u",
+            "module": "pi_nonansi_hier_c",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 13,
+                  "col": 28,
+                  "end_line": 13,
+                  "end_col": 31
+                },
+                "port": "clk",
+                "dir": "in",
+                "expr": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 13,
+                    "col": 28,
+                    "end_line": 13,
+                    "end_col": 31
+                  },
+                  "width": 1,
+                  "name": "clk"
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 13,
+                  "col": 37,
+                  "end_line": 13,
+                  "end_col": 38
+                },
+                "port": "a",
+                "dir": "in",
+                "expr": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 13,
+                    "col": 37,
+                    "end_line": 13,
+                    "end_col": 38
+                  },
+                  "width": 1,
+                  "name": "a"
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 13,
+                  "col": 44,
+                  "end_line": 13,
+                  "end_col": 45
+                },
+                "port": "o",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 13,
+                    "col": 44,
+                    "end_line": 13,
+                    "end_col": 45
+                  },
+                  "width": 2,
+                  "name": "y"
+                }
+              }
+            ]
+          }
+        ],
+        "others": []
+      },
+      {
+        "kind": "Module",
+        "span": {
+          "line": 5,
+          "col": 1,
+          "end_line": 11,
+          "end_col": 10
+        },
+        "name": "pi_nonansi_hier_c",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 26,
+              "end_line": 5,
+              "end_col": 29
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 31,
+              "end_line": 5,
+              "end_col": 32
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 34,
+              "end_line": 5,
+              "end_col": 35
+            },
+            "name": "o",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 10,
+                      "end_line": 9,
+                      "end_col": 11
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 12,
+                      "end_line": 9,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 9,
+                "col": 19,
+                "end_line": 9,
+                "end_col": 24
+              },
+              "width": 2,
+              "bits": "10"
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 10,
+              "col": 3,
+              "end_line": 10,
+              "end_col": 38
+            },
+            "sv_kind": "ProceduralBlockSymbol:initialized-variable",
+            "text": "always_ff writes 'o', which has a declaration initializer: IEEE 1800-2023 counts the initialization as a procedural assignment (\u00a76.5, \u00a710.5) and forbids any other process to assign an always_ff variable (\u00a79.2.2.2, \u00a79.2.2.4); Xcelium 24.03 rejects the design (*E,MULAXX) where Icarus 12.0, Yosys 0.53 and slang run it, so the tools split on its legality (drop the initializer, or write the variable from a plain `always` procedure)"
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

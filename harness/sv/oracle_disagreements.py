@@ -6,10 +6,72 @@ are checked on every run, and changed or resolved discrepancies fail.
 
 import hashlib
 import json
+import re
 
 
 class HarnessError(Exception):
     pass
+
+
+# HOST FRAMING OF ONE ICARUS FAILURE (2026-10-28). The unavailable-oracle
+# signatures were recorded with Ubuntu's Icarus 12.0-2build2; Homebrew's
+# Icarus 12.0 on macOS fails at the same stage, with the same exit status and
+# the same tool diagnostic, but the HOST wraps it differently in two places:
+#
+#   * a C `assert` in vvp is printed by the C library -- glibc writes
+#     `vvp: FILE:LINE: PRETTY-FUNCTION: Assertion `EXPR' failed.`, macOS libc
+#     writes `Assertion failed: (EXPR), function FUNC, file FILE, line LINE.`;
+#   * an aborted `ivl` (Icarus's own `assert:` line, unchanged on both hosts)
+#     is reported by the `/bin/sh` that the iverilog driver runs its pipeline
+#     in -- dash prints `Aborted (core dumped)`, macOS's bash prints a job
+#     report naming the preprocessor `Done` and the `ivl` stage `Abort trap: 6`
+#     with process ids and temporary file names that differ on every run.
+#
+# Both sides of a comparison are reduced to the same canonical text before
+# comparing, and ONLY these forms are rewritten: the assertion keeps its
+# file, line, function name and expression (a different assertion, or the
+# same one at another line, still differs), and the abort report keeps which
+# pipeline stage died and of which signal (an ivlpp abort, a segmentation
+# fault or a bare `Aborted` without the recorded framing still differs).
+# Stage, exit status, stdout and every other stderr line stay exact.
+_GLIBC_ASSERT = re.compile(
+    r"^[\w.+-]+: (?P<file>[^\s:]+):(?P<line>\d+): (?P<func>[^\n]+?): "
+    r"Assertion `(?P<expr>[^\n]*)' failed\.$", re.M)
+_DARWIN_ASSERT = re.compile(
+    r"^Assertion failed: \((?P<expr>[^\n]*)\), function (?P<func>[^,\n]+), "
+    r"file (?P<file>[^,\n]+), line (?P<line>\d+)\.$", re.M)
+_DASH_IVL_ABORT = re.compile(r"^Aborted \(core dumped\)$", re.M)
+_DARWIN_IVL_ABORT = re.compile(
+    r"^sh: line \d+: +\d+ Done +\S*/lib/ivl/ivlpp [^\n]*\n"
+    r" +\d+ Abort trap: 6 +\| \S*/lib/ivl/ivl [^\n]*$", re.M)
+_IVL_ABORT = "<sh: ivl stage aborted (SIGABRT)>"
+
+
+def _short_function(name):
+    """`bool vvp_vector4_t::set_vec(unsigned int, ...)` -> `set_vec`, the
+    name macOS libc prints (`__func__`); glibc prints the pretty signature."""
+    head = name.split("(", 1)[0].strip()
+    return re.split(r"[\s:*&]+", head)[-1]
+
+
+def _canonical_assert(match):
+    return "<assert %s:%s %s: %s>" % (match.group("file"), match.group("line"),
+                                      _short_function(match.group("func")),
+                                      match.group("expr"))
+
+
+def canonical_tool_output(text):
+    """Rewrite only the host-specific framing described above."""
+    text = _GLIBC_ASSERT.sub(_canonical_assert, text)
+    text = _DARWIN_ASSERT.sub(_canonical_assert, text)
+    text = _DASH_IVL_ABORT.sub(_IVL_ABORT, text)
+    return _DARWIN_IVL_ABORT.sub(_IVL_ABORT, text)
+
+
+def canonical_failure(failure):
+    return dict(stage=failure.get("stage"), returncode=failure.get("returncode"),
+                stdout=canonical_tool_output(failure.get("stdout", "")),
+                stderr=canonical_tool_output(failure.get("stderr", "")))
 
 
 class SimulatorError(HarnessError):
@@ -52,7 +114,8 @@ def oracle_unavailability(case, source, envelope, tb_text, source_path, error):
     observed = dict(stage=error.stage, returncode=error.returncode,
                     stdout=error.stdout.replace(source_path, "<source>"),
                     stderr=error.stderr.replace(source_path, "<source>"))
-    if observed not in row.get("failures", []):
+    recorded = [canonical_failure(f) for f in row.get("failures", [])]
+    if canonical_failure(observed) not in recorded:
         raise HarnessError("%s: unexpected simulator failure; review the declaration\n%s"
                            % (row["id"], json.dumps(observed, indent=2, sort_keys=True)))
     return row["id"]

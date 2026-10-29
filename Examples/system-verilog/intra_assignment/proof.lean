@@ -26,7 +26,7 @@ theorem capture_before_wait (source word index : LVec) (pending : NbaQueue)
       captureWait =
       .ok ([("source",source),("word",word),("index",index),(capturedName,source)],
         pending, output, .suspended (.atTime 3) [copyback]) := by
-  rcases output with ⟨lines, current, halted, transfer⟩
+  rcases output with ⟨lines, current, strobes, halted, transfer⟩
   change halted = false at running
   change transfer = .normal at normal
   subst halted

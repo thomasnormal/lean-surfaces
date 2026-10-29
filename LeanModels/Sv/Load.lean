@@ -112,6 +112,7 @@ private partial def timedAccesses : SStmt → List (Bool × String)
   | .m0 body => m0Writes body
   | .assign _ name _ | .selectedAssign name _ _ _ _ _ _
   | .selectedNbaAssign name _ _ _ _ _ _ | .localDecl name _ _ _ => [(false, name)]
+  -- `$dist_uniform` is an inout call: both the target and the seed are written.
   | .distUniformAssign target seed _ _ _ => [(false, target), (false, seed)]
   | .packedAssign targets _ | .packedNbaAssign targets _ => targets.map targetWrite
   | .scanf _ _ outputs result => (outputs.flatten ++ result).map targetWrite

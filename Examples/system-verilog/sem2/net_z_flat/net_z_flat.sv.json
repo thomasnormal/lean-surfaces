@@ -1,0 +1,252 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "net_z_flat",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/net_z_flat/net_z_flat.sv",
+      "sha256": "93aab09114adca069ab5ce1c59659425e0206d3b4e68bdc29a92e8ef8fd230c9"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 4,
+          "col": 1,
+          "end_line": 13,
+          "end_col": 10
+        },
+        "name": "net_z_flat",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 22,
+              "end_line": 5,
+              "end_col": 23
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 17,
+                      "end_line": 5,
+                      "end_col": 18
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 19,
+                      "end_line": 5,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          },
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 6,
+              "col": 27,
+              "end_line": 6,
+              "end_col": 29
+            },
+            "sv_kind": "PortSymbol:net-z",
+            "text": "yn"
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 22,
+              "end_line": 7,
+              "end_col": 23
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 17,
+                      "end_line": 7,
+                      "end_col": 18
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 19,
+                      "end_line": 7,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 22,
+              "end_line": 8,
+              "end_col": 23
+            },
+            "name": "t",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 17,
+                      "end_line": 8,
+                      "end_col": 18
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 19,
+                      "end_line": 8,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 10,
+              "col": 20,
+              "end_line": 10,
+              "end_col": 21
+            },
+            "sv_kind": "NetSymbol:net-z",
+            "text": "w"
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 11,
+              "col": 10,
+              "end_line": 11,
+              "end_col": 15
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 11,
+                "col": 10,
+                "end_line": 11,
+                "end_col": 11
+              },
+              "width": 2,
+              "name": "y"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 11,
+                "col": 14,
+                "end_line": 11,
+                "end_col": 15
+              },
+              "width": 2,
+              "name": "a"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 12,
+              "col": 10,
+              "end_line": 12,
+              "end_col": 15
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 12,
+                "col": 10,
+                "end_line": 12,
+                "end_col": 11
+              },
+              "width": 2,
+              "name": "t"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 12,
+                "col": 14,
+                "end_line": 12,
+                "end_col": 15
+              },
+              "width": 2,
+              "name": "w"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

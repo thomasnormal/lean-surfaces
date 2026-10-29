@@ -75,13 +75,17 @@ class SymbolicContinuousSelects(unittest.TestCase):
         self.assertEqual(selection["index"].get("resolved_width"), 32)
         self.assertNotEqual(selection["index"]["span"], selection["span"])
 
+    # A literal label over a parameter-dependent range is an `ArraySel`
+    # path (2026-10-28): the label is kept and normalized against the
+    # declared range at every point (out of range at the default W = 5, in
+    # range from W = 6 on; at W = 0 the range is the ascending `[-1:0]`).
     def test_parameterized_bit_select_is_not_rejected_at_default_width(self):
         envelope = self.extract(
             "module top #(parameter W = 5) (input logic [W-1:0] source, "
             "output logic out); assign out = source[5]; endmodule")
         assignment, = envelope["design"]["modules"][0]["processes"]
-        self.assertEqual(assignment["value"]["kind"], "BitSel")
-        self.assertEqual(assignment["value"]["index"]["value"], 5)
+        self.assertEqual(assignment["value"]["kind"], "ArraySel")
+        self.assertEqual([i["value"] for i in assignment["value"]["indices"]], [5])
 
     def test_parameterized_part_select_is_not_rejected_at_default_width(self):
         envelope = self.extract(
@@ -89,9 +93,9 @@ class SymbolicContinuousSelects(unittest.TestCase):
             "output logic [1:0] out); assign out = source[6:5]; endmodule")
         assignment, = envelope["design"]["modules"][0]["processes"]
         selection = assignment["value"]
-        self.assertEqual(selection["kind"], "PartSel")
-        self.assertEqual((selection["msb"]["value"], selection["lsb"]["value"]),
-                         (6, 5))
+        self.assertEqual(selection["kind"], "ArraySel")
+        self.assertEqual((selection["part"]["mode"], selection["part"]["left"]["value"],
+                          selection["part"]["right"]["value"]), ("range", 6, 5))
 
     def test_untagged_packed_member_is_a_fixed_window(self):
         envelope = self.extract(

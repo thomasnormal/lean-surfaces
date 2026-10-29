@@ -4114,6 +4114,15 @@
         "PASS"
       ],
       "expect": "match"
+    },
+    {
+      "name": "pure_diagnostic_adapter",
+      "file": "Examples/system-verilog/pure_diagnostic_adapter/pure_diagnostic_adapter.sv",
+      "module": "top",
+      "oracle": [
+        "PASS"
+      ],
+      "expect": "match"
     }
   ]
 }

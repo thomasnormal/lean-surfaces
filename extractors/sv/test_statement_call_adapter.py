@@ -30,6 +30,20 @@ class StatementCallAdapter(unittest.TestCase):
             '$display("PASS"); end endmodule')
         self.assertIn("Call:$info", residual)
 
+    def test_inert_pure_diagnostics_follow_converter_erasure(self):
+        self.assertEqual(
+            blockers(
+                '`timescale 1ns/1ps module top; initial begin '
+                '$printtimescale; $printtimescale($unit); $exit; '
+                '$display("PASS"); end endmodule'),
+            [])
+
+    def test_noninert_pure_diagnostic_forms_remain_loud(self):
+        residual = blockers(
+            'module top; initial $printtimescale(1); endmodule')
+        self.assertTrue(
+            "Call:$printtimescale" in residual or "InvalidStatement" in residual)
+
 
 if __name__ == "__main__":
     unittest.main()

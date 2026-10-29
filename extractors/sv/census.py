@@ -104,6 +104,7 @@ FILE_TIMEOUT_S = 90
 # state: output and whole-run termination.  Other system and user calls stay
 # explicit adapter boundaries even when their syntax is recognized.
 ADAPTER_CALLS = ("$display", "$write", "$finish", "$stop")
+ADAPTER_PURE_DIAGNOSTIC = ("$exit", "$printtimescale")
 DEEP_DIVE_CHAPTERS = ("chapter-4", "chapter-6", "chapter-11")
 
 # A *real* include directive at the start of a line (`include "f" / <f> /
@@ -247,8 +248,8 @@ def adapter_expr(sm, e):
 
 def adapter_stmt(sm, s):
     """Blocker tags of a statement under the adapter tier (M0 vocabulary
-    + represented output/termination calls + string literals + M0-typed local
-    var decls)."""
+    + represented output/termination calls + inert pure diagnostics + string
+    literals + M0-typed local var decls)."""
     if getattr(s, "bad", False):
         return ["InvalidStatement"]
     cn = type(s).__name__
@@ -320,6 +321,12 @@ def adapter_stmt(sm, s):
                         continue
                     out.extend(adapter_expr(sm, a))
                 return out
+            if name in ADAPTER_PURE_DIAGNOSTIC:
+                converted = extract.convert_stmt(sm, s)
+                if (isinstance(converted, dict)
+                        and converted.get("kind") == "Empty"
+                        and converted.get("pure_diagnostic") == name):
+                    return []
             # The extractor erases source-pure string statement methods after
             # replaying their literal history.  Mirror only those exact
             # markers here: the legacy adapter has no string cell, so a

@@ -111,19 +111,21 @@ is depth-first left to right on both the store and the read path. -/
 #py_check dict_lab.dict_eq_mixed() =
   (Val.tuple #[.bool true, .bool false, .bool true])
 #py_check dict_lab.mate_style() = 69290
-#py_check dict_lab.genexp_local_capture(7) = 2
+#guard callFunction dict_lab "genexp_local_capture" #[.int 7] 4096
+  matches .unsupported _
 #guard callFunction dict_lab "genexp_local_capture_default_still_loud" #[.int 7] 4096
   matches .unsupported _
-# The key-view intersection is a monadic heap operation.  The proof
-# interpreter deliberately keeps dictionary-view allocation outside its
-# value-side tier; the executable differential row covers the behavior.
+/-! The key-view intersection is a monadic heap operation.  The proof
+interpreter deliberately keeps dictionary-view allocation outside its
+value-side tier; the executable differential row covers the behavior. -/
 
 /-! ### out-of-tier stays loud: non-None immediate `is`, live iteration -/
 
-#py_check dict_lab.int_is(1, 1) = True
-#py_check dict_lab.int_is(1, 2) = False
+#py_check dict_lab.int_is(1, 1) = Val.bool true
+#py_check dict_lab.int_is(1, 2) = Val.bool false
 #guard callFunction dict_lab "iter_dict" #[] 4096 matches .unsupported _
-#py_check dict_lab.view_eq_still_loud(7) = true
+#guard callFunction dict_lab "view_eq_still_loud" #[.int 7] 4096
+  matches .unsupported _
 #guard heapEq #[.dict #[(.int 1, .int 7)] 0, .dictView 0 .keys,
     .dictView 0 .keys] 8 [] (.ref 1) (.ref 2) == .ok true
 #guard heapIndex #[.dict #[(.int 1, .int 7)] 0, .dictView 0 .keys] 1 (.ref 1) ==

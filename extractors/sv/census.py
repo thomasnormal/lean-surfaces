@@ -157,6 +157,23 @@ def _minus_string(kinds):
 
 
 def adapter_expr(sm, e):
+    # Strings have no flat self-check slot, but the extractor already has an
+    # exact source-history resolver for unconditional ASCII literals,
+    # concatenations, and constant replications.  Reuse that proof here so
+    # adapter census rows do not report a false 2-state blocker for a value
+    # that the actual self-check lowering has erased safely.  Unknown,
+    # effectful, timed, and non-ASCII histories remain ordinary blockers.
+    try:
+        if (type(e).__name__ in ("NamedValueExpression", "ConcatenationExpression",
+                                 "ReplicationExpression", "StringLiteral")
+                and type(getattr(e.type, "canonicalType", None)).__name__ == "StringType"):
+            position = getattr(getattr(getattr(e, "sourceRange", None),
+                                       "start", None), "offset", None)
+            if (position is not None
+                    and extract._string_source_value(e, position) is not None):
+                return []
+    except Exception:
+        pass
     return _minus_string(kinds_in(extract.convert_expr(sm, e)))
 
 
@@ -281,6 +298,13 @@ def adapter_design_blockers(sm, comp):
                         out.extend(kinds_in(extract.convert_port(sm, m)))
                     elif k in ("Variable", "Net"):
                         if m.name in port_names:
+                            continue
+                        if (k == "Variable"
+                                and (extract.is_string_decl(m)
+                                     or extract.is_fixed_string_array_decl(m))):
+                            # These declarations are intentionally erased by
+                            # the legacy converter; their source-pure values
+                            # are replayed at query sites instead of stored.
                             continue
                         d = (extract.convert_var(sm, m) if k == "Variable"
                              else extract.convert_net(sm, m))

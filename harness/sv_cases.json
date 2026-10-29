@@ -2,6 +2,16 @@
   "oracle": "sv-tests-2 self-check declarations",
   "cases": [
     {
+      "name": "string_concat_replication_ops",
+      "file": "Examples/system-verilog/string_concat_replication_ops/string_concat_replication_ops.sv",
+      "module": "top",
+      "oracle": [
+        "Hello_World!",
+        "testtesttesttest"
+      ],
+      "expect": "match"
+    },
+    {
       "name": "fixed_string_array_loops",
       "file": "Examples/system-verilog/fixed_string_array_loops/fixed_string_array_loops.sv",
       "module": "top",

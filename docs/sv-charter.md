@@ -12,6 +12,22 @@ external corpus snapshot is unchanged because the checkout is unavailable.
 
 # The SystemVerilog tier: FOUNDING CHARTER
 
+## Source-pure string concatenation and replication in the adapter — 2026-10-29
+
+The legacy adapter census now uses the same source-history proof as the
+extractor for ASCII string assignments. Literal concatenation and constant
+replication can therefore feed later `%s` observations without reporting a
+false `VariableSymbol:2state` or `NamedValueExpression:2state` blocker.
+Unknown, effectful, timed, and non-ASCII histories remain loud, and no string
+storage or scheduler state is added. The `string_concat_replication_ops`
+fixture, adapter regressions, generated envelope, Lean receipt, and
+differential row cover both §11.4.12.2 forms.
+
+Differential coverage grows **439/433/0/6 → 440/434/0/6**; grammar coverage
+remains **111/109**. The temporary public sv-tests audit remains **364 clean /
+437 partial / 111 include skips**; the two chapter-11 string rows now have no
+adapter residuals.
+
 ## Fixed unpacked string-array elements in procedural loops — 2026-10-29
 
 Finite one-dimensional unpacked arrays of ASCII `string` literals now replay

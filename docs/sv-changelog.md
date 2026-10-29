@@ -1,3 +1,14 @@
+## [0.1.185] — 2026-10-29
+
+The legacy adapter now recognizes source-pure ASCII string histories while
+measuring the self-check surface: literal concatenation and constant
+replication assignments can feed later `%s` observations without a false
+`VariableSymbol:2state` or `NamedValueExpression:2state` residual. Unknown,
+effectful, timed, and non-ASCII histories remain loud. The
+`string_concat_replication_ops` fixture, adapter regressions, generated
+envelope, Lean receipt, and differential row cover both §11.4.12.2 forms.
+Differential coverage grows **439/433/0/6 → 440/434/0/6**.
+
 ## [0.1.184] — 2026-10-29
 
 Finite fixed unpacked arrays of ASCII `string` literals now support exact
